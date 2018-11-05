@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 type Adapter interface {

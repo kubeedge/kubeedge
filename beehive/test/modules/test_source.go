@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 const (

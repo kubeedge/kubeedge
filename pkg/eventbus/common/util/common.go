@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 

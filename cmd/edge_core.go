@@ -1,16 +1,16 @@
 package main
 
 import (
-	"edge-core/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core"
 
-	"edge-core/pkg/common/dbm"
-	_ "edge-core/pkg/devicetwin"
-	_ "edge-core/pkg/edged"
-	_ "edge-core/pkg/edgehub"
-	_ "edge-core/pkg/eventbus"
-	_ "edge-core/pkg/metamanager"
-	_ "edge-core/test"
-	// _ "edge-core/pkg/edgefunction"
+	"kubeedge/pkg/common/dbm"
+	_ "kubeedge/pkg/devicetwin"
+	_ "kubeedge/pkg/edged"
+	_ "kubeedge/pkg/edgehub"
+	_ "kubeedge/pkg/eventbus"
+	_ "kubeedge/pkg/metamanager"
+	_ "kubeedge/test"
+	// _ "kubeedge/pkg/edgefunction"
 )
 
 func main() {

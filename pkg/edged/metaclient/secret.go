@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
-	"edge-core/pkg/common/message"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
+	"kubeedge/pkg/common/message"
 	api "k8s.io/api/core/v1"
 )
 

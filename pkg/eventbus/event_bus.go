@@ -1,14 +1,14 @@
 package eventbus
 
 import (
-	"edge-core/beehive/pkg/common/config"
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
 	"encoding/json"
 
-	"edge-core/pkg/eventbus/common/util"
-	mqttBus "edge-core/pkg/eventbus/mqtt"
+	"kubeedge/pkg/eventbus/common/util"
+	mqttBus "kubeedge/pkg/eventbus/mqtt"
 )
 
 // eventbus struct
