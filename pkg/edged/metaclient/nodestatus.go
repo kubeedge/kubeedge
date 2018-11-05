@@ -3,11 +3,11 @@ package metaclient
 import (
 	"fmt"
 
-	"edge-core/beehive/adoptions/common/api"
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
-	"edge-core/pkg/common/message"
+	"kubeedge/beehive/adoptions/common/api"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
+	"kubeedge/pkg/common/message"
 )
 
 type NodeStatusGetter interface {

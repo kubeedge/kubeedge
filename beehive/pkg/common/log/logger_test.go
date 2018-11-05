@@ -1,7 +1,7 @@
 package log_test
 
 import (
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 	"testing"
 	//"os"
 )

@@ -11,7 +11,7 @@ import (
 	"github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager"
 	"gopkg.in/yaml.v2"
 
-	"edge-core/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/config"
 )
 
 // LOGGER var
@@ -46,7 +46,7 @@ func init() {
 
 	log.Init(*logConfig)
 
-	LOGGER = log.NewLogger("edge-core")
+	LOGGER = log.NewLogger("kubeedge")
 	writers := logConfig.Writers
 	for _, value := range writers {
 		if value == "file" {

@@ -1,8 +1,8 @@
 package dtclient
 
 import (
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/pkg/common/dbm"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/pkg/common/dbm"
 )
 
 //Device the struct of device

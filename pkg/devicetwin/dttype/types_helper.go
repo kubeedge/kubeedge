@@ -1,7 +1,7 @@
 package dttype
 
 import (
-	"edge-core/pkg/devicetwin/dtclient"
+	"kubeedge/pkg/devicetwin/dtclient"
 
 	"encoding/json"
 	"strings"

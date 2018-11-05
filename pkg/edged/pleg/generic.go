@@ -10,9 +10,9 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/pkg/edged/containers"
-	"edge-core/pkg/edged/podmanager"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/pkg/edged/containers"
+	"kubeedge/pkg/edged/podmanager"
 )
 
 type GenericLifecycle struct {

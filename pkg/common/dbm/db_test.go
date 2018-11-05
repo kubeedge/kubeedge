@@ -3,10 +3,10 @@ package dbm_test
 import (
 	"testing"
 
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 	"github.com/astaxie/beego/orm"
 
-	"edge-core/pkg/common/dbm"
+	"kubeedge/pkg/common/dbm"
 )
 
 const (

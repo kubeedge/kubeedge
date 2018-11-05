@@ -1,6 +1,6 @@
 package dtmanager
 
-import "edge-core/pkg/devicetwin/dtcontext"
+import "kubeedge/pkg/devicetwin/dtcontext"
 
 //DTWorker worker for devicetwin
 type DTWorker interface {
