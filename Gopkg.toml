@@ -1,0 +1,86 @@
+# Gopkg.toml example
+#
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
+
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.10.9"
+
+[[constraint]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.10.9"
+
+[[constraint]]
+  name = "k8s.io/apiserver"
+  version = "kubernetes-1.10.9"
+
+[[constraint]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.10.9"
+
+[[constraint]]
+  name = "k8s.io/kubernetes"
+  version = "v1.10.9"
+
+[[override]]
+  name = "github.com/astaxie/beego"
+  version = "v1.9.2"
+
+[[override]]
+  name = "golang.org/x/exp"
+  revision = "292a51b8d262487dab23a588950e8052d63d9113"
+
+[[override]]
+  name = "github.com/docker/docker"
+  revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  branch = "master"
+
+[[override]]
+  name = "github.com/opencontainers/runc"
+  revision = "871ba2e58e24314d1fab4517a80410191ba5ad01"
+
+[[override]]
+  name = "github.com/google/cadvisor"
+  version = "v0.29.2"
+
+[[override]]
+  name = "k8s.io/utils"
+  revision = "aedf551cdb8b0119df3a19c65fde413a13b34997"
+
+[[override]]
+  name = "github.com/containerd/containerd"
+  revision = "27d450a01bb533d7ebc5701eb52792565396b084"
+
+[[override]]
+  name = "github.com/prometheus/client_golang"
+  revision = "08fd2e12372a66e68e30523c7642e0cbc3e4fbde"
+
+[prune]
+  go-tests = true
+  unused-packages = true

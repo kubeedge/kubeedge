@@ -1,0 +1,2 @@
+modules:
+    enabled: [eventbus, websocket, metaManager, edged, twin, testManager]
