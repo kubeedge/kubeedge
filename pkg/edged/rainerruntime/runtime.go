@@ -4,7 +4,7 @@ import (
 	"k8s.io/api/core/v1"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 
-	"edge-core/pkg/edged/containers"
+	"kubeedge/pkg/edged/containers"
 )
 
 type Runtime interface {

@@ -1,7 +1,7 @@
 package config_test
 
 import (
-	"edge-core/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/config"
 	"fmt"
 	"testing"
 )

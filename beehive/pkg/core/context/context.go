@@ -3,7 +3,7 @@ package context
 import (
 	"time"
 
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 type ModuleContext interface {

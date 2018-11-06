@@ -3,9 +3,9 @@ package core
 import (
 	"time"
 
-	"edge-core/beehive/pkg/common/config"
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/core/context"
 )
 
 const (

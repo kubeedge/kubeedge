@@ -1,7 +1,7 @@
 package store
 
 import (
-	"edge-core/pkg/metamanager/dao"
+	"kubeedge/pkg/metamanager/dao"
 )
 
 type UpdateFunc func(input interface{}) (output interface{}, ttl uint64, err error)

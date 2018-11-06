@@ -3,8 +3,8 @@ package dbm
 import (
 	"strings"
 
-	"edge-core/beehive/pkg/common/config"
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/log"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/mattn/go-sqlite3"
 )

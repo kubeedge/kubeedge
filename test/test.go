@@ -8,12 +8,12 @@ import (
 
 	"k8s.io/api/core/v1"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
-	"edge-core/pkg/common/message"
-	"edge-core/pkg/metamanager/dao"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
+	"kubeedge/pkg/common/message"
+	"kubeedge/pkg/metamanager/dao"
 )
 
 const (

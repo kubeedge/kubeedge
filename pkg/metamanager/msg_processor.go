@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/beehive/pkg/common/util"
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/util"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
 
-	messagepkg "edge-core/pkg/common/message"
-	"edge-core/pkg/metamanager/dao"
+	messagepkg "kubeedge/pkg/common/message"
+	"kubeedge/pkg/metamanager/dao"
 )
 
 const (

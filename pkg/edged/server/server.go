@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/pkg/edged/podmanager"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/pkg/edged/podmanager"
 	"k8s.io/api/core/v1"
 )
 
