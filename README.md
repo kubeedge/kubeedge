@@ -1,28 +1,28 @@
 [TOC]
 
-# Kubeedge
+# KubeEdge
 
 <img src="./images/logo-200.png">
 
-Kubeedge is an open source system that Extend native containerized application orchestration and device management capabilities to edge devices. It also offers **MQTT** based device monitoring, management and communication capabilities which will enable users flexibly develop applications or custom logic directly on cross-platform devices, and extend most container management capabilities from cloud side to edge side.
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata sychronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge.
 
 ## Advantages
 
 #### Edge Computing
 
-Significantly decrease the volumes of data that must be moved, reducing transmission costs, shrinking latency between the data and the decision, improving quality of service. 
+With business logic running at Edge, volumes of data can be secured & processed locally. It reduces the bandwidth request between Edge and Cloud; increases the response speak; and protects customers' data privacy. 
 
 #### Simplify development
 
-Offer container runtime based application management capability,  you can deployment application from your image and shield system difference. Same code can be run on a device or in cloud, and you can code in any language you know and use existing business logic without any change.
+Developers can write regular http or mqtt based applications; containerize and run anywhere at Edge or Cloud.
 
 #### Kubernetes-native support
 
-Kubeedge is built upon kubernetes and provides fundamental infrastructure support for network, application anagement and metadata synchronization between cloud and edge. Edge side decision, data analysis result, device status can be easily upload to cloud side for further analysis, data statistic, data visualization. 
+With KubeEdge, users can orchestrate apps, manage devices and monitor app/device status against Edge nodes like a normal K8s cluster in the Cloud
 
 #### Abundant applications
 
-You can easily get and deploy complicate machine learning, image recognition, event processing and other high level applications to your edge side. Get them from the community, create modules and make them available to the community.
+You can easily get and deploy complicated machine learning, image recognition, event processing and other high level applications to your Edge side.
 
 ## Introduction
 
@@ -38,14 +38,23 @@ KubeEdge is composed of these components:
 
 <img src="./images/edge-core.png">
 
-## Road Map
+## Roadmap
 
-KubeEdge will provide the fundamental infrastructure and basic functionalities for IOT/Edge workload. We will support the following features for KubeEdge in the future:
+### Release 1.0
+KubeEdge will provide the fundamental infrastructure and basic functionalities for IOT/Edge workload. This includes: 
 - K8s Application deployment through kubectl from Cloud to Edge node(s)
 - K8s configmap, secret deployment through kubectl from Cloud to Edge node(s) and their applications in Pod
 - Bi-directional and multiplex network communication between Cloud and edge nodes
 - K8s Pod and Node status querying with kubectl at Cloud with data collected/reported from Edge
 - Edge node autonomy when its getting offline and recover post reconnection to Cloud
+
+### Release 2.0 and Future
+- Build service mesh with KubeEdge and Istio 
+- Enable function as a service at Edge
+- Support more types of device protocols to Edge node sunch as AMQP, BlueTooth, ZigBee, etc.
+- Evaluate and enable super large scale of Edge clusters with thousands of Edge nodes and millions of devices
+- Enable intelligent scheduling of apps. to large scale of Edge nodes
+- etc.
 
 ## Usage
 
