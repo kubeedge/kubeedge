@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 )
 
 const (

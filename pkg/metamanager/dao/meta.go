@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 
-	"edge-core/pkg/common/dbm"
+	"kubeedge/pkg/common/dbm"
 )
 
 const (

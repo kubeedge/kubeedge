@@ -3,13 +3,13 @@ package metamanager
 import (
 	"time"
 
-	"edge-core/beehive/pkg/common/config"
-	"edge-core/beehive/pkg/core"
-	"edge-core/beehive/pkg/core/context"
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
 
-	"edge-core/pkg/common/dbm"
-	"edge-core/pkg/metamanager/dao"
+	"kubeedge/pkg/common/dbm"
+	"kubeedge/pkg/metamanager/dao"
 )
 
 const (

@@ -52,10 +52,10 @@ import (
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	"k8s.io/kubernetes/pkg/util/selinux"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/pkg/edged/apis"
-	"edge-core/pkg/edged/apis/runtime/cri"
-	"edge-core/pkg/edged/securitycontext"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/pkg/edged/apis"
+	"kubeedge/pkg/edged/apis/runtime/cri"
+	"kubeedge/pkg/edged/securitycontext"
 )
 
 const (

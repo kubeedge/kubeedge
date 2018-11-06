@@ -1,10 +1,10 @@
 package clients
 
 import (
-	"edge-core/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/common/log"
 
-	"edge-core/pkg/edgehub/clients/wsclient"
-	"edge-core/pkg/edgehub/config"
+	"kubeedge/pkg/edgehub/clients/wsclient"
+	"kubeedge/pkg/edgehub/config"
 )
 
 const (

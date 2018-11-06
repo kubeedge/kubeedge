@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 // UnixSocket struct

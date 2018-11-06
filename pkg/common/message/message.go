@@ -1,7 +1,7 @@
 package message
 
 import (
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 const (

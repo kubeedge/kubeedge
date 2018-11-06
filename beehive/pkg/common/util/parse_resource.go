@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"edge-core/beehive/pkg/core/model"
+	"kubeedge/beehive/pkg/core/model"
 )
 
 // Parse resource at edge: return namespace, resource_type, resource_id.

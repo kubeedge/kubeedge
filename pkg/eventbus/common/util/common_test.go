@@ -6,7 +6,7 @@ import (
 	"github.com/bouk/monkey"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 
-	common "edge-core/pkg/edgehub/common"
+	common "kubeedge/pkg/edgehub/common"
 	"github.com/stretchr/testify/assert"
 )
 

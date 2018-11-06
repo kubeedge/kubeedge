@@ -17,7 +17,7 @@ limitations under the License.
 package dockertools
 
 import (
-	"edge-core/pkg/edged/util/record"
+	"kubeedge/pkg/edged/util/record"
 	"encoding/base64"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 
@@ -43,10 +43,10 @@ import (
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/util/version"
 
-	"edge-core/beehive/pkg/common/log"
-	"edge-core/pkg/edged/apis/runtime/cri"
-	"edge-core/pkg/edged/containers"
-	"edge-core/pkg/edged/util"
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/pkg/edged/apis/runtime/cri"
+	"kubeedge/pkg/edged/containers"
+	"kubeedge/pkg/edged/util"
 )
 
 const (
