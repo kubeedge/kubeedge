@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"kubeedge/beehive/pkg/common/log"
-	"github.com/astaxie/beego/orm"
-
 	"kubeedge/pkg/common/dbm"
+
+	"github.com/astaxie/beego/orm"
 )
 
 const (
