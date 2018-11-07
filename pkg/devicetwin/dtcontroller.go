@@ -1,10 +1,6 @@
 package devicetwin
 
 import (
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
-
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -12,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
 	"kubeedge/pkg/devicetwin/dtclient"
 	"kubeedge/pkg/devicetwin/dtcommon"
 	"kubeedge/pkg/devicetwin/dtcontext"
@@ -285,7 +284,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			loc := strings.Index(topic, identity)
 			nextLoc := loc + len(identity)
 			prefix := topic[0:loc]
-			suffix := topic[nextLoc:len(topic)]
+			suffix := topic[nextLoc:]
 			log.LOGGER.Infof("%s %s", prefix, suffix)
 			if v, exist := EventActionMap[prefix][suffix]; exist {
 				action = v

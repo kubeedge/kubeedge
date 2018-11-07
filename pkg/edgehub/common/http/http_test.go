@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	common "kubeedge/pkg/edgehub/common"
+
 	"github.com/stretchr/testify/assert"
 )
 

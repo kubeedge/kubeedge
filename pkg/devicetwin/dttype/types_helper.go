@@ -1,11 +1,11 @@
 package dttype
 
 import (
-	"kubeedge/pkg/devicetwin/dtclient"
-
 	"encoding/json"
 	"strings"
 	"time"
+
+	"kubeedge/pkg/devicetwin/dtclient"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail
@@ -61,31 +61,29 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		var actualVersion TwinVersion
 		// var err error
 
-
 		optional := twin.Optional
 		expected := twin.Expected
 		actual := twin.Actual
-		
+
 		msgTwin := &MsgTwin{
-			Optional:        &optional,
-			Metadata:        &TypeMetadata{Type: twin.AttrType}}
-		if expected != ""{
+			Optional: &optional,
+			Metadata: &TypeMetadata{Type: twin.AttrType}}
+		if expected != "" {
 			expectedValue := &TwinValue{Value: &expected}
-			if twin.ExpectedMeta != ""{
+			if twin.ExpectedMeta != "" {
 				json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta)
 				expectedValue.Metadata = &expectedMeta
-			} 
+			}
 			msgTwin.Expected = expectedValue
-		} 
-		if actual != ""{
+		}
+		if actual != "" {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
 				json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
 			}
 			msgTwin.Actual = actualValue
-		} 
-			
-		
+		}
+
 		if twin.ExpectedVersion != "" {
 			json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion)
 			msgTwin.ExpectedVersion = &expectedVersion
@@ -225,7 +223,7 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 	result := make(map[string]*MsgTwin)
 	if dealType == 0 {
 		for k, v := range twins {
-			if v == nil{
+			if v == nil {
 				result[k] = nil
 				continue
 			}
@@ -299,24 +297,24 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 		}
 		if v.Expected != nil {
 			var expectedValue string
-			if v.Expected.Value != nil{
+			if v.Expected.Value != nil {
 				expectedValue = *v.Expected.Value
 			}
 			if v.Actual != nil {
 				var actualValue string
-				if v.Actual.Value != nil{
+				if v.Actual.Value != nil {
 					actualValue = *v.Actual.Value
-				}	
-				if strings.Compare(expectedValue, actualValue) != 0{
+				}
+				if strings.Compare(expectedValue, actualValue) != 0 {
 					value := expectedValue
 					delta[k] = value
 				}
-			}else{
-				if expectedValue != ""{
+			} else {
+				if expectedValue != "" {
 					value := expectedValue
 					delta[k] = value
 				}
-				
+
 			}
 		} else {
 			continue
@@ -332,7 +330,7 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 	if err != nil {
 		return []byte(""), false
 	}
-	if len(delta) > 0{
+	if len(delta) > 0 {
 		return payload, true
 	}
 	return payload, false

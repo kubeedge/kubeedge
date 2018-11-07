@@ -10,6 +10,6 @@ const (
 )
 
 type Rule struct {
-	Name               string             `json:"name,omitempty"`
-	Data               map[RuleKey]string `json:"data,omitempty"`
+	Name string             `json:"name,omitempty"`
+	Data map[RuleKey]string `json:"data,omitempty"`
 }

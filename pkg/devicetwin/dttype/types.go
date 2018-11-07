@@ -1,12 +1,13 @@
 package dttype
 
 import (
-	"kubeedge/pkg/devicetwin/dtclient"
-	"kubeedge/pkg/devicetwin/dtcommon"
 	"encoding/json"
-	"time"
 	"errors"
 	"strings"
+	"time"
+
+	"kubeedge/pkg/devicetwin/dtclient"
+	"kubeedge/pkg/devicetwin/dtcommon"
 
 	"github.com/satori/go.uuid"
 )
@@ -69,23 +70,23 @@ type MembershipUpdate struct {
 }
 
 //MarshalMembershipUpdate marshal membership update
-func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error){
-	for i := range result.AddDevices{
-		if result.AddDevices[i].Twin != nil{
+func MarshalMembershipUpdate(result MembershipUpdate) ([]byte, error) {
+	for i := range result.AddDevices {
+		if result.AddDevices[i].Twin != nil {
 			for k, v := range result.AddDevices[i].Twin {
 				if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
-					result.AddDevices[i].Twin[k] = nil	
+					result.AddDevices[i].Twin[k] = nil
 				}
 				v.ActualVersion = nil
 				v.ExpectedVersion = nil
 			}
 		}
 	}
-	for i := range result.RemoveDevices{
-		if result.RemoveDevices[i].Twin != nil{
+	for i := range result.RemoveDevices {
+		if result.RemoveDevices[i].Twin != nil {
 			for k, v := range result.RemoveDevices[i].Twin {
 				if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
-					result.RemoveDevices[i].Twin[k] = nil	
+					result.RemoveDevices[i].Twin[k] = nil
 				}
 				v.ActualVersion = nil
 				v.ExpectedVersion = nil
@@ -251,27 +252,27 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 	}
 	if deviceTwinUpdate.Twin == nil {
 		return &deviceTwinUpdate, errors.New("Update twin error, the update request body not have key:twin")
-	}	
+	}
 	for key, value := range deviceTwinUpdate.Twin {
 		match := dtcommon.ValidateTwinKey(key)
 		errorKey := `The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128.`
-		if !match{
+		if !match {
 			return &deviceTwinUpdate, errors.New(errorKey)
 		}
 		errorValue := `The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512.`
-		if value != nil{
-			if value.Expected != nil{
-				if value.Expected.Value != nil{
+		if value != nil {
+			if value.Expected != nil {
+				if value.Expected.Value != nil {
 					match := dtcommon.ValidateTwinValue(*value.Expected.Value)
-					if !match{
+					if !match {
 						return &deviceTwinUpdate, errors.New(errorValue)
 					}
 				}
 			}
-			if value.Actual != nil{
-				if value.Actual.Value != nil{
+			if value.Actual != nil {
+				if value.Actual.Value != nil {
 					match := dtcommon.ValidateTwinValue(*value.Actual.Value)
-					if !match{
+					if !match {
 						return &deviceTwinUpdate, errors.New(errorValue)
 					}
 				}

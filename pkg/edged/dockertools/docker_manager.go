@@ -17,13 +17,11 @@ limitations under the License.
 package dockertools
 
 import (
-	"kubeedge/pkg/edged/util/record"
 	"encoding/base64"
-	"k8s.io/kubernetes/pkg/kubelet/dockershim"
-
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/context"
 	"io"
 	"strings"
 	"time"
@@ -34,10 +32,11 @@ import (
 	dockerapi "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	dockerdigest "github.com/opencontainers/go-digest"
-	"golang.org/x/net/context"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/util/flowcontrol"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	"k8s.io/kubernetes/pkg/kubelet/gpu"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
@@ -47,6 +46,7 @@ import (
 	"kubeedge/pkg/edged/apis/runtime/cri"
 	"kubeedge/pkg/edged/containers"
 	"kubeedge/pkg/edged/util"
+	"kubeedge/pkg/edged/util/record"
 )
 
 const (
