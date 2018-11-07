@@ -126,13 +126,6 @@ make edge_core
 
 ### Run
 
-Put the folder `conf` in the same directory as the `edge_core` binary
-
-```shell
-cd cmd/
-cp -rf ../conf . 
-```
-
 Modify the configuration files accordingly, `edge.yaml` (modify `certfile`, `keyfile`, etc.)
 
 ```yaml
