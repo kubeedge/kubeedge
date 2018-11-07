@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    docker:
+    - image: circleci/golang:1.11.1
+    working_directory: /go/src/kubeedge
+    steps:
+    - checkout
+    - run: make
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - build
