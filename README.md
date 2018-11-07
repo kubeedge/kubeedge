@@ -34,7 +34,7 @@ KubeEdge is composed of these components:
 
 ### Architecture
 
-<img src="./images/edge-core.png">
+<img src="./images/kubeedge_arch.png">
 
 ## Roadmap
 
