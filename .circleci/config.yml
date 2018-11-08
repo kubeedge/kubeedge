@@ -1,14 +1,29 @@
 version: 2
+
+# Docker environment.
+defaults: &defaults
+  working_directory: /go/src/kubeedge
+  docker:
+  - image: circleci/golang:1.11.1
+
 jobs:
   build:
-    docker:
-    - image: circleci/golang:1.11.1
-    working_directory: /go/src/kubeedge
+    <<: *defaults
     steps:
     - checkout
     - run: make
+
+  format:
+    <<: *defaults
+    steps:
+    - checkout
+    - run:
+        name: Check Format
+        command: /go/src/kubeedge/hack/gofmt.sh -v
+
 workflows:
   version: 2
   workflow:
     jobs:
+    - format
     - build
