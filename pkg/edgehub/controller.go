@@ -71,7 +71,7 @@ func (ehc *EdgeHubController) Start(ctx *context.Context) {
 	for {
 		err := ehc.initial(ctx)
 		if err != nil {
-			log.LOGGER.Fatalf("failed to init contorller: %v", err)
+			log.LOGGER.Fatalf("failed to init controller: %v", err)
 			return
 		}
 
