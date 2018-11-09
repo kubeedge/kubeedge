@@ -13,17 +13,16 @@ jobs:
     - checkout
     - run: make
 
-  format:
+  verify:
     <<: *defaults
     steps:
     - checkout
     - run:
-        name: Check Format
-        command: /go/src/kubeedge/hack/gofmt.sh -v
+        command: make verify
 
 workflows:
   version: 2
   workflow:
     jobs:
-    - format
+    - verify
     - build
