@@ -11,9 +11,9 @@ import (
 	"kubeedge/beehive/pkg/core"
 	"kubeedge/beehive/pkg/core/context"
 	"kubeedge/beehive/pkg/core/model"
-	MQTT "github.com/eclipse/paho.mqtt.golang"
-
 	"kubeedge/pkg/eventbus/common/util"
+
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 var (

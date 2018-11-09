@@ -8,6 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/util/flowcontrol"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
@@ -21,8 +22,8 @@ const (
 )
 
 var imageList = map[string]types.ImageSummary{
-	"registry.southchina.huaweicloud.com/dgh/edge-demo-app:latest":  types.ImageSummary{ID: "1234567890", RepoTags: []string{"registry.southchina.huaweicloud.com/dgh/edge-demo-app:latest"}, RepoDigests: []string{}, Size: 100},
-	"registry.southchina.huaweicloud.com/dgh/edge-demo-app2:latest": types.ImageSummary{ID: "1234567891", RepoTags: []string{"registry.southchina.huaweicloud.com/dgh/edge-demo-app2:latest"}, RepoDigests: []string{}, Size: 100},
+	"registry.southchina.huaweicloud.com/dgh/edge-demo-app:latest":  {ID: "1234567890", RepoTags: []string{"registry.southchina.huaweicloud.com/dgh/edge-demo-app:latest"}, RepoDigests: []string{}, Size: 100},
+	"registry.southchina.huaweicloud.com/dgh/edge-demo-app2:latest": {ID: "1234567891", RepoTags: []string{"registry.southchina.huaweicloud.com/dgh/edge-demo-app2:latest"}, RepoDigests: []string{}, Size: 100},
 }
 
 func getDockerManager() (*DockerManager, error) {

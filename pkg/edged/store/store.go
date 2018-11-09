@@ -24,22 +24,22 @@ func NewStore(prefix string) BackendStore {
 	return &store{}
 }
 
-func (s *store)Create(key string, kind string, obj interface{}, output bool, ttl uint64) (interface{}, error) {
+func (s *store) Create(key string, kind string, obj interface{}, output bool, ttl uint64) (interface{}, error) {
 	return nil, nil
 }
 
-func (s *store)Delete(key string, kind string, obj interface{}) error {
+func (s *store) Delete(key string, kind string, obj interface{}) error {
 	return dao.DeleteMetaByKey(key)
 }
 
-func (s *store)Get(key string, kind string, obj interface{}) (interface{}, error) {
+func (s *store) Get(key string, kind string, obj interface{}) (interface{}, error) {
 	return dao.QueryMeta(key, kind)
 }
 
-func (s *store)List(key string, kind string, obj interface{}, filter FilterFunc) (interface{}, error) {
+func (s *store) List(key string, kind string, obj interface{}, filter FilterFunc) (interface{}, error) {
 	return dao.QueryMeta(key, kind)
 }
 
-func (s *store)Update(key string, kind string, obj interface{}, tryUpdate UpdateFunc) (interface{}, error) {
+func (s *store) Update(key string, kind string, obj interface{}, tryUpdate UpdateFunc) (interface{}, error) {
 	return nil, nil
 }
