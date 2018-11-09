@@ -5,6 +5,7 @@ import (
 
 	"kubeedge/beehive/pkg/common/config"
 	"kubeedge/beehive/pkg/common/log"
+
 	"github.com/astaxie/beego/orm"
 	_ "github.com/mattn/go-sqlite3"
 )

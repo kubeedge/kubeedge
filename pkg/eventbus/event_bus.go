@@ -1,12 +1,12 @@
 package eventbus
 
 import (
+	"encoding/json"
+
 	"kubeedge/beehive/pkg/common/config"
 	"kubeedge/beehive/pkg/common/log"
 	"kubeedge/beehive/pkg/core"
 	"kubeedge/beehive/pkg/core/context"
-	"encoding/json"
-
 	"kubeedge/pkg/eventbus/common/util"
 	mqttBus "kubeedge/pkg/eventbus/mqtt"
 )

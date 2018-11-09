@@ -1,15 +1,16 @@
 package dtmanager
 
 import (
+	"encoding/json"
+	"errors"
+	"strings"
+	"time"
+
 	"kubeedge/beehive/pkg/common/log"
 	"kubeedge/beehive/pkg/core/model"
 	"kubeedge/pkg/devicetwin/dtcommon"
 	"kubeedge/pkg/devicetwin/dtcontext"
 	"kubeedge/pkg/devicetwin/dttype"
-	"encoding/json"
-	"errors"
-	"strings"
-	"time"
 )
 
 var (

@@ -1,18 +1,18 @@
 package dtmanager
 
 import (
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/model"
-
-	"kubeedge/pkg/devicetwin/dtclient"
-	"kubeedge/pkg/devicetwin/dtcommon"
-	"kubeedge/pkg/devicetwin/dtcontext"
-	"kubeedge/pkg/devicetwin/dttype"
 	"encoding/json"
 	"errors"
 	"strings"
 	"time"
+
+	"kubeedge/beehive/pkg/common/log"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/model"
+	"kubeedge/pkg/devicetwin/dtclient"
+	"kubeedge/pkg/devicetwin/dtcommon"
+	"kubeedge/pkg/devicetwin/dtcontext"
+	"kubeedge/pkg/devicetwin/dttype"
 )
 
 var (

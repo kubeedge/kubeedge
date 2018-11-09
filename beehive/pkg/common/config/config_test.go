@@ -1,9 +1,10 @@
 package config_test
 
 import (
-	"kubeedge/beehive/pkg/common/config"
 	"fmt"
 	"testing"
+
+	"kubeedge/beehive/pkg/common/config"
 )
 
 func TestGetCurrentDirectory(t *testing.T) {

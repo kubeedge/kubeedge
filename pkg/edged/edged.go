@@ -5,11 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"kubeedge/beehive/pkg/common/config"
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -26,6 +21,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
+	"k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
@@ -38,7 +34,12 @@ import (
 	"k8s.io/kubernetes/pkg/volume/host_path"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
+	"kubeedge/beehive/pkg/common/config"
+	"kubeedge/beehive/pkg/common/log"
 	"kubeedge/beehive/pkg/common/util"
+	"kubeedge/beehive/pkg/core"
+	"kubeedge/beehive/pkg/core/context"
+	"kubeedge/beehive/pkg/core/model"
 	"kubeedge/pkg/edged/apis"
 	"kubeedge/pkg/edged/containers"
 	"kubeedge/pkg/edged/dockertools"
@@ -53,7 +54,6 @@ import (
 	utilpod "kubeedge/pkg/edged/util/pod"
 	"kubeedge/pkg/edged/util/record"
 	"kubeedge/pkg/metamanager"
-	"k8s.io/kubernetes/pkg/kubelet/status"
 )
 
 const (
