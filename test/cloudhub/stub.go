@@ -62,7 +62,7 @@ func (tm *stubCloudHub) serveEvent(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.LOGGER.Errorf("fail to build websocket connection: %v", err)
-		http.Error(w, "fail to upgrade to websocket protocal", http.StatusInternalServerError)
+		http.Error(w, "fail to upgrade to websocket protocol", http.StatusInternalServerError)
 		return
 	}
 	tm.wsConn = conn
