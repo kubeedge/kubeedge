@@ -20,6 +20,11 @@ jobs:
     - run:
         name: Check Format
         command: /go/src/kubeedge/hack/gofmt.sh -v
+  test:
+    <<: *defaults
+    steps:
+    - checkout
+    - run: make test
 
 workflows:
   version: 2
@@ -27,3 +32,4 @@ workflows:
     jobs:
     - format
     - build
+    - test
