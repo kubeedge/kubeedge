@@ -15,3 +15,7 @@ endif
 test:
 	find ${TEST_DIR} -name "*_test.go"|xargs -i dirname {}|uniq|xargs -i go test ${T} {}
 
+# verify
+.PHONY: verify
+verify:
+	bash -x hack/verify.sh

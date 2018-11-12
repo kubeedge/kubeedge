@@ -42,7 +42,7 @@ func NewWebSocketClient(conf *WebSocketConfig) *WebSocketClient {
 
 // InitWebsocket init websocket client
 func (wcc *WebSocketClient) Init() error {
-	log.LOGGER.Infof("start to connect Accesss")
+	log.LOGGER.Infof("start to connect Access")
 	cert, err := tls.LoadX509KeyPair(wcc.config.CertFilePath, wcc.config.KeyFilePath)
 	if err != nil {
 		log.LOGGER.Errorf("failed to load x509 key pair: %v", err)
@@ -72,13 +72,13 @@ func (wcc *WebSocketClient) Init() error {
 			}
 			log.LOGGER.Errorf("error when init websocket connection%s: %v", respMsg, err)
 		} else {
-			log.LOGGER.Infof("success to connect Accesss")
+			log.LOGGER.Infof("success to connect Access")
 			wcc.webConn = conn
 			return nil
 		}
 		time.Sleep(cloudAccessSleep)
 	}
-	return errors.New("max retry count to connect Accesss")
+	return errors.New("max retry count to connect Access")
 }
 
 func (wcc *WebSocketClient) Uninit() {
