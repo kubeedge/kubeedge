@@ -114,19 +114,14 @@ See [mosquitto official website](https://mosquitto.org/download/) for more infor
 Clone kube-edge
 
 ```shell
-git clone clone https://github.com/***/kube0edge.git $GOPATH/src/kube-edge
-cd $GOPATH/src/kube-edge
+git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
+cd $GOPATH/src/github.com/kubeedge/kubeedge
+make # or `make edge_core`
 ```
 
-Build
+### Configure
 
-```shell
-make edge_core
-```
-
-### Run
-
-Modify the configuration files accordingly, `edge.yaml` (modify `certfile`, `keyfile`, etc.)
+Modify the configuration files in `conf/` accordingly, `edge.yaml` (modify `certfile`, `keyfile`, etc.)
 
 ```yaml
 mqtt:
@@ -161,13 +156,13 @@ edged:
     version: 2.0.0
 ```
 
-Run
+### Run
 
 ```shell
 # run mosquitto
 mosquitto -d -p 1883
+
 # run edge_core
-cd cmd/
 ./edge_core
 # or
 nohup ./edge_core > edge_core.log 2>&1 &
