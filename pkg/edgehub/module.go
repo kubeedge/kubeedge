@@ -1,8 +1,8 @@
 package edgehub
 
 import (
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
 const (

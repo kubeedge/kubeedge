@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	common "kubeedge/pkg/edgehub/common"
+	common "github.com/kubeedge/kubeedge/pkg/edgehub/common"
 
 	"github.com/stretchr/testify/assert"
 )

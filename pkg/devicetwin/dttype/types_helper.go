@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"kubeedge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtclient"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail

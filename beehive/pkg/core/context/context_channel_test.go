@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
 func TestSendSync(t *testing.T) {

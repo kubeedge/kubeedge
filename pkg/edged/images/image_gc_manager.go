@@ -3,7 +3,7 @@ package images
 import (
 	"syscall"
 
-	"kubeedge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/pkg/edged/util"
 
 	statsapi "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 	"k8s.io/kubernetes/pkg/kubelet/images"

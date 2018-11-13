@@ -11,7 +11,7 @@ import (
 	"github.com/ServiceComb/go-archaius/sources/file-source"
 	"github.com/go-chassis/go-archaius/core"
 
-	"kubeedge/beehive/pkg/common/util"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/util"
 )
 
 const (

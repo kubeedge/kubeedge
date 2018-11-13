@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 
-	"kubeedge/pkg/edged/apis/runtime/cri"
+	"github.com/kubeedge/kubeedge/pkg/edged/apis/runtime/cri"
 )
 
 const (

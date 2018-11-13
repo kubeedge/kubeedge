@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"kubeedge/pkg/devicetwin/dtclient"
-	"kubeedge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
 
 	"github.com/satori/go.uuid"
 )
