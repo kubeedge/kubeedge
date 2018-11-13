@@ -17,7 +17,7 @@
 # get gometalinter(https://github.com/alecthomas/gometalinter)
 curl -L https://git.io/vp6lP | sh
 
-export PATH=${PATH}:${GOPATH}/src/kubeedge/bin
+export PATH=${PATH}:${GOPATH}/src/github.com/kubeedge/kubeedge/bin
 
 gometalinter --disable-all --enable=gofmt --enable=misspell --exclude=vendor ./...
 if [ $? != 0 ]; then
