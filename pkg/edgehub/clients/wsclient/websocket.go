@@ -11,8 +11,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
 const (

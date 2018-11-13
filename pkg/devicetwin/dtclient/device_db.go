@@ -1,8 +1,8 @@
 package dtclient
 
 import (
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/pkg/common/dbm"
 )
 
 //Device the struct of device

@@ -5,10 +5,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
-	"kubeedge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/pkg/metamanager"
 )
 
 const (

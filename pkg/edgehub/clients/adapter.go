@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
 type Adapter interface {

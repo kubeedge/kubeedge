@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/model"
-	"kubeedge/pkg/devicetwin/dtclient"
-	"kubeedge/pkg/devicetwin/dtcommon"
-	"kubeedge/pkg/devicetwin/dtcontext"
-	"kubeedge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcontext"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dttype"
 )
 
 var (

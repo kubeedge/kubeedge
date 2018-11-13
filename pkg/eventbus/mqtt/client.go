@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
-	"kubeedge/pkg/eventbus/common/util"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/pkg/eventbus/common/util"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )

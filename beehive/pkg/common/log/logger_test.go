@@ -1,7 +1,7 @@
 package log_test
 
 import (
-	"kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 	"testing"
 	//"os"
 )

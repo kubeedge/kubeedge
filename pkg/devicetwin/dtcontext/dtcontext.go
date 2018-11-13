@@ -1,19 +1,19 @@
 package dtcontext
 
 import (
-	"kubeedge/beehive/pkg/common/config"
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 
 	"errors"
 	"strings"
 	"sync"
 	"time"
 
-	"kubeedge/pkg/devicetwin/dtcommon"
-	"kubeedge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dttype"
 )
 
 var (
