@@ -119,42 +119,17 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 make # or `make edge_core`
 ```
 
-### Configure
+### Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)](https://www.huaweicloud.com/product/ief.html)
+**Note** The HuaweiCloud IEF is only available in China now.
 
-Modify the configuration files in `conf/` accordingly, `edge.yaml` (modify `certfile`, `keyfile`, etc.)
+Create an account in [HuaweiCloud](https://www.huaweicloud.com).
 
-```yaml
-mqtt:
-    server: tcp://127.0.0.1:1883
+Go to [IEF](https://www.huaweicloud.com/product/ief.html) and create an Edge node.
 
-edgehub:
-    websocket:
-        url: ws://127.0.0.1:20000/fake_group_id/events
-        certfile: /tmp/edge.crt
-        keyfile: /tmp/edge.key
-        handshake-timeout: 30 #second
-        write-deadline: 15 # second
-        read-deadline: 15 # second
-    controller:
-        heartbeat: 15  # second
-        refresh-ak-sk-interval: 10 # minute
-        auth-info-files-path: /var/IEF/secret
-        placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
-        project-id: e632aba927ea4ac2b575ec1603d56f10
-        node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+Download the node configuration file (<node_name>.tar.gz) and put it in `hack/`.
 
-edged:
-    register-node-namespace: default
-    hostname-override: 93e05fa9-b782-4a59-9d02-9f6e639b4205
-    interface-name: eth0
-    node-status-update-frequency: 10 # second
-    device-plugin-enabled: false
-    gpu-plugin-enabled: false
-    image-gc-high-threshold: 80 # percent
-    image-gc-low-threshold: 40 # percent
-    maximum-dead-containers-per-container: 1
-    version: 2.0.0
-```
+Run `hack/setup_for_IEF.sh <GOPATH>` (You don't need to pass in <GOPATH> if it is exported.) And then the configuration files in `conf/` should be modified according to contents of the node configuration files.
+
 
 ### Run
 
@@ -167,6 +142,8 @@ mosquitto -d -p 1883
 # or
 nohup ./edge_core > edge_core.log 2>&1 &
 ```
+
+If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
 ## Support
 
