@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	"kubeedge/beehive/adoptions/common/api"
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/pkg/edged/apis"
-	"kubeedge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/beehive/adoptions/common/api"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/pkg/edged/util"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

@@ -1,10 +1,10 @@
 package devicetwin
 
 import (
-	"kubeedge/beehive/pkg/common/log"
-	core "kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	core "github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtclient"
 )
 
 //DeviceTwin the module

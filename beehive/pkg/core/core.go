@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
 // start modules that registered

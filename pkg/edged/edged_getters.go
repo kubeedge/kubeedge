@@ -25,7 +25,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 
 	"k8s.io/apimachinery/pkg/types"
 	utilfile "k8s.io/kubernetes/pkg/util/file"

@@ -42,11 +42,11 @@ import (
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/util/version"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/pkg/edged/apis/runtime/cri"
-	"kubeedge/pkg/edged/containers"
-	"kubeedge/pkg/edged/util"
-	"kubeedge/pkg/edged/util/record"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/pkg/edged/apis/runtime/cri"
+	"github.com/kubeedge/kubeedge/pkg/edged/containers"
+	"github.com/kubeedge/kubeedge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/pkg/edged/util/record"
 )
 
 const (
