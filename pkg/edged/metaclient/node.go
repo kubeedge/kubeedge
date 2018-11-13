@@ -3,7 +3,7 @@ package metaclient
 import (
 	api "k8s.io/api/core/v1"
 
-	"kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
 type NodesGetter interface {

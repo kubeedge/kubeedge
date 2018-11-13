@@ -7,7 +7,7 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
 
-	common "kubeedge/pkg/edgehub/common"
+	common "github.com/kubeedge/kubeedge/pkg/edgehub/common"
 )
 
 type fakeMqttClient struct{}

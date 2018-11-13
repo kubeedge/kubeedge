@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/config"
 )
 
 func TestGetCurrentDirectory(t *testing.T) {

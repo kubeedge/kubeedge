@@ -3,11 +3,11 @@ package metaclient
 import (
 	"fmt"
 
-	"kubeedge/beehive/adoptions/common/api"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
-	"kubeedge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/beehive/adoptions/common/api"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/pkg/common/message"
 )
 
 type PodStatusGetter interface {

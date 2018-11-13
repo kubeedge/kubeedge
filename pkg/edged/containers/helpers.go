@@ -8,7 +8,7 @@ import (
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/container"
 
-	"kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 )
 
 type sourceImpl struct{}

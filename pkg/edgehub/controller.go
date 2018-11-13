@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 
-	"kubeedge/pkg/common/message"
-	"kubeedge/pkg/edgehub/clients"
-	"kubeedge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/pkg/edgehub/clients"
+	"github.com/kubeedge/kubeedge/pkg/edgehub/config"
 )
 
 const (

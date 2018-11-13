@@ -1,9 +1,9 @@
 package dtmodule
 
 import (
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/pkg/devicetwin/dtcontext"
-	"kubeedge/pkg/devicetwin/dtmanager"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcontext"
+	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtmanager"
 	"strings"
 )
 

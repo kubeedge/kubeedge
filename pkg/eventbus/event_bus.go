@@ -3,12 +3,12 @@ package eventbus
 import (
 	"encoding/json"
 
-	"kubeedge/beehive/pkg/common/config"
-	"kubeedge/beehive/pkg/common/log"
-	"kubeedge/beehive/pkg/core"
-	"kubeedge/beehive/pkg/core/context"
-	"kubeedge/pkg/eventbus/common/util"
-	mqttBus "kubeedge/pkg/eventbus/mqtt"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/pkg/eventbus/common/util"
+	mqttBus "github.com/kubeedge/kubeedge/pkg/eventbus/mqtt"
 )
 
 // eventbus struct

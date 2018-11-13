@@ -1,7 +1,7 @@
 package record
 
 import (
-	"kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
