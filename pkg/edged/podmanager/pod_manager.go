@@ -114,6 +114,13 @@ func (pm *podManager) DeletePod(pod *v1.Pod) {
 	delete(pm.podByFullName, podFullName)
 }
 
+// GetUIDTranslations is part of the interface
+// We don't have static pod, so don't have podToMirror and mirrorToPod
+func (pm *podManager) GetUIDTranslations() (podToMirror map[kubetypes.ResolvedPodUID]kubetypes.MirrorPodUID,
+	mirrorToPod map[kubetypes.MirrorPodUID]kubetypes.ResolvedPodUID) {
+	return nil, nil
+}
+
 func (pm *podManager) TranslatePodUID(uid types.UID) kubetypes.ResolvedPodUID {
 	return kubetypes.ResolvedPodUID(uid)
 }
