@@ -2,6 +2,8 @@ package edgehub
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"sync"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/edgehub/clients"
+	http_utils "github.com/kubeedge/kubeedge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/pkg/edgehub/config"
 )
 
@@ -47,10 +50,22 @@ func NewEdgeHubController() *EdgeHubController {
 }
 
 func (ehc *EdgeHubController) initial(ctx *context.Context) error {
+	getUrl := func() string {
+		for {
+			url, err := ehc.getCloudHubUrl()
+			if err != nil {
+				log.LOGGER.Warnf("failed to get cloud hub url, error:%+v", err)
+				time.Sleep(time.Minute)
+				continue
+			}
+			return url
+		}
+	}
 
 	if ehc.config.ProjectID != "" && ehc.config.NodeId != "" {
+		cloudHubUrl := getUrl()
 		// TODO: set url gracefully
-		config.GetConfig().WSConfig.Url = ehc.config.CloudhubURL
+		config.GetConfig().WSConfig.Url = cloudHubUrl
 	} else {
 		log.LOGGER.Warnf("use the config url for testing")
 	}
@@ -266,4 +281,54 @@ func (ehc *EdgeHubController) pubConnectInfo(isConnected bool) {
 			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
 		ehc.context.Send2Group(group, *message)
 	}
+}
+
+func (ehc *EdgeHubController) postUrlRequst(client *http.Client) (string, error) {
+	req, err := http_utils.BuildRequest(http.MethodGet, ehc.config.PlacementUrl, nil, "")
+	if err != nil {
+		log.LOGGER.Errorf("failed to build request: %v", err)
+		return "", err
+	}
+
+	for {
+		resp, err := http_utils.SendRequest(req, client)
+		if err != nil {
+			log.LOGGER.Errorf("%v", err)
+			time.Sleep(time.Minute)
+			continue
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			defer resp.Body.Close()
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			url := fmt.Sprintf("%s/%s/%s/events", string(bodyBytes), ehc.config.ProjectID, ehc.config.NodeId)
+			log.LOGGER.Infof("successfully to get cloudaccess url: %s", url)
+			return url, nil
+		case http.StatusBadRequest:
+			log.LOGGER.Errorf("no retry on error code: %d, failed to get cloudaccess url", resp.StatusCode)
+			return "", fmt.Errorf("bad request")
+		default:
+			log.LOGGER.Errorf("get cloudaccess with Error code: %d", resp.StatusCode)
+		}
+		time.Sleep(time.Minute)
+	}
+}
+
+func (ehc *EdgeHubController) getCloudHubUrl() (string, error) {
+	// TODO: get the file path gracefully
+	certFile := config.GetConfig().WSConfig.CertFilePath
+	keyFile := config.GetConfig().WSConfig.KeyFilePath
+	placementClient, err := http_utils.NewHTTPSclient(certFile, keyFile)
+	if err != nil {
+		log.LOGGER.Warnf("failed to new https client for placement, error: %+v", err)
+		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+	}
+
+	cloudHubUrl, err := ehc.postUrlRequst(placementClient)
+	if err != nil {
+		log.LOGGER.Warnf("failed to get cloud hub url, error: %+v", err)
+		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+	}
+
+	return cloudHubUrl, nil
 }

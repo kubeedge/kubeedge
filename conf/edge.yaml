@@ -4,12 +4,16 @@ mqtt:
 edgehub:
     websocket:
         url: ws://127.0.0.1:20000/fake_group_id/events
+        certfile: /tmp/edge.crt
+        keyfile: /tmp/edge.key
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
     controller:
         heartbeat: 15  # second
-        cloudhub-url: ws://127.0.0.1:20000/fake_group_id/events
+        refresh-ak-sk-interval: 10 # minute
+        auth-info-files-path: /var/IEF/secret
+        placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
         project-id: e632aba927ea4ac2b575ec1603d56f10
         node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
 
