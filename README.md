@@ -128,7 +128,7 @@ Go to [IEF](https://www.huaweicloud.com/product/ief.html) and create an Edge nod
 
 Download the node configuration file (<node_name>.tar.gz) and put it in `hack/`.
 
-Run `hack/setup_for_IEF.sh <GOPATH>` (You don't need to pass in <GOPATH> if it is exported.) And then the configuration files in `conf/` should be modified according to contents of the node configuration files.
+Run `bash -x hack/setup_for_IEF.sh /PATH/TO/<node_name>.tar.gz`.  And then the configuration files in `conf/` should be modified according to contents of the node configuration files.
 
 
 ### Run

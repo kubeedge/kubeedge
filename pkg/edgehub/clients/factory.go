@@ -15,6 +15,8 @@ func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
 	if clientType == ClientTypeWebSocket {
 		websocketConf := wsclient.WebSocketConfig{
 			Url:              config.WSConfig.Url,
+			CertFilePath:     config.WSConfig.CertFilePath,
+			KeyFilePath:      config.WSConfig.KeyFilePath,
 			HandshakeTimeout: config.WSConfig.HandshakeTimeout,
 			ReadDeadline:     config.WSConfig.ReadDeadline,
 			WriteDeadline:    config.WSConfig.WriteDeadline,
