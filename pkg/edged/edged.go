@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
+	fakekube "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/client-go/util/workqueue"
@@ -214,7 +215,9 @@ func NewEdged() (*edged, error) {
 		LowThresholdPercent:  conf.imageGCLowThreshold,
 		MinAge:               minAge,
 	}
-	statusManager := status.NewManager(nil, podManager, utilpod.NewPodDeleteSafety()) // TODO
+	// TODO: consider use metaclient generate kube client
+	kubeClient := fakekube.NewSimpleClientset()
+	statusManager := status.NewManager(kubeClient, podManager, utilpod.NewPodDeleteSafety())
 
 	ed := &edged{
 		nodeName:                  conf.nodeName,
@@ -283,7 +286,7 @@ func NewEdged() (*edged, error) {
 		types.NodeName(ed.nodeName),
 		podManager,
 		ed.statusManager,
-		nil, // TODO
+		kubeClient,
 		ed.volumePluginMgr,
 		runtime,
 		ed.mounter,
