@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	CesMetricDataURL = "https://ces.kwe.devcloud.huawei.com/V1.0"
+	// TODO: confirm this change. It fails to look up "ces.kwe.devcloud.huawei.com" in CI.
+	// CesMetricDataURL = "https://ces.kwe.devcloud.huawei.com/V1.0"
+	CesMetricDataURL = "https://huaweicloud.com/V1.0"
 	// CA_FILE             = "/tmp/ca.crt"
 	// CERT_FILE           = "/tmp/client.cert"
 	// KEY_FILE            = "/tmp/client.key"
