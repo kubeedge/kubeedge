@@ -1040,7 +1040,10 @@ func (cm *containerManager) listPodsUid() []types.UID {
 
 func (cm *containerManager) GarbageCollect(gcPolicy kubecontainer.ContainerGCPolicy, ready bool, evictNonDeletedPods bool) error {
 	podsInUse := sets.String{}
-	// TODO: fill this podInUse
+	pods := cm.listPodsUid()
+	for _, podUID := range pods {
+		podsInUse.Insert(string(podUID))
+	}
 
 	err := cm.freeContainer(time.Now(), gcPolicy, podsInUse)
 	if err != nil {
