@@ -281,6 +281,9 @@ func NewEdged() (*edged, error) {
 	ed.store = store.NewStore("")
 	ed.server = server.NewServer(ed.podManager)
 	ed.volumePluginMgr, err = NewInitializedVolumePluginMgr(ed, ProbeVolumePlugins(""))
+	if err != nil {
+		return nil, fmt.Errorf("init VolumePluginMgr failed with error %s", err.Error())
+	}
 	ed.volumeManager = volumemanager.NewVolumeManager(
 		false,
 		types.NodeName(ed.nodeName),

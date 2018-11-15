@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ "$1" = "" ]
-then
-    SRC_DIR=$GOPATH/src/github.com/kubeedge/kubeedge
-else
-    SRC_DIR=$1
+if [ "$1" = "" ];then
+    echo "Please specify the node configuration file"
+    exist 1
 fi
+
+NODE_CONFIG_FILE=$1
+SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
 
 echo "make new dir for certs..."
 if [ ! -d kubeedge_work_dir ]; then
@@ -27,10 +28,10 @@ if [ ! -d kubeedge_work_dir ]; then
 else
 	rm -rf kubeedge_work_dir/*
 fi
-KUBEEDGE_WORK_DIR=`pwd`/kubeedge_work_dir/
+KUBEEDGE_WORK_DIR=`pwd`/kubeedge_work_dir
 
 echo "unzip to get the certificates and user_config..."
-tar -zxvf edge-node-*.tar.gz -C kubeedge_work_dir/
+tar -zxvf ${NODE_CONFIG_FILE} -C kubeedge_work_dir/
 
 CURRENT_PATH=${SRC_DIR}
 CERT_PATH=${KUBEEDGE_WORK_DIR}
@@ -174,7 +175,6 @@ create_edge_config() {
     sed -i "s|api-version: .*|api-version: ${DIS_API_VERSION}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|region: .*|region: ${REGION}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|obs_endpoint: .*|obs_endpoint: ${OBS_URL}|g" ${CURRENT_PATH}/conf/edge.yaml
-    sed -i "s|^        url: .*|        url: ${DIS_URL}|g" ${CURRENT_PATH}/conf/edge.yaml
 }
 
 

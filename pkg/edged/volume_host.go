@@ -133,6 +133,8 @@ func (evh *edgedVolumeHost) GetPodVolumeDeviceDir(podUID types.UID, pluginName s
 	return ""
 }
 func (evh *edgedVolumeHost) GetSecretFunc() func(namespace, name string) (*api.Secret, error) {
-	return nil
+	return func(namespace, name string) (*api.Secret, error) {
+		return evh.edge.metaClient.Secrets(namespace).Get(name)
+	}
 }
 func (evh *edgedVolumeHost) GetVolumeDevicePluginDir(pluginName string) string { return "" }

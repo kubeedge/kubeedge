@@ -73,7 +73,7 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 
 func handleSecretFromMetaDB(content []byte) (*api.Secret, error) {
 	var lists []string
-	err := json.Unmarshal([]byte(content), &lists)
+	err := json.Unmarshal(content, &lists)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to secret list from db failed, err: %v", err)
 	}
