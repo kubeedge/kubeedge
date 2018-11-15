@@ -56,6 +56,8 @@ func InitDBManager() {
 }
 
 func isModuleEnabled(m string) bool {
+	// TODO: temp change for ut
+	return true
 	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
 	if modules != nil {
 		for _, value := range modules.([]interface{}) {

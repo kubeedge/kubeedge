@@ -20,9 +20,17 @@ jobs:
     - run:
         command: make verify
 
+  test:
+    <<: *defaults
+    steps:
+    - checkout
+    - run:
+        command: make test
+
 workflows:
   version: 2
   workflow:
     jobs:
     - verify
     - build
+    - test
