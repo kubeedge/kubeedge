@@ -16,6 +16,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/metaclient"
 )
 
+// manager as status manager, embedded a k8s.io/kubernetes/pkg/kubelet/status.Manager
+// inherit it's method but refactored Start() function to periodicity update status to IEF
 type manager struct {
 	status.Manager
 	// TODO: consider need lock?
