@@ -120,15 +120,13 @@ make # or `make edge_core`
 ```
 
 ### Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)](https://www.huaweicloud.com/product/ief.html)
-**Note** The HuaweiCloud IEF is only available in China now.
+**Note:** The HuaweiCloud IEF is only available in China now.
 
-Create an account in [HuaweiCloud](https://www.huaweicloud.com).
-
-Go to [IEF](https://www.huaweicloud.com/product/ief.html) and create an Edge node.
-
-Download the node configuration file (<node_name>.tar.gz) and put it in `hack/`.
-
-Run `bash -x hack/setup_for_IEF.sh /PATH/TO/<node_name>.tar.gz`.  And then the configuration files in `conf/` should be modified according to contents of the node configuration files.
+1. Create an account in [HuaweiCloud](https://www.huaweicloud.com).
+2. Go to [IEF](https://www.huaweicloud.com/product/ief.html) and create an Edge node.
+3. Download the node configuration file (<node_name>.tar.gz) and put it in `hack/`.
+4. Run `bash -x hack/setup_for_IEF.sh /PATH/TO/<node_name>.tar.gz`.
+5. Modify the configuration files in `conf/` according to contents of the node configuration files.
 
 
 ### Run
