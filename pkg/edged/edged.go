@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
+	clientset "k8s.io/client-go/kubernetes"
 	fakekube "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/flowcontrol"
@@ -22,7 +23,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
-	"k8s.io/kubernetes/pkg/kubelet/status"
+	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
@@ -50,6 +51,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/pkg/edged/rainerruntime"
 	"github.com/kubeedge/kubeedge/pkg/edged/server"
+	"github.com/kubeedge/kubeedge/pkg/edged/status"
 	"github.com/kubeedge/kubeedge/pkg/edged/store"
 	edgedutil "github.com/kubeedge/kubeedge/pkg/edged/util"
 	utilpod "github.com/kubeedge/kubeedge/pkg/edged/util/pod"
@@ -91,7 +93,8 @@ type edged struct {
 	podManager                podmanager.Manager
 	pleg                      pleg.PodLifecycleEventGenerator
 	store                     store.BackendStore
-	statusManager             status.Manager
+	statusManager             kubestatus.Manager
+	kubeClient                clientset.Interface
 	probeManager              prober.Manager
 	livenessManager           proberesults.Manager
 	server                    *server.Server
@@ -158,6 +161,21 @@ func (e *edged) Start(c *context.Context) {
 		return
 	}
 	e.metaClient = metaclient.New(c)
+	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
+	e.volumeManager = volumemanager.NewVolumeManager(
+		false,
+		types.NodeName(e.nodeName),
+		e.podManager,
+		e.statusManager,
+		e.kubeClient,
+		e.volumePluginMgr,
+		e.runtime.(*dockertools.DockerManager),
+		e.mounter,
+		e.getPodsDir(),
+		record.NewEventRecorder(),
+		false,
+		false,
+	)
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
@@ -217,7 +235,6 @@ func NewEdged() (*edged, error) {
 	}
 	// TODO: consider use metaclient generate kube client
 	kubeClient := fakekube.NewSimpleClientset()
-	statusManager := status.NewManager(kubeClient, podManager, utilpod.NewPodDeleteSafety())
 
 	ed := &edged{
 		nodeName:                  conf.nodeName,
@@ -228,7 +245,7 @@ func NewEdged() (*edged, error) {
 		podAdditionBackoff:        backoff,
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
-		statusManager:             statusManager,
+		kubeClient:                kubeClient,
 		nodeStatusUpdateFrequency: conf.nodeStatusUpdateInterval,
 		mounter:                   mount.New(""),
 		writer:                    &kubeio.StdWriter{},
@@ -284,20 +301,6 @@ func NewEdged() (*edged, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init VolumePluginMgr failed with error %s", err.Error())
 	}
-	ed.volumeManager = volumemanager.NewVolumeManager(
-		false,
-		types.NodeName(ed.nodeName),
-		podManager,
-		ed.statusManager,
-		kubeClient,
-		ed.volumePluginMgr,
-		runtime,
-		ed.mounter,
-		ed.getPodsDir(),
-		recorder,
-		false,
-		false,
-	)
 	return ed, nil
 }
 
