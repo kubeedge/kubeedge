@@ -40,7 +40,7 @@ func (eb *eventbus) Start(c *context.Context) {
 	if mqttURL == nil || nodeID == nil {
 		panic("mqtt url or node id not configured")
 	}
-	hub := &mqttBus.MQTTClient{
+	hub := &mqttBus.Client{
 		MQTTUrl: mqttURL.(string),
 	}
 	mqttBus.MQTTHub = hub
