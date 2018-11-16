@@ -144,6 +144,10 @@ nohup ./edge_core > edge_core.log 2>&1 &
 
 If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
+## Community
+
+Slack channel: kubeedge.slack.com
+
 ## Support
 
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
@@ -153,8 +157,4 @@ That said, if you have questions, reach out to us, feel free to reach out to the
 - @m1093782566 
 - @islinwb 
 - @Lion-Wei 
-
-
-
-
 
