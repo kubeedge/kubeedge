@@ -153,7 +153,6 @@ kubeedge.slack.com
 Users can join this channel by clicking the invitation [link](https://join.slack.com/t/kubeedge/shared_invite/enQtNDg1MjAwMDI0MTgyLTQ1NzliNzYwNWU5MWYxOTdmNDZjZjI2YWE2NDRlYjdiZGYxZGUwYzkzZWI2NGZjZWRkZDVlZDQwZWI0MzM1Yzc).
 
 
-
 ## Support
 
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
