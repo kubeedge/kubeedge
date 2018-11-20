@@ -25,3 +25,10 @@ if [ $? != 0 ]; then
 	echo "Run hack/update-gofmt.sh if any warnings in gofmt"
         exit 1
 fi
+
+# TODO: move `golint` to the above after fixing all golint warnings
+gometalinter --disable-all --enable=golint --include=docs ./...
+if [ $? != 0 ]; then
+        echo "Please fix the golint warnings!"
+        exit 1
+fi
