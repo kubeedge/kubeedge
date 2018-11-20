@@ -19,3 +19,9 @@ test:
 .PHONY: verify
 verify:
 	bash -x hack/verify.sh
+
+# clean
+.PHONY: clean
+clean:
+	git clean -fd \*edge_core \*edge.db
+
