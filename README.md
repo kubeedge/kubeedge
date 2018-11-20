@@ -142,7 +142,7 @@ mosquitto -d -p 1883
 nohup ./edge_core > edge_core.log 2>&1 &
 ```
 
-If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
+If you are using HuaweiCloud IEF, then the edge node you created should be in `running` status (check it in the IEF console page).
 
 ## Community
 
