@@ -20,7 +20,7 @@ edgehub:
 edged:
     register-node-namespace: default
     hostname-override: 93e05fa9-b782-4a59-9d02-9f6e639b4205
-    interface-name: eth0
+    interface-name: enp0s31f6
     node-status-update-frequency: 10 # second
     device-plugin-enabled: false
     gpu-plugin-enabled: false

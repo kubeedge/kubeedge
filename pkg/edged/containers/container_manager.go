@@ -159,7 +159,11 @@ type ContainerManager interface {
 const (
 	defaultGracePeriod = 30
 
-	defaultNetWortMode dockercontainer.NetworkMode = "host"
+	noneNetWorkMode dockercontainer.NetworkMode = "none"
+
+	hostNetWorkMode dockercontainer.NetworkMode = "host"
+
+	hostIpcMode dockercontainer.IpcMode = "host"
 )
 
 func NewContainerManager(runtimeService cri.RuntimeService, livenessManager proberesults.Manager, containerBackOff *flowcontrol.Backoff, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (ContainerManager, error) {
@@ -494,6 +498,17 @@ func updateCreateConfig(config *cri.ContainerConfig, container *v1.Container) {
 	return
 }
 
+func updatePodConfig(config *cri.ContainerConfig, pod *v1.Pod) {
+	if pod.Spec.HostNetwork {
+		config.HostConfig.NetworkMode = hostNetWorkMode
+	}
+
+	if pod.Spec.HostIPC {
+		config.HostConfig.IpcMode = hostIpcMode
+	}
+	return
+}
+
 func (cm *containerManager) InitPodContainer() error {
 	log.LOGGER.Infof("start to init pod container map")
 	containers, err := cm.runtimeService.ListContainers()
@@ -652,12 +667,14 @@ func (cm *containerManager) StartPod(pod *v1.Pod, runOpt *kubecontainer.RunConta
 				Tty:          container.TTY,
 			},
 			HostConfig: &dockercontainer.HostConfig{
-				NetworkMode: defaultNetWortMode,
+				NetworkMode: noneNetWorkMode,
 				Binds:       GenerateMountBindings(mounts),
 			},
 		}
 
 		updateCreateConfig(&containerConfig, container)
+
+		updatePodConfig(&containerConfig, pod)
 
 		devices := make([]dockercontainer.DeviceMapping, len(opts.Devices))
 		for i, device := range opts.Devices {

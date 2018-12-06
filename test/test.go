@@ -150,7 +150,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		if p.Namespace != "" {
 			ns = p.Namespace
 		}
-		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", ns+"/pod/"+string(p.UID), operation, p)
+		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", ns+"/pod/"+p.Name, operation, p)
 		tm.context.Send("metaManager", *msgReq)
 		log.LOGGER.Infof("send message to metaManager is %+v\n", msgReq)
 	}
