@@ -42,8 +42,12 @@ func init() {
 		dataSource = "edge.db"
 	}
 
-	orm.RegisterDriver(driverName, orm.DRSqlite)
-	orm.RegisterDataBase(dbName, driverName, dataSource)
+	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
+		log.LOGGER.Fatalf("Failed to register driver: %v", err)
+	}
+	if err := orm.RegisterDataBase(dbName, driverName, dataSource); err != nil {
+		log.LOGGER.Fatalf("Failed to register db: %v", err)
+	}
 }
 
 func InitDBManager() {
