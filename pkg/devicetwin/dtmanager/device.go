@@ -89,6 +89,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return nil, err
 	}
 	deviceID := resource
+	defer context.Unlock(deviceID)
 	context.Lock(deviceID)
 	doc, docExist := context.DeviceList.Load(deviceID)
 	if !docExist {
@@ -130,7 +131,6 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
 		context.BuildModelMessage("resource", "", msgResource, "update", string(payload)))
-	context.Unlock(deviceID)
 	return nil, nil
 }
 
