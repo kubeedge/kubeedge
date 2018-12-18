@@ -87,10 +87,9 @@ func (wcc *WebSocketClient) Uninit() {
 
 func (wcc *WebSocketClient) Send(message model.Message) error {
 	deadline := time.Now().Add(wcc.config.WriteDeadline)
-	wcc.webConn.SetWriteDeadline(deadline)
-
 	wcc.sendLock.Lock()
 	defer wcc.sendLock.Unlock()
+	wcc.webConn.SetWriteDeadline(deadline)
 
 	return wcc.webConn.WriteJSON(message)
 }
