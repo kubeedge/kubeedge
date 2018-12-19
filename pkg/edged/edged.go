@@ -3,6 +3,7 @@ package edged
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -79,10 +80,17 @@ const (
 	EdgeController                   = "controller"
 )
 
+// podReady holds the initPodReady flag and its lock
+type podReady struct {
+	// initPodReady is flag to check Pod ready status
+	initPodReady bool
+	// podReadyLock is used to guard initPodReady flag
+	podReadyLock sync.RWMutex
+}
+
 //Define edged
 type edged struct {
 	context                   *context.Context
-	initPodReady              bool
 	hostname                  string
 	namespace                 string
 	nodeName                  string
@@ -113,6 +121,8 @@ type edged struct {
 	rootDirectory             string
 	gpuPluginEnabled          bool
 	version                   string
+	// podReady is structure with initPodReady flag and its lock
+	podReady
 	// cache for secret
 	secretStore    cache.Store
 	configMapStore cache.Store
@@ -204,6 +214,20 @@ func (e *edged) Cleanup() {
 	}
 	e.context.Cleanup(e.Name())
 	log.LOGGER.Info("edged exit!")
+}
+
+// isInitPodReady is used to safely return initPodReady flag
+func (e *edged) isInitPodReady() bool {
+	e.podReadyLock.RLock()
+	defer e.podReadyLock.RUnlock()
+	return e.initPodReady
+}
+
+// setInitPodReady is used to safely set initPodReady flag
+func (e *edged) setInitPodReady(readyStatus bool) {
+	e.podReadyLock.Lock()
+	defer e.podReadyLock.Unlock()
+	e.initPodReady = readyStatus
 }
 
 func getConfig() *Config {
@@ -327,7 +351,7 @@ func (e *edged) StartGarbageCollection() {
 	}, ImageGCPeriod, utilwait.NeverStop)
 
 	go utilwait.Until(func() {
-		if e.initPodReady {
+		if e.isInitPodReady() {
 			err := e.containerGCManager.GarbageCollect()
 			if err != nil {
 				log.LOGGER.Errorf("Container garbage collection failed: %v", err)
@@ -600,14 +624,14 @@ func (e *edged) syncPod() {
 						log.LOGGER.Errorf("handle podList failed: %v", err)
 						continue
 					}
-					e.initPodReady = true
+					e.setInitPodReady(true)
 				} else if op == model.ResponseOperation && resID == "" && request.GetSource() == EdgeController {
 					err := e.handlePodListFromEdgeController(content)
 					if err != nil {
 						log.LOGGER.Errorf("handle controllerPodList failed: %v", err)
 						continue
 					}
-					e.initPodReady = true
+					e.setInitPodReady(true)
 				} else {
 					err := e.handlePod(op, content)
 					if err != nil {
@@ -839,7 +863,7 @@ func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 }
 
 func (e *edged) HandlePodCleanups() error {
-	if !e.initPodReady {
+	if !e.isInitPodReady() {
 		return nil
 	}
 	pods := e.podManager.GetPods()
