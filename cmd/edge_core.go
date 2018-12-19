@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+        foo()
 	dbm.InitDBManager()
 	core.Run()
 }
