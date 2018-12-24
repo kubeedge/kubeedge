@@ -260,6 +260,8 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		content, err := json.Marshal(resp.GetContent())
 		if err != nil {
 			log.LOGGER.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
 		}
 
 		resKey, resType, _ := parseResource(message.GetResource())
