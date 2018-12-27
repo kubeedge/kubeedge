@@ -22,6 +22,11 @@ fi
 NODE_CONFIG_FILE=$1
 SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
 
+if [ -z "${GOPATH}" ]; then
+    echo "Please export GOPATH"
+    exit 1
+fi
+
 echo "make new dir for certs..."
 if [ ! -d kubeedge_work_dir ]; then
 	mkdir kubeedge_work_dir
