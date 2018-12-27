@@ -30,8 +30,8 @@ func ValidateValue(valueType string, value string) error {
 			return errors.New("The value is not float")
 		}
 	} else if strings.Compare(valueType, "boolean") == 0 {
-		if strings.Compare(value, "true") == 0 || strings.Compare(value, "false") == 0 {
-			return errors.New("The bool type must be true or false")
+		if strings.Compare(value, "true") != 0 && strings.Compare(value, "false") != 0 {
+			return errors.New("The bool value must be true or false")
 		}
 	} else if strings.Compare(valueType, "deleted") == 0 {
 		return nil
