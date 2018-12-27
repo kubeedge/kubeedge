@@ -1,6 +1,6 @@
 # KubeEdge
 
-<img src="./images/KubeEdge_logo.png">
+<img src="./docs/images/KubeEdge_logo.png">
 
 KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata sychronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge.
 
@@ -34,7 +34,7 @@ KubeEdge is composed of these components:
 
 ### Architecture
 
-<img src="./images/kubeedge_arch.png">
+<img src="./docs/images/kubeedge_arch.png">
 
 ## Roadmap
 
