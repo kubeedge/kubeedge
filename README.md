@@ -1,4 +1,5 @@
 # KubeEdge
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
 
 <img src="./docs/images/KubeEdge_logo.png">
 
