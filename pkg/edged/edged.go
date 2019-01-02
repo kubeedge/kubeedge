@@ -53,7 +53,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/rainerruntime"
 	"github.com/kubeedge/kubeedge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/pkg/edged/status"
-	"github.com/kubeedge/kubeedge/pkg/edged/store"
 	edgedutil "github.com/kubeedge/kubeedge/pkg/edged/util"
 	utilpod "github.com/kubeedge/kubeedge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/pkg/edged/util/record"
@@ -100,7 +99,6 @@ type edged struct {
 	runtime                   rainerruntime.Runtime
 	podManager                podmanager.Manager
 	pleg                      pleg.PodLifecycleEventGenerator
-	store                     store.BackendStore
 	statusManager             kubestatus.Manager
 	kubeClient                clientset.Interface
 	probeManager              prober.Manager
@@ -319,7 +317,6 @@ func NewEdged() (*edged, error) {
 		return nil, fmt.Errorf("init Container GC Manager failed with error %s", err.Error())
 	}
 
-	ed.store = store.NewStore("")
 	ed.server = server.NewServer(ed.podManager)
 	ed.volumePluginMgr, err = NewInitializedVolumePluginMgr(ed, ProbeVolumePlugins(""))
 	if err != nil {
