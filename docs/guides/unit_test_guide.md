@@ -29,7 +29,7 @@ The purpose of this document is to give introduction about unit tests and to hel
  
 See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/metamanager/dao/meta_test.go) in kubeedge where go builtin package testing and gomock is used for writing unit tests.
 
-We will soon add a sample in kubeedge where ginkgo is used for writing unit tests.
+See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
 
 ## Writing UT using GoMock example : metamanager/dao/meta.go
 
