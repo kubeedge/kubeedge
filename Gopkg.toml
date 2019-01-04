@@ -81,6 +81,10 @@
   name = "github.com/prometheus/client_golang"
   revision = "08fd2e12372a66e68e30523c7642e0cbc3e4fbde"
 
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+
 [prune]
   go-tests = true
   unused-packages = true
