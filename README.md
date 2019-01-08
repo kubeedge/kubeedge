@@ -5,7 +5,7 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata sychronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge.
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge.
 
 ## Advantages
 
@@ -53,7 +53,7 @@ KubeEdge will provide the fundamental infrastructure and basic functionalities f
 ### Release 2.0 and Future
 - Build service mesh with KubeEdge and Istio 
 - Enable function as a service at Edge
-- Support more types of device protocols to Edge node sunch as AMQP, BlueTooth, ZigBee, etc.
+- Support more types of device protocols to Edge node such as AMQP, BlueTooth, ZigBee, etc.
 - Evaluate and enable super large scale of Edge clusters with thousands of Edge nodes and millions of devices
 - Enable intelligent scheduling of apps. to large scale of Edge nodes
 - etc.
