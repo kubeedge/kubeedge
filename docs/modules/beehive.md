@@ -45,21 +45,21 @@ Message has 3 parts
 1) Add module operation first creates a new channel of message type.
 2) Then the module name(key) and its channel(value) is added in the channels map of channel context structure. 
 3) Eg: add edged module
-```go.
+```go
 coreContext.Addmodule(“edged”)
 ``` 
 ### Add Module to Group
 1) addModuleGroup first gets the channel of a module from the channels map.
 2) Then the module and its channel is added in the typeChannels map where key is the group and in the value is a map in which (key is module name and value is the channel).
 3) Eg: add edged in edged group. Here 1st edged is module name and 2nd edged is the group name.
-```go.
+```go
 coreContext.AddModuleGroup(“edged”,”edged”)
  ```
 ### CleanUp
 1) CleanUp deletes the module from channels map and deletes the module from all groups(typeChannels map).
 2) Then the channel associated with the module is closed.
 3) Eg: CleanUp edged module
-```go.
+```go
 coreContext.CleanUp(“edged”)
 ```
 ## Message Operations
@@ -67,21 +67,21 @@ coreContext.CleanUp(“edged”)
 1) Send gets the channel of a module from channels map.
 2) Then the message is put on the channel. 
 3) Eg: send message to edged.
-```go.
+```go
 coreContext.Send(“edged”,message) 
 ```
 ### Send to a Group
 1) Send2Group gets all modules(map) from the typeChannels map.
 2) Then it iterates over the map and sends the message on the channels of all modules in the map.
 3) Eg: message to be sent to all modules in edged group.
-```go.
+```go
 coreContext.Send2Group(“edged”,message) message will be sent to all modules in edged group.
 ```
 ### Receive by a Module
 1) Receive gets the channel of a module from channels map.
 2) Then it waits for a message to arrive on that channel and returns the message. Error is returned if there is any..
 3) Eg: receive message for edged module
-```go.
+```go
 msg,err := coreContext.Receive("edged")
 ```
 ### SendSync to a Module
@@ -92,7 +92,7 @@ msg,err := coreContext.Receive("edged")
 5) Then it waits for the message(response) to be received on the anonChannel it created till timeout.
 6) If message is received before timeout, message is returned with nil error orelse timeout error is returned.
 7) Eg: send sync to edged with timeout duration 60 seconds
-```go.
+```go
 response,err := coreContext.SendSync("edged",message,60*time.Second)
 ```
 ### SendSync to a Group
@@ -102,7 +102,7 @@ response,err := coreContext.SendSync("edged",message,60*time.Second)
 4) Wait till timeout. If the length of anonChannel = no of modules in that group, check if all the messages in the channel have parentID = messageID. If no return error else return nil error.
 5) If timeout is reached,return timeout error.
 6) Eg: send sync message to edged group with timeout duration 60 seconds
-```go.
+```go
 err := coreContext.Send2GroupSync("edged",message,60*time.Second)
 ```
 
@@ -112,6 +112,6 @@ err := coreContext.Send2GroupSync("edged",message,60*time.Second)
 3) When SendResp is called, it checks if for the parentID of response message , there exists a channel is anonChannels.
 4) If channel exists, message(response) is sent on that channel.
 5) Or else error is logged.
-```go.
+```go
 coreContext.SendResp(respMessage)
 ```
