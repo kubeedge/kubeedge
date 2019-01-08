@@ -85,6 +85,10 @@
   name = "gopkg.in/fsnotify.v1"
   source = "https://github.com/fsnotify/fsnotify.git"
 
+[[override]]
+  name = "github.com/256dpi/gomqtt"
+  revision = "adb21d1b0cbac79463b51d1a9b234ee1e743a4c2"
+
 [prune]
   go-tests = true
   unused-packages = true
