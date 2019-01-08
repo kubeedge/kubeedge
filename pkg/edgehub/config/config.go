@@ -55,8 +55,16 @@ type EdgeHubConfig struct {
 var edgeHubConfig EdgeHubConfig
 
 func init() {
-	getWebSocketConfig()
-	getControllerConfig()
+	err := getWebSocketConfig()
+	if err != nil {
+		log.LOGGER.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
+		panic(err)
+	}
+	err = getControllerConfig()
+	if err != nil {
+		log.LOGGER.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
+		panic(err)
+	}
 }
 
 func GetConfig() *EdgeHubConfig {
@@ -66,42 +74,39 @@ func GetConfig() *EdgeHubConfig {
 func getWebSocketConfig() error {
 	url, err := config.CONFIG.GetValue("edgehub.websocket.url").ToString()
 	if err != nil {
-		log.LOGGER.Errorf("failed to get url for web socket client: %v", err)
-		//return fmt.Errorf("failed to get url for web socket client, error: %v", err)
+		log.LOGGER.Errorf("Failed to get url for web socket client: %v", err)
 	}
 	edgeHubConfig.WSConfig.Url = url
 
 	certFile, err := config.CONFIG.GetValue("edgehub.websocket.certfile").ToString()
 	if err != nil {
-		log.LOGGER.Errorf("failed to get cert file for web socket client: %v", err)
 		return fmt.Errorf("failed to get cert file for web socket client, error: %v", err)
 	}
 	edgeHubConfig.WSConfig.CertFilePath = certFile
 
 	keyFile, err := config.CONFIG.GetValue("edgehub.websocket.keyfile").ToString()
 	if err != nil {
-		log.LOGGER.Errorf("failed to get key file for web socket client: %v", err)
 		return fmt.Errorf("failed to get key file for web socket client, error: %v", err)
 	}
 	edgeHubConfig.WSConfig.KeyFilePath = keyFile
 
 	writeDeadline, err := config.CONFIG.GetValue("edgehub.websocket.write-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get key file for web socket client")
+		log.LOGGER.Warnf("Failed to get write-deadline for web socket client: %v", err)
 		writeDeadline = writeDeadlineDefault
 	}
 	edgeHubConfig.WSConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
 
-	readDeadline, err := config.CONFIG.GetValue("edgehub.websocket.write-deadline").ToInt()
+	readDeadline, err := config.CONFIG.GetValue("edgehub.websocket.read-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get key file for web socket client")
+		log.LOGGER.Warnf("Failed to get read-deadline for web socket client: %v", err)
 		readDeadline = readDeadlineDefault
 	}
 	edgeHubConfig.WSConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
 
 	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.websocket.handshake-timeout").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get key file for web socket client")
+		log.LOGGER.Warnf("Failed to get handshake-timeout for web socket client: %v", err)
 		handshakeTimeout = handshakeTimeoutDefault
 	}
 	edgeHubConfig.WSConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
@@ -111,45 +116,47 @@ func getWebSocketConfig() error {
 	return nil
 }
 
-func getControllerConfig() {
+func getControllerConfig() error {
 	heartbeat, err := config.CONFIG.GetValue("edgehub.controller.heartbeat").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get key file for web socket client")
-		heartbeat = handshakeTimeoutDefault
+		log.LOGGER.Warnf("Failed to get heartbeat for controller client: %v", err)
+		heartbeat = heartbeatDefault
 	}
 	edgeHubConfig.CtrConfig.HeartbeatPeroid = time.Duration(heartbeat) * time.Second
 
 	interval, err := config.CONFIG.GetValue("edgehub.controller.refresh-ak-sk-interval").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get key file for web socket client")
+		log.LOGGER.Warnf("Failed to get refresh-ak-sk-interval for controller client: %v", err)
 		interval = refreshInterval
 	}
 	edgeHubConfig.CtrConfig.RefreshInterval = time.Duration(interval) * time.Minute
 
 	projectId, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get project id  for web socket client")
+		return fmt.Errorf("failed to get project id for controller client: %v", err)
 	}
 	edgeHubConfig.CtrConfig.ProjectID = projectId
 
 	nodeId, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get node id  for web socket client")
+		return fmt.Errorf("failed to get node id for controller client: %v", err)
 	}
 	edgeHubConfig.CtrConfig.NodeId = nodeId
 
 	placementUrl, err := config.CONFIG.GetValue("edgehub.controller.placement-url").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get placement url  for web socket client")
+		return fmt.Errorf("failed to get placement url for controller client: %v", err)
 	}
 	edgeHubConfig.CtrConfig.PlacementUrl = placementUrl
 
 	authInfoPath, err := config.CONFIG.GetValue("edgehub.controller.auth-info-files-path").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get auth info files path")
+		log.LOGGER.Warnf("Failed to get auth info : %v", err)
 		authInfoPath = authInfoFilesPathDefault
 	}
 	edgeHubConfig.CtrConfig.AuthInfosPath = authInfoPath
+
+	return nil
 }
 
 func getExtendHeader() http.Header {
