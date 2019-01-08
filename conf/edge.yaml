@@ -1,5 +1,7 @@
 mqtt:
-    server: tcp://127.0.0.1:1883
+    internal-mqtt: tcp://127.0.0.1:1884
+    external-mqtt: tcp://127.0.0.1:1883
+    mode: 1 #0: internal mqtt broker enable only. 1: internal and third party mqtt broker enable. 2: third party mqtt broker enable only.
 
 edgehub:
     websocket:

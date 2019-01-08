@@ -8,18 +8,30 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
-
 	"github.com/kubeedge/kubeedge/pkg/eventbus/common/util"
 	mqttBus "github.com/kubeedge/kubeedge/pkg/eventbus/mqtt"
 )
 
+var mqttServer *mqttBus.MqttServer
+
+const (
+	internalMqttMode = iota
+	doubleMqttMode
+	externalMqttMode
+)
+
 // eventbus struct
 type eventbus struct {
-	context *context.Context
+	context  *context.Context
+	mqttMode int
 }
 
 func init() {
-	edgeEventHubModule := eventbus{}
+	mode := config.CONFIG.GetConfigurationByKey("mqtt.mode")
+	if mode == nil || mode.(int) > externalMqttMode || mode.(int) < internalMqttMode {
+		panic("mqtt mode must be 0,1,2")
+	}
+	edgeEventHubModule := eventbus{mqttMode: mode.(int)}
 	core.Register(&edgeEventHubModule)
 }
 
@@ -35,19 +47,42 @@ func (eb *eventbus) Start(c *context.Context) {
 	// no need to call TopicInit now, we have fixed topic
 	eb.context = c
 
-	mqttURL := config.CONFIG.GetConfigurationByKey("mqtt.server")
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
-	if mqttURL == nil || nodeID == nil {
+	if nodeID == nil {
 		panic("mqtt url or node id not configured")
 	}
-	hub := &mqttBus.MQTTClient{
-		MQTTUrl: mqttURL.(string),
-	}
-	mqttBus.MQTTHub = hub
+
 	mqttBus.NodeID = nodeID.(string)
 	mqttBus.ModuleContext = c
-	hub.InitSubClient()
-	hub.InitPubClient()
+
+	if eb.mqttMode >= doubleMqttMode {
+		// launch an external mqtt server
+		externalMqttUrl := config.CONFIG.GetConfigurationByKey("mqtt.external-mqtt")
+		if externalMqttUrl == nil {
+			panic("third party mqtt url not configured")
+		}
+
+		hub := &mqttBus.MQTTClient{
+			MQTTUrl: externalMqttUrl.(string),
+		}
+		mqttBus.MQTTHub = hub
+		hub.InitSubClient()
+		hub.InitPubClient()
+	}
+
+	if eb.mqttMode <= doubleMqttMode {
+		internalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.internal-mqtt")
+		if internalMqttURL == nil {
+			panic("mqtt url is not configured")
+		}
+		// launch an internal mqtt server only
+		// launch a mqtt server
+		mqttServer = mqttBus.NewMqttServer(100, internalMqttURL.(string))
+		err := mqttServer.Run()
+		if err != nil {
+			panic(fmt.Sprintf("Launch mqtt borker failed, %s", err.Error()))
+		}
+	}
 
 	eb.pubCloudMsgToEdge()
 }
@@ -66,17 +101,14 @@ func pubMQTT(topic string, payload []byte) {
 }
 
 func (eb *eventbus) pubCloudMsgToEdge() {
+
 	for {
 		if accessInfo, err := eb.context.Receive(eb.Name()); err == nil {
 			operation := accessInfo.GetOperation()
 			resource := accessInfo.GetResource()
 			switch operation {
 			case "subscribe":
-				token := mqttBus.MQTTHub.SubCli.Subscribe(resource, 1, mqttBus.OnSubMessageReceived)
-				if rs, err := util.CheckClientToken(token); !rs {
-					log.LOGGER.Errorf("edge-hub-cli subscribe topic:%s, %v", resource, err)
-					return
-				}
+				eb.subscribe(resource)
 				log.LOGGER.Infof("edge-hub-cli subscribe topic to %s", resource)
 			case "message":
 				body, ok := accessInfo.GetContent().(map[string]interface{})
@@ -87,7 +119,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				message := body["message"].(map[string]interface{})
 				topic := message["topic"].(string)
 				payload, _ := json.Marshal(&message)
-				pubMQTT(topic, payload)
+				eb.publish(topic, payload)
 			case "publish":
 				topic := resource
 				var ok bool
@@ -97,7 +129,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 					content := accessInfo.GetContent().(string)
 					payload = []byte(content)
 				}
-				pubMQTT(topic, payload)
+				eb.publish(topic, payload)
 			case "get_result":
 				if resource != "auth_info" {
 					log.LOGGER.Info("skip none auth_info get_result message")
@@ -105,12 +137,39 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				}
 				topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", mqttBus.NodeID)
 				payload, _ := json.Marshal(accessInfo.GetContent())
-				pubMQTT(topic, payload)
+				eb.publish(topic, payload)
 			default:
 				log.LOGGER.Warnf("action not found")
 			}
 		} else {
 			log.LOGGER.Errorf("fail to get a message from channel: %v", err)
 		}
+	}
+}
+
+func (eb *eventbus) publish(topic string, payload []byte) {
+	if eb.mqttMode >= doubleMqttMode {
+		// pub msg to external mqtt broker.
+		pubMQTT(topic, payload)
+	}
+
+	if eb.mqttMode <= doubleMqttMode {
+		// pub msg to internal mqtt broker.
+		mqttServer.Publish(topic, payload)
+	}
+}
+
+func (eb *eventbus) subscribe(topic string) {
+	if eb.mqttMode >= doubleMqttMode {
+		// subscribe topic to thirdparty mqtt broker.
+		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
+		if rs, err := util.CheckClientToken(token); !rs {
+			log.LOGGER.Errorf("edge-hub-cli subscribe topic:%s, %v", topic, err)
+		}
+	}
+
+	if eb.mqttMode <= doubleMqttMode {
+		// set topic to internal mqtt broker.
+		mqttServer.SetTopic(topic)
 	}
 }

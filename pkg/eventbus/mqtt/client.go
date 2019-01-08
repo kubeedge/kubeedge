@@ -124,7 +124,7 @@ func (mq *MQTTClient) InitSubClient() {
 	}
 	subID := fmt.Sprintf("hub-client-sub-%s", timeStr[0:right])
 	subOpts := util.HubclientInit(mq.MQTTUrl, subID, "", "")
-	subOpts.OnConnect = onSubConnect
+	//subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
