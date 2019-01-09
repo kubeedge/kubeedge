@@ -164,7 +164,7 @@ func getExtendHeader() http.Header {
 	if arch, err := config.CONFIG.GetValue("systeminfo.architecture").ToString(); err == nil {
 		header.Add("Arch", arch)
 	}
-	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker_root_dir").ToString(); err == nil {
+	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker-root-dir").ToString(); err == nil {
 		header.Add("DockerRootDir", dockerRoot)
 	}
 	log.LOGGER.Infof("websocket connection header is %v", header)
