@@ -19,3 +19,8 @@ test:
 .PHONY: verify
 verify:
 	bash -x hack/verify.sh
+
+.PHONY: integration_test
+integration_test:
+	bash test/Edge-SDV/scripts/execute.sh eventbus
+
