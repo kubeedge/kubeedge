@@ -32,8 +32,8 @@ var coreContext *context.Context
 // metaModule is metamanager implementation of Module interface
 var metaModule core.Module
 
-// TestMetaManager_Name will initialize CONFIG and register metaManager and test Name
-func TestMetaManager_Name(t *testing.T) {
+// TestName will initialize CONFIG and register metaManager and test Name
+func TestName(t *testing.T) {
 	//Load Configurations as go test runs in /tmp
 	err := util.LoadConfig()
 	t.Run("AddConfigSource", func(t *testing.T) {
@@ -66,8 +66,8 @@ func TestMetaManager_Name(t *testing.T) {
 
 }
 
-// TestMetaManager_Start is used for starting metaManager and testing if sync message is sent correctly
-func TestMetaManager_Start(t *testing.T) {
+// TestStart is used for starting metaManager and testing if sync message is sent correctly
+func TestStart(t *testing.T) {
 	coreContext = context.GetContext(context.MsgCtxTypeChannel)
 	modules := core.GetModules()
 	for name, module := range modules {
@@ -90,8 +90,8 @@ func TestMetaManager_Start(t *testing.T) {
 	})
 }
 
-// TestMetaManager_Cleanup is function to test cleanup
-func TestMetaManager_Cleanup(t *testing.T) {
+// TestCleanup is function to test cleanup
+func TestCleanup(t *testing.T) {
 	metaModule.Cleanup()
 	var test model.Message
 
