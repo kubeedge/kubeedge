@@ -62,7 +62,7 @@ KubeEdge will provide the fundamental infrastructure and basic functionalities f
 
 ### Prerequisites
 
-To use KubeEdge, you need make sure have **mosquitto**(as MQTT broker) and **docker** in your environment, if don't have, please reference the following step to install docker and mosquitto.
+To use KubeEdge, make sure you have **docker** in your environment, if don't have, please reference the following steps to install docker.
 
 #### Install docker
 
@@ -96,7 +96,14 @@ yum-config-manager \
     https://download.docker.com/linux/centos/docker-ce.repo
 yum update && yum install docker-ce-18.06.1.ce
 ```
+KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
+1) internalMqttMode: internal mqtt broker is enabled
+2) bothMqttMode: internal as well as external broker are enabled
+3) externalMqttMode: only external broker is enabled
 
+Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/conf/edge.yaml) to select the desired mode
+
+To use kubeedge in double mqtt or external mode, make sure you have **mosquitto** in your environment. Please reference the following steps to install mosquitto if it is not already present in your environment.
 #### Install mosquitto
 
 For ubuntu:
