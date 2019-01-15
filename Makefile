@@ -13,6 +13,7 @@ else
 endif
 
 test:
+	export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
 	find ${TEST_DIR} -name "*_test.go"|xargs -i dirname {}|uniq|xargs -i go test ${T} {}
 
 # verify
