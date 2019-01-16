@@ -24,21 +24,6 @@ type CommWorker struct {
 	Group string
 }
 
-//PreDeal pre deal
-func (cw CommWorker) PreDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//Deal deal
-func (cw CommWorker) Deal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//PostDeal post deal
-func (cw CommWorker) PostDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
 //Start worker
 func (cw CommWorker) Start() {
 	initActionCallBack()

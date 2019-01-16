@@ -26,21 +26,6 @@ type DeviceWorker struct {
 	Group string
 }
 
-//PreDeal pre deal
-func (dw DeviceWorker) PreDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//Deal deal
-func (dw DeviceWorker) Deal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//PostDeal post deal
-func (dw DeviceWorker) PostDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
 //Start worker
 func (dw DeviceWorker) Start() {
 	initDeviceActionCallBack()
