@@ -579,16 +579,6 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 	return nil
 }
 
-func handleErrorInfo(err error, info string, request model.Message, c *context.Context) {
-	log.LOGGER.Infof(info)
-	errInfo := "Something wrong"
-	if err != nil {
-		errInfo = fmt.Sprintf(info+": %v", err)
-	}
-	errResponse := model.NewErrorMessage(&request, errInfo)
-	c.Send(request.GetSource(), *errResponse)
-}
-
 func (e *edged) syncPod() {
 	//read containers from host
 	e.runtime.InitPodContainer()
