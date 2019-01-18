@@ -77,15 +77,8 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 	return errors.New("Not found chan to communicate")
 }
 
-//Confirm confirm ack
-func (dtc *DTContext) Confirm(msgID string, content interface{}) error {
-	dtc.ConfirmChan <- content
-	return nil
-}
-
 //HeartBeat hearbeat to dtcontroller
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
-
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
 		log.LOGGER.Infof("%s is healthy %v", dtmName, time.Now().Unix())
@@ -95,7 +88,6 @@ func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 		return errors.New("stop")
 	}
 	return nil
-
 }
 
 //GetMutex get mutex
@@ -122,7 +114,6 @@ func (dtc *DTContext) Lock(deviceID string) bool {
 		return true
 	}
 	return false
-
 }
 
 //Unlock remove the lock of the device
