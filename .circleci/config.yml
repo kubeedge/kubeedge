@@ -27,6 +27,13 @@ jobs:
     - run:
         command: make test
 
+  integration:
+    <<: *defaults
+    steps:
+    - checkout
+    - run:
+        command: make integration_test
+
 workflows:
   version: 2
   workflow:
@@ -34,3 +41,4 @@ workflows:
     - verify
     - build
     - test
+    - integration
