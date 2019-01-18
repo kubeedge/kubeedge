@@ -6,14 +6,13 @@ import (
 	"net/http"
 	"sync"
 
-	"k8s.io/api/core/v1"
-
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/metamanager/dao"
+	"k8s.io/api/core/v1"
 )
 
 const (
@@ -39,6 +38,37 @@ func (tm *testManager) Name() string {
 
 func (tm *testManager) Group() string {
 	return core.MetaGroup
+}
+
+//Function to handle device addition and removal from the edgenode
+func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
+	var operation string
+	var Content interface{}
+
+	if req.Body != nil {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.LOGGER.Errorf("read body error %v", err)
+			w.Write([]byte("read request body error"))
+		}
+		log.LOGGER.Infof("request body is %s\n", string(body))
+		err = json.Unmarshal(body, &Content)
+		if err != nil {
+			log.LOGGER.Errorf("unmarshal request body error %v", err)
+			w.Write([]byte("unmarshal request body error"))
+		}
+		switch req.Method {
+		case "POST":
+			operation = model.InsertOperation
+		case "DELETE":
+			operation = model.DeleteOperation
+		case "PUT":
+			operation = model.UpdateOperation
+		}
+		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
+		tm.context.Send("twin", *msgReq)
+		log.LOGGER.Infof("send message to twingrp is %+v\n", msgReq)
+	}
 }
 
 func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
@@ -163,6 +193,7 @@ func (tm *testManager) Start(c *context.Context) {
 	http.HandleFunc("/pod", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
+	http.HandleFunc("/devices", tm.deviceHandler)
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
 		log.LOGGER.Errorf("ListenAndServe: %v", err)
