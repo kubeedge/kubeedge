@@ -84,7 +84,7 @@ func TestStart(t *testing.T) {
 			t.Errorf("error while receiving message")
 			return
 		}
-		if (message.GetSource() != MetaManagerModuleName) && (message.GetGroup() != GroupResource) && (message.GetResource() != model.ResourceTypePodStatus) && (message.GetOperation() != OperationMetaSync) {
+		if (message.GetSource() != MetaManagerModuleName) || (message.GetGroup() != GroupResource) || (message.GetResource() != model.ResourceTypePodStatus) || (message.GetOperation() != OperationMetaSync) {
 			t.Errorf("Wrong message received")
 		}
 	})
