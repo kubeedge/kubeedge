@@ -10,10 +10,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/message"
 )
 
+//NodeStatusGetter is interface to get node status
 type NodeStatusGetter interface {
 	NodeStatus(namespace string) NodeStatusInterface
 }
 
+//NodeStatusInterface is node status interface
 type NodeStatusInterface interface {
 	Create(*api.NodeStatusRequest) (*api.NodeStatusRequest, error)
 	Update(rsName string, ns api.NodeStatusRequest) error

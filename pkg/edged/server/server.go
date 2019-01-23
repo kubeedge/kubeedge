@@ -13,16 +13,19 @@ import (
 	"k8s.io/api/core/v1"
 )
 
+//constants to define server address
 const (
-	NET_INTERFACE = "eth0"
-	SERVER_ADDR   = "127.0.0.1"
-	SERVER_PORT   = 10255
+	NetInterface = "eth0"
+	ServerAddr   = "127.0.0.1"
+	ServerPort   = 10255
 )
 
+//Server is object to define server
 type Server struct {
 	podManager podmanager.Manager
 }
 
+//NewServer creates and returns a new server object
 func NewServer(podManager podmanager.Manager) *Server {
 	return &Server{
 		podManager: podManager,
@@ -40,7 +43,7 @@ func (s *Server) getPodsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(rspBodyBytes.Bytes())
 }
 
-func getLocalIp() string {
+func getLocalIP() string {
 	addrSlice, err := net.InterfaceAddrs()
 	if nil != err {
 		log.LOGGER.Errorf("Get local IP addr failed %s", err.Error())
@@ -56,12 +59,13 @@ func getLocalIp() string {
 	return "localhost"
 }
 
+// ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe() {
 	//addr := getLocalIp()
-	log.LOGGER.Infof("starting to listen on %s:%d", SERVER_ADDR, SERVER_PORT)
+	log.LOGGER.Infof("starting to listen on %s:%d", ServerAddr, ServerPort)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/pods", s.getPodsHandler)
-	err := http.ListenAndServe(net.JoinHostPort(SERVER_ADDR, strconv.FormatUint(uint64(SERVER_PORT), 10)), mux)
+	err := http.ListenAndServe(net.JoinHostPort(ServerAddr, strconv.FormatUint(uint64(ServerPort), 10)), mux)
 	if err != nil {
 		log.LOGGER.Fatalf("run server: %v", err)
 	}

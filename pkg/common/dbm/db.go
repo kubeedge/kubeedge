@@ -7,6 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 
 	"github.com/astaxie/beego/orm"
+	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,8 +17,10 @@ var (
 	dataSource string
 )
 
+//DBAccess is Ormer object interface for all transaction processing and switching database
 var DBAccess orm.Ormer
 
+//RegisterModel registers the defined model in the orm if model is enabled
 func RegisterModel(moduleName string, m interface{}) {
 	if isModuleEnabled(moduleName) {
 		orm.RegisterModel(m)
@@ -50,6 +53,7 @@ func init() {
 	}
 }
 
+//InitDBManager initialises the database by syncing the database schema and creating orm
 func InitDBManager() {
 	// sync database schema
 	orm.RunSyncdb(dbName, false, true)

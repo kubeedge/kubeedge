@@ -18,7 +18,7 @@ import (
 
 var (
 	// MQTTHub client
-	MQTTHub *MQTTClient
+	MQTTHub *Client
 	// ModuleContext variable
 	ModuleContext *context.Context
 	// NodeID stands for node id
@@ -55,8 +55,8 @@ var (
 	}
 )
 
-// MQTTClient struct
-type MQTTClient struct {
+// Client struct
+type Client struct {
 	MQTTUrl string
 	PubCli  MQTT.Client
 	SubCli  MQTT.Client
@@ -116,7 +116,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 }
 
 // InitSubClient init sub client
-func (mq *MQTTClient) InitSubClient() {
+func (mq *Client) InitSubClient() {
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -133,7 +133,7 @@ func (mq *MQTTClient) InitSubClient() {
 }
 
 // InitPubClient init pub client
-func (mq *MQTTClient) InitPubClient() {
+func (mq *Client) InitPubClient() {
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -149,7 +149,7 @@ func (mq *MQTTClient) InitPubClient() {
 }
 
 // PubMQTTMsg pub msg to mqtt broker
-func (mq *MQTTClient) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
+func (mq *Client) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
 	token := mq.PubCli.Publish(topic, qos, retained, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
 		log.LOGGER.Errorf("error in pubCloudMsgToEdge with topic: %s, %v", topic, token.Error())

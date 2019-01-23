@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
-// UnixSocket struct
+// UnixSocketContext unixsocket struct
 type UnixSocketContext struct {
 	filename string
 	bufsize  int
@@ -20,6 +20,7 @@ var (
 	usOnce    sync.Once
 )
 
+//GetUnixSocketContext defines and returns unix socket context object
 func GetUnixSocketContext() *UnixSocketContext {
 	usOnce.Do(func() {
 		usContext = &UnixSocketContext{}
@@ -27,37 +28,44 @@ func GetUnixSocketContext() *UnixSocketContext {
 	return usContext
 }
 
+//AddModule adds module to context
 func (ctx *UnixSocketContext) AddModule(module string) {
 
 }
 
+//AddModuleGroup adds module to module context group
 func (ctx *UnixSocketContext) AddModuleGroup(module, group string) {
 
 }
 
+//Cleanup cleans up module
 func (ctx *UnixSocketContext) Cleanup(module string) {
 
 }
 
-// async mode
+// Send async mode
 func (ctx *UnixSocketContext) Send(module string, content interface{}) {
 
 }
 
+//Receive the message
+//local module name
 func (ctx *UnixSocketContext) Receive(module string) interface{} {
 	return nil
 }
 
-// sync mode
+// SendSync sends message in sync mode
+// module: the destination of the message
 func (ctx *UnixSocketContext) SendSync(module string, message model.Message, timeout time.Duration) (interface{}, error) {
 	return nil, nil
 }
 
-func (ctx *UnixSocketContext) SendResp(messageId string, content interface{}) {
+// SendResp sends response
+func (ctx *UnixSocketContext) SendResp(messageID string, content interface{}) {
 
 }
 
-// group broadcast
+// Send2Group broadcasts the message to all of group members
 func (ctx *UnixSocketContext) Send2Group(moduleType string, content interface{}) {
 
 }

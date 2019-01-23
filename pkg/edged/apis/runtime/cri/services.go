@@ -23,7 +23,7 @@ import (
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
-// Basic information about a container image.
+// Image defines basic information about a container image.
 type Image struct {
 	// ID of the image.
 	ID string
@@ -35,6 +35,7 @@ type Image struct {
 	Size int64
 }
 
+//VersionResponse is object for versions
 type VersionResponse struct {
 	// Version of the kubelet runtime API.
 	Version string `json:"version,omitempty"`
@@ -46,26 +47,29 @@ type VersionResponse struct {
 	RuntimeVersion string `json:"runtimeVersion,omitempty"`
 	// API version of the container runtime. The string must be
 	// semver-compatible.
-	RuntimeApiVersion string `json:"runtimeApiVersion,omitempty"`
+	RuntimeAPIVersion string `json:"runtimeApiVersion,omitempty"`
 }
 
+//constants to check status of container state
 const (
-	Status_UNKNOWN                              = kubecontainer.ContainerStateUnknown
-	Status_CREATED                              = kubecontainer.ContainerStateCreated
-	Status_RUNNING                              = kubecontainer.ContainerStateRunning
-	Status_EXITED                               = kubecontainer.ContainerStateExited
-	Status_STOPPED kubecontainer.ContainerState = "stopped"
-	Status_PAUSED  kubecontainer.ContainerState = "paused"
+	StatusUNKNOWN                              = kubecontainer.ContainerStateUnknown
+	StatusCREATED                              = kubecontainer.ContainerStateCreated
+	StatusRUNNING                              = kubecontainer.ContainerStateRunning
+	StatusEXITED                               = kubecontainer.ContainerStateExited
+	StatusSTOPPED kubecontainer.ContainerState = "stopped"
+	StatusPAUSED  kubecontainer.ContainerState = "paused"
 )
 
+//Container defines container object
 type Container struct {
 	// ID of the container.
-	Id string `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Status of the container.
 	Status  kubecontainer.ContainerState `json:"status,omitempty"`
 	StartAt time.Time                    `json:"startat,omitempty"`
 }
 
+//ContainerInspect checks container status
 type ContainerInspect struct {
 	Status ContainerStatus `json:"Status,omitempty"`
 }
@@ -96,12 +100,14 @@ type Device struct {
 	Permissions string `json:"permissions,omitempty"`
 }
 
+//ContainerConfig defines container configuration details
 type ContainerConfig struct {
 	Name       string
 	Config     *container.Config
 	HostConfig *container.HostConfig
 }
 
+//RuntimeService is interface for any run time service
 type RuntimeService interface {
 	Version() (kubecontainer.Version, error)
 	CreateContainer(config *ContainerConfig) (string, error)
@@ -113,6 +119,7 @@ type RuntimeService interface {
 	InspectContainer(containerID string) (*ContainerInspect, error)
 }
 
+//constants for defining prefix in docker
 const (
 	DockerPrefix                = "docker://"
 	DockerPullablePrefix        = "docker-pullable://"

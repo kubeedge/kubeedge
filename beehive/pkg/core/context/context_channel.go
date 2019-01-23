@@ -11,6 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
+//constants for channel context
 const (
 	ChannelSizeDefault = 1024
 
@@ -19,7 +20,7 @@ const (
 	TickerTimeoutDefault = 20 * time.Millisecond
 )
 
-// Context struct
+// ChannelContext is object for Context channel
 type ChannelContext struct {
 	//ConfigFactory goarchaius.ConfigurationFactory
 	channels     map[string]chan model.Message
@@ -30,7 +31,7 @@ type ChannelContext struct {
 	anonChsLock  sync.RWMutex
 }
 
-// NewContext
+// NewChannelContext creates and returns object of new channel context
 // TODO: Singleton
 func NewChannelContext() *ChannelContext {
 	channelMap := make(map[string]chan model.Message)
@@ -70,7 +71,7 @@ func (ctx *ChannelContext) Send(module string, message model.Message) {
 	log.LOGGER.Warnf("bad module name (%s), do nothing", module)
 }
 
-// Recv msg from channel of module
+// Receive msg from channel of module
 func (ctx *ChannelContext) Receive(module string) (model.Message, error) {
 	if channel := ctx.getChannel(module); channel != nil {
 		content := <-channel
@@ -85,7 +86,7 @@ func getAnonChannelName(msgID string) string {
 	return msgID
 }
 
-// Send message in a sync way
+// SendSync sends message in a sync way
 func (ctx *ChannelContext) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
@@ -106,7 +107,7 @@ func (ctx *ChannelContext) SendSync(module string, message model.Message, timeou
 	// check req/resp channel
 	reqChannel := ctx.getChannel(module)
 	if reqChannel == nil {
-		return model.Message{}, errors.New(fmt.Sprintf("bad request module name(%s)", module))
+		return model.Message{}, fmt.Errorf("bad request module name(%s)", module)
 	}
 
 	sendTimer := time.NewTimer(timeout)
@@ -142,7 +143,7 @@ func (ctx *ChannelContext) SendSync(module string, message model.Message, timeou
 	return resp, nil
 }
 
-// SendMessageResp send resp for this message when using sync mode
+// SendResp send resp for this message when using sync mode
 func (ctx *ChannelContext) SendResp(message model.Message) {
 	anonName := getAnonChannelName(message.GetParentID())
 
@@ -182,8 +183,7 @@ func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) 
 	log.LOGGER.Warnf("bad module type (%s), do nothing", moduleType)
 }
 
-// Send2GroupSync
-// broadcast the message to echo module channel, the module send response back anon channel
+// Send2GroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
 func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error {
 	// avoid exception because of channel colsing
@@ -364,11 +364,13 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 	ctx.typeChannels[group][module] = moduleCh
 }
 
+//AddModule adds module into module context
 func (ctx *ChannelContext) AddModule(module string) {
 	channel := ctx.newChannel()
 	ctx.addChannel(module, channel)
 }
 
+//AddModuleGroup adds modules into module context group
 func (ctx *ChannelContext) AddModuleGroup(module, group string) {
 	if channel := ctx.getChannel(module); channel != nil {
 		ctx.addTypeChannel(module, group, channel)
