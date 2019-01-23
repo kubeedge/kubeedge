@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/test/integration/utils/common"
@@ -163,9 +162,12 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
-			time.Sleep(10 * time.Second)
-			deviceState := getDeviceStateFromDB(DeviceID)
-			Expect(deviceState).Should(Equal("online"))
+			Eventually(func() string {
+				deviceState := getDeviceStateFromDB(DeviceID)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				return deviceState
+			}, "60s", "2s").Should(Equal("online"), "Device state is not online within specified time")
+
 			Client.Disconnect(1)
 		})
 
@@ -182,9 +184,11 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
-			time.Sleep(10 * time.Second)
-			deviceState := getDeviceStateFromDB(DeviceID)
-			Expect(deviceState).Should(Equal("unknown"))
+			Eventually(func() string {
+				deviceState := getDeviceStateFromDB(DeviceID)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				return deviceState
+			}, "60s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
 			Client.Disconnect(1)
 		})
 
@@ -201,9 +205,11 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
-			time.Sleep(10 * time.Second)
-			deviceState := getDeviceStateFromDB(DeviceID)
-			Expect(deviceState).Should(Equal("offline"))
+			Eventually(func() string {
+				deviceState := getDeviceStateFromDB(DeviceID)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				return deviceState
+			}, "60s", "2s").Should(Equal("offline"), "Device state is not offline within specified time")
 			Client.Disconnect(1)
 		})
 	})
