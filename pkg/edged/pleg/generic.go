@@ -15,6 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/podmanager"
 )
 
+//GenericLifecycle is object for pleg lifecycle
 type GenericLifecycle struct {
 	pleg.GenericPLEG
 	runtime      containers.ContainerManager
@@ -24,6 +25,7 @@ type GenericLifecycle struct {
 	probeManager prober.Manager
 }
 
+//NewGenericLifecycle creates new generic life cycle object
 func NewGenericLifecycle(manager containers.ContainerManager, probeManager prober.Manager, channelCapacity int,
 	relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager) pleg.PodLifecycleEventGenerator {
 	kubeContainerManager := containers.NewKubeContainerRuntime(manager)

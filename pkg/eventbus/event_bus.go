@@ -14,7 +14,7 @@ import (
 	mqttBus "github.com/kubeedge/kubeedge/pkg/eventbus/mqtt"
 )
 
-var mqttServer *mqttBus.MqttServer
+var mqttServer *mqttBus.Server
 
 const (
 	internalMqttMode = iota // 0: launch an internal mqtt broker.
@@ -67,13 +67,13 @@ func (eb *eventbus) Start(c *context.Context) {
 
 	if eb.mqttMode >= bothMqttMode {
 		// launch an external mqtt server
-		externalMqttUrl := config.CONFIG.GetConfigurationByKey("mqtt.server")
-		if externalMqttUrl == nil {
+		externalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.server")
+		if externalMqttURL == nil {
 			panic(" mqtt server url not configured")
 		}
 
-		hub := &mqttBus.MQTTClient{
-			MQTTUrl: externalMqttUrl.(string),
+		hub := &mqttBus.Client{
+			MQTTUrl: externalMqttURL.(string),
 		}
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()

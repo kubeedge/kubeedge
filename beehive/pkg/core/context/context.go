@@ -6,12 +6,14 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
+//ModuleContext is interface for context module management
 type ModuleContext interface {
 	AddModule(module string)
 	AddModuleGroup(module, group string)
 	Cleanup(module string)
 }
 
+//MessageContext is interface for message syncing
 type MessageContext interface {
 	// async mode
 	Send(module string, message model.Message)
@@ -24,7 +26,7 @@ type MessageContext interface {
 	Send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error
 }
 
-// global context
+// Context is global context object
 type Context struct {
 	moduleContext  ModuleContext
 	messageContext MessageContext

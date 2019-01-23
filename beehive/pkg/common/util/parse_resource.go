@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
-// Parse resource at edge: return namespace, resource_type, resource_id.
+// ParseResourceEdge parses resource at edge and returns namespace, resource_type, resource_id.
 // If operation of msg is query list, return namespace, pod.
 func ParseResourceEdge(resource string, operation string) (string, string, string, error) {
 	resourceSplits := strings.Split(resource, "/")
@@ -16,11 +16,11 @@ func ParseResourceEdge(resource string, operation string) (string, string, strin
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 2 {
 		return resourceSplits[0], resourceSplits[1], "", nil
 	} else {
-		return "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response.", resource, operation)
+		return "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 	}
 }
 
-// Parse resource at master: return cluster_id, node_id, namespace, resource_type, resource_id.
+// ParseResourceMaster parses resource at master and returns cluster_id, node_id, namespace, resource_type, resource_id.
 // If operation of msg is query list, return cluster_id, node_id, namespace, pod.
 func ParseResourceMaster(resource string, operation string) (string, string, string, string, string, error) {
 	resourceSplits := strings.Split(resource, "/")
@@ -29,7 +29,7 @@ func ParseResourceMaster(resource string, operation string) (string, string, str
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 6 {
 		return resourceSplits[1], resourceSplits[3], resourceSplits[4], resourceSplits[5], "", nil
 	} else {
-		return "", "", "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response.", resource, operation)
+		return "", "", "", "", "", fmt.Errorf("Resource: %s format incorrect, or Operation: %s is not query/response", resource, operation)
 
 	}
 }

@@ -27,8 +27,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/dbm"
 )
 
-// FailedDBOperation is common DB operation fail error
-var failedDBOperationErr = errors.New("Failed DB Operation")
+// errFailedDBOperation is common DB operation fail error
+var errFailedDBOperation = errors.New("Failed DB Operation")
 
 // ormerMock is mocked Ormer implementation
 var ormerMock *beego.MockOrmer
@@ -66,7 +66,7 @@ func TestSaveDevice(t *testing.T) {
 		// Failure Case
 		name:      "FailureCase",
 		returnInt: int64(1),
-		returnErr: failedDBOperationErr,
+		returnErr: errFailedDBOperation,
 	},
 	}
 
@@ -107,7 +107,7 @@ func TestDeleteDeviceByID(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		deleteReturnInt:  int64(0),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -151,7 +151,7 @@ func TestUpdateDeviceField(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -195,7 +195,7 @@ func TestUpdateDeviceFields(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -239,7 +239,7 @@ func TestQueryDevice(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -296,7 +296,7 @@ func TestQueryDeviceAll(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -353,7 +353,7 @@ func TestUpdateDeviceMulti(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -411,9 +411,9 @@ func TestAddDeviceTrans(t *testing.T) {
 		successInsertReturnErr: nil,
 		successInsertTimes:     0,
 		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    failedDBOperationErr,
+		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case SaveDeviceAttr
 		name:                   "FailureCaseSaveDeviceAttr",
@@ -424,9 +424,9 @@ func TestAddDeviceTrans(t *testing.T) {
 		successInsertReturnErr: nil,
 		successInsertTimes:     1,
 		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    failedDBOperationErr,
+		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case SaveDeviceTwin
 		name:                   "FailureCaseSaveDeviceAttr",
@@ -437,9 +437,9 @@ func TestAddDeviceTrans(t *testing.T) {
 		successInsertReturnErr: nil,
 		successInsertTimes:     2,
 		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    failedDBOperationErr,
+		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Success Case SaveDeviceTwin
 		name:                   "SuccessCaseSaveDeviceAttr",
@@ -450,7 +450,7 @@ func TestAddDeviceTrans(t *testing.T) {
 		successInsertReturnErr: nil,
 		successInsertTimes:     3,
 		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    failedDBOperationErr,
+		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        0,
 		wantErr:                nil,
 	},
@@ -527,13 +527,13 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     0,
 		failDeleteReturnInt:    int64(1),
-		failDeleteReturnErr:    failedDBOperationErr,
+		failDeleteReturnErr:    errFailedDBOperation,
 		failDeleteTimes:        1,
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        1,
 		filterReturn:           querySeterMock,
 		filterTimes:            1,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case DeleteDeviceAttrByDeviceID
 		name:                   "FailureCaseDeleteDeviceAttrByDeviceID",
@@ -544,13 +544,13 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     1,
 		failDeleteReturnInt:    int64(1),
-		failDeleteReturnErr:    failedDBOperationErr,
+		failDeleteReturnErr:    errFailedDBOperation,
 		failDeleteTimes:        1,
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        2,
 		filterReturn:           querySeterMock,
 		filterTimes:            2,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Failure Case DeleteDeviceTwinByDeviceID
 		name:                   "FailureCaseDeleteDeviceTwinByDeviceID",
@@ -561,13 +561,13 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     2,
 		failDeleteReturnInt:    int64(1),
-		failDeleteReturnErr:    failedDBOperationErr,
+		failDeleteReturnErr:    errFailedDBOperation,
 		failDeleteTimes:        1,
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        3,
 		filterReturn:           querySeterMock,
 		filterTimes:            3,
-		wantErr:                failedDBOperationErr,
+		wantErr:                errFailedDBOperation,
 	}, {
 		// Success Case
 		name:                   "SuccessCase",
@@ -578,7 +578,7 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		successDeleteReturnErr: nil,
 		successDeleteTimes:     3,
 		failDeleteReturnInt:    int64(1),
-		failDeleteReturnErr:    failedDBOperationErr,
+		failDeleteReturnErr:    errFailedDBOperation,
 		failDeleteTimes:        0,
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        3,

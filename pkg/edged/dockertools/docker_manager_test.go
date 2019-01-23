@@ -44,13 +44,13 @@ func TestPullImage(t *testing.T) {
 
 	image := kubecontainer.ImageSpec{"testPullImage:latest"}
 
-	IMAGEPULL_ERROR = fmt.Errorf("test error")
+	ImagePullError = fmt.Errorf("test error")
 	_, err = dm.PullImage(image, []v1.Secret{})
-	if !reflect.DeepEqual(err, IMAGEPULL_ERROR) {
-		t.Errorf("TestPullImage failed, test error failed, err(%v) != IMAGEPULL_ERROR(%v)", err, IMAGEPULL_ERROR)
+	if !reflect.DeepEqual(err, ImagePullError) {
+		t.Errorf("TestPullImage failed, test error failed, err(%v) != IMAGEPULL_ERROR(%v)", err, ImagePullError)
 	}
 
-	IMAGEPULL_ERROR = nil
+	ImagePullError = nil
 	_, err = dm.PullImage(image, []v1.Secret{})
 	if err != nil {
 		t.Errorf("TestPullImage failed, pull image failed err: %v", err)
@@ -60,7 +60,7 @@ func TestPullImage(t *testing.T) {
 		t.Errorf("Check if the image exists,present: %v err: %v", present, err)
 	}
 
-	id := getImageIdByName(dm, image.Image)
+	id := getImageIDByName(dm, image.Image)
 	dm.RemoveImage(kubecontainer.ImageSpec{id})
 }
 
@@ -112,7 +112,7 @@ func TestIsImagePresent(t *testing.T) {
 
 }
 
-func getImageIdByName(dm *DockerManager, name string) string {
+func getImageIDByName(dm *DockerManager, name string) string {
 	images, err := dm.ListImages()
 	if err != nil {
 		return ""
@@ -140,7 +140,7 @@ func TestRemoveImage(t *testing.T) {
 		t.Errorf("TestRemoveImage failed, pull Image(%v) failed", newImage)
 	}
 
-	id := getImageIdByName(dm, newImage.Image)
+	id := getImageIDByName(dm, newImage.Image)
 	if id == "" {
 		t.Errorf("TestRemoveImage failed, getImageIdByName failed")
 	}

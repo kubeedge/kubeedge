@@ -7,6 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/containers"
 )
 
+//Runtime is interface view run time status
 type Runtime interface {
 	containers.ContainerManager
 	EnsureImageExists(pod *v1.Pod, secrets []v1.Secret) error
