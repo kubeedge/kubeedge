@@ -33,7 +33,7 @@ type WebSocketConfig struct {
 
 //ControllerConfig defines controller configuration object type
 type ControllerConfig struct {
-	HeartbeatPeroid time.Duration
+	HeartbeatPeriod time.Duration
 	RefreshInterval time.Duration
 	CloudhubURL     string
 	AuthInfosPath   string
@@ -127,7 +127,7 @@ func getControllerConfig() error {
 		log.LOGGER.Warnf("Failed to get heartbeat for controller client: %v", err)
 		heartbeat = heartbeatDefault
 	}
-	edgeHubConfig.CtrConfig.HeartbeatPeroid = time.Duration(heartbeat) * time.Second
+	edgeHubConfig.CtrConfig.HeartbeatPeriod = time.Duration(heartbeat) * time.Second
 
 	interval, err := config.CONFIG.GetValue("edgehub.controller.refresh-ak-sk-interval").ToInt()
 	if err != nil {
