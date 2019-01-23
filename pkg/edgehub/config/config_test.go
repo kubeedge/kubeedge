@@ -114,7 +114,7 @@ func TestGetConfig(t *testing.T) {
 					ExtendHeader:     http.Header{},
 				},
 				ControllerConfig{
-					HeartbeatPeroid: 150 * time.Second,
+					HeartbeatPeriod: 150 * time.Second,
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
@@ -151,7 +151,7 @@ func TestGetConfig(t *testing.T) {
 				},
 				ControllerConfig{
 					AuthInfosPath:   "/var/IEF/secret",
-					HeartbeatPeroid: 15 * time.Second,
+					HeartbeatPeriod: 15 * time.Second,
 					RefreshInterval: 10 * time.Minute,
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
