@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
-	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/test/integration/utils/edge"
 
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -117,8 +117,9 @@ func HandleAddAndDeleteDevice(operation string) bool {
 		return false
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	_, err = client.Do(req)
-	common.InfoV6("%s %s", req.Method, req.URL)
+	t := time.Now()
+	resp, err := client.Do(req)
+	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
 		// handle error
 		common.Failf("HTTP request is failed :%v", err)
