@@ -155,6 +155,19 @@ nohup ./edge_core > edge_core.log 2>&1 &
 
 If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
+
+### Run Unit Tests
+
+ ```shell
+ make test
+ ```
+ To run unit tests of a package individually 
+ ```shell
+ export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge
+ cd <path to package to be tested>
+ go test -v
+ 
+ ```
 ## Community
 
 **Slack channel:** 
