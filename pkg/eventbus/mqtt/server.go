@@ -31,8 +31,8 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/model"
 )
 
-// A MqttServer serve as an internal mqtt broker.
-type MqttServer struct {
+//Server serve as an internal mqtt broker.
+type Server struct {
 	// Internal mqtt url
 	url string
 
@@ -60,8 +60,8 @@ type MqttServer struct {
 }
 
 // NewMqttServer create an internal mqtt server.
-func NewMqttServer(sqz int, url string, retain bool, qos int) *MqttServer {
-	return &MqttServer{
+func NewMqttServer(sqz int, url string, retain bool, qos int) *Server {
+	return &Server{
 		sessionQueueSize: sqz,
 		url:              url,
 		tree:             topic.NewTree(),
@@ -71,7 +71,7 @@ func NewMqttServer(sqz int, url string, retain bool, qos int) *MqttServer {
 }
 
 // Run launch a server and accept connections.
-func (m *MqttServer) Run() error {
+func (m *Server) Run() error {
 	var err error
 
 	m.server, err = transport.Launch(m.url)
@@ -98,7 +98,7 @@ func (m *MqttServer) Run() error {
 }
 
 // onSubscribe will be called if the topic is matched in topic tree.
-func (m *MqttServer) onSubscribe(msg *packet.Message) {
+func (m *Server) onSubscribe(msg *packet.Message) {
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
@@ -119,8 +119,8 @@ func (m *MqttServer) onSubscribe(msg *packet.Message) {
 	ModuleContext.Send2Group(target, *message)
 }
 
-// set internal topics to server by default.
-func (m *MqttServer) InitInternalTopics() {
+// InitInternalTopics sets internal topics to server by default.
+func (m *Server) InitInternalTopics() {
 	for _, v := range SubTopics {
 		m.tree.Set(v, packet.Subscription{Topic: v, QOS: packet.QOS(m.qos)})
 		log.LOGGER.Infof("Subscribe internal topic to %s", v)
@@ -128,12 +128,12 @@ func (m *MqttServer) InitInternalTopics() {
 }
 
 // SetTopic set the topic to internal mqtt broker.
-func (m *MqttServer) SetTopic(topic string) {
+func (m *Server) SetTopic(topic string) {
 	m.tree.Set(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
 
 // Publish will dispatch topic msg to its subscribers directly.
-func (m *MqttServer) Publish(topic string, payload []byte) {
+func (m *Server) Publish(topic string, payload []byte) {
 	client := &broker.Client{}
 
 	msg := &packet.Message{

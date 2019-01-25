@@ -33,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/log"
 )
 
+//AddressFamily is uint type var to describe family ips
 type AddressFamily uint
 
 const (
@@ -45,6 +46,7 @@ const (
 	ipv6RouteFile = "/proc/net/ipv6_route"
 )
 
+//Route is to define object of connection route
 type Route struct {
 	Interface   string
 	Destination net.IP
@@ -52,6 +54,7 @@ type Route struct {
 	Family      AddressFamily
 }
 
+//RouteFile is object of file of routs
 type RouteFile struct {
 	name  string
 	parse func(input io.Reader) ([]Route, error)
@@ -71,7 +74,7 @@ func (rf RouteFile) extract() ([]Route, error) {
 	return rf.parse(file)
 }
 
-// getIPv4DefaultRoutes obtains the IPv4 routes, and filters out non-default routes.
+// GetIPv4DefaultRoutes obtains the IPv4 routes, and filters out non-default routes.
 func GetIPv4DefaultRoutes(input io.Reader) ([]Route, error) {
 	routes := []Route{}
 	scanner := bufio.NewReader(input)
@@ -110,6 +113,7 @@ func GetIPv4DefaultRoutes(input io.Reader) ([]Route, error) {
 	return routes, nil
 }
 
+// GetIPv6DefaultRoutes obtains the IPv6 routes, and filters out non-default routes.
 func GetIPv6DefaultRoutes(input io.Reader) ([]Route, error) {
 	routes := []Route{}
 	scanner := bufio.NewReader(input)
@@ -147,7 +151,7 @@ func GetIPv6DefaultRoutes(input io.Reader) ([]Route, error) {
 	return routes, nil
 }
 
-// parseIP takes the hex IP address string from route file and converts it
+// ParseIP takes the hex IP address string from route file and converts it
 // to a net.IP address. For IPv4, the value must be converted to big endian.
 func ParseIP(str string, family AddressFamily) (net.IP, error) {
 	if str == "" {
@@ -170,6 +174,7 @@ func ParseIP(str string, family AddressFamily) (net.IP, error) {
 	return net.IP(bytes), nil
 }
 
+//IsInterfaceUp checks the interface is running or not
 func IsInterfaceUp(intf *net.Interface) bool {
 	if intf == nil {
 		return false
@@ -181,11 +186,12 @@ func IsInterfaceUp(intf *net.Interface) bool {
 	return false
 }
 
+//IsLoopbackOrPointToPoint checks interface is loopback or point to point
 func IsLoopbackOrPointToPoint(intf *net.Interface) bool {
 	return intf.Flags&(net.FlagLoopback|net.FlagPointToPoint) != 0
 }
 
-// getMatchingGlobalIP returns the first valid global unicast address of the given
+// GetMatchingGlobalIP returns the first valid global unicast address of the given
 // 'family' from the list of 'addrs'.
 func GetMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error) {
 	if len(addrs) > 0 {
@@ -199,9 +205,8 @@ func GetMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error)
 				if ip.IsGlobalUnicast() {
 					log.LOGGER.Infof("IP found %v", ip)
 					return ip, nil
-				} else {
-					log.LOGGER.Infof("Non-global unicast address found %v", ip)
 				}
+				log.LOGGER.Infof("Non-global unicast address found %v", ip)
 			} else {
 				log.LOGGER.Infof("%v is not an IPv%d address", ip, int(family))
 			}
@@ -211,7 +216,7 @@ func GetMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error)
 	return nil, nil
 }
 
-// getIPFromInterface gets the IPs on an interface and returns a global unicast address, if any. The
+// GetIPFromInterface gets the IPs on an interface and returns a global unicast address, if any. The
 // interface must be up, the IP must in the family requested, and the IP must be a global unicast address.
 func GetIPFromInterface(intfName string, forFamily AddressFamily, nw networkInterfacer) (net.IP, error) {
 	intf, err := nw.InterfaceByName(intfName)
@@ -236,16 +241,16 @@ func GetIPFromInterface(intfName string, forFamily AddressFamily, nw networkInte
 	return nil, nil
 }
 
-// memberOF tells if the IP is of the desired family. Used for checking interface addresses.
+// MemberOf tells if the IP is of the desired family. Used for checking interface addresses.
 func MemberOf(ip net.IP, family AddressFamily) bool {
 	if ip.To4() != nil {
 		return family == familyIPv4
-	} else {
-		return family == familyIPv6
 	}
+	//else
+	return family == familyIPv6
 }
 
-// chooseIPFromHostInterfaces looks at all system interfaces, trying to find one that is up that
+// ChooseIPFromHostInterfaces looks at all system interfaces, trying to find one that is up that
 // has a global unicast address (non-loopback, non-link local, non-point2point), and returns the IP.
 // Searches for IPv4 addresses, and then IPv6 addresses.
 func ChooseIPFromHostInterfaces(nw networkInterfacer) (net.IP, error) {
@@ -254,7 +259,7 @@ func ChooseIPFromHostInterfaces(nw networkInterfacer) (net.IP, error) {
 		return nil, err
 	}
 	if len(intfs) == 0 {
-		return nil, fmt.Errorf("no interfaces found on host.")
+		return nil, fmt.Errorf("no interfaces found on host")
 	}
 	for _, family := range []AddressFamily{familyIPv4, familyIPv6} {
 		log.LOGGER.Infof("Looking for system interface with a global IPv%d address", uint(family))
@@ -327,19 +332,19 @@ type networkInterfacer interface {
 // wrapping the underlying net library function calls.
 type networkInterface struct{}
 
-func (_ networkInterface) InterfaceByName(intfName string) (*net.Interface, error) {
+func (ni networkInterface) InterfaceByName(intfName string) (*net.Interface, error) {
 	return net.InterfaceByName(intfName)
 }
 
-func (_ networkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
+func (ni networkInterface) Addrs(intf *net.Interface) ([]net.Addr, error) {
 	return intf.Addrs()
 }
 
-func (_ networkInterface) Interfaces() ([]net.Interface, error) {
+func (ni networkInterface) Interfaces() ([]net.Interface, error) {
 	return net.Interfaces()
 }
 
-// getAllDefaultRoutes obtains IPv4 and IPv6 default routes on the node. If unable
+// GetAllDefaultRoutes obtains IPv4 and IPv6 default routes on the node. If unable
 // to read the IPv4 routing info file, we return an error. If unable to read the IPv6
 // routing info file (which is optional), we'll just use the IPv4 route information.
 // Using all the routing info, if no default routes are found, an error is returned.
@@ -351,12 +356,12 @@ func GetAllDefaultRoutes() ([]Route, error) {
 	v6Routes, _ := v6File.extract()
 	routes = append(routes, v6Routes...)
 	if len(routes) == 0 {
-		return nil, fmt.Errorf("No default routes.")
+		return nil, fmt.Errorf("No default routes")
 	}
 	return routes, nil
 }
 
-// chooseHostInterfaceFromRoute cycles through each default route provided, looking for a
+// ChooseHostInterfaceFromRoute cycles through each default route provided, looking for a
 // global IP address from the interface for the route. Will first look all each IPv4 route for
 // an IPv4 IP, and then will look at each IPv6 route for an IPv6 IP.
 func ChooseHostInterfaceFromRoute(routes []Route, nw networkInterfacer) (net.IP, error) {
@@ -378,10 +383,10 @@ func ChooseHostInterfaceFromRoute(routes []Route, nw networkInterfacer) (net.IP,
 		}
 	}
 	log.LOGGER.Infof("No active IP found by looking at default routes")
-	return nil, fmt.Errorf("unable to select an IP from default routes.")
+	return nil, fmt.Errorf("unable to select an IP from default routes")
 }
 
-// Validate given node IP belongs to the current host
+// ValidateNodeIP validates given node IP belongs to the current host
 func ValidateNodeIP(nodeIP net.IP) error {
 	// Honor IP limitations set in setNodeStatus()
 	if nodeIP.To4() == nil && nodeIP.To16() == nil {
@@ -419,6 +424,7 @@ func ValidateNodeIP(nodeIP net.IP) error {
 	return fmt.Errorf("Node IP: %q not found in the host's network interfaces", nodeIP.String())
 }
 
+//Command executes command and returns output
 func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
 	ret, err := cmd.Output()
@@ -429,6 +435,7 @@ func Command(name string, arg []string) (string, error) {
 	return strings.Trim(string(ret), "\n"), nil
 }
 
+//GetCurPath returns filepath
 func GetCurPath() string {
 	file, _ := exec.LookPath(os.Args[0])
 	path, _ := filepath.Abs(file)
@@ -436,6 +443,7 @@ func GetCurPath() string {
 	return rst
 }
 
+//ConvertStrToTime converts time string object to inbuilt time object
 func ConvertStrToTime(strTime string) (time.Time, error) {
 	loc, _ := time.LoadLocation("Local")
 	t, err := time.ParseInLocation("2006-01-02T15:04:05", strTime, loc)
@@ -445,8 +453,10 @@ func ConvertStrToTime(strTime string) (time.Time, error) {
 	return t, nil
 }
 
+//ParseTimeErrorCode is constant set to -1 to show error
 const ParseTimeErrorCode = -1
 
+//ParseTimestampStr2Int64 returns given string time into int64 type
 func ParseTimestampStr2Int64(s string) (int64, error) {
 	timeStamp, err := time.Parse(time.RFC3339Nano, s)
 	if err != nil {
@@ -455,6 +465,7 @@ func ParseTimestampStr2Int64(s string) (int64, error) {
 	return timeStamp.Unix(), nil
 }
 
+//ParseTimestampInt64 returns given int64 type time into matav1 type time
 func ParseTimestampInt64(timestamp int64) metav1.Time {
 	if timestamp == ParseTimeErrorCode {
 		return metav1.Time{}

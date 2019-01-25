@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// some functions are come from "k8s.io/kubernetes/pkg/kubelet/kubelet_getters.go"
+// Package edged got some functions from "k8s.io/kubernetes/pkg/kubelet/kubelet_getters.go"
 // and made some variant
 package edged
 
@@ -32,6 +32,7 @@ import (
 	"k8s.io/kubernetes/pkg/volume/util"
 )
 
+//constants for Kubelet
 const (
 	DefaultKubeletPluginsDirName = "plugins"
 	DefaultKubeletVolumesDirName = "volumes"

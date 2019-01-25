@@ -20,6 +20,7 @@ func (s sourceImpl) AllReady() bool {
 	return true
 }
 
+//ConvertEnvVersion converts environment version
 // TODO: need consider EnvVar.ValueFrom
 func ConvertEnvVersion(envs []v1.EnvVar) []container.EnvVar {
 	var res []container.EnvVar
@@ -29,6 +30,7 @@ func ConvertEnvVersion(envs []v1.EnvVar) []container.EnvVar {
 	return res
 }
 
+//GenerateEnvList generates environments list
 func GenerateEnvList(envs []v1.EnvVar) (result []string) {
 	for _, env := range envs {
 		result = append(result, fmt.Sprintf("%s=%s", env.Name, env.Value))
@@ -36,6 +38,7 @@ func GenerateEnvList(envs []v1.EnvVar) (result []string) {
 	return
 }
 
+//EnableHostUserNamespace checks security to enable host user namespace
 func EnableHostUserNamespace(pod *v1.Pod) bool {
 	if pod.Spec.Containers[0].SecurityContext != nil && *pod.Spec.Containers[0].SecurityContext.Privileged {
 		return true
@@ -43,6 +46,13 @@ func EnableHostUserNamespace(pod *v1.Pod) bool {
 	return false
 }
 
+// GenerateMountBindings converts the mount list to a list of strings that
+// can be understood by docker.
+// '<HostPath>:<ContainerPath>[:options]', where 'options'
+// is a comma-separated list of the following strings:
+// 'ro', if the path is read only
+// 'Z', if the volume requires SELinux relabeling
+// propagation mode such as 'rslave'
 func GenerateMountBindings(mounts []*container.Mount) []string {
 	result := make([]string, 0, len(mounts))
 	for _, m := range mounts {
@@ -78,16 +88,20 @@ func GenerateMountBindings(mounts []*container.Mount) []string {
 	return result
 }
 
+//NewKubeContainerRuntime returns runtime object of container manager
 func NewKubeContainerRuntime(cm ContainerManager) container.Runtime {
 	return cm.(*containerManager)
 }
 
+//KubeSourcesReady is blank structure just for function referencing
 type KubeSourcesReady struct{}
 
+//AllReady give ready state of Kube Sources
 func (s *KubeSourcesReady) AllReady() bool {
 	return true
 }
 
+//NewContainerRunner returns container manager object
 // TODO: we didn't realized Run In container interface yet
 func NewContainerRunner() container.ContainerCommandRunner {
 	return &containerManager{}

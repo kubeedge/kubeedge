@@ -20,8 +20,9 @@ const (
 	refreshInterval  = 10
 )
 
+//WebSocketConfig defines web socket configuration object type
 type WebSocketConfig struct {
-	Url              string
+	URL              string
 	CertFilePath     string
 	KeyFilePath      string
 	HandshakeTimeout time.Duration
@@ -30,23 +31,26 @@ type WebSocketConfig struct {
 	ExtendHeader     http.Header
 }
 
+//ControllerConfig defines controller configuration object type
 type ControllerConfig struct {
 	HeartbeatPeroid time.Duration
 	RefreshInterval time.Duration
 	CloudhubURL     string
 	AuthInfosPath   string
-	PlacementUrl    string
+	PlacementURL    string
 	ProjectID       string
-	NodeId          string
+	NodeID          string
 }
 
+//DISClientConfig is Huawei data injection service
 type DISClientConfig struct {
-	ApiGatewayUrl string
-	ApiVersion    string
+	APIGatewayURL string
+	APIVersion    string
 	RegionID      string
 	ProjectID     string
 }
 
+//EdgeHubConfig edge hub configuration object containing web socket and controller configuration
 type EdgeHubConfig struct {
 	WSConfig  WebSocketConfig
 	CtrConfig ControllerConfig
@@ -67,6 +71,7 @@ func init() {
 	}
 }
 
+//GetConfig returns the EdgeHub configuration object
 func GetConfig() *EdgeHubConfig {
 	return &edgeHubConfig
 }
@@ -76,7 +81,7 @@ func getWebSocketConfig() error {
 	if err != nil {
 		log.LOGGER.Errorf("Failed to get url for web socket client: %v", err)
 	}
-	edgeHubConfig.WSConfig.Url = url
+	edgeHubConfig.WSConfig.URL = url
 
 	certFile, err := config.CONFIG.GetValue("edgehub.websocket.certfile").ToString()
 	if err != nil {
@@ -131,23 +136,23 @@ func getControllerConfig() error {
 	}
 	edgeHubConfig.CtrConfig.RefreshInterval = time.Duration(interval) * time.Minute
 
-	projectId, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
+	projectID, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
 	if err != nil {
 		return fmt.Errorf("failed to get project id for controller client: %v", err)
 	}
-	edgeHubConfig.CtrConfig.ProjectID = projectId
+	edgeHubConfig.CtrConfig.ProjectID = projectID
 
-	nodeId, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
+	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {
 		return fmt.Errorf("failed to get node id for controller client: %v", err)
 	}
-	edgeHubConfig.CtrConfig.NodeId = nodeId
+	edgeHubConfig.CtrConfig.NodeID = nodeID
 
-	placementUrl, err := config.CONFIG.GetValue("edgehub.controller.placement-url").ToString()
+	placementURL, err := config.CONFIG.GetValue("edgehub.controller.placement-url").ToString()
 	if err != nil {
 		return fmt.Errorf("failed to get placement url for controller client: %v", err)
 	}
-	edgeHubConfig.CtrConfig.PlacementUrl = placementUrl
+	edgeHubConfig.CtrConfig.PlacementURL = placementURL
 
 	authInfoPath, err := config.CONFIG.GetValue("edgehub.controller.auth-info-files-path").ToString()
 	if err != nil {

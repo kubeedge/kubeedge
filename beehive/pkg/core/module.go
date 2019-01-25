@@ -19,7 +19,7 @@ const (
 	MetaGroup = "meta"
 	//EdgedGroup group
 	EdgedGroup = "edged"
-
+	//EdgedModuleName name
 	EdgedModuleName = "edged"
 
 	tryReadKeyTimes = 5
@@ -158,7 +158,7 @@ func inSlice(e string, slice []interface{}) bool {
 	return false
 }
 
-// get modules map
+// GetModules gets modules map
 func GetModules() map[string]Module {
 	return modules
 }

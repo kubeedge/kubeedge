@@ -64,19 +64,24 @@ const (
 	plegRelistPeriod    = time.Second * 1
 	concurrentConsumers = 5
 	backOffPeriod       = 10 * time.Second
+	// MaxContainerBackOff is the max backoff period, exported for the e2e test
 	MaxContainerBackOff = 300 * time.Second
 	enqueueDuration     = 10 * time.Second
-	ImageGCPeriod       = 5 * time.Second
-	ContainerGCPeriod   = 60 * time.Second
+	// ImageGCPeriod is the period for performing image garbage collection.
+	ImageGCPeriod = 5 * time.Second
+	// ContainerGCPeriod is the period for performing container garbage collection.
+	ContainerGCPeriod = 60 * time.Second
 	// Period for performing global cleanup tasks.
-	housekeepingPeriod               = time.Second * 2
-	syncWorkQueuePeriod              = time.Second * 2
-	minAge                           = 60 * time.Second
-	imageGcHighThreshold             = "edged.image-gc-high-threshold"
-	syncMsgRespTimeout               = 1 * time.Minute
+	housekeepingPeriod   = time.Second * 2
+	syncWorkQueuePeriod  = time.Second * 2
+	minAge               = 60 * time.Second
+	imageGcHighThreshold = "edged.image-gc-high-threshold"
+	syncMsgRespTimeout   = 1 * time.Minute
+	//DefaultRootDir give default directory
 	DefaultRootDir                   = "/var/lib/edged"
 	workerResyncIntervalJitterFactor = 0.5
-	EdgeController                   = "controller"
+	//EdgeController gives controller name
+	EdgeController = "controller"
 )
 
 // podReady holds the initPodReady flag and its lock
@@ -127,6 +132,7 @@ type edged struct {
 	workQueue      queue.WorkQueue
 }
 
+//Config defines configuration details
 type Config struct {
 	nodeName                 string
 	nodeNamespace            string
@@ -141,7 +147,7 @@ type Config struct {
 }
 
 func init() {
-	edged, err := NewEdged()
+	edged, err := newEdged()
 	if err != nil {
 		log.LOGGER.Errorf("init new edged error, %v", err)
 		return
@@ -244,7 +250,8 @@ func getConfig() *Config {
 	return &conf
 }
 
-func NewEdged() (*edged, error) {
+//newEdged creates new edged object and initialises it
+func newEdged() (*edged, error) {
 	var gpuManager gpu.GPUManager
 	conf := getConfig()
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)

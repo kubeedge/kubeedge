@@ -25,18 +25,23 @@ import (
 	"k8s.io/api/core/v1"
 )
 
+// DockerConfig represents the config file used by the docker CLI.
+// This config that represents the credentials that should be used
+// when pulling images from specific image repositories.
 type DockerConfig map[string]DockerConfigEntry
 
+//DockerConfigEntry defines
 type DockerConfigEntry struct {
 	Username string
 	Password string
 	Email    string
 }
 
-type DockerConfigJson struct {
+//DockerConfigJSON is json struct for docker configuration
+type DockerConfigJSON struct {
 	Auths DockerConfig `json:"auths"`
 	// +optional
-	HttpHeaders map[string]string `json:"HttpHeaders,omitempty"`
+	HTTPHeaders map[string]string `json:"HttpHeaders,omitempty"`
 }
 
 type dockerConfigEntryWithAuth struct {
@@ -50,6 +55,7 @@ type dockerConfigEntryWithAuth struct {
 	Auth string `json:"auth,omitempty"`
 }
 
+//UnmarshalJSON is to unmarshal json object
 func (ident *DockerConfigEntry) UnmarshalJSON(data []byte) error {
 	var tmp dockerConfigEntryWithAuth
 	err := json.Unmarshal(data, &tmp)
@@ -69,6 +75,7 @@ func (ident *DockerConfigEntry) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+//MarshalJSON is to encode byte array to json
 func (ident DockerConfigEntry) MarshalJSON() ([]byte, error) {
 	toEncode := dockerConfigEntryWithAuth{ident.Username, ident.Password, ident.Email, ""}
 	toEncode.Auth = encodeDockerConfigFieldAuth(ident.Username, ident.Password)
@@ -105,12 +112,12 @@ func encodeDockerConfigFieldAuth(username, password string) string {
 func getDockerConfigEntryFromSecret(passedSecrets []v1.Secret) ([]DockerConfigEntry, error) {
 	dockerConfigEntrys := []DockerConfigEntry{}
 	for _, passedSecret := range passedSecrets {
-		if dockerConfigJsonBytes, dockerConfigJsonExists := passedSecret.Data[v1.DockerConfigJsonKey]; passedSecret.Type == v1.SecretTypeDockerConfigJson && dockerConfigJsonExists && (len(dockerConfigJsonBytes) > 0) {
-			dockerConfigJson := DockerConfigJson{}
-			if err := json.Unmarshal(dockerConfigJsonBytes, &dockerConfigJson); err != nil {
+		if dockerConfigJSONBytes, dockerConfigJSONExists := passedSecret.Data[v1.DockerConfigJsonKey]; passedSecret.Type == v1.SecretTypeDockerConfigJson && dockerConfigJSONExists && (len(dockerConfigJSONBytes) > 0) {
+			dockerConfigJSON := DockerConfigJSON{}
+			if err := json.Unmarshal(dockerConfigJSONBytes, &dockerConfigJSON); err != nil {
 				return nil, err
 			}
-			for _, entry := range dockerConfigJson.Auths {
+			for _, entry := range dockerConfigJSON.Auths {
 				dockerConfigEntrys = append(dockerConfigEntrys, entry)
 			}
 		}

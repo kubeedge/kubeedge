@@ -14,10 +14,11 @@ const (
 	NvidiaGPUScalarResourceName = "nvidia.com/gpu"
 	// NvidiaGPUMaxUsage is the maximum possible usage of a GPU in millis
 	NvidiaGPUMaxUsage = 1000
-
+	//StatusTag is to compare status of resources
 	StatusTag = "StatusTag"
 )
 
+//RainerCoreConfiguration is configuration object for edge node
 type RainerCoreConfiguration struct {
 
 	// IP address for the EdgeStore etcd server
@@ -36,12 +37,15 @@ type RainerCoreConfiguration struct {
 	RegisterNodeNamespace string
 }
 
+//Node is object type for node
 type Node struct {
 	Name string
 }
 
+//UID is string form to represent ID
 type UID string
 
+//error variables
 var (
 	ErrPodNotFound       = errors.New("PodNotFound")
 	ErrContainerNotFound = errors.New("ContainerNotFound")

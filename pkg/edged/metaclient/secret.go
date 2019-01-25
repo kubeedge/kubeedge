@@ -12,10 +12,12 @@ import (
 	api "k8s.io/api/core/v1"
 )
 
+//SecretsGetter is interface to get metaclient secrets
 type SecretsGetter interface {
 	Secrets(namespace string) SecretsInterface
 }
 
+//SecretsInterface is interface for metaclient secret
 type SecretsInterface interface {
 	Create(*api.Secret) (*api.Secret, error)
 	Update(*api.Secret) error
@@ -66,9 +68,10 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	//op := msg.GetOperation()
 	if msg.GetOperation() == model.ResponseOperation {
 		return handleSecretFromMetaDB(content)
-	} else {
-		return handleSecretFromMetaManager(content)
 	}
+	//else
+	return handleSecretFromMetaManager(content)
+
 }
 
 func handleSecretFromMetaDB(content []byte) (*api.Secret, error) {
