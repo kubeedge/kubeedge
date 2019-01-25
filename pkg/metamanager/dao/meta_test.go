@@ -28,8 +28,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/dbm"
 )
 
-// FailedDBOperation is common DB operation fail error
-var failedDBOperationErr = errors.New("Failed DB Operation")
+// errFailedDBOperation is common DB operation fail error
+var errFailedDBOperation = errors.New("Failed DB Operation")
 
 // ormerMock is mocked Ormer implementation
 var ormerMock *beego.MockOrmer
@@ -78,7 +78,7 @@ func TestSaveMeta(t *testing.T) {
 		// Failure Case
 		name:      "FailureCase",
 		returnInt: int64(1),
-		returnErr: failedDBOperationErr,
+		returnErr: errFailedDBOperation,
 	},
 	}
 
@@ -119,7 +119,7 @@ func TestDeleteMetaByKey(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		deleteReturnInt:  int64(0),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -156,7 +156,7 @@ func TestUpdateMeta(t *testing.T) {
 		// Failure Case
 		name:      "FailureCase",
 		returnInt: int64(0),
-		returnErr: failedDBOperationErr,
+		returnErr: errFailedDBOperation,
 	},
 	}
 
@@ -177,8 +177,8 @@ func TestInsertOrUpdate(t *testing.T) {
 	cases := []struct {
 		// name is name of the testcase
 		name string
-		// returnSql is first return of mock interface rawSeterMock's Exec function
-		returnSql sql.Result
+		// returnSQL is first return of mock interface rawSeterMock's Exec function
+		returnSQL sql.Result
 		// returnErr is second return of mock interface rawSeterMock's Exec function which is also expected error
 		returnErr error
 		// returnRaw is the return of mock interface ormerMock's Raw function
@@ -186,21 +186,21 @@ func TestInsertOrUpdate(t *testing.T) {
 	}{{
 		// Success Case
 		name:      "SuccessCase",
-		returnSql: nil,
+		returnSQL: nil,
 		returnErr: nil,
 		returnRaw: rawSeterMock,
 	}, {
 		// Failure Case
 		name:      "FailureCase",
-		returnSql: nil,
-		returnErr: failedDBOperationErr,
+		returnSQL: nil,
+		returnErr: errFailedDBOperation,
 		returnRaw: rawSeterMock,
 	},
 	}
 
 	// run the test cases
 	for _, test := range cases {
-		rawSeterMock.EXPECT().Exec().Return(test.returnSql, test.returnErr).Times(1)
+		rawSeterMock.EXPECT().Exec().Return(test.returnSQL, test.returnErr).Times(1)
 		ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(test.returnRaw).Times(1)
 		err := InsertOrUpdate(&meta)
 		t.Run(test.name, func(t *testing.T) {
@@ -236,7 +236,7 @@ func TestUpdateMetaField(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -280,7 +280,7 @@ func TestUpdateMetaFields(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -324,7 +324,7 @@ func TestQueryMeta(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -381,7 +381,7 @@ func TestQueryAllMeta(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}

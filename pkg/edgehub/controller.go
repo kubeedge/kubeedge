@@ -32,7 +32,8 @@ var (
 	times = 2
 )
 
-type EdgeHubController struct {
+//Controller is EdgeHub controller object
+type Controller struct {
 	context    *context.Context
 	chClient   clients.Adapter
 	config     *config.ControllerConfig
@@ -41,18 +42,19 @@ type EdgeHubController struct {
 	keeperLock sync.RWMutex
 }
 
-func NewEdgeHubController() *EdgeHubController {
-	return &EdgeHubController{
+//NewEdgeHubController creates and returns a EdgeHubController object
+func NewEdgeHubController() *Controller {
+	return &Controller{
 		config:     &config.GetConfig().CtrConfig,
 		stopChan:   make(chan struct{}),
 		syncKeeper: make(map[string]chan model.Message),
 	}
 }
 
-func (ehc *EdgeHubController) initial(ctx *context.Context) error {
-	getUrl := func() string {
+func (ehc *Controller) initial(ctx *context.Context) error {
+	getURL := func() string {
 		for {
-			url, err := ehc.getCloudHubUrl()
+			url, err := ehc.getCloudHubURL()
 			if err != nil {
 				log.LOGGER.Warnf("failed to get cloud hub url, error:%+v", err)
 				time.Sleep(time.Minute)
@@ -62,10 +64,10 @@ func (ehc *EdgeHubController) initial(ctx *context.Context) error {
 		}
 	}
 
-	if ehc.config.ProjectID != "" && ehc.config.NodeId != "" {
-		cloudHubUrl := getUrl()
+	if ehc.config.ProjectID != "" && ehc.config.NodeID != "" {
+		cloudHubURL := getURL()
 		// TODO: set url gracefully
-		config.GetConfig().WSConfig.Url = cloudHubUrl
+		config.GetConfig().WSConfig.URL = cloudHubURL
 	} else {
 		log.LOGGER.Warnf("use the config url for testing")
 	}
@@ -82,7 +84,8 @@ func (ehc *EdgeHubController) initial(ctx *context.Context) error {
 	return nil
 }
 
-func (ehc *EdgeHubController) Start(ctx *context.Context) {
+//Start will start EdgeHub
+func (ehc *Controller) Start(ctx *context.Context) {
 	for {
 		err := ehc.initial(ctx)
 		if err != nil {
@@ -126,7 +129,7 @@ func (ehc *EdgeHubController) Start(ctx *context.Context) {
 	}
 }
 
-func (ehc *EdgeHubController) addKeepChannel(msgID string) chan model.Message {
+func (ehc *Controller) addKeepChannel(msgID string) chan model.Message {
 	ehc.keeperLock.Lock()
 	defer ehc.keeperLock.Unlock()
 
@@ -136,14 +139,14 @@ func (ehc *EdgeHubController) addKeepChannel(msgID string) chan model.Message {
 	return tempChannel
 }
 
-func (ehc *EdgeHubController) deleteKeepChannel(msgID string) {
+func (ehc *Controller) deleteKeepChannel(msgID string) {
 	ehc.keeperLock.Lock()
 	defer ehc.keeperLock.Unlock()
 
 	delete(ehc.syncKeeper, msgID)
 }
 
-func (ehc *EdgeHubController) isSyncResponse(msgID string) bool {
+func (ehc *Controller) isSyncResponse(msgID string) bool {
 	ehc.keeperLock.RLock()
 	defer ehc.keeperLock.RUnlock()
 
@@ -151,7 +154,7 @@ func (ehc *EdgeHubController) isSyncResponse(msgID string) bool {
 	return exist
 }
 
-func (ehc *EdgeHubController) sendToKeepChannel(message model.Message) error {
+func (ehc *Controller) sendToKeepChannel(message model.Message) error {
 	ehc.keeperLock.RLock()
 	defer ehc.keeperLock.RUnlock()
 
@@ -172,7 +175,7 @@ func (ehc *EdgeHubController) sendToKeepChannel(message model.Message) error {
 	return nil
 }
 
-func (ehc *EdgeHubController) dispatch(message model.Message) error {
+func (ehc *Controller) dispatch(message model.Message) error {
 
 	// TODO: dispatch message by the message type
 	md, ok := groupMap[message.GetGroup()]
@@ -190,7 +193,7 @@ func (ehc *EdgeHubController) dispatch(message model.Message) error {
 	return ehc.sendToKeepChannel(message)
 }
 
-func (ehc *EdgeHubController) routeToEdge() {
+func (ehc *Controller) routeToEdge() {
 	for {
 		message, err := ehc.chClient.Receive()
 		if err != nil {
@@ -207,7 +210,7 @@ func (ehc *EdgeHubController) routeToEdge() {
 	}
 }
 
-func (ehc *EdgeHubController) sendToCloud(message model.Message) error {
+func (ehc *Controller) sendToCloud(message model.Message) error {
 	err := ehc.chClient.Send(message)
 	if err != nil {
 		log.LOGGER.Errorf("failed to send message: %v", err)
@@ -235,7 +238,7 @@ func (ehc *EdgeHubController) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (ehc *EdgeHubController) routeToCloud() {
+func (ehc *Controller) routeToCloud() {
 	for {
 		message, err := ehc.context.Receive(ModuleNameEdgeHub)
 		if err != nil {
@@ -254,7 +257,7 @@ func (ehc *EdgeHubController) routeToCloud() {
 	}
 }
 
-func (ehc *EdgeHubController) keepalive() {
+func (ehc *Controller) keepalive() {
 	for {
 		msg := model.NewMessage("").
 			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
@@ -269,11 +272,11 @@ func (ehc *EdgeHubController) keepalive() {
 	}
 }
 
-func (ehc *EdgeHubController) pubConnectInfo(isConnected bool) {
+func (ehc *Controller) pubConnectInfo(isConnected bool) {
 	// var info model.Message
-	content := model.CLOUD_CONNECTED
+	content := model.CloudConnected
 	if !isConnected {
-		content = model.CLOUD_DISCONNECTED
+		content = model.CloudDisconnected
 	}
 
 	for _, group := range groupMap {
@@ -283,8 +286,8 @@ func (ehc *EdgeHubController) pubConnectInfo(isConnected bool) {
 	}
 }
 
-func (ehc *EdgeHubController) postUrlRequst(client *http.Client) (string, error) {
-	req, err := http_utils.BuildRequest(http.MethodGet, ehc.config.PlacementUrl, nil, "")
+func (ehc *Controller) postURLRequst(client *http.Client) (string, error) {
+	req, err := http_utils.BuildRequest(http.MethodGet, ehc.config.PlacementURL, nil, "")
 	if err != nil {
 		log.LOGGER.Errorf("failed to build request: %v", err)
 		return "", err
@@ -301,7 +304,7 @@ func (ehc *EdgeHubController) postUrlRequst(client *http.Client) (string, error)
 		case http.StatusOK:
 			defer resp.Body.Close()
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			url := fmt.Sprintf("%s/%s/%s/events", string(bodyBytes), ehc.config.ProjectID, ehc.config.NodeId)
+			url := fmt.Sprintf("%s/%s/%s/events", string(bodyBytes), ehc.config.ProjectID, ehc.config.NodeID)
 			log.LOGGER.Infof("successfully to get cloudaccess url: %s", url)
 			return url, nil
 		case http.StatusBadRequest:
@@ -314,7 +317,7 @@ func (ehc *EdgeHubController) postUrlRequst(client *http.Client) (string, error)
 	}
 }
 
-func (ehc *EdgeHubController) getCloudHubUrl() (string, error) {
+func (ehc *Controller) getCloudHubURL() (string, error) {
 	// TODO: get the file path gracefully
 	certFile := config.GetConfig().WSConfig.CertFilePath
 	keyFile := config.GetConfig().WSConfig.KeyFilePath
@@ -324,11 +327,11 @@ func (ehc *EdgeHubController) getCloudHubUrl() (string, error) {
 		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
 	}
 
-	cloudHubUrl, err := ehc.postUrlRequst(placementClient)
+	cloudHubURL, err := ehc.postURLRequst(placementClient)
 	if err != nil {
 		log.LOGGER.Warnf("failed to get cloud hub url, error: %+v", err)
 		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
 	}
 
-	return cloudHubUrl, nil
+	return cloudHubURL, nil
 }

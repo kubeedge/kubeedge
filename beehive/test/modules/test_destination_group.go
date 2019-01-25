@@ -7,6 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
+//Constant for test module destination group name
 const (
 	DestinationGroupModule = "destinationgroupmodule"
 )

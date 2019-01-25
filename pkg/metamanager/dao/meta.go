@@ -6,6 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/dbm"
 )
 
+//constant metatable name reference
 const (
 	MetaTableName = "meta"
 )

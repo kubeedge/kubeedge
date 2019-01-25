@@ -42,7 +42,7 @@ type testHeaderYamlGenerator struct {
 
 //webSocketConfigYaml is a structure which is used to generate the test YAML file to test WebSocket config components
 type webSocketConfigYaml struct {
-	Url              string `yaml:"url,omitempty"`
+	URL              string `yaml:"url,omitempty"`
 	CertFilePath     string `yaml:"certfile,omitempty"`
 	KeyFilePath      string `yaml:"keyfile,omitempty"`
 	HandshakeTimeout string `yaml:"handshake-timeout,omitempty"`
@@ -62,9 +62,9 @@ type controllerConfigYaml struct {
 	RefreshInterval string `yaml:"refresh-ak-sk-interval,omitempty"`
 	CloudhubURL     string `yaml:"cloud-hub-url"`
 	AuthInfosPath   string `yaml:"auth-info-files-path,omitempty"`
-	PlacementUrl    string `yaml:"placement-url,omitempty"`
+	PlacementURL    string `yaml:"placement-url,omitempty"`
 	ProjectID       string `yaml:"project-id,omitempty"`
-	NodeId          string `yaml:"node-id,omitempty"`
+	NodeID          string `yaml:"node-id,omitempty"`
 }
 
 //edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
@@ -86,7 +86,7 @@ func TestGetConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath:     "/tmp/edge.crt",
 						KeyFilePath:      "/tmp/edge.key",
 						HandshakeTimeout: "500",
@@ -97,15 +97,15 @@ func TestGetConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
-						NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
 			&EdgeHubConfig{
 				WebSocketConfig{
-					Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 					CertFilePath:     "/tmp/edge.crt",
 					KeyFilePath:      "/tmp/edge.key",
 					HandshakeTimeout: 500 * time.Second,
@@ -117,9 +117,9 @@ func TestGetConfig(t *testing.T) {
 					HeartbeatPeroid: 150 * time.Second,
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
-					PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
-					NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
 
@@ -128,20 +128,20 @@ func TestGetConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:          "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:          "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath: "/tmp/edge.crt",
 						KeyFilePath:  "/tmp/edge.key",
 					},
 					controllerConfigYaml{
-						PlacementUrl: "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
-						NodeId:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
 			&EdgeHubConfig{
 				WebSocketConfig{
-					Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 					CertFilePath:     "/tmp/edge.crt",
 					KeyFilePath:      "/tmp/edge.key",
 					HandshakeTimeout: 60 * time.Second,
@@ -153,9 +153,9 @@ func TestGetConfig(t *testing.T) {
 					AuthInfosPath:   "/var/IEF/secret",
 					HeartbeatPeroid: 15 * time.Second,
 					RefreshInterval: 10 * time.Minute,
-					PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
-					NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
 	}
@@ -201,7 +201,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath:     "/tmp/edge.crt",
 						KeyFilePath:      "/tmp/edge.key",
 						HandshakeTimeout: "500",
@@ -218,7 +218,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:          "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:          "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath: "/tmp/edge.crt",
 						KeyFilePath:  "/tmp/edge.key",
 					},
@@ -248,7 +248,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 						KeyFilePath:      "/tmp/edge.key",
 						HandshakeTimeout: "500",
 						WriteDeadline:    "100",
@@ -264,7 +264,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{
-						Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath:     "/tmp/edge.crt",
 						HandshakeTimeout: "500",
 						WriteDeadline:    "100",
@@ -313,9 +313,9 @@ func Test_getControllerConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
-						NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
@@ -327,9 +327,9 @@ func Test_getControllerConfig(t *testing.T) {
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
 					controllerConfigYaml{
-						PlacementUrl: "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
-						NodeId:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
@@ -345,7 +345,7 @@ func Test_getControllerConfig(t *testing.T) {
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
-						NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
@@ -360,8 +360,8 @@ func Test_getControllerConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						NodeId:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
@@ -376,7 +376,7 @@ func Test_getControllerConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						PlacementUrl:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
+						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
 					},
 				},

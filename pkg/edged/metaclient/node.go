@@ -6,10 +6,12 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
+//NodesGetter to get node interface
 type NodesGetter interface {
 	Nodes(namespace string) NodesInterface
 }
 
+//NodesInterface is interface for metaclient nodes
 type NodesInterface interface {
 	Create(*api.Node) (*api.Node, error)
 	Update(*api.Node) error

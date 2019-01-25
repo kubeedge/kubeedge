@@ -1,15 +1,18 @@
 package rule
 
-type RuleKey string
+//Key string type for rules exporting
+type Key string
 
+//constants for different rules key
 const (
-	EventType     RuleKey = "event_type"
-	MessageFilter RuleKey = "message_filter"
-	FunctionUrn   RuleKey = "function_urn"
-	TargetAddress RuleKey = "target_address"
+	EventType     Key = "event_type"
+	MessageFilter Key = "message_filter"
+	FunctionUrn   Key = "function_urn"
+	TargetAddress Key = "target_address"
 )
 
+//Rule defines map of rules
 type Rule struct {
-	Name string             `json:"name,omitempty"`
-	Data map[RuleKey]string `json:"data,omitempty"`
+	Name string         `json:"name,omitempty"`
+	Data map[Key]string `json:"data,omitempty"`
 }

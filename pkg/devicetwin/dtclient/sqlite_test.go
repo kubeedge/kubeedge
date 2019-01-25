@@ -45,7 +45,7 @@ func TestSaveTwin(t *testing.T) {
 		// Failure Case
 		name:      "FailureCase",
 		returnInt: int64(1),
-		returnErr: failedDBOperationErr,
+		returnErr: errFailedDBOperation,
 	},
 	}
 
@@ -86,7 +86,7 @@ func TestDeleteTwinByID(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		deleteReturnInt:  int64(0),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -130,7 +130,7 @@ func TestUpdateTwinField(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -174,7 +174,7 @@ func TestUpdateTwinFields(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -218,7 +218,7 @@ func TestQueryTwin(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -276,7 +276,7 @@ func TestQueryTwinAll(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}

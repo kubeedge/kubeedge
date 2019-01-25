@@ -6,10 +6,12 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
+//PodsGetter is interface to get pods
 type PodsGetter interface {
 	Pods(namespace string) PodsInterface
 }
 
+//PodsInterface is pod interface
 type PodsInterface interface {
 	Create(*api.Pod) (*api.Pod, error)
 	Update(*api.Pod) error

@@ -1,6 +1,7 @@
 package model
 
+//constants for cloud connection
 const (
-	CLOUD_CONNECTED    = "cloud_connected"
-	CLOUD_DISCONNECTED = "cloud_disconnected"
+	CloudConnected    = "cloud_connected"
+	CloudDisconnected = "cloud_disconnected"
 )

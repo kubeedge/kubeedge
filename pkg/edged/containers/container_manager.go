@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// containerManager is derived from "k8s.io/kubernetes/pkg/kubelet/cm/container_manager_linux.go"
+//Package containers : containerManager is derived from "k8s.io/kubernetes/pkg/kubelet/cm/container_manager_linux.go"
 // runed extra interface  and changed most of the realization
 package containers
 
@@ -58,6 +58,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/securitycontext"
 )
 
+//Pod details constants
 const (
 	// Taken from lmctfy https://github.com/google/lmctfy/blob/master/lmctfy/controllers/cpu_controller.cc
 	minShares     = 2
@@ -162,6 +163,7 @@ const (
 	defaultNetWortMode dockercontainer.NetworkMode = "host"
 )
 
+//NewContainerManager initialises and returns a container manager object
 func NewContainerManager(runtimeService cri.RuntimeService, livenessManager proberesults.Manager, containerBackOff *flowcontrol.Backoff, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (ContainerManager, error) {
 	var devicePluginManager deviceplugin.Manager
 	var err error
@@ -238,11 +240,11 @@ func shouldContainerBeRestarted(container *v1.Container, pod *v1.Pod, status *cr
 		return true
 	}
 	// Check whether container is running
-	if status.State == cri.Status_RUNNING {
+	if status.State == cri.StatusRUNNING {
 		return false
 	}
 	// Always restart container in the unknown, or in the created state.
-	if status.State == cri.Status_UNKNOWN || status.State == cri.Status_CREATED {
+	if status.State == cri.StatusUNKNOWN || status.State == cri.StatusCREATED {
 		return true
 	}
 	// Check RestartPolicy for dead container
@@ -311,12 +313,12 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 			changes.ContainersToStart = append(changes.ContainersToStart, idx)
 			continue
 		}
-		status, err := cm.runtimeService.ContainerStatus(innerContainer.Id)
+		status, err := cm.runtimeService.ContainerStatus(innerContainer.ID)
 		if err != nil {
 			log.LOGGER.Errorf("get container status for pod %s failed: %v", pod.Name, err)
 		}
 
-		if status == nil || status.State != cri.Status_RUNNING {
+		if status == nil || status.State != cri.StatusRUNNING {
 			if shouldContainerBeRestarted(&container, pod, status) {
 				message := fmt.Sprintf("Container %+v is dead, but RestartPolicy says that we should restart it.", container)
 				log.LOGGER.Infof(message)
@@ -503,7 +505,7 @@ func (cm *containerManager) InitPodContainer() error {
 	}
 
 	for _, container := range containers {
-		podID, err := cm.getPodID(container.Id)
+		podID, err := cm.getPodID(container.ID)
 		if err != nil {
 			return err
 		}
@@ -535,7 +537,7 @@ func (cm *containerManager) getContainer(containerID string) (*cri.Container, er
 	}
 
 	container := &cri.Container{
-		Id:      containerID,
+		ID:      containerID,
 		StartAt: containerInspect.Status.CreatedAt,
 		Status:  containerInspect.Status.State,
 	}
@@ -709,14 +711,14 @@ func (cm *containerManager) TerminatePod(uid types.UID) error {
 		log.LOGGER.Errorf("get container id error, terminate pod [%s] not found.", uid)
 		return apis.ErrContainerNotFound
 	}
-	err := cm.runtimeService.StopContainer(container.Id, defaultGracePeriod)
+	err := cm.runtimeService.StopContainer(container.ID, defaultGracePeriod)
 	if err != nil {
-		log.LOGGER.Errorf("stop container [%s] for pod [%s], err: %v", container.Id, uid, err)
+		log.LOGGER.Errorf("stop container [%s] for pod [%s], err: %v", container.ID, uid, err)
 		return err
 	}
-	err = cm.runtimeService.DeleteContainer(kubecontainer.ContainerID{ID: container.Id})
+	err = cm.runtimeService.DeleteContainer(kubecontainer.ContainerID{ID: container.ID})
 	if err != nil {
-		log.LOGGER.Errorf("remove container [%s] for pod [%s], err: %v", container.Id, uid, err)
+		log.LOGGER.Errorf("remove container [%s] for pod [%s], err: %v", container.ID, uid, err)
 		return err
 	}
 	cm.deleteContainerFromMap(uid)
@@ -745,15 +747,16 @@ func (cm *containerManager) RemoveContainerLog(containerID string) error {
 func (cm *containerManager) getPodContainerLabels(pod *v1.Pod) (map[string]string, error) {
 	container, ok := cm.getContainerFromMap(pod.UID)
 	if !ok {
-		return nil, fmt.Errorf("get pod [%s] status failed with container nod found error.", pod.Name)
+		return nil, fmt.Errorf("get pod [%s] status failed with container nod found error", pod.Name)
 	}
-	status, err := cm.runtimeService.ContainerStatus(container.Id)
+	status, err := cm.runtimeService.ContainerStatus(container.ID)
 	if err != nil {
 		return nil, fmt.Errorf("get pod [%s] status failed with error %v", pod.Name, err)
 	}
 	return status.Labels, nil
 }
 
+//GetContainerStatus returns container status
 func GetContainerStatus(statuses []v1.ContainerStatus, name string) (v1.ContainerStatus, bool) {
 	for i := range statuses {
 		if statuses[i].Name == name {
@@ -803,20 +806,20 @@ func (cm *containerManager) GeneratePodReadyCondition(statuses []v1.ContainerSta
 
 func (cm *containerManager) convertStatusToAPIStatus(pod *v1.Pod, status *cri.ContainerStatus) *v1.PodStatus {
 	switch status.State {
-	case cri.Status_RUNNING:
+	case cri.StatusRUNNING:
 		kubeStatus := cm.toKubeContainerStatus(v1.PodRunning, status)
 		return &v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
-	case cri.Status_EXITED:
+	case cri.StatusEXITED:
 		if (pod.Spec.RestartPolicy == v1.RestartPolicyNever || pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure) && status.ExitCode == 0 {
 			kubeStatus := cm.toKubeContainerStatus(v1.PodSucceeded, status)
 			return &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		}
 		kubeStatus := cm.toKubeContainerStatus(v1.PodFailed, status)
 		return &v1.PodStatus{Phase: v1.PodFailed, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
-	case cri.Status_PAUSED:
+	case cri.StatusPAUSED:
 		kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
 		return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
-	case cri.Status_CREATED:
+	case cri.StatusCREATED:
 		if (pod.Spec.RestartPolicy == v1.RestartPolicyNever || pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure) && status.ExitCode != 0 {
 			kubeStatus := cm.toKubeContainerStatus(v1.PodFailed, status)
 			return &v1.PodStatus{Phase: v1.PodFailed, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
@@ -829,6 +832,7 @@ func (cm *containerManager) convertStatusToAPIStatus(pod *v1.Pod, status *cri.Co
 	}
 }
 
+//GetPhase returns pod phase
 func GetPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 	unknown := 0
 	running := 0
@@ -903,14 +907,14 @@ func (cm *containerManager) GetPodStatusOwn(pod *v1.Pod) (*v1.PodStatus, error) 
 			status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: "ContainerCreating"}}
 			kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
 			return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
-		} else {
-			status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: "Completed"}}
-			kubeStatus := cm.toKubeContainerStatus(v1.PodSucceeded, status)
-			return &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
 		}
+		//else
+		status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: "Completed"}}
+		kubeStatus := cm.toKubeContainerStatus(v1.PodSucceeded, status)
+		return &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
 
 	}
-	status, err := cm.runtimeService.ContainerStatus(container.Id)
+	status, err := cm.runtimeService.ContainerStatus(container.ID)
 	if err != nil {
 		status := &cri.ContainerStatus{}
 		kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
@@ -997,7 +1001,7 @@ func (cm *containerManager) getHostIPByInterface() (string, error) {
 func (cm *containerManager) GetPods(all bool) ([]*kubecontainer.Pod, error) {
 	pods := make([]*kubecontainer.Pod, 0)
 
-	uids := cm.listPodsUid()
+	uids := cm.listPodsUID()
 	for _, id := range uids {
 		pod := &kubecontainer.Pod{}
 		pod.ID = id
@@ -1027,7 +1031,7 @@ func (cm *containerManager) getContainerFromMap(podID types.UID) (*cri.Container
 	return container, ok
 }
 
-func (cm *containerManager) listPodsUid() []types.UID {
+func (cm *containerManager) listPodsUID() []types.UID {
 	cm.podContainerLock.Lock()
 	defer cm.podContainerLock.Unlock()
 
@@ -1040,7 +1044,7 @@ func (cm *containerManager) listPodsUid() []types.UID {
 
 func (cm *containerManager) GarbageCollect(gcPolicy kubecontainer.ContainerGCPolicy, ready bool, evictNonDeletedPods bool) error {
 	podsInUse := sets.String{}
-	pods := cm.listPodsUid()
+	pods := cm.listPodsUID()
 	for _, podUID := range pods {
 		podsInUse.Insert(string(podUID))
 	}
@@ -1059,7 +1063,7 @@ func (cm *containerManager) CleanupOrphanedPod(activePods []*v1.Pod) {
 		podsInUse.Insert(string(pod.UID))
 	}
 
-	uids := cm.listPodsUid()
+	uids := cm.listPodsUID()
 	for _, id := range uids {
 		if podsInUse.Has(string(id)) {
 			continue
@@ -1085,9 +1089,10 @@ func (ev byLastUsedAndDetected) Swap(i, j int) { ev[i], ev[j] = ev[j], ev[i] }
 func (ev byLastUsedAndDetected) Less(i, j int) bool {
 	if ev[i].lastUsed.Equal(ev[j].lastUsed) {
 		return ev[i].firstDetected.Before(ev[j].firstDetected)
-	} else {
-		return ev[i].lastUsed.Before(ev[j].lastUsed)
 	}
+	//else
+	return ev[i].lastUsed.Before(ev[j].lastUsed)
+
 }
 
 func (cm *containerManager) freeContainer(freeTime time.Time, gcPolicy kubecontainer.ContainerGCPolicy, podsInUse sets.String) error {
@@ -1151,26 +1156,26 @@ func (cm *containerManager) detectContainers(detectTime time.Time, podsInUse set
 	currentContainers := sets.NewString()
 
 	for _, container := range containers {
-		log.LOGGER.Infof("Adding container ID %s to currentContainers", container.Id)
-		currentContainers.Insert(container.Id)
+		log.LOGGER.Infof("Adding container ID %s to currentContainers", container.ID)
+		currentContainers.Insert(container.ID)
 
-		record, ok := cm.getContainerRecords(container.Id)
+		record, ok := cm.getContainerRecords(container.ID)
 		if !ok {
-			log.LOGGER.Infof("Container ID %s is new", container.Id)
-			podID, _ := cm.getPodID(container.Id)
+			log.LOGGER.Infof("Container ID %s is new", container.ID)
+			podID, _ := cm.getPodID(container.ID)
 			record = &containerRecord{
 				firstDetected: container.StartAt,
 				podID:         podID,
 			}
-			cm.addContainerRecords(container.Id, record)
+			cm.addContainerRecords(container.ID, record)
 		}
 
 		if cm.isContainerUsed(record.podID, podsInUse) {
-			log.LOGGER.Infof("Setting Container ID %s lastUsed to %v", container.Id, now)
+			log.LOGGER.Infof("Setting Container ID %s lastUsed to %v", container.ID, now)
 			record.lastUsed = now
 		}
 
-		log.LOGGER.Infof("Container ID [%s], status is [%d], startat [%s]", container.Id, container.Status, container.StartAt)
+		log.LOGGER.Infof("Container ID [%s], status is [%d], startat [%s]", container.ID, container.Status, container.StartAt)
 		record.Status = container.Status
 	}
 

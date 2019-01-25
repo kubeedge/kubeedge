@@ -44,7 +44,7 @@ func TestSaveDeviceAttr(t *testing.T) {
 		// Failure Case
 		name:      "FailureCase",
 		returnInt: int64(1),
-		returnErr: failedDBOperationErr,
+		returnErr: errFailedDBOperation,
 	},
 	}
 
@@ -85,7 +85,7 @@ func TestDeleteDeviceAttrByDeviceID(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		deleteReturnInt:  int64(0),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -129,7 +129,7 @@ func TestDeleteDeviceAttr(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		deleteReturnInt:  int64(0),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -173,7 +173,7 @@ func TestUpdateDeviceAttrField(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -217,7 +217,7 @@ func TestUpdateDeviceAttrFields(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -261,7 +261,7 @@ func TestQueryDeviceAttr(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		allReturnInt:     int64(0),
-		allReturnErr:     failedDBOperationErr,
+		allReturnErr:     errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -317,7 +317,7 @@ func TestUpdateDeviceAttrMulti(t *testing.T) {
 		name:             "FailureCase",
 		filterReturn:     querySeterMock,
 		updateReturnInt:  int64(0),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		queryTableReturn: querySeterMock,
 	},
 	}
@@ -388,7 +388,7 @@ func TestDeviceAttrTrans(t *testing.T) {
 		filterReturn:     nil,
 		filterTimes:      0,
 		insertReturnInt:  int64(1),
-		insertReturnErr:  failedDBOperationErr,
+		insertReturnErr:  errFailedDBOperation,
 		insertTimes:      1,
 		deleteReturnInt:  int64(1),
 		deleteReturnErr:  nil,
@@ -398,7 +398,7 @@ func TestDeviceAttrTrans(t *testing.T) {
 		updateTimes:      0,
 		queryTableReturn: nil,
 		queryTableTimes:  0,
-		wantErr:          failedDBOperationErr,
+		wantErr:          errFailedDBOperation,
 	}, {
 		// Failure Case DeleteDeviceAttr
 		name:             "DeviceAttrTransDeleteDeviceAttrFailureCase",
@@ -411,14 +411,14 @@ func TestDeviceAttrTrans(t *testing.T) {
 		insertReturnErr:  nil,
 		insertTimes:      1,
 		deleteReturnInt:  int64(1),
-		deleteReturnErr:  failedDBOperationErr,
+		deleteReturnErr:  errFailedDBOperation,
 		deleteTimes:      1,
 		updateReturnInt:  int64(1),
 		updateReturnErr:  nil,
 		updateTimes:      0,
 		queryTableReturn: querySeterMock,
 		queryTableTimes:  1,
-		wantErr:          failedDBOperationErr,
+		wantErr:          errFailedDBOperation,
 	}, {
 		// Failure Case UpdateDeviceAttrFields
 		name:             "DeviceAttrTransUpdateDeviceAttrFieldsFailureCase",
@@ -434,11 +434,11 @@ func TestDeviceAttrTrans(t *testing.T) {
 		deleteReturnErr:  nil,
 		deleteTimes:      1,
 		updateReturnInt:  int64(1),
-		updateReturnErr:  failedDBOperationErr,
+		updateReturnErr:  errFailedDBOperation,
 		updateTimes:      1,
 		queryTableReturn: querySeterMock,
 		queryTableTimes:  2,
-		wantErr:          failedDBOperationErr,
+		wantErr:          errFailedDBOperation,
 	}, {
 		// Success Case
 		name:             "DeviceAttrTransSuccessCase",
