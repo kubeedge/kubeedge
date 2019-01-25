@@ -41,7 +41,7 @@ func TestGetClient(t *testing.T) {
 			clientType: ClientTypeWebSocket,
 			config: &config.EdgeHubConfig{
 				WSConfig: config.WebSocketConfig{
-					Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 					CertFilePath:     "/tmp/edge.crt",
 					KeyFilePath:      "/tmp/edge.key",
 					HandshakeTimeout: 500 * time.Second,
@@ -51,7 +51,7 @@ func TestGetClient(t *testing.T) {
 				},
 			},
 		}, wsclient.NewWebSocketClient(&wsclient.WebSocketConfig{
-			Url:              "ws://127.0.0.1:20000/fake_group_id/events",
+			URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 			CertFilePath:     "/tmp/edge.crt",
 			KeyFilePath:      "/tmp/edge.key",
 			HandshakeTimeout: 500 * time.Second,
