@@ -19,12 +19,14 @@ workdir=`pwd`
 cd $workdir
 
 cd ../
-curpath=$PWD
 echo $PWD
-rm -rf /home/src/integration
-mkdir -p /home/src/
 
 compilemodule=$1
-
-ln -s $curpath /home/src/integration
-ginkgo build -r modules/edgecore/$compilemodule
+#compile all test if user doesn't specify the test else compile only specified tests.
+if [ $# -eq 0 ]
+  then
+    echo "compiling all tests !!"
+    ginkgo build -r
+else
+    ginkgo build -r $compilemodule
+fi

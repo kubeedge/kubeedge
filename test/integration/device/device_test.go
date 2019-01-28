@@ -14,16 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package integration
+package device_test
 
 import (
-	"database/sql"
 	"encoding/json"
-	"os"
-	"path/filepath"
 
 	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/test/integration/utils/common"
+	. "github.com/kubeedge/kubeedge/test/integration/utils/helpers"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	_ "github.com/mattn/go-sqlite3"
@@ -31,54 +29,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-//DeviceUpdate device update
-type DeviceUpdate struct {
-	State string `json:"state,omitempty"`
-}
-
-//Device the struct of device
-type Device struct {
-	ID          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	State       string `json:"state,omitempty"`
-	LastOnline  string `json:"last_online,omitempty"`
-}
-
 //getting deviceid from the DB and assigning to it
 var DeviceID string
-
-//Function to access the edge_core DB and return the device state.
-func getDeviceStateFromDB(deviceID string) string {
-	var device Device
-
-	pwd, err := os.Getwd()
-	if err != nil {
-		common.Failf("Failed to get PWD: %v", err)
-		os.Exit(1)
-	}
-	destpath := filepath.Join(pwd, "../../edge.db")
-	db, err := sql.Open("sqlite3", destpath)
-	if err != nil {
-		common.Failf("Open Sqlite DB failed : %v", err)
-	}
-	defer db.Close()
-	row, err := db.Query("SELECT * FROM device")
-	if err != nil {
-		common.Failf("Query Sqlite DB failed: %v", err)
-	}
-	defer row.Close()
-	for row.Next() {
-		err = row.Scan(&device.ID, &device.Name, &device.Description, &device.State, &device.LastOnline)
-		if err != nil {
-			common.Failf("Failed to scan DB rows: %v", err)
-		}
-		if string(device.ID) == deviceID {
-			break
-		}
-	}
-	return device.State
-}
 
 //Run Test cases
 var _ = Describe("Event Bus Testing", func() {
@@ -163,7 +115,7 @@ var _ = Describe("Event Bus Testing", func() {
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := getDeviceStateFromDB(DeviceID)
+				deviceState := GetDeviceStateFromDB(DeviceID)
 				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("online"), "Device state is not online within specified time")
@@ -185,7 +137,7 @@ var _ = Describe("Event Bus Testing", func() {
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := getDeviceStateFromDB(DeviceID)
+				deviceState := GetDeviceStateFromDB(DeviceID)
 				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
@@ -206,7 +158,7 @@ var _ = Describe("Event Bus Testing", func() {
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := getDeviceStateFromDB(DeviceID)
+				deviceState := GetDeviceStateFromDB(DeviceID)
 				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("offline"), "Device state is not offline within specified time")
