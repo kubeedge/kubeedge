@@ -14,22 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package integration
+package device_test
 
 import (
-	"bytes"
-	"crypto/tls"
-	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/kubeedge/kubeedge/pkg/devicetwin/dtcommon"
-	"github.com/kubeedge/kubeedge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/test/integration/utils/edge"
+	. "github.com/kubeedge/kubeedge/test/integration/utils/helpers"
 
-	MQTT "github.com/eclipse/paho.mqtt.golang"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -62,72 +58,6 @@ var (
 	ClientID = "eventbus"
 )
 
-// HubclientInit create mqtt client config
-func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
-	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
-	if username != "" {
-		opts.SetUsername(username)
-		if password != "" {
-			opts.SetPassword(password)
-		}
-	}
-	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
-	opts.SetTLSConfig(tlsConfig)
-	return opts
-}
-
-//function to handle device addition and deletion.
-func HandleAddAndDeleteDevice(operation string) bool {
-	var req *http.Request
-	var err error
-
-	client := &http.Client{}
-	switch operation {
-	case "PUT":
-		payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{
-			{
-				ID:          DeviceID,
-				Name:        "edgedevice",
-				Description: "integrationtest",
-				State:       "unknown",
-			}}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Add device to edge_core DB is failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPut, ctx.Cfg.TestManager+"/devices", bytes.NewBuffer(respbytes))
-	case "DELETE":
-		payload := dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
-			{
-				ID:          DeviceID,
-				Name:        "edgedevice",
-				Description: "integrationtest",
-				State:       "unknown",
-			}}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Remove device from edge_core DB failed: %v", err)
-			return false
-		}
-		req, err = http.NewRequest(http.MethodDelete, ctx.Cfg.TestManager+"/devices", bytes.NewBuffer(respbytes))
-	}
-	if err != nil {
-		// handle error
-		common.Failf("Open Sqlite DB failed :%v", err)
-		return false
-	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	t := time.Now()
-	resp, err := client.Do(req)
-	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
-	if err != nil {
-		// handle error
-		common.Failf("HTTP request is failed :%v", err)
-		return false
-	}
-	return true
-}
-
 //Function to run the Ginkgo Test
 func TestEdgecoreEventBus(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -139,13 +69,13 @@ func TestEdgecoreEventBus(t *testing.T) {
 		common.InfoV2("Adding Mock device to edgenode !!")
 		//Generate the random string and assign as a DeviceID
 		DeviceID = "kubeedge-device-" + edge.GetRandomString(10)
-		IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut)
+		IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, DeviceID, ctx.Cfg.TestManager+"/devices")
 		Expect(IsDeviceAdded).Should(BeTrue())
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")
 		common.InfoV2("Remove Mock device from edgenode !!")
-		IsDeviceDeleted := HandleAddAndDeleteDevice(http.MethodDelete)
+		IsDeviceDeleted := HandleAddAndDeleteDevice(http.MethodDelete, DeviceID, ctx.Cfg.TestManager+"/devices")
 		Expect(IsDeviceDeleted).Should(BeTrue())
 	})
 

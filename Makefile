@@ -23,5 +23,5 @@ verify:
 
 .PHONY: integration_test
 integration_test:
-	bash test/integration/scripts/execute.sh eventbus
+	bash test/integration/scripts/execute.sh
 

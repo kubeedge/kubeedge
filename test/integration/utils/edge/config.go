@@ -28,8 +28,10 @@ import (
 
 //config.json decode struct
 type Config struct {
-	MqttEndpoint string `json:"mqttEndpoint"`
-	TestManager  string `json:"testManager"`
+	MqttEndpoint  string   `json:"mqttEndpoint"`
+	TestManager   string   `json:"testManager"`
+	EdgedEndpoint string   `json:"edgedEndpoint"`
+	AppImageUrl   []string `json:"image_url"`
 }
 
 //config struct

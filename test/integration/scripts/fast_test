@@ -19,7 +19,7 @@ workdir=`pwd`
 cd $workdir
 
 debugflag="-v 6 -alsologtostderr"
-modulename=$1
+compilemodule=$1
 
 #setup env
 cd ../
@@ -28,9 +28,18 @@ cd ../
 cat >config.json<<END
 {
         "mqttEndpoint":"tcp://$MQTT_SERVER:1884",
-        "testManager": "http://127.0.0.1:12345"
+        "testManager": "http://127.0.0.1:12345",
+        "edgedEndpoint": "http://127.0.0.1:10255",
+        "image_url": ["nginx:latest", "redis:latest"]
 }
 END
 
-#run testcase
-./modules/edgecore/$modulename/${modulename}.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+if [ $# -eq 0 ]
+  then
+    #run testcase
+    ./appdeployment/appdeployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./device/device.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+else
+    ./$compilemodule/$compilemodule.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+fi
+
