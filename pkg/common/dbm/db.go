@@ -11,6 +11,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	// defaultDriverName is sqlite3
+	defaultDriverName = "sqlite3"
+	// defaultDbName is default
+	defaultDbName = "default"
+	// defaultDataSource is edge.db
+	defaultDataSource = "edge.db"
+)
+
 var (
 	driverName string
 	dbName     string
@@ -36,13 +45,13 @@ func init() {
 	dbName, _ = config.CONFIG.GetValue("database.name").ToString()
 	dataSource, _ = config.CONFIG.GetValue("database.source").ToString()
 	if driverName == "" {
-		driverName = "sqlite3"
+		driverName = defaultDriverName
 	}
 	if dbName == "" {
-		dbName = "default"
+		dbName = defaultDbName
 	}
 	if dataSource == "" {
-		dataSource = "edge.db"
+		dataSource = defaultDataSource
 	}
 
 	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
