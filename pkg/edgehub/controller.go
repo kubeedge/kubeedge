@@ -92,17 +92,14 @@ func (ehc *Controller) Start(ctx *context.Context) {
 			log.LOGGER.Fatalf("failed to init controller: %v", err)
 			return
 		}
-
 		err = ehc.chClient.Init()
 		if err != nil {
 			log.LOGGER.Errorf("connection error, try again after 60s: %v", err)
 			time.Sleep(waitConnectionPeriod)
 			continue
 		}
-
 		// execute hook func after connect
 		ehc.pubConnectInfo(true)
-
 		go ehc.routeToEdge()
 		go ehc.routeToCloud()
 		go ehc.keepalive()
@@ -116,7 +113,7 @@ func (ehc *Controller) Start(ctx *context.Context) {
 		ehc.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(ehc.config.HeartbeatPeroid * 2)
+		time.Sleep(ehc.config.HeartbeatPeriod * 2)
 
 		// clean channel
 		for i := 0; i < times; i++ {
@@ -157,13 +154,11 @@ func (ehc *Controller) isSyncResponse(msgID string) bool {
 func (ehc *Controller) sendToKeepChannel(message model.Message) error {
 	ehc.keeperLock.RLock()
 	defer ehc.keeperLock.RUnlock()
-
 	channel, exist := ehc.syncKeeper[message.GetParentID()]
 	if !exist {
 		log.LOGGER.Errorf("failed to get sync keeper channel, messageID:%+v", message)
 		return fmt.Errorf("failed to get sync keeper channel, messageID:%+v", message)
 	}
-
 	// send response into synckeep channel
 	select {
 	case channel <- message:
@@ -171,12 +166,10 @@ func (ehc *Controller) sendToKeepChannel(message model.Message) error {
 		log.LOGGER.Errorf("failed to send message to sync keep channel")
 		return fmt.Errorf("failed to send message to sync keep channel")
 	}
-
 	return nil
 }
 
 func (ehc *Controller) dispatch(message model.Message) error {
-
 	// TODO: dispatch message by the message type
 	md, ok := groupMap[message.GetGroup()]
 	if !ok {
@@ -189,7 +182,6 @@ func (ehc *Controller) dispatch(message model.Message) error {
 		ehc.context.Send2Group(md, message)
 		return nil
 	}
-
 	return ehc.sendToKeepChannel(message)
 }
 
@@ -219,7 +211,7 @@ func (ehc *Controller) sendToCloud(message model.Message) error {
 
 	syncKeep := func(message model.Message) {
 		tempChannel := ehc.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(ehc.config.HeartbeatPeroid)
+		sendTimer := time.NewTimer(ehc.config.HeartbeatPeriod)
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
@@ -268,7 +260,7 @@ func (ehc *Controller) keepalive() {
 			ehc.stopChan <- struct{}{}
 			return
 		}
-		time.Sleep(ehc.config.HeartbeatPeroid)
+		time.Sleep(ehc.config.HeartbeatPeriod)
 	}
 }
 
