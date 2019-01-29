@@ -10,6 +10,27 @@
   version = "v0.30.0"
 
 [[projects]]
+  digest = "1:081e89b411150cfce121aaf0e7cc3ec8506cf5548bf8bd775770145635f9a1fe"
+  name = "github.com/256dpi/gomqtt"
+  packages = [
+    "broker",
+    "packet",
+    "session",
+    "topic",
+    "transport",
+  ]
+  pruneopts = "UT"
+  revision = "adb21d1b0cbac79463b51d1a9b234ee1e743a4c2"
+
+[[projects]]
+  digest = "1:48c768d0e214cd29eacf2fe65cc68ffda14795366787e11c021d584eb51f7e03"
+  name = "github.com/256dpi/mercury"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "947525349996e4a314b26559e9c2c9a5c81402c0"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:6da51e5ec493ad2b44cb04129e2d0a068c8fb9bd6cb5739d199573558696bb94"
   name = "github.com/Azure/go-ansiterm"
@@ -1179,6 +1200,14 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
+  branch = "v2"
+  digest = "1:5bb148b78468350091db2ffbb2370f35cc6dcd74d9378a31b1c7b86ff7528f08"
+  name = "gopkg.in/tomb.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -1656,6 +1685,11 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/256dpi/gomqtt/broker",
+    "github.com/256dpi/gomqtt/packet",
+    "github.com/256dpi/gomqtt/session",
+    "github.com/256dpi/gomqtt/topic",
+    "github.com/256dpi/gomqtt/transport",
     "github.com/ServiceComb/go-archaius",
     "github.com/ServiceComb/go-archaius/sources/file-source",
     "github.com/ServiceComb/paas-lager",

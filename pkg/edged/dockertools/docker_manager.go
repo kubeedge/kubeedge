@@ -59,27 +59,29 @@ const (
 	statusCreatedPrefix = "Created"
 	statusExitedPrefix  = "Exited"
 	statusPausedSuffix  = "Paused"
-
+	//ZeroTime defines base time
 	ZeroTime = "0001-01-01T00:00:00Z"
 )
 
-const DOCKER_DEFAULT_ADDRESS = "unix:///var/run/docker.sock"
+//DockerDefaultAddress is default address for docker
+const DockerDefaultAddress = "unix:///var/run/docker.sock"
 
 //PROJECTNAME needs to be specified, temporarily written as "southchina"
 const PROJECTNAME = "southchina"
 
 var (
-	// Required Image is absent on host and PullPolicy is NeverPullImage
+	// ErrImageNeverPull : Required Image is absent on host and PullPolicy is NeverPullImage
 	ErrImageNeverPull = errors.New("ErrImageNeverPull")
 )
 
+//DockerManager defines object structure of docker manager
 type DockerManager struct {
 	containers.ContainerManager
 	imgManager images.ImageManager
 	client     dockerapi.CommonAPIClient
 }
 
-// Get a *dockerapi.Client, either using the endpoint passed in, or using
+// NewDockerClient gets a *dockerapi.Client, either using the endpoint passed in, or using
 // DOCKER_HOST, DOCKER_TLS_VERIFY, and DOCKER_CERT path per their spec
 func NewDockerClient(dockerEndpoint string) (dockerapi.CommonAPIClient, error) {
 	if len(dockerEndpoint) > 0 {
@@ -89,10 +91,11 @@ func NewDockerClient(dockerEndpoint string) (dockerapi.CommonAPIClient, error) {
 	return dockerapi.NewEnvClient()
 }
 
+//NewDockerManager returns a docker manager object
 func NewDockerManager(livenessManager proberesults.Manager, qps float32, burst int, backOff *flowcontrol.Backoff, serializeImagePulls bool, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (*DockerManager, error) {
 	var err error
 	dm := &DockerManager{}
-	client, err := NewDockerClient(DOCKER_DEFAULT_ADDRESS)
+	client, err := NewDockerClient(DockerDefaultAddress)
 	if err != nil {
 		return nil, fmt.Errorf("new docker client failed: %s", err)
 	}
@@ -103,6 +106,7 @@ func NewDockerManager(livenessManager proberesults.Manager, qps float32, burst i
 	return dm, err
 }
 
+//PullImage pulls an image from network to local storage
 func (dm *DockerManager) PullImage(image kubecontainer.ImageSpec, pullSecrets []v1.Secret) (string, error) {
 	dockerConfigEntrys, err := getDockerConfigEntryFromSecret(pullSecrets)
 	if err != nil {
@@ -123,9 +127,9 @@ func (dm *DockerManager) PullImage(image kubecontainer.ImageSpec, pullSecrets []
 		if err != nil {
 			log.LOGGER.Errorf("", fmt.Errorf("docker manager pull image %s failed, err: %v", image.Image, err))
 			return "", err
-		} else {
-			break
 		}
+		//else
+		break
 	}
 	return "", nil
 }
@@ -192,6 +196,7 @@ func (dm *DockerManager) pullImage(image kubecontainer.ImageSpec, dockerConfig *
 	return nil
 }
 
+// IsImagePresent checks whether the container image is already in the local storage
 func (dm *DockerManager) IsImagePresent(image kubecontainer.ImageSpec) (bool, error) {
 	respImages, err := dm.ListImages()
 	if err != nil {
@@ -207,6 +212,7 @@ func (dm *DockerManager) IsImagePresent(image kubecontainer.ImageSpec) (bool, er
 	return false, nil
 }
 
+// ListImages gets all images currently on the machine
 func (dm *DockerManager) ListImages() ([]kubecontainer.Image, error) {
 	ctx := context.Background()
 	opt := types.ImageListOptions{}
@@ -227,6 +233,7 @@ func (dm *DockerManager) ListImages() ([]kubecontainer.Image, error) {
 	return imageSlice, nil
 }
 
+// RemoveImage removes the specified image
 func (dm *DockerManager) RemoveImage(image kubecontainer.ImageSpec) error {
 	log.LOGGER.Infof("docker manager start to remove image [%s]", image.Image)
 	ctx := context.Background()
@@ -240,6 +247,7 @@ func (dm *DockerManager) RemoveImage(image kubecontainer.ImageSpec) error {
 	return nil
 }
 
+// InspectImageByID checks if the inspected image matches what we are looking for
 func (dm *DockerManager) InspectImageByID(imageID string) (*types.ImageInspect, error) {
 	resp, err := dm.inspectImageRaw(imageID)
 	if err != nil {
@@ -307,6 +315,7 @@ func matchImageIDOnly(inspected types.ImageInspect, image string) bool {
 	return false
 }
 
+//Version returns kubecontainer version
 func (dm *DockerManager) Version() (kubecontainer.Version, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -324,6 +333,7 @@ func (dm *DockerManager) Version() (kubecontainer.Version, error) {
 	return version.ParseGeneric(runtimeVersion)
 }
 
+//CreateContainer creates container and returns ID
 func (dm *DockerManager) CreateContainer(config *cri.ContainerConfig) (string, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -338,7 +348,7 @@ func (dm *DockerManager) CreateContainer(config *cri.ContainerConfig) (string, e
 	return createResp.ID, nil
 }
 
-//ContainerStart
+//StartContainer is for ContainerStart
 func (dm *DockerManager) StartContainer(containerID string) error {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -349,6 +359,7 @@ func (dm *DockerManager) StartContainer(containerID string) error {
 	return err
 }
 
+//StopContainer is to stop the container given its ID
 func (dm *DockerManager) StopContainer(containerID string, timeout uint32) error {
 	t := time.Duration(timeout) * time.Second
 	ctx, cancel := dm.getCustomTimeoutContext(t)
@@ -360,6 +371,7 @@ func (dm *DockerManager) StopContainer(containerID string, timeout uint32) error
 	return err
 }
 
+//DeleteContainer deletes container given ID
 func (dm *DockerManager) DeleteContainer(containerID kubecontainer.ContainerID) error {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -372,6 +384,7 @@ func (dm *DockerManager) DeleteContainer(containerID kubecontainer.ContainerID) 
 	return err
 }
 
+//ListContainers returns all containers list
 func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -385,7 +398,7 @@ func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
 	containers := make([]*cri.Container, 0)
 	for _, v := range dcontainers {
 		container := &cri.Container{
-			Id:      v.ID,
+			ID:      v.ID,
 			StartAt: time.Unix(v.Created, 0),
 			Status:  toEdgedStatus(v.Status),
 		}
@@ -395,6 +408,7 @@ func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
 	return containers, nil
 }
 
+//InspectContainer is to inspect the container returning ContainerInspect object
 func (dm *DockerManager) InspectContainer(containerID string) (*cri.ContainerInspect, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
@@ -443,7 +457,7 @@ func (dm *DockerManager) InspectContainer(containerID string) (*cri.ContainerIns
 }
 
 func setStatusReason(status *cri.ContainerStatus) {
-	if status.State == cri.Status_CREATED &&
+	if status.State == cri.StatusCREATED &&
 		status.ExitCode != 0 && status.FinishedAt.IsZero() {
 		status.Reason = "ContainerCannotRun"
 	}
@@ -452,18 +466,19 @@ func setStatusReason(status *cri.ContainerStatus) {
 func toEdgedStatus(state string) kubecontainer.ContainerState {
 	switch {
 	case strings.Contains(state, statusPausedSuffix):
-		return cri.Status_PAUSED
+		return cri.StatusPAUSED
 	case strings.HasPrefix(state, statusRunningPrefix):
-		return cri.Status_RUNNING
+		return cri.StatusRUNNING
 	case strings.HasPrefix(state, statusExitedPrefix):
-		return cri.Status_EXITED
+		return cri.StatusEXITED
 	case strings.HasPrefix(state, statusCreatedPrefix):
-		return cri.Status_CREATED
+		return cri.StatusCREATED
 	default:
-		return cri.Status_UNKNOWN
+		return cri.StatusUNKNOWN
 	}
 }
 
+//ContainerStatus gives container status
 func (dm *DockerManager) ContainerStatus(containerID string) (*cri.ContainerStatus, error) {
 
 	containerInspect, err := dm.InspectContainer(containerID)
@@ -480,6 +495,7 @@ func (dm *DockerManager) ContainerStatus(containerID string) (*cri.ContainerStat
 	return &containerInspect.Status, nil
 }
 
+//EnsureImageExists checks existence of image in container
 func (dm *DockerManager) EnsureImageExists(pod *v1.Pod, secrets []v1.Secret) error {
 	log.LOGGER.Infof("start to pull image for pod %s", pod.Name)
 
@@ -549,6 +565,7 @@ func (e imageNotFoundError) Error() string {
 	return fmt.Sprintf("no such image: %q", e.ID)
 }
 
+//IsImageNotFoundError checks error to be of type imageNotFoundError
 func IsImageNotFoundError(err error) bool {
 	_, ok := err.(imageNotFoundError)
 	return ok
@@ -560,9 +577,10 @@ func convertTime(stringTime string) time.Time {
 	return metav1Time.Time
 }
 
+//NewDockerConfig configures docker client
 // TODO: fillup other field in this struct
 func NewDockerConfig() *dockershim.ClientConfig {
 	return &dockershim.ClientConfig{
-		DockerEndpoint: DOCKER_DEFAULT_ADDRESS,
+		DockerEndpoint: DockerDefaultAddress,
 	}
 }

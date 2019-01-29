@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
+//GPUInfoQueryTool sets information monitoring tool location for GPU
 var GPUInfoQueryTool = "/var/IEF/nvidia/bin/nvidia-smi"
 var initNode v1.Node
 var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
@@ -74,7 +75,7 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		return nil, err
 	}
 
-	err = e.setCpuInfo(node.Status.Capacity, node.Status.Allocatable)
+	err = e.setCPUInfo(node.Status.Capacity, node.Status.Allocatable)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +318,7 @@ func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
 	return nil
 }
 
-func (e *edged) setCpuInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
 	total[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
 	allocated[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
 

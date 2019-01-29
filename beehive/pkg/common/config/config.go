@@ -14,9 +14,10 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/util"
 )
 
+//constants to define config paths
 const (
-	PARAMETER_CONFIG_PATH     = "config-path"
-	ENVIRONMENTAL_CONFIG_PATH = "GOARCHAIUS_CONFIG_PATH"
+	ParameterConfigPath     = "config-path"
+	EnvironmentalConfigPath = "GOARCHAIUS_CONFIG_PATH"
 )
 
 // CONFIG conf
@@ -59,29 +60,33 @@ func init() {
 
 }
 
-// Get the configuration file path
+// GetConfigDirectory gets the configuration file path
 func GetConfigDirectory() string {
-	if config, err := CONFIG.GetValue(PARAMETER_CONFIG_PATH).ToString(); err == nil {
+	if config, err := CONFIG.GetValue(ParameterConfigPath).ToString(); err == nil {
 		return config
 	}
 
-	if config, err := CONFIG.GetValue(ENVIRONMENTAL_CONFIG_PATH).ToString(); err == nil {
+	if config, err := CONFIG.GetValue(EnvironmentalConfigPath).ToString(); err == nil {
 		return config
 	}
 
 	return util.GetCurrentDirectory()
 }
 
-type ConfigChangeCallback interface {
+//ChangeCallback is interface to change callback of config
+type ChangeCallback interface {
 	Callback(k string, v interface{})
 }
 
-var ConfigChangeCallbacks []ConfigChangeCallback
+//ConfigChangeCallbacks is array of changecallbacks
+var ConfigChangeCallbacks []ChangeCallback
 
-func AddConfigChangeCallback(cb ConfigChangeCallback) {
+//AddConfigChangeCallback adds a config change callback
+func AddConfigChangeCallback(cb ChangeCallback) {
 	ConfigChangeCallbacks = append(ConfigChangeCallbacks, cb)
 }
 
+//EventListener is object to define eventlistener
 type EventListener struct {
 	Name string
 }

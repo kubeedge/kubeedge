@@ -29,6 +29,7 @@ func (i *imageGCManager) ImageFsStats() (*statsapi.FsStats, error) {
 	}, nil
 }
 
+//NewStatsProvider returns image status provider
 func NewStatsProvider() images.StatsProvider {
 	return &imageGCManager{
 		util.GetCurPath(),

@@ -10,10 +10,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/message"
 )
 
+//PodStatusGetter is interface to get pod status
 type PodStatusGetter interface {
 	PodStatus(namespace string) PodStatusInterface
 }
 
+//PodStatusInterface is interface of pod status
 type PodStatusInterface interface {
 	Create(*api.PodStatusRequest) (*api.PodStatusRequest, error)
 	Update(rsName string, ps api.PodStatusRequest) error

@@ -1,5 +1,10 @@
 mqtt:
-    server: tcp://127.0.0.1:1883
+    server: tcp://127.0.0.1:1883 # external mqtt broker url.
+    internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+    mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
+    qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+    retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+    session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
 
 edgehub:
     websocket:

@@ -26,6 +26,7 @@ type manager struct {
 	metaClient        metaclient.CoreInterface
 }
 
+//NewManager creates and returns a new manager object
 func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient metaclient.CoreInterface) status.Manager {
 	kubeManager := status.NewManager(kubeClient, podManager, podDeletionSafety)
 	return &manager{

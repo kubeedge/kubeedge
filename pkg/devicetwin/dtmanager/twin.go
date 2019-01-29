@@ -43,21 +43,6 @@ type TwinWorker struct {
 	Group string
 }
 
-//PreDeal pre deal
-func (tw TwinWorker) PreDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//Deal deal
-func (tw TwinWorker) Deal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//PostDeal post deal
-func (tw TwinWorker) PostDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
 //Start worker
 func (tw TwinWorker) Start() {
 	initTwinActionCallBack()

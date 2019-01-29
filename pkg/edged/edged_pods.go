@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// some functions are come from "k8s.io/kubernetes/pkg/kubelet/kubelet_pods.go"
+// Package edged got some functions from "k8s.io/kubernetes/pkg/kubelet/kubelet_pods.go"
 // and made some variant
 package edged
 
