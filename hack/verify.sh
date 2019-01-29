@@ -15,13 +15,16 @@
 # limitations under the License.
 
 # get gometalinter(https://github.com/alecthomas/gometalinter)
+
+sudo chown circleci:circleci /go/bin
 curl -L https://git.io/vp6lP | sh
+export PATH=${PATH}:${GOPATH}/bin
 
-export PATH=${PATH}:${GOPATH}/src/github.com/kubeedge/kubeedge/bin
-
-gometalinter --disable-all --enable=gofmt --enable=misspell --exclude=vendor ./...
+gometalinter --disable-all --enable=gofmt --enable=misspell --enable=golint --exclude=vendor --exclude=test ./...
 if [ $? != 0 ]; then
         echo "Please fix the warnings!"
 	echo "Run hack/update-gofmt.sh if any warnings in gofmt"
         exit 1
+else
+echo "Gofmt,misspell,golint checks have been passed"
 fi

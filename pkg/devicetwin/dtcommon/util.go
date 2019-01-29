@@ -24,21 +24,22 @@ func ValidateValue(valueType string, value string) error {
 		if err != nil {
 			return errors.New("The value is not int")
 		}
+		return nil
 	} else if strings.Compare(valueType, "float") == 0 {
 		_, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return errors.New("The value is not float")
 		}
+		return nil
 	} else if strings.Compare(valueType, "boolean") == 0 {
 		if strings.Compare(value, "true") != 0 && strings.Compare(value, "false") != 0 {
 			return errors.New("The bool value must be true or false")
 		}
+		return nil
 	} else if strings.Compare(valueType, "deleted") == 0 {
 		return nil
-	} else {
-		return errors.New("The value type is not allowed")
 	}
-	return nil
+	return errors.New("The value type is not allowed")
 }
 
 //ValidateTwinKey validate twin key
