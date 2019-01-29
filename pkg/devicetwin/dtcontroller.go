@@ -117,7 +117,7 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
 		log.LOGGER.Errorf("Distribute message, msg is nil")
-		return nil
+		return errors.New("Message is nil")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
@@ -267,7 +267,12 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		if err != nil {
 			return false
 		}
-		topic = string(topicByte)
+
+		err = json.Unmarshal(topicByte, &topic)
+		if err != nil {
+			log.LOGGER.Errorf("Error in Unmarshalling: %v", err)
+			return false
+		}
 
 		log.LOGGER.Infof("classify the msg with the topic %s", topic)
 		splitString := strings.Split(topic, "/")
