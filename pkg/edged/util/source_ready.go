@@ -14,6 +14,7 @@ func (s *sourcesReady) AllReady() bool {
 	return true
 }
 
+//NewSourcesReady returns a new sourceready object
 func NewSourcesReady() config.SourcesReady {
 	return &sourcesReady{}
 }

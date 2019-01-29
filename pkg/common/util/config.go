@@ -17,21 +17,29 @@ limitations under the License.
 package util
 
 import (
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/ServiceComb/go-archaius/sources/file-source"
-
 	"github.com/kubeedge/kubeedge/beehive/pkg/common/config"
+
+	"github.com/ServiceComb/go-archaius/sources/file-source"
+	"gopkg.in/yaml.v2"
 )
 
-// LoadConfig is function to Load Configarations
-func LoadConfig() error {
+// LoadConfig is function to Load Configarations from a specified location. If no location is specified it loads the config from the default location
+func LoadConfig(confLocation ...string) error {
+	err := config.CONFIG.DeInit()
+	if err != nil {
+		return err
+	}
 	fSource := filesource.NewYamlConfigurationSource()
-	confLocation := os.Getenv("GOPATH") + "/src/github.com/kubeedge/kubeedge/conf"
-	err := filepath.Walk(confLocation, func(location string, f os.FileInfo, err error) error {
+	if len(confLocation) == 0 {
+		confLocation = []string{os.Getenv("GOPATH") + "/src/github.com/kubeedge/kubeedge/conf"}
+	}
+	err = filepath.Walk(confLocation[0], func(location string, f os.FileInfo, err error) error {
 		if f == nil {
 			return err
 		}
@@ -48,5 +56,25 @@ func LoadConfig() error {
 		return err
 	}
 	config.CONFIG.AddSource(fSource)
+	return nil
+}
+
+//GenerateTestYaml is a function is used to create a temporary file to be used for testing
+//It accepts 3 arguments:"test" is the interface used to generate the YAML,
+// "path" is the directory path at which the directory is to be created,
+// "filename" is the name of the file to be creatd without the ".yaml" extension
+func GenerateTestYaml(test interface{}, path, filename string) error {
+	data, err := yaml.Marshal(test)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(path, 0777)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(path+"/"+filename+".yaml", data, 0777)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -29,21 +29,6 @@ type MemWorker struct {
 	Group string
 }
 
-//PreDeal pre deal
-func (mw MemWorker) PreDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//Deal deal
-func (mw MemWorker) Deal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//PostDeal post deal
-func (mw MemWorker) PostDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
 //Start worker
 func (mw MemWorker) Start() {
 	initMemActionCallBack()

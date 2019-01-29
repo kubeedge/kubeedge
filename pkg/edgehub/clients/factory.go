@@ -7,14 +7,16 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edgehub/config"
 )
 
+//constant for reference to web socket of client
 const (
 	ClientTypeWebSocket = "websocket"
 )
 
+//GetClient returns an Adapter object with new web socket
 func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
 	if clientType == ClientTypeWebSocket {
 		websocketConf := wsclient.WebSocketConfig{
-			Url:              config.WSConfig.Url,
+			URL:              config.WSConfig.URL,
 			CertFilePath:     config.WSConfig.CertFilePath,
 			KeyFilePath:      config.WSConfig.KeyFilePath,
 			HandshakeTimeout: config.WSConfig.HandshakeTimeout,

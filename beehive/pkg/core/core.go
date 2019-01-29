@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/beehive/pkg/core/context"
 )
 
-// start modules that registered
+// StartModules starts modules that are registered
 func StartModules() {
 	coreContext := context.GetContext(context.MsgCtxTypeChannel)
 
@@ -24,7 +24,7 @@ func StartModules() {
 	}
 }
 
-// if get the special signals, cleanup modules
+// GracefulShutdown is if it gets the special signals it does modules cleanup
 func GracefulShutdown() {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
@@ -41,6 +41,7 @@ func GracefulShutdown() {
 	}
 }
 
+//Run starts the modules and in the end does module cleanup
 func Run() {
 	//Address the module registration and start the core
 	StartModules()

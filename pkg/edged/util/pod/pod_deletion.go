@@ -13,6 +13,7 @@ func (p *podDeletionSafety) PodResourcesAreReclaimed(pod *v1.Pod, status v1.PodS
 	return true
 }
 
+//NewPodDeleteSafety returns status of pod deletion safety
 func NewPodDeleteSafety() status.PodDeletionSafetyProvider {
 	return &podDeletionSafety{}
 }

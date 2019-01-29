@@ -20,14 +20,16 @@ const (
 	cloudAccessSleep = 60 * time.Second
 )
 
+//WebSocketClient defines websocket client object
 type WebSocketClient struct {
 	webConn  *websocket.Conn
 	sendLock sync.Mutex
 	config   *WebSocketConfig
 }
 
+//WebSocketConfig defines configuration object
 type WebSocketConfig struct {
-	Url              string
+	URL              string
 	CertFilePath     string
 	KeyFilePath      string
 	HandshakeTimeout time.Duration
@@ -36,11 +38,12 @@ type WebSocketConfig struct {
 	ExtendHeader     http.Header
 }
 
+//NewWebSocketClient returns a new web socket client object with its configuration
 func NewWebSocketClient(conf *WebSocketConfig) *WebSocketClient {
 	return &WebSocketClient{config: conf}
 }
 
-// InitWebsocket init websocket client
+// Init initializes websocket client
 func (wcc *WebSocketClient) Init() error {
 	log.LOGGER.Infof("start to connect Access")
 	cert, err := tls.LoadX509KeyPair(wcc.config.CertFilePath, wcc.config.KeyFilePath)
@@ -58,7 +61,7 @@ func (wcc *WebSocketClient) Init() error {
 	}
 
 	for i := 0; i < retryCount; i++ {
-		conn, resp, err := dialer.Dial(wcc.config.Url, wcc.config.ExtendHeader)
+		conn, resp, err := dialer.Dial(wcc.config.URL, wcc.config.ExtendHeader)
 		if err != nil {
 			var respMsg string
 			if resp != nil {
@@ -81,10 +84,12 @@ func (wcc *WebSocketClient) Init() error {
 	return errors.New("max retry count to connect Access")
 }
 
+//Uninit closes the web socket connection
 func (wcc *WebSocketClient) Uninit() {
 	wcc.webConn.Close()
 }
 
+//Send sends the message as JSON object through the connection
 func (wcc *WebSocketClient) Send(message model.Message) error {
 	deadline := time.Now().Add(wcc.config.WriteDeadline)
 	wcc.sendLock.Lock()
@@ -94,6 +99,7 @@ func (wcc *WebSocketClient) Send(message model.Message) error {
 	return wcc.webConn.WriteJSON(message)
 }
 
+//Receive reads the JSON object through the connection
 func (wcc *WebSocketClient) Receive() (model.Message, error) {
 	var message model.Message
 
@@ -108,6 +114,7 @@ func (wcc *WebSocketClient) Receive() (model.Message, error) {
 	return message, nil
 }
 
+//Notify logs info
 func (wcc *WebSocketClient) Notify(authInfo map[string]string) {
 	log.LOGGER.Infof("don't care")
 }

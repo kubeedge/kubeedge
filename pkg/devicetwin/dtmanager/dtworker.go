@@ -4,9 +4,6 @@ import "github.com/kubeedge/kubeedge/pkg/devicetwin/dtcontext"
 
 //DTWorker worker for devicetwin
 type DTWorker interface {
-	PreDeal(interface{}) (interface{}, error)
-	Deal(interface{}) (interface{}, error)
-	PostDeal(interface{}) (interface{}, error)
 	Start()
 }
 

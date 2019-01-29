@@ -16,6 +16,7 @@ const (
 	syncMsgRespTimeout = 1 * time.Minute
 )
 
+//CoreInterface is interface of mataclient
 type CoreInterface interface {
 	PodsGetter
 	PodStatusGetter
@@ -54,6 +55,7 @@ func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 	return newPodStatus(namespace, m.context, m.send)
 }
 
+//New creates a new metaclient
 func New(c *context.Context) CoreInterface {
 	return &metaClient{
 		context: c,
@@ -61,6 +63,7 @@ func New(c *context.Context) CoreInterface {
 	}
 }
 
+//SendInterface is to sync interface
 type SendInterface interface {
 	SendSync(message *model.Message) (*model.Message, error)
 }
@@ -83,14 +86,13 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 		if err == nil {
 			log.LOGGER.Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
 			return true, nil
-		} else {
-			if retries < 3 {
-				log.LOGGER.Errorf("send sync message %s failed, error:%v, retries: %d", message.GetResource(), err, retries)
-				return false, nil
-			} else {
-				return true, err
-			}
 		}
+		if retries < 3 {
+			log.LOGGER.Errorf("send sync message %s failed, error:%v, retries: %d", message.GetResource(), err, retries)
+			return false, nil
+		}
+		return true, err
+
 	})
 	return &resp, err
 }

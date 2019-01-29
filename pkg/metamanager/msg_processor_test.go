@@ -47,8 +47,8 @@ const (
 	OperationNodeConnection = "publish"
 )
 
-// FailedDBOperationErr is common Database operation fail error
-var failedDBOperationErr = errors.New(FailedDBOperation)
+// errFailedDBOperation is common Database operation fail error
+var errFailedDBOperation = errors.New(FailedDBOperation)
 
 // mainContext is beehive context used for communication between modules
 var mainContext *context.Context
@@ -134,7 +134,7 @@ func TestProcessInsert(t *testing.T) {
 	metaMgrModule.Start(mainContext)
 
 	//SaveMeta Failed, feedbackError Send2Cloud
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, model.InsertOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, err := mainContext.Receive(ModuleNameEdgeHub)
@@ -150,7 +150,7 @@ func TestProcessInsert(t *testing.T) {
 	})
 
 	//SaveMeta Failed, feedbackError Send2Edged and 2 resources
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus+"/secondRes", model.InsertOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, err = mainContext.Receive(ModuleNameEdged)
@@ -211,7 +211,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	//Database save error
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSeterMock).Times(1)
-	rawSeterMock.EXPECT().Exec().Return(nil, failedDBOperationErr).Times(1)
+	rawSeterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, model.UpdateOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
@@ -327,7 +327,7 @@ func TestProcessResponse(t *testing.T) {
 
 	//Database save error
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSeterMock).Times(1)
-	rawSeterMock.EXPECT().Exec().Return(nil, failedDBOperationErr).Times(1)
+	rawSeterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, model.ResponseOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
@@ -369,7 +369,7 @@ func TestProcessResponse(t *testing.T) {
 func TestProcessDelete(t *testing.T) {
 	//Database Save Error
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
-	querySeterMock.EXPECT().Delete().Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().Delete().Return(int64(1), errFailedDBOperation).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, model.DeleteOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
@@ -406,7 +406,7 @@ func TestProcessDelete(t *testing.T) {
 // TestProcessQuery is function to test processQuery
 func TestProcessQuery(t *testing.T) {
 	//process remote query sync error case
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CLOUD_CONNECTED)
+	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudConnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
@@ -415,7 +415,7 @@ func TestProcessQuery(t *testing.T) {
 			t.Errorf("Connected was not set to true")
 		}
 	})
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
@@ -432,7 +432,7 @@ func TestProcessQuery(t *testing.T) {
 	mainContext.AddModuleGroup(ModuleNameEdgeHub, core.HubGroup)
 
 	//process remote query jsonMarshall error
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
@@ -449,9 +449,9 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//process remote query db fail
-	rawSeterMock.EXPECT().Exec().Return(nil, failedDBOperationErr).Times(1)
+	rawSeterMock.EXPECT().Exec().Return(nil, errFailedDBOperation).Times(1)
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSeterMock).Times(1)
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
@@ -489,7 +489,7 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//ResId Nil database error
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CLOUD_DISCONNECTED)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudDisconnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	time.Sleep(1 * time.Second)
 	t.Run("ConnectedFalse", func(t *testing.T) {
@@ -497,7 +497,7 @@ func TestProcessQuery(t *testing.T) {
 			t.Errorf("Connected was not set to false")
 		}
 	})
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypeConfigmap, model.QueryOperation)
@@ -511,7 +511,7 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//ResID not nil database error
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
@@ -545,7 +545,7 @@ func TestProcessQuery(t *testing.T) {
 // TestProcessNodeConnection is function to test processNodeConnection
 func TestProcessNodeConnection(t *testing.T) {
 	//connected true
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CLOUD_CONNECTED)
+	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudConnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
@@ -556,7 +556,7 @@ func TestProcessNodeConnection(t *testing.T) {
 	})
 
 	//connected false
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CLOUD_DISCONNECTED)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudDisconnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
@@ -570,7 +570,7 @@ func TestProcessNodeConnection(t *testing.T) {
 // TestProcessSync is function to test processSync
 func TestProcessSync(t *testing.T) {
 	//QueryAllMeta Error
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
@@ -590,7 +590,7 @@ func TestProcessSync(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	mainContext.Send(MetaManagerModuleName, *msg)
@@ -603,7 +603,7 @@ func TestProcessSync(t *testing.T) {
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
-	querySeterMock.EXPECT().Delete().Return(int64(1), failedDBOperationErr).Times(1)
+	querySeterMock.EXPECT().Delete().Return(int64(1), errFailedDBOperation).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ := mainContext.Receive(ModuleNameEdgeHub)
@@ -669,7 +669,7 @@ func TestProcessFunctionAction(t *testing.T) {
 	})
 
 	//Database Save Error
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationFunctionAction)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)
@@ -707,7 +707,7 @@ func TestProcessFunctionActionResult(t *testing.T) {
 	})
 
 	//Database Save Error
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), failedDBOperationErr).Times(1)
+	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(EdgeFunctionModel, GroupResource, model.ResourceTypePodStatus, OperationFunctionActionResult)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)

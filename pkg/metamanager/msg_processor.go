@@ -16,6 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metamanager/dao"
 )
 
+//Constants to check metamanager processes
 const (
 	ResourceSeparator = "/"
 	OK                = "OK"
@@ -281,9 +282,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 func (m *metaManager) processNodeConnection(message model.Message) {
 	content, _ := message.GetContent().(string)
 	log.LOGGER.Infof("node connection event occur: %s", content)
-	if content == model.CLOUD_CONNECTED {
+	if content == model.CloudConnected {
 		connected = true
-	} else if content == model.CLOUD_DISCONNECTED {
+	} else if content == model.CloudDisconnected {
 		connected = false
 	}
 }

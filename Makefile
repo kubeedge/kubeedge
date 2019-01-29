@@ -12,6 +12,7 @@ else
        TEST_DIR=${WHAT}	
 endif
 
+export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
 test:
 	find ${TEST_DIR} -name "*_test.go"|xargs -i dirname {}|uniq|xargs -i go test ${T} {}
 
@@ -19,3 +20,8 @@ test:
 .PHONY: verify
 verify:
 	bash -x hack/verify.sh
+
+.PHONY: integration_test
+integration_test:
+	bash test/integration/scripts/execute.sh eventbus
+

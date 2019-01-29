@@ -24,21 +24,6 @@ type CommWorker struct {
 	Group string
 }
 
-//PreDeal pre deal
-func (cw CommWorker) PreDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//Deal deal
-func (cw CommWorker) Deal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
-//PostDeal post deal
-func (cw CommWorker) PostDeal(msg interface{}) (interface{}, error) {
-	return nil, nil
-}
-
 //Start worker
 func (cw CommWorker) Start() {
 	initActionCallBack()
@@ -106,7 +91,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 		return nil, errors.New("msg not Message type")
 	}
 	connectedInfo, _ := (message.Content.(string))
-	if strings.Compare(connectedInfo, model.CLOUD_CONNECTED) == 0 {
+	if strings.Compare(connectedInfo, model.CloudConnected) == 0 {
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 			_, err := detailRequest(context, msg)
 			if err != nil {
@@ -115,7 +100,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 			}
 		}
 		context.State = dtcommon.Connected
-	} else if strings.Compare(connectedInfo, model.CLOUD_DISCONNECTED) == 0 {
+	} else if strings.Compare(connectedInfo, model.CloudDisconnected) == 0 {
 		context.State = dtcommon.Disconnected
 	}
 	return nil, nil

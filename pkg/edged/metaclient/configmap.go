@@ -12,10 +12,13 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/common/message"
 )
 
+// ConfigMapsGetter has a method to return a ConfigMapInterface.
+// A group's client should implement this interface.
 type ConfigMapsGetter interface {
 	ConfigMaps(namespace string) ConfigMapsInterface
 }
 
+// ConfigMapsInterface has methods to work with ConfigMap resources.
 type ConfigMapsInterface interface {
 	Create(*api.ConfigMap) (*api.ConfigMap, error)
 	Update(*api.ConfigMap) error
@@ -65,9 +68,9 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 
 	if msg.GetOperation() == model.ResponseOperation {
 		return handleConfigMapFromMetaDB(content)
-	} else {
-		return handleConfigMapFromMetaManager(content)
 	}
+	return handleConfigMapFromMetaManager(content)
+
 }
 
 func handleConfigMapFromMetaDB(content []byte) (*api.ConfigMap, error) {

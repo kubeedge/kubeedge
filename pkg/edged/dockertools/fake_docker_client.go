@@ -18,20 +18,25 @@ import (
 	"golang.org/x/net/context"
 )
 
+//EMPTYVALUE is byte type for zero value
 const EMPTYVALUE byte = 0
 
-var IMAGEPULL_ERROR error
+//ImagePullError is var of error type
+var ImagePullError error
 
+//IFakeDockerClien is interface for dockertools server version
 type IFakeDockerClien interface {
 	ServerVersion(ctx context.Context) (types.Version, error)
 }
 
+//FakeDockerClient is object for a docker client
 type FakeDockerClient struct {
 	dockerapi.CommonAPIClient
 	images     map[string]types.ImageSummary
 	containers map[string]byte
 }
 
+//NewFakeDockerClient is to initialise docker client
 func NewFakeDockerClient(imageList map[string]types.ImageSummary) *FakeDockerClient {
 	client, _ := NewDockerClient("")
 	containers := map[string]byte{
@@ -51,12 +56,13 @@ func NewFakeDockerClient(imageList map[string]types.ImageSummary) *FakeDockerCli
 	}
 }
 
+//ImagePull reads image from repository
 func (cli *FakeDockerClient) ImagePull(ctx context.Context, ref string, options types.ImagePullOptions) (io.ReadCloser, error) {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := strconv.Itoa(rnd.Int())
 	newImage := types.ImageSummary{ID: id, RepoTags: []string{ref}, RepoDigests: []string{}}
-	if IMAGEPULL_ERROR != nil {
-		return nil, IMAGEPULL_ERROR
+	if ImagePullError != nil {
+		return nil, ImagePullError
 	}
 	cli.images[ref] = newImage
 	event := jsonmessage.JSONMessage{ID: id}
@@ -65,9 +71,10 @@ func (cli *FakeDockerClient) ImagePull(ctx context.Context, ref string, options 
 		return nil, err
 	}
 
-	return ioutil.NopCloser(bytes.NewReader(byteEvent)), IMAGEPULL_ERROR
+	return ioutil.NopCloser(bytes.NewReader(byteEvent)), ImagePullError
 }
 
+//ImageList returns image list
 func (cli *FakeDockerClient) ImageList(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error) {
 	images := make([]types.ImageSummary, 0, 10)
 	for _, image := range cli.images {
@@ -76,6 +83,7 @@ func (cli *FakeDockerClient) ImageList(ctx context.Context, options types.ImageL
 	return images, nil
 }
 
+//ImageRemove removes image from repository
 func (cli *FakeDockerClient) ImageRemove(ctx context.Context, imageID string, options types.ImageRemoveOptions) ([]types.ImageDeleteResponseItem, error) {
 	for k, image := range cli.images {
 		if image.ID == imageID {
@@ -86,6 +94,7 @@ func (cli *FakeDockerClient) ImageRemove(ctx context.Context, imageID string, op
 	return nil, fmt.Errorf("image %v not found", imageID)
 }
 
+//ServerVersion  returns server version
 func (cli *FakeDockerClient) ServerVersion(ctx context.Context) (types.Version, error) {
 	return types.Version{
 		Version:       "1.1",
@@ -97,6 +106,7 @@ func (cli *FakeDockerClient) ServerVersion(ctx context.Context) (types.Version, 
 	}, nil
 }
 
+//ContainerCreate creates a container body and returns it
 func (cli *FakeDockerClient) ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string) (container.ContainerCreateCreatedBody, error) {
 	if _, ok := cli.images[config.Image]; !ok {
 		return container.ContainerCreateCreatedBody{}, fmt.Errorf("Error: No such image: %s", config.Image)
@@ -107,6 +117,7 @@ func (cli *FakeDockerClient) ContainerCreate(ctx context.Context, config *contai
 	return container.ContainerCreateCreatedBody{ID: id}, nil
 }
 
+//ContainerStart starts the container
 func (cli *FakeDockerClient) ContainerStart(ctx context.Context, containerID string, opts types.ContainerStartOptions) error {
 	if _, ok := cli.containers[containerID]; !ok {
 		return fmt.Errorf("Error response from daemon: {\"message\":\"No such container: %+v\"}", containerID)
@@ -114,6 +125,7 @@ func (cli *FakeDockerClient) ContainerStart(ctx context.Context, containerID str
 	return nil
 }
 
+//ContainerStop stops the container
 func (cli *FakeDockerClient) ContainerStop(ctx context.Context, containerID string, timeout *time.Duration) error {
 	if _, ok := cli.containers[containerID]; !ok {
 		return fmt.Errorf("Error response from daemon: {\"message\":\"No such container: %+v\"}", containerID)
@@ -121,6 +133,7 @@ func (cli *FakeDockerClient) ContainerStop(ctx context.Context, containerID stri
 	return nil
 }
 
+//ContainerRemove removes container object
 func (cli *FakeDockerClient) ContainerRemove(ctx context.Context, containerID string, options types.ContainerRemoveOptions) error {
 	if _, ok := cli.containers[containerID]; !ok {
 		return fmt.Errorf("Error response from daemon: {\"message\":\"No such container: %+v\"}", containerID)
@@ -129,6 +142,7 @@ func (cli *FakeDockerClient) ContainerRemove(ctx context.Context, containerID st
 	return nil
 }
 
+//ContainerList returns list of created container
 func (cli *FakeDockerClient) ContainerList(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
 
 	status := []string{
@@ -164,6 +178,7 @@ func (cli *FakeDockerClient) ContainerList(ctx context.Context, options types.Co
 	return containers, nil
 }
 
+//ContainerInspect returns container JSON to inspect
 func (cli *FakeDockerClient) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
 	return types.ContainerJSON{}, nil
 }

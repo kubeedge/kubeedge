@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metamanager/dao"
 )
 
+//constant metamanager module name
 const (
 	MetaManagerModuleName = "metaManager"
 )

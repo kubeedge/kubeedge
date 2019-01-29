@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Manager is derived from kubernetes/pkg/kubelet/pod/pod_manager.go
+//Package podmanager : Manager is derived from kubernetes/pkg/kubelet/pod/pod_manager.go
 // pruned extra interface  and changed most of the realization
 package podmanager
 
@@ -26,6 +26,7 @@ import (
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 )
 
+//Manager is derived from kubernetes/pkg/kubelet/pod/pod_manager.go
 type Manager interface {
 	pod.Manager
 }
@@ -37,6 +38,7 @@ type podManager struct {
 	*testing.MockManager
 }
 
+//NewPodManager creates new pod manager object
 func NewPodManager() pod.Manager {
 	pm := &podManager{
 		MockManager: new(testing.MockManager),

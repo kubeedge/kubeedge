@@ -26,7 +26,7 @@ func (dt *DeviceTwin) Name() string {
 
 //Group get group of the module
 func (dt *DeviceTwin) Group() string {
-	return "twin"
+	return core.TwinGroup
 }
 
 //Start run the module
