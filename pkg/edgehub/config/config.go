@@ -42,14 +42,6 @@ type ControllerConfig struct {
 	NodeID          string
 }
 
-//DISClientConfig is Huawei data injection service
-type DISClientConfig struct {
-	APIGatewayURL string
-	APIVersion    string
-	RegionID      string
-	ProjectID     string
-}
-
 //EdgeHubConfig edge hub configuration object containing web socket and controller configuration
 type EdgeHubConfig struct {
 	WSConfig  WebSocketConfig
