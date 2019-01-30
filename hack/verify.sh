@@ -17,10 +17,12 @@
 # get gometalinter(https://github.com/alecthomas/gometalinter)
 
 sudo chown circleci:circleci /go/bin
-curl -L https://git.io/vp6lP | sh
-export PATH=${PATH}:${GOPATH}/bin
+#curl -L https://git.io/vp6lP | sh
 
-gometalinter --disable-all --enable=gofmt --enable=misspell --enable=golint --exclude=vendor --exclude=test ./...
+#export PATH=${PATH}:${GOPATH}/bin
+curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin 'latest'
+#gometalinter --disable-all --enable=gofmt --enable=misspell --enable=golint --exclude=vendor --exclude=test ./...
+golangci-lint run $GOPATH/src/github.com/kubeedge/kubeedge/pkg/... $GOPATH/src/github.com/kubeedge/kubeedge/beehive/... 
 if [ $? != 0 ]; then
         echo "Please fix the warnings!"
 	echo "Run hack/update-gofmt.sh if any warnings in gofmt"
