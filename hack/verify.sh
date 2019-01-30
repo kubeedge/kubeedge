@@ -17,8 +17,9 @@
 # get gometalinter(https://github.com/alecthomas/gometalinter)
 
 sudo chown circleci:circleci /go/bin
+
 curl -L https://git.io/vp6lP | sh
-export PATH=${PATH}:${GOPATH}/bin
+export PATH=${PATH}:${GOPATH}/bin:${GOPATH}/src/github.com/kubeedge/kubeedge/bin
 
 gometalinter --disable-all --enable=gofmt --enable=misspell --enable=golint --exclude=vendor --exclude=test ./...
 if [ $? != 0 ]; then
