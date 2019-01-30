@@ -1,0 +1,30 @@
+language: go
+
+sudo: required
+
+services:
+  - docker
+
+go:
+  - 1.11
+
+before_script:
+  - mkdir -p $HOME/gopath/src/github.com/kubeedge/kubeedge
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kubeedge/kubeedge/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedge
+  - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
+  - sudo apt-get install build-essential
+
+install: true
+
+jobs:
+  include:
+    - stage: "Test Jobs"                # naming the Tests stage
+      script: make
+      name: "make job"            # names the first Tests stage job
+    - script: make verify
+      name: "make verify job"     # names the second Tests stage job
+    - script: make test
+      name: "make test job"     # names the third Tests stage job
+    - script: make integration_test
+      name: "make integration test job"     # names the fourth Tests stage job
