@@ -20,7 +20,7 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
-modulename=$1
+sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
 #run the edge_core bin to run the integration
 go build cmd/edge_core.go
 #dynamically append testManager Module before starting integration test.
@@ -38,15 +38,15 @@ else
     echo "edge_core process is not started"
     exit 1
 fi
-
 PWD=${curpath}/test/integration
-sudo rm -rf $PWD/modules/edgecore/$modulename/$modulename.test
-sudo apt-get install -y golang-ginkgo-dev
+sudo rm -rf $PWD/appdeployment/appdeployment.test
+sudo rm -rf $PWD/device/device.test
+go get github.com/onsi/ginkgo/ginkgo
 # Specify the module name to compile in below command
-ginkgo build -r $PWD/modules/edgecore/$modulename
+bash -x $PWD/scripts/compile.sh $1
 export MQTT_SERVER=127.0.0.1
 :> /tmp/testcase.log
-sudo bash ${PWD}/scripts/fast_test $modulename 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+bash -x ${PWD}/scripts/fast_test $1
 sed -i 's/dbTest, testManager/dbTest/g' conf/modules.yaml
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
