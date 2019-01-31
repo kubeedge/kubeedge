@@ -1,3 +1,4 @@
+
 language: go
 
 sudo: required
@@ -14,6 +15,9 @@ before_script:
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedge
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+  - export GOARCHAIUS_CONFIG_PATH=$HOME/gopath/src/github.com/kubeedge/kubeedge
 
 install: true
 
@@ -28,3 +32,5 @@ jobs:
       name: "make test job"     # names the third Tests stage job
     - script: make integration_test
       name: "make integration test job"     # names the fourth Tests stage job
+    - script:  bash -x hack/coverage.sh && $HOME/gopath/bin/goveralls -coverprofile=coverage.txt -service=travis-ci  #generates coverage report
+      name: "generates coverage report"
