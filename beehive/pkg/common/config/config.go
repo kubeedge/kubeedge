@@ -36,8 +36,8 @@ func init() {
 		fmt.Printf("failed to init config factory,  error: %+v", err)
 	}
 	//Add yaml files as config source
-	fSource := filesource.NewYamlConfigurationSource()
-	confLocation := GetConfigDirectory() + "/conf"
+             	fSource := filesource.NewYamlConfigurationSource()
+        	confLocation := GetConfigDirectory() + "/conf"
 	err = filepath.Walk(confLocation, func(location string, f os.FileInfo, err error) error {
 		if f == nil {
 			return err
