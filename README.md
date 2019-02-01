@@ -132,15 +132,6 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 make # or `make edge_core`
 ```
 
-### Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)](https://www.huaweicloud.com/product/ief.html)
-**Note:** The HuaweiCloud IEF is only available in China now.
-
-1. Create an account in [HuaweiCloud](https://www.huaweicloud.com).
-2. Go to [IEF](https://www.huaweicloud.com/product/ief.html) and create an Edge node.
-3. Download the node configuration file (<node_name>.tar.gz).
-4. Run `bash -x hack/setup_for_IEF.sh /PATH/TO/<node_name>.tar.gz` to modify the configuration files in `conf/`.
-
-
 ### Run
 
 ```shell
@@ -177,7 +168,7 @@ Users can join this channel by clicking the invitation [link](https://join.slack
 
 ## Documentation
 
-Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules) for detailed information about individual modules of KubeEdge. You can also find the [guides](https://github.com/kubeedge/kubeedge/tree/master/docs/guides/message_topics.md) for trying kubeedge with IEF.
+Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules) for detailed information about individual modules of KubeEdge. You can also find the [guides](https://github.com/kubeedge/kubeedge/tree/master/docs/guides/try_kubeedge_with_ief.md) for trying kubeedge with IEF.
 
 ## Support
 
