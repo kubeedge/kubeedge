@@ -6,7 +6,7 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge.
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge. Basically kubeedge consists of cloud part and edge part, the edge part has been already open sourced and cloud part is coming soon!
 
 ## Advantages
 
@@ -44,6 +44,7 @@ KubeEdge is composed of these components:
 
 ### Release 1.0
 KubeEdge will provide the fundamental infrastructure and basic functionalities for IOT/Edge workload. This includes: 
+- Open source cloud part implementation.
 - K8s Application deployment through kubectl from Cloud to Edge node(s)
 - K8s configmap, secret deployment through kubectl from Cloud to Edge node(s) and their applications in Pod
 - Bi-directional and multiplex network communication between Cloud and edge nodes
@@ -140,7 +141,6 @@ make # or `make edge_core`
 4. Run `bash -x hack/setup_for_IEF.sh /PATH/TO/<node_name>.tar.gz` to modify the configuration files in `conf/`.
 
 
-
 ### Run
 
 ```shell
@@ -173,21 +173,18 @@ If you are using HuaweiCloud IEF, then the edge node you created should be runni
 
 **Slack channel:** 
 
-kubeedge.slack.com
-
 Users can join this channel by clicking the invitation [link](https://join.slack.com/t/kubeedge/shared_invite/enQtNDg1MjAwMDI0MTgyLTQ1NzliNzYwNWU5MWYxOTdmNDZjZjI2YWE2NDRlYjdiZGYxZGUwYzkzZWI2NGZjZWRkZDVlZDQwZWI0MzM1Yzc).
 
 ## Documentation
 
-Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules) for detailed information about individual modules of KubeEdge.
+Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules) for detailed information about individual modules of KubeEdge. You can also find the [guides](https://github.com/kubeedge/kubeedge/tree/master/docs/guides/message_topics.md) for trying kubeedge with IEF.
 
 ## Support
 
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
 
-That said, if you have questions, reach out to us, feel free to reach out to these folks:
+That said, if you have questions, reach out to us, feel free to reach out in the following ways:
 
-- @m1093782566 
-- @islinwb 
-- @Lion-Wei 
+- [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
+- [slack](kubeedge.slack.com)
