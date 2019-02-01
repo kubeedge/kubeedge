@@ -77,8 +77,8 @@ func (dtc *DTController) Start() error {
 			if msg, ok := dtc.DTContexts.ModulesContext.Receive("twin"); ok == nil {
 				log.LOGGER.Info("DeviceTwin receive msg")
 				err := dtc.distributeMsg(msg)
-				// todo  deal error
 				if err != nil {
+					log.LOGGER.Warnf("distributeMsg failed: %v", err)
 				}
 			}
 		}
@@ -117,7 +117,7 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
 		log.LOGGER.Errorf("Distribute message, msg is nil")
-		return nil
+		return errors.New("Distribute message, msg is nil")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
