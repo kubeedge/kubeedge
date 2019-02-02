@@ -20,7 +20,10 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
-sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
+if [ ! -d "/var/lib/edged" ]; then
+  sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
+fi
+
 #run the edge_core bin to run the integration
 go build cmd/edge_core.go
 #dynamically append testManager Module before starting integration test.
@@ -42,12 +45,16 @@ PWD=${curpath}/test/integration
 sudo rm -rf $PWD/appdeployment/appdeployment.test
 sudo rm -rf $PWD/device/device.test
 go get github.com/onsi/ginkgo/ginkgo
+sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
 bash -x $PWD/scripts/compile.sh $1
 export MQTT_SERVER=127.0.0.1
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/fast_test $1
+#Reset env
 sed -i 's/dbTest, testManager/dbTest/g' conf/modules.yaml
+#stop the edge_core after the test completion
+sudo pkill edge_core
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
 echo "==============================================="
