@@ -198,12 +198,12 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, Ima
 }
 
 //Function to get the pods from Edged
-func GetPods(EdgedEdnpoint string) (v1.PodList, error) {
+func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	var pods v1.PodList
 	var bytes io.Reader
 	client := &http.Client{}
 	t := time.Now()
-	req, err := http.NewRequest(http.MethodGet, EdgedEdnpoint, bytes)
+	req, err := http.NewRequest(http.MethodGet, EdgedEndpoint, bytes)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
 		common.Failf("Frame HTTP request failed: %v", err)
