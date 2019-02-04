@@ -43,6 +43,11 @@ type Token interface {
 	Error() error
 }
 
+const
+(
+	Devicehandler = "/devices"
+)
+
 var (
 	//deviceupload topic
 	DeviceUpload = "$hw/events/upload/#"
@@ -69,13 +74,13 @@ func TestEdgecoreEventBus(t *testing.T) {
 		common.InfoV2("Adding Mock device to edgenode !!")
 		//Generate the random string and assign as a DeviceID
 		DeviceID = "kubeedge-device-" + edge.GetRandomString(10)
-		IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, DeviceID, ctx.Cfg.TestManager+"/devices")
+		IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, DeviceID, ctx.Cfg.TestManager+Devicehandler)
 		Expect(IsDeviceAdded).Should(BeTrue())
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")
 		common.InfoV2("Remove Mock device from edgenode !!")
-		IsDeviceDeleted := HandleAddAndDeleteDevice(http.MethodDelete, DeviceID, ctx.Cfg.TestManager+"/devices")
+		IsDeviceDeleted := HandleAddAndDeleteDevice(http.MethodDelete, DeviceID, ctx.Cfg.TestManager+Devicehandler)
 		Expect(IsDeviceDeleted).Should(BeTrue())
 	})
 

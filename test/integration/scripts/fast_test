@@ -20,6 +20,7 @@ cd $workdir
 
 debugflag="-v 6 -alsologtostderr"
 compilemodule=$1
+runtest=$2
 
 #setup env
 cd ../
@@ -40,6 +41,6 @@ if [ $# -eq 0 ]
     ./appdeployment/appdeployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
     ./device/device.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 else
-    ./$compilemodule/$compilemodule.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 fi
 
