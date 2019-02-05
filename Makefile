@@ -25,3 +25,6 @@ verify:
 integration_test:
 	bash test/integration/scripts/execute.sh
 
+.PHONY: clean
+clean:
+	bash -x hack/clean.sh
