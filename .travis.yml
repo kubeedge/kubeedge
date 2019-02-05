@@ -1,6 +1,6 @@
 language: go
 
-sudo: required
+sudo: true
 
 services:
   - docker

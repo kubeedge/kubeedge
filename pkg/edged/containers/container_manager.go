@@ -1,13 +1,13 @@
 // +build linux
 
 /*
-Copyright 2015 The Kubernetes Authors.
+Copyright 2019 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//Package containers : containerManager is derived from "k8s.io/kubernetes/pkg/kubelet/cm/container_manager_linux.go"
-// runed extra interface  and changed most of the realization
 package containers
 
 import (
@@ -58,9 +56,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/edged/securitycontext"
 )
 
-//Pod details constants
+//Pod constants required by the manager
 const (
-	// Taken from lmctfy https://github.com/google/lmctfy/blob/master/lmctfy/controllers/cpu_controller.cc
 	minShares     = 2
 	sharesPerCPU  = 1024
 	milliCPUToCPU = 1000
@@ -166,7 +163,7 @@ const (
 //NewContainerManager initialises and returns a container manager object
 func NewContainerManager(runtimeService cri.RuntimeService, livenessManager proberesults.Manager, containerBackOff *flowcontrol.Backoff, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (ContainerManager, error) {
 	var devicePluginManager deviceplugin.Manager
-	var err error
+	var cmErr error
 	cm := &containerManager{
 		Mock:                     new(testing.Mock),
 		runtimeService:           runtimeService,
@@ -178,13 +175,13 @@ func NewContainerManager(runtimeService cri.RuntimeService, livenessManager prob
 		livenessManager:          livenessManager,
 	}
 	if devicePluginEnabled {
-		devicePluginManager, err = deviceplugin.NewManagerImpl()
+		devicePluginManager, cmErr = deviceplugin.NewManagerImpl()
 	} else {
-		devicePluginManager, err = deviceplugin.NewManagerStub()
+		devicePluginManager, cmErr = deviceplugin.NewManagerStub()
 	}
 
-	if err != nil {
-		return nil, err
+	if cmErr != nil {
+		return nil, cmErr
 	}
 	cm.devicePluginManager = devicePluginManager
 	return cm, nil
