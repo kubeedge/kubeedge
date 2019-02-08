@@ -122,7 +122,9 @@ func (evh *edgedVolumeHost) GetWriter() io.Writer                         { retu
 func (evh *edgedVolumeHost) GetHostName() string                          { return evh.edge.hostname }
 func (evh *edgedVolumeHost) GetCloudProvider() cloudprovider.Interface    { return nil }
 func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*api.ConfigMap, error) {
-	return nil
+	return func(namespace, name string) (*api.ConfigMap, error) {
+		return evh.edge.metaClient.ConfigMaps(namespace).Get(name)
+	}
 }
 func (evh *edgedVolumeHost) GetExec(pluginName string) mount.Exec          { return nil }
 func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                    { return nil, nil }
