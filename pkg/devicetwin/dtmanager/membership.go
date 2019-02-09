@@ -88,11 +88,18 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	devices, err := dttype.UnmarshalMembershipDetail(message.Content.([]byte))
-	if err != nil {
 
+	contentData, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("assertion failed")
+	}
+
+	devices, err := dttype.UnmarshalMembershipDetail(contentData)
+	if err != nil {
+		log.LOGGER.Errorf("Unmarshal membership info failed , err: %#v", err)
 		return nil, err
 	}
+
 	baseMessage := dttype.BaseMessage{EventID: devices.EventID}
 	defer context.UnlockAll()
 	context.LockAll()
@@ -107,17 +114,25 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	log.LOGGER.Info("Deal node detail info successful")
 	return nil, nil
 }
+
 func dealMembershipUpdated(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	log.LOGGER.Infof("MEMBERSHIP EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	updateEdgeGroups, err := dttype.UnmarshalMembershipUpdate(message.Content.([]byte))
+
+	contentData, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("assertion failed")
+	}
+
+	updateEdgeGroups, err := dttype.UnmarshalMembershipUpdate(contentData)
 	if err != nil {
 		log.LOGGER.Errorf("Unmarshal membership info failed , err: %#v", err)
-		return nil, nil
+		return nil, err
 	}
+
 	baseMessage := dttype.BaseMessage{EventID: updateEdgeGroups.EventID}
 	if updateEdgeGroups.AddDevices != nil && len(updateEdgeGroups.AddDevices) > 0 {
 		//add device
@@ -136,7 +151,13 @@ func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interf
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	DealGetMembership(context, message.Content.([]byte))
+
+	contentData, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("assertion failed")
+	}
+
+	DealGetMembership(context, contentData)
 	return nil, nil
 }
 
