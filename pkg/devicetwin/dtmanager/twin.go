@@ -88,13 +88,18 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 		return nil, errors.New("msg not Message type")
 	}
 	result := []byte("")
-	msgTwin, err := dttype.UnmarshalDeviceTwinUpdate(message.Content.([]byte))
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("invalid message content")
+	}
 
+	msgTwin, err := dttype.UnmarshalDeviceTwinUpdate(content)
 	if err != nil {
 		log.LOGGER.Errorf("Unmarshal update request body failed, err: %#v", err)
 		dealUpdateResult(context, "", "", dtcommon.BadRequestCode, errors.New("Unmarshal update request body failed, Please check the request"), result)
-		return nil, nil
+		return nil, err
 	}
+
 	log.LOGGER.Infof("Begin to update twin of the device %s", resource)
 	eventID := msgTwin.EventID
 	context.Lock(resource)
@@ -110,7 +115,13 @@ func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{})
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	DealGetTwin(context, resource, message.Content.([]byte))
+
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("invalid message content")
+	}
+
+	DealGetTwin(context, resource, content)
 	return nil, nil
 }
 
@@ -120,8 +131,14 @@ func dealTwinUpdate(context *dtcontext.DTContext, resource string, msg interface
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
+
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("invalid message content")
+	}
+
 	context.Lock(resource)
-	Updated(context, resource, (message.Content.([]byte)))
+	Updated(context, resource, content)
 	context.Unlock(resource)
 	return nil, nil
 }
@@ -226,6 +243,7 @@ func dealUpdateResult(context *dtcontext.DTContext, deviceID string, eventID str
 		result, jsonErr = dttype.BuildErrorResult(para)
 		if jsonErr != nil {
 			log.LOGGER.Errorf("Unmarshal error result of device %s error, err: %v", deviceID, jsonErr)
+			return jsonErr
 		}
 	}
 	log.LOGGER.Infof("Deal update result of device %s: send result", deviceID)
@@ -284,6 +302,7 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 		msg, jsonErr = dttype.BuildErrorResult(para)
 		if jsonErr != nil {
 			log.LOGGER.Errorf("Unmarshal error result error, err: %v", jsonErr)
+			return jsonErr
 		}
 	} else {
 		para.EventID = edgeGet.EventID
@@ -296,6 +315,7 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 			msg, jsonErr = dttype.BuildErrorResult(para)
 			if jsonErr != nil {
 				log.LOGGER.Errorf("Unmarshal error result error, err: %v", jsonErr)
+				return jsonErr
 			}
 		} else {
 			now := time.Now().UnixNano() / 1e6
@@ -309,6 +329,7 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 				msg, jsonErr = dttype.BuildErrorResult(para)
 				if jsonErr != nil {
 					log.LOGGER.Errorf("Unmarshal error result error, err: %v", jsonErr)
+					return jsonErr
 				}
 			}
 		}
@@ -890,15 +911,6 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 
 //DealMsgTwin get diff while updating twin
 func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[string]*dttype.MsgTwin, dealType int) dttype.DealTwinResult {
-	deviceModel, ok := context.GetDevice(deviceID)
-	if !ok {
-
-	}
-	twins := deviceModel.Twin
-	if twins == nil {
-		deviceModel.Twin = make(map[string]*dttype.MsgTwin)
-		twins = deviceModel.Twin
-	}
 	add := make([]dtclient.DeviceTwin, 0)
 	deletes := make([]dtclient.DeviceDelete, 0)
 	update := make([]dtclient.DeviceTwinUpdate, 0)
@@ -912,6 +924,24 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 		SyncResult: syncResult,
 		Document:   document,
 		Err:        nil}
+
+	deviceModel, ok := context.GetDevice(deviceID)
+	if !ok {
+		log.LOGGER.Errorf("invalid device id")
+		return dttype.DealTwinResult{Add: add,
+			Delete:     deletes,
+			Update:     update,
+			Result:     result,
+			SyncResult: syncResult,
+			Document:   document,
+			Err:        errors.New("invalid device id")}
+	}
+
+	twins := deviceModel.Twin
+	if twins == nil {
+		deviceModel.Twin = make(map[string]*dttype.MsgTwin)
+		twins = deviceModel.Twin
+	}
 
 	var err error
 	for key, msgTwin := range msgTwins {
