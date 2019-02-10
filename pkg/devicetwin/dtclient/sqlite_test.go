@@ -51,9 +51,9 @@ func TestSaveTwin(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-		err := SaveTwin(&Twin{})
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
+			err := SaveTwin(&Twin{})
 			if test.returnErr != err {
 				t.Errorf("SaveTwin case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -93,11 +93,11 @@ func TestDeleteTwinByID(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := DeleteTwinByID("test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := DeleteTwinByID("test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteTwinByID case failed: wanted %v and got %v", test.deleteReturnErr, err)
 			}
@@ -137,11 +137,11 @@ func TestUpdateTwinField(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateTwinField("test", "test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateTwinField("test", "test", "test")
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateTwinField case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -181,11 +181,11 @@ func TestUpdateTwinFields(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateTwinFields("test", make(map[string]interface{}))
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateTwinFields("test", make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateTwinFields case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -231,11 +231,11 @@ func TestQueryTwin(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		twin, err := QueryTwin("test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			twin, err := QueryTwin("test", "test")
 			// check err
 			if test.allReturnErr != err {
 				t.Errorf("QueryTwin case failed: wanted error %v and got error %v", test.allReturnErr, err)
@@ -289,11 +289,11 @@ func TestQueryTwinAll(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		twin, err := QueryTwinAll()
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			twin, err := QueryTwinAll()
 			if test.allReturnErr != err {
 				t.Errorf("QueryTwinAll case failed: wanted error %v and got error %v", test.allReturnErr, err)
 				return
