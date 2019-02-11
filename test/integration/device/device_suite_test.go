@@ -43,8 +43,7 @@ type Token interface {
 	Error() error
 }
 
-const
-(
+const (
 	Devicehandler = "/devices"
 )
 

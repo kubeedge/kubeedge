@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	name = "testManager"
-	edgedEndPoint = "http://127.0.0.1:10255"
+	name            = "testManager"
+	edgedEndPoint   = "http://127.0.0.1:10255"
 	EdgedPodHandler = "/pods"
 )
 
@@ -44,7 +44,7 @@ func (tm *testManager) Group() string {
 }
 
 //Function to get the pods from Edged
-func GetPodListFromEdged(w http.ResponseWriter) error{
+func GetPodListFromEdged(w http.ResponseWriter) error {
 	var pods v1.PodList
 	var bytes io.Reader
 	client := &http.Client{}
@@ -89,7 +89,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 	var p v1.Pod
 	if req.Method == http.MethodGet {
 		err := GetPodListFromEdged(w)
-		if err != nil{
+		if err != nil {
 			log.LOGGER.Errorf("Get podlist from Edged has failed: %v", err)
 		}
 	} else if req.Body != nil {

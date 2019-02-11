@@ -28,8 +28,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const
-(
+const (
 	AppHandler = "/pods"
 )
 
