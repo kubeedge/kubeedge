@@ -1,10 +1,37 @@
 # Guide on testing
 
 - [Test with `TestManager` Module](#test-with-testmanager-module)
+    - [TestManager Overview](#Overview-About-testManager-Module)
     - [Compile](#compile)
-    - [Configure](#configure)
+    - [Configure](#Configure)
     - [Run](#run)
     - [Verify](#verify)
+
+## Overview About testManager Module
+
+* testManager is a utility module to mimic the cloud and push messages for different kinds of actions that could happen from the cloud. Typical device , node and application lifecycle management functions are expected to be performed in the cloud and pushed to the edge node. These functions commonly encompass configurations related to 
+    
+     - Kubernetes Secrets and Configuration Maps.
+     - Application deployment/sync
+     - Binding devices to edge nodes via memberships.
+     - Syncing of different resources between cloud and edge ( like app status, device status etc)
+     - Node sync, etc..
+     
+Below info can help user how to use the testManager for testing the kubeedge.
+
+* testManager module starts http server on port 12345 to let users interact with kubeedge and perform operations which would be typically performed from cloud.
+It exposes its API's to do the following
+
+    - /pods         : Deploying a pod on to kubeedge node.
+    - /devices      : Bind a Device to kubeedge node.
+    - /secrets      : Configure secrets on kubeedge node.
+    - /configmaps   : Configure configmaps on kubeedge node.
+    
+Using above API's user can perform the resource operations against running edge node.
+    
+testManager facilitates validating the capabilities of the edge platform by performing **curl** operations against a running edge node. 
+
+Following sections will explain the procedure to test the kubeedge with testManager. 
 
 ## Test with `TestManager` Module
 
@@ -16,34 +43,31 @@ make
 # or
 make edge_core
 ```
-
-### Install dependency
-
-You need install **mosquitto** to support mqtt.
-
-xref: https://mosquitto.org/download/
-
-```shell
-# For ubuntu
-apt install -y mosquitto
-```
-
 ### Configure
 
-#### Modify the configuration files accordingly
+##### Modify the configuration files accordingly
 
-##### `modules.yaml` (add the `testManager`)
+##### in `modules.yaml` (add the `testManager`)
+
+Kubeedge uses [beehive](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/beehive.md) framework as the inter-module communication, all modules in the kubeedge need to register with beehive.
+`testManager` is a module like other KubeEdge modules. So, it has to be configured as shown below.
 
 ```yaml
 modules:
-    enabled: [eventbus, websocket, metaManager, edged, twin, edgefunction, testManager]
+    enabled: [eventbus, websocket, metaManager, edged, twin, testManager]
 ```
+#### Test kubeedge with Internal MQTT Server
 
-##### `edge.yaml` (modify `certfile`, `keyfile`, etc.)
+##### `edge.yaml` (`mode: 0 (default mode)` modify `certfile`, `keyfile`, etc.)
 
 ```yaml
 mqtt:
-    server: tcp://127.0.0.1:1883
+    server: tcp://127.0.0.1:1883 # external mqtt broker url.
+    internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+    mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
+    qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+    retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+    session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
 
 edgehub:
     websocket:
@@ -74,6 +98,28 @@ edged:
     version: 2.0.0
 ```
 
+```bash
+# run edge_core
+./edge_core
+# or
+nohup ./edge_core > edge_core.log 2>&1 &
+```
+
+### Test kubeedge with External MQTT Server
+
+**Install dependency:**
+
+You need install **mosquitto** to support mqtt.
+
+xref: https://mosquitto.org/download/
+
+```shell
+# For ubuntu
+apt install -y mosquitto
+```
+
+##### `edge.yaml` (modify `mode: 2`, `certfile`, `keyfile`, etc.)
+
 ### Run
 
 ```bash
@@ -87,7 +133,46 @@ nohup ./edge_core > edge_core.log 2>&1 &
 
 ### Verify
 
-#### POST request
+**Add Device**
+```bash
+curl -X PUT \
+  http://127.0.0.1:12345/devices \
+  -H 'content-type: application/json' \
+  -d '{
+	"added_devices": [{
+		"id": "kubeedge-device-1",
+		"name": "edgedevice",
+		"description": "integrationtest",
+		"state": "online"
+	}]
+}'
+``` 
+
+#### Verify the DB 
+```bash
+# Enter the database
+sqlite3 edge.db
+
+# Query the database and you shall see the posted Device info
+select * from device;
+```
+
+**Remove Device**
+```bash
+curl -X DELETE \
+  http://127.0.0.1:12345/devices \
+  -H 'content-type: application/json' \
+  -d '{
+	"removed_devices": [{
+		"id": "kubeedge-device-1",
+		"name": "edgedevice",
+		"description": "integrationtest",
+		"state": "online"
+	}]
+}'
+``` 
+
+#### Add Pod
 ```bash
 curl -i -v -X POST http://127.0.0.1:12345/pod -d '{
   "apiVersion": "v1",
@@ -109,20 +194,27 @@ curl -i -v -X POST http://127.0.0.1:12345/pod -d '{
   }
 }'
 ```
+#### Query Pods
+```bash
+curl -i -v -X GET http://127.0.0.1:12345/pod 
+
+#or (To display response in json format)
+
+curl -i -v -X GET http://127.0.0.1:12345/pod | python -m json.tool
+```
+
 #### Check the database
 
 ```bash
 # Enter the database
 sqlite3 edge.db
 
-# Query the database and you shall see the posted pod info
+# Query the database and you shall see the posted application deployment info
 select * from meta;
 
 # or you can check the pod container using `docker ps`
 ```
-### DELETE request
-clean after the testing or the container will remain on the machine
-
+### Remove Pod 
 ```bash
 curl -i -v -X DELETE http://127.0.0.1:12345/pod -d '{
   "apiVersion": "v1",
