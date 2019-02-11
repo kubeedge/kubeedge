@@ -1,0 +1,4 @@
+loggerLevel: "DEBUG"
+enableRsyslog: false
+logFormatText: true
+writers: [stdout]
