@@ -20,11 +20,11 @@ install: true
 jobs:
   include:
     - stage: "Test Jobs"                # naming the Tests stage
-      script: make
-      name: "make job"            # names the first Tests stage job
-    - script: make verify
-      name: "make verify job"     # names the second Tests stage job
-    - script: make test
-      name: "make test job"     # names the third Tests stage job
-    - script: make integration_test
-      name: "make integration test job"     # names the fourth Tests stage job
+      script: make edge_core
+      name: "build edge"            # names the first Tests stage job
+    - script: make edge_verify
+      name: "verify edge"     # names the second Tests stage job
+    - script: make edge_test
+      name: "unit test edge"     # names the third Tests stage job
+    - script: make edge_integration_test
+      name: "integration test edge"     # names the fourth Tests stage job
