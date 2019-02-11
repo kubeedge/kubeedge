@@ -28,6 +28,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const
+(
+	AppHandler = "/pods"
+)
+
 //Run Test cases
 var _ = Describe("Application deployment in edge_core Testing", func() {
 	var UID string
@@ -35,9 +40,9 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 		BeforeEach(func() {
 		})
 		AfterEach(func() {
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[0])
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[0])
 			Expect(IsAppDeleted).Should(BeTrue())
-			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+"/pods", UID)
+			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 			time.Sleep(2 * time.Second)
 			common.PrintTestcaseNameandStatus()
 		})
@@ -45,20 +50,20 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_1: Test application deployment in edge_core", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[0])
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[0])
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
-			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+"/pods", UID)
+			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
 
 		It("TC_TEST_APP_DEPLOYMENT_2: Test List application deployment in edge_core", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[0])
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[0])
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
-			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+"/pods", UID)
-			pods, err := GetPods(ctx.Cfg.EdgedEndpoint + "/pods")
+			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
+			pods, err := GetPods(ctx.Cfg.EdgedEndpoint + AppHandler)
 			Expect(err).To(BeNil())
 			common.Info("Get pods from Edged is Successfull !!")
 			for index := range pods.Items {
@@ -70,12 +75,12 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_3: Test application deployment delete from edge_core", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[1])
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[1])
 			Expect(IsAppDeployed).Should(BeTrue())
-			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+"/pods", UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[1])
+			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[1])
 			Expect(IsAppDeleted).Should(BeTrue())
-			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+"/pods", UID)
+			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
 
 		It("TC_TEST_APP_DEPLOYMENT_4: Test application deployment delete from edge_core", func() {
@@ -83,9 +88,9 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			for i := 0; i < 2; i++ {
 				UID = "deployment-app-" + edge.GetRandomString(10)
-				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[i])
+				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[i])
 				Expect(IsAppDeployed).Should(BeTrue())
-				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+"/pods", UID)
+				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 				time.Sleep(5 * time.Second)
 			}
 		})
@@ -96,16 +101,16 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			for i := 0; i < 2; i++ {
 				UID = "deployment-app-" + edge.GetRandomString(10)
-				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+"/apps", UID, ctx.Cfg.AppImageUrl[i])
+				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, ctx.Cfg.AppImageUrl[i])
 				Expect(IsAppDeployed).Should(BeTrue())
-				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+"/pods", UID)
+				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 				apps = append(apps, UID)
 				time.Sleep(5 * time.Second)
 			}
 			for i, appname := range apps {
-				IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+"/apps", appname, ctx.Cfg.AppImageUrl[i])
+				IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, appname, ctx.Cfg.AppImageUrl[i])
 				Expect(IsAppDeleted).Should(BeTrue())
-				CheckPodDeletion(ctx.Cfg.EdgedEndpoint+"/pods", appname)
+				CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, appname)
 			}
 		})
 

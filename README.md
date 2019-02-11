@@ -159,7 +159,18 @@ If you are using HuaweiCloud IEF, then the edge node you created should be runni
  cd <path to package to be tested>
  go test -v
  
- ```
+ ``` 
+### Run Integration Tests
+
+```shell 
+cd $GOPATH/src/github.com/kubeedge/kubeedge
+make integration_test
+```
+
+### Details and use cases of integration test framework
+
+Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/test/integration) to use cases of intergration test framework for kubeedge 
+
 ## Community
 
 **Slack channel:** 
