@@ -72,9 +72,9 @@ func TestSaveDevice(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-		err := SaveDevice(&Device{})
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
+			err := SaveDevice(&Device{})
 			if test.returnErr != err {
 				t.Errorf("SaveDevice case failed: wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -114,11 +114,11 @@ func TestDeleteDeviceByID(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := DeleteDeviceByID("test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := DeleteDeviceByID("test")
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceByID case failed: wanted %v and got %v", test.deleteReturnErr, err)
 			}
@@ -158,11 +158,11 @@ func TestUpdateDeviceField(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateDeviceField("test", "test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateDeviceField("test", "test", "test")
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceField case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -202,11 +202,11 @@ func TestUpdateDeviceFields(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateDeviceFields("test", make(map[string]interface{}))
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateDeviceFields("test", make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceFields case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -252,11 +252,11 @@ func TestQueryDevice(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		device, err := QueryDevice("test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			device, err := QueryDevice("test", "test")
 			if test.allReturnErr != err {
 				t.Errorf("QueryDevice case failed: wanted error %v and got error %v", test.allReturnErr, err)
 				return
@@ -309,11 +309,11 @@ func TestQueryDeviceAll(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		device, err := QueryDeviceAll()
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			device, err := QueryDeviceAll()
 			if test.allReturnErr != err {
 				t.Errorf("QueryDeviceAll case failed: wanted error %v and got error %v", test.allReturnErr, err)
 				return
@@ -364,11 +364,11 @@ func TestUpdateDeviceMulti(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateDeviceMulti(updateDevice)
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateDeviceMulti(updateDevice)
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceMulti case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -468,15 +468,15 @@ func TestAddDeviceTrans(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-		// success insert
-		ormerMock.EXPECT().Insert(gomock.Any()).Return(test.successInsertReturnInt, test.successInsertReturnErr).Times(test.successInsertTimes)
-		// fail insert
-		ormerMock.EXPECT().Insert(gomock.Any()).Return(test.failInsertReturnInt, test.failInsertReturnErr).Times(test.failInsertTimes)
-		ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-		ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
-		err := AddDeviceTrans(adds, addAttrs, addTwins)
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
+			// success insert
+			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.successInsertReturnInt, test.successInsertReturnErr).Times(test.successInsertTimes)
+			// fail insert
+			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.failInsertReturnInt, test.failInsertReturnErr).Times(test.failInsertTimes)
+			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
+			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
+			err := AddDeviceTrans(adds, addAttrs, addTwins)
 			if test.wantErr != err {
 				t.Errorf("AddDeviceTrans case failed: wanted error %v and got error %v", test.wantErr, err)
 			}
@@ -593,17 +593,17 @@ func TestDeleteDeviceTrans(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-		ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
-		ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
-		// success delete
-		querySeterMock.EXPECT().Delete().Return(test.successDeleteReturnInt, test.successDeleteReturnErr).Times(test.successDeleteTimes)
-		// fail delete
-		querySeterMock.EXPECT().Delete().Return(test.failDeleteReturnInt, test.failDeleteReturnErr).Times(test.failDeleteTimes)
-		err := DeleteDeviceTrans(deletes)
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
+			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
+			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
+			// success delete
+			querySeterMock.EXPECT().Delete().Return(test.successDeleteReturnInt, test.successDeleteReturnErr).Times(test.successDeleteTimes)
+			// fail delete
+			querySeterMock.EXPECT().Delete().Return(test.failDeleteReturnInt, test.failDeleteReturnErr).Times(test.failDeleteTimes)
+			err := DeleteDeviceTrans(deletes)
 			if test.wantErr != err {
 				t.Errorf("DeleteDeviceTrans Case failed : wanted %v and got %v", test.wantErr, err)
 			}

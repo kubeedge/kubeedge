@@ -84,9 +84,9 @@ func TestSaveMeta(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-		err := SaveMeta(&meta)
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
+			err := SaveMeta(&meta)
 			if test.returnErr != err {
 				t.Errorf("Save Meta Case failed : wanted error %v and got error %v", test.returnErr, err)
 			}
@@ -126,11 +126,11 @@ func TestDeleteMetaByKey(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := DeleteMetaByKey("test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := DeleteMetaByKey("test")
 			if test.deleteReturnErr != err {
 				t.Errorf("Delete Meta By Key Case failed : wanted %v and got %v", test.deleteReturnErr, err)
 			}
@@ -162,9 +162,9 @@ func TestUpdateMeta(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		ormerMock.EXPECT().Update(gomock.Any(), gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
-		err := UpdateMeta(&meta)
 		t.Run(test.name, func(t *testing.T) {
+			ormerMock.EXPECT().Update(gomock.Any(), gomock.Any()).Return(test.returnInt, test.returnErr).Times(1)
+			err := UpdateMeta(&meta)
 			if test.returnErr != err {
 				t.Errorf("Update Meta Case failed : wanted %v and got %v", test.returnErr, err)
 			}
@@ -200,10 +200,10 @@ func TestInsertOrUpdate(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		rawSeterMock.EXPECT().Exec().Return(test.returnSQL, test.returnErr).Times(1)
-		ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(test.returnRaw).Times(1)
-		err := InsertOrUpdate(&meta)
 		t.Run(test.name, func(t *testing.T) {
+			rawSeterMock.EXPECT().Exec().Return(test.returnSQL, test.returnErr).Times(1)
+			ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(test.returnRaw).Times(1)
+			err := InsertOrUpdate(&meta)
 			if test.returnErr != err {
 				t.Errorf("Insert or Update Meta Case failed : wanted %v and got %v", test.returnErr, err)
 			}
@@ -243,11 +243,11 @@ func TestUpdateMetaField(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateMetaField("test", "test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateMetaField("test", "test", "test")
 			if test.updateReturnErr != err {
 				t.Errorf("Update Meta Field Case failed : wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -287,11 +287,12 @@ func TestUpdateMetaFields(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		err := UpdateMetaFields("test", nil)
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			err := UpdateMetaFields("test", nil)
+
 			if test.updateReturnErr != err {
 				t.Errorf("Update Meta Fields Case failed : wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -337,11 +338,11 @@ func TestQueryMeta(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		meta, err := QueryMeta("test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			meta, err := QueryMeta("test", "test")
 			if test.allReturnErr != err {
 				t.Errorf("Query Meta Case Failed : wanted error %v and got error %v", test.allReturnErr, err)
 				return
@@ -394,11 +395,11 @@ func TestQueryAllMeta(t *testing.T) {
 
 	// run the test cases
 	for _, test := range cases {
-		querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(test.allReturnInt, test.allReturnErr).Times(1)
-		querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-		ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-		meta, err := QueryAllMeta("test", "test")
 		t.Run(test.name, func(t *testing.T) {
+			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(test.allReturnInt, test.allReturnErr).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+			meta, err := QueryAllMeta("test", "test")
 			if test.allReturnErr != err {
 				t.Errorf("Query All Meta Case Failed : wanted error %v and got error %v", test.allReturnErr, err)
 				return
