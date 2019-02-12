@@ -27,6 +27,7 @@ find_files() {
   find . -not \( \
       \( \
         -wholename './.git' \
+	-o -wholename '*/test/*'\
         -o -wholename '*/vendor/*' \
       \) -prune \
     \) -name '*.go'

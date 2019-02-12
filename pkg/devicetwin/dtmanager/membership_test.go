@@ -60,7 +60,7 @@ func TestGetRemoveList(t *testing.T) {
 	}
 	dArray = append(dArray, d)
 	value := getRemoveList(dtc, dArray)
-	for i, _ := range value {
+	for i := range value {
 		assert.Equal(t, "DeviceB", value[i].ID)
 	}
 }
@@ -77,7 +77,7 @@ func TestGetRemoveListProperDevideID(t *testing.T) {
 	}
 	dArray = append(dArray, d)
 	value := getRemoveList(dtc, dArray)
-	for i, _ := range value {
+	for i := range value {
 		assert.Equal(t, "123", value[i].ID)
 	}
 }
