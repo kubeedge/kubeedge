@@ -30,7 +30,7 @@ type BaseMessage struct {
 }
 
 //SetEventID set event id
-func (bs BaseMessage) SetEventID(eventID string) {
+func (bs *BaseMessage) SetEventID(eventID string) {
 	bs.EventID = eventID
 }
 
@@ -137,12 +137,12 @@ type ValueMetadata struct {
 }
 
 //UpdateCloudVersion update cloud version
-func (tv TwinVersion) UpdateCloudVersion() {
+func (tv *TwinVersion) UpdateCloudVersion() {
 	tv.CloudVersion = tv.CloudVersion + 1
 }
 
 //UpdateEdgeVersion update edge version while dealing edge update
-func (tv TwinVersion) UpdateEdgeVersion() {
+func (tv *TwinVersion) UpdateEdgeVersion() {
 	tv.EdgeVersion = tv.EdgeVersion + 1
 }
 
