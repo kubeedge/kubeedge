@@ -103,7 +103,7 @@ KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge su
 2) bothMqttMode: internal as well as external broker are enabled
 3) externalMqttMode: only external broker is enabled
 
-Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/conf/edge.yaml) to select the desired mode
+Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml) to select the desired mode
 
 To use kubeedge in double mqtt or external mode, make sure you have **mosquitto** in your environment. Please reference the following steps to install mosquitto if it is not already present in your environment.
 #### Install mosquitto
@@ -122,17 +122,17 @@ yum install mosquitto
 
 See [mosquitto official website](https://mosquitto.org/download/) for more information.
 
-### Build
+### Build Edge
 
-Clone kube-edge
+Clone KubeEdge
 
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
-cd $GOPATH/src/github.com/kubeedge/kubeedge
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
 make # or `make edge_core`
 ```
 
-### Run
+### Run Edge
 
 ```shell
 # run mosquitto
@@ -148,28 +148,28 @@ nohup ./edge_core > edge_core.log 2>&1 &
 If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
 
-### Run Unit Tests
+### Run Edge Unit Tests
 
  ```shell
  make test
  ```
  To run unit tests of a package individually 
  ```shell
- export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge
+ export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge/edge
  cd <path to package to be tested>
  go test -v
  
  ``` 
-### Run Integration Tests
+### Run Edge Integration Tests
 
 ```shell 
-cd $GOPATH/src/github.com/kubeedge/kubeedge
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
 make integration_test
 ```
 
 ### Details and use cases of integration test framework
 
-Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/test/integration) to use cases of intergration test framework for kubeedge 
+Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) to use cases of intergration test framework for kubeedge 
 
 ## Community
 

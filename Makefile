@@ -1,30 +1,18 @@
-
 # make edge_core
-.PHONY: default edge_core
+.PHONY: edge_core
 edge_core:
-	go build cmd/edge_core.go
+	cd edge && $(MAKE)
 
 # unit tests
-.PHONY: test
-ifeq ($(WHAT),)
-       TEST_DIR="./pkg/"
-else
-       TEST_DIR=${WHAT}	
-endif
-
-export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
-test:
-	find ${TEST_DIR} -name "*_test.go"|xargs -i dirname {}|uniq|xargs -i go test ${T} {}
+.PHONY: edge_test
+edge_test:
+	cd edge && $(MAKE) test
 
 # verify
-.PHONY: verify
-verify:
-	bash -x hack/verify.sh
+.PHONY: edge_verify
+edge_verify:
+	cd edge && $(MAKE) verify
 
-.PHONY: integration_test
-integration_test:
-	bash test/integration/scripts/execute.sh
-
-.PHONY: clean
-clean:
-	bash -x hack/clean.sh
+.PHONY: edge_integration_test
+edge_integration_test:
+	cd edge && $(MAKE) integration_test
