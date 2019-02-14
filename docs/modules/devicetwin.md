@@ -93,11 +93,11 @@ The following are the action callbacks which can be performed by the membership 
 ### Twin Module
 
 The main responsibility of the twin module is to deal with all the device twin related operations. It can perform 
-operations like device twin update and device twin sync.
+operations like device twin update, device twin get and device twin sync-to-cloud.
 
 The major functions performed by this module are:-
 
-1. Initialize action callback map which is a map[string]Callback that contains the callback functions that can be performed
+1. Initialize action callback map (which is a  map of action(string) to the callback function that performs the requested action)
 2. Receive the messages sent to twin module
 3. For each message the action message is read and the corresponding function is called
 4. Receive heartbeat from the heartbeat channel and send a heartbeat to the controller
@@ -109,16 +109,35 @@ The following are the action callbacks which can be performed by the twin module
    - dealTwinSync
    
 **dealTwinUpdate**: dealTwinUpdate() updates the device twin information for a particular device. 
-                    The delta of the twin is sent to event bus and the result of the update is sent to the eventbus
-                    The result is also synced to the cloud. 
+                    The devicetwin update message can either be received by edgehub module from the cloud or from 
+                    the MQTT broker through the eventbus component (mapper will publish a message on the device twin update topic) . The message is then sent 
+                    to the device twin controller from where it is sent to the device twin module. The twin module updates the twin value in 
+                    the database and sends the update result message to the communication module. The communication module will in turn
+                    send the publish message to the MQTT broker through the eventbus.
+                    
+  <img src="../images/devicetwin/devicetwin-update.png">
+                 
+                 
+**dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. The edgehub component  receives the message that arrives on the subscribed twin get topic through the 
+                                               eventbus component. The edgehub component forwards the message to devicetwin controller, 
+                                               which further sends the message to twin module. The twin module gets the devicetwin related information for the particular device and 
+                                               sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
+                                                The communication module sends the information to the edgehub component which further sends it to the eventbus component.
+                                                The eventbus component publishes the result on the topic specified . 
+                                                
+  <img src="../images/devicetwin/devicetwin-get.png">
 
-**dealTwinGet**: dealTwinGet() provides the device twin event information for a particular device.
-                 It sends this information to the edge through the communication module.
 
-**dealTwinSync**: dealTwinSync() syncs the device twin information to the database.The result of the update is sent to
-                  the event bus. The result is also synced to the cloud and the delta of the twin is sent to eventbus. 
-                   
-
+**dealTwinSync**: dealTwinSync() syncs the device twin information to the cloud. The edgehub module receives the message on the subscribed twin cloud sync 
+                                                  topic through the eventbus component. This message is then sent to the devicetwin controller from where it is sent to
+                                                  the twin module. The twin module then syncs the twin information present in the database and sends the synced twin results
+                                                  to the communication module. The communication module further sends the information to edgehub component which will 
+                                                  in turn send the updates to the cloud through the websocket connection. This function also performs operations like publishing the updated
+                                                 twin details  document, delta of the device twin as well as the update result (in case there is some error) to a specified topic through the communication module,
+                                                 which sends the data to edgehub, which will send it to eventbus which publishes on the MQTT broker.
+                                                    
+  <img src="../images/devicetwin/sync-to-cloud.png">                                             
+        
 
 ### Communication Module
 
