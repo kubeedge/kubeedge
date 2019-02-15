@@ -131,6 +131,8 @@ git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeed
 cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
 make # or `make edge_core`
 ```
+KubeEdge can also be cross compiled to run on ARM based processors.
+Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
 
 ### Run Edge
 
