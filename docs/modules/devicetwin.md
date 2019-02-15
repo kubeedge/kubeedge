@@ -158,12 +158,12 @@ The following are the action callbacks which can be performed by the communicati
 
 ### Device Module
 
-The main responsibility of the device module is to perform the device related operations like dealing with device updates,
- device attribute updates, syncing from sql lite and so on.
+The main responsibility of the device module is to perform the device related operations like dealing with device state updates 
+and device attribute updates.
       
 The major functions performed by this module are :-
 
-1. Initialize action callback map which is a map[string]Callback that contains the callback functions that can be performed
+1. Initialize action callback map (which is a  map of action(string) to the callback function that performs the requested action)
 2. Receive the messages sent to device module
 3. For each message the action message is read and the corresponding function is called
 4. Receive heartbeat from the heartbeat channel and send a heartbeat to the controller
@@ -175,14 +175,20 @@ The following are the action callbacks which can be performed by the device modu
    
  **dealDeviceUpdated**: dealDeviceUpdated() deals with the operations to be performed when a device attribute update is encountered.
                         It updates the changes to the device attributes, like addition of attributes, updation of attributes and deletion of attributes,
-                        in the database. It also publishes the device attribute update to the eventBus.                      
+                        in the database. It also sends the result of the device attribute update to be  published to the eventhub component]
+                        through the communicate module of devicetwin. The eventhub component further sends the received message to eventbus which
+                        publishes the result on the specified topic.                      
+ 
+  <img src="../images/devicetwin/device-update.png">                                             
  
  **dealDeviceStateUpdate**:  dealDeviceStateUpdate() deals with the operations to be performed when a device status update is encountered.
                              It updates the state of the device as well as the last online time of the device in the database.
-                             It also sends the state of the device to the cloud 
-                             and result of the update is sent to the edge, through the communication module   
+                             It also sends the update state result to the cloud as well as the edgehub module (which in turn sends it to the eventbus
+                             module which publishes the result on the specified topic of the MQTT broker), through the communication module   
 
-
+  <img src="../images/devicetwin/device-state-update.png">                                             
+  
+  
 ## Tables
 
 DeviceTwin module creates three tables in the database, namely :-
