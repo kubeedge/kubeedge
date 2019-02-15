@@ -42,8 +42,8 @@ func PathExist(path string) bool {
 	return err == nil || os.IsExist(err)
 }
 
-// HubclientInit create mqtt client config
-func HubclientInit(server, clientID, username, password string) *MQTT.ClientOptions {
+// HubClientInit create mqtt client config
+func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
 	if username != "" {
 		opts.SetUsername(username)
