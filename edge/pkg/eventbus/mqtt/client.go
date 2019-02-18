@@ -123,7 +123,7 @@ func (mq *Client) InitSubClient() {
 		right = 10
 	}
 	subID := fmt.Sprintf("hub-client-sub-%s", timeStr[0:right])
-	subOpts := util.HubclientInit(mq.MQTTUrl, subID, "", "")
+	subOpts := util.HubClientInit(mq.MQTTUrl, subID, "", "")
 	subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
@@ -140,7 +140,7 @@ func (mq *Client) InitPubClient() {
 		right = 10
 	}
 	pubID := fmt.Sprintf("hub-client-pub-%s", timeStr[0:right])
-	pubOpts := util.HubclientInit(mq.MQTTUrl, pubID, "", "")
+	pubOpts := util.HubClientInit(mq.MQTTUrl, pubID, "", "")
 	pubOpts.OnConnectionLost = onPubConnectionLost
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
