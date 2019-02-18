@@ -14,6 +14,7 @@ before_script:
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedge
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
+  - sudo apt-get install gcc-arm-linux-gnueabi
 
 install: true
 
@@ -28,3 +29,5 @@ jobs:
       name: "unit test edge"     # names the third Tests stage job
     - script: make edge_integration_test
       name: "integration test edge"     # names the fourth Tests stage job
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
