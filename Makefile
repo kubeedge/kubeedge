@@ -16,3 +16,7 @@ edge_verify:
 .PHONY: edge_integration_test
 edge_integration_test:
 	cd edge && $(MAKE) integration_test
+
+.PHONY: edge_cross_build
+edge_cross_build:
+	cd edge && $(MAKE) cross_build
