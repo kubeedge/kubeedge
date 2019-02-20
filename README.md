@@ -153,7 +153,7 @@ If you are using HuaweiCloud IEF, then the edge node you created should be runni
 ### Run Edge Unit Tests
 
  ```shell
- make test
+ make edge_test
  ```
  To run unit tests of a package individually 
  ```shell
@@ -165,8 +165,7 @@ If you are using HuaweiCloud IEF, then the edge node you created should be runni
 ### Run Edge Integration Tests
 
 ```shell 
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make integration_test
+make edge_integration_test
 ```
 
 ### Details and use cases of integration test framework
