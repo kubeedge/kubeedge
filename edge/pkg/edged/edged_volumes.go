@@ -9,18 +9,23 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
 
-// most functions in this file is come from "k8s.io/kubernetes/pkg/kubelet/kubelet_volumes.go"
-// and made some variant.
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with reduced set of methods
+Changes done are
+1. Most functions in this file is come from "k8s.io/kubernetes/pkg/kubelet/kubelet_volumes.go"
+   and made some variant.
+*/
 
 package edged
 
 import (
 	"fmt"
-	"k8s.io/kubernetes/pkg/kubelet/container"
 	"strconv"
 	"strings"
+
+	"k8s.io/kubernetes/pkg/kubelet/container"
 
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"

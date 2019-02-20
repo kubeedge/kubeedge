@@ -14,10 +14,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with pruned structures and interfaces
+and changed most of the realization.
+Changes done are
+1. Interface containerManager is derived from "k8s.io/kubernetes/pkg/kubelet/cm/container_manager_linux.go"
+   runed extra interface  and changed most of the realization
+2. Struct containerManager partially derived from kubernetes/pkg/kubelet/cm/devicemanager.ManagerImpl
 */
 
-//Package containers : containerManager is derived from "k8s.io/kubernetes/pkg/kubelet/cm/container_manager_linux.go"
-// runed extra interface  and changed most of the realization
 package containers
 
 import (

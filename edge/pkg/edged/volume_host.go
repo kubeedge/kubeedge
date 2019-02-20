@@ -12,11 +12,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
 
-// This file is derived from kubernetes/pkg/kubelet/volume_host.go
-// edgedVolumeHost is derived from kubeletVolumeHost but pruned sections that we don't need
-// and made some variant.
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with reduced set of methods
+Changes done are
+1. This file is derived from kubernetes/pkg/kubelet/volume_host.go
+ edgedVolumeHost is derived from kubeletVolumeHost but pruned sections that we don't need
+ and made some variant.
+*/
 
 package edged
 

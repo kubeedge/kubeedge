@@ -12,6 +12,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with pruned structures and interfaces
+and changed most of the realization.
+Changes done are
+1. For ImageServiceServer interface is been implemented here.
+2. Directly call docker client methods for container and image operations
 */
 
 package dockertools
@@ -21,10 +29,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/net/context"
 	"io"
 	"strings"
 	"time"
+
+	"golang.org/x/net/context"
 
 	dockerref "github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"

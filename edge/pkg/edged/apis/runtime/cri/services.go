@@ -12,6 +12,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with pruned structures and interfaces
+and changed most of the realization.
+Changes done are
+1. For Runtime interface only ContainerManager and RuntimeVersion methods are considered.
+2. Directly call docker client methods for container operations
 */
 
 package cri
