@@ -6,35 +6,35 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at Edge. It is built upon Kubernetes and provides core infrastructure support for network, app. deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author customer logic and enable resource constraint devices communication at Edge. Basically kubeedge consists of cloud part and edge part, the edge part has been already open sourced and cloud part is coming soon!
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. Kubeedge consists of a cloud part and an edge part. The edge part has already been open sourced and the cloud part is coming soon!
 
 ## Advantages
 
 #### Edge Computing
 
-With business logic running at Edge, volumes of data can be secured & processed locally. It reduces the bandwidth request between Edge and Cloud; increases the response speak; and protects customers' data privacy. 
+With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. This reduces the network bandwidth requirements and consumption between Edge and Cloud. This increases responsiveness, decreases costs, and protects customers' data privacy. 
 
-#### Simplify development
+#### Simplified development
 
-Developers can write regular http or mqtt based applications; containerize and run anywhere at Edge or Cloud.
+Developers can write regular http or mqtt based applications, containerize these, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate.
 
 #### Kubernetes-native support
 
-With KubeEdge, users can orchestrate apps, manage devices and monitor app/device status against Edge nodes like a normal K8s cluster in the Cloud
+With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud
 
 #### Abundant applications
 
-You can easily get and deploy complicated machine learning, image recognition, event processing and other high level applications to your Edge side.
+It is easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge.
 
 ## Introduction
 
-KubeEdge is composed of these components:
+KubeEdge is composed of the following components:
 
-- **Edged:** Edged is an agent running on edge node for managing user's application.
-- **EdgeHub:** EdgeHub is a web socket client, which is responsible for interacting with **Huawei Cloud IEF service**, including sync cloud side resources update, report edged side host and device status changes.
-- **EventBus:** EventBus is a MQTT client to interact with MQTT server(mosquitto), offer subscribe and publish capability to other components.
-- **DeviceTwin:** DeviceTwin is responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
-- **MetaManager:** MetaManager is the message processor and between edged and edgehub. It's also responsible for storing/retrieving metadata to/from a lightweight database(SQLite). 
+- **Edged:** an agent that runs on edge nodes and manages containerized applications.
+- **EdgeHub:** a web socket client responsible for interacting with **Huawei Cloud IEF service**. This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
+- **EventBus:** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
+- **DeviceTwin:** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
+- **MetaManager:** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
 
 ### Architecture
 
@@ -43,32 +43,31 @@ KubeEdge is composed of these components:
 ## Roadmap
 
 ### Release 1.0
-KubeEdge will provide the fundamental infrastructure and basic functionalities for IOT/Edge workload. This includes: 
-- Open source cloud part implementation.
-- K8s Application deployment through kubectl from Cloud to Edge node(s)
-- K8s configmap, secret deployment through kubectl from Cloud to Edge node(s) and their applications in Pod
-- Bi-directional and multiplex network communication between Cloud and edge nodes
-- K8s Pod and Node status querying with kubectl at Cloud with data collected/reported from Edge
-- Edge node autonomy when its getting offline and recover post reconnection to Cloud
-- Device twin and MQTT protocol for IOT devices talking to Edge node
+KubeEdge will provide the fundamental infrastructure and basic functionality for IOT/Edge workloads. This includes: 
+- An open source implementation of the cloud part.
+- Kubernetes application deployment through kubectl from Cloud to Edge nodes.
+- Kubernetes configmap and secret deployment through kubectl from Cloud to Edge nodes and their applications.
+- Bi-directional multiplexed network communication between Cloud and Edge nodes.
+- Kubernetes Pod and Node status querying with kubectl at Cloud with data collected/reported from the Edge.
+- Edge node autonomy when disconnected, and automatic post-reconnection recovery to the Cloud.
+- Device twin and MQTT protocol for communication between IOT devices and Edge nodes.
 
-### Release 2.0 and Future
-- Build service mesh with KubeEdge and Istio 
-- Enable function as a service at Edge
-- Support more types of device protocols to Edge node such as AMQP, BlueTooth, ZigBee, etc.
-- Evaluate and enable super large scale of Edge clusters with thousands of Edge nodes and millions of devices
-- Enable intelligent scheduling of apps. to large scale of Edge nodes
-- etc.
+### Release 2.0 and the Future
+- Istio-based service mesh across Edge and Cloud.
+- Enable function as a service at the Edge
+- Support more types of device protocols to Edge nodes such as AMQP, BlueTooth, ZigBee, etc.
+- Evaluate and enable much larger scale Edge clusters with thousands of Edge nodes and millions of devices.
+- Enable intelligent scheduling of applications to large scale Edge clusters.
 
 ## Usage
 
 ### Prerequisites
 
-To use KubeEdge, make sure you have **docker** in your environment, if don't have, please reference the following steps to install docker.
+To use KubeEdge, you will need to have **docker** installed. If you don't, please follow these steps to install docker.
 
 #### Install docker
 
-For ubuntu:
+For Ubuntu:
 
 ```shell
 # Install Docker from Ubuntu's repositories:
@@ -85,7 +84,7 @@ add-apt-repository \
 apt-get update && apt-get install docker-ce=18.06.0~ce~3-0~ubuntu
 ```
 
-For centOS:
+For CentOS:
 
 ```shell
 # Install Docker from CentOS/RHEL repository:
@@ -105,16 +104,16 @@ KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge su
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml) to select the desired mode
 
-To use kubeedge in double mqtt or external mode, make sure you have **mosquitto** in your environment. Please reference the following steps to install mosquitto if it is not already present in your environment.
+To use kubeedge in double mqtt or external mode, you will need to have **mosquitto** installed. If you do not already have it, you may install as folllows.
 #### Install mosquitto
 
-For ubuntu:
+For Ubuntu:
 
 ```shell
 apt install mosquitto
 ```
 
-For centOS:
+For CentOS:
 
 ```shell
 yum install mosquitto
@@ -184,9 +183,12 @@ Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules
 
 ## Support
 
+<!--
+We don't have a troubleshooting guide yet.  When we do, uncomment the following and add the link.
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
-
-That said, if you have questions, reach out to us, feel free to reach out in the following ways:
+ 
+--> 
+If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
