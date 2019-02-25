@@ -78,16 +78,34 @@ The following are the action callbacks which can be performed by the membership 
    - dealMembershipUpdated
    - dealMembershipDetail
 
-**dealMembershipGet**:   dealMembershipGet() deal gets the membership event, providing information
-                         about the devices associated with the edge node for a particular event id.
+**dealMembershipGet**:   dealMembershipGet() deal gets the information  about the devices associated with the
+                                                                    particular edge node, from the cache. The eventbus first receives a message on its subscribed topic (membership-get topic).
+                                                                    This message arrives at the  devicetwin controller, which further sends the message to membership module.  The membership module
+                                                                     gets the devices associated with the edge node from the cache (context) and sends the information to the communication module, 
+                                                                     it also handles errors that may arise while performing the  aforementioned process and sends the error to the communication module
+                                                                      instead of device details.The communication module sends the information to the  eventbus component which further publishes the result on the 
+                                                                     specified MQTT topic (get membership result topic). 
+
+  <img src="../images/devicetwin/membership-get.png">
+
 
 **dealMembershipUpdated**:  dealMembershipUpdated() updates the membership details of the node. 
                             It adds the devices, that were newly added, to the edge group and removes the devices, that were removed,
-                            from the edge group 
+                            from the edge group and updates device details, if they have been altered or updated. The eventbus module receives the message that arrives on the subscribed topic and forwards the message 
+                            to devicetwin controller which further forwards it to the membership module. The membership  module adds devices that are newly added, removes devices that have been recently 
+                            deleted and also updates the devices that were already existing in the database as well as in the cache. After updating the details of the devices a  message is sent
+                            to the communication module of the device twin, which sends the message to eventbus module to be published on the given MQTT topic. 
+                            
+  <img src="../images/devicetwin/membership-update.png">
                     
+                                        
 **dealMembershipDetail**:   dealMembershipDetail() provides the membership details of the edge node, providing information
                             about the devices associated with the edge node, after removing the membership details of 
-                            recently removed devices.
+                            recently removed devices. The eventbus module receives the message that arrives on the subscribed topic,the message is then forwarded  to the 
+                            devicetwin controller which further forwards it to the membership module. The membership  module adds devices that are mentioned in the message, removes 
+                            devices that that are not present in the cache. After updating the details of the devices a  message is sent to the communication module of the device twin.
+
+  <img src="../images/devicetwin/membership-detail.png">
 
 
 ### Twin Module
@@ -118,12 +136,10 @@ The following are the action callbacks which can be performed by the twin module
   <img src="../images/devicetwin/devicetwin-update.png">
                  
                  
-**dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. The edgehub component  receives the message that arrives on the subscribed twin get topic through the 
-                                               eventbus component. The edgehub component forwards the message to devicetwin controller, 
-                                               which further sends the message to twin module. The twin module gets the devicetwin related information for the particular device and 
+**dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. The eventbus component  receives the message that arrives on the subscribed twin get topic. 
+                                              and forwards the message to devicetwin controller, which further sends the message to twin module. The twin module gets the devicetwin related information for the particular device and 
                                                sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
-                                                The communication module sends the information to the edgehub component which further sends it to the eventbus component.
-                                                The eventbus component publishes the result on the topic specified . 
+                                                The communication module sends the information to the eventbus component, which publishes the result on the topic specified . 
                                                 
   <img src="../images/devicetwin/devicetwin-get.png">
 
@@ -194,16 +210,15 @@ The following are the action callbacks which can be performed by the device modu
    
  **dealDeviceUpdated**: dealDeviceUpdated() deals with the operations to be performed when a device attribute update is encountered.
                         It updates the changes to the device attributes, like addition of attributes, updation of attributes and deletion of attributes,
-                        in the database. It also sends the result of the device attribute update to be  published to the eventhub component]
-                        through the communicate module of devicetwin. The eventhub component further sends the received message to eventbus which
-                        publishes the result on the specified topic.                      
+                        in the database. It also sends the result of the device attribute update to be  published to the eventbus component]
+                        through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.                      
  
   <img src="../images/devicetwin/device-update.png">                                             
  
  **dealDeviceStateUpdate**:  dealDeviceStateUpdate() deals with the operations to be performed when a device status update is encountered.
                              It updates the state of the device as well as the last online time of the device in the database.
-                             It also sends the update state result to the cloud as well as the edgehub module (which in turn sends it to the eventbus
-                             module which publishes the result on the specified topic of the MQTT broker), through the communication module   
+                             It also sends the update state result, through the communication module,  to the cloud through the edgehub module and to the  eventbus module which in turn 
+                             publishes the result on the specified topic of the MQTT broker.
 
   <img src="../images/devicetwin/device-state-update.png">                                             
   
@@ -221,16 +236,14 @@ DeviceTwin module creates three tables in the database, namely :-
 
 Device table contains the data regarding the devices added to a particular edge node.
 The following are the columns present in the device table :-
-    
-   - **ID**:  This field indicates the id assigned to the device
-    
-   - **Name**: This field indicates the name of the device
-   
-   - **Description**: This field indicates the description of the device
-   
-   - **State**: This field indicates the state of the device
-   
-   - **LastOnline**: This fields indicates when the device was last online
+        
+|Column Name | Description |
+|----------------|--------------------------|
+|**ID** |  This field indicates the id assigned to the device
+|**Name** | This field indicates the name of the device
+|**Description** | This field indicates the description of the device
+|**State** | This field indicates the state of the device
+|**LastOnline** | This fields indicates when the device was last online
 
 
 **Operations Performed :-**   
@@ -263,21 +276,16 @@ The following are the operations that can be performed on this data :-
 Device attribute table contains the data regarding the device attributes associated with a particular device in the edge node.
 The following are the columns present in the device attribute table :-
     
-   - **ID**:  This field indicates the id assigned to the device attribute
-    
-   - **DeviceID**:  This field indicates the device id of the device associated with this attribute
-    
-   - **Name**: This field indicates the name of the device attribute
-   
-   - **Description**: This field indicates the description of the device attribute
-   
-   - **Value**: This field indicates the value of the device attribute
-   
-   - **Optional**: This fields indicates whether the device attribute is optional or not
-   
-   - **AttrType**: This fields indicates the type of attribute that is referred to
-   
-   - **Metadata**: This fields describes the metadata associated with the device attribute 
+|Column Name | Description |
+|----------------|--------------------------|
+| **ID** |  This field indicates the id assigned to the device attribute
+| **DeviceID** |  This field indicates the device id of the device associated with this attribute
+| **Name** | This field indicates the name of the device attribute
+|**Description** | This field indicates the description of the device attribute
+|**Value** | This field indicates the value of the device attribute
+| **Optional** | This fields indicates whether the device attribute is optional or not
+|**AttrType** | This fields indicates the type of attribute that is referred to
+|**Metadata**|This fields describes the metadata associated with the device attribute 
 
 
 **Operations Performed :-**   
@@ -306,31 +314,21 @@ The following are the operations that can be performed on this data :-
 Device twin table contains the data related to the device device twin associated with a particular device in the edge node.
 The following are the columns present in the device twin table :-
     
-   - **ID**:  This field indicates the id assigned to the device twin
-    
-   - **DeviceID**:  This field indicates the device id of the device associated with this device twin
-    
-   - **Name**: This field indicates the name of the device twin
-   
-   - **Description**: This field indicates the description of the device twin
-   
-   - **Expected**: This field indicates the expected value of the device 
-
-   - **Actual**: This field indicates the actual value of the device 
-
-   - **ExpectedMeta**: This field indicates the metadata associated with the expected value of the device 
-
-   - **ActualMeta**: This field indicates the metadata associated with the actual value of the device 
-
-   - **ExpectedVersion**: This field indicates the version of the expected value of the device
-
-   - **ActualVersion**: This field indicates the version of the actual value of the device 
-   
-   - **Optional**: This fields indicates whether the device twin is optional or not
-   
-   - **AttrType**: This fields indicates the type of attribute that is referred to
-   
-   - **Metadata**: This fields describes the metadata associated with the device twin
+|Column Name | Description |
+|----------------|--------------------------|
+   | **ID** | This field indicates the id assigned to the device twin
+   | **DeviceID** |  This field indicates the device id of the device associated with this device twin
+   |**Name**| This field indicates the name of the device twin
+   |**Description**| This field indicates the description of the device twin
+   |**Expected**| This field indicates the expected value of the device 
+   |**Actual**| This field indicates the actual value of the device 
+   | **ExpectedMeta**| This field indicates the metadata associated with the expected value of the device 
+   |**ActualMeta**| This field indicates the metadata associated with the actual value of the device 
+   | **ExpectedVersion**| This field indicates the version of the expected value of the device
+   |**ActualVersion**| This field indicates the version of the actual value of the device 
+   |**Optional**| This fields indicates whether the device twin is optional or not
+   |**AttrType**| This fields indicates the type of attribute that is referred to
+   | **Metadata**| This fields describes the metadata associated with the device twin
 
 
 **Operations Performed :-**   
