@@ -31,7 +31,7 @@ It is easy to get and deploy existing complicated machine learning, image recogn
 KubeEdge is composed of the following components:
 
 - **Edged:** an agent that runs on edge nodes and manages containerized applications.
-- **EdgeHub:** a web socket client responsible for interacting with **Huawei Cloud IEF service**. This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
+- **EdgeHub:** a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
 - **EventBus:** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
 - **DeviceTwin:** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - **MetaManager:** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
