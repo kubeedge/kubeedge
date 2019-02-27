@@ -12,6 +12,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with pruned structures and interfaces
+and changed most of the realization.
+1. Functions from k8s.io\kubernetes\pkg\credentialprovider\config.go related to DockerConfigEntry
+   are re-used here
+2. Function from k8s.io\kubernetes\pkg\credentialprovider\secrets\secrets.go is derived here
 */
 
 package dockertools

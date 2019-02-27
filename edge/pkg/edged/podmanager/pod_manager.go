@@ -9,10 +9,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+This file is derived from K8S Kubelet code with pruned structures and interfaces
+and changed most of the realization.
+1. Manager struct is dericed from basicManager struct in kubernetes/pkg/kubelet/pod/pod_manager.go
+2. The methods are also pruned and modifed
 */
 
-//Package podmanager : Manager is derived from kubernetes/pkg/kubelet/pod/pod_manager.go
-// pruned extra interface  and changed most of the realization
 package podmanager
 
 import (
