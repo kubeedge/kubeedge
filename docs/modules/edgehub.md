@@ -52,13 +52,13 @@ The major steps involved in this process are as follows :-
 2. Send that message to cloudHub 
 3. If the message received is a sync message then :
  
- 	    3.1 If response is received on syncChannel then it creates a map[string] chan containing the messageID of the message as key
+ 	3.1 If response is received on syncChannel then it creates a map[string] chan containing the messageID of the message as key
 	    
-	    3.2 It waits for one heartbeat period to receive a response on the channel created, if it does not receive any response on the channel within the specified time then it times out.
+	3.2 It waits for one heartbeat period to receive a response on the channel created, if it does not receive any response on the channel within the specified time then it times out.
 	     
-	    3.3 The response received on the channel is sent back to the module using the SendResponse() function.
+	3.3 The response received on the channel is sent back to the module using the SendResponse() function.
 
-<img src="../images/edgehub/route-to-cloud.png">
+![Route to Cloud](../images/edgehub/route-to-cloud.png)
 
 ## Route To Edge
 
@@ -77,4 +77,4 @@ The major steps involved in this process are as follows :-
 
 - If it is a response message then the message is sent to the syncKeep channel
 
-<img src="../images/edgehub/route-to-edge.png">
+![Route to Edge](../images/edgehub/route-to-edge.png)
