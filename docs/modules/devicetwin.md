@@ -77,32 +77,37 @@ The following are the action callbacks which can be performed by the membership 
    - dealMembershipUpdated
    - dealMembershipDetail
 
-**dealMembershipGet**:   dealMembershipGet() deal gets the information  about the devices associated with the
-                                                                    particular edge node, from the cache. The eventbus first receives a message on its subscribed topic (membership-get topic).
-                                                                    This message arrives at the  devicetwin controller, which further sends the message to membership module.  The membership module
-                                                                     gets the devices associated with the edge node from the cache (context) and sends the information to the communication module, 
-                                                                     it also handles errors that may arise while performing the  aforementioned process and sends the error to the communication module
-                                                                      instead of device details.The communication module sends the information to the  eventbus component which further publishes the result on the 
-                                                                     specified MQTT topic (get membership result topic). 
+**dealMembershipGet**:    dealMembershipGet()  gets the information  about the devices associated with the particular edge node, from the cache. 
+- The eventbus first receives a message on its subscribed topic (membership-get topic).
+- This message arrives at the  devicetwin controller, which further sends the message to membership module.  
+- The membership module gets the devices associated with the edge node from the cache (context) and sends the information to the communication module. 
+ It also handles errors that may arise while performing the  aforementioned process and sends the error to the communication module instead of device details.
+- The communication module sends the information to the  eventbus component which further publishes the result on the 
+ specified MQTT topic (get membership result topic). 
 
   ![Membership Get()](../images/devicetwin/membership-get.png)
 
 
 **dealMembershipUpdated**:  dealMembershipUpdated() updates the membership details of the node. 
                             It adds the devices, that were newly added, to the edge group and removes the devices, that were removed,
-                            from the edge group and updates device details, if they have been altered or updated. The eventbus module receives the message that arrives on the subscribed topic and forwards the message 
-                            to devicetwin controller which further forwards it to the membership module. The membership  module adds devices that are newly added, removes devices that have been recently 
-                            deleted and also updates the devices that were already existing in the database as well as in the cache. After updating the details of the devices a  message is sent
-                            to the communication module of the device twin, which sends the message to eventbus module to be published on the given MQTT topic. 
+                            from the edge group and updates device details, if they have been altered or updated. 
+- The eventbus module receives the message that arrives on the subscribed topic and forwards the message 
+to devicetwin controller which further forwards it to the membership module. 
+- The membership  module adds devices that are newly added, removes devices that have been recently 
+deleted and also updates the devices that were already existing in the database as well as in the cache. 
+- After updating the details of the devices a  message is sent to the communication module of the device twin, which sends the message to eventbus module to be published on the given MQTT topic. 
                             
   ![Membership Update](../images/devicetwin/membership-update.png)
                     
                                         
 **dealMembershipDetail**:   dealMembershipDetail() provides the membership details of the edge node, providing information
                             about the devices associated with the edge node, after removing the membership details of 
-                            recently removed devices. The eventbus module receives the message that arrives on the subscribed topic,the message is then forwarded  to the 
-                            devicetwin controller which further forwards it to the membership module. The membership  module adds devices that are mentioned in the message, removes 
-                            devices that that are not present in the cache. After updating the details of the devices a  message is sent to the communication module of the device twin.
+                            recently removed devices. 
+- The eventbus module receives the message that arrives on the subscribed topic,the message is then forwarded  to the 
+devicetwin controller which further forwards it to the membership module. 
+- The membership  module adds devices that are mentioned in the message, removes 
+devices that that are not present in the cache. 
+- After updating the details of the devices a  message is sent to the communication module of the device twin.
 
   ![Membership Detail](../images/devicetwin/membership-detail.png)
 
@@ -126,33 +131,32 @@ The following are the action callbacks which can be performed by the twin module
    - dealTwinSync
    
 **dealTwinUpdate**: dealTwinUpdate() updates the device twin information for a particular device. 
-                    The devicetwin update message can either be received by edgehub module from the cloud or from 
-                    the MQTT broker through the eventbus component (mapper will publish a message on the device twin update topic) . The message is then sent 
-                    to the device twin controller from where it is sent to the device twin module. The twin module updates the twin value in 
-                    the database and sends the update result message to the communication module. The communication module will in turn
-                    send the publish message to the MQTT broker through the eventbus.
+- The devicetwin update message can either be received by edgehub module from the cloud or from 
+the MQTT broker through the eventbus component (mapper will publish a message on the device twin update topic) . 
+- The message is then sent to the device twin controller from where it is sent to the device twin module. 
+- The twin module updates the twin value in the database and sends the update result message to the communication module. 
+- The communication module will in turn send the publish message to the MQTT broker through the eventbus.
                     
   ![Device Twin Update](../images/devicetwin/devicetwin-update.png)
                  
                  
-**dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. The eventbus component  receives the message that arrives on the subscribed twin get topic. 
-                                              and forwards the message to devicetwin controller, which further sends the message to twin module. The twin module gets the devicetwin related information for the particular device and 
-                                               sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
-                                                The communication module sends the information to the eventbus component, which publishes the result on the topic specified . 
+**dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. 
+- The eventbus component  receives the message that arrives on the subscribed twin get topic and forwards the message to devicetwin controller, which further sends the message to twin module. 
+- The twin module gets the devicetwin related information for the particular device and sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
+- The communication module sends the information to the eventbus component, which publishes the result on the topic specified . 
                                                 
   ![Device Twin Get](../images/devicetwin/devicetwin-get.png)
 
 
-**dealTwinSync**: dealTwinSync() syncs the device twin information to the cloud. The edgehub module receives the message on the subscribed twin cloud sync 
-                                                  topic through the eventbus component. This message is then sent to the devicetwin controller from where it is sent to
-                                                  the twin module. The twin module then syncs the twin information present in the database and sends the synced twin results
-                                                  to the communication module. The communication module further sends the information to edgehub component which will 
-                                                  in turn send the updates to the cloud through the websocket connection. This function also performs operations like publishing the updated
-                                                 twin details  document, delta of the device twin as well as the update result (in case there is some error) to a specified topic through the communication module,
-                                                 which sends the data to edgehub, which will send it to eventbus which publishes on the MQTT broker.
-                                                    
-  ![Sync to Cloud](../images/devicetwin/sync-to-cloud.png)  
-        
+**dealTwinSync**: dealTwinSync() syncs the device twin information to the cloud.
+ - The eventbus module receives the message on the subscribed twin cloud sync topic .
+ - This message is then sent to the devicetwin controller from where it is sent to the twin module. 
+ - The twin module then syncs the twin information present in the database and sends the synced twin results to the communication module. 
+ - The communication module further sends the information to edgehub component which will in turn send the updates to the cloud through the websocket connection. 
+ - This function also performs operations like publishing the updated twin details  document, delta of the device twin as well as the update result (in case there is some error) to a specified topic through the communication module,
+ which sends the data to edgehub, which will send it to eventbus which publishes on the MQTT broker.
+                                    
+  ![Sync to Cloud](../images/devicetwin/sync-to-cloud.png)          
 
 ### Communication Module
 
