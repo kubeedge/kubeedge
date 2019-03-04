@@ -1,0 +1,18 @@
+controller:
+  kube:
+    master: http://localhost:8080
+    namespace: ""
+    content_type: "application/vnd.kubernetes.protobuf"
+    qps: 5
+    burst: 10
+    node_update_frequency: 10
+cloudhub:
+  address: 0.0.0.0
+  port: 10000
+  ca: tmp/rootCA.crt
+  cert: tmp/test.crt
+  key: tmp/test.key
+  keepalive-interval: 30
+  write-timeout: 30
+  node-limit: 10
+
