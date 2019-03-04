@@ -7,21 +7,21 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. Kubeedge consists of a cloud part and an edge part. The edge part has already been open sourced and the cloud part is coming soon!
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. Kubeedge consists of a cloud part and an edge part. 
 
 ## Advantages
 
 #### Edge Computing
 
-With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. This reduces the network bandwidth requirements and consumption between Edge and Cloud. This increases responsiveness, decreases costs, and protects customers' data privacy. 
+With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously that it reduces the network bandwidth requirements and consumptions between Edge and Cloud. Data processed at Edge, the responsiveness is increased dramatically and data privacy is protected.  
 
 #### Simplified development
 
-Developers can write regular http or mqtt based applications, containerize these, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate.
+Developers can write regular http or mqtt based applications, containerize these, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate. 
 
 #### Kubernetes-native support
 
-With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud
+With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud. Locations of edge nodes are transparent to customers. 
 
 #### Abundant applications
 
@@ -33,6 +33,8 @@ KubeEdge is composed of the following components:
 
 - **Edged:** an agent that runs on edge nodes and manages containerized applications.
 - **EdgeHub:** a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
+- **CloudHub:** a web socket server responsible for watching changes at the clouds side, cache and sending messages to EdgeHub.
+- **EdgeController:** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can target to a specific edge node. 
 - **EventBus:** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
 - **DeviceTwin:** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - **MetaManager:** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
@@ -45,7 +47,7 @@ KubeEdge is composed of the following components:
 
 ### Release 1.0
 KubeEdge will provide the fundamental infrastructure and basic functionality for IOT/Edge workloads. This includes: 
-- An open source implementation of the cloud part.
+- An open source implementation of the cloud and edge parts.
 - Kubernetes application deployment through kubectl from Cloud to Edge nodes.
 - Kubernetes configmap and secret deployment through kubectl from Cloud to Edge nodes and their applications.
 - Bi-directional multiplexed network communication between Cloud and Edge nodes.
@@ -54,8 +56,9 @@ KubeEdge will provide the fundamental infrastructure and basic functionality for
 - Device twin and MQTT protocol for communication between IOT devices and Edge nodes.
 
 ### Release 2.0 and the Future
-- Istio-based service mesh across Edge and Cloud.
-- Enable function as a service at the Edge
+- Istio-based service mesh across Edge and Cloud where micro-services can communicate freely in the mesh.
+- Enhance performance and reliability of KubeEdge infrastructure.
+- Enable function as a service at the Edge.
 - Support more types of device protocols to Edge nodes such as AMQP, BlueTooth, ZigBee, etc.
 - Evaluate and enable much larger scale Edge clusters with thousands of Edge nodes and millions of devices.
 - Enable intelligent scheduling of applications to large scale Edge clusters.
