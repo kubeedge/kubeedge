@@ -8,13 +8,14 @@ mqtt:
 
 edgehub:
     websocket:
-        url: ws://127.0.0.1:20000/fake_group_id/events
+        url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
         certfile: /tmp/edge.crt
         keyfile: /tmp/edge.key
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
     controller:
+        placement: false
         heartbeat: 15  # second
         refresh-ak-sk-interval: 10 # minute
         auth-info-files-path: /var/IEF/secret
@@ -24,7 +25,7 @@ edgehub:
 
 edged:
     register-node-namespace: default
-    hostname-override: 93e05fa9-b782-4a59-9d02-9f6e639b4205
+    hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
     interface-name: eth0
     node-status-update-frequency: 10 # second
     device-plugin-enabled: false
