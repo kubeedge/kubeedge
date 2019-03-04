@@ -1,0 +1,2 @@
+###### Requirements without Version Specifiers ######
+sphinx-markdown-tables==0.0.9
