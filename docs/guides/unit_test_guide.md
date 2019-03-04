@@ -32,7 +32,9 @@ See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/metamanager/
 
 See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
 
-## Writing UT using GoMock example : metamanager/dao/meta.go  
+## Writing UT using GoMock  
+
+### Example : metamanager/dao/meta.go  
 
 After reading the code of meta.go, we can find that there are 3 interfaces of beego which are used. They are [Ormer](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go), [QuerySeter](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go) and [RawSeter](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go).
 

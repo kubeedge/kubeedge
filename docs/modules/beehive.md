@@ -21,15 +21,15 @@ Beehive supports following message operations:
 Message has 3 parts 
 
   1. Header:  
-    1. ID: message ID (string)
-    2. ParentID: if it is a response to a sync message then parentID exists (string)
-    3. TimeStamp: time when message was generated (int)
-    4. Sync: flag to indicate if message is of type sync (bool)
+      1. ID: message ID (string)
+      2. ParentID: if it is a response to a sync message then parentID exists (string)
+      3. TimeStamp: time when message was generated (int)
+      4. Sync: flag to indicate if message is of type sync (bool)
   2. Route: 
-    1. Source: origin of message (string)
-    2. Group: the group to which the message has to be broadcasted (string)
-    3. Operation: what’s the operation on the resource (string)
-    4. Resource: the resource to operate on (string)
+      1. Source: origin of message (string)
+      2. Group: the group to which the message has to be broadcasted (string)
+      3. Operation: what’s the operation on the resource (string)
+      4. Resource: the resource to operate on (string)
   3. Content: content of the message (interface{})
   
 ## Register Module  
@@ -38,7 +38,9 @@ Message has 3 parts
 2. Beehive core maintains a map named modules which has module name as key and implementation of module interface as value. 
 3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map orelse it is added in the disabled modules map.
 
-## Channel Context structure fields (_Important for understanding beehive operations_)  
+## Channel Context Structure Fields  
+
+### (_Important for understanding beehive operations_)  
 
 1. **channels:** channels is a map of string(key) which is name of module and chan(value) of message which will used to send message to the respective module.
 2. **chsLock:** lock for channels map
