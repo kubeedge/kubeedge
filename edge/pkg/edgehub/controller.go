@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	bhconfig "github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
 	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
@@ -19,6 +20,7 @@ import (
 
 const (
 	waitConnectionPeriod = time.Minute
+	defaultPlacement     = true
 )
 
 var (
@@ -309,20 +311,27 @@ func (ehc *Controller) postURLRequst(client *http.Client) (string, error) {
 }
 
 func (ehc *Controller) getCloudHubURL() (string, error) {
-	// TODO: get the file path gracefully
-	certFile := config.GetConfig().WSConfig.CertFilePath
-	keyFile := config.GetConfig().WSConfig.KeyFilePath
-	placementClient, err := http_utils.NewHTTPSclient(certFile, keyFile)
+	placement, err := bhconfig.CONFIG.GetValue("edgehub.controller.placement").ToBool()
 	if err != nil {
-		log.LOGGER.Warnf("failed to new https client for placement, error: %+v", err)
-		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+		placement = defaultPlacement
 	}
+	if placement {
+		// TODO: get the file path gracefully
+		certFile := config.GetConfig().WSConfig.CertFilePath
+		keyFile := config.GetConfig().WSConfig.KeyFilePath
+		placementClient, err := http_utils.NewHTTPSclient(certFile, keyFile)
+		if err != nil {
+			log.LOGGER.Warnf("failed to new https client for placement, error: %+v", err)
+			return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+		}
 
-	cloudHubURL, err := ehc.postURLRequst(placementClient)
-	if err != nil {
-		log.LOGGER.Warnf("failed to get cloud hub url, error: %+v", err)
-		return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+		cloudHubURL, err := ehc.postURLRequst(placementClient)
+		if err != nil {
+			log.LOGGER.Warnf("failed to get cloud hub url, error: %+v", err)
+			return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
+		}
+
+		return cloudHubURL, nil
 	}
-
-	return cloudHubURL, nil
+	return bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
 }

@@ -668,7 +668,7 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "ws://127.0.0.1:20000/foo/bar/events", nil},
+		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
 
 		{"Invalid cloudhub URL", Controller{
 			config: &config.ControllerConfig{
@@ -679,7 +679,7 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "", fmt.Errorf("failed to new https client for placement, error: bad request")},
+		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
 
 		{"Wrong certificate paths", Controller{
 			config: &config.ControllerConfig{
@@ -690,7 +690,7 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: "/wrong_path/edge.crt",
 			KeyFilePath:  "/wrong_path/edge.key",
-		}, "", fmt.Errorf("failed to new https client for placement, error: open /wrong_path/edge.crt: no such file or directory")},
+		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
