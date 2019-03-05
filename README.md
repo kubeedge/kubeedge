@@ -13,11 +13,11 @@ KubeEdge is an open source system extending native containerized application orc
 
 #### Edge Computing
 
-With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously that it reduces the network bandwidth requirements and consumptions between Edge and Cloud. Data processed at Edge, the responsiveness is increased dramatically and data privacy is protected.  
+With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously which effectively reduces the network bandwidth requirements and consumptions between Edge and Cloud. With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.  
 
 #### Simplified development
 
-Developers can write regular http or mqtt based applications, containerize these, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate. 
+Developers can write regular http or mqtt based applications, containerize them, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate. 
 
 #### Kubernetes-native support
 
@@ -33,8 +33,8 @@ KubeEdge is composed of the following components:
 
 - **Edged:** an agent that runs on edge nodes and manages containerized applications.
 - **EdgeHub:** a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
-- **CloudHub:** a web socket server responsible for watching changes at the clouds side, cache and sending messages to EdgeHub.
-- **EdgeController:** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can target to a specific edge node. 
+- **CloudHub:** A web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
+- **EdgeController:** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node. 
 - **EventBus:** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
 - **DeviceTwin:** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - **MetaManager:** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
@@ -182,7 +182,7 @@ yum install mosquitto
 
 See [mosquitto official website](https://mosquitto.org/download/) for more information.
 
-KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow below steps is any other method of generation of certificates isn't available.
+KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow the steps below to generate certificates.
 
 #### Install openssl
 
