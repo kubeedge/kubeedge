@@ -85,7 +85,7 @@ The following are the action callbacks which can be performed by the membership 
                                                                       instead of device details.The communication module sends the information to the  eventbus component which further publishes the result on the 
                                                                      specified MQTT topic (get membership result topic). 
 
-  <img src="../images/devicetwin/membership-get.png">
+  ![Membership Get()](../images/devicetwin/membership-get.png)
 
 
 **dealMembershipUpdated**:  dealMembershipUpdated() updates the membership details of the node. 
@@ -95,7 +95,7 @@ The following are the action callbacks which can be performed by the membership 
                             deleted and also updates the devices that were already existing in the database as well as in the cache. After updating the details of the devices a  message is sent
                             to the communication module of the device twin, which sends the message to eventbus module to be published on the given MQTT topic. 
                             
-  <img src="../images/devicetwin/membership-update.png">
+  ![Membership Update](../images/devicetwin/membership-update.png)
                     
                                         
 **dealMembershipDetail**:   dealMembershipDetail() provides the membership details of the edge node, providing information
@@ -104,7 +104,7 @@ The following are the action callbacks which can be performed by the membership 
                             devicetwin controller which further forwards it to the membership module. The membership  module adds devices that are mentioned in the message, removes 
                             devices that that are not present in the cache. After updating the details of the devices a  message is sent to the communication module of the device twin.
 
-  <img src="../images/devicetwin/membership-detail.png">
+  ![Membership Detail](../images/devicetwin/membership-detail.png)
 
 
 ### Twin Module
@@ -132,7 +132,7 @@ The following are the action callbacks which can be performed by the twin module
                     the database and sends the update result message to the communication module. The communication module will in turn
                     send the publish message to the MQTT broker through the eventbus.
                     
-  <img src="../images/devicetwin/devicetwin-update.png">
+  ![Device Twin Update](../images/devicetwin/devicetwin-update.png)
                  
                  
 **dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. The eventbus component  receives the message that arrives on the subscribed twin get topic. 
@@ -140,7 +140,7 @@ The following are the action callbacks which can be performed by the twin module
                                                sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
                                                 The communication module sends the information to the eventbus component, which publishes the result on the topic specified . 
                                                 
-  <img src="../images/devicetwin/devicetwin-get.png">
+  ![Device Twin Get](../images/devicetwin/devicetwin-get.png)
 
 
 **dealTwinSync**: dealTwinSync() syncs the device twin information to the cloud. The edgehub module receives the message on the subscribed twin cloud sync 
@@ -151,7 +151,7 @@ The following are the action callbacks which can be performed by the twin module
                                                  twin details  document, delta of the device twin as well as the update result (in case there is some error) to a specified topic through the communication module,
                                                  which sends the data to edgehub, which will send it to eventbus which publishes on the MQTT broker.
                                                     
-  <img src="../images/devicetwin/sync-to-cloud.png">                                             
+  ![Sync to Cloud](../images/devicetwin/sync-to-cloud.png)  
         
 
 ### Communication Module
@@ -212,14 +212,14 @@ The following are the action callbacks which can be performed by the device modu
                         in the database. It also sends the result of the device attribute update to be  published to the eventbus component]
                         through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.                      
  
-  <img src="../images/devicetwin/device-update.png">                                             
+  ![Device Update](../images/devicetwin/device-update.png)
  
  **dealDeviceStateUpdate**:  dealDeviceStateUpdate() deals with the operations to be performed when a device status update is encountered.
                              It updates the state of the device as well as the last online time of the device in the database.
                              It also sends the update state result, through the communication module,  to the cloud through the edgehub module and to the  eventbus module which in turn 
                              publishes the result on the specified topic of the MQTT broker.
 
-  <img src="../images/devicetwin/device-state-update.png">                                             
+  ![Device State Update](../images/devicetwin/device-state-update.png)
   
   
 ## Tables
@@ -234,63 +234,62 @@ DeviceTwin module creates three tables in the database, namely :-
 ### Device Table 
 
 Device table contains the data regarding the devices added to a particular edge node.
-The following are the columns present in the device table :-
-        
-|Column Name | Description |
-|----------------|--------------------------|
-|**ID** |  This field indicates the id assigned to the device
-|**Name** | This field indicates the name of the device
-|**Description** | This field indicates the description of the device
-|**State** | This field indicates the state of the device
-|**LastOnline** | This fields indicates when the device was last online
+The following are the columns present in the device table :  
 
+|Column Name | Description |  
+|---|---|  
+| **ID** |  This field indicates the id assigned to the device |  
+| **Name** | This field indicates the name of the device |  
+| **Description** | This field indicates the description of the device |  
+| **State** | This field indicates the state of the device |  
+| **LastOnline** | This fields indicates when the device was last online |  
 
-**Operations Performed :-**   
+**Operations Performed :-**  
 
 The following are the operations that can be performed on this data :-
-     
-   - **Save Device**: Inserts a device in the device table
-    
-   - **Delete Device By ID**: Deletes a device by its ID from the device table
-   
-   - **Update Device Field**: Updates a single field in the device table
-   
-   - **Update Device Fields**: Updates multiple fields in the device table
-   
-   - **Query Device**: Queries a device from the device table 
-   
-   - **Query Device All**: Displays all the devices present in the device table
-   
-   - **Update Device Multi**: Updates multiple columns of multiple devices in the device table
-    
-   - **Add Device Trans**: Inserts device, device attribute and device twin in a single transaction, if any of these operations fail, 
-   then it rolls back the other insertions
-   
-   - **Delete Device Trans**: Deletes device, device attribute and device twin in a single transaction, if any of these operations fail, 
-   then it rolls back the other deletions 
-   
+
+- **Save Device**: Inserts a device in the device table
+
+- **Delete Device By ID**: Deletes a device by its ID from the device table
+
+- **Update Device Field**: Updates a single field in the device table
+
+- **Update Device Fields**: Updates multiple fields in the device table
+
+- **Query Device**: Queries a device from the device table 
+
+- **Query Device All**: Displays all the devices present in the device table
+
+- **Update Device Multi**: Updates multiple columns of multiple devices in the device table
+
+- **Add Device Trans**: Inserts device, device attribute and device twin in a single transaction, if any of these operations fail, 
+   then it rolls back the other insertions  
+
+- **Delete Device Trans**: Deletes device, device attribute and device twin in a single transaction, if any of these operations fail, 
+   then it rolls back the other deletions  
+
 
 ### Device Attribute Table 
 
 Device attribute table contains the data regarding the device attributes associated with a particular device in the edge node.
-The following are the columns present in the device attribute table :-
-    
-|Column Name | Description |
+The following are the columns present in the device attribute table :  
+
+| Column Name | Description |
 |----------------|--------------------------|
-| **ID** |  This field indicates the id assigned to the device attribute
-| **DeviceID** |  This field indicates the device id of the device associated with this attribute
-| **Name** | This field indicates the name of the device attribute
-|**Description** | This field indicates the description of the device attribute
-|**Value** | This field indicates the value of the device attribute
-| **Optional** | This fields indicates whether the device attribute is optional or not
-|**AttrType** | This fields indicates the type of attribute that is referred to
-|**Metadata**|This fields describes the metadata associated with the device attribute 
+| **ID** |  This field indicates the id assigned to the device attribute |
+| **DeviceID** |  This field indicates the device id of the device associated with this attribute |
+| **Name** | This field indicates the name of the device attribute |
+| **Description** | This field indicates the description of the device attribute |
+| **Value** | This field indicates the value of the device attribute |
+| **Optional** | This fields indicates whether the device attribute is optional or not |
+| **AttrType** | This fields indicates the type of attribute that is referred to |
+| **Metadata** |This fields describes the metadata associated with the device attribute  |
 
 
 **Operations Performed :-**   
 
-The following are the operations that can be performed on this data :-
-     
+The following are the operations that can be performed on this data :  
+
    - **Save Device Attr**: Inserts a device attribute in the device attribute table
     
    - **Delete Device Attr By ID**: Deletes a device attribute by its ID from the device attribute table
@@ -311,23 +310,24 @@ The following are the operations that can be performed on this data :-
 ### Device Twin Table 
 
 Device twin table contains the data related to the device device twin associated with a particular device in the edge node.
-The following are the columns present in the device twin table :-
-    
-|Column Name | Description |
-|----------------|--------------------------|
-   | **ID** | This field indicates the id assigned to the device twin
-   | **DeviceID** |  This field indicates the device id of the device associated with this device twin
-   |**Name**| This field indicates the name of the device twin
-   |**Description**| This field indicates the description of the device twin
-   |**Expected**| This field indicates the expected value of the device 
-   |**Actual**| This field indicates the actual value of the device 
-   | **ExpectedMeta**| This field indicates the metadata associated with the expected value of the device 
-   |**ActualMeta**| This field indicates the metadata associated with the actual value of the device 
-   | **ExpectedVersion**| This field indicates the version of the expected value of the device
-   |**ActualVersion**| This field indicates the version of the actual value of the device 
-   |**Optional**| This fields indicates whether the device twin is optional or not
-   |**AttrType**| This fields indicates the type of attribute that is referred to
-   | **Metadata**| This fields describes the metadata associated with the device twin
+The following are the columns present in the device twin table :  
+
+
+| Column Name | Description |  
+|---|---|  
+| **ID** | This field indicates the id assigned to the device twin |  
+| **DeviceID** |  This field indicates the device id of the device associated with this device twin |  
+| **Name** | This field indicates the name of the device twin |  
+| **Description** | This field indicates the description of the device twin |  
+| **Expected** | This field indicates the expected value of the device |  
+| **Actual** | This field indicates the actual value of the device |  
+| **ExpectedMeta** | This field indicates the metadata associated with the expected value of the device |  
+| **ActualMeta** | This field indicates the metadata associated with the actual value of the device |  
+| **ExpectedVersion** | This field indicates the version of the expected value of the device |  
+| **ActualVersion** | This field indicates the version of the actual value of the device |  
+| **Optional** | This fields indicates whether the device twin is optional or not |  
+| **AttrType** | This fields indicates the type of attribute that is referred to |  
+| **Metadata** | This fields describes the metadata associated with the device twin |  
 
 
 **Operations Performed :-**   
