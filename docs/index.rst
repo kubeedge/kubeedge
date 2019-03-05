@@ -28,18 +28,18 @@ application orchestration capabilities to hosts at Edge.
    :caption: Concepts
 
    kubeedge.md
-   modules/beehive.md
-   modules/eventbus.md
-   modules/metamanager.md
-   modules/edgehub.md
-   modules/devicetwin.md
+   modules/beehive
+   modules/eventbus
+   modules/metamanager
+   modules/edgehub
+   modules/devicetwin
 
 .. toctree::
    :maxdepth: 2
    :caption: Setup
 
-   requirements.md
-   setup.md
+   requirements
+   setup
    Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF) <guides/try_kubeedge_with_ief.md>
 
 
@@ -47,14 +47,14 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Guides
 
-   guides/message_topics.md
-   guides/unit_test_guide.md
+   guides/message_topics
+   guides/unit_test_guide
 
 .. toctree::
    :maxdepth: 2
    :caption: Troubleshooting
 
-   troubleshooting.md
+   troubleshooting
 
 
 
