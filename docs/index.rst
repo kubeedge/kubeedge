@@ -10,9 +10,13 @@ Welcome to KubeEdge's documentation!
 .. figure:: images/KubeEdge_logo.png
       :width: 150px
       :align: right
+      :target: https://kubeedge.io
 
 KubeEdge is an open source system for extending native containerized 
 application orchestration capabilities to hosts at Edge.
+
+.. toctree::
+   KubeEdge Home <https://kubeedge.io>
 
 .. toctree::
    :maxdepth: 2
