@@ -31,3 +31,5 @@ jobs:
       name: "integration test edge"     # names the fourth Tests stage job
     - script: make edge_cross_build
       name: "cross build edge"     # names the fifth Tests stage job
+    - script: make edgecontroller
+      name: "build edgecontroller"     # names the sixth Tests stage job
