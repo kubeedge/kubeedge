@@ -25,28 +25,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
 type SortedContainerStatuses []v1.ContainerStatus
 
