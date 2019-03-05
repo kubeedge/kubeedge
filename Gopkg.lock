@@ -104,7 +104,7 @@
   revision = "bbbad097214e2918d8543d5201d12bfd7bca254d"
 
 [[projects]]
-  digest = "1:ddc6047cc0bffea7cbcff2ff94e6b8497dac08b2f0e74a12fb4a7ede1667b744"
+  digest = "0:"
   name = "github.com/astaxie/beego"
   packages = ["orm"]
   pruneopts = "UT"
@@ -163,14 +163,6 @@
   pruneopts = "UT"
   revision = "2ee87856327ba09384cabd113bc6b5d174e9ec0f"
   version = "v3.5.1"
-
-[[projects]]
-  digest = "1:d8abdc866ebbe05fa3bce50863e23afd4c73c804b90c908caa864e86df1db8a1"
-  name = "github.com/bouk/monkey"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5df1f207ff77e025801505ae4d903133a0b4353f"
-  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -624,6 +616,14 @@
   revision = "a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:0778dc7fce1b4669a8bfa7ae506ec1f595b6ab0f8989c1c0d22a8ca1144e9972"
+  name = "github.com/howeyc/gopass"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
+
+[[projects]]
   digest = "1:a1038ef593beb4771c8f0f9c26e8b00410acd800af5c6864651d9bf160ea1813"
   name = "github.com/hpcloud/tail"
   packages = [
@@ -636,6 +636,14 @@
   pruneopts = "UT"
   revision = "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:a0cefd27d12712af4b5018dc7046f245e1e3b5760e2e848c30b171b570708f9b"
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7c29201646fa3de8506f701213473dd407f19646"
+  version = "v0.3.7"
 
 [[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
@@ -1345,7 +1353,7 @@
   version = "kubernetes-1.10.9"
 
 [[projects]]
-  digest = "1:c07b934022f532afe3a492db0c8582fd6145ac520433e254c24f9d22c48fe7d7"
+  digest = "1:ae349bea8ee6d5d3150688376e1c7be277720c28e460f2ba9490a46cc237131e"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1480,8 +1488,12 @@
     "rest",
     "rest/watch",
     "testing",
+    "tools/auth",
     "tools/cache",
+    "tools/clientcmd",
     "tools/clientcmd/api",
+    "tools/clientcmd/api/latest",
+    "tools/clientcmd/api/v1",
     "tools/metrics",
     "tools/pager",
     "tools/record",
@@ -1493,6 +1505,7 @@
     "util/cert",
     "util/exec",
     "util/flowcontrol",
+    "util/homedir",
     "util/integer",
     "util/retry",
     "util/workqueue",
@@ -1687,7 +1700,6 @@
   input-imports = [
     "github.com/256dpi/gomqtt/broker",
     "github.com/256dpi/gomqtt/packet",
-    "github.com/256dpi/gomqtt/session",
     "github.com/256dpi/gomqtt/topic",
     "github.com/256dpi/gomqtt/transport",
     "github.com/ServiceComb/go-archaius",
@@ -1695,7 +1707,6 @@
     "github.com/ServiceComb/paas-lager",
     "github.com/ServiceComb/paas-lager/rotate",
     "github.com/astaxie/beego/orm",
-    "github.com/bouk/monkey",
     "github.com/docker/distribution/reference",
     "github.com/docker/docker/api/types",
     "github.com/docker/docker/api/types/container",
@@ -1707,6 +1718,7 @@
     "github.com/eclipse/paho.mqtt.golang",
     "github.com/go-chassis/go-archaius/core",
     "github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager",
+    "github.com/golang/glog",
     "github.com/golang/mock/gomock",
     "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
@@ -1720,8 +1732,10 @@
     "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/equality",
+    "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/clock",
@@ -1729,10 +1743,13 @@
     "k8s.io/apimachinery/pkg/util/runtime",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/watch",
     "k8s.io/apiserver/pkg/util/feature",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/fake",
+    "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
+    "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/util/flowcontrol",
     "k8s.io/client-go/util/workqueue",
     "k8s.io/kubernetes/pkg/cloudprovider",
