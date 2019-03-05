@@ -24,3 +24,4 @@ edge_cross_build:
 .PHONY: edgecontroller
 edgecontroller:
 	cd cloud/edgecontroller && $(MAKE)
+
