@@ -101,6 +101,63 @@ yum-config-manager \
     https://download.docker.com/linux/centos/docker-ce.repo
 yum update && yum install docker-ce-18.06.1.ce
 ```
+
+KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes Setup, please follow these steps to install Kubernetes using kubeadm
+
+#### Install kubeadm/kubectl 
+
+For Ubuntu:
+
+```shell
+apt-get update && apt-get install -y apt-transport-https curl
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+```
+For CentOS:
+
+```shell
+at <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kube*
+EOF
+
+# Set SELinux in permissive mode (effectively disabling it)
+setenforce 0
+sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+systemctl enable --now kubelet
+```
+
+#### Install Kubernetes
+
+To initialize Kubernetes master, follow the below step:
+
+```shell
+kubeadm init
+```
+After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to api-server
+Please follow below steps to enable http port in apiserver
+
+```shell 
+vi /etc/kubernetes/manifests/kube-apiserver.yaml
+# Add the following flags in spec: containers: -command section
+- --insecure-port=8080
+- --insecure-bind-address=0.0.0.0
+```
+
 KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
 1) internalMqttMode: internal mqtt broker is enabled
 2) bothMqttMode: internal as well as external broker are enabled
@@ -125,17 +182,68 @@ yum install mosquitto
 
 See [mosquitto official website](https://mosquitto.org/download/) for more information.
 
-### Build Edge
+KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow below steps is any other method of generation of certificates isn't available.
+
+#### Install openssl
+
+If openssl is not already present using below command to install openssl
+
+```shell
+apt-get install openssl
+```
+#### Generate Certificates
+
+RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge. 
+```shell
+# Generete Root Key
+openssl genrsa -des3 -out rootCA.key 4096
+# Generate Root Certificate
+openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
+# Generate Key
+openssl genrsa -out kubeedge.key 2048
+# Generate csr, Fill required details after running the command
+openssl req -new -key kubeedge.key -out kubeedge.csr
+# Generate Certificate
+openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 
+```
+
+### Clone KubeEdge
 
 Clone KubeEdge
 
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edge_core`
+cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
+
+### Build Cloud
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+make # or `make edgecontroller`
+```
+
+### Build Edge
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make # or `make edgecontroller`
+```
+
 KubeEdge can also be cross compiled to run on ARM based processors.
 Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
+
+## Run KubeEdge
+
+### Run Cloud
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+# run edge controller
+# `conf/` should be in the same directory as the binary
+# verify the configurations before running cloud(edgecontroller)
+./edgecontroller
+```
 
 ### Run Edge
 
@@ -145,6 +253,7 @@ mosquitto -d -p 1883
 
 # run edge_core
 # `conf/` should be in the same directory as the binary
+# verify the configurations before running edge(edge_core)
 ./edge_core
 # or
 nohup ./edge_core > edge_core.log 2>&1 &
