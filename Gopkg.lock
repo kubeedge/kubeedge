@@ -104,7 +104,7 @@
   revision = "bbbad097214e2918d8543d5201d12bfd7bca254d"
 
 [[projects]]
-  digest = "0:"
+  digest = "1:ddc6047cc0bffea7cbcff2ff94e6b8497dac08b2f0e74a12fb4a7ede1667b744"
   name = "github.com/astaxie/beego"
   packages = ["orm"]
   pruneopts = "UT"

@@ -102,7 +102,7 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
-KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes Setup, please follow these steps to install Kubernetes using kubeadm
+KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm
 
 #### Install kubeadm/kubectl 
 
@@ -247,6 +247,14 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 
 ### Run Edge
 
+We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node
+  
+```shell
+kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
+```
+
+Run Edge
+
 ```shell
 # run mosquitto
 mosquitto -d -p 1883
@@ -261,7 +269,13 @@ nohup ./edge_core > edge_core.log 2>&1 &
 
 If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
+### Deploy Application
 
+Try out a sample application deployment by following below steps
+
+```shell
+kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
+```
 ### Run Edge Unit Tests
 
  ```shell
