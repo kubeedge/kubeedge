@@ -40,7 +40,7 @@ tar -zxvf ${NODE_CONFIG_FILE} -C kubeedge_work_dir/
 
 CURRENT_PATH=${SRC_DIR}
 CERT_PATH=${KUBEEDGE_WORK_DIR}
-
+DEFAULT_PLACEMENT_FLAG="true"
 create_system_config() {
     #docker root dir
 set +e
@@ -172,6 +172,7 @@ create_edge_config() {
     sed -i "s|keyfile: .*|keyfile: ${CERT_PATH}/${PRIVATE_KEY_FILE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|project-id: .*|project-id: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|node-id: .*|node-id: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml
+    sed -i "s|placement: .*|placement: ${DEFAULT_PLACEMENT_FLAG}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|register-node-namespace: .*|register-node-namespace: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|hostname-override: .*|hostname-override: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|device-plugin-enabled: .*|device-plugin-enabled: ${ENABLE_GPU}|g" ${CURRENT_PATH}/conf/edge.yaml
