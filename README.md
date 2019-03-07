@@ -227,7 +227,7 @@ make # or `make edgecontroller`
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edgecontroller`
+make # or `make edge_core`
 ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
