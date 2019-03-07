@@ -95,13 +95,13 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 			log.LOGGER.Infof("retry read key: %+v", k)
 			modules := retryReadKey()
 			if currentModules, ok = modules.([]interface{}); !ok {
-				log.LOGGER.Warnf("bad vaule of key(%s)", k)
+				log.LOGGER.Warnf("bad value of key(%s)", k)
 				return
 			}
 		}
 
 		newModules, deletedModules := calculateModuleChanges(currentModules)
-		log.LOGGER.Infof("current module list: %+v, deletedmodule:%+v addmodule: %+v  deletemodule: %+v", currentModules, disabledModules, newModules, deletedModules)
+		log.LOGGER.Infof("current module list: %+v, disabledmodule: %+v addmodule: %+v  deletedmodule: %+v", currentModules, disabledModules, newModules, deletedModules)
 		//Remove disabled modules
 		for _, m := range deletedModules {
 			module, exist := modules[m]

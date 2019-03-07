@@ -45,6 +45,6 @@ func GracefulShutdown() {
 func Run() {
 	//Address the module registration and start the core
 	StartModules()
-	// monitor system singal and shutdown gracefully
+	// monitor system signal and shutdown gracefully
 	GracefulShutdown()
 }

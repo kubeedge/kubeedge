@@ -24,8 +24,8 @@ const EMPTYVALUE byte = 0
 //ImagePullError is var of error type
 var ImagePullError error
 
-//IFakeDockerClien is interface for dockertools server version
-type IFakeDockerClien interface {
+//IFakeDockerClient is interface for dockertools server version
+type IFakeDockerClient interface {
 	ServerVersion(ctx context.Context) (types.Version, error)
 }
 
