@@ -599,33 +599,42 @@ func TestBuildDeviceTwinResult(t *testing.T) {
 
 // TestBuildErrorResult is function to test BuildErrorResult().
 func TestBuildErrorResult(t *testing.T) {
-	result := Result{BaseMessage: BaseMessage{Timestamp: time.Now().UnixNano() / 1e6,
+	result := Result{BaseMessage: BaseMessage{
 		EventID: ""},
 		Code:   1,
 		Reason: ""}
-	bytesResult, _ := json.Marshal(result)
 	tests := []struct {
 		name    string
 		para    Parameter
-		want    []byte
+		want    Result
 		wantErr error
 	}{
 		{
 			name:    "BuildErrorResultTest",
 			para:    Parameter{EventID: "", Code: 1, Reason: ""},
-			want:    bytesResult,
+			want:    result,
 			wantErr: nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := BuildErrorResult(test.para)
+			gotResult := Result{}
+			json.Unmarshal(got, &gotResult)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("BuildErrorResult() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("BuildErrorResult() = %v, want %v", got, test.want)
+			if !reflect.DeepEqual(gotResult.EventID, test.want.EventID) {
+				t.Errorf("BuildErrorResult() error EventID = %v, want = %v", gotResult.EventID, test.want.EventID)
+				return
+			}
+			if !reflect.DeepEqual(gotResult.Reason, test.want.Reason) {
+				t.Errorf("BuildErrorResult() error Reason = %v, want = %v", gotResult.Reason, test.want.Reason)
+				return
+			}
+			if !reflect.DeepEqual(gotResult.Code, test.want.Code) {
+				t.Errorf("BuildErrorResult() error Code = %v, want = %v", gotResult.Code, test.want.Code)
 			}
 		})
 	}
@@ -761,7 +770,8 @@ func TestBuildDeviceTwinDocument(t *testing.T) {
 	twinDoc := make(map[string]*TwinDoc)
 	doc := TwinDoc{LastState: &MsgTwin{Metadata: &TypeMetadata{"updated"}}, CurrentState: &MsgTwin{Metadata: &TypeMetadata{"deleted"}}}
 	twinDoc["SensorTag"] = &doc
-	devTwinDoc := DeviceTwinDocument{BaseMessage: BaseMessage{EventID: "", Timestamp: time.Now().UnixNano() / 1e6}, Twin: twinDoc}
+	timeStamp := time.Now().UnixNano() / 1e6
+	devTwinDoc := DeviceTwinDocument{BaseMessage: BaseMessage{EventID: "", Timestamp: timeStamp}, Twin: twinDoc}
 	bytesdevTwinDoc, _ := json.Marshal(devTwinDoc)
 	tests := []struct {
 		name        string
@@ -772,7 +782,7 @@ func TestBuildDeviceTwinDocument(t *testing.T) {
 	}{
 		{
 			name:        "BuildDeviceTwinDocumentTest",
-			baseMessage: BaseMessage{EventID: "", Timestamp: time.Now().UnixNano() / 1e6},
+			baseMessage: BaseMessage{EventID: "", Timestamp: timeStamp},
 			twins:       twinDoc,
 			want:        bytesdevTwinDoc,
 			wantBool:    true,
@@ -780,12 +790,12 @@ func TestBuildDeviceTwinDocument(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, got1 := BuildDeviceTwinDocument(test.baseMessage, test.twins)
+			got, gotBool := BuildDeviceTwinDocument(test.baseMessage, test.twins)
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf("BuildDeviceTwinDocument() got = %v, want %v", got, test.want)
 			}
-			if got1 != test.wantBool {
-				t.Errorf("BuildDeviceTwinDocument() got1 = %v, want %v", got1, test.wantBool)
+			if gotBool != test.wantBool {
+				t.Errorf("BuildDeviceTwinDocument() gotBool = %v, want %v", gotBool, test.wantBool)
 			}
 		})
 	}
