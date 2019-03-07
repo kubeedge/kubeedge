@@ -43,27 +43,31 @@ We need to create fake implementations of these interfaces so that we do not rel
 Following are the steps for creating fake/mock implementation of Ormer, initializing it and replacing the original with fake.  
 
 1. Create directory mocks/beego.  
+
 2. use mockgen to generate fake implementation of the Ormer interface
 ```shell
 mockgen -destination=mocks/beego/fake_ormer.go -package=beego github.com/astaxie/beego/orm Ormer
 ```
-destination : where you want to create the fake implementation.
-package : package of the created fake implementation file
-github.com/astaxie/beego/orm : the package where interface definition is there
-Ormer : generate mocks for this interface
+    - `destination` : where you want to create the fake implementation.  
+    - `package` : package of the created fake implementation file  
+    - `github.com/astaxie/beego/orm` : the package where interface definition is there  
+    - `Ormer` : generate mocks for this interface
 
 3. Initialize mocks in your test file. eg meta_test.go
 ```shell
 mockCtrl := gomock.NewController(t)
 defer mockCtrl.Finish()
 ormerMock = beego.NewMockOrmer(mockCtrl)
-```
-4. ormermock is now a fake implementation of Ormer interface. We can make any function in ormermock return any value you want.  
-5. replace the real Ormer implementation with this fake implementation. DBAccess is variable to type Ormer which we will replace with mock implemention
+```  
+
+4. ormermock is now a fake implementation of Ormer interface. We can make any function in ormermock return any value you want.    
+
+5. replace the real Ormer implementation with this fake implementation. DBAccess is variable to type Ormer which we will replace with mock implemention  
 ```shell
 dbm.DBAccess = ormerMock
-```
-6. If we want Insert function of ormer interface which has return types as (int64,err) to return (1 nil), it can be done in 1 line in your test file using gomock.
+```   
+
+6. If we want Insert function of ormer interface which has return types as (int64,err) to return (1 nil), it can be done in 1 line in your test file using gomock.  
 ```shell
 ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
 ```  

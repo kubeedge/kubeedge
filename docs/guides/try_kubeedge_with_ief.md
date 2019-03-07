@@ -1,4 +1,6 @@
-# Try kubeedge with HuaweiCloud [Intelligent EdgeFabric (IEF)](https://www.huaweicloud.com/product/ief.html)
+# Try KubeEdge with HuaweiCloud (IEF) 
+
+## [Intelligent EdgeFabric (IEF)](https://www.huaweicloud.com/product/ief.html)
 **Note:** The HuaweiCloud IEF is only available in China now.
 
 1. Create an account in [HuaweiCloud](https://www.huaweicloud.com).
