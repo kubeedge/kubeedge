@@ -37,13 +37,16 @@ application orchestration capabilities to hosts at Edge.
    modules/metamanager
    modules/edgehub
    modules/devicetwin
+   modules/cloud/controller
+   modules/cloudhub/CloudHub
 
 .. toctree::
    :maxdepth: 2
    :caption: Setup
 
    requirements
-   setup
+   setup/setup
+   setup/cross-compilation
    Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF) <guides/try_kubeedge_with_ief.md>
 
 

@@ -165,7 +165,7 @@ KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge su
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml) to select the desired mode
 
-To use kubeedge in double mqtt or external mode, you will need to have **mosquitto** installed. If you do not already have it, you may install as folllows.
+To use kubeedge in double mqtt or external mode, you will need to have **mosquitto** installed. If you do not already have it, you may install as follows.
 #### Install mosquitto
 
 For Ubuntu:
@@ -306,7 +306,8 @@ Users can join this channel by clicking the invitation [link](https://join.slack
 
 ## Documentation
 
-Please find [link](https://github.com/kubeedge/kubeedge/tree/master/docs/modules) for detailed information about individual modules of KubeEdge. You can also find the [guides](https://github.com/kubeedge/kubeedge/tree/master/docs/guides/try_kubeedge_with_ief.md) for trying kubeedge with IEF.
+The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io). 
+Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at [this](https://github.com/kubeedge/examples) repository.
 
 ## Support
 
