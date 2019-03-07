@@ -93,11 +93,21 @@ vi /etc/kubernetes/manifests/kube-apiserver.yaml
 - --insecure-bind-address=0.0.0.0
 ```
 KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
-1. `internalMqttMode`: internal mqtt broker is enabled
-2. `bothMqttMode`: internal as well as external broker are enabled
-3. `externalMqttMode`: only external broker is enabled
+- `0 - internalMqttMode`: internal mqtt broker is enabled
+- `1 - bothMqttMode`: internal as well as external broker are enabled
+- `2 - externalMqttMode`: only external broker is enabled
 
-Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/conf/edge.yaml) to select the desired mode
+Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml) to select the desired mode
+
+```yaml
+mqtt:
+    server: tcp://127.0.0.1:1883 # external mqtt broker url.
+    internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+    mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
+    qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+    retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+    session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
+```
 
 To use kubeedge in double mqtt or external mode, make sure you have **mosquitto** in your environment. If you do not already have it, you may install as follows.  
 
@@ -165,7 +175,7 @@ make # or `make edgecontroller`
 ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
-Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
+Please click [Cross Compilation](cross-compilation.html) for the instructions.
 
 ## Run KubeEdge  
 
