@@ -22,16 +22,16 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Getting Started
    
-   getting-started.md
-   contribute.md
-   roadmap.md
-   support.md
+   getting-started/getting-started
+   getting-started/contribute.md
+   getting-started/roadmap.md
+   getting-started/support.md
 
 .. toctree::
    :maxdepth: 2
    :caption: Concepts
 
-   kubeedge.md
+   modules/kubeedge.md
    modules/beehive
    modules/eventbus
    modules/metamanager
@@ -44,10 +44,10 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Setup
 
-   requirements
+   setup/requirements
    setup/setup
    setup/cross-compilation
-   Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF) <guides/try_kubeedge_with_ief.md>
+   Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF) <guides/try_kubeedge_with_ief>
 
 
 .. toctree::
@@ -61,7 +61,7 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Troubleshooting
 
-   troubleshooting
+   troubleshooting/troubleshooting
 
 
 

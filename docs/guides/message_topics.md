@@ -3,7 +3,7 @@ KubeEdge uses MQTT for communication between deviceTwin and devices/apps.
 EventBus can be started in multiple MQTT modes and acts as an interface for sending/receiving messages on relevant MQTT topics.
 
 The purpose of this document is to describe the topics which KubeEdge uses for communication.
-Please read Beehive [documentation](../modules/beehive/) for understanding about message format used by KubeEdge. 
+Please read Beehive [documentation](../modules/beehive.html) for understanding about message format used by KubeEdge. 
 
 ## Subscribe Topics
 On starting EventBus, it subscribes to these 5 topics:
@@ -30,6 +30,6 @@ This topic is used to update the state of the device. + symbol can be replaced w
 The two + symbols can be replaced by the deviceID on whose twin the operation is to be performed and any one of(update,cloud_updated,get) respectively.  
 
 Following is the explanation of the three suffix used:  
-    a. update: this suffix is used to update the twin for the deviceID.  
-    b. cloud_updated: this suffix is used to sync the twin status between edge and cloud.  
-    c. get: is used to get twin status of a device. The response is published on `"$hw/events/device/+/twin/get/result"` topic.
+1. `update`: this suffix is used to update the twin for the deviceID.  
+2. `cloud_updated`: this suffix is used to sync the twin status between edge and cloud.  
+3. `get`: is used to get twin status of a device. The response is published on `"$hw/events/device/+/twin/get/result"` topic.
