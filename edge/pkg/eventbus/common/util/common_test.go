@@ -39,27 +39,25 @@ func TestCheckKeyExist(t *testing.T) {
 		name          string
 		keys          []string
 		disinfo       map[string]interface{}
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "TestCheckKeyExist: Key exists in passed map",
 			keys:          []string{"key1"},
 			disinfo:       map[string]interface{}{"key1": "value1"},
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "TestCheckKeyExist: Key does not exists in passed map",
 			keys:          []string{"key1"},
 			disinfo:       map[string]interface{}{"key2": "value2"},
-			expectedError: fmt.Errorf("key not found"),
+			expectedError: "key not found",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := CheckKeyExist(tt.keys, tt.disinfo)
-			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("common.CheckKeyExist() error = %v, expectedError =  %v", err, tt.expectedError)
-			}
+			assert.Containsf(t, fmt.Sprintf("%e", err), tt.expectedError, "error message %s", "formatted")
 		})
 	}
 }
@@ -69,29 +67,24 @@ func TestCheckClientToken(t *testing.T) {
 	tests := []struct {
 		name          string
 		token         MQTT.Token
-		expectedError error
+		expectedError string
 	}{
 		{
 			name:          "TestCheckClientToken: Client Token with no error",
 			token:         MQTT.NewClient(clientOptions).Connect(),
-			expectedError: nil,
+			expectedError: "",
 		},
 		{
 			name:          "TestCheckClientToken: Client token created with error",
 			token:         MQTT.NewClient(HubClientInit("tcp://127.0.0:8000", "12345", "", "")).Connect(),
-			expectedError: fmt.Errorf("Network Error : dial tcp: lookup 127.0.0: no such host"),
+			expectedError: "Network Error",
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rs, err := CheckClientToken(tt.token)
 			fmt.Printf("rs  =  %v", rs)
-			rs, err = CheckClientToken(tt.token)
-			fmt.Printf("rs  =  %v", rs)
-			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("common.CheckClientToken() error = %v, expectedError =  %v", err, tt.expectedError)
-			}
+			assert.Containsf(t, fmt.Sprintf("%e", err), tt.expectedError, "error message %s", "formatted")
 		})
 	}
 }
@@ -191,13 +184,13 @@ func TestLoopConnect(t *testing.T) {
 		connect       bool
 	}{
 		{
-			name: "TestLoopConnect: success in connection",
+			name:          "TestLoopConnect: success in connection",
 			clientID:      "12345",
 			clientOptions: MQTT.NewClientOptions(),
 			connect:       true,
 		},
 		{
-			name: "TestLoopConnect: Connection error",
+			name:          "TestLoopConnect: Connection error",
 			clientID:      "12345",
 			clientOptions: HubClientInit("tcp://127.0.0.1:1882", "12345", "test_user", "123456789"),
 			connect:       false,
