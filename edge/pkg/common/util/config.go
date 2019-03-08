@@ -36,7 +36,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// LoadConfig is function to Load Configarations from a specified location. If no location is specified it loads the config from the default location
+// LoadConfig is function to Load Configurations from a specified location. If no location is specified it loads the config from the default location
 func LoadConfig(confLocation ...string) error {
 	err := config.CONFIG.DeInit()
 	if err != nil {
@@ -146,6 +146,7 @@ func createPEMfile(path string, pemBlock pem.Block) error {
 	if err != nil {
 		return err
 	}
+
 	defer file.Close()
 	err = pem.Encode(file, &pemBlock)
 	return err
