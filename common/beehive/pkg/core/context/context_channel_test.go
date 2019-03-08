@@ -19,8 +19,8 @@ func TestSendSync(t *testing.T) {
 		fmt.Printf("resp: %v, error: %v\n", resp, err)
 	}()
 
-	msg := coreContext.Receive("test_dest")
-	fmt.Printf("receive msg: %v\n", msg)
+	msg, err := coreContext.Receive("test_dest")
+	fmt.Printf("receive msg, error: %v\n", msg, err)
 	resp := msg.NewRespByMessage(&msg, "how are you")
 	coreContext.SendResp(*resp)
 
