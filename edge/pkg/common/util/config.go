@@ -146,9 +146,8 @@ func createPEMfile(path string, pemBlock pem.Block) error {
 	if err != nil {
 		return err
 	}
-	if err := pem.Encode(file, &pemBlock); err != nil {
-		return err
-	}
+
 	defer file.Close()
-	return nil
+	err = pem.Encode(file, &pemBlock)
+	return err
 }
