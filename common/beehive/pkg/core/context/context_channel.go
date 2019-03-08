@@ -54,7 +54,7 @@ func (ctx *ChannelContext) Cleanup(module string) {
 	}
 }
 
-// Send send msg to a mudule. Todo: do not stuck
+// Send send msg to a module. Todo: do not stuck
 func (ctx *ChannelContext) Send(module string, message model.Message) {
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
@@ -157,7 +157,7 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 	log.LOGGER.Warnf("bad anonName(%s), do nothing", anonName)
 }
 
-// Send2Group send msg to mudles. Todo: do not stuck
+// Send2Group send msg to modules. Todo: do not stuck
 func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) {
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
