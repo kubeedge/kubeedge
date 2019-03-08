@@ -1,0 +1,17 @@
+# Official list of KubeEdge Maintainers.
+#
+# Names added to this file should be in the following format:
+#     Individual's name <email address> @githubhandle
+#
+# Currently KubeEdge doesn't have folder wise maintainers.
+# 4th column will be added in the list to specify the folder maintained by an individual.
+#
+# Please keep the below list sorted in ascending order.
+
+Jun Du <dujun5@huawei.com> @m1093782566
+Li (Cindy) Xing <li.xing1@huawei.com> @CindyXing
+Rohit Sardesai <sardesai.rohit.prabhakar@huawei.com> @rohitsardesai83
+Siddharth Bhadri <siddharth.bhadri@huawei.com> @sids-b
+Qi Zhang <zhangqi21@huawei.com> @qizha
+Zefeng (Kevin) Wang <wangzefeng@huawei.com> @kevin-wangzefeng
+
