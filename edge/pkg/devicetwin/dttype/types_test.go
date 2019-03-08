@@ -30,7 +30,6 @@ import (
 func TestSetEventID(t *testing.T) {
 	tests := []struct {
 		name      string
-		timestamp int64
 		eventID   string
 	}{
 		{
