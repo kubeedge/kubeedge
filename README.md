@@ -7,21 +7,21 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. Kubeedge consists of a cloud part and an edge part. 
+KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. KubeEdge consists of a cloud part and an edge part.
 
 ## Advantages
 
 #### Edge Computing
 
-With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously which effectively reduces the network bandwidth requirements and consumptions between Edge and Cloud. With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.  
+With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously which effectively reduces the network bandwidth requirements and consumptions between Edge and Cloud. With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.
 
 #### Simplified development
 
-Developers can write regular http or mqtt based applications, containerize them, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate. 
+Developers can write regular http or mqtt based applications, containerize them, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate.
 
 #### Kubernetes-native support
 
-With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud. Locations of edge nodes are transparent to customers. 
+With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud. Locations of edge nodes are transparent to customers.
 
 #### Abundant applications
 
@@ -33,9 +33,9 @@ KubeEdge is composed of the following components:
 
 - **Edged:** an agent that runs on edge nodes and manages containerized applications.
 - **EdgeHub:** a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
-- **CloudHub:** A web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
-- **EdgeController:** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node. 
-- **EventBus:** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
+- **CloudHub:** a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
+- **EdgeController:** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.
+- **EventBus:** a MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
 - **DeviceTwin:** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - **MetaManager:** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
 
@@ -67,7 +67,7 @@ KubeEdge will provide the fundamental infrastructure and basic functionality for
 
 ### Prerequisites
 
-To use KubeEdge, you will need to have **docker** installed. If you don't, please follow these steps to install docker.
+To use KubeEdge, you will need to have **docker** installed both of Cloud and Edge parts. If you don't, please follow these steps to install docker.
 
 #### Install docker
 
@@ -102,9 +102,9 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
-KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm
+KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm.
 
-#### Install kubeadm/kubectl 
+#### Install kubeadm/kubectl
 
 For Ubuntu:
 
@@ -118,6 +118,7 @@ apt-get update
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 ```
+
 For CentOS:
 
 ```shell
@@ -148,24 +149,34 @@ To initialize Kubernetes master, follow the below step:
 ```shell
 kubeadm init
 ```
-After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to api-server
-Please follow below steps to enable http port in apiserver
 
-```shell 
+To use Kubernetes command line tool **kubectl**, you need to make the below configuration.
+
+```shell
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to Kubernetes apiserver.
+Please follow below steps to enable http port in Kubernetes apiserver.
+
+```shell
 vi /etc/kubernetes/manifests/kube-apiserver.yaml
 # Add the following flags in spec: containers: -command section
 - --insecure-port=8080
 - --insecure-bind-address=0.0.0.0
 ```
 
-KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
-1) internalMqttMode: internal mqtt broker is enabled
-2) bothMqttMode: internal as well as external broker are enabled
-3) externalMqttMode: only external broker is enabled
+The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
+1) internalMqttMode: internal mqtt broker is enabled.
+2) bothMqttMode: internal as well as external broker are enabled.
+3) externalMqttMode: only external broker is enabled.
 
-Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml) to select the desired mode
+Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use kubeedge in double mqtt or external mode, you will need to have **mosquitto** installed. If you do not already have it, you may install as follows.
+To use KubeEdge in double mqtt or external mode, you will need to have **mosquitto** installed on the Edge node. If you do not already have it, you may install as follows.
+
 #### Install mosquitto
 
 For Ubuntu:
@@ -186,14 +197,16 @@ KubeEdge has certificate based authentication/authorization between cloud and ed
 
 #### Install openssl
 
-If openssl is not already present using below command to install openssl
+If openssl is not already present using below command to install openssl.
 
 ```shell
 apt-get install openssl
 ```
+
 #### Generate Certificates
 
-RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge. 
+RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
+
 ```shell
 # Generete Root Key
 openssl genrsa -des3 -out rootCA.key 4096
@@ -240,15 +253,15 @@ Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instru
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 # run edge controller
-# `conf/` should be in the same directory as the binary
+# `conf/` should be in the same directory as the cloned KubeEdge repository
 # verify the configurations before running cloud(edgecontroller)
 ./edgecontroller
 ```
 
 ### Run Edge
 
-We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node
-  
+We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
+
 ```shell
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
 ```
@@ -260,43 +273,60 @@ Run Edge
 mosquitto -d -p 1883
 
 # run edge_core
-# `conf/` should be in the same directory as the binary
+# `conf/` should be in the same directory as the cloned KubeEdge repository
 # verify the configurations before running edge(edge_core)
 ./edge_core
 # or
 nohup ./edge_core > edge_core.log 2>&1 &
 ```
 
+After the Cloud and Edge parts are started, you can use below command to check the edge node status.
+
+```shell
+kubectl get nodes
+```
+
+Please make sure the status of edge node you created is **ready**.
+
 If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
 ### Deploy Application
 
-Try out a sample application deployment by following below steps
+Try out a sample application deployment by following below steps.
 
 ```shell
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
+
+Then you can use below command to check if the application is normally running.
+
+```shell
+kubectl get pods
+```
+
 ### Run Edge Unit Tests
 
  ```shell
  make edge_test
  ```
- To run unit tests of a package individually 
+
+ To run unit tests of a package individually.
+
  ```shell
  export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge/edge
  cd <path to package to be tested>
  go test -v
- 
- ``` 
+ ```
+
 ### Run Edge Integration Tests
 
-```shell 
+```shell
 make edge_integration_test
 ```
 
 ### Details and use cases of integration test framework
 
-Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) to use cases of intergration test framework for kubeedge 
+Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) to use cases of intergration test framework for KubeEdge.
 
 ## Community
 
