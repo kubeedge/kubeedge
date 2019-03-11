@@ -29,14 +29,24 @@ application orchestration capabilities to hosts at Edge.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Concepts
+   :caption: General Concepts
 
    modules/kubeedge.md
    modules/beehive
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Edge Concepts
+
    modules/eventbus
    modules/metamanager
    modules/edgehub
    modules/devicetwin
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Cloud Concepts
+
    modules/cloud/controller
    modules/cloudhub/CloudHub
 
