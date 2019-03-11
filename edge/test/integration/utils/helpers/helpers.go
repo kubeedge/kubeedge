@@ -149,8 +149,8 @@ func HandleAddAndDeleteDevice(operation, DeviceID, testMgrEndPoint string) bool 
 	return true
 }
 
-//Function to handle app deployment/delete deployment.
-func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, ImageUrl string) bool {
+//HandleAddAndDeletePods is function to handle app deployment/delete deployment.
+func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restart_policy v1.RestartPolicy) bool {
 	var req *http.Request
 	var err error
 
@@ -160,7 +160,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, Ima
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: UID},
-			Spec:       v1.PodSpec{RestartPolicy: "OnFailure", Containers: []v1.Container{{Name: UID, Image: ImageUrl, ImagePullPolicy: "IfNotPresent"}}},
+			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
@@ -171,7 +171,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, Ima
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: UID},
-			Spec:       v1.PodSpec{RestartPolicy: "OnFailure", Containers: []v1.Container{{Name: UID, Image: ImageUrl, ImagePullPolicy: "IfNotPresent"}}},
+			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
@@ -229,7 +229,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	return pods, nil
 }
 
-//Function to check the Pod state
+//CheckPodRunningState is function to check the Pod state
 func CheckPodRunningState(EdgedEndPoint, podname string) {
 	Eventually(func() string {
 		var status string
@@ -245,7 +245,7 @@ func CheckPodRunningState(EdgedEndPoint, podname string) {
 	}, "240s", "2s").Should(Equal("Running"), "Application Deployment is Unsuccessfull, Pod has not come to Running State")
 }
 
-//Function to check pod deletion
+//CheckPodDeletion is function to check pod deletion
 func CheckPodDeletion(EdgedEndPoint, UID string) {
 	Eventually(func() bool {
 		var IsExist = false
