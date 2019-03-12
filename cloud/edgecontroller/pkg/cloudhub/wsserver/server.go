@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/channelq"
+	hubio "github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/util"
 	bhLog "github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
@@ -64,15 +65,6 @@ type EventHandle struct {
 	Context           *context.Context
 }
 
-// JSONReadWriter reads/writes json objects from underline connection
-type JSONReadWriter interface {
-	SetReadDeadline(time.Time) error
-	SetWriteDeadline(time.Time) error
-	ReadJSON(interface{}) error
-	WriteJSON(interface{}) error
-	Close() error
-}
-
 func dumpEventMetadata(event *emodel.Event) string {
 	return fmt.Sprintf("id: %s, parent_id: %s, group: %s, source: %s, resource: %s, operation: %s",
 		event.ID, event.ParentID, event.Group, event.Source, event.UserGroup.Resource, event.UserGroup.Operation)
@@ -91,17 +83,17 @@ func trimMessage(msg *model.Message) {
 }
 
 // EventReadLoop processes all read requests
-func (eh *EventHandle) EventReadLoop(conn JSONReadWriter, info *emodel.HubInfo, stop chan ExitCode) {
+func (eh *EventHandle) EventReadLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
 	for {
 		var msg model.Message
 		// set the read timeout as the keepalive interval so that we can disconnect when heart beat is lost
-		err := conn.SetReadDeadline(time.Now().Add(time.Duration(eh.KeepaliveInterval) * time.Second))
+		err := hi.SetReadDeadline(time.Now().Add(time.Duration(eh.KeepaliveInterval) * time.Second))
 		if err != nil {
 			bhLog.LOGGER.Errorf("SetReadDeadline error, %s", err.Error())
 			stop <- webSocketReadFail
 			return
 		}
-		err = conn.ReadJSON(&msg)
+		_, err = hi.ReadData(&msg)
 		if err != nil {
 			bhLog.LOGGER.Errorf("read error, connection for node %s will be closed, reason: %s", info.NodeID, err.Error())
 			stop <- webSocketReadFail
@@ -137,7 +129,7 @@ func (eh *EventHandle) handleNodeQuery(info *emodel.HubInfo, event *emodel.Event
 }
 
 // EventWriteLoop processes all write requests
-func (eh *EventHandle) EventWriteLoop(conn JSONReadWriter, info *emodel.HubInfo, stop chan ExitCode) {
+func (eh *EventHandle) EventWriteLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
 	events, err := eh.EventQueue.Consume(info)
 	if err != nil {
 		bhLog.LOGGER.Errorf("failed to consume event for node %s, reason: %s", info.NodeID, err.Error())
@@ -180,13 +172,13 @@ func (eh *EventHandle) EventWriteLoop(conn JSONReadWriter, info *emodel.HubInfo,
 
 		msg := emodel.EventToMessage(event)
 		trimMessage(&msg)
-		err = conn.SetWriteDeadline(time.Now().Add(time.Duration(eh.WriteTimeout) * time.Second))
+		err = hi.SetWriteDeadline(time.Now().Add(time.Duration(eh.WriteTimeout) * time.Second))
 		if err != nil {
 			bhLog.LOGGER.Errorf("SetWriteDeadline error, %s", err.Error())
 			stop <- webSocketWriteFail
 			return
 		}
-		err = eh.webSocketWrite(conn, info.NodeID, &msg)
+		err = eh.webSocketWrite(hi, info.NodeID, &msg)
 		if err != nil {
 			bhLog.LOGGER.Errorf("write error, connection for node %s will be closed, affected event %s, reason %s",
 				info.NodeID, dumpEventMetadata(event), err.Error())
@@ -197,7 +189,7 @@ func (eh *EventHandle) EventWriteLoop(conn JSONReadWriter, info *emodel.HubInfo,
 	}
 }
 
-func (eh *EventHandle) webSocketWrite(conn JSONReadWriter, nodeID string, v interface{}) error {
+func (eh *EventHandle) webSocketWrite(hi hubio.CloudHubIO, nodeID string, v interface{}) error {
 	value, ok := eh.nodeLocks.Load(nodeID)
 	if !ok {
 		return fmt.Errorf("node disconnected")
@@ -206,13 +198,13 @@ func (eh *EventHandle) webSocketWrite(conn JSONReadWriter, nodeID string, v inte
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	return conn.WriteJSON(v)
+	return hi.WriteData(v)
 }
 
-func notifyEventQueueError(conn JSONReadWriter, code ExitCode, nodeID string) {
+func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 	if code == eventQueueDisconnect {
 		msg := model.NewMessage("").BuildRouter(emodel.GpResource, emodel.SrcCloudHub, emodel.NewResource(emodel.ResNode, nodeID, nil), emodel.OpDisConnect)
-		err := conn.WriteJSON(msg)
+		err := hi.WriteData(msg)
 		if err != nil {
 			bhLog.LOGGER.Errorf("fail to notify node %s event queue disconnected, reason: %s", nodeID, err.Error())
 		}
@@ -264,16 +256,17 @@ func (ah *AccessHandle) ServeEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	info := &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}
-	ah.EventHandle.ServeConn(conn, info)
+	hi := &hubio.JSONWSIO{conn}
+	ah.EventHandle.ServeConn(hi, info)
 }
 
 // ServeConn starts serving the incoming connection
-func (eh *EventHandle) ServeConn(conn JSONReadWriter, info *emodel.HubInfo) {
+func (eh *EventHandle) ServeConn(hi hubio.CloudHubIO, info *emodel.HubInfo) {
 	err := eh.EventQueue.Connect(info)
 	if err != nil {
 		bhLog.LOGGER.Errorf("fail to connect to event queue for node %s, reason %s", info.NodeID, err.Error())
-		notifyEventQueueError(conn, eventQueueDisconnect, info.NodeID)
-		err = conn.Close()
+		notifyEventQueueError(hi, eventQueueDisconnect, info.NodeID)
+		err = hi.Close()
 		if err != nil {
 			bhLog.LOGGER.Errorf("fail to close connection, reason: %s", err.Error())
 		}
@@ -283,8 +276,8 @@ func (eh *EventHandle) ServeConn(conn JSONReadWriter, info *emodel.HubInfo) {
 	err = eh.EventQueue.Publish(info, constructConnectEvent(info, true))
 	if err != nil {
 		bhLog.LOGGER.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
-		notifyEventQueueError(conn, eventQueueDisconnect, info.NodeID)
-		err = conn.Close()
+		notifyEventQueueError(hi, eventQueueDisconnect, info.NodeID)
+		err = hi.Close()
 		if err != nil {
 			bhLog.LOGGER.Errorf("fail to close connection, reason: %s", err.Error())
 		}
@@ -292,14 +285,14 @@ func (eh *EventHandle) ServeConn(conn JSONReadWriter, info *emodel.HubInfo) {
 		return
 	}
 
-	eh.nodeConns.Store(info.NodeID, conn)
+	eh.nodeConns.Store(info.NodeID, hi)
 	eh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
 	eh.Nodes.Store(info.NodeID, true)
 
 	bhLog.LOGGER.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
 	stop := make(chan ExitCode, 2)
-	go eh.EventReadLoop(conn, info, stop)
-	go eh.EventWriteLoop(conn, info, stop)
+	go eh.EventReadLoop(hi, info, stop)
+	go eh.EventWriteLoop(hi, info, stop)
 
 	code := <-stop
 	bhLog.LOGGER.Infof("edge node %s for project %s disconnected", info.NodeID, info.ProjectID)
@@ -310,9 +303,9 @@ func (eh *EventHandle) ServeConn(conn JSONReadWriter, info *emodel.HubInfo) {
 	if err != nil {
 		bhLog.LOGGER.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
-	notifyEventQueueError(conn, code, info.NodeID)
+	notifyEventQueueError(hi, code, info.NodeID)
 	eh.Nodes.Delete(info.NodeID)
-	err = conn.Close()
+	err = hi.Close()
 	if err != nil {
 		bhLog.LOGGER.Errorf("fail to close connection, reason: %s", err.Error())
 	}
