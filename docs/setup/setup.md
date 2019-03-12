@@ -218,6 +218,9 @@ Try out a sample application deployment by following below steps
 ```shell
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
+**Note:**
+Currently, for edge node, we must use hostPort in the Pod container spec to make it started normally, or the pod will be always in *ContainerCreating* status. And the hostPort must be equal to containerPort and can not be 0.
+
 ## Run Edge Unit Tests
 
  ```shell
