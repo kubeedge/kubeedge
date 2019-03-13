@@ -1,0 +1,86 @@
+mqtt:
+  mode: 0       # 0 -internal mqtt broker  1 - external mqtt broker
+  server: tcp://127.0.0.1:1883 # external mqtt broker url.
+  internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+device:
+  name: CC2650 SensorTag
+  id: 25e7ffe7-4094-42c9-b3c1-2d8390278025         #deviceID received while registering device with the cloud
+action-manager:
+  actions:
+    - name: IRTemperatureConfiguration
+      enable: true
+      operation:
+        action: Write
+        characteristic-uuid: f000aa0204514000b000000000000000
+        value: [1]
+    - name: IRTemperatureData
+      enable: false
+      operation:
+        action: Read
+        characteristic-uuid: f000aa0104514000b000000000000000
+    - name: IOConfigurationInitialize
+      enable: false
+      operation:
+        action: Write
+        characteristic-uuid: f000aa6604514000b000000000000000
+        value: [0]
+    - name: IODataInitialize
+      enable: false
+      operation:
+        action: Write
+        characteristic-uuid: f000aa6504514000b000000000000000
+        value: [0]
+    - name: IOConfiguration
+      enable: false
+      operation:
+        action: Write
+        characteristic-uuid: f000aa6604514000b000000000000000
+        value: [1]
+    - name: IOData
+      enable: false
+      operation:
+        action: Write
+        characteristic-uuid: f000aa6504514000b000000000000000
+        value: [0]                          # value in bytes to be written by default if converter for this is not mentioned
+scheduler:
+  schedules:
+    - enable: true
+      name: temperature
+      event-frequency: 3000
+      occurrence-limit: 10            # if it is 0, then the event will execute infinitely
+      actions:
+        - IRTemperatureData
+watcher:
+  enable: true
+  attributes :
+    - name: IOControl                        # the twin attribute name defined while creating device
+      actions:
+        - IOConfigurationInitialize
+        - IODataInitialize
+        - IOConfiguration
+        - IOData
+data-converter:
+  write:
+    attributes:
+      - name: IOControl                   # the twin attribute name defined while creating device
+        operations :
+          IOData :
+            data-map:                   # to be given in byte format
+              Red: [1]
+              Green: [2]
+              RedGreen: [3]
+              Buzzer: [4]
+              BuzzerRed: [5]
+              BuzzerGreen: [6]
+              BuzzerRedGreen: [7]
+  read:
+    actions:
+      - action-name: IRTemperatureData    # the name of the action for which the data conversion is to be performed
+        conversion-operation:
+          start-index: 1
+          end-index: 0                 # the value specified should be inclusive for example if 5 is specified it includes the fifth bit
+          shift-right: 2
+          multiply: 0.03125
+          order-of-execution:
+            - multiply
+
