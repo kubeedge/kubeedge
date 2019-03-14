@@ -29,3 +29,7 @@ edge_small_build:
 edgecontroller:
 	cd cloud/edgecontroller && $(MAKE)
 
+.PHONY: e2e_test
+e2e_test:
+	bash tests/e2e/scripts/execute.sh
+
