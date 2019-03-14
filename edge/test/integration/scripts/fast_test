@@ -31,7 +31,8 @@ cat >config.json<<END
         "mqttEndpoint":"tcp://$MQTT_SERVER:1884",
         "testManager": "http://127.0.0.1:12345",
         "edgedEndpoint": "http://127.0.0.1:10255",
-        "image_url": ["nginx:latest", "redis:latest"]
+        "image_url": ["nginx:latest", "redis:latest"],
+        "nodeId": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
 }
 END
 
