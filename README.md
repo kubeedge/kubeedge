@@ -298,6 +298,8 @@ Try out a sample application deployment by following below steps.
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
 
+**Note:** Currently, for edge node, we must use hostPort in the Pod container spec so that the pod comes up normally, or the pod will be always in ContainerCreating status. The hostPort must be equal to containerPort and can not be 0.
+
 Then you can use below command to check if the application is normally running.
 
 ```shell
