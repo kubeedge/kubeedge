@@ -301,6 +301,8 @@ kubectl get nodes
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
 
+**提示：** 目前对于边缘端，必须在 Pod 配置中使用 hostPort，不然 Pod 会一直处于 ContainerCreating 状态。 hostPort 必须等于 containerPort 而且不能为 0。
+
 然后可以使用下面的命令检查应用程序是否正常运行。
 
 ```shell
