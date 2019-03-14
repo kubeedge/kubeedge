@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgecontroller
+  labels:
+    k8s-app: kubeedge
+    kubeedge: edgecontroller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - configmaps
+  - pods
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
