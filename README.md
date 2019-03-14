@@ -250,6 +250,38 @@ Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instru
 
 ### Run Cloud
 
+#### Method A
+
+This method will guide you to deploy the cloud part into a k8s cluster,
+so you need to login to the k8s master node (or where else if you can
+operate the cluster with `kubectl`).
+
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud`
+will be used, so place these files to somewhere you can kubectl with.
+
+Then, first, we need to generate the tls certs (and CA if we don't have
+one) for CloudHub to host websocket server. It then will give us
+`06-secret.yaml` if succeeded.
+
+```bash
+# this script uses a docker image to generate secrets
+./00-generate_secret.sh
+
+# or use tools/certgen.sh directly if openssl and coreutils are installed
+tools/certgen.sh buildSecret | tee ./06-secret.yaml
+```
+
+Second, we create k8s resources from the manifests in name order. Before
+creating, check the content of each manifest to make sure it meets your
+environment.
+
+```bash
+kubectl create -f *.yaml
+```
+
+
+#### Method B
+
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 # run edge controller
