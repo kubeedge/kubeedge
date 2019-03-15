@@ -271,7 +271,7 @@ tools/certgen.sh buildSecret | tee ./06-secret.yaml
 接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
 
 ```bash
-kubectl create -f *.yaml
+for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
 
 
@@ -295,6 +295,25 @@ kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
 ```
 
 运行 Edge
+
+#### 方案A
+
+此方式将在容器中运行 edge 端，所以需要确认 docker engine 监听在
+`/var/run/docker.sock`，这个之后需要挂载到容器中。
+
+在启动 edge 端容器之前，需要检查一下这个脚本的内容 `build/edge/run_daemon.sh`，
+确保符合具体的环境。（这个脚本会生成 EdgeHub 的客户端证书，建议用生成 CloudHub
+端证书时使用的相同的 CA 证书）
+
+之后，运行脚本，mqtt broker url 作为第一个参数，cloud hub url 作为第二个参数，例如：
+
+```bash
+./run_daemon.sh \
+tcp://192.168.2.12:1883 \
+wss://192.168.2.12:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
+```
+
+#### 方案B
 
 ```shell
 # run mosquitto

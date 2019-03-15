@@ -276,7 +276,7 @@ creating, check the content of each manifest to make sure it meets your
 environment.
 
 ```bash
-kubectl create -f *.yaml
+for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
 
 
@@ -299,6 +299,28 @@ kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
 ```
 
 Run Edge
+
+#### Method A
+
+This method will guide you to deploy the edge part running in docker
+container, so make sure that docker engine listening on
+`/var/run/docker.sock` which will then mount into the edge container.
+
+Before start the edge part container, check the content of this script
+`build/edge/run_daemon.sh` to make sure it meets your environment. (this
+script will generate client certs for EdgeHub, we recommend that to use
+the same CA that generate CloudHub certs with)
+
+Then, run the script with mqtt broker url as the first argument, cloud
+hub url as the second argument, like this:
+
+```bash
+./run_daemon.sh \
+tcp://192.168.2.12:1883 \
+wss://192.168.2.12:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
+```
+
+#### Method B
 
 ```shell
 # run mosquitto

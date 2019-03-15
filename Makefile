@@ -34,3 +34,7 @@ cloudimage:
 .PHONY: certgenimage
 certgenimage:
 	docker build -t kubeedge/certgen:${IMAGE_TAG} -f build/tools/Dockerfile build/tools
+
+.PHONY: edgeimage
+edgeimage:
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .

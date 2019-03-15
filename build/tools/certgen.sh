@@ -5,19 +5,19 @@ readonly caSubject=${CA_SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kube
 readonly certPath=${CERT_PATH:-/etc/kubeedge/certs}
 readonly subject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
 
-function genCA() {
+genCA() {
     openssl genrsa -des3 -out ${caPath}/ca.key -passout pass:kubeedge.io 4096
     openssl req -x509 -new -nodes -key ${caPath}/ca.key -sha256 -days 3650 \
     -subj ${subject} -passin pass:kubeedge.io -out ${caPath}/ca.crt
 }
 
-function ensureCA() {
+ensureCA() {
     if [ ! -e ${caPath}/ca.key ] || [ ! -e ${caPath}/ca.crt ]; then
         genCA
     fi
 }
 
-function genCertAndKey() {
+genCertAndKey() {
     ensureCA
     local name=$1
     openssl genrsa -out ${certPath}/${name}.key 2048
@@ -25,7 +25,7 @@ function genCertAndKey() {
     openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/ca.crt -CAkey ${caPath}/ca.key -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
 }
 
-function buildSecret() {
+buildSecret() {
     local name="cloud"
     genCertAndKey ${name} > /dev/null 2>&1
     cat <<EOF
