@@ -21,7 +21,7 @@
 - Creates Respective manager (pod, configmap, secret) for handling events by calling manager interface
 - Locates configmap and secret should be send to which node
 
-![Downstream Controller](./../../images/edgecontroller/DownstreamController.png)
+![Downstream Controller](../../images/edgecontroller/DownstreamController.png)
 ## Upstream Controller:
 ### Sync watch and Update status of resource and events
 
@@ -42,7 +42,7 @@
    - **PodIp**:IP address allocated to the Pod
    - **QosClass**:Assigned to the pod based on resource requirement
    
-   ![Upstream Controller](./../../images/edgecontroller/UpstreamController.png)
+   ![Upstream Controller](../../images/edgecontroller/UpstreamController.png)
    
 ## Controller Manager:
 ### Creates manager Interface and implements ConfigmapManager LocationCache and podManager
