@@ -48,10 +48,10 @@ Following are the steps for creating fake/mock implementation of Ormer, initiali
 ```shell
 mockgen -destination=mocks/beego/fake_ormer.go -package=beego github.com/astaxie/beego/orm Ormer
 ```
-    - `destination` : where you want to create the fake implementation.  
-    - `package` : package of the created fake implementation file  
-    - `github.com/astaxie/beego/orm` : the package where interface definition is there  
-    - `Ormer` : generate mocks for this interface
+- `destination` : where you want to create the fake implementation.  
+- `package` : package of the created fake implementation file  
+- `github.com/astaxie/beego/orm` : the package where interface definition is there  
+- `Ormer` : generate mocks for this interface
 
 3. Initialize mocks in your test file. eg meta_test.go
 ```shell
