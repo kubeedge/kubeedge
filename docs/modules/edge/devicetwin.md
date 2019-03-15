@@ -85,7 +85,7 @@ The following are the action callbacks which can be performed by the membership 
 - The communication module sends the information to the  eventbus component which further publishes the result on the 
  specified MQTT topic (get membership result topic). 
 
-  ![Membership Get()](../images/devicetwin/membership-get.png)
+  ![Membership Get()](../../images/devicetwin/membership-get.png)
 
 
 **dealMembershipUpdated**:  dealMembershipUpdated() updates the membership details of the node. 
@@ -97,7 +97,7 @@ to devicetwin controller which further forwards it to the membership module.
 deleted and also updates the devices that were already existing in the database as well as in the cache. 
 - After updating the details of the devices a  message is sent to the communication module of the device twin, which sends the message to eventbus module to be published on the given MQTT topic. 
                             
-  ![Membership Update](../images/devicetwin/membership-update.png)
+  ![Membership Update](../../images/devicetwin/membership-update.png)
                     
                                         
 **dealMembershipDetail**:   dealMembershipDetail() provides the membership details of the edge node, providing information
@@ -109,7 +109,7 @@ devicetwin controller which further forwards it to the membership module.
 devices that that are not present in the cache. 
 - After updating the details of the devices a  message is sent to the communication module of the device twin.
 
-  ![Membership Detail](../images/devicetwin/membership-detail.png)
+  ![Membership Detail](../../images/devicetwin/membership-detail.png)
 
 
 ### Twin Module
@@ -137,7 +137,7 @@ the MQTT broker through the eventbus component (mapper will publish a message on
 - The twin module updates the twin value in the database and sends the update result message to the communication module. 
 - The communication module will in turn send the publish message to the MQTT broker through the eventbus.
                     
-  ![Device Twin Update](../images/devicetwin/devicetwin-update.png)
+  ![Device Twin Update](../../images/devicetwin/devicetwin-update.png)
                  
                  
 **dealTwinGet**: dealTwinGet() provides the device twin  information for a particular device. 
@@ -145,7 +145,7 @@ the MQTT broker through the eventbus component (mapper will publish a message on
 - The twin module gets the devicetwin related information for the particular device and sends it to the communication module, it also handles errors that arise when the device is not found or if any internal problem occurs.
 - The communication module sends the information to the eventbus component, which publishes the result on the topic specified . 
                                                 
-  ![Device Twin Get](../images/devicetwin/devicetwin-get.png)
+  ![Device Twin Get](../../images/devicetwin/devicetwin-get.png)
 
 
 **dealTwinSync**: dealTwinSync() syncs the device twin information to the cloud.
@@ -156,7 +156,7 @@ the MQTT broker through the eventbus component (mapper will publish a message on
  - This function also performs operations like publishing the updated twin details  document, delta of the device twin as well as the update result (in case there is some error) to a specified topic through the communication module,
  which sends the data to edgehub, which will send it to eventbus which publishes on the MQTT broker.
                                     
-  ![Sync to Cloud](../images/devicetwin/sync-to-cloud.png)          
+  ![Sync to Cloud](../../images/devicetwin/sync-to-cloud.png)          
 
 ### Communication Module
 
@@ -216,14 +216,14 @@ The following are the action callbacks which can be performed by the device modu
                         in the database. It also sends the result of the device attribute update to be  published to the eventbus component]
                         through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.                      
  
-  ![Device Update](../images/devicetwin/device-update.png)
+  ![Device Update](../../images/devicetwin/device-update.png)
  
  **dealDeviceStateUpdate**:  dealDeviceStateUpdate() deals with the operations to be performed when a device status update is encountered.
                              It updates the state of the device as well as the last online time of the device in the database.
                              It also sends the update state result, through the communication module,  to the cloud through the edgehub module and to the  eventbus module which in turn 
                              publishes the result on the specified topic of the MQTT broker.
 
-  ![Device State Update](../images/devicetwin/device-state-update.png)
+  ![Device State Update](../../images/devicetwin/device-state-update.png)
   
   
 ## Tables
