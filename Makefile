@@ -25,6 +25,16 @@ edge_cross_build:
 edgecontroller:
 	cd cloud/edgecontroller && $(MAKE)
 
+IMAGE_TAG ?= $(shell git describe --tags)
+
 .PHONY: cloudimage
 cloudimage:
-	docker build -t kubeedge/edgecontroller:v0.2 -f build/cloud/Dockerfile .
+	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
+
+.PHONY: certgenimage
+certgenimage:
+	docker build -t kubeedge/certgen:${IMAGE_TAG} -f build/tools/Dockerfile build/tools
+
+.PHONY: edgeimage
+edgeimage:
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .

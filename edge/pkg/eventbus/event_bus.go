@@ -3,6 +3,7 @@ package eventbus
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/256dpi/gomqtt/packet"
 
@@ -35,13 +36,24 @@ type eventbus struct {
 
 func init() {
 	mode := config.CONFIG.GetConfigurationByKey("mqtt.mode")
+	var mqttMode int
+	var ok bool
 	if mode == nil {
-		mode = internalMqttMode
+		mqttMode = internalMqttMode
+	} else {
+		if mqttMode, ok = mode.(int); !ok {
+			var err error
+			if modeStr, ok := mode.(string); !ok {
+				panic("mqtt.mode should be one of [0,1,2]")
+			} else if mqttMode, err = strconv.Atoi(modeStr); err != nil {
+				panic(err)
+			}
+		}
 	}
-	if mode.(int) > externalMqttMode || mode.(int) < internalMqttMode {
+	if mqttMode > externalMqttMode || mqttMode < internalMqttMode {
 		panic("mqtt.mode should be one of [0,1,2]")
 	}
-	edgeEventHubModule := eventbus{mqttMode: mode.(int)}
+	edgeEventHubModule := eventbus{mqttMode: mqttMode}
 	core.Register(&edgeEventHubModule)
 }
 
