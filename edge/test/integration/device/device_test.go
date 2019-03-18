@@ -18,8 +18,10 @@ package device_test
 
 import (
 	"encoding/json"
-
+	"net/http"
+	
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
 
@@ -30,7 +32,12 @@ import (
 )
 
 //getting deviceid from the DB and assigning to it
-var DeviceID string
+var DeviceIDN string
+var DeviceN dttype.Device
+var DeviceIDWithAttr string
+var DeviceATT dttype.Device
+var DeviceIDWithTwin string
+var DeviceTW dttype.Device
 
 //Run Test cases
 var _ = Describe("Event Bus Testing", func() {
@@ -108,15 +115,15 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Failf("Marshal failed %v", err)
 			}
 
-			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceID+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
+			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceIDN+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
 				common.Failf("client.Publish() Error is %s", Token_client.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := GetDeviceStateFromDB(DeviceID)
-				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				deviceState := GetDeviceStateFromDB(DeviceIDN)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceIDN, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("online"), "Device state is not online within specified time")
 
@@ -130,15 +137,15 @@ var _ = Describe("Event Bus Testing", func() {
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
 			}
-			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceID+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
+			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceIDN+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
 				common.Failf("client.Publish() Error is %s", Token_client.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := GetDeviceStateFromDB(DeviceID)
-				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				deviceState := GetDeviceStateFromDB(DeviceIDN)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceIDN, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
 			Client.Disconnect(1)
@@ -151,18 +158,129 @@ var _ = Describe("Event Bus Testing", func() {
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
 			}
-			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceID+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
+			if Token_client = Client.Publish(dtcommon.DeviceETPrefix+DeviceIDN+dtcommon.DeviceETStateUpdateSuffix, 0, false, body); Token_client.Wait() && Token_client.Error() != nil {
 				common.Failf("client.Publish() Error is %s", Token_client.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(Token_client.Error()).NotTo(HaveOccurred())
 			Eventually(func() string {
-				deviceState := GetDeviceStateFromDB(DeviceID)
-				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceID, deviceState)
+				deviceState := GetDeviceStateFromDB(DeviceIDN)
+				common.InfoV2("DeviceID= %s, DeviceState= %s", DeviceIDN, deviceState)
 				return deviceState
 			}, "60s", "2s").Should(Equal("offline"), "Device state is not offline within specified time")
 			Client.Disconnect(1)
 		})
+
+		It("TC_TEST_EBUS_9: Add a sample device with device attributes to kubeedge node", func() {
+			//Generating Device ID
+			DeviceIDWithAttr = GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
+			//Generate a Device
+			DeviceATT = CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
+			//Add Attribute to device
+			AddDeviceAttribute(DeviceATT, "Temperature", "25.25", "float")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
+				return attributeDB.Value
+			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
+			Client.Disconnect(1)
+
+		})
+
+		It("TC_TEST_EBUS_10: Add a sample device with Twin attributes to kubeedge node", func() {
+			//Generating Device ID
+			DeviceIDWithTwin = GenerateDeviceID("kubeedge-device-WithTwinAttributes")
+			//Generate a Device
+			DeviceTW = CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
+			//Add twin attribute
+			AddTwinAttribute(DeviceTW, "Temperature", "25.25", "float")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
+				return attributeDB.Expected
+			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
+			Client.Disconnect(1)
+
+		})
+
+		It("TC_TEST_EBUS_11: Update existing device with new attributes", func() {
+
+			//Generate a Device
+			device := CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
+			//Add Attribute to device
+			AddDeviceAttribute(device, "Temperature", "50.50", "float")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Temperature")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
+				return attributeDB.Value
+			}, "60s", "2s").Should(Equal("50.50"), "Device Attributes are not updated within specified time")
+			Client.Disconnect(1)
+
+		})
+
+		It("TC_TEST_EBUS_12: Update existing device with new Twin attributes", func() {
+
+			//Generate a Device
+			device := CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
+			//Add twin attribute
+			AddTwinAttribute(device, "Temperature", "50.50", "float")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Temperature")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
+				return attributeDB.Expected
+			}, "60s", "2s").Should(Equal("50.50"), "Device Twin Attributes are not updated within specified time")
+			Client.Disconnect(1)
+
+		})
+
+		It("TC_TEST_EBUS_13: Add a new Device attribute to existing device", func() {
+			//Adding a new attribute to a device
+			AddDeviceAttribute(DeviceATT, "Humidity", "30", "Int")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetDeviceAttributesFromDB(DeviceIDWithAttr, "Humidity")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
+				return attributeDB.Value
+			}, "60s", "2s").Should(Equal("30"), "Device Attributes are not Added within specified time")
+			Client.Disconnect(1)
+
+		})
+
+		It("TC_TEST_EBUS_14: Add a new Twin attribute to existing device", func() {
+			//Preparing temporary Twin Attributes
+			AddTwinAttribute(DeviceTW, "Humidity", "100.100", "float")
+
+			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+			Expect(IsDeviceAdded).Should(BeTrue())
+
+			Eventually(func() string {
+				attributeDB := GetTwinAttributesFromDB(DeviceIDWithTwin, "Humidity")
+				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
+				return attributeDB.Expected
+			}, "60s", "2s").Should(Equal("100.100"), "Device Twin Attributes are not Added within specified time")
+			Client.Disconnect(1)
+
+		})
+
 	})
 })
