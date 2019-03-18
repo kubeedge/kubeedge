@@ -250,6 +250,38 @@ Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instru
 
 ### Run Cloud
 
+#### Run as Kubernetes deployment
+
+This method will guide you to deploy the cloud part into a k8s cluster,
+so you need to login to the k8s master node (or where else if you can
+operate the cluster with `kubectl`).
+
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud`
+will be used, so place these files to somewhere you can kubectl with.
+
+Then, first, we need to generate the tls certs (and CA if we don't have
+one) for CloudHub to host websocket server. It then will give us
+`06-secret.yaml` if succeeded.
+
+```bash
+# this script uses a docker image to generate secrets
+./00-generate_secret.sh
+
+# or use tools/certgen.sh directly if openssl and coreutils are installed
+tools/certgen.sh buildSecret | tee ./06-secret.yaml
+```
+
+Second, we create k8s resources from the manifests in name order. Before
+creating, check the content of each manifest to make sure it meets your
+environment.
+
+```bash
+for resource in $(ls *.yaml); do kubectl create -f $resource; done
+```
+
+
+#### Run as a binary
+
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 # run edge controller
@@ -267,6 +299,30 @@ kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
 ```
 
 Run Edge
+
+#### Run as container
+
+This method will guide you to deploy the edge part running in docker
+container, so make sure that docker engine listening on
+`/var/run/docker.sock` which will then mount into the edge container.
+
+Before starting the edge part container, check the contents of this script
+`build/edge/run_daemon.sh` to make sure it meets your environment. (this
+script will generate client certs for EdgeHub, we recommend that to use
+the same CA that generate CloudHub certs with)
+
+Then, run the script with mqtt broker url as the first argument, cloud
+hub url as the second argument, optionally a third argument to specify
+the edge core image tag, if not set it goes to 'latest' as default,
+like this:
+
+```bash
+./run_daemon.sh \
+tcp://<mqtt-broker-address>:1883 \
+wss://<cloud-hub-address>:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
+```
+
+#### Run as a binary
 
 ```shell
 # run mosquitto

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: edgecontroller
+  name: edgecontroller
+  namespace: kubeedge
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kubeedge
+      kubeedge: edgecontroller
+  template:
+    metadata:
+      labels:
+        k8s-app: kubeedge
+        kubeedge: edgecontroller
+    spec:
+      initContainers:
+      - name: kubeconfig
+        image: alpine:3.9
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /etc/kubeedge/cloud
+          subPath: kubeconfig.yaml
+        command:
+        - /bin/sh
+        - -c
+        - |
+          apk --no-cache add coreutils && cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - name: kubeedge
+            cluster:
+              certificate-authority-data: $(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt | base64 -w 0)
+          users:
+          - name: kubeedge
+            user:
+              token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          contexts:
+          - name: kubeedge
+            context:
+              cluster: kubeedge
+              user: kubeedge
+          current-context: kubeedge
+          EOF
+      containers:
+      - name: edgecontroller
+        image: kubeedge/edgecontroller:v0.2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10000
+          name: cloudhub
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/kubeedge/cloud/conf
+        - name: certs
+          mountPath: /etc/kubeedge/cloud/certs
+        - name: kubeconfig
+          mountPath: /etc/kubeedge/cloud
+          subPath: kubeconfig.yaml
+      restartPolicy: Always
+      serviceAccount: edgecontroller
+      serviceAccountName: edgecontroller
+      volumes:
+      - name: conf
+        configMap:
+          name: edgecontroller
+      - name: certs
+        secret:
+          secretName: edgecontroller
+      - name: kubeconfig
+        emptyDir: {}
