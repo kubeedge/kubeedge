@@ -25,3 +25,6 @@ edge_cross_build:
 edgecontroller:
 	cd cloud/edgecontroller && $(MAKE)
 
+.PHONY: edgeimage
+edgeimage:
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
