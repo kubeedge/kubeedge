@@ -353,4 +353,4 @@ If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)
