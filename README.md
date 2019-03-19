@@ -245,7 +245,25 @@ make # or `make edge_core`
 ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
-Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
+Please follow the instructions given below or click [Cross Compilation](docs/setup/cross-compilation.md) for detailed instructions.
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_cross_build
+```
+
+KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
+
+```shell
+apt-get install upx-ucl
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_small_build
+```
+
+**Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
+lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
+more than once etc. are applicable here as well.
+
 
 ## Run KubeEdge
 

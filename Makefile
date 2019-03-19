@@ -21,6 +21,10 @@ edge_integration_test:
 edge_cross_build:
 	cd edge && $(MAKE) cross_build
 
+.PHONY: edge_small_build
+edge_small_build:
+	cd edge && $(MAKE) small_build
+
 .PHONY: edgecontroller
 edgecontroller:
 	cd cloud/edgecontroller && $(MAKE)
