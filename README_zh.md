@@ -354,4 +354,4 @@ make edge_integration_test
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)
