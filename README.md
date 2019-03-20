@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
 [![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
+[![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
 
 <img src="./docs/images/KubeEdge_logo.png">
@@ -244,7 +245,25 @@ make # or `make edge_core`
 ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
-Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
+Please follow the instructions given below or click [Cross Compilation](docs/setup/cross-compilation.md) for detailed instructions.
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_cross_build
+```
+
+KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
+
+```shell
+apt-get install upx-ucl
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_small_build
+```
+
+**Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
+lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
+more than once etc. are applicable here as well.
+
 
 ## Run KubeEdge
 
@@ -298,6 +317,8 @@ Try out a sample application deployment by following below steps.
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
 
+**Note:** Currently, for edge node, we must use hostPort in the Pod container spec so that the pod comes up normally, or the pod will be always in ContainerCreating status. The hostPort must be equal to containerPort and can not be 0.
+
 Then you can use below command to check if the application is normally running.
 
 ```shell
@@ -350,4 +371,4 @@ If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)

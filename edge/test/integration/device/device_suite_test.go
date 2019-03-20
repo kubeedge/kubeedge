@@ -24,8 +24,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
-	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
-
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
+	
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -71,16 +71,28 @@ func TestEdgecoreEventBus(t *testing.T) {
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
 		common.InfoV2("Adding Mock device to edgenode !!")
-		//Generate the random string and assign as a DeviceID
-		DeviceID = "kubeedge-device-" + edge.GetRandomString(10)
-		IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, DeviceID, ctx.Cfg.TestManager+Devicehandler)
+
+		DeviceIDN = helpers.GenerateDeviceID("kubeedge-device-")
+		DeviceN = helpers.CreateDevice(DeviceIDN, "edgedevice", "unknown")
+
+		IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceN)
 		Expect(IsDeviceAdded).Should(BeTrue())
+
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")
-		common.InfoV2("Remove Mock device from edgenode !!")
-		IsDeviceDeleted := HandleAddAndDeleteDevice(http.MethodDelete, DeviceID, ctx.Cfg.TestManager+Devicehandler)
+		common.InfoV2("Remove Mock devices from edgenode !!")
+
+		//Deleting all the devices created for testing purposes.
+		IsDeviceDeleted := helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceN)
 		Expect(IsDeviceDeleted).Should(BeTrue())
+
+		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+		Expect(IsDeviceDeleted).Should(BeTrue())
+
+		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+		Expect(IsDeviceDeleted).Should(BeTrue())
+
 	})
 
 	RunSpecs(t, "edgecore Suite")
