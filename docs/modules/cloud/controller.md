@@ -32,7 +32,7 @@
 - **Below is the information for PodCondition**
    - **Ready**:PodReady means the pod is able to service requests and should be added to the load balancing pools for all matching services
    - **PodScheduled**:It represents status of the scheduling process for this pod
-   - **Unschedulable**:It means scheduler cant schedule the pod right now, may be due to insufficient resources in the cluster
+   - **Unschedulable**:It means scheduler cannot schedule the pod right now, may be due to insufficient resources in the cluster
    - **Initialized**:It means that all Init containers in the pod have started sucessfully
    - **ContainersReady**:It indicates whether all containers in the pod are ready
 - **Below is the information for PodStatus**
