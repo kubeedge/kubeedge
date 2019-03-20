@@ -75,6 +75,7 @@ func TestStart(t *testing.T) {
 		coreContext.AddModuleGroup(name, module.Group())
 	}
 	dbm.InitDBManager()
+	defer dbm.Cleanup()
 	go metaModule.Start(coreContext)
 
 	// wait to hit sync interval and receive message
