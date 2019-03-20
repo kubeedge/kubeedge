@@ -2,60 +2,104 @@
 
 ## Overview
 
-EdgeD is an edge node module which manages the POD lifecycle. With help of the POD specifications provided as JSON from Cloud via MetaManager, it ensures the containers for the POD's (with containers as described in POD spec) are launched over the edge node, are running and healthy.
+EdgeD is an edge node module which manages pod lifecycle. It helps user to deploy containerized workloads or applications at the edge node. Those workloads could perform any operation from simple telemetry data manipulation to analytics or ML inference and so on. Using `kubectl` command line interface at the cloud side, user can issue commands to launch the workloads.
 
-EdgeD interfaces with MetaManager module to receive all the configuration calls. It responds to MetaManager module with all config results and queries.
+Docker container runtime is currently supported for container and image management. In future other runtime support shall be added, like containerd etc.,
 
-Docker container runtime is used for container and image management. It is the default option for EdgeD. It is a configurable option in config.yaml.
+There are many modules which work in tandom to achive edged's functionalities.
 
-Following functionalities are performed by edgeD :-
+![EdgeD OverAll](../images/edged/edged-overall.PNG)
+*Fig 1: EdgeD Functionalities*
 
-- POD Launch, Deletion & Modification
-- ConfigMap Addition, Deletion & Modification
-- Secret Addition, Deletion & Modification
-- Probing Containers for Liveliness and Readiness
+### Pod Management
 
-## POD Launch, Deletion & Modification
+It is handles for pod addition, deletion and modification. It also tracks the health of the pods using pod status manager and pleg.
+Its primary jobs are as follows:
 
-EdgeD supports Adding (Launching), Modification and Deletion of POD's. These requests are sent from Cloud, whenever respective "Kubectl" pod commands are execute over its terminal. The specs are defined in yaml format which is similar to that of Kubernetes. Those spec's can also have Volume and Network specs.
+- Receives and handles pod addition/deletion/modification messages from metamanager.
+- Handles separate worker queues for pod addition and deletion.
+- Handles worker routines to check worker queues to do pod operations.
+- Keeps separate cache for config map and secrets respectively.
+- Regular cleanup of orphaned pods
 
-If edgeD doesn't have the images in the spec, which shall be used to launch the pod, it will download it using docker runtime.
+![Pod Addition Flow](../images/edged/pod-addition-flow.PNG)
+*Fig 2: Pod Addition Flow*
 
-By modifying the POD spec and issuing the kubectl command for update, pods can be updated.
+![Pod Deletion Flow](../images/edged/pod-deletion-flow.PNG)
+*Fig 3: Pod Deletion Flow*
 
-Execute the below kubectl commands from Cloud console or terminal
+![Pod Updation Flow](../images/edged/pod-update-flow.PNG)
+*Fig 4: Pod Updation Flow*
 
-To create a POD
-```
-kubectl create -f <file path>
-Example : kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
-```
+### Pod Lifecycle Event Generator
 
-To modify a POD
-```
-kubectl apply -f <file path>
-Example : kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
-```
+This module helps in monitoring pod status for edged. Every second, using probe's for liveliness and readyness, it updates the information with pod status manager for every pod.
 
-To delete a POD
-```
-kubectl delete -f <file path>
-Example : kubectl delete -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
-```
+![PLEG Design](../images/edged/PLEG-Flow.PNG)
 
-## ConfigMap Addition, Deletion & Modification
+*Fig 5: PLEG at EdgeD*
 
-ConfigMaps allow the user to decouple configuration artifacts from image content to keep containerized applications portable.
+### Secret Management
 
-For more detailed study and configuration commands please visit **[here](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)**
+At edged, Secrets are handled separately. For its operations like addition, deletion and modifications; there are separate set of config messages or interfaces.
+Using these interfaces, secrets are updated in cache store.
+Below flow diagram explains the message flow.
+
+![Secret Message Handling](../images/edged/secret-handling.PNG)
+*Fig 6: Secret Message Handling at EdgeD*
+
+Also edged uses MetaClient module to fetch secret from Metamanager (if available with it) else cloud. Whenever edged queries for a new secret which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the secret, it stores a copy of it and send it to edged.
+Hence the subsequent query for same secret key will be responded by Metamanger only, hence reducing the response delay.
+Below flow diagram shows, how secret is fetched from metamanager and cloud. The flow of how secret is saved in metamanager.
+
+![Query Secret](../images/edged/query-secret-from-edged.PNG)
+*Fig 7: Query Secret by EdgeD*
+
+### Probe Management
+
+Probe management creates to probes for readiness and liveliness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveliness probe helps in monitoring the health of pods, if they are up or down. 
+As explained earlier PLEG module uses its services.
 
 
-## Secret Addition, Deletion & Modification
+### ConfigMap Management
+At edged, ConfigMap are also handled separately. For its operations like addition, deletion and modifications; there are separate set of config messages or interfaces.
+Using these interfaces, configMaps are updated in cache store.
+Below flow diagram explains the message flow.
 
-Secret objects let the user store and manage sensitive information, such as passwords, OAuth tokens, and ssh keys. Putting this information in a secret is safer and more flexible than putting it verbatim in a Pod Lifecycle definition or in a container image
+![ConfigMap Message Handling](../images/edged/configmap-handling.PNG)
+*Fig 8: ConfigMap Message Handling at EdgeD*
 
-For more detailed study and configuration commands please visit **[here](https://kubernetes.io/docs/concepts/configuration/secret/)**
+Also edged uses MetaClient module to fetch configmap from Metamanager (if available with it) else cloud. Whenever edged queries for a new configmaps which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the configmaps, it stores a copy of it and send it to edged.
+Hence the subsequent query for same configmaps key will be responded by Metamanger only, hence reducing the response delay.
+Below flow diagram shows, how configmaps is fetched from metamanager and cloud. The flow of how configmaps is saved in metamanager.
 
-## Probing Containers for Liveliness and Readiness 
+![Query Configmaps](../images/edged/query-configmap-from-edged.PNG)
+*Fig 9: Query Configmaps by EdgeD*
 
-A Probe is a diagnostics performed periodically by the edged on containers. If configured to check the container is alive or not in certain intervals of time, then liveliness probing is configured. To check if the POD is ready to service or not then readiness probe is configured.
+### Container GC
+
+Container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy
+The policy for garbage collecting containers we apply takes on three variables, which can be user-defined. MinAge is the minimum age at which a container can be garbage collected, zero for no limit. MaxPerPodContainer is the max number of dead containers any single pod (UID, container name) pair is allowed to have, less than zero for no limit. MaxContainers is the max number of total dead containers, less than zero for no limit as well. Gernerally the oldest containers are removed first.
+
+### Image GC
+
+Image garbage collector is an edged routine which wakes up every 5 secs, collects information about disk usage based on the policy used.
+The policy for garbage collecting images we apply takes two factors into consideration, HighThresholdPercent and LowThresholdPercent. Disk usage above the high threshold will trigger garbage collection, which attempts to delete unused images until the low threshold is met. Least recently used images are deleted first.
+
+### Status Manager
+
+Status manager is as an independent edge routine, which collects pods statuses every 10 seconds and forwards this information with cloud using metaclient interface to the cloud.
+
+![Status Manager Flow](../images/edged/pod-status-manger-flow.PNG)
+*Fig 10: Status Manager Flow*
+
+### Volume Management
+
+Volume manager runs as an edge routine which brings out the information of which volume(s) are to be attached/mounted/unmounted/detached based on pods scheduled on the edge node.
+
+Before starting the pod, all the specified volumes referenced in pod specs are attached and mounted, Till then the flow is blocked and with it other operations.
+
+### MetaClient
+
+Metaclient is an interface of Metamanger for edged. It helps edge to get configmap and secret details from metamanager or cloud.
+It also sends sync messages, node status and pod status towards metamanger to cloud.
