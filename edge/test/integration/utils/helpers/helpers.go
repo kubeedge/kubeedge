@@ -30,6 +30,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	. "github.com/onsi/gomega"
@@ -39,7 +40,8 @@ import (
 
 //DeviceUpdate device update
 type DeviceUpdate struct {
-	State string `json:"state,omitempty"`
+	State      string                     `json:"state,omitempty"`
+	Attributes map[string]*dttype.MsgAttr `json:"attributes"`
 }
 
 //Device the struct of device
@@ -49,6 +51,79 @@ type Device struct {
 	Description string `json:"description,omitempty"`
 	State       string `json:"state,omitempty"`
 	LastOnline  string `json:"last_online,omitempty"`
+}
+
+//Attribute Structure to read data from DB (Should match with the DB-table 'device_attr' schema)
+type Attribute struct {
+	ID          string `json:"id,omitempty"`
+	DeviceID    string `json:"deviceid,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Value       string `json:"value,omitempty"`
+	Optional    bool   `json:"optional,omitempty"`
+	Type        string `json:"attr_type,omitempty"`
+	MetaData    string `json:"metadata,omitempty"`
+}
+
+//Twin Structure to read data from DB (Should match with the DB-table 'device_twin' schema)
+type TwinAttribute struct {
+	ID           string `json:"id,omitempty"`
+	DeviceID     string `json:"deviceid,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Description  string `json:"description,omitempty"`
+	Expected     string `json:"expected,omitempty"`
+	Actual       string `json:"actual,omitempty"`
+	ExpectedMeta string `json:"expected_meta,omitempty"`
+	ActualMeta   string `json:"actual_meta,omitempty"`
+	ExpectedVer  string `json:"expected_version,omitempty"`
+	ActualVer    string `json:"actual_version,omitempty"`
+	Optional     bool   `json:"optional,omitempty"`
+	Type         string `json:"attr_type,omitempty"`
+	MetaData     string `json:"metadata,omitempty"`
+}
+
+func GenerateDeviceID(deviceSuffix string) string {
+	return deviceSuffix + edge.GetRandomString(10)
+}
+
+//Function to Generate Device
+func CreateDevice(deviceID string, deviceName string, deviceState string) dttype.Device {
+	device := dttype.Device{
+		ID:          deviceID,
+		Name:        deviceName,
+		Description: "IntegrationTest",
+		State:       deviceState,
+		Attributes:  make(map[string]*dttype.MsgAttr),
+		Twin:        make(map[string]*dttype.MsgTwin),
+	}
+	return device
+}
+
+//Function to add Device attribute to existing device
+func AddDeviceAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
+	var optional = true
+	var typeMeta = dttype.TypeMetadata{Type: attributeType}
+	var attribute = dttype.MsgAttr{Value: attributeValue, Optional: &optional, Metadata: &typeMeta}
+	device.Attributes[attributeName] = &attribute
+}
+
+//Function to add Twin attribute to existing device
+func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
+	value := attributeValue
+	optional := true
+	valueMeta := dttype.ValueMetadata{Timestamp: time.Now().Unix()}
+	typeMeta := dttype.TypeMetadata{Type: attributeType}
+	twinVersion := dttype.TwinVersion{CloudVersion: 1.0, EdgeVersion: 1.0}
+	twinValue := dttype.TwinValue{Value: &value, Metadata: &valueMeta}
+	msgTwin := dttype.MsgTwin{Expected: &twinValue,
+		Actual:          &twinValue,
+		Optional:        &optional,
+		Metadata:        &typeMeta,
+		ExpectedVersion: &twinVersion,
+		ActualVersion:   &twinVersion,
+	}
+
+	device.Twin[attributeName] = &msgTwin
 }
 
 //Function to access the edge_core DB and return the device state.
@@ -83,6 +158,78 @@ func GetDeviceStateFromDB(deviceID string) string {
 	return device.State
 }
 
+func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
+	var twinAttribute TwinAttribute
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		common.Failf("Failed to get PWD: %v", err)
+		os.Exit(1)
+	}
+	destpath := filepath.Join(pwd, "../../edge.db")
+	db, err := sql.Open("sqlite3", destpath)
+	if err != nil {
+		common.Failf("Open Sqlite DB failed : %v", err)
+	}
+	defer db.Close()
+	row, err := db.Query("SELECT * FROM device_twin")
+	defer row.Close()
+
+	for row.Next() {
+		err = row.Scan(&twinAttribute.ID,
+			&twinAttribute.DeviceID,
+			&twinAttribute.Name,
+			&twinAttribute.Description,
+			&twinAttribute.Expected,
+			&twinAttribute.Actual,
+			&twinAttribute.ExpectedMeta,
+			&twinAttribute.ActualMeta,
+			&twinAttribute.ExpectedVer,
+			&twinAttribute.ActualVer,
+			&twinAttribute.Optional,
+			&twinAttribute.Type,
+			&twinAttribute.MetaData)
+
+		if err != nil {
+			common.Failf("Failed to scan DB rows: %v", err)
+		}
+		if string(twinAttribute.DeviceID) == deviceID && twinAttribute.Name == Name {
+			break
+		}
+	}
+
+	return twinAttribute
+}
+
+func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
+	var attribute Attribute
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		common.Failf("Failed to get PWD: %v", err)
+		os.Exit(1)
+	}
+	destPath := filepath.Join(pwd, "../../edge.db")
+	db, err := sql.Open("sqlite3", destPath)
+	if err != nil {
+		common.Failf("Open Sqlite DB failed : %v", err)
+	}
+	defer db.Close()
+	row, err := db.Query("SELECT * FROM device_attr")
+	defer row.Close()
+
+	for row.Next() {
+		err = row.Scan(&attribute.ID, &attribute.DeviceID, &attribute.Name, &attribute.Description, &attribute.Value, &attribute.Optional, &attribute.Type, &attribute.MetaData)
+		if err != nil {
+			common.Failf("Failed to scan DB rows: %v", err)
+		}
+		if string(attribute.DeviceID) == deviceID && attribute.Name == Name {
+			break
+		}
+	}
+	return attribute
+}
+
 // HubclientInit create mqtt client config
 func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
@@ -98,7 +245,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 }
 
 //function to handle device addition and deletion.
-func HandleAddAndDeleteDevice(operation, DeviceID, testMgrEndPoint string) bool {
+func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.Device) bool {
 	var req *http.Request
 	var err error
 
@@ -106,12 +253,8 @@ func HandleAddAndDeleteDevice(operation, DeviceID, testMgrEndPoint string) bool 
 	switch operation {
 	case "PUT":
 		payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{
-			{
-				ID:          DeviceID,
-				Name:        "edgedevice",
-				Description: "integrationtest",
-				State:       "unknown",
-			}}}
+			device,
+		}}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
 			common.Failf("Add device to edge_core DB is failed: %v", err)
@@ -119,12 +262,8 @@ func HandleAddAndDeleteDevice(operation, DeviceID, testMgrEndPoint string) bool 
 		req, err = http.NewRequest(http.MethodPut, testMgrEndPoint, bytes.NewBuffer(respbytes))
 	case "DELETE":
 		payload := dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
-			{
-				ID:          DeviceID,
-				Name:        "edgedevice",
-				Description: "integrationtest",
-				State:       "unknown",
-			}}}
+			device,
+		}}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
 			common.Failf("Remove device from edge_core DB failed: %v", err)
