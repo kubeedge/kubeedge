@@ -2,16 +2,18 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"k8s.io/api/core/v1"
 )
@@ -40,7 +42,8 @@ func (tm *testManager) Name() string {
 }
 
 func (tm *testManager) Group() string {
-	return core.MetaGroup
+	//return core.MetaGroup
+	return modules.MetaGroup
 }
 
 //Function to get the pods from Edged

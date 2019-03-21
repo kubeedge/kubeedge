@@ -25,7 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
-	
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

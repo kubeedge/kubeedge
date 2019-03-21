@@ -1,8 +1,8 @@
 package messagelayer
 
 import (
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
 )
 
 // MessageLayer define all functions that message layer must implement

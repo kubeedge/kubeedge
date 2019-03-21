@@ -2,12 +2,11 @@ package metaclient
 
 import (
 	"fmt"
-
-	"github.com/kubeedge/kubeedge/common/beehive/adoptions/common/api"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 //NodeStatusGetter is interface to get node status
@@ -17,10 +16,10 @@ type NodeStatusGetter interface {
 
 //NodeStatusInterface is node status interface
 type NodeStatusInterface interface {
-	Create(*api.NodeStatusRequest) (*api.NodeStatusRequest, error)
-	Update(rsName string, ns api.NodeStatusRequest) error
+	Create(*edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusRequest, error)
+	Update(rsName string, ns edgeapi.NodeStatusRequest) error
 	Delete(name string) error
-	Get(name string) (*api.NodeStatusRequest, error)
+	Get(name string) (*edgeapi.NodeStatusRequest, error)
 }
 
 type nodeStatus struct {
@@ -37,13 +36,13 @@ func newNodeStatus(namespace string, c *context.Context, s SendInterface) *nodeS
 	}
 }
 
-func (c *nodeStatus) Create(ns *api.NodeStatusRequest) (*api.NodeStatusRequest, error) {
+func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusRequest, error) {
 	return nil, nil
 }
 
-func (c *nodeStatus) Update(rsName string, ns api.NodeStatusRequest) error {
+func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
-	nodeStatusMsg := message.BuildMsg(core.MetaGroup, "", core.EdgedModuleName, resource, model.UpdateOperation, ns)
+	nodeStatusMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)
 	_, err := c.send.SendSync(nodeStatusMsg)
 	if err != nil {
 		return fmt.Errorf("update nodeStatus failed, err: %v", err)
@@ -56,6 +55,6 @@ func (c *nodeStatus) Delete(name string) error {
 	return nil
 }
 
-func (c *nodeStatus) Get(name string) (*api.NodeStatusRequest, error) {
+func (c *nodeStatus) Get(name string) (*edgeapi.NodeStatusRequest, error) {
 	return nil, nil
 }

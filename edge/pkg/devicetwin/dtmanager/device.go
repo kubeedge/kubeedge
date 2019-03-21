@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -109,7 +109,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(core.BusGroup, "", topic, "publish", payload))
+		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
 
 	msgResource := "device/" + device.ID + "/state"
 	context.Send(deviceID,
@@ -178,7 +178,7 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 			context.Send(deviceID,
 				dtcommon.SendToEdge,
 				dtcommon.CommModule,
-				context.BuildModelMessage(core.BusGroup, "", topic, "publish", payload))
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
 		}
 
 	}

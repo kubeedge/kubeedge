@@ -10,7 +10,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )

@@ -24,9 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/stretchr/testify/assert"
 )
 

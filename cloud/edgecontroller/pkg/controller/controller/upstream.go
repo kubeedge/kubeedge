@@ -1,4 +1,3 @@
-
 /*
 Copyright 2014 The Kubernetes Authors.
 
@@ -30,14 +29,14 @@ import (
 	"sort"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/config"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/types"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/utils"
-	edgeapi "github.com/kubeedge/kubeedge/common/beehive/adoptions/common/api"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

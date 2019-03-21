@@ -3,10 +3,9 @@ package dbm
 import (
 	"strings"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-
 	"github.com/astaxie/beego/orm"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 )

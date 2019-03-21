@@ -1,10 +1,10 @@
 package config
 
 import (
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
 )
 
 // ContextSendModule is the name send message to

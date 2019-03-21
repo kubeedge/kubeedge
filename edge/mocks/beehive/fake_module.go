@@ -6,7 +6,7 @@ package beehive
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	context "github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
+	context "github.com/kubeedge/beehive/pkg/core/context"
 	reflect "reflect"
 )
 
