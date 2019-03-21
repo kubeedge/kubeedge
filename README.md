@@ -214,11 +214,11 @@ openssl genrsa -des3 -out rootCA.key 4096
 # Generate Root Certificate
 openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
 # Generate Key
-openssl genrsa -out kubeedge.key 2048
+openssl genrsa -out edge.key 2048
 # Generate csr, Fill required details after running the command
-openssl req -new -key kubeedge.key -out kubeedge.csr
+openssl req -new -key edge.key -out edge.csr
 # Generate Certificate
-openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 
+openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
 ```
 
 ### Clone KubeEdge
