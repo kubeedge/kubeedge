@@ -120,9 +120,9 @@ func (eb *eventbus) Cleanup() {
 func pubMQTT(topic string, payload []byte) {
 	token := mqttBus.MQTTHub.PubCli.Publish(topic, 1, false, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("Error in pubCloudMsgToEdge with topic: %s", topic)
+		log.LOGGER.Errorf("Error in pubMQTT with topic: %s, %v", topic, token.Error())
 	} else {
-		log.LOGGER.Infof("Success in pubCloudMsgToEdge with topic: %s", topic)
+		log.LOGGER.Infof("Success in pubMQTT with topic: %s", topic)
 	}
 }
 
@@ -189,7 +189,7 @@ func (eb *eventbus) subscribe(topic string) {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("Edge-hub-cli subscribe topic:%s, %v", topic, err)
+			log.LOGGER.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
 		}
 	}
 
