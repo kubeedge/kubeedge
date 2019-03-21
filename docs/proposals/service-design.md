@@ -103,6 +103,7 @@ ServiceBus is in the same process with EdgeHub as a module
 
 ### Router
 Add two endpoints definition:
+
 |Endpoint|Type|Capability|
 |---|---|
 |ClusterIP|Target|Request Forward|
