@@ -232,29 +232,17 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### Build Cloud
 
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
-
-+ Build Cloud
-    ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-    make # or `make edgecontroller`
-    ```
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+make # or `make edgecontroller`
+```
 
 ### Build Edge
 
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
-  + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certification path
-  + In websocket:url you need to give IP address of the master.
-  + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node ip in edge.yaml in 3 place.
-    + in websecket:URL
-    + in controller:node-id
-    + in edged:hostname-override
-
-+ Build edge
-    ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-    make # or `make edge_core`
-    ```
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make # or `make edge_core`
+```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
 Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
@@ -263,23 +251,36 @@ Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instru
 
 ### Run Cloud
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-# run edge controller
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running cloud(edgecontroller)
-./edgecontroller
-```
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
+
++ Run Cloud
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+    # run edge controller
+    # `conf/` should be in the same directory as the cloned KubeEdge repository
+    # verify the configurations before running cloud(edgecontroller)
+    ./edgecontroller
+    ```
 
 ### Run Edge
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
+#### On cloud node:
 + Compile the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the IP of the edge node
 + Deploy node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
     ```
+
+#### On edge node:
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
+  + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certification path
+  + In websocket:url you need to give IP address of the master.
+  + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node ip in edge.yaml in 3 place.
+    + in websecket:URL
+    + in controller:node-id
+    + in edged:hostname-override
 
 + Run Edge
 
