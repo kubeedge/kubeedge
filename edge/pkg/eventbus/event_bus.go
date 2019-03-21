@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/256dpi/gomqtt/packet"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
 )
@@ -47,7 +47,7 @@ func (*eventbus) Name() string {
 }
 
 func (*eventbus) Group() string {
-	return core.BusGroup
+	return modules.BusGroup
 }
 
 func (eb *eventbus) Start(c *context.Context) {

@@ -3,6 +3,7 @@ package edged
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"sync"
 	"time"
 
@@ -37,12 +38,12 @@ import (
 	"k8s.io/kubernetes/pkg/volume/host_path"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/util"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/util"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
@@ -160,7 +161,7 @@ func (e *edged) Name() string {
 }
 
 func (e *edged) Group() string {
-	return core.EdgedGroup
+	return modules.EdgedGroup
 }
 
 func (e *edged) Start(c *context.Context) {

@@ -19,10 +19,11 @@ package metamanager
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
 
@@ -59,8 +60,8 @@ func TestName(t *testing.T) {
 			t.Errorf("Name of module is not correct wanted: %v and got: %v", MetaManagerModuleName, metaModule.Name())
 			return
 		}
-		if core.MetaGroup != metaModule.Group() {
-			t.Errorf("Group of module is not correct wanted: %v and got: %v", core.MetaGroup, metaModule.Group())
+		if commodule.MetaGroup != metaModule.Group() {
+			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.MetaGroup, metaModule.Group())
 		}
 	})
 

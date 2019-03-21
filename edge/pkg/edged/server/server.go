@@ -3,12 +3,11 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"net"
 	"net/http"
 	"strconv"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 
 	"k8s.io/api/core/v1"
 )

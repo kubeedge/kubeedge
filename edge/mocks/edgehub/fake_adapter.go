@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/golang/mock/gomock"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 // MockAdapter is a mock of Adapter interface

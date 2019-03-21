@@ -3,12 +3,11 @@ package metaclient
 import (
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (

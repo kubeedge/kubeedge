@@ -1,8 +1,9 @@
 package edgehub
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 //define edgehub module name
@@ -29,7 +30,7 @@ func (eh *EdgeHub) Name() string {
 
 //Group returns EdgeHub group
 func (eh *EdgeHub) Group() string {
-	return core.HubGroup
+	return modules.HubGroup
 }
 
 //Start sets context and starts the controller

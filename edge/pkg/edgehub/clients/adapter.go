@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 //Adapter is a web socket client interface

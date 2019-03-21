@@ -1,7 +1,7 @@
 package dtclient
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
