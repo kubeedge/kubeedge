@@ -11,6 +11,6 @@ const (
 	MetaGroup = "meta"
 	//EdgedGroup group
 	EdgedGroup = "edged"
-	////EdgedModuleName name
-	//EdgedModuleName = "edged"
+	// UserGroup is ServiceBus group
+	UserGroup = "user"
 )
