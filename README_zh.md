@@ -234,7 +234,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### 构建 Cloud
 
-+ 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/ontroller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
++ 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
 + 编译 Cloud
   ```shell
