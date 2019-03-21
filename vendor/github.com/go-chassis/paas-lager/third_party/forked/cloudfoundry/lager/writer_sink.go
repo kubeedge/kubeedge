@@ -22,6 +22,7 @@ type writerSink struct {
 	name        string
 	writeL      *sync.Mutex
 }
+
 //NewWriterSink is function which returns new struct object
 func NewWriterSink(name string, writer io.Writer, minLogLevel LogLevel) Sink {
 	return &writerSink{

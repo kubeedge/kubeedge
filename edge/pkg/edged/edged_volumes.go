@@ -37,7 +37,7 @@ import (
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 )
 
 // newVolumeMounterFromPlugins attempts to find a plugin by volume spec, pod

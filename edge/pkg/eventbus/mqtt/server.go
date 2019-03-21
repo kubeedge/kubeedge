@@ -26,9 +26,9 @@ import (
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 //Server serve as an internal mqtt broker.
@@ -105,15 +105,15 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
-		target = core.TwinGroup
+		target = modules.TwinGroup
 	} else {
-		target = core.HubGroup
+		target = modules.HubGroup
 		if msg.Topic == "SYS/dis/upload_records" {
 			resource = "SYS/dis/upload_records"
 		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	message := model.NewMessage("").BuildRouter(core.BusGroup, "user",
+	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(msg.Payload))
 	log.LOGGER.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	ModuleContext.Send2Group(target, *message)

@@ -24,12 +24,14 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
@@ -98,7 +100,7 @@ func registerFakeModules() {
 	mainContext = context.GetContext(context.MsgCtxTypeChannel)
 	mainContext.AddModule(ModuleNameEdged)
 	mainContext.AddModule(ModuleNameEdgeHub)
-	mainContext.AddModuleGroup(ModuleNameEdgeHub, core.HubGroup)
+	mainContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
 	mainContext.AddModule(EdgeFunctionModel)
 }
 
@@ -406,7 +408,7 @@ func TestProcessDelete(t *testing.T) {
 // TestProcessQuery is function to test processQuery
 func TestProcessQuery(t *testing.T) {
 	//process remote query sync error case
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudConnected)
+	msg := model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudConnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
@@ -429,7 +431,7 @@ func TestProcessQuery(t *testing.T) {
 		}
 	})
 	mainContext.AddModule(ModuleNameEdgeHub)
-	mainContext.AddModuleGroup(ModuleNameEdgeHub, core.HubGroup)
+	mainContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
 
 	//process remote query jsonMarshall error
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
@@ -489,7 +491,7 @@ func TestProcessQuery(t *testing.T) {
 	})
 
 	//ResId Nil database error
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudDisconnected)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudDisconnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	time.Sleep(1 * time.Second)
 	t.Run("ConnectedFalse", func(t *testing.T) {
@@ -545,7 +547,7 @@ func TestProcessQuery(t *testing.T) {
 // TestProcessNodeConnection is function to test processNodeConnection
 func TestProcessNodeConnection(t *testing.T) {
 	//connected true
-	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudConnected)
+	msg := model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudConnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)
@@ -556,7 +558,7 @@ func TestProcessNodeConnection(t *testing.T) {
 	})
 
 	//connected false
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(model.CloudDisconnected)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, OperationNodeConnection).FillBody(connect.CloudDisconnected)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	//wait for message to be received by metaManager and get processed
 	time.Sleep(1 * time.Second)

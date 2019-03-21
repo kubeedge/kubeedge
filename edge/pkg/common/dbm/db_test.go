@@ -3,7 +3,7 @@ package dbm_test
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 
 	"github.com/astaxie/beego/orm"

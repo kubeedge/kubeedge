@@ -1,7 +1,7 @@
 package message
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 //constant defining node connection types

@@ -1,7 +1,7 @@
 package dttype
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 //MsgSubPub the struct of message for subscribe or publish

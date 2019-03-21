@@ -2,16 +2,18 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	//	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"io"
 	"io/ioutil"
 	"net/http"
 
 	"k8s.io/api/core/v1"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -41,7 +43,8 @@ func (*stubCloudHub) Name() string {
 }
 
 func (*stubCloudHub) Group() string {
-	return core.MetaGroup
+	//return core.MetaGroup
+	return modules.MetaGroup
 }
 
 func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {

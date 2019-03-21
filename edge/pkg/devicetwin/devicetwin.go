@@ -1,9 +1,10 @@
 package devicetwin
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	core "github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 )
 
@@ -26,7 +27,7 @@ func (dt *DeviceTwin) Name() string {
 
 //Group get group of the module
 func (dt *DeviceTwin) Group() string {
-	return core.TwinGroup
+	return modules.TwinGroup
 }
 
 //Start run the module

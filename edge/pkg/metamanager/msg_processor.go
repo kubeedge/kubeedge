@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/util"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
-
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/util"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -42,7 +42,7 @@ func feedbackError(err error, info string, request model.Message, c *context.Con
 		errInfo = fmt.Sprintf(info+": %v", err)
 	}
 	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
-	if request.GetSource() == core.EdgedModuleName {
+	if request.GetSource() == modules.EdgedModuleName {
 		send2Edged(errResponse, request.IsSync(), c)
 	} else {
 		send2Cloud(errResponse, c)
@@ -53,12 +53,12 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 	if sync {
 		c.SendResp(*message)
 	} else {
-		c.Send(core.EdgedModuleName, *message)
+		c.Send(modules.EdgedModuleName, *message)
 	}
 }
 
 func send2Cloud(message *model.Message, c *context.Context) {
-	c.Send2Group(core.HubGroup, *message)
+	c.Send2Group(modules.HubGroup, *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -155,7 +155,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 	}
 
 	switch message.GetSource() {
-	case core.EdgedModuleName:
+	//case core.EdgedModuleName:
+	case modules.EdgedModuleName:
 		send2Cloud(&message, m.context)
 		resp := message.NewRespByMessage(&message, OK)
 		send2Edged(resp, message.IsSync(), m.context)
@@ -191,7 +192,8 @@ func (m *metaManager) processResponse(message model.Message) {
 	}
 
 	// Notify edged if the data if coming from cloud
-	if message.GetSource() != core.EdgedModuleName {
+	//if message.GetSource() != core.EdgedModuleName {
+	if message.GetSource() != modules.EdgedModuleName {
 		send2Edged(&message, false, m.context)
 	} else {
 		// Send to cloud if the update request is coming from edged
@@ -282,9 +284,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 func (m *metaManager) processNodeConnection(message model.Message) {
 	content, _ := message.GetContent().(string)
 	log.LOGGER.Infof("node connection event occur: %s", content)
-	if content == model.CloudConnected {
+	if content == connect.CloudConnected {
 		connected = true
-	} else if content == model.CloudDisconnected {
+	} else if content == connect.CloudDisconnected {
 		connected = false
 	}
 }

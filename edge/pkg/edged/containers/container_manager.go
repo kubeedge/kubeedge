@@ -43,6 +43,10 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerstrslice "github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis/runtime/cri"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -58,11 +62,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/schedulercache"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	"k8s.io/kubernetes/pkg/util/selinux"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis/runtime/cri"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
 )
 
 //Pod details constants
