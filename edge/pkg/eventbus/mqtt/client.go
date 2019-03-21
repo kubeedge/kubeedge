@@ -84,7 +84,7 @@ func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("edge-hub-cli subscribe topic:%s, %v", t, err)
+			log.LOGGER.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
 			return
 		}
 		log.LOGGER.Infof("edge-hub-cli subscribe topic to %s", t)
@@ -152,9 +152,9 @@ func (mq *Client) InitPubClient() {
 func (mq *Client) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
 	token := mq.PubCli.Publish(topic, qos, retained, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("error in pubCloudMsgToEdge with topic: %s, %v", topic, token.Error())
+		log.LOGGER.Errorf("error in PubMQTTMsg with topic: %s, %v", topic, token.Error())
 		return fmt.Errorf("pubmsg err")
 	}
-	log.LOGGER.Infof("success in pubCloudMsgToEdge with topic: %s", topic)
+	log.LOGGER.Infof("success in PubMQTTMsg with topic: %s", topic)
 	return nil
 }
