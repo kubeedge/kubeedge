@@ -21,7 +21,7 @@
 - Creates Respective manager (pod, configmap, secret) for handling events by calling manager interface
 - Locates configmap and secret should be send to which node
 
-![Downstream Controller](./../../images/edgecontroller/DownstreamController.png)
+![Downstream Controller](../../images/edgecontroller/DownstreamController.png)
 ## Upstream Controller:
 ### Sync watch and Update status of resource and events
 
@@ -32,7 +32,7 @@
 - **Below is the information for PodCondition**
    - **Ready**:PodReady means the pod is able to service requests and should be added to the load balancing pools for all matching services
    - **PodScheduled**:It represents status of the scheduling process for this pod
-   - **Unschedulable**:It means scheduler cant schedule the pod right now, may be due to insufficient resources in the cluster
+   - **Unschedulable**:It means scheduler cannot schedule the pod right now, may be due to insufficient resources in the cluster
    - **Initialized**:It means that all Init containers in the pod have started sucessfully
    - **ContainersReady**:It indicates whether all containers in the pod are ready
 - **Below is the information for PodStatus**
@@ -42,7 +42,7 @@
    - **PodIp**:IP address allocated to the Pod
    - **QosClass**:Assigned to the pod based on resource requirement
    
-   ![Upstream Controller](./../../images/edgecontroller/UpstreamController.png)
+   ![Upstream Controller](../../images/edgecontroller/UpstreamController.png)
    
 ## Controller Manager:
 ### Creates manager Interface and implements ConfigmapManager LocationCache and podManager

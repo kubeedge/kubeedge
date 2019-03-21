@@ -16,7 +16,7 @@ Metamanager receives different types of messages based on the operations listed 
 `Insert` operation messages are received via the cloud when new objects are created.
 An example could be a new user application pod created/deployed through the cloud.
 
-![Insert Operation](../images/metamanager/meta-insert.png)
+![Insert Operation](../../images/metamanager/meta-insert.png)
 
 The insert operation request is received via the cloud by edgehub. It dispatches the
 request to the metamanager which saves this message in the local database.
@@ -32,13 +32,13 @@ The update message flow is similar to an insert operation. Additionally, metaman
 If there is a delta, only then the update is stored locally and the message is 
 passed to edged and response is sent back to the cloud.
 
-![Update Operation](../images/metamanager/meta-update.png)
+![Update Operation](../../images/metamanager/meta-update.png)
 
 ## Delete Operation
 `Delete` operations are triggered when objects like pods are deleted from the 
 cloud.
 
-![Delete Operation](../images/metamanager/meta-delete.png)
+![Delete Operation](../../images/metamanager/meta-delete.png)
 
 ## Query Operation
 `Query` operations let you query for metadata either locally at the edge or for some remote resources like config maps/secrets from the cloud. edged queries this
@@ -46,7 +46,7 @@ metadata from metamanager which further handles local/remote query processing an
 returns the response back to edged. A Message resource can be broken into 3 parts 
 (resKey,resType,resId) based on separator ‘/’.
 
-![Query Operation](../images/metamanager/meta-query.png)
+![Query Operation](../../images/metamanager/meta-query.png)
 
 ## Response Operation
 `Responses` are returned for any operations performed at the cloud/edge. Previous operations
