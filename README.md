@@ -232,7 +232,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### Build Cloud
 
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/ontroller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
 
 + Build Cloud
     ```shell
@@ -295,7 +295,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     nohup ./edge_core > edge_core.log 2>&1 &
     ```
 
-+ After the Cloud and Edge parts are started, you can use below command to check the edge node status.
++ After the Cloud and Edge parts have started, you can use below command to check the edge node status.
 
     ```shell
     kubectl get nodes
