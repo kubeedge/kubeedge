@@ -105,7 +105,7 @@ ServiceBus is in the same process with EdgeHub as a module
 Add two endpoints definition:
 
 |Endpoint|Type|Capability|
-|---|---|
+|---|---|---|
 |ClusterIP|Target|Request Forward|
 |ServiceBus|Source|Resutst Forward, Service Discovery, Load Balance|
 |ServiceBus|Target|Request Forward|
