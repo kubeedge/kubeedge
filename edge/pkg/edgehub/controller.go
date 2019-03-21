@@ -7,12 +7,13 @@ import (
 	"sync"
 	"time"
 
-	bhconfig "github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	http_utils "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -25,9 +26,9 @@ const (
 
 var (
 	authEventType = "auth_info_event"
-	groupMap      = map[string]string{"resource": core.MetaGroup,
-		"twin": core.TwinGroup, "app": "sync",
-		"func": core.MetaGroup, "user": core.BusGroup}
+	groupMap      = map[string]string{"resource": modules.MetaGroup,
+		"twin": modules.TwinGroup, "app": "sync",
+		"func": modules.MetaGroup, "user": modules.BusGroup}
 
 	// clear the number of data of the stop channel
 	times = 2
@@ -267,9 +268,9 @@ func (ehc *Controller) keepalive() {
 
 func (ehc *Controller) pubConnectInfo(isConnected bool) {
 	// var info model.Message
-	content := model.CloudConnected
+	content := connect.CloudConnected
 	if !isConnected {
-		content = model.CloudDisconnected
+		content = connect.CloudDisconnected
 	}
 
 	for _, group := range groupMap {

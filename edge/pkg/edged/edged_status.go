@@ -31,8 +31,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/adoptions/common/api"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 
@@ -112,8 +112,8 @@ func retrieveDevicePluginStatus(s string) (string, error) {
 	return statusList, nil
 }
 
-func (e *edged) getNodeStatusRequest(node *v1.Node) (*api.NodeStatusRequest, error) {
-	var nodeStatus = &api.NodeStatusRequest{}
+func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest, error) {
+	var nodeStatus = &edgeapi.NodeStatusRequest{}
 	nodeStatus.UID = e.uid
 	nodeStatus.Status = *node.Status.DeepCopy()
 	nodeStatus.Status.Phase = e.getNodePhase()
@@ -158,12 +158,12 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*api.NodeStatusRequest, err
 	return nodeStatus, nil
 }
 
-func (e *edged) setNodeStatusConditions(node *api.NodeStatusRequest) {
+func (e *edged) setNodeStatusConditions(node *edgeapi.NodeStatusRequest) {
 	e.setNodeReadyCondition(node)
 }
 
 // setNodeReadyCondition is partially come from "k8s.io/kubernetes/pkg/kubelet.setNodeReadyCondition"
-func (e *edged) setNodeReadyCondition(node *api.NodeStatusRequest) {
+func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 	currentTime := metav1.NewTime(time.Now())
 	var newNodeReadyCondition v1.NodeCondition
 
@@ -234,13 +234,13 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 
 }
 
-func (e *edged) setGPUInfo(nodeStatus *api.NodeStatusRequest) error {
+func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	_, err := os.Stat(GPUInfoQueryTool)
 	if err != nil {
 		return fmt.Errorf("can not get file in path: %s, err: %v", GPUInfoQueryTool, err)
 	}
 
-	nodeStatus.ExtendResources = make(map[v1.ResourceName][]api.ExtendResource)
+	nodeStatus.ExtendResources = make(map[v1.ResourceName][]edgeapi.ExtendResource)
 
 	result, err := util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", GPUInfoQueryTool)})
 	if err != nil {
@@ -248,7 +248,7 @@ func (e *edged) setGPUInfo(nodeStatus *api.NodeStatusRequest) error {
 	}
 	re := regexp.MustCompile(`GPU .*:.*\(.*\)`)
 	gpuInfos := re.FindAllString(result, -1)
-	gpuResources := make([]api.ExtendResource, 0)
+	gpuResources := make([]edgeapi.ExtendResource, 0)
 	gpuRegexp := regexp.MustCompile(`^GPU ([\d]+):(.*)\(.*\)`)
 	for _, gpuInfo := range gpuInfos {
 		params := gpuRegexp.FindStringSubmatch(strings.TrimSpace(gpuInfo))
@@ -270,7 +270,7 @@ func (e *edged) setGPUInfo(nodeStatus *api.NodeStatusRequest) error {
 		}
 		mem := strings.TrimSpace(strings.Split(strings.TrimSpace(parts[1]), " ")[0])
 
-		gpuResource := api.ExtendResource{}
+		gpuResource := edgeapi.ExtendResource{}
 		gpuResource.Name = fmt.Sprintf("nvidia%v", gpuName)
 		gpuResource.Type = gpuType
 		gpuResource.Capacity = resource.MustParse(mem + "Mi")
@@ -373,7 +373,7 @@ func (e *edged) registerNode() {
 	}
 }
 
-func (e *edged) tryRegisterToMeta(node *api.NodeStatusRequest) bool {
+func (e *edged) tryRegisterToMeta(node *edgeapi.NodeStatusRequest) bool {
 	err := e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *node)
 	if err != nil {
 		log.LOGGER.Errorf("register node failed, error: %v", err)

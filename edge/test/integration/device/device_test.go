@@ -19,7 +19,7 @@ package device_test
 import (
 	"encoding/json"
 	"net/http"
-	
+
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"

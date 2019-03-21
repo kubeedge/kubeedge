@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 const (

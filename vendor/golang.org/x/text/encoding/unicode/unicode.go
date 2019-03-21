@@ -158,12 +158,12 @@ func UTF16(e Endianness, b BOMPolicy) encoding.Encoding {
 // and recommendations. Some of the "configurations" are merely recommendations,
 // so multiple configurations could match.
 var mibValue = map[Endianness][numBOMValues]identifier.MIB{
-	BigEndian: [numBOMValues]identifier.MIB{
+	BigEndian: {
 		IgnoreBOM: identifier.UTF16BE,
 		UseBOM:    identifier.UTF16, // BigEnding default is preferred by RFC 2781.
 		// TODO: acceptBOM | strictBOM would map to UTF16BE as well.
 	},
-	LittleEndian: [numBOMValues]identifier.MIB{
+	LittleEndian: {
 		IgnoreBOM: identifier.UTF16LE,
 		UseBOM:    identifier.UTF16, // LittleEndian default is allowed and preferred on Windows.
 		// TODO: acceptBOM | strictBOM would map to UTF16LE as well.

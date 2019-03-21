@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -243,13 +243,11 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 			context.Send("",
 				dtcommon.SendToEdge,
 				dtcommon.CommModule,
-				context.BuildModelMessage(core.BusGroup, "", topic, "publish", result))
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
 		}
-
 		if delta {
 			context.Unlock(device.ID)
 		}
-
 	}
 }
 
@@ -299,7 +297,7 @@ func Removed(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage
 			context.Send("",
 				dtcommon.SendToEdge,
 				dtcommon.CommModule,
-				context.BuildModelMessage(core.BusGroup, "", topic, "publish", result))
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
 		}
 
 		log.LOGGER.Infof("Remove device %s successful", device.ID)
@@ -349,7 +347,7 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 	context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(core.BusGroup, "", topic, "publish", result))
+		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
 
 	return nil
 
@@ -363,9 +361,6 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		var deviceMutex sync.Mutex
 		context.DeviceMutex.Store(deviceID, &deviceMutex)
 	}
-
-	// defer context.Unlock(deviceID)
-	// context.Lock(deviceID)
 
 	devices, err := dtclient.QueryDevice("id", deviceID)
 	if err != nil {
@@ -382,20 +377,12 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		log.LOGGER.Errorf("query device attr failed: %v", err)
 		return err
 	}
-	// attributes := make(map[string]*dtclient.DeviceAttr)
-	// for _,attr := range(*deviceAttr) {
-	// 	attributes[attr.Name] = &attr
-	// }
 
 	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
 		log.LOGGER.Errorf("query device twin failed: %v", err)
 		return err
 	}
-	// twins := make(map[string]*dtclient.DeviceTwin)
-	// for _,twin := range(*deviceTwin) {
-	// 	twins[twin.Name] = &twin
-	// }
 
 	context.DeviceList.Store(deviceID, &dttype.Device{
 		ID:          deviceID,
