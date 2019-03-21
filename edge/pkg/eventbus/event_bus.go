@@ -34,14 +34,11 @@ type eventbus struct {
 }
 
 func init() {
-	mode := config.CONFIG.GetConfigurationByKey("mqtt.mode")
-	if mode == nil {
+	mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
+	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
 		mode = internalMqttMode
 	}
-	if mode.(int) > externalMqttMode || mode.(int) < internalMqttMode {
-		panic("mqtt.mode should be one of [0,1,2]")
-	}
-	edgeEventHubModule := eventbus{mqttMode: mode.(int)}
+	edgeEventHubModule := eventbus{mqttMode: mode}
 	core.Register(&edgeEventHubModule)
 }
 

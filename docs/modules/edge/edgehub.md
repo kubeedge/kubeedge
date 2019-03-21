@@ -58,7 +58,7 @@ The major steps involved in this process are as follows :-
 	     
 	3.3 The response received on the channel is sent back to the module using the SendResponse() function.
 
-![Route to Cloud](../images/edgehub/route-to-cloud.png)
+![Route to Cloud](../../images/edgehub/route-to-cloud.png)
 
 ## Route To Edge
 
@@ -77,4 +77,4 @@ The major steps involved in this process are as follows :-
 
 - If it is a response message then the message is sent to the syncKeep channel
 
-![Route to Edge](../images/edgehub/route-to-edge.png)
+![Route to Edge](../../images/edgehub/route-to-edge.png)

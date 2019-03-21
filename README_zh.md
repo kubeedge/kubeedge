@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
 [![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
+[![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
 
 ![logo](./docs/images/KubeEdge_logo.png)
@@ -301,6 +302,8 @@ kubectl get nodes
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
 
+**提示：** 目前对于边缘端，必须在 Pod 配置中使用 hostPort，不然 Pod 会一直处于 ContainerCreating 状态。 hostPort 必须等于 containerPort 而且不能为 0。
+
 然后可以使用下面的命令检查应用程序是否正常运行。
 
 ```shell
@@ -351,4 +354,4 @@ make edge_integration_test
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)
