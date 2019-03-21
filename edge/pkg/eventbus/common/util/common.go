@@ -21,7 +21,7 @@ func CheckKeyExist(keys []string, disinfo map[string]interface{}) error {
 	for _, v := range keys {
 		_, ok := disinfo[v]
 		if !ok {
-			log.LOGGER.Infof("key: %s not found", v)
+			log.LOGGER.Errorf("key: %s not found", v)
 			return errors.New("key not found")
 		}
 	}
