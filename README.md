@@ -232,17 +232,29 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### Build Cloud
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-make # or `make edgecontroller`
-```
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/ontroller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
+
++ Build Cloud
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+    make # or `make edgecontroller`
+    ```
 
 ### Build Edge
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edge_core`
-```
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
+  + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certification path
+  + In websocket:url you need to give IP address of the master.
+  + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node ip in edge.yaml in 3 place.
+    + in websecket:URL
+    + in controller:node-id
+    + in edged:hostname-override
+
++ Build edge
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+    make # or `make edge_core`
+    ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
 Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
@@ -263,33 +275,35 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
-```shell
-kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
-```
++ Compile the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the IP of the edge node
++ Deploy node
+    ```shell
+    kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
+    ```
 
-Run Edge
++ Run Edge
 
-```shell
-# run mosquitto
-mosquitto -d -p 1883
+    ```shell
+    # run mosquitto
+    mosquitto -d -p 1883
 
-# run edge_core
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running edge(edge_core)
-./edge_core
-# or
-nohup ./edge_core > edge_core.log 2>&1 &
-```
+    # run edge_core
+    # `conf/` should be in the same directory as the cloned KubeEdge repository
+    # verify the configurations before running edge(edge_core)
+    ./edge_core
+    # or
+    nohup ./edge_core > edge_core.log 2>&1 &
+    ```
 
-After the Cloud and Edge parts are started, you can use below command to check the edge node status.
++ After the Cloud and Edge parts are started, you can use below command to check the edge node status.
 
-```shell
-kubectl get nodes
-```
+    ```shell
+    kubectl get nodes
+    ```
 
-Please make sure the status of edge node you created is **ready**.
+    Please make sure the status of edge node you created is **ready**.
 
-If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
+    If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
 
 ### Deploy Application
 
