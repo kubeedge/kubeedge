@@ -1,4 +1,3 @@
-
 /*
 Copyright 2014 The Kubernetes Authors.
 
@@ -160,6 +159,63 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 	}
 }
 
+func listAllPodsOnNode(
+	client kubernetes.Interface,
+	namespace string,
+	podStatuses []edgeapi.PodStatusRequest) (pods []v1.Pod, err error) {
+
+	if podStatuses == nil || len(podStatuses) <= 0 {
+		pods = make([]v1.Pod, 0)
+		return
+	}
+	var pod *v1.Pod
+	if pod, err = client.CoreV1().Pods(namespace).Get(podStatuses[0].Name, metaV1.GetOptions{}); err != nil {
+		return
+	}
+	var list *v1.PodList
+	if list, err = client.CoreV1().Pods("").List(
+		metaV1.ListOptions{FieldSelector: fmt.Sprintf("spec.nodeName=%s", pod.Spec.NodeName)}); err != nil {
+		return
+	}
+	pods = list.Items
+	return
+}
+
+// key -> pod name
+func indexPodsByName(pods []v1.Pod) (indexed map[string]*v1.Pod) {
+	count := len(pods)
+	indexed = make(map[string]*v1.Pod, count)
+	for i := 0; i < count; i++ {
+		pp := &(pods[i])
+		indexed[pp.Name] = pp
+	}
+	return
+}
+
+func (uc UpstreamController) listPods(
+	namespace string,
+	podStatuses []edgeapi.PodStatusRequest) (indexed map[string]*v1.Pod, err error) {
+
+	var pods []v1.Pod
+	if pods, err = listAllPodsOnNode(uc.kubeClient, namespace, podStatuses); err != nil {
+		return
+	}
+	indexed = indexPodsByName(pods)
+	return
+}
+
+func (uc UpstreamController) deletePod(pod *v1.Pod) (err error) {
+	var resource string
+	if resource, err = messagelayer.BuildResource(
+		pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name); err != nil {
+		return
+	}
+	message := model.NewMessage("").BuildRouter(
+		constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation).FillBody(pod)
+	err = uc.messageLayer.Send(*message)
+	return
+}
+
 func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 	running := true
 	for running {
@@ -168,16 +224,21 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 			log.LOGGER.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
 			namespace, podStatuses := uc.unmarshalPodStatusMessage(msg)
+			pods, err := uc.listPods(namespace, podStatuses)
+			if err != nil {
+				log.LOGGER.Warnf("list pods failed when updating pod status, message: %s, namespace: %s, error: %s", msg.GetID(), namespace, err)
+				break
+			}
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
 				for _, podStatus := range podStatuses {
-					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(podStatus.Name, metaV1.GetOptions{})
-					if errors.IsNotFound(err) {
-						log.LOGGER.Warnf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
-						continue
-					}
-					if err != nil {
-						log.LOGGER.Warnf("message: %s, pod is nil, namespace: %s, name: %s, error: %s", msg.GetID(), namespace, podStatus.Name, err)
+					getPod, exist := pods[podStatus.Name]
+					if !exist {
+						if err := uc.deletePod(getPod); err != nil {
+							log.LOGGER.Warnf(
+								"notify edge to delete pod failed, message: %s, namespace: %s, pod: %s, error: %s",
+								msg.GetID(), namespace, getPod.Name, err)
+						}
 						continue
 					}
 					status := podStatus.Status
@@ -220,7 +281,7 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 						log.LOGGER.Warnf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
 					} else {
 						log.LOGGER.Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
-						if updatedPod.DeletionTimestamp != nil && (status.Phase == v1.PodSucceeded || status.Phase == v1.PodFailed) {
+						if updatedPod.DeletionTimestamp != nil {
 							if uc.isPodNotRunning(status.ContainerStatuses) {
 								if err := uc.kubeClient.CoreV1().Pods(updatedPod.Namespace).Delete(updatedPod.Name, metaV1.NewDeleteOptions(0)); err != nil {
 									log.LOGGER.Warnf("message: %s, graceful delete pod failed with error: %s, namespace: %s, name: %s", msg.GetID, err, updatedPod.Namespace, updatedPod.Name)
