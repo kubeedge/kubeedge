@@ -255,56 +255,53 @@ KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
 
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
-+ 运行 Cloud
-    ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-    # run edge controller
-    # `conf/` should be in the same directory as the cloned KubeEdge repository
-    # verify the configurations before running cloud(edgecontroller)
-    ./edgecontroller
-    ```
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+# run edge controller
+# `conf/` should be in the same directory as the cloned KubeEdge repository
+# verify the configurations before running cloud(edgecontroller)
+./edgecontroller
+```
 
 ### 运行 Edge
 
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
 请确保在 Kubernetes 中添加了边缘节点 edge-node。运行以下步骤以添加边缘节点 edge-node。
 
-#### 在Cloud 节点上：
 + 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node的IP
 + 部署node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
     ```
 
-#### 在Node节点上：
-+ 修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
+修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
   + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
   + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master edge 的IP
   + 用 edge node 的IP替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
 
-+ 运行 Edge
+运行 Edge
 
-  ```shell
-  # run mosquitto
-  mosquitto -d -p 1883
+```shell
+# run mosquitto
+mosquitto -d -p 1883
 
-  # run edge_core
-  # `conf/` should be in the same directory as the cloned KubeEdge repository
-  # verify the configurations before running edge(edge_core)
-  ./edge_core
-  # or
-  nohup ./edge_core > edge_core.log 2>&1 &
-  ```
+# run edge_core
+# `conf/` should be in the same directory as the cloned KubeEdge repository
+# verify the configurations before running edge(edge_core)
+./edge_core
+# or
+nohup ./edge_core > edge_core.log 2>&1 &
+```
 
-+ 在 Cloud 和 Edge 被启动之后, 您能通过如下的命令去检查边缘节点的状态。
+在 Cloud 和 Edge 被启动之后, 您能通过如下的命令去检查边缘节点的状态。
 
-  ```shell
-  kubectl get nodes
-  ```
+```shell
+kubectl get nodes
+```
 
-  请确保您创建的边缘节点状态是 **ready**。
+请确保您创建的边缘节点状态是 **ready**。
 
-  如果您使用华为云 IEF, 那么您创建的边缘节点应该正在运行（可在 IEF 控制台页面中查看）。
+如果您使用华为云 IEF, 那么您创建的边缘节点应该正在运行（可在 IEF 控制台页面中查看）。
 
 ### 部署应用
 
