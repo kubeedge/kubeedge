@@ -169,6 +169,16 @@ vi /etc/kubernetes/manifests/kube-apiserver.yaml
 - --insecure-bind-address=0.0.0.0
 ```
 
+KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
+
+Enter the path to kubeconfig file in controller.yaml
+```yaml
+controller:
+  kube:
+    ...
+    kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+```
+
 The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
 1) internalMqttMode: internal mqtt broker is enabled.
 2) bothMqttMode: internal as well as external broker are enabled.

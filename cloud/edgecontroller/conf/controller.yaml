@@ -6,6 +6,7 @@ controller:
     qps: 5
     burst: 10
     node_update_frequency: 10
+    kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
 cloudhub:
   address: 0.0.0.0
   port: 10000
