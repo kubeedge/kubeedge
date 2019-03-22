@@ -44,7 +44,7 @@ Message has 3 parts
 
 1. **channels:** channels is a map of string(key) which is name of module and chan(value) of message which will used to send message to the respective module.
 2. **chsLock:** lock for channels map
-3. **typeChannels:** typeChannels is is map of string(key)which is group name and (map of string(key) to chan(value) of message ) (value) which is map of name of each module in the group to the channels ofcorresponding module.
+3. **typeChannels:** typeChannels is is map of string(key)which is group name and (map of string(key) to chan(value) of message ) (value) which is map of name of each module in the group to the channels of corresponding module.
 4. **typeChsLock:** lock for typeChannels map 
 5. **anonChannels:** anonChannels is a map of string(parentid) to chan(value) of message which will be used for sending response for a sync message.
 6. **anonChsLock:** lock for anonChannels map
@@ -102,7 +102,7 @@ coreContext.Send2Group(“edged”,message) message will be sent to all modules 
 ### Receive by a Module  
 
 1. Receive gets the channel of a module from channels map.
-2. Then it waits for a message to arrive on that channel and returns the message. Error is returned if there is any..
+2. Then it waits for a message to arrive on that channel and returns the message. Error is returned if there is any.
 3. Eg: receive message for edged module  
 
 ```go
