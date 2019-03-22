@@ -10,7 +10,7 @@ Kubeedge is Apache 2.0 licensed and accepts contributions via GitHub pull reques
 ## Getting started
 
 - Fork the repository on GitHub
-- Read the [setup](setup/setup.html) for build instructions
+- Read the [setup](../setup/setup.md#build) for build instructions
 
 ## Reporting bugs and creating issues
 
