@@ -36,7 +36,7 @@ Message has 3 parts
 
 1. On starting edge_core,  each module tries to register itself with the beehive core.
 2. Beehive core maintains a map named modules which has module name as key and implementation of module interface as value. 
-3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map orelse it is added in the disabled modules map.
+3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map or else it is added in the disabled modules map.
 
 ## Channel Context Structure Fields  
 
@@ -106,7 +106,7 @@ coreContext.Send2Group(“edged”,message) message will be sent to all modules 
 3. Eg: receive message for edged module  
 
 ```go
-msg,err := coreContext.Receive("edged")
+msg, err := coreContext.Receive("edged")
 ```
 ### SendSync to a Module  
 
@@ -115,11 +115,11 @@ msg,err := coreContext.Receive("edged")
 3. Then the message is put on the channel.
 4. Then a new channel of message is created and is added in anonChannels map where key is the messageID.
 5. Then it waits for the message(response) to be received on the anonChannel it created till timeout.
-6. If message is received before timeout, message is returned with nil error orelse timeout error is returned.
+6. If message is received before timeout, message is returned with nil error or else timeout error is returned.
 7. Eg: send sync to edged with timeout duration 60 seconds  
 
 ```go
-response,err := coreContext.SendSync("edged",message,60*time.Second)
+response, err := coreContext.SendSync("edged",message,60*time.Second)
 ```
 ### SendSync to a Group  
 
