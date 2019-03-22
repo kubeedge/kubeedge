@@ -251,7 +251,10 @@ Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instru
 
 ### Run Cloud
 
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` configuration file to modify `cloudhub.ca`, `cloudhub.cert`, `cloudhub.key` to generated Certificate path
++ The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
+    + cloudhub.ca
+    + cloudhub.cert
+    + cloudhub.key
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
@@ -272,12 +275,12 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     ```
 
 Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
-+ Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certification path
-+ In websocket:url you need to give IP address of the master.
-+ replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node ip in edge.yaml in 3 place.
-    + in websocket:URL
-    + in controller:node-id
-    + in edged:hostname-override
++ Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
++ Update the IP address of the master in the `websocket.url` field. 
++ replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node ip in edge.yaml for the below fields :
+    + `websocket:URL`
+    + `controller:node-id`
+    + `edged:hostname-override`
 
 Run edge
 ```shell
