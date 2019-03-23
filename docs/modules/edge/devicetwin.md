@@ -213,7 +213,7 @@ The following are the action callbacks which can be performed by the device modu
    
  **dealDeviceUpdated**: dealDeviceUpdated() deals with the operations to be performed when a device attribute update is encountered.
                         It updates the changes to the device attributes, like addition of attributes, updation of attributes and deletion of attributes,
-                        in the database. It also sends the result of the device attribute update to be  published to the eventbus component]
+                        in the database. It also sends the result of the device attribute update to be  published to the eventbus component
                         through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.                      
  
   ![Device Update](../../images/devicetwin/device-update.png)
