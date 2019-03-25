@@ -3,10 +3,7 @@
 if [ ! -d /etc/kubeedge/edge/certs ] || [ ! -e /etc/kubeedge/edge/certs/edge.crt ] || [ ! -e /etc/kubeedge/edge/certs/edge.key ]; then
     mkdir -p /etc/kubeedge/edge/certs
     mkdir -p /etc/kubeedge/ca
-    docker run --rm \
-    -v /etc/kubeedge/ca:/etc/kubeedge/ca \
-    -v /etc/kubeedge/edge/certs:/etc/kubeedge/certs \
-    kubeedge/certgen:v0.2 genCertAndKey edge
+    ../tools/certgen.sh genCertAndKey edge
 fi
 
 if [ ! -d /var/lib/kubeedge ]; then
