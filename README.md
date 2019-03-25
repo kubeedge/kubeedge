@@ -280,6 +280,43 @@ more than once etc. are applicable here as well.
 
 ### Run Cloud
 
+#### Run as Kubernetes deployment
+
+This method will guide you to deploy the cloud part into a k8s cluster,
+so you need to login to the k8s master node (or where else if you can
+operate the cluster with `kubectl`).
+
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud`
+will be used, so place these files to somewhere you can kubectl with.
+
+First, ensure your k8s cluster can pull edge controller image. If the
+image not exist. We can make one, and push to your registry.
+
+```bash
+make cloudimage
+```
+
+Then, we need to generate the tls certs. It then will give us
+`06-secret.yaml` if succeeded.
+
+```bash
+../tools/certgen.sh buildSecret | tee ./06-secret.yaml
+```
+
+Second, we create k8s resources from the manifests in name order. Before
+creating, check the content of each manifest to make sure it meets your
+environment.
+
+```bash
+for resource in $(ls *.yaml); do kubectl create -f $resource; done
+```
+
+Last, base on the `08-service.yaml.example`, create your own service,
+to expose cloud hub to outside of k8s cluster, so that edge core can
+connect to.
+
+#### Run as a binary
+
 + The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
     + cloudhub.ca
     + cloudhub.cert
@@ -297,6 +334,40 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
+```shell
+kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
+```
+
+#### Run as container
+
+This method will guide you to deploy the edge part running in docker
+container, so make sure that docker engine listening on
+`/var/run/docker.sock` which will then mount into the edge container.
+
+Before starting the edge part container, check the contents of this script
+`build/edge/run_daemon.sh` to make sure it meets your environment. (this
+script will generate client certs for EdgeHub, we recommend that to use
+the same CA that generate CloudHub certs with)
+
+And if you don't have a edge core image, you need to make one:
+
+```bash
+make edgeimage
+```
+
+Then, run the script with mqtt broker url as the first argument, cloud
+hub url as the second argument, optionally a third argument to specify
+the edge core image tag, if not set it goes to 'latest' as default,
+like this:
+
+```bash
+./run_daemon.sh \
+tcp://<mqtt-broker-address>:1883 \
+wss://<cloud-hub-address>:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
+```
+
+#### Run as a binary
+
 + Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the IP of the edge node
 + Deploy node
     ```shell
@@ -312,6 +383,7 @@ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` config
     + `edged:hostname-override`
 
 Run edge
+
 ```shell
 # run mosquitto
 mosquitto -d -p 1883
