@@ -8,8 +8,8 @@ const (
 
 	// Resource sep
 	ResourceSep               = "/"
-	ResourceSliceLength        = 5
-	ResourceSliceLengthQuery   = 4
+	ResourceSliceLength       = 5
+	ResourceSliceLengthQuery  = 4
 	ResourceNodeIndex         = 0
 	ResourceNodeIDIndex       = 1
 	ResourceNamespaceIndex    = 2

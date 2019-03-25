@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
 [![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
+[![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
 
 <img src="./docs/images/KubeEdge_logo.png">
@@ -168,6 +169,16 @@ vi /etc/kubernetes/manifests/kube-apiserver.yaml
 - --insecure-bind-address=0.0.0.0
 ```
 
+KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
+
+Enter the path to kubeconfig file in controller.yaml
+```yaml
+controller:
+  kube:
+    ...
+    kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+```
+
 The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
 1) internalMqttMode: internal mqtt broker is enabled.
 2) bothMqttMode: internal as well as external broker are enabled.
@@ -213,11 +224,11 @@ openssl genrsa -des3 -out rootCA.key 4096
 # Generate Root Certificate
 openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
 # Generate Key
-openssl genrsa -out kubeedge.key 2048
+openssl genrsa -out edge.key 2048
 # Generate csr, Fill required details after running the command
-openssl req -new -key kubeedge.key -out kubeedge.csr
+openssl req -new -key edge.key -out edge.csr
 # Generate Certificate
-openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 
+openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
 ```
 
 ### Clone KubeEdge
@@ -244,11 +255,34 @@ make # or `make edge_core`
 ```
 
 KubeEdge can also be cross compiled to run on ARM based processors.
-Please click [Cross Compilation](docs/setup/cross-compilation.md) for the instructions.
+Please follow the instructions given below or click [Cross Compilation](docs/setup/cross-compilation.md) for detailed instructions.
+
+```shell
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_cross_build
+```
+
+KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
+
+```shell
+apt-get install upx-ucl
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+make edge_small_build
+```
+
+**Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
+lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
+more than once etc. are applicable here as well.
+
 
 ## Run KubeEdge
 
 ### Run Cloud
+
++ The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
+    + cloudhub.ca
+    + cloudhub.cert
+    + cloudhub.key
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
@@ -262,12 +296,21 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
-```shell
-kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
-```
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the IP of the edge node
++ Deploy node
+    ```shell
+    kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
+    ```
 
-Run Edge
+Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
++ Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
++ Update the IP address of the master in the `websocket.url` field. 
++ replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node ip in edge.yaml for the below fields :
+    + `websocket:URL`
+    + `controller:node-id`
+    + `edged:hostname-override`
 
+Run edge
 ```shell
 # run mosquitto
 mosquitto -d -p 1883
@@ -280,7 +323,7 @@ mosquitto -d -p 1883
 nohup ./edge_core > edge_core.log 2>&1 &
 ```
 
-After the Cloud and Edge parts are started, you can use below command to check the edge node status.
+After the Cloud and Edge parts have started, you can use below command to check the edge node status.
 
 ```shell
 kubectl get nodes
@@ -297,6 +340,8 @@ Try out a sample application deployment by following below steps.
 ```shell
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
+
+**Note:** Currently, for edge node, we must use hostPort in the Pod container spec so that the pod comes up normally, or the pod will be always in ContainerCreating status. The hostPort must be equal to containerPort and can not be 0.
 
 Then you can use below command to check if the application is normally running.
 
@@ -350,4 +395,4 @@ If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)

@@ -32,6 +32,7 @@ type Config struct {
 	TestManager   string   `json:"testManager"`
 	EdgedEndpoint string   `json:"edgedEndpoint"`
 	AppImageUrl   []string `json:"image_url"`
+	NodeId        string   `json:"nodeId"`
 }
 
 //config struct

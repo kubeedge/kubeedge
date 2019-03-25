@@ -1,12 +1,12 @@
 package dbm
 
 import (
+	"os"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-
 	"github.com/astaxie/beego/orm"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -72,9 +72,25 @@ func InitDBManager() {
 	DBAccess.Using(dbName)
 }
 
+// Cleanup cleans up resources
+func Cleanup() {
+	cleanDBFile(dataSource)
+}
+
+// cleanDBFile removes db file
+func cleanDBFile(fileName string) {
+	// Remove db file
+	err := os.Remove(fileName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.LOGGER.Infof("DB file %s is not existing", fileName)
+		} else {
+			log.LOGGER.Errorf("Failed to remove DB file %s: %v", fileName, err)
+		}
+	}
+}
+
 func isModuleEnabled(m string) bool {
-	// TODO: temp change for ut
-	return true
 	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
 	if modules != nil {
 		for _, value := range modules.([]interface{}) {

@@ -36,7 +36,7 @@ Message has 3 parts
 
 1. On starting edge_core,  each module tries to register itself with the beehive core.
 2. Beehive core maintains a map named modules which has module name as key and implementation of module interface as value. 
-3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map orelse it is added in the disabled modules map.
+3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map or else it is added in the disabled modules map.
 
 ## Channel Context Structure Fields  
 
@@ -44,7 +44,7 @@ Message has 3 parts
 
 1. **channels:** channels is a map of string(key) which is name of module and chan(value) of message which will used to send message to the respective module.
 2. **chsLock:** lock for channels map
-3. **typeChannels:** typeChannels is is map of string(key)which is group name and (map of string(key) to chan(value) of message ) (value) which is map of name of each module in the group to the channels ofcorresponding module.
+3. **typeChannels:** typeChannels is is map of string(key)which is group name and (map of string(key) to chan(value) of message ) (value) which is map of name of each module in the group to the channels of corresponding module.
 4. **typeChsLock:** lock for typeChannels map 
 5. **anonChannels:** anonChannels is a map of string(parentid) to chan(value) of message which will be used for sending response for a sync message.
 6. **anonChsLock:** lock for anonChannels map
@@ -102,11 +102,11 @@ coreContext.Send2Group(“edged”,message) message will be sent to all modules 
 ### Receive by a Module  
 
 1. Receive gets the channel of a module from channels map.
-2. Then it waits for a message to arrive on that channel and returns the message. Error is returned if there is any..
+2. Then it waits for a message to arrive on that channel and returns the message. Error is returned if there is any.
 3. Eg: receive message for edged module  
 
 ```go
-msg,err := coreContext.Receive("edged")
+msg, err := coreContext.Receive("edged")
 ```
 ### SendSync to a Module  
 
@@ -115,11 +115,11 @@ msg,err := coreContext.Receive("edged")
 3. Then the message is put on the channel.
 4. Then a new channel of message is created and is added in anonChannels map where key is the messageID.
 5. Then it waits for the message(response) to be received on the anonChannel it created till timeout.
-6. If message is received before timeout, message is returned with nil error orelse timeout error is returned.
+6. If message is received before timeout, message is returned with nil error or else timeout error is returned.
 7. Eg: send sync to edged with timeout duration 60 seconds  
 
 ```go
-response,err := coreContext.SendSync("edged",message,60*time.Second)
+response, err := coreContext.SendSync("edged",message,60*time.Second)
 ```
 ### SendSync to a Group  
 

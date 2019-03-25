@@ -3,9 +3,9 @@ package config
 import (
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
 )
 
 // KubeMaster is the url of edge master(kube api server)
@@ -71,11 +71,11 @@ func init() {
 		KubeBurst = kb
 	}
 	log.LOGGER.Infof("kube burst: %d", KubeBurst)
-	
+
 	if kuf, err := config.CONFIG.GetValue("controller.kube.node_update_frequency").ToInt64(); err != nil {
 		KubeUpdateNodeFrequency = constants.DefaultKubeUpdateNodeFrequency * time.Second
 	} else {
 		KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
 	}
-	log.LOGGER.Infof("kube update frequency: %v", KubeUpdateNodeFrequency)	
+	log.LOGGER.Infof("kube update frequency: %v", KubeUpdateNodeFrequency)
 }

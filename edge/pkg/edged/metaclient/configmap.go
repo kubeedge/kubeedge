@@ -3,13 +3,11 @@ package metaclient
 import (
 	"encoding/json"
 	"fmt"
-
-	api "k8s.io/api/core/v1"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	api "k8s.io/api/core/v1"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.
@@ -55,7 +53,7 @@ func (c *configMaps) Delete(name string) error {
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
-	configMapMsg := message.BuildMsg(core.MetaGroup, "", core.EdgedModuleName, resource, model.QueryOperation, nil)
+	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(configMapMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get configmap from metaManager failed, err: %v", err)
