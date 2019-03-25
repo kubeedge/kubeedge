@@ -160,7 +160,6 @@ func GetDeviceStateFromDB(deviceID string) string {
 
 func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	var twinAttribute TwinAttribute
-
 	pwd, err := os.Getwd()
 	if err != nil {
 		common.Failf("Failed to get PWD: %v", err)
@@ -197,7 +196,6 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 			break
 		}
 	}
-
 	return twinAttribute
 }
 

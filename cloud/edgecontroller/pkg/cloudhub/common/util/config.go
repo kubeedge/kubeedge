@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 // HubConfig is the config for entire CloudHub

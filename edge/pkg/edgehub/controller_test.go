@@ -28,11 +28,12 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -349,19 +350,22 @@ func TestDispatch(t *testing.T) {
 		{"dispatch with valid input", Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
-		}, model.NewMessage("").BuildRouter(ModuleNameEdgeHub, core.TwinGroup, "", ""),
+		},
+			model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
 			nil, false},
 
 		{"Error Case in dispatch", Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
-		}, model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, core.EdgedGroup, "", ""),
+		},
+			model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
 			fmt.Errorf("msg_group not found"), true},
 
 		{"Response Case in dispatch", Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
-		}, model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, core.TwinGroup, "", ""),
+		},
+			model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
 			nil, true},
 	}
 	for _, tt := range tests {
@@ -406,8 +410,8 @@ func TestRouteToEdge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, core.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, core.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
 			go tt.controller.routeToEdge()
 			stop := <-tt.controller.stopChan
@@ -573,14 +577,14 @@ func TestPubConnectInfo(t *testing.T) {
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			true,
-			model.CloudConnected},
+			connect.CloudConnected},
 		{"Cloud disconnected case", Controller{
 			context:    testContext,
 			stopChan:   make(chan struct{}),
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			false,
-			model.CloudDisconnected},
+			connect.CloudDisconnected},
 	}
 	for _, tt := range tests {
 		modules := core.GetModules()
@@ -591,7 +595,7 @@ func TestPubConnectInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.controller.pubConnectInfo(tt.isConnected)
 			t.Run("TestMessageContent", func(t *testing.T) {
-				msg, err := testContext.Receive(core.TwinGroup)
+				msg, err := testContext.Receive(module.TwinGroup)
 				if err != nil {
 					t.Errorf("Error in receiving message from twin group: %v", err)
 				} else if msg.Content != tt.content {

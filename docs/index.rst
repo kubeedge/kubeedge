@@ -38,6 +38,7 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Edge Concepts
 
+   modules/edge/edged
    modules/edge/eventbus
    modules/edge/metamanager
    modules/edge/edgehub

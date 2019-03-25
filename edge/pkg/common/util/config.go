@@ -30,9 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-
 	"github.com/ServiceComb/go-archaius/sources/file-source"
+	"github.com/kubeedge/beehive/pkg/common/config"
 	"gopkg.in/yaml.v2"
 )
 
