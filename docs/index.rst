@@ -38,17 +38,18 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Edge Concepts
 
-   modules/eventbus
-   modules/metamanager
-   modules/edgehub
-   modules/devicetwin
+   modules/edge/edged
+   modules/edge/eventbus
+   modules/edge/metamanager
+   modules/edge/edgehub
+   modules/edge/devicetwin
 
 .. toctree::
    :maxdepth: 2
    :caption: Cloud Concepts
 
    modules/cloud/controller
-   modules/cloudhub/CloudHub
+   modules/cloud/cloudhub
 
 .. toctree::
    :maxdepth: 2

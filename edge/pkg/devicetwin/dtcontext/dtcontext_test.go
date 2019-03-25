@@ -19,14 +19,14 @@ package dtcontext
 import (
 	"encoding/json"
 	"errors"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"reflect"
 	"sync"
 	"testing"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -481,8 +481,8 @@ func TestBuildModelMessage(t *testing.T) {
 				t.Errorf("DTContext.BuildModelMessage failed due to wrong parentID, Got = %v Want = %v", got.Header.ParentID, test.parentID)
 				return
 			}
-			if got.Router.Source != core.TwinGroup {
-				t.Errorf("DtContext.BuildModelMessage failed due to wrong source, Got= %v Want = %v", got.Router.Source, core.TwinGroup)
+			if got.Router.Source != modules.TwinGroup {
+				t.Errorf("DtContext.BuildModelMessage failed due to wrong source, Got= %v Want = %v", got.Router.Source, modules.TwinGroup)
 				return
 			}
 			if got.Router.Group != test.group {

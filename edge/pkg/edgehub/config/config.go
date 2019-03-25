@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 )
 
 const (

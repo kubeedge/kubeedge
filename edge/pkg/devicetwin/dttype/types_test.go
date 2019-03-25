@@ -29,8 +29,8 @@ import (
 // TestSetEventID is function to test SetEventID().
 func TestSetEventID(t *testing.T) {
 	tests := []struct {
-		name      string
-		eventID   string
+		name    string
+		eventID string
 	}{
 		{
 			name:    "SetEventIDTest",

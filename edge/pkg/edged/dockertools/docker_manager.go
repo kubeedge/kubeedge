@@ -51,7 +51,7 @@ import (
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/util/version"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis/runtime/cri"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"

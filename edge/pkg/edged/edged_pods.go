@@ -44,7 +44,7 @@ import (
 	"k8s.io/kubernetes/pkg/volume/util"
 	"k8s.io/kubernetes/pkg/volume/validation"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 )
 
 const (

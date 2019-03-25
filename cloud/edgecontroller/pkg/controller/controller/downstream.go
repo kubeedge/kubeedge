@@ -1,12 +1,12 @@
 package controller
 
 import (
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/manager"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/utils"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
