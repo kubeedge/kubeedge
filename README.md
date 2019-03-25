@@ -306,14 +306,13 @@ Second, we create k8s resources from the manifests in name order. Before
 creating, check the content of each manifest to make sure it meets your
 environment.
 
-Last, base on the `08-service.yaml.example`, create your own service,
-to expose cloud hub to outside of k8s cluster, so that edge core can
-connect to.
-
 ```bash
 for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
 
+Last, base on the `08-service.yaml.example`, create your own service,
+to expose cloud hub to outside of k8s cluster, so that edge core can
+connect to.
 
 #### Run as a binary
 

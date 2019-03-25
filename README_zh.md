@@ -253,21 +253,22 @@ KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
 
 ### 运行 Cloud
 
-<<<<<<< HEAD
 #### 以 k8s deployment 方式运行
 
 此方式将部署 cloud 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
 
 存放在 `github.com/kubeedge/kubeedge/build/cloud` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
 
-然后，首先，需要生成 tls 证书给 CloudHub 用于起 websocket 服务端。这步成功的话，会生成 `06-secret.yaml`。
+首先， 确保 k8s 集群可以拉到 edge controller 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
 
 ```bash
-# 这个脚本是通过一个 docker 镜像来生成 secret 的
-./00-generate_secret.sh
+make cloudimage
+```
 
-# 或者直接用 tools/certgen.sh 生成，如果环境里安装了 openssl 跟 coreutils
-tools/certgen.sh buildSecret | tee ./06-secret.yaml
+然后，需要生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
+
+```bash
+../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 
 接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
@@ -276,11 +277,13 @@ tools/certgen.sh buildSecret | tee ./06-secret.yaml
 for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
 
+最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service，
+将 cloud hub 暴露到集群外，让 edge core 能够连到。
+
 
 #### 以二进制文件方式运行
-=======
+
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
->>>>>>> official/master
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
@@ -316,6 +319,12 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 在启动 edge 端容器之前，需要检查一下这个脚本的内容 `build/edge/run_daemon.sh`，
 确保符合具体的环境。（这个脚本会生成 EdgeHub 的客户端证书，建议用生成 CloudHub
 端证书时使用的相同的 CA 证书）
+
+如果没有 edge core 镜像，可以自行构建一个：
+
+```bash
+make edgeimage
+```
 
 之后，运行脚本，mqtt broker url 作为第一个参数，cloud hub url 作为第二个参数，
 第三个参数可选，可以用来指定 edge core 镜像的 tag，如果不指定，默认是 'latest'，
