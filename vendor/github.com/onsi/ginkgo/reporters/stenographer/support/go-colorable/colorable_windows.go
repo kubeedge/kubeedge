@@ -663,22 +663,22 @@ func (c consoleColor) backgroundAttr() (attr word) {
 }
 
 var color16 = []consoleColor{
-	consoleColor{0x000000, false, false, false, false},
-	consoleColor{0x000080, false, false, true, false},
-	consoleColor{0x008000, false, true, false, false},
-	consoleColor{0x008080, false, true, true, false},
-	consoleColor{0x800000, true, false, false, false},
-	consoleColor{0x800080, true, false, true, false},
-	consoleColor{0x808000, true, true, false, false},
-	consoleColor{0xc0c0c0, true, true, true, false},
-	consoleColor{0x808080, false, false, false, true},
-	consoleColor{0x0000ff, false, false, true, true},
-	consoleColor{0x00ff00, false, true, false, true},
-	consoleColor{0x00ffff, false, true, true, true},
-	consoleColor{0xff0000, true, false, false, true},
-	consoleColor{0xff00ff, true, false, true, true},
-	consoleColor{0xffff00, true, true, false, true},
-	consoleColor{0xffffff, true, true, true, true},
+	{0x000000, false, false, false, false},
+	{0x000080, false, false, true, false},
+	{0x008000, false, true, false, false},
+	{0x008080, false, true, true, false},
+	{0x800000, true, false, false, false},
+	{0x800080, true, false, true, false},
+	{0x808000, true, true, false, false},
+	{0xc0c0c0, true, true, true, false},
+	{0x808080, false, false, false, true},
+	{0x0000ff, false, false, true, true},
+	{0x00ff00, false, true, false, true},
+	{0x00ffff, false, true, true, true},
+	{0xff0000, true, false, false, true},
+	{0xff00ff, true, false, true, true},
+	{0xffff00, true, true, false, true},
+	{0xffffff, true, true, true, true},
 }
 
 type hsv struct {

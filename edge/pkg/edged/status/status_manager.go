@@ -1,19 +1,18 @@
 package status
 
 import (
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/metaclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/pkg/kubelet/status"
-
-	"github.com/kubeedge/kubeedge/common/beehive/adoptions/common/api"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/metaclient"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )
 
 // manager as status manager, embedded a k8s.io/kubernetes/pkg/kubelet/status.Manager
@@ -94,7 +93,7 @@ func (m *manager) updatePodStatus() {
 			}
 		}
 
-		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, api.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
+		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, edgeapi.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
 		if err != nil {
 			log.LOGGER.Errorf("Update pod status failed err :%v", err)
 		}

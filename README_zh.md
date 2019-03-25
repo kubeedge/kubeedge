@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
 [![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
+[![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
 
 ![logo](./docs/images/KubeEdge_logo.png)
@@ -215,11 +216,11 @@ openssl genrsa -des3 -out rootCA.key 4096
 # Generate Root Certificate
 openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
 # Generate Key
-openssl genrsa -out kubeedge.key 2048
+openssl genrsa -out edge.key 2048
 # Generate csr, Fill required details after running the command
-openssl req -new -key kubeedge.key -out kubeedge.csr
+openssl req -new -key edge.key -out edge.csr
 # Generate Certificate
-openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 
+openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
 ```
 
 ### 克隆 KubeEdge
@@ -252,6 +253,7 @@ KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
 
 ### 运行 Cloud
 
+<<<<<<< HEAD
 #### 以 k8s deployment 方式运行
 
 此方式将部署 cloud 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
@@ -276,6 +278,9 @@ for resource in $(ls *.yaml); do kubectl create -f $resource; done
 
 
 #### 以二进制文件方式运行
+=======
++ 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
+>>>>>>> official/master
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
@@ -290,9 +295,16 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
 请确保在 Kubernetes 中添加了边缘节点 edge-node。运行以下步骤以添加边缘节点 edge-node。
 
-```shell
-kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
-```
++ 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node的IP
++ 部署node
+    ```shell
+    kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
+    ```
+
+修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
+  + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
+  + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master edge 的IP
+  + 用 edge node 的IP替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
 
 运行 Edge
 
@@ -347,6 +359,8 @@ kubectl get nodes
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
 ```
 
+**提示：** 目前对于边缘端，必须在 Pod 配置中使用 hostPort，不然 Pod 会一直处于 ContainerCreating 状态。 hostPort 必须等于 containerPort 而且不能为 0。
+
 然后可以使用下面的命令检查应用程序是否正常运行。
 
 ```shell
@@ -397,4 +411,4 @@ make edge_integration_test
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 
-- [slack](kubeedge.slack.com)
+- [slack](https://kubeedge.slack.com)

@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/256dpi/gomqtt/packet"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
 )
@@ -34,14 +34,11 @@ type eventbus struct {
 }
 
 func init() {
-	mode := config.CONFIG.GetConfigurationByKey("mqtt.mode")
-	if mode == nil {
+	mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
+	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
 		mode = internalMqttMode
 	}
-	if mode.(int) > externalMqttMode || mode.(int) < internalMqttMode {
-		panic("mqtt.mode should be one of [0,1,2]")
-	}
-	edgeEventHubModule := eventbus{mqttMode: mode.(int)}
+	edgeEventHubModule := eventbus{mqttMode: mode}
 	core.Register(&edgeEventHubModule)
 }
 
@@ -50,7 +47,7 @@ func (*eventbus) Name() string {
 }
 
 func (*eventbus) Group() string {
-	return core.BusGroup
+	return modules.BusGroup
 }
 
 func (eb *eventbus) Start(c *context.Context) {
@@ -123,9 +120,9 @@ func (eb *eventbus) Cleanup() {
 func pubMQTT(topic string, payload []byte) {
 	token := mqttBus.MQTTHub.PubCli.Publish(topic, 1, false, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("Error in pubCloudMsgToEdge with topic: %s", topic)
+		log.LOGGER.Errorf("Error in pubMQTT with topic: %s, %v", topic, token.Error())
 	} else {
-		log.LOGGER.Infof("Success in pubCloudMsgToEdge with topic: %s", topic)
+		log.LOGGER.Infof("Success in pubMQTT with topic: %s", topic)
 	}
 }
 
@@ -192,7 +189,7 @@ func (eb *eventbus) subscribe(topic string) {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("Edge-hub-cli subscribe topic:%s, %v", topic, err)
+			log.LOGGER.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
 		}
 	}
 

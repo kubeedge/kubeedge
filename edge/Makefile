@@ -37,3 +37,8 @@ cross_build:
 	export CGO_ENABLED=1
 	export CC=arm-linux-gnueabi-gcc
 	go build cmd/edge_core.go
+
+.PHONY: small_build
+small_build:
+	go build -ldflags="-w -s -extldflags -static" cmd/edge_core.go
+	upx-ucl --best edge_core

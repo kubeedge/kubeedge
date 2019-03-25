@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
@@ -171,7 +171,7 @@ func (dtc *DTContext) Send(identity string, action string, module string, msg *m
 //BuildModelMessage build mode messages
 func (dtc *DTContext) BuildModelMessage(group string, parentID string, resource string, operation string, content interface{}) *model.Message {
 	msg := model.NewMessage(parentID)
-	msg.BuildRouter(core.TwinGroup, group, resource, operation)
+	msg.BuildRouter(modules.TwinGroup, group, resource, operation)
 	msg.Content = content
 	return msg
 }

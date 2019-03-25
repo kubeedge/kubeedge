@@ -30,7 +30,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 
 	"k8s.io/apimachinery/pkg/types"
 	utilfile "k8s.io/kubernetes/pkg/util/file"

@@ -6,12 +6,13 @@ controller:
     qps: 5
     burst: 10
     node_update_frequency: 10
+    kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
 cloudhub:
   address: 0.0.0.0
   port: 10000
-  ca: tmp/rootCA.crt
-  cert: tmp/test.crt
-  key: tmp/test.key
+  ca: /tmp/rootCA.crt
+  cert: /tmp/edge.crt
+  key: /tmp/edge.key
   keepalive-interval: 30
   write-timeout: 30
   node-limit: 10

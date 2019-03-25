@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -84,7 +84,7 @@ func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("edge-hub-cli subscribe topic:%s, %v", t, err)
+			log.LOGGER.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
 			return
 		}
 		log.LOGGER.Infof("edge-hub-cli subscribe topic to %s", t)
@@ -101,15 +101,15 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
 	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
-		target = core.TwinGroup
+		target = modules.TwinGroup
 	} else {
-		target = core.HubGroup
+		target = modules.HubGroup
 		if message.Topic() == "SYS/dis/upload_records" {
 			resource = "SYS/dis/upload_records"
 		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	msg := model.NewMessage("").BuildRouter(core.BusGroup, "user",
+	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(message.Payload()))
 	log.LOGGER.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	ModuleContext.Send2Group(target, *msg)
@@ -152,9 +152,9 @@ func (mq *Client) InitPubClient() {
 func (mq *Client) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
 	token := mq.PubCli.Publish(topic, qos, retained, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("error in pubCloudMsgToEdge with topic: %s, %v", topic, token.Error())
+		log.LOGGER.Errorf("error in PubMQTTMsg with topic: %s, %v", topic, token.Error())
 		return fmt.Errorf("pubmsg err")
 	}
-	log.LOGGER.Infof("success in pubCloudMsgToEdge with topic: %s", topic)
+	log.LOGGER.Infof("success in PubMQTTMsg with topic: %s", topic)
 	return nil
 }

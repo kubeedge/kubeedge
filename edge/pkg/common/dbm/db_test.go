@@ -3,10 +3,11 @@ package dbm_test
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 
 	"github.com/astaxie/beego/orm"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -88,6 +89,9 @@ func QueryMetaByKey() error {
 func TestInitDB(t *testing.T) {
 	dbm.RegisterModel("dbTest", &TestMeta{})
 	dbm.InitDBManager()
-	//m := &TestMeta{Key: "testKey", Type: "testType", Value: "testValue"}
-	//SaveMeta(m)
+	defer dbm.Cleanup()
+
+	m := &TestMeta{Key: "testKey", Type: "testType", Value: "testValue"}
+	err := SaveMeta(m)
+	assert.NoError(t, err)
 }

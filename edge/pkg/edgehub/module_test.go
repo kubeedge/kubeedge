@@ -1,13 +1,13 @@
 package edgehub
 
 import (
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"testing"
 	"time"
-
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
 
 // coreContext is beehive context used for communication between modules
@@ -67,8 +67,8 @@ func TestGroup(t *testing.T) {
 			t.Errorf("EdgeHub Module not Registered with beehive core")
 			return
 		}
-		if core.HubGroup != edgeHubModule.Group() {
-			t.Errorf("Group of module is not correct wanted: %v and got: %v", core.HubGroup, edgeHubModule.Group())
+		if commodule.HubGroup != edgeHubModule.Group() {
+			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.HubGroup, edgeHubModule.Group())
 		}
 	})
 }
