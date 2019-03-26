@@ -1,4 +1,4 @@
-# make edge_core
+# make edge_core  only
 .PHONY: edge_core
 edge_core:
 	cd edge && $(MAKE)
