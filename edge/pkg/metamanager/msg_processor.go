@@ -1,6 +1,7 @@
 package metamanager
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"k8s.io/api/core/v1"
 )
 
 //Constants to check metamanager processes
@@ -171,7 +173,78 @@ func (m *metaManager) processUpdate(message model.Message) {
 	}
 }
 
+func getResourcesFromMessage(content, resources interface{}) (err error) {
+	buffer := new(bytes.Buffer)
+	if err = json.NewEncoder(buffer).Encode(content); err != nil {
+		return
+	}
+	if err = json.NewDecoder(buffer).Decode(&resources); err != nil {
+		return
+	}
+	return
+}
+
+func (m *metaManager) syncResourcesOnNode(message model.Message) {
+	var resources struct {
+		Pods       []v1.Pod       `json:"pods,omitempty"`
+		ConfigMaps []v1.ConfigMap `json:"configMaps,omitempty"`
+		Secrets    []v1.Secret    `json:"secrets,omitempty"`
+		Error      string         `json:"error,omitempty"`
+	}
+	if err := getResourcesFromMessage(message.Content, &resources); err != nil {
+		log.LOGGER.Errorf("get resources on this node from message failed, error: %s", err)
+		return
+	}
+	if resources.Error != "" {
+		log.LOGGER.Warnf("edge controller list resources on node failed, error: %s", resources.Error)
+		// try to pull again
+		pullResourcesOnNode(m.context)
+		return
+	}
+	messages := make([]*model.Message, 0)
+	podEvents := diffPods(resources.Pods)
+	for _, event := range podEvents {
+		messages = append(messages, event)
+	}
+	configMapEvents := diffConfigMaps(resources.ConfigMaps)
+	for _, event := range configMapEvents {
+		messages = append(messages, event)
+	}
+	secretEvents := diffSecrets(resources.Secrets)
+	for _, event := range secretEvents {
+		messages = append(messages, event)
+	}
+	for _, message := range messages {
+		send2Edged(message, false, m.context)
+	}
+}
+
+func diffPods(pods []v1.Pod) (events []*model.Message) {
+	// TODO:
+	events = make([]*model.Message, 0)
+	return
+}
+
+func diffConfigMaps(configMaps []v1.ConfigMap) (events []*model.Message) {
+	// TODO:
+	events = make([]*model.Message, 0)
+	return
+}
+
+func diffSecrets(secrets []v1.Secret) (events []*model.Message) {
+	// TODO:
+	events = make([]*model.Message, 0)
+	return
+}
+
 func (m *metaManager) processResponse(message model.Message) {
+	resKey, resType, resourceID := parseResource(message.GetResource())
+
+	if resType == model.ResourceTypeNode && resourceID == "resources" {
+		m.syncResourcesOnNode(message)
+		return
+	}
+
 	content, err := json.Marshal(message.GetContent())
 	if err != nil {
 		log.LOGGER.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
@@ -179,7 +252,6 @@ func (m *metaManager) processResponse(message model.Message) {
 		return
 	}
 
-	resKey, resType, _ := parseResource(message.GetResource())
 	meta := &dao.Meta{
 		Key:   resKey,
 		Type:  resType,
@@ -286,9 +358,23 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	log.LOGGER.Infof("node connection event occur: %s", content)
 	if content == connect.CloudConnected {
 		connected = true
+		pullResourcesOnNode(m.context)
 	} else if content == connect.CloudDisconnected {
 		connected = false
 	}
+}
+
+func pullResourcesOnNode(context *context.Context) {
+	send2Cloud(buildPullResourcesMessage(), context)
+}
+
+func buildPullResourcesMessage() (message *model.Message) {
+	message = model.NewMessage("").BuildRouter(
+		MetaManagerModuleName,
+		GroupResource,
+		namespace+ResourceSeparator+model.ResourceTypeNode,
+		model.QueryOperation)
+	return
 }
 
 func (m *metaManager) processSync(message model.Message) {

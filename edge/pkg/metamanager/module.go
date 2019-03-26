@@ -17,8 +17,13 @@ const (
 	MetaManagerModuleName = "metaManager"
 )
 
+var (
+	namespace string
+)
+
 func init() {
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
+	namespace = config.CONFIG.GetConfigurationByKey("edged.register-node-namespace").(string)
 	core.Register(&metaManager{})
 }
 
