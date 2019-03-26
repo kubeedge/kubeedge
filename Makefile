@@ -33,3 +33,12 @@ edgecontroller:
 e2e_test:
 	bash tests/e2e/scripts/execute.sh
 
+IMAGE_TAG ?= $(shell git describe --tags)
+
+.PHONY: cloudimage
+cloudimage:
+	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
+
+.PHONY: edgeimage
+edgeimage:
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
