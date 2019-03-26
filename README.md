@@ -26,7 +26,7 @@ With KubeEdge, users can orchestrate apps, manage devices and monitor app and de
 
 #### Abundant applications
 
-It is easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge.
+It is aaa easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge.
 
 ## Introduction
 
