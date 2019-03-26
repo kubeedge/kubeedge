@@ -277,12 +277,13 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
 	resp, err := client.Do(req)
-	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+
 	if err != nil {
 		// handle error
 		common.Failf("HTTP request is failed :%v", err)
 		return false
 	}
+	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 
