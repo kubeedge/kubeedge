@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/model"
