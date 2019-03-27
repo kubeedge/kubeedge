@@ -455,7 +455,7 @@ Users can join this channel by clicking the invitation [link](https://join.slack
 ## Documentation
 
 The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io). 
-Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at [this](https://github.com/kubeedge/examples) repository.
+Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at this [examples](https://github.com/kubeedge/examples) repository.
 
 ## Support
 
