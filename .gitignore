@@ -1,0 +1,9 @@
+.DS_Store
+/_python_build
+*.pyc
+__pycache__
+*.swp
+.idea/**
+/build/
+.gradle
+.idea
