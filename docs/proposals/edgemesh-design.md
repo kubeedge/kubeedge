@@ -1,5 +1,5 @@
 ---
-title: Service Design
+title: EdgeMesh Design
 status: Pending
 authors:
     - "@qizha"
