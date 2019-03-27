@@ -7,13 +7,13 @@ approvers:
   - "@kevin-wangzefeng"
   - "@CindyXing"
 creation-date: 2019-03-20
-last-updated: 2019-03-20
+last-updated: 2019-03-27
 ---
 
-# Service support on edge
+# Edge Mesh on edge
 
 ## Abstract
-To support service capabilities on edge to support microservice communication cross cloud and edge.
+To support service mesh capabilities on edge to support microservice communication cross cloud and edge.
 The service discovery, communication should be considered in this feature.
 Developers can define services on top of the deployments deployed on the cloud or edges in a unified manner without caring about their location. The service name is the only thing they need to know to do the communication. For example, the following address can be used for a REST  request:
 `http://{service_name}/resources`
