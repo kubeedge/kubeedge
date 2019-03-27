@@ -29,14 +29,28 @@ go build cmd/edge_core.go
 #dynamically append testManager Module before starting integration test.
 sed -i 's/dbTest/dbTest, testManager/g' conf/modules.yaml
 #restart edge_core after appending testManager Module.
+
+if pgrep edge_core >/dev/null ; then
+echo "Old edge core is running"
+while true; do
 sudo pkill edge_core
+if [ $? == 0 ]; then
+echo "Edgecore got killed"
+break
+fi
+done
+else
+echo "No Old edge core is running"
+fi
+
 #kill the edge_core process if it exists, wait 2s delay before start the edge_core process.
 sleep 2s
 nohup ./edge_core > edge_core.log 2>&1 &
 sleep 15s
 if pgrep edge_core >/dev/null
 then
-    echo "edge_core process is Running"
+    pid=$(lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}')
+    echo "edge_core process has Started pid is $pid"
 else
     echo "edge_core process is not started"
     exit 1
@@ -54,7 +68,20 @@ bash -x ${PWD}/scripts/fast_test $1
 #Reset env
 sed -i 's/dbTest, testManager/dbTest/g' conf/modules.yaml
 #stop the edge_core after the test completion
+
+if pgrep edge_core >/dev/null ; then
+echo "old edge core is running"
+while true; do
 sudo pkill edge_core
+if [ $? == 0 ]; then
+echo "Edgecore got killed"
+break
+fi
+done
+else
+echo "No Old edge core is running"
+fi
+
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
 echo "==============================================="

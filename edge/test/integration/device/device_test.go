@@ -19,6 +19,7 @@ package device_test
 import (
 	"encoding/json"
 	"net/http"
+	"os/exec"
 	"strings"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -100,6 +101,7 @@ var _ = Describe("Event Bus Testing", func() {
 	var Client MQTT.Client
 	Context("Publish on eventbus topics throgh MQTT internal broker", func() {
 		BeforeEach(func() {
+
 			ClientOpts = HubClientInit(ctx.Cfg.MqttEndpoint, ClientID, "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
@@ -116,57 +118,94 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_1: Sending data to Cloud", func() {
-
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			if TokenClient = Client.Publish(UploadRecordToCloud, 0, false, "messagetoUpload_record_to_cloud"); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Failf("client.Publish() Error is %s", TokenClient.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_2: Sending data to device module", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
 			if TokenClient = Client.Publish(DevicestatusUpdate, 0, false, "messagetoDevice_status_update"); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Failf("client.Publish() Error is %s", TokenClient.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_3: Sending data to device twin module", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
 			if TokenClient = Client.Publish(DeviceTwinUpdate, 0, false, "messagetoDevice_Twin_update"); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Failf("client.Publish() Error is %s", TokenClient.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_4: Sending data to membership module", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
 			if TokenClient = Client.Publish(DeviceMembershipUpdate, 0, false, "messagetoDevice_Membership_update"); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Failf("client.Publish() Error is %s", TokenClient.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_5: Sending data to device module", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			if TokenClient = Client.Publish(DeviceUpload, 0, false, "messagetoDevice_upload"); TokenClient.Wait() && TokenClient.Error() != nil {
 				common.Failf("client.Publish() Error is %s", TokenClient.Error())
 			} else {
 				common.InfoV6("client.Publish Success !!")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_6: change the device status to online from eventbus", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			var message DeviceUpdate
 			message.State = "online"
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateSuffix + "/result"
@@ -192,12 +231,20 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("subscribed to the topic %v", topic)
 				return DeviceState
 			}, "10s", "2s").Should(Equal("online"), "Device state is not online within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_7: change the device status to unknown from eventbus", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			var message DeviceUpdate
 			message.State = "unknown"
+			//os.Getpid()
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateSuffix + "/result"
 			body, err := json.Marshal(message)
 			if err != nil {
@@ -221,10 +268,17 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("subscribed to the topic %v", topic)
 				return DeviceState
 			}, "10s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_8: change the device status to offline from eventbus", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			var message DeviceUpdate
 			message.State = "offline"
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateSuffix + "/result"
@@ -250,10 +304,17 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("subscribed to the topic %v", topic)
 				return DeviceState
 			}, "10s", "2s").Should(Equal("offline"), "Device state is not offline within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 		})
 
 		It("TC_TEST_EBUS_9: Add a sample device with device attributes to kubeedge node", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			//Generating Device ID
 			DeviceIDWithAttr = GenerateDeviceID("kubeedge-device-WithDeviceAttributes")
 			//Generate a Device
@@ -269,11 +330,18 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})
 
 		It("TC_TEST_EBUS_10: Add a sample device with Twin attributes to kubeedge node", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			//Generating Device ID
 			DeviceIDWithTwin = GenerateDeviceID("kubeedge-device-WithTwinAttributes")
 			//Generate a Device
@@ -289,11 +357,18 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})
 
 		It("TC_TEST_EBUS_11: Update existing device with new attributes", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 
 			//Generate a Device
 			device := CreateDevice(DeviceIDWithAttr, "DeviceATT", "unknown")
@@ -308,11 +383,18 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("50.50"), "Device Attributes are not updated within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})
 
 		It("TC_TEST_EBUS_12: Update existing device with new Twin attributes", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 
 			//Generate a Device
 			device := CreateDevice(DeviceIDWithTwin, "DeviceTW", "unknown")
@@ -327,11 +409,18 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("50.50"), "Device Twin Attributes are not updated within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})
 
 		It("TC_TEST_EBUS_13: Add a new Device attribute to existing device", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			//Adding a new attribute to a device
 			AddDeviceAttribute(DeviceATT, "Humidity", "30", "Int")
 
@@ -343,11 +432,18 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Value)
 				return attributeDB.Value
 			}, "60s", "2s").Should(Equal("30"), "Device Attributes are not Added within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})
 
 		It("TC_TEST_EBUS_14: Add a new Twin attribute to existing device", func() {
+			cmd := exec.Command("sh", "-c", "lsof -i tcp:10255 | awk '{print $2}' | awk 'FNR == 2 {print}'")
+			err, result := PrintCombinedOutput(cmd)
+			if err != nil {
+				common.Failf("failed result")
+			}
+			common.InfoV6("result of edgecore pid is  %s", result)
 			//Preparing temporary Twin Attributes
 			AddTwinAttribute(DeviceTW, "Humidity", "100.100", "float")
 
@@ -359,6 +455,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("100.100"), "Device Twin Attributes are not Added within specified time")
+			common.InfoV6("result of edgecore pid is  %s", result)
 			Client.Disconnect(1)
 
 		})

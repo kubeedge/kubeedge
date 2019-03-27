@@ -21,11 +21,14 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -197,6 +200,19 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 		}
 	}
 	return twinAttribute
+}
+func PrintCombinedOutput(cmd *exec.Cmd) (error, string) {
+	fmt.Printf("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("CombinedOutput failed", err)
+		return err, " "
+	}
+	result := string(output)
+	if len(output) > 0 {
+		fmt.Printf("=====> Output: %s\n", string(output))
+	}
+	return nil, result
 }
 
 func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
