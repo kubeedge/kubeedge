@@ -42,8 +42,12 @@ func (mgr *ConnectionManager) DelConnection(conn conn.Connection) {
 }
 
 // get connection for store
-func (mgr *ConnectionManager) GetConnection(key string) {
-	mgr.connections.Delete(key)
+func (mgr *ConnectionManager) GetConnection(key string) (conn.Connection, bool) {
+	obj, exist := mgr.connections.Load(key)
+	if exist {
+		return obj.(conn.Connection), true
+	}
+	return nil, false
 }
 
 func (mgr *ConnectionManager) Range(f func(key, value interface{}) bool) {
