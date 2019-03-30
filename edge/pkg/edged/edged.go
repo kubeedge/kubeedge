@@ -614,12 +614,19 @@ func (e *edged) syncPod() {
 				continue
 			}
 
-			content, err := json.Marshal(request.Content)
-			if err != nil {
-				log.LOGGER.Errorf("marshal message content failed: %v", err)
-				continue
+			var content []byte
+
+			switch request.Content.(type) {
+			case []byte:
+				content = request.GetContent().([]byte)
+			default:
+				content, err = json.Marshal(request.Content)
+				if err != nil {
+					log.LOGGER.Errorf("marshal message content failed: %v", err)
+					continue
+				}
 			}
-			log.LOGGER.Infof("request content is %s", string(content))
+			log.LOGGER.Infof("request content is %s", request.Content)
 			switch resType {
 			case model.ResourceTypePod:
 				if op == model.ResponseOperation && resID == "" && request.GetSource() == metamanager.MetaManagerModuleName {

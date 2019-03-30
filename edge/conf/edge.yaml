@@ -14,7 +14,16 @@ edgehub:
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
+    quic:
+        url: 127.0.0.1:10001
+        cafile: /tmp/rootCA.crt
+        certfile: /tmp/edge.crt
+        keyfile: /tmp/edge.key
+        handshake-timeout: 30 #second
+        write-deadline: 15 # second
+        read-deadline: 15 # second
     controller:
+        protocol: quic # websocket, quic
         placement: false
         heartbeat: 15  # second
         refresh-ak-sk-interval: 10 # minute

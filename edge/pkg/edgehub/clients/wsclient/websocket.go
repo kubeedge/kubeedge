@@ -2,6 +2,7 @@ package wsclient
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -95,19 +96,27 @@ func (wcc *WebSocketClient) Send(message model.Message) error {
 	defer wcc.sendLock.Unlock()
 	wcc.webConn.SetWriteDeadline(deadline)
 
-	return wcc.webConn.WriteJSON(message)
+	data, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("websocket write msg failed with marshal failed. error %s", err.Error())
+	}
+
+	return wcc.webConn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 //Receive reads the JSON object through the connection
 func (wcc *WebSocketClient) Receive() (model.Message, error) {
 	var message model.Message
 
-	//deadline := time.Now().Add(wcc.config.ReadDeadline)
-	//wcc.webConn.SetReadDeadline(deadline)
-	err := wcc.webConn.ReadJSON(&message)
+	_, buf, err := wcc.webConn.ReadMessage()
+	if err != nil {
+		return model.Message{}, err
+	}
+
+	err = json.Unmarshal(buf, &message)
 	if err != nil {
 		log.LOGGER.Errorf("failed to read json: %v", err)
-		return model.Message{}, fmt.Errorf("failed to read json, error: %v", err)
+		return model.Message{}, err
 	}
 
 	return message, nil
