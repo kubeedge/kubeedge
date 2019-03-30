@@ -18,6 +18,8 @@ const (
 
 	heartbeatDefault = 15
 	refreshInterval  = 10
+
+	protocolDefault = "websocket"
 )
 
 //WebSocketConfig defines web socket configuration object type
@@ -33,6 +35,7 @@ type WebSocketConfig struct {
 
 //ControllerConfig defines controller configuration object type
 type ControllerConfig struct {
+	Protocol        string
 	HeartbeatPeriod time.Duration
 	RefreshInterval time.Duration
 	CloudhubURL     string
@@ -46,6 +49,17 @@ type ControllerConfig struct {
 type EdgeHubConfig struct {
 	WSConfig  WebSocketConfig
 	CtrConfig ControllerConfig
+	QcConfig  QuicConfig
+}
+
+type QuicConfig struct {
+	Url              string
+	CaFilePath       string
+	CertFilePath     string
+	KeyFilePath      string
+	HandshakeTimeout time.Duration
+	ReadDeadline     time.Duration
+	WriteDeadline    time.Duration
 }
 
 var edgeHubConfig EdgeHubConfig
@@ -59,6 +73,11 @@ func init() {
 	err = getControllerConfig()
 	if err != nil {
 		log.LOGGER.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
+		panic(err)
+	}
+	err = getQuicConfig()
+	if err != nil {
+		log.LOGGER.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
 		panic(err)
 	}
 }
@@ -114,6 +133,13 @@ func getWebSocketConfig() error {
 }
 
 func getControllerConfig() error {
+	protocol, err := config.CONFIG.GetValue("edgehub.controller.protocol").ToString()
+	if err != nil {
+		log.LOGGER.Warnf("Failed to get protocol for controller client: %v", err)
+		protocol = protocolDefault
+	}
+	edgeHubConfig.CtrConfig.Protocol = protocol
+
 	heartbeat, err := config.CONFIG.GetValue("edgehub.controller.heartbeat").ToInt()
 	if err != nil {
 		log.LOGGER.Warnf("Failed to get heartbeat for controller client: %v", err)
@@ -167,4 +193,52 @@ func getExtendHeader() http.Header {
 	log.LOGGER.Infof("websocket connection header is %v", header)
 
 	return header
+}
+
+func getQuicConfig() error {
+	url, err := config.CONFIG.GetValue("edgehub.quic.url").ToString()
+	if err != nil {
+		log.LOGGER.Errorf("Failed to get url for quic client: %v", err)
+	}
+	edgeHubConfig.QcConfig.Url = url
+
+	caFile, err := config.CONFIG.GetValue("edgehub.quic.cafile").ToString()
+	if err != nil {
+		return fmt.Errorf("failed to get cert file for quic client, error: %v", err)
+	}
+	edgeHubConfig.QcConfig.CaFilePath = caFile
+
+	certFile, err := config.CONFIG.GetValue("edgehub.quic.certfile").ToString()
+	if err != nil {
+		return fmt.Errorf("failed to get cert file for quic client, error: %v", err)
+	}
+	edgeHubConfig.QcConfig.CertFilePath = certFile
+
+	keyFile, err := config.CONFIG.GetValue("edgehub.quic.keyfile").ToString()
+	if err != nil {
+		return fmt.Errorf("failed to get key file for quic client, error: %v", err)
+	}
+	edgeHubConfig.QcConfig.KeyFilePath = keyFile
+
+	writeDeadline, err := config.CONFIG.GetValue("edgehub.quic.write-deadline").ToInt()
+	if err != nil {
+		log.LOGGER.Warnf("Failed to get write-deadline for quic client: %v", err)
+		writeDeadline = writeDeadlineDefault
+	}
+	edgeHubConfig.QcConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
+
+	readDeadline, err := config.CONFIG.GetValue("edgehub.quic.read-deadline").ToInt()
+	if err != nil {
+		log.LOGGER.Warnf("Failed to get read-deadline for quic client: %v", err)
+		readDeadline = readDeadlineDefault
+	}
+	edgeHubConfig.QcConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
+
+	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.quic.handshake-timeout").ToInt()
+	if err != nil {
+		log.LOGGER.Warnf("Failed to get handshake-timeout for quic client: %v", err)
+		handshakeTimeout = handshakeTimeoutDefault
+	}
+	edgeHubConfig.QcConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
+	return nil
 }
