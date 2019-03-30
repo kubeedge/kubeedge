@@ -88,7 +88,7 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
 	lane.SetWriteDeadline(conn.writeDeadline)
-
+	msg.Header.Sync = true
 	err = lane.WriteMessage(msg)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 
 	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
 	lane.SetWriteDeadline(conn.writeDeadline)
-
+	msg.Header.Sync = false
 	return lane.WriteMessage(msg)
 }
 

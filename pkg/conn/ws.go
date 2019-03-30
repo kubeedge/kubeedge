@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/viaduct/pkg/keeper"
 	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -19,12 +20,15 @@ type WSConnection struct {
 
 	wsConn  *websocket.Conn
 	handler mux.Handler
+
+	syncKeeper *keeper.SyncKeeper
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
 	return &WSConnection{
-		wsConn:  options.Base.(*websocket.Conn),
-		handler: options.Handler,
+		wsConn:     options.Base.(*websocket.Conn),
+		handler:    options.Handler,
+		syncKeeper: keeper.NewSyncKeeper(),
 	}
 }
 
@@ -42,6 +46,12 @@ func (conn *WSConnection) handleMessage() {
 			}
 			return
 		}
+
+		// to check whether the message is a response or not
+		if matched := conn.syncKeeper.MatchAndNotify(*msg); matched {
+			continue
+		}
+
 		if conn.handler == nil {
 			// use default mux
 			conn.handler = mux.MuxDefault
@@ -66,6 +76,7 @@ func (conn *WSConnection) SetWriteDeadline(t time.Time) error {
 func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
 	lane.SetReadDeadline(conn.WriteDeadline)
+	msg.Header.Sync = false
 	return lane.WriteMessage(msg)
 }
 
@@ -73,6 +84,7 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
 	// send msg
 	lane.SetWriteDeadline(conn.WriteDeadline)
+	msg.Header.Sync = true
 	err := lane.WriteMessage(msg)
 	if err != nil {
 		log.LOGGER.Errorf("write message error(%+v)", err)
@@ -80,14 +92,8 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 	}
 
 	//receive response
-	response := model.Message{}
-	lane.SetReadDeadline(conn.WriteDeadline)
-	err = lane.ReadMessage(&response)
-	if err != nil {
-		log.LOGGER.Errorf("receive response error(%+v)", err)
-		return nil, err
-	}
-	return nil, nil
+	response, err := conn.syncKeeper.WaitResponse(msg, conn.WriteDeadline)
+	return &response, err
 }
 
 func (conn *WSConnection) ReadMessage(msg *model.Message) error {
