@@ -18,6 +18,7 @@ type WSLane struct {
 }
 
 func NewWSLane(van interface{}) *WSLane {
+	log.LOGGER.Debugf("lan type: %T", van)
 	if wsConn, ok := van.(*websocket.Conn); ok {
 		return &WSLane{conn: wsConn}
 	}
@@ -68,7 +69,8 @@ func (l *WSLane) WriteMessage(msg *model.Message) error {
 		return err
 	}
 
-	return packer.NewWriter(l).Write(rawData)
+	_, err = packer.NewWriter(l).Write(rawData)
+	return err
 }
 
 func (l *WSLane) SetReadDeadline(t time.Time) error {

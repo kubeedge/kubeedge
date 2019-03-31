@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -30,6 +31,7 @@ type Options struct {
 	AutoRoute        bool
 	HandshakeTimeout time.Duration
 	Handler          mux.Handler
+	Consumer         io.Writer
 }
 
 type Server struct {
@@ -50,6 +52,8 @@ type Server struct {
 	HandshakeTimeout time.Duration
 	// mux handler
 	Handler mux.Handler
+	// consumer for raw data
+	Consumer io.Writer
 	// extend options
 	ExOpts interface{}
 
@@ -112,6 +116,7 @@ func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
 		HandshakeTimeout: s.HandshakeTimeout,
 		AutoRoute:        s.AutoRoute,
 		Handler:          s.Handler,
+		Consumer:         s.Consumer,
 	})
 	if err != nil {
 		return err

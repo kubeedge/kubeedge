@@ -2,9 +2,12 @@ package client
 
 import (
 	"crypto/tls"
+	"fmt"
+	"io"
 	"sync"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -22,14 +25,18 @@ type Options struct {
 	Type string
 	// the addr or url
 	Addr string
+	// client type
+	ConnUse api.UseType
 	// used to configure a TLS client
 	TLSConfig *tls.Config
 	// the message will route to Handler automatically if AutoRoute is true
 	Handler mux.Handler
-	// auto route flags
+	// auto route flag
 	AutoRoute bool
 	// HandshakeTimeout is the maximum duration that the cryptographic handshake may take.
 	HandshakeTimeout time.Duration
+	// consumer for raw data
+	Consumer io.Writer
 }
 
 // client including common options and extend options
@@ -40,6 +47,10 @@ type Client struct {
 	connLock sync.Mutex
 	// common options
 	Options
+	// client type
+	ConnUse api.UseType
+	// consumer for raw data
+	Consumer io.Writer
 	// extend options
 	ExOpts interface{}
 }
@@ -54,6 +65,9 @@ func (c *Client) Connect() (conn.Connection, error) {
 		protoClient = NewQuicClient(c.Options, c.ExOpts)
 	case api.ProtocolTypeWS:
 		protoClient = NewWSClient(c.Options, c.ExOpts)
+	default:
+		log.LOGGER.Errorf("bad protocol type(%v)", c.Type)
+		return nil, fmt.Errorf("bad protocol type(%v)", c.Type)
 	}
 
 	// try to connect to protocol server
@@ -67,9 +81,7 @@ func (c *Client) Connect() (conn.Connection, error) {
 	c.connLock.Unlock()
 
 	// check and route to handler
-	if c.AutoRoute {
-		go protoConn.ServeConn()
-	}
+	go protoConn.ServeConn(c.AutoRoute)
 
 	return protoConn, nil
 }

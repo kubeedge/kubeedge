@@ -13,6 +13,8 @@ type Lane interface {
 	SetWriteDeadline(t time.Time) error
 	ReadMessage(msg *model.Message) error
 	WriteMessage(msg *model.Message) error
+	Read(raw []byte) (int, error)
+	Write(raw []byte) (int, error)
 }
 
 func NewLane(protoType string, van interface{}) Lane {
