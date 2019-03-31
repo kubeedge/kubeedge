@@ -2,6 +2,7 @@ package mux
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/filter"
@@ -13,10 +14,16 @@ type ResponseWriter interface {
 }
 
 type Handler interface {
-	ServeConn(msg *model.Message, writer ResponseWriter)
+	ServeConn(req *MessageRequest, writer ResponseWriter)
+}
+
+type MessageRequest struct {
+	Header  http.Header
+	Message *model.Message
 }
 
 type MessageContainer struct {
+	Header     http.Header
 	Message    *model.Message
 	parameters map[string]string
 }
@@ -55,24 +62,26 @@ func (mux *MessageMux) extractParameters(expression *MessageExpression, resource
 	return parameters
 }
 
-func (mux *MessageMux) wrapMessage(msg *model.Message, params map[string]string) *MessageContainer {
+func (mux *MessageMux) wrapMessage(header http.Header, msg *model.Message, params map[string]string) *MessageContainer {
 	return &MessageContainer{
 		Message:    msg,
 		parameters: params,
+		Header:     header,
 	}
 }
 
-func (mux *MessageMux) dispatch(msg *model.Message, writer ResponseWriter) error {
+func (mux *MessageMux) dispatch(req *MessageRequest, writer ResponseWriter) error {
 	for _, entry := range mux.muxEntry {
 		// select entry
-		matched := entry.pattern.Match(msg)
+		matched := entry.pattern.Match(req.Message)
 		if !matched {
 			continue
 		}
+
 		// extract parameters
-		parameters := mux.extractParameters(entry.pattern.resExpr, msg.GetResource())
+		parameters := mux.extractParameters(entry.pattern.resExpr, req.Message.GetResource())
 		// wrap message
-		container := mux.wrapMessage(msg, parameters)
+		container := mux.wrapMessage(req.Header, req.Message, parameters)
 		// call user handle of entry
 		entry.handleFunc(container, writer)
 		return nil
@@ -84,19 +93,19 @@ func (mux *MessageMux) AddFilter(filter *filter.MessageFilter) {
 	mux.filter = filter
 }
 
-func (mux *MessageMux) processFilter(msg *model.Message) error {
+func (mux *MessageMux) processFilter(req *MessageRequest) error {
 	if mux.filter != nil {
-		return mux.filter.ProcessFilter(msg)
+		return mux.filter.ProcessFilter(req.Message)
 	}
 	return nil
 }
 
-func (mux *MessageMux) ServeConn(msg *model.Message, writer ResponseWriter) {
-	err := mux.processFilter(msg)
+func (mux *MessageMux) ServeConn(req *MessageRequest, writer ResponseWriter) {
+	err := mux.processFilter(req)
 	if err != nil {
 		return
 	}
-	mux.dispatch(msg, writer)
+	mux.dispatch(req, writer)
 }
 
 func Entry(pattern *MessagePattern, handle func(*MessageContainer, ResponseWriter)) *MessageMux {

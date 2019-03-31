@@ -24,8 +24,7 @@ import (
 var serverStdWriter = bufio.NewWriter(os.Stdout)
 
 func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	serverStdWriter.WriteString(fmt.Sprintf("%s", container.Message.GetContent()))
-	serverStdWriter.Flush()
+	fmt.Printf("receive message: %s", container.Message.GetContent())
 	if container.Message.IsSync() {
 		writer.WriteResponse(container.Message, "success")
 	}
@@ -102,17 +101,19 @@ func StartServer(cfg *config.Config) error {
 
 	input := bufio.NewReader(os.Stdin)
 	for {
-		conns := make([]conn.Connection, 0)
-		connMgr.Range(func(key, value interface{}) bool {
-			conns = append(conns, value.(conn.Connection))
-			return true
-		})
-
+		fmt.Print("send message: ")
 		inputData, err := input.ReadString('\n')
 		if err != nil {
 			log.LOGGER.Errorf("failed to read input, error: %+v", err)
 			return err
 		}
+
+		var conns []conn.Connection
+		connMgr.Range(func(key, value interface{}) bool {
+			conns = append(conns, value.(conn.Connection))
+			return true
+		})
+
 		message := model.NewMessage("").
 			BuildRouter("server", "", "viaduct_message", "update").
 			FillBody([]byte(inputData))

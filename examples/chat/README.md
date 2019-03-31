@@ -14,8 +14,8 @@ ca certificate and a cert/key pair is required to have a setup for examples/chat
 
 # How to Run
 
-cd examples/chat
-go build
+    cd examples/chat
+    go build
 
 ## quic
 - start server

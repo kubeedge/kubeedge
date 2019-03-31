@@ -1,11 +1,17 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/viaduct/pkg/comm"
 	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/lucas-clemente/quic-go"
 )
 
@@ -47,15 +53,80 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 		if err != nil {
 			return err
 		}
-		srv.handleSession(session)
+
+		go srv.handleSession(session)
 	}
 }
 
+// accept control stream
+func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
+	stream, err := session.AcceptStream()
+	if err != nil {
+		log.LOGGER.Errorf("failed to accept stream, error:%+v", err)
+		return nil
+	}
+	return stream
+}
+
+// receive header from control lane
+func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
+	var msg model.Message
+	// read control message
+	err := lane.ReadMessage(&msg)
+	if err != nil {
+		log.LOGGER.Errorf("failed read control message")
+		return nil, err
+	}
+
+	// process control message
+	result := comm.RespTypeAck
+	headers := make(http.Header)
+	err = json.Unmarshal(msg.GetContent().([]byte), &headers)
+	if err != nil {
+		log.LOGGER.Errorf("failed to unmarshal header, error: %+v", err)
+		result = comm.RespTypeNack
+	}
+
+	// feedback the response
+	resp := msg.NewRespByMessage(&msg, result)
+	err = lane.WriteMessage(resp)
+	if err != nil {
+		log.LOGGER.Errorf("failed to send response back, error:%+v", err)
+		return nil, err
+	}
+	return headers, nil
+}
+
+// handle session
+// 1) get connection
+// 2) notify connection event
+// 3) add connection into manager
+// 4) auto route to entries
 func (srv *QuicServer) handleSession(session quic.Session) {
+	ctrlStream := srv.acceptControlStream(session)
+	if ctrlStream == nil {
+		log.LOGGER.Errorf("failed to accept control stream")
+		return
+	}
+
+	ctrlLane := lane.NewLane(api.ProtocolTypeQuic, ctrlStream)
+	header, err := srv.receiveHeader(ctrlLane)
+	if err != nil {
+		log.LOGGER.Errorf("failed to complete get header, error: %+v", err)
+	}
+
 	conn := conn.NewConnection(&conn.ConnectionOptions{
 		ConnType: api.ProtocolTypeQuic,
+		// TODO:
+		ConnUse:  api.UseTypeShare,
+		Consumer: srv.options.Consumer,
 		Base:     session,
+		CtrlLane: lane.NewLane(api.ProtocolTypeQuic, ctrlStream),
 		Handler:  srv.options.Handler,
+		State: &conn.ConnectionState{
+			State:   api.StatConnected,
+			Headers: header,
+		},
 	})
 
 	// connection callback
@@ -69,9 +140,7 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 	}
 
 	// auto route message to entry
-	if srv.options.AutoRoute {
-		go conn.ServeConn()
-	}
+	conn.ServeConn(srv.options.AutoRoute)
 }
 
 func (srv *QuicServer) getQuicConfig() *quic.Config {

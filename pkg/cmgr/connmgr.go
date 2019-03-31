@@ -16,6 +16,10 @@ type ConnectionManager struct {
 }
 
 // new connection manager instance
+// you the conn key like this:
+//func getConnKey(conn conn.Connection) string {
+//	return conn.ConnectionState().Headers.Get("node_id")
+//}
 func NewManager(connKey ConnKey) *ConnectionManager {
 	keyFunc := getConnKeyDefault
 	if connKey != nil {

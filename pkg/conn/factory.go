@@ -1,6 +1,8 @@
 package conn
 
 import (
+	"io"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -12,11 +14,20 @@ type ConnectionOptions struct {
 	ConnType string
 	// connection or session object for each kind of protocol
 	Base interface{}
+	// control lane
+	CtrlLane interface{}
+	// connect stat
+	State *ConnectionState
 	// the message route to
 	Handler mux.Handler
+	// package type
+	// only used by websocket mode
+	ConnUse api.UseType
+	// consumer for raw data
+	Consumer io.Writer
 }
 
-// get connection interface by ConnType
+// get connection interface by ConnTye
 func NewConnection(opts *ConnectionOptions) Connection {
 	switch opts.ConnType {
 	case api.ProtocolTypeQuic:
