@@ -261,13 +261,13 @@ spec:
       isSwap: true
       isRegisterSwap: true
    - propertyName: temperature-enable
-      modbus:
-        register: DiscreteInputRegister
-        offset: 2
-        limit: 1
-        scale: 1
-        isSwap: true
-        isRegisterSwap: true
+     modbus:
+       register: DiscreteInputRegister
+       offset: 2
+       limit: 1
+       scale: 1
+       isSwap: true
+       isRegisterSwap: true
 ```
 
 The device model shown above describes the temperature property of a sensor. Access modes describe whether the property is read-only or can be written to.
@@ -297,10 +297,10 @@ type DeviceSpec struct {
 type ProtocolConfig struct {
 	// Protocol configuration for opc-ua
 	// +optional
-	OpcUA  *ProtocolConfigOpcUA
+	OpcUA  *ProtocolConfigOpcUA  `json:"opcua,omitempty"`
 	// Protocol configuration for modbus
 	// +optional
-	Modbus *ProtocolConfigModbus
+	Modbus *ProtocolConfigModbus `json:"modbus,omitempty"`
 }
 
 type ProtocolConfigOpcUA struct {
@@ -362,12 +362,24 @@ type ProtocolConfigModbusRTU struct {
 	SlaveID    int64  `json:"slaveID,omitempty"`
 }
 
+// DeviceState indicates the current state of the device.
+type DeviceState string
+
+// A device can be in one of the below states.
+const (
+	DeviceStateOnline  DeviceState = "online"
+	DeviceStateOffline DeviceState = "offline"
+	DeviceStateUnknown DeviceState = "unknown"
+)
+
 // DeviceStatus reports the device state and the expected/actual values of twin attributes.
 type DeviceStatus struct {
 	// A list of device twins containing expected/actual states of control properties.
 	// Optional: A passive device won't have control attributes and this list could be empty.
 	// +optional
-	Twins []Twin `json:"twins,omitempty"`
+	Twins []Twin      `json:"twins,omitempty"`
+	// Device state (online, offline, unknown)
+	State DeviceState `json:"state,omitempty"`
 }
 
 // A Twin provides a logical representation of control properties (writable properties in the
@@ -381,15 +393,15 @@ type Twin struct {
 	// Required: The property name for which the desired/reported values are specified.
 	// This property should be present in the device model.
 	PropertyName string       `json:"propertyName,omitempty"`
-	// Required: the expected attribute value for this property.
+	// Required: the desired property value
 	Desired      TwinProperty `json:"desired,omitempty"`
-	// Required: the actual attribute value for this property.
+	// Required: the reported property value.
 	Reported     TwinProperty `json:"reported,omitempty"`
 }
 
 // TwinProperty represents the device property for which an Expected/Actual state can be defined.
 type TwinProperty struct {
-	// Required: The value for this attribute.
+	// Required: The value for this property.
 	Value    string            `json:"value,omitempty"`
 	// Additional metadata like timestamp when the value was reported etc.
 	// +optional
@@ -433,7 +445,7 @@ spec:
   deviceModelRef:
     Name: sensor-tag-model
   protocol:
-    Modbus:
+    modbus:
       rtu:
         serialPort: '1'
         baudRate: 115200
@@ -452,12 +464,12 @@ status:
   state: online
   twins:
     - name: temperature-enable
-      actual:
+      reported:
         metadata:
           timestamp: '1550049403598'
           type: string
         value: OFF
-      expected:
+      desired:
         metadata:
           timestamp: '1550049403598'
           type: string
