@@ -23,6 +23,8 @@ import (
 	"time"
 )
 
+const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+
 //config.json decode struct
 type Config struct {
 	EdgedEndpoint string   `json:"edgedEndpoint"`
@@ -41,7 +43,7 @@ func LoadConfig() Config {
 	return *config
 }
 
-//Load Config.json from the PWD, and decode the config.
+//loadConfigJsonFromPath reads the test configuration and builds a Config object.
 func loadConfigJsonFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
@@ -62,7 +64,8 @@ func loadConfigJsonFromPath() *Config {
 	return config
 }
 
-//Get config path from Env or hard code the file path
+//getConfigPath returns the configuration path provided in the env var name. In case the env var is not
+//set, the default configuration path is returned
 func getConfigPath() string {
 	path := os.Getenv("TESTCONFIG")
 	if path == "" {

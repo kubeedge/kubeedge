@@ -32,22 +32,24 @@ import (
 var (
 	ctx *utils.TestContext
 	cfg utils.Config
+	nodeSelector string
+	nodeName string
 )
 
-const (
-	runController = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud/edgecontroller; nohup ./edgecontroller > edgecontroller.log 2>&1 &"
-	runEdgecore   = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; nohup ./edge_core > edge_core.log 2>&1 &"
+var (
+	runController = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud/edgecontroller; sudo nohup ./edgecontroller > edgecontroller.log 2>&1 &"
+	runEdgecore   = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edge_core > edge_core.log 2>&1 &"
 )
 
 //Function to run the Ginkgo Test
 func TestEdgecoreAppDeployment(t *testing.T) {
-	var nodeName string
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 		utils.InfoV6("Before Suite Execution")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
 		nodeName = "integration-node-" + utils.GetRandomString(10)
+		nodeSelector = "node-" + utils.GetRandomString(3)
 		//Generate Cerificates for Edge and Cloud nodes copy to respective folders
 		cmd := exec.Command("bash", "-x", "scripts/generate_cert.sh")
 		err := utils.PrintCombinedOutput(cmd)
@@ -63,7 +65,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		Expect(err).Should(BeNil())
 		//Register the Edge Node to Master
-		err = utils.RegisterNodeToMaster(ctx, nodeName, NodeHandler)
+		err = utils.RegisterNodeToMaster(ctx, nodeName, NodeHandler, nodeSelector)
 		Expect(err).Should(BeNil())
 		//Run ./edge_core after node registration
 		cmd = exec.Command("sh", "-c", runEdgecore)

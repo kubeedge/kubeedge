@@ -19,6 +19,7 @@ workdir=`pwd`
 cd $workdir
 
 debugflag="-v 6 -alsologtostderr"
+
 compilemodule=$1
 runtest=$2
 
@@ -30,7 +31,7 @@ cd ../
 cat >config.json<<END
 {
         "edgedEndpoint": "http://127.0.0.1:10255",
-        "image_url": ["nginx:1.7.9", "hello-world"],
+        "image_url": ["nginx", "hello-world"],
         "apiserver":"http://$MASTER_IP:12418"
 }
 END
