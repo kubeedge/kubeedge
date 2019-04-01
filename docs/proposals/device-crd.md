@@ -99,12 +99,12 @@ type DeviceModelSpec struct {
 // DeviceProperty describes an individual device property / attribute like temperature / humidity etc.
 type DeviceProperty struct {
 	// Required: The device property name.
-	Name        string `json:"name,omitempty"`
+	Name        string        `json:"name,omitempty"`
 	// The device property description.
 	// +optional
-	Description string `json:"description,omitempty"`
+	Description string        `json:"description,omitempty"`
 	// Required: PropertyType represents the type and data validation of the property.
-	PropertyType       `json:",inline"`
+	Type        PropertyType  `json:"type,omitempty"`
 }
 
 // Represents the type and data validation of a property.
@@ -137,8 +137,10 @@ type PropertyTypeString struct {
 	DefaultValue string             `json:"defaultValue,omitempty"`
 }
 
+// The access mode for  a device property.
 type PropertyAccessMode string
 
+// Access mode constants for a device property.
 const (
 	ReadWrite PropertyAccessMode = "ReadWrite"
 	ReadOnly  PropertyAccessMode = "ReadOnly"
@@ -147,8 +149,6 @@ const (
 // DevicePropertyVisitor describes the specifics of accessing a particular device
 // property. Visitors are intended to be consumed by device mappers which connect to devices
 // and collect data / perform actions on the device.
-// A device may support multiple protocols. With visitorConfig,
-// users can define property access details per protocol per property for a device.
 type DevicePropertyVisitor struct {
 	// Required: The device property name to be accessed. This should refer to one of the
 	// device properties defined in the device model.
@@ -197,8 +197,10 @@ type VisitorConfigModbus struct {
 	IsRegisterSwap bool               `json:"isRegisterSwap,omitempty"`
 }
 
+// The Modbus register type to read a device property.
 type ModbusRegisterType string
 
+// Modbus protocol register types
 const (
 	ModbusRegisterTypeCoilRegister          ModbusRegisterType = "CoilRegister"
 	ModbusRegisterTypeDiscreteInputRegister ModbusRegisterType = "DiscreteInputRegister"
@@ -242,36 +244,40 @@ spec:
   properties:
   - name: temperature
     description: temperature in degree celsius
-    int:
-      accessMode: ReadOnly
-      maximum: 100
-      unit: Degree Celsius
+    type:
+      int:
+        accessMode: ReadOnly
+        maximum: 100
+        unit: Degree Celsius
   - name: temperature-enable
     description: enable data collection of temperature sensor
-    string:
-      accessMode: ReadWrite
-      defaultValue: OFF
+    type:
+      string:
+        accessMode: ReadWrite
+        defaultValue: OFF
   propertyVisitors:
   - propertyName: temperature
     modbus:
       register: CoilRegister
       offset: 2
       limit: 1
-      scale: 1
+      scale: 1.0
       isSwap: true
       isRegisterSwap: true
    - propertyName: temperature-enable
      modbus:
        register: DiscreteInputRegister
-       offset: 2
+       offset: 3
        limit: 1
-       scale: 1
+       scale: 1.0
        isSwap: true
        isRegisterSwap: true
 ```
+Shown above is an example device model for a temperature sensor with Modbus protocol. It has two properties :
+- `temperature` : the temperature readings from the sensor. The `type` field indicates that the temperature property is of type `int` , it is read-only and the maximum value it can take is 100.
+- `temperature-enable` : this property defines whether data collection is enabled from the sensor. It is a writable property. Data collection is disabled if it is set to `OFF`. To turn on data collection , it needs to be set to `ON`.
 
-The device model shown above describes the temperature property of a sensor. Access modes describe whether the property is read-only or can be written to.
-Property visitors provide details like how to access device properties. In the above example , the visitor is for Modbus protocol and describes the register to read data , the offset to apply etc.
+Property visitors provide details like how to access device properties. In the above example , there are two visitors defined which describe how to read / write the device properties using `modbus` protocol. Detailed information on the Modbus registers to access is provided along with the offset, limit and other settings.
 
 ### Device instance CRD
 <img src="../images/device-crd/device-crd.png">
@@ -362,33 +368,20 @@ type ProtocolConfigModbusRTU struct {
 	SlaveID    int64  `json:"slaveID,omitempty"`
 }
 
-// DeviceState indicates the current state of the device.
-type DeviceState string
-
-// A device can be in one of the below states.
-const (
-	DeviceStateOnline  DeviceState = "online"
-	DeviceStateOffline DeviceState = "offline"
-	DeviceStateUnknown DeviceState = "unknown"
-)
-
 // DeviceStatus reports the device state and the expected/actual values of twin attributes.
 type DeviceStatus struct {
 	// A list of device twins containing expected/actual states of control properties.
 	// Optional: A passive device won't have control attributes and this list could be empty.
 	// +optional
 	Twins []Twin      `json:"twins,omitempty"`
-	// Device state (online, offline, unknown)
-	State DeviceState `json:"state,omitempty"`
 }
 
 // A Twin provides a logical representation of control properties (writable properties in the
-// device model). The properties can have an Expected state and an Actual state. The cloud configures
-// the `Expected`state of a device property and this configuration update is pushed to the edge node.
-// The mapper sends a command to the device to change this property value as per the expected state .
-// It receives the `Actual` state of the property once the previous operation is complete and sends
-// the actual state to the cloud. Offline device interaction in the edge is possible via twin
-// properties for control/command operations.
+// device model). The properties can have a desired (expected) state and a reported(actual) state.
+// The cloud configures the `desired`state of a device property and this configuration update is pushed
+// to the edge node. The mapper sends a command to the device to change this property value as per the desired state.
+// It sends the state reported by the device to the cloud. Offline device interaction in the edge is possible via
+// twin properties for control/command operations.
 type Twin struct {
 	// Required: The property name for which the desired/reported values are specified.
 	// This property should be present in the device model.
@@ -454,11 +447,11 @@ spec:
         stopBits: 1
         slaveID: 1
   nodeSelector:
-    NodeSelectorTerms:
-    - MatchExpressions:
-      - Key: ''
-        Operator: In
-        Values:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: ''
+        operator: In
+        values:
         - node1
 status:
   state: online
