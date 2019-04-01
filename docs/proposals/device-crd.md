@@ -302,7 +302,7 @@ Property visitors provide details like how to access device properties. In the a
 ### Device instance CRD
 <img src="../images/device-crd/device-crd.png">
 
-A `device` instance represents an actual device object. It is like an instantiation of the `device model` and references properties defined in the model. It additionally reports the expected and actual values of the properties, protocol details like server url etc.
+A `device` instance represents an actual device object. It is like an instantiation of the `device model` and references properties defined in the model. The device spec is static while the device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
 
 ### Device instance type definition
 ```go
@@ -411,7 +411,7 @@ type Twin struct {
 	Reported     TwinProperty `json:"reported,omitempty"`
 }
 
-// TwinProperty represents the device property for which an Expected/Actual state can be defined.
+// TwinProperty represents the device property for which a desired/reported state can be defined.
 type TwinProperty struct {
 	// Required: The value for this property.
 	Value    string            `json:"value,omitempty"`
@@ -492,7 +492,7 @@ status:
 
 ## Synchronizing Device Twin Updates
 
-The below illustrations describe the flow of events that would occur when device twin expected/actual property values are updated from the cloud/edge.
+The below illustrations describe the flow of events that would occur when device twin desired/reported property values are updated from the cloud/edge.
 
 ### Syncing Desired Device Twin Property Update From Cloud To Edge
 <img src="../images/device-crd/device-updates-cloud-edge.png">
@@ -517,7 +517,7 @@ Updates are categorized below along with the possible actions that the downstrea
 |New Device Model Created       |  NA                                           |
 |New Device Created             | The controller creates a new config map to store the device properties and visitors defined in the device model associated with the device.  This config map is stored in etcd. The existing config map sync mechanism in the edge controller is used to sync the config map to the egde. The mapper application running in a container can get the updated config map and use the property and visitor metadata to access the device. The device controller additionally reports the device twin metadata updates to the edge node.|
 |Device Node Membership Updated | The device controller sends a membership update event to the edge node.|
-|Device  Twin Expected State Updated | The device controller sends a twin update event to the edge node.|
+|Device  Twin Desired State Updated | The device controller sends a twin update event to the edge node.|
 |Device Model Updated           |  TODO: What happens to existing devices using this model which are generating telemetry data as per the old model ? Do we update the config map associated with the devices which are using this device model ?|
 |Device Deleted                 | The controller sends the device twin delete event to delete all device twins associated with the device. It also deletes config maps associated with the device and this delete event is synced to the edge. The mapper application effectively stops operating on the device.|
 |Device Model Deleted           |  The controller needs to run [`finalizers`](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers) to ensure that all device instances using the device model are deleted first, and only then should the model deletion proceed.|
@@ -624,8 +624,7 @@ This can be retrieved from the propertyVisitors list. Finally , using the visito
 
   | Update Type                        | Action                                        |
   |-------------------------------     |---------------------------------------------- |
-  |Device Twin Actual State Updated    |  The controller patches the actual state of the device twin property in the cloud. |
-  |Device State Updated                | The controller patches the device state in the cloud.|
+  |Device Twin Reported State Updated    |  The controller patches the reported state of the device twin property in the cloud. |
 
 ## Offline scenarios
 In case where there is intermittent / no connectivity between the edge node and the cloud , we need to have mechanisms to retry until the updates are correctly propagated. A retry mechanism with a configurable retry timeout and number of retry attempts can be implemented.
@@ -646,7 +645,7 @@ IoT device lifecycle management comprises of several steps listed below
   - The device needs to be registered (via authorization or admission control mechanism). This is currently not in scope of this design.
 - Device configuration
   - The device needs to be reconfigured many a times during it's lifecycle. No new capabilities are added.
-  The device CRD has device twins which contain expected values for control attributes. By changing the expected value of a control attribute , we can re-configure the device behaviour.
+  The device CRD has device twins which contain desired values for control properties. By changing the desired value of a control property , we can re-configure the device behaviour.
 - Device Updates
   - Firmware updates or some bug fixes need to be applied to the device. This can be a scheduled or ad-hoc update.
   The current design doesn't support applying such updates. We can support additional actions in the future to perform such tasks.
@@ -658,7 +657,7 @@ IoT device lifecycle management comprises of several steps listed below
   - If a device is damaged , it needs to be retired. This is currently not in scope of this design.
 
 ### Device Actions
-- Currently the device model doesn't support [WOT style actions](https://iot.mozilla.org/wot/#actions-resource). The only way to perform some action on the device is by changing the expected state of the twin attribute in the status field. We need to see how WOT actions can be incorporated in this model and who will consume those actions ?
+- Currently the device model doesn't support [WOT style actions](https://iot.mozilla.org/wot/#actions-resource). The only way to perform some action on the device is by changing the desired state of the twin property in the status field. We need to see how WOT actions can be incorporated in this model and who will consume those actions ?
 Will it be the responsibility of the mapper to expose HTTP APIs for the actions ? Can we generate server / client code to perform / consume these actions ? Can we handle firmware updates with such actions ?
 
 ### Device Events
