@@ -9,7 +9,7 @@ approvers:
   - "@Baoqiang-Zhang"
   - "@m1093782566"
 creation-date: 2019-02-27
-last-updated: 2019-03-29
+last-updated: 2019-04-01
 status: alpha
 ---
 
@@ -22,17 +22,17 @@ status: alpha
   * [Proposal](#proposal)
     * [Use Cases](#use-cases)
   * [Design Details](#design-details)  
+    * [CRD API Group and Version](#crd-api-group-and-version)
     * [Device model CRD](#device-model-crd)
     * [Device model type definition](#device-model-type-definition)
     * [Device model sample](#device-model-sample)
     * [Device instance CRD](#device-instance-crd)
     * [Device instance type definition](#device-instance-type-definition)
     * [Device instance sample](#device-instance-sample)
-    * [CRD API Group and Version](#crd-api-group-and-version)
     * [Validation](#validation)
     * [Synchronizing Device Twin Updates](#synchronizing-device-twin-updates)
-      * [Syncing Expected Device Twin Property Update From Cloud To Edge](#syncing-expected-device-twin-property-update-from-cloud-to-edge)
-      * [Syncing Actual Device Twin Property Update From Edge To Cloud](#syncing-actual-device-twin-property-update-from-edge-to-cloud)
+      * [Syncing Desired Device Twin Property Update From Cloud To Edge](#syncing-desired-device-twin-property-update-from-cloud-to-edge)
+      * [Syncing Reported Device Twin Property Update From Edge To Cloud](#syncing-reported-device-twin-property-update-from-edge-to-cloud)
   * [Device Controller Design](#device-controller-design)
     * [Downstream Controller](#downstream-controller)
     * [Upstream Controller](#upstream-controller)
@@ -73,11 +73,31 @@ We propose using Kubernetes [Custom Resource Definitions (CRDs)](https://kuberne
   * Users can describe device properties and access mechanisms to interact with / control the device.
 * Perform CRUD operations on devices from cloud.
    * Users can create, update and delete device metadata from the cloud via the CRD APIs exposed by the Kubernetes API server.
-   * Users can control the expected state of a device via the CRD APIs.
-* Report device status from the edge node.
-  * Mapper applications running on the edge can report the device state as well the actual values of the control attributes.
+   * Users can control the desired state of a device via the CRD APIs.
+* Report device properties values.
+  * Mapper applications running on the edge can report the current values of the device properties.
 
 ## Design Details
+
+### CRD API Group and Version
+The `DeviceModel` and `Device` CRD's will be namespace-scoped.
+The tables below summarize the group, kind and API version details for the CRDs.
+
+* DeviceModel
+
+| Field                 | Description             |
+|-----------------------|-------------------------|
+|Group                  | devices.kubeedge.io     |
+|APIVersion             | v1alpha1                |
+|Kind                   | DeviceModel             |
+
+* DeviceInstance
+
+| Field                 | Description             |
+|-----------------------|-------------------------|
+|Group                  | devices.kubeedge.io     |
+|APIVersion             | v1alpha1                |
+|Kind                   | Device                  |
 
 ### Device model CRD
 <img src="../images/device-crd/device-model-crd.png">
@@ -264,20 +284,20 @@ spec:
       scale: 1.0
       isSwap: true
       isRegisterSwap: true
-   - propertyName: temperature-enable
-     modbus:
-       register: DiscreteInputRegister
-       offset: 3
-       limit: 1
-       scale: 1.0
-       isSwap: true
-       isRegisterSwap: true
+  - propertyName: temperature-enable
+    modbus:
+      register: DiscreteInputRegister
+      offset: 3
+      limit: 1
+      scale: 1.0
+      isSwap: true
+      isRegisterSwap: true
 ```
-Shown above is an example device model for a temperature sensor with Modbus protocol. It has two properties :
-- `temperature` : the temperature readings from the sensor. The `type` field indicates that the temperature property is of type `int` , it is read-only and the maximum value it can take is 100.
-- `temperature-enable` : this property defines whether data collection is enabled from the sensor. It is a writable property. Data collection is disabled if it is set to `OFF`. To turn on data collection , it needs to be set to `ON`.
+Shown above is an example device model for a temperature sensor with Modbus protocol. It has two properties:
+- `temperature`: the temperature readings from the sensor. The `type` field indicates that the temperature property is of type `int`, it is read-only and the maximum value it can take is 100.
+- `temperature-enable`: this property defines whether data collection is enabled from the sensor. It is a writable property. Data collection is disabled if it is set to `OFF`. To turn on data collection, it needs to be set to `ON`.
 
-Property visitors provide details like how to access device properties. In the above example , there are two visitors defined which describe how to read / write the device properties using `modbus` protocol. Detailed information on the Modbus registers to access is provided along with the offset, limit and other settings.
+Property visitors provide details like how to access device properties. In the above example, there are two visitors defined which describe how to read/write the device properties using `modbus` protocol. Detailed information on the Modbus registers to access is provided along with the offset, limit and other settings.
 
 ### Device instance CRD
 <img src="../images/device-crd/device-crd.png">
@@ -286,7 +306,7 @@ A `device` instance represents an actual device object. It is like an instantiat
 
 ### Device instance type definition
 ```go
-// DeviceSpec represents a single device instance. It is an instantation of a device model.
+// DeviceSpec represents the static information of a single device instance.
 type DeviceSpec struct {
 	// Required: DeviceModelRef is reference to the device model used as a template
 	// to create the device instance.
@@ -368,20 +388,19 @@ type ProtocolConfigModbusRTU struct {
 	SlaveID    int64  `json:"slaveID,omitempty"`
 }
 
-// DeviceStatus reports the device state and the expected/actual values of twin attributes.
+// DeviceStatus contains the desired/reported values of device twin properties.
 type DeviceStatus struct {
-	// A list of device twins containing expected/actual states of control properties.
-	// Optional: A passive device won't have control attributes and this list could be empty.
+	// A list of device twins containing desired/reported values of twin properties.
+	// A passive device won't have twin properties and this list could be empty.
 	// +optional
 	Twins []Twin      `json:"twins,omitempty"`
 }
 
 // A Twin provides a logical representation of control properties (writable properties in the
 // device model). The properties can have a desired (expected) state and a reported(actual) state.
-// The cloud configures the `desired`state of a device property and this configuration update is pushed
+// The cloud configures the `desired` state of a device property and this configuration update is pushed
 // to the edge node. The mapper sends a command to the device to change this property value as per the desired state.
-// It sends the state reported by the device to the cloud. Offline device interaction in the edge is possible via
-// twin properties for control/command operations.
+// The mapper sends the state reported by the device to the cloud. Offline device interaction in the edge is // possible via twin properties for control/command operations.
 type Twin struct {
 	// Required: The property name for which the desired/reported values are specified.
 	// This property should be present in the device model.
@@ -436,7 +455,7 @@ metadata:
     model: CC2650
 spec:
   deviceModelRef:
-    Name: sensor-tag-model
+    name: sensor-tag-model
   protocol:
     modbus:
       rtu:
@@ -468,24 +487,6 @@ status:
           type: string
         value: OFF
 ```
-### CRD API Group and Version
-The tables below summarize the group, kind and API version details for the CRDs.
-
-* DeviceModel
-
-| Field                 | Description             |
-|-----------------------|-------------------------|
-|Group                  | devices.kubeedge.io     |
-|APIVersion             | v1alpha1                |
-|Kind                   | DeviceModel             |
-
-* DeviceInstance
-
-| Field                 | Description             |
-|-----------------------|-------------------------|
-|Group                  | devices.kubeedge.io     |
-|APIVersion             | v1alpha1                |
-|Kind                   | Device                  |
 
 ### Validation
 [Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation) can be used to guard against bad requests.
@@ -494,13 +495,13 @@ The tables below summarize the group, kind and API version details for the CRDs.
 
 The below illustrations describe the flow of events that would occur when device twin expected/actual property values are updated from the cloud/edge.
 
-### Syncing Expected Device Twin Property Update From Cloud To Edge
+### Syncing Desired Device Twin Property Update From Cloud To Edge
 <img src="../images/device-crd/device-updates-cloud-edge.png">
 The device controller watches device updates in the cloud and relays them to the edge node. These updates are stored locally by the device twin. The mapper gets these updates via the broker and operates on the device based on the updates.
 
-### Syncing Actual Device Twin Property Update From Edge To Cloud
+### Syncing Reported Device Twin Property Update From Edge To Cloud
 <img src="../images/device-crd/device-updates-edge-cloud.png">
-The mapper watches devices for updates and reports them to the event bus via the broker. The event bus reports the actual state to the device twin which stores it locally and then syncs the updates to the cloud. The device controller watches for device updates from the edge ( via the cloudhub ) and updates the actual state in the cloud.
+The mapper watches devices for updates and reports them to the event bus via the broker. The event bus sends the reported state of the device to the device twin which stores it locally and then syncs the updates to the cloud. The device controller watches for device updates from the edge ( via the cloudhub ) and updates the reported state in the cloud.
 
 ## Device Controller Design
 The device controller starts two separate goroutines called  `upstream` controller and `downstream` controller. These are not separate controllers as such but named here for clarity.
@@ -582,16 +583,26 @@ data:
           "modelName": "SensorTagModel",
           "protocol": "BluetoothLE",
           "visitorConfig": {
-            "uuid": "F000AA01-0451-4000-B000-000000000000"
+            "register": "CoilRegister",
+            "offset": "2",
+            "limit": "1",
+            "scale": "1.0",
+            "isSwap": "true",
+            "isRegisterSwap": "true"
           }
         },
         {
           "name": "temperatureEnable",
           "propertyName": "temperature-enable",
           "modelName": "SensorTagModel",
-          "protocol": "BluetoothLE",
+          "protocol": "Modbus",
           "visitorConfig": {
-            "uuid": "F000AA02-0451-4000-B000-000000000000"
+            "register": "DiscreteInputRegister",
+            "offset": "3",
+            "limit": "1",
+            "scale": "1.0",
+            "isSwap": "true",
+            "isRegisterSwap": "true"
           }
         }
       ]
@@ -623,6 +634,7 @@ The following factors need to be evaluated in order to analyze issues with scale
   - A detailed design for the device controller is provided in earlier section. The device model and the device instance would be stored in etcd in the cloud. The device twin updates are stored at the edge. The device property and visitors , protocol config are stored in config-maps and consumed by mappers.
 - How are we going to use the device data at cloud ? This can help evaluate item 1
   - This is desribed in the device controller design.
+- Currently, we have only one config map per node which stores all the device instances, device models, protocols and visitors for all the devices connected to the edge node. Mappers running on an edge node managing different devices now need to access one global configmap in order to extract information about the device properties and visitors. What should be the best way to partition a monolithic config map into smaller config maps ? Should the partitioning be based on the protocol type or based on device model ?
 
 ## Device Lifecycle Management
 IoT device lifecycle management comprises of several steps listed below
