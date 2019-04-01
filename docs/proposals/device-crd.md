@@ -473,7 +473,6 @@ spec:
         values:
         - node1
 status:
-  state: online
   twins:
     - name: temperature-enable
       reported:
@@ -543,7 +542,7 @@ data:
         {
           "id": "1",
           "name": "device1",
-          "protocol": "ble-01",
+          "protocol": "ble-01", // TODO: not supported in API definition
           "model": "SensorTagModel"
         }
       ],
@@ -569,10 +568,15 @@ data:
       ],
       "protocols": [
         {
-          "name": "ble-01",
-          "protocol": "BluetoothLE",
+          "name": "ble-01", // TODO: not supported in API definition
+          "protocol": "modbus",
           "protocolConfig": {
-
+            "serialPort": "1",
+            "baudRate": "115200",
+            "dataBits": "8",
+            "parity": "even",
+            "stopBits": "1",
+            "slaveID": "1"
           }
         }
       ],
@@ -581,7 +585,7 @@ data:
           "name": "temperature",
           "propertyName": "temperature",
           "modelName": "SensorTagModel",
-          "protocol": "BluetoothLE",
+          "protocol": "modbus",
           "visitorConfig": {
             "register": "CoilRegister",
             "offset": "2",
@@ -595,7 +599,7 @@ data:
           "name": "temperatureEnable",
           "propertyName": "temperature-enable",
           "modelName": "SensorTagModel",
-          "protocol": "Modbus",
+          "protocol": "modbus",
           "visitorConfig": {
             "register": "DiscreteInputRegister",
             "offset": "3",
