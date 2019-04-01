@@ -28,7 +28,7 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-//Function to deregister the node from master
+//DeRegisterNodeFromMaster to deregister the node from master
 func DeRegisterNodeFromMaster(ctx *TestContext, nodehandler, nodename string) error {
 	err, resp := SendHttpRequest(http.MethodDelete, ctx.Cfg.ApiServer+nodehandler+"/"+nodename)
 	if err != nil {
@@ -41,11 +41,11 @@ func DeRegisterNodeFromMaster(ctx *TestContext, nodehandler, nodename string) er
 	return nil
 }
 
-//function to generate the node request body
-func GenerateNodeReqBody(nodeid string) (error, map[string]interface{}) {
+//GenerateNodeReqBody to generate the node request body
+func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interface{}) {
 	var temp map[string]interface{}
 
-	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode"}}}`, nodeid)
+	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s"}}}`, nodeid, nodeselector)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
 		Failf("Unmarshal body failed: %v", err)
@@ -55,9 +55,9 @@ func GenerateNodeReqBody(nodeid string) (error, map[string]interface{}) {
 	return nil, temp
 }
 
-//Function to register node to master
-func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler string) error {
-	err, body := GenerateNodeReqBody(UID)
+//RegisterNodeToMaster to register node to master
+func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler, nodeselector string) error {
+	err, body := GenerateNodeReqBody(UID, nodeselector)
 	if err != nil {
 		Failf("Unmarshal body failed: %v", err)
 		return err
@@ -89,7 +89,7 @@ func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler string) error {
 	return nil
 }
 
-//function to get node status
+//CheckNodeReadyStatus to get node status
 func CheckNodeReadyStatus(ctx *TestContext, nodehandler, nodename string) string {
 	var node v1.Node
 	var nodeStatus = "unknown"
@@ -114,7 +114,7 @@ func CheckNodeReadyStatus(ctx *TestContext, nodehandler, nodename string) string
 	return string(node.Status.Phase)
 }
 
-//function to node delete status
+//CheckNodeDeleteStatus to check node delete status
 func CheckNodeDeleteStatus(ctx *TestContext, nodehandler, nodename string) int {
 	err, resp := SendHttpRequest(http.MethodGet, ctx.Cfg.ApiServer+nodehandler+"/"+nodename)
 	if err != nil {

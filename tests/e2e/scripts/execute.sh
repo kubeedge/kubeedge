@@ -31,6 +31,7 @@ sleep 2s
 #Kill the process if it exists
 sudo pkill edgecontroller
 sudo pkill edge_core
+sleep 2s
 #check the process are killed successfully
 if pgrep edgecontroller >/dev/null
 then
