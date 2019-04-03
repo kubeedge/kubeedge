@@ -293,6 +293,7 @@ First, ensure your k8s cluster can pull edge controller image. If the
 image not exist. We can make one, and push to your registry.
 
 ```bash
+cd $GOPATH/src/github.com/kubeedge/kubeedge
 make cloudimage
 ```
 
