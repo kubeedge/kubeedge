@@ -293,6 +293,7 @@ First, ensure your k8s cluster can pull edge controller image. If the
 image not exist. We can make one, and push to your registry.
 
 ```bash
+cd $GOPATH/src/github.com/kubeedge/kubeedge
 make cloudimage
 ```
 
@@ -300,6 +301,7 @@ Then, we need to generate the tls certs. It then will give us
 `06-secret.yaml` if succeeded.
 
 ```bash
+cd build/cloud
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 
