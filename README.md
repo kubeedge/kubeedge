@@ -301,7 +301,8 @@ Then, we need to generate the tls certs. It then will give us
 `06-secret.yaml` if succeeded.
 
 ```bash
-../tools/certgen.sh buildSecret | tee ./06-secret.yaml
+cd build
+./tools/certgen.sh buildSecret | tee ./cloud/06-secret.yaml
 ```
 
 Second, we create k8s resources from the manifests in name order. Before
