@@ -17,12 +17,23 @@ ensureCA() {
     fi
 }
 
+ensureFolder() {
+    if [ ! -d ${caPath} ]; then
+        mkdir -p ${caPath}
+    fi
+    if [ ! -d ${certPath} ]; then
+        mkdir -p ${certPath}
+    fi
+}
+
 genCertAndKey() {
+    ensureFolder
     ensureCA
     local name=$1
     openssl genrsa -out ${certPath}/${name}.key 2048
     openssl req -new -key ${certPath}/${name}.key -subj ${subject} -out ${certPath}/${name}.csr
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/ca.crt -CAkey ${caPath}/ca.key -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/ca.crt -CAkey ${caPath}/ca.key \
+    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
 }
 
 buildSecret() {
