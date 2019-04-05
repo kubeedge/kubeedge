@@ -22,7 +22,7 @@ func TestMakeUpVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := makeUpVersion(tt.major, tt.minor, tt.fix); got != tt.want {
-				t.Errorf("makeUpVersion() = %v, want %v", got, tt.want)
+				t.Errorf("makeUpVersion() = %v, majorVersion %v", got, tt.want)
 			}
 		})
 	}
@@ -31,31 +31,31 @@ func TestMakeUpVersion(t *testing.T) {
 // TestBreadDownVersion is function to test breadDownVersion().
 func TestBreadDownVersion(t *testing.T) {
 	tests := []struct {
-		name    string
-		version uint32
-		want    uint8
-		want1   uint8
-		want2   uint8
+		name          string
+		version       uint32
+		majorVersion  uint8
+		middleVersion uint8
+		minorVersion  uint8
 	}{
 		{
-			name:    "BreadDownVersionTest",
-			version: 00,
-			want:    00,
-			want1:   00,
-			want2:   00,
+			name:          "BreadDownVersionTest",
+			version:       00,
+			majorVersion:  00,
+			middleVersion: 00,
+			minorVersion:  00,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, got2 := breadDownVersion(tt.version)
-			if got != tt.want {
-				t.Errorf("breadDownVersion() got = %v, want %v", got, tt.want)
+			gotMajorVersion, gotMiddleVersion, gotMinorVersion := breadDownVersion(tt.version)
+			if gotMajorVersion != tt.majorVersion {
+				t.Errorf("breadDownVersion() gotMajorVersion = %v, majorVersion %v", gotMajorVersion, tt.majorVersion)
 			}
-			if got1 != tt.want1 {
-				t.Errorf("breadDownVersion() got1 = %v, want %v", got1, tt.want1)
+			if gotMiddleVersion != tt.middleVersion {
+				t.Errorf("breadDownVersion() gotMiddleVersion = %v, majorVersion %v", gotMiddleVersion, tt.middleVersion)
 			}
-			if got2 != tt.want2 {
-				t.Errorf("breadDownVersion() got2 = %v, want %v", got2, tt.want2)
+			if gotMinorVersion != tt.minorVersion {
+				t.Errorf("breadDownVersion() gotMinorVersion = %v, majorVersion %v", gotMinorVersion, tt.minorVersion)
 			}
 		})
 	}
