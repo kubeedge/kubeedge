@@ -2,21 +2,21 @@ package packer
 
 import "testing"
 
-// Test_makeUpVersion is function to test makeUpVersion().
-func Test_makeUpVersion(t *testing.T) {
+// TestMakeUpVersion is function to test makeUpVersion().
+func TestMakeUpVersion(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		major uint8
 		minor uint8
 		fix   uint8
-		want uint32
+		want  uint32
 	}{
 		{
-			name:"MakeUpversionTest",
-			major:FixVersion,
-			minor:MinorVersion,
-			fix:FixVersion,
-			want:16843008,
+			name:  "MakeUpversionTest",
+			major: FixVersion,
+			minor: MinorVersion,
+			fix:   FixVersion,
+			want:  16843008,
 		},
 	}
 	for _, tt := range tests {
@@ -28,21 +28,21 @@ func Test_makeUpVersion(t *testing.T) {
 	}
 }
 
-// Test_breadDownVersion is function to test breadDownVersion().
-func Test_breadDownVersion(t *testing.T) {
+// TestBreadDownVersion is function to test breadDownVersion().
+func TestBreadDownVersion(t *testing.T) {
 	tests := []struct {
-		name  string
+		name    string
 		version uint32
-		want  uint8
-		want1 uint8
-		want2 uint8
+		want    uint8
+		want1   uint8
+		want2   uint8
 	}{
 		{
-			name:"BreadDownVersionTest",
-			version:00,
-			want:00,
-			want1:00,
-			want2:00,
+			name:    "BreadDownVersionTest",
+			version: 00,
+			want:    00,
+			want1:   00,
+			want2:   00,
 		},
 	}
 	for _, tt := range tests {
@@ -60,3 +60,4 @@ func Test_breadDownVersion(t *testing.T) {
 		})
 	}
 }
+

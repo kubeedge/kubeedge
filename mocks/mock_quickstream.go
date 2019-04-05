@@ -6,7 +6,6 @@ package mocks
 
 import (
 	"context"
-	"fmt"
 	"github.com/golang/mock/gomock"
 	quic_go "github.com/lucas-clemente/quic-go"
 	"reflect"
@@ -94,7 +93,6 @@ func (mr *MockStreamMockRecorder) Context() *gomock.Call {
 
 // Read mocks base method
 func (m *MockStream) Read(arg0 []byte) (int, error) {
-	fmt.Println("%INSIDE MOCKSS%%%%%%%%%%%%%%")
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", arg0)
 	ret0, _ := ret[0].(int)

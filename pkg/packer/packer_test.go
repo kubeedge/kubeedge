@@ -10,8 +10,8 @@ func TestPack(t *testing.T) {
 		buffer *[]byte
 	}{
 		{
-			name:"PackTest",
-			buffer:&headerBuffer,
+			name:   "PackTest",
+			buffer: &headerBuffer,
 		},
 	}
 	for _, tt := range tests {
@@ -30,8 +30,8 @@ func TestUnpack(t *testing.T) {
 		header []byte
 	}{
 		{
-			name:"UnpackTest",
-			header:headerBuffer,
+			name:   "UnpackTest",
+			header: headerBuffer,
 		},
 	}
 	for _, tt := range tests {
@@ -41,3 +41,4 @@ func TestUnpack(t *testing.T) {
 		})
 	}
 }
+
