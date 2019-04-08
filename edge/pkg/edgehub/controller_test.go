@@ -42,6 +42,7 @@ import (
 const (
 	CertFile = "/tmp/kubeedge/certs/edge.crt"
 	KeyFile  = "/tmp/kubeedge/certs/edge.key"
+	ConfigPath = "/tmp/kubeedge/testData"
 )
 
 //testServer is a fake http server created for testing
@@ -685,10 +686,10 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 			Placement: "false",
 		},
 	},
-	}, "/tmp/kubeedge/testData", "edge"); err != nil {
+	}, ConfigPath, "edge"); err != nil {
 		t.Error("Unable to generate test YAML file: ", err)
 	}
-	if err := util.LoadConfig("/tmp/kubeedge/testData"); err != nil {
+	if err := util.LoadConfig(ConfigPath); err != nil {
 		t.Error("Unable to load the configuration file: ", err)
 	}
 	tests := []struct {
@@ -735,10 +736,10 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 			Placement: "true",
 		},
 	},
-	}, "/tmp/kubeedge/testData", "edge"); err != nil {
+	}, ConfigPath, "edge"); err != nil {
 		t.Error("Unable to generate test YAML file: ", err)
 	}
-	if err := util.LoadConfig("/tmp/kubeedge/testData"); err != nil {
+	if err := util.LoadConfig(ConfigPath); err != nil {
 		t.Error("Unable to load the configuration file: ", err)
 	}
 	tests := []struct {
