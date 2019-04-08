@@ -67,8 +67,8 @@ func initMocks(t *testing.T) {
 	mockAdapter = edgehub.NewMockAdapter(mockCtrl)
 }
 
-//testYamlGenerator is a structure which is used to generate the test YAML file to test Edgehub config components
-type testYamlGenerator struct {
+//testEdgeConfigYaml is a structure which is used to generate the test YAML file to test Edgehub config components
+type testEdgeConfigYaml struct {
 	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
 }
 
@@ -678,7 +678,7 @@ func TestPostUrlRequst(t *testing.T) {
 
 //TestGetCloudHubUrlWithoutPlacement() tests the procurement of the cloudHub URL when no placement server is present
 func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
-	if err := util.GenerateTestYaml(testYamlGenerator{edgeHubConfigYaml{
+	if err := util.GenerateTestYaml(testEdgeConfigYaml{edgeHubConfigYaml{
 		webSocketConfigYaml{
 			URL: "wss://0.0.0.0:10000/foo/bar/events",
 		},
@@ -728,7 +728,7 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 
 //TestGetCloudHubUrlWithPlacement() tests the procurement of the cloudHub URL from the placement server
 func TestGetCloudHubUrlWithPlacement(t *testing.T) {
-	if err := util.GenerateTestYaml(testYamlGenerator{edgeHubConfigYaml{
+	if err := util.GenerateTestYaml(testEdgeConfigYaml{edgeHubConfigYaml{
 		webSocketConfigYaml{
 			URL: "wss://0.0.0.0:10000/foo/bar/events",
 		},
