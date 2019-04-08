@@ -772,12 +772,10 @@ func TestGetCloudHubUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
-			if err != nil {
+			if err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge");err != nil {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
-			err = util.LoadConfig("/tmp/kubeedge/testData")
-			if err != nil {
+			if err := util.LoadConfig("/tmp/kubeedge/testData"); err != nil {
 				t.Error("Unable to load the configuration file: ", err)
 			}
 			edgeHubConfig := config.GetConfig()
