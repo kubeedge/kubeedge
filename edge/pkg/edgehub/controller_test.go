@@ -66,6 +66,27 @@ func initMocks(t *testing.T) {
 	mockAdapter = edgehub.NewMockAdapter(mockCtrl)
 }
 
+//testYamlGenerator is a structure which is used to generate the test YAML file to test Edgehub config components
+type testYamlGenerator struct {
+	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
+}
+
+//edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
+type edgeHubConfigYaml struct {
+	WSConfig  webSocketConfigYaml  `yaml:"websocket"`
+	CtrConfig controllerConfigYaml `yaml:"controller"`
+}
+
+//controllerConfigYaml is a structure which is used to generate the test YAML file to test controller config components
+type controllerConfigYaml struct {
+	Placement string `yaml:"placement,omitempty"`
+}
+
+//webSocketConfigYaml is a structure which is used to generate the test YAML file to test WebSocket config components
+type webSocketConfigYaml struct {
+	URL string `yaml:"url,omitempty"`
+}
+
 //newTestServer() starts a fake server for testing
 func newTestServer() {
 	flag := true
@@ -662,8 +683,9 @@ func TestGetCloudHubUrl(t *testing.T) {
 		webSocketConfig config.WebSocketConfig
 		want            string
 		expectedError   error
+		test            testYamlGenerator
 	}{
-		{"Get valid cloudhub URL", Controller{
+		{"Get valid cloudhub URL: with placement server", Controller{
 			config: &config.ControllerConfig{
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
@@ -672,9 +694,19 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
-
-		{"Invalid cloudhub URL", Controller{
+		}, "ws://127.0.0.1:20000/foo/bar/events", nil,
+			testYamlGenerator{
+				edgeHubConfigYaml{
+					webSocketConfigYaml{
+						URL: "wss://0.0.0.0:10000/foo/bar/events",
+					},
+					controllerConfigYaml{
+						Placement: "true",
+					},
+				},
+			},
+		},
+		{"Invalid cloudhub URL: with placement server", Controller{
 			config: &config.ControllerConfig{
 				PlacementURL: testServer.URL + "/bad_request",
 				ProjectID:    "foo",
@@ -683,9 +715,19 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
-
-		{"Wrong certificate paths", Controller{
+		}, "", fmt.Errorf("failed to new https client for placement, error: bad request"),
+			testYamlGenerator{
+				edgeHubConfigYaml{
+					webSocketConfigYaml{
+						URL: "wss://0.0.0.0:10000/foo/bar/events",
+					},
+					controllerConfigYaml{
+						Placement: "true",
+					},
+				},
+			},
+		},
+		{"Wrong certificate paths: with placement server", Controller{
 			config: &config.ControllerConfig{
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
@@ -694,10 +736,50 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: "/wrong_path/edge.crt",
 			KeyFilePath:  "/wrong_path/edge.key",
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
+		}, "", fmt.Errorf("failed to new https client for placement, error: open /wrong_path/edge.crt: no such file or directory"),
+			testYamlGenerator{
+				edgeHubConfigYaml{
+					webSocketConfigYaml{
+						URL: "wss://0.0.0.0:10000/foo/bar/events",
+					},
+					controllerConfigYaml{
+						Placement: "true",
+					},
+				},
+			},
+		},
+		{"Get valid cloudhub URL: without placement server", Controller{
+			config: &config.ControllerConfig{
+				PlacementURL: testServer.URL + "/proper_request",
+				ProjectID:    "foo",
+				NodeID:       "bar",
+			},
+		}, config.WebSocketConfig{
+			CertFilePath: CertFile,
+			KeyFilePath:  KeyFile,
+		}, "wss://0.0.0.0:10000/foo/bar/events", nil,
+			testYamlGenerator{
+				edgeHubConfigYaml{
+					webSocketConfigYaml{
+						URL: "wss://0.0.0.0:10000/foo/bar/events",
+					},
+					controllerConfigYaml{
+						Placement: "false",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
+			if err != nil {
+				t.Error("Unable to generate test YAML file: ", err)
+			}
+			err = util.LoadConfig("/tmp/kubeedge/testData")
+			if err != nil {
+				t.Error("Unable to load the configuration file: ", err)
+			}
 			edgeHubConfig := config.GetConfig()
 			edgeHubConfig.WSConfig = tt.webSocketConfig
 			got, err := tt.controller.getCloudHubURL()
