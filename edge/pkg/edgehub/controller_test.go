@@ -40,8 +40,8 @@ import (
 )
 
 const (
-	CertFile = "/tmp/kubeedge/certs/edge.crt"
-	KeyFile  = "/tmp/kubeedge/certs/edge.key"
+	CertFile   = "/tmp/kubeedge/certs/edge.crt"
+	KeyFile    = "/tmp/kubeedge/certs/edge.key"
 	ConfigPath = "/tmp/kubeedge/testData"
 )
 
