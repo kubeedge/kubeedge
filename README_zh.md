@@ -106,17 +106,6 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
-树莓派
-
-```
- apt-get remove docker docker-engine docker.io
- apt-get update
- apt-get install -y apt-transport-https  ca-certificates curl gnupg2 software-properties-common
- curl -fsSL https://download.docker.com/linux/raspbian/gpg | apt-key add -
- echo "deb [arch=armhf]  https://download.docker.com/linux/raspbian stretch stable" | tee /etc/apt/sources.list.d/docker.list 
- apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
-```
-
 KubeEdge 云端部分（edgecontroller）连接到 Kubernetes master 节点以同步节点和 pod 状态的更新。如果没有安装 Kubernetes，请按照以下步骤使用 kubeadm 安装 Kubernetes。
 
 #### 安装 kubeadm/kubectl
@@ -229,33 +218,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### 运行 Cloud
 
-#### 以 k8s deployment 方式运行
-
-此方式将部署 cloud 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
-
-存放在 `github.com/kubeedge/kubeedge/build/cloud` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
-
-首先， 确保 k8s 集群可以拉到 edge controller 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
-
-```bash
-make cloudimage
-```
-
-然后，需要生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
-
-```bash
-../tools/certgen.sh buildSecret | tee ./06-secret.yaml
-```
-
-接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
-
-```bash
-for resource in $(ls *.yaml); do kubectl create -f $resource; done
-```
-
-最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service，
-将 cloud hub 暴露到集群外，让 edge core 能够连到。
-
+#### [以 k8s deployment 方式运行](./build/cloud/README_zh.md)
 
 #### 以二进制文件方式运行
 + 构建 Cloud
@@ -291,70 +254,7 @@ for resource in $(ls *.yaml); do kubectl create -f $resource; done
 
 #### 运行 Edge
 
-##### 以容器方式运行
-
-此方式将在容器中运行 edge 端和mqtt broker，所以需要确认 docker engine 监听在
-`/var/run/docker.sock`，这个之后需要挂载到容器中。
-
-+ 检查容器运行环境
-  ```
-  ./build/edge/run_daemon.sh prepare
-  ```
-
-+ 设置容器参数
-
-  以下参数如果不用修改则无需设置
-
-  | 参数名称        | 默认值                            | 备注                     |
-  | --------------- | --------------------------------- | ------------------------ |
-  | cloudhub        | 0.0.0.0:10000                     |                          |
-  | edgename        | edge-node                         |                          |
-  | edge_core_image | kubeedge/edgecore:latest          |                          |
-  | arch            | amd64                             | 可选值：amd64 \| arm64v8 |
-  | qemu_arch       | x86_64                            | 可选值：x86_64 \| aarch  |
-  | certpath        | /etc/kubeedge/edge/certs          |                          |
-  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                          |
-  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                          |
-
-  ```shell
-  ./build/edge/run_daemon.sh set \
-  		    cloudhub=0.0.0.0:10000 \
-          edgename=edgeNode \
-          edge_core_image="kubeedge/edgecore:latest" \
-          arch=amd64 \
-          qemu_arch=x86_64 \
-          certpath=/etc/kubeedge/edge/certs \
-          certfile=/etc/kubeedge/edge/certs/edge.crt \
-          keyfile=/etc/kubeedge/edge/certs/edge.ke
-  ```
-
-+ 编译容器镜像
-
-  ```
-  ./build/edge/run_daemon.sh build
-  ```
-
-+ **(可选)** 如果edge的性能不够，可以在cloud上交叉编译edge的镜像，在edge端加载镜像
-  - 设置CPU类型
-
-    ```
-    ./build/edge/run_daemon.sh set arch=arm64v8 qemu_arch=aarch
-    ```
-
-  - 编译镜像
-    ```
-    ./build/edge/run_daemon.sh build
-    ```
-
-  - 保存镜像
-    ```
-    ./build/edge/run_daemon.sh save 
-    ```
-
-+ 启动容器
-  ```
-  ./build/edge/run_daemon.sh up
-  ```
+##### [以容器方式运行](./build/edge/README_zh.md)
 
 ##### 以二进制文件方式运行
 

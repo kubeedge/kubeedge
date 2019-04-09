@@ -104,17 +104,6 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
-For Raspbian
-
-```shell
-apt-get remove docker docker-engine docker.io
-apt-get update
-apt-get install -y apt-transport-https  ca-certificates curl gnupg2 software-properties-common
-curl -fsSL https://download.docker.com/linux/raspbian/gpg | apt-key add -
-echo "deb [arch=armhf]  https://download.docker.com/linux/raspbian stretch stable" | tee /etc/apt/sources.list.d/docker.list 
-apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
-```
-
 KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm.
 
 #### Install kubeadm/kubectl
@@ -238,42 +227,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### Run Cloud
 
-#### Run as Kubernetes deployment
-
-This method will guide you to deploy the cloud part into a k8s cluster,
-so you need to login to the k8s master node (or where else if you can
-operate the cluster with `kubectl`).
-
-The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud`
-will be used, so place these files to somewhere you can kubectl with.
-
-First, ensure your k8s cluster can pull edge controller image. If the
-image not exist. We can make one, and push to your registry.
-
-```bash
-cd $GOPATH/src/github.com/kubeedge/kubeedge
-make cloudimage
-```
-
-Then, we need to generate the tls certs. It then will give us
-`06-secret.yaml` if succeeded.
-
-```bash
-cd build/cloud
-../tools/certgen.sh buildSecret | tee ./06-secret.yaml
-```
-
-Second, we create k8s resources from the manifests in name order. Before
-creating, check the content of each manifest to make sure it meets your
-environment.
-
-```bash
-for resource in $(ls *.yaml); do kubectl create -f $resource; done
-```
-
-Last, base on the `08-service.yaml.example`, create your own service,
-to expose cloud hub to outside of k8s cluster, so that edge core can
-connect to.
+#### [Run as Kubernetes deployment](./build/cloud/README.md)
 
 #### Run as a binary
 
@@ -312,72 +266,9 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 
 #### Run edge
 
-##### Run as container
+##### [Run as container](./build/edge/README.md)
 
-This method will guide you to deploy the edge part running in docker
-container and MQTT Broker, so make sure that docker engine listening on
-`/var/run/docker.sock` which will then mount into the edge container.
-
-+ Check the container runtime environment
-  ```
-  ./build/edge/run_daemon.sh prepare
-  ```
-
-+ Set container parameters
-
-  The following parameters do not need to be set if they are not modified.
-
-  | name            | default                           | note                      |
-  | --------------- | --------------------------------- | ------------------------- |
-  | cloudhub        | 0.0.0.0:10000                     |                           |
-  | edgename        | edge-node                         |                           |
-  | edge_core_image | kubeedge/edgecore:latest          |                           |
-  | arch            | amd64                             | Optional: amd64 \|arm64v8 |
-  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch |
-  | certpath        | /etc/kubeedge/edge/certs          |                           |
-  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                           |
-  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                           |
-
-  ```shell
-  ./build/edge/run_daemon.sh set \
-  		    cloudhub=0.0.0.0:10000 \
-          edgename=edgeNode \
-          edge_core_image="kubeedge/edgecore:latest" \
-          arch=amd64 \
-          qemu_arch=x86_64 \
-          certpath=/etc/kubeedge/edge/certs \
-          certfile=/etc/kubeedge/edge/certs/edge.crt \
-          keyfile=/etc/kubeedge/edge/certs/edge.ke
-  ```
-
-+ Build image
-
-  ```
-  ./build/edge/run_daemon.sh build
-  ```
-
-+ **(Optional)** If the performance of the edge is not enough, you can cross-compile the image of the edge on the cloud and load the image on the edge.
-
-  - Set the CPU type
-
-    ```
-    ./build/edge/run_daemon.sh set arch=arm64v8 qemu_arch=aarch
-    ```
-  - Build image
-    ```
-    ./build/edge/run_daemon.sh build
-    ```
-  - Save image
-    ```
-    ./build/edge/run_daemon.sh save 
-    ```
-
-+ Start container
-  ```
-  ./build/edge/run_daemon.sh up
-  ```
-
-#### Run as a binary
+##### Run as a binary
 + Install mosquitto
 
     For Ubuntu:
