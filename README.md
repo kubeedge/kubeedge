@@ -104,6 +104,17 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
+For Raspbian
+
+```shell
+apt-get remove docker docker-engine docker.io
+apt-get update
+apt-get install -y apt-transport-https  ca-certificates curl gnupg2 software-properties-common
+curl -fsSL https://download.docker.com/linux/raspbian/gpg | apt-key add -
+echo "deb [arch=armhf]  https://download.docker.com/linux/raspbian stretch stable" | tee /etc/apt/sources.list.d/docker.list 
+apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
+```
+
 KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm.
 
 #### Install kubeadm/kubectl
@@ -189,24 +200,6 @@ Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/e
 
 To use KubeEdge in double mqtt or external mode, you will need to have **mosquitto** installed on the Edge node. If you do not already have it, you may install as follows.
 
-#### Install mosquitto
-
-For Ubuntu:
-
-```shell
-apt install mosquitto
-```
-
-For CentOS:
-
-```shell
-yum install mosquitto
-```
-
-See [mosquitto official website](https://mosquitto.org/download/) for more information.
-
-KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow the steps below to generate certificates.
-
 #### Install openssl
 
 If openssl is not already present using below command to install openssl.
@@ -240,41 +233,6 @@ Clone KubeEdge
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
-
-### Build Cloud
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-make # or `make edgecontroller`
-```
-
-### Build Edge
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edge_core`
-```
-
-KubeEdge can also be cross compiled to run on ARM based processors.
-Please follow the instructions given below or click [Cross Compilation](docs/setup/cross-compilation.md) for detailed instructions.
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make edge_cross_build
-```
-
-KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
-
-```shell
-apt-get install upx-ucl
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make edge_small_build
-```
-
-**Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
-lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
-more than once etc. are applicable here as well.
-
 
 ## Run KubeEdge
 
@@ -319,84 +277,175 @@ connect to.
 
 #### Run as a binary
 
++ Build Cloud
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+    make # or `make edgecontroller`
+    ```
+
 + The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
     + cloudhub.ca
     + cloudhub.cert
     + cloudhub.key
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-# run edge controller
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running cloud(edgecontroller)
-./edgecontroller
-```
++ Run cloud
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+    # run edge controller
+    # `conf/` should be in the same directory as the cloned KubeEdge repository
+    # verify the configurations before running cloud(edgecontroller)
+    ./edgecontroller
+    ```
 
 ### Run Edge
 
+#### Deploy the Edge node
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
-```shell
-kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
-```
-
-#### Run as container
-
-This method will guide you to deploy the edge part running in docker
-container, so make sure that docker engine listening on
-`/var/run/docker.sock` which will then mount into the edge container.
-
-Before starting the edge part container, check the contents of this script
-`build/edge/run_daemon.sh` to make sure it meets your environment. (this
-script will generate client certs for EdgeHub, we recommend that to use
-the same CA that generate CloudHub certs with)
-
-And if you don't have a edge core image, you need to make one:
-
-```bash
-make edgeimage
-```
-
-Then, run the script with mqtt broker url as the first argument, cloud
-hub url as the second argument, optionally a third argument to specify
-the edge core image tag, if not set it goes to 'latest' as default,
-like this:
-
-```bash
-./run_daemon.sh \
-tcp://<mqtt-broker-address>:1883 \
-wss://<cloud-hub-address>:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-```
-
-#### Run as a binary
-
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the IP of the edge node
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
 + Deploy node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
     ```
++ Transfer the certificate file to the edge node
 
-Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
-+ Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
-+ Update the IP address of the master in the `websocket.url` field. 
-+ replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node ip in edge.yaml for the below fields :
-    + `websocket:URL`
-    + `controller:node-id`
-    + `edged:hostname-override`
+#### Run edge
 
-Run edge
+##### Run as container
 
-```shell
-# run mosquitto
-mosquitto -d -p 1883
+This method will guide you to deploy the edge part running in docker
+container and MQTT Broker, so make sure that docker engine listening on
+`/var/run/docker.sock` which will then mount into the edge container.
 
-# run edge_core
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running edge(edge_core)
-./edge_core
-# or
-nohup ./edge_core > edge_core.log 2>&1 &
-```
++ Check the container runtime environment
+  ```
+  ./build/edge/run_daemon.sh prepare
+  ```
+
++ Set container parameters
+
+  The following parameters do not need to be set if they are not modified.
+
+  | name            | default                           | note                      |
+  | --------------- | --------------------------------- | ------------------------- |
+  | cloudhub        | 0.0.0.0:10000                     |                           |
+  | edgename        | edge-node                         |                           |
+  | edge_core_image | kubeedge/edgecore:latest          |                           |
+  | arch            | amd64                             | Optional: amd64 \|arm64v8 |
+  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch |
+  | certpath        | /etc/kubeedge/edge/certs          |                           |
+  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                           |
+  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                           |
+
+  ```shell
+  ./build/edge/run_daemon.sh set \
+  		    cloudhub=0.0.0.0:10000 \
+          edgename=edgeNode \
+          edge_core_image="kubeedge/edgecore:latest" \
+          arch=amd64 \
+          qemu_arch=x86_64 \
+          certpath=/etc/kubeedge/edge/certs \
+          certfile=/etc/kubeedge/edge/certs/edge.crt \
+          keyfile=/etc/kubeedge/edge/certs/edge.ke
+  ```
+
++ Build image
+
+  ```
+  ./build/edge/run_daemon.sh build
+  ```
+
++ **(Optional)** If the performance of the edge is not enough, you can cross-compile the image of the edge on the cloud and load the image on the edge.
+
+  - Set the CPU type
+
+    ```
+    ./build/edge/run_daemon.sh set arch=arm64v8 qemu_arch=aarch
+    ```
+  - Build image
+    ```
+    ./build/edge/run_daemon.sh build
+    ```
+  - Save image
+    ```
+    ./build/edge/run_daemon.sh save 
+    ```
+
++ Start container
+  ```
+  ./build/edge/run_daemon.sh up
+  ```
+
+#### Run as a binary
++ Install mosquitto
+
+    For Ubuntu:
+
+    ```shell
+    apt install mosquitto
+    ```
+
+    For CentOS:
+
+    ```shell
+    yum install mosquitto
+    ```
+
+    See [mosquitto official website](https://mosquitto.org/download/) for more information.
+
+    KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow the steps below to generate certificates.
+
++ Build Edge
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+    make # or `make edge_core`
+    ```
+
+    KubeEdge can also be cross compiled to run on ARM based processors.
+    Please follow the instructions given below or click [Cross Compilation](docs/setup/cross-compilation.md) for detailed instructions.
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+    make edge_cross_build
+    ```
+
+    KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
+
+    ```shell
+    apt-get install upx-ucl
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+    make edge_small_build
+    ```
+
+    **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
+    lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
+    more than once etc. are applicable here as well.
+
++ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
+    + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
+    + Update the IP address of the master in the `websocket.url` field. 
+    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node name in edge.yaml for the below fields :
+        + `websocket:URL`
+        + `controller:node-id`
+        + `edged:hostname-override`
+
++ Run edge
+
+    ```shell
+    # run mosquitto
+    mosquitto -d -p 1883
+
+    # run edge_core
+    # `conf/` should be in the same directory as the cloned KubeEdge repository
+    # verify the configurations before running edge(edge_core)
+    ./edge_core
+    # or
+    nohup ./edge_core > edge_core.log 2>&1 &
+    ```
+
+### Check status
 
 After the Cloud and Edge parts have started, you can use below command to check the edge node status.
 
@@ -464,7 +513,7 @@ Some sample applications and demos to illustrate possible use cases of KubeEdge 
 <!--
 We don't have a troubleshooting guide yet.  When we do, uncomment the following and add the link.
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
- 
+
 --> 
 If you have questions, feel free to reach out to us in the following ways:
 

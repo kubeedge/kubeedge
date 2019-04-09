@@ -106,6 +106,17 @@ yum-config-manager \
 yum update && yum install docker-ce-18.06.1.ce
 ```
 
+树莓派
+
+```
+ apt-get remove docker docker-engine docker.io
+ apt-get update
+ apt-get install -y apt-transport-https  ca-certificates curl gnupg2 software-properties-common
+ curl -fsSL https://download.docker.com/linux/raspbian/gpg | apt-key add -
+ echo "deb [arch=armhf]  https://download.docker.com/linux/raspbian stretch stable" | tee /etc/apt/sources.list.d/docker.list 
+ apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
+```
+
 KubeEdge 云端部分（edgecontroller）连接到 Kubernetes master 节点以同步节点和 pod 状态的更新。如果没有安装 Kubernetes，请按照以下步骤使用 kubeadm 安装 Kubernetes。
 
 #### 安装 kubeadm/kubectl
@@ -180,22 +191,6 @@ KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信�
 
 使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 **mosquitto**。如果没有，请参考下面的步骤安装。
 
-#### 安装 mosquitto
-
-Ubuntu系统：
-
-```shell
-apt install mosquitto
-```
-
-CentOS系统：
-
-```shell
-yum install mosquitto
-```
-
-参考 [mosquitto official website](https://mosquitto.org/download/) 获得更多的信息。
-
 KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可以使用 openssl 生成。请按照以下步骤生成证书。
 
 #### 安装 openssl
@@ -225,29 +220,10 @@ openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial 
 
 ### 克隆 KubeEdge
 
-克隆 KubeEdge
-
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
-
-### 构建 Cloud
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-make # or `make edgecontroller`
-```
-
-### 构建 Edge
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edge_core`
-```
-
-KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
-请点击 [Cross Compilation](docs/setup/cross-compilation.md) 获得相关说明。
 
 ## 运行 KubeEdge
 
@@ -282,74 +258,151 @@ for resource in $(ls *.yaml); do kubectl create -f $resource; done
 
 
 #### 以二进制文件方式运行
++ 构建 Cloud
+
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  make # or `make edgecontroller`
+  ```
 
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-# run edge controller
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running cloud(edgecontroller)
-./edgecontroller
-```
++ 运行二进制文件
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  # run edge controller
+  # `conf/` should be in the same directory as the cloned KubeEdge repository
+  # verify the configurations before running cloud(edgecontroller)
+  ./edgecontroller
+  ```
 
 ### 运行 Edge
 
+#### 部署 Edge node
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
 请确保在 Kubernetes 中添加了边缘节点 edge-node。运行以下步骤以添加边缘节点 edge-node。
 
-+ 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node的IP
++ 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node name
 + 部署node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
     ```
++ 将证书文件传输到edge node
 
-修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
-  + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
-  + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master edge 的IP
-  + 用 edge node 的IP替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
+#### 运行 Edge
 
-运行 Edge
+##### 以容器方式运行
 
-#### 以容器方式运行
-
-此方式将在容器中运行 edge 端，所以需要确认 docker engine 监听在
+此方式将在容器中运行 edge 端和mqtt broker，所以需要确认 docker engine 监听在
 `/var/run/docker.sock`，这个之后需要挂载到容器中。
 
-在启动 edge 端容器之前，需要检查一下这个脚本的内容 `build/edge/run_daemon.sh`，
-确保符合具体的环境。（这个脚本会生成 EdgeHub 的客户端证书，建议用生成 CloudHub
-端证书时使用的相同的 CA 证书）
++ 检查容器运行环境
+  ```
+  ./build/edge/run_daemon.sh prepare
+  ```
 
-如果没有 edge core 镜像，可以自行构建一个：
++ 设置容器参数
 
-```bash
-make edgeimage
-```
+  以下参数如果不用修改则无需设置
 
-之后，运行脚本，mqtt broker url 作为第一个参数，cloud hub url 作为第二个参数，
-第三个参数可选，可以用来指定 edge core 镜像的 tag，如果不指定，默认是 'latest'，
-例如：
+  | 参数名称        | 默认值                            | 备注                     |
+  | --------------- | --------------------------------- | ------------------------ |
+  | cloudhub        | 0.0.0.0:10000                     |                          |
+  | edgename        | edge-node                         |                          |
+  | edge_core_image | kubeedge/edgecore:latest          |                          |
+  | arch            | amd64                             | 可选值：amd64 \| arm64v8 |
+  | qemu_arch       | x86_64                            | 可选值：x86_64 \| aarch  |
+  | certpath        | /etc/kubeedge/edge/certs          |                          |
+  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                          |
+  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                          |
 
-```bash
-./run_daemon.sh \
-tcp://<mqtt-broker-address>:1883 \
-wss://<cloud-hub-address>:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-```
+  ```shell
+  ./build/edge/run_daemon.sh set \
+  		    cloudhub=0.0.0.0:10000 \
+          edgename=edgeNode \
+          edge_core_image="kubeedge/edgecore:latest" \
+          arch=amd64 \
+          qemu_arch=x86_64 \
+          certpath=/etc/kubeedge/edge/certs \
+          certfile=/etc/kubeedge/edge/certs/edge.crt \
+          keyfile=/etc/kubeedge/edge/certs/edge.ke
+  ```
 
-#### 以二进制文件方式运行
++ 编译容器镜像
 
-```shell
-# run mosquitto
-mosquitto -d -p 1883
+  ```
+  ./build/edge/run_daemon.sh build
+  ```
 
-# run edge_core
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running edge(edge_core)
-./edge_core
-# or
-nohup ./edge_core > edge_core.log 2>&1 &
-```
++ **(可选)** 如果edge的性能不够，可以在cloud上交叉编译edge的镜像，在edge端加载镜像
+  - 设置CPU类型
 
+    ```
+    ./build/edge/run_daemon.sh set arch=arm64v8 qemu_arch=aarch
+    ```
+
+  - 编译镜像
+    ```
+    ./build/edge/run_daemon.sh build
+    ```
+
+  - 保存镜像
+    ```
+    ./build/edge/run_daemon.sh save 
+    ```
+
++ 启动容器
+  ```
+  ./build/edge/run_daemon.sh up
+  ```
+
+##### 以二进制文件方式运行
+
++ 安装 mosquitto
+
+  Ubuntu系统：
+
+  ```shell
+  apt install mosquitto
+  ```
+
+  CentOS系统：
+
+  ```shell
+  yum install mosquitto
+  ```
+
+  参考 [mosquitto official website](https://mosquitto.org/download/) 获得更多的信息。
+
++ 构建 Edge
+
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+  make # or `make edge_core`
+  ```
+
+  KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
+  请点击 [Cross Compilation](docs/setup/cross-compilation.md) 获得相关说明。
+
++ 修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
+  + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
+  + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master node 的IP
+  + 用 edge node name 替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
+
++ 运行二进制文件
+  ```shell
+  # run mosquitto
+  mosquitto -d -p 1883
+
+  # run edge_core
+  # `conf/` should be in the same directory as the cloned KubeEdge repository
+  # verify the configurations before running edge(edge_core)
+  ./edge_core
+  # or
+  nohup ./edge_core > edge_core.log 2>&1 &
+  ```
+
+### 检查状态
 在 Cloud 和 Edge 被启动之后, 您能通过如下的命令去检查边缘节点的状态。
 
 ```shell
