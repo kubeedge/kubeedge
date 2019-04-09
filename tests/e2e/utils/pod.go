@@ -26,18 +26,17 @@ import (
 )
 
 const (
-	podLabelSelector = "?labelSelector="
+	podLabelSelector = "?fieldSelector=spec.nodeName="
 )
 
-//Function to get the pods from Edged
+//GetPods function to get the pods from Edged
 func GetPods(apiserver, label string) (v1.PodList, error) {
 	var pods v1.PodList
 	var resp *http.Response
 	var err error
 
-	ls := MapLabels(map[string]string{"app": label})
-	if len(ls) > 0 {
-		err, resp = SendHttpRequest(http.MethodGet, apiserver+podLabelSelector+ls)
+	if len(label) > 0 {
+		err, resp = SendHttpRequest(http.MethodGet, apiserver+podLabelSelector+label)
 	} else {
 		err, resp = SendHttpRequest(http.MethodGet, apiserver)
 	}
@@ -59,7 +58,7 @@ func GetPods(apiserver, label string) (v1.PodList, error) {
 	return pods, nil
 }
 
-//function to get the pod status and response code
+//GetPodState function to get the pod status and response code
 func GetPodState(apiserver string) (string, int) {
 	var pod v1.Pod
 
@@ -81,10 +80,34 @@ func GetPodState(apiserver string) (string, int) {
 		return string(pod.Status.Phase), resp.StatusCode
 	}
 
-	return " ", resp.StatusCode
+	return "", resp.StatusCode
 }
 
-//Function to check the Pod state
+//DeletePods function to get the pod status and response code
+func DeletePods(apiserver string) (string, int) {
+	var pod v1.Pod
+	err, resp := SendHttpRequest(http.MethodDelete, apiserver)
+	if err != nil {
+		Failf("GetPodState :SenHttpRequest failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			Failf("HTTP Response reading has failed: %v", err)
+		}
+		err = json.Unmarshal(contents, &pod)
+		if err != nil {
+			Failf("Unmarshal HTTP Response has failed: %v", err)
+		}
+		return string(pod.Status.Phase), resp.StatusCode
+	}
+
+	return "", resp.StatusCode
+}
+
+//CheckPodRunningState function to check the Pod state
 func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 	Eventually(func() int {
 		var count int
@@ -100,7 +123,7 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 
 }
 
-//Function to check the Pod state
+//CheckPodDeleteState function to check the Pod state
 func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 	Eventually(func() int {
 		var count int
