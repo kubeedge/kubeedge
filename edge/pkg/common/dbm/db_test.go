@@ -107,8 +107,8 @@ func TestCleanDBFile(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cleanDBFile(test.fileName)
 			_, err := os.Stat(test.fileName)
-			if os.IsNotExist(err) {
-				t.Errorf("CleanUp failed ,file does not exist")
+			if os.IsExist(err) {
+				t.Errorf("CleanUp failed ,file exist")
 			}
 		})
 	}
