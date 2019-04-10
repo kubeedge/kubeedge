@@ -9,6 +9,9 @@ import (
 // quic client option
 // extend options when you using quic in client
 type QuicClientOption struct {
+	// send heads after connection completed using control stream
+	// TODO:
+	Header http.Header
 	// the max incoming stream
 	MaxIncomingStreams int
 }
