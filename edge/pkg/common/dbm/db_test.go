@@ -18,26 +18,26 @@ type TestDevice struct {
 // TestRegisterModel is function to test RegisterModel().
 func TestRegisterModel(t *testing.T) {
 	tests := []struct {
-		name       string
-		modulename string
-		m          interface{}
+		name           string
+		moduleName     string
+		modelStructure interface{}
 	}{
 		{
 			//Failure Case
-			name:       "TestRegisterModel-UnregisteredModule",
-			modulename: "testmodule",
-			m:          "",
+			name:           "TestRegisterModel-UnregisteredModule",
+			moduleName:     "testmodule",
+			modelStructure: "",
 		},
 		{
 			//Success Case
-			name:       "TestRegisterModel-RegisteredModule",
-			modulename: "twin",
-			m:          new(TestDevice),
+			name:           "TestRegisterModel-RegisteredModule",
+			moduleName:     "twin",
+			modelStructure: new(TestDevice),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			RegisterModel(test.modulename, test.m)
+			RegisterModel(test.moduleName, test.modelStructure)
 		})
 	}
 }
@@ -80,13 +80,13 @@ func TestIsNonUniqueNameError(t *testing.T) {
 	}
 }
 
-// TestCleanUp() is functioj to test CleanUp().
+// TestCleanUp() is function to test CleanUp().
 func TestCleanup(t *testing.T) {
 	t.Run("CleanUpTest", func(t *testing.T) {
 		Cleanup()
-		_, err := os.Stat(defaultDataSource)
+		_, err := os.Stat(dataSource)
 		if os.IsExist(err) {
-			t.Error("CleanUp failed ,File not removed")
+			t.Errorf("CleanUp failed ,File not removed")
 		}
 	})
 }
@@ -95,20 +95,20 @@ func TestCleanup(t *testing.T) {
 func TestCleanDBFile(t *testing.T) {
 	tests := []struct {
 		name     string
-		filename string
+		fileName string
 	}{
 		{
 			// Checks for the negative scenario of CleanBDFile where an unknown file is passed. Positive scenario is handled in CleanUp().
 			name:     "CleanDBFileTest",
-			filename: "testfile",
+			fileName: "testfile",
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleanDBFile(test.filename)
-			_, err := os.Stat(test.filename)
-			if os.IsExist(err) {
-				t.Error("CleanUp failed ,File not removed")
+			cleanDBFile(test.fileName)
+			_, err := os.Stat(test.fileName)
+			if os.IsNotExist(err) {
+				t.Errorf("CleanUp failed ,file does not exist")
 			}
 		})
 	}
