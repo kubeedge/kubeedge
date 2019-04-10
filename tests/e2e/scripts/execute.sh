@@ -25,8 +25,7 @@ if [ ! -d "/var/lib/edged" ]; then
 fi
 
 #run the edge_core and edgecontroller bin to run the E2E
-make edge_core
-make edgecontroller
+make #builds cloud and edge_core components
 sleep 2s
 #Kill the process if it exists
 sudo pkill edgecontroller

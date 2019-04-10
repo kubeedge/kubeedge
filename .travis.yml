@@ -21,8 +21,8 @@ install: true
 jobs:
   include:
     - stage: "Test Jobs"                # naming the Tests stage
-      script: make edge_core
-      name: "build edge"            # names the first Tests stage job
+      script: make 
+      name: "builds cloud and edge components"            # names the first Tests stage job
     - script: make edge_verify
       name: "verify edge"     # names the second Tests stage job
     - script: make edge_test
@@ -31,7 +31,5 @@ jobs:
       name: "integration test edge"     # names the fourth Tests stage job
     - script: make edge_cross_build
       name: "cross build edge"     # names the fifth Tests stage job
-    - script: make edgecontroller
-      name: "build edgecontroller"     # names the sixth Tests stage job
     - script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
