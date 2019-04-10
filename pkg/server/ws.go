@@ -10,14 +10,18 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/viaduct/pkg/lane"
+	"github.com/kubeedge/viaduct/pkg/utils"
 )
 
+// websocket protocol server
 type WSServer struct {
 	options Options
 	exOpts  api.WSServerOption
 	server  *http.Server
 }
 
+// http server logger filter
 type LoggerFilter struct{}
 
 func (f *LoggerFilter) Write(p []byte) (n int, err error) {
@@ -78,7 +82,14 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	conn := conn.NewConnection(&conn.ConnectionOptions{
 		ConnType: api.ProtocolTypeWS,
 		Base:     wsConn,
+		ConnUse:  api.UseType(req.Header.Get("ConnectionUse")),
+		Consumer: srv.options.Consumer,
 		Handler:  srv.options.Handler,
+		CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
+		State: &conn.ConnectionState{
+			State:   api.StatConnected,
+			Headers: utils.DeepCopyHeader(req.Header),
+		},
 	})
 
 	// connection callback
@@ -92,9 +103,7 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// auto route message to entry
-	if srv.options.AutoRoute {
-		go conn.ServeConn()
-	}
+	go conn.ServeConn(srv.options.AutoRoute)
 }
 
 func (srv *WSServer) ListenAndServeTLS() error {

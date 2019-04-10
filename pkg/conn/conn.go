@@ -3,6 +3,7 @@ package conn
 import (
 	"crypto/x509"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -11,13 +12,15 @@ import (
 // connection states
 // TODO: add connection state filed
 type ConnectionState struct {
+	State            string
+	Headers          http.Header
 	PeerCertificates []*x509.Certificate
 }
 
 // the operation set of connection
 type Connection interface {
 	// process message from the connection
-	ServeConn()
+	ServeConn(autoRoute bool)
 
 	// SetReadDeadline sets the deadline for future Read calls
 	// and any currently-blocked Read call.
@@ -31,6 +34,13 @@ type Connection interface {
 	// A zero value for t means Write will not time out.
 	SetWriteDeadline(t time.Time) error
 
+	// Read read raw data from the connection
+	Read(raw []byte) (int, error)
+
+	// Write write raw data to the connection
+	// it will open a stream for raw data
+	Write(raw []byte) (int, error)
+
 	// WriteMessageAsync writes data to the connection and don't care about the response.
 	WriteMessageAsync(msg *model.Message) error
 
@@ -38,6 +48,8 @@ type Connection interface {
 	WriteMessageSync(msg *model.Message) (*model.Message, error)
 
 	// ReadMessage reads message from the connection.
+	// if you want to use this api for message reading,
+	// make sure AutoRoute be false
 	ReadMessage(msg *model.Message) error
 
 	// RemoteAddr returns the remote network address.

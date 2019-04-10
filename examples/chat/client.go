@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
@@ -18,8 +19,7 @@ import (
 var clientStdWriter = bufio.NewWriter(os.Stdout)
 
 func handleClient(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	clientStdWriter.WriteString(fmt.Sprintf("%s", container.Message.GetContent()))
-	clientStdWriter.Flush()
+	fmt.Printf("receive message: %s", container.Message.GetContent())
 	if container.Message.IsSync() {
 		writer.WriteResponse(container.Message, "ack")
 	}
@@ -41,11 +41,18 @@ func StartClient(cfg *config.Config) error {
 	tls := &tls.Config{InsecureSkipVerify: true}
 
 	var exOpts interface{}
+
+	header := make(http.Header)
+	header.Add("client_id", "client1")
 	switch cfg.Type {
 	case api.ProtocolTypeQuic:
-		exOpts = api.QuicClientOption{}
+		exOpts = api.QuicClientOption{
+			Header: header,
+		}
 	case api.ProtocolTypeWS:
-		exOpts = api.WSClientOption{}
+		exOpts = api.WSClientOption{
+			Header: header,
+		}
 	}
 
 	client := client.Client{
@@ -54,6 +61,7 @@ func StartClient(cfg *config.Config) error {
 			Addr:      cfg.Addr,
 			TLSConfig: tls,
 			AutoRoute: true,
+			ConnUse:   api.UseTypeMessage,
 		},
 		ExOpts: exOpts,
 	}
@@ -62,6 +70,8 @@ func StartClient(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	stat := connClient.ConnectionState()
+	log.LOGGER.Infof("connect stat:%+v", stat)
 
 	return SendStdin([]conn.Connection{connClient}, "client")
 }
@@ -69,6 +79,7 @@ func StartClient(cfg *config.Config) error {
 func SendStdin(conns []conn.Connection, source string) error {
 	input := bufio.NewReader(os.Stdin)
 	for {
+		fmt.Print("send message: ")
 		inputData, err := input.ReadString('\n')
 		if err != nil {
 			log.LOGGER.Errorf("failed to read input, error: %+v", err)

@@ -15,6 +15,11 @@ func NewReader(r io.Reader) *Reader {
 	return &Reader{reader: r}
 }
 
+// Read message raw data from reader
+// steps:
+// 1)read the package header
+// 2)unpack the package header and get the payload length
+// 3)read the payload
 func (r *Reader) Read() ([]byte, error) {
 	if r.reader == nil {
 		log.LOGGER.Errorf("bad io reader")

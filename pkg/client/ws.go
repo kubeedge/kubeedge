@@ -8,6 +8,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/viaduct/pkg/lane"
+	"github.com/kubeedge/viaduct/pkg/utils"
 )
 
 // the client based on websocket
@@ -36,7 +38,9 @@ func NewWSClient(options Options, exOpts interface{}) *WSClient {
 
 // Connect try to connect remote server
 func (c *WSClient) Connect() (conn.Connection, error) {
-	wsConn, resp, err := c.dialer.Dial(c.options.Addr, c.exOpts.Header)
+	header := c.exOpts.Header
+	header.Add("ConnectionUse", string(c.options.ConnUse))
+	wsConn, resp, err := c.dialer.Dial(c.options.Addr, header)
 	if err == nil {
 		log.LOGGER.Infof("dial %s successfully", c.options.Addr)
 
@@ -46,8 +50,15 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 		}
 		return conn.NewConnection(&conn.ConnectionOptions{
 			ConnType: api.ProtocolTypeWS,
+			ConnUse:  c.options.ConnUse,
 			Base:     wsConn,
+			Consumer: c.options.Consumer,
 			Handler:  c.options.Handler,
+			CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
+			State: &conn.ConnectionState{
+				State:   api.StatConnected,
+				Headers: utils.DeepCopyHeader(c.exOpts.Header),
+			},
 		}), nil
 	}
 

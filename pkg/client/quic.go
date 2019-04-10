@@ -1,16 +1,24 @@
 package client
 
 import (
+	"fmt"
+	"sync"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/viaduct/pkg/comm"
 	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/lucas-clemente/quic-go"
 )
 
 // the client based on quic
 type QuicClient struct {
-	options Options
-	exOpts  api.QuicClientOption
+	options  Options
+	exOpts   api.QuicClientOption
+	ctrlLane lane.Lane
+	laneLock sync.Mutex
 }
 
 // new a quic client instance
@@ -36,6 +44,51 @@ func (c *QuicClient) getQuicConfig() *quic.Config {
 	}
 }
 
+// the basic lan for connection control
+// never be closed
+func (c *QuicClient) getControlLane(s quic.Session) error {
+	c.laneLock.Lock()
+	defer c.laneLock.Unlock()
+
+	if c.ctrlLane != nil {
+		return nil
+	}
+
+	stream, err := s.OpenStreamSync()
+	if err != nil {
+		log.LOGGER.Errorf("open control stream error(%+v)", err)
+		return fmt.Errorf("open control stream")
+	}
+
+	c.ctrlLane = lane.NewLane(api.ProtocolTypeQuic, stream)
+	return nil
+}
+
+// send the headers
+// TODO: add timeout?
+func (c *QuicClient) sendHeader() error {
+	msg := model.NewMessage("").
+		BuildRouter("", "", comm.ControlTypeHeader, comm.ControlTypeHeader).
+		FillBody(c.exOpts.Header)
+	err := c.ctrlLane.WriteMessage(msg)
+	if err != nil {
+		log.LOGGER.Errorf("failed to write message, error: %+v", err)
+		return err
+	}
+
+	// receive the response
+	// ignore the response
+	// TODO: check the response content
+	var response model.Message
+	err = c.ctrlLane.ReadMessage(&response)
+	if err != nil {
+		log.LOGGER.Errorf("failed to read message, error: %+v", err)
+		return err
+	}
+	log.LOGGER.Debugf("get response: %+v", response)
+	return nil
+}
+
 // try to dial server and get connection interface for operations
 func (c *QuicClient) Connect() (conn.Connection, error) {
 	quicConfig := c.getQuicConfig()
@@ -45,9 +98,30 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 		return nil, err
 	}
 
+	// get control lan
+	err = c.getControlLane(session)
+	if err != nil {
+		session.Close()
+		return nil, err
+	}
+
+	// send headers
+	err = c.sendHeader()
+	if err != nil {
+		log.LOGGER.Warnf("failed to send headers, error: %+v", err)
+	}
+
+	log.LOGGER.Debugf("connect remote peer successfully")
 	return conn.NewConnection(&conn.ConnectionOptions{
 		ConnType: api.ProtocolTypeQuic,
+		ConnUse:  c.options.ConnUse,
 		Base:     session,
+		CtrlLane: c.ctrlLane,
+		Consumer: c.options.Consumer,
 		Handler:  c.options.Handler,
+		State: &conn.ConnectionState{
+			State:   api.StatConnected,
+			Headers: c.exOpts.Header,
+		},
 	}), nil
 }

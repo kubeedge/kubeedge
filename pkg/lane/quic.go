@@ -46,7 +46,16 @@ func (l *QuicLane) WriteMessage(msg *model.Message) error {
 		return err
 	}
 
-	return packer.NewWriter(l.stream).Write(rawData)
+	_, err = packer.NewWriter(l.stream).Write(rawData)
+	return err
+}
+
+func (l *QuicLane) Read(raw []byte) (int, error) {
+	return l.stream.Read(raw)
+}
+
+func (l *QuicLane) Write(raw []byte) (int, error) {
+	return l.stream.Write(raw)
 }
 
 func (l *QuicLane) SetReadDeadline(t time.Time) error {
