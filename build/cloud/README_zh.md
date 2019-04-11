@@ -7,12 +7,14 @@
 首先， 确保 k8s 集群可以拉到 edge controller 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
 
 ```bash
+cd $GOPATH/src/github.com/kubeedge/kubeedge
 make cloudimage
 ```
 
 然后，需要生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
 
 ```bash
+cd build/cloud
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 

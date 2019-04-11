@@ -29,14 +29,14 @@ type TestContext struct {
 	Cfg Config
 }
 
-//function to get the testcontext Object.
+//NewTestContext function to build testcontext with provided config.
 func NewTestContext(cfg Config) *TestContext {
 	return &TestContext{
 		Cfg: cfg,
 	}
 }
 
-//Function to prepare the http req and send
+//SendHttpRequest Function to prepare the http req and send
 func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	var body io.Reader
 	var resp *http.Response
@@ -61,7 +61,7 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	return nil, resp
 }
 
-//function add label selector
+//MapLabels function add label selector
 func MapLabels(ls map[string]string) string {
 	selector := make([]string, 0, len(ls))
 	for key, value := range ls {

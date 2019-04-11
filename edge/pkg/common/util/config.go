@@ -22,7 +22,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"path"
@@ -78,8 +77,18 @@ func GenerateTestYaml(test interface{}, path, filename string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path+"/"+filename+".yaml", data, 0777)
+	fp, err := os.Create(path + "/" + filename + ".yaml")
 	if err != nil {
+		return err
+	}
+	_, err = fp.Write(data)
+	if err != nil {
+		return err
+	}
+	if err = fp.Sync(); err != nil {
+		return err
+	}
+	if err = fp.Close(); err != nil {
 		return err
 	}
 	return nil
