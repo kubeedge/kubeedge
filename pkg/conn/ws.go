@@ -10,6 +10,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
+	"github.com/kubeedge/viaduct/pkg/fifo"
 	"github.com/kubeedge/viaduct/pkg/keeper"
 	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -24,24 +25,24 @@ type WSConnection struct {
 	syncKeeper    *keeper.SyncKeeper
 	connUse       api.UseType
 	consumer      io.Writer
+	autoRoute     bool
+	messageFifo   *fifo.MessageFifo
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
 	return &WSConnection{
-		wsConn:     options.Base.(*websocket.Conn),
-		handler:    options.Handler,
-		syncKeeper: keeper.NewSyncKeeper(),
-		state:      options.State,
-		connUse:    options.ConnUse,
+		wsConn:      options.Base.(*websocket.Conn),
+		handler:     options.Handler,
+		syncKeeper:  keeper.NewSyncKeeper(),
+		state:       options.State,
+		connUse:     options.ConnUse,
+		autoRoute:   options.AutoRoute,
+		messageFifo: fifo.NewMessageFifo(),
 	}
 }
 
 // ServeConn start to receive message from connection
-func (conn *WSConnection) ServeConn(autoRoute bool) {
-	if !autoRoute {
-		return
-	}
-
+func (conn *WSConnection) ServeConn() {
 	switch conn.connUse {
 	case api.UseTypeMessage:
 		go conn.handleMessage()
@@ -92,6 +93,11 @@ func (conn *WSConnection) handleRawData() {
 		log.LOGGER.Warnf("bad consumer for raw data")
 		return
 	}
+
+	if !conn.autoRoute {
+		return
+	}
+
 	// TODO: support control message processing in raw data mode
 	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeQuic, conn.wsConn))
 	if err != nil {
@@ -122,6 +128,12 @@ func (conn *WSConnection) handleMessage() {
 
 		// to check whether the message is a response or not
 		if matched := conn.syncKeeper.MatchAndNotify(*msg); matched {
+			continue
+		}
+
+		// put the messages into fifo and wait for reading
+		if !conn.autoRoute {
+			conn.messageFifo.Put(msg)
 			continue
 		}
 
@@ -181,9 +193,7 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 }
 
 func (conn *WSConnection) ReadMessage(msg *model.Message) error {
-	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
-	lane.SetReadDeadline(conn.ReadDeadline)
-	return lane.ReadMessage(msg)
+	return conn.messageFifo.Get(msg)
 }
 
 func (conn *WSConnection) RemoteAddr() net.Addr {

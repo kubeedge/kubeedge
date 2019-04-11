@@ -18,7 +18,6 @@ type WSLane struct {
 }
 
 func NewWSLane(van interface{}) *WSLane {
-	log.LOGGER.Debugf("lan type: %T", van)
 	if wsConn, ok := van.(*websocket.Conn); ok {
 		return &WSLane{conn: wsConn}
 	}
