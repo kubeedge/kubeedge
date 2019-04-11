@@ -69,116 +69,33 @@ KubeEdge will provide the fundamental infrastructure and basic functionality for
 
 ### Prerequisites
 
-To use KubeEdge, you will need to have **docker** installed both of Cloud and Edge parts. If you don't, please follow these steps to install docker.
++ [Install docker](https://docs.docker.com/install/)
 
-#### Install docker
++ [Install kubeadm/kubectl](https://docs.docker.com/install/)
 
-For Ubuntu:
++ [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-```shell
-# Install Docker from Ubuntu's repositories:
-apt-get update
-apt-get install -y docker.io
++ After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to Kubernetes apiserver.
+  Please follow below steps to enable http port in Kubernetes apiserver.
 
-# or install Docker CE 18.06 from Docker's repositories for Ubuntu or Debian:
-apt-get update && apt-get install apt-transport-https ca-certificates curl software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-apt-get update && apt-get install docker-ce=18.06.0~ce~3-0~ubuntu
-```
+    ```shell
+    vi /etc/kubernetes/manifests/kube-apiserver.yaml
+    # Add the following flags in spec: containers: -command section
+    - --insecure-port=8080
+    - --insecure-bind-address=0.0.0.0
+    ```
 
-For CentOS:
++ (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
 
-```shell
-# Install Docker from CentOS/RHEL repository:
-yum install -y docker
+  Enter the path to kubeconfig file in controller.yaml
+  ```yaml
+  controller:
+    kube:
+      ...
+      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+  ```
 
-# or install Docker CE 18.06 from Docker's CentOS repositories:
-yum install yum-utils device-mapper-persistent-data lvm2
-yum-config-manager \
-    --add-repo \
-    https://download.docker.com/linux/centos/docker-ce.repo
-yum update && yum install docker-ce-18.06.1.ce
-```
-
-KubeEdge's Cloud(edgecontroller) connects to Kubernetes master to sync updates of node/pod status. If you don't have Kubernetes setup, please follow these steps to install Kubernetes using kubeadm.
-
-#### Install kubeadm/kubectl
-
-For Ubuntu:
-
-```shell
-apt-get update && apt-get install -y apt-transport-https curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
-```
-
-For CentOS:
-
-```shell
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-exclude=kube*
-EOF
-
-# Set SELinux in permissive mode (effectively disabling it)
-setenforce 0
-sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-
-yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
-
-systemctl enable --now kubelet
-```
-
-#### Install Kubernetes
-
-To initialize Kubernetes master, follow the below step:
-
-```shell
-kubeadm init
-```
-
-To use Kubernetes command line tool **kubectl**, you need to make the below configuration.
-
-```shell
-mkdir -p $HOME/.kube
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
-```
-
-After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to Kubernetes apiserver.
-Please follow below steps to enable http port in Kubernetes apiserver.
-
-```shell
-vi /etc/kubernetes/manifests/kube-apiserver.yaml
-# Add the following flags in spec: containers: -command section
-- --insecure-port=8080
-- --insecure-bind-address=0.0.0.0
-```
-
-KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
-
-Enter the path to kubeconfig file in controller.yaml
-```yaml
-controller:
-  kube:
-    ...
-    kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
-```
+#### Configuring MQTT mode
 
 The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
 1) internalMqttMode: internal mqtt broker is enabled.
@@ -187,15 +104,7 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use KubeEdge in double mqtt or external mode, you will need to have **mosquitto** installed on the Edge node. If you do not already have it, you may install as follows.
-
-#### Install openssl
-
-If openssl is not already present using below command to install openssl.
-
-```shell
-apt-get install openssl
-```
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto])(https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
 
 #### Generate Certificates
 
@@ -214,16 +123,14 @@ openssl req -new -key edge.key -out edge.csr
 openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
 ```
 
-### Clone KubeEdge
+## Run KubeEdge
 
-Clone KubeEdge
+### Clone KubeEdge
 
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
-
-## Run KubeEdge
 
 ### Run Cloud
 
@@ -269,24 +176,6 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 ##### [Run as container](./build/edge/README.md)
 
 ##### Run as a binary
-+ Install mosquitto
-
-    For Ubuntu:
-
-    ```shell
-    apt install mosquitto
-    ```
-
-    For CentOS:
-
-    ```shell
-    yum install mosquitto
-    ```
-
-    See [mosquitto official website](https://mosquitto.org/download/) for more information.
-
-    KubeEdge has certificate based authentication/authorization between cloud and edge. Certificates can be generated using openssl. Please follow the steps below to generate certificates.
-
 + Build Edge
 
     ```shell
@@ -327,7 +216,9 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     ```shell
     # run mosquitto
     mosquitto -d -p 1883
-
+    # or run emqx edge
+    # emqx start
+    
     # run edge_core
     # `conf/` should be in the same directory as the cloned KubeEdge repository
     # verify the configurations before running edge(edge_core)
