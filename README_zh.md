@@ -70,107 +70,19 @@ KubeEdge将为 IoT / Edge 工作负载提供基础架构和基本功能。其中
 ## 使用
 
 ### 先决条件
++ [安装 docker](https://docs.docker.com/install/)
++ [安装 kubeadm/kubectl](https://docs.docker.com/install/)
++ [初始化 Kubernetes](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
++ 在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 edgecontroller/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
 
-要使用 KubeEdge 您需要同时在云端和边缘端安装 **docker**。如果没有，请按照以下步骤安装 docker。
+    ```shell
+    vi /etc/kubernetes/manifests/kube-apiserver.yaml
+    # Add the following flags in spec: containers: -command section
+    - --insecure-port=8080
+    - --insecure-bind-address=0.0.0.0
+    ```
 
-#### 安装 docker
-
-Ubuntu系统：
-
-```shell
-# Install Docker from Ubuntu's repositories:
-apt-get update
-apt-get install -y docker.io
-
-# or install Docker CE 18.06 from Docker's repositories for Ubuntu or Debian:
-apt-get update && apt-get install apt-transport-https ca-certificates curl software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-apt-get update && apt-get install docker-ce=18.06.0~ce~3-0~ubuntu
-```
-
-CentOS系统：
-
-```shell
-# Install Docker from CentOS/RHEL repository:
-yum install -y docker
-
-# or install Docker CE 18.06 from Docker's CentOS repositories:
-yum install yum-utils device-mapper-persistent-data lvm2
-yum-config-manager \
-    --add-repo \
-    https://download.docker.com/linux/centos/docker-ce.repo
-yum update && yum install docker-ce-18.06.1.ce
-```
-
-KubeEdge 云端部分（edgecontroller）连接到 Kubernetes master 节点以同步节点和 pod 状态的更新。如果没有安装 Kubernetes，请按照以下步骤使用 kubeadm 安装 Kubernetes。
-
-#### 安装 kubeadm/kubectl
-
-Ubuntu系统：
-
-```shell
-apt-get update && apt-get install -y apt-transport-https curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
-```
-
-CentOS系统：
-
-```shell
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-exclude=kube*
-EOF
-
-# Set SELinux in permissive mode (effectively disabling it)
-setenforce 0
-sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-
-yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
-
-systemctl enable --now kubelet
-```
-
-#### 安装 Kubernetes
-
-初始化 Kubernetes master, 需要如下步骤:
-
-```shell
-kubeadm init
-```
-
-要使用 Kubernetes 命令行工具 **kubectl**, 您需要完成如下配置。
-
-```shell
-mkdir -p $HOME/.kube
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
-```
-
-在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 edgecontroller/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
-
-```shell
-vi /etc/kubernetes/manifests/kube-apiserver.yaml
-# Add the following flags in spec: containers: -command section
-- --insecure-port=8080
-- --insecure-bind-address=0.0.0.0
-```
-
+#### 配置 MQTT 模式
 KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信。KubeEdge 支持3个 MQTT 模式：
 1) internalMqttMode: 启用内部  mqtt 代理。
 2) bothMqttMode: 同时启用内部和外部代理。
@@ -178,37 +90,11 @@ KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信�
 
 可以使用 [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) 中的 mode 字段去配置期望的模式。
 
-使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 **mosquitto**。如果没有，请参考下面的步骤安装。
-
-#### 安装 mosquitto
-
-Ubuntu系统：
-
-```shell
-apt install mosquitto
-```
-
-CentOS系统：
-
-```shell
-yum install mosquitto
-```
-
-参考 [mosquitto official website](https://mosquitto.org/download/) 获得更多的信息。
-
-KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可以使用 openssl 生成。请按照以下步骤生成证书。
-
-#### 安装 openssl
-
-如果 openssl 不存在，请使用下面的命令安装 openssl。
-
-```shell
-apt-get install openssl
-```
+使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 [mosquitto](https://mosquitto.org/) 或 [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) 作为 MQTT Broker。
 
 #### 生成证书
 
-安装 KubeEdge 需要 RootCA 证书以及证书/密钥对。相同的证书/密钥对可以同时用于云端和边缘端。
+KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可以使用 openssl 生成。请按照以下步骤生成证书。
 
 ```shell
 # Generete Root Key
@@ -223,135 +109,88 @@ openssl req -new -key edge.key -out edge.csr
 openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
 ```
 
-### 克隆 KubeEdge
+## 运行 KubeEdge
 
-克隆 KubeEdge
+### 克隆 KubeEdge
 
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
 
-### 构建 Cloud
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-make # or `make edgecontroller`
-```
-
-### 构建 Edge
-
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make # or `make edge_core`
-```
-
-KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
-请点击 [Cross Compilation](docs/setup/cross-compilation.md) 获得相关说明。
-
-## 运行 KubeEdge
-
 ### 运行 Cloud
 
-#### 以 k8s deployment 方式运行
-
-此方式将部署 cloud 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
-
-存放在 `github.com/kubeedge/kubeedge/build/cloud` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
-
-首先， 确保 k8s 集群可以拉到 edge controller 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
-
-```bash
-cd $GOPATH/src/github.com/kubeedge/kubeedge
-make cloudimage
-```
-
-然后，需要生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
-
-```bash
-cd build/cloud
-../tools/certgen.sh buildSecret | tee ./06-secret.yaml
-```
-
-接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
-
-```bash
-for resource in $(ls *.yaml); do kubectl create -f $resource; done
-```
-
-最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service，
-将 cloud hub 暴露到集群外，让 edge core 能够连到。
-
+#### [以 k8s deployment 方式运行](./build/cloud/README_zh.md)
 
 #### 以二进制文件方式运行
++ 构建 Cloud
+
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  make # or `make edgecontroller`
+  ```
 
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
-```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-# run edge controller
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running cloud(edgecontroller)
-./edgecontroller
-```
++ 运行二进制文件
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  # run edge controller
+  # `conf/` should be in the same directory as the cloned KubeEdge repository
+  # verify the configurations before running cloud(edgecontroller)
+  ./edgecontroller
+  ```
 
 ### 运行 Edge
 
+#### 部署 Edge node
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
 请确保在 Kubernetes 中添加了边缘节点 edge-node。运行以下步骤以添加边缘节点 edge-node。
 
-+ 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node的IP
++ 编译 `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` 文件，将 `metadata.name` 修改为edge node name
 + 部署node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
     ```
++ 将证书文件传输到edge node
 
-修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
+#### 运行 Edge
+
+##### [以容器方式运行](./build/edge/README_zh.md)
+
+##### 以二进制文件方式运行
+
++ 构建 Edge
+
+  ```shell
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+  make # or `make edge_core`
+  ```
+
+  KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
+  请点击 [Cross Compilation](docs/setup/cross-compilation.md) 获得相关说明。
+
++ 修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
   + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
-  + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master edge 的IP
-  + 用 edge node 的IP替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
+  + 将 `edgehub.websocket.url` 中的 `0.0.0.0` 修改为 master node 的IP
+  + 用 edge node name 替换 yaml文件中的 `fb4eb70-2783-42b8-b3f-63e2fd6d242e`
 
-运行 Edge
++ 运行二进制文件
+  ```shell
+  # run mosquitto
+  mosquitto -d -p 1883
+  # or run emqx edge
+  # emqx start
+  
+  # run edge_core
+  # `conf/` should be in the same directory as the cloned KubeEdge repository
+  # verify the configurations before running edge(edge_core)
+  ./edge_core
+  # or
+  nohup ./edge_core > edge_core.log 2>&1 &
+  ```
 
-#### 以容器方式运行
-
-此方式将在容器中运行 edge 端，所以需要确认 docker engine 监听在
-`/var/run/docker.sock`，这个之后需要挂载到容器中。
-
-在启动 edge 端容器之前，需要检查一下这个脚本的内容 `build/edge/run_daemon.sh`，
-确保符合具体的环境。（这个脚本会生成 EdgeHub 的客户端证书，建议用生成 CloudHub
-端证书时使用的相同的 CA 证书）
-
-如果没有 edge core 镜像，可以自行构建一个：
-
-```bash
-make edgeimage
-```
-
-之后，运行脚本，mqtt broker url 作为第一个参数，cloud hub url 作为第二个参数，
-第三个参数可选，可以用来指定 edge core 镜像的 tag，如果不指定，默认是 'latest'，
-例如：
-
-```bash
-./run_daemon.sh \
-tcp://<mqtt-broker-address>:1883 \
-wss://<cloud-hub-address>:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-```
-
-#### 以二进制文件方式运行
-
-```shell
-# run mosquitto
-mosquitto -d -p 1883
-
-# run edge_core
-# `conf/` should be in the same directory as the cloned KubeEdge repository
-# verify the configurations before running edge(edge_core)
-./edge_core
-# or
-nohup ./edge_core > edge_core.log 2>&1 &
-```
-
+### 检查状态
 在 Cloud 和 Edge 被启动之后, 您能通过如下的命令去检查边缘节点的状态。
 
 ```shell

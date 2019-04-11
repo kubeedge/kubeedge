@@ -1,5 +1,10 @@
-FROM golang:1.12.1-alpine3.9 AS builder
+ARG BUILD_FROM=golang:1.12-alpine3.9
+ARG RUN_FROM=alpine:3.9
 
+FROM ${BUILD_FROM} AS builder
+
+ARG QEMU_ARCH=x86_64
+COPY ./build/edge/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
 COPY . /go/src/github.com/kubeedge/kubeedge
 
 RUN apk --no-cache update && \
@@ -8,15 +13,13 @@ apk --no-cache add build-base linux-headers sqlite-dev && \
 CGO_ENABLED=1 go build -v -o /usr/local/bin/edge_core -ldflags="-w -s -extldflags -static" \
 github.com/kubeedge/kubeedge/edge/cmd
 
+FROM ${RUN_FROM}
 
-FROM alpine:3.9
+LABEL maintainer="zhanghongtong <zhanghongtong@foxmail.com>"
+
+COPY --from=builder /usr/bin/qemu* /usr/bin/
 
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/edge
-ENV mqtt.server tcp://127.0.0.1:1883
-ENV mqtt.mode 2
-ENV edgehub.websocket.url wss://127.0.0.1:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-ENV edgehub.websocket.certfile /etc/kubeedge/edge/certs/edge.crt
-ENV edgehub.websocket.keyfile /etc/kubeedge/edge/certs/edge.key
 ENV database.source /var/lib/kubeedge/edge.db
 
 VOLUME ["/etc/kubeedge/edge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
