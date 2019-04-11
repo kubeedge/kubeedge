@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
+	"github.com/kubeedge/viaduct/pkg/fifo"
 	"github.com/kubeedge/viaduct/pkg/keeper"
 	"github.com/kubeedge/viaduct/pkg/lane"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -36,6 +37,8 @@ type QuicConnection struct {
 	consumer      io.Writer
 	connUse       api.UseType
 	syncKeeper    *keeper.SyncKeeper
+	messageFifo   *fifo.MessageFifo
+	autoRoute     bool
 }
 
 // new quic connection
@@ -49,6 +52,8 @@ func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 		connUse:       options.ConnUse,
 		syncKeeper:    keeper.NewSyncKeeper(),
 		consumer:      options.Consumer,
+		autoRoute:     options.AutoRoute,
+		messageFifo:   fifo.NewMessageFifo(),
 		streamManager: smgr.NewStreamManager(smgr.NumStreamsMax, autoFree, quicSession),
 	}
 }
@@ -105,7 +110,7 @@ func (conn *QuicConnection) serveControlLan() {
 
 // ServeSession accept steams from remote peer
 // then, receive messages from the steam
-func (conn *QuicConnection) serveSession(autoRoute bool) {
+func (conn *QuicConnection) serveSession() {
 	for {
 		stream, err := conn.session.AcceptStream()
 		if err != nil {
@@ -118,9 +123,7 @@ func (conn *QuicConnection) serveSession(autoRoute bool) {
 		}
 		conn.streamManager.AddStream(stream)
 		// auto route to mux or raw data consumer
-		if autoRoute {
-			conn.dispatch(stream)
-		}
+		conn.dispatch(stream)
 	}
 }
 
@@ -136,9 +139,9 @@ func (conn *QuicConnection) dispatch(stream *smgr.Stream) {
 }
 
 // ServeConn start control lan and session loop
-func (conn *QuicConnection) ServeConn(autoRoute bool) {
+func (conn *QuicConnection) ServeConn() {
 	go conn.serveControlLan()
-	conn.serveSession(autoRoute)
+	conn.serveSession()
 }
 
 func (conn *QuicConnection) Read(raw []byte) (int, error) {
@@ -197,6 +200,11 @@ func (conn *QuicConnection) handleRawData(stream *smgr.Stream) {
 		log.LOGGER.Errorf("bad raw data consumer")
 		return
 	}
+
+	if !conn.autoRoute {
+		return
+	}
+
 	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeQuic, stream.Stream))
 	if err != nil {
 		log.LOGGER.Errorf("failed to copy data, error: %+v", err)
@@ -222,6 +230,13 @@ func (conn *QuicConnection) handleMessage(stream *smgr.Stream) {
 			continue
 		}
 
+		// put the messages into fifo and wait for reading
+		if !conn.autoRoute {
+			conn.messageFifo.Put(msg)
+			continue
+		}
+
+		// user do not set  message handle, use the default mux
 		if conn.handler == nil {
 			// use default mux
 			conn.handler = mux.MuxDefault
@@ -292,24 +307,10 @@ func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 	return lane.WriteMessage(msg)
 }
 
-// ReadMessage read message
+// ReadMessage read message from fifo
+// it will blocked when no message received
 func (conn *QuicConnection) ReadMessage(msg *model.Message) error {
-	if conn.session.Sess == nil {
-		log.LOGGER.Errorf("bad connection session")
-		return fmt.Errorf("bad connection session")
-	}
-
-	stream, err := conn.streamManager.GetStream(api.UseTypeMessage, false, conn.acceptStream)
-	if err != nil {
-		log.LOGGER.Errorf("failed to accept stream, error: %+v", err)
-		return err
-	}
-	defer conn.streamManager.ReleaseStream(api.UseTypeMessage, stream)
-
-	lane := lane.NewLane(api.ProtocolTypeQuic, stream)
-	lane.SetReadDeadline(conn.readDeadline)
-
-	return lane.ReadMessage(msg)
+	return conn.messageFifo.Get(msg)
 }
 
 func (conn *QuicConnection) SetReadDeadline(t time.Time) error {

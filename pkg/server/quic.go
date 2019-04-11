@@ -127,6 +127,7 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 			State:   api.StatConnected,
 			Headers: header,
 		},
+		AutoRoute: srv.options.AutoRoute,
 	})
 
 	// connection callback
@@ -139,8 +140,8 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		srv.options.ConnMgr.AddConnection(conn)
 	}
 
-	// auto route message to entry
-	conn.ServeConn(srv.options.AutoRoute)
+	// serve connection
+	conn.ServeConn()
 }
 
 func (srv *QuicServer) getQuicConfig() *quic.Config {

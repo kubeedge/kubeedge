@@ -81,7 +81,7 @@ func (c *Client) Connect() (conn.Connection, error) {
 	c.connLock.Unlock()
 
 	// check and route to handler
-	go protoConn.ServeConn(c.AutoRoute)
+	go protoConn.ServeConn()
 
 	return protoConn, nil
 }

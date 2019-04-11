@@ -20,7 +20,7 @@ type ConnectionState struct {
 // the operation set of connection
 type Connection interface {
 	// process message from the connection
-	ServeConn(autoRoute bool)
+	ServeConn()
 
 	// SetReadDeadline sets the deadline for future Read calls
 	// and any currently-blocked Read call.
@@ -35,6 +35,7 @@ type Connection interface {
 	SetWriteDeadline(t time.Time) error
 
 	// Read read raw data from the connection
+	// you can also set raw data consumer when new client/server instance
 	Read(raw []byte) (int, error)
 
 	// Write write raw data to the connection
@@ -48,6 +49,7 @@ type Connection interface {
 	WriteMessageSync(msg *model.Message) (*model.Message, error)
 
 	// ReadMessage reads message from the connection.
+	// it will be blocked when no message received
 	// if you want to use this api for message reading,
 	// make sure AutoRoute be false
 	ReadMessage(msg *model.Message) error

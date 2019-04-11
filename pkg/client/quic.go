@@ -123,5 +123,6 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 			State:   api.StatConnected,
 			Headers: c.exOpts.Header,
 		},
+		AutoRoute: c.options.AutoRoute,
 	}), nil
 }
