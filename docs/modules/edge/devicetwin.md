@@ -91,7 +91,7 @@ The following are the action callbacks which can be performed by the membership 
 **dealMembershipUpdated**:  dealMembershipUpdated() updates the membership details of the node. 
                             It adds the devices, that were newly added, to the edge group and removes the devices, that were removed,
                             from the edge group and updates device details, if they have been altered or updated. 
-- The eventbus module receives the message that arrives on the subscribed topic and forwards the message 
+- The edgehub module receives the membership update message from the cloud and forwards the message 
 to devicetwin controller which further forwards it to the membership module. 
 - The membership  module adds devices that are newly added, removes devices that have been recently 
 deleted and also updates the devices that were already existing in the database as well as in the cache. 
@@ -212,16 +212,24 @@ The following are the action callbacks which can be performed by the device modu
    - dealDeviceStateUpdate
    
  **dealDeviceUpdated**: dealDeviceUpdated() deals with the operations to be performed when a device attribute update is encountered.
-                        It updates the changes to the device attributes, like addition of attributes, updation of attributes and deletion of attributes,
-                        in the database. It also sends the result of the device attribute update to be  published to the eventbus component
-                        through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.                      
- 
+                        It updates the changes to the device attributes, like addition of attributes, updation of attributes and deletion of attributes
+                        in the database. It also sends the result of the device attribute update to be published to the eventbus component.
+ - The device attribute updation is initiated from the cloud, which sends the update to edgehub.
+ - The edgehub component sends the message to the device twin controller which forwards the message to the device module.
+ - The device module updates the device attribute details into the database after which, the device module sends the result of the device attribute update to be published
+  to the eventbus component through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic.
+                        
   ![Device Update](../../images/devicetwin/device-update.png)
  
  **dealDeviceStateUpdate**:  dealDeviceStateUpdate() deals with the operations to be performed when a device status update is encountered.
                              It updates the state of the device as well as the last online time of the device in the database.
                              It also sends the update state result, through the communication module,  to the cloud through the edgehub module and to the  eventbus module which in turn 
                              publishes the result on the specified topic of the MQTT broker.
+- The device state updation is initiated by publishing a message on the specified topic which is being subscribed by the eventbus component.
+- The eventbus component sends the message to the device twin controller which forwards the message to the device module.
+- The device module updates the state of the device as well as the last online time of the device in the database.
+- The device module then sends the result of the device state update to the eventbus component and edgehub component through the communicate module of devicetwin. The eventbus component further publishes the result on the specified topic, while the 
+edgehub component sends the device status update to the cloud.
 
   ![Device State Update](../../images/devicetwin/device-state-update.png)
   
