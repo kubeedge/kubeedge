@@ -71,7 +71,7 @@ KubeEdge will provide the fundamental infrastructure and basic functionality for
 
 + [Install docker](https://docs.docker.com/install/)
 
-+ [Install kubeadm/kubectl](https://docs.docker.com/install/)
++ [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 
 + [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
