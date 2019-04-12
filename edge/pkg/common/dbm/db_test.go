@@ -1,97 +1,131 @@
-package dbm_test
+/*
+Copyright 2019 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package dbm
 
 import (
+	"errors"
+	"os"
 	"testing"
-
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-
-	"github.com/astaxie/beego/orm"
-	"github.com/stretchr/testify/assert"
 )
 
-const (
-	//MetaTable name
-	MetaTableName = "meta"
-	// DocumentTableName document table name
-	DocumentTableName = "document"
-)
-
-// Document device document
-type Document struct {
-	Deviceid   string `orm:"column(deviceid); size(64); pk"`
-	Expected   string `orm:"column(expected); type(text); null"`
-	Actual     string `orm:"column(actual); type(text); null"`
-	Metadata   string `orm:"column(metadata); type(text); null"`
-	Laststate  string `orm:"column(laststate); type(text); null"`
-	Lastsync   string `orm:"column(lastsync); type(text); null"`
-	Attributes string `orm:"column(attributes); type(text); null"`
+// TestDevice is a dummy struct that is used for model creation in orm.
+type TestDevice struct {
+	ID          string `orm:"column(id); size(64); pk"`
+	Name        string `orm:"column(name); null; type(text)"`
+	Description string `orm:"column(description); null; type(text)"`
+	State       string `orm:"column(state); null; type(text)"`
+	LastOnline  string `orm:"column(last_online); null; type(text)"`
 }
 
-// SaveDocument save document to db
-func SaveDocument(doc *Document) error {
-	_, err := dbm.DBAccess.Insert(doc)
-	return err
-}
-
-// Meta metadata object
-type TestMeta struct {
-	// ID    int64  `orm:"pk; auto; column(id)"`
-	Key   string `orm:"column(key); size(36); pk"`
-	Type  string `orm:"column(type); size(36)"`
-	Value string `orm:"column(value); null; type(text)"`
-}
-
-// SaveMeta save meta to db
-func SaveMeta(meta *TestMeta) error {
-	num, err := dbm.DBAccess.Insert(meta)
-	log.LOGGER.Debugf("Insert affected Num: %d, %s", num, err)
-	return err
-}
-
-// DeleteMetaByKey delete meta by key
-func DeleteMetaByKey(key string) error {
-	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Delete()
-	if err != nil {
-		log.LOGGER.Errorf("Something wrong when inserting data: %v", err)
-		return err
+// TestRegisterModel is function to test RegisterModel().
+func TestRegisterModel(t *testing.T) {
+	tests := []struct {
+		name           string
+		moduleName     string
+		modelStructure interface{}
+	}{
+		{
+			//Failure Case
+			name:           "TestRegisterModel-UnregisteredModule",
+			moduleName:     "testmodule",
+			modelStructure: "",
+		},
+		{
+			//Success Case
+			name:           "TestRegisterModel-RegisteredModule",
+			moduleName:     "twin",
+			modelStructure: new(TestDevice),
+		},
 	}
-	log.LOGGER.Debugf("Delete affected Num: %d", num)
-	return nil
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			RegisterModel(test.moduleName, test.modelStructure)
+		})
+	}
 }
 
-// UpdateMeta update meta
-func UpdateMeta(meta *TestMeta) error {
-	num, err := dbm.DBAccess.Update(meta) // will update all field
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
-	return err
+// TestIsNonUniqueNameError is function to test IsNonUniqueNameError().
+func TestIsNonUniqueNameError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		wantBool bool
+	}{
+		{
+			name:     "Suffix-are not unique",
+			err:      errors.New("The fields are not unique"),
+			wantBool: true,
+		},
+		{
+			name:     "Contains-UNIQUE constraint failed",
+			err:      errors.New("Failed-UNIQUE constraint failed"),
+			wantBool: true,
+		},
+		{
+			name:     "Contains-constraint failed",
+			err:      errors.New("The input constraint failed"),
+			wantBool: true,
+		},
+		{
+			name:     "OtherError",
+			err:      errors.New("Failed"),
+			wantBool: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotBool := IsNonUniqueNameError(test.err)
+			if gotBool != test.wantBool {
+				t.Errorf("IsNonUniqueError() failed, Got = %v, Want = %v", gotBool, test.wantBool)
+			}
+		})
+	}
 }
 
-// UpdateMetaField update special field
-func UpdateMetaField(key string, col string, value interface{}) error {
-	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Update(orm.Params{col: value})
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
-	return err
+// TestCleanUp() is function to test CleanUp().
+func TestCleanup(t *testing.T) {
+	t.Run("CleanUpTest", func(t *testing.T) {
+		Cleanup()
+		_, err := os.Stat(dataSource)
+		if os.IsExist(err) {
+			t.Errorf("CleanUp failed ,File not removed")
+		}
+	})
 }
 
-// UpdateMetaFields update special fields
-func UpdateMetaFields(key string, cols map[string]interface{}) error {
-	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Update(cols)
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
-	return err
+// TestCleanDBFile is function to test cleanDBFile().
+func TestCleanDBFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileName string
+	}{
+		{
+			// Checks for the negative scenario of CleanBDFile where an unknown file is passed. Positive scenario is handled in CleanUp().
+			name:     "CleanDBFileTest",
+			fileName: "testfile",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cleanDBFile(test.fileName)
+			_, err := os.Stat(test.fileName)
+			if os.IsExist(err) {
+				t.Errorf("CleanUp failed ,file exist")
+			}
+		})
+	}
 }
 
-// QueryMetaByKey query meta
-func QueryMetaByKey() error {
-	return nil
-}
-
-func TestInitDB(t *testing.T) {
-	dbm.RegisterModel("dbTest", &TestMeta{})
-	dbm.InitDBManager()
-	defer dbm.Cleanup()
-
-	m := &TestMeta{Key: "testKey", Type: "testType", Value: "testValue"}
-	err := SaveMeta(m)
-	assert.NoError(t, err)
-}
