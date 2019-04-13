@@ -71,7 +71,7 @@ KubeEdge will provide the fundamental infrastructure and basic functionality for
 
 + [Install docker](https://docs.docker.com/install/)
 
-+ [Install kubeadm/kubectl](https://docs.docker.com/install/)
++ [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 
 + [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
@@ -138,11 +138,18 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 #### Run as a binary
 
++ Build Cloud and edge
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge
+     make 
+    ```
+
 + Build Cloud
 
     ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
-    make # or `make edgecontroller`
+    cd $GOPATH/src/github.com/kubeedge/kubeedge
+     make all WHAT=cloud
     ```
 
 + The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
@@ -179,8 +186,8 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 + Build Edge
 
     ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-    make # or `make edge_core`
+    cd $GOPATH/src/github.com/kubeedge/kubeedge
+    make all WHAT=edge
     ```
 
     KubeEdge can also be cross compiled to run on ARM based processors.
