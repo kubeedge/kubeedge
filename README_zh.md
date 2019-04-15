@@ -241,11 +241,13 @@ make edge_integration_test
 
 请单击链接 [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) 找到 KubeEdge 集成测试框架的详细信息和用例。
 
-## 社区
+## 社区例会
 
-**Slack channel:** 
+社区会议通常周三（双周一次）北京时间上午11:00开始。
 
-用户可以通过单击邀请链接 [link](https://join.slack.com/t/kubeedge/shared_invite/enQtNDg1MjAwMDI0MTgyLTQ1NzliNzYwNWU5MWYxOTdmNDZjZjI2YWE2NDRlYjdiZGYxZGUwYzkzZWI2NGZjZWRkZDVlZDQwZWI0MzM1Yzc) 加入此频道。
+- [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
+- 会议视频记录
+- [会议链接](https://zoom.us/j/861913470)
 
 ## 文档
 
@@ -259,6 +261,5 @@ make edge_integration_test
 -->
 如果您有任何疑问，请以下方式与我们联系：
 
-- [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
-
-- [slack](https://kubeedge.slack.com)
+- mailing list](https://groups.google.com/forum/#!forum/kubeedge)
+- [slack](https://join.slack.com/t/kubeedge/shared_invite/enQtNDg1MjAwMDI0MTgyLTQ1NzliNzYwNWU5MWYxOTdmNDZjZjI2YWE2NDRlYjdiZGYxZGUwYzkzZWI2NGZjZWRkZDVlZDQwZWI0MzM1Yzc)https://kubeedge.slack.com)
