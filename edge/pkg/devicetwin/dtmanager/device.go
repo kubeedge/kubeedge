@@ -228,7 +228,7 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 			}
 			if msgAttr.Metadata != nil {
 				msgMetaJSON, _ := json.Marshal(msgAttr.Metadata)
-				attrMetaJSON, _ := json.Marshal(msgAttr.Metadata)
+				attrMetaJSON, _ := json.Marshal(attr.Metadata)
 				if strings.Compare(string(msgMetaJSON), string(attrMetaJSON)) != 0 {
 					cols["attr_type"] = msgAttr.Metadata.Type
 					meta := dttype.CopyMsgAttr(msgAttr)
