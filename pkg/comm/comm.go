@@ -16,4 +16,7 @@ const (
 	// response type
 	RespTypeAck  = "ack"
 	RespTypeNack = "nack"
+
+	// the max size of message fifo
+	MessageFiFoSizeMax = 100
 )

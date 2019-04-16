@@ -59,6 +59,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 				State:   api.StatConnected,
 				Headers: utils.DeepCopyHeader(c.exOpts.Header),
 			},
+			AutoRoute: c.options.AutoRoute,
 		}), nil
 	}
 
