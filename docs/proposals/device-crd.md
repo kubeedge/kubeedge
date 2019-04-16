@@ -193,8 +193,8 @@ type VisitorConfig struct {
 // Common visitor configurations for bluetooth protocol
 type VisitorConfigBluetooth struct {
 	// Required: Unique ID of the corresponding operation
-	CharacteristicUUID string `json:"characteristicUuid,omitempty"`
-	//Responsible for converting the data coming from the platform into a form that is understood by the bluetooth device
+	CharacteristicUUID string `json:"characteristicUUID,omitempty"`
+	// Responsible for converting the data coming from the platform into a form that is understood by the bluetooth device
 	// For example: "ON":[1], "OFF":[0]
 	//+optional
 	DataWriteToBluetooth map[string][]byte `json:"dataWrite,omitempty"`
@@ -360,13 +360,13 @@ spec:
       isRegisterSwap: true
   - propertyName: pressure-enable
     bluetooth:
-      characteristicUuid: f000aa4204514000b000000000000000
+      characteristicUUID: f000aa4204514000b000000000000000
       dataWrite:
         ON: [1]
         OFF: [0]
   - propertyName: pressure
     bluetooth:
-      characteristicUuid: f000aa4104514000b000000000000000
+      characteristicUUID: f000aa4104514000b000000000000000
       dataConverter:
         startIndex: 3
         endIndex: 5
