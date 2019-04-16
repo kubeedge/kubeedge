@@ -1,6 +1,7 @@
 package model
 
 import (
+	// Mapping value of json to struct member
 	_ "encoding/json"
 	"fmt"
 	"strings"
