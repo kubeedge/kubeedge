@@ -1,0 +1,136 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: devicemodels.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: DeviceModel
+    plural: devicemodels
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            properties:
+              description: 'Required: List of device properties.'
+              items:
+                properties:
+                  description:
+                    description: The device property description.
+                    type: string
+                  name:
+                    description: 'Required: The device property name.'
+                    type: string
+                  type:
+                    description: 'Required: PropertyType represents the type and data
+                      validation of the property.'
+                    properties:
+                      int:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                          defaultValue:
+                            format: int64
+                            type: integer
+                          maximum:
+                            format: int64
+                            type: integer
+                          minimum:
+                            format: int64
+                            type: integer
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        type: object
+                      string:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                          defaultValue:
+                            type: string
+                        type: object
+                    type: object
+                type: object
+              type: array
+            propertyVisitors:
+              description: 'Required: List of property visitors which describe how
+                to access the device properties. PropertyVisitors must unique by propertyVisitor.propertyName.'
+              items:
+                properties:
+                  modbus:
+                    description: Modbus represents a set of additional visitor config
+                      fields of modbus protocol.
+                    properties:
+                      isRegisterSwap:
+                        description: Indicates whether the high and low register swapped.
+                          Defaults to false.
+                        type: boolean
+                      isSwap:
+                        description: Indicates whether the high and low byte swapped.
+                          Defaults to false.
+                        type: boolean
+                      limit:
+                        description: 'Required: Limit number of registers to read/write.'
+                        format: int64
+                        type: integer
+                      offset:
+                        description: 'Required: Offset indicates the starting register
+                          number to read/write data.'
+                        format: int64
+                        type: integer
+                      register:
+                        description: 'Required: Type of register'
+                        type: string
+                      scale:
+                        description: The scale to convert raw property data into final
+                          units. Defaults to 1.0
+                        format: double
+                        type: number
+                    type: object
+                  opcua:
+                    description: Opcua represents a set of additional visitor config
+                      fields of opc-ua protocol.
+                    properties:
+                      browseName:
+                        description: The name of opc-ua node
+                        type: string
+                      nodeID:
+                        description: 'Required: The ID of opc-ua node, e.g. "ns=1,i=1005"'
+                        type: string
+                    type: object
+                  propertyName:
+                    description: 'Required: The device property name to be accessed.
+                      This should refer to one of the device properties defined in
+                      the device model.'
+                    type: string
+                type: object
+              type: array
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
