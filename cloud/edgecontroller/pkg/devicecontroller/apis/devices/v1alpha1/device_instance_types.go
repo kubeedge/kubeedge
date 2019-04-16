@@ -88,7 +88,6 @@ type ProtocolConfigModbusTCP struct {
 }
 
 type ProtocolConfigModbusRTU struct {
-
 	// Required.
 	SerialPort string `json:"serialPort,omitempty"`
 	// Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
@@ -111,7 +110,7 @@ type DeviceStatus struct {
 	Twins []Twin `json:"twins,omitempty"`
 }
 
-// A Twin provides a logical representation of control properties (writable properties in the
+// Twin provides a logical representation of control properties (writable properties in the
 // device model). The properties can have a Desired state and a Reported state. The cloud configures
 // the `Desired`state of a device property and this configuration update is pushed to the edge node.
 // The mapper sends a command to the device to change this property value as per the desired state .
