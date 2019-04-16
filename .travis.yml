@@ -35,4 +35,4 @@ jobs:
     - script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
     - script: make cloud_lint
-      name: "cloud_lint"     # names the second Tests stage job
+      name: "cloud_lint"     # names the eighth Tests stage job
