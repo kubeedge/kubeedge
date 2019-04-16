@@ -24,19 +24,11 @@ To achieve this goal, the group will need to deal with the following items:
 
 ### 2.1 Success Criteria
 
-First of all, KubeEdge is designed to address IoT/Edge workload scenarios. We'd like to enable customers manage node & device resources from cloud. With single pane of glass, IT administrators or users can fulfill the needs the same way as resources in data center.
-
-Secondly, KubeEdge is an open architecture based on Kubernetes. We'd like folks from industry, academy, community etc. to contribute and make innovation.
-
-Thirdly, KubeEdge is currently considered as one of the reference architecture. It is our goal to make the cloud/edge communication channel be the standard and acquire more companies to adopt.
-
-
-
 We expect our proposed device management and cloud-edge communication standards will be adopted by mainstream IoT edge cloud providers and KubeEdge becomes the best possible platform for IoT and Edge computing.
 
 ### 2.2 Out of Scope
 
-We will not try to go deeper into general IoT and Edge computing discussions as there are excellent papers that already cover these topics in details and we are a open source software community.
+We will not try to go deeper into general IoT and Edge computing discussions as there are excellent papers that already cover these topics in details we are a open source software community.
 
 ## 3. Roles and Organization Management
 
