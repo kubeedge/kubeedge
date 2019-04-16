@@ -90,6 +90,7 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			State:   api.StatConnected,
 			Headers: utils.DeepCopyHeader(req.Header),
 		},
+		AutoRoute: srv.options.AutoRoute,
 	})
 
 	// connection callback
@@ -102,8 +103,8 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		srv.options.ConnMgr.AddConnection(conn)
 	}
 
-	// auto route message to entry
-	go conn.ServeConn(srv.options.AutoRoute)
+	// serve connection
+	go conn.ServeConn()
 }
 
 func (srv *WSServer) ListenAndServeTLS() error {

@@ -25,6 +25,8 @@ type ConnectionOptions struct {
 	ConnUse api.UseType
 	// consumer for raw data
 	Consumer io.Writer
+	// auto route into entries
+	AutoRoute bool
 }
 
 // get connection interface by ConnTye
