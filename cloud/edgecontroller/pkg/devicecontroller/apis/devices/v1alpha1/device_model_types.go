@@ -162,7 +162,3 @@ type DeviceModelList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DeviceModel `json:"items"`
 }
-
-func init() {
-	//SchemeBuilder.Register(&Device{}, &DeviceList{}, &DeviceModel{})
-}
