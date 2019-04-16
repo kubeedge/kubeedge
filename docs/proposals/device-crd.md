@@ -220,18 +220,18 @@ type BluetoothDataRead struct {
 	// Specifies the operations that are required to be performed, with what value the operation is to be performed and in what order they are to be performed
 	// For example: ["Multiply":0.235, "Add":32] will ensure that the value is multiplied by 0.235 and the result is added with 32 to provide the final result
 	//+optional
-	OrderOfOperations []map[ArithmaticOperationType]float64 `json:"order-of-operations"`
+	OrderOfOperations []map[BluetoothArithmaticOperationType]float64 `json:"order-of-operations"`
 }
 
 // Operations supported by Bluetooth protocol to convert the value being read from the device into an understandable form
-type ArithmaticOperationType string
+type BluetoothArithmaticOperationType string
 
 // Bluetooth Protocol Operation type
 const (
-	Add      ArithmaticOperationType = "Add"
-	Subtract ArithmaticOperationType = "Subtract"
-	Multiply ArithmaticOperationType = "Multiply"
-	Divide   ArithmaticOperationType = "Divide"
+	BluetoothAdd      ArithmaticOperationType = "Add"
+	BluetoothSubtract ArithmaticOperationType = "Subtract"
+	BluetoothMultiply ArithmaticOperationType = "Multiply"
+	BluetoothDivide   ArithmaticOperationType = "Divide"
 )
 
 // Common visitor configurations for opc-ua protocol
