@@ -40,5 +40,25 @@ kill_edgecontroller() {
     fi
 }
 
+cleanup_files(){
+    workdir=$GOPATH/src/github.com/kubeedge/kubeedge
+    cd $workdir
+
+    sudo rm -rf cloud/edgecontroller/edgecontroller
+    sudo rm -rf cloud/edgecontroller/tmp/
+    sudo rm -rf edge/edge.db
+    sudo rm -rf edge/edge_core
+    sudo rm -rf edge/tmp/
+    sudo rm -rf tests/e2e/config.json
+    sudo rm -rf tests/e2e/kubeedge.crt
+    sudo rm -rf tests/e2e/kubeedge.csr
+    sudo rm -rf tests/e2e/kubeedge.key
+    sudo rm -rf tests/e2e/rootCA.crt
+    sudo rm -rf tests/e2e/rootCA.key
+    sudo rm -rf tests/e2e/rootCA.srl
+    sudo rm -rf tests/e2e/deployment/deployment.test
+}
+
 kill_edge_core
 kill_edgecontroller
+cleanup_files
