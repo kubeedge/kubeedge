@@ -111,18 +111,11 @@ To use KubeEdge in double mqtt or external mode, you need to make sure that [mos
 
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
-```shell
-# Generete Root Key
-openssl genrsa -des3 -out rootCA.key 4096
-# Generate Root Certificate
-openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
-# Generate Key
-openssl genrsa -out edge.key 2048
-# Generate csr, Fill required details after running the command
-openssl req -new -key edge.key -out edge.csr
-# Generate Certificate
-openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
+```bash
+# $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
 ```
+
+The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively.
 
 ## Run KubeEdge
 

@@ -10,9 +10,9 @@ controller:
 cloudhub:
   address: 0.0.0.0
   port: 10000
-  ca: /tmp/rootCA.crt
-  cert: /tmp/edge.crt
-  key: /tmp/edge.key
+  ca: /etc/kubeedge/ca/rootCA.crt
+  cert: /etc/kubeedge/certs/edge.crt
+  key: /etc/kubeedge/certs/edge.key
   keepalive-interval: 30
   write-timeout: 30
   node-limit: 10
