@@ -1,9 +1,6 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  creationTimestamp: null
-  labels:
-    controller-tools.k8s.io: "1.0"
   name: devicemodels.devices.kubeedge.io
 spec:
   group: devices.kubeedge.io
@@ -78,6 +75,66 @@ spec:
                 to access the device properties. PropertyVisitors must unique by propertyVisitor.propertyName.'
               items:
                 properties:
+                  bluetooth:
+                    description: Bluetooth represents a set of additional visitor
+                      config fields of bluetooth protocol.
+                    properties:
+                      characteristicUUID:
+                        description: 'Required: Unique ID of the corresponding operation'
+                        type: string
+                      dataConverter:
+                        description: Responsible for converting the data being read
+                          from the bluetooth device into a form that is understandable
+                          by the platform
+                        properties:
+                          endIndex:
+                            description: 'Required: Specifies the end index of incoming
+                              byte stream to be considered to convert the data the
+                              value specified should be inclusive for example if 3
+                              is specified it includes the third index'
+                            format: int64
+                            type: integer
+                          orderOfOperations:
+                            description: Specifies in what order the operations(which
+                              are required to be performed to convert incoming data
+                              into understandable form) are performed
+                            items:
+                              properties:
+                                operationType:
+                                  description: 'Required: Specifies the operation
+                                    to be performed to convert incoming data'
+                                  type: string
+                                operationValue:
+                                  description: 'Required: Specifies with what value
+                                    the operation is to be performed'
+                                  format: double
+                                  type: number
+                              type: object
+                            type: array
+                          shiftLeft:
+                            description: Refers to the number of bits to shift left,
+                              if left-shift operation is necessary for conversion
+                            type: uint
+                          shiftRight:
+                            description: Refers to the number of bits to shift right,
+                              if right-shift operation is necessary for conversion
+                            type: uint
+                          startIndex:
+                            description: 'Required: Specifies the start index of the
+                              incoming byte stream to be considered to convert the
+                              data. For example: start-index:2, end-index:3 concatenates
+                              the value present at second and third index of the incoming
+                              byte stream. If we want to reverse the order we can
+                              give it as start-index:3, end-index:2'
+                            format: int64
+                            type: integer
+                        type: object
+                      dataWrite:
+                        description: 'Responsible for converting the data coming from
+                          the platform into a form that is understood by the bluetooth
+                          device For example: "ON":[1], "OFF":[0]'
+                        type: object
+                    type: object
                   modbus:
                     description: Modbus represents a set of additional visitor config
                       fields of modbus protocol.
@@ -134,3 +191,4 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+

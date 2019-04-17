@@ -99,7 +99,61 @@ type VisitorConfig struct {
 	// Modbus represents a set of additional visitor config fields of modbus protocol.
 	// +optional
 	Modbus VisitorConfigModbus `json:"modbus,omitempty"`
+	// Bluetooth represents a set of additional visitor config fields of bluetooth protocol.
+	// +optional
+	Bluetooth VisitorConfigBluetooth `json:"bluetooth,omitempty"`
 }
+
+// Common visitor configurations for bluetooth protocol
+type VisitorConfigBluetooth struct {
+	// Required: Unique ID of the corresponding operation
+	CharacteristicUUID string `json:"characteristicUUID,omitempty"`
+	// Responsible for converting the data coming from the platform into a form that is understood by the bluetooth device
+	// For example: "ON":[1], "OFF":[0]
+	//+optional
+	DataWriteToBluetooth map[string][]byte `json:"dataWrite,omitempty"`
+	// Responsible for converting the data being read from the bluetooth device into a form that is understandable by the platform
+	//+optional
+	BluetoothDataConverter BluetoothReadConverter `json:"dataConverter,omitempty"`
+}
+
+// Specifies the operations that may need to be performed to convert the data
+type BluetoothReadConverter struct {
+	// Required: Specifies the start index of the incoming byte stream to be considered to convert the data.
+	// For example: start-index:2, end-index:3 concatenates the value present at second and third index of the incoming byte stream. If we want to reverse the order we can give it as start-index:3, end-index:2
+	StartIndex int `json:"startIndex,omitempty"`
+	// Required: Specifies the end index of incoming byte stream to be considered to convert the data
+	// the value specified should be inclusive for example if 3 is specified it includes the third index
+	EndIndex int `json:"endIndex,omitempty"`
+	// Refers to the number of bits to shift left, if left-shift operation is necessary for conversion
+	// +optional
+	ShiftLeft uint `json:"shiftLeft,omitempty"`
+	// Refers to the number of bits to shift right, if right-shift operation is necessary for conversion
+	// +optional
+	ShiftRight uint `json:"shiftRight,omitempty"`
+	// Specifies in what order the operations(which are required to be performed to convert incoming data into understandable form) are performed
+	//+optional
+	OrderOfOperations []BluetoothOperations `json:"orderOfOperations,omitempty"`
+}
+
+// Specify the operation that should be performed to convert incoming data into understandable form
+type BluetoothOperations struct {
+	// Required: Specifies the operation to be performed to convert incoming data
+	BluetoothOperationType BluetoothArithmeticOperationType `json:"operationType,omitempty"`
+	// Required: Specifies with what value the operation is to be performed
+	BluetoothOperationValue float64 `json:"operationValue,omitempty"`
+}
+
+// Operations supported by Bluetooth protocol to convert the value being read from the device into an understandable form
+type BluetoothArithmeticOperationType string
+
+// Bluetooth Protocol Operation type
+const (
+	BluetoothAdd      BluetoothArithmeticOperationType = "Add"
+	BluetoothSubtract BluetoothArithmeticOperationType = "Subtract"
+	BluetoothMultiply BluetoothArithmeticOperationType = "Multiply"
+	BluetoothDivide   BluetoothArithmeticOperationType = "Divide"
+)
 
 // Common visitor configurations for opc-ua protocol
 type VisitorConfigOPCUA struct {
