@@ -36,4 +36,57 @@ We will not try to go deeper into general IoT and Edge computing discussions as 
 
 ## 3. Roles and Organization Management
 
-- Proposing and making decisions *MAY* be done without the use of KEPS so long as the decision is documented in a linkable medium. We prefer to see written decisions and reasoning on the [kubeedge@](https://groups.google.com/forum/#!forum/kubeedge) mailing list or as issues filed against [kubeedge/kubeedge](https://github.com/kubeedge/kubeedge). We encourage the use of faster mediums such as slack of video conferences to come to consensus.
+### Roles
+
+#### Maintainers
+
+  - Run operations and processes governing the SIG
+  - Number: 2-3
+  - Membership tracked in [MAINTAINERS](https://github.com/kubeedge/kubeedge/blob/master/MAINTAINERS)
+
+#### Member
+
+- *SHOULD* maintain health of the community
+- *SHOULD* show sustained contributions to at least one project or to the community
+- *SHOULD* hold some documented role or responsibility in the community and / or at least one project 
+- *MAY* build new functionality for projects
+- *MAY* participate in decision making for the projects they hold roles in
+
+#### Security Contact
+
+- *MUST* be a contact point for the Product Security Committee to reach out to for triaging and handling of incoming issues
+- *MUST* accept the [Embargo Policy](https://git.k8s.io/security/private-distributors-list.md#embargo-policy)
+- Defined in `SECURITY_CONTACTS` files, this is only relevant to the root file in the repository. Template [SECURITY_CONTACTS](https://github.com/kubernetes/kubernetes-template-project/blob/master/SECURITY_CONTACTS)
+
+### Organizational Management
+
+- Community members meets bi-weekly on zoom with agenda in meeting notes
+  - *SHOULD* be facilitated by chairs unless delegated to specific Members
+- Project overview and deep-dive sessions organized for KubeCon/CloudNativeCon
+  - *SHOULD* be organized by chairs unless delegated to specific Members
+- Contributing instructions defined in the CONTRIBUTING.md
+
+#### Project Management
+In addition, community have the following responsibilities to PM:
+
+* identify community annual roadmap
+* identify all community features in the current release
+* actively track / maintain SIG features within docs/proposals
+
+#### Technical processes
+
+Projects of the community MUST use the following processes unless explicitly following alternatives they have defined.
+
+* Proposing and making decisions
+
+   - Proposals sent as KEP PRs and published to googlegroup as announcement
+   - Follow KEP decision making process
+
+* Test health
+
+- Canonical health of code published to
+- Consistently broken tests automatically send an alert to
+- SIG members are responsible for responding to broken tests alert. PRs that break tests should be rolled back if not fixed within 24 hours (business hours).
+- Test dashboard checked and reviewed at start of each SIG meeting. Owners assigned for any broken tests. and followed up during the next SIG meeting.
+
+Proposing and making decisions *MAY* be done without the use of KEPS so long as the decision is documented in a linkable medium. We prefer to see written decisions and reasoning on the [kubeedge@](https://groups.google.com/forum/#!forum/kubeedge) mailing list or as issues filed against [kubeedge/kubeedge](https://github.com/kubeedge/kubeedge). We encourage the use of faster mediums such as slack of video conferences to come to consensus.
