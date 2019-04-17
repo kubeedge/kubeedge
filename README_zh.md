@@ -246,7 +246,7 @@ make edge_integration_test
 社区会议通常周三（双周一次）北京时间上午11:00开始。
 
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
-- 会议视频记录
+- [会议视频记录](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [会议链接](https://zoom.us/j/861913470)
 
 ## 文档
@@ -261,5 +261,5 @@ make edge_integration_test
 -->
 如果您有任何疑问，请以下方式与我们联系：
 
-- mailing list](https://groups.google.com/forum/#!forum/kubeedge)
+- [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
 - [slack](https://join.slack.com/t/kubeedge/shared_invite/enQtNDg1MjAwMDI0MTgyLTQ1NzliNzYwNWU5MWYxOTdmNDZjZjI2YWE2NDRlYjdiZGYxZGUwYzkzZWI2NGZjZWRkZDVlZDQwZWI0MzM1Yzc)https://kubeedge.slack.com)
