@@ -6,13 +6,13 @@ readonly certPath=${CERT_PATH:-/etc/kubeedge/certs}
 readonly subject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
 
 genCA() {
-    openssl genrsa -des3 -out ${caPath}/ca.key -passout pass:kubeedge.io 4096
-    openssl req -x509 -new -nodes -key ${caPath}/ca.key -sha256 -days 3650 \
-    -subj ${subject} -passin pass:kubeedge.io -out ${caPath}/ca.crt
+    openssl genrsa -des3 -out ${caPath}/rootCA.key -passout pass:kubeedge.io 4096
+    openssl req -x509 -new -nodes -key ${caPath}/rootCA.key -sha256 -days 3650 \
+    -subj ${subject} -passin pass:kubeedge.io -out ${caPath}/rootCA.crt
 }
 
 ensureCA() {
-    if [ ! -e ${caPath}/ca.key ] || [ ! -e ${caPath}/ca.crt ]; then
+    if [ ! -e ${caPath}/rootCA.key ] || [ ! -e ${caPath}/rootCA.crt ]; then
         genCA
     fi
 }
@@ -32,12 +32,12 @@ genCertAndKey() {
     local name=$1
     openssl genrsa -out ${certPath}/${name}.key 2048
     openssl req -new -key ${certPath}/${name}.key -subj ${subject} -out ${certPath}/${name}.csr
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/ca.crt -CAkey ${caPath}/ca.key \
+    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
     -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
 }
 
 buildSecret() {
-    local name="cloud"
+    local name="edge"
     genCertAndKey ${name} > /dev/null 2>&1
     cat <<EOF
 apiVersion: v1
@@ -49,11 +49,11 @@ metadata:
     k8s-app: kubeedge
     kubeedge: edgecontroller
 stringData:
-  ca.crt: |
-$(pr -T -o 4 ${caPath}/ca.crt)
-  cloud.crt: |
+  rootCA.crt: |
+$(pr -T -o 4 ${caPath}/rootCA.crt)
+  edge.crt: |
 $(pr -T -o 4 ${certPath}/${name}.crt)
-  cloud.key: |
+  edge.key: |
 $(pr -T -o 4 ${certPath}/${name}.key)
 
 EOF
