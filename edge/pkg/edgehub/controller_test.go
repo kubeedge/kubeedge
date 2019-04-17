@@ -118,6 +118,7 @@ func TestNewEdgeHubController(t *testing.T) {
 		{"Testing if EdgeHubController is returned with correct values",
 			&Controller{
 				config: &config.ControllerConfig{
+					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
@@ -129,6 +130,7 @@ func TestNewEdgeHubController(t *testing.T) {
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 150 * time.Second,
 				RefreshInterval: 15 * time.Minute,
 				AuthInfosPath:   "/var/IEF/secret",
@@ -164,6 +166,7 @@ func TestNewEdgeHubController(t *testing.T) {
 //TestInitial() tests the procurement of the cloudhub client
 func TestInitial(t *testing.T) {
 	controllerConfig := config.ControllerConfig{
+		Protocol:        "websocket",
 		HeartbeatPeriod: 150 * time.Second,
 		RefreshInterval: 15 * time.Minute,
 		AuthInfosPath:   "/var/IEF/secret",
@@ -201,6 +204,7 @@ func TestInitial(t *testing.T) {
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
 		}, config.ControllerConfig{
+			Protocol:     "websocket",
 			PlacementURL: testServer.URL,
 			ProjectID:    "foo",
 			NodeID:       "bar",
@@ -215,6 +219,7 @@ func TestInitial(t *testing.T) {
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
 		}, config.ControllerConfig{
+			Protocol:     "websocket",
 			PlacementURL: testServer.URL,
 			ProjectID:    "",
 			NodeID:       "",
@@ -461,6 +466,7 @@ func TestSendToCloud(t *testing.T) {
 			context:  context.GetContext(context.MsgCtxTypeChannel),
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 6 * time.Second,
 			},
 			syncKeeper: make(map[string]chan model.Message),
@@ -472,6 +478,7 @@ func TestSendToCloud(t *testing.T) {
 		{"Wait Error in send to cloud", Controller{
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 3 * time.Second,
 			},
 			syncKeeper: make(map[string]chan model.Message),
@@ -557,6 +564,7 @@ func TestKeepalive(t *testing.T) {
 	}{
 		{"Heartbeat failure Case", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -639,6 +647,7 @@ func TestPostUrlRequst(t *testing.T) {
 	}{
 		{"post URL request with valid input ", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -648,6 +657,7 @@ func TestPostUrlRequst(t *testing.T) {
 
 		{"post URL request with invalid input", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/bad_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -656,6 +666,7 @@ func TestPostUrlRequst(t *testing.T) {
 
 		{"post URL request with wrong URL", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/wrong_url",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -701,6 +712,7 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 	}{
 		{"Get valid cloudhub URL: without placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -751,6 +763,7 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 	}{
 		{"Get valid cloudhub URL: with placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -762,6 +775,7 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 		},
 		{"Invalid cloudhub URL: with placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/bad_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -773,6 +787,7 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 		},
 		{"Wrong certificate paths: with placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",

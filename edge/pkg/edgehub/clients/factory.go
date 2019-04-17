@@ -29,13 +29,15 @@ func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
 		return wsclient.NewWebSocketClient(&websocketConf)
 	} else if clientType == ClientTypeQuic {
 		quicConfig := quicclient.QuicConfig{
-			Addr:             config.QcConfig.Url,
+			Addr:             config.QcConfig.URL,
 			CaFilePath:       config.QcConfig.CaFilePath,
 			CertFilePath:     config.QcConfig.CertFilePath,
 			KeyFilePath:      config.QcConfig.KeyFilePath,
 			HandshakeTimeout: config.QcConfig.HandshakeTimeout,
 			ReadDeadline:     config.QcConfig.ReadDeadline,
 			WriteDeadline:    config.QcConfig.WriteDeadline,
+			ProjectID:        config.CtrConfig.ProjectID,
+			NodeID:           config.CtrConfig.NodeID,
 		}
 		return quicclient.NewQuicClient(&quicConfig)
 	} else {

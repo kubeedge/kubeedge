@@ -36,7 +36,6 @@ func (io *JSONWSIO) SetWriteDeadline(time time.Time) error {
 
 // ReadData read data from connection
 func (io *JSONWSIO) ReadData(d interface{}) (int, error) {
-
 	_, buf, err := io.WSConn.ReadMessage()
 	if err != nil {
 		return 0, err
@@ -67,23 +66,23 @@ func (io *JSONWSIO) Close() error {
 	return io.WSConn.Close()
 }
 
-type JsonQuicIO struct {
+type JSONQuicIO struct {
 	Connection conn.Connection
 }
 
-func (quicio *JsonQuicIO) SetReadDeadline(time time.Time) error {
+func (quicio *JSONQuicIO) SetReadDeadline(time time.Time) error {
 	return nil
 }
 
-func (quicio *JsonQuicIO) SetWriteDeadline(time time.Time) error {
+func (quicio *JSONQuicIO) SetWriteDeadline(time time.Time) error {
 	return nil
 }
 
-func (quicio *JsonQuicIO) ReadData(d interface{}) (int, error) {
+func (quicio *JSONQuicIO) ReadData(d interface{}) (int, error) {
 	return 0, quicio.Connection.ReadMessage(d.(*model.Message))
 }
 
-func (quicio *JsonQuicIO) WriteData(d interface{}) error {
+func (quicio *JSONQuicIO) WriteData(d interface{}) error {
 	msg, ok := d.(*model.Message)
 	if !ok {
 		return fmt.Errorf("data is not model.Message type")
@@ -95,6 +94,6 @@ func (quicio *JsonQuicIO) WriteData(d interface{}) error {
 	return nil
 }
 
-func (quicio *JsonQuicIO) Close() error {
+func (quicio *JSONQuicIO) Close() error {
 	return quicio.Connection.Close()
 }
