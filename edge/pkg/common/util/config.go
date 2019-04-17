@@ -100,7 +100,7 @@ func GenerateTestYaml(test interface{}, path, filename string) error {
 // "certFileName" & "keyFileName" refers to the name of the file to be created without the extension
 func GenerateTestCertificate(path string, certFileName string, keyFileName string) error {
 	template := &x509.Certificate{
-		IsCA: true,
+		IsCA:                  true,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
 		SerialNumber:          big.NewInt(1234),

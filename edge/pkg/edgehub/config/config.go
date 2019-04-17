@@ -19,7 +19,9 @@ const (
 	heartbeatDefault = 15
 	refreshInterval  = 10
 
-	protocolDefault = "websocket"
+	protocolDefault   = protocolWebsocket
+	protocolWebsocket = "websocket"
+	protocolQuic      = "quic"
 )
 
 //WebSocketConfig defines web socket configuration object type
@@ -52,8 +54,9 @@ type EdgeHubConfig struct {
 	QcConfig  QuicConfig
 }
 
+//QuicConfig defines quic configuration object type
 type QuicConfig struct {
-	Url              string
+	URL              string
 	CaFilePath       string
 	CertFilePath     string
 	KeyFilePath      string
@@ -65,20 +68,25 @@ type QuicConfig struct {
 var edgeHubConfig EdgeHubConfig
 
 func init() {
-	err := getWebSocketConfig()
-	if err != nil {
-		log.LOGGER.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
-		panic(err)
-	}
-	err = getControllerConfig()
+	err := getControllerConfig()
 	if err != nil {
 		log.LOGGER.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
 		panic(err)
 	}
-	err = getQuicConfig()
-	if err != nil {
-		log.LOGGER.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
-		panic(err)
+	if edgeHubConfig.CtrConfig.Protocol == protocolWebsocket {
+		err = getWebSocketConfig()
+		if err != nil {
+			log.LOGGER.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
+			panic(err)
+		}
+	} else if edgeHubConfig.CtrConfig.Protocol == protocolQuic {
+		err = getQuicConfig()
+		if err != nil {
+			log.LOGGER.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
+			panic(err)
+		}
+	} else {
+		panic(fmt.Errorf("error in loading Controller configurations, protocol %s is invalid", edgeHubConfig.CtrConfig.Protocol))
 	}
 }
 
@@ -198,9 +206,9 @@ func getExtendHeader() http.Header {
 func getQuicConfig() error {
 	url, err := config.CONFIG.GetValue("edgehub.quic.url").ToString()
 	if err != nil {
-		log.LOGGER.Errorf("Failed to get url for quic client: %v", err)
+		return fmt.Errorf("Failed to get url for quic client: %v", err)
 	}
-	edgeHubConfig.QcConfig.Url = url
+	edgeHubConfig.QcConfig.URL = url
 
 	caFile, err := config.CONFIG.GetValue("edgehub.quic.cafile").ToString()
 	if err != nil {

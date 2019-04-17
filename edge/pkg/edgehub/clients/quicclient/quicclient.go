@@ -4,23 +4,24 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/kubeedge/viaduct/pkg/api"
 	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/viaduct/pkg/api"
 	qclient "github.com/kubeedge/viaduct/pkg/client"
 	"github.com/kubeedge/viaduct/pkg/conn"
 )
 
-const Default_MaxIncomingStreams = 10000
-
+// QuicClient a quic client
 type QuicClient struct {
 	config *QuicConfig
 	client conn.Connection
 }
 
+// QuicConfig config for quic
 type QuicConfig struct {
 	Addr             string
 	CaFilePath       string
@@ -29,22 +30,26 @@ type QuicConfig struct {
 	HandshakeTimeout time.Duration
 	ReadDeadline     time.Duration
 	WriteDeadline    time.Duration
+	NodeID           string
+	ProjectID        string
 }
 
+// NewQuicClient initializes a new quic client instance
 func NewQuicClient(conf *QuicConfig) *QuicClient {
 	return &QuicClient{config: conf}
 }
 
+// Init initializes quic client
 func (qcc *QuicClient) Init() error {
-	log.LOGGER.Infof("quic start to connect Access")
+	log.LOGGER.Infof("Quic start to connect Access")
 	cert, err := tls.LoadX509KeyPair(qcc.config.CertFilePath, qcc.config.KeyFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("failed to load x509 key pair: %v", err)
+		log.LOGGER.Errorf("Failed to load x509 key pair: %v", err)
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 	caCrt, err := ioutil.ReadFile(qcc.config.CaFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("failed to load ca file: %s", err.Error())
+		log.LOGGER.Errorf("Failed to load ca file: %s", err.Error())
 		return fmt.Errorf("failed to load ca file: %s", err.Error())
 	}
 	pool := x509.NewCertPool()
@@ -62,33 +67,39 @@ func (qcc *QuicClient) Init() error {
 		Type:             api.ProtocolTypeQuic,
 		Addr:             qcc.config.Addr,
 	}
-	exOpts := api.QuicClientOption{}
+	exOpts := api.QuicClientOption{Header: make(http.Header)}
+	exOpts.Header.Set("node_id", qcc.config.NodeID)
+	exOpts.Header.Set("project_id", qcc.config.ProjectID)
 	client := qclient.NewQuicClient(option, exOpts)
 	connection, err := client.Connect()
 	if err != nil {
-		log.LOGGER.Errorf("init quic connection failed %s", err.Error())
+		log.LOGGER.Errorf("Init quic connection failed %s", err.Error())
 		return err
 	}
 	qcc.client = connection
-	log.LOGGER.Infof("quic connect to cloud access successful")
+	log.LOGGER.Infof("Quic connect to cloud access successful")
 
 	return nil
 }
 
+//Uninit closes the quic connection
 func (qcc *QuicClient) Uninit() {
 	qcc.client.Close()
 }
 
+//Send sends the message as JSON object through the connection
 func (qcc *QuicClient) Send(message model.Message) error {
 	return qcc.client.WriteMessageAsync(&message)
 }
 
+//Receive reads the binary message through the connection
 func (qcc *QuicClient) Receive() (model.Message, error) {
 	message := model.Message{}
 	qcc.client.ReadMessage(&message)
 	return message, nil
 }
 
+//Notify logs info
 func (qcc *QuicClient) Notify(authInfo map[string]string) {
-	log.LOGGER.Infof("don not care")
+	log.LOGGER.Infof("Don not care")
 }

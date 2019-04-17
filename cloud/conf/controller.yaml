@@ -12,6 +12,7 @@ cloudhub:
   port: 10000 # open port for websocket server
   protocol_quic: true # enable quic protocol
   quic_port: 10001 # open prot for quic server
+  max_incomingstreams: 10000 # the max incoming stream for quic server
   address: 0.0.0.0
   ca: /etc/kubeedge/ca/rootCA.crt
   cert: /etc/kubeedge/certs/edge.crt

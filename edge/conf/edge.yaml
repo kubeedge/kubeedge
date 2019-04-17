@@ -16,14 +16,14 @@ edgehub:
         read-deadline: 15 # second
     quic:
         url: 127.0.0.1:10001
-        cafile: /tmp/rootCA.crt
-        certfile: /tmp/edge.crt
-        keyfile: /tmp/edge.key
+        cafile: /etc/kubeedge/ca/rootCA.crt
+        certfile: /etc/kubeedge/certs/edge.crt
+        keyfile: /etc/kubeedge/certs/edge.key
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
     controller:
-        protocol: quic # websocket, quic
+        protocol: websocket # websocket, quic
         placement: false
         heartbeat: 15  # second
         refresh-ak-sk-interval: 10 # minute

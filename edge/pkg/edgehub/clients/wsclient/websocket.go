@@ -45,10 +45,10 @@ func NewWebSocketClient(conf *WebSocketConfig) *WebSocketClient {
 
 // Init initializes websocket client
 func (wcc *WebSocketClient) Init() error {
-	log.LOGGER.Infof("start to connect Access")
+	log.LOGGER.Infof("Start to connect Access")
 	cert, err := tls.LoadX509KeyPair(wcc.config.CertFilePath, wcc.config.KeyFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("failed to load x509 key pair: %v", err)
+		log.LOGGER.Errorf("Failed to load x509 key pair: %v", err)
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 
@@ -73,9 +73,9 @@ func (wcc *WebSocketClient) Init() error {
 				}
 				resp.Body.Close()
 			}
-			log.LOGGER.Errorf("error when init websocket connection%s: %v", respMsg, err)
+			log.LOGGER.Errorf("Error when init websocket connection%s: %v", respMsg, err)
 		} else {
-			log.LOGGER.Infof("success to connect Access")
+			log.LOGGER.Infof("Success to connect Access")
 			wcc.webConn = conn
 			return nil
 		}
@@ -89,7 +89,7 @@ func (wcc *WebSocketClient) Uninit() {
 	wcc.webConn.Close()
 }
 
-//Send sends the message as JSON object through the connection
+//Send sends the message as binary message through the connection
 func (wcc *WebSocketClient) Send(message model.Message) error {
 	deadline := time.Now().Add(wcc.config.WriteDeadline)
 	wcc.sendLock.Lock()
@@ -104,7 +104,7 @@ func (wcc *WebSocketClient) Send(message model.Message) error {
 	return wcc.webConn.WriteMessage(websocket.BinaryMessage, data)
 }
 
-//Receive reads the JSON object through the connection
+//Receive reads the binary message through the connection
 func (wcc *WebSocketClient) Receive() (model.Message, error) {
 	var message model.Message
 
@@ -115,7 +115,7 @@ func (wcc *WebSocketClient) Receive() (model.Message, error) {
 
 	err = json.Unmarshal(buf, &message)
 	if err != nil {
-		log.LOGGER.Errorf("failed to read json: %v", err)
+		log.LOGGER.Errorf("Failed to read json: %v", err)
 		return model.Message{}, err
 	}
 
