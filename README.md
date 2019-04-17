@@ -292,7 +292,7 @@ Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/tes
 Regular Community Meeting: Wednesday at 11:00 Beijing Time (biweekly).
 
 - [Meeting notes and agenda](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
-- Meeting recordings
+- [Meeting recordings](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [Meeting link](https://zoom.us/j/861913470)
 
 ## Documentation
