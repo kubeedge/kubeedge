@@ -9,8 +9,8 @@ mqtt:
 edgehub:
     websocket:
         url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-        certfile: /tmp/edge.crt
-        keyfile: /tmp/edge.key
+        certfile: /etc/kubeedge/certs/edge.crt
+        keyfile: /etc/kubeedge/certs/edge.key
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
