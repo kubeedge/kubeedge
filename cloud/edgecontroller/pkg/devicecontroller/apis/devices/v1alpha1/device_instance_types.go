@@ -46,7 +46,7 @@ type ProtocolConfig struct {
 
 type ProtocolConfigOpcUA struct {
 	// Required: The URL for opc server endpoint.
-	Url string `json:"url,omitempty"`
+	URL string `json:"url,omitempty"`
 	// Username for access opc server.
 	// +optional
 	UserName string `json:"userName,omitempty"`
