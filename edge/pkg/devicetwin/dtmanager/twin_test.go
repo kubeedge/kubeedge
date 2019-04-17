@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -207,13 +207,13 @@ func TestStart(t *testing.T) {
 			contentType: contentKeyTwin,
 		},
 		{
-			name:        "TestStart(): Case 2: ReceiverChan case error log - TwinModule deal event failed, not found callback",
+			name:        "TestStart(): Case 2: ReceiverChan case error log; TwinModule deal event failed, not found callback",
 			tw:          twinWorkerFunc(receiverChannel, nil, nil, context, ""),
 			actionType:  dtcommon.SendToEdge,
 			contentType: contentKeyTwin,
 		},
 		{
-			name:       "TestStart(): Case 3: ReceiverChan case error log - TwinModule deal event failed",
+			name:       "TestStart(): Case 3: ReceiverChan case error log; TwinModule deal event failed",
 			tw:         twinWorkerFunc(receiverChannel, nil, nil, context, ""),
 			actionType: dtcommon.TwinGet,
 		},
@@ -327,7 +327,14 @@ func TestDealTwinGet(t *testing.T) {
 			err:     errors.New("invalid message content"),
 		},
 		{
-			name:     "TestDealTwinGet(): Case 3: Success case",
+			name:     "TestDealTwinGet(): Case 3: Success; Unmarshal twin info fails in DealGetTwin()",
+			context:  &context,
+			resource: deviceB,
+			msg:      msgTypeFunc([]byte("")),
+			err:      nil,
+		},
+		{
+			name:     "TestDealTwinGet(): Case 4: Success; Device not found while getting twin in DealGetTwin()",
 			context:  &context,
 			resource: deviceB,
 			msg:      msgTypeFunc(contentKeyTwin),
@@ -373,14 +380,14 @@ func TestDealTwinUpdate(t *testing.T) {
 			err:     errors.New("invalid message content"),
 		},
 		{
-			name:     "TestDealTwinUpdate(): Case 3: Success case 1: UnmarshalDeviceTwinUpdate error in Updated() is not nil",
+			name:     "TestDealTwinUpdate(): Case 3: Success; Unmarshal update request body fails in Updated()",
 			context:  &context,
 			resource: deviceB,
 			msg:      msgTypeFunc(content),
 			err:      nil,
 		},
 		{
-			name:     "TestDealTwinUpdate(): Case 4: Success case 2: UnmarshalDeviceTwinUpdate error in Updated() is nil",
+			name:     "TestDealTwinUpdate(): Case 4: Success; Begin to update twin of the device in Updated()",
 			context:  &context,
 			resource: deviceA,
 			msg:      msgTypeFunc(contentKeyTwin),
@@ -444,25 +451,18 @@ func TestDealDeviceTwin(t *testing.T) {
 		queryTableReturn orm.QuerySeter
 	}{
 		{
-			name:     "TestDealDeviceTwin(): Case 1: DeviceID does not exist",
-			context:  &contextDeviceB,
-			msgTwin:  msgTwin,
-			dealType: 0,
-			err:      errors.New("Update rejected due to the device is not existed"),
-		},
-		{
-			name:     "TestDealDeviceTwin(): Case 2: msgTwin is nil",
+			name:     "TestDealDeviceTwin(): Case 1: msgTwin is nil",
 			context:  &contextDeviceB,
 			deviceID: deviceB,
-			dealType: 0,
+			dealType: RestDealType,
 			err:      errors.New("Update twin error, the update request body not have key:twin"),
 		},
 		{
-			name:             "TestDealDeviceTwin(): Case 3: Success Case",
+			name:             "TestDealDeviceTwin(): Case 2: Success Case",
 			context:          &contextDeviceC,
 			deviceID:         deviceC,
 			msgTwin:          msgTwin,
-			dealType:         0,
+			dealType:         RestDealType,
 			err:              nil,
 			filterReturn:     mockQuerySeter,
 			allReturnInt:     int64(1),
@@ -528,7 +528,7 @@ func TestDealDeviceTwin_dealTwinResult(t *testing.T) {
 			context:          &contextDeviceA,
 			deviceID:         deviceB,
 			msgTwin:          msgTwinValue,
-			dealType:         0,
+			dealType:         RestDealType,
 			err:              errors.New("The value type is not allowed"),
 			filterReturn:     mockQuerySeter,
 			allReturnInt:     int64(1),
@@ -613,7 +613,7 @@ func TestDealDeviceTwin_DeviceTwinTrans(t *testing.T) {
 			context:          &contextDeviceB,
 			deviceID:         deviceB,
 			msgTwin:          msgTwin,
-			dealType:         0,
+			dealType:         RestDealType,
 			err:              errors.New("Failed DB Operation"),
 			filterReturn:     mockQuerySeter,
 			insertReturnInt:  int64(1),
@@ -668,181 +668,10 @@ func TestDealDeviceTwin_DeviceTwinTrans(t *testing.T) {
 	}
 }
 
-// TestDealUpdateResult is function to test dealUpdateResult
-func TestDealUpdateResult(t *testing.T) {
-	tests := []struct {
-		name      string
-		context   *dtcontext.DTContext
-		deviceID  string
-		eventID   string
-		code      int
-		err       error
-		payload   []byte
-		errorWant error
-	}{
-		{
-			name:      "TestDealUpdateResult(): Case 1: Error passed is nil",
-			context:   &dtcontext.DTContext{},
-			code:      0,
-			payload:   []byte(""),
-			errorWant: errors.New("Not found chan to communicate"),
-		},
-		{
-			name:      "TestDealUpdateResult(): Case 2: Parameter Reason Error",
-			context:   &dtcontext.DTContext{},
-			deviceID:  deviceA,
-			eventID:   event1,
-			code:      dtcommon.BadRequestCode,
-			err:       errors.New("Test Error"),
-			payload:   []byte(""),
-			errorWant: errors.New("Not found chan to communicate"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := dealUpdateResult(test.context, test.deviceID, test.eventID, test.code, test.err, test.payload); !reflect.DeepEqual(err, test.errorWant) {
-				t.Errorf("DTManager.TestDealUpdateResult() case failed: got = %v, Want = %v", err, test.errorWant)
-			}
-		})
-	}
-}
-
-// TestDealDelta is function to test dealDelta
-func TestDealDelta(t *testing.T) {
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		deviceID string
-		payload  []byte
-		err      error
-	}{
-		{
-			name:     "TestDealDelta(): Deal delta of device, send delta",
-			context:  &dtcontext.DTContext{},
-			deviceID: deviceA,
-			payload:  []byte(""),
-			err:      errors.New("Not found chan to communicate"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := dealDelta(test.context, test.deviceID, test.payload); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealDelta() case failed: got = %+v, Want = %+v", err, test.err)
-			}
-		})
-	}
-}
-
-// TestDealSyncResult is function to test dealSyncResult
-func TestDealSyncResult(t *testing.T) {
-	twinKey := make(map[string]*dttype.MsgTwin)
-	tests := []struct {
-		name        string
-		context     *dtcontext.DTContext
-		deviceID    string
-		baseMessage dttype.BaseMessage
-		twin        map[string]*dttype.MsgTwin
-		err         error
-	}{
-		{
-			name:        "TestDealSyncResult(): Deal sync result of device, sync with cloud",
-			context:     &dtcontext.DTContext{},
-			deviceID:    deviceA,
-			baseMessage: dttype.BaseMessage{},
-			twin:        twinKey,
-			err:         errors.New("Not found chan to communicate"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := dealSyncResult(test.context, test.deviceID, test.baseMessage, test.twin); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealSyncResult() case failed: got = %v, Want = %v", err, test.err)
-			}
-		})
-	}
-}
-
-// TestDealDocument is function to test dealDocument
-func TestDealDocument(t *testing.T) {
-	twinDocKey := make(map[string]*dttype.TwinDoc)
-	tests := []struct {
-		name         string
-		context      *dtcontext.DTContext
-		deviceID     string
-		baseMessage  dttype.BaseMessage
-		twinDocument map[string]*dttype.TwinDoc
-		err          error
-	}{
-		{
-			name:         "TestDealDocument(): Deal document of devcie, build and send document",
-			context:      &dtcontext.DTContext{},
-			deviceID:     deviceA,
-			baseMessage:  dttype.BaseMessage{},
-			twinDocument: twinDocKey,
-			err:          errors.New("Not found chan to communicate"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := dealDocument(test.context, test.deviceID, test.baseMessage, test.twinDocument); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealDocument() case failed: got = %v, Want = %v", err, test.err)
-			}
-		})
-	}
-}
-
-// TestDealGetTwin is function to test DealGetTwin
-func TestDealGetTwin(t *testing.T) {
-	context := contextFunc(deviceB)
-	var baseMessage dttype.BaseMessage
-	bytesBaseMessage, _ := json.Marshal(baseMessage)
-
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		deviceID string
-		payload  []byte
-		err      error
-	}{
-		{
-			name:     "TestDealGetTwin(): Case1: Success Case",
-			context:  &context,
-			deviceID: deviceB,
-			payload:  []byte(""),
-			err:      errors.New("Not found chan to communicate"),
-		},
-		{
-			name:     "TestDealGetTwin(): Case 2",
-			context:  &context,
-			deviceID: deviceB,
-			payload:  bytesBaseMessage,
-			err:      errors.New("Not found chan to communicate"),
-		},
-		{
-			name:     "TestDealGetTwin(): Case 3",
-			context:  &context,
-			deviceID: deviceC,
-			payload:  bytesBaseMessage,
-			err:      errors.New("Not found chan to communicate"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := DealGetTwin(tt.context, tt.deviceID, tt.payload); !reflect.DeepEqual(err, tt.err) {
-				t.Errorf("DTManager.TestDealGetTwin() case failed: got = %v, want = %v", err, tt.err)
-			}
-		})
-	}
-}
-
 // TestDealVersion is function to test dealVersion
 func TestDealVersion(t *testing.T) {
 	twinCloudEdgeVersion := dttype.TwinVersion{
 		CloudVersion: 1,
-		EdgeVersion:  1,
-	}
-	twinEdgeVersion := dttype.TwinVersion{
-		CloudVersion: 0,
 		EdgeVersion:  1,
 	}
 	twinCloudVersion := dttype.TwinVersion{
@@ -859,48 +688,17 @@ func TestDealVersion(t *testing.T) {
 		err        error
 	}{
 		{
-			name:       "TestDealVersion(): Case 1: Success Case",
-			version:    &dttype.TwinVersion{},
-			reqVersion: &dttype.TwinVersion{},
-			dealType:   0,
-			errorWant:  true,
-			err:        nil,
-		},
-		{
-			name:      "TestDealVersion(): Case 2",
+			name:      "TestDealVersion(): Case 1: dealType=3",
 			version:   &dttype.TwinVersion{},
-			dealType:  1,
-			errorWant: false,
-			err:       errors.New("Version not allowed be nil while syncing"),
-		},
-		{
-			name:      "TestDealVersion(): Case 3",
-			version:   &dttype.TwinVersion{},
-			dealType:  3,
+			dealType:  SyncTwinDeleteDealType,
 			errorWant: true,
 			err:       nil,
 		},
 		{
-			name:       "TestDealVersion(): Case 4",
-			version:    &dttype.TwinVersion{},
-			reqVersion: &dttype.TwinVersion{},
-			dealType:   1,
-			errorWant:  true,
-			err:        nil,
-		},
-		{
-			name:       "TestDealVersion(): Case 5",
-			version:    &twinCloudEdgeVersion,
-			reqVersion: &twinEdgeVersion,
-			dealType:   1,
-			errorWant:  false,
-			err:        errors.New("Version not allowed"),
-		},
-		{
-			name:       "TestDealVersion(): Case 6",
+			name:       "TestDealVersion(): Case 2: dealType>=1 && version.EdgeVersion>reqVersion.EdgeVersion",
 			version:    &twinCloudEdgeVersion,
 			reqVersion: &twinCloudVersion,
-			dealType:   1,
+			dealType:   SyncDealType,
 			errorWant:  false,
 			err:        errors.New("Not allowed to sync due to version conflict"),
 		},
@@ -949,20 +747,7 @@ func TestDealTwinDelete(t *testing.T) {
 		err          error
 	}{
 		{
-			name:         "TestDealTwinDelete(): Case 1: msgTwin nil",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional:        &optionTrue,
-				Metadata:        &dttype.TypeMetadata{typeDeleted},
-				ExpectedVersion: &dttype.TwinVersion{},
-			},
-			dealType: 0,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinDelete(): Case 2",
+			name:         "TestDealTwinDelete(): Case 1: msgTwin is not nil; isChange is false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -979,11 +764,11 @@ func TestDealTwinDelete(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinDelete(): Case 3",
+			name:         "TestDealTwinDelete(): Case 2: hasTwinExpected is true; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1000,25 +785,11 @@ func TestDealTwinDelete(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{CloudVersion: 0},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinDelete(): Case 4",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional:        &optionTrue,
-				Metadata:        &dttype.TypeMetadata{typeString},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
-			dealType: 0,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinDelete(): Case 5",
+			name:         "TestDealTwinDelete(): Case 3: hasTwinActual is true; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1035,11 +806,25 @@ func TestDealTwinDelete(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{CloudVersion: 0},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinDelete(): Case 6",
+			name:         "TestDealTwinDelete(): Case 4: hasTwinExpected is true; hasTwinActual is true",
+			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
+			deviceID:     deviceA,
+			key:          key1,
+			twin: &dttype.MsgTwin{
+				Optional:        &optionTrue,
+				Metadata:        &dttype.TypeMetadata{typeString},
+				ExpectedVersion: &dttype.TwinVersion{},
+				ActualVersion:   &dttype.TwinVersion{},
+			},
+			dealType: RestDealType,
+			err:      nil,
+		},
+		{
+			name:         "TestDealTwinDelete(): Case 5: hasTwinExpected is true; hasTwinActual is false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1056,7 +841,7 @@ func TestDealTwinDelete(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 	}
@@ -1064,63 +849,6 @@ func TestDealTwinDelete(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if err := dealTwinDelete(test.returnResult, test.deviceID, test.key, test.twin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinDelete() case failed: got = %+v, Want = %+v", err, test.err)
-			}
-		})
-	}
-}
-
-// TestIsTwinValueDiff is function to test isTwinValueDiff
-func TestIsTwinValueDiff(t *testing.T) {
-	tests := []struct {
-		name      string
-		twin      *dttype.MsgTwin
-		msgTwin   *dttype.MsgTwin
-		dealType  int
-		errorWant bool
-		err       error
-	}{
-		{
-			name:      "TestIsTwinValueDiff(): Case 1",
-			twin:      &dttype.MsgTwin{Expected: twinValueFunc(), Metadata: &dttype.TypeMetadata{typeInt}},
-			msgTwin:   &dttype.MsgTwin{Expected: twinValueFunc(), Metadata: &dttype.TypeMetadata{typeString}},
-			dealType:  0,
-			errorWant: false,
-			err:       errors.New("The value is not int"),
-		},
-		{
-			name:      "TestIsTwinValueDiff(): Case 2",
-			twin:      &dttype.MsgTwin{Expected: twinValueFunc(), Metadata: &dttype.TypeMetadata{typeString}},
-			msgTwin:   &dttype.MsgTwin{Expected: twinValueFunc(), Metadata: &dttype.TypeMetadata{typeString}},
-			dealType:  0,
-			errorWant: true,
-			err:       nil,
-		},
-		{
-			name:      "TestIsTwinValueDiff(): Case 3",
-			twin:      &dttype.MsgTwin{Metadata: &dttype.TypeMetadata{typeDeleted}},
-			msgTwin:   &dttype.MsgTwin{Actual: twinValueFunc(), Metadata: &dttype.TypeMetadata{typeDeleted}},
-			dealType:  1,
-			errorWant: true,
-			err:       nil,
-		},
-		{
-			name:      "TestIsTwinValueDiff(): Case 4",
-			twin:      &dttype.MsgTwin{Metadata: &dttype.TypeMetadata{typeDeleted}},
-			msgTwin:   &dttype.MsgTwin{Metadata: &dttype.TypeMetadata{typeDeleted}},
-			dealType:  1,
-			errorWant: false,
-			err:       nil,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := isTwinValueDiff(test.twin, test.msgTwin, test.dealType)
-			if !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestIsTwinValueDiff() case failed: got = %v, Want = %v", err, test.err)
-				return
-			}
-			if !reflect.DeepEqual(got, test.errorWant) {
-				t.Errorf("DTManager.TestIsTwinValueDiff() case failed: got = %v, want %v", got, test.errorWant)
 			}
 		})
 	}
@@ -1164,32 +892,11 @@ func TestDealTwinCompare(t *testing.T) {
 				Optional: &optionTrue,
 				Metadata: &dttype.TypeMetadata{typeDeleted},
 			},
-			dealType: 0,
+			dealType: RestDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 2",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{Value: &str},
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{typeDeleted},
-			},
-			msgTwin: &dttype.MsgTwin{
-				Expected:      &dttype.TwinValue{Value: &str},
-				Actual:        &dttype.TwinValue{Value: &str},
-				Optional:      &optionFalse,
-				Metadata:      &dttype.TypeMetadata{typeInt},
-				ActualVersion: &dttype.TwinVersion{},
-			},
-			dealType: 0,
-			err:      errors.New("The value is not int"),
-		},
-		{
-			name:         "TestDealTwinCompare(): Case 3",
+			name:         "TestDealTwinCompare(): Case 2: actualOk is false; actualErr is not nil",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1204,30 +911,11 @@ func TestDealTwinCompare(t *testing.T) {
 				Optional: &optionFalse,
 				Metadata: &dttype.TypeMetadata{typeInt},
 			},
-			dealType: 0,
+			dealType: RestDealType,
 			err:      errors.New("The value is not int"),
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 4",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{typeDeleted},
-			},
-			msgTwin: &dttype.MsgTwin{
-				Expected:      &dttype.TwinValue{Value: &str},
-				Actual:        &dttype.TwinValue{Value: &str},
-				Optional:      &optionFalse,
-				Metadata:      &dttype.TypeMetadata{typeString},
-				ActualVersion: &dttype.TwinVersion{},
-			},
-			dealType: 0,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinCompare(): Case 5",
+			name:         "TestDealTwinCompare(): Case 3: expectedOk is true; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1244,11 +932,11 @@ func TestDealTwinCompare(t *testing.T) {
 				Metadata:      &dttype.TypeMetadata{typeInt},
 				ActualVersion: &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 6",
+			name:         "TestDealTwinCompare(): Case 4: actualOk is true; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1263,11 +951,30 @@ func TestDealTwinCompare(t *testing.T) {
 				Optional: &optionFalse,
 				Metadata: &dttype.TypeMetadata{typeString},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 7",
+			name:         "TestDealTwinCompare(): Case 5: expectedOk is true; actualOk is true",
+			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
+			deviceID:     deviceA,
+			key:          key1,
+			twin: &dttype.MsgTwin{
+				Optional: &optionTrue,
+				Metadata: &dttype.TypeMetadata{typeDeleted},
+			},
+			msgTwin: &dttype.MsgTwin{
+				Expected:      &dttype.TwinValue{Value: &str},
+				Actual:        &dttype.TwinValue{Value: &str},
+				Optional:      &optionFalse,
+				Metadata:      &dttype.TypeMetadata{typeString},
+				ActualVersion: &dttype.TwinVersion{},
+			},
+			dealType: RestDealType,
+			err:      nil,
+		},
+		{
+			name:         "TestDealTwinCompare(): Case 6: expectedOk is false; actualOk is false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1279,7 +986,7 @@ func TestDealTwinCompare(t *testing.T) {
 				Optional:      &optionFalse,
 				ActualVersion: &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 	}
@@ -1323,28 +1030,11 @@ func TestDealTwinAdd(t *testing.T) {
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
-			dealType:     0,
+			dealType:     RestDealType,
 			err:          errors.New("The request body is wrong"),
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 2",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twins:        twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected:        &dttype.TwinValue{Value: &str},
-				Actual:          &dttype.TwinValue{Value: &str},
-				Optional:        &optionTrue,
-				Metadata:        &dttype.TypeMetadata{typeDeleted},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
-			dealType: 1,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinAdd(): Case 3",
+			name:         "TestDealTwinAdd(): Case 2: msgTwin.Expected is not nil; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1356,11 +1046,11 @@ func TestDealTwinAdd(t *testing.T) {
 				Metadata:      &dttype.TypeMetadata{typeDeleted},
 				ActualVersion: &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 4",
+			name:         "TestDealTwinAdd(): Case 3: msgTwin.Expected is not nil; ValidateValue() returns error",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1372,27 +1062,11 @@ func TestDealTwinAdd(t *testing.T) {
 				Metadata:        &dttype.TypeMetadata{typeInt},
 				ExpectedVersion: &dttype.TwinVersion{},
 			},
-			dealType: 0,
-			err:      errors.New("The value is not int"),
-		},
-		{
-			name:         "TestDealTwinAdd(): Case 5",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twins:        twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected:        &dttype.TwinValue{Value: &str},
-				Actual:          &dttype.TwinValue{Value: &str},
-				Optional:        &optionTrue,
-				Metadata:        &dttype.TypeMetadata{typeInt},
-				ExpectedVersion: &dttype.TwinVersion{},
-			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 6",
+			name:         "TestDealTwinAdd(): Case 4: msgTwin.Actual is not nil; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1404,11 +1078,11 @@ func TestDealTwinAdd(t *testing.T) {
 				Metadata:        &dttype.TypeMetadata{typeDeleted},
 				ExpectedVersion: &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 7",
+			name:         "TestDealTwinAdd(): Case 5: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=0",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1420,11 +1094,11 @@ func TestDealTwinAdd(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 0,
+			dealType: RestDealType,
 			err:      errors.New("The value is not int"),
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 8",
+			name:         "TestDealTwinAdd(): Case 6: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=1",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1436,11 +1110,11 @@ func TestDealTwinAdd(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 1,
+			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinAdd(): Case 9",
+			name:         "TestDealTwinAdd(): Case 7: msgTwin.Expected is nil; msgTwin.Actual is nil",
 			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
 			deviceID:     deviceA,
 			key:          key1,
@@ -1449,7 +1123,24 @@ func TestDealTwinAdd(t *testing.T) {
 				ExpectedVersion: &dttype.TwinVersion{},
 				ActualVersion:   &dttype.TwinVersion{},
 			},
-			dealType: 0,
+			dealType: RestDealType,
+			err:      nil,
+		},
+		{
+			name:         "TestDealTwinAdd(): Case 8: msgTwin.Expected is not nil; msgTwin.Actual is not nil",
+			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
+			deviceID:     deviceA,
+			key:          key1,
+			twins:        twinDelete,
+			msgTwin: &dttype.MsgTwin{
+				Expected:        &dttype.TwinValue{Value: &str},
+				Actual:          &dttype.TwinValue{Value: &str},
+				Optional:        &optionTrue,
+				Metadata:        &dttype.TypeMetadata{typeDeleted},
+				ExpectedVersion: &dttype.TwinVersion{},
+				ActualVersion:   &dttype.TwinVersion{},
+			},
+			dealType: SyncDealType,
 			err:      nil,
 		},
 	}
@@ -1527,7 +1218,7 @@ func TestDealMsgTwin(t *testing.T) {
 			context:  &context,
 			deviceID: deviceC,
 			msgTwins: msgTwin,
-			dealType: 0,
+			dealType: RestDealType,
 			want: dttype.DealTwinResult{
 				Add:        add,
 				Delete:     deletes,
@@ -1539,27 +1230,11 @@ func TestDealMsgTwin(t *testing.T) {
 			},
 		},
 		{
-			name:     "TestDealMsgTwin(): Case 2: dealTwinAdd return error",
-			context:  &context,
-			deviceID: deviceB,
-			msgTwins: msgTwin,
-			dealType: 0,
-			want: dttype.DealTwinResult{
-				Add:        add,
-				Delete:     deletes,
-				Update:     update,
-				Result:     result,
-				SyncResult: syncResult,
-				Document:   document,
-				Err:        errors.New("The value type is not allowed"),
-			},
-		},
-		{
-			name:     "TestDealMsgTwin(): Case 3: dealTwinCompare return error",
+			name:     "TestDealMsgTwin(): Case 2: dealTwinCompare error",
 			context:  &context,
 			deviceID: deviceA,
 			msgTwins: msgTwinDeviceTwin,
-			dealType: 0,
+			dealType: RestDealType,
 			want: dttype.DealTwinResult{
 				Add:        add,
 				Delete:     deletes,
@@ -1571,11 +1246,11 @@ func TestDealMsgTwin(t *testing.T) {
 			},
 		},
 		{
-			name:     "TestDealMsgTwin(): Case 4: Success case",
+			name:     "TestDealMsgTwin(): Case 3: Success case",
 			context:  &context,
 			deviceID: deviceA,
 			msgTwins: msgTwinDevice,
-			dealType: 0,
+			dealType: RestDealType,
 			want: dttype.DealTwinResult{
 				Add:        add,
 				Delete:     deletes,
