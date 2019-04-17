@@ -17,21 +17,21 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/apis/core"
 )
 
 // DeviceSpec represents a single device instance. It is an instantation of a device model.
 type DeviceSpec struct {
 	// Required: DeviceModelRef is reference to the device model used as a template
 	// to create the device instance.
-	DeviceModelRef *core.LocalObjectReference `json:"deviceModelRef,omitempty"`
+	DeviceModelRef *v1.LocalObjectReference `json:"deviceModelRef,omitempty"`
 	// Required: The protocol configuration used to connect to the device.
 	Protocol ProtocolConfig `json:"protocol,omitempty"`
 	// NodeSelector indicates the binding preferences between devices and nodes.
 	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
 	// +optional
-	NodeSelector *core.NodeSelector `json:"nodeSelector,omitempty"`
+	NodeSelector *v1.NodeSelector `json:"nodeSelector,omitempty"`
 }
 
 // Only one of its members may be specified.
