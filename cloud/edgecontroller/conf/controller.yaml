@@ -16,4 +16,12 @@ cloudhub:
   keepalive-interval: 30
   write-timeout: 30
   node-limit: 10
-
+devicecontroller:
+  kube:
+    master: http://localhost:8080
+    namespace: ""
+    content_type: "application/vnd.kubernetes.protobuf"
+    qps: 5
+    burst: 10
+    node_update_frequency: 10
+    kubeconfig: ""

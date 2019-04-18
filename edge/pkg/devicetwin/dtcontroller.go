@@ -297,7 +297,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		message.Action = action
 		log.LOGGER.Infof("Classify the msg to action %s", action)
 		return true
-	} else if strings.Compare(msgSource, "edgemgr") == 0 {
+	} else if (strings.Compare(msgSource, "edgemgr") == 0) || (strings.Compare(msgSource, "devicecontroller") == 0) {
 		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
 			message.Action = dtcommon.MemDetailResult
 			content, err := json.Marshal(message.Msg.Content)
