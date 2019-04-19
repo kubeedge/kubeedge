@@ -5,7 +5,8 @@
 
 + 检查容器运行环境
   ```
-  ./build/edge/run_daemon.sh prepare
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
+  ./run_daemon.sh prepare
   ```
 
 + 设置容器参数
