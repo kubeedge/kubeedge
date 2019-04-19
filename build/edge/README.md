@@ -14,27 +14,27 @@ container and MQTT Broker, so make sure that docker engine listening on
 
   The following parameters do not need to be set if they are not modified.
 
-  | name            | default                           | note                      |
-  | --------------- | --------------------------------- | ------------------------- |
-  | cloudhub        | 0.0.0.0:10000                     |                           |
-  | edgename        | edge-node                         |                           |
-  | edge_core_image | kubeedge/edgecore:latest          |                           |
-  | arch            | amd64                             | Optional: amd64 \|arm64v8 |
-  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch |
-  | certpath        | /etc/kubeedge/edge/certs          |                           |
-  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                           |
-  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                           |
+  | name            | default                           | note                       |
+  | --------------- | --------------------------------- | -------------------------- |
+  | cloudhub        | 0.0.0.0:10000                     |                            |
+  | edgename        | edge-node                         |                            |
+  | edge_core_image | kubeedge/edgecore:latest          |                            |
+  | arch            | amd64                             | Optional: amd64 \| arm64v8 |
+  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch  |
+  | certpath        | /etc/kubeedge/certs               |                            |
+  | certfile        | /etc/kubeedge/certs/edge.crt      |                            |
+  | keyfile         | /etc/kubeedge/certs/edge.key      |                            |
 
   ```shell
   ./run_daemon.sh set \
-  		    cloudhub=0.0.0.0:10000 \
-          edgename=edgeNode \
+          cloudhub=0.0.0.0:10000 \
+          edgename=edge-node \
           edge_core_image="kubeedge/edgecore:latest" \
           arch=amd64 \
           qemu_arch=x86_64 \
-          certpath=/etc/kubeedge/edge/certs \
-          certfile=/etc/kubeedge/edge/certs/edge.crt \
-          keyfile=/etc/kubeedge/edge/certs/edge.key
+          certpath=/etc/kubeedge/certs \
+          certfile=/etc/kubeedge/certs/edge.crt \
+          keyfile=/etc/kubeedge/certs/edge.key
   ```
 
 + Build image

@@ -137,6 +137,8 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### 运行 Edge
 
+#### [以 k8s deployment 方式运行](./build/edge/kubernetes/README_zh.md)
+
 #### 部署 Edge node
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
 请确保在 Kubernetes 中添加了边缘节点 edge-node。运行以下步骤以添加边缘节点 edge-node。

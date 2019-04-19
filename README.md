@@ -162,6 +162,8 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
 ### Run Edge
 
+#### [Run as Kubernetes deployment](./build/edge/kubernetes/README.md)
+
 #### Deploy the Edge node
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
