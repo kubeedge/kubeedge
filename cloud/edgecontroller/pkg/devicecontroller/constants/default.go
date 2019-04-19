@@ -6,11 +6,10 @@ import (
 
 // Config
 const (
-	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
-	DefaultKubeNamespace           = v1.NamespaceAll
-	DefaultKubeQPS                 = 100.0
-	DefaultKubeBurst               = 10
-	DefaultKubeUpdateNodeFrequency = 20
+	DefaultKubeContentType = "application/vnd.kubernetes.protobuf"
+	DefaultKubeNamespace   = v1.NamespaceAll
+	DefaultKubeQPS         = 100.0
+	DefaultKubeBurst       = 10
 
 	DefaultUpdateDeviceStatusWorkers = 1
 

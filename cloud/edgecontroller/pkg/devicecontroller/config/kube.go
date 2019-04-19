@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/constants"
@@ -26,56 +24,46 @@ var KubeQPS float32
 // KubeBurst default is 10
 var KubeBurst int
 
-// KubeUpdateNodeFrequency is the time duration for update node status(default is 20s)
-var KubeUpdateNodeFrequency time.Duration
-
 func init() {
 	if km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString(); err != nil {
-		log.LOGGER.Errorf("kube master not set")
+		log.LOGGER.Errorf("Kube master not set")
 	} else {
 		KubeMaster = km
 	}
-	log.LOGGER.Infof("kube master: %s", KubeMaster)
+	log.LOGGER.Infof("Kube master: %s", KubeMaster)
 
 	if kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString(); err != nil {
-		log.LOGGER.Errorf("kube config not set")
+		log.LOGGER.Errorf("Kube config not set")
 	} else {
 		KubeConfig = kc
 	}
-	log.LOGGER.Infof("kube config: %s", KubeConfig)
+	log.LOGGER.Infof("Kube config: %s", KubeConfig)
 
 	if kn, err := config.CONFIG.GetValue("devicecontroller.kube.namespace").ToString(); err != nil {
 		KubeNamespace = constants.DefaultKubeNamespace
 	} else {
 		KubeNamespace = kn
 	}
-	log.LOGGER.Infof("kube namespace: %s", KubeNamespace)
+	log.LOGGER.Infof("Kube namespace: %s", KubeNamespace)
 
 	if kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString(); err != nil {
 		KubeContentType = constants.DefaultKubeContentType
 	} else {
 		KubeContentType = kct
 	}
-	log.LOGGER.Infof("kube content type: %s", KubeContentType)
+	log.LOGGER.Infof("Kube content type: %s", KubeContentType)
 
 	if kqps, err := config.CONFIG.GetValue("devicecontroller.kube.qps").ToFloat64(); err != nil {
 		KubeQPS = constants.DefaultKubeQPS
 	} else {
 		KubeQPS = float32(kqps)
 	}
-	log.LOGGER.Infof("kube QPS: %f", KubeQPS)
+	log.LOGGER.Infof("Kube QPS: %f", KubeQPS)
 
 	if kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt(); err != nil {
 		KubeBurst = constants.DefaultKubeBurst
 	} else {
 		KubeBurst = kb
 	}
-	log.LOGGER.Infof("kube burst: %d", KubeBurst)
-
-	if kuf, err := config.CONFIG.GetValue("devicecontroller.kube.node_update_frequency").ToInt64(); err != nil {
-		KubeUpdateNodeFrequency = constants.DefaultKubeUpdateNodeFrequency * time.Second
-	} else {
-		KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
-	}
-	log.LOGGER.Infof("kube update frequency: %v", KubeUpdateNodeFrequency)
+	log.LOGGER.Infof("Kube burst: %d", KubeBurst)
 }

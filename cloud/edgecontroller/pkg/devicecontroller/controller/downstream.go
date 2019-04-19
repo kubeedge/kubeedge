@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"reflect"
 	"strconv"
 	"time"
 
-	/*"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"*/
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/apis/devices/v1alpha1"
@@ -23,7 +22,23 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/kubernetes/pkg/apis/core"
+)
+
+// Constants for protocol, datatype, configmap, deviceProfile
+const (
+	OPCUA     = "opcua"
+	ModbusRTU = "modbus-rtu"
+	ModbusTCP = "modbus-tcp"
+	Modbus    = "modbus"
+	Bluetooth = "bluetooth"
+
+	DataTypeInt    = "int"
+	DataTypeString = "string"
+
+	ConfigMapKind    = "ConfigMap"
+	ConfigMapVersion = "v1"
+
+	DeviceProfileConfigPrefix = "device-profile-config-"
 )
 
 // CacheDevice is the struct save device data for check device is really changed
@@ -50,10 +65,13 @@ type DownstreamController struct {
 	deviceModelManager *manager.DeviceModelManager
 	deviceModelStop    chan struct{}
 
+	configMapManager *manager.ConfigMapManager
+
 	crdClient *rest.RESTClient
 	crdScheme *runtime.Scheme
 }
 
+// syncDeviceModel is used to get events from informer
 func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 	running := true
 	for running {
@@ -82,7 +100,7 @@ func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 }
 
 func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha1.DeviceModel) {
-	// TODO: looks like nothing to do when deviceModel added, only add in map
+	// nothing to do when deviceModel added, only add in map
 	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, &CacheDeviceModel{ObjectMeta: deviceModel.ObjectMeta, Spec: deviceModel.Spec})
 }
 
@@ -101,15 +119,20 @@ func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha1.DeviceM
 	if ok {
 		cachedDeviceModel := value.(*CacheDeviceModel)
 		if isDeviceModelUpdated(cachedDeviceModel, deviceModel) {
-			//TODO: add logic to update config map
+			dc.updateAllConfigMaps(deviceModel)
 		}
 	} else {
 		dc.deviceModelAdded(deviceModel)
 	}
 }
 
+func (dc *DownstreamController) updateAllConfigMaps(deviceModel *v1alpha1.DeviceModel) {
+	//TODO: add logic to update all config maps, How to manage if a property is deleted but a device is referring that property. Need to come up with a design.
+}
+
 func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha1.DeviceModel) {
-	// TODO: If finalizers used, all devices will be deleted before delete of deviceModel, then just delete from deviceModel map and config-map
+	// TODO: Need to use finalizer like method to delete all devices referring to this model. Need to come up with a design.
+	dc.deviceModelManager.DeviceModel.Delete(deviceModel.Name)
 }
 
 func (dc *DownstreamController) syncDevice(stop chan struct{}) {
@@ -119,7 +142,7 @@ func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 		case e := <-dc.deviceManager.Events():
 			device, ok := e.Object.(*v1alpha1.Device)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", device)
+				log.LOGGER.Warnf("Object type: %T unsupported", device)
 				continue
 			}
 			switch e.Type {
@@ -130,45 +153,205 @@ func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 			case watch.Modified:
 				dc.deviceUpdated(device)
 			default:
-				log.LOGGER.Warnf("device event type: %s unsupported", e.Type)
+				log.LOGGER.Warnf("Device event type: %s unsupported", e.Type)
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncDevice")
+			log.LOGGER.Infof("Stop syncDevice")
 			running = false
 		}
 	}
 }
 
+// addToConfigMap adds device in the configmap
+func (dc *DownstreamController) addToConfigMap(device *v1alpha1.Device) {
+	configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+	if !ok {
+		nodeConfigMap := &v1.ConfigMap{}
+		nodeConfigMap.Kind = ConfigMapKind
+		nodeConfigMap.APIVersion = ConfigMapVersion
+		nodeConfigMap.Name = DeviceProfileConfigPrefix + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+		nodeConfigMap.Namespace = device.Namespace
+		nodeConfigMap.Data = make(map[string]string)
+		// TODO: how to handle 2 device of multiple namespaces bind to same node ?
+		dc.addDeviceProfile(device, nodeConfigMap)
+		// store new config map
+		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
+			log.LOGGER.Errorf("Failed to create config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			return
+		}
+		return
+	}
+	nodeConfigMap, ok := configMap.(*v1.ConfigMap)
+	if !ok {
+		log.LOGGER.Errorf("Failed to assert to configmap")
+		return
+	}
+	dc.addDeviceProfile(device, nodeConfigMap)
+	// store new config map
+	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+		log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+		return
+	}
+}
+
+func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
+	dp, ok := configMap.Data["deviceProfile.json"]
+	if !ok {
+		// create deviceProfileStruct
+		deviceProfile := &types.DeviceProfile{}
+		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
+		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
+		deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
+		deviceProfile.Protocols = make([]*types.Protocol, 0)
+		addDeviceInstanceAndProtocol(device, deviceProfile)
+
+		dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+		deviceModel := dm.(*CacheDeviceModel)
+		addDeviceModelAndVisitors(deviceModel, deviceProfile)
+		bytes, err := json.Marshal(deviceProfile)
+		if err != nil {
+			log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+		}
+		configMap.Data["deviceProfile.json"] = string(bytes)
+		return
+	}
+	deviceProfile := &types.DeviceProfile{}
+	err := json.Unmarshal([]byte(dp), deviceProfile)
+	if err != nil {
+		log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
+		return
+	}
+	addDeviceInstanceAndProtocol(device, deviceProfile)
+	dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	deviceModel := dm.(*CacheDeviceModel)
+	// if model already exists no need to add model and visitors
+	checkModelExists := false
+	for _, dm := range deviceProfile.DeviceModels {
+		if dm.Name == deviceModel.Name {
+			checkModelExists = true
+			break
+		}
+	}
+	if checkModelExists != true {
+		addDeviceModelAndVisitors(deviceModel, deviceProfile)
+	}
+	bytes, err := json.Marshal(deviceProfile)
+	if err != nil {
+		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+		return
+	}
+	configMap.Data["deviceProfile.json"] = string(bytes)
+}
+
+func addDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
+	model := &types.DeviceModel{}
+	model.Name = deviceModel.Name
+	model.Properties = make([]*types.Property, 0)
+	for _, ppt := range deviceModel.Spec.Properties {
+		property := &types.Property{}
+		property.Name = ppt.Name
+		property.Description = ppt.Description
+		/*	if ppt.Type.Int != nil{
+				property.AccessMode=string(ppt.Type.Int.AccessMode)
+				property.DataType=DataTypeInt
+				property.DefaultValue=ppt.Type.Int.DefaultValue
+				property.Maximum=ppt.Type.Int.Maximum
+				property.Minimum=ppt.Type.Int.Minimum
+				property.Unit=ppt.Type.Int.Unit
+			}else if ppt.Type.String != nil{
+				property.AccessMode=string(ppt.Type.String.AccessMode)
+				property.DataType=DataTypeString
+				property.DefaultValue = ppt.Type.String.DefaultValue
+			}*/
+		model.Properties = append(model.Properties, property)
+	}
+	deviceProfile.DeviceModels = append(deviceProfile.DeviceModels, model)
+	for _, pptv := range deviceModel.Spec.PropertyVisitors {
+		propertyVisitor := &types.PropertyVisitor{}
+		propertyVisitor.Name = pptv.PropertyName
+		propertyVisitor.PropertyName = pptv.PropertyName
+		propertyVisitor.ModelName = deviceModel.Name
+		/*if pptv.Modbus != nil{
+			propertyVisitor.Protocol = Modbus
+			propertyVisitor.VisitorConfig=pptv.Modbus
+		}else if pptv.OpcUA != nil{
+			propertyVisitor.Protocol = OPCUA
+			propertyVisitor.VisitorConfig = pptv.OpcUA
+		}else if pptv.Bluetooth != nil {
+			propertyVisitor.Protocol=Bluetooth
+			propertyVisitor.VisitorConfig=pptv.Bluetooth
+		}*/
+		deviceProfile.PropertyVisitors = append(deviceProfile.PropertyVisitors, propertyVisitor)
+	}
+}
+
+func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
+	deviceInstance := &types.DeviceInstance{}
+	deviceProtocol := &types.Protocol{}
+	deviceInstance.ID = device.Name
+	deviceInstance.Name = device.Name
+	deviceInstance.Model = device.Spec.DeviceModelRef.Name
+	var protocol string
+	if device.Spec.Protocol.OpcUA != nil {
+		protocol = OPCUA + "-" + device.Name
+		deviceInstance.Protocol = protocol
+		deviceProtocol.Name = protocol
+		deviceProtocol.Protocol = OPCUA
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
+	} else if device.Spec.Protocol.Modbus.RTU != nil {
+		protocol = ModbusRTU + "-" + device.Name
+		deviceInstance.Protocol = protocol
+		deviceProtocol.Name = protocol
+		deviceProtocol.Protocol = ModbusRTU
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.RTU
+	} else if device.Spec.Protocol.Modbus.TCP != nil {
+		protocol = ModbusTCP + "-" + device.Name
+		deviceInstance.Protocol = protocol
+		deviceProtocol.Name = protocol
+		deviceProtocol.Protocol = ModbusTCP
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.TCP
+	} else {
+		log.LOGGER.Warnf("Device doesnt support valid protocol")
+	}
+	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
+	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
+}
+
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
 	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status})
-	edgeDevice := createDevice(device)
-	msg := model.NewMessage("")
+	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+		dc.addToConfigMap(device)
+		edgeDevice := createDevice(device)
+		msg := model.NewMessage("")
 
-	// TODO: Use node selector instead of hardcoding values, check if node is available
-	resource, err := messagelayer.BuildResource("fb4ebb70-2783-42b8-b3ef-63e2fd6d242e", "membership", "")
-	if err != nil {
-		log.LOGGER.Warnf("built message resource failed with error: %s", err)
-		return
-	}
-	msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
+		if err != nil {
+			log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+			return
+		}
+		msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-	content := types.MembershipUpdate{AddDevices: []types.Device{
-		edgeDevice,
-	}}
-	content.EventID = uuid.NewV4().String()
-	content.Timestamp = time.Now().UnixNano() / 1e6
-	msg.Content = content
+		content := types.MembershipUpdate{AddDevices: []types.Device{
+			edgeDevice,
+		}}
+		content.EventID = uuid.NewV4().String()
+		content.Timestamp = time.Now().UnixNano() / 1e6
+		msg.Content = content
 
-	err = dc.messageLayer.Send(*msg)
-	if err != nil {
-		log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+		err = dc.messageLayer.Send(*msg)
+		if err != nil {
+			log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+		}
 	}
 }
 
 func createDevice(device *v1alpha1.Device) types.Device {
 	edgeDevice := types.Device{
-		ID:   string(device.UID),
+		// ID and name can be used as ID as we are using CRD and name(key in ETCD) will always be unique
+		ID:   device.Name,
 		Name: device.Name,
 	}
 
@@ -213,7 +396,7 @@ func isDeviceUpdated(old *CacheDevice, new *v1alpha1.Device) bool {
 	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec) || !reflect.DeepEqual(old.Status, new.Status)
 }
 
-func isNodeSelectorUpdated(old *core.NodeSelector, new *core.NodeSelector) bool {
+func isNodeSelectorUpdated(old *v1.NodeSelector, new *v1.NodeSelector) bool {
 	return !reflect.DeepEqual(old.NodeSelectorTerms, new.NodeSelectorTerms)
 }
 
@@ -229,25 +412,23 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 			// if node selector updated delete from old node and create in new node
 			if isNodeSelectorUpdated(cachedDevice.Spec.NodeSelector, device.Spec.NodeSelector) {
 				dc.deviceAdded(device)
-				// TODO: add code to add in node's configmap
 				deletedDevice := &v1alpha1.Device{ObjectMeta: cachedDevice.ObjectMeta,
 					Spec:     cachedDevice.Spec,
 					Status:   cachedDevice.Status,
 					TypeMeta: device.TypeMeta,
 				}
 				dc.deviceDeleted(deletedDevice)
-				// TODO: add code to delete from nodes configmap
+
 			} else {
-				// TODO: add logic to update the twins configMap
+				// TODO: add an else if condition to check if ProtocolConfig/DeviceModelReference has changed, if yes whether deviceModelReference exists
 				twin := make(map[string]*types.MsgTwin)
 				addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
 				addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
 				msg := model.NewMessage("")
 
-				// TODO: Use node selector instead of hardcoding values, check if node is available
-				resource, err := messagelayer.BuildResource("fb4ebb70-2783-42b8-b3ef-63e2fd6d242e", "device/"+string(device.UID)+"/twin/cloud_updated", "")
+				resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
 				if err != nil {
-					log.LOGGER.Warnf("built message resource failed with error: %s", err)
+					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
 					return
 				}
 				msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
@@ -262,7 +443,6 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 				}
 			}
 		}
-
 	} else {
 		// If device not present in device map means it is not modified and added.
 		dc.deviceAdded(device)
@@ -328,35 +508,142 @@ func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, versio
 	}
 }
 
+func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
+	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+		if !ok {
+			return
+		}
+		nodeConfigMap, ok := configMap.(*v1.ConfigMap)
+		if !ok {
+			log.LOGGER.Errorf("Failed to assert to configmap")
+			return
+		}
+		//TODO: call delete from deviceProfile
+		dc.deleteFromDeviceProfile(device, nodeConfigMap)
+		// store new config map
+		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+			log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			return
+		}
+	}
+}
+
+func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
+	dp, ok := configMap.Data["deviceProfile.json"]
+	if !ok {
+		log.LOGGER.Errorf("Device profile does not exist in the configmap")
+		return
+	}
+
+	deviceProfile := &types.DeviceProfile{}
+	err := json.Unmarshal([]byte(dp), deviceProfile)
+	if err != nil {
+		log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
+		return
+	}
+	deleteDeviceInstanceAndProtocol(device, deviceProfile)
+
+	dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	deviceModel := dm.(*CacheDeviceModel)
+	// if model referenced by other devices, no need to delete the model
+	checkModelReferenced := false
+	for _, dvc := range deviceProfile.DeviceInstances {
+		if dvc.Model == deviceModel.Name {
+			checkModelReferenced = true
+			break
+		}
+	}
+	if checkModelReferenced != true {
+		deleteDeviceModelAndVisitors(deviceModel, deviceProfile)
+	}
+	bytes, err := json.Marshal(deviceProfile)
+	if err != nil {
+		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+		return
+	}
+	configMap.Data["deviceProfile.json"] = string(bytes)
+}
+
+func deleteDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
+	var protocol string
+	for i, devInst := range deviceProfile.DeviceInstances {
+		if device.Name == devInst.Name {
+			protocol = devInst.Protocol
+			deviceProfile.DeviceInstances[i] = deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1]
+			deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1] = nil
+			deviceProfile.DeviceInstances = deviceProfile.DeviceInstances[:len(deviceProfile.DeviceInstances)-1]
+			break
+		}
+	}
+
+	for i, ptcl := range deviceProfile.Protocols {
+		if ptcl.Name == protocol {
+			deviceProfile.Protocols[i] = deviceProfile.Protocols[len(deviceProfile.Protocols)-1]
+			deviceProfile.Protocols[len(deviceProfile.Protocols)-1] = nil
+			deviceProfile.Protocols = deviceProfile.Protocols[:len(deviceProfile.Protocols)-1]
+			return
+		}
+	}
+}
+
+func deleteDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
+	for i, dm := range deviceProfile.DeviceModels {
+		if dm.Name == deviceModel.Name {
+			deviceProfile.DeviceModels[i] = deviceProfile.DeviceModels[len(deviceProfile.DeviceModels)-1]
+			deviceProfile.DeviceModels[len(deviceProfile.DeviceModels)-1] = nil
+			deviceProfile.DeviceModels = deviceProfile.DeviceModels[:len(deviceProfile.DeviceModels)-1]
+			break
+		}
+	}
+
+	allVisitorsNotDeleted := true
+	for allVisitorsNotDeleted {
+		allVisitorsNotDeleted = false
+		for i, vst := range deviceProfile.PropertyVisitors {
+			if vst.ModelName == deviceModel.Name {
+				deviceProfile.PropertyVisitors[i] = deviceProfile.PropertyVisitors[len(deviceProfile.PropertyVisitors)-1]
+				deviceProfile.PropertyVisitors[len(deviceProfile.PropertyVisitors)-1] = nil
+				deviceProfile.PropertyVisitors = deviceProfile.PropertyVisitors[:len(deviceProfile.PropertyVisitors)-1]
+				allVisitorsNotDeleted = true
+				break
+			}
+		}
+	}
+}
+
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
 func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 	dc.deviceManager.Device.Delete(device.Name)
+	dc.deleteFromConfigMap(device)
 	edgeDevice := createDevice(device)
 	msg := model.NewMessage("")
 
-	// TODO: Use node selector instead of hardcoding values
-	resource, err := messagelayer.BuildResource("fb4ebb70-2783-42b8-b3ef-63e2fd6d242e", "membership", "")
-	msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
+		msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-	content := types.MembershipUpdate{RemoveDevices: []types.Device{
-		edgeDevice,
-	}}
-	content.EventID = uuid.NewV4().String()
-	content.Timestamp = time.Now().UnixNano() / 1e6
-	msg.Content = content
-	if err != nil {
-		log.LOGGER.Warnf("built message resource failed with error: %s", err)
-		return
-	}
-	err = dc.messageLayer.Send(*msg)
-	if err != nil {
-		log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+		content := types.MembershipUpdate{RemoveDevices: []types.Device{
+			edgeDevice,
+		}}
+		content.EventID = uuid.NewV4().String()
+		content.Timestamp = time.Now().UnixNano() / 1e6
+		msg.Content = content
+		if err != nil {
+			log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+			return
+		}
+		err = dc.messageLayer.Send(*msg)
+		if err != nil {
+			log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+		}
 	}
 }
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
-	log.LOGGER.Infof("start downstream controller")
+	log.LOGGER.Infof("Start downstream controller")
 
 	dc.deviceModelStop = make(chan struct{})
 	go dc.syncDeviceModel(dc.deviceModelStop)
@@ -370,7 +657,7 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Infof("stop downstream controller")
+	log.LOGGER.Infof("Stop downstream controller")
 	dc.deviceStop <- struct{}{}
 	dc.deviceModelStop <- struct{}{}
 	return nil
@@ -382,30 +669,31 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	cli, err := utils.KubeClient()
 	if err != nil {
-		log.LOGGER.Warnf("create kube client failed with error: %s", err)
+		log.LOGGER.Warnf("Create kube client failed with error: %s", err)
 		return nil, err
 	}
 	config, err := utils.KubeConfig()
 	crdcli, _, err := utils.NewCRDClient(config)
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("create device manager failed with error: %s", err)
+		log.LOGGER.Warnf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
 	deviceModelManager, err := manager.NewDeviceModelManager(crdcli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("create device manager failed with error: %s", err)
+		log.LOGGER.Warnf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
+
+	cm := manager.NewConfigMapManager()
 
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
-		log.LOGGER.Warnf("create message layer failed with error: %s", err)
+		log.LOGGER.Warnf("Create message layer failed with error: %s", err)
 		return nil, err
 	}
 
-	dc := &DownstreamController{kubeClient: cli, deviceManager: deviceManager, deviceModelManager: deviceModelManager, messageLayer: ml}
-
+	dc := &DownstreamController{kubeClient: cli, deviceManager: deviceManager, deviceModelManager: deviceModelManager, messageLayer: ml, configMapManager: cm}
 	return dc, nil
 }

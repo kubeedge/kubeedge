@@ -25,19 +25,19 @@ func init() {
 	} else {
 		ContextSendModule = smn
 	}
-	log.LOGGER.Infof(" send module name: %s", ContextSendModule)
+	log.LOGGER.Infof("Send module name: %s", ContextSendModule)
 
 	if rmn, err := config.CONFIG.GetValue("devicecontroller.context-receive-module").ToString(); err != nil {
 		ContextReceiveModule = constants.DefaultContextReceiveModuleName
 	} else {
 		ContextReceiveModule = rmn
 	}
-	log.LOGGER.Infof("receive module name: %s", ContextReceiveModule)
+	log.LOGGER.Infof("Receive module name: %s", ContextReceiveModule)
 
 	if rmn, err := config.CONFIG.GetValue("devicecontroller.context-response-module").ToString(); err != nil {
 		ContextResponseModule = constants.DefaultContextResponseModuleName
 	} else {
 		ContextResponseModule = rmn
 	}
-	log.LOGGER.Infof("response module name: %s", ContextResponseModule)
+	log.LOGGER.Infof("Response module name: %s", ContextResponseModule)
 }

@@ -23,5 +23,4 @@ devicecontroller:
     content_type: "application/vnd.kubernetes.protobuf"
     qps: 5
     burst: 10
-    node_update_frequency: 10
     kubeconfig: ""
