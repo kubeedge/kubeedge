@@ -488,8 +488,8 @@ func TestDealDeviceTwin(t *testing.T) {
 	}
 }
 
-// TestDealDeviceTwin_dealTwinResult is function to test DealDeviceTwin when dealTwinResult.Err is not nil
-func TestDealDeviceTwin_dealTwinResult(t *testing.T) {
+// TestDealDeviceTwinResult is function to test DealDeviceTwin when dealTwinResult.Err is not nil
+func TestDealDeviceTwinResult(t *testing.T) {
 	mocksInit(t)
 	str := typeString
 	optionTrue := true
@@ -524,7 +524,7 @@ func TestDealDeviceTwin_dealTwinResult(t *testing.T) {
 		queryTableReturn orm.QuerySeter
 	}{
 		{
-			name:             "TestDealDeviceTwin_dealTwinResult(): dealTwinResult error",
+			name:             "TestDealDeviceTwinResult(): dealTwinResult error",
 			context:          &contextDeviceA,
 			deviceID:         deviceB,
 			msgTwin:          msgTwinValue,
@@ -564,14 +564,14 @@ func TestDealDeviceTwin_dealTwinResult(t *testing.T) {
 			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealDeviceTwin_dealTwinResult() case failed: got = %v, Want = %v", err, test.err)
+				t.Errorf("DTManager.TestDealDeviceTwinResult() case failed: got = %v, Want = %v", err, test.err)
 			}
 		})
 	}
 }
 
-// TestDealDeviceTwin_DeviceTwinTrans is function to test DealDeviceTwin when DeviceTwinTrans() return error
-func TestDealDeviceTwin_DeviceTwinTrans(t *testing.T) {
+// TestDealDeviceTwinTrans is function to test DealDeviceTwin when DeviceTwinTrans() return error
+func TestDealDeviceTwinTrans(t *testing.T) {
 	mocksInit(t)
 	str := typeString
 	optionTrue := true
@@ -609,7 +609,7 @@ func TestDealDeviceTwin_DeviceTwinTrans(t *testing.T) {
 		queryTableReturn orm.QuerySeter
 	}{
 		{
-			name:             "TestDealDeviceTwin_DeviceTwinTrans(): DeviceTwinTrans error",
+			name:             "TestDealDeviceTwinTrans(): DeviceTwinTrans error",
 			context:          &contextDeviceB,
 			deviceID:         deviceB,
 			msgTwin:          msgTwin,
@@ -662,7 +662,7 @@ func TestDealDeviceTwin_DeviceTwinTrans(t *testing.T) {
 			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
-				t.Errorf("DTManager.TestDealDeviceTwin_DeviceTwinTrans() case failed: got = %v, Want = %v", err, test.err)
+				t.Errorf("DTManager.TestDealDeviceTwinTrans() case failed: got = %v, Want = %v", err, test.err)
 			}
 		})
 	}
