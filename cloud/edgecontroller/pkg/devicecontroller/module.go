@@ -44,13 +44,13 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 		stopChannel := make(<-chan struct{})
 		downstream, err := controller.NewDownstreamController()
 		if err != nil {
-			log.LOGGER.Warnf("new downstream controller failed with error: %s", err)
+			log.LOGGER.Warnf("New downstream controller failed with error: %s", err)
 			continue
 		}
 		downstream.Start()
 
 		<-stopChannel
-		log.LOGGER.Warnf("election as slave, start to stop downstream controller")
+		log.LOGGER.Warnf("stop downstream controller")
 		downstream.Stop()
 		log.LOGGER.Warnf("downstream controller stopped")
 	}

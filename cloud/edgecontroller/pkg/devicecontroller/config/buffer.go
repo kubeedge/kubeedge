@@ -15,5 +15,5 @@ func init() {
 	} else {
 		UpdateDeviceStatusBuffer = psb
 	}
-	log.LOGGER.Infof("update device status buffer: %d", UpdateDeviceStatusBuffer)
+	log.LOGGER.Infof("Update device status buffer: %d", UpdateDeviceStatusBuffer)
 }

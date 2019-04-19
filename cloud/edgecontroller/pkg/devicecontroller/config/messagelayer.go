@@ -15,5 +15,5 @@ func init() {
 	} else {
 		MessageLayer = ml
 	}
-	log.LOGGER.Infof("message layer: %s", MessageLayer)
+	log.LOGGER.Infof("Message layer: %s", MessageLayer)
 }
