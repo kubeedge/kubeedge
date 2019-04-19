@@ -71,7 +71,7 @@ KubeEdge将为 IoT / Edge 工作负载提供基础架构和基本功能。其中
 
 ### 先决条件
 + [安装 docker](https://docs.docker.com/install/)
-+ [安装 kubeadm/kubectl](https://docs.docker.com/install/)
++ [安装 kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 + [初始化 Kubernetes](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 + 在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 edgecontroller/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
 
@@ -96,18 +96,12 @@ KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信�
 
 KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可以使用 openssl 生成。请按照以下步骤生成证书。
 
-```shell
-# Generete Root Key
-openssl genrsa -des3 -out rootCA.key 4096
-# Generate Root Certificate
-openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.crt
-# Generate Key
-openssl genrsa -out edge.key 2048
-# Generate csr, Fill required details after running the command
-openssl req -new -key edge.key -out edge.csr
-# Generate Certificate
-openssl x509 -req -in edge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out edge.crt -days 500 -sha256 
+```bash
+# $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
 ```
+
+证书和密钥会分别自动生成在`/etc/kubeedge/ca` 和 `/etc/kubeedge/certs` 
+目录下。
 
 ## 运行 KubeEdge
 
