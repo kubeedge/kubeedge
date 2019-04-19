@@ -20,46 +20,46 @@
   | edge_core_image | kubeedge/edgecore:latest          |                          |
   | arch            | amd64                             | 可选值：amd64 \| arm64v8 |
   | qemu_arch       | x86_64                            | 可选值：x86_64 \| aarch  |
-  | certpath        | /etc/kubeedge/edge/certs          |                          |
-  | certfile        | /etc/kubeedge/edge/certs/edge.crt |                          |
-  | keyfile         | /etc/kubeedge/edge/certs/edge.key |                          |
+  | certpath        | /etc/kubeedge/certs               |                          |
+  | certfile        | /etc/kubeedge/certs/edge.crt      |                          |
+  | keyfile         | /etc/kubeedge/certs/edge.key      |                          |
 
   ```shell
-  ./build/edge/run_daemon.sh set \
-  		    cloudhub=0.0.0.0:10000 \
-          edgename=edgeNode \
+  ./run_daemon.sh set \
+          cloudhub=0.0.0.0:10000 \
+          edgename=edge-node \
           edge_core_image="kubeedge/edgecore:latest" \
           arch=amd64 \
           qemu_arch=x86_64 \
-          certpath=/etc/kubeedge/edge/certs \
-          certfile=/etc/kubeedge/edge/certs/edge.crt \
-          keyfile=/etc/kubeedge/edge/certs/edge.ke
+          certpath=/etc/kubeedge/certs \
+          certfile=/etc/kubeedge/certs/edge.crt \
+          keyfile=/etc/kubeedge/certs/edge.key
   ````
 
 + 编译容器镜像
 
   ```
-  ./build/edge/run_daemon.sh build
+  ./run_daemon.sh build
   ```
 
 + **(可选)** 如果edge的性能不够，可以在cloud上交叉编译edge的镜像，在edge端加载镜像
   - 设置CPU类型
 
     ```
-    ./build/edge/run_daemon.sh set arch=arm64v8 qemu_arch=aarch
+    ./run_daemon.sh set arch=arm64v8 qemu_arch=aarch
     ```
 
   - 编译镜像
     ```
-    ./build/edge/run_daemon.sh build
+    ./run_daemon.sh build
     ```
 
   - 保存镜像
     ```
-    ./build/edge/run_daemon.sh save 
+    ./run_daemon.sh save
     ```
 
 + 启动容器
   ```
-  ./build/edge/run_daemon.sh up
+  ./run_daemon.sh up
   ```
