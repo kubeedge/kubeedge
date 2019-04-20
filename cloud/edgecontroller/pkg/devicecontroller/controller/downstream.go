@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package controller
 
 import (
@@ -18,7 +34,6 @@ import (
 	"github.com/satori/go.uuid"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -39,6 +54,8 @@ const (
 	ConfigMapVersion = "v1"
 
 	DeviceProfileConfigPrefix = "device-profile-config-"
+
+	DeviceProfileJSON = "deviceProfile.json"
 )
 
 // CacheDevice is the struct save device data for check device is really changed
@@ -68,7 +85,6 @@ type DownstreamController struct {
 	configMapManager *manager.ConfigMapManager
 
 	crdClient *rest.RESTClient
-	crdScheme *runtime.Scheme
 }
 
 // syncDeviceModel is used to get events from informer
@@ -99,11 +115,13 @@ func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 	}
 }
 
+// deviceModelAdded is function to process addition of new deviceModel in apiserver
 func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha1.DeviceModel) {
 	// nothing to do when deviceModel added, only add in map
 	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, &CacheDeviceModel{ObjectMeta: deviceModel.ObjectMeta, Spec: deviceModel.Spec})
 }
 
+// isDeviceModelUpdated is function to check if deviceModel is actually updated
 func isDeviceModelUpdated(old *CacheDeviceModel, new *v1alpha1.DeviceModel) bool {
 	// does not care fields
 	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
@@ -113,6 +131,7 @@ func isDeviceModelUpdated(old *CacheDeviceModel, new *v1alpha1.DeviceModel) bool
 	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec)
 }
 
+// deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha1.DeviceModel) {
 	value, ok := dc.deviceModelManager.DeviceModel.Load(deviceModel.Name)
 	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, &CacheDeviceModel{ObjectMeta: deviceModel.ObjectMeta, Spec: deviceModel.Spec})
@@ -126,15 +145,18 @@ func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha1.DeviceM
 	}
 }
 
+// updateAllConfigMaps is function to update configMaps which refer to an updated deviceModel
 func (dc *DownstreamController) updateAllConfigMaps(deviceModel *v1alpha1.DeviceModel) {
 	//TODO: add logic to update all config maps, How to manage if a property is deleted but a device is referring that property. Need to come up with a design.
 }
 
+// deviceModelDeleted is function to process deleted deviceModel
 func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha1.DeviceModel) {
 	// TODO: Need to use finalizer like method to delete all devices referring to this model. Need to come up with a design.
 	dc.deviceModelManager.DeviceModel.Delete(deviceModel.Name)
 }
 
+// syncDevice is used to get device events from informer
 func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 	running := true
 	for running {
@@ -176,8 +198,15 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha1.Device) {
 		dc.addDeviceProfile(device, nodeConfigMap)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
-			log.LOGGER.Errorf("Failed to create config map %v in namespace %v", nodeConfigMap, device.Namespace)
+
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
+			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
+				log.LOGGER.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
+				return
+			}
+		}
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+			log.LOGGER.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
 		return
@@ -196,8 +225,9 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha1.Device) {
 	}
 }
 
+// addDeviceProfile is function to add deviceProfile in configMap
 func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
-	dp, ok := configMap.Data["deviceProfile.json"]
+	dp, ok := configMap.Data[DeviceProfileJSON]
 	if !ok {
 		// create deviceProfileStruct
 		deviceProfile := &types.DeviceProfile{}
@@ -207,14 +237,19 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		deviceProfile.Protocols = make([]*types.Protocol, 0)
 		addDeviceInstanceAndProtocol(device, deviceProfile)
 
-		dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+		dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+		if !ok {
+			log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+			return
+		}
 		deviceModel := dm.(*CacheDeviceModel)
 		addDeviceModelAndVisitors(deviceModel, deviceProfile)
 		bytes, err := json.Marshal(deviceProfile)
 		if err != nil {
 			log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+			return
 		}
-		configMap.Data["deviceProfile.json"] = string(bytes)
+		configMap.Data[DeviceProfileJSON] = string(bytes)
 		return
 	}
 	deviceProfile := &types.DeviceProfile{}
@@ -224,7 +259,11 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		return
 	}
 	addDeviceInstanceAndProtocol(device, deviceProfile)
-	dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	if !ok {
+		log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+		return
+	}
 	deviceModel := dm.(*CacheDeviceModel)
 	// if model already exists no need to add model and visitors
 	checkModelExists := false
@@ -242,9 +281,10 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 		return
 	}
-	configMap.Data["deviceProfile.json"] = string(bytes)
+	configMap.Data[DeviceProfileJSON] = string(bytes)
 }
 
+// addDeviceModelAndVisitors adds deviceModels and deviceVisitors in configMap
 func addDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
@@ -253,18 +293,18 @@ func addDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *typ
 		property := &types.Property{}
 		property.Name = ppt.Name
 		property.Description = ppt.Description
-		/*	if ppt.Type.Int != nil{
-				property.AccessMode=string(ppt.Type.Int.AccessMode)
-				property.DataType=DataTypeInt
-				property.DefaultValue=ppt.Type.Int.DefaultValue
-				property.Maximum=ppt.Type.Int.Maximum
-				property.Minimum=ppt.Type.Int.Minimum
-				property.Unit=ppt.Type.Int.Unit
-			}else if ppt.Type.String != nil{
-				property.AccessMode=string(ppt.Type.String.AccessMode)
-				property.DataType=DataTypeString
-				property.DefaultValue = ppt.Type.String.DefaultValue
-			}*/
+		if ppt.Type.Int != nil {
+			property.AccessMode = string(ppt.Type.Int.AccessMode)
+			property.DataType = DataTypeInt
+			property.DefaultValue = ppt.Type.Int.DefaultValue
+			property.Maximum = ppt.Type.Int.Maximum
+			property.Minimum = ppt.Type.Int.Minimum
+			property.Unit = ppt.Type.Int.Unit
+		} else if ppt.Type.String != nil {
+			property.AccessMode = string(ppt.Type.String.AccessMode)
+			property.DataType = DataTypeString
+			property.DefaultValue = ppt.Type.String.DefaultValue
+		}
 		model.Properties = append(model.Properties, property)
 	}
 	deviceProfile.DeviceModels = append(deviceProfile.DeviceModels, model)
@@ -273,20 +313,21 @@ func addDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *typ
 		propertyVisitor.Name = pptv.PropertyName
 		propertyVisitor.PropertyName = pptv.PropertyName
 		propertyVisitor.ModelName = deviceModel.Name
-		/*if pptv.Modbus != nil{
+		if pptv.Modbus != nil {
 			propertyVisitor.Protocol = Modbus
-			propertyVisitor.VisitorConfig=pptv.Modbus
-		}else if pptv.OpcUA != nil{
+			propertyVisitor.VisitorConfig = pptv.Modbus
+		} else if pptv.OpcUA != nil {
 			propertyVisitor.Protocol = OPCUA
 			propertyVisitor.VisitorConfig = pptv.OpcUA
-		}else if pptv.Bluetooth != nil {
-			propertyVisitor.Protocol=Bluetooth
-			propertyVisitor.VisitorConfig=pptv.Bluetooth
-		}*/
+		} else if pptv.Bluetooth != nil {
+			propertyVisitor.Protocol = Bluetooth
+			propertyVisitor.VisitorConfig = pptv.Bluetooth
+		}
 		deviceProfile.PropertyVisitors = append(deviceProfile.PropertyVisitors, propertyVisitor)
 	}
 }
 
+// addDeviceInstanceAndProtocol adds deviceInstance and protocol in configMap
 func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
 	deviceInstance := &types.DeviceInstance{}
 	deviceProtocol := &types.Protocol{}
@@ -348,6 +389,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
 	}
 }
 
+// createDevice creates a device from CRD
 func createDevice(device *v1alpha1.Device) types.Device {
 	edgeDevice := types.Device{
 		// ID and name can be used as ID as we are using CRD and name(key in ETCD) will always be unique
@@ -373,7 +415,10 @@ func createDevice(device *v1alpha1.Device) types.Device {
 		expected.Metadata = metadata
 
 		// TODO: how to manage versioning ??
-		cloudVersion, _ := strconv.ParseInt(device.ResourceVersion, 10, 64)
+		cloudVersion, err := strconv.ParseInt(device.ResourceVersion, 10, 64)
+		if err != nil {
+			log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+		}
 		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
@@ -387,6 +432,7 @@ func createDevice(device *v1alpha1.Device) types.Device {
 	return edgeDevice
 }
 
+// isDeviceUpdated checks if device is actually updated
 func isDeviceUpdated(old *CacheDevice, new *v1alpha1.Device) bool {
 	// does not care fields
 	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
@@ -396,6 +442,7 @@ func isDeviceUpdated(old *CacheDevice, new *v1alpha1.Device) bool {
 	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec) || !reflect.DeepEqual(old.Status, new.Status)
 }
 
+// isNodeSelectorUpdated checks if nodeSelector is updated
 func isNodeSelectorUpdated(old *v1.NodeSelector, new *v1.NodeSelector) bool {
 	return !reflect.DeepEqual(old.NodeSelectorTerms, new.NodeSelectorTerms)
 }
@@ -449,6 +496,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 	}
 }
 
+// addDeletedTwins add deleted twins in the message
 func addDeletedTwins(old []v1alpha1.Twin, new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
@@ -462,7 +510,10 @@ func addDeletedTwins(old []v1alpha1.Twin, new []v1alpha1.Twin, twin map[string]*
 			expected.Metadata = metadata
 
 			// TODO: how to manage versioning ??
-			cloudVersion, _ := strconv.ParseInt(version, 10, 64)
+			cloudVersion, err := strconv.ParseInt(version, 10, 64)
+			if err != nil {
+				log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+			}
 			twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 			msgTwin := &types.MsgTwin{
 				Expected:        expected,
@@ -475,8 +526,9 @@ func addDeletedTwins(old []v1alpha1.Twin, new []v1alpha1.Twin, twin map[string]*
 	}
 }
 
-func ifTwinPresent(twin v1alpha1.Twin, new []v1alpha1.Twin) bool {
-	for _, dtwin := range new {
+// ifTwinPresent checks if twin is present in the array of twins
+func ifTwinPresent(twin v1alpha1.Twin, newTwins []v1alpha1.Twin) bool {
+	for _, dtwin := range newTwins {
 		if twin.PropertyName == dtwin.PropertyName {
 			return true
 		}
@@ -484,6 +536,7 @@ func ifTwinPresent(twin v1alpha1.Twin, new []v1alpha1.Twin) bool {
 	return false
 }
 
+// addUpdatedTwins is function of add updated twins to send to edge
 func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
@@ -496,7 +549,10 @@ func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, versio
 		expected.Metadata = metadata
 
 		// TODO: how to manage versioning ??
-		cloudVersion, _ := strconv.ParseInt(version, 10, 64)
+		cloudVersion, err := strconv.ParseInt(version, 10, 64)
+		if err != nil {
+			log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+		}
 		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
@@ -508,6 +564,7 @@ func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, versio
 	}
 }
 
+// deleteFromConfigMap deletes a device from configMap
 func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
@@ -519,7 +576,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 			log.LOGGER.Errorf("Failed to assert to configmap")
 			return
 		}
-		//TODO: call delete from deviceProfile
+
 		dc.deleteFromDeviceProfile(device, nodeConfigMap)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
@@ -530,8 +587,9 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 	}
 }
 
+// deleteFromDeviceProfile deletes a device from deviceProfile
 func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
-	dp, ok := configMap.Data["deviceProfile.json"]
+	dp, ok := configMap.Data[DeviceProfileJSON]
 	if !ok {
 		log.LOGGER.Errorf("Device profile does not exist in the configmap")
 		return
@@ -545,7 +603,11 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device,
 	}
 	deleteDeviceInstanceAndProtocol(device, deviceProfile)
 
-	dm, _ := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
+	if !ok {
+		log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+		return
+	}
 	deviceModel := dm.(*CacheDeviceModel)
 	// if model referenced by other devices, no need to delete the model
 	checkModelReferenced := false
@@ -563,9 +625,10 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device,
 		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 		return
 	}
-	configMap.Data["deviceProfile.json"] = string(bytes)
+	configMap.Data[DeviceProfileJSON] = string(bytes)
 }
 
+// deleteDeviceInstanceAndProtocol deletes deviceInstance and protocol from deviceProfile
 func deleteDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
 	var protocol string
 	for i, devInst := range deviceProfile.DeviceInstances {
@@ -588,6 +651,7 @@ func deleteDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *typ
 	}
 }
 
+// deleteDeviceModelAndVisitors deletes deviceModel and visitor from deviceProfile
 func deleteDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
 	for i, dm := range deviceProfile.DeviceModels {
 		if dm.Name == deviceModel.Name {
@@ -648,10 +712,11 @@ func (dc *DownstreamController) Start() error {
 	dc.deviceModelStop = make(chan struct{})
 	go dc.syncDeviceModel(dc.deviceModelStop)
 
+	// Wait for adding all device model
+	time.Sleep(1 * time.Second)
 	dc.deviceStop = make(chan struct{})
 	go dc.syncDevice(dc.deviceStop)
 
-	time.Sleep(100 * time.Second)
 	return nil
 }
 
@@ -673,7 +738,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 	config, err := utils.KubeConfig()
-	crdcli, _, err := utils.NewCRDClient(config)
+	crdcli, err := utils.NewCRDClient(config)
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {
 		log.LOGGER.Warnf("Create device manager failed with error: %s", err)

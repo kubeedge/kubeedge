@@ -10,15 +10,14 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// TODO: check if returning scheme is required, else remove from return type
 // NewCRDClient is used to create a restClient for crd
-func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
+func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, error) {
 	scheme := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(addDeviceCrds)
 
 	err := schemeBuilder.AddToScheme(scheme)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	config := *cfg
@@ -30,10 +29,10 @@ func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, *runtime.Scheme, error) {
 	client, err := rest.RESTClientFor(&config)
 	if err != nil {
 		log.LOGGER.Errorf("Failed to create REST Client due to error %v", err)
-		return nil, nil, err
+		return nil, err
 	}
 
-	return client, scheme, nil
+	return client, nil
 }
 
 func addDeviceCrds(scheme *runtime.Scheme) error {

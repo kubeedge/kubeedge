@@ -67,7 +67,7 @@ type MsgTwin struct {
 
 //TwinValue the struct of twin value
 type TwinValue struct {
-	Value    *string        `json:"value, omitempty"`
+	Value    *string        `json:"value,omitempty"`
 	Metadata *ValueMetadata `json:"metadata,omitempty"`
 }
 
@@ -84,7 +84,7 @@ type TypeMetadata struct {
 
 //ValueMetadata the meta of value
 type ValueMetadata struct {
-	Timestamp int64 `json:"timestamp, omitempty"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
 // ConnectedInfo connected info
