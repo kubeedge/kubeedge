@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 )
 
-// TODO: need to change according to deviceController
 // Manager define the interface of a Manager, configmapManager and podManager implement it
 type Manager interface {
 	Events() chan watch.Event

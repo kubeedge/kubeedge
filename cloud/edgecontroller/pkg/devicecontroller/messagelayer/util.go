@@ -1,12 +1,13 @@
 package messagelayer
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/constants"
 )
 
-// TODO: Check after changing constants if it works fine
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResource(nodeID, resourceType, resourceID string) (resource string, err error) {
 	if nodeID == "" || resourceType == "" {
@@ -18,4 +19,21 @@ func BuildResource(nodeID, resourceType, resourceID string) (resource string, er
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}
 	return
+}
+
+// GetDeviceID returns the ID of the device
+func GetDeviceID(resource string) (string, error) {
+	res := strings.Split(resource, "/")
+	if len(res) >= constants.ResourceDeviceIDIndex+1 && res[constants.ResourceDeviceIndex] == constants.ResourceDevice {
+		return res[constants.ResourceDeviceIDIndex], nil
+	}
+	return "", errors.New("failed to get device id")
+}
+
+// GetResourceType returns the resourceType of message received from edge
+func GetResourceType(resource string) (string, error) {
+	if strings.Contains(resource, constants.ResourceTypeTwinEdgeUpdated) {
+		return constants.ResourceTypeTwinEdgeUpdated, nil
+	}
+	return "", errors.New("unknown resource")
 }

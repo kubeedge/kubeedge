@@ -6,16 +6,16 @@ const (
 	DeviceControllerModuleName   = "devicecontroller"
 	CloudHubControllerModuleName = "cloudhub"
 
-	// Resource sep TODO: change the index based on deviceTwin reqirement
-	ResourceSep               = "/"
-	ResourceSliceLength       = 5
-	ResourceSliceLengthQuery  = 4
-	ResourceNodeIndex         = 0
-	ResourceNodeIDIndex       = 1
-	ResourceNamespaceIndex    = 2
-	ResourceResourceTypeIndex = 3
-	ResourceResourceNameIndex = 4
-	ResourceNode              = "node"
+	// group
+	DeviceControllerModuleGroup = "controller"
+
+	// Resource
+	ResourceSep                 = "/"
+	ResourceDeviceIndex         = 2
+	ResourceDeviceIDIndex       = 3
+	ResourceNode                = "node"
+	ResourceDevice              = "device"
+	ResourceTypeTwinEdgeUpdated = "twin/edge_updated"
 
 	// Group
 	GroupTwin = "twin"
