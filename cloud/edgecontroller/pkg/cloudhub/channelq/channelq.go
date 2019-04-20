@@ -72,9 +72,10 @@ func (q *ChannelEventQueue) dispatchMessage() {
 		}
 		resource := msg.Router.Resource
 		tokens := strings.Split(resource, "/")
+		numOfTokens := len(tokens)
 		var nodeID string
 		for i, token := range tokens {
-			if token == "node" && i+1 < len(token) {
+			if token == "node" && i+1 < numOfTokens {
 				nodeID = tokens[i+1]
 			}
 		}
