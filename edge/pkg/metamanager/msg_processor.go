@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core/context"
@@ -58,7 +59,7 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 }
 
 func send2Cloud(message *model.Message, c *context.Context) {
-	c.Send2Group(modules.HubGroup, *message)
+        c.Send2Group(config.CONFIG.GetConfigurationByKey("context-receive-module").(string), *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -69,8 +70,10 @@ func parseResource(resource string) (string, string, string) {
 	resID := ""
 	switch len(tokens) {
 	case 2:
+	case 4:
 		resType = tokens[len(tokens)-1]
 	case 3:
+	case 5:
 		resType = tokens[len(tokens)-2]
 		resID = tokens[len(tokens)-1]
 	default:
@@ -118,6 +121,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		}
 	}
 	resKey, resType, _ := parseResource(message.GetResource())
+
 	meta := &dao.Meta{
 		Key:   resKey,
 		Type:  resType,
