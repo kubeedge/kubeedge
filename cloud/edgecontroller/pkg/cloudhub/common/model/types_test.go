@@ -211,8 +211,8 @@ func TestIsFromEdge(t *testing.T) {
 		errorWant bool
 	}{
 		{
-			name: "TestIsFromEdge(): when the event is sent from edge",
-			event: &event,
+			name:      "TestIsFromEdge(): when the event is sent from edge",
+			event:     &event,
 			errorWant: true,
 		},
 	}
@@ -236,18 +236,18 @@ func TestIsToEdge(t *testing.T) {
 		errorWant bool
 	}{
 		{
-			name: "TestIsToEdge(): Case 1: when the event is sent from edge",
-			event: &eventResource,
+			name:      "TestIsToEdge(): Case 1: when the event is sent from edge",
+			event:     &eventResource,
 			errorWant: true,
 		},
 		{
-			name: "TestIsToEdge(): Case 2: event.Source!=SrcManager",
-			event: &eventSource,
+			name:      "TestIsToEdge(): Case 2: event.Source!=SrcManager",
+			event:     &eventSource,
 			errorWant: true,
 		},
 		{
-			name: "TestIsToEdge(): Case 3: when the event equals to resOpMap",
-			event: &eventOperation,
+			name:      "TestIsToEdge(): Case 3: when the event equals to resOpMap",
+			event:     &eventOperation,
 			errorWant: false,
 		},
 	}
