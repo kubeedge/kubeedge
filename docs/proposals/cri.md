@@ -23,7 +23,6 @@ status: alpha
   * [High Level Design](#high-level-design)  
     * [Edged with CRI support](#edged-with-cri-support)
   * [Low Level Design](#low-level-design)  
-    * [Packages](#packages)
     * [Configuration parameters](#configuration-parameters)
     * [Data structure modifications](#data-structure-modifications)
     * [Edged object creation modifications](#edged-object-creation-modifications)
@@ -33,13 +32,14 @@ status: alpha
     
     
 ## Motivation
-This proposal addresses the Container Runtime Interface support in edged to enable supporting multiple container
-runtimes like docker, containerd, crio etc on the edge platform.
+This proposal addresses the Container Runtime Interface support in edged to enable the following
+1. Support light weight container runtimes on resource constrained edge node which are unable to run the existing docker runtime
+2. Support multiple container runtimes like docker, containerd, cri-o etc on the edge node.
 
 ### Goals
 CRI support in edged must:
-* support multiple runtimes like docker, contianerd, crio etc.
-* Support corresponding CNI with pause container and IP
+* support multiple runtimes like docker, contianerd, cri-o etc.
+* Support for corresponding CNI with pause container and IP will be considered later
 
 ### Non-goals
 
@@ -47,41 +47,37 @@ CRI support in edged must:
 * 
 ## Proposal
 
-Currently Kubernetes kubelet CRI supports container runtimes like containerd, crio etc but support for docker runtime is
+Currently Kubernetes kubelet CRI supports container runtimes like containerd, cri-o etc but support for docker runtime is
 provided using dockershim as well. However going forward even docker runtime will be supported through only CRI. Also 
 currently kubeedge edged supports only docker runtime using the legacy dockertools. Hence we propose to support multiple 
 container runtime in kubeedge edged as follows
-1. Include CRI support as in kubernetes kubelet to support contianerd, crio etc
+1. Include CRI support as in kubernetes kubelet to support contianerd, cri-o etc
 2. Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
 for docker runtime using dockershim is not considered in edged
 
 
 ### Use Cases
 
-* Customer can choose the required runtime on his edge platform
+* Customer can run light weight container runtime on resource constrained edge node that cannot run the existing docker runtime
+* Customer has the option to choose from multiple container runtimes on his edge platform
 
 
 ## High Level Design
 
 ### Edged with CRI support
-<img src="../docs/images/edged/docker-cri.png">
+<img src="../images/edged/docker-cri.png">
 
 ## Low Level Design
 
-### Packages
-
-Additional CRI runtime packages need to be included.
-
-```go
-"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
-"k8s.io/kubernetes/pkg/kubelet/remote"
-
-```
-
 ### Configuration parameters
 
-The options to configure runtime type i.e. docker or other remote runtimes(crio, containerd etc) and the CRI remote endpoints
-for runtime and image services should be provided.
+The following configuration parameters need to be added
+No  | Parameter                | Type            | Values                       | Description
+-------------------------------------------------------------------------------------------------
+1   | containerRuntimeName     | string          | DockerRuntime/RemoteRuntime  | 
+2   | RemoteRuntimeEndpoint    | string          |                              |
+3   | RemoteImageEndpoint      | string          |                              |
+4   | RuntimeRequestTimeout    | Duration        |                              |
 
 ```go
 type Config struct {
@@ -309,5 +305,4 @@ func (e *edged) HandlePodCleanups() error {
 
 
 ## Open questions
-- Do we need to support pause container and IP in edged ?
-- Do we need to support CNI in edged ?
+- None
