@@ -33,13 +33,25 @@ const (
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
 )
 
+var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
+
 //Run Test cases
 var _ = Describe("Application deployment test in E2E scenario", func() {
 	var UID string
+	var testTimer *utils.TestTimer
+	var testDescription GinkgoTestDescription
 	Context("Test application deployment and delete deployment using deployment spec", func() {
 		BeforeEach(func() {
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
 		})
 		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
@@ -137,8 +149,16 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 	})
 	Context("Test application deployment using Pod spec", func() {
 		BeforeEach(func() {
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
 		})
 		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
 			var podlist metav1.PodList
 			label := nodeName
 			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
@@ -178,7 +198,6 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
-
 		})
 		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
 			var podlist metav1.PodList
@@ -197,7 +216,6 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
 			_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+UID)
 			Expect(StatusCode).Should(Equal(http.StatusNotFound))
-
 		})
 		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
