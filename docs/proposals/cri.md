@@ -72,12 +72,13 @@ for docker runtime using dockershim is not considered in edged
 ### Configuration parameters
 
 The following configuration parameters need to be added
-No  | Parameter                | Type            | Values                       | Description
--------------------------------------------------------------------------------------------------
-1   | containerRuntimeName     | string          | DockerRuntime/RemoteRuntime  | 
-2   | RemoteRuntimeEndpoint    | string          |                              |
-3   | RemoteImageEndpoint      | string          |                              |
-4   | RuntimeRequestTimeout    | Duration        |                              |
+
+No | Parameter | Type | Values | Description
+---|---|---|---|---
+1 | containerRuntimeName | string | DockerRuntime/RemoteRuntime | Runtime name
+2   | RemoteRuntimeEndpoint | string | /var/run/*.sock | Endpoint of remote runtime service
+3   | RemoteImageEndpoint | string | same as remoteRuntimeEndpoint if not specified | Endpoint of remote image service
+4   | RuntimeRequestTimeout | Duration | time value | timeout for all runtime request
 
 ```go
 type Config struct {
@@ -304,5 +305,4 @@ func (e *edged) HandlePodCleanups() error {
 ```
 
 
-## Open questions
-- None
+
