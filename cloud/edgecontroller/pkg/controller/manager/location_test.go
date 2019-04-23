@@ -26,14 +26,6 @@ import (
 
 var nodes = []string{"Node1", "Node2"}
 
-//locationCache returns a new LocationCache
-func locationCache(configMapKey string, configMapValue interface{}, secretKey string, SecretValue interface{}) LocationCache {
-	lc := LocationCache{}
-	lc.configMapNode.Store(configMapKey, configMapValue)
-	lc.secretNode.Store(secretKey, SecretValue)
-	return lc
-}
-
 //TestAddOrUpdatePod is function to test AddOrUpdatePod
 func TestAddOrUpdatePod(t *testing.T) {
 	pod := v1.Pod{
@@ -58,7 +50,9 @@ func TestAddOrUpdatePod(t *testing.T) {
 			Name:      "Object1",
 		},
 	}
-	lc := locationCache("ObjectMeta1/VolumeConfig1", "Node", "ObjectMeta1/VolumeSecret1", nodes)
+	locationCache := LocationCache{}
+	locationCache.configMapNode.Store("ObjectMeta1/VolumeConfig1", "Node1")
+	locationCache.secretNode.Store("ObjectMeta1/VolumeSecret1", nodes)
 	tests := []struct {
 		name string
 		lc   *LocationCache
@@ -71,7 +65,7 @@ func TestAddOrUpdatePod(t *testing.T) {
 		},
 		{
 			name: "TestAddOrUpdatePod(): Case 2: LocationCache is not empty",
-			lc:   &lc,
+			lc:   &locationCache,
 			pod:  pod,
 		},
 	}
@@ -84,7 +78,8 @@ func TestAddOrUpdatePod(t *testing.T) {
 
 //TestConfigMapNodes is function to test ConfigMapNodes
 func TestConfigMapNodes(t *testing.T) {
-	lc := locationCache("ObjectMeta1/VolumeConfig1", nodes, "", nil)
+	locationCache := LocationCache{}
+	locationCache.configMapNode.Store("ObjectMeta1/VolumeConfig1", nodes)
 	tests := []struct {
 		name          string
 		lc            *LocationCache
@@ -99,7 +94,7 @@ func TestConfigMapNodes(t *testing.T) {
 		},
 		{
 			name:          "TestConfigMapNodes(): Case 2: LocationCache is not empty",
-			lc:            &lc,
+			lc:            &locationCache,
 			namespace:     "ObjectMeta1",
 			configMapName: "VolumeConfig1",
 			nodes:         nodes,
@@ -116,7 +111,8 @@ func TestConfigMapNodes(t *testing.T) {
 
 //TestSecretNodes is function to test SecretNodes
 func TestSecretNodes(t *testing.T) {
-	lc := locationCache("", nil, "ObjectMeta1/VolumeSecret1", nodes)
+	locationCache := LocationCache{}
+	locationCache.secretNode.Store("ObjectMeta1/VolumeSecret1", nodes)
 	tests := []struct {
 		name       string
 		lc         *LocationCache
@@ -131,7 +127,7 @@ func TestSecretNodes(t *testing.T) {
 		},
 		{
 			name:       "TestSecretNodes(): Case 2: LocationCache is not empty",
-			lc:         &lc,
+			lc:         &locationCache,
 			namespace:  "ObjectMeta1",
 			secretName: "VolumeSecret1",
 			nodes:      nodes,
@@ -148,16 +144,18 @@ func TestSecretNodes(t *testing.T) {
 
 //TestDeleteConfigMap is function to test DeleteConfigMap
 func TestDeleteConfigMap(t *testing.T) {
-	lc := locationCache("ObjectMeta1/VolumeConfig1", nodes, "", nil)
+	locationCache := LocationCache{}
+	locationCache.configMapNode.Store("ObjectMeta1/VolumeConfig1", nodes)
 	namespace := "ObjectMeta1"
 	configMapName := "VolumeConfig1"
-	lc.DeleteConfigMap(namespace, configMapName)
+	locationCache.DeleteConfigMap(namespace, configMapName)
 }
 
 //TestDeleteSecret is function to test DeleteSecret
 func TestDeleteSecret(t *testing.T) {
-	lc := locationCache("", nil, "ObjectMeta1/VolumeSecret1", nodes)
+	locationCache := LocationCache{}
+	locationCache.secretNode.Store("ObjectMeta1/VolumeSecret1", nodes)
 	namespace := "ObjectMeta1"
 	secretName := "VolumeSecret1"
-	lc.DeleteSecret(namespace, secretName)
+	locationCache.DeleteSecret(namespace, secretName)
 }
