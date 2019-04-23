@@ -19,6 +19,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"reflect"
 	"testing"
 	"time"
@@ -29,10 +30,17 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
+
+var called bool
+
+//testAction is a dummy function for testing Start
+func testAction(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+	called = true
+	return called, errors.New("Called the dummy function for testing")
+}
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestDeviceStartAction(t *testing.T) {
@@ -43,20 +51,13 @@ func TestDeviceStartAction(t *testing.T) {
 	bytes, _ := json.Marshal(content)
 	msg := model.Message{Content: bytes}
 	receiveChanActionPresent := make(chan interface{}, 1)
-	receiveChanActionPresent <- &dttype.DTMessage{Action: "DeviceUpdated", Identity: "identity", Msg: &msg}
+	receiveChanActionPresent <- &dttype.DTMessage{Action: "testAction", Identity: "identity", Msg: &msg}
 	receiveChanActionNotPresent := make(chan interface{}, 1)
 	receiveChanActionNotPresent <- &dttype.DTMessage{Action: "action", Identity: "identity", Msg: &model.Message{Content: "msg"}}
 	tests := []struct {
 		name   string
 		Worker Worker
 	}{
-		{
-			name: "StartTest-ActionPresentInActionCallback",
-			Worker: Worker{
-				ReceiverChan: receiveChanActionPresent,
-				DTContexts:   dtContextStateConnected,
-			},
-		},
 		{
 			name: "StartTest-ActionNotPresentInActionCallback",
 			Worker: Worker{
@@ -72,6 +73,13 @@ func TestDeviceStartAction(t *testing.T) {
 			}
 			go dw.Start()
 			time.Sleep(1 * time.Millisecond)
+			//Adding a dummy function to callback to ensure Start is successful.
+			deviceActionCallBack["testAction"] = testAction
+			dw.ReceiverChan <- &dttype.DTMessage{Action: "testAction", Identity: "identity", Msg: &msg}
+			time.Sleep(1 * time.Millisecond)
+			if !called {
+				t.Errorf("Start failed")
+			}
 		})
 	}
 }
