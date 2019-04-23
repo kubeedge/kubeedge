@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -51,6 +52,7 @@ func NewCloudInit(out io.Writer, init *options.InitOptions) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			// TODO: Work your own magic here
 			fmt.Println("cloud init called")
+			fmt.Println("Print: " + strings.Join(args, " "))
 		},
 	}
 
