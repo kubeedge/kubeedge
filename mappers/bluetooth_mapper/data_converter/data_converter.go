@@ -21,6 +21,14 @@ import (
 	"strings"
 )
 
+// Bluetooth Protocol Operation type
+const (
+	BluetoothAdd      string = "Add"
+	BluetoothSubtract string = "Subtract"
+	BluetoothMultiply string = "Multiply"
+	BluetoothDivide   string = "Divide"
+)
+
 //Converter is the structure that contains data conversion specific configuration
 type Converter struct {
 	DataWrite DataWrite `yaml:"write"`
@@ -95,13 +103,13 @@ func (operation *ReadOperation) ConvertReadData(data []byte) float64 {
 	finalResult := float64(intermediateResult)
 	for _, executeOperation := range operation.OrderOfExecution {
 		switch strings.ToUpper(executeOperation) {
-		case "ADD":
+		case strings.ToUpper(BluetoothAdd):
 			finalResult = finalResult + operation.Add
-		case "SUBTRACT":
+		case strings.ToUpper(BluetoothSubtract):
 			finalResult = finalResult - operation.Subtract
-		case "MULTIPLY":
+		case strings.ToUpper(BluetoothMultiply):
 			finalResult = finalResult * operation.Multiply
-		case "DIVIDE":
+		case strings.ToUpper(BluetoothDivide):
 			finalResult = finalResult / operation.Divide
 		}
 	}
