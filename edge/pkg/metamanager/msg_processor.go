@@ -59,7 +59,7 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 }
 
 func send2Cloud(message *model.Message, c *context.Context) {
-        c.Send2Group(config.CONFIG.GetConfigurationByKey("context-receive-module").(string), *message)
+	c.Send2Group(config.CONFIG.GetConfigurationByKey("context-receive-module").(string), *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]

@@ -56,8 +56,8 @@ func (eb *eventbus) Start(c *context.Context) {
 	eb.context = c
 
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
-	if (nodeID == nil) {
-	        nodeID = config.CONFIG.GetConfigurationByKey("controller.kube.node-id")
+	if nodeID == nil {
+		nodeID = config.CONFIG.GetConfigurationByKey("controller.kube.node-id")
 	}
 
 	if nodeID == nil {
