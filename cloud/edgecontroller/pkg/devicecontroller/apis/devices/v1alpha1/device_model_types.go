@@ -45,9 +45,9 @@ type DeviceProperty struct {
 // Only one of its members may be specified.
 type PropertyType struct {
 	// +optional
-	Int PropertyTypeInt64 `json:"int,omitempty"`
+	Int *PropertyTypeInt64 `json:"int,omitempty"`
 	// +optional
-	String PropertyTypeString `json:"string,omitempty"`
+	String *PropertyTypeString `json:"string,omitempty"`
 }
 
 type PropertyTypeInt64 struct {
@@ -95,13 +95,13 @@ type DevicePropertyVisitor struct {
 type VisitorConfig struct {
 	// Opcua represents a set of additional visitor config fields of opc-ua protocol.
 	// +optional
-	OpcUA VisitorConfigOPCUA `json:"opcua,omitempty"`
+	OpcUA *VisitorConfigOPCUA `json:"opcua,omitempty"`
 	// Modbus represents a set of additional visitor config fields of modbus protocol.
 	// +optional
-	Modbus VisitorConfigModbus `json:"modbus,omitempty"`
+	Modbus *VisitorConfigModbus `json:"modbus,omitempty"`
 	// Bluetooth represents a set of additional visitor config fields of bluetooth protocol.
 	// +optional
-	Bluetooth VisitorConfigBluetooth `json:"bluetooth,omitempty"`
+	Bluetooth *VisitorConfigBluetooth `json:"bluetooth,omitempty"`
 }
 
 // Common visitor configurations for bluetooth protocol
