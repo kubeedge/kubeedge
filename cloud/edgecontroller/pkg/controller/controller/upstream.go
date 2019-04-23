@@ -302,7 +302,7 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					if name == constants.NvidiaGPUScalarResourceName {
 						var gpuStatus []types.NvidiaGPUStatus
 						for _, er := range v {
-							gpuStatus = append(gpuStatus, types.NvidiaGPUStatus{Id: er.Name, Healthy: true})
+							gpuStatus = append(gpuStatus, types.NvidiaGPUStatus{ID: er.Name, Healthy: true})
 						}
 						if len(gpuStatus) > 0 {
 							data, _ := json.Marshal(gpuStatus)

@@ -40,6 +40,10 @@ edge_cross_build:
 edge_small_build:
 	cd edge && $(MAKE) small_build
 
+.PHONY: cloud_lint
+cloud_lint:
+	cd cloud/edgecontroller && $(MAKE) lint
+
 .PHONY: e2e_test
 e2e_test:
 	bash tests/e2e/scripts/execute.sh

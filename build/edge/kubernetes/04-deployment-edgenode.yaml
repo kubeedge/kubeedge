@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edgenode1
+  namespace: kubeedge
+  labels:
+    k8s-app: kubeedge
+    kubeedge: edgenode
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kubeedge
+      kubeedge: edgenode
+  template:
+    metadata:
+      labels:
+        k8s-app: kubeedge
+        kubeedge: edgenode
+    spec:
+      containers:
+      - name: edgenode
+        securityContext:
+          privileged: true
+        image: kubeedge/edgecore:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+        env: 
+          - name: DOCKER_HOST
+            value: tcp://localhost:2375
+        volumeMounts:
+        - name: certs
+          mountPath: /etc/kubeedge/certs
+        - name: conf
+          mountPath: /etc/kubeedge/edge/conf
+      - name: dind-daemon
+        securityContext: 
+            privileged: true
+        image: docker:dind 
+        resources: 
+            requests: 
+                cpu: 20m 
+                memory: 512Mi 
+        volumeMounts: 
+          - name: docker-graph-storage 
+            mountPath: /var/lib/docker
+      volumes:
+      - name: certs
+        hostPath:
+          path: /etc/kubeedge/certs
+      - name: conf
+        configMap:
+          name: edgenodeconf
+      - name: docker-graph-storage 
+        emptyDir: {}

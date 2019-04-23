@@ -144,6 +144,7 @@ type Config struct {
 	imageGCHighThreshold     int
 	imageGCLowThreshold      int
 	MaxPerPodContainerCount  int
+	DockerAddress            string
 	version                  string
 }
 
@@ -248,6 +249,7 @@ func getConfig() *Config {
 	conf.imageGCLowThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-low-threshold").(int)
 	conf.MaxPerPodContainerCount = config.CONFIG.GetConfigurationByKey("edged.maximum-dead-containers-per-container").(int)
 	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
+	conf.DockerAddress = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
 	return &conf
 }
 
@@ -285,6 +287,11 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
+	}
+
+	// Set docker address if it is set in the conf
+	if conf.DockerAddress != "" {
+		dockertools.InitDockerAddress(conf.DockerAddress)
 	}
 
 	if conf.gpuPluginEnabled {
