@@ -47,6 +47,7 @@ type Operation struct {
 
 // Action is structure to define a device action
 type Action struct {
+	// Enable indicates whether the action is to be performed immediately or not
 	Enable bool `yaml:"enable" json:"enable"`
 	// Name is the name of the Action
 	Name string `yaml:"name" json:"name"`
