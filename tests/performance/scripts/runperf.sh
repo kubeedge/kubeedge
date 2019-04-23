@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/usr/bin/env bash
 
 # Copyright 2019 The KubeEdge Authors.
 #
@@ -24,6 +24,7 @@ compilemodule=$1
 runtest=$2
 
 export MASTER_IP=121.244.95.60
+export MASTER_IP_2=121.244.95.60
 #setup env
 cd ../
 #Pre-configurations required for running the suite.
@@ -32,14 +33,22 @@ cat >config.json<<END
 {
         "edgedEndpoint": "http://127.0.0.1:10255",
         "image_url": ["nginx", "hello-world"],
-        "K8smaster1":"http://$MASTER_IP:12418"
+        "K8smaster1": "http://$MASTER_IP:12436",
+        "node_num": 10,
+        "imagerepo": "pavan187",
+        "k8smaster2": "http://$MASTER_IP_2:12458",
+        "cloudimageurl": "pavan187/cloudcore:v1.0",
+        "edgeimageurl": "pavan187/edgecore:latest",
+        "namespace":"default"
 }
 END
+
 
 if [ $# -eq 0 ]
   then
     #run testcase
-    ./deployment/deployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./loadtest/loadtest.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
+    ./nodedensity/nodedensity.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
 else
-    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/$compilemodule_test.log && :> /tmp/perf_test.log
 fi
