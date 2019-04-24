@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/kubeedge/kubeedge/kubeedgeinst/app/cmd/options"
+	"github.com/kubeedge/kubeedge/kubeedgeinst/app/cmd/util"
 )
 
 var (
@@ -47,6 +48,8 @@ func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 		joinOptions = newJoinOptions()
 	}
 
+	tools := make(map[string]util.ToolsInstaller, 0)
+
 	cmd := &cobra.Command{
 		Use:     "join",
 		Short:   "Run this on any machine you wish to join an existing cluster",
@@ -55,6 +58,10 @@ func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("node join called")
 			fmt.Println(cmd.ArgsLenAtDash())
+
+			checkFlags := func(f *pflag.Flag) {
+				UpdateTools(f, tools)
+			}
 			cmd.Flags().Visit(checkFlags)
 		},
 	}
@@ -101,6 +108,29 @@ func newJoinOptions() *options.JoinOptions {
 	return opts
 }
 
-func checkFlags(f *pflag.Flag) {
+func UpdateTools(f *pflag.Flag, toolList map[string]util.ToolsInstaller) {
 	fmt.Println(f.Name, "VAL:", f.Value, "DEFVAL:", f.DefValue)
+	switch f.Name {
+	case options.KubeedgeVersion:
+		kubeVer := CheckIfAvailable(f.Value.String(), f.DefValue)
+		toolList["KubeEdge"] = &util.KubeEdgeInstTool{util.Common{ToolVersion: kubeVer}, ""}
+	case options.DockerVersion:
+	case options.Kubernetesversion:
+	case options.CertPath:
+	case options.K8SAPIServerIPPort:
+	}
+
+	// tools = map[string]ToolsInstaller{
+	// 	"Docker":     &DockerInstTool{Common{ToolVersion: dockerVer}, defaultDockerVer},
+	// 	"Kubernetes": &K8SInstTool{Common{ToolVersion: k8sVer}, defaultK8SVer},
+	// 	"MQTT":       &MQTTInstTool{},
+	// 	"KubeEdge":   &KubeEdgeInstTool{Common{ToolVersion: kubeVer}, server},
+	// }
+}
+
+func CheckIfAvailable(val, deval string) string {
+	if val == "" {
+		return deval
+	}
+	return val
 }

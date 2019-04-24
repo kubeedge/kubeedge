@@ -1,0 +1,179 @@
+package util
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+)
+
+const (
+	UbuntuOSType = "ubuntu"
+	CentOSType   = "centos"
+
+	DefaultDownloadURL = "https://download.docker.com"
+	DockerPreqReqList  = "apt-transport-https ca-certificates curl gnupg-agent software-properties-common"
+
+	KubernetesDownloadURL = "https://apt.kubernetes.io/"
+	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+	KubeEdgeDownloadURL     = "https://github.com/kubeedge/kubeedge/releases/download/"
+	KubeEdgeConfigPath      = "/etc/kubeedge/"
+	KubeEdgeBinaryName      = "edge_core"
+	KubeEdgeDefaultCertPath = KubeEdgeConfigPath + "certs/"
+	KubeEdgeConfigEdgeYaml  = KubeEdgeConfigPath + "edge/conf/edge.yaml"
+	KubeEdgeToReplaceKey1   = "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
+	KubeEdgeToReplaceKey2   = "0.0.0.0"
+	KubeEdgeConfigNodeJSON  = KubeEdgeConfigPath + "edge/conf/node.json"
+)
+
+type ToolsInstaller interface {
+	InstallTools() error
+}
+
+type OSTypeInstaller interface {
+	IsDockerInstalled(string) string
+	IsDockerVerInRepo(string) (bool, error)
+	InstallDocker() error
+	InstallMQTT() error
+	InstallK8S() error
+	InstallKubeEdge() error
+	SetDockerVersion(string)
+	SetK8SVersion(string)
+	SetKubeEdgeVersion(string)
+	RunEdgeCore() error
+}
+
+type Common struct {
+	OSTypeInstaller
+	OSVersion   string
+	ToolVersion string
+}
+
+func (co *Common) SetOSInterface(intf OSTypeInstaller) {
+	co.OSTypeInstaller = intf
+}
+
+type Command struct {
+	Cmd    *exec.Cmd
+	StdOut []byte
+	StdErr []byte
+}
+
+func (cm *Command) ExecuteCommand() {
+	var err error
+	cm.StdOut, err = cm.Cmd.Output()
+	if err != nil {
+		fmt.Println("Output failed: ", err)
+	}
+}
+
+func (cm Command) GetStdOutput() string {
+	if len(cm.StdOut) != 0 {
+		return strings.TrimRight(string(cm.StdOut), "\n")
+	}
+	return ""
+}
+
+func (cm Command) GetStdErr() string {
+	if len(cm.StdErr) != 0 {
+		return strings.TrimRight(string(cm.StdErr), "\n")
+	}
+	return ""
+}
+
+func (cm Command) ExecuteCmdShowOutput() error {
+	var stdoutBuf, stderrBuf bytes.Buffer
+	stdoutIn, _ := cm.Cmd.StdoutPipe()
+	stderrIn, _ := cm.Cmd.StderrPipe()
+
+	var errStdout, errStderr error
+	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+	err := cm.Cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start because of error : %s", err.Error())
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		_, errStdout = io.Copy(stdout, stdoutIn)
+		wg.Done()
+	}()
+
+	_, errStderr = io.Copy(stderr, stderrIn)
+	wg.Wait()
+
+	err = cm.Cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("failed to run because of error : %s", err.Error())
+	}
+	if errStdout != nil || errStderr != nil {
+		return fmt.Errorf("failed to capture stdout or stderr")
+	}
+
+	cm.StdOut, cm.StdErr = stdoutBuf.Bytes(), stderrBuf.Bytes()
+	return nil
+}
+
+func GetOSVersion() string {
+	c := &Command{Cmd: exec.Command("sh", "-c", ". /etc/os-release && echo $ID")}
+	c.ExecuteCommand()
+	return c.GetStdOutput()
+}
+
+func GetInterfaceIP() (string, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return "", err
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil || ip.IsLoopback() {
+				continue
+			}
+			ip = ip.To4()
+			if ip == nil {
+				continue // not an ipv4 address
+			}
+			return ip.String(), nil
+		}
+	}
+	return "", errors.New("Not able to get interfaces")
+}
+
+func GetOSInterface() OSTypeInstaller {
+
+	switch GetOSVersion() {
+	case UbuntuOSType:
+		return &UbuntuOS{}
+	case CentOSType:
+		return &CentOS{}
+	default:
+	}
+	return nil
+}
