@@ -24,26 +24,24 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/helper"
 )
 
 const (
-	MapperTopicPrefix     = "$ke/mappers/bluetooth-mapper/"
+	MapperTopicPrefix     = "$ke/device/bluetooth-mapper/"
 	SchedulerResultSuffix = "/scheduler/result"
 	defaultEventFrequency = 5000
 )
 
 // Schedule is structure to define a schedule
 type Schedule struct {
-	//Enable indicates whether the scheduler is to be enabled or not
-	Enable bool `yaml:"enable" json:"enable"`
 	// Name is name of the schedule. It should be unique so that a stop-chan
 	// can be made corresponding to name to stop the schedule.
 	Name string `yaml:"name" json:"name"`
-	// Frequency is the time in milliseconds after which this action are to be performed
-	EventFrequency int `yaml:"event-frequency" json:"event-frequency"`
+	// Interval is the time in milliseconds after which this action are to be performed
+	Interval int `yaml:"interval" json:"interval"`
 	//OccurrenceLimit refers to the number of time the action can occur, if it is 0, then the  event will execute infinitely
 	OccurrenceLimit int `yaml:"occurrence-limit" json:"occurrence-limit"`
 	// Actions is list of Actions to be performed in this schedule
@@ -91,10 +89,10 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 				publishScheduleResult(scheduleResult, deviceID)
 			}
 		}
-		if schedule.EventFrequency == 0 {
-			schedule.EventFrequency = defaultEventFrequency
+		if schedule.Interval == 0 {
+			schedule.Interval = defaultEventFrequency
 		}
-		time.Sleep(time.Duration(time.Duration(schedule.EventFrequency) * time.Millisecond))
+		time.Sleep(time.Duration(time.Duration(schedule.Interval) * time.Millisecond))
 	}
 }
 

@@ -24,7 +24,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/paypal/gatt"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
 )
 
 const (
@@ -47,8 +47,8 @@ type Operation struct {
 
 // Action is structure to define a device action
 type Action struct {
-	// Enable indicates whether the action is to be performed immediately or not
-	Enable bool `yaml:"enable" json:"enable"`
+	// PerformImmediately indicates whether the action is to be performed immediately or not
+	PerformImmediately bool `yaml:"perform-immediately" json:"perform-immediately"`
 	// Name is the name of the Action
 	Name string `yaml:"name" json:"name"`
 	// Operation specifies the operation to be performed for this action

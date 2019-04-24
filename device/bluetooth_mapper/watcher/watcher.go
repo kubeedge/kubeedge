@@ -18,15 +18,16 @@ package watcher
 
 import (
 	"errors"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
 	"github.com/paypal/gatt"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/helper"
 )
 
 var DeviceConnected = make(chan bool)
@@ -38,13 +39,12 @@ var dataConverter dataconverter.Converter
 
 //Watch structure contains the watcher specific configurations
 type Watcher struct {
-	Enable     bool        `yaml:"enable" json:"enable"`
-	Attributes []Attribute `yaml:"attributes" json:"attributes"`
+	DeviceTwinAttributes []Attribute `yaml:"device-twin-attributes" json:"device-twin-attributes"`
 }
 
 //Attribute structure contains the name of the attribute along with the actions to be performed for this attribute
 type Attribute struct {
-	Name    string   `yaml:"name" json:"name"`
+	Name    string   `yaml:"device-property-name" json:"device-property-name"`
 	Actions []string `yaml:"actions" json:"actions"`
 }
 
@@ -79,7 +79,7 @@ func onStateChanged(device gatt.Device, s gatt.State) {
 
 //onPeripheralDiscovered contains the operations to be performed as soon as the peripheral device is discovered
 func onPeripheralDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
-	if a.LocalName == deviceName {
+	if strings.ToUpper(a.LocalName) == strings.ToUpper(strings.Replace(deviceName, "-", " ", -1)) {
 		glog.Infof("Device: %s found !!!! Stop Scanning for devices", deviceName)
 		// Stop scanning once we've got the peripheral we're looking for.
 		p.Device().StopScanning()
@@ -103,7 +103,8 @@ func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	DeviceConnected <- true
 	helper.ChangeDeviceState("online", deviceID)
 	for {
-		if w.Enable {
+		newWatcher:=&Watcher{}
+		if !reflect.DeepEqual(w,newWatcher) {
 			err := w.EquateTwinValue(deviceID)
 			if err != nil {
 				glog.Errorf("Error in watcher functionality: %s", err)
@@ -122,7 +123,7 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 	helper.GetTwin(updateMessage, deviceID)
 	helper.Wg.Wait()
 	twinUpdated := false
-	for _, twinAttribute := range w.Attributes {
+	for _, twinAttribute := range w.DeviceTwinAttributes  {
 		if helper.TwinResult.Twin[twinAttribute.Name] != nil {
 			if (helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value) {
 				glog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
