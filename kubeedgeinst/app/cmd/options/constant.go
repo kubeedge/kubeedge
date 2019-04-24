@@ -33,4 +33,10 @@ const (
 
 	//DefaultCertPath is the default certificate path in edge node
 	DefaultCertPath = "/etc/kubeedge/certs"
+
+	DefaultKubeEdgeVersion = "0.2.0"
+
+	DefaultDockerVersion = "18.06.0"
+
+	DefaultK8SVersion = "1.14.1"
 )
