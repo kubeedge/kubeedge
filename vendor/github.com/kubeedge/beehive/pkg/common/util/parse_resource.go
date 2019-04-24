@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"strings"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -11,7 +12,7 @@ import (
 func ParseResourceEdge(resource string, operation string) (string, string, string, error) {
 	resourceSplits := strings.Split(resource, "/")
 	if len(resourceSplits) == 3 {
-		return resourceSplits[2], resourceSplits[3], resourceSplits[4], nil
+		return resourceSplits[0], resourceSplits[1], resourceSplits[2], nil
 	} else if len(resourceSplits) == 5 {
 		return resourceSplits[2], resourceSplits[3], resourceSplits[4], nil
 	} else if operation == model.QueryOperation || operation == model.ResponseOperation && len(resourceSplits) == 2 {

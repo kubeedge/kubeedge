@@ -232,7 +232,7 @@ func TestProcessUpdate(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/test/test/"+model.ResourceTypePodStatus, model.UpdateOperation).FillBody("test")
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypePodStatus, model.UpdateOperation).FillBody("test")
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
 	t.Run("ResourceUnchangedTrue", func(t *testing.T) {
@@ -420,7 +420,7 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Cleanup(ModuleNameEdgeHub)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ := mainContext.Receive(ModuleNameEdged)
@@ -437,10 +437,10 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)
-	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody(make(chan int))
+	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody(make(chan int))
 	mainContext.SendResp(*msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)
 	t.Run("ProcessRemoteQueryMarshallFail", func(t *testing.T) {
@@ -456,10 +456,10 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)
-	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody("TestMessage")
+	msg = model.NewMessage(message.GetID()).BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation).FillBody("TestMessage")
 	mainContext.SendResp(*msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
 	t.Run("ProcessRemoteQueryDbFail", func(t *testing.T) {
@@ -477,7 +477,7 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
 	t.Run("DatabaseNoErrorAndMetaFound", func(t *testing.T) {
@@ -516,7 +516,7 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdgeHub)
 	t.Run("ResIDNotNilDatabaseError", func(t *testing.T) {
@@ -530,7 +530,7 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, "test/test/"+model.ResourceTypeConfigmap, model.QueryOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
 	t.Run("DatabaseNoErrorAndMetaFound", func(t *testing.T) {
@@ -587,7 +587,7 @@ func TestProcessSync(t *testing.T) {
 	//QueryMetaError
 	fakeDao := new([]dao.Meta)
 	fakeDaoArray := make([]dao.Meta, 1)
-	fakeDaoArray[0] = dao.Meta{Key: "Test/Test/Test/Test/Test", Value: "Test"}
+	fakeDaoArray[0] = dao.Meta{Key: "Test/Test/Test", Value: "Test"}
 	fakeDao = &fakeDaoArray
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
@@ -637,7 +637,7 @@ func TestProcessSync(t *testing.T) {
 	})
 
 	//QueryMeta Length > 0 Success Case
-	fakeDaoArray[0] = dao.Meta{Key: "Test/Test/Test/Test/Test", Value: "\"Test\""}
+	fakeDaoArray[0] = dao.Meta{Key: "Test/Test/Test", Value: "\"Test\""}
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
