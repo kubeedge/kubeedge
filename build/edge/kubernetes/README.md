@@ -23,7 +23,7 @@ Firstly you need to copy edge certs including `edge.crt` and `edge.key` into the
 `/etc/kubeedge/certs/` on the k8s nodes where you want to deploy edge part.
 
 On the other side, you need to replace `0.0.0.0:10000` with your kubeedge cloud web socket url.
-* [url](04-configmap-edgenodeconf.yaml#L20)
+* [url](03-configmap-edgenodeconf.yaml#L20)
 
 The default edge node name is `edgenode1`,
 if you want to change edge node name or add new edge node,
