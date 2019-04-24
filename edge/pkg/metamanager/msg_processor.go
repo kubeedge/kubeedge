@@ -70,9 +70,12 @@ func parseResource(resource string) (string, string, string) {
 	resID := ""
 	switch len(tokens) {
 	case 2:
+		resType = tokens[len(tokens)-1]
 	case 4:
 		resType = tokens[len(tokens)-1]
 	case 3:
+		resType = tokens[len(tokens)-2]
+		resID = tokens[len(tokens)-1]
 	case 5:
 		resType = tokens[len(tokens)-2]
 		resID = tokens[len(tokens)-1]
