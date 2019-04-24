@@ -25,17 +25,17 @@ import (
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/watcher"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/configuration"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/helper"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/scheduler"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/watcher"
 )
 
 // constants which can be used to convey topic information
 const (
-	MapperTopicPrefix              = "$ke/mappers/bluetooth-mapper/"
+	MapperTopicPrefix              = "$ke/device/bluetooth-mapper/"
 	WatcherTopicSuffix             = "/watcher/create"
 	SchedulerCreateTopicSuffix     = "/scheduler/create"
 	SchedulerDeleteTopicSuffix     = "/scheduler/delete"
@@ -79,16 +79,14 @@ func (c *ControllerConfig) Start() {
 
 	<-watcher.DeviceConnected
 	for _, action := range c.ActionManager.Actions {
-		if action.Enable {
+		if action.PerformImmediately{
 			action.PerformOperation()
 		}
 	}
 
 	for _, schedule := range c.Scheduler.Schedules {
-		if schedule.Enable {
-			helper.ControllerWg.Add(1)
-			go schedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
-		}
+		helper.ControllerWg.Add(1)
+		go schedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
 	}
 	helper.ControllerWg.Wait()
 }
@@ -105,7 +103,6 @@ func subscribeAllTopics() {
 
 //handleWatchMessage is the MQTT handler function for changing watcher configuration at runtime
 func (c *ControllerConfig) handleWatchMessage(client MQTT.Client, message MQTT.Message) {
-	c.Watcher.Enable = false
 	newWatch := watcher.Watcher{}
 	err := json.Unmarshal(message.Payload(), &newWatch)
 	if err != nil {
@@ -142,9 +139,7 @@ func (c *ControllerConfig) handleScheduleCreateMessage(client MQTT.Client, messa
 			glog.Infof("New Schedule: %v", newSchedule)
 		}
 		configuration.Config.Scheduler = c.Scheduler
-		if newSchedule.Enable {
-			newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
-		}
+		newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
 	}
 }
 
@@ -199,7 +194,7 @@ func (c *ControllerConfig) handleActionCreateMessage(client MQTT.Client, message
 			glog.Infof("New Action: %v", newAction)
 		}
 		configuration.Config.ActionManager = c.ActionManager
-		if newAction.Enable {
+		if newAction.PerformImmediately {
 			newAction.PerformOperation()
 		}
 	}

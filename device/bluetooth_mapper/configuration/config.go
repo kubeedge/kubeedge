@@ -23,10 +23,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/watcher"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/scheduler"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/watcher"
 
 	"gopkg.in/yaml.v2"
 )
@@ -57,11 +57,11 @@ type BLEConfig struct {
 
 //ReadConfigFile is the structure that is used to read the config file to get configuration information from the user
 type ReadConfigFile struct {
-	Mqtt          Mqtt                `yaml:"mqtt"`
-	DeviceName    string              `yaml:"device-name"`
-	ActionManager ActionManagerConfig `yaml:"action-manager"`
-	Watcher       watcher.Watcher     `yaml:"watcher"`
-	Scheduler     scheduler.Scheduler `yaml:"scheduler"`
+	Mqtt            Mqtt                `yaml:"mqtt"`
+	DeviceModelName string              `yaml:"device-model-name"`
+	ActionManager   ActionManagerConfig `yaml:"action-manager"`
+	Watcher         watcher.Watcher     `yaml:"watcher"`
+	Scheduler       scheduler.Scheduler `yaml:"scheduler"`
 }
 
 //ActionManagerConfig is a structure that contains a list of actions
@@ -71,12 +71,12 @@ type ActionManagerConfig struct {
 
 //Action is structure to define a device action
 type Action struct {
-	//Enable signifies whether the action is to be performed by the action-manager immediately or not
-	Enable bool `yaml:"enable" json:"enable"`
+	//PerformImmediately signifies whether the action is to be performed by the action-manager immediately or not
+	PerformImmediately bool `yaml:"perform-immediately" json:"perform-immediately"`
 	//Name is the name of the Action
 	Name string `yaml:"name" json:"name"`
 	//PropertyName is the name of the property defined in the device CRD
-	PropertyName string `yaml:"property-name" json:"property-name"`
+	PropertyName string `yaml:"device-property-name" json:"device-property-name"`
 }
 
 //Mqtt structure contains the MQTT specific configurations
@@ -122,7 +122,7 @@ func (b *BLEConfig) Load() error {
 	b.Watcher = readConfigFile.Watcher
 	// Assign device information obtained from config file
 	for _, device := range readConfigMap.DeviceInstances {
-		if strings.ToUpper(device.Model) == strings.ToUpper(readConfigFile.DeviceName) {
+		if strings.ToUpper(device.Model) == strings.ToUpper(readConfigFile.DeviceModelName) {
 			b.Device.Id = device.ID
 			b.Device.Name = device.Model
 		}
@@ -131,7 +131,7 @@ func (b *BLEConfig) Load() error {
 	for _, actionConfig := range readConfigFile.ActionManager.Actions {
 		action := actionmanager.Action{}
 		action.Name = actionConfig.Name
-		action.Enable = actionConfig.Enable
+		action.PerformImmediately = actionConfig.PerformImmediately
 
 		for _, propertyVisitor := range readConfigMap.PropertyVisitors {
 			if strings.ToUpper(propertyVisitor.ModelName) == strings.ToUpper(b.Device.Name) && strings.ToUpper(propertyVisitor.PropertyName) == strings.ToUpper(actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == Protocol_Name {
