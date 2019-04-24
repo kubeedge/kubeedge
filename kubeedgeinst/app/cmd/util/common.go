@@ -32,19 +32,29 @@ const (
 	KubeEdgeConfigNodeJSON  = KubeEdgeConfigPath + "edge/conf/node.json"
 )
 
+type InstallState uint8
+
+const (
+	NewInstallRequired InstallState = iota
+	AlreadySameVersionExist
+	DefVerInstallRequired
+	VersionNAInRepo
+)
+
 type ToolsInstaller interface {
 	InstallTools() error
 }
 
 type OSTypeInstaller interface {
-	IsDockerInstalled(string) string
-	IsDockerVerInRepo(string) (bool, error)
+	IsToolVerInRepo(string, string) (bool, error)
+	IsDockerInstalled(string) (InstallState, error)
 	InstallDocker() error
 	InstallMQTT() error
+	IsK8SComponentInstalled(string, string) (InstallState, error)
 	InstallK8S() error
 	InstallKubeEdge() error
 	SetDockerVersion(string)
-	SetK8SVersion(string)
+	SetK8SVersionAndIsNodeFlag(version string, flag bool)
 	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 }

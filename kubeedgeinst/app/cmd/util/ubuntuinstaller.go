@@ -17,38 +17,50 @@ type UbuntuOS struct {
 func (u *UbuntuOS) SetDockerVersion(version string) {
 	u.DockerVersion = version
 }
-func (u *UbuntuOS) SetK8SVersion(version string) {
+
+func (u *UbuntuOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
 	u.KubernetesVersion = version
+	u.IsEdgeNode = flag
 }
 
 func (u *UbuntuOS) SetKubeEdgeVersion(version string) {
 	u.KubeEdgeVersion = version
 }
 
-func (u *UbuntuOS) IsDockerInstalled(defVersion string) string {
+func (u *UbuntuOS) IsDockerInstalled(defVersion string) (InstallState, error) {
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "docker -v | cut -d ' ' -f3 | cut -d ',' -f1")}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
 	if str == "" {
-		return "Install Required Docker"
+		return NewInstallRequired, nil
 	}
 
 	if strings.Contains(cmd.GetStdOutput(), u.DockerVersion) {
-		return "Same Version Docker"
+		return AlreadySameVersionExist, nil
 	}
 
-	isDefVerAvail, _ := u.IsDockerVerInRepo(defVersion)
-	isReqVerAvail, _ := u.IsDockerVerInRepo(u.DockerVersion)
+	isReqVerAvail, err := u.IsToolVerInRepo("docker-ce", u.DockerVersion)
+	if err != nil {
+		return VersionNAInRepo, err
+	}
+
+	var isDefVerAvail bool
+	if u.DockerVersion != defVersion {
+		isDefVerAvail, err = u.IsToolVerInRepo("docker-ce", defVersion)
+		if err != nil {
+			return VersionNAInRepo, err
+		}
+	}
 
 	if isReqVerAvail {
-		return "Install Required Docker"
+		return NewInstallRequired, nil
 	}
 
 	if isDefVerAvail {
-		return "Install Default Docker"
+		return DefVerInstallRequired, nil
 	}
 
-	return "Unavailable"
+	return VersionNAInRepo, nil
 }
 
 func (u *UbuntuOS) InstallDocker() error {
@@ -125,7 +137,7 @@ func (u *UbuntuOS) InstallDocker() error {
 	fmt.Println("Expected docker version to install is", stdout)
 
 	//Install docker-ce
-	dockerInst := fmt.Sprintf("apt-get install -y docker-ce=%s", stdout)
+	dockerInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages docker-ce=%s", stdout)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerInst)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -139,12 +151,12 @@ func (u *UbuntuOS) InstallDocker() error {
 	return nil
 }
 
-func (u *UbuntuOS) IsDockerVerInRepo(version string) (bool, error) {
+func (u *UbuntuOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 	//Check if requested Docker version available in repo
 
-	//apt-cache madison 'docker-ce' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
-	chkDockerVer := fmt.Sprintf("apt-cache madison 'docker-ce' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", version)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", chkDockerVer)}
+	//apt-cache madison '$toolname' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
+	chkToolVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", toolName, version)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", chkToolVer)}
 	cmd.ExecuteCommand()
 	stdout := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
@@ -186,7 +198,7 @@ func (u *UbuntuOS) InstallMQTT() error {
 	}
 
 	//Install mqttInst
-	mqttInst := fmt.Sprintf("apt-get install -y mosquitto")
+	mqttInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages mosquitto")
 	cmd = &Command{Cmd: exec.Command("sh", "-c", mqttInst)}
 	err := cmd.ExecuteCmdShowOutput()
 	stdout = cmd.GetStdOutput()
@@ -199,6 +211,43 @@ func (u *UbuntuOS) InstallMQTT() error {
 	fmt.Println("MQTT is installed in this host")
 
 	return nil
+}
+
+func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (InstallState, error) {
+	find := fmt.Sprintf("dpkg -l | grep %s | awk '{print $3}'", component)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
+	cmd.ExecuteCommand()
+	str := cmd.GetStdOutput()
+	if str == "" {
+		return NewInstallRequired, nil
+	}
+
+	if strings.Contains(cmd.GetStdOutput(), u.KubernetesVersion) {
+		return AlreadySameVersionExist, nil
+	}
+
+	isReqVerAvail, err := u.IsToolVerInRepo(component, u.KubernetesVersion)
+	if err != nil {
+		return VersionNAInRepo, err
+	}
+
+	var isDefVerAvail bool
+	if u.DockerVersion != defVersion {
+		isDefVerAvail, _ = u.IsToolVerInRepo(component, defVersion)
+		if err != nil {
+			return VersionNAInRepo, err
+		}
+	}
+
+	if isReqVerAvail {
+		return NewInstallRequired, nil
+	}
+
+	if isDefVerAvail {
+		return DefVerInstallRequired, nil
+	}
+
+	return VersionNAInRepo, nil
 }
 
 func (u *UbuntuOS) InstallK8S() error {

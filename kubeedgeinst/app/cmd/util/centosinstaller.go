@@ -13,17 +13,18 @@ func (c *CentOS) SetDockerVersion(version string) {
 	c.DockerVersion = version
 }
 
-func (c *CentOS) SetK8SVersion(version string) {
+func (c *CentOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
 	c.KubernetesVersion = version
+	c.IsEdgeNode = flag
 }
 
 func (c *CentOS) SetKubeEdgeVersion(version string) {
 	c.KubeEdgeVersion = version
 }
 
-func (c *CentOS) IsDockerInstalled(string) string {
+func (c *CentOS) IsDockerInstalled(string) (InstallState, error) {
 
-	return "18.06"
+	return VersionNAInRepo, nil
 }
 
 func (c *CentOS) InstallDocker() error {
@@ -31,14 +32,18 @@ func (c *CentOS) InstallDocker() error {
 	return nil
 }
 
-func (c *CentOS) IsDockerVerInRepo(version string) (bool, error) {
-	fmt.Println("IsDockerVerInRepo called")
+func (c *CentOS) IsToolVerInRepo(toolName, version string) (bool, error) {
+	fmt.Println("IsToolVerInRepo called")
 	return false, nil
 }
 
 func (c *CentOS) InstallMQTT() error {
 	fmt.Println("InstallMQTT called")
 	return nil
+}
+
+func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (InstallState, error) {
+	return VersionNAInRepo, nil
 }
 
 func (c *CentOS) InstallK8S() error {

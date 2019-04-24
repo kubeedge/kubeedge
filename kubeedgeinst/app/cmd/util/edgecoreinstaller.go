@@ -43,7 +43,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 // 	}
 // }
 
-func (ku *KubeEdgeInstTool) setK8SApiServerIP(server string) error {
+func (ku *KubeEdgeInstTool) SetK8SApiServerIP(server string) error {
 	if server == "" {
 		return fmt.Errorf("K8S API Server IP not provided")
 	}

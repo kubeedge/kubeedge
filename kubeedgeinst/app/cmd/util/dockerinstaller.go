@@ -11,15 +11,20 @@ func (d *DockerInstTool) InstallTools() error {
 	d.SetOSInterface(GetOSInterface())
 	d.SetDockerVersion(d.ToolVersion)
 
-	switch d.IsDockerInstalled(d.DefaultToolVer) {
-	case "Unavailable":
-		return fmt.Errorf("Expected Docker versions are not available in OS repo")
-	case "Same Version Docker":
-		return fmt.Errorf("Same version docker already installed in this host")
-	case "Install Default Docker":
-		d.SetDockerVersion(d.ToolVersion)
+	action, err := d.IsDockerInstalled(d.DefaultToolVer)
+	if err != nil {
+		return err
+	}
+	switch action {
+	case VersionNAInRepo:
+		return fmt.Errorf("Expected Docker version is not available in OS repo")
+	case AlreadySameVersionExist:
+		return fmt.Errorf("Same version of docker already installed in this host")
+	case DefVerInstallRequired:
+		fmt.Println("Installing default", d.DefaultToolVer, "version of docker")
+		d.SetDockerVersion(d.DefaultToolVer)
 		fallthrough
-	case "Install Required Docker":
+	case NewInstallRequired:
 		err := d.InstallDocker()
 		if err != nil {
 			return err
