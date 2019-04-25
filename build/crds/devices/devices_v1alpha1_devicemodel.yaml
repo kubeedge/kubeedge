@@ -114,11 +114,13 @@ spec:
                           shiftLeft:
                             description: Refers to the number of bits to shift left,
                               if left-shift operation is necessary for conversion
-                            type: uint
+                            format: int64
+                            type: integer
                           shiftRight:
                             description: Refers to the number of bits to shift right,
                               if right-shift operation is necessary for conversion
-                            type: uint
+                            format: int64
+                            type: integer
                           startIndex:
                             description: 'Required: Specifies the start index of the
                               incoming byte stream to be considered to convert the
