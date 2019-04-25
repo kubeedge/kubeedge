@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
-)
-
 //Device the struct of device
 type Device struct {
 	ID          string              `json:"id,omitempty"`
@@ -109,24 +105,4 @@ type TwinDoc struct {
 type DeviceTwinUpdate struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
-}
-
-//DealTwinResult the result of dealing twin
-type DealTwinResult struct {
-	Add        []dtclient.DeviceTwin
-	Delete     []dtclient.DeviceDelete
-	Update     []dtclient.DeviceTwinUpdate
-	Result     map[string]*MsgTwin
-	SyncResult map[string]*MsgTwin
-	Document   map[string]*TwinDoc
-	Err        error
-}
-
-//DealAttrResult the result of dealing attr
-type DealAttrResult struct {
-	Add    []dtclient.DeviceAttr
-	Delete []dtclient.DeviceDelete
-	Update []dtclient.DeviceAttrUpdate
-	Result map[string]*MsgAttr
-	Err    error
 }
