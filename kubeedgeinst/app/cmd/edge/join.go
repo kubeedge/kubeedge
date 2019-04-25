@@ -28,8 +28,8 @@ import (
 )
 
 var (
-	nodeJoinLongDescription = `
-node command bootstraps KubeEdge's node component.
+	edgeJoinLongDescription = `
+edge command bootstraps KubeEdge's edge component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
@@ -37,13 +37,22 @@ It will also connect with cloud component to receieve
 further instructions and forward telemetry data from 
 devices to cloud
 `
-	nodeJoinExample = `
-kubeedge node join --certPath <path> --server <ip:port> 
+	edgeJoinExample = `
+kectl edge join --server=<ip:port> or kectl edge join --server <ip:port>
+
+  - For this command --server option is a Mandatory option
+  - This command will download and install the default version of pre-requisites and KubeEdge
+
+kectl edge join --server 10.20.30.40:8080 --docker-version --kubeedge-version 0.2.1 --kubernetes-version 1.14.1
+kectl edge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
+
+  - In case, any option is used in a format like as shown for "--docker-version", without provide a value
+    then default values will be used. 
 `
 )
 
-// NewNodeJoin returns KubeEdge node join command.
-func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command {
+// NewEdgeJoin returns KubeEdge edge join command.
+func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command {
 	if joinOptions == nil {
 		joinOptions = newJoinOptions()
 	}
@@ -53,8 +62,8 @@ func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 	cmd := &cobra.Command{
 		Use:     "join",
 		Short:   "Run this on any machine you wish to join an existing cluster",
-		Long:    nodeJoinLongDescription,
-		Example: nodeJoinExample,
+		Long:    edgeJoinLongDescription,
+		Example: edgeJoinExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("node join called")
 			fmt.Println(cmd.ArgsLenAtDash())
@@ -65,7 +74,7 @@ func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 			AddOtherTools(tools)
 			cmd.Flags().Visit(checkFlags)
 
-			Execute(tools)
+			//Execute(tools)
 		},
 	}
 
@@ -74,11 +83,6 @@ func NewNodeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 }
 
 func addJoinOtherFlags(cmd *cobra.Command, joinOptions *options.JoinOptions) {
-
-	// --docker-version     string   use this key to download and use the required Docker version (Optional, default will be Latest)
-	// --kubeedge-version   string   use this key to download and use the required KubeEdge version (Optional, default will be Latest)
-	// --kubernetes-version string   use this key to download and use the required Kubernetes version (Optional, default will be Latest)
-	// -s, --server             string   ip:port address of cloud components host/VM (Mandatory)
 
 	cmd.Flags().StringVar(&joinOptions.KubeedgeVersion, options.KubeedgeVersion, joinOptions.KubeedgeVersion,
 		"Use this key to download and use the required KubeEdge version")
@@ -124,18 +128,11 @@ func AddTools(f *pflag.Flag, toolList map[string]util.ToolsInstaller, joinOption
 		k8sVer := CheckIfAvailable(f.Value.String(), f.DefValue)
 		toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: true, DefaultToolVer: f.DefValue}
 	}
-
-	// tools = map[string]ToolsInstaller{
-	// 	"Docker":     &DockerInstTool{Common{ToolVersion: dockerVer}, defaultDockerVer},
-	// 	"Kubernetes": &K8SInstTool{Common{ToolVersion: k8sVer}, defaultK8SVer},
-	// 	"MQTT":       &MQTTInstTool{},
-	// 	"KubeEdge":   &KubeEdgeInstTool{Common{ToolVersion: kubeVer}, server},
-	// }
 }
 
-func CheckIfAvailable(val, deval string) string {
+func CheckIfAvailable(val, defval string) string {
 	if val == "" {
-		return deval
+		return defval
 	}
 	return val
 }
@@ -146,7 +143,7 @@ func AddOtherTools(toolList map[string]util.ToolsInstaller) {
 
 func Execute(toolList map[string]util.ToolsInstaller) {
 
-	//Install all the required tools
+	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
 		if name != "KubeEdge" {
 			err := tool.InstallTools()

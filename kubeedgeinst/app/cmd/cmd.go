@@ -42,13 +42,13 @@ var (
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node# kubeedge cloud init <arguments>              │
+    │ cloud-node# kectl cloud init <arguments>                 │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node# kubeedge node join <arguments>                │
+    │ edge-node# kectl node join <arguments>                   │
     └──────────────────────────────────────────────────────────┘
 
     You can then repeat the second step on as many other machines as you like.
@@ -59,15 +59,15 @@ var (
 func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	cmds := &cobra.Command{
-		Use:     "kubeedge",
-		Short:   "kubeedge: Bootstrap KubeEdge cluster",
+		Use:     "kectl",
+		Short:   "kectl: Bootstrap KubeEdge cluster",
 		Long:    kubeEdgeLongDescription,
 		Example: kubeEdgeExample,
 	}
 
 	cmds.ResetFlags()
 	cmds.AddCommand(NewCmdCloud(out))
-	cmds.AddCommand(NewCmdNode(out))
+	cmds.AddCommand(NewCmdEdge(out))
 
 	return cmds
 }

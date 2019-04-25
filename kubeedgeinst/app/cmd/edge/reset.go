@@ -24,25 +24,25 @@ import (
 )
 
 var (
-	nodeResetLongDescription = `
-node reset command will tear down KubeEdge 
+	edgeResetLongDescription = `
+edge reset command will tear down KubeEdge 
 edge component and disconnect with cloud
 `
-	nodeResetExample = `
-kubeedge cloud reset 
+	edgeResetExample = `
+kectl cloud reset 
 `
 )
 
-// NewNodeReset represents the reset command
-func NewNodeReset(out io.Writer) *cobra.Command {
+// NewEdgeReset represents the reset command
+func NewEdgeReset(out io.Writer) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns node component",
-		Long:    nodeResetLongDescription,
-		Example: nodeResetExample,
+		Short:   "Teardowns edge component",
+		Long:    edgeResetLongDescription,
+		Example: edgeResetExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			// TODO: Work your own magic here
-			fmt.Println("node reset called")
+			fmt.Println("edge reset called")
 		},
 		Args: cobra.NoArgs,
 	}

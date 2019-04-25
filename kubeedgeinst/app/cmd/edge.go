@@ -21,31 +21,31 @@ import (
 
 	"github.com/spf13/cobra"
 
-	node "github.com/kubeedge/kubeedge/kubeedgeinst/app/cmd/node"
+	edge "github.com/kubeedge/kubeedge/kubeedgeinst/app/cmd/edge"
 )
 
 var (
-	nodeLongDescription = `
-node commands help in operating with KubeEdge's edge component.
+	edgeLongDescription = `
+'edge' commands help in operating with KubeEdge's edge component.
 `
-	nodeExample = `
-kubeedge node join <arguments> 
-kubeedge node reset
+	edgeExample = `
+kectl edge join <options> 
+kectl edge reset
 `
 )
 
-// NewCmdNode represents the node command
-func NewCmdNode(out io.Writer) *cobra.Command {
+// NewCmdEdge represents the Edge command
+func NewCmdEdge(out io.Writer) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:     "node",
+		Use:     "edge",
 		Short:   "Edge component command option for KubeEdge",
-		Long:    nodeLongDescription,
-		Example: nodeExample,
+		Long:    edgeLongDescription,
+		Example: edgeExample,
 		Args:    cobra.MinimumNArgs(1),
 	}
 
-	cmd.AddCommand(node.NewNodeJoin(out, nil))
-	cmd.AddCommand(node.NewNodeReset(out))
+	cmd.AddCommand(edge.NewEdgeJoin(out, nil))
+	cmd.AddCommand(edge.NewEdgeReset(out))
 	return cmd
 }
 
