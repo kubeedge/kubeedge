@@ -38,15 +38,14 @@ further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
-kectl edge join --server=<ip:port> or kectl edge join --server <ip:port>
+kectl edge join --server=<ip:port>
 
   - For this command --server option is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kectl edge join --server 10.20.30.40:8080 --docker-version --kubeedge-version 0.2.1 --kubernetes-version 1.14.1
 kectl edge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
 
-  - In case, any option is used in a format like as shown for "--docker-version", without provide a value
+  - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
     then default values will be used. 
 `
 )
@@ -65,8 +64,6 @@ func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 		Long:    edgeJoinLongDescription,
 		Example: edgeJoinExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("node join called")
-			fmt.Println(cmd.ArgsLenAtDash())
 
 			checkFlags := func(f *pflag.Flag) {
 				AddTools(f, tools, joinOptions)
@@ -74,7 +71,7 @@ func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 			AddOtherTools(tools)
 			cmd.Flags().Visit(checkFlags)
 
-			//Execute(tools)
+			Execute(tools)
 		},
 	}
 
@@ -108,7 +105,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *options.JoinOptions) {
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
 func newJoinOptions() *options.JoinOptions {
-	opts := new(options.JoinOptions)
+	opts := &options.JoinOptions{}
 	opts.InitOptions = options.InitOptions{DockerVersion: options.DefaultDockerVersion, KubeedgeVersion: options.DefaultKubeEdgeVersion,
 		Kubernetesversion: options.DefaultK8SVersion}
 	opts.CertPath = options.DefaultCertPath
@@ -143,6 +140,7 @@ func AddOtherTools(toolList map[string]util.ToolsInstaller) {
 
 func Execute(toolList map[string]util.ToolsInstaller) {
 
+	fmt.Println(toolList)
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
 		if name != "KubeEdge" {
@@ -153,9 +151,9 @@ func Execute(toolList map[string]util.ToolsInstaller) {
 			}
 		}
 	}
-	//Install and Start KubeEdge Node
-	err := toolList["KubeEdge"].InstallTools()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	// //Install and Start KubeEdge Node
+	// err := toolList["KubeEdge"].InstallTools()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
 }

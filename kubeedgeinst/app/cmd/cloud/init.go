@@ -34,7 +34,7 @@ If not installed, this command will help in download,
 install and execute on the host.
 `
 	cloudInitExample = `
-kubeedge cloud init  
+kectl cloud init  
 `
 )
 

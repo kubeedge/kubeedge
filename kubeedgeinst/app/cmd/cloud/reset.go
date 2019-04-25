@@ -29,7 +29,7 @@ cloud reset command will tear down KubeEdge
 cloud component and stop K8S master node
 `
 	cloudResetExample = `
-kubeedge cloud reset 
+kectl cloud reset 
 `
 )
 

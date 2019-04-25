@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	kubeEdgeLongDescription = `
+	kectlLongDescription = `
     ┌──────────────────────────────────────────────────────────┐
-    │ KUBEEDGE                                                 │
+    │ KECTL                                                    │
     │ Easily bootstrap a KubeEdge cluster                      │
     │                                                          │
     │ Please give us feedback at:                              │
@@ -38,31 +38,31 @@ var (
     pods and deployments run), connects to devices.
 
 `
-	kubeEdgeExample = `
+	kectlExample = `
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node# kectl cloud init <arguments>                 │
+    │ cloud-node# kectl cloud init <options>                   │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node# kectl node join <arguments>                   │
+    │ edge-node# kectl node join <options>                     │
     └──────────────────────────────────────────────────────────┘
 
-    You can then repeat the second step on as many other machines as you like.
+    You can then repeat the second step on, as many other machines as you like.
 `
 )
 
-// NewKubeedgeCommand returns cobra.Command to run kubeedge commands
+// NewKubeedgeCommand returns cobra.Command to run kectl commands
 func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	cmds := &cobra.Command{
 		Use:     "kectl",
 		Short:   "kectl: Bootstrap KubeEdge cluster",
-		Long:    kubeEdgeLongDescription,
-		Example: kubeEdgeExample,
+		Long:    kectlLongDescription,
+		Example: kectlExample,
 	}
 
 	cmds.ResetFlags()

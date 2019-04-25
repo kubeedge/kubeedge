@@ -1,3 +1,18 @@
+/*
+Copyright 2019 The Kubeedge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package util
 
 import (
@@ -25,6 +40,34 @@ func (u *UbuntuOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
 
 func (u *UbuntuOS) SetKubeEdgeVersion(version string) {
 	u.KubeEdgeVersion = version
+}
+
+func (u *UbuntuOS) IsToolVerInRepo(toolName, version string) (bool, error) {
+	//Check if requested Docker version available in repo
+
+	//apt-cache madison '$toolname' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
+	chkToolVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", toolName, version)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", chkToolVer)}
+	cmd.ExecuteCommand()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+
+	if errout != "" {
+		return false, fmt.Errorf("%s", errout)
+	}
+
+	if stdout != "" {
+		fmt.Println(toolName, stdout, "is available in OS repo")
+		return true, nil
+	}
+
+	// fmt.Println("Docker version", u.DockerVersion, "is not available in OS repo")
+	// fmt.Println("Docker versions available in OS repo are:")
+	// cmd1 := &Command{Cmd: exec.Command("sh", "-c", "apt-cache madison 'docker-ce'")}
+	// cmd1.ExecuteCommand()
+	// fmt.Println(cmd1.GetStdOutput())
+	fmt.Println(toolName, "version", version, "not found in OS repo")
+	return false, nil
 }
 
 func (u *UbuntuOS) IsDockerInstalled(defVersion string) (InstallState, error) {
@@ -65,6 +108,8 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (InstallState, error) {
 
 func (u *UbuntuOS) InstallDocker() error {
 	fmt.Println("InstallDocker called")
+
+	fmt.Println("Installing ", u.DockerVersion, "version of docker")
 
 	//lsb_release -cs
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
@@ -137,7 +182,7 @@ func (u *UbuntuOS) InstallDocker() error {
 	fmt.Println("Expected docker version to install is", stdout)
 
 	//Install docker-ce
-	dockerInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages docker-ce=%s", stdout)
+	dockerInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades docker-ce=%s", stdout)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerInst)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -149,34 +194,6 @@ func (u *UbuntuOS) InstallDocker() error {
 	fmt.Println("Docker version", u.DockerVersion, "is installed in this Host")
 
 	return nil
-}
-
-func (u *UbuntuOS) IsToolVerInRepo(toolName, version string) (bool, error) {
-	//Check if requested Docker version available in repo
-
-	//apt-cache madison '$toolname' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
-	chkToolVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", toolName, version)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", chkToolVer)}
-	cmd.ExecuteCommand()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-
-	if errout != "" {
-		return false, fmt.Errorf("%s", errout)
-	}
-
-	if stdout != "" {
-		fmt.Println("Docker ", stdout, "is available in OS repo")
-		return true, nil
-	}
-
-	// fmt.Println("Docker version", u.DockerVersion, "is not available in OS repo")
-	// fmt.Println("Docker versions available in OS repo are:")
-	// cmd1 := &Command{Cmd: exec.Command("sh", "-c", "apt-cache madison 'docker-ce'")}
-	// cmd1.ExecuteCommand()
-	// fmt.Println(cmd1.GetStdOutput())
-
-	return false, fmt.Errorf("Docker %s not found in OS repo", u.DockerVersion)
 }
 
 func (u *UbuntuOS) InstallMQTT() error {
@@ -198,7 +215,7 @@ func (u *UbuntuOS) InstallMQTT() error {
 	}
 
 	//Install mqttInst
-	mqttInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages mosquitto")
+	mqttInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
 	cmd = &Command{Cmd: exec.Command("sh", "-c", mqttInst)}
 	err := cmd.ExecuteCmdShowOutput()
 	stdout = cmd.GetStdOutput()
@@ -214,6 +231,7 @@ func (u *UbuntuOS) InstallMQTT() error {
 }
 
 func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (InstallState, error) {
+
 	find := fmt.Sprintf("dpkg -l | grep %s | awk '{print $3}'", component)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
 	cmd.ExecuteCommand()
@@ -232,7 +250,7 @@ func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (Instal
 	}
 
 	var isDefVerAvail bool
-	if u.DockerVersion != defVersion {
+	if u.KubernetesVersion != defVersion {
 		isDefVerAvail, _ = u.IsToolVerInRepo(component, defVersion)
 		if err != nil {
 			return VersionNAInRepo, err
@@ -253,89 +271,97 @@ func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (Instal
 func (u *UbuntuOS) InstallK8S() error {
 	fmt.Println("InstallK8S called")
 
-	//lsb_release -cs
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
-	cmd.ExecuteCommand()
-	distVersion := cmd.GetStdOutput()
-	if distVersion == "" {
-		return fmt.Errorf("Ubuntu dist version not available")
-	}
-	fmt.Println("Ubuntu distribution version is", distVersion)
-
-	//'apt-get update -qq >/dev/null'
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
-	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(stdout)
-
-	//curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-	curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesGPGURL)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", curl)}
-	cmd.ExecuteCommand()
-	curlOutput := cmd.GetStdOutput()
-	curlErr := cmd.GetStdErr()
-	if curlOutput == "" || curlErr != "" {
-		return fmt.Errorf("not able add the apt key due to error : %s", curlErr)
-	}
-	fmt.Println(curlOutput)
-
-	// 	cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-	// deb https://apt.kubernetes.io/ kubernetes-xenial main
-	// EOF
-	aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
-	//"echo \"$apt_repo\" > /etc/apt/sources.list.d/docker.list"
-	updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
-	cmd.ExecuteCommand()
-	updtRepoErr := cmd.GetStdErr()
-	if updtRepoErr != "" {
-		return fmt.Errorf("not able add update repo due to error : %s", updtRepoErr)
-	}
-
-	//'apt-get update -qq >/dev/null'
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
-	err = cmd.ExecuteCmdShowOutput()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(stdout)
-
-	k8sComponent := "kubeadm"
+	kcomp := fmt.Sprintf("Installing %s version of ", u.KubernetesVersion)
 	if u.IsEdgeNode == true {
-		k8sComponent = "kubectl"
+		kcomp = kcomp + "kubectl"
+	} else {
+		kcomp = kcomp + "kubeadm"
 	}
-	//apt-cache madison 'kubeadm' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
-	chkKubeadmVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", k8sComponent, u.KubernetesVersion)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
-	cmd.ExecuteCommand()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
-	if errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
+	fmt.Println(kcomp)
 
-	fmt.Println("Expected K8S(Kubeadm, Kubelet, Kubectl) version to install is", stdout)
+	// //lsb_release -cs
+	// cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
+	// cmd.ExecuteCommand()
+	// distVersion := cmd.GetStdOutput()
+	// if distVersion == "" {
+	// 	return fmt.Errorf("Ubuntu dist version not available")
+	// }
+	// fmt.Println("Ubuntu distribution version is", distVersion)
 
-	//Install K8S
-	k8sInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages kubeadm=%s kubelet=%s kubectl=%s", stdout, stdout, stdout)
-	if u.IsEdgeNode == true {
-		k8sInst = fmt.Sprintf("apt-get install -y --allow-change-held-packages kubectl=%s", stdout)
-	}
-	cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(cmd.GetStdOutput())
+	// //'apt-get update -qq >/dev/null'
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
+	// err := cmd.ExecuteCmdShowOutput()
+	// stdout := cmd.GetStdOutput()
+	// errout := cmd.GetStdErr()
+	// if err != nil || errout != "" {
+	// 	return fmt.Errorf("%s", errout)
+	// }
+	// fmt.Println(stdout)
 
-	fmt.Println("Kubeadm version", u.KubernetesVersion, "is installed in this Host")
+	// //curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+	// curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesGPGURL)
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", curl)}
+	// cmd.ExecuteCommand()
+	// curlOutput := cmd.GetStdOutput()
+	// curlErr := cmd.GetStdErr()
+	// if curlOutput == "" || curlErr != "" {
+	// 	return fmt.Errorf("not able add the apt key due to error : %s", curlErr)
+	// }
+	// fmt.Println(curlOutput)
+
+	// // 	cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+	// // deb https://apt.kubernetes.io/ kubernetes-xenial main
+	// // EOF
+	// aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
+	// //"echo \"$apt_repo\" > /etc/apt/sources.list.d/docker.list"
+	// updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
+	// cmd.ExecuteCommand()
+	// updtRepoErr := cmd.GetStdErr()
+	// if updtRepoErr != "" {
+	// 	return fmt.Errorf("not able add update repo due to error : %s", updtRepoErr)
+	// }
+
+	// //'apt-get update -qq >/dev/null'
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
+	// err = cmd.ExecuteCmdShowOutput()
+	// stdout = cmd.GetStdOutput()
+	// errout = cmd.GetStdErr()
+	// if err != nil || errout != "" {
+	// 	return fmt.Errorf("%s", errout)
+	// }
+	// fmt.Println(stdout)
+
+	// k8sComponent := "kubeadm"
+	// if u.IsEdgeNode == true {
+	// 	k8sComponent = "kubectl"
+	// }
+	// //apt-cache madison 'kubeadm' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
+	// chkKubeadmVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", k8sComponent, u.KubernetesVersion)
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
+	// cmd.ExecuteCommand()
+	// stdout = cmd.GetStdOutput()
+	// errout = cmd.GetStdErr()
+	// if errout != "" {
+	// 	return fmt.Errorf("%s", errout)
+	// }
+
+	// fmt.Println("Expected K8S(Kubeadm, Kubelet, Kubectl) version to install is", stdout)
+
+	// //Install K8S
+	// k8sInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubeadm=%s kubelet=%s kubectl=%s", stdout, stdout, stdout)
+	// if u.IsEdgeNode == true {
+	// 	k8sInst = fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubectl=%s", stdout)
+	// }
+	// cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
+	// err = cmd.ExecuteCmdShowOutput()
+	// errout = cmd.GetStdErr()
+	// if err != nil || errout != "" {
+	// 	return fmt.Errorf("%s", errout)
+	// }
+	// fmt.Println(cmd.GetStdOutput())
+
+	// fmt.Println("Kubeadm version", u.KubernetesVersion, "is installed in this Host")
 
 	return nil
 }
@@ -397,5 +423,15 @@ func (u *UbuntuOS) RunEdgeCore() error {
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	cmd.ExecuteCommand()
 	fmt.Println("KubeEdge started running, For logs visit", KubeEdgeConfigPath+"edge/")
+	return nil
+}
+
+func (u *UbuntuOS) KillEdgeCore() error {
+
+	//Execute edge_core
+	binExec := fmt.Sprintf("kill -9 $(ps aux | grep '[e]%s' | awk '{print $2}')", KubeEdgeBinaryName[1:])
+	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	cmd.ExecuteCommand()
+	fmt.Println("KubeEdge is stopped, For logs visit", KubeEdgeConfigPath+"edge/")
 	return nil
 }
