@@ -10,7 +10,7 @@ FROM alpine:3.9
 
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/cloud
 
-VOLUME ["/etc/kubeedge/cloud/certs", "/etc/kubeedge/cloud/conf"]
+VOLUME ["/etc/kubeedge/certs", "/etc/kubeedge/cloud/conf"]
 
 COPY --from=builder /usr/local/bin/edgecontroller /usr/local/bin/edgecontroller
 
