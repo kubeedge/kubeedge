@@ -42,6 +42,9 @@ type ProtocolConfig struct {
 	// Protocol configuration for modbus
 	// +optional
 	Modbus *ProtocolConfigModbus `json:"modbus,omitempty"`
+	// Protocol configuration for bluetooth
+	// +optional
+	Bluetooth *ProtocolConfigBluetooth `json:"bluetooth,omitempty"`
 }
 
 type ProtocolConfigOpcUA struct {
@@ -100,6 +103,12 @@ type ProtocolConfigModbusRTU struct {
 	StopBits int64 `json:"stopBits,omitempty"`
 	// Required. 0-255
 	SlaveID int64 `json:"slaveID,omitempty"`
+}
+
+type ProtocolConfigBluetooth struct {
+	// Unique identifier assigned to the device.
+	// +optional
+	MACAddress string `json:"macAddress,omitempty"`
 }
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
