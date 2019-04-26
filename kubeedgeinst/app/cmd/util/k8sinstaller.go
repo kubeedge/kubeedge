@@ -44,10 +44,10 @@ func (ks *K8SInstTool) InstallTools() error {
 		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
 		fallthrough
 	case NewInstallRequired:
-		// err := ks.InstallK8S()
-		// if err != nil {
-		// 	return err
-		// }
+		err := ks.InstallK8S()
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("Error in getting the %s version from host", component)
 	}
