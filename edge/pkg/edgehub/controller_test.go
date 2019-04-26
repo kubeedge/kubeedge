@@ -548,41 +548,6 @@ func TestRouteToCloud(t *testing.T) {
 	}
 }
 
-//TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
-func TestKeepalive(t *testing.T) {
-	initMocks(t)
-	tests := []struct {
-		name       string
-		controller Controller
-	}{
-		{"Heartbeat failure Case", Controller{
-			config: &config.ControllerConfig{
-				PlacementURL: testServer.URL + "/proper_request",
-				ProjectID:    "foo",
-				NodeID:       "bar",
-			},
-			chClient: mockAdapter,
-			stopChan: make(chan struct{}),
-		}},
-	}
-	edgeHubConfig := config.GetConfig()
-	edgeHubConfig.WSConfig = config.WebSocketConfig{
-		CertFilePath: CertFile,
-		KeyFilePath:  KeyFile,
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
-			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
-			go tt.controller.keepalive()
-			got := <-tt.controller.stopChan
-			if got != struct{}{} {
-				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
-			}
-		})
-	}
-}
-
 //TestPubConnectInfo() checks the connection information sent to the required group
 func TestPubConnectInfo(t *testing.T) {
 	initMocks(t)
