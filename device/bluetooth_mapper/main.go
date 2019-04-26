@@ -22,8 +22,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/controller"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/configuration"
+	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/controller"
 )
 
 //usage is responsible for setting up the default settings of all defined command-line flags for glog.
