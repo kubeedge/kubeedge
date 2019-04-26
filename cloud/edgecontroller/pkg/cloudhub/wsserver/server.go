@@ -257,7 +257,7 @@ func (ah *AccessHandle) ServeEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	info := &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}
-	hi := &hubio.JSONWSIO{conn}
+	hi := &hubio.JSONWSIO{WSConn: conn}
 	ah.EventHandle.ServeConn(hi, info)
 }
 

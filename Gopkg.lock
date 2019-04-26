@@ -813,6 +813,24 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:bab862732167cdab16ca3f26140611316f185a449daa34f44375a6fbbee7dafe"
+  name = "github.com/paypal/gatt"
+  packages = [
+    ".",
+    "examples/option",
+    "linux",
+    "linux/cmd",
+    "linux/evt",
+    "linux/gioctl",
+    "linux/socket",
+    "linux/util",
+    "xpc",
+  ]
+  pruneopts = "UT"
+  revision = "4ae819d591cfc94c496c45deb55928469542beec"
+
+[[projects]]
   digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
   name = "github.com/pborman/uuid"
   packages = ["."]
@@ -1682,6 +1700,8 @@
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/opencontainers/go-digest",
+    "github.com/paypal/gatt",
+    "github.com/paypal/gatt/examples/option",
     "github.com/satori/go.uuid",
     "github.com/stretchr/testify/assert",
     "golang.org/x/net/context",

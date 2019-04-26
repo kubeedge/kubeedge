@@ -30,7 +30,7 @@ services:
       edgehub.websocket.certfile: ${CERTFILE} 
       edgehub.websocket.keyfile: ${KEYFILE}
     volumes:
-      - ${CERTPATH}:/etc/kubeedge/edge/certs:ro
+      - ${CERTPATH}:/etc/kubeedge/certs:ro
       - /var/lib/edged:/var/lib/edged 
       - /var/lib/kubeedge:/var/lib/kubeedge
       - /var/run/docker.sock:/var/run/docker.sock

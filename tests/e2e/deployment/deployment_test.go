@@ -18,6 +18,7 @@ package deployment
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 
@@ -33,13 +34,25 @@ const (
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
 )
 
+var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
+
 //Run Test cases
 var _ = Describe("Application deployment test in E2E scenario", func() {
 	var UID string
+	var testTimer *utils.TestTimer
+	var testDescription GinkgoTestDescription
 	Context("Test application deployment and delete deployment using deployment spec", func() {
 		BeforeEach(func() {
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
 		})
 		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
@@ -75,7 +88,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 					break
 				}
 			}
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 		})
 		It("E2E_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
 			var deploymentList v1.DeploymentList
@@ -95,7 +108,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 					break
 				}
 			}
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 		})
 
 		It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
@@ -116,7 +129,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 					break
 				}
 			}
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -131,14 +144,22 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				}
 			}
 			Expect(len(podlist.Items)).Should(Equal(replica))
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 		})
 
 	})
 	Context("Test application deployment using Pod spec", func() {
 		BeforeEach(func() {
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
 		})
 		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
 			var podlist metav1.PodList
 			label := nodeName
 			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
@@ -160,7 +181,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			label := nodeName
 			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 		})
 
 		It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
@@ -172,13 +193,12 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			label := nodeName
 			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
-
 		})
 		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
 			var podlist metav1.PodList
@@ -189,7 +209,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			label := nodeName
 			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -197,7 +217,6 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
 			_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+UID)
 			Expect(StatusCode).Should(Equal(http.StatusNotFound))
-
 		})
 		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
@@ -208,7 +227,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				label := nodeName
 				podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
 				Expect(err).To(BeNil())
-				utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+				utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
 				for _, pod := range podlist.Items {
 					_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
 					Expect(StatusCode).Should(Equal(http.StatusOK))

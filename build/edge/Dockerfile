@@ -1,5 +1,5 @@
 ARG BUILD_FROM=golang:1.12-alpine3.9
-ARG RUN_FROM=alpine:3.9
+ARG RUN_FROM=docker
 
 FROM ${BUILD_FROM} AS builder
 
@@ -22,7 +22,7 @@ COPY --from=builder /usr/bin/qemu* /usr/bin/
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/edge
 ENV database.source /var/lib/kubeedge/edge.db
 
-VOLUME ["/etc/kubeedge/edge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
+VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
 
 COPY --from=builder /usr/local/bin/edge_core /usr/local/bin/edge_core
 COPY --from=builder /go/src/github.com/kubeedge/kubeedge/edge/conf /etc/kubeedge/edge/conf

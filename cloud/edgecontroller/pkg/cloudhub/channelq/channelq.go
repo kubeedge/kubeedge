@@ -72,9 +72,10 @@ func (q *ChannelEventQueue) dispatchMessage() {
 		}
 		resource := msg.Router.Resource
 		tokens := strings.Split(resource, "/")
+		numOfTokens := len(tokens)
 		var nodeID string
 		for i, token := range tokens {
-			if token == "node" && i+1 < len(token) {
+			if token == "node" && i+1 < numOfTokens {
 				nodeID = tokens[i+1]
 			}
 		}
@@ -137,7 +138,7 @@ func (q *ChannelEventQueue) Close(info *model.HubInfo) error {
 // Publish sends message via the rchannel to Edge Controller
 func (q *ChannelEventQueue) Publish(info *model.HubInfo, event *model.Event) error {
 	msg := model.EventToMessage(event)
-	q.ctx.Send("controller", msg)
+	q.ctx.Send2Group("controller", msg)
 	return nil
 }
 

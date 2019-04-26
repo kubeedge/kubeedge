@@ -39,9 +39,8 @@ usage() {
 }
 
 docker_prepare(){
-    if [ ! -d /etc/kubeedge/edge/certs ] || [ ! -e /etc/kubeedge/edge/certs/edge.crt ] || [ ! -e /etc/kubeedge/edge/certs/edge.key ]; then
-        mkdir -p /etc/kubeedge/edge/certs
-        mkdir -p /etc/kubeedge/ca
+    if [ ! -d /etc/kubeedge/certs ] || [ ! -e /etc/kubeedge/certs/edge.crt ] || [ ! -e /etc/kubeedge/certs/edge.key ]; then
+        mkdir -p /etc/kubeedge/certs
         echo "Certificate does not exist"
         exit -1 
     fi
@@ -59,9 +58,9 @@ docker_prepare(){
         exit -1
     fi
 
-    eval $(sed -n -e  '/CERTPATH/p' .env)
-    eval $(sed -n -e  '/CERTFILE/p' .env)
-    eval $(sed -n -e  '/KEYFILE/p' .env)
+    eval $(sed -n '/CERTPATH/p' .env)
+    eval $(sed -n '/CERTFILE/p' .env)
+    eval $(sed -n '/KEYFILE/p' .env)
     if [ ! -d ${CERTPATH} ] || [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ]; then
         mkdir -p ${CERTPATH}
         echo "Certificate does not exist"
@@ -72,6 +71,7 @@ docker_prepare(){
         curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         chmod +x /usr/local/bin/docker-compose
     fi 
+    echo "Container runtime environment check passed."
 }
 
 docker_set(){
@@ -90,13 +90,13 @@ docker_set(){
     # 
     #  ./build.sh set \
     #    cloudhub=0.0.0.0:10000 \
-    #    edgename=edgeNode \
+    #    edgename=edge-node \
     #    edge_core_image="kubeedge/edgecore:latest" \
     #    arch=amd64 \
     #    qemu_arch=x86_64 \
-    #    certpath=/etc/kubeedge/edge/certs \
-    #    certfile=/etc/kubeedge/edge/certs/edge.crt \
-    #    keyfile=/etc/kubeedge/edge/certs/edge.ke
+    #    certpath=/etc/kubeedge/certs \
+    #    certfile=/etc/kubeedge/certs/edge.crt \
+    #    keyfile=/etc/kubeedge/certs/edge.key
 
     ARGS=$@
 
@@ -117,7 +117,7 @@ docker_set(){
 }
 
 docker_build(){
-    eval $(sed -n -e  '/QEMU_ARCH/p' .env)
+    eval $(sed -n '/QEMU_ARCH/p' .env)
 
     # Prepare qemu to build images other then x86_64 on travis
     prepare_qemu ${QEMU_ARCH}
@@ -126,7 +126,7 @@ docker_build(){
 }
 
 docker_save(){
-    eval $(sed -n -e  '/EDGECOREIMAGE/p' .env)
+    eval $(sed -n '/EDGECOREIMAGE/p' .env)
     docker save -o edge_core_image.tar $EDGECOREIMAGE 
 }
 
@@ -148,7 +148,7 @@ docker_only_run_edge(){
     # 
     # Example
     # 
-    # ./run_daemon.sh only_run_edge mqtt=0.0.0.0:1883 cloudhub=0.0.0.0:10000 edgename=edgeNode image="kubeedge/edgecore:latest"
+    # ./run_daemon.sh only_run_edge mqtt=0.0.0.0:1883 cloudhub=0.0.0.0:10000 edgename=edge-node image="kubeedge/edgecore:latest"
 
     ARGS=$@
 
@@ -166,13 +166,13 @@ docker_only_run_edge(){
 
     docker run -d --name edgecore --restart always \
         --cpu-period=50000 --cpu-quota=100000 --memory=1g --privileged \
-        -e edgehub.websocket.certfile=/etc/kubeedge/edge/certs/edge.crt \
-        -e edgehub.websocket.keyfile=/etc/kubeedge/edge/certs/edge.key \
+        -e edgehub.websocket.certfile=/etc/kubeedge/certs/edge.crt \
+        -e edgehub.websocket.keyfile=/etc/kubeedge/certs/edge.key \
         -e mqtt.server=${mqtt} \
         -e edgehub.websocket.url=${edgehubWebsocketUrl} \
         -e edged.hostname-override=${edgename} \
         -e edgehub.controller.node-id=${edgename} \
-        -v /etc/kubeedge/edge/certs:/etc/kubeedge/edge/certs:ro \
+        -v /etc/kubeedge/certs:/etc/kubeedge/certs:ro \
         -v /var/lib/edged:/var/lib/edged \
         -v /var/lib/kubeedge:/var/lib/kubeedge \
         -v /var/run/docker.sock:/var/run/docker.sock \
