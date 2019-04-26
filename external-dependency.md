@@ -111,3 +111,4 @@
 |k8s.io/kube-openapi | Apache License 2.0  |https://github.com/kubernetes/kube-openapi
 |k8s.io/kubernetes | Apache License 2.0  |https://github.com/kubernetes/kubernetes
 |k8s.io/utils | Apache License 2.0  |https://github.com/kubernetes/utils
+|paypal/gatt |BSD-3-Clause |https://github.com/paypal/gatt
