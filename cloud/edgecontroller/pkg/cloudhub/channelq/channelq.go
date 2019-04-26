@@ -77,6 +77,7 @@ func (q *ChannelEventQueue) dispatchMessage() {
 		for i, token := range tokens {
 			if token == "node" && i+1 < numOfTokens {
 				nodeID = tokens[i+1]
+				break
 			}
 		}
 		if nodeID == "" {
