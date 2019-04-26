@@ -136,7 +136,7 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 
 	//Remove the edge from api server
 	//kubectl delete -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
-	nodeJSONApply := fmt.Sprintf("kubectl apply -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
+	nodeJSONApply := fmt.Sprintf("kubectl delete -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONApply)}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()

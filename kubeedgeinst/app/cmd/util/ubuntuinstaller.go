@@ -434,12 +434,18 @@ SKIPDOWNLOADAND:
 func (u *UbuntuOS) RunEdgeCore() error {
 
 	//Execute edge_core
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgeConfigPath, KubeEdgeBinaryName)
+	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgeConfigPath, KubeEdgeBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%s/kubeedge-v%s-linux-$(dpkg --print-architecture)/edge/conf", KubeEdgeConfigPath, u.KubeEdgeVersion)
+	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgeConfigPath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	cmd.ExecuteCommand()
+	//cmd.ExecuteCommand()
+        err := cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
 	fmt.Println("KubeEdge started running, For logs visit", KubeEdgeConfigPath+"edge/")
 	return nil
 }
