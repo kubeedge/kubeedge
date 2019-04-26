@@ -370,14 +370,14 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	fmt.Println("InstallKubeEdge called")
 
 	var (
-		confPath string
-		cmd      *Command
+		confPath, dwnldURL string
+		cmd                *Command
 	)
 
 	//Create the default path if not exist.
 	src, err := os.Stat(KubeEdgeConfigPath)
 	if err == nil && src.IsDir() {
-		fmt.Println("KubeEdgeConfigPath is available")
+		fmt.Println(KubeEdgeConfigPath, "is available")
 		goto DOWNLOADBINARY
 	}
 
@@ -388,17 +388,35 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 
 DOWNLOADBINARY:
 
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "dpkg --print-architecture")}
+	cmd.ExecuteCommand()
+	arch := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+	if errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+
+	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", u.KubeEdgeVersion, arch)
+	filePath := fmt.Sprintf("%s%s", KubeEdgeConfigPath, filename)
+	fileStat, err := os.Stat(filePath)
+	if err == nil && fileStat.Name() != "" {
+		fmt.Println("Expected or Default KubeEdge version", u.KubeEdgeVersion, "is already installed")
+		goto SKIPDOWNLOADAND
+		//return fmt.Errorf("%s", KubeEdgeVersionAlreadyInstalled)
+	}
+
 	//Download the tar for repo
-	filename := fmt.Sprintf("kubeedge-v%s-linux-$(dpkg --print-architecture).tar.gz", u.KubeEdgeVersion)
-	dwnldURL := fmt.Sprintf("cd %s && rm %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgeConfigPath, filename, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
+	//filename := fmt.Sprintf("kubeedge-v%s-linux-$(dpkg --print-architecture).tar.gz", u.KubeEdgeVersion)
+	dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgeConfigPath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
 	err = cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
+	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
 
+SKIPDOWNLOADAND:
 	//tar -C /usr/local -xzf go1.12.4.linux-amd64.tar.gz
 	//kubeFolderName := strings.Split(filename, ".")[0]
 	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgeConfigPath, KubeEdgeConfigPath, filename, KubeEdgeConfigPath, KubeEdgeBinaryName)

@@ -55,6 +55,7 @@ const (
 		  }
 		}
 	  }`
+	KubeEdgeVersionAlreadyInstalled = "Version already installed"
 )
 
 type InstallState uint8

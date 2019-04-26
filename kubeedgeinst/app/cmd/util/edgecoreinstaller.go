@@ -35,6 +35,9 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 
 	err := ku.InstallKubeEdge()
 	if err != nil {
+		// if strings.Contains(err.Error(), KubeEdgeVersionAlreadyInstalled) {
+		// 	goto RUNEDGECORE
+		// }
 		return err
 	}
 
@@ -43,6 +46,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 		return err
 	}
 
+	//RUNEDGECORE:
 	err = ku.RunEdgeCore()
 	if err != nil {
 		return err
@@ -92,7 +96,7 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 	}
 
 	switch ku.ToolVersion {
-	case "0.1.0", "0.2.0", "0.2.1":
+	case "0.1", "0.2", "0.2.1":
 		//Update node.json, node ip to act as node id
 		rep := bytes.Replace([]byte(KubeEdgeNodeJSONContent), []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
 
