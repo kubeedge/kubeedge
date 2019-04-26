@@ -104,7 +104,6 @@ func (ehc *Controller) Start(ctx *context.Context) {
 		ehc.pubConnectInfo(true)
 		go ehc.routeToEdge()
 		go ehc.routeToCloud()
-		go ehc.keepalive()
 
 		// wait the stop singal
 		// stop authinfo manager/websocket connection
@@ -248,21 +247,6 @@ func (ehc *Controller) routeToCloud() {
 			ehc.stopChan <- struct{}{}
 			return
 		}
-	}
-}
-
-func (ehc *Controller) keepalive() {
-	for {
-		msg := model.NewMessage("").
-			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
-			FillBody("ping")
-		err := ehc.chClient.Send(*msg)
-		if err != nil {
-			log.LOGGER.Errorf("websocket write error: %v", err)
-			ehc.stopChan <- struct{}{}
-			return
-		}
-		time.Sleep(ehc.config.HeartbeatPeriod)
 	}
 }
 
