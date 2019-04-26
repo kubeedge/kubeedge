@@ -341,13 +341,13 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = OPCUA
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
-	} else if device.Spec.Protocol.Modbus.RTU != nil {
+	} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
 		protocol = ModbusRTU + "-" + device.Name
 		deviceInstance.Protocol = protocol
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = ModbusRTU
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.RTU
-	} else if device.Spec.Protocol.Modbus.TCP != nil {
+	} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
 		protocol = ModbusTCP + "-" + device.Name
 		deviceInstance.Protocol = protocol
 		deviceProtocol.Name = protocol
