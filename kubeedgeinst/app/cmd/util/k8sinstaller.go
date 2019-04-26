@@ -41,7 +41,6 @@ func (ks *K8SInstTool) InstallTools() error {
 	case AlreadySameVersionExist:
 		return fmt.Errorf("Same version of %s already installed in this host", component)
 	case DefVerInstallRequired:
-		//fmt.Println("Installing default", ks.DefaultToolVer, "version of", component)
 		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
 		fallthrough
 	case NewInstallRequired:

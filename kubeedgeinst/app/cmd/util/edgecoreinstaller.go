@@ -91,16 +91,26 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 		return err
 	}
 
-	nodeJSON, err := ioutil.ReadFile(KubeEdgeConfigNodeJSON)
-	if err != nil {
-		return err
-	}
+	switch ku.ToolVersion {
+	case "0.1.0", "0.2.0", "0.2.1":
+		//Update node.json, node ip to act as node id
+		rep := bytes.Replace([]byte(KubeEdgeNodeJSONContent), []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
 
-	//Update node.json, node ip to act as node id
-	rep := bytes.Replace(nodeJSON, []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
+		if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, rep, 0666); err != nil {
+			return err
+		}
+	default:
+		nodeJSON, err := ioutil.ReadFile(KubeEdgeConfigNodeJSON)
+		if err != nil {
+			return err
+		}
 
-	if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, rep, 0666); err != nil {
-		return err
+		//Update node.json, node ip to act as node id
+		rep := bytes.Replace(nodeJSON, []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
+
+		if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, rep, 0666); err != nil {
+			return err
+		}
 	}
 
 	//kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080

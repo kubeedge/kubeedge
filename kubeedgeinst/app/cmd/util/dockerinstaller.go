@@ -39,10 +39,10 @@ func (d *DockerInstTool) InstallTools() error {
 		d.SetDockerVersion(d.DefaultToolVer)
 		fallthrough
 	case NewInstallRequired:
-		// err := d.InstallDocker()
-		// if err != nil {
-		// 	return err
-		// }
+		err := d.InstallDocker()
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("Error in getting the docker version from host")
 	}

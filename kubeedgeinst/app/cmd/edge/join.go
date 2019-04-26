@@ -38,9 +38,9 @@ further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
-kectl edge join --server=<ip:port>
+kectl edge join --server=<ip:port> --kubeedge-version
 
-  - For this command --server option is a Mandatory option
+  - For this command --server & --kubeedge-version option is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
 kectl edge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
@@ -50,6 +50,11 @@ kectl edge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0
 `
 )
 
+type FlagData struct {
+	Val    interface{}
+	DefVal interface{}
+}
+
 // NewEdgeJoin returns KubeEdge edge join command.
 func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command {
 	if joinOptions == nil {
@@ -57,6 +62,7 @@ func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 	}
 
 	tools := make(map[string]util.ToolsInstaller, 0)
+	flagVals := make(map[string]FlagData, 0)
 
 	cmd := &cobra.Command{
 		Use:     "join",
@@ -66,11 +72,10 @@ func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 		Run: func(cmd *cobra.Command, args []string) {
 
 			checkFlags := func(f *pflag.Flag) {
-				AddTools(f, tools, joinOptions)
+				AddToolVals(f, flagVals)
 			}
-			AddOtherTools(tools)
-			cmd.Flags().Visit(checkFlags)
-
+			cmd.Flags().VisitAll(checkFlags)
+			Add2ToolsList(tools, flagVals, joinOptions)
 			Execute(tools)
 		},
 	}
@@ -84,7 +89,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *options.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.KubeedgeVersion, options.KubeedgeVersion, joinOptions.KubeedgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(options.KubeedgeVersion).NoOptDefVal = joinOptions.KubeedgeVersion
-	cmd.MarkFlagRequired(options.KubeedgeVersion)
+	//cmd.MarkFlagRequired(options.KubeedgeVersion)
 
 	cmd.Flags().StringVar(&joinOptions.DockerVersion, options.DockerVersion, joinOptions.DockerVersion,
 		"Use this key to download and use the required Docker version")
@@ -112,19 +117,48 @@ func newJoinOptions() *options.JoinOptions {
 	return opts
 }
 
-func AddTools(f *pflag.Flag, toolList map[string]util.ToolsInstaller, joinOptions *options.JoinOptions) {
+func AddToolVals(f *pflag.Flag, flagData map[string]FlagData) {
 	fmt.Println(f.Name, "VAL:", f.Value, "DEFVAL:", f.DefValue)
-	switch f.Name {
-	case options.KubeedgeVersion:
-		kubeVer := CheckIfAvailable(f.Value.String(), f.DefValue)
-		toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort}
-	case options.DockerVersion:
-		dockerVer := CheckIfAvailable(f.Value.String(), f.DefValue)
-		toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: f.DefValue}
-	case options.Kubernetesversion:
-		k8sVer := CheckIfAvailable(f.Value.String(), f.DefValue)
-		toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: true, DefaultToolVer: f.DefValue}
+	flagData[f.Name] = FlagData{Val: f.Value.String(), DefVal: f.DefValue}
+}
+
+func Add2ToolsList(toolList map[string]util.ToolsInstaller, flagData map[string]FlagData, joinOptions *options.JoinOptions) {
+
+	var kubeVer, dockerVer, k8sVer string
+
+	fmt.Println(flagData)
+
+	flgData, ok := flagData[options.KubeedgeVersion]
+	if ok {
+		fmt.Println(options.KubeedgeVersion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
+		kubeVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	} else {
+		kubeVer = joinOptions.KubeedgeVersion
 	}
+	fmt.Println(options.KubeedgeVersion, "VAL:", kubeVer, "DEFVAL:", flgData.DefVal.(string))
+	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort}
+
+	flgData, ok = flagData[options.DockerVersion]
+	if ok {
+		fmt.Println(options.DockerVersion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
+		dockerVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	} else {
+		dockerVer = joinOptions.DockerVersion
+	}
+	fmt.Println(options.DockerVersion, "VAL:", dockerVer, "DEFVAL:", flgData.DefVal.(string))
+	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: flgData.DefVal.(string)}
+
+	flgData, ok = flagData[options.Kubernetesversion]
+	if ok {
+		fmt.Println(options.Kubernetesversion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
+		k8sVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	} else {
+		k8sVer = joinOptions.Kubernetesversion
+	}
+	fmt.Println(options.Kubernetesversion, "VAL:", k8sVer, "DEFVAL:", flgData.DefVal.(string))
+	toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: true, DefaultToolVer: flgData.DefVal.(string)}
+	toolList["MQTT"] = &util.MQTTInstTool{}
+	fmt.Println(toolList)
 }
 
 func CheckIfAvailable(val, defval string) string {
@@ -132,10 +166,6 @@ func CheckIfAvailable(val, defval string) string {
 		return defval
 	}
 	return val
-}
-
-func AddOtherTools(toolList map[string]util.ToolsInstaller) {
-	toolList["MQTT"] = &util.MQTTInstTool{}
 }
 
 func Execute(toolList map[string]util.ToolsInstaller) {
@@ -151,9 +181,9 @@ func Execute(toolList map[string]util.ToolsInstaller) {
 			}
 		}
 	}
-	// //Install and Start KubeEdge Node
-	// err := toolList["KubeEdge"].InstallTools()
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// }
+	//Install and Start KubeEdge Node
+	err := toolList["KubeEdge"].InstallTools()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

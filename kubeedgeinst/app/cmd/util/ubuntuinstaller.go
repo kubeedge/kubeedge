@@ -46,7 +46,7 @@ func (u *UbuntuOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 	//Check if requested Docker version available in repo
 
 	//apt-cache madison '$toolname' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
-	chkToolVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", toolName, version)
+	chkToolVer := fmt.Sprintf("apt-cache madison '%s' | grep -w %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", toolName, version)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", chkToolVer)}
 	cmd.ExecuteCommand()
 	stdout := cmd.GetStdOutput()
@@ -279,89 +279,89 @@ func (u *UbuntuOS) InstallK8S() error {
 	}
 	fmt.Println(kcomp)
 
-	// //lsb_release -cs
-	// cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
-	// cmd.ExecuteCommand()
-	// distVersion := cmd.GetStdOutput()
-	// if distVersion == "" {
-	// 	return fmt.Errorf("Ubuntu dist version not available")
-	// }
-	// fmt.Println("Ubuntu distribution version is", distVersion)
+	//lsb_release -cs
+	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
+	cmd.ExecuteCommand()
+	distVersion := cmd.GetStdOutput()
+	if distVersion == "" {
+		return fmt.Errorf("Ubuntu dist version not available")
+	}
+	fmt.Println("Ubuntu distribution version is", distVersion)
 
-	// //'apt-get update -qq >/dev/null'
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
-	// err := cmd.ExecuteCmdShowOutput()
-	// stdout := cmd.GetStdOutput()
-	// errout := cmd.GetStdErr()
-	// if err != nil || errout != "" {
-	// 	return fmt.Errorf("%s", errout)
-	// }
-	// fmt.Println(stdout)
+	//'apt-get update -qq >/dev/null'
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
+	err := cmd.ExecuteCmdShowOutput()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(stdout)
 
-	// //curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-	// curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesGPGURL)
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", curl)}
-	// cmd.ExecuteCommand()
-	// curlOutput := cmd.GetStdOutput()
-	// curlErr := cmd.GetStdErr()
-	// if curlOutput == "" || curlErr != "" {
-	// 	return fmt.Errorf("not able add the apt key due to error : %s", curlErr)
-	// }
-	// fmt.Println(curlOutput)
+	//curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+	curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesGPGURL)
+	cmd = &Command{Cmd: exec.Command("sh", "-c", curl)}
+	cmd.ExecuteCommand()
+	curlOutput := cmd.GetStdOutput()
+	curlErr := cmd.GetStdErr()
+	if curlOutput == "" || curlErr != "" {
+		return fmt.Errorf("not able add the apt key due to error : %s", curlErr)
+	}
+	fmt.Println(curlOutput)
 
-	// // 	cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-	// // deb https://apt.kubernetes.io/ kubernetes-xenial main
-	// // EOF
-	// aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
-	// //"echo \"$apt_repo\" > /etc/apt/sources.list.d/docker.list"
-	// updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
-	// cmd.ExecuteCommand()
-	// updtRepoErr := cmd.GetStdErr()
-	// if updtRepoErr != "" {
-	// 	return fmt.Errorf("not able add update repo due to error : %s", updtRepoErr)
-	// }
+	// 	cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+	// deb https://apt.kubernetes.io/ kubernetes-xenial main
+	// EOF
+	aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
+	//"echo \"$apt_repo\" > /etc/apt/sources.list.d/docker.list"
+	updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
+	cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
+	cmd.ExecuteCommand()
+	updtRepoErr := cmd.GetStdErr()
+	if updtRepoErr != "" {
+		return fmt.Errorf("not able add update repo due to error : %s", updtRepoErr)
+	}
 
-	// //'apt-get update -qq >/dev/null'
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
-	// err = cmd.ExecuteCmdShowOutput()
-	// stdout = cmd.GetStdOutput()
-	// errout = cmd.GetStdErr()
-	// if err != nil || errout != "" {
-	// 	return fmt.Errorf("%s", errout)
-	// }
-	// fmt.Println(stdout)
+	//'apt-get update -qq >/dev/null'
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
+	err = cmd.ExecuteCmdShowOutput()
+	stdout = cmd.GetStdOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(stdout)
 
-	// k8sComponent := "kubeadm"
-	// if u.IsEdgeNode == true {
-	// 	k8sComponent = "kubectl"
-	// }
-	// //apt-cache madison 'kubeadm' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
-	// chkKubeadmVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", k8sComponent, u.KubernetesVersion)
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
-	// cmd.ExecuteCommand()
-	// stdout = cmd.GetStdOutput()
-	// errout = cmd.GetStdErr()
-	// if errout != "" {
-	// 	return fmt.Errorf("%s", errout)
-	// }
+	k8sComponent := "kubeadm"
+	if u.IsEdgeNode == true {
+		k8sComponent = "kubectl"
+	}
+	//apt-cache madison 'kubeadm' | grep $version | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3
+	chkKubeadmVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", k8sComponent, u.KubernetesVersion)
+	cmd = &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
+	cmd.ExecuteCommand()
+	stdout = cmd.GetStdOutput()
+	errout = cmd.GetStdErr()
+	if errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
 
-	// fmt.Println("Expected K8S(Kubeadm, Kubelet, Kubectl) version to install is", stdout)
+	fmt.Println("Expected K8S('", k8sComponent, "') version to install is", stdout)
 
-	// //Install K8S
-	// k8sInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubeadm=%s kubelet=%s kubectl=%s", stdout, stdout, stdout)
-	// if u.IsEdgeNode == true {
-	// 	k8sInst = fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubectl=%s", stdout)
-	// }
-	// cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
-	// err = cmd.ExecuteCmdShowOutput()
-	// errout = cmd.GetStdErr()
-	// if err != nil || errout != "" {
-	// 	return fmt.Errorf("%s", errout)
-	// }
-	// fmt.Println(cmd.GetStdOutput())
+	//Install K8S
+	k8sInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubeadm=%s kubelet=%s kubectl=%s", stdout, stdout, stdout)
+	if u.IsEdgeNode == true {
+		k8sInst = fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubectl=%s", stdout)
+	}
+	cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
 
-	// fmt.Println("Kubeadm version", u.KubernetesVersion, "is installed in this Host")
+	fmt.Println(k8sComponent, "version", u.KubernetesVersion, "is installed in this Host")
 
 	return nil
 }
@@ -384,13 +384,13 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	confPath = fmt.Sprintf("mkdir %s", KubeEdgeConfigPath)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", confPath)}
 	cmd.ExecuteCommand()
-	fmt.Println("KubeEdge config path %s is available", KubeEdgeConfigPath)
+	fmt.Println("KubeEdge config path", KubeEdgeConfigPath, "is available")
 
 DOWNLOADBINARY:
 
 	//Download the tar for repo
 	filename := fmt.Sprintf("kubeedge-v%s-linux-$(dpkg --print-architecture).tar.gz", u.KubeEdgeVersion)
-	dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate %s/v%s/%s", KubeEdgeConfigPath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
+	dwnldURL := fmt.Sprintf("cd %s && rm %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgeConfigPath, filename, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
@@ -400,8 +400,8 @@ DOWNLOADBINARY:
 	fmt.Println(cmd.GetStdOutput())
 
 	//tar -C /usr/local -xzf go1.12.4.linux-amd64.tar.gz
-	kubeFolderName := strings.Split(filename, ".")[0]
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s /usr/local/bin/.", KubeEdgeConfigPath, KubeEdgeConfigPath, filename, KubeEdgeConfigPath, kubeFolderName, KubeEdgeBinaryName)
+	//kubeFolderName := strings.Split(filename, ".")[0]
+	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgeConfigPath, KubeEdgeConfigPath, filename, KubeEdgeConfigPath, KubeEdgeBinaryName)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", untarFileAndMove)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()

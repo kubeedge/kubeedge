@@ -20,11 +20,11 @@ type MQTTInstTool struct {
 }
 
 func (m *MQTTInstTool) InstallTools() error {
-	// m.SetOSInterface(GetOSInterface())
-	// err := m.InstallMQTT()
-	// if err != nil {
-	// 	return err
-	// }
+	m.SetOSInterface(GetOSInterface())
+	err := m.InstallMQTT()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

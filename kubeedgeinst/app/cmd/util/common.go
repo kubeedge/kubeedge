@@ -37,14 +37,24 @@ const (
 	KubernetesDownloadURL = "https://apt.kubernetes.io/"
 	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 
-	KubeEdgeDownloadURL     = "https://github.com/kubeedge/kubeedge/releases/download/"
+	KubeEdgeDownloadURL     = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgeConfigPath      = "/etc/kubeedge/"
 	KubeEdgeBinaryName      = "edge_core"
 	KubeEdgeDefaultCertPath = KubeEdgeConfigPath + "certs/"
-	KubeEdgeConfigEdgeYaml  = KubeEdgeConfigPath + "edge/conf/edge.yaml"
+	KubeEdgeConfigEdgeYaml  = KubeEdgeConfigPath + "kubeedge/edge/conf/edge.yaml"
 	KubeEdgeToReplaceKey1   = "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
 	KubeEdgeToReplaceKey2   = "0.0.0.0"
-	KubeEdgeConfigNodeJSON  = KubeEdgeConfigPath + "edge/conf/node.json"
+	KubeEdgeConfigNodeJSON  = KubeEdgeConfigPath + "kubeedge/edge/conf/node.json"
+	KubeEdgeNodeJSONContent = `{
+		"kind": "Node",
+		"apiVersion": "v1",
+		"metadata": {
+		  "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+		  "labels": {
+			"name": "edge-node"
+		  }
+		}
+	  }`
 )
 
 type InstallState uint8
