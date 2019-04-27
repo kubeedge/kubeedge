@@ -1,0 +1,15 @@
+
+func (ehc *Controller) keepalive() {
+        for {
+                msg := model.NewMessage("").
+                        BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
+                        FillBody("ping")
+                err := ehc.chClient.Send(*msg)
+                if err != nil {
+                        log.LOGGER.Errorf("websocket write error: %v", err)
+                        ehc.stopChan <- struct{}{}
+                        return
+                }
+                time.Sleep(ehc.config.HeartbeatPeriod)
+        }
+}

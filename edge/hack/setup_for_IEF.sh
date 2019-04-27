@@ -183,7 +183,16 @@ create_edge_config() {
     sed -i "s|obs_endpoint: .*|obs_endpoint: ${OBS_URL}|g" ${CURRENT_PATH}/conf/edge.yaml
 }
 
+keepalive() {
+    if [ ! -f ${CURRENT_PATH}/pkg/edgehub/controller.go ]; then
+        echo "There is no ${CURRENT_PATH}/pkg/edgehub/controller.go!"
+        exit 1
+    fi
+    sed -i "s|go\ ehc.routeToCloud().*|go ehc.routeToCloud()\n\t\tgo ehc.keepalive()|g" ${CURRENT_PATH}/pkg/edgehub/controller.go
+    cat ${CURRENT_PATH}/hack/keepalivefunction.txt >> ${CURRENT_PATH}/pkg/edgehub/controller.go
+}
 
+keepalive
 create_system_config
 parse_config
 create_edge_config
