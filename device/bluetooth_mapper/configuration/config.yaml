@@ -7,22 +7,22 @@ action-manager:
   actions:
     - name: IRTemperatureConfiguration
       perform-immediately: true
-      device-property-name: temperature-enable     #property-name define in the device model
+      device-property-name: temperature-enable     #property-name defined in the device model
     - name: IRTemperatureData
       perform-immediately: false
-      device-property-name: temperature            #property-name define in the device model
+      device-property-name: temperature            #property-name defined in the device model
     - name: IOConfigurationInitialize
       perform-immediately: true
-      device-property-name: io-config-initialize    #property-name define in the device model
+      device-property-name: io-config-initialize    #property-name defined in the device model
     - name: IODataInitialize
       perform-immediately: true
-      device-property-name: io-data-initialize      #property-name define in the device model
+      device-property-name: io-data-initialize      #property-name defined in the device model
     - name: IOConfiguration
       perform-immediately: false
-      device-property-name: io-config                #property-name define in the device model
+      device-property-name: io-config                #property-name defined in the device model
     - name: IOData
       perform-immediately: false
-      device-property-name: io-data                  #property-name define in the device model
+      device-property-name: io-data                  #property-name defined in the device model
 scheduler:
   schedules:
     - name: temperature
