@@ -100,6 +100,10 @@ func (eh *EventHandle) EventReadLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, 
 			stop <- webSocketReadFail
 			return
 		}
+		if msg.GetOperation() == emodel.OpKeepalive {
+			bhLog.LOGGER.Infof("Keepalive message received from node: %s", info.NodeID)
+			continue
+		}
 		msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
 		event := emodel.MessageToEvent(&msg)
 		bhLog.LOGGER.Infof("event received for node %s %s, content: %s", info.NodeID, dumpEventMetadata(&event), event.Content)
