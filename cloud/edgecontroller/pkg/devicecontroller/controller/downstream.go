@@ -353,6 +353,12 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = ModbusTCP
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.TCP
+	} else if device.Spec.Protocol.Bluetooth != nil {
+		protocol = Bluetooth + "-" + device.Name
+		deviceInstance.Protocol = protocol
+		deviceProtocol.Name = protocol
+		deviceProtocol.Protocol = Bluetooth
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
 	} else {
 		log.LOGGER.Warnf("Device doesnt support valid protocol")
 	}
