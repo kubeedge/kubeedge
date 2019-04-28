@@ -23,7 +23,13 @@
 #   non-go = false
 #   go-tests = true
 #   unused-packages = true
-
+required = [
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/informer-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
+]
 
 [[constraint]]
   name = "k8s.io/client-go"
@@ -44,6 +50,10 @@
 [[constraint]]
   name = "k8s.io/kubernetes"
   version = "v1.10.9"
+
+[[override]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.13.2"
 
 [[override]]
   name = "github.com/astaxie/beego"
@@ -92,3 +102,6 @@
 [prune]
   go-tests = true
   unused-packages = true
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    unused-packages = false
