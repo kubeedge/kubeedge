@@ -48,18 +48,9 @@ func NewPodManager() pod.Manager {
 	pm := &podManager{
 		MockManager: new(testing.MockManager),
 	}
-	pm.SetPods(nil)
-	return pm
-}
-
-// Set the internal pods based on the new pods.
-func (pm *podManager) SetPods(newPods []*v1.Pod) {
-	pm.lock.Lock()
-	defer pm.lock.Unlock()
-
 	pm.podByUID = make(map[types.UID]*v1.Pod)
 	pm.podByFullName = make(map[string]*v1.Pod)
-	pm.updatePodsInternal(newPods...)
+	return pm
 }
 
 func (pm *podManager) AddPod(pod *v1.Pod) {
