@@ -70,3 +70,53 @@ func Trace(funcName string, msg ...string) func() {
 		LOGGER.Infof("exit %s (%s)", s, time.Since(start))
 	}
 }
+
+// Debugf Default Debugf
+func Debugf(format string, args ...interface{}) {
+	LOGGER.Debugf(format, args...)
+}
+
+// Debug Default Debug
+func Debug(action string) {
+	LOGGER.Debug(action)
+}
+
+// Infof Default Infof
+func Infof(format string, args ...interface{}) {
+	LOGGER.Infof(format, args...)
+}
+
+// Info Default Info
+func Info(action string) {
+	LOGGER.Info(action)
+}
+
+// Warnf Default Warnf
+func Warnf(format string, args ...interface{}) {
+	LOGGER.Warnf(format, args...)
+}
+
+// Warn Default Warn
+func Warn(action string) {
+	LOGGER.Warn(action)
+}
+
+// Errorf Default Errorf
+func Errorf(format string, args ...interface{}) {
+	LOGGER.Errorf(format, args...)
+}
+
+// Error Default Error
+func Error(action string) {
+	LOGGER.Error(action)
+}
+
+// Fatalf Default Fatalf
+func Fatalf(format string, args ...interface{}) {
+	LOGGER.Fatalf(format, args...)
+}
+
+// Fatal Default Fatal
+func Fatal(action string) {
+	LOGGER.Fatal(action)
+}
