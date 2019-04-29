@@ -52,15 +52,15 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 + 构建 Cloud
 
   ```shell
-  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
   make # or `make edgecontroller`
   ```
 
-+ 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
++ 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
 + 运行二进制文件
   ```shell
-  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
   # run edge controller
   # `conf/` should be in the same directory as the cloned KubeEdge repository
   # verify the configurations before running cloud(edgecontroller)
