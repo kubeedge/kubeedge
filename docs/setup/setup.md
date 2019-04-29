@@ -163,7 +163,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 ### Build Cloud
 
 ```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
 make # or `make edgecontroller`
 ```
 
@@ -182,7 +182,7 @@ Please click [Cross Compilation](cross-compilation.html) for the instructions.
 ### Run Cloud
 
 ```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
 # run edge controller
 # `conf/` should be in the same directory as the binary
 # verify the configurations before running cloud(edgecontroller)

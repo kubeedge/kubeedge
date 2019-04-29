@@ -37,7 +37,7 @@ var (
 )
 
 var (
-	runController = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud/edgecontroller; sudo nohup ./edgecontroller > edgecontroller.log 2>&1 &"
+	runController = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud; sudo nohup ./edgecontroller > edgecontroller.log 2>&1 &"
 	runEdgecore   = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edge_core > edge_core.log 2>&1 &"
 )
 

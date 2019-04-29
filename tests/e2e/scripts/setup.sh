@@ -22,7 +22,7 @@ SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
 echo `pwd`
 CURRENT_PATH=`pwd`
 EDGE_PATH=${SRC_DIR}/edge/conf/edge.yaml
-CLOUD_PATH=${SRC_DIR}/cloud/edgecontroller/conf/controller.yaml
+CLOUD_PATH=${SRC_DIR}/cloud/conf/controller.yaml
 
 create_edge_config() {
     if [ ! -f ${EDGE_PATH} ]; then
