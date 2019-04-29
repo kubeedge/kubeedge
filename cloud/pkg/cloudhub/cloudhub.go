@@ -1,8 +1,6 @@
 package cloudhub
 
 import (
-	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
@@ -10,6 +8,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/wsserver"
 )
 
@@ -31,30 +30,40 @@ func (a *cloudHub) Group() string {
 
 func (a *cloudHub) Start(c *context.Context) {
 	a.context = c
-	var err error
-	caI := config.CONFIG.GetConfigurationByKey("cloudhub.ca")
-	certI := config.CONFIG.GetConfigurationByKey("cloudhub.cert")
-	keyI := config.CONFIG.GetConfigurationByKey("cloudhub.key")
 
-	util.HubConfig.Ca, err = ioutil.ReadFile(caI.(string))
+	cafile, err := config.CONFIG.GetValue("cloudhub.ca").ToString()
 	if err != nil {
-		panic(err)
+		cafile = chconfig.DefaultCAFile
 	}
 
-	util.HubConfig.Cert, err = ioutil.ReadFile(certI.(string))
+	certfile, err := config.CONFIG.GetValue("cloudhub.cert").ToString()
 	if err != nil {
-		panic(err)
-	}
-	util.HubConfig.Key, err = ioutil.ReadFile(keyI.(string))
-	if err != nil {
-		panic(err)
+		certfile = chconfig.DefaultCertFile
 	}
 
-	// init filter
-	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(util.HubConfig.Ca)
-	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
+	keyfile, err := config.CONFIG.GetValue("cloudhub.key").ToString()
+	if err != nil {
+		keyfile = chconfig.DefaultKeyFile
+	}
+
+	errs := make([]string, 0)
+
+	util.HubConfig.Ca, err = ioutil.ReadFile(cafile)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	util.HubConfig.Cert, err = ioutil.ReadFile(certfile)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+	util.HubConfig.Key, err = ioutil.ReadFile(keyfile)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	if len(errs) <= 0 {
+		//  TBD : add code for to sync graceful exit of modules
+		return
 	}
 
 	eventq, err := channelq.NewChannelEventQueue(c)
