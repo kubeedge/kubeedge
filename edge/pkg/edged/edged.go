@@ -158,7 +158,7 @@ func init() {
 }
 
 func (e *edged) Name() string {
-	return "edged"
+	return modules.EdgedModuleName
 }
 
 func (e *edged) Group() string {
