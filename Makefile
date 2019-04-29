@@ -2,12 +2,12 @@
 .PHONY: all  
 ifeq ($(WHAT),)
 all:
-	cd cloud/edgecontroller && $(MAKE)
+	cd cloud && $(MAKE)
 	cd edge && $(MAKE)
 else ifeq ($(WHAT),cloud)
 # make all what=cloud, build cloud binary
 all:
-	cd cloud/edgecontroller && $(MAKE)
+	cd cloud && $(MAKE)
 else ifeq ($(WHAT),edge)
 all:
 # make all what=edge, build edge binary
@@ -42,7 +42,7 @@ edge_small_build:
 
 .PHONY: cloud_lint
 cloud_lint:
-	cd cloud/edgecontroller && $(MAKE) lint
+	cd cloud && $(MAKE) lint
 
 .PHONY: e2e_test
 e2e_test:

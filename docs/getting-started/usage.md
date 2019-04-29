@@ -78,14 +78,14 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
      make all WHAT=cloud
     ```
 
-+ The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller/conf/controller.yaml`. Please update the correct paths for the following :
++ The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml`. Please update the correct paths for the following :
     + cloudhub.ca
     + cloudhub.cert
     + cloudhub.key
 
 + Run cloud
     ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud/edgecontroller
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
     # run edge controller
     # `conf/` should be in the same directory as the cloned KubeEdge repository
     # verify the configurations before running cloud(edgecontroller)
