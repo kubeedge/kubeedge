@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package util
 
 import (
@@ -27,6 +28,7 @@ import (
 	"sync"
 )
 
+//Constants used by installers
 const (
 	UbuntuOSType = "ubuntu"
 	CentOSType   = "centos"
@@ -55,11 +57,12 @@ const (
 		  }
 		}
 	  }`
-	KubeEdgeVersionAlreadyInstalled = "Version already installed"
 )
 
+//InstallState enum set used for verifying a tool version is installed in host
 type InstallState uint8
 
+//Difference enum values for type InstallState
 const (
 	NewInstallRequired InstallState = iota
 	AlreadySameVersionExist
@@ -67,11 +70,13 @@ const (
 	VersionNAInRepo
 )
 
+//ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
 	TearDown() error
 }
 
+//OSTypeInstaller interface for methods to be executed over a specified OS distribution type
 type OSTypeInstaller interface {
 	IsToolVerInRepo(string, string) (bool, error)
 	IsDockerInstalled(string) (InstallState, error)
@@ -87,22 +92,26 @@ type OSTypeInstaller interface {
 	KillEdgeCore() error
 }
 
+//Common struct contains OS and Tool version properties and also embeds OS interface
 type Common struct {
 	OSTypeInstaller
 	OSVersion   string
 	ToolVersion string
 }
 
+//SetOSInterface defines a method to set the implemtation of the OS interface
 func (co *Common) SetOSInterface(intf OSTypeInstaller) {
 	co.OSTypeInstaller = intf
 }
 
+//Command defines commands to be executed and captures std out and std error
 type Command struct {
 	Cmd    *exec.Cmd
 	StdOut []byte
 	StdErr []byte
 }
 
+//ExecuteCommand executes the command and captures the output in stdOut
 func (cm *Command) ExecuteCommand() {
 	var err error
 	cm.StdOut, err = cm.Cmd.Output()
@@ -111,6 +120,7 @@ func (cm *Command) ExecuteCommand() {
 	}
 }
 
+//GetStdOutput gets StdOut field
 func (cm Command) GetStdOutput() string {
 	if len(cm.StdOut) != 0 {
 		return strings.TrimRight(string(cm.StdOut), "\n")
@@ -118,6 +128,7 @@ func (cm Command) GetStdOutput() string {
 	return ""
 }
 
+//GetStdErr gets StdErr field
 func (cm Command) GetStdErr() string {
 	if len(cm.StdErr) != 0 {
 		return strings.TrimRight(string(cm.StdErr), "\n")
@@ -125,6 +136,8 @@ func (cm Command) GetStdErr() string {
 	return ""
 }
 
+//ExecuteCmdShowOutput captures both StdOut and StdErr after exec.cmd().
+//It helps in the commands where it takes some time for execution.
 func (cm Command) ExecuteCmdShowOutput() error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	stdoutIn, _ := cm.Cmd.StdoutPipe()
@@ -161,12 +174,14 @@ func (cm Command) ExecuteCmdShowOutput() error {
 	return nil
 }
 
+//GetOSVersion gets the OS name
 func GetOSVersion() string {
 	c := &Command{Cmd: exec.Command("sh", "-c", ". /etc/os-release && echo $ID")}
 	c.ExecuteCommand()
 	return c.GetStdOutput()
 }
 
+//GetInterfaceIP gets the interface ip address, this command helps in getting the edge node ip
 func GetInterfaceIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -204,6 +219,7 @@ func GetInterfaceIP() (string, error) {
 	return "", errors.New("Not able to get interfaces")
 }
 
+//GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() OSTypeInstaller {
 
 	switch GetOSVersion() {

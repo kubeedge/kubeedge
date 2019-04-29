@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package util
 
 import (
@@ -23,21 +24,22 @@ import (
 	"strings"
 )
 
+//KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information
+//It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
 	//CertPath       string
 	K8SApiServerIP string
 }
 
+//InstallTools downloads KubeEdge for the specified verssion
+//and makes the required configuration changes and initiates edge_core.
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	err := ku.InstallKubeEdge()
 	if err != nil {
-		// if strings.Contains(err.Error(), KubeEdgeVersionAlreadyInstalled) {
-		// 	goto RUNEDGECORE
-		// }
 		return err
 	}
 
@@ -46,7 +48,6 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 		return err
 	}
 
-	//RUNEDGECORE:
 	err = ku.RunEdgeCore()
 	if err != nil {
 		return err
@@ -62,19 +63,20 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 // 	}
 // }
 
-func (ku *KubeEdgeInstTool) SetK8SApiServerIP(server string) error {
-	if server == "" {
-		return fmt.Errorf("K8S API Server IP not provided")
-	}
-	ku.K8SApiServerIP = server
-	//TODO: IP format validation should be done
-	return nil
-}
+// //SetK8SApiServerIP sets api-server ip
+// func (ku *KubeEdgeInstTool) SetK8SApiServerIP(server string) error {
+// 	if server == "" {
+// 		return fmt.Errorf("K8S API Server IP not provided")
+// 	}
+// 	ku.K8SApiServerIP = server
+// 	//TODO: IP format validation should be done
+// 	return nil
+// }
 
+//modifyEdgeYamlNodeJSON modifies the edge config files
 func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 
 	//Update edge.yaml, server ip for websocket communication
-
 	edgeYaml, err := ioutil.ReadFile(KubeEdgeConfigEdgeYaml)
 	if err != nil {
 		return err
@@ -84,7 +86,7 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 	rep1 := bytes.Replace(edgeYaml, []byte(KubeEdgeToReplaceKey2), []byte(serverIPAddr), -1)
 
 	//Update edge.yaml, node ip to act as node id
-
+	//Get node ip address from the interface
 	edgeIP, err := GetInterfaceIP()
 	if err != nil {
 		return err
@@ -96,6 +98,9 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 	}
 
 	switch ku.ToolVersion {
+	//These are the older version of KubeEdge, Hence creating node.json file directly,
+	//since it is not available in ../edge/conf path.
+	//From higher release, it shall be placed and the default condition will get executed.
 	case "0.1", "0.2", "0.2.1":
 		//Update node.json, node ip to act as node id
 		rep := bytes.Replace([]byte(KubeEdgeNodeJSONContent), []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
@@ -117,6 +122,7 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 		}
 	}
 
+	//Add edge node in api-server using kubectl command
 	//kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
 	nodeJSONApply := fmt.Sprintf("kubectl apply -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONApply)}
@@ -130,11 +136,12 @@ func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {
 	return nil
 }
 
+//TearDown method will remove the edge node from api-server and stop edge_core process
 func (ku *KubeEdgeInstTool) TearDown() error {
 
 	ku.SetOSInterface(GetOSInterface())
 
-	//Remove the edge from api server
+	//Remove the edge from api server using kubectl command, like below
 	//kubectl delete -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
 	nodeJSONApply := fmt.Sprintf("kubectl delete -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONApply)}
@@ -145,7 +152,7 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	}
 	fmt.Println(cmd.GetStdOutput())
 
-	//Kill edge core
+	//Kill edge core process
 	ku.KillEdgeCore()
 
 	return nil

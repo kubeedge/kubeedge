@@ -13,15 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package util
 
 import "fmt"
 
+//DockerInstTool embedes Common struct and contains the default docker version
+//It implements ToolsInstaller interface
 type DockerInstTool struct {
 	Common
 	DefaultToolVer string
 }
 
+//InstallTools sets the OS interface, checks if docker installation is required or not.
+//If required then install the said version.
 func (d *DockerInstTool) InstallTools() error {
 	d.SetOSInterface(GetOSInterface())
 	d.SetDockerVersion(d.ToolVersion)
@@ -50,6 +55,8 @@ func (d *DockerInstTool) InstallTools() error {
 	return nil
 }
 
+//TearDown shoud uninstall docker, but it is not required either for cloud or edge node.
+//It is defined so that DockerInstTool implements ToolsInstaller interface
 func (d *DockerInstTool) TearDown() error {
 	return nil
 }

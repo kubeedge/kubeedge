@@ -13,12 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package util
 
+//MQTTInstTool embedes Common struct and It implements ToolsInstaller interface
 type MQTTInstTool struct {
 	Common
 }
 
+//InstallTools sets the OS interface, it simply installs the said version
 func (m *MQTTInstTool) InstallTools() error {
 	m.SetOSInterface(GetOSInterface())
 	err := m.InstallMQTT()
@@ -28,6 +31,8 @@ func (m *MQTTInstTool) InstallTools() error {
 	return nil
 }
 
+//TearDown shoud uninstall MQTT, but it is not required either for cloud or edge node.
+//It is defined so that MQTTInstTool implements ToolsInstaller interface
 func (m *MQTTInstTool) TearDown() error {
 	return nil
 }

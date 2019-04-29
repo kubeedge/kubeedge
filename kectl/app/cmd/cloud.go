@@ -29,7 +29,7 @@ var (
 cloud commands help in operating with KubeEdge's cloud component.
 `
 	cloudExample = `
-kectl cloud init <arguments> 
+kectl cloud init <options> 
 kectl cloud reset 
 `
 )
@@ -48,8 +48,4 @@ func NewCmdCloud(out io.Writer) *cobra.Command {
 	cmd.AddCommand(cloud.NewCloudInit(out, nil))
 	cmd.AddCommand(cloud.NewCloudReset(out))
 	return cmd
-}
-
-func init() {
-
 }

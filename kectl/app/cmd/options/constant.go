@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package options
 
 const (
@@ -34,9 +35,12 @@ const (
 	//DefaultCertPath is the default certificate path in edge node
 	DefaultCertPath = "/etc/kubeedge/certs"
 
+	//DefaultKubeEdgeVersion is the current default version of KubeEdge
 	DefaultKubeEdgeVersion = "0.2.1"
 
+	//DefaultDockerVersion is the current default version of Docker
 	DefaultDockerVersion = "18.06.0"
 
+	//DefaultK8SVersion is the current default version of K8S
 	DefaultK8SVersion = "1.14.1"
 )

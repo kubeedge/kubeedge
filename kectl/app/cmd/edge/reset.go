@@ -19,9 +19,10 @@ package cmd
 import (
 	"io"
 
+	"github.com/spf13/cobra"
+
 	"github.com/kubeedge/kubeedge/kectl/app/cmd/options"
 	"github.com/kubeedge/kubeedge/kectl/app/cmd/util"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -45,11 +46,15 @@ func NewEdgeReset(out io.Writer) *cobra.Command {
 		Long:    edgeResetLongDescription,
 		Example: edgeResetExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: Work your own magic here
+			// Tear down edge node. It includes
+			// 1. Removing edge node from api-server
+			// 2. killing edge_core process
 			TearDownEdgeNode(K8SAPIServerIPPort)
 		},
 	}
 
+	//This command requires to know the api-server address so that node can be removed from api-server
+	//2 methods, 1. To get it from the flag option and 2. To read from edge.yaml. TODO: method 2
 	cmd.Flags().StringVarP(&K8SAPIServerIPPort, options.K8SAPIServerIPPort, "s", K8SAPIServerIPPort,
 		"IP:Port address of cloud components host/VM")
 	cmd.MarkFlagRequired(options.K8SAPIServerIPPort)

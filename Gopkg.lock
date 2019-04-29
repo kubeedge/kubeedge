@@ -104,7 +104,7 @@
   revision = "bbbad097214e2918d8543d5201d12bfd7bca254d"
 
 [[projects]]
-  digest = "1:ddc6047cc0bffea7cbcff2ff94e6b8497dac08b2f0e74a12fb4a7ede1667b744"
+  digest = "0:"
   name = "github.com/astaxie/beego"
   packages = ["orm"]
   pruneopts = "UT"
@@ -426,15 +426,14 @@
   version = "v0.1"
 
 [[projects]]
-  digest = "1:9e61085198e66f3705dfd5de4371fff208a5f6dfe64662167277f0e53fe479ad"
+  digest = "1:9b2d81b3eb9308b375df51796c89b39dca2cb355fe510d2dedcfbb4cc7a529d2"
   name = "github.com/go-chassis/paas-lager"
   packages = [
     "third_party/forked/cloudfoundry/lager",
     "third_party/forked/cloudfoundry/lager/color",
   ]
   pruneopts = "UT"
-  revision = "005283cca84c31e4ee549c6fd280bbd8432503f0"
-  version = "v1.0.1"
+  revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
 
 [[projects]]
   branch = "master"
