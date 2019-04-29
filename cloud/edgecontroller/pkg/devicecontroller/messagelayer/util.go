@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource

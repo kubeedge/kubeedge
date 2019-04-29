@@ -8,9 +8,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/channelq"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/util"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/wsserver"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/wsserver"
 )
 
 type cloudHub struct {

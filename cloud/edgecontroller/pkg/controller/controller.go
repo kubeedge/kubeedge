@@ -6,10 +6,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/config"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/controller"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
 )
 
 // Controller use beehive context message layer

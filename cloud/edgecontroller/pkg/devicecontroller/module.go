@@ -6,10 +6,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/controller"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 )
 
 // DeviceController use beehive context message layer

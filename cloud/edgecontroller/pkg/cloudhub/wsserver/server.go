@@ -16,10 +16,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/channelq"
-	hubio "github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/io"
-	emodel "github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
+	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 
 	bhLog "github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"

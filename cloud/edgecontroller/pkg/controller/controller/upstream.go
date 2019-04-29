@@ -31,11 +31,11 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/config"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/types"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/controller/utils"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/types"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 
 	"k8s.io/api/core/v1"

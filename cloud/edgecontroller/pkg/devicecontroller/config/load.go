@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
 // UpdateDeviceStatusWorkers is the count of goroutines of update device status

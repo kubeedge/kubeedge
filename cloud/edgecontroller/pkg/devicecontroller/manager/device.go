@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/edgecontroller/pkg/devicecontroller/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis/devices/v1alpha1"
 )
 
 // DeviceManager is a manager watch device change event
