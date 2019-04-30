@@ -16,28 +16,12 @@ limitations under the License.
 
 package util
 
-import (
-	"bytes"
-	"errors"
-	"fmt"
-	"io"
-	"net"
-	"os"
-	"os/exec"
-	"strings"
-	"sync"
-)
-
 //Constants used by installers
 const (
-	KubeCloudCertificatePath   = "/etc/kubeedge/kubeedge/certificates/"
+	KubeCloudCertificatePath   = "/etc/kubeedge/"
 	KubeControllerConfig       = "/etc/kubeedge/kubeedge/cloud/conf/controller.yaml"
 	KubeCloudBinaryName        = "edgecontroller"
 	KubeCloudApiserverYamlPath = "/etc/kubernetes/manifests/kube-apiserver.yaml"
 	KubeCloudReplaceIndex      = 25
 	KubeCloudReplaceString     = "    - --insecure-bind-address=0.0.0.0\n"
 )
-
-type ToolsInstallerCloud interface {
-	InstallTools() error
-}

@@ -27,11 +27,11 @@ import (
 
 var (
 	cloudResetLongDescription = `
-cloud reset command will tear down KubeEdge 
+cloud reset command will tear down KubeEdge
 cloud component and stop K8S master node
 `
 	cloudResetExample = `
-kectl cloud reset 
+kectl cloud reset
 `
 )
 
@@ -44,7 +44,7 @@ func NewCloudReset(out io.Writer) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			// TODO: Work your own magic here
 			fmt.Println("cloud reset called")
-			TearDownEdgeNode()
+			TearDownCloud()
 		},
 		Example: cloudResetExample,
 		Args:    cobra.NoArgs,
@@ -53,10 +53,10 @@ func NewCloudReset(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-//TearDoen nodes will do kubeadm reset and kill edgecontroller
-func TearDownEdgeNode() {
+//Tear Down nodes will do kubeadm reset and kill edgecontroller
+func TearDownCloud() {
 	cloud := &util.KubeCloudInstTool{Common: util.Common{}}
-	cloud.ResetKubernetes()
 	cloud.KillEdgeController()
+	cloud.ResetKubernetes()
 	fmt.Println("Reset is sucessful")
 }

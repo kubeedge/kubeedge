@@ -36,7 +36,8 @@ If not installed, this command will help in download,
 install and execute on the host.
 `
 	cloudInitExample = `
-kectl cloud init  --docker-version= --kubernetes-version=<version> --kubeedge-version<version> --docker-version=<version>
+
+kectl cloud init  --docker-version= --kubernetes-version=<version> --kubeedge-version=<version>
 `
 )
 
@@ -49,10 +50,8 @@ type FlagData struct {
 func NewCloudInit(out io.Writer, init *options.InitOptions) *cobra.Command {
 	if init == nil {
 		init = newInitOptions()
-		fmt.Println("init is %v", init)
 	}
-
-	tools := make(map[string]util.ToolsInstallerCloud, 0)
+	tools := make(map[string]util.ToolsInstaller, 0)
 	flagVals := make(map[string]FlagData, 0)
 	var cmd = &cobra.Command{
 		Use:     "init",
@@ -61,8 +60,6 @@ func NewCloudInit(out io.Writer, init *options.InitOptions) *cobra.Command {
 		Example: cloudInitExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			// TODO: Work your own magic here
-			fmt.Println("cloud init called")
-			fmt.Println("Print: " + strings.Join(args, " "))
 			checkFlags := func(f *pflag.Flag) {
 				AddToolVals(f, flagVals)
 			}
@@ -81,44 +78,41 @@ func newInitOptions() *options.InitOptions {
 	var opts *options.InitOptions
 	opts = &options.InitOptions{}
 	opts.DockerVersion = options.DefaultDockerVersion
-	opts.KubeedgeVersion = options.DefaultKubeEdgeVersion
-	opts.Kubernetesversion = options.DefaultK8SVersion
+	opts.KubeEdgeVersion = options.DefaultKubeEdgeVersion
+	opts.KubernetesVersion = options.DefaultK8SVersion
 
 	return opts
 }
 
 func addJoinOtherFlags(cmd *cobra.Command, initOpts *options.InitOptions) {
 
-	cmd.Flags().StringVar(&initOpts.KubeedgeVersion, options.KubeedgeVersion, initOpts.KubeedgeVersion,
+	cmd.Flags().StringVar(&initOpts.KubeEdgeVersion, options.KubeedgeVersion, initOpts.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().StringVar(&initOpts.DockerVersion, options.DockerVersion, initOpts.DockerVersion,
 		"Use this key to download and use the required Docker version")
-	cmd.Flags().StringVar(&initOpts.Kubernetesversion, options.Kubernetesversion, initOpts.Kubernetesversion,
+	cmd.Flags().StringVar(&initOpts.KubernetesVersion, options.Kubernetesversion, initOpts.KubernetesVersion,
 		"Use this key to download and use the required Kubernetes version")
 }
 
-func Add2ToolsList(toolList map[string]util.ToolsInstallerCloud, flagData map[string]FlagData, initOptions *options.InitOptions) {
+func Add2ToolsList(toolList map[string]util.ToolsInstaller, flagData map[string]FlagData, initOptions *options.InitOptions) {
 	var kubeVer, dockerVer, k8sVer string
+
 	flgData, ok := flagData[options.KubeedgeVersion]
-	fmt.Println("flagdata kubeedgeversion is %v", flgData)
 	if ok {
 		fmt.Println(options.KubeedgeVersion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
 		kubeVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
-		kubeVer = initOptions.KubeedgeVersion
+		kubeVer = initOptions.KubeEdgeVersion
 	}
-	fmt.Println(options.KubeedgeVersion, "VAL:", kubeVer, "DEFVAL:", flgData.DefVal.(string))
 	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer}}
 
 	flgData, ok = flagData[options.DockerVersion]
-	fmt.Println("flagdata docker is %v", flgData)
 	if ok {
 		fmt.Println(options.DockerVersion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
 		dockerVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
 		dockerVer = initOptions.DockerVersion
 	}
-	fmt.Println(options.DockerVersion, "VAL:", dockerVer, "DEFVAL:", flgData.DefVal.(string))
 	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: flgData.DefVal.(string)}
 
 	flgData, ok = flagData[options.Kubernetesversion]
@@ -126,24 +120,20 @@ func Add2ToolsList(toolList map[string]util.ToolsInstallerCloud, flagData map[st
 		fmt.Println(options.Kubernetesversion, "VAL:", flgData.Val.(string), "DEFVAL:", flgData.DefVal.(string))
 		k8sVer = CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
-		k8sVer = initOptions.Kubernetesversion
+		k8sVer = initOptions.KubernetesVersion
 	}
-	fmt.Println(options.Kubernetesversion, "VAL:", k8sVer, "DEFVAL:", flgData.DefVal.(string))
 	toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: false, DefaultToolVer: flgData.DefVal.(string)}
 
-	fmt.Println(toolList)
 }
 
 func AddToolVals(f *pflag.Flag, flagData map[string]FlagData) {
-	fmt.Println(f.Name, "VAL:", f.Value, "DEFVAL:", f.DefValue)
 	flagData[f.Name] = FlagData{Val: f.Value.String(), DefVal: f.DefValue}
 }
 
-func Execute(toolList map[string]util.ToolsInstallerCloud) {
-	fmt.Println("in execute")
-	//Install all the required tools
+//Install all the required tools
+func Execute(toolList map[string]util.ToolsInstaller) {
+
 	for name, tool := range toolList {
-		fmt.Println("name is %v tool is %v", name, tool)
 		if name != "Cloud" {
 			err := tool.InstallTools()
 			if err != nil {

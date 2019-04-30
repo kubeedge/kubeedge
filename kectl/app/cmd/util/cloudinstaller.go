@@ -25,35 +25,37 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		return err
 	}
 	fmt.Println("Installation of kubeedge package is sucessfull")
-	err = cu.generatecertificates()
+	err = cu.generateCertificates()
 	if err != nil {
 		fmt.Println(" in err")
 		return err
 	}
-	fmt.Println("Certificates got genertaed and its kept in /etc/kubeedge/kubeedge certificates folder")
-	err = cu.tarcertificates()
+	fmt.Println("Certificates got generated at : /etc/kubeedge/")
+	err = cu.updateControlleryaml()
 	if err != nil {
 		return err
 	}
-	fmt.Println("Certificates got Tared and kept /etc/kubeedge/kubeedge/certificates folder Please copy the certificates to the respective edge node")
+	fmt.Println("Certificates got Updated at : /etc/kubeedge/kubeedge/cloud/conf/controller.yaml")
 
-	err = cu.startkubernetescluster()
+	err = cu.tarCertificates()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Certificates got Tared at : /etc/kubeedge/kubeedge/certificates folder, Please copy the certificates to the respective edge node")
+
+	err = cu.startKubernetescluster()
 	if err != nil {
 		return err
 	}
 	fmt.Println("Kubernetes cluster started")
-	err = cu.apiserverHealthcheck()
-	if err != nil {
-		return err
-	}
-	fmt.Println("")
-	err = cu.updatemanifests()
+
+	err = cu.updateManifests()
 	if err != nil {
 		return err
 	}
 	fmt.Println("Updation of manifests is sucessful")
 
-	err = cu.updatecontrolleryaml()
+	err = cu.updateControlleryaml()
 	if err != nil {
 		return err
 	}
@@ -69,8 +71,8 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	return nil
 }
 
-//Certifcates ca,cert will be generated in /etc/kubeedge/kubeedge/certificates
-func (cu *KubeCloudInstTool) generatecertificates() error {
+//generateCertificates  generates ca,cert in /etc/kubeedge
+func (cu *KubeCloudInstTool) generateCertificates() error {
 	cmd := &Command{Cmd: exec.Command("bash", "-x", "/etc/kubeedge/kubeedge/tools/certgen.sh", "genCertAndKey", "edge")}
 	err := cmd.ExecuteCmdShowOutput()
 	stdout := cmd.GetStdOutput()
@@ -83,28 +85,11 @@ func (cu *KubeCloudInstTool) generatecertificates() error {
 	return nil
 }
 
-//certificates tar file will be generated in /etc/kubeedge/kubeedge
-func (cu *KubeCloudInstTool) tarcertificates() error {
-
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "tar -cvzf certificates.tar certificates")}
-	cmd.Cmd.Dir = KubeEdgeConfigPath + "kubeedge" // or whatever directory it's in
-	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", "certificates not tared")
-		fmt.Println("in error")
-	}
-	fmt.Println(stdout)
-	return nil
-}
-
-//controller yaml ca and cert path will be replaces
-func (cu *KubeCloudInstTool) updatecontrolleryaml() error {
+//updateControlleryaml replaces certificate path in Controller.yaml
+func (cu *KubeCloudInstTool) updateControlleryaml() error {
 
 	filetoReplace := fmt.Sprintf("sed -i 's|ca: .*|ca: %sca/rootCA.crt|g' %s && sed -i 's|cert: .*|cert: %scerts/edge.crt|g' %s && sed -i 's|key: .*|key: %scerts/edge.key|g' %s ", KubeCloudCertificatePath, KubeControllerConfig, KubeCloudCertificatePath, KubeControllerConfig, KubeCloudCertificatePath, KubeControllerConfig)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoReplace)}
-	//cmd := &Command{Cmd: exec.Command("sh", "-c","sed -i 's|ca: .*|ca: ca/rootCA.crt|g' ",KubeCloudCertificatePath,KubeControllerConfig)}       // or whatever directory it's in
 	err := cmd.ExecuteCmdShowOutput()
 	stdout := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
@@ -116,9 +101,24 @@ func (cu *KubeCloudInstTool) updatecontrolleryaml() error {
 	return nil
 }
 
-//kubeadm init will be called and cluster will be started
-func (cu *KubeCloudInstTool) startkubernetescluster() error {
-	fmt.Println("in start kubernetes cluster")
+//tarCertificates,certs will be tared at /etc/kubeedge
+func (cu *KubeCloudInstTool) tarCertificates() error {
+
+	cmd := &Command{Cmd: exec.Command("sh", "-c", "tar -cvzf certs.tar edge.crt edge.key && cp -r certs.tar /etc/kubeedge")}
+	cmd.Cmd.Dir = KubeEdgePath + "/certs"
+
+	err := cmd.ExecuteCmdShowOutput()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", "certificates not tared")
+	}
+	fmt.Println(stdout)
+	return nil
+}
+
+//startKubernetescluster checks kubeadm version and calls kubeadm init
+func (cu *KubeCloudInstTool) startKubernetescluster() error {
 	var install bool
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "kubeadm version")}
 	cmd.ExecuteCommand()
@@ -137,7 +137,7 @@ func (cu *KubeCloudInstTool) startkubernetescluster() error {
 			fmt.Errorf("kubernetes Installation failed:%s", stdout)
 		}
 
-		cmd = &Command{Cmd: exec.Command("sh", "-c", "rm  $HOME/.kube/config && mkdir -p $HOME/.kube && echo y |  cp -i /etc/kubernetes/admin.conf $HOME/.kube/config &&  sudo chown $(id -u):$(id -g) $HOME/.kube/config")}
+		cmd = &Command{Cmd: exec.Command("sh", "-c", " mkdir -p $HOME/.kube && cp -r /etc/kubernetes/admin.conf $HOME/.kube/config &&  sudo chown $(id -u):$(id -g) $HOME/.kube/config")}
 		err = cmd.ExecuteCmdShowOutput()
 		stdout = cmd.GetStdOutput()
 		errout = cmd.GetStdErr()
@@ -148,9 +148,8 @@ func (cu *KubeCloudInstTool) startkubernetescluster() error {
 	return nil
 }
 
-//Kubernetes Manifests file will be updated by necessary parameters
-func (cu *KubeCloudInstTool) updatemanifests() error {
-
+//updateManifests updates Kubernetes Manifests file by necessary parameters
+func (cu *KubeCloudInstTool) updateManifests() error {
 	input, err := ioutil.ReadFile(KubeCloudApiserverYamlPath)
 	if err != nil {
 		fmt.Println(err)
@@ -205,10 +204,10 @@ func linesFromReader(r io.Reader) ([]string, error) {
 	return lines, nil
 }
 
-//starts the Edgecontroller
+//RunEdgeController starts the Edgecontroller
 func (u *KubeCloudInstTool) RunEdgeController() error {
 
-	filetoCopy := fmt.Sprintf("rm /usr/local/bin/%s && cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeCloudBinaryName, KubeEdgeConfigPath, KubeCloudBinaryName)
+	filetoCopy := fmt.Sprintf(" cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
@@ -217,11 +216,11 @@ func (u *KubeCloudInstTool) RunEdgeController() error {
 		return fmt.Errorf("%s", errout)
 
 	}
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgeConfigPath, KubeCloudBinaryName)
+	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	fmt.Println("binexec is %v", binExec)
 	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgeConfigPath)
+	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -232,30 +231,10 @@ func (u *KubeCloudInstTool) RunEdgeController() error {
 	return nil
 }
 
-//checks the health of Api server
-func (cu *KubeCloudInstTool) apiserverHealthcheck() error {
+func (ku *KubeCloudInstTool) TearDown() error {
+	ku.SetOSInterface(GetOSInterface())
+	ku.KillEdgeController()
+	ku.ResetKubernetes()
 
-	return nil
-}
-
-//kubeadm reset will be called
-func (u *KubeCloudInstTool) ResetKubernetes() error {
-	binExec := fmt.Sprintf("echo 'y' | kubeadm reset && sudo rm -rf ~/.kube")
-	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("kubernetes installation failed %s", errout)
-		println("in error")
-	}
-	return nil
-}
-
-//kills edgecontroller
-func (u *KubeCloudInstTool) KillEdgeController() error {
-	binExec := fmt.Sprintf("kill -9 $(ps aux | grep '[e]%s' | awk '{print $2}') && pkill -9 apiserver", KubeCloudBinaryName[1:])
-	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-	cmd.ExecuteCommand()
-	fmt.Println("Edgecontroller is stopped, For logs visit", KubeEdgeConfigPath+"kubeedge/cloud")
 	return nil
 }
