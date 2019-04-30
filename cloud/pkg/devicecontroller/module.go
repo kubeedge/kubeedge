@@ -1,6 +1,7 @@
 package devicecontroller
 
 import (
+	"os"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
@@ -39,14 +40,15 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 	dctl.stopChan = make(chan bool)
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		log.LOGGER.Warnf("New downstream controller failed with error: %s", err)
-		return
+		log.LOGGER.Errorf("New downstream controller failed with error: %s", err)
+		os.Exit(1)
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		log.LOGGER.Warnf("new upstream controller failed with error: %s", err)
-		return
+		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
+		os.Exit(1)
 	}
+
 	downstream.Start()
 	// wait for downstream controller to start and load deviceModels and devices
 	time.Sleep(1 * time.Second)

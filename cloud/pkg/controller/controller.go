@@ -37,7 +37,7 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 	config.Context = c
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
-		log.LOGGER.Warnf("new upstream controller failed with error: %s", err)
+		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	upstream.Start()
