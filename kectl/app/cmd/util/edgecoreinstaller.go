@@ -19,6 +19,7 @@ package util
 import (
 	"bytes"
 	"fmt"
+        "os"
 	"io/ioutil"
 	"os/exec"
 	"strings"
@@ -43,7 +44,8 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 		return err
 	}
 
-	err = ku.modifyEdgeYamlNodeJSON()
+        err = ku.createEdgeConfigFiles()
+       //err = ku.modifyEdgeYamlNodeJSON()
 	if err != nil {
 		return err
 	}
@@ -72,6 +74,61 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 // 	//TODO: IP format validation should be done
 // 	return nil
 // }
+
+func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
+
+       //This makes sure the path is created, if it already exists also it is fine
+       err := os.MkdirAll(KubeEdgeConfPath, os.ModePerm)
+       if err != nil {
+               return fmt.Errorf("not able to create %s folder path", KubeEdgeConfPath)
+       }
+
+       //Create edge.yaml
+       //Update edge.yaml, node ip to act as node id
+       //Get node ip address from the interface
+       edgeIP, err := GetInterfaceIP()
+       if err != nil {
+               return err
+       }
+       change1 := bytes.Replace(EdgeYaml, []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
+
+       serverIPAddr := strings.Split(ku.K8SApiServerIP, ":")[0]
+       change2 := bytes.Replace(change1, []byte(KubeEdgeToReplaceKey2), []byte(serverIPAddr), -1)
+
+       change3 := bytes.Replace(change2, []byte("2.0.0"), []byte(ku.ToolVersion), -1)
+       if err = ioutil.WriteFile(KubeEdgeConfigEdgeYaml, change3, 0666); err != nil {
+               return err
+       }
+
+       //Create logging.yaml
+       if err = ioutil.WriteFile(KubeEdgeConfigLoggingYaml, EdgeLoggingYaml, 0666); err != nil {
+               return err
+       }
+       //Create modules.yaml
+       if err = ioutil.WriteFile(KubeEdgeConfigModulesYaml, EdgeModulesYaml, 0666); err != nil {
+               return err
+       }
+
+       //Create node.json
+       rep := bytes.Replace([]byte(KubeEdgeNodeJSONContent), []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
+
+       if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, rep, 0666); err != nil {
+               return err
+       }
+
+       //Add edge node in api-server using kubectl command
+       //kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
+       nodeJSONApply := fmt.Sprintf("kubectl apply -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
+       cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONApply)}
+       err = cmd.ExecuteCmdShowOutput()
+       errout := cmd.GetStdErr()
+       if err != nil || errout != "" {
+           return fmt.Errorf("%s", errout)
+       }
+       fmt.Println(cmd.GetStdOutput())
+
+       return nil
+}
 
 //modifyEdgeYamlNodeJSON modifies the edge config files
 func (ku *KubeEdgeInstTool) modifyEdgeYamlNodeJSON() error {

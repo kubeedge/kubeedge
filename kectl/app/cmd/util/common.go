@@ -40,23 +40,26 @@ const (
 	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 
 	KubeEdgeDownloadURL     = "https://github.com/kubeedge/kubeedge/releases/download"
-	KubeEdgeConfigPath      = "/etc/kubeedge/"
+        KubeEdgePath            = "/etc/kubeedge/"
+        KubeEdgeConfPath        = KubeEdgePath + "kubeedge/edge/conf"
 	KubeEdgeBinaryName      = "edge_core"
-	KubeEdgeDefaultCertPath = KubeEdgeConfigPath + "certs/"
-	KubeEdgeConfigEdgeYaml  = KubeEdgeConfigPath + "kubeedge/edge/conf/edge.yaml"
+        KubeEdgeDefaultCertPath = KubeEdgePath + "certs/"
+        KubeEdgeConfigEdgeYaml  = KubeEdgeConfPath + "/edge.yaml"
 	KubeEdgeToReplaceKey1   = "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
 	KubeEdgeToReplaceKey2   = "0.0.0.0"
-	KubeEdgeConfigNodeJSON  = KubeEdgeConfigPath + "kubeedge/edge/conf/node.json"
+        KubeEdgeConfigNodeJSON  = KubeEdgeConfPath + "/node.json"
 	KubeEdgeNodeJSONContent = `{
-		"kind": "Node",
-		"apiVersion": "v1",
-		"metadata": {
-		  "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
-		  "labels": {
-			"name": "edge-node"
-		  }
-		}
-	  }`
+"kind": "Node",
+"apiVersion": "v1",
+"metadata": {
+    "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+    "labels": {
+        "name": "edge-node"
+    }
+  }
+}`
+        KubeEdgeConfigLoggingYaml = KubeEdgeConfPath + "/logging.yaml"
+        KubeEdgeConfigModulesYaml = KubeEdgeConfPath + "/modules.yaml"
 )
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -117,6 +120,7 @@ func (cm *Command) ExecuteCommand() {
 	cm.StdOut, err = cm.Cmd.Output()
 	if err != nil {
 		fmt.Println("Output failed: ", err)
+                cm.StdErr = []byte(err.Error())
 	}
 }
 

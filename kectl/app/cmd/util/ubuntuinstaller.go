@@ -371,23 +371,15 @@ func (u *UbuntuOS) InstallK8S() error {
 //the binary to /usr/local/bin path.
 func (u *UbuntuOS) InstallKubeEdge() error {
 	var (
-		confPath, dwnldURL string
+		dwnldURL string
 		cmd                *Command
 	)
 
 	//Create the /etc/kubeedge path if not exist.
-	src, err := os.Stat(KubeEdgeConfigPath)
-	if err == nil && src.IsDir() {
-		fmt.Println(KubeEdgeConfigPath, "is available")
-		goto DOWNLOADBINARY
-	}
-
-	confPath = fmt.Sprintf("mkdir %s", KubeEdgeConfigPath)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", confPath)}
-	cmd.ExecuteCommand()
-	fmt.Println("KubeEdge config path", KubeEdgeConfigPath, "is available")
-
-DOWNLOADBINARY:
+        err := os.MkdirAll(KubeEdgePath, os.ModePerm)
+        if err != nil {
+            return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+        }
 
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "dpkg --print-architecture")}
 	cmd.ExecuteCommand()
@@ -404,15 +396,15 @@ DOWNLOADBINARY:
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", u.KubeEdgeVersion, arch)
-	filePath := fmt.Sprintf("%s%s", KubeEdgeConfigPath, filename)
+	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	fileStat, err := os.Stat(filePath)
 	if err == nil && fileStat.Name() != "" {
-		fmt.Println("Expected or Default KubeEdge version", u.KubeEdgeVersion, "is already installed")
+		fmt.Println("Expected or Default KubeEdge version", u.KubeEdgeVersion, "is already downloaded")
 		goto SKIPDOWNLOADAND
 	}
 
 	//Download the tar from repo
-	dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgeConfigPath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
+	dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -422,7 +414,7 @@ DOWNLOADBINARY:
 	fmt.Println(cmd.GetStdOutput())
 
 SKIPDOWNLOADAND:
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgeConfigPath, KubeEdgeConfigPath, filename, KubeEdgeConfigPath, KubeEdgeBinaryName)
+	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", untarFileAndMove)}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -437,10 +429,10 @@ SKIPDOWNLOADAND:
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edge_core with logs being captured
 func (u *UbuntuOS) RunEdgeCore() error {
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgeConfigPath, KubeEdgeBinaryName)
+	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgeConfigPath)
+	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
@@ -448,7 +440,7 @@ func (u *UbuntuOS) RunEdgeCore() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-	fmt.Println("KubeEdge started running, For logs visit", KubeEdgeConfigPath+"edge/")
+	fmt.Println("KubeEdge started running, For logs visit", KubeEdgePath+"edge/")
 	return nil
 }
 
@@ -457,6 +449,6 @@ func (u *UbuntuOS) KillEdgeCore() error {
 	binExec := fmt.Sprintf("kill -9 $(ps aux | grep '[e]%s' | awk '{print $2}')", KubeEdgeBinaryName[1:])
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.ExecuteCommand()
-	fmt.Println("KubeEdge is stopped, For logs visit", KubeEdgeConfigPath+"edge/")
+	fmt.Println("KubeEdge is stopped, For logs visit", KubeEdgePath+"edge/")
 	return nil
 }
