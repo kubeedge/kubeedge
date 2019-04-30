@@ -370,16 +370,16 @@ func (f *FilterWriter) Write(p []byte) (n int, err error) {
 }
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue) {
+func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue) error {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
 	if !ok {
-		panic(fmt.Errorf("fail to load ca content"))
+		return fmt.Errorf("fail to load ca content")
 	}
 	cert, err := tls.X509KeyPair(config.Cert, config.Key)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	tlsConfig := tls.Config{
 		ClientCAs:    pool,
@@ -412,4 +412,6 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue) {
 	}
 	bhLog.LOGGER.Infof("Start cloud hub service")
 	go s.ListenAndServeTLS("", "")
+
+	return nil
 }
