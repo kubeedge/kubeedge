@@ -3,11 +3,13 @@ package edged
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"os"
 	"sync"
 	"time"
 
-	"k8s.io/api/core/v1"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -169,12 +171,12 @@ func (e *edged) Start(c *context.Context) {
 	e.context = c
 	if err := e.initializeModules(); err != nil {
 		log.LOGGER.Errorf("initialize module error: %v", err)
-		return
+		os.Exit(1)
 	}
 	err := e.makePodDir()
 	if err != nil {
 		log.LOGGER.Errorf("create pod dir [%s] failed: %v", e.getPodsDir(), err)
-		return
+		os.Exit(1)
 	}
 	e.metaClient = metaclient.New(c)
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
