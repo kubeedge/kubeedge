@@ -2,8 +2,10 @@ package cloudhub
 
 import (
 	"io/ioutil"
+	"os"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
@@ -33,16 +35,19 @@ func (a *cloudHub) Start(c *context.Context) {
 
 	cafile, err := config.CONFIG.GetValue("cloudhub.ca").ToString()
 	if err != nil {
+		log.LOGGER.Info("missing cloudhub.ca configuration key, loading default path and filename ./" + chconfig.DefaultCAFile)
 		cafile = chconfig.DefaultCAFile
 	}
 
 	certfile, err := config.CONFIG.GetValue("cloudhub.cert").ToString()
 	if err != nil {
+		log.LOGGER.Info("missing cloudhub.cert configuration key, loading default path and filename ./" + chconfig.DefaultCertFile)
 		certfile = chconfig.DefaultCertFile
 	}
 
 	keyfile, err := config.CONFIG.GetValue("cloudhub.key").ToString()
 	if err != nil {
+		log.LOGGER.Info("missing cloudhub.key configuration key, loading default path and filename ./" + chconfig.DefaultKeyFile)
 		keyfile = chconfig.DefaultKeyFile
 	}
 
@@ -61,14 +66,19 @@ func (a *cloudHub) Start(c *context.Context) {
 		errs = append(errs, err.Error())
 	}
 
-	if len(errs) <= 0 {
+	if len(errs) > 0 {
 		//  TBD : add code for to sync graceful exit of modules
-		return
+		log.LOGGER.Errorf("cloudhub failed with errors : %v", errs)
+		os.Exit(1)
 	}
 
 	eventq, err := channelq.NewChannelEventQueue(c)
 	// start the cloudhub server
-	wsserver.StartCloudHub(util.HubConfig, eventq)
+	err = wsserver.StartCloudHub(util.HubConfig, eventq)
+	if err != nil {
+		log.LOGGER.Errorf("cloudhub start failed with errors : %v", err)
+		os.Exit(1)
+	}
 	wsserver.EventHandler.Context = c
 	stopchan := make(chan bool)
 	<-stopchan
