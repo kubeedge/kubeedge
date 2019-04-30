@@ -67,7 +67,6 @@ func (a *cloudHub) Start(c *context.Context) {
 	}
 
 	if len(errs) > 0 {
-		//  TBD : add code for to sync graceful exit of modules
 		log.LOGGER.Errorf("cloudhub failed with errors : %v", errs)
 		os.Exit(1)
 	}
