@@ -33,7 +33,7 @@ With KubeEdge, users can orchestrate apps, manage devices and monitor app and de
 
 It is easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge.
 
-## Introduction
+## Introduction1
 
 KubeEdge is composed of the following components:
 
