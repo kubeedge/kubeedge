@@ -85,12 +85,12 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("100m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("256Mi"),
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
 							Limits: v1.ResourceList{
 								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("512Mi"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
 						},
 						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
