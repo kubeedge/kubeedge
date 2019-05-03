@@ -65,7 +65,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		Expect(err).Should(BeNil())
 		//Register the Edge Node to Master
-		err = utils.RegisterNodeToMaster(ctx, nodeName, NodeHandler, nodeSelector)
+		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.ApiServer+NodeHandler, nodeSelector)
 		Expect(err).Should(BeNil())
 		//Run ./edge_core after node registration
 		cmd = exec.Command("sh", "-c", runEdgecore)
@@ -73,7 +73,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		//Check node successfully registered or not
 		Eventually(func() string {
-			status := utils.CheckNodeReadyStatus(ctx, NodeHandler, nodeName)
+			status := utils.CheckNodeReadyStatus(ctx.Cfg.ApiServer+NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
@@ -82,10 +82,10 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("After Suite Execution....!")
 		//Deregister the edge node from master
-		err := utils.DeRegisterNodeFromMaster(ctx, NodeHandler, nodeName)
+		err := utils.DeRegisterNodeFromMaster(ctx.Cfg.ApiServer+NodeHandler, nodeName)
 		Expect(err).Should(BeNil())
 		Eventually(func() int {
-			statuscode := utils.CheckNodeDeleteStatus(ctx, NodeHandler, nodeName)
+			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.ApiServer+NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")

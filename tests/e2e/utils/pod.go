@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
 const (
@@ -131,6 +132,14 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 
 //CheckPodDeleteState function to check the Pod state
 func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
+	var count int
+	//skip the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
+	for _, pod := range podlist.Items {
+		if strings.Contains(pod.Name, "deployment-"){
+			count++
+		}
+	}
+	podCount := len(podlist.Items) - count
 	Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
@@ -141,7 +150,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "240s", "4s").Should(Equal(len(podlist.Items)), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "240s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
 
 }
 
