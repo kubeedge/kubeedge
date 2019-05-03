@@ -56,34 +56,34 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	//Create controller.yaml
-	_, err = os.Stat(KubeEdgeControllerYaml)
-	if err != nil {
+	//_, err = os.Stat(KubeEdgeControllerYaml)
+	//if err != nil {
 		if err = ioutil.WriteFile(KubeEdgeControllerYaml, ControllerYaml, 0666); err != nil {
 			return err
 		}
-	} else {
-		fmt.Println(KubeEdgeControllerYaml, "is already available, hence not overwriting it")
-	}
+	//} else {
+	//	fmt.Println(KubeEdgeControllerYaml, "is already available, hence not overwriting it")
+	//}
 
 	//Create logger.yaml
-	_, err = os.Stat(KubeEdgeControllerLoggingYaml)
-	if err != nil {
+	//_, err = os.Stat(KubeEdgeControllerLoggingYaml)
+	//if err != nil {
 		if err = ioutil.WriteFile(KubeEdgeControllerLoggingYaml, ControllerLoggingYaml, 0666); err != nil {
 			return err
 		}
-	} else {
-		fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
-	}
+	//} else {
+	//	fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
+	//}
 
 	//Create modules.yaml
-	_, err = os.Stat(KubeEdgeControllerModulesYaml)
-	if err != nil {
+	//_, err = os.Stat(KubeEdgeControllerModulesYaml)
+	//if err != nil {
 		if err = ioutil.WriteFile(KubeEdgeControllerModulesYaml, ControllerModulesYaml, 0666); err != nil {
 			return err
 		}
-	} else {
-		fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
-	}
+	//} else {
+	//	fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
+	//}
 
 	time.Sleep(1 * time.Second)
 
