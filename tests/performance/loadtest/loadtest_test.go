@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
+	"fmt"
 )
 
 var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
@@ -96,7 +97,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			utils.CheckPodRunningState(ctx.Cfg.ApiServer2+AppHandler, podlist)
 		})
 
-		It("PERF_LOADTEST_POD_10: Create deployment and check the pods are coming up correctly", func() {
+		It("PERF_LOADTEST_POD_50: Create deployment and check the pods are coming up correctly", func() {
 			var deploymentList v1.DeploymentList
 			podlist = metav1.PodList{}
 			replica := 50
@@ -118,7 +119,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			utils.CheckPodRunningState(ctx.Cfg.ApiServer2+AppHandler, podlist)
 		})
 
-		It("PERF_LOADTEST_POD_10: Create deployment and check the pods are coming up correctly", func() {
+		It("PERF_LOADTEST_POD_75: Create deployment and check the pods are coming up correctly", func() {
 			var deploymentList v1.DeploymentList
 			podlist = metav1.PodList{}
 			replica := 75
@@ -161,5 +162,33 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			}
 			utils.CheckPodRunningState(ctx.Cfg.ApiServer2+AppHandler, podlist)
 		})
+
+		Measure("MEASURE_PERF_NODETEST_NODES_100: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
+			podlist = metav1.PodList{}
+			runtime := b.Time("runtime", func() {
+				var deploymentList v1.DeploymentList
+				podlist = metav1.PodList{}
+				replica := 100
+				//Generate the random string and assign as a UID
+				UID = "edgecore-app-" + utils.GetRandomString(5)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.ApiServer2+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				Expect(IsAppDeployed).Should(BeTrue())
+				err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer2+DeploymentHandler)
+				Expect(err).To(BeNil())
+				for _, deployment := range deploymentList.Items {
+					if deployment.Name == UID {
+						//label := nodeName
+						time.Sleep(2 * time.Second)
+						podlist, err = utils.GetPods(ctx.Cfg.ApiServer2+AppHandler, "")
+						Expect(err).To(BeNil())
+						break
+					}
+				}
+				utils.CheckPodRunningState(ctx.Cfg.ApiServer2+AppHandler, podlist)
+			})
+
+			fmt.Println(runtime.Seconds())
+
+		}, 5)
 	})
 })

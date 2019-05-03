@@ -161,6 +161,8 @@ func DeleteEdgeDeployments(apiServer string, nodes int){
 		return count
 	}, "60s", "4s").Should(Equal(nodes), "EdgeNode deleton is unsuccessfull !!")
 
+	NodeInfo = nil
+
 }
 
 func DeleteCloudDeployment(apiserver string){
