@@ -40,13 +40,13 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 	var cloudNode string
 	var cloudHub string
 	var cloudCoreHostIP string
+	var podlist metav1.PodList
 	//var toTaint bool
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 		utils.InfoV6("Kubeedge deployment Load test Begin !!")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
-		var podlist metav1.PodList
 
 		//Create configMap for CloudCore
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
@@ -94,6 +94,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		By("Kubeedge deployment Load test End !!....!")
 
 		DeleteEdgeDeployments(ctx.Cfg.ApiServer2, ctx.Cfg.NumOfNodes)
+		utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2, podlist)
 		//untaint Node
 		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.ApiServer2+NodeHandler+"/"+EdgeNode)
 		Expect(err).Should(BeNil())

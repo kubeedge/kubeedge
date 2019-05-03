@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	metav1 "k8s.io/api/core/v1"
+	"fmt"
 )
 
 
@@ -43,23 +44,39 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			// Print result
 			testTimer.PrintResult()
 			DeleteEdgeDeployments(ctx.Cfg.ApiServer2, NoOfEdgeNodes)
+			utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2+AppHandler, podlist)
 		})
 
 		It("PERF_NODETEST_NODES_1: Create KubeEdge Node Deployment, Measure Node Ready time", func() {
-			NoOfEdgeNodes=1
+			NoOfEdgeNodes=20
+			podlist = metav1.PodList{}
 			podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
 				ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 		})
 		It("PERF_NODETEST_NODES_5: Create 5 KubeEdge Node Deployment, Measure Node Ready time", func() {
+			podlist = metav1.PodList{}
 			NoOfEdgeNodes=5
 			podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
 				ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 		})
-		It("PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func() {
-			NoOfEdgeNodes=10
+
+		It("PERF_NODETEST_NODES_5: Create 5 KubeEdge Node Deployment, Measure Node Ready time", func() {
+			podlist = metav1.PodList{}
+			NoOfEdgeNodes=5
 			podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
 				ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 		})
+		Measure("PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
+			podlist = metav1.PodList{}
+			runtime := b.Time("runtime", func() {
+				NoOfEdgeNodes=20
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
+			})
+
+			fmt.Println(runtime.Seconds())
+
+		}, 5)
 
 	})
 })
