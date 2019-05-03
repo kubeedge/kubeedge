@@ -18,17 +18,17 @@ This design doc is to enable customers deploy and run lightweight clusters at ed
 
 ## Motivation
 For these use cases, when considering large set of edge locations, the resource usage of management plane adding together will be high. 
-K3s is an opensource project enabling lightweight kubernetes cluster including the light control plane and worker components. 
+K3s is an opensource project enabling lightweight Kubernetes cluster including the light control plane and worker components. 
 KubeEdge is the other opensource project enabling lightweight k8s client on the edge nodes. The KubeEdge agent runtime memory footprint is 
-10MB and it supports kubernetes primitives. Meanwhile KubEdge is targeted for Edge/IOT computing with many functionality enablements. 
+10MB and it supports Kubernetes primitives. Meanwhile KubeEdge is targeted for Edge/IOT computing with many functionality enablements. 
 
-By integrating KubeEdge and K3s, this proposal is to allow customers to run an efficient kubernetes cluster for Edge/IOT computing. 
+By integrating KubeEdge and K3s, this proposal enables customers to run an efficient kubernetes cluster for Edge/IOT computing. 
 
 ## Assumptions
 Here we assume a cluster is deployed at edge location including the management control plane. 
 For the management control plane to manage some scale of edge worker nodes, the hosting master node needs to have sufficient resources. 
 The assumptions are
-1. EdgeSite cluster master node is of no less than 2 CPUs and no less than 1GB memories
+1. EdgeSite cluster master node is of no less than 2 CPUs and no less than 1GB memory
 2. If high availability is required, 2-3 master nodes are needed at different edge locations
 3. The same Kubernetes security (authN and authZ) mechanisms are used to ensure the secure handshake between master and worker nodes
 4. The same K8s HA mechanism is to be used to enable HA
