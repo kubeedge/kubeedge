@@ -42,7 +42,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
-			DeleteEdgeDeployments(ctx.Cfg.ApiServer2, NoOfEdgeNodes)
+			DeleteEdgeDeployments(ctx.Cfg.ApiServer, ctx.Cfg.ApiServer2, NoOfEdgeNodes)
 			utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2+AppHandler, podlist)
 		})
 
@@ -50,7 +50,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 1
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
 					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
@@ -59,7 +59,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 5
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
 					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
@@ -69,7 +69,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 10
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
 					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
@@ -78,7 +78,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 20
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
 					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)

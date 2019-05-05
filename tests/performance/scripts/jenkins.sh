@@ -17,14 +17,13 @@ echo $PWD
 curpath=$PWD
 PWD=${curpath}/tests/performance
 sudo rm -rf $PWD/loadtest/loadtest.test
+sudo rm -rf $PWD/nodedensity/nodedensity.test
+sudo rm -rf $PWD/hubtest/hubtest.test
 
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
 bash -x $PWD/scripts/compileperf.sh $1
-
-export MASTER_IP=121.244.95.60
-export CLOUD_IP=34.74.168.208
 
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/runperf.sh $1

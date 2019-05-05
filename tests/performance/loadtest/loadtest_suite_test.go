@@ -39,6 +39,7 @@ var (
 func TestEdgecoreK8sDeployment(t *testing.T) {
 	var cloudHub string
 	var cloudCoreHostIP string
+	var cloudCoreNodeName string
 	var podlist metav1.PodList
 	//var toTaint bool
 	RegisterFailHandler(Fail)
@@ -63,6 +64,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
 				cloudCoreHostIP = pod.Status.HostIP
+				cloudCoreNodeName = pod.Spec.NodeName
 			}
 			break
 		}
@@ -76,27 +78,21 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		str2 := strconv.FormatInt(int64(nodePort), 10)
 		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
 		//Deploye edgecore as a k8s resource to cluster-2
-		podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer2+NodeHandler,
+		podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
 			ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, ctx.Cfg.NumOfNodes)
-		for _, pod := range podlist.Items {
-			if strings.Contains(pod.Name, "edgecore-deployment") {
-				EdgeNode = pod.Spec.NodeName
-			}
-			break
-		}
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
 		ToTaint = true
-		err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.ApiServer2+NodeHandler+"/"+EdgeNode)
+		err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.ApiServer+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
 		ToTaint = false
 	})
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")
 
-		DeleteEdgeDeployments(ctx.Cfg.ApiServer2, ctx.Cfg.NumOfNodes)
+		DeleteEdgeDeployments(ctx.Cfg.ApiServer, ctx.Cfg.ApiServer2, ctx.Cfg.NumOfNodes)
 		utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2, podlist)
 		//untaint Node
-		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.ApiServer2+NodeHandler+"/"+EdgeNode)
+		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.ApiServer+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
 		DeleteCloudDeployment(ctx.Cfg.ApiServer)
 
