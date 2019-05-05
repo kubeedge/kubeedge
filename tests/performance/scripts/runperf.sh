@@ -37,8 +37,8 @@ cat >config.json<<END
         "node_num": 10,
         "imagerepo": "pavan187",
         "k8smaster2": "http://$MASTER_IP_2:12458",
-        "cloudimageurl": "pavan187/cloudcore:v1.0",
-        "edgeimageurl": "pavan187/edgecore:latest",
+        "cloudimageurl": "pavan187/cloudcore:v2.1",
+        "edgeimageurl": "pavan187/edgecore:v2.1",
         "namespace":"default"
 }
 END
@@ -49,6 +49,7 @@ if [ $# -eq 0 ]
     #run testcase
     ./loadtest/loadtest.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
     ./nodedensity/nodedensity.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
+    ./hubtest/hubtest.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
 else
     ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/$compilemodule_test.log && :> /tmp/perf_test.log
 fi
