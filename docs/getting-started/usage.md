@@ -83,6 +83,12 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     + cloudhub.cert
     + cloudhub.key
 
++ Create device model and device CRDs.
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
+    kubectl create -f devices_v1alpha1_devicemodel.yaml
+    kubectl create -f devices_v1alpha1_device.yaml
+    ```
 + Run cloud
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
