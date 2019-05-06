@@ -1,5 +1,5 @@
 ARG BUILD_FROM=golang:1.12-alpine3.9
-ARG RUN_FROM=docker
+ARG RUN_FROM=docker:dind
 
 FROM ${BUILD_FROM} AS builder
 

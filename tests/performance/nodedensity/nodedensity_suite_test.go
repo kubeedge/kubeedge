@@ -31,13 +31,12 @@ import (
 
 //context to load config and access across the package
 var (
-	ctx            *utils.TestContext
-	cfg            utils.Config
+	ctx      *utils.TestContext
+	cfg      utils.Config
 	cloudHub string
 )
 
 func TestEdgecoreK8sDeployment(t *testing.T) {
-	var cloudNode string
 	var cloudCoreHostIP string
 	var podlist metav1.PodList
 	//var toTaint bool
@@ -46,13 +45,14 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		utils.InfoV6("Kubeedge deployment Load test Begin !!")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
-
-
+		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
+		err := ApplyLabel(ctx.Cfg.ApiServer2 + NodeHandler)
+		Expect(err).Should(BeNil())
 		//Create configMap for CloudCore
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
 		//Deploye cloudcore as a k8s resource to cluster-1
-		err := HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.ApiServer,
+		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.ApiServer,
 			ctx.Cfg.ApiServer+ConfigmapHandler, ctx.Cfg.ApiServer+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
@@ -61,7 +61,6 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		Expect(err).To(BeNil())
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
-				cloudNode = pod.Spec.NodeName
 				cloudCoreHostIP = pod.Status.HostIP
 			}
 			break
@@ -74,7 +73,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		//Create a nodePort Service to access the cloud Service from the cluster nodes
 		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.ApiServer+ServiceHandler)
 		str2 := strconv.FormatInt(int64(nodePort), 10)
-		cloudHub = "wss://"+cloudCoreHostIP+":"+ str2
+		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
 		//Deploye edgecore as a k8s resource to cluster-2
 	})
 	AfterSuite(func() {
