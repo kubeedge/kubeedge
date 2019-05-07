@@ -48,6 +48,10 @@ cloud_lint:
 e2e_test:
 	bash tests/e2e/scripts/execute.sh
 
+.PHONY: performance_test
+performance_test:
+	bash tests/performance/scripts/jenkins.sh
+
 IMAGE_TAG ?= $(shell git describe --tags)
 
 .PHONY: cloudimage

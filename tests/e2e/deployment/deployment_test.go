@@ -75,8 +75,8 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			var podlist metav1.PodList
 			replica := 1
 			//Generate the random string and assign as a UID
-			UID = "deployment-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, replica)
+			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "",replica)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
 			Expect(err).To(BeNil())
@@ -95,8 +95,8 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			var podlist metav1.PodList
 			replica := 3
 			//Generate the random string and assign as a UID
-			UID = "deployment-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, replica)
+			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
 			Expect(err).To(BeNil())
@@ -116,8 +116,8 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			var podlist metav1.PodList
 			replica := 3
 			//Generate the random string and assign as a UID
-			UID = "deployment-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, replica)
+			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
 			Expect(err).To(BeNil())

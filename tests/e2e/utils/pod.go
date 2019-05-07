@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
 const (
@@ -125,12 +126,20 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "240s", "4s").Should(Equal(len(podlist.Items)), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "1200s", "4s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
 
 }
 
 //CheckPodDeleteState function to check the Pod state
 func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
+	var count int
+	//skip the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
+	for _, pod := range podlist.Items {
+		if strings.Contains(pod.Name, "deployment-"){
+			count++
+		}
+	}
+	podCount := len(podlist.Items) - count
 	Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
@@ -141,7 +150,31 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "240s", "4s").Should(Equal(len(podlist.Items)), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "1200s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
+
+}
+
+//CheckPodDeleteState function to check the Pod state
+func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
+	var count int
+	//count the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
+	for _, pod := range podlist.Items {
+		if strings.Contains(pod.Name, "deployment-"){
+			count++
+		}
+	}
+	//podCount := len(podlist.Items) - count
+	Eventually(func() int {
+		var count int
+		for _, pod := range podlist.Items {
+			status, statusCode := GetPodState(apiserver + "/" + pod.Name)
+			InfoV2("PodName: %s status: %s StatusCode: %d", pod.Name, status, statusCode)
+			if statusCode == 404 {
+				count++
+			}
+		}
+		return count
+	}, "240s", "4s").Should(Equal(count), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
 
 }
 

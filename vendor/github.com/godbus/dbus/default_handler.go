@@ -45,7 +45,7 @@ func (h *defaultHandler) introspectPath(path ObjectPath) string {
 	subpath := make(map[string]struct{})
 	var xml bytes.Buffer
 	xml.WriteString("<node>")
-	for obj := range h.objects {
+	for obj, _ := range h.objects {
 		p := string(path)
 		if p != "/" {
 			p += "/"
@@ -55,7 +55,7 @@ func (h *defaultHandler) introspectPath(path ObjectPath) string {
 			subpath[node_name] = struct{}{}
 		}
 	}
-	for s := range subpath {
+	for s, _ := range subpath {
 		xml.WriteString("\n\t<node name=\"" + s + "\"/>")
 	}
 	xml.WriteString("\n</node>")

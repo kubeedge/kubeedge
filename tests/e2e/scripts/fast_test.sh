@@ -32,7 +32,7 @@ cat >config.json<<END
 {
         "edgedEndpoint": "http://127.0.0.1:10255",
         "image_url": ["nginx", "hello-world"],
-        "apiserver":"http://$MASTER_IP:12418"
+        "K8smaster1":"http://$MASTER_IP:12418"
 }
 END
 
