@@ -32,6 +32,8 @@ status: pending
 
 Security is a paramount requirement for edge computing architecture as security breaches can make a complete organization to come to a halt (IIot) , data breach can lead to privacy issues and also control of the complete edge computing infrastructure. Each computation process and communication is required to be secure and auditable which requires a strong identity framework which supports assignment of identities for every workload and device, attestation of identities, rotation of secrets, blocking invalid identities from communication channels and information that helps better auditing. Traditional methods of network isolation strategies pose difficulty with scalabiliy and mobility of user devices and applications as network policies and user-specific edge node security management requires manual intervention from administrators and are prone to human errors.
 
+In the context of edge computing, there is a need for decentralized security framework, which works independently of centralized server clusters. Such framework enables all edge computing framework to be able to authenticate and authorize services without a need to communicate to centralized server. A partial dependency of centralized server is still required for administration configuration roles which are required to check who is permitted to change the edge security framework policies.
+
 ### Goals (in security-version 0.1)
 * Ability to assign identities for edge nodes and workloads.
 * Ability to attest the identities assigned.
@@ -53,12 +55,43 @@ Security is a paramount requirement for edge computing architecture as security 
 
 ## Proposal
 * Use SPIFFE specification based SPIRE for implementation of identity servers.
-TBD : Information about spire
-* Architecture goal.
-TBD : Overall architecture
 
-* PoC without KubeEdge integration.
-TBD : Link to PoC example
+### SPIFFE and SPIRE
+The Secure Production Identity Framework For Everyone (SPIFFE) Project defines a framework and set of standards for identifying and securing communications between services. SPIFFE enables enterprises to transform their security posture from just protecting the edge to consistently securing all inter-service communications deep within their applications. SPIFFE recommends industry standards like TLS and JWT for forming a identity document for every service. The service-level identity AuthN and AuthZ removes the dependency of complex network-level ACL strategies.
+
+More information about SPIFFE can be found at https://github.com/spiffe/spiffe.
+
+SPIRE (SPIFFE Runtime Environment) is a reference implementation of SPIFFE specification. SPIRE manages identities for node and workloads. It provides API for controlling attestation policies and identity issuance and rotation strategies.
+
+More information about SPIRE can be found at https://github.com/spiffe/spire.
+
+### Benefits
+Node attestation: Only verifiable edge nodes can join the edge clusters. Every node is issued an identity on verification. In case of failed node attestations, no identity documents can be issued for services running on the node.
+
+Workload attestation: Only verifiable workload can run on edge nodes. In case of failed workload attestations, there are no identities issues for the workloads. All communications are blocked from unverified workloads.
+
+Certificate rotation: Short-lived certificates are generated and rotation policies can be configured for every service communication. There is no need for custom agents and reliance on specific orchestrators for certificate rotation configuration and management.
+
+Automated non-root CA certificate heirarchical deployments: Edge spire servers can be configured to not share any root CA chain for downstream nodes and workloads.
+
+### Why not Kubernetes secrets?
+
+* Kubernetes secrets work in a centralized model of secret distribution. To support offline scenarios, usage of long-lived certificates are used. Usage of long-lived certificates expose keys and certificates for longer duration which will enable theft and therefore are a higher value to an attacker since a stolen key enables the attacker to impersonate the service.
+* Known risks of using Kubernetes secrets (here)[https://kubernetes.io/docs/concepts/configuration/secret/#risks]. The presented solution mitigates risks related to protection of secret by application, secret visibility to other instance of application, impersonation of application instance (though, this requires a stronger method of workload selector used for attestation) and accidental storage of secretes on shared volumes by storing in-memory. In-memory storage have issues but pose a harder problem. A better notification framework will be proposed in the forthcoming versions.
+
+## Architecture goal.
+
+* High-level architecture that is achieved in the presented design.\
+
+<img src="../images/security/SpireEdgev0.1-SpireEdgeIntegrationDetailed.png">
+
+* For reference, a PoC without integration with KubeEdge is present in examples.
+
+https://github.com/kubeedge/examples/blob/master/security-demo/README.md
+
+Demo video can be found in the following link:
+
+https://www.youtube.com/watch?v=Nq9EzTrWTRM&t=24s
 
 ### Use Cases
 
