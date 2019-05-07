@@ -45,17 +45,18 @@ KubeEdge is composed of the following components:
 
 <img src="./docs/images/kubeedge_arch.png">
 
+## Usage
+
+* [Manual Installation of Docker, Kubernetes, Mosquitto](./docs/getting-started/usage.md#prerequisites)
+* [One click Kubeedge Installer to install both Cloud and Edge nodes](./keadm/README.md)
+* [Run KubeEdge](./docs/getting-started/usage.md#run-kubeedge)
+* [Deploy Application](./docs/getting-started/usage.md#deploy-application)
+* [Run Tests](./docs/getting-started/usage.md#run-tests)
+
 ## Roadmap
 
 * [Release 1.0 onwards](./docs/getting-started/roadmap.md#release-1.0-onwards)
 * [Release 0.3](./docs/getting-started/roadmap.md#release-0.3) - Plan to Release on 31 May 2019
-
-## Usage
-
-* [Prerequisites](./docs/getting-started/usage.md#prerequisites)
-* [Run KubeEdge](./docs/getting-started/usage.md#run-kubeedge)
-* [Deploy Application](./docs/getting-started/usage.md#deploy-application)
-* [Run Tests](./docs/getting-started/usage.md#run-tests)
 
 ## Meeting
 
@@ -63,7 +64,7 @@ Regular Community Meeting: Wednesday at 11:00 Beijing Time (biweekly).
 
 - [Meeting notes and agenda](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [Meeting recordings](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
-- [Meeting link](https://zoom.us/j/861913470)
+- [Meeting link](https://zoom.us/j/4167237304)
 
 ## Documentation
 

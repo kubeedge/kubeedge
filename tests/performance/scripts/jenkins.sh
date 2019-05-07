@@ -13,18 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [ "${1}" == "--help" ]; then
+  cat <<EOF
+Usage: $(basename $0) <tests>
+
+  <tests>        the performance tests will be performed, it could be one of [loadtest, nodedensity, hubtest],
+                 empty means all the performance tests will be performed.
+Examples:
+  $(basename $0)
+  $(basename $0) loadtest
+  $(basename $0) nodedensity
+  $(basename $0) hubtest
+
+EOF
+  exit 0
+fi
+
 echo $PWD
 curpath=$PWD
 PWD=${curpath}/tests/performance
 sudo rm -rf $PWD/loadtest/loadtest.test
+sudo rm -rf $PWD/nodedensity/nodedensity.test
+sudo rm -rf $PWD/hubtest/hubtest.test
 
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
 bash -x $PWD/scripts/compileperf.sh $1
-
-export MASTER_IP=121.244.95.60
-export CLOUD_IP=34.74.168.208
 
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/runperf.sh $1

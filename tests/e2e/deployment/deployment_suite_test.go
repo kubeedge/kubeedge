@@ -30,10 +30,10 @@ import (
 
 //context to load config and access across the package
 var (
-	ctx *utils.TestContext
-	cfg utils.Config
+	ctx          *utils.TestContext
+	cfg          utils.Config
 	nodeSelector string
-	nodeName string
+	nodeName     string
 )
 
 var (
@@ -55,7 +55,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		err := utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())
 		//Do the neccessary config changes in Cloud and Edge nodes
-		cmd = exec.Command("bash", "-x", "scripts/setup.sh", nodeName, ctx.Cfg.ApiServer)
+		cmd = exec.Command("bash", "-x", "scripts/setup.sh", nodeName, ctx.Cfg.K8SMasterForKubeEdge)
 		err = utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
@@ -65,7 +65,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		Expect(err).Should(BeNil())
 		//Register the Edge Node to Master
-		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.ApiServer+NodeHandler, nodeSelector)
+		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeSelector)
 		Expect(err).Should(BeNil())
 		//Run ./edge_core after node registration
 		cmd = exec.Command("sh", "-c", runEdgecore)
@@ -73,7 +73,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		//Check node successfully registered or not
 		Eventually(func() string {
-			status := utils.CheckNodeReadyStatus(ctx.Cfg.ApiServer+NodeHandler, nodeName)
+			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
@@ -82,10 +82,10 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("After Suite Execution....!")
 		//Deregister the edge node from master
-		err := utils.DeRegisterNodeFromMaster(ctx.Cfg.ApiServer+NodeHandler, nodeName)
+		err := utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
 		Expect(err).Should(BeNil())
 		Eventually(func() int {
-			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.ApiServer+NodeHandler, nodeName)
+			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")

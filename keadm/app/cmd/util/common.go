@@ -18,16 +18,16 @@ package util
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
 
 	"github.com/spf13/pflag"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
 //Constants used by installers
@@ -47,8 +47,6 @@ const (
 	KubeEdgeBinaryName        = "edge_core"
 	KubeEdgeDefaultCertPath   = KubeEdgePath + "certs/"
 	KubeEdgeConfigEdgeYaml    = KubeEdgeConfPath + "/edge.yaml"
-	KubeEdgeToReplaceKey1     = "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
-	KubeEdgeToReplaceKey2     = "0.0.0.0"
 	KubeEdgeConfigNodeJSON    = KubeEdgeConfPath + "/node.json"
 	KubeEdgeConfigLoggingYaml = KubeEdgeConfPath + "/logging.yaml"
 	KubeEdgeConfigModulesYaml = KubeEdgeConfPath + "/modules.yaml"
@@ -65,63 +63,17 @@ const (
 	KubeCloudReplaceIndex         = 25
 	KubeCloudReplaceString        = "    - --insecure-bind-address=0.0.0.0\n"
 
-	KubeAPIServerName = "kube-apiserver"
+	KubeAPIServerName          = "kube-apiserver"
+	KubeEdgeHTTPProto          = "http"
+	KubeEdgeHTTPSProto         = "https"
+	KubeEdgeHTTPPort           = "8080"
+	KubeEdgeHTTPSPort          = "6443"
+	KubeEdgeHTTPRequestTimeout = 30
 )
-
-//InstallState enum set used for verifying a tool version is installed in host
-type InstallState uint8
-
-//Difference enum values for type InstallState
-const (
-	NewInstallRequired InstallState = iota
-	AlreadySameVersionExist
-	DefVerInstallRequired
-	VersionNAInRepo
-)
-
-//ModuleRunning is defined to know the running status of KubeEdge components
-type ModuleRunning uint8
-
-//Different possible values for ModuleRunning type
-const (
-	NoneRunning ModuleRunning = iota
-	KubeEdgeCloudRunning
-	KubeEdgeEdgeRunning
-)
-
-//ToolsInstaller interface for tools with install and teardown methods.
-type ToolsInstaller interface {
-	InstallTools() error
-	TearDown() error
-}
-
-//OSTypeInstaller interface for methods to be executed over a specified OS distribution type
-type OSTypeInstaller interface {
-	IsToolVerInRepo(string, string) (bool, error)
-	IsDockerInstalled(string) (InstallState, error)
-	InstallDocker() error
-	InstallMQTT() error
-	IsK8SComponentInstalled(string, string) (InstallState, error)
-	InstallK8S() error
-	StartK8Scluster() error
-	InstallKubeEdge() error
-	SetDockerVersion(string)
-	SetK8SVersionAndIsNodeFlag(version string, flag bool)
-	SetKubeEdgeVersion(string)
-	RunEdgeCore() error
-	KillKubeEdgeBinary(string) error
-	IsKubeEdgeProcessRunning(string) (bool, error)
-}
-
-//FlagData stores value and default value of the flags used in this command
-type FlagData struct {
-	Val    interface{}
-	DefVal interface{}
-}
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
-func AddToolVals(f *pflag.Flag, flagData map[string]FlagData) {
-	flagData[f.Name] = FlagData{Val: f.Value.String(), DefVal: f.DefValue}
+func AddToolVals(f *pflag.Flag, flagData map[string]types.FlagData) {
+	flagData[f.Name] = types.FlagData{Val: f.Value.String(), DefVal: f.DefValue}
 }
 
 //CheckIfAvailable checks is val of a flag is empty then return the default value
@@ -132,33 +84,15 @@ func CheckIfAvailable(val, defval string) string {
 	return val
 }
 
-//NodeMetaDataLabels defines
-type NodeMetaDataLabels struct {
-	Name string
-}
-
-//NodeMetaDataSt defines
-type NodeMetaDataSt struct {
-	Name   string
-	Labels NodeMetaDataLabels
-}
-
-//NodeDefinition defines
-type NodeDefinition struct {
-	Kind       string
-	APIVersion string
-	MetaData   NodeMetaDataSt
-}
-
 //Common struct contains OS and Tool version properties and also embeds OS interface
 type Common struct {
-	OSTypeInstaller
+	types.OSTypeInstaller
 	OSVersion   string
 	ToolVersion string
 }
 
 //SetOSInterface defines a method to set the implemtation of the OS interface
-func (co *Common) SetOSInterface(intf OSTypeInstaller) {
+func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 	co.OSTypeInstaller = intf
 }
 
@@ -240,46 +174,8 @@ func GetOSVersion() string {
 	return c.GetStdOutput()
 }
 
-//GetInterfaceIP gets the interface ip address, this command helps in getting the edge node ip
-func GetInterfaceIP() (string, error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return "", err
-	}
-	for _, iface := range ifaces {
-		if iface.Flags&net.FlagUp == 0 {
-			continue // interface down
-		}
-		if iface.Flags&net.FlagLoopback != 0 {
-			continue // loopback interface
-		}
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return "", err
-		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() {
-				continue
-			}
-			ip = ip.To4()
-			if ip == nil {
-				continue // not an ipv4 address
-			}
-			return ip.String(), nil
-		}
-	}
-	return "", errors.New("Not able to get interfaces")
-}
-
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
-func GetOSInterface() OSTypeInstaller {
+func GetOSInterface() types.OSTypeInstaller {
 
 	switch GetOSVersion() {
 	case UbuntuOSType:
@@ -293,29 +189,29 @@ func GetOSInterface() OSTypeInstaller {
 
 //IsKubeEdgeController identifies if the node is having edge controller and k8s api-server already running.
 //If so, then return true, else it can used as edge node and initialise it.
-func IsKubeEdgeController() (ModuleRunning, error) {
+func IsKubeEdgeController() (types.ModuleRunning, error) {
 	osType := GetOSInterface()
 	edgeControllerRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
 	if err != nil {
-		return NoneRunning, err
+		return types.NoneRunning, err
 	}
 	apiServerRunning, err := osType.IsKubeEdgeProcessRunning(KubeAPIServerName)
 	if err != nil {
-		return NoneRunning, err
+		return types.NoneRunning, err
 	}
 	//If any of edgecontroller or K8S API server is running, then we believe the node is cloud node
 	if edgeControllerRunning || apiServerRunning {
-		return KubeEdgeCloudRunning, nil
+		return types.KubeEdgeCloudRunning, nil
 	}
 
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
 	if err != nil {
-		return NoneRunning, err
+		return types.NoneRunning, err
 	}
 
 	if false != edgeCoreRunning {
-		return KubeEdgeEdgeRunning, nil
+		return types.KubeEdgeEdgeRunning, nil
 	}
 
-	return NoneRunning, nil
+	return types.NoneRunning, nil
 }

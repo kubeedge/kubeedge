@@ -22,7 +22,6 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /opt/kubeedge/
-          subPath: device_profile.json
       nodeSelector:
         bluetooth: "true"      
       volumes:

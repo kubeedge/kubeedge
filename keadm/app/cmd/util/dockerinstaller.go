@@ -16,7 +16,11 @@ limitations under the License.
 
 package util
 
-import "fmt"
+import (
+	"fmt"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+)
 
 //DockerInstTool embedes Common struct and contains the default docker version
 //It implements ToolsInstaller interface
@@ -36,14 +40,14 @@ func (d *DockerInstTool) InstallTools() error {
 		return err
 	}
 	switch action {
-	case VersionNAInRepo:
+	case types.VersionNAInRepo:
 		return fmt.Errorf("Expected Docker version is not available in OS repo")
-	case AlreadySameVersionExist:
+	case types.AlreadySameVersionExist:
 		return fmt.Errorf("Same version of docker already installed in this host")
-	case DefVerInstallRequired:
+	case types.DefVerInstallRequired:
 		d.SetDockerVersion(d.DefaultToolVer)
 		fallthrough
-	case NewInstallRequired:
+	case types.NewInstallRequired:
 		err := d.InstallDocker()
 		if err != nil {
 			return err

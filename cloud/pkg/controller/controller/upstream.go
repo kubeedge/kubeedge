@@ -248,12 +248,21 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 		case msg := <-uc.nodeStatusChan:
 			log.LOGGER.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			nodeStatusRequest := &edgeapi.NodeStatusRequest{}
-			data, err := json.Marshal(msg.GetContent())
-			if err != nil {
-				log.LOGGER.Warnf("message: %s process failure, marshal message content with error: %s", msg.GetID(), err)
-				continue
+
+			var data []byte
+			switch msg.Content.(type) {
+			case []byte:
+				data = msg.GetContent().([]byte)
+			default:
+				var err error
+				data, err = json.Marshal(msg.GetContent())
+				if err != nil {
+					log.LOGGER.Warnf("message: %s process failure, marshal message content with error: %s", msg.GetID(), err)
+					continue
+				}
 			}
-			err = json.Unmarshal(data, nodeStatusRequest)
+
+			err := json.Unmarshal(data, nodeStatusRequest)
 			if err != nil {
 				log.LOGGER.Warnf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
 				continue
@@ -456,11 +465,20 @@ func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns s
 		return
 	}
 	name, _ := messagelayer.GetResourceName(msg)
-	data, err := json.Marshal(msg.GetContent())
-	if err != nil {
-		log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-		return
+
+	var data []byte
+	switch msg.Content.(type) {
+	case []byte:
+		data = msg.GetContent().([]byte)
+	default:
+		var err error
+		data, err = json.Marshal(msg.GetContent())
+		if err != nil {
+			log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+			return
+		}
 	}
+
 	if name == "" {
 		// multi pod status in one message
 		err = json.Unmarshal(data, &podStatuses)

@@ -32,4 +32,4 @@ data:
     writers: [stdout]
   modules.yaml: |
     modules:
-      enabled: [controller, cloudhub]
+      enabled: [controller, cloudhub, controllerstub]

@@ -1,17 +1,17 @@
 package cloudhub
 
 import (
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"io/ioutil"
 	"os"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/wsserver"
 )
 
 type cloudHub struct {
@@ -73,12 +73,14 @@ func (a *cloudHub) Start(c *context.Context) {
 
 	eventq, err := channelq.NewChannelEventQueue(c)
 	// start the cloudhub server
-	err = wsserver.StartCloudHub(util.HubConfig, eventq)
-	if err != nil {
-		log.LOGGER.Errorf("cloudhub start failed with errors : %v", err)
-		os.Exit(1)
+	if util.HubConfig.ProtocolWebsocket {
+		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
 	}
-	wsserver.EventHandler.Context = c
+
+	if util.HubConfig.ProtocolQuic {
+		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
+	}
+
 	stopchan := make(chan bool)
 	<-stopchan
 }

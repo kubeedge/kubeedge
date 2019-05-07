@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kubeedge/kubeedge/keadm/app/cmd/options"
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/app/cmd/util"
 )
 
@@ -37,8 +37,7 @@ For cloud node:
 kubeedge reset
 
 For edge node:
-kubeedge reset --server 10.20.30.40:8080
-    - For this command --server option is a Mandatory option
+kubeedge reset --k8sserverip 10.20.30.40:8080
 `
 )
 
@@ -57,9 +56,9 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 				return err
 			}
 			switch whoRunning {
-			case util.KubeEdgeEdgeRunning:
+			case types.KubeEdgeEdgeRunning:
 				IsEdgeNode = true
-			case util.NoneRunning:
+			case types.NoneRunning:
 				return fmt.Errorf("None of KubeEdge components are running in this host")
 			}
 			return nil
@@ -77,10 +76,9 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 	}
 
 	//This command requires to know the api-server address so that node can be removed from api-server
-	//2 methods, 1. To get it from the flag option and 2. To read from edge.yaml. TODO: method 2
-	cmd.Flags().StringVarP(&K8SAPIServerIPPort, options.K8SAPIServerIPPort, "s", K8SAPIServerIPPort,
+	//possible 2 methods, 1. To get it from the flag option and 2. To read from edge.yaml. TODO: method 2
+	cmd.Flags().StringVarP(&K8SAPIServerIPPort, types.K8SAPIServerIPPort, "k", K8SAPIServerIPPort,
 		"IP:Port address of cloud components host/VM")
-	//cmd.MarkFlagRequired(options.K8SAPIServerIPPort)
 
 	return cmd
 }
@@ -88,12 +86,9 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 //TearDownKubeEdge will bring down either cloud or edge components,
 //depending upon in which type of node it is executed
 func TearDownKubeEdge(isEdgeNode bool, server string) error {
-	var ke util.ToolsInstaller
+	var ke types.ToolsInstaller
 	ke = &util.KubeCloudInstTool{Common: util.Common{}}
 	if false != isEdgeNode {
-		if server == "" {
-			return fmt.Errorf("On KubeEdge Edge node '--server' option is mandatory with 'kubeedge reset' command ")
-		}
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}, K8SApiServerIP: server}
 	}
 

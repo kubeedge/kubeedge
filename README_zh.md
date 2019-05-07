@@ -44,11 +44,6 @@ KubeEdge 由以下组件构成:
 
 ![架构图](docs/images/kubeedge_arch.png)
 
-## 路线图
-
-* [Release 1.0 onwards](./docs/getting-started/roadmap_zh.md#release-1.0-onwards)
-* [Release 0.3](./docs/getting-started/roadmap_zh.md#release-0.3) - 计划在2019年5月31日发布
-
 ## 使用
 
 * [先决条件](./docs/getting-started/usage_zh.md#先决条件)
@@ -56,13 +51,18 @@ KubeEdge 由以下组件构成:
 * [部署应用](./docs/getting-started/usage_zh.md#部署应用)
 * [运行测试](./docs/getting-started/usage_zh.md#运行测试)
 
+## 路线图
+
+* [Release 1.0 onwards](./docs/getting-started/roadmap_zh.md#release-1.0-onwards)
+* [Release 0.3](./docs/getting-started/roadmap_zh.md#release-0.3) - 计划在2019年5月31日发布
+
 ## 社区例会
 
 社区会议通常周三（双周一次）北京时间上午11:00开始。
 
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [会议视频记录](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
-- [会议链接](https://zoom.us/j/861913470)
+- [会议链接](https://zoom.us/j/4167237304)
 
 ## 文档
 

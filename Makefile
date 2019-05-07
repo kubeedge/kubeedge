@@ -4,6 +4,7 @@ ifeq ($(WHAT),)
 all:
 	cd cloud && $(MAKE)
 	cd edge && $(MAKE)
+	cd keadm && $(MAKE)
 else ifeq ($(WHAT),cloud)
 # make all what=cloud, build cloud binary
 all:
@@ -12,6 +13,10 @@ else ifeq ($(WHAT),edge)
 all:
 # make all what=edge, build edge binary
 	cd edge && $(MAKE)
+else ifeq ($(WHAT),keadm)
+all:
+# make all what=edge, build edge binary
+	cd keadm && $(MAKE)
 else
 # invalid entry
 all:
