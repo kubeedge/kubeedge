@@ -9,13 +9,10 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/controller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
 )
 
 // Controller use beehive context message layer
-type Controller struct {
-	messageLayer messagelayer.MessageLayer
-}
+type Controller struct{}
 
 func init() {
 	edgeController := Controller{}
