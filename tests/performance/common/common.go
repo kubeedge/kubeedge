@@ -19,6 +19,7 @@ package common
 import (
 	"net/http"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
@@ -35,18 +36,22 @@ const (
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
 	ConfigmapHandler  = "/api/v1/namespaces/default/configmaps"
 	ServiceHandler    = "/api/v1/namespaces/default/services"
-)
-var(
-	chconfigmapRet = make(chan error)
-	Deployments []string
-	NodeInfo = make(map[string][]string)
-	CloudConfigMap string
-	CloudCoreDeployment string
-	ToTaint bool
-	EdgeNode string
+	NodelabelKey      = "k8snode"
+	NodelabelVal      = "kb-perf-node"
 )
 
-func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, confighdl, deploymenthdl, imgURL string, nodelimit int) error{
+var (
+	chconfigmapRet      = make(chan error)
+	Deployments         []string
+	NodeInfo            = make(map[string][]string)
+	CloudConfigMap      string
+	CloudCoreDeployment string
+	ToTaint             bool
+	EdgeNode            string
+	NSForEdgeNode       map[string]string
+)
+
+func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, confighdl, deploymenthdl, imgURL string, nodelimit int) error {
 	nodes := strconv.FormatInt(int64(nodelimit), 10)
 	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", apiserver2, cloudConfigMap, nodes)
 	err := utils.PrintCombinedOutput(cmd)
@@ -61,7 +66,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	return nil
 }
 
-func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int ) v1.PodList {
+func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int) v1.PodList {
 	replica := 1
 	//Create edgecore configMaps based on the users choice of edgecore deployment.
 	for i := 0; i < numOfNodes; i++ {
@@ -102,12 +107,12 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
+	}, "60s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
 
 	return podlist
 }
 
-func DeleteEdgeDeployments(apiServer string, nodes int){
+func DeleteEdgeDeployments(apiServer string, nodes int) {
 	//delete confogMap
 	for _, configmap := range NodeInfo {
 		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServer+ConfigmapHandler+"/"+configmap[0], false)
@@ -160,12 +165,12 @@ func DeleteEdgeDeployments(apiServer string, nodes int){
 		}
 		return count
 	}, "60s", "4s").Should(Equal(nodes), "EdgeNode deleton is unsuccessfull !!")
-
-	NodeInfo = nil
-
+	//Cleanup globals
+	NodeInfo = map[string][]string{}
+	Deployments = nil
 }
 
-func DeleteCloudDeployment(apiserver string){
+func DeleteCloudDeployment(apiserver string) {
 	//delete cloud deployment
 	go utils.HandleDeployment(true, true, http.MethodDelete, apiserver+DeploymentHandler+"/"+CloudCoreDeployment, "", "", "", "", 0)
 	//delete cloud configMap
@@ -175,4 +180,22 @@ func DeleteCloudDeployment(apiserver string){
 	//delete cloud svc
 	StatusCode := utils.DeleteSvc(apiserver + ServiceHandler + "/" + CloudCoreDeployment)
 	Expect(StatusCode).Should(Equal(http.StatusOK))
+}
+
+func ApplyLabel(nodeHandler string) error {
+	var isMasterNode bool
+	nodes := utils.GetNodes(nodeHandler)
+	for _, node := range nodes.Items {
+		isMasterNode = false
+		for key, _ := range node.Labels {
+			if strings.Contains(key, "node-role.kubernetes.io/master") {
+				isMasterNode = true
+				break
+			}
+		}
+		if isMasterNode == false {
+			utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal)
+		}
+	}
+	return nil
 }
