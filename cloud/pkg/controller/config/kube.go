@@ -31,51 +31,51 @@ var KubeUpdateNodeFrequency time.Duration
 
 func init() {
 	if km, err := config.CONFIG.GetValue("controller.kube.master").ToString(); err != nil {
-		log.LOGGER.Errorf("kube master not set")
+		log.LOGGER.Errorf("Controller kube master not set")
 	} else {
 		KubeMaster = km
 	}
-	log.LOGGER.Infof("kube master: %s", KubeMaster)
+	log.LOGGER.Infof("Controller kube master: %s", KubeMaster)
 
 	if kc, err := config.CONFIG.GetValue("controller.kube.kubeconfig").ToString(); err != nil {
-		log.LOGGER.Errorf("kube config not set")
+		log.LOGGER.Errorf("Controller kube config not set")
 	} else {
 		KubeConfig = kc
 	}
-	log.LOGGER.Infof("kube config: %s", KubeConfig)
+	log.LOGGER.Infof("Controller kube config: %s", KubeConfig)
 
 	if kn, err := config.CONFIG.GetValue("controller.kube.namespace").ToString(); err != nil {
 		KubeNamespace = constants.DefaultKubeNamespace
 	} else {
 		KubeNamespace = kn
 	}
-	log.LOGGER.Infof("kube namespace: %s", KubeNamespace)
+	log.LOGGER.Infof("Controller kube namespace: %s", KubeNamespace)
 
 	if kct, err := config.CONFIG.GetValue("controller.kube.content_type").ToString(); err != nil {
 		KubeContentType = constants.DefaultKubeContentType
 	} else {
 		KubeContentType = kct
 	}
-	log.LOGGER.Infof("kube content type: %s", KubeContentType)
+	log.LOGGER.Infof("Controller kube content type: %s", KubeContentType)
 
 	if kqps, err := config.CONFIG.GetValue("controller.kube.qps").ToFloat64(); err != nil {
 		KubeQPS = constants.DefaultKubeQPS
 	} else {
 		KubeQPS = float32(kqps)
 	}
-	log.LOGGER.Infof("kube QPS: %f", KubeQPS)
+	log.LOGGER.Infof("Controller kube QPS: %f", KubeQPS)
 
 	if kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt(); err != nil {
 		KubeBurst = constants.DefaultKubeBurst
 	} else {
 		KubeBurst = kb
 	}
-	log.LOGGER.Infof("kube burst: %d", KubeBurst)
+	log.LOGGER.Infof("Controller kube burst: %d", KubeBurst)
 
 	if kuf, err := config.CONFIG.GetValue("controller.kube.node_update_frequency").ToInt64(); err != nil {
 		KubeUpdateNodeFrequency = constants.DefaultKubeUpdateNodeFrequency * time.Second
 	} else {
 		KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
 	}
-	log.LOGGER.Infof("kube update frequency: %v", KubeUpdateNodeFrequency)
+	log.LOGGER.Infof("Controller kube update frequency: %v", KubeUpdateNodeFrequency)
 }
