@@ -153,6 +153,12 @@ openssl req -new -key kubeedge.key -out kubeedge.csr
 openssl x509 -req -in kubeedge.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out kubeedge.crt -days 500 -sha256 
 ```
 ## Build  
+**Info**
+If your are running go 1.12 or higher make sure to disable go mod and set GOPATH.
+```shell
+export GO111MODULE=off
+export GOPATH=$HOME/go
+```
 ### Clone KubeEdge
 
 ```shell
