@@ -18,6 +18,8 @@ package controller
 
 import (
 	"encoding/json"
+	"strconv"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis/devices/v1alpha1"
@@ -26,7 +28,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
-	"strconv"
 
 	"k8s.io/client-go/rest"
 )
@@ -48,7 +49,7 @@ type UpstreamController struct {
 	crdClient    *rest.RESTClient
 	messageLayer messagelayer.MessageLayer
 
-	//stop channel
+	// stop channel
 	stopDispatch           chan struct{}
 	stopUpdateDeviceStatus chan struct{}
 
