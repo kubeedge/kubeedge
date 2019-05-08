@@ -10,7 +10,7 @@ type ConfigMapManager struct {
 	ConfigMap sync.Map
 }
 
-// NewConfigManager is function to return new ConfigMapManager
+// NewConfigMapManager is function to return new ConfigMapManager
 func NewConfigMapManager() *ConfigMapManager {
 	return &ConfigMapManager{}
 }

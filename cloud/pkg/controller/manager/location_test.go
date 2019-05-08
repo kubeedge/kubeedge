@@ -33,7 +33,7 @@ var (
 	secretVolume    = "VolumeSecret1"
 )
 
-//TestAddOrUpdatePod is function to test AddOrUpdatePod
+// TestAddOrUpdatePod is function to test AddOrUpdatePod
 func TestAddOrUpdatePod(t *testing.T) {
 	pod := v1.Pod{
 		Spec: v1.PodSpec{
@@ -83,7 +83,7 @@ func TestAddOrUpdatePod(t *testing.T) {
 	}
 }
 
-//TestConfigMapNodes is function to test ConfigMapNodes
+// TestConfigMapNodes is function to test ConfigMapNodes
 func TestConfigMapNodes(t *testing.T) {
 	locationCache := LocationCache{}
 	locationCache.configMapNode.Store(configMapKey, nodes)
@@ -116,7 +116,7 @@ func TestConfigMapNodes(t *testing.T) {
 	}
 }
 
-//TestSecretNodes is function to test SecretNodes
+// TestSecretNodes is function to test SecretNodes
 func TestSecretNodes(t *testing.T) {
 	locationCache := LocationCache{}
 	locationCache.secretNode.Store(secretKey, nodes)
@@ -149,7 +149,7 @@ func TestSecretNodes(t *testing.T) {
 	}
 }
 
-//TestDeleteConfigMap is function to test DeleteConfigMap
+// TestDeleteConfigMap is function to test DeleteConfigMap
 func TestDeleteConfigMap(t *testing.T) {
 	locationCache := LocationCache{}
 	locationCache.configMapNode.Store(configMapKey, nodes)
@@ -178,7 +178,7 @@ func TestDeleteConfigMap(t *testing.T) {
 	}
 }
 
-//TestDeleteSecret is function to test DeleteSecret
+// TestDeleteSecret is function to test DeleteSecret
 func TestDeleteSecret(t *testing.T) {
 	locationCache := LocationCache{}
 	locationCache.secretNode.Store(secretKey, nodes)

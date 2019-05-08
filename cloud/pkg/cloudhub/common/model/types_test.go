@@ -25,7 +25,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//modelMessage returns a new model.Message
+// modelMessage returns a new model.Message
 func modelMessage(ID string, PID string, Timestamp int64, Source string, Group string, Operation string, Resource string) model.Message {
 	return model.Message{
 		Header: model.MessageHeader{
@@ -42,7 +42,7 @@ func modelMessage(ID string, PID string, Timestamp int64, Source string, Group s
 	}
 }
 
-//modelEvent returns a new Event
+// modelEvent returns a new Event
 func modelEvent(ID string, PID string, Timestamp int64, Source string, Group string, Operation string, Resource string, Content interface{}) Event {
 	return Event{
 		Group:  Group,
@@ -58,7 +58,7 @@ func modelEvent(ID string, PID string, Timestamp int64, Source string, Group str
 	}
 }
 
-//TestEventToMessage is function to test EventToMessage
+// TestEventToMessage is function to test EventToMessage
 func TestEventToMessage(t *testing.T) {
 	msg := modelMessage("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1")
 	event := modelEvent("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1", nil)
@@ -82,7 +82,7 @@ func TestEventToMessage(t *testing.T) {
 	}
 }
 
-//TestMessageToEvent is function to test MessageToEvent
+// TestMessageToEvent is function to test MessageToEvent
 func TestMessageToEvent(t *testing.T) {
 	msg := modelMessage("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1")
 	event := modelEvent("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1", nil)
@@ -106,7 +106,7 @@ func TestMessageToEvent(t *testing.T) {
 	}
 }
 
-//TestNewResource is function to test NewResource
+// TestNewResource is function to test NewResource
 func TestNewResource(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -139,7 +139,7 @@ func TestNewResource(t *testing.T) {
 	}
 }
 
-//TestIsNodeStopped is function to test IsNodeStopped
+// TestIsNodeStopped is function to test IsNodeStopped
 func TestIsNodeStopped(t *testing.T) {
 	body := map[string]interface{}{
 		"event_type": OpConnect,
@@ -202,7 +202,7 @@ func TestIsNodeStopped(t *testing.T) {
 	}
 }
 
-//TestIsFromEdge is function to test IsFromEdge
+// TestIsFromEdge is function to test IsFromEdge
 func TestIsFromEdge(t *testing.T) {
 	event := modelEvent("", "", 0, "Source1", "", "", "", nil)
 	tests := []struct {
@@ -225,7 +225,7 @@ func TestIsFromEdge(t *testing.T) {
 	}
 }
 
-//TestIsToEdge is function to test IsToEdge
+// TestIsToEdge is function to test IsToEdge
 func TestIsToEdge(t *testing.T) {
 	eventSource := modelEvent("", "", 0, "Source1", "", "", "", nil)
 	eventResource := modelEvent("", "", 0, SrcManager, "", "", "node/Node1/node/res1", nil)
