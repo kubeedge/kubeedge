@@ -33,4 +33,8 @@ const (
 	DefaultContextSendModuleName     = "cloudhub"
 	DefaultContextReceiveModuleName  = "controller"
 	DefaultContextResponseModuleName = "cloudhub"
+
+	DefaultPodEventBuffer       = 1
+	DefaultConfigMapEventBuffer = 1
+	DefaultSecretEventBuffer    = 1
 )
