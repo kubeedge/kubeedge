@@ -18,7 +18,7 @@ action-manager:
       perform-immediately: true
       device-property-name: io-data-initialize      #property-name defined in the device model
     - name: IOConfiguration
-      perform-immediately: false
+      perform-immediately: true
       device-property-name: io-config                #property-name defined in the device model
     - name: IOData
       perform-immediately: false
