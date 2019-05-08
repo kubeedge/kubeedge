@@ -62,7 +62,7 @@ KubeEdge 由以下组件构成:
 
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [会议视频记录](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
-- [会议链接](https://zoom.us/j/861913470)
+- [会议链接](https://zoom.us/j/4167237304)
 
 ## 文档
 
