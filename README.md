@@ -45,17 +45,17 @@ KubeEdge is composed of the following components:
 
 <img src="./docs/images/kubeedge_arch.png">
 
-## Roadmap
-
-* [Release 1.0 onwards](./docs/getting-started/roadmap.md#release-1.0-onwards)
-* [Release 0.3](./docs/getting-started/roadmap.md#release-0.3) - Plan to Release on 31 May 2019
-
 ## Usage
 
 * [Prerequisites](./docs/getting-started/usage.md#prerequisites)
 * [Run KubeEdge](./docs/getting-started/usage.md#run-kubeedge)
 * [Deploy Application](./docs/getting-started/usage.md#deploy-application)
 * [Run Tests](./docs/getting-started/usage.md#run-tests)
+
+## Roadmap
+
+* [Release 1.0 onwards](./docs/getting-started/roadmap.md#release-1.0-onwards)
+* [Release 0.3](./docs/getting-started/roadmap.md#release-0.3) - Plan to Release on 31 May 2019
 
 ## Meeting
 
