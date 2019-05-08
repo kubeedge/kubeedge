@@ -133,7 +133,7 @@ func (event *Event) IsNodeStopped() bool {
 	return true
 }
 
-// isFromEdge judges if the event is sent from edge
+// IsFromEdge judges if the event is sent from edge
 func (event *Event) IsFromEdge() bool {
 	return true
 }
