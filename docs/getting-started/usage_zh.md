@@ -45,8 +45,6 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 
 ### 运行Cloud
 
-#### [以 k8s deployment 方式运行](../../build/cloud/README_zh.md)
-
 #### 以二进制文件方式运行
 
 + 构建 Cloud
@@ -58,6 +56,13 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
 
++ 创建 device model 和 device CRDs
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
+    kubectl create -f devices_v1alpha1_devicemodel.yaml
+    kubectl create -f devices_v1alpha1_device.yaml
+    ```
+
 + 运行二进制文件
   ```shell
   cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
@@ -67,9 +72,9 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   ./edgecontroller
   ```
 
-### 运行Edge
+#### [以 k8s deployment 方式运行](../../build/cloud/README_zh.md)
 
-#### [以 k8s deployment 方式运行](../../build/edge/kubernetes/README_zh.md)
+### 运行Edge
 
 #### 部署 Edge node
 我们提供了一个示例 node.json 来在 Kubernetes 中添加一个节点。
@@ -83,8 +88,6 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 + 将证书文件传输到edge node
 
 #### 运行Edge
-
-##### [以容器方式运行](../../build/edge/README_zh.md)
 
 ##### 以二进制文件方式运行
 
@@ -117,6 +120,12 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   # or
   nohup ./edge_core > edge_core.log 2>&1 &
   ```
+
+  请使用具有root权限的用户运行 edge。
+
+##### [以容器方式运行](../../build/edge/README_zh.md)
+
+#### [以 k8s deployment 方式运行](../../build/edge/kubernetes/README_zh.md)
 
 #### 检查状态
 在 Cloud 和 Edge 被启动之后, 您能通过如下的命令去检查边缘节点的状态。

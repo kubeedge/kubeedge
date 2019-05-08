@@ -44,17 +44,17 @@ KubeEdge 由以下组件构成:
 
 ![架构图](docs/images/kubeedge_arch.png)
 
-## 路线图
-
-* [Release 1.0 onwards](./docs/getting-started/roadmap_zh.md#release-1.0-onwards)
-* [Release 0.3](./docs/getting-started/roadmap_zh.md#release-0.3) - 计划在2019年5月31日发布
-
 ## 使用
 
 * [先决条件](./docs/getting-started/usage_zh.md#先决条件)
 * [运行KubeEdge](./docs/getting-started/usage_zh.md#运行KubeEdge)
 * [部署应用](./docs/getting-started/usage_zh.md#部署应用)
 * [运行测试](./docs/getting-started/usage_zh.md#运行测试)
+
+## 路线图
+
+* [Release 1.0 onwards](./docs/getting-started/roadmap_zh.md#release-1.0-onwards)
+* [Release 0.3](./docs/getting-started/roadmap_zh.md#release-0.3) - 计划在2019年5月31日发布
 
 ## 社区例会
 

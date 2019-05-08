@@ -44,7 +44,7 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto])(https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
 
 ### Generate Certificates
 
@@ -59,8 +59,6 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 ## Run KubeEdge
 
 ### Run Cloud
-
-#### [Run as Kubernetes deployment](../../build/cloud/README.md)
 
 #### Run as a binary
 
@@ -89,6 +87,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     kubectl create -f devices_v1alpha1_devicemodel.yaml
     kubectl create -f devices_v1alpha1_device.yaml
     ```
+
 + Run cloud
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
@@ -98,9 +97,9 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     ./edgecontroller
     ```
 
-### Run Edge
+#### [Run as Kubernetes deployment](../../build/cloud/README.md)
 
-#### [Run as Kubernetes deployment](../../build/edge/kubernetes/README.md)
+### Run Edge
 
 #### Deploy the Edge node
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
@@ -113,8 +112,6 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 + Transfer the certificate file to the edge node
 
 #### Run Edge
-
-##### [Run as container](../../build/edge/README.md)
 
 ##### Run as a binary
 + Build Edge
@@ -167,6 +164,12 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     # or
     nohup ./edge_core > edge_core.log 2>&1 &
     ```
+
+    **Note:** Please run edge using the users who have root permission.
+
+##### [Run as container](../../build/edge/README.md)
+
+#### [Run as Kubernetes deployment](../../build/edge/kubernetes/README.md)
 
 #### Check status
 
