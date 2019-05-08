@@ -47,7 +47,7 @@ func main() {
 	err := BleConfig.Load()
 	if err != nil {
 		glog.Errorf("Error in loading configuration: %s", err)
-		return
+		os.Exit(1)
 	}
 	bleController := controller.ControllerConfig{
 		Watcher:       BleConfig.Watcher,
