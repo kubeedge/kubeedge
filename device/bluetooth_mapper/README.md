@@ -39,7 +39,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/device/bluetooth_mapper
 #    1. Replace <edge_node_name> with the name of your edge node at spec.template.spec.voluems.configMap.name
 #    2. Replace <your_dockerhub_username> with your dockerhub username at spec.template.spec.containers.image
 
-kubectl create -f deplyment.yaml
+kubectl create -f deployment.yaml
 ```
 
 ## Modules
