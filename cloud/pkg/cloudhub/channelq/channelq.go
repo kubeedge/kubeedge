@@ -84,6 +84,11 @@ func (q *ChannelEventQueue) dispatchMessage() {
 			log.LOGGER.Warnf("node id is not found in the message")
 			continue
 		}
+		_, ok := q.channelPool.Load(nodeID)
+		if !ok {
+			rChannel := make(chan model.Event, rChanBufSize)
+			q.channelPool.LoadOrStore(nodeID, rChannel)
+		}
 		rChannel, err := q.getRChannel(nodeID)
 		if err != nil {
 			log.LOGGER.Infof("fail to get dispatch channel for %s", nodeID)
