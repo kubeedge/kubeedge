@@ -49,7 +49,7 @@ const (
 // EventHandler handle all event
 var EventHandler *EventHandle
 
-//AccessHandle access handler
+// AccessHandle access handler
 type AccessHandle struct {
 	EventHandle *EventHandle
 	NodeLimit   int
