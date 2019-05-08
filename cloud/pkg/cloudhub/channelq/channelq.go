@@ -115,15 +115,14 @@ func (q *ChannelEventQueue) getRChannel(nodeID string) (chan model.Event, error)
 // Connect allocates rChannel for given project and group
 func (q *ChannelEventQueue) Connect(info *model.HubInfo) error {
 	_, ok := q.channelPool.Load(info.NodeID)
-	if ok {
-		return fmt.Errorf("edge node %s is already connected", info.NodeID)
-	}
-	// allocate a new rchannel with default buffer size
-	rChannel := make(chan model.Event, rChanBufSize)
-	_, ok = q.channelPool.LoadOrStore(info.NodeID, rChannel)
-	if ok {
-		// rchannel is already allocated
-		return fmt.Errorf("edge node %s is already connected", info.NodeID)
+	if !ok {
+		// allocate a new rchannel with default buffer size
+		rChannel := make(chan model.Event, rChanBufSize)
+		_, ok = q.channelPool.LoadOrStore(info.NodeID, rChannel)
+		if ok {
+			// rchannel is already allocated
+			return fmt.Errorf("edge node %s is already connected", info.NodeID)
+		}
 	}
 	return nil
 }
