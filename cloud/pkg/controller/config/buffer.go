@@ -18,32 +18,63 @@ var QueryConfigMapBuffer int
 // QuerySecretBuffer is the size of channel which save query secret message from edge
 var QuerySecretBuffer int
 
+// PodEventBuffer is the size of channel which save pod event from k8s
+var PodEventBuffer int
+
+// ConfigMapEventBuffer is the size of channel which save configmap event from k8s
+var ConfigMapEventBuffer int
+
+// SecretEventBuffer is the size of channel which save secret event from k8s
+var SecretEventBuffer int
+
 func init() {
 	if psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt(); err != nil {
 		UpdatePodStatusBuffer = constants.DefaultUpdatePodStatusBuffer
 	} else {
 		UpdatePodStatusBuffer = psb
 	}
-	log.LOGGER.Infof("update pod status buffer: %d", UpdatePodStatusBuffer)
+	log.LOGGER.Infof("Update controller.buffer.update-pod-status: %d", UpdatePodStatusBuffer)
 
 	if nsb, err := config.CONFIG.GetValue("controller.buffer.update-node-status").ToInt(); err != nil {
 		UpdateNodeStatusBuffer = constants.DefaultUpdateNodeStatusBuffer
 	} else {
 		UpdateNodeStatusBuffer = nsb
 	}
-	log.LOGGER.Infof("Update node status buffer: %d", UpdateNodeStatusBuffer)
+	log.LOGGER.Infof("Update controller.buffer.update-node-status: %d", UpdateNodeStatusBuffer)
 
 	if qcb, err := config.CONFIG.GetValue("controller.buffer.query-configmap").ToInt(); err != nil {
 		QueryConfigMapBuffer = constants.DefaultQueryConfigMapBuffer
 	} else {
 		QueryConfigMapBuffer = qcb
 	}
-	log.LOGGER.Infof("query config map buffer: %d", QueryConfigMapBuffer)
+	log.LOGGER.Infof("Update controller.buffer.query-configmap: %d", QueryConfigMapBuffer)
 
 	if qsb, err := config.CONFIG.GetValue("controller.buffer.query-secret").ToInt(); err != nil {
 		QuerySecretBuffer = constants.DefaultQuerySecretBuffer
 	} else {
 		QuerySecretBuffer = qsb
 	}
-	log.LOGGER.Infof("query secret buffer: %d", QuerySecretBuffer)
+	log.LOGGER.Infof("Update controller.buffer.query-secret: %d", QuerySecretBuffer)
+
+	if peb, err := config.CONFIG.GetValue("controller.buffer.pod-event").ToInt(); err != nil {
+		PodEventBuffer = constants.DefaultPodEventBuffer
+	} else {
+		PodEventBuffer = peb
+	}
+	log.LOGGER.Infof("Update controller.buffer.pod-event: %d", PodEventBuffer)
+
+	if cmeb, err := config.CONFIG.GetValue("controller.buffer.configmap-event").ToInt(); err != nil {
+		ConfigMapEventBuffer = constants.DefaultConfigMapEventBuffer
+	} else {
+		ConfigMapEventBuffer = cmeb
+	}
+	log.LOGGER.Infof("Update controller.buffer.configmap-event: %d", ConfigMapEventBuffer)
+
+	if seb, err := config.CONFIG.GetValue("controller.buffer.secret-event").ToInt(); err != nil {
+		SecretEventBuffer = constants.DefaultSecretEventBuffer
+	} else {
+		SecretEventBuffer = seb
+	}
+	log.LOGGER.Infof("Update controller.buffer.secret-event: %d", SecretEventBuffer)
+
 }
