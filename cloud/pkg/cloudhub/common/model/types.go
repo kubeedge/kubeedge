@@ -170,5 +170,5 @@ func (event *Event) IsToEdge() bool {
 
 // GetContent dumps the content to string
 func (event *Event) GetContent() string {
-	return fmt.Sprintf("%v", event.Content)
+	return fmt.Sprintf("%s", event.Content)
 }
