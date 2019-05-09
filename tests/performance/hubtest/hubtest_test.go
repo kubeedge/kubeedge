@@ -16,15 +16,15 @@ limitations under the License.
 package hubtest
 
 import (
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
-
 	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
+	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
+	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
 )
 
 var _ = Describe("KubeEdge hub performance test", func() {
@@ -38,8 +38,8 @@ var _ = Describe("KubeEdge hub performance test", func() {
 		BeforeEach(func() {
 			// Create Edge Nodes
 			numOfEdgeNodes = 10
-			podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
-				ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, numOfEdgeNodes)
+			podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+				ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, numOfEdgeNodes)
 		})
 
 		AfterEach(func() {
@@ -54,13 +54,13 @@ var _ = Describe("KubeEdge hub performance test", func() {
 			}, "240s", "4s").Should(Equal(0), "Wait for Pods deleted timeout")
 
 			// Delete Edge Nodes
-			DeleteEdgeDeployments(ctx.Cfg.ApiServer, ctx.Cfg.ApiServer2, numOfEdgeNodes)
-			utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2+AppHandler, podlist)
+			DeleteEdgeDeployments(ctx.Cfg.K8SMasterForKubeEdge, ctx.Cfg.K8SMasterForProvisionEdgeNodes, numOfEdgeNodes)
+			utils.CheckDeploymentPodDeleteState(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, podlist)
 		})
 
 		Measure("PERF_HUBTEST_NODES_10_PODS_10: Create 10 Edge Nodes, Deploy 10 Pods per Edge Node, Measure startup time of Pods", func(b Benchmarker) {
 			// Measure startup time
-			runtime := b.Time("runtime", func() {
+			hubTestRuntime := b.Time("runtime", func() {
 				// Create Pods on Edge Nodes
 				numOfPodsPerEdgeNode = 10
 				podsInfo = make(map[string]types.FakePod)
@@ -96,7 +96,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 				}, "240s", "4s").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
 
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			glog.Infof("HubTest runtime stats: %+v", hubTestRuntime)
 		}, 5)
 	})
 })

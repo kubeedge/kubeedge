@@ -26,23 +26,23 @@ import (
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 type vmSpec struct {
-	Ip string `json:"ip"`
+	Ip       string `json:"ip"`
 	Username string `json:"username"`
 	Passwd   string `json:"password"`
 }
+
 //config.json decode struct
 type Config struct {
-	EdgedEndpoint  string   `json:"edgedEndpoint"`
-	AppImageUrl    []string `json:"image_url"`
-	ApiServer      string   `json:"K8smaster1"`
-	EdgeController string   `json:"cloud_ip"`
-	Nodes          map[string]vmSpec `json:"k8snodes"`
-	NumOfNodes     int      `json:"node_num"`
-	ImageRepo      string   `json:"imagerepo"`
-	ApiServer2      string   `json:"k8smaster2"`
-	CloudImageUrl  string   `json:"cloudimageurl"`
-	EdgeImageUrl  string   `json:"edgeimageurl"`
-	Namespace     string   `json:"namespace"`
+	AppImageUrl                    []string          `json:"image_url"`
+	K8SMasterForKubeEdge           string            `json:"k8smasterforkubeedge"`
+	Nodes                          map[string]vmSpec `json:"k8snodes"`
+	NumOfNodes                     int               `json:"node_num"`
+	ImageRepo                      string            `json:"imagerepo"`
+	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
+	CloudImageUrl                  string            `json:"cloudimageurl"`
+	EdgeImageUrl                   string            `json:"edgeimageurl"`
+	Namespace                      string            `json:"namespace"`
+	ControllerStubPort             int               `json:"controllerstubport"`
 }
 
 //config struct

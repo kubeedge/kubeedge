@@ -16,17 +16,17 @@ limitations under the License.
 package hubtest
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
 )
 
 // configs across the package
@@ -50,7 +50,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		ctx = utils.NewTestContext(cfg)
 
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
-		err := ApplyLabel(ctx.Cfg.ApiServer2 + NodeHandler)
+		err := ApplyLabel(ctx.Cfg.K8SMasterForKubeEdge + NodeHandler)
 		Expect(err).Should(BeNil())
 
 		// Deploy KubeEdge Cloud Part as a k8s deployment into KubeEdge Cluster
@@ -59,16 +59,16 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		err = HandleCloudDeployment(
 			CloudConfigMap,
 			CloudCoreDeployment,
-			ctx.Cfg.ApiServer,
-			ctx.Cfg.ApiServer+ConfigmapHandler,
-			ctx.Cfg.ApiServer+DeploymentHandler,
+			ctx.Cfg.K8SMasterForKubeEdge,
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler,
+			ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
 			ctx.Cfg.CloudImageUrl,
 			ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 
 		// Get KubeEdge Cloud Part host ip
-		podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, "")
+		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
 		Expect(err).To(BeNil())
 		cloudPartHostIP := ""
 		for _, pod := range podlist.Items {
@@ -79,24 +79,24 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		}
 
 		// Check if KubeEdge Cloud Part is running
-		utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
 
 		// Create NodePort Service for KubeEdge Cloud Part
-		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.ApiServer+ServiceHandler)
+		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
 
 		// Get NodePort Service to access KubeEdge Cloud Part from KubeEdge Edge Nodes
-		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.ApiServer+ServiceHandler)
-		cloudHubURL = "wss://" + cloudPartHostIP + ":" + strconv.FormatInt(int64(nodePort), 10)
-		controllerHubURL = "http://" + cloudPartHostIP + ":54321"
+		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+		cloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, nodePort)
+		controllerHubURL = fmt.Sprintf("http://%s:%d", cloudPartHostIP, ctx.Cfg.ControllerStubPort)
 	})
 	AfterSuite(func() {
 		By("KubeEdge hub performance test end!")
 		// Delete KubeEdge Cloud Part deployment
-		DeleteCloudDeployment(ctx.Cfg.ApiServer)
+		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		// Check if KubeEdge Cloud Part is deleted
-		utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	})
 	RunSpecs(t, "KubeEdge hub performance test suite")
 }

@@ -13,6 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [ "${1}" == "--help" ]; then
+  cat <<EOF
+Usage: $(basename $0) <tests>
+
+  <tests>        the performance tests will be performed, it could be one of [loadtest, nodedensity, hubtest],
+                 empty means all the performance tests will be performed.
+Examples:
+  $(basename $0)
+  $(basename $0) loadtest
+  $(basename $0) nodedensity
+  $(basename $0) hubtest
+
+EOF
+  exit 0
+fi
+
 echo $PWD
 curpath=$PWD
 PWD=${curpath}/tests/performance
