@@ -17,16 +17,22 @@ limitations under the License.
 package common
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
+	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
-	"strconv"
 )
 
 //K8s resource handlers
@@ -112,21 +118,21 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 	return podlist
 }
 
-func DeleteEdgeDeployments(apiServer string, nodes int) {
+func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments string, nodes int) {
 	//delete confogMap
 	for _, configmap := range NodeInfo {
-		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServer+ConfigmapHandler+"/"+configmap[0], false)
+		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServerForDeployments+ConfigmapHandler+"/"+configmap[0], false)
 		ret := <-chconfigmapRet
 		Expect(ret).To(BeNil())
 
 	}
 	//delete edgenode deployment
 	for _, depName := range Deployments {
-		go utils.HandleDeployment(true, true, http.MethodDelete, apiServer+DeploymentHandler+"/"+depName, "", "", "", "", 0)
+		go utils.HandleDeployment(true, true, http.MethodDelete, apiServerForDeployments+DeploymentHandler+"/"+depName, "", "", "", "", 0)
 	}
 	//delete edgenodes
 	for edgenodeName, _ := range NodeInfo {
-		err := utils.DeRegisterNodeFromMaster(apiServer+NodeHandler, edgenodeName)
+		err := utils.DeRegisterNodeFromMaster(apiServerForRegisterNode+NodeHandler, edgenodeName)
 		if err != nil {
 			utils.Failf("DeRegisterNodeFromMaster failed: %v", err)
 		}
@@ -135,7 +141,7 @@ func DeleteEdgeDeployments(apiServer string, nodes int) {
 	Eventually(func() int {
 		count := 0
 		for _, depName := range Deployments {
-			statusCode := utils.VerifyDeleteDeployment(apiServer + DeploymentHandler + "/" + depName)
+			statusCode := utils.VerifyDeleteDeployment(apiServerForDeployments + DeploymentHandler + "/" + depName)
 			if statusCode == 404 {
 				count++
 			}
@@ -146,7 +152,7 @@ func DeleteEdgeDeployments(apiServer string, nodes int) {
 	Eventually(func() int {
 		count := 0
 		for _, configmap := range NodeInfo {
-			statusCode := utils.GetConfigmap(apiServer + ConfigmapHandler + "/" + configmap[0])
+			statusCode := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
 			if statusCode == 404 {
 				count++
 			}
@@ -157,7 +163,7 @@ func DeleteEdgeDeployments(apiServer string, nodes int) {
 	Eventually(func() int {
 		count := 0
 		for edgenodeName, _ := range NodeInfo {
-			status := utils.CheckNodeDeleteStatus(apiServer+NodeHandler, edgenodeName)
+			status := utils.CheckNodeDeleteStatus(apiServerForRegisterNode+NodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == 404 {
 				count++
@@ -198,4 +204,89 @@ func ApplyLabel(nodeHandler string) error {
 		}
 	}
 	return nil
+}
+
+// AddFakePod adds a fake pod
+func AddFakePod(ControllerHubURL string, pod types.FakePod) {
+	reqBody, err := json.Marshal(pod)
+	if err != nil {
+		utils.Failf("Unmarshal HTTP Response has failed: %v", err)
+	}
+
+	err, resp := SendHttpRequest(http.MethodPost,
+		ControllerHubURL+constants.PodResource,
+		bytes.NewBuffer(reqBody))
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		utils.Failf("HTTP Response reading has failed: %v", err)
+	}
+
+	utils.Info("AddPod response: %v", contents)
+}
+
+// DeleteFakePod deletes a fake pod
+func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
+	err, resp := SendHttpRequest(http.MethodDelete,
+		ControllerHubURL+constants.PodResource+
+			"?name="+pod.Name+"&namespace="+pod.Namespace+"&nodename="+pod.NodeName,
+		nil)
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		utils.Failf("HTTP Response reading has failed: %v", err)
+	}
+
+	utils.Info("DeletePod response: %v", contents)
+}
+
+// ListFakePods lists all fake pods
+func ListFakePods(ControllerHubURL string) []types.FakePod {
+	err, resp := SendHttpRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		utils.Failf("HTTP Response reading has failed: %v", err)
+	}
+
+	pods := []types.FakePod{}
+	err = json.Unmarshal(contents, &pods)
+	if err != nil {
+		utils.Failf("Unmarshal message content with error: %s", err)
+	}
+
+	utils.Info("ListPods result: %v", pods)
+	return pods
+}
+
+// SendHttpRequest launches a http request
+func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Response) {
+	var resp *http.Response
+	client := &http.Client{}
+	req, err := http.NewRequest(method, reqApi, body)
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+		return err, resp
+	}
+	req.Header.Set("Content-Type", "application/json")
+	t := time.Now()
+	resp, err = client.Do(req)
+	utils.Info("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	if err != nil {
+		utils.Failf("HTTP request is failed :%v", err)
+		return err, resp
+	}
+	return nil, resp
 }

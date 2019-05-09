@@ -30,9 +30,8 @@ cd ../
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "edgedEndpoint": "http://127.0.0.1:10255",
         "image_url": ["nginx", "hello-world"],
-        "K8smaster1":"http://$MASTER_IP:12418"
+        "k8smasterforkubeedge":"http://$MASTER_IP:12418"
 }
 END
 

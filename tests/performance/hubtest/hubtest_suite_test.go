@@ -13,76 +13,90 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package nodedensity
+package hubtest
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
 )
 
-//context to load config and access across the package
+// configs across the package
 var (
-	ctx      *utils.TestContext
-	cfg      utils.Config
-	cloudHub string
+	ctx              *utils.TestContext
+	cfg              utils.Config
+	cloudHubURL      string
+	controllerHubURL string
 )
 
-func TestEdgecoreK8sDeployment(t *testing.T) {
-	var cloudCoreHostIP string
-	var podlist metav1.PodList
-	//var toTaint bool
+func TestKubeEdgeK8SDeployment(t *testing.T) {
+	// Init params
+	var podlist v1.PodList
 	RegisterFailHandler(Fail)
+
+	// Init suite
 	var _ = BeforeSuite(func() {
-		utils.InfoV6("Kubeedge deployment Load test Begin !!")
+		// Init config
+		utils.InfoV6("KubeEdge hub performance test begin!")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
+
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
-		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
+		err := ApplyLabel(ctx.Cfg.K8SMasterForKubeEdge + NodeHandler)
 		Expect(err).Should(BeNil())
-		//Create configMap for CloudCore
+
+		// Deploy KubeEdge Cloud Part as a k8s deployment into KubeEdge Cluster
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
-		//Deploye cloudcore as a k8s resource to cluster-1
-		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+		err = HandleCloudDeployment(
+			CloudConfigMap,
+			CloudCoreDeployment,
+			ctx.Cfg.K8SMasterForKubeEdge,
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler,
+			ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
+			ctx.Cfg.CloudImageUrl,
+			ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
-		//Get the cloudCore pod Node name and IP
+
+		// Get KubeEdge Cloud Part host ip
 		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
 		Expect(err).To(BeNil())
+		cloudPartHostIP := ""
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
-				cloudCoreHostIP = pod.Status.HostIP
+				cloudPartHostIP = pod.Status.HostIP
+				break
 			}
-			break
 		}
+
+		// Check if KubeEdge Cloud Part is running
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
-		//Create service for cloud
+
+		// Create NodePort Service for KubeEdge Cloud Part
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
-		//Create a nodePort Service to access the cloud Service from the cluster nodes
+
+		// Get NodePort Service to access KubeEdge Cloud Part from KubeEdge Edge Nodes
 		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
-		str2 := strconv.FormatInt(int64(nodePort), 10)
-		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
-		//Deploye edgecore as a k8s resource to cluster-2
+		cloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, nodePort)
+		controllerHubURL = fmt.Sprintf("http://%s:%d", cloudPartHostIP, ctx.Cfg.ControllerStubPort)
 	})
 	AfterSuite(func() {
-		By("Kubeedge deployment Load test End !!....!")
-
+		By("KubeEdge hub performance test end!")
+		// Delete KubeEdge Cloud Part deployment
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
+		// Check if KubeEdge Cloud Part is deleted
 		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-
 	})
-
-	RunSpecs(t, "kubeedge Performace Load test Suite")
+	RunSpecs(t, "KubeEdge hub performance test suite")
 }

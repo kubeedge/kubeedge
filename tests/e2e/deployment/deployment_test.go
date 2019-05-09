@@ -55,18 +55,18 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			testTimer.PrintResult()
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
-			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
+			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 			Expect(err).To(BeNil())
 			for _, deployment := range deploymentList.Items {
 				if deployment.Name == UID {
 					label := nodeName
-					podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
-					StatusCode := utils.DeleteDeployment(ctx.Cfg.ApiServer+DeploymentHandler, deployment.Name)
+					StatusCode := utils.DeleteDeployment(ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, deployment.Name)
 					Expect(StatusCode).Should(Equal(http.StatusOK))
 				}
 			}
-			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			utils.PrintTestcaseNameandStatus()
 		})
 
@@ -76,19 +76,19 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			replica := 1
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "",replica)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "",replica)
 			Expect(IsAppDeployed).Should(BeTrue())
-			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
+			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 			Expect(err).To(BeNil())
 			for _, deployment := range deploymentList.Items {
 				if deployment.Name == UID {
 					label := nodeName
-					podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					break
 				}
 			}
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 		})
 		It("E2E_APP_DEPLOYMENT_2: Create deployment with replicas and check the pods are coming up correctly", func() {
 			var deploymentList v1.DeploymentList
@@ -96,19 +96,19 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			replica := 3
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
 			Expect(IsAppDeployed).Should(BeTrue())
-			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
+			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 			Expect(err).To(BeNil())
 			for _, deployment := range deploymentList.Items {
 				if deployment.Name == UID {
 					label := nodeName
-					podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					break
 				}
 			}
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 		})
 
 		It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
@@ -117,34 +117,34 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			replica := 3
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.ApiServer+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
+			IsAppDeployed := utils.HandleDeployment(false,false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
 			Expect(IsAppDeployed).Should(BeTrue())
-			err := utils.GetDeployments(&deploymentList, ctx.Cfg.ApiServer+DeploymentHandler)
+			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 			Expect(err).To(BeNil())
 			for _, deployment := range deploymentList.Items {
 				if deployment.Name == UID {
 					label := nodeName
-					podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					break
 				}
 			}
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
-				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
-			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			for _, deployment := range deploymentList.Items {
 				if deployment.Name == UID {
 					label := nodeName
-					podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					break
 				}
 			}
 			Expect(len(podlist.Items)).Should(Equal(replica))
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 		})
 
 	})
@@ -162,13 +162,13 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			testTimer.PrintResult()
 			var podlist metav1.PodList
 			label := nodeName
-			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 			Expect(err).To(BeNil())
 			for _, pod := range podlist.Items {
-				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
-			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			utils.PrintTestcaseNameandStatus()
 		})
 
@@ -176,63 +176,63 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			var podlist metav1.PodList
 			//Generate the random string and assign as a UID
 			UID = "pod-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.ApiServer+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
 			Expect(IsAppDeployed).Should(BeTrue())
 			label := nodeName
-			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 		})
 
 		It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
 			var podlist metav1.PodList
 			//Generate the random string and assign as a UID
 			UID = "pod-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.ApiServer+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
 			Expect(IsAppDeployed).Should(BeTrue())
 			label := nodeName
-			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
-				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
-			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		})
 		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
 			var podlist metav1.PodList
 			//Generate the random string and assign as a UID
 			UID = "pod-app-" + utils.GetRandomString(5)
-			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.ApiServer+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
 			Expect(IsAppDeployed).Should(BeTrue())
 			label := nodeName
-			podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 			Expect(err).To(BeNil())
-			utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 			for _, pod := range podlist.Items {
-				_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
-			utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
-			_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+UID)
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+			_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+UID)
 			Expect(StatusCode).Should(Equal(http.StatusNotFound))
 		})
 		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
 			for i:=0; i<10; i++{
 				UID = "pod-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.ApiServer+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
+				IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
 				Expect(IsAppDeployed).Should(BeTrue())
 				label := nodeName
-				podlist, err := utils.GetPods(ctx.Cfg.ApiServer+AppHandler, label)
+				podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 				Expect(err).To(BeNil())
-				utils.WaitforPodsRunning(ctx.Cfg.ApiServer, podlist, 240*time.Second)
+				utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 				for _, pod := range podlist.Items {
-					_, StatusCode := utils.DeletePods(ctx.Cfg.ApiServer+AppHandler+"/"+pod.Name)
+					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+"/"+pod.Name)
 					Expect(StatusCode).Should(Equal(http.StatusOK))
 				}
-				utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+				utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			}
 		})
 	})
