@@ -46,18 +46,18 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
-		err := ApplyLabel(ctx.Cfg.ApiServer2 + NodeHandler)
+		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
 		Expect(err).Should(BeNil())
 		//Create configMap for CloudCore
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
 		//Deploye cloudcore as a k8s resource to cluster-1
-		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.ApiServer,
-			ctx.Cfg.ApiServer+ConfigmapHandler, ctx.Cfg.ApiServer+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP
-		podlist, err = utils.GetPods(ctx.Cfg.ApiServer+AppHandler, "")
+		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
 		Expect(err).To(BeNil())
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
@@ -65,13 +65,13 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 			}
 			break
 		}
-		utils.CheckPodRunningState(ctx.Cfg.ApiServer+AppHandler, podlist)
+		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
 		//Create service for cloud
-		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.ApiServer+ServiceHandler)
+		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
 		//Create a nodePort Service to access the cloud Service from the cluster nodes
-		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.ApiServer+ServiceHandler)
+		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		str2 := strconv.FormatInt(int64(nodePort), 10)
 		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
 		//Deploye edgecore as a k8s resource to cluster-2
@@ -79,8 +79,8 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")
 
-		DeleteCloudDeployment(ctx.Cfg.ApiServer)
-		utils.CheckPodDeleteState(ctx.Cfg.ApiServer+AppHandler, podlist)
+		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
+		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 
 	})
 

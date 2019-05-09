@@ -42,16 +42,16 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
-			DeleteEdgeDeployments(ctx.Cfg.ApiServer, ctx.Cfg.ApiServer2, NoOfEdgeNodes)
-			utils.CheckDeploymentPodDeleteState(ctx.Cfg.ApiServer2+AppHandler, podlist)
+			DeleteEdgeDeployments(ctx.Cfg.K8SMasterForKubeEdge, ctx.Cfg.K8SMasterForProvisionEdgeNodes, NoOfEdgeNodes)
+			utils.CheckDeploymentPodDeleteState(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, podlist)
 		})
 
 		Measure("PERF_NODETEST_NODES_1: Create 1 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 1
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
-					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+					ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
@@ -59,8 +59,8 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 5
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
-					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+					ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
@@ -69,8 +69,8 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 10
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
-					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+					ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
@@ -78,8 +78,8 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				NoOfEdgeNodes = 20
-				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.ApiServer2+DeploymentHandler, ctx.Cfg.ApiServer+NodeHandler,
-					ctx.Cfg.ApiServer2+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.ApiServer2+AppHandler, NoOfEdgeNodes)
+				podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+					ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, NoOfEdgeNodes)
 			})
 			glog.Infof("Runtime stats: %+v", runtime)
 		}, 5)

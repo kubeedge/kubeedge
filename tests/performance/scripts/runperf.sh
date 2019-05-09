@@ -20,26 +20,25 @@ cd $workdir
 
 debugflag="-v 6 -alsologtostderr"
 
-compilemodule=$1
-runtest=$2
+runtest=$1
 
-export MASTER_IP=121.244.95.60
-export MASTER_IP_2=121.244.95.60
+export K8SMasterForKubeEdge=http://121.244.95.60:12436
+export K8SMasterForProvisionEdgeNodes=http://121.244.95.60:12458
 #setup env
 cd ../
 #Pre-configurations required for running the suite.
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "edgedEndpoint": "http://127.0.0.1:10255",
         "image_url": ["nginx", "hello-world"],
-        "K8smaster1": "http://$MASTER_IP:12436",
+        "k8smasterforkubeedge": "$K8SMasterForKubeEdge",
         "node_num": 10,
-        "imagerepo": "pavan187",
-        "k8smaster2": "http://$MASTER_IP_2:12458",
-        "cloudimageurl": "pavan187/cloudcore:v2.1",
-        "edgeimageurl": "pavan187/edgecore:v2.1",
-        "namespace":"default"
+        "imagerepo": "kubeedge",
+        "k8smasterforprovisionedgenodes": "$K8SMasterForProvisionEdgeNodes",
+        "cloudimageurl": "kubeedge/edgecontroller-test:v2.1",
+        "edgeimageurl": "kubeedge/edgecore-test:v2.1",
+        "namespace":"default",
+        "controllerstubport": 54321
 }
 END
 
@@ -51,5 +50,5 @@ if [ $# -eq 0 ]
     ./nodedensity/nodedensity.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
     ./hubtest/hubtest.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
 else
-    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/$compilemodule_test.log && :> /tmp/perf_test.log
+    ./$runtest/$runtest.test $debugflag 2>&1 | tee /tmp/perf_test.log && cat /tmp/perf_test.log >> /tmp/performace_test.log && :> /tmp/perf_test.log
 fi
