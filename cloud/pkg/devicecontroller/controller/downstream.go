@@ -584,6 +584,16 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 		}
 
 		dc.deleteFromDeviceProfile(device, nodeConfigMap)
+
+		// no device is bound to the configMap, then remove the configMap directly.
+		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" {
+			deleteOptions := &metav1.DeleteOptions{}
+			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(nodeConfigMap.Name, deleteOptions)
+			// remove from cache
+			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+			return
+		}
+
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
