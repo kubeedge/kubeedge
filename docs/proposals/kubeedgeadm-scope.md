@@ -1,8 +1,9 @@
 ---
 title: KubeEdge installer scope (Issue 324)
-status: Pending
+status: Alpha
 authors:
     - "@samy2019"
+    - "@srivatsav123"
 approvers:
   - "@m1093782566"
   - "@rohitsardesai83"
@@ -28,14 +29,13 @@ Hence proposing the following commands for KubeEdge installation process.
 
 For cloud, commands shall be:
 
-- `kubeedge cloud init`
-- `kubeedge cloud reset`
+- `kubeedge init`
+- `kubeedge reset`
 
 For edge, commands shall be:
 
-- `kubeedge node init`
-- `kubeedge node reset`
-- `kubeedge node join`
+- `kubeedge join`
+- `kubeedge reset`
 
 **NOTE:**
 `node` key is used for edge component in the command, for superficial reasons. Because `kubeedge edge init` had `edge` used twice and didn't sound nice.
@@ -51,140 +51,149 @@ For edge, commands shall be:
 
 ## Design of the commands
 
-### kubeedge --help or kubedge
+**NOTE**: All the below steps are executed as root user, to execute as sudo user ,Please add sudo infront of all the commands
+
+### kubeedge --help or kubeedge
 
 ```
-ubuntu# kubedge --help or ubuntu# kubedge
-Kubeedge
-
     ┌──────────────────────────────────────────────────────────┐
-    │ KUBEEDGE                                                 │
-    │ Easily bootstrap KubeEdge cluster                        │
+    │ KubeEdge                                                 │
+    │ Easily bootstrap a KubeEdge cluster                      │
     │                                                          │
     │ Please give us feedback at:                              │
     │ https://github.com/kubeedge/kubeedge/issues              │
     └──────────────────────────────────────────────────────────┘
-
-Example usage:
-
+	
     Create a two-machine cluster with one cloud node
-    (which controls the edge cluster), and one edge node
+    (which controls the edge node cluster), and one edge node
     (where native containerized application, in the form of
     pods and deployments run), connects to devices.
+
+Usage:
+  kubeedge [command]
+
+Examples:
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node# kubeedge cloud init <arguments>              │
+    │ cloud-node#  kubeedge init <options>                 │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node# kubeedge node join <arguments>                │
+    │ edge-node#  kubeedge join <options>                  │
     └──────────────────────────────────────────────────────────┘
 
     You can then repeat the second step on as many other machines as you like.
 
-Usage:
-  kubeedge [command]
 
 Available Commands:
-  cloud       Cloud component command option for KubeEdge
-  node        Edge component command option for KubeEdge
-  version     Displays KubeEdge release version and code commit id.
+  help        Help about any command
+  init        Bootstraps cloud component. Checks and install (if required) the pre-requisites.
+  join        Bootstraps edge component. Checks and install (if required) the pre-requisites.
+              Execute it on any edge node machine you wish to join
+  reset       Teardowns KubeEdge (cloud & edge) component
 
 Flags:
   -h, --help   help for kubeedge
 
 Use "kubeedge [command] --help" for more information about a command.
-ubuntu#
 ```
 
-### kubeedge cloud --help
+### kubeedge init --help
 
 ```
-ubuntu# kubeedge cloud --help
-<Apt description to be added while implementation>
+kubeedge init command bootstraps KubeEdge's cloud component.
+It checks if the pre-requisites are installed already,
+if not installed, this command will help in download,
+installation and execution on the host.
 
 Usage:
-  kubeedge cloud [command]
+  kubeedge init [flags]
 
-Example usage:
-<Apt information to be added while implementation>
+Examples:
 
-Available Commands:
-  init        Bootstraps cloud component. Checks and install (if required) the pre-requisites.
-  reset       Teardowns cloud component.
+kubeedge init
+
 
 Flags:
-  -h, --help   help for cloud
-
-Use "kubeedge cloud [command] --help" for more information about a command.
-```
-
-### kubeedge cloud init --help
+      --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
+  -h, --help                                       help for init
+      --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
+      --kubernetes-version string[="1.14.1"]       Use this key to download and use the required Kubernetes version (default "1.14.1")
 
 ```
-kubeedge cloud init --help
-<Apt description to be added while implementation>
+
+### kubeedge reset --help
+
+```
+kubeedge reset command can be executed in both cloud and edge node
+In cloud node it shuts down the cloud processes of KubeEdge
+In edge node it shuts down the edge processes of KubeEdge
 
 Usage:
-  kubeedge cloud init [flags]
+  kubeedge reset [flags]
 
-Example usage:
-<Apt information to be added while implementation>
+Examples:
 
-Flags:
-  -h, --help                        help for init
-      --kubeedge-version   string   use this key to download and use the required KubeEdge version (Optional, default will be Latest)
-      --kubernetes-version string   use this key to download and use the required Kubernetes version (Optional, default will be Latest)
-      --docker-version     string   use this key to download and use the required Docker version (Optional, default will be Latest)
-```
+For cloud node:
+kubeedge reset
 
-### kubeedge cloud reset --help
+For edge node:
+kubeedge reset --server 10.20.30.40:8080
+    - For this command --server option is a Mandatory option
 
-```
-kubeedge cloud reset --help
-<Apt description to be added while implementation>
-
-Usage:
-  kubeedge cloud reset
-
-Example usage:
-<Apt information to be added while implementation>
 
 Flags:
-  -h, --help   help for reset
+  -h, --help            help for reset
+  -s, --server string   IP:Port address of k8s master 
   
 ```
 
-### kubeedge node join --help
+### kubeedge join --help
 
 ```
-kubeedge node join --help
-<Apt description to be added while implementation>
+
+"kubeedge join" command bootstraps KubeEdge's edge component.
+It checks if the pre-requisites are installed already,
+If not installed, this command will help in download,
+install and execute on the host.
+It will also connect with cloud component to receieve 
+further instructions and forward telemetry data from 
+devices to cloud
 
 Usage:
-  kubeedge node join [flags]
+  kubeedge join [flags]
 
-Example usage:
-<Apt information to be added while implementation>
+Examples:
 
+kubeedge join --server=<ip:port>
+
+  - For this command --server option is a Mandatory option
+  - This command will download and install the default version of pre-requisites and KubeEdge
+
+kubeedge join --server=10.20.30.40:8080 --docker-version=18.06.0 --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
+kubeedge join --server=10.20.30.40:8080 --docker-version --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
+  - Default values for --docker-version=18.06.0,--kubernetes-version=1.14.1, --kubeedge-version=0.3.0-beta.0
+  - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
+		then default values will be used. 
+		
 Flags:
-  -h, --help                        help for join
-      --certPath           string   downloaded path of the certifcates generated by cloud component in this host (Mandatory)
-      --docker-version     string   use this key to download and use the required Docker version (Optional, default will be Latest)
-      --kubeedge-version   string   use this key to download and use the required KubeEdge version (Optional, default will be Latest)
-      --kubernetes-version string   use this key to download and use the required Kubernetes version (Optional, default will be Latest)
-  -s, --server             string   ip:port address of cloud components host/VM (Mandatory)
+      --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
+  -h, --help                                       help for join
+      --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
+      --kubernetes-version string[="1.14.1"]       Use this key to download and use the required Kubernetes version (default "1.14.1")
+  -s, --server string                              IP:Port address of cloud components host/VM
+
 ```
 
 ## Explaining the commands
 
 ### Cloud commands
 
-`kubeedge cloud init`
+`kubeedge init`
   - What is it?
      * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
    
@@ -199,8 +208,7 @@ Flags:
     4. It will update the certificate information in `controller.yaml`
     5. Start `kubeadm init`.
 
-       **NOTE:** If any issues or error reported from `kubeadm init`, `kubeedge cloud init` command shall be not responsible, as it may occur due to the environment. User has to resolve it. We are taking up this activity to have 1 click install approach for KubeEdge and not K8S.
-
+       **NOTE:** Issues encountered while performing kubeadm init need to be resolved by the user
     6. Update `/etc/kubernetes/manifests/kube-apiserver.yaml` with below information
     ```
     - --insecure-port=8080
@@ -209,7 +217,7 @@ Flags:
 
     7. start edge-controller
 
-`kubeedge cloud reset`
+`kubeedge reset`
   - What is it? 
     * This command will be responsible to bring down KubeEdge cloud components edge-controller and call `kubeadm reset` (to stop K8S)
 
@@ -220,7 +228,7 @@ Flags:
 
 ### Edge (node) commands
 
-`kubeedge node join`
+`kubeedge join`
   - What is it? 
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edge_core) and start it
 
@@ -244,7 +252,7 @@ Flags:
 
     4. start edge_core
 
-`kubeedge node reset`
+`kubeedge reset`
 
   - What is it? 
     * This command will be responsible to bring down KubeEdge edge component (edge_core)
