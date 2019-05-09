@@ -16,7 +16,7 @@ make edgeimage
 首先您需要去拷贝 edge certs 文件包括`edge.crt`和`edge.key`到您想要部署 edge part 的 k8s 节点上的`/etc/kubeedge/certs/`文件夹中。
 
 另一方面，您需要替换`0.0.0.0:10000`成您的 kubeedge cloud web socket url。
-* [url](04-configmap-edgenodeconf.yaml#L20)
+* [url](03-configmap-edgenodeconf.yaml#L20)
 
 默认的边缘节点名称是`edgenode1`，如果您想要改变节点名称或者是创建新的边缘节点，您需要用新的边缘节点名称替换如下几个地方。
 * [name in 02-edgenode.yaml](02-edgenode.yaml#L4)
