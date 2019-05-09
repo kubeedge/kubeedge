@@ -10,7 +10,7 @@ import (
 var UpdateDeviceStatusBuffer int
 
 func init() {
-	if psb, err := config.CONFIG.GetValue("devicecontroller.update-device-status-buffer").ToInt(); err != nil {
+	if psb, err := config.CONFIG.GetValue("devicecontroller.buffer.update-device-status").ToInt(); err != nil {
 		UpdateDeviceStatusBuffer = constants.DefaultUpdateDeviceStatusBuffer
 	} else {
 		UpdateDeviceStatusBuffer = psb

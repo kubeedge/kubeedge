@@ -10,7 +10,7 @@ import (
 var UpdateDeviceStatusWorkers int
 
 func init() {
-	if psw, err := config.CONFIG.GetValue("devicecontroller.update-device-status-workers").ToInt(); err != nil {
+	if psw, err := config.CONFIG.GetValue("devicecontroller.load.update-device-status-workers").ToInt(); err != nil {
 		UpdateDeviceStatusWorkers = constants.DefaultUpdateDeviceStatusWorkers
 	} else {
 		UpdateDeviceStatusWorkers = psw

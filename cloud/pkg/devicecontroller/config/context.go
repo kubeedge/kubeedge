@@ -20,21 +20,21 @@ var ContextResponseModule string
 var Context *context.Context
 
 func init() {
-	if smn, err := config.CONFIG.GetValue("devicecontroller.context-send-module").ToString(); err != nil {
+	if smn, err := config.CONFIG.GetValue("devicecontroller.context.send-module").ToString(); err != nil {
 		ContextSendModule = constants.DefaultContextSendModuleName
 	} else {
 		ContextSendModule = smn
 	}
 	log.LOGGER.Infof("Send module name: %s", ContextSendModule)
 
-	if rmn, err := config.CONFIG.GetValue("devicecontroller.context-receive-module").ToString(); err != nil {
+	if rmn, err := config.CONFIG.GetValue("devicecontroller.context.receive-module").ToString(); err != nil {
 		ContextReceiveModule = constants.DefaultContextReceiveModuleName
 	} else {
 		ContextReceiveModule = rmn
 	}
 	log.LOGGER.Infof("Receive module name: %s", ContextReceiveModule)
 
-	if rmn, err := config.CONFIG.GetValue("devicecontroller.context-response-module").ToString(); err != nil {
+	if rmn, err := config.CONFIG.GetValue("devicecontroller.context.response-module").ToString(); err != nil {
 		ContextResponseModule = constants.DefaultContextResponseModuleName
 	} else {
 		ContextResponseModule = rmn
