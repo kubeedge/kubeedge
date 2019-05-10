@@ -227,37 +227,22 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha1.Device) {
 
 // addDeviceProfile is function to add deviceProfile in configMap
 func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
+	deviceProfile := &types.DeviceProfile{}
 	dp, ok := configMap.Data[DeviceProfileJSON]
 	if !ok {
 		// create deviceProfileStruct
-		deviceProfile := &types.DeviceProfile{}
 		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
 		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
 		deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
 		deviceProfile.Protocols = make([]*types.Protocol, 0)
-		addDeviceInstanceAndProtocol(device, deviceProfile)
-
-		dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
-		if !ok {
-			log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
-			return
-		}
-		deviceModel := dm.(*CacheDeviceModel)
-		addDeviceModelAndVisitors(deviceModel, deviceProfile)
-		bytes, err := json.Marshal(deviceProfile)
+	} else {
+		err := json.Unmarshal([]byte(dp), deviceProfile)
 		if err != nil {
-			log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+			log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
 			return
 		}
-		configMap.Data[DeviceProfileJSON] = string(bytes)
-		return
 	}
-	deviceProfile := &types.DeviceProfile{}
-	err := json.Unmarshal([]byte(dp), deviceProfile)
-	if err != nil {
-		log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
-		return
-	}
+
 	addDeviceInstanceAndProtocol(device, deviceProfile)
 	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
 	if !ok {
