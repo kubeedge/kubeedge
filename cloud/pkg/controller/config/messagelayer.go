@@ -10,7 +10,7 @@ import (
 var MessageLayer string
 
 func init() {
-	if ml, err := config.CONFIG.GetValue("message-layer").ToString(); err != nil {
+	if ml, err := config.CONFIG.GetValue("controller.message-layer").ToString(); err != nil {
 		MessageLayer = constants.DefaultMessageLayer
 	} else {
 		MessageLayer = ml
