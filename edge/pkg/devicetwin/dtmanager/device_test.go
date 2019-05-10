@@ -490,4 +490,3 @@ func TestDealMsgAttr(t *testing.T) {
 		})
 	}
 }
-

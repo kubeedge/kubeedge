@@ -74,7 +74,7 @@ func (ehc *Controller) initial(ctx *context.Context) error {
 		log.LOGGER.Warnf("use the config url for testing")
 	}
 
-	cloudHubClient := clients.GetClient(clients.ClientTypeWebSocket, config.GetConfig())
+	cloudHubClient := clients.GetClient(ehc.config.Protocol, config.GetConfig())
 	if cloudHubClient == nil {
 		log.LOGGER.Errorf("failed to get web socket client")
 		return fmt.Errorf("failed to get web socket client")
