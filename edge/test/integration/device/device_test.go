@@ -62,7 +62,6 @@ type BaseMessage struct {
 
 var MemDeviceUpdate *MembershipUpdate
 
-
 var TokenClient Token
 var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
@@ -90,7 +89,6 @@ func DeviceSubscribed(client MQTT.Client, message MQTT.Message) {
 	}
 }
 
-
 // Deviceid from the DB and assigning to it
 var DeviceIDN string
 var DeviceN dttype.Device
@@ -114,7 +112,7 @@ var _ = Describe("Event Bus Testing", func() {
 			common.PrintTestcaseNameandStatus()
 		})
 		It("TC_TEST_EBUS_1: Sending data to Cloud", func() {
-			var data ="messagetoUpload_record_to_cloud"
+			var data = "messagetoUpload_record_to_cloud"
 			body, err := json.Marshal(data)
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
@@ -129,7 +127,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_2: Sending data to device module", func() {
-			var data ="messagetoDevice_status_update"
+			var data = "messagetoDevice_status_update"
 			body, err := json.Marshal(data)
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
@@ -144,7 +142,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_3: Sending data to device twin module", func() {
-			var data ="messagetoDevice_Twin_update"
+			var data = "messagetoDevice_Twin_update"
 			body, err := json.Marshal(data)
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
@@ -158,7 +156,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_4: Sending data to membership module", func() {
-			var data ="messagetoDevice_Membership_update"
+			var data = "messagetoDevice_Membership_update"
 			body, err := json.Marshal(data)
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
@@ -172,7 +170,7 @@ var _ = Describe("Event Bus Testing", func() {
 		})
 
 		It("TC_TEST_EBUS_5: Sending data to device module", func() {
-			var data ="messagetoDevice_upload"
+			var data = "messagetoDevice_upload"
 			body, err := json.Marshal(data)
 			if err != nil {
 				common.Failf("Marshal failed %v", err)
@@ -202,12 +200,12 @@ var _ = Describe("Event Bus Testing", func() {
 			devicetopic := dtcommon.MemETPrefix + ctx.Cfg.NodeId + dtcommon.MemETUpdateSuffix
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateSuffix + "/result"
 			Token := Client.Subscribe(devicetopic, 0, DeviceSubscribed)
-			if Token.Wait() && TokenClient.Error() != nil{
+			if Token.Wait() && TokenClient.Error() != nil {
 				common.Failf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), topic)
 			}
 
 			Token = Client.Subscribe(topic, 0, SubMessageReceived)
-			if Token.Wait() && TokenClient.Error() != nil{
+			if Token.Wait() && TokenClient.Error() != nil {
 				common.Failf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), devicetopic)
 			}
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceN)
@@ -346,7 +344,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.InfoV2("DeviceID= %s, Value= %s", attributeDB.DeviceID, attributeDB.Expected)
 				return attributeDB.Expected
 			}, "60s", "2s").Should(Equal("25.25"), "Device is not added within specified time")
-			
+
 		})
 
 		It("TC_TEST_EBUS_11: Update existing device with new attributes", func() {

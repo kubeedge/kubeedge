@@ -32,6 +32,10 @@ required = [
 ]
 
 [[constraint]]
+  name = "github.com/kubeedge/viaduct"
+  revision = "df4e595b4e12a411fa67b42a7cb299d0afe961ab"
+
+[[constraint]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.10.9"
 
@@ -76,6 +80,10 @@ required = [
   revision = "871ba2e58e24314d1fab4517a80410191ba5ad01"
 
 [[override]]
+  name = "github.com/go-chassis/paas-lager"
+  revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
+
+[[override]]
   name = "github.com/google/cadvisor"
   version = "v0.29.2"
 
@@ -101,7 +109,11 @@ required = [
 
 [[override]]
   name = "github.com/go-chassis/paas-lager"
-revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
+  revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
+
+[[override]]
+  name = "github.com/bifurcation/mint"
+  revision = "93c51c6ce11597a26e246fc33a301d62d3439cd2"
 
 [prune]
   go-tests = true

@@ -103,13 +103,20 @@ func resourceUnchanged(resType string, resKey string, content []byte) bool {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
-	content, err := json.Marshal(message.GetContent())
-	if err != nil {
-		log.LOGGER.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to marshal message content", message, m.context)
-		return
-	}
 
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
+	}
 	resKey, resType, _ := parseResource(message.GetResource())
 	meta := &dao.Meta{
 		Key:   resKey,
@@ -128,11 +135,18 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
-	content, err := json.Marshal(message.GetContent())
-	if err != nil {
-		log.LOGGER.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to marshal message content", message, m.context)
-		return
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -172,11 +186,19 @@ func (m *metaManager) processUpdate(message model.Message) {
 }
 
 func (m *metaManager) processResponse(message model.Message) {
-	content, err := json.Marshal(message.GetContent())
-	if err != nil {
-		log.LOGGER.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to marshal message content", message, m.context)
-		return
+
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -260,11 +282,17 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			return
 		}
 
-		content, err := json.Marshal(resp.GetContent())
-		if err != nil {
-			log.LOGGER.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
-			feedbackError(err, "Error to marshal message content", message, m.context)
-			return
+		var content []byte
+		switch resp.GetContent().(type) {
+		case []uint8:
+			content = resp.GetContent().([]byte)
+		default:
+			content, err = json.Marshal(resp.GetContent())
+			if err != nil {
+				log.LOGGER.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
+				feedbackError(err, "Error to marshal message content", message, m.context)
+				return
+			}
 		}
 
 		resKey, resType, _ := parseResource(message.GetResource())
@@ -342,11 +370,19 @@ func (m *metaManager) syncPodStatus() {
 }
 
 func (m *metaManager) processFunctionAction(message model.Message) {
-	content, err := json.Marshal(message.GetContent())
-	if err != nil {
-		log.LOGGER.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to marshal message content", message, m.context)
-		return
+
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -365,11 +401,18 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 }
 
 func (m *metaManager) processFunctionActionResult(message model.Message) {
-	content, err := json.Marshal(message.GetContent())
-	if err != nil {
-		log.LOGGER.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to marshal message content", message, m.context)
-		return
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
