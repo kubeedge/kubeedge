@@ -35,7 +35,7 @@ import (
 var CONFIG_FILE_PATH = "configuration/config.yaml"
 
 //CONFIG_MAP_PATH contains the location of the configuration file
-var CONFIG_MAP_PATH = "/opt/kubeedge/device_profile.json"
+var CONFIG_MAP_PATH = "/opt/kubeedge/deviceProfile.json"
 
 //Config is the global configuration used by all the modules of the mapper
 var Config *BLEConfig
