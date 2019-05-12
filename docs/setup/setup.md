@@ -62,18 +62,23 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 
 #### Run as a binary
 
++ Firstly, make sure gcc is already installed on your host. You can verify it via:
+    ```shell
+    gcc --version
+    ```
+
 + Build Cloud and edge
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge
-     make 
+    make 
     ```
 
 + Build Cloud
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge
-     make all WHAT=cloud
+    make all WHAT=cloud
     ```
 
 + The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml`. Please update the correct paths for the following :
