@@ -108,10 +108,6 @@ required = [
   revision = "adb21d1b0cbac79463b51d1a9b234ee1e743a4c2"
 
 [[override]]
-  name = "github.com/go-chassis/paas-lager"
-  revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
-
-[[override]]
   name = "github.com/bifurcation/mint"
   revision = "93c51c6ce11597a26e246fc33a301d62d3439cd2"
 
