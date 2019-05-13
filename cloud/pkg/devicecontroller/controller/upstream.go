@@ -138,11 +138,13 @@ func (uc *UpstreamController) updateDeviceStatus(stop chan struct{}) {
 			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
 			for twinName, twin := range msgTwin.Twin {
 				for i, cacheTwin := range deviceStatus.Status.Twins {
-					if twinName == cacheTwin.PropertyName {
+					if twinName == cacheTwin.PropertyName && twin.Actual != nil && twin.Actual.Value != nil {
 						reported := v1alpha1.TwinProperty{}
 						reported.Value = *twin.Actual.Value
 						reported.Metadata = make(map[string]string)
-						reported.Metadata["timestamp"] = strconv.FormatInt(twin.Actual.Metadata.Timestamp, 10)
+						if twin.Actual.Metadata != nil {
+							reported.Metadata["timestamp"] = strconv.FormatInt(twin.Actual.Metadata.Timestamp, 10)
+						}
 						if twin.Metadata != nil {
 							reported.Metadata["type"] = twin.Metadata.Type
 						}
