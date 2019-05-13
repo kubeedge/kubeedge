@@ -8,7 +8,7 @@ approvers:
   - "@kevin-wangzefeng"
   - "@m1093782566"
 ---
-# EdgeSite: Lightweight Cluster at edge
+# EdgeSite: Standalone Cluster at edge
 
 ## Abstract
 In Edge computing, there are scenarios where customers would like to have a whole cluster installed at edge location. As a result, 
@@ -17,12 +17,16 @@ admins/users can leverage the local control plane to implement management functi
 This design doc is to enable customers deploy and run lightweight clusters at edge. 
 
 ## Motivation
-For these use cases, when considering large set of edge locations, the resource usage of management plane adding together will be high. 
-K3s is an opensource project enabling lightweight Kubernetes cluster including the light control plane and worker components. 
-KubeEdge is the other opensource project enabling lightweight k8s client on the edge nodes. The KubeEdge agent runtime memory footprint is 
-10MB and it supports Kubernetes primitives. Meanwhile KubeEdge is targeted for Edge/IOT computing with many functionality enablements. 
+There are scenarios user need to run a standalone Kubernetes cluster at edge to get full control and improve the offline scheduling capability. There are two scenarios user need to do that:
 
-By integrating KubeEdge and K3s, this proposal enables customers to run an efficient kubernetes cluster for Edge/IOT computing. 
+* The edge cluster is in CDN instead of the user's site
+The CDN sites usually be large around the world and the network connectivity and quality cannot be guaranteed. Another factor is that the application deployed in CDN edge do not need to interact with center usually. For those deploy edge cluster in CDN resources, they need to make sure the cluster is workable without the connection with central cloud not only for the deployed applicatons but also the schedule capabilities. So that the CDN edge is manageable regardless the connection to one center.
+
+* User need to deploy an edge environment with limited resources and offline running for most of the time
+In some IOT scenarios, user need to deploy a full control edge environment and running offline.
+
+For these use cases, a standalone, full controlled, light weight Edge cluster is required.
+By integrating KubeEdge and standard Kubernetes, this proposal enables customers to run an efficient kubernetes cluster for Edge/IOT computing. User can also leverage other smaller Kubernetes implementation such as K3S to make the footprint even smaller.
 
 ## Assumptions
 Here we assume a cluster is deployed at edge location including the management control plane. 
@@ -39,10 +43,10 @@ The assumptions are
 ## Advantages
 With the integration, the following can be enabled
 
-1. Light weight control plane and agent
-2. Edge worker node autonomy in case of network disconnection/reconnection
-3. All benefits of edge computing including latency, data locality, etc.
-4. Support large scale of edge clusters without consuming too much resources for control plane
+1. Full control of Kubernetes cluster at edge
+2. Light weight control plane and agent
+3. Edge worker node autonomy in case of network disconnection/reconnection
+4. All benefits of edge computing including latency, data locality, etc.
 
 ## Protocol 
 K8s client library interface will be used. The edgecontroller on each edge node only watches against k8s types for the node itself. 
@@ -69,7 +73,7 @@ And the data can be written to the client side store.
 
 ## Work Items
 1. Port current EdgeController code to KubeEdge agent side
-2. Remove cloudhub/edgehub 
+2. Make cloudhub/edgehub optional
 3. Come up with lightweight etcd
    For lightweight etcd, we keep etcdv3 implementation and remove v2; and some other items.
 4. Lightweight kubeproxy on edgecore
