@@ -1,0 +1,26 @@
+  
+apiVersion: devices.kubeedge.io/v1alpha1
+kind: Device
+metadata:
+  name: sensor-tag-instance-01
+  labels:
+    description: TISimplelinkSensorTag
+    manufacturer: TexasInstruments
+    model: cc2650-sensortag
+spec:
+  deviceModelRef:
+    name: cc2650-sensortag
+  protocol:
+    bluetooth:
+      macAddress: "BC:6A:29:AE:CC:96"   #pls note it is optional to provide MAC address
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: ''
+        operator: In
+        values:
+        - edge-node1          #pls give your edge node name
+status:
+  twins:
+    - propertyName: temperature-enable
+    - propertyName: io-data
