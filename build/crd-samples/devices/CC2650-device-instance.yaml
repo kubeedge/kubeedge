@@ -23,15 +23,4 @@ spec:
 status:
   twins:
     - propertyName: temperature-enable
-      desired:
-        metadata:
-          timestamp: '1550049403598'
-          type: string
-        value: 'ON'
     - propertyName: io-data
-      desired:
-        metadata:
-          timestamp: '1550049403598'
-          type: int
-        value: "3"
-
