@@ -73,7 +73,7 @@ And the data can be written to the client side store.
 
 ## Work Items
 1. Port current EdgeController code to KubeEdge agent side
-2. Remove cloudhub/edgehub 
+2. Make cloudhub/edgehub optional
 3. Come up with lightweight etcd
    For lightweight etcd, we keep etcdv3 implementation and remove v2; and some other items.
 4. Lightweight kubeproxy on edgecore
