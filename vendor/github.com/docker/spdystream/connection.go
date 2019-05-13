@@ -103,12 +103,12 @@ Loop:
 			//
 			// See https://github.com/docker/spdystream/issues/49 for more details.
 			go func() {
-				for range resetChan {
+				for _ = range resetChan {
 				}
 			}()
 
 			go func() {
-				for range setTimeoutChan {
+				for _ = range setTimeoutChan {
 				}
 			}()
 
@@ -127,7 +127,7 @@ Loop:
 	}
 
 	// Drain resetChan
-	for range resetChan {
+	for _ = range resetChan {
 	}
 }
 

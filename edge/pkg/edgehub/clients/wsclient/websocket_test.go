@@ -247,7 +247,7 @@ func TestReceive(t *testing.T) {
 			fields:        newTestWebSocketClient("wrong_send", "/tmp/edge.crt", "/tmp/edge.key"),
 			want:          model.Message{},
 			sent:          model.Message{},
-			expectedError: fmt.Errorf("failed to read json, error: websocket: close 1006 (abnormal closure): unexpected EOF"),
+			expectedError: &websocket.CloseError{Code: 1006, Text: "unexpected EOF"},
 		},
 	}
 	for _, tt := range tests {

@@ -22,15 +22,29 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
+	"path/filepath"
+	"runtime"
 	"time"
 
+	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 )
 
-//DeRegisterNodeFromMaster to deregister the node from master
-func DeRegisterNodeFromMaster(ctx *TestContext, nodehandler, nodename string) error {
-	err, resp := SendHttpRequest(http.MethodDelete, ctx.Cfg.ApiServer+nodehandler+"/"+nodename)
+func getpwd() string {
+	_, file, _, _ := runtime.Caller(0)
+	dir, err := filepath.Abs(filepath.Dir(file))
+	if err != nil {
+		glog.Errorf("get current dir fail %+v", err)
+		return " "
+	}
+	return dir
+}
+
+//DeRegisterNodeFromMaster function to deregister the node from master
+func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
+	err, resp := SendHttpRequest(http.MethodDelete, nodehandler+"/"+nodename)
 	if err != nil {
 		Failf("Sending SenHttpRequest failed: %v", err)
 		return err
@@ -41,7 +55,7 @@ func DeRegisterNodeFromMaster(ctx *TestContext, nodehandler, nodename string) er
 	return nil
 }
 
-//GenerateNodeReqBody to generate the node request body
+//GenerateNodeReqBody function to generate the node request body
 func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interface{}) {
 	var temp map[string]interface{}
 
@@ -55,8 +69,8 @@ func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interfa
 	return nil, temp
 }
 
-//RegisterNodeToMaster to register node to master
-func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler, nodeselector string) error {
+//RegisterNodeToMaster function to register node to master
+func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 	err, body := GenerateNodeReqBody(UID, nodeselector)
 	if err != nil {
 		Failf("Unmarshal body failed: %v", err)
@@ -71,7 +85,7 @@ func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler, nodeselector strin
 		return err
 	}
 	BodyBuf := bytes.NewReader(nodebody)
-	req, err := http.NewRequest(http.MethodPost, ctx.Cfg.ApiServer+nodehandler, BodyBuf)
+	req, err := http.NewRequest(http.MethodPost, nodehandler, BodyBuf)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		Failf("Frame HTTP request failed: %v", err)
@@ -89,11 +103,11 @@ func RegisterNodeToMaster(ctx *TestContext, UID, nodehandler, nodeselector strin
 	return nil
 }
 
-//CheckNodeReadyStatus to get node status
-func CheckNodeReadyStatus(ctx *TestContext, nodehandler, nodename string) string {
+//CheckNodeReadyStatus function to get node status
+func CheckNodeReadyStatus(nodehandler, nodename string) string {
 	var node v1.Node
 	var nodeStatus = "unknown"
-	err, resp := SendHttpRequest(http.MethodGet, ctx.Cfg.ApiServer+nodehandler+"/"+nodename)
+	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
 		Failf("Sending SenHttpRequest failed: %v", err)
 		return nodeStatus
@@ -114,13 +128,158 @@ func CheckNodeReadyStatus(ctx *TestContext, nodehandler, nodename string) string
 	return string(node.Status.Phase)
 }
 
-//CheckNodeDeleteStatus to check node delete status
-func CheckNodeDeleteStatus(ctx *TestContext, nodehandler, nodename string) int {
-	err, resp := SendHttpRequest(http.MethodGet, ctx.Cfg.ApiServer+nodehandler+"/"+nodename)
+//CheckNodeDeleteStatus function to check node delete status
+func CheckNodeDeleteStatus(nodehandler, nodename string) int {
+	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
 		Failf("Sending SenHttpRequest failed: %v", err)
 		return -1
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
+}
+
+//HandleConfigmap function to create configmaps for respective edgenodes
+func HandleConfigmap(configName chan error, operation, confighandler string, IsEdgeCore bool) {
+	var req *http.Request
+	var file string
+	curpath := getpwd()
+	if IsEdgeCore == true {
+		file = path.Join(curpath, "../../performance/assets/02-edgeconfigmap.yaml")
+	} else {
+		file = path.Join(curpath, "../../performance/assets/01-configmap.yaml")
+	}
+	body, err := ioutil.ReadFile(file)
+	if err == nil {
+		client := &http.Client{}
+		t := time.Now()
+		if operation == http.MethodPost {
+			BodyBuf := bytes.NewReader(body)
+			req, err = http.NewRequest(operation, confighandler, BodyBuf)
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/yaml")
+		} else {
+			req, err = http.NewRequest(operation, confighandler, bytes.NewReader([]byte("")))
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/json")
+		}
+
+		if err != nil {
+			Failf("Frame HTTP request failed: %v", err)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			Failf("Sending HTTP request failed: %v", err)
+		}
+		InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		defer resp.Body.Close()
+		if operation == http.MethodPost {
+			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+		} else {
+			Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+		}
+		configName <- nil
+
+	} else {
+		configName <- err
+	}
+}
+
+//GetConfigmap function to get configmaps for respective edgenodes
+func GetConfigmap(apiConfigMap string) int {
+	err, resp := SendHttpRequest(http.MethodGet, apiConfigMap)
+	if err != nil {
+		Failf("Sending SenHttpRequest failed: %v", err)
+		return -1
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode
+
+}
+
+func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
+	var temp map[string]interface{}
+	var body string
+	if toTaint == true {
+		body = fmt.Sprintf(`{"spec":{"taints":[{"effect":"NoSchedule","key":"key","value":"value"}]}}`)
+	} else {
+		body = fmt.Sprintf(`{"spec":{"taints":null}}`)
+	}
+	err := json.Unmarshal([]byte(body), &temp)
+	if err != nil {
+		Failf("Unmarshal body failed: %v", err)
+		return nil
+	}
+	nodebody, err := json.Marshal(temp)
+	if err != nil {
+		Failf("Marshal body failed: %v", err)
+		return err
+	}
+	BodyBuf := bytes.NewReader(nodebody)
+	req, err := http.NewRequest(http.MethodPatch, taintHandler, BodyBuf)
+	Expect(err).Should(BeNil())
+	client := &http.Client{}
+	t := time.Now()
+	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		Failf("Sending HTTP request failed: %v", err)
+		return err
+	}
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	defer resp.Body.Close()
+	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	return nil
+}
+
+//GetNodes function to get configmaps for respective edgenodes
+func GetNodes(api string) v1.NodeList {
+	var nodes v1.NodeList
+	err, resp := SendHttpRequest(http.MethodGet, api)
+	if err != nil {
+		Failf("Sending SenHttpRequest failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Failf("HTTP Response reading has failed: %v", err)
+	}
+	err = json.Unmarshal(contents, &nodes)
+	if err != nil {
+		Failf("Unmarshal HTTP Response has failed: %v", err)
+	}
+
+	return nodes
+}
+
+func ApplyLabelToNode(apiserver, key, val string) error {
+	var temp map[string]interface{}
+	var body string
+	body = fmt.Sprintf(`{"metadata":{"labels":{"%s":"%s"}}}`, key, val)
+	err := json.Unmarshal([]byte(body), &temp)
+	if err != nil {
+		Failf("Unmarshal body failed: %v", err)
+		return nil
+	}
+	nodebody, err := json.Marshal(temp)
+	if err != nil {
+		Failf("Marshal body failed: %v", err)
+		return err
+	}
+	BodyBuf := bytes.NewReader(nodebody)
+	req, err := http.NewRequest(http.MethodPatch, apiserver, BodyBuf)
+	Expect(err).Should(BeNil())
+	client := &http.Client{}
+	t := time.Now()
+	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		Failf("Sending HTTP request failed: %v", err)
+		return err
+	}
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	defer resp.Body.Close()
+	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	return nil
 }

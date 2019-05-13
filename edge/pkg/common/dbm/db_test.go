@@ -128,4 +128,3 @@ func TestCleanDBFile(t *testing.T) {
 		})
 	}
 }
-

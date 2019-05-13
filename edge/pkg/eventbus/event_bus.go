@@ -3,6 +3,7 @@ package eventbus
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/kubeedge/beehive/pkg/common/config"
@@ -56,7 +57,8 @@ func (eb *eventbus) Start(c *context.Context) {
 
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
 	if nodeID == nil {
-		panic("node id not configured")
+		log.LOGGER.Errorf("node id not configured")
+		os.Exit(1)
 	}
 
 	mqttBus.NodeID = nodeID.(string)
@@ -99,14 +101,16 @@ func (eb *eventbus) Start(c *context.Context) {
 		}
 
 		if qos.(int) < int(packet.QOSAtMostOnce) || qos.(int) > int(packet.QOSExactlyOnce) || sessionQueueSize.(int) <= 0 {
-			panic("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
+			log.LOGGER.Errorf("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
+			os.Exit(1)
 		}
 		// launch an internal mqtt server only
 		mqttServer = mqttBus.NewMqttServer(sessionQueueSize.(int), internalMqttURL.(string), retain.(bool), qos.(int))
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {
-			panic(fmt.Sprintf("Launch mqtt broker failed, %s", err.Error()))
+			log.LOGGER.Errorf("Launch mqtt broker failed, %s", err.Error())
+			os.Exit(1)
 		}
 	}
 
