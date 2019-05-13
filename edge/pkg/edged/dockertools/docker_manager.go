@@ -81,7 +81,17 @@ const PROJECTNAME = "southchina"
 var (
 	// ErrImageNeverPull : Required Image is absent on host and PullPolicy is NeverPullImage
 	ErrImageNeverPull = errors.New("ErrImageNeverPull")
+	// DockerAddress is address for docker
+	DockerAddress = DockerDefaultAddress
 )
+
+// InitDockerAddress inits docker address
+func InitDockerAddress(dockerAddress string) {
+	DockerAddress = dockerAddress
+	if DockerAddress == "" {
+		DockerAddress = DockerDefaultAddress
+	}
+}
 
 //DockerManager defines object structure of docker manager
 type DockerManager struct {
@@ -104,7 +114,7 @@ func NewDockerClient(dockerEndpoint string) (dockerapi.CommonAPIClient, error) {
 func NewDockerManager(livenessManager proberesults.Manager, qps float32, burst int, backOff *flowcontrol.Backoff, serializeImagePulls bool, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (*DockerManager, error) {
 	var err error
 	dm := &DockerManager{}
-	client, err := NewDockerClient(DockerDefaultAddress)
+	client, err := NewDockerClient(DockerAddress)
 	if err != nil {
 		return nil, fmt.Errorf("new docker client failed: %s", err)
 	}
@@ -590,6 +600,6 @@ func convertTime(stringTime string) time.Time {
 // TODO: fillup other field in this struct
 func NewDockerConfig() *dockershim.ClientConfig {
 	return &dockershim.ClientConfig{
-		DockerEndpoint: DockerDefaultAddress,
+		DockerEndpoint: DockerAddress,
 	}
 }

@@ -59,9 +59,15 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 		return nil, fmt.Errorf("get secret from metaManager failed, err: %v", err)
 	}
 
-	content, err := json.Marshal(msg.GetContent())
-	if err != nil {
-		return nil, fmt.Errorf("marshal message content failed, err: %v", err)
+	var content []byte
+	switch msg.Content.(type) {
+	case []byte:
+		content = msg.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(msg.GetContent())
+		if err != nil {
+			return nil, fmt.Errorf("marshal message to secret failed, err: %v", err)
+		}
 	}
 
 	//op := msg.GetOperation()

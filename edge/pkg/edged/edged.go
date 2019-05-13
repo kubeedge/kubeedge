@@ -3,11 +3,13 @@ package edged
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"os"
 	"sync"
 	"time"
 
-	"k8s.io/api/core/v1"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -144,6 +146,7 @@ type Config struct {
 	imageGCHighThreshold     int
 	imageGCLowThreshold      int
 	MaxPerPodContainerCount  int
+	DockerAddress            string
 	version                  string
 }
 
@@ -157,7 +160,7 @@ func init() {
 }
 
 func (e *edged) Name() string {
-	return "edged"
+	return modules.EdgedModuleName
 }
 
 func (e *edged) Group() string {
@@ -168,12 +171,12 @@ func (e *edged) Start(c *context.Context) {
 	e.context = c
 	if err := e.initializeModules(); err != nil {
 		log.LOGGER.Errorf("initialize module error: %v", err)
-		return
+		os.Exit(1)
 	}
 	err := e.makePodDir()
 	if err != nil {
 		log.LOGGER.Errorf("create pod dir [%s] failed: %v", e.getPodsDir(), err)
-		return
+		os.Exit(1)
 	}
 	e.metaClient = metaclient.New(c)
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
@@ -248,6 +251,7 @@ func getConfig() *Config {
 	conf.imageGCLowThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-low-threshold").(int)
 	conf.MaxPerPodContainerCount = config.CONFIG.GetConfigurationByKey("edged.maximum-dead-containers-per-container").(int)
 	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
+	conf.DockerAddress = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
 	return &conf
 }
 
@@ -285,6 +289,11 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
+	}
+
+	// Set docker address if it is set in the conf
+	if conf.DockerAddress != "" {
+		dockertools.InitDockerAddress(conf.DockerAddress)
 	}
 
 	if conf.gpuPluginEnabled {
@@ -605,12 +614,19 @@ func (e *edged) syncPod() {
 				continue
 			}
 
-			content, err := json.Marshal(request.Content)
-			if err != nil {
-				log.LOGGER.Errorf("marshal message content failed: %v", err)
-				continue
+			var content []byte
+
+			switch request.Content.(type) {
+			case []byte:
+				content = request.GetContent().([]byte)
+			default:
+				content, err = json.Marshal(request.Content)
+				if err != nil {
+					log.LOGGER.Errorf("marshal message content failed: %v", err)
+					continue
+				}
 			}
-			log.LOGGER.Infof("request content is %s", string(content))
+			log.LOGGER.Infof("request content is %s", request.Content)
 			switch resType {
 			case model.ResourceTypePod:
 				if op == model.ResponseOperation && resID == "" && request.GetSource() == metamanager.MetaManagerModuleName {

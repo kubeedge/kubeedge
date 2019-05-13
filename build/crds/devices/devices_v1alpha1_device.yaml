@@ -41,6 +41,13 @@ spec:
               description: 'Required: The protocol configuration used to connect to
                 the device.'
               properties:
+                bluetooth:
+                  description: Protocol configuration for bluetooth
+                  properties:
+                    macAddress:
+                      description: Unique identifier assigned to the device.
+                      type: string
+                  type: object
                 modbus:
                   description: Protocol configuration for modbus
                   properties:
