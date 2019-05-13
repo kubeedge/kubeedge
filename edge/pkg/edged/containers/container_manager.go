@@ -1122,7 +1122,7 @@ func (cm *containerManager) freeContainer(freeTime time.Time, gcPolicy kubeconta
 		log.LOGGER.Infof("Evaluating Container ID %s for possible garbage collection", record.containerID)
 		if record.lastUsed.Equal(freeTime) || record.lastUsed.After(freeTime) {
 			log.LOGGER.Infof("Container ID %s has lastUsed=%v which is >= freeTime=%v, not eligible for garbage collection", record.containerID, record.lastUsed, freeTime)
-			break
+			continue
 		}
 
 		if freeTime.Sub(record.firstDetected) < gcPolicy.MinAge {

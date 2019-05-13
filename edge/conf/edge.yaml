@@ -14,7 +14,16 @@ edgehub:
         handshake-timeout: 30 #second
         write-deadline: 15 # second
         read-deadline: 15 # second
+    quic:
+        url: 127.0.0.1:10001
+        cafile: /etc/kubeedge/ca/rootCA.crt
+        certfile: /etc/kubeedge/certs/edge.crt
+        keyfile: /etc/kubeedge/certs/edge.key
+        handshake-timeout: 30 #second
+        write-deadline: 15 # second
+        read-deadline: 15 # second
     controller:
+        protocol: websocket # websocket, quic
         placement: false
         heartbeat: 15  # second
         refresh-ak-sk-interval: 10 # minute
@@ -33,4 +42,5 @@ edged:
     image-gc-high-threshold: 80 # percent
     image-gc-low-threshold: 40 # percent
     maximum-dead-containers-per-container: 1
+    docker-address: unix:///var/run/docker.sock
     version: 2.0.0

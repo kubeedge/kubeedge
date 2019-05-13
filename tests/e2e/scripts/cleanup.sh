@@ -44,8 +44,8 @@ cleanup_files(){
     workdir=$GOPATH/src/github.com/kubeedge/kubeedge
     cd $workdir
 
-    sudo rm -rf cloud/edgecontroller/edgecontroller
-    sudo rm -rf cloud/edgecontroller/tmp/
+    sudo rm -rf cloud/edgecontroller
+    sudo rm -rf cloud/tmp/
     sudo rm -rf edge/edge.db
     sudo rm -rf edge/edge_core
     sudo rm -rf edge/tmp/
