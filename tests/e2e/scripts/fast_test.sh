@@ -19,6 +19,7 @@ workdir=`pwd`
 cd $workdir
 
 debugflag="-v 6 -alsologtostderr"
+
 compilemodule=$1
 runtest=$2
 
@@ -29,9 +30,8 @@ cd ../
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "edgedEndpoint": "http://127.0.0.1:10255",
-        "image_url": ["nginx:1.7.9", "hello-world"],
-        "apiserver":"http://$MASTER_IP:12418"
+        "image_url": ["nginx", "hello-world"],
+        "k8smasterforkubeedge":"http://$MASTER_IP:12418"
 }
 END
 

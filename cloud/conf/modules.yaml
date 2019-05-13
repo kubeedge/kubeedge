@@ -1,0 +1,2 @@
+modules:
+    enabled: [devicecontroller, controller, cloudhub]

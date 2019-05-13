@@ -40,8 +40,9 @@ import (
 )
 
 const (
-	CertFile = "/tmp/kubeedge/certs/edge.crt"
-	KeyFile  = "/tmp/kubeedge/certs/edge.key"
+	CertFile   = "/tmp/kubeedge/certs/edge.crt"
+	KeyFile    = "/tmp/kubeedge/certs/edge.key"
+	ConfigPath = "/tmp/kubeedge/testData"
 )
 
 //testServer is a fake http server created for testing
@@ -64,6 +65,27 @@ func initMocks(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter = edgehub.NewMockAdapter(mockCtrl)
+}
+
+//testEdgeConfigYaml is a structure which is used to generate the test YAML file to test Edgehub config components
+type testEdgeConfigYaml struct {
+	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
+}
+
+//edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
+type edgeHubConfigYaml struct {
+	WSConfig  webSocketConfigYaml  `yaml:"websocket"`
+	CtrConfig controllerConfigYaml `yaml:"controller"`
+}
+
+//controllerConfigYaml is a structure which is used to generate the test YAML file to test controller config components
+type controllerConfigYaml struct {
+	Placement string `yaml:"placement,omitempty"`
+}
+
+//webSocketConfigYaml is a structure which is used to generate the test YAML file to test WebSocket config components
+type webSocketConfigYaml struct {
+	URL string `yaml:"url,omitempty"`
 }
 
 //newTestServer() starts a fake server for testing
@@ -96,6 +118,7 @@ func TestNewEdgeHubController(t *testing.T) {
 		{"Testing if EdgeHubController is returned with correct values",
 			&Controller{
 				config: &config.ControllerConfig{
+					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
@@ -107,6 +130,7 @@ func TestNewEdgeHubController(t *testing.T) {
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 150 * time.Second,
 				RefreshInterval: 15 * time.Minute,
 				AuthInfosPath:   "/var/IEF/secret",
@@ -142,6 +166,7 @@ func TestNewEdgeHubController(t *testing.T) {
 //TestInitial() tests the procurement of the cloudhub client
 func TestInitial(t *testing.T) {
 	controllerConfig := config.ControllerConfig{
+		Protocol:        "websocket",
 		HeartbeatPeriod: 150 * time.Second,
 		RefreshInterval: 15 * time.Minute,
 		AuthInfosPath:   "/var/IEF/secret",
@@ -179,6 +204,7 @@ func TestInitial(t *testing.T) {
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
 		}, config.ControllerConfig{
+			Protocol:     "websocket",
 			PlacementURL: testServer.URL,
 			ProjectID:    "foo",
 			NodeID:       "bar",
@@ -193,6 +219,7 @@ func TestInitial(t *testing.T) {
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
 		}, config.ControllerConfig{
+			Protocol:     "websocket",
 			PlacementURL: testServer.URL,
 			ProjectID:    "",
 			NodeID:       "",
@@ -439,6 +466,7 @@ func TestSendToCloud(t *testing.T) {
 			context:  context.GetContext(context.MsgCtxTypeChannel),
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 6 * time.Second,
 			},
 			syncKeeper: make(map[string]chan model.Message),
@@ -450,6 +478,7 @@ func TestSendToCloud(t *testing.T) {
 		{"Wait Error in send to cloud", Controller{
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
+				Protocol:        "websocket",
 				HeartbeatPeriod: 3 * time.Second,
 			},
 			syncKeeper: make(map[string]chan model.Message),
@@ -535,6 +564,7 @@ func TestKeepalive(t *testing.T) {
 	}{
 		{"Heartbeat failure Case", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -617,6 +647,7 @@ func TestPostUrlRequst(t *testing.T) {
 	}{
 		{"post URL request with valid input ", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -626,6 +657,7 @@ func TestPostUrlRequst(t *testing.T) {
 
 		{"post URL request with invalid input", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/bad_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -634,6 +666,7 @@ func TestPostUrlRequst(t *testing.T) {
 
 		{"post URL request with wrong URL", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/wrong_url",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -654,8 +687,22 @@ func TestPostUrlRequst(t *testing.T) {
 	}
 }
 
-//TestGetCloudHubUrl() tests the procurement of the cloudHub URL from the placement server
-func TestGetCloudHubUrl(t *testing.T) {
+//TestGetCloudHubUrlWithoutPlacement() tests the procurement of the cloudHub URL when no placement server is present
+func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
+	if err := util.GenerateTestYaml(testEdgeConfigYaml{edgeHubConfigYaml{
+		webSocketConfigYaml{
+			URL: "wss://0.0.0.0:10000/foo/bar/events",
+		},
+		controllerConfigYaml{
+			Placement: "false",
+		},
+	},
+	}, ConfigPath, "edge"); err != nil {
+		t.Error("Unable to generate test YAML file: ", err)
+	}
+	if err := util.LoadConfig(ConfigPath); err != nil {
+		t.Error("Unable to load the configuration file: ", err)
+	}
 	tests := []struct {
 		name            string
 		controller      Controller
@@ -663,8 +710,9 @@ func TestGetCloudHubUrl(t *testing.T) {
 		want            string
 		expectedError   error
 	}{
-		{"Get valid cloudhub URL", Controller{
+		{"Get valid cloudhub URL: without placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -672,10 +720,62 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
+		}, "wss://0.0.0.0:10000/foo/bar/events", nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			edgeHubConfig := config.GetConfig()
+			edgeHubConfig.WSConfig = tt.webSocketConfig
+			got, err := tt.controller.getCloudHubURL()
+			if !reflect.DeepEqual(err, tt.expectedError) {
+				t.Errorf("Controller.getCloudHubUrl() error = %v, expectedError %v", err, tt.expectedError)
+			}
+			if got != tt.want {
+				t.Errorf("Controller.getCloudHubUrl() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
-		{"Invalid cloudhub URL", Controller{
+//TestGetCloudHubUrlWithPlacement() tests the procurement of the cloudHub URL from the placement server
+func TestGetCloudHubUrlWithPlacement(t *testing.T) {
+	if err := util.GenerateTestYaml(testEdgeConfigYaml{edgeHubConfigYaml{
+		webSocketConfigYaml{
+			URL: "wss://0.0.0.0:10000/foo/bar/events",
+		},
+		controllerConfigYaml{
+			Placement: "true",
+		},
+	},
+	}, ConfigPath, "edge"); err != nil {
+		t.Error("Unable to generate test YAML file: ", err)
+	}
+	if err := util.LoadConfig(ConfigPath); err != nil {
+		t.Error("Unable to load the configuration file: ", err)
+	}
+	tests := []struct {
+		name            string
+		controller      Controller
+		webSocketConfig config.WebSocketConfig
+		want            string
+		expectedError   error
+	}{
+		{"Get valid cloudhub URL: with placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
+				PlacementURL: testServer.URL + "/proper_request",
+				ProjectID:    "foo",
+				NodeID:       "bar",
+			},
+		}, config.WebSocketConfig{
+			CertFilePath: CertFile,
+			KeyFilePath:  KeyFile,
+		}, "ws://127.0.0.1:20000/foo/bar/events", nil,
+		},
+		{"Invalid cloudhub URL: with placement server", Controller{
+			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/bad_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -683,10 +783,11 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: CertFile,
 			KeyFilePath:  KeyFile,
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
-
-		{"Wrong certificate paths", Controller{
+		}, "", fmt.Errorf("failed to new https client for placement, error: bad request"),
+		},
+		{"Wrong certificate paths: with placement server", Controller{
 			config: &config.ControllerConfig{
+				Protocol:     "websocket",
 				PlacementURL: testServer.URL + "/proper_request",
 				ProjectID:    "foo",
 				NodeID:       "bar",
@@ -694,7 +795,8 @@ func TestGetCloudHubUrl(t *testing.T) {
 		}, config.WebSocketConfig{
 			CertFilePath: "/wrong_path/edge.crt",
 			KeyFilePath:  "/wrong_path/edge.key",
-		}, "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", nil},
+		}, "", fmt.Errorf("failed to new https client for placement, error: open /wrong_path/edge.crt: no such file or directory"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

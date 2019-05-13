@@ -23,11 +23,26 @@ import (
 	"time"
 )
 
+const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+type vmSpec struct {
+	Ip       string `json:"ip"`
+	Username string `json:"username"`
+	Passwd   string `json:"password"`
+}
+
 //config.json decode struct
 type Config struct {
-	EdgedEndpoint string   `json:"edgedEndpoint"`
-	AppImageUrl   []string `json:"image_url"`
-	ApiServer     string   `json:"apiserver"`
+	AppImageUrl                    []string          `json:"image_url"`
+	K8SMasterForKubeEdge           string            `json:"k8smasterforkubeedge"`
+	Nodes                          map[string]vmSpec `json:"k8snodes"`
+	NumOfNodes                     int               `json:"node_num"`
+	ImageRepo                      string            `json:"imagerepo"`
+	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
+	CloudImageUrl                  string            `json:"cloudimageurl"`
+	EdgeImageUrl                   string            `json:"edgeimageurl"`
+	Namespace                      string            `json:"namespace"`
+	ControllerStubPort             int               `json:"controllerstubport"`
 }
 
 //config struct
@@ -41,7 +56,7 @@ func LoadConfig() Config {
 	return *config
 }
 
-//Load Config.json from the PWD, and decode the config.
+//loadConfigJsonFromPath reads the test configuration and builds a Config object.
 func loadConfigJsonFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
@@ -62,7 +77,8 @@ func loadConfigJsonFromPath() *Config {
 	return config
 }
 
-//Get config path from Env or hard code the file path
+//getConfigPath returns the configuration path provided in the env var name. In case the env var is not
+//set, the default configuration path is returned
 func getConfigPath() string {
 	path := os.Getenv("TESTCONFIG")
 	if path == "" {

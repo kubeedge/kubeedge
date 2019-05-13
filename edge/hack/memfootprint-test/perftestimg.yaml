@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: perftestimg-deployment
+    labels:
+        app: perftestimg
+
+spec:
+    replicas: 5
+    selector:
+        matchLabels:
+            app: perftestimg
+    template:
+        metadata:
+            labels:
+                app: perftestimg
+        spec:
+            containers:
+            - name: perftestimg
+              image: localhost:5000/pertestimg:v2

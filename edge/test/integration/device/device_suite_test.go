@@ -66,17 +66,12 @@ var (
 func TestEdgecoreEventBus(t *testing.T) {
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
+
+		MemDeviceUpdate = &MembershipUpdate{}
 		common.InfoV6("Before Suite execution")
 
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
-		common.InfoV2("Adding Mock device to edgenode !!")
-
-		DeviceIDN = helpers.GenerateDeviceID("kubeedge-device-")
-		DeviceN = helpers.CreateDevice(DeviceIDN, "edgedevice", "unknown")
-
-		IsDeviceAdded := helpers.HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, DeviceN)
-		Expect(IsDeviceAdded).Should(BeTrue())
 
 	})
 	AfterSuite(func() {
@@ -92,7 +87,6 @@ func TestEdgecoreEventBus(t *testing.T) {
 
 		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
 		Expect(IsDeviceDeleted).Should(BeTrue())
-
 	})
 
 	RunSpecs(t, "edgecore Suite")
