@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: edgecore-configmap-rov
+  name: edgecore-configmap
   namespace: default
   labels:
     k8s-app: kubeedge
@@ -17,24 +17,34 @@ data:
         session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
     edgehub:
         websocket:
-            url: wss://192.168.20.107:31765/e632aba927ea4ac2b575ec1603d56f10/perf-node-ymysm0j2yw/events
+            url: wss://192.168.20.107:31379/e632aba927ea4ac2b575ec1603d56f10/perf-node-o19egaee6o/events
+            cafile: /etc/kubeedge/certs/rootCA.crt
+            certfile: /etc/kubeedge/certs/edge.crt
+            keyfile: /etc/kubeedge/certs/edge.key
+            handshake-timeout: 30 #second
+            write-deadline: 15 # second
+            read-deadline: 15 # second
+        quic:
+            url: 192.168.20.107:31771
+            cafile: /etc/kubeedge/certs/rootCA.crt
             certfile: /etc/kubeedge/certs/edge.crt
             keyfile: /etc/kubeedge/certs/edge.key
             handshake-timeout: 30 #second
             write-deadline: 15 # second
             read-deadline: 15 # second
         controller:
+            protocol: quic
             placement: false
             heartbeat: 15  # second
             refresh-ak-sk-interval: 10 # minute
             auth-info-files-path: /var/IEF/secret
-            placement-url: wss://192.168.20.107:31765/e632aba927ea4ac2b575ec1603d56f10/perf-node-ymysm0j2yw/events
+            placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
             project-id: e632aba927ea4ac2b575ec1603d56f10
-            node-id: perf-node-ymysm0j2yw
+            node-id: perf-node-o19egaee6o
     edged:
         register-node-namespace: default
-        hostname-override: perf-node-ymysm0j2yw
-        interface-name: edgecore-configmap-rov
+        hostname-override: perf-node-o19egaee6o
+        interface-name: edgecore-configmap-b7r
         node-status-update-frequency: 10 # second
         device-plugin-enabled: false
         gpu-plugin-enabled: false

@@ -26,7 +26,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -36,6 +38,11 @@ import (
 
 const (
 	Namespace = "default"
+)
+
+var (
+	ProtocolQuic      bool
+	ProtocolWebsocket bool
 )
 
 //Function to get nginx deployment spec
@@ -124,6 +131,9 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 
 //Function to create cloudcore deploymentspec object
 func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
+	var portInfo []v1.ContainerPort
+	portInfo = []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "websocket"}, {ContainerPort: 10001, Protocol: "UDP", Name: "quic"}}
+
 	deplObj := apps.DeploymentSpec{
 		Replicas: func() *int32 { i := int32(replicas); return &i }(),
 		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "edgecontroller"}},
@@ -149,7 +159,7 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("1Gi"),
 							},
 						},
-						Ports:        []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "cloudhub"}},
+						Ports:        portInfo,
 						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/cloud/conf"}},
 					},
 				},
@@ -363,17 +373,28 @@ func ExposeCloudService(name, serviceHandler string) error {
 		return err
 	}
 	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 	return nil
 }
 
 //CreateServiceObject function to create a servcice object
 func CreateServiceObject(name string) *v1.Service {
+	var portInfo []v1.ServicePort
+
+	portInfo = []v1.ServicePort{
+		{
+			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000),
+		}, {
+			Name: "quic", Protocol: "UDP", Port: 10001, TargetPort: intstr.FromInt(10001),
+		},
+	}
+
 	Service := v1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": "kubeedge"}},
 
 		Spec: v1.ServiceSpec{
-			Ports:    []v1.ServicePort{{Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000)}},
+			Ports:    portInfo,
 			Selector: map[string]string{"app": "edgecontroller"},
 			Type:     "NodePort",
 		},
@@ -382,37 +403,43 @@ func CreateServiceObject(name string) *v1.Service {
 }
 
 //GetServicePort function to get the service port created for deployment.
-func GetServicePort(cloudName, serviceHandler string) int32 {
+func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	var svc v1.ServiceList
-	var nodePort int32
+	var wssport, quicport int32
 	err, resp := SendHttpRequest(http.MethodGet, serviceHandler)
 	if err != nil {
 		// handle error
 		Failf("HTTP request is failed :%v", err)
-		return -1
+		return -1, -1
 	}
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		Failf("HTTP Response reading has failed: %v", err)
-		return -1
+		return -1, -1
 	}
 
 	err = json.Unmarshal(contents, &svc)
 	if err != nil {
 		Failf("Unmarshal HTTP Response has failed: %v", err)
-		return -1
+		return -1, -1
 	}
 	defer resp.Body.Close()
 
 	for _, svcs := range svc.Items {
 		if svcs.Name == cloudName {
-			nodePort = svcs.Spec.Ports[0].NodePort
+			for _, nodePort := range svcs.Spec.Ports {
+				if nodePort.Name == api.ProtocolTypeQuic {
+					quicport = nodePort.NodePort
+				}
+				if nodePort.Name == api.ProtocolTypeWS {
+					wssport = nodePort.NodePort
+				}
+			}
 		}
 		break
 	}
-
-	return nodePort
+	return wssport, quicport
 }
 
 //DeleteSvc function to delete service

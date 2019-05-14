@@ -35,10 +35,11 @@ cat >config.json<<END
         "node_num": 10,
         "imagerepo": "kubeedge",
         "k8smasterforprovisionedgenodes": "$K8SMasterForProvisionEdgeNodes",
-        "cloudimageurl": "kubeedge/edgecontroller-test:v2.1",
-        "edgeimageurl": "kubeedge/edgecore-test:v2.1",
+        "cloudimageurl": "pavan187/cloudcore:v2.2",
+        "edgeimageurl": "pavan187/edgecore:v2.2",
         "namespace":"default",
-        "controllerstubport": 54321
+        "controllerstubport": 54321,
+        "protocol": "websocket"
 }
 END
 
