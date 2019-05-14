@@ -13,16 +13,22 @@
 
   以下参数如果不用修改则无需设置
 
-  | 参数名称        | 默认值                            | 备注                     |
-  | --------------- | --------------------------------- | ------------------------ |
-  | cloudhub        | 0.0.0.0:10000                     |                          |
-  | edgename        | edge-node                         |                          |
-  | edge_core_image | kubeedge/edgecore:latest          |                          |
-  | arch            | amd64                             | 可选值：amd64 \| arm64v8 |
-  | qemu_arch       | x86_64                            | 可选值：x86_64 \| aarch  |
-  | certpath        | /etc/kubeedge/certs               |                          |
-  | certfile        | /etc/kubeedge/certs/edge.crt      |                          |
-  | keyfile         | /etc/kubeedge/certs/edge.key      |                          |
+  | 参数名称            | 默认值                       | 备注                     |
+  | ------------------- | ---------------------------- | ------------------------ |
+  | cloudhub            | 0.0.0.0:10000                |                          |
+  | edgename            | edge-node                    |                          |
+  | edge_core_image     | kubeedge/edgecore:latest     |                          |
+  | arch                | amd64                        | 可选值：amd64 \| arm64v8 |
+  | qemu_arch           | x86_64                       | 可选值：x86_64 \| aarch  |
+  | certpath            | /etc/kubeedge/certs          |                          |
+  | certfile            | /etc/kubeedge/certs/edge.crt |                          |
+  | keyfile             | /etc/kubeedge/certs/edge.key |                          |
+  | keyfile             | /etc/kubeedge/certs/edge.key |                          |
+  | keyfile             | /etc/kubeedge/certs/edge.key |                          |
+  | keyfile             | /etc/kubeedge/certs/edge.key |                          |
+  | emqx_storm_address  | storm.emqx.io:1883           |                          |
+  | emqx_storm_username | qg3rgewt135                  |                          |
+  | emqx_storm_password | e3t5tt34tw3t                 |                          |
 
   ```shell
   ./run_daemon.sh set \
@@ -33,7 +39,10 @@
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \
           certfile=/etc/kubeedge/certs/edge.crt \
-          keyfile=/etc/kubeedge/certs/edge.key
+          keyfile=/etc/kubeedge/certs/edge.key \
+          emqx_storm_address="storm.emqx.io:1883" \
+          emqx_storm_username="qg3rgewt135" \
+          emqx_storm_password="e3t5tt34tw3t"
   ````
 
 + 编译容器镜像

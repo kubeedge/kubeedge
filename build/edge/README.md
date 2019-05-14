@@ -24,6 +24,9 @@ container and MQTT Broker, so make sure that docker engine listening on
   | certpath        | /etc/kubeedge/certs               |                            |
   | certfile        | /etc/kubeedge/certs/edge.crt      |                            |
   | keyfile         | /etc/kubeedge/certs/edge.key      |                            |
+  | emqx_storm_address  | storm.emqx.io:1883           |                          |
+  | emqx_storm_username | qg3rgewt135                  |                          |
+  | emqx_storm_password | e3t5tt34tw3t                 |                          |
 
   ```shell
   ./run_daemon.sh set \
@@ -34,7 +37,10 @@ container and MQTT Broker, so make sure that docker engine listening on
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \
           certfile=/etc/kubeedge/certs/edge.crt \
-          keyfile=/etc/kubeedge/certs/edge.key
+          keyfile=/etc/kubeedge/certs/edge.key \
+          emqx_storm_address="storm.emqx.io:1883" \
+          emqx_storm_username="qg3rgewt135" \
+          emqx_storm_password="e3t5tt34tw3t"
   ```
 
 + Build image

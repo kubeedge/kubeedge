@@ -85,6 +85,9 @@ docker_set(){
     # * certpath
     # * certfile 
     # * keyfile 
+    # * emqx_storm_address
+    # * emqx_storm_username
+    # * emqx_storm_password
     #
     # Example
     # 
@@ -96,7 +99,10 @@ docker_set(){
     #    qemu_arch=x86_64 \
     #    certpath=/etc/kubeedge/certs \
     #    certfile=/etc/kubeedge/certs/edge.crt \
-    #    keyfile=/etc/kubeedge/certs/edge.key
+    #    keyfile=/etc/kubeedge/certs/edge.key \
+    #    emqx_storm_address="storm.emqx.io:1883" \
+    #    emqx_storm_username="qg3rgewt135" \
+    #    emqx_storm_password="e3t5tt34tw3t"
 
     ARGS=$@
 
@@ -114,6 +120,9 @@ docker_set(){
     [[ ! -z $certpath ]] &&  sed -i "/CERTPATH=/c\CERTPATH=${certpath}" .env && echo "set certpath success"
     [[ ! -z $certfile ]] &&  sed -i "/CERTFILE=/c\CERTFILE=${certfile}" .env && echo "set certfile success"
     [[ ! -z $keyfile ]] &&  sed -i "/KEYFILE=/c\KEYFILE=${keyfile}" .env && echo "set keyfile success"
+    [[ ! -z $emqx_storm_address ]] &&  sed -i "/EMQX_STORM_ADDRESS=/c\EMQX_STORM_ADDRESS=${emqx_storm_address}" .env && echo "set emqx_storm_address success"
+    [[ ! -z $emqx_storm_username ]] &&  sed -i "/EMQX_STORM_USERNAME=/c\EMQX_STORM_USERNAME=${emqx_storm_username}" .env && echo "set emqx_storm_username success"
+    [[ ! -z $emqx_storm_password ]] &&  sed -i "/EMQX_STORM_PASSWORD=/c\EMQX_STORM_PASSWORD=${emqx_storm_password}" .env && echo "set emqx_storm_password success"
 }
 
 docker_build(){
