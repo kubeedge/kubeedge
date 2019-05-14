@@ -46,7 +46,7 @@
   - 设置CPU类型
 
     ```
-    ./run_daemon.sh set arch=arm64v8 qemu_arch=aarch
+    ./run_daemon.sh set arch=arm64v8 qemu_arch=aarch64
     ```
 
   - 编译镜像
