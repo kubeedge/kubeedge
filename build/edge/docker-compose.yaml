@@ -12,11 +12,7 @@ services:
     networks:
       - kubeedge-bridge
   emqx:
-    image: emqx/emqx-edge:v3.1.0-${ARCH}
-    environment:
-      EMQX_STORM__ADDRESS: ${EMQX_STORM_ADDRESS}
-      EMQX_STORM__USERNAME: ${EMQX_STORM_USERNAME}
-      EMQX_STORM__PASSWORD: ${EMQX_STORM_PASSWORD}
+    image: emqx/emqx-edge:v3.1.1-${ARCH}
     restart: always
     networks:
       - kubeedge-bridge
