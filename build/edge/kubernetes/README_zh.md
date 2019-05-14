@@ -6,6 +6,15 @@
 
 首先， 确保 k8s 集群可以拉到 edge core 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
 
+- 检查容器运行环境
+
+```bash
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
+  ./run_daemon.sh prepare
+```
+
+- 构建edge core镜像
+
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 make edgeimage
