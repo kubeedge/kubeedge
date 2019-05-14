@@ -87,7 +87,7 @@ func (uc *UpstreamController) WaitforMessage(stop chan struct{}) {
 			log.LOGGER.Errorf("Get message: %s resource type with error: %v", msg.GetID(), err)
 			continue
 		}
-		log.LOGGER.Debugf("Message: %s resource type: %s", msg.GetID(), resourceType)
+		log.LOGGER.Infof("Message: %s resource type: %s", msg.GetID(), resourceType)
 
 		switch resourceType {
 		case model.ResourceTypePodStatus:
@@ -104,7 +104,7 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 	for running {
 		select {
 		case msg := <-uc.podStatusChan:
-			log.LOGGER.Debugf("Message: %s operation: %s resource: %s",
+			log.LOGGER.Infof("Message: %s operation: %s resource: %s",
 				msg.GetID(), msg.GetOperation(), msg.GetResource())
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
@@ -112,20 +112,20 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 				data, err := json.Marshal(msg.GetContent())
 				if err != nil {
 					log.LOGGER.Errorf("Message: %s process failure, marshal content failed with error: %v", msg.GetID(), err)
-					return
+					continue
 				}
 
 				// Get pod
 				var pod types.FakePod
 				if err := json.Unmarshal(data, &pod); err != nil {
 					log.LOGGER.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
-					return
+					continue
 				}
 
 				// Update pod status in cache
 				uc.podManager.UpdatePodStatus(pod.Namespace+"/"+pod.Name, pod.Status)
 
-				log.LOGGER.Debugf("Pod namespace: %s name: %s status: %s",
+				log.LOGGER.Infof("Pod namespace: %s name: %s status: %s",
 					pod.Namespace, pod.Name, pod.Status)
 			default:
 				log.LOGGER.Debugf("Pod operation: %s unsupported", msg.GetOperation())
