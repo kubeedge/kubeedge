@@ -60,4 +60,4 @@ cloudimage:
 
 .PHONY: edgeimage
 edgeimage:
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
+	cd build/edge && ./run_daemon.sh build
