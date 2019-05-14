@@ -164,7 +164,7 @@ docker_only_run_edge(){
     edgehubWebsocketUrl=wss://${cloudhub}/e632aba927ea4ac2b575ec1603d56f10/${edgename}/events 
     image=${image:-"kubeedge/edgecore:latest"}
 
-    docker run -d --name edgecore --restart always \
+    docker run -d --name ${containername} --restart always \
         --cpu-period=50000 --cpu-quota=100000 --memory=1g --privileged \
         -e edgehub.websocket.certfile=/etc/kubeedge/certs/edge.crt \
         -e edgehub.websocket.keyfile=/etc/kubeedge/certs/edge.key \
