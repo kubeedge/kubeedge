@@ -51,13 +51,12 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
 		// handle error
 		Failf("HTTP request is failed :%v", err)
 		return err, resp
 	}
-
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return nil, resp
 }
 

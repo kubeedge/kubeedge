@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
+	"github.com/kubeedge/viaduct/pkg/api"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,15 +32,17 @@ import (
 
 //context to load config and access across the package
 var (
-	ctx          *utils.TestContext
-	cfg          utils.Config
-	nodeSelector string
+	ctx               *utils.TestContext
+	cfg               utils.Config
+	nodeSelector      string
+	cloudHubURL       string
+	wsscloudHubURL    string
+	quiccloudHubURL   string
+	cloudCoreNodeName string
 )
 
 func TestEdgecoreK8sDeployment(t *testing.T) {
-	var cloudHub string
 	var cloudCoreHostIP string
-	var cloudCoreNodeName string
 	var podlist metav1.PodList
 	//var toTaint bool
 	RegisterFailHandler(Fail)
@@ -53,6 +56,12 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		//Create configMap for CloudCore
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
+		//protocol to be used for test between edge and cloud
+		if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
+			IsQuicProtocol = true
+		} else {
+			IsQuicProtocol = false
+		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
 			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
@@ -74,12 +83,18 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
 		//Create a nodePort Service to access the cloud Service from the cluster nodes
-		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
-		str2 := strconv.FormatInt(int64(nodePort), 10)
-		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
+		wsPort, quicPort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+		wsNodePort := strconv.FormatInt(int64(wsPort), 10)
+		quicNodePort := strconv.FormatInt(int64(quicPort), 10)
+		quiccloudHubURL = cloudCoreHostIP + ":" + quicNodePort
+		cloudHubURL = quiccloudHubURL
+		wsscloudHubURL = "wss://" + cloudCoreHostIP + ":" + wsNodePort
+		cloudHubURL = wsscloudHubURL
+
 		//Deploye edgecore as a k8s resource to cluster-2
-		podlist = HandleEdgeDeployment(cloudHub, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
+		podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
 			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
+
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
 		ToTaint = true
 		err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)

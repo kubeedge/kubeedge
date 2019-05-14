@@ -53,8 +53,7 @@ var (
 	CloudConfigMap      string
 	CloudCoreDeployment string
 	ToTaint             bool
-	EdgeNode            string
-	NSForEdgeNode       map[string]string
+	IsQuicProtocol      bool
 )
 
 func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, confighdl, deploymenthdl, imgURL string, nodelimit int) error {
@@ -65,7 +64,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false)
 	ret := <-chconfigmapRet
 	Expect(ret).To(BeNil())
-
+	utils.ProtocolQuic = IsQuicProtocol
 	//Handle cloudCore deployment
 	go utils.HandleDeployment(true, false, http.MethodPost, deploymenthdl, cloudCoreDeployment, imgURL, "", cloudConfigMap, 1)
 
@@ -89,7 +88,7 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 		ret := <-chconfigmapRet
 		Expect(ret).To(BeNil())
 		//Store the ConfigMap against each edgenode
-		NodeInfo[nodeName] = append(NodeInfo[nodeName], configmap)
+		NodeInfo[nodeName] = append(NodeInfo[nodeName], configmap, nodeSelector)
 	}
 	//Create edgeCore deployments as users configuration
 	for _, configmap := range NodeInfo {

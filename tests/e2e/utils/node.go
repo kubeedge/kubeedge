@@ -27,6 +27,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
@@ -158,6 +159,16 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 			req, err = http.NewRequest(operation, confighandler, BodyBuf)
 			Expect(err).Should(BeNil())
 			req.Header.Set("Content-Type", "application/yaml")
+		} else if operation == http.MethodPatch {
+			jsondata, err := yaml.YAMLToJSON(body)
+			if err != nil {
+				fmt.Printf("err: %v\n", err)
+				return
+			}
+			BodyBuf := bytes.NewReader(jsondata)
+			req, err = http.NewRequest(operation, confighandler, BodyBuf)
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
 		} else {
 			req, err = http.NewRequest(operation, confighandler, bytes.NewReader([]byte("")))
 			Expect(err).Should(BeNil())
