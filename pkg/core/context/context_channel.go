@@ -171,7 +171,16 @@ func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) 
 		select {
 		case ch <- message:
 		default:
-			log.LOGGER.Warnf("the message channel is full, just drop this message:%+v", message)
+			log.LOGGER.Warnf("the message channel is full, message: %+v", message)
+			for {
+				if len(ch) < cap(ch) {
+					log.LOGGER.Infof("current channel length: %d, retry to send message to channel: %+v", len(ch), message)
+					ch <- message
+					log.LOGGER.Infof("retry to send message successfully, message: %+v", message)
+					break
+				}
+				time.Sleep(time.Millisecond * 10)
+			}
 		}
 	}
 	if channelList := ctx.getTypeChannel(moduleType); channelList != nil {
