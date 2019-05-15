@@ -12,7 +12,7 @@ This document gives a brief overview of the KubeEdge community roles with the re
 | [Owner](#owner) | Sponsor from 3 owners, helps drive the overall KubeEdge project | Drive the overall technical roadmap of the project and set priorities of activities in release planning | KubeEdge GitHub organization Admin access |
 
 
-**Note :** It is mandatory for all KubeEdge community members to follow KubeEdge [Code of Conduct](https://github.com/kubeedge/kubeedge/blob/master/CODE_OF_CONDUCT.md).
+**Note :** It is mandatory for all KubeEdge community members to follow KubeEdge [Code of Conduct].
 
 ## Member
 
@@ -23,6 +23,7 @@ reviewing issues/PRs or participate in community discussions on slack/mailing li
 ### Requirements
 
 - Sponsor from 2 approvers
+- Enabled [two-factor authentication] on their GitHub account
 - Actively contributed to the community. Contributions may include, but are not limited to:
     - Authoring PRs
     - Reviewing issues/PRs authored by other community members
@@ -113,3 +114,5 @@ Has deep understanding of KubeEdge and related domain and facilitates major agre
 
 **Note :** These roles are applicable only for KubeEdge github organization and repositories. Currently KubeEdge doesn't have a formal process for review and acceptance into these roles. We will come-up with a process soon.
 
+[Code of Conduct]: https://github.com/kubeedge/kubeedge/blob/master/CODE_OF_CONDUCT.md
+[two-factor authentication]: https://help.github.com/articles/about-two-factor-authentication
