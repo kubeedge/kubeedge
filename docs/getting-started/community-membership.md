@@ -31,7 +31,7 @@ reviewing issues/PRs or participate in community discussions on slack/mailing li
     - Participate in KubeEdge community meetings
 
 
-### Responsibilities 
+### Responsibilities and privileges
 
 - Member of the KubeEdge GitHub organization
 - Can be assigned to issues and PRs and community members can also request their review
