@@ -1,0 +1,19 @@
+apiVersion: devices.kubeedge.io/v1alpha1
+kind: DeviceModel
+metadata:
+ name: led-light
+ namespace: default
+spec:
+ properties:
+  - name: power-status
+    description: Indicates whether the led light is ON/OFF
+    type:
+      string:
+        accessMode: ReadWrite
+        defaultValue: 'OFF'
+  - name: gpio-pin-number
+    description: Indicates whether the GPIO pin to which LED is connected 
+    type:
+      int:
+        accessMode: Read
+        defaultValue: 18
