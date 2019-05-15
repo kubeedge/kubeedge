@@ -1,0 +1,21 @@
+apiVersion: devices.kubeedge.io/v1alpha1
+kind: Device
+metadata:
+  name: led-light-instance-01
+  labels:
+    description: LEDLight
+    model: led-light
+spec:
+  deviceModelRef:
+    name: led-light
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: ''
+        operator: In
+        values:
+        - edge-node1          #pls give your edge node name
+status:
+  twins:
+    - propertyName: power-status
+
