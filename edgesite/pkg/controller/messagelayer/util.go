@@ -10,12 +10,12 @@ import (
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
-func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource string, err error) {
-	if nodeID == "" || namespace == "" || resourceType == "" {
+func BuildResource(namespace, resourceType, resourceID string) (resource string, err error) {
+	if namespace == "" || resourceType == "" {
 		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 		return
 	}
-	resource = fmt.Sprintf("%s%s%s%s%s%s%s", constants.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+	resource = fmt.Sprintf("%s%s%s", namespace, constants.ResourceSep, resourceType)
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}

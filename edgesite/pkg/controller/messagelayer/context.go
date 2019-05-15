@@ -27,7 +27,7 @@ func (cml *ContextMessageLayer) Receive() (model.Message, error) {
 
 // Response message
 func (cml *ContextMessageLayer) Response(message model.Message) error {
-	cml.Context.Send(cml.ResponseModuleName, message)
+	cml.Context.SendResp(message)
 	return nil
 }
 

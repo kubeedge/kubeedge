@@ -27,16 +27,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-//	"time"
+	//	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/config"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/constants"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/types"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/utils"
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -369,13 +369,7 @@ func (uc *UpstreamController) queryConfigMap(stop chan struct{}) {
 				}
 				resMsg := model.NewMessage(msg.GetID())
 				resMsg.Content = configMap
-				// nodeID, err := messagelayer.GetNodeID(msg)
-				nodeID := config.KubeNodeID
-
-				if err != nil {
-					log.LOGGER.Warnf("message: %s process failure, get node id failed with error: %s", nodeID, err)
-				}
-				resource, err := messagelayer.BuildResource(nodeID, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
+				resource, err := messagelayer.BuildResource(configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
 					log.LOGGER.Warnf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 				}
@@ -413,7 +407,6 @@ func (uc *UpstreamController) querySecret(stop chan struct{}) {
 				log.LOGGER.Warnf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
 				continue
 			}
-
 			switch msg.GetOperation() {
 			case model.QueryOperation:
 				secret, err := uc.kubeClient.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
@@ -427,12 +420,7 @@ func (uc *UpstreamController) querySecret(stop chan struct{}) {
 				}
 				resMsg := model.NewMessage(msg.GetID())
 				resMsg.Content = secret
-				nodeID, err := messagelayer.GetNodeID(msg)
-				if err != nil {
-					log.LOGGER.Warnf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
-					continue
-				}
-				resource, err := messagelayer.BuildResource(nodeID, secret.Namespace, model.ResourceTypeSecret, secret.Name)
+				resource, err := messagelayer.BuildResource(secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
 					log.LOGGER.Warnf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 					continue

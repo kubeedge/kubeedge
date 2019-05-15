@@ -5,26 +5,9 @@ mqtt:
     qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
     retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
     session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
-
-    #edgehub:
-    #websocket:
-    #    url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
-    #    certfile: /etc/kubeedge/certs/edge.crt
-    #    keyfile: /etc/kubeedge/certs/edge.key
-    #    handshake-timeout: 30 #second
-    #    write-deadline: 15 # second
-    #    read-deadline: 15 # second
-    #controller:
-    #    placement: false
-    #    heartbeat: 15  # second
-    #    refresh-ak-sk-interval: 10 # minute
-    #    auth-info-files-path: /var/IEF/secret
-    #    placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
-    #    project-id: e632aba927ea4ac2b575ec1603d56f10
-    #    node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
 context-send-module: metaManager
 context-receive-module: controller
-context-response-module: controller
+context-response-module: metaManager
 
 controller:
     kube:
@@ -49,3 +32,8 @@ edged:
     maximum-dead-containers-per-container: 1
     docker-address: unix:///var/run/docker.sock
     version: 2.0.0
+
+metamanager:
+    context-send-group: controller
+    context-send-module: controller
+    edgesite: true

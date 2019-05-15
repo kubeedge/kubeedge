@@ -37,6 +37,30 @@ const (
 
 var connected = false
 
+// sendModuleGroupName is the name of the group to which we send the message
+var sendModuleGroupName = modules.HubGroup
+
+// sendModuleName is the name of send module for remote query
+var sendModuleName = "websocket"
+
+func init() {
+	var err error
+	groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
+	if err == nil && groupName != "" {
+		sendModuleGroupName = groupName
+	}
+
+	edgeSite, err := config.CONFIG.GetValue("metamanager.edgesite").ToBool()
+	if err == nil && edgeSite == true {
+		connected = true
+	}
+
+	moduleName, err := config.CONFIG.GetValue("metamanager.context-send-module").ToString()
+	if err == nil && moduleName != "" {
+		sendModuleName = moduleName
+	}
+}
+
 func feedbackError(err error, info string, request model.Message, c *context.Context) {
 	errInfo := "Something wrong"
 	if err != nil {
@@ -59,7 +83,7 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 }
 
 func send2Cloud(message *model.Message, c *context.Context) {
-	c.Send2Group(config.CONFIG.GetConfigurationByKey("context-receive-module").(string), *message)
+	c.Send2Group(sendModuleGroupName, *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -71,12 +95,7 @@ func parseResource(resource string) (string, string, string) {
 	switch len(tokens) {
 	case 2:
 		resType = tokens[len(tokens)-1]
-	case 4:
-		resType = tokens[len(tokens)-1]
 	case 3:
-		resType = tokens[len(tokens)-2]
-		resID = tokens[len(tokens)-1]
-	case 5:
 		resType = tokens[len(tokens)-2]
 		resID = tokens[len(tokens)-1]
 	default:
@@ -281,7 +300,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		// TODO: retry
 		originalID := message.GetID()
 		message.UpdateID()
-		resp, err := m.context.SendSync("websocket", message, 60*time.Second) // TODO: configurable
+		resp, err := m.context.SendSync(sendModuleName, message, 60*time.Second) // TODO: configurable
 		log.LOGGER.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
 		if err != nil {
 			log.LOGGER.Errorf("remote query failed: %v", err)

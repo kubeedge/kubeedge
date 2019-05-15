@@ -43,9 +43,8 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 				log.LOGGER.Warnf("object type: %T unsupported", pod)
 				continue
 			}
-			log.LOGGER.Warnf("here I am %T", pod)
 			msg := model.NewMessage("")
-			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
+			resource, err := messagelayer.BuildResource(pod.Namespace, model.ResourceTypePod, pod.Name)
 			if err != nil {
 				log.LOGGER.Warnf("built message resource failed with error: %s", err)
 				continue
@@ -87,9 +86,9 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 			}
 			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
 			log.LOGGER.Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
-			for _, n := range nodes {
+			for range nodes {
 				msg := model.NewMessage("")
-				resource, err := messagelayer.BuildResource(n, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
+				resource, err := messagelayer.BuildResource(configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
 					log.LOGGER.Warnf("build message resource failed with error: %s", err)
 				}
@@ -133,9 +132,9 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 			}
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
 			log.LOGGER.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
-			for _, n := range nodes {
+			for range nodes {
 				msg := model.NewMessage("")
-				resource, err := messagelayer.BuildResource(n, secret.Namespace, model.ResourceTypeSecret, secret.Name)
+				resource, err := messagelayer.BuildResource(secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
 					log.LOGGER.Warnf("build message resource failed with error: %s", err)
 				}
