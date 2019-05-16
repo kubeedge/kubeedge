@@ -37,8 +37,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	
-    "k8s.io/api/core/v1"
+
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
