@@ -1,3 +1,4 @@
+
 apiVersion: devices.kubeedge.io/v1alpha1
 kind: DeviceModel
 metadata:
@@ -12,8 +13,8 @@ spec:
         accessMode: ReadWrite
         defaultValue: 'OFF'
   - name: gpio-pin-number
-    description: Indicates whether the GPIO pin to which LED is connected 
+    description: Indicates the GPIO pin to which LED is connected 
     type:
       int:
         accessMode: Read
-        defaultValue: 18
+        defaultValue: 18   # Indicates the GPIO pin number to which the LED is connected, pls give the appropriate number according to the connection made
