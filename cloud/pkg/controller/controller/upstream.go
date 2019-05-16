@@ -37,8 +37,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-
-	"k8s.io/api/core/v1"
+	
+    "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -333,19 +333,20 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 				}
 
 				resMsg := model.NewMessage(msg.GetID())
-				resMsg.Content = "update node status successfully"
+				resMsg.Content = "OK"
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
-					log.LOGGER.Warnf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+					log.LOGGER.Warnf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+					continue
 				}
 				resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeNode, name)
 				if err != nil {
-					log.LOGGER.Warnf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+					log.LOGGER.Warnf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+					continue
 				}
 				resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
-				err = uc.messageLayer.Response(*resMsg)
-				if err != nil {
-					log.LOGGER.Warnf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					log.LOGGER.Warnf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
 
