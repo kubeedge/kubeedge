@@ -50,7 +50,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		ctx = utils.NewTestContext(cfg)
 
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
-		err := ApplyLabel(ctx.Cfg.K8SMasterForKubeEdge + NodeHandler)
+		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
 		Expect(err).Should(BeNil())
 
 		// Deploy KubeEdge Cloud Part as a k8s deployment into KubeEdge Cluster
