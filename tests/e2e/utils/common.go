@@ -154,10 +154,6 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("100m"),
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("512Mi"),
 							},
-							Limits: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("1Gi"),
-							},
 						},
 						Ports:        portInfo,
 						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/cloud/conf"}},

@@ -34,6 +34,8 @@ var _ = Describe("KubeEdge hub performance test", func() {
 		var numOfEdgeNodes int
 		var numOfPodsPerEdgeNode int
 		var podsInfo map[string]types.FakePod
+		var pods []types.FakePod
+		var latency types.Latency
 
 		BeforeEach(func() {
 			// Create Edge Nodes
@@ -43,6 +45,15 @@ var _ = Describe("KubeEdge hub performance test", func() {
 		})
 
 		AfterEach(func() {
+			// Get latency
+			if len(pods) > 0 {
+				latency = GetLatency(pods)
+				glog.Infof("HubTest 50 percent latency: %s", latency.Percent50.String())
+				glog.Infof("HubTest 90 percent latency: %s", latency.Percent90.String())
+				glog.Infof("HubTest 99 percent latency: %s", latency.Percent99.String())
+				glog.Infof("HubTest 100 percent latency: %s", latency.Percent100.String())
+			}
+
 			// Delete Pods
 			for _, p := range podsInfo {
 				DeleteFakePod(controllerHubURL, p)
@@ -64,6 +75,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 				// Create Pods on Edge Nodes
 				numOfPodsPerEdgeNode = 10
 				podsInfo = make(map[string]types.FakePod)
+				pods = make([]types.FakePod, 0)
 				// Loop for Pod Numbers
 				for i := 0; i < numOfPodsPerEdgeNode; i++ {
 					// Loop for Edge Node Numbers
@@ -85,7 +97,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 				Eventually(func() int {
 					count := 0
 					// List all pods status
-					pods := ListFakePods(controllerHubURL)
+					pods = ListFakePods(controllerHubURL)
 					// Get current pod numbers which are running
 					for _, p := range pods {
 						if p.Status == constants.PodRunning {
@@ -94,8 +106,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 					}
 					glog.Infof("Current running pods count: %d", count)
 					return count
-				}, "240s", "500ms").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
-
+				}, "240s", "100ms").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
 			})
 			glog.Infof("HubTest runtime stats: %+v", hubTestRuntime)
 		}, 5)

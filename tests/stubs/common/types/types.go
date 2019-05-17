@@ -16,10 +16,37 @@ limitations under the License.
 
 package types
 
+import "time"
+
 // FakePod
 type FakePod struct {
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	NodeName  string `json:"nodename,omitempty"`
-	Status    string `json:"status,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	Name        string `json:"name,omitempty"`
+	NodeName    string `json:"nodename,omitempty"`
+	Status      string `json:"status,omitempty"`
+	CreateTime  int64  `json:"createtime,omitempty"`
+	RunningTime int64  `json:"runningtime,omitempty"`
+}
+
+// FakePodSort
+type FakePodSort []FakePod
+
+func (s FakePodSort) Len() int {
+	return len(s)
+}
+
+func (s FakePodSort) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s FakePodSort) Less(i, j int) bool {
+	return s[i].RunningTime-s[i].CreateTime < s[j].RunningTime-s[j].CreateTime
+}
+
+// Latency
+type Latency struct {
+	Percent50  time.Duration `json:"percent50,omitempty"`
+	Percent90  time.Duration `json:"percent90,omitempty"`
+	Percent99  time.Duration `json:"percent99,omitempty"`
+	Percent100 time.Duration `json:"percent100,omitempty"`
 }
