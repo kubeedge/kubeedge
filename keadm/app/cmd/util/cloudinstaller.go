@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
 //KubeCloudInstTool embedes Common struct
@@ -56,34 +58,19 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	//Create controller.yaml
-	//_, err = os.Stat(KubeEdgeControllerYaml)
-	//if err != nil {
-		if err = ioutil.WriteFile(KubeEdgeControllerYaml, ControllerYaml, 0666); err != nil {
-			return err
-		}
-	//} else {
-	//	fmt.Println(KubeEdgeControllerYaml, "is already available, hence not overwriting it")
-	//}
+	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml); err != nil {
+		return err
+	}
 
 	//Create logger.yaml
-	//_, err = os.Stat(KubeEdgeControllerLoggingYaml)
-	//if err != nil {
-		if err = ioutil.WriteFile(KubeEdgeControllerLoggingYaml, ControllerLoggingYaml, 0666); err != nil {
-			return err
-		}
-	//} else {
-	//	fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
-	//}
+	if err = common.WriteCloudLoggingYamlFile(KubeEdgeControllerLoggingYaml); err != nil {
+		return err
+	}
 
 	//Create modules.yaml
-	//_, err = os.Stat(KubeEdgeControllerModulesYaml)
-	//if err != nil {
-		if err = ioutil.WriteFile(KubeEdgeControllerModulesYaml, ControllerModulesYaml, 0666); err != nil {
-			return err
-		}
-	//} else {
-	//	fmt.Println(KubeEdgeControllerLoggingYaml, "is already available, hence not overwriting it")
-	//}
+	if err = common.WriteCloudModulesYamlFile(KubeEdgeControllerModulesYaml); err != nil {
+		return err
+	}
 
 	time.Sleep(1 * time.Second)
 
@@ -211,14 +198,14 @@ func (cu *KubeCloudInstTool) RunEdgeController() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"cloud/")
+	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	return nil
 }
 
 //TearDown method will remove the edge node from api-server and stop edgecontroller process
 func (cu *KubeCloudInstTool) TearDown() error {
 
-        cu.SetOSInterface(GetOSInterface())
+	cu.SetOSInterface(GetOSInterface())
 
 	//Stops kubeadm
 	binExec := fmt.Sprintf("echo 'y' | kubeadm reset &&  rm -rf ~/.kube")

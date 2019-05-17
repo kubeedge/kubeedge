@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/kubeedge/kubeedge/keadm/app/cmd/options"
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/app/cmd/util"
 )
 
@@ -38,46 +38,35 @@ further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
-kubeedge join --server=<ip:port>
+kubeedge join --edgecontrollerip=<ip address>
 
-  - For this command --server option is a Mandatory option
+  - For this command --edgecontrollerip flag is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
-kubeedge join --server=10.20.30.40:8080 --docker-version --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
+kubeedge join --edgecontrollerip=10.20.30.40 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+kubeedge join --edgecontrollerip=10.20.30.40 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
-		then default values will be used. 
-		Also options like "--docker-version", "--kubernetes-version" and "--kubeedge-version", version should be in 
-		format like "18.06.3", "1.14.0" and "0.2.1".
+	then default values will be used. 
+	Also options like "--docker-version", and "--kubeedge-version", version should be in 
+	format like "18.06.3" and "0.2.1".
 `
 )
 
 // NewEdgeJoin returns KubeEdge edge join command.
-func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command {
+func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 	if joinOptions == nil {
 		joinOptions = newJoinOptions()
 	}
 
-	tools := make(map[string]util.ToolsInstaller, 0)
-	flagVals := make(map[string]util.FlagData, 0)
+	tools := make(map[string]types.ToolsInstaller, 0)
+	flagVals := make(map[string]types.FlagData, 0)
 
 	cmd := &cobra.Command{
 		Use:     "join",
-		Short:   "Bootstraps edge component. Checks and install (if required) the pre-requisites.\nExecute it on any edge node machine you wish to join",
+		Short:   "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
 		Long:    edgeJoinLongDescription,
 		Example: edgeJoinExample,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-
-			whoRunning, err := util.IsKubeEdgeController()
-			if err != nil {
-				return err
-			}
-			if util.KubeEdgeCloudRunning == whoRunning {
-				return fmt.Errorf("This is KubeEdge Cloud node, KubeEdge Edge node should't be initialised on it")
-			}
-			return nil
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			//Visit all the flags and store their values and default values.
@@ -95,72 +84,62 @@ func NewEdgeJoin(out io.Writer, joinOptions *options.JoinOptions) *cobra.Command
 	return cmd
 }
 
-func addJoinOtherFlags(cmd *cobra.Command, joinOptions *options.JoinOptions) {
+func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
-	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, options.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
+	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, types.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
-	cmd.Flags().Lookup(options.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.DockerVersion, options.DockerVersion, joinOptions.DockerVersion,
+	cmd.Flags().StringVar(&joinOptions.DockerVersion, types.DockerVersion, joinOptions.DockerVersion,
 		"Use this key to download and use the required Docker version")
-	cmd.Flags().Lookup(options.DockerVersion).NoOptDefVal = joinOptions.DockerVersion
+	cmd.Flags().Lookup(types.DockerVersion).NoOptDefVal = joinOptions.DockerVersion
 
-	cmd.Flags().StringVar(&joinOptions.KubernetesVersion, options.KubernetesVersion, joinOptions.KubernetesVersion,
-		"Use this key to download and use the required Kubernetes version")
-	cmd.Flags().Lookup(options.KubernetesVersion).NoOptDefVal = joinOptions.KubernetesVersion
+	cmd.Flags().StringVarP(&joinOptions.K8SAPIServerIPPort, types.K8SAPIServerIPPort, "k", joinOptions.K8SAPIServerIPPort,
+		"IP:Port address of K8S API-Server")
 
-	cmd.Flags().StringVarP(&joinOptions.K8SAPIServerIPPort, options.K8SAPIServerIPPort, "s", joinOptions.K8SAPIServerIPPort,
-		"IP:Port address of cloud components host/VM")
-	cmd.MarkFlagRequired(options.K8SAPIServerIPPort)
+	cmd.Flags().StringVarP(&joinOptions.EdgeControllerIP, types.EdgeControllerIP, "e", joinOptions.EdgeControllerIP,
+		"IP address of KubeEdge edgecontroller")
+	cmd.MarkFlagRequired(types.EdgeControllerIP)
 
-	//Commenting the certificate for path option now, as they are placed in /etc/kubedge/certs by default by gen script.
-	// cmd.Flags().StringVar(&joinOptions.CertPath, options.CertPath, joinOptions.CertPath,
-	// 	"Downloaded path of the certifcates generated by cloud component in this host")
-	// cmd.Flags().Lookup(options.CertPath).NoOptDefVal = joinOptions.CertPath
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeID, types.EdgeNodeID, "i", joinOptions.EdgeNodeID,
+		"KubeEdge Node unique idenfitcation string")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
-func newJoinOptions() *options.JoinOptions {
-	opts := &options.JoinOptions{}
-	opts.InitOptions = options.InitOptions{DockerVersion: options.DefaultDockerVersion, KubeEdgeVersion: options.DefaultKubeEdgeVersion,
-		KubernetesVersion: options.DefaultK8SVersion}
-	opts.CertPath = options.DefaultCertPath
+func newJoinOptions() *types.JoinOptions {
+	opts := &types.JoinOptions{}
+	opts.InitOptions = types.InitOptions{DockerVersion: types.DefaultDockerVersion, KubeEdgeVersion: types.DefaultKubeEdgeVersion,
+		KubernetesVersion: types.DefaultK8SVersion}
+	opts.CertPath = types.DefaultCertPath
 	return opts
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]util.ToolsInstaller, flagData map[string]util.FlagData, joinOptions *options.JoinOptions) {
+func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) {
 
-	var kubeVer, dockerVer, k8sVer string
+	var kubeVer, dockerVer string
 
-	flgData, ok := flagData[options.KubeEdgeVersion]
+	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
 		kubeVer = joinOptions.KubeEdgeVersion
 	}
-	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort}
+	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort,
+		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID}
 
-	flgData, ok = flagData[options.DockerVersion]
+	flgData, ok = flagData[types.DockerVersion]
 	if ok {
 		dockerVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
 		dockerVer = joinOptions.DockerVersion
 	}
 	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: flgData.DefVal.(string)}
-
-	flgData, ok = flagData[options.KubernetesVersion]
-	if ok {
-		k8sVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	} else {
-		k8sVer = joinOptions.KubernetesVersion
-	}
-	toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: true, DefaultToolVer: flgData.DefVal.(string)}
 	toolList["MQTT"] = &util.MQTTInstTool{}
 }
 
 //Execute the instalation for each tool and start edge_core
-func Execute(toolList map[string]util.ToolsInstaller) {
+func Execute(toolList map[string]types.ToolsInstaller) {
 
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {

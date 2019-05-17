@@ -18,11 +18,19 @@ package util
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/google/uuid"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
 //KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information
@@ -30,7 +38,9 @@ import (
 type KubeEdgeInstTool struct {
 	Common
 	//CertPath       string
+	EdgeContrlrIP  string
 	K8SApiServerIP string
+	EdgeNodeID     string
 }
 
 //InstallTools downloads KubeEdge for the specified verssion
@@ -64,51 +74,137 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfPath)
 	}
 
-	//Create edge.yaml
-	//Update edge.yaml, node ip to act as node id
-	//Get node ip address from the interface
-	edgeIP, err := GetInterfaceIP()
-	if err != nil {
-		return err
+	// //Create edge.yaml
+	//Update edge.yaml with a unique id against node id
+	//If the user doesn't provide any edge ID on the command line, then it generates unique id and assigns it.
+	edgeID := uuid.New().String()
+	if "" != ku.EdgeNodeID {
+		edgeID = ku.EdgeNodeID
 	}
-	change1 := bytes.Replace(EdgeYaml, []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
 
-	serverIPAddr := strings.Split(ku.K8SApiServerIP, ":")[0]
-	change2 := bytes.Replace(change1, []byte(KubeEdgeToReplaceKey2), []byte(serverIPAddr), -1)
+	serverIPAddr := "0.0.0.0"
+	if "" != ku.EdgeContrlrIP {
+		serverIPAddr = ku.EdgeContrlrIP
+	}
 
-	change3 := bytes.Replace(change2, []byte("2.0.0"), []byte(ku.ToolVersion), -1)
+	url := fmt.Sprintf("wss://%s:10000/e632aba927ea4ac2b575ec1603d56f10/%s/events", serverIPAddr, edgeID)
+	edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
+		EdgeD: types.EdgeDSt{Version: ku.ToolVersion}}
 
-	if err = ioutil.WriteFile(KubeEdgeConfigEdgeYaml, change3, 0666); err != nil {
+	if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, edgeYaml); err != nil {
 		return err
 	}
 
 	//Create logging.yaml
-	if err = ioutil.WriteFile(KubeEdgeConfigLoggingYaml, EdgeLoggingYaml, 0666); err != nil {
+	if err = types.WriteEdgeLoggingYamlFile(KubeEdgeConfigLoggingYaml); err != nil {
 		return err
 	}
 	//Create modules.yaml
-	if err = ioutil.WriteFile(KubeEdgeConfigModulesYaml, EdgeModulesYaml, 0666); err != nil {
+	if err = types.WriteEdgeModulesYamlFile(KubeEdgeConfigModulesYaml); err != nil {
 		return err
 	}
 
-	//Create node.json
-	rep := bytes.Replace([]byte(EdgeNodeJSONContent), []byte(KubeEdgeToReplaceKey1), []byte(edgeIP), -1)
+	if "" != ku.K8SApiServerIP {
+		if err := ku.addNodeToK8SAPIServer(edgeID, ku.K8SApiServerIP); err != nil {
+			return err
+		}
+	}
 
-	if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, rep, 0666); err != nil {
+	return nil
+}
+
+func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
+	client := &http.Client{}
+
+	data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   edgeid,
+			Labels: map[string]string{"name": "edge-node"},
+		}}
+
+	respBytes, err := json.Marshal(data)
+	if err != nil {
 		return err
 	}
 
-	//Add edge node in api-server using kubectl command
-	//kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
-	nodeJSONApply := fmt.Sprintf("kubectl apply -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONApply)}
-	err = cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	proto := KubeEdgeHTTPProto
+	if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
+		proto = KubeEdgeHTTPSProto
 	}
-	fmt.Println(cmd.GetStdOutput())
 
+	kubeAPIServerURL := fmt.Sprintf("%s://%s:%s/api/v1/nodes", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1])
+	req, err := http.NewRequest(http.MethodPost, kubeAPIServerURL, bytes.NewBuffer(respBytes))
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusCreated:
+		fmt.Println("KubeEdge Edge Node:", edgeid, "successfully add to kube-apiserver, with operation status:", resp.Status)
+		if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, respBytes, 0666); err != nil {
+			return err
+		}
+
+	case http.StatusConflict:
+		fmt.Println("KubeEdge Edge Node:", edgeid, "already exists and no change required")
+	default:
+		fmt.Println("KubeEdge Edge Node:", edgeid, "failed due to reasons mentioned in operation response", string(contents))
+	}
+
+	fmt.Println("Content", string(contents))
+	return nil
+}
+
+func (ku *KubeEdgeInstTool) deleteNodeFromK8SAPIServer(server string) error {
+	var byte io.Reader
+	client := &http.Client{}
+
+	proto := KubeEdgeHTTPProto
+	if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
+		proto = KubeEdgeHTTPSProto
+	}
+
+	fileData, err := ioutil.ReadFile(KubeEdgeConfigNodeJSON)
+	if err != nil {
+		return err
+	}
+
+	node := &v1.Node{}
+	err = json.Unmarshal(fileData, &node)
+	if err != nil {
+		return err
+	}
+
+	kubeAPIServerURL := fmt.Sprintf("%s://%s:%s/api/v1/nodes/%s", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1], node.GetName())
+	req, err := http.NewRequest(http.MethodDelete, kubeAPIServerURL, byte)
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		fmt.Println(resp.Status, ": Node", node.GetName(), "successfully deleted from kube-apiserver")
+	case http.StatusNotFound:
+		fmt.Println(resp.Status, "Node already already deleted or never existed")
+	default:
+		fmt.Println(resp.Status, "Content", string(contents))
+	}
+
+	fmt.Println("Content", string(contents))
 	return nil
 }
 
@@ -117,16 +213,12 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 
 	ku.SetOSInterface(GetOSInterface())
 
-	//Remove the edge from api server using kubectl command, like below
-	//kubectl delete -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json -s http://192.168.20.50:8080
-	nodeJSONDelete := fmt.Sprintf("kubectl delete -f %s -s http://%s", KubeEdgeConfigNodeJSON, ku.K8SApiServerIP)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", nodeJSONDelete)}
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	if "" != ku.K8SApiServerIP {
+		//Remove the edge from api server using kubectl command, like below
+		if err := ku.deleteNodeFromK8SAPIServer(ku.K8SApiServerIP); err != nil {
+			return err
+		}
 	}
-	fmt.Println(cmd.GetStdOutput())
 
 	//Kill edge core process
 	ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
