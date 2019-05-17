@@ -45,13 +45,13 @@ var (
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node# sudo kubeedge init <options>                 │
+    │ cloud-node# sudo kubeedge init                           │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node# sudo kubeedge join <options>                  │
+    │ edge-node# sudo kubeedge join <flags>                    │
     └──────────────────────────────────────────────────────────┘
 
     You can then repeat the second step on, as many other machines as you like.
@@ -71,8 +71,6 @@ func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	cmds.ResetFlags()
 	cmds.AddCommand(cloud.NewCloudInit(out, nil))
 	cmds.AddCommand(edge.NewEdgeJoin(out, nil))
-	// cmds.AddCommand(cloud.NewCloudReset(out))
-	// cmds.AddCommand(edge.NewEdgeReset(out))
 	cmds.AddCommand(NewKubeEdgeReset(out))
 
 	return cmds
