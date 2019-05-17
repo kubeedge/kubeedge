@@ -75,7 +75,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 						pod.NodeName = nodeName
 						pod.Status = constants.PodPending
 						// Add fake pod
-						AddFakePod(controllerHubURL, pod)
+						go AddFakePod(controllerHubURL, pod)
 						// Store fake pod
 						podsInfo[pod.Name] = pod
 					}
@@ -92,8 +92,9 @@ var _ = Describe("KubeEdge hub performance test", func() {
 							count++
 						}
 					}
+					glog.Infof("Current running pods count: %d", count)
 					return count
-				}, "240s", "4s").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
+				}, "240s", "500ms").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
 
 			})
 			glog.Infof("HubTest runtime stats: %+v", hubTestRuntime)

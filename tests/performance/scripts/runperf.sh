@@ -32,7 +32,7 @@ cat >config.json<<END
 {
         "image_url": ["nginx", "hello-world"],
         "k8smasterforkubeedge": "$K8SMasterForKubeEdge",
-        "node_num": 10,
+        "node_num": 500,
         "imagerepo": "kubeedge",
         "k8smasterforprovisionedgenodes": "$K8SMasterForProvisionEdgeNodes",
         "cloudimageurl": "kubeedge/edgecontroller-test:v2.1",
