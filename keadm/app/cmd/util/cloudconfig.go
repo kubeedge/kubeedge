@@ -65,44 +65,4 @@ EOF
 
 $1 $2
 `)
-
-	ControllerYaml = []byte(`controller:
-  kube:
-    master: http://localhost:8080
-    namespace: ""
-    content_type: "application/vnd.kubernetes.protobuf"
-    qps: 5
-    burst: 10
-    node_update_frequency: 10
-    kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
-cloudhub:
-  address: 0.0.0.0
-  port: 10000
-  ca: /etc/kubeedge/ca/rootCA.crt
-  cert: /etc/kubeedge/certs/edge.crt
-  key: /etc/kubeedge/certs/edge.key
-  keepalive-interval: 30
-  write-timeout: 30
-  node-limit: 10
-devicecontroller:
-  kube:
-    master: http://localhost:8080
-    namespace: ""
-    content_type: "application/vnd.kubernetes.protobuf"
-    qps: 5
-    burst: 10
-    kubeconfig: ""
-
-`)
-
-	ControllerLoggingYaml = []byte(`loggerLevel: "INFO"
-enableRsyslog: false
-logFormatText: true
-writers: [file,stdout]
-loggerFile: "edgecontroller.log"    
-`)
-
-	ControllerModulesYaml = []byte(`modules:
-    enabled: [devicecontroller, controller, cloudhub]
-`)
 )

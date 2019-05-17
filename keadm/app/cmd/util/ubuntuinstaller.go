@@ -21,6 +21,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
 //UbuntuOS struct objects shall have information of the tools version to be installed
@@ -73,70 +75,20 @@ func (u *UbuntuOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 	return false, nil
 }
 
-//IsDockerInstalled checks if docker is installed in the host or not
-func (u *UbuntuOS) IsDockerInstalled(defVersion string) (InstallState, error) {
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "docker -v | cut -d ' ' -f3 | cut -d ',' -f1")}
-	cmd.ExecuteCommand()
-	str := cmd.GetStdOutput()
-	if str == "" {
-		return NewInstallRequired, nil
-	}
-
-	if strings.Contains(cmd.GetStdOutput(), u.DockerVersion) {
-		return AlreadySameVersionExist, nil
-	}
-
-	isReqVerAvail, err := u.IsToolVerInRepo("docker-ce", u.DockerVersion)
-	if err != nil {
-		return VersionNAInRepo, err
-	}
-
-	var isDefVerAvail bool
-	if u.DockerVersion != defVersion {
-		isDefVerAvail, err = u.IsToolVerInRepo("docker-ce", defVersion)
-		if err != nil {
-			return VersionNAInRepo, err
-		}
-	}
-
-	if isReqVerAvail {
-		return NewInstallRequired, nil
-	}
-
-	if isDefVerAvail {
-		return DefVerInstallRequired, nil
-	}
-
-	return VersionNAInRepo, nil
-}
-
-//InstallDocker will install the specified docker in the host
-func (u *UbuntuOS) InstallDocker() error {
-	fmt.Println("Installing ", u.DockerVersion, "version of docker")
-
+func (u *UbuntuOS) addDockerRepositoryAndUpdate() error {
 	//lsb_release -cs
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
 	cmd.ExecuteCommand()
 	distVersion := cmd.GetStdOutput()
 	if distVersion == "" {
-		return fmt.Errorf("Ubuntu dist version not available")
+		return fmt.Errorf("ubuntu dist version not available")
 	}
 	fmt.Println("Ubuntu distribution version is", distVersion)
 
-	//'apt-get update -qq >/dev/null'
+	//'apt-get update'
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(cmd.GetStdOutput())
-
-	//Do an apt-get update
-	instPreReq := fmt.Sprintf("apt-get install -y %s", DockerPreqReqList)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", instPreReq)}
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
@@ -167,6 +119,64 @@ func (u *UbuntuOS) InstallDocker() error {
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	return nil
+}
+
+//IsDockerInstalled checks if docker is installed in the host or not
+func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, error) {
+	cmd := &Command{Cmd: exec.Command("sh", "-c", "docker -v | cut -d ' ' -f3 | cut -d ',' -f1")}
+	cmd.ExecuteCommand()
+	str := cmd.GetStdOutput()
+	if str == "" {
+		return types.NewInstallRequired, nil
+	}
+
+	if strings.Contains(cmd.GetStdOutput(), u.DockerVersion) {
+		return types.AlreadySameVersionExist, nil
+	}
+
+	if err := u.addDockerRepositoryAndUpdate(); err != nil {
+		return types.VersionNAInRepo, err
+	}
+
+	isReqVerAvail, err := u.IsToolVerInRepo("docker-ce", u.DockerVersion)
+	if err != nil {
+		return types.VersionNAInRepo, err
+	}
+
+	var isDefVerAvail bool
+	if u.DockerVersion != defVersion {
+		isDefVerAvail, err = u.IsToolVerInRepo("docker-ce", defVersion)
+		if err != nil {
+			return types.VersionNAInRepo, err
+		}
+	}
+
+	if isReqVerAvail {
+		return types.NewInstallRequired, nil
+	}
+
+	if isDefVerAvail {
+		return types.DefVerInstallRequired, nil
+	}
+
+	return types.VersionNAInRepo, nil
+}
+
+//InstallDocker will install the specified docker in the host
+func (u *UbuntuOS) InstallDocker() error {
+	fmt.Println("Installing ", u.DockerVersion, "version of docker")
+
+	//Do an apt-get update
+	instPreReq := fmt.Sprintf("apt-get install -y %s", DockerPreqReqList)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", instPreReq)}
+	err := cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
@@ -231,61 +241,55 @@ func (u *UbuntuOS) InstallMQTT() error {
 }
 
 //IsK8SComponentInstalled checks if said K8S version is already installed in the host
-func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (InstallState, error) {
+func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (types.InstallState, error) {
 
 	find := fmt.Sprintf("dpkg -l | grep %s | awk '{print $3}'", component)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
 	if str == "" {
-		return NewInstallRequired, nil
+		return types.NewInstallRequired, nil
 	}
 
 	if strings.Contains(cmd.GetStdOutput(), u.KubernetesVersion) {
-		return AlreadySameVersionExist, nil
+		return types.AlreadySameVersionExist, nil
+	}
+
+	if err := u.addK8SRepositoryAndUpdate(); err != nil {
+		return types.VersionNAInRepo, err
 	}
 
 	isReqVerAvail, err := u.IsToolVerInRepo(component, u.KubernetesVersion)
 	if err != nil {
-		return VersionNAInRepo, err
+		return types.VersionNAInRepo, err
 	}
 
 	var isDefVerAvail bool
 	if u.KubernetesVersion != defVersion {
 		isDefVerAvail, _ = u.IsToolVerInRepo(component, defVersion)
 		if err != nil {
-			return VersionNAInRepo, err
+			return types.VersionNAInRepo, err
 		}
 	}
 
 	if isReqVerAvail {
-		return NewInstallRequired, nil
+		return types.NewInstallRequired, nil
 	}
 
 	if isDefVerAvail {
-		return DefVerInstallRequired, nil
+		return types.DefVerInstallRequired, nil
 	}
 
-	return VersionNAInRepo, nil
+	return types.VersionNAInRepo, nil
 }
 
-//InstallK8S will install kubeadm, kudectl and kubelet for the cloud node
-//and only kubectl for edge node
-func (u *UbuntuOS) InstallK8S() error {
-	kcomp := fmt.Sprintf("Installing %s version of ", u.KubernetesVersion)
-	if u.IsEdgeNode == true {
-		kcomp = kcomp + "kubectl"
-	} else {
-		kcomp = kcomp + "kubeadm"
-	}
-	fmt.Println(kcomp)
-
+func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 	//Get the distribution version
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
 	cmd.ExecuteCommand()
 	distVersion := cmd.GetStdOutput()
 	if distVersion == "" {
-		return fmt.Errorf("Ubuntu dist version not available")
+		return fmt.Errorf("ubuntu dist version not available")
 	}
 	fmt.Println("Ubuntu distribution version is", distVersion)
 
@@ -330,18 +334,20 @@ func (u *UbuntuOS) InstallK8S() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(stdout)
+	return nil
+}
 
+//InstallK8S will install kubeadm, kudectl and kubelet for the cloud node
+func (u *UbuntuOS) InstallK8S() error {
 	k8sComponent := "kubeadm"
-	if u.IsEdgeNode == true {
-		k8sComponent = "kubectl"
-	}
+	fmt.Println("Installing", k8sComponent, u.KubernetesVersion, "version")
 
 	//Get the exact version string from OS repo, so that it can search and install.
 	chkKubeadmVer := fmt.Sprintf("apt-cache madison '%s' | grep %s | head -1 | awk '{$1=$1};1' | cut -d' ' -f 3", k8sComponent, u.KubernetesVersion)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
+	cmd := &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
 	cmd.ExecuteCommand()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
 	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
@@ -350,11 +356,8 @@ func (u *UbuntuOS) InstallK8S() error {
 
 	//Install respective K8S components based on where it is being installed
 	k8sInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubeadm=%s kubelet=%s kubectl=%s", stdout, stdout, stdout)
-	if u.IsEdgeNode == true {
-		k8sInst = fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades kubectl=%s", stdout)
-	}
 	cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
-	err = cmd.ExecuteCmdShowOutput()
+	err := cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
@@ -474,7 +477,7 @@ func (u *UbuntuOS) RunEdgeCore() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-	fmt.Println("KubeEdge edge core is running, For logs visit", KubeEdgePath+"edge/")
+	fmt.Println("KubeEdge edge core is running, For logs visit", KubeEdgePath+"kubeedge/edge/")
 	return nil
 }
 
