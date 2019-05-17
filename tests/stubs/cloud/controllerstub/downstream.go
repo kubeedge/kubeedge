@@ -57,9 +57,9 @@ func (dc *DownstreamController) SyncPods(stop chan struct{}) {
 	for running {
 		select {
 		case msg := <-dc.podManager.GetEvent():
-			log.LOGGER.Debugf("Send message to cloudhub: %v", *msg)
+			log.LOGGER.Infof("Send message to cloudhub: %v", *msg)
 			dc.context.Send(constants.CloudHub, *msg)
-			log.LOGGER.Debugf("Finish send message to cloudhub")
+			log.LOGGER.Infof("Finish send message to cloudhub")
 		case <-stop:
 			log.LOGGER.Infof("Stop sync pod")
 			running = false
