@@ -173,6 +173,29 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(podStatus.Name, metaV1.GetOptions{})
 					if errors.IsNotFound(err) {
 						log.LOGGER.Warnf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
+
+						// Send request to delete this pod on edge side
+						delMsg := model.NewMessage("")
+						nodeID, err := messagelayer.GetNodeID(msg)
+						if err != nil {
+							log.LOGGER.Warnf("Get node ID failed with error: %s", err)
+							continue
+						}
+						resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypePod, podStatus.Name)
+						if err != nil {
+							log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+							continue
+						}
+						pod := &v1.Pod{}
+						pod.Namespace, pod.Name = namespace, podStatus.Name
+						delMsg.Content = pod
+						delMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+						if err := uc.messageLayer.Send(*delMsg); err != nil {
+							log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, delMsg.GetOperation(), delMsg.GetResource())
+						} else {
+							log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", delMsg.GetOperation(), delMsg.GetResource())
+						}
+
 						continue
 					}
 					if err != nil {
