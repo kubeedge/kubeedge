@@ -331,6 +331,25 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					log.LOGGER.Warnf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
 				}
+
+				resMsg := model.NewMessage(msg.GetID())
+				resMsg.Content = "OK"
+				nodeID, err := messagelayer.GetNodeID(msg)
+				if err != nil {
+					log.LOGGER.Warnf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeNode, name)
+				if err != nil {
+					log.LOGGER.Warnf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					log.LOGGER.Warnf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+
 				log.LOGGER.Infof("message: %s, update node status successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
 
 			default:
