@@ -1,0 +1,39 @@
+mqtt:
+    server: tcp://127.0.0.1:1883 # external mqtt broker url.
+    internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+    mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
+    qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+    retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+    session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
+context-send-module: metaManager
+context-receive-module: controller
+context-response-module: metaManager
+
+controller:
+    kube:
+       master: http://localhost:8080
+       namespace: "default"
+       content_type: "application/vnd.kubernetes.protobuf"
+       qps: 5
+       burst: 10
+       node_update_frequency: 10
+       node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+       node-name: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+
+edged:
+    register-node-namespace: default
+    hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+    interface-name: eth0
+    node-status-update-frequency: 10 # second
+    device-plugin-enabled: false
+    gpu-plugin-enabled: false
+    image-gc-high-threshold: 80 # percent
+    image-gc-low-threshold: 40 # percent
+    maximum-dead-containers-per-container: 1
+    docker-address: unix:///var/run/docker.sock
+    version: 2.0.0
+
+metamanager:
+    context-send-group: controller
+    context-send-module: controller
+    edgesite: true
