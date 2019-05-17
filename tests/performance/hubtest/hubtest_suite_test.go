@@ -87,8 +87,8 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		Expect(err).Should(BeNil())
 
 		// Get NodePort Service to access KubeEdge Cloud Part from KubeEdge Edge Nodes
-		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
-		cloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, nodePort)
+		wsPort, _ := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+		cloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, wsPort)
 		controllerHubURL = fmt.Sprintf("http://%s:%d", cloudPartHostIP, ctx.Cfg.ControllerStubPort)
 	})
 	AfterSuite(func() {
