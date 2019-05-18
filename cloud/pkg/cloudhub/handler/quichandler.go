@@ -21,6 +21,12 @@ type QuicHandle struct {
 func (qh *QuicHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
+
+	if qh.EventHandler.GetNodeCount() >= qh.NodeLimit {
+		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)
+		return
+	}
+
 	err := qh.EventHandler.Pub2Controller(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
 	if err != nil {
 		// if err, we should stop node, write data to edgehub, stop nodify
