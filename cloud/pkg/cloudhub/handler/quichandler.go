@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	bhLog "github.com/kubeedge/beehive/pkg/common/log"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
@@ -13,8 +15,9 @@ var QuicHandler *QuicHandle
 
 //QuicHandle access handler
 type QuicHandle struct {
-	EventHandler *EventHandle
-	NodeLimit    int
+	EventHandler     *EventHandle
+	NodeLimit        int
+	KeepaliveChannel chan struct{}
 }
 
 // HandleServer handle all the request from quic
@@ -24,6 +27,10 @@ func (qh *QuicHandle) HandleServer(container *mux.MessageContainer, writer mux.R
 
 	if qh.EventHandler.GetNodeCount() >= qh.NodeLimit {
 		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)
+
+	if container.Message.GetOperation() == emodel.OpKeepalive {
+		bhLog.LOGGER.Infof("Keepalive message received from node: %s", nodeID)
+		qh.KeepaliveChannel <- struct{}{}
 		return
 	}
 
@@ -41,6 +48,23 @@ func (qh *QuicHandle) OnRegister(connection conn.Connection) {
 
 	quicio := &hubio.JSONQuicIO{Connection: connection}
 	go qh.EventHandler.ServeConn(quicio, &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID})
+}
+
+// KeepaliveCheckLoop checks whether the edge node is still alive
+func (qh *QuicHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
+	for {
+		keepaliveTimer := time.NewTimer(time.Duration(qh.EventHandler.KeepaliveInterval) * time.Second)
+		select {
+		case <-qh.KeepaliveChannel:
+			bhLog.LOGGER.Infof("Node %s is still alive", info.NodeID)
+			keepaliveTimer.Stop()
+		case <-keepaliveTimer.C:
+			bhLog.LOGGER.Warnf("Timeout to receive heart beat from edge node %s for project %s",
+				info.NodeID, info.ProjectID)
+			stop <- nodeStop
+			return
+		}
+	}
 }
 
 // EventWriteLoop loop write cloud msg to edge
