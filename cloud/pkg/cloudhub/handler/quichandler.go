@@ -25,6 +25,11 @@ func (qh *QuicHandle) HandleServer(container *mux.MessageContainer, writer mux.R
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
+	if qh.EventHandler.GetNodeCount() >= qh.NodeLimit {
+		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)
+		return
+	}
+
 	if container.Message.GetOperation() == emodel.OpKeepalive {
 		bhLog.LOGGER.Infof("Keepalive message received from node: %s", nodeID)
 		qh.KeepaliveChannel <- struct{}{}
