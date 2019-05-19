@@ -48,7 +48,8 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue) {
 		},
 		NodeLimit: config.NodeLimit,
 	}
-	handler.QuicHandler.EventHandler.Handlers = []handler.HandleFunc{handler.QuicHandler.EventWriteLoop}
+	handler.QuicHandler.KeepaliveChannel = make(chan struct{}, 1)
+	handler.QuicHandler.EventHandler.Handlers = []handler.HandleFunc{handler.QuicHandler.KeepaliveCheckLoop, handler.QuicHandler.EventWriteLoop}
 
 	initServerEntries()
 
