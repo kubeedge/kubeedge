@@ -43,6 +43,8 @@ var Config *BLEConfig
 //Blutooth protocol name
 const (
 	Protocol_Name string = "BLUETOOTH"
+	READWRITE     string = "ReadWrite"
+	READ          string = "Read"
 )
 
 //BLEConfig is the main structure that stores the configuration information read from both the config file as well as the config map
@@ -182,7 +184,7 @@ func (b *BLEConfig) Load() error {
 			if strings.ToUpper(deviceModel.Name) == strings.ToUpper(b.Device.Name) {
 				for _, property := range deviceModel.Properties {
 					if strings.ToUpper(property.Name) == strings.ToUpper(actionConfig.PropertyName) {
-						if strings.ToUpper(property.AccessMode) == "RW" {
+						if strings.ToUpper(property.AccessMode) == strings.ToUpper(READWRITE){
 							action.Operation.Action = "Write"
 							if strings.ToUpper(property.DataType) == "INT" {
 								value := string(int(property.DefaultValue.(float64)))
@@ -200,7 +202,7 @@ func (b *BLEConfig) Load() error {
 									}
 								}
 							}
-						} else if strings.ToUpper(property.AccessMode) == "R" {
+						} else if strings.ToUpper(property.AccessMode) == strings.ToUpper(READ) {
 							action.Operation.Action = "Read"
 						}
 					}
