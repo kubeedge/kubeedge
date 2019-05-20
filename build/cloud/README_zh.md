@@ -26,3 +26,27 @@ for resource in $(ls *.yaml); do kubectl create -f $resource; done
 
 最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service，
 将 cloud hub 暴露到集群外，让 edge core 能够连到。
+
+---
+> 以下仅针对网络环境不能正常下载相应镜像的说明:
+
+在可能有网络问题的情况下,在执行07-deployment.yaml的时候
+deployment中对应的init container会先去
+```
+apk --no-cache add coreutils && cat | tee /etc/kubeedge/cloud/kubeconfig.yaml
+```
+这一步可能会因为网络的原因不能成功执行,报错为
+```
+ERROR: unsatisfiable constraints:
+  coreutils (missing):
+    required by: world[coreutils]
+The command '/bin/sh -c apk --no-cache add coreutils' returned a non-zero code: 1
+```
+
+解决办法为在有网络环境的先制作一个init container image
+Dockerfile
+```
+FROM alpine:3.9
+RUN apk --no-cache add coreutils
+```
+再替换老的init container的image,以及删除掉`apk --no-cache add coreutils &&`即可

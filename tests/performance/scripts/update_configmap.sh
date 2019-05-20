@@ -33,7 +33,13 @@ create_edge_config() {
     sed -i "s|name: .*|name: ${configmapName}|g" ${EDGE_PATH}
     sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
-    sed -i "s|url: .*|url: ${Url}/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
+    if [[ ${Url} == *"wss"* ]]; then
+        sed -i "20s|url: .*|url: ${Url}/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
+        sed -i "s|protocol: .*|protocol: websocket|g" ${EDGE_PATH}
+    else
+        sed -i "28s|url: .*|url: ${Url}|g" ${EDGE_PATH}
+        sed -i "s|protocol: .*|protocol: quic|g" ${EDGE_PATH}
+    fi
 }
 
 create_cloud_config() {

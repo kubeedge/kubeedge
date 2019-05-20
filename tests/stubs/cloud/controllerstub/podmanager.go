@@ -32,7 +32,7 @@ import (
 
 // NewPodManager creates pod manger
 func NewPodManager() (*PodManager, error) {
-	event := make(chan *model.Message)
+	event := make(chan *model.Message, 1024)
 	pm := &PodManager{event: event}
 	return pm, nil
 }
@@ -139,8 +139,12 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		// Add pod in cache
 		pm.AddPod(ns+"/"+p.Name, p)
-		pm.event <- msg
-		log.LOGGER.Debugf("Finish add pod request")
+
+		// Send msg
+		select {
+		case pm.event <- msg:
+			log.LOGGER.Debugf("Finish add pod request")
+		}
 	case http.MethodDelete:
 		// Delete Pod
 		log.LOGGER.Debugf("Receive delete pod request")
@@ -166,8 +170,13 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		// Delete pod in cache
 		pm.DeletePod(ns + "/" + name)
-		pm.event <- msg
-		log.LOGGER.Debugf("Finish delete pod request")
+
+		// Send msg
+		select {
+		case pm.event <- msg:
+			log.LOGGER.Debugf("Finish delete pod request")
+		}
+
 	default:
 		log.LOGGER.Errorf("Http type: %s unsupported", req.Method)
 	}

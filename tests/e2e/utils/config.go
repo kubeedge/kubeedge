@@ -43,6 +43,7 @@ type Config struct {
 	EdgeImageUrl                   string            `json:"edgeimageurl"`
 	Namespace                      string            `json:"namespace"`
 	ControllerStubPort             int               `json:"controllerstubport"`
+	Protocol 		       string            `json:"protocol"`
 }
 
 //config struct

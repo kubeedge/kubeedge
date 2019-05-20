@@ -48,7 +48,7 @@ container and MQTT Broker, so make sure that docker engine listening on
   - Set the CPU type
 
     ```
-    ./run_daemon.sh set arch=arm64v8 qemu_arch=aarch
+    ./run_daemon.sh set arch=arm64v8 qemu_arch=aarch64
     ```
   - Build image
     ```

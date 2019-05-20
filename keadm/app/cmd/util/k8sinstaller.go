@@ -16,7 +16,11 @@ limitations under the License.
 
 package util
 
-import "fmt"
+import (
+	"fmt"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+)
 
 //K8SInstTool embedes Common struct and contains the default K8S version and
 //a flag depicting if host is an edge or cloud node
@@ -42,14 +46,14 @@ func (ks *K8SInstTool) InstallTools() error {
 		return err
 	}
 	switch action {
-	case VersionNAInRepo:
+	case types.VersionNAInRepo:
 		return fmt.Errorf("Expected %s version is not available in OS repo", component)
-	case AlreadySameVersionExist:
+	case types.AlreadySameVersionExist:
 		return fmt.Errorf("Same version of %s already installed in this host", component)
-	case DefVerInstallRequired:
+	case types.DefVerInstallRequired:
 		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
 		fallthrough
-	case NewInstallRequired:
+	case types.NewInstallRequired:
 		err := ks.InstallK8S()
 		if err != nil {
 			return err

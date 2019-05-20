@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
+	"github.com/kubeedge/viaduct/pkg/api"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,7 +34,9 @@ import (
 var (
 	ctx      *utils.TestContext
 	cfg      utils.Config
-	cloudHub string
+	cloudHubURL string
+	wsscloudHubURL string
+	quiccloudHubURL string
 )
 
 func TestEdgecoreK8sDeployment(t *testing.T) {
@@ -51,6 +54,12 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		//Create configMap for CloudCore
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
+		//protocol to be used for test between edge and cloud
+		if ctx.Cfg.Protocol == api.ProtocolTypeQuic{
+			IsQuicProtocol = true
+		}else{
+			IsQuicProtocol = false
+		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
 			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
@@ -66,15 +75,18 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 			break
 		}
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-		time.Sleep(5 * time.Second)
+		time.Sleep(300 * time.Second)
 		//Create service for cloud
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
 		//Create a nodePort Service to access the cloud Service from the cluster nodes
-		nodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
-		str2 := strconv.FormatInt(int64(nodePort), 10)
-		cloudHub = "wss://" + cloudCoreHostIP + ":" + str2
-		//Deploye edgecore as a k8s resource to cluster-2
+		wsPort, quicPort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+		wsNodePort := strconv.FormatInt(int64(wsPort), 10)
+		quicNodePort := strconv.FormatInt(int64(quicPort), 10)
+		quiccloudHubURL = cloudCoreHostIP + ":" + quicNodePort
+		cloudHubURL = quiccloudHubURL
+		wsscloudHubURL = "wss://" + cloudCoreHostIP + ":" + wsNodePort
+		cloudHubURL = wsscloudHubURL
 	})
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")

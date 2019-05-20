@@ -19,6 +19,8 @@ package util
 import (
 	"fmt"
 	"os/exec"
+
+	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
 //CentOS struct objects shall have information of the tools version to be installed
@@ -49,12 +51,12 @@ func (c *CentOS) SetKubeEdgeVersion(version string) {
 }
 
 //IsDockerInstalled checks if docker is installed in the host or not
-func (c *CentOS) IsDockerInstalled(string) (InstallState, error) {
+func (c *CentOS) IsDockerInstalled(string) (types.InstallState, error) {
 
 	//yum list installed | grep docker-ce | awk '{print $2}' | cut -d'-' -f 1
 	//18.06.1.ce
 
-	return VersionNAInRepo, nil
+	return types.VersionNAInRepo, nil
 }
 
 //InstallDocker will install the specified docker in the host
@@ -130,7 +132,7 @@ func (c *CentOS) InstallMQTT() error {
 }
 
 //IsK8SComponentInstalled checks if said K8S version is already installed in the host
-func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (InstallState, error) {
+func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (types.InstallState, error) {
 	// 	[root@localhost ~]# yum list installed | grep kubeadm | awk '{print $2}' | cut -d'-' -f 1
 	// 1.14.1
 	// [root@localhost ~]#
@@ -138,11 +140,10 @@ func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (InstallS
 	// kubeadm.x86_64                          1.14.1-0                       @kubernetes
 	// [root@localhost ~]#
 
-	return VersionNAInRepo, nil
+	return types.VersionNAInRepo, nil
 }
 
 //InstallK8S will install kubeadm, kudectl and kubelet for the cloud node
-//and only kubectl for edge node
 func (c *CentOS) InstallK8S() error {
 	fmt.Println("InstallK8S called")
 	//Follow https://kubernetes.io/docs/setup/independent/install-kubeadm/
