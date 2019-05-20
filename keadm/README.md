@@ -29,9 +29,6 @@ Referring to `KubeEdge Installer Doc`, the command to install KubeEdge cloud com
 
 - Execute `kubeedge init`
 
-**NOTE:**
-Device CRD yamls need to be applied in a K8S cluster for device management. Support for deploying these CRD's as a part of the installer will be available in the next release.
-
 ### Command flags
 The optional flags with this command are mentioned below
 
@@ -98,31 +95,34 @@ Usage:
 
 Examples:
 
-kubeedge join --server=<ip:port>
+kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
-  - For this command --server option is a Mandatory option
+  - For this command --edgecontrollerip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --server=10.20.30.40:8080 --docker-version= --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
-kubeedge join --server=10.20.30.40:8080 --docker-version --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
-  
-  - Default values for --docker-version=18.06.0,--kubernetes-version=1.14.1, --kubeedge-version=0.3.0-beta.0 
+kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
-  
+        then default values will be used.
+        Also options like "--docker-version", and "--kubeedge-version", version should be in
+        format like "18.06.3" and "0.2.1".
+
+
 Flags:
       --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
+  -e, --edgecontrollerip string                    IP address of KubeEdge edgecontroller
+  -i, --edgenodeid string                          KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
   -h, --help                                       help for join
+  -k, --k8sserverip string                         IP:Port address of K8S API-Server
       --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
-      --kubernetes-version string[="1.14.1"]       Use this key to download and use the required Kubernetes version (default "1.14.1")
-  -s, --server string                              IP:Port address of cloud components host/VM
 
 ```
 
-1. For Docker, K8S and KubeEdge flags the functionality is same as mentioned in `kubeedge init`
-2. -s, --server, It should be in the format <IPAddress:Port>, where the default port is 8080. Please see the example above.
-                It is a mandatory flag
+1. For KubeEdge flag the functionality is same as mentioned in `kubeedge init`
+2. -k, --k8sserverip, It should be in the format <IPAddress:Port>, where the default port is 8080. Please see the example above.
 
-**IMPORTANT NOTE:** The versions used for Docker, KubeEdge and K8S, should be same in both Cloud and Edge side.
+
+**IMPORTANT NOTE:** The KubeEdge version used in cloud and cdge side should be same.
 
 ## Reset KubeEdge Cloud and Edge components
 
@@ -148,93 +148,141 @@ For cloud node:
 kubeedge reset
 
 For edge node:
-kubeedge reset --server 10.20.30.40:8080
-    - For this command --server option is a Mandatory option
+kubeedge reset --k8sserverip 10.20.30.40:8080
 
 
 Flags:
-  -h, --help            help for reset
-  -s, --server string   IP:Port address of cloud components host/VM
+  -h, --help                 help for reset
+  -k, --k8sserverip string   IP:Port address of cloud components host/VM
 
 ```
 
-## Simple steps to bring up a KubeEdge setup and deploy a pod
+## Simple steps to bring up KubeEdge setup and deploy a pod
+
 **NOTE:** All the below steps are executed as root user, to execute as sudo user ,Please add **sudo** infront of all the commands
-### 1.EdgeController (With K8S API-Server)
-##### Install tools with the particular version
+
+### 1. Deploy KubeEdge edgeController (With K8S Cluster)
+
+#### Install tools with the particular version
+
 ```
 kubeedge init --kubeedge-version=<kubeedge Version>  --kubernetes-version=<kubernetes Version> --docker-version=<Docker version>
 ```
-##### Install tools with the Default version version
+
+#### Install tools with the default version
+
 ```
 kubeedge init --kubeedge-version= --kubernetes-version= --docker-version
 or
-kubeedge init 
+kubeedge init
 ```
 
 **NOTE:**
+On the console output, obeserve the below line
+
 kubeadm join **192.168.20.134**:6443 --token 2lze16.l06eeqzgdz8sfcvh \
          --discovery-token-ca-cert-hash sha256:1e5c808e1022937474ba264bb54fea42b05eddb9fde2d35c9cad5b83cf5ef9ac  
-         After Kubeedge init ,please note the **CloudIp** as highlighted above generated from console output and port is **8080**.
+After Kubeedge init ,please note the **cloudIP** as highlighted above generated from console output and port is **8080**.
 
-### 2.Manually copy Certs.tgz. to /etc/kubeedge in Edge vm
+### 2. Manually copy certs.tgz from cloud host to edge host(s)
 
-In Edge VM
+On edge host
+
 ```
 mkdir -p /etc/kubeedge
 ```
-In Cloud VM
+
+On cloud host
 
 ```
+cd /etc/kubeedge/
 scp -r certs.tgz username@ipEdgevm:/etc/kubeedge
 ```
 
-In Edge VM untar the certs,tgz file
+On edge host untar the certs.tgz file
 
 ```
 cd /etc/kubeedge
 tar -xvzf certs.tgz
 ```
 
-### 3.Edge Node join
-##### Install tools with the Default version 
-```
-kubeedge join --kubeedge-version=<kubeedge Version>  --kubernetes-version=<kubernetes Version> --docker-version=<Docker version> --server=<CloudIp:8080>
-```
+### 3. Deploy KubeEdge edge core
+
+#### Install tools with the particular version
 
 ```
-kubeedge join --kubeedge-version= --kubernetes-version= --docker-version= --server=CloudIp:8080
-or
-kubeedge join --server=CloudIp:8080
+kubeedge join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
 ```
-**Note**:Cloud ip refers to Ip generated ,from the step 1 as highlighted 
 
-### 4.Node status on EdgeController console
-In the Cloud Vm run,
+#### Install tools with the default version 
+
+```
+kubeedge join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
+```
+
+Sample execution output:
+```
+# ./kubeedge join --edgecontrollerip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
+Same version of docker already installed in this host
+Host has mosquit+ already installed and running. Hence skipping the installation steps !!!
+Expected or Default KubeEdge version 0.3.0-beta.0 is already downloaded
+kubeedge/
+kubeedge/edge/
+kubeedge/edge/conf/
+kubeedge/edge/conf/modules.yaml
+kubeedge/edge/conf/logging.yaml
+kubeedge/edge/conf/edge.yaml
+kubeedge/edge/edge_core
+kubeedge/cloud/
+kubeedge/cloud/edgecontroller
+kubeedge/cloud/conf/
+kubeedge/cloud/conf/controller.yaml
+kubeedge/cloud/conf/modules.yaml
+kubeedge/cloud/conf/logging.yaml
+kubeedge/version
+
+KubeEdge Edge Node: testing123 successfully add to kube-apiserver, with operation status: 201 Created
+Content {"kind":"Node","apiVersion":"v1","metadata":{"name":"testing123","selfLink":"/api/v1/nodes/testing123","uid":"87d8d7a3-7acd-11e9-b86b-286ed488c645","resourceVersion":"3864","creationTimestamp":"2019-05-20T07:04:37Z","labels":{"name":"edge-node"}},"spec":{"taints":[{"key":"node.kubernetes.io/not-ready","effect":"NoSchedule"}]},"status":{"daemonEndpoints":{"kubeletEndpoint":{"Port":0}},"nodeInfo":{"machineID":"","systemUUID":"","bootID":"","kernelVersion":"","osImage":"","containerRuntimeVersion":"","kubeletVersion":"","kubeProxyVersion":"","operatingSystem":"","architecture":""}}}
+
+KubeEdge edge core is running, For logs visit /etc/kubeedge/kubeedge/edge/
+#
+```
+
+**Note**:Cloud IP refers to IP generated ,from the step 1 as highlighted
+
+### 4. Edge node status on edgeController console
+
+On cloud host run,
+
 ```
 kubectl get nodes
 
-NAME             STATUS     ROLES    AGE     VERSION
-192.168.20.135   Ready      <none>   6s      0.3.0-beta.0
+NAME         STATUS     ROLES    AGE     VERSION
+testing123   Ready      <none>   6s      0.3.0-beta.0
 ```
 Check if the edge node is in ready state
 
 ### 5.Deploy a sample pod from Cloud VM
+
 **https://github.com/kubeedge/kubeedge/blob/master/build/deployment.yaml**
 
-copy the deployment.yaml from the above link in cloud Vm,run
+Copy the deployment.yaml from the above link in cloud host,run
+
 ```
 kubectl create -f deployment.yaml
 deployment.apps/nginx-deployment created
 ```
 
 ### 6.Pod status
+
 Check the pod is up and is running state
+
 ```
 kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-deployment-d86dfb797-scfzz   1/1     Running   0          44s
 ```
+
 Check the deployment is up and is running state
 ```
 kubectl get deployments
@@ -243,9 +291,9 @@ NAME               READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-deployment   1/1     1            1           63s
 ```
 
-### Errata
+## Errata
+
 1.If GPG key for docker repo fail to fetch from key server.
 Please refer [Docker GPG error fix](<https://forums.docker.com/t/gpg-key-for-docker-repo-fail-to-fetch-from-key-server/24253>)
-
 
 2.After kubeadm init, if you face any errors regarding swap memory and preflight checks please refer  [Kubernetes preflight error fix](<https://github.com/kubernetes/kubeadm/issues/610>)
