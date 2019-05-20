@@ -11,6 +11,10 @@ func init() {
 	HubConfig = &Config{}
 	HubConfig.ProtocolWebsocket, _ = config.CONFIG.GetValue("cloudhub.protocol_websocket").ToBool()
 	HubConfig.ProtocolQuic, _ = config.CONFIG.GetValue("cloudhub.protocol_quic").ToBool()
+	if !HubConfig.ProtocolWebsocket && !HubConfig.ProtocolQuic {
+		HubConfig.ProtocolWebsocket = true
+	}
+
 	HubConfig.Address, _ = config.CONFIG.GetValue("cloudhub.address").ToString()
 	HubConfig.Port, _ = config.CONFIG.GetValue("cloudhub.port").ToInt()
 	HubConfig.QuicPort, _ = config.CONFIG.GetValue("cloudhub.quic_port").ToInt()
