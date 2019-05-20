@@ -108,6 +108,23 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		if err := ku.addNodeToK8SAPIServer(edgeID, ku.K8SApiServerIP); err != nil {
 			return err
 		}
+	} else {
+		data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   edgeID,
+				Labels: map[string]string{"name": "edge-node"},
+			}}
+
+		respBytes, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+
+		if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, respBytes, 0666); err != nil {
+			return err
+		}
+
+		fmt.Println("KubeEdge Edge Node:", edgeID, "will be started")
 	}
 
 	return nil
