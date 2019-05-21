@@ -74,10 +74,9 @@ func (ehc *Controller) initial(ctx *context.Context) error {
 		log.LOGGER.Warnf("use the config url for testing")
 	}
 
-	cloudHubClient := clients.GetClient(ehc.config.Protocol, config.GetConfig())
-	if cloudHubClient == nil {
-		log.LOGGER.Errorf("failed to get web socket client")
-		return fmt.Errorf("failed to get web socket client")
+	cloudHubClient, err := clients.GetClient(ehc.config.Protocol, config.GetConfig())
+	if err != nil {
+		return err
 	}
 
 	ehc.context = ctx
@@ -196,7 +195,7 @@ func (ehc *Controller) routeToEdge() {
 			return
 		}
 
-		log.LOGGER.Infof("received msg from cloud-hub:%#v", message)
+		log.LOGGER.Infof("received msg from cloud-hub:%+v", message)
 		err = ehc.dispatch(message)
 		if err != nil {
 			log.LOGGER.Errorf("failed to dispatch message, discard: %v", err)

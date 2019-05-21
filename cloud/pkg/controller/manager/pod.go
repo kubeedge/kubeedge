@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,10 +80,16 @@ func (pm *PodManager) Events() chan watch.Event {
 }
 
 // NewPodManager create PodManager from config
-func NewPodManager(kubeClient *kubernetes.Clientset, namespace string) (*PodManager, error) {
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, fields.Everything())
-	realEvents := make(chan watch.Event)
-	mergedEvents := make(chan watch.Event)
+func NewPodManager(kubeClient *kubernetes.Clientset, namespace, nodeName string) (*PodManager, error) {
+	var lw *cache.ListWatch
+	if "" == nodeName {
+		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, fields.Everything())
+	} else {
+		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
+		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, selector)
+	}
+	realEvents := make(chan watch.Event, config.PodEventBuffer)
+	mergedEvents := make(chan watch.Event, config.PodEventBuffer)
 	rh := NewCommonResourceEventHandler(realEvents)
 	si := cache.NewSharedInformer(lw, &v1.Pod{}, 0)
 	si.AddEventHandler(rh)

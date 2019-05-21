@@ -44,7 +44,7 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
 
 ### Generate Certificates
 
@@ -144,7 +144,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 + Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
     + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
     + Update the IP address of the master in the `websocket.url` field. 
-    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node name in edge.yaml for the below fields :
+    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node name in edge.yaml for the below fields :
         + `websocket:URL`
         + `controller:node-id`
         + `edged:hostname-override`

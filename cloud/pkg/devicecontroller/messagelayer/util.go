@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	constants "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
@@ -14,7 +15,7 @@ func BuildResource(nodeID, resourceType, resourceID string) (resource string, er
 		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 		return
 	}
-	resource = fmt.Sprintf("%s%s%s%s%s", constants.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, resourceType)
+	resource = fmt.Sprintf("%s%s%s%s%s", deviceconstants.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, resourceType)
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}
@@ -24,16 +25,16 @@ func BuildResource(nodeID, resourceType, resourceID string) (resource string, er
 // GetDeviceID returns the ID of the device
 func GetDeviceID(resource string) (string, error) {
 	res := strings.Split(resource, "/")
-	if len(res) >= constants.ResourceDeviceIDIndex+1 && res[constants.ResourceDeviceIndex] == constants.ResourceDevice {
-		return res[constants.ResourceDeviceIDIndex], nil
+	if len(res) >= deviceconstants.ResourceDeviceIDIndex+1 && res[deviceconstants.ResourceDeviceIndex] == deviceconstants.ResourceDevice {
+		return res[deviceconstants.ResourceDeviceIDIndex], nil
 	}
 	return "", errors.New("failed to get device id")
 }
 
 // GetResourceType returns the resourceType of message received from edge
 func GetResourceType(resource string) (string, error) {
-	if strings.Contains(resource, constants.ResourceTypeTwinEdgeUpdated) {
-		return constants.ResourceTypeTwinEdgeUpdated, nil
+	if strings.Contains(resource, deviceconstants.ResourceTypeTwinEdgeUpdated) {
+		return deviceconstants.ResourceTypeTwinEdgeUpdated, nil
 	}
 	return "", errors.New("unknown resource")
 }

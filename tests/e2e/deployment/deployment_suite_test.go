@@ -18,62 +18,46 @@ package deployment
 
 import (
 	"net/http"
-	"os/exec"
 	"testing"
-	"time"
-
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
-//context to load config and access across the package
 var (
-	ctx          *utils.TestContext
-	cfg          utils.Config
-	nodeSelector string
 	nodeName     string
-)
-
-var (
-	runController = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud; sudo nohup ./edgecontroller > edgecontroller.log 2>&1 &"
-	runEdgecore   = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edge_core > edge_core.log 2>&1 &"
+	nodeSelector string
+	//context to load config and access across the package
+	ctx *utils.TestContext
 )
 
 //Function to run the Ginkgo Test
 func TestEdgecoreAppDeployment(t *testing.T) {
+
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 		utils.InfoV6("Before Suite Execution")
-		cfg = utils.LoadConfig()
-		ctx = utils.NewTestContext(cfg)
+		//cfg = utils.LoadConfig()
+		ctx = utils.NewTestContext(utils.LoadConfig())
 		nodeName = "integration-node-" + utils.GetRandomString(10)
 		nodeSelector = "node-" + utils.GetRandomString(3)
+
 		//Generate Cerificates for Edge and Cloud nodes copy to respective folders
-		cmd := exec.Command("bash", "-x", "scripts/generate_cert.sh")
-		err := utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
+		Expect(utils.GenerateCerts()).Should(BeNil())
 		//Do the neccessary config changes in Cloud and Edge nodes
-		cmd = exec.Command("bash", "-x", "scripts/setup.sh", nodeName, ctx.Cfg.K8SMasterForKubeEdge)
-		err = utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
-		time.Sleep(1 * time.Second)
+		Expect(utils.DeploySetup(ctx, nodeName, "deployment")).Should(BeNil())
 		//Run ./edgecontroller binary
-		cmd = exec.Command("sh", "-c", runController)
-		err = utils.PrintCombinedOutput(cmd)
-		time.Sleep(5 * time.Second)
-		Expect(err).Should(BeNil())
+		Expect(utils.StartEdgeController()).Should(BeNil())
 		//Register the Edge Node to Master
-		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeSelector)
-		Expect(err).Should(BeNil())
+		Expect(utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
 		//Run ./edge_core after node registration
-		cmd = exec.Command("sh", "-c", runEdgecore)
-		err = utils.PrintCombinedOutput(cmd)
-		time.Sleep(5 * time.Second)
+		Expect(utils.StartEdgeCore()).Should(BeNil())
 		//Check node successfully registered or not
 		Eventually(func() string {
-			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
+			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
@@ -82,18 +66,15 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("After Suite Execution....!")
 		//Deregister the edge node from master
-		err := utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
-		Expect(err).Should(BeNil())
+		Expect(utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)).Should(BeNil())
 		Eventually(func() int {
-			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeName)
+			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
 			utils.Info("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
 		//Run the Cleanup steps to kill edge_core and edgecontroller binaries
-		cmd := exec.Command("bash", "-x", "scripts/cleanup.sh")
-		err = utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
-		time.Sleep(2 * time.Second)
+		Expect(utils.CleanUp("deployment")).Should(BeNil())
+		//time.Sleep(2 * time.Second)
 		utils.Info("Cleanup is Successfull !!")
 	})
 

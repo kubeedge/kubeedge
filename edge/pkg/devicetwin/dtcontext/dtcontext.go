@@ -31,7 +31,7 @@ type DTContext struct {
 	ModulesContext *context.Context
 	DeviceList     *sync.Map
 	DeviceMutex    *sync.Map
-	Mutex          *sync.Mutex
+	Mutex          *sync.RWMutex
 	// DBConn *dtclient.Conn
 	State string
 }
@@ -49,7 +49,7 @@ func InitDTContext(context *context.Context) (*DTContext, error) {
 	var confirm sync.Map
 	var deviceList sync.Map
 	var deviceMutex sync.Map
-	var mutex sync.Mutex
+	var mutex sync.RWMutex
 	// var deviceVersionList sync.Map
 
 	return &DTContext{
@@ -107,9 +107,8 @@ func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 func (dtc *DTContext) Lock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
-		dtc.Mutex.Lock()
+		dtc.Mutex.RLock()
 		deviceMutex.Lock()
-		dtc.Mutex.Unlock()
 		return true
 	}
 	return false
@@ -119,9 +118,8 @@ func (dtc *DTContext) Lock(deviceID string) bool {
 func (dtc *DTContext) Unlock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
-		dtc.Mutex.Lock()
 		deviceMutex.Unlock()
-		dtc.Mutex.Unlock()
+		dtc.Mutex.RUnlock()
 		return true
 	}
 	return false

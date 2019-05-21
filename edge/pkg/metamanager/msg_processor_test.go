@@ -32,7 +32,6 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -43,6 +42,8 @@ const (
 	ModuleNameEdged = "edged"
 	// ModuleNameEdgeHub is name of edgehub module
 	ModuleNameEdgeHub = "websocket"
+	// ModuleNameController is the name of the controller module
+	ModuleNameController = "controller"
 	// MarshalErroris common jsonMarshall error
 	MarshalError = "Error to marshal message content: json: unsupported type: chan int"
 	// OperationNodeConnection is message with operation publish
@@ -106,13 +107,6 @@ func registerFakeModules() {
 
 // TestProcessInsert is function to test processInsert
 func TestProcessInsert(t *testing.T) {
-	//Load Configurations as go test runs in /tmp
-	err := util.LoadConfig()
-	t.Run("AddConfigSource", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("loading config failed with error: %v", err)
-		}
-	})
 	// Initialize Mocks
 	initMocks(t)
 	// Register Fake Modules with beehive core
@@ -356,11 +350,11 @@ func TestProcessResponse(t *testing.T) {
 	//Success Case Source EdgeHub
 	ormerMock.EXPECT().Raw(gomock.Any(), gomock.Any()).Return(rawSeterMock).Times(1)
 	rawSeterMock.EXPECT().Exec().Return(nil, nil).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdgeHub, GroupResource, model.ResourceTypePodStatus, model.ResponseOperation)
+	msg = model.NewMessage("").BuildRouter(ModuleNameController, GroupResource, model.ResourceTypePodStatus, model.ResponseOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
 	message, _ = mainContext.Receive(ModuleNameEdged)
 	t.Run("SuccessSourceEdgeHub", func(t *testing.T) {
-		want := ModuleNameEdgeHub
+		want := ModuleNameController
 		if message.GetSource() != want {
 			t.Errorf("Wrong message received : Wanted from source %v and Got from source %v", want, message.GetSource())
 		}

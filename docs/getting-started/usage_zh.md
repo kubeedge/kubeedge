@@ -28,7 +28,7 @@ KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信�
 
 可以使用 [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) 中的 mode 字段去配置期望的模式。
 
-使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 [mosquitto](https://mosquitto.org/) 或 [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) 作为 MQTT Broker。
+使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 [mosquitto](https://mosquitto.org/) 或 [emqx edge](https://www.emqx.io/downloads/edge) 作为 MQTT Broker。
 
 ### 生成证书
 
@@ -99,7 +99,7 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   ```
 
   KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
-  请点击 [Cross Compilation](../docs/setup/cross-compilation.md) 获得相关说明。
+  请点击 [Cross Compilation](../setup/cross-compilation.md) 获得相关说明。
 
 + 修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
   + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径

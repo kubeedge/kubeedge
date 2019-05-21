@@ -37,7 +37,6 @@ var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
 func RestartEdgeNodePodsToUseQuicProtocol() error {
 	var EdgeNodePods []string
 	chconfigmapRet := make(chan error)
-	var EdgeNodePodHost string
 	for nodeName, conf := range NodeInfo {
 		for range conf {
 			cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edge_config", nodeName, quiccloudHubURL, conf[0])
@@ -54,7 +53,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 	Expect(err).To(BeNil())
 	for _, pod := range pods.Items {
 		if strings.Contains(pod.Name, "edgecore-deployment") {
-			EdgeNodePodHost = pod.Spec.NodeName
+			//EdgeNodePodHost = pod.Spec.NodeName
 			EdgeNodePods = append(EdgeNodePods, pod.Name)
 		}
 	}
@@ -75,7 +74,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 		return count
 	}, "1200s", "4s").Should(Equal(len(EdgeNodePods)), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
 
-	newpods, err := utils.GetPods(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, EdgeNodePodHost)
+	newpods, err := utils.GetPods(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, "")
 	Expect(err).To(BeNil())
 
 	Eventually(func() int {
@@ -106,12 +105,51 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 	return nil
 }
 
+func PullImageInAllEdgeNodes(appDeployments []string){
+	var deploymentList v1.DeploymentList
+	var podlist metav1.PodList
+	for kubenode, val := range NodeInfo {
+		UID := "edgecore-app-" + utils.GetRandomString(5)
+		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], val[1], val[0], 1)
+		Expect(IsAppDeployed).Should(BeTrue())
+		appDeployments = append(appDeployments, UID)
+		err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
+		Expect(err).To(BeNil())
+		for _, deployment := range deploymentList.Items {
+			if deployment.Name == UID {
+				label := kubenode
+				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
+				Expect(err).To(BeNil())
+				break
+			}
+		}
+		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+	}
+	//after pulling image to all edgenodes, delete the deployments on respective edgenodes
+	for i, _ := range appDeployments {
+		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
+		Expect(IsAppDeployed).Should(BeTrue())
+	}
+	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+	Expect(err).To(BeNil())
+	utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+	appDeployments = nil
+}
+
 //Run Test cases
 var _ = Describe("Application deployment test in Perfronace test EdgeNodes", func() {
 	var UID string
 	var testTimer *utils.TestTimer
 	var testDescription GinkgoTestDescription
 	var podlist metav1.PodList
+	var appDeployments []string
+
+	Context("Pull images to all KubeEdge nodes", func() {
+		FIt("PULL_IMAGE_ALL_KUBEEDGE_NODES: Pull image to all KubeEdge edge nodes", func() {
+			PullImageInAllEdgeNodes(appDeployments)
+		})
+	})
+
 	Context("Test application deployment on Kubeedge EdgeNodes Through Websocket", func() {
 		BeforeEach(func() {
 			testDescription = CurrentGinkgoTestDescription()
@@ -129,35 +167,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 		})
 
-		Measure("WSS_MEASURE_PERF_NODETEST_NODES_1: Create 1 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			runtime := b.Time("runtime", func() {
-				var deploymentList v1.DeploymentList
-				podlist = metav1.PodList{}
-				replica := 1
-				//Generate the random string and assign as a UID
-				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
-				Expect(IsAppDeployed).Should(BeTrue())
-				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
-				Expect(err).To(BeNil())
-				for _, deployment := range deploymentList.Items {
-					if deployment.Name == UID {
-						//label := nodeName
-						time.Sleep(2 * time.Second)
-						podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
-						Expect(err).To(BeNil())
-						break
-					}
-				}
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-			})
-
-			glog.Infof("Runtime stats: %+v", runtime)
-
-		}, 1)
-
-		Measure("WSS_MEASURE_PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
+		Measure("WSS_MEASURE_PERF_LOADTEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				var deploymentList v1.DeploymentList
@@ -185,7 +195,35 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 
 		}, 5)
 
-		Measure("WSS_MEASURE_PERF_NODETEST_NODES_50: Create 50 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
+		Measure("WSS_MEASURE_PERF_LOADTEST_NODES_20: Create 20 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
+			podlist = metav1.PodList{}
+			runtime := b.Time("runtime", func() {
+				var deploymentList v1.DeploymentList
+				podlist = metav1.PodList{}
+				replica := 20
+				//Generate the random string and assign as a UID
+				UID = "edgecore-app-" + utils.GetRandomString(5)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				Expect(IsAppDeployed).Should(BeTrue())
+				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
+				Expect(err).To(BeNil())
+				for _, deployment := range deploymentList.Items {
+					if deployment.Name == UID {
+						//label := nodeName
+						time.Sleep(2 * time.Second)
+						podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+						Expect(err).To(BeNil())
+						break
+					}
+				}
+				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+			})
+
+			glog.Infof("Runtime stats: %+v", runtime)
+
+		}, 5)
+
+		Measure("WSS_MEASURE_PERF_LOADTEST_NODES_50: Create 50 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
 			podlist = metav1.PodList{}
 			runtime := b.Time("runtime", func() {
 				var deploymentList v1.DeploymentList
@@ -287,7 +325,13 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			appDeployments = nil
 		})
 
-		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create 100 application Deployments, Measure Pod Running time", func(b Benchmarker) {
+		It("QUIC_APP_DEPLOYMENT_1: Switch to Quic and pull the image in all KubeEdge nodes", func() {
+			err := RestartEdgeNodePodsToUseQuicProtocol()
+			Expect(err).To(BeNil())
+			PullImageInAllEdgeNodes(appDeployments)
+		})
+
+		FMeasure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create 100 application Deployments, Measure Pod Running time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
 			var err error
 			var nodeSelector string
@@ -306,15 +350,38 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
 						UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
 				}
-				time.Sleep(2 * time.Second)
+				time.Sleep(10 * time.Second)
 				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, nodeName)
 				Expect(err).To(BeNil())
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 		}, 5)
+
+		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create 100 application Deployments while each deployment have 100 replica, Measure Pod Running time", func(b Benchmarker) {
+			podlist = metav1.PodList{}
+			var err error
+			var nodeSelector string
+			//var nodeName string
+			b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_1", func() {
+				replica := 10
+				for _, val := range NodeInfo {
+					nodeSelector = val[1]
+					//Generate the random string and assign as a UID
+					UID = "edgecore-app-" + utils.GetRandomString(5)
+					appDeployments = append(appDeployments, UID)
+					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
+						UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
+
+				}
+				time.Sleep(10 * time.Second)
+				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+				Expect(err).To(BeNil())
+				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+			})
+		}, 1)
 	})
 
-	FContext("Test application deployment on Kubeedge EdgeNodes with Quic Protocol", func() {
+	Context("Test application deployment on Kubeedge EdgeNodes with Quic Protocol", func() {
 		var appDeployments []string
 		BeforeEach(func() {
 			testDescription = CurrentGinkgoTestDescription()
@@ -332,38 +399,10 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			podlist = metav1.PodList{}
 		})
 
-		It("QUIC_APP_DEPLOYMENT_1: Switch to Quic and Create deployment to make sure each KubeEdge node is having the application Image", func() {
-			var deploymentList v1.DeploymentList
-			podlist = metav1.PodList{}
-			replica := 1
+		It("QUIC_APP_DEPLOYMENT_1: Switch to Quic and pull the image in all KubeEdge nodes", func() {
 			err := RestartEdgeNodePodsToUseQuicProtocol()
 			Expect(err).To(BeNil())
-			for kubenode, val := range NodeInfo {
-				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], val[1], val[0], replica)
-				Expect(IsAppDeployed).Should(BeTrue())
-				appDeployments = append(appDeployments, UID)
-				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
-				Expect(err).To(BeNil())
-				for _, deployment := range deploymentList.Items {
-					if deployment.Name == UID {
-						label := kubenode
-						podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
-						Expect(err).To(BeNil())
-						break
-					}
-				}
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-			}
-
-			for i, _ := range appDeployments {
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
-				Expect(IsAppDeployed).Should(BeTrue())
-			}
-
-			podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
-			Expect(err).To(BeNil())
-			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+			PullImageInAllEdgeNodes(appDeployments)
 		})
 
 		Measure("QUIC_MEASURE_PERF_NODETEST_NODES_1: Create 1 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {

@@ -122,13 +122,13 @@ func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha1.DeviceMod
 }
 
 // isDeviceModelUpdated is function to check if deviceModel is actually updated
-func isDeviceModelUpdated(old *CacheDeviceModel, new *v1alpha1.DeviceModel) bool {
+func isDeviceModelUpdated(oldTwin *CacheDeviceModel, newTwin *v1alpha1.DeviceModel) bool {
 	// does not care fields
-	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
-	old.ObjectMeta.Generation = new.ObjectMeta.Generation
+	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
+	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
 
 	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec)
+	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec)
 }
 
 // deviceModelUpdated is function to process updated deviceModel
@@ -397,9 +397,13 @@ func createDevice(device *v1alpha1.Device) types.Device {
 	opt := false
 	optional := &opt
 	twin := make(map[string]*types.MsgTwin)
-	for _, dtwin := range device.Status.Twins {
+	for i, dtwin := range device.Status.Twins {
 		expected := &types.TwinValue{}
-		expected.Value = &dtwin.Desired.Value
+		expected.Value = &device.Status.Twins[i].Desired.Value
+		metadataType, ok := device.Status.Twins[i].Desired.Metadata["type"]
+		if !ok {
+			metadataType = "string"
+		}
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -414,7 +418,7 @@ func createDevice(device *v1alpha1.Device) types.Device {
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: "string"},
+			Metadata:        &types.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
@@ -424,18 +428,113 @@ func createDevice(device *v1alpha1.Device) types.Device {
 }
 
 // isDeviceUpdated checks if device is actually updated
-func isDeviceUpdated(old *CacheDevice, new *v1alpha1.Device) bool {
+func isDeviceUpdated(oldTwin *CacheDevice, newTwin *v1alpha1.Device) bool {
 	// does not care fields
-	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
-	old.ObjectMeta.Generation = new.ObjectMeta.Generation
+	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
+	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
 
 	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec) || !reflect.DeepEqual(old.Status, new.Status)
+	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec) || !reflect.DeepEqual(oldTwin.Status, newTwin.Status)
 }
 
 // isNodeSelectorUpdated checks if nodeSelector is updated
-func isNodeSelectorUpdated(old *v1.NodeSelector, new *v1.NodeSelector) bool {
-	return !reflect.DeepEqual(old.NodeSelectorTerms, new.NodeSelectorTerms)
+func isNodeSelectorUpdated(oldTwin *v1.NodeSelector, newTwin *v1.NodeSelector) bool {
+	return !reflect.DeepEqual(oldTwin.NodeSelectorTerms, newTwin.NodeSelectorTerms)
+}
+
+// isProtocolConfigUpdated checks if protocol is updated
+func isProtocolConfigUpdated(oldTwin *v1alpha1.ProtocolConfig, newTwin *v1alpha1.ProtocolConfig) bool {
+	return !reflect.DeepEqual(oldTwin, newTwin)
+}
+
+// updateProtocolInConfigMap updates the protocol in the deviceProfile in configmap
+func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Device) {
+	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+		if ok {
+			nodeConfigMap, ok := configMap.(*v1.ConfigMap)
+			if !ok {
+				log.LOGGER.Errorf("Failed to assert to configmap")
+				return
+			}
+			dp, ok := nodeConfigMap.Data[DeviceProfileJSON]
+			if !ok || dp == "{}" {
+				// This case should never be hit as we delete empty configmaps
+				log.LOGGER.Errorf("Failed to get deviceProfile from configmap data or deviceProfile is empty")
+				return
+			}
+
+			deviceProfile := &types.DeviceProfile{}
+			if err := json.Unmarshal([]byte(dp), deviceProfile); err != nil {
+				log.LOGGER.Errorf("Failed to unmarshal due to error: %v", err)
+				return
+			}
+			var oldProtocol string
+			for _, devInst := range deviceProfile.DeviceInstances {
+				if device.Name == devInst.Name {
+					oldProtocol = devInst.Protocol
+					break
+				}
+			}
+
+			// delete the old protocol
+			for i, ptcl := range deviceProfile.Protocols {
+				if ptcl.Name == oldProtocol {
+					deviceProfile.Protocols = append(deviceProfile.Protocols[:i], deviceProfile.Protocols[i+1:]...)
+					break
+				}
+			}
+
+			// add new protocol
+			deviceProtocol := &types.Protocol{}
+			var protocol string
+			if device.Spec.Protocol.OpcUA != nil {
+				protocol = OPCUA + "-" + device.Name
+				deviceProtocol.Name = protocol
+				deviceProtocol.Protocol = OPCUA
+				deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
+			} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
+				protocol = ModbusRTU + "-" + device.Name
+				deviceProtocol.Name = protocol
+				deviceProtocol.Protocol = ModbusRTU
+				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.RTU
+			} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
+				protocol = ModbusTCP + "-" + device.Name
+				deviceProtocol.Name = protocol
+				deviceProtocol.Protocol = ModbusTCP
+				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.TCP
+			} else if device.Spec.Protocol.Bluetooth != nil {
+				protocol = Bluetooth + "-" + device.Name
+				deviceProtocol.Name = protocol
+				deviceProtocol.Protocol = Bluetooth
+				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
+			} else {
+				log.LOGGER.Warnf("Unsupported device protocol")
+			}
+
+			// update the protocol in deviceInstance
+			for _, devInst := range deviceProfile.DeviceInstances {
+				if device.Name == devInst.Name {
+					devInst.Protocol = protocol
+					break
+				}
+			}
+			deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
+
+			bytes, err := json.Marshal(deviceProfile)
+			if err != nil {
+				log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+				return
+			}
+			nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
+			// store new config map
+			dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+				log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+				return
+			}
+		}
+	}
 }
 
 // deviceUpdated updates the map, check if device is actually updated.
@@ -457,8 +556,10 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 				}
 				dc.deviceDeleted(deletedDevice)
 
+			} else if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) {
+				dc.updateProtocolInConfigMap(device)
 			} else {
-				// TODO: add an else if condition to check if ProtocolConfig/DeviceModelReference has changed, if yes whether deviceModelReference exists
+				// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
 				twin := make(map[string]*types.MsgTwin)
 				addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
 				addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
@@ -488,13 +589,13 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 }
 
 // addDeletedTwins add deleted twins in the message
-func addDeletedTwins(old []v1alpha1.Twin, new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
+func addDeletedTwins(oldTwin []v1alpha1.Twin, newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range old {
-		if !ifTwinPresent(dtwin, new) {
+	for i, dtwin := range oldTwin {
+		if !ifTwinPresent(dtwin, newTwin) {
 			expected := &types.TwinValue{}
-			expected.Value = &dtwin.Desired.Value
+			expected.Value = &oldTwin[i].Desired.Value
 			timestamp := time.Now().UnixNano() / 1e6
 
 			metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -528,12 +629,16 @@ func ifTwinPresent(twin v1alpha1.Twin, newTwins []v1alpha1.Twin) bool {
 }
 
 // addUpdatedTwins is function of add updated twins to send to edge
-func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
+func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range new {
+	for i, dtwin := range newTwin {
 		expected := &types.TwinValue{}
-		expected.Value = &dtwin.Desired.Value
+		expected.Value = &newTwin[i].Desired.Value
+		metadataType, ok := newTwin[i].Desired.Metadata["type"]
+		if !ok {
+			metadataType = "string"
+		}
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -548,7 +653,7 @@ func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, versio
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: "string"},
+			Metadata:        &types.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
@@ -738,7 +843,13 @@ func NewDownstreamController() (*DownstreamController, error) {
 		log.LOGGER.Warnf("Create kube client failed with error: %s", err)
 		return nil, err
 	}
+
 	config, err := utils.KubeConfig()
+	if err != nil {
+		log.LOGGER.Warnf("Get kubeConfig error: %v", err)
+		return nil, err
+	}
+
 	crdcli, err := utils.NewCRDClient(config)
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {

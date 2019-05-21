@@ -49,19 +49,19 @@ func TestValidateValue(t *testing.T) {
 		name:      "ValidateValueIntErrorCase",
 		valueType: "int",
 		value:     "test",
-		wantErr:   errors.New("The value is not int"),
+		wantErr:   errors.New("the value is not int"),
 	}, {
 		// float error
 		name:      "ValidateValueFloatErrorCase",
 		valueType: "float",
 		value:     "test",
-		wantErr:   errors.New("The value is not float"),
+		wantErr:   errors.New("the value is not float"),
 	}, {
 		// bool error
 		name:      "ValidateValueBoolErrorCase",
 		valueType: "boolean",
 		value:     "test",
-		wantErr:   errors.New("The bool value must be true or false"),
+		wantErr:   errors.New("the bool value must be true or false"),
 	}, {
 		// deleted
 		name:      "ValidateValueDeletedSuccessCase",
@@ -73,7 +73,7 @@ func TestValidateValue(t *testing.T) {
 		name:      "ValidateValueNotSupportedErrorCase",
 		valueType: "test",
 		value:     "test",
-		wantErr:   errors.New("The value type is not allowed"),
+		wantErr:   errors.New("the value type is not allowed"),
 	}, {
 		// int success
 		name:      "ValidateValueIntSuccessCase",

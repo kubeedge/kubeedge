@@ -24,7 +24,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
 
 // coreContext is beehive context used for communication between modules
@@ -36,13 +35,6 @@ var metaModule core.Module
 // TestName will initialize CONFIG and register metaManager and test Name
 func TestName(t *testing.T) {
 	//Load Configurations as go test runs in /tmp
-	err := util.LoadConfig()
-	t.Run("AddConfigSource", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("loading config failed with error: %v", err)
-		}
-	})
-
 	modules := core.GetModules()
 	core.Register(&metaManager{})
 	for name, module := range modules {

@@ -37,11 +37,32 @@ Its primary jobs are as follows:
 
 ## Pod Lifecycle Event Generator
 
-This module helps in monitoring pod status for edged. Every second, using probe's for liveliness and readyness, it updates the information with pod status manager for every pod.
+This module helps in monitoring pod status for edged. Every second, using probe's for liveness and readiness, it updates the information with pod status manager for every pod.
 
 ![PLEG Design](../../images/edged/pleg-flow.png)  
 
 *Fig 5: PLEG at EdgeD*
+
+## CRI for edged
+
+Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes, without the need to recompile and also support multiple runtimes like docker, containerd, cri-o etc
+
+#### Why CRI for edge?
+Currently kubeedge edged supports only docker runtime using the legacy dockertools. 
++ CRI support for  multiple container runtime in kubeedge is needed due to below mentioned factors 
+  + Include CRI support as in kubernetes kubelet to support containerd, cri-o etc
+
+  + Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
+    for docker runtime using dockershim is not considered in edged
+  + Support light weight container runtimes on resource constrained edge node which are unable to run the existing docker runtime
+  + Support multiple container runtimes like docker, containerd, cri-o etc on the edge node.
+  + Support for corresponding CNI with pause container and IP will be considered later
+  + Customer can run light weight container runtime on resource constrained edge node that cannot run the existing docker runtime
+  + Customer has the option to choose from multiple container runtimes on his edge platform
+
+![CRI Design](../../images/edged/edged-cri.png)  
+
+*Fig 6: CRI at EdgeD*
 
 ## Secret Management
 
@@ -51,7 +72,7 @@ Below flow diagram explains the message flow.
 
 ![Secret Message Handling](../../images/edged/secret-handling.png)  
 
-*Fig 6: Secret Message Handling at EdgeD*
+*Fig 7: Secret Message Handling at EdgeD*
 
 Also edged uses MetaClient module to fetch secret from Metamanager (if available with it) else cloud. Whenever edged queries for a new secret which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the secret, it stores a copy of it and send it to edged.
 Hence the subsequent query for same secret key will be responded by Metamanger only, hence reducing the response delay.
@@ -59,12 +80,12 @@ Below flow diagram shows, how secret is fetched from metamanager and cloud. The 
 
 ![Query Secret](../../images/edged/query-secret-from-edged.png)  
 
-*Fig 7: Query Secret by EdgeD*
+*Fig 8: Query Secret by EdgeD*
 
 ## Probe Management
 
-Probe management creates to probes for readiness and liveliness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveliness probe helps in monitoring the health of pods, if they are up or down. 
-As explained earlier PLEG module uses its services.
+Probe management creates to probes for readiness and liveness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveness probe helps in monitoring the health of pods, if they are up or down. 
+As explained earlier, PLEG module uses its services.
 
 
 ## ConfigMap Management
@@ -74,7 +95,7 @@ Below flow diagram explains the message flow.
 
 ![ConfigMap Message Handling](../../images/edged/configmap-handling.png)  
 
-*Fig 8: ConfigMap Message Handling at EdgeD*
+*Fig 9: ConfigMap Message Handling at EdgeD*
 
 Also edged uses MetaClient module to fetch configmap from Metamanager (if available with it) else cloud. Whenever edged queries for a new configmaps which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the configmaps, it stores a copy of it and send it to edged.
 Hence the subsequent query for same configmaps key will be responded by Metamanger only, hence reducing the response delay.
@@ -82,12 +103,12 @@ Below flow diagram shows, how configmaps is fetched from metamanager and cloud. 
 
 ![Query Configmaps](../../images/edged/query-configmap-from-edged.png)  
 
-*Fig 9: Query Configmaps by EdgeD*
+*Fig 10: Query Configmaps by EdgeD*
 
 ## Container GC
 
-Container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy
-The policy for garbage collecting containers we apply takes on three variables, which can be user-defined. MinAge is the minimum age at which a container can be garbage collected, zero for no limit. MaxPerPodContainer is the max number of dead containers any single pod (UID, container name) pair is allowed to have, less than zero for no limit. MaxContainers is the max number of total dead containers, less than zero for no limit as well. Gernerally the oldest containers are removed first.
+Container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy.
+The policy for garbage collecting containers we apply takes on three variables, which can be user-defined. MinAge is the minimum age at which a container can be garbage collected, zero for no limit. MaxPerPodContainer is the max number of dead containers any single pod (UID, container name) pair is allowed to have, less than zero for no limit. MaxContainers is the max number of total dead containers, less than zero for no limit as well. Generally, the oldest containers are removed first.
 
 ## Image GC
 
@@ -100,7 +121,7 @@ Status manager is as an independent edge routine, which collects pods statuses e
 
 ![Status Manager Flow](../../images/edged/pod-status-manger-flow.png)  
 
-*Fig 10: Status Manager Flow*
+*Fig 11: Status Manager Flow*
 
 ## Volume Management
 

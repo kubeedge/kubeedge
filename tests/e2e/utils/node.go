@@ -60,7 +60,7 @@ func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
 func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interface{}) {
 	var temp map[string]interface{}
 
-	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s"}}}`, nodeid, nodeselector)
+	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "node-role.kubernetes.io/edge": ""}}}`, nodeid, nodeselector)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
 		Failf("Unmarshal body failed: %v", err)
@@ -197,15 +197,27 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 }
 
 //GetConfigmap function to get configmaps for respective edgenodes
-func GetConfigmap(apiConfigMap string) int {
+func GetConfigmap(apiConfigMap string) (int, []byte) {
 	err, resp := SendHttpRequest(http.MethodGet, apiConfigMap)
+	if err != nil {
+		Failf("Sending SenHttpRequest failed: %v", err)
+		return -1,nil
+	}
+	body,_:=ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return resp.StatusCode,body
+
+}
+
+//DeleteConfigmap function to delete configmaps
+func DeleteConfigmap(apiConfigMap string) int {
+	err, resp := SendHttpRequest(http.MethodDelete, apiConfigMap)
 	if err != nil {
 		Failf("Sending SenHttpRequest failed: %v", err)
 		return -1
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
-
 }
 
 func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {

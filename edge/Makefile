@@ -14,7 +14,7 @@ endif
 
 export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
 test:
-	find ${TEST_DIR} -name "*_test.go"|xargs -i dirname {}|uniq|xargs -i go test ${T} {}
+	find ${TEST_DIR} -name "*_test.go"| xargs -I{} dirname {} | uniq | xargs -I{} go test ${T} {}
 
 # verify
 .PHONY: verify

@@ -41,6 +41,7 @@ type KubeEdgeInstTool struct {
 	EdgeContrlrIP  string
 	K8SApiServerIP string
 	EdgeNodeID     string
+	RuntimeType    string
 }
 
 //InstallTools downloads KubeEdge for the specified verssion
@@ -87,9 +88,9 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		serverIPAddr = ku.EdgeContrlrIP
 	}
 
-	url := fmt.Sprintf("wss://%s:10000/e632aba927ea4ac2b575ec1603d56f10/%s/events", serverIPAddr, edgeID)
+	url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)
 	edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
-		EdgeD: types.EdgeDSt{Version: ku.ToolVersion}}
+		EdgeD: types.EdgeDSt{Version: types.VendorK8sPrefix + ku.ToolVersion, RuntimeType: ku.RuntimeType}}
 
 	if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, edgeYaml); err != nil {
 		return err
@@ -108,6 +109,23 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		if err := ku.addNodeToK8SAPIServer(edgeID, ku.K8SApiServerIP); err != nil {
 			return err
 		}
+	} else {
+		data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   edgeID,
+				Labels: map[string]string{"name": "edge-node", "node-role.kubernetes.io/edge": ""},
+			}}
+
+		respBytes, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+
+		if err = ioutil.WriteFile(KubeEdgeConfigNodeJSON, respBytes, 0666); err != nil {
+			return err
+		}
+
+		fmt.Println("KubeEdge Edge Node:", edgeID, "will be started")
 	}
 
 	return nil
@@ -119,7 +137,7 @@ func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
 	data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   edgeid,
-			Labels: map[string]string{"name": "edge-node"},
+			Labels: map[string]string{"name": "edge-node", "node-role.kubernetes.io/edge": ""},
 		}}
 
 	respBytes, err := json.Marshal(data)

@@ -82,11 +82,11 @@ func (operation *ReadOperation) ConvertReadData(data []byte) float64 {
 	var initialValue []byte
 	var initialStringValue = ""
 	if operation.StartIndex <= operation.EndIndex {
-		for index := operation.StartIndex; index <= operation.EndIndex; index += 1 {
+		for index := operation.StartIndex; index <= operation.EndIndex; index++ {
 			initialValue = append(initialValue, data[index])
 		}
 	} else {
-		for index := operation.StartIndex; index >= operation.EndIndex; index -= 1 {
+		for index := operation.StartIndex; index >= operation.EndIndex; index-- {
 			initialValue = append(initialValue, data[index])
 		}
 	}

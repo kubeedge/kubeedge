@@ -25,6 +25,14 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
+const downloadRetryTimes int = 3
+
+// Ubuntu releases
+const (
+	UbuntuXenial = "xenial"
+	UbuntuBionic = "bionic"
+)
+
 //UbuntuOS struct objects shall have information of the tools version to be installed
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
@@ -132,16 +140,17 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, err
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "docker -v | cut -d ' ' -f3 | cut -d ',' -f1")}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
-	if str == "" {
-		return types.NewInstallRequired, nil
-	}
 
-	if strings.Contains(cmd.GetStdOutput(), u.DockerVersion) {
+	if strings.Contains(str, u.DockerVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
 
 	if err := u.addDockerRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
+	}
+
+	if str == "" {
+		return types.NewInstallRequired, nil
 	}
 
 	isReqVerAvail, err := u.IsToolVerInRepo("docker-ce", u.DockerVersion)
@@ -247,16 +256,17 @@ func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (types.
 	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
-	if str == "" {
-		return types.NewInstallRequired, nil
-	}
 
-	if strings.Contains(cmd.GetStdOutput(), u.KubernetesVersion) {
+	if strings.Contains(str, u.KubernetesVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
 
 	if err := u.addK8SRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
+	}
+
+	if str == "" {
+		return types.NewInstallRequired, nil
 	}
 
 	isReqVerAvail, err := u.IsToolVerInRepo(component, u.KubernetesVersion)
@@ -292,6 +302,14 @@ func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 		return fmt.Errorf("ubuntu dist version not available")
 	}
 	fmt.Println("Ubuntu distribution version is", distVersion)
+	distVersionForSuite := distVersion
+	if distVersion == UbuntuBionic {
+		// No bionic-specific version is available on apt.kubernetes.io.
+		// Use xenial version instead.
+		distVersionForSuite = UbuntuXenial
+	}
+	suite := fmt.Sprintf("kubernetes-%s", distVersionForSuite)
+	fmt.Println("Deb suite to use:", suite)
 
 	//Do an apt-get update
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
@@ -316,7 +334,7 @@ func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 	fmt.Println(curlOutput)
 
 	//Add K8S repo to local apt-get source.list
-	aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
+	aptRepo := fmt.Sprintf("deb %s %s main", KubernetesDownloadURL, suite)
 	updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
 	cmd.ExecuteCommand()
@@ -433,6 +451,7 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", u.KubeEdgeVersion, arch)
+	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.txt", u.KubeEdgeVersion, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	fileStat, err := os.Stat(filePath)
 	if err == nil && fileStat.Name() != "" {
@@ -440,15 +459,52 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 		goto SKIPDOWNLOADAND
 	}
 
-	//Download the tar from repo
-	dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	for i := 0; i < downloadRetryTimes; i++ {
+		//Download the tar from repo
+		dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
+		if err := cmd.ExecuteCmdShowOutput(); err != nil {
+			return err
+		}
+		if errout := cmd.GetStdErr(); errout != "" {
+			return fmt.Errorf("%s", errout)
+		}
+		fmt.Println()
+
+		//Verify the tar with checksum
+		fmt.Printf("%s checksum: \n", filename)
+		cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+		cmd.ExecuteCommand()
+		desiredChecksum := cmd.GetStdOutput()
+		fmt.Printf("%s \n\n", cmd.GetStdOutput())
+
+		fmt.Printf("%s content: \n", checksumFilename)
+		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, u.KubeEdgeVersion, checksumFilename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+		cmd.ExecuteCommand()
+		actualChecksum := cmd.GetStdOutput()
+		fmt.Printf("%s \n\n", cmd.GetStdOutput())
+
+		if desiredChecksum == actualChecksum {
+			break
+		}
+
+		if i < downloadRetryTimes-1 {
+			fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+			//Cleanup the downloaded files
+			cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+			cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+			if err := cmd.ExecuteCmdShowOutput(); err != nil {
+				return err
+			}
+			if errout := cmd.GetStdErr(); errout != "" {
+				return fmt.Errorf("%s", errout)
+			}
+		} else {
+			return fmt.Errorf("failed to verify the checksum of %s", filename)
+		}
 	}
-	fmt.Println(cmd.GetStdOutput())
 
 SKIPDOWNLOADAND:
 	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)

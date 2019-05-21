@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-nodename=$1
-MASTER_IP=$2
+setuptype=$1
+nodename=$2
+MASTER_IP=$3
 
 SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
 
@@ -23,6 +24,7 @@ echo `pwd`
 CURRENT_PATH=`pwd`
 EDGE_PATH=${SRC_DIR}/edge/conf/edge.yaml
 CLOUD_PATH=${SRC_DIR}/cloud/conf/controller.yaml
+EDGESITE_YAML_PATH=${SRC_DIR}/edgesite/conf/edgeSite.yaml
 
 create_edge_config() {
     if [ ! -f ${EDGE_PATH} ]; then
@@ -34,6 +36,7 @@ create_edge_config() {
     sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|url: .*|url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
+    sed -i "s|mode: .*|mode: 0|g" ${EDGE_PATH}
 }
 
 create_cloud_config() {
@@ -47,5 +50,22 @@ create_cloud_config() {
     sed -i "s|key: .*|key: tmp/kubeedge.key|g" ${CLOUD_PATH}
 }
 
-create_edge_config
-create_cloud_config
+create_edgesite_config() {
+    if [ ! -f ${EDGESITE_YAML_PATH} ]; then
+        echo "There is no edgeSite.yaml!"
+        exit 1
+    fi
+    sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGESITE_YAML_PATH}
+    sed -i "s|node-name: .*|node-name: ${nodename}|g" ${EDGESITE_YAML_PATH}
+    sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGESITE_YAML_PATH}
+    sed -i "s|master: .*|master: ${MASTER_IP}|g" ${EDGESITE_YAML_PATH}
+}
+
+if [ "deployment" = ${setuptype} ]; then
+    create_edge_config
+    create_cloud_config
+fi
+
+if [ "edgesite" = ${setuptype} ]; then
+    create_edgesite_config
+fi

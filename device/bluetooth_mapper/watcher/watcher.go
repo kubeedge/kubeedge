@@ -18,6 +18,7 @@ package watcher
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -49,8 +50,8 @@ type Attribute struct {
 }
 
 //Initiate initiates the watcher module
-func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, deviceId string, actions []actionmanager.Action, converter dataconverter.Converter) {
-	deviceID = deviceId
+func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, idOfDevice string, actions []actionmanager.Action, converter dataconverter.Converter) {
+	deviceID = idOfDevice
 	deviceName = nameOfDevice
 	actionManager = actions
 	dataConverter = converter
@@ -100,11 +101,25 @@ func onPeripheralDisconnected(p gatt.Peripheral, err error) {
 //onPeripheralConnected contains the operations to be performed as soon as the peripheral device is connected
 func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	actionmanager.GattPeripheral = p
-	DeviceConnected <- true
 	helper.ChangeDeviceState("online", deviceID)
+	ss, err := p.DiscoverServices(nil)
+	if err != nil {
+		glog.Errorf("Failed to discover services, err: %s\n", err)
+		os.Exit(1)
+	}
+	for _, s := range ss {
+		// Discovery characteristics
+		cs, err := p.DiscoverCharacteristics(nil, s)
+		if err != nil {
+			glog.Errorf("Failed to discover characteristics for service %s, err: %v\n", s.Name(), err)
+			continue
+		}
+		actionmanager.CharacteristicsList = append(actionmanager.CharacteristicsList, cs...)
+	}
+	DeviceConnected <- true
 	for {
-		newWatcher:=&Watcher{}
-		if !reflect.DeepEqual(w,newWatcher) {
+		newWatcher := &Watcher{}
+		if !reflect.DeepEqual(w, newWatcher) {
 			err := w.EquateTwinValue(deviceID)
 			if err != nil {
 				glog.Errorf("Error in watcher functionality: %s", err)
@@ -123,12 +138,12 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 	helper.GetTwin(updateMessage, deviceID)
 	helper.Wg.Wait()
 	twinUpdated := false
-	for _, twinAttribute := range w.DeviceTwinAttributes  {
+	for _, twinAttribute := range w.DeviceTwinAttributes {
 		if helper.TwinResult.Twin[twinAttribute.Name] != nil {
-			if (helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value) {
+			if helper.TwinResult.Twin[twinAttribute.Name].Expected != nil && ((helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) && helper.TwinResult.Twin[twinAttribute.Name].Expected != nil || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)) {
 				glog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
 				if helper.TwinResult.Twin[twinAttribute.Name].Actual == nil {
-					glog.Infof("%s  Actual Value: %s", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
+					glog.Infof("%s  Actual Value: %v", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
 				} else {
 					glog.Infof("%s Actual Value: %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)
 				}

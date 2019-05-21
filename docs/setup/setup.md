@@ -18,6 +18,8 @@
     - --insecure-bind-address=0.0.0.0
     ```
 
++ **Go** The minimum required go version is 1.11. You can install this version by using [this website.](https://golang.org/dl/) 
+
 + (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
 
   Enter the path to kubeconfig file in controller.yaml
@@ -44,7 +46,7 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
 
 ### Generate Certificates
 
@@ -110,6 +112,22 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
 + Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
++ Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
++ Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
+    ```script
+    {
+      "kind": "Node",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+        "labels": {
+          "name": "edge-node",
+          "node-role.kubernetes.io/edge": ""
+        }
+      }
+    }
+    ```
++ If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
 + Deploy node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json

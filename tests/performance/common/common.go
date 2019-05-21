@@ -21,8 +21,10 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -71,8 +73,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	return nil
 }
 
-func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int) v1.PodList {
-	replica := 1
+func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNodes int) {
 	//Create edgecore configMaps based on the users choice of edgecore deployment.
 	for i := 0; i < numOfNodes; i++ {
 		nodeName := "perf-node-" + utils.GetRandomString(10)
@@ -90,7 +91,11 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 		//Store the ConfigMap against each edgenode
 		NodeInfo[nodeName] = append(NodeInfo[nodeName], configmap, nodeSelector)
 	}
-	//Create edgeCore deployments as users configuration
+}
+
+func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, numOfNodes int) v1.PodList {
+	replica := 1
+	//Create edgeCore deployments as per users configuration
 	for _, configmap := range NodeInfo {
 		UID := "edgecore-deployment-" + utils.GetRandomString(5)
 		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "", configmap[0], replica)
@@ -114,6 +119,12 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 		return count
 	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
 
+	return podlist
+}
+
+func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int) v1.PodList {
+	CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler, numOfNodes)
+	podlist := HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler, numOfNodes)
 	return podlist
 }
 
@@ -151,7 +162,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 	Eventually(func() int {
 		count := 0
 		for _, configmap := range NodeInfo {
-			statusCode := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
+			statusCode, _ := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
 			if statusCode == 404 {
 				count++
 			}
@@ -307,4 +318,30 @@ func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Respon
 		utils.Info("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	}
 	return nil, resp
+}
+
+// GetLatency calculates latency based on different percent
+func GetLatency(pods []types.FakePod) types.Latency {
+	latency := types.Latency{}
+	if len(pods) > 0 {
+		// Sort fake pods
+		sort.Stable(types.FakePodSort(pods))
+
+		// Get 50% throughputs latency
+		index50 := int(math.Ceil(float64(len(pods)) * 0.50))
+		latency.Percent50 = time.Duration(pods[index50-1].RunningTime - pods[index50-1].CreateTime)
+
+		// Get 90% throughputs latency
+		index90 := int(math.Ceil(float64(len(pods)) * 0.90))
+		latency.Percent90 = time.Duration(pods[index90-1].RunningTime - pods[index90-1].CreateTime)
+
+		// Get 99% throughputs latency
+		index99 := int(math.Ceil(float64(len(pods)) * 0.99))
+		latency.Percent99 = time.Duration(pods[index99-1].RunningTime - pods[index99-1].CreateTime)
+
+		// Get 100% throughputs latency
+		index100 := int(math.Ceil(float64(len(pods)) * 1.00))
+		latency.Percent100 = time.Duration(pods[index100-1].RunningTime - pods[index100-1].CreateTime)
+	}
+	return latency
 }
