@@ -8,7 +8,6 @@ import (
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/manager"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/utils"
-
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -196,7 +195,7 @@ func (dc *DownstreamController) Stop() error {
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
-	selector := fields.OneTermEqualSelector("spec.nodeName", config.KubeNodeName).String()
+	selector := fields.OneTermEqualSelector("spec.nodeName", config.Kube.KubeNodeName).String()
 
 	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{FieldSelector: selector})
 	if err != nil {
@@ -219,8 +218,8 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, config.KubeNodeName)
-	log.LOGGER.Warnf("node name is %s", config.KubeNodeName)
+	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, config.Kube.KubeNodeName)
+	log.LOGGER.Warnf("node name is %s", config.Kube.KubeNodeName)
 
 	if err != nil {
 		log.LOGGER.Warnf("create pod manager failed with error: %s", err)
