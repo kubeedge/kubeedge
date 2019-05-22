@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // UpdatePodStatusWorkers is the count of goroutines of update pod status
