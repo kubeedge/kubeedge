@@ -62,7 +62,7 @@ func GenerateEnvList(envs []v1.EnvVar) (result []string) {
 
 //EnableHostUserNamespace checks security to enable host user namespace
 func EnableHostUserNamespace(pod *v1.Pod) bool {
-	if pod.Spec.Containers[0].SecurityContext != nil && *pod.Spec.Containers[0].SecurityContext.Privileged {
+	if pod.Spec.Containers[0].SecurityContext != nil && pod.Spec.Containers[0].SecurityContext.Privileged != nil && *pod.Spec.Containers[0].SecurityContext.Privileged {
 		return true
 	}
 	return false
