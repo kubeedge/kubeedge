@@ -196,7 +196,7 @@ func (ehc *Controller) routeToEdge() {
 			return
 		}
 
-		log.LOGGER.Infof("received msg from cloud-hub:%#v", message)
+		log.LOGGER.Infof("received msg from cloud-hub:%+v", message)
 		err = ehc.dispatch(message)
 		if err != nil {
 			log.LOGGER.Errorf("failed to dispatch message, discard: %v", err)
