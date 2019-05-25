@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // MessageLayer used, context or ssmq, default is context
