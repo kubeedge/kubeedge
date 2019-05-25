@@ -13,16 +13,16 @@
 
   以下参数如果不用修改则无需设置
 
-  | 参数名称        | 默认值                            | 备注                     |
-  | --------------- | --------------------------------- | ------------------------ |
-  | cloudhub        | 0.0.0.0:10000                     |                          |
-  | edgename        | edge-node                         |                          |
-  | edge_core_image | kubeedge/edgecore:latest          |                          |
-  | arch            | amd64                             | 可选值：amd64 \| arm64v8 |
-  | qemu_arch       | x86_64                            | 可选值：x86_64 \| aarch  |
-  | certpath        | /etc/kubeedge/certs               |                          |
-  | certfile        | /etc/kubeedge/certs/edge.crt      |                          |
-  | keyfile         | /etc/kubeedge/certs/edge.key      |                          |
+  | 参数名称            | 默认值                       | 备注                     |
+  | ------------------- | ---------------------------- | ------------------------ |
+  | cloudhub            | 0.0.0.0:10000                |                          |
+  | edgename            | edge-node                    |                          |
+  | edge_core_image     | kubeedge/edgecore:latest     |                          |
+  | arch                | amd64                        | 可选值：amd64 \| arm64v8 \| arm32v7 \| i386 \| s390x |
+  | qemu_arch           | x86_64                       | 可选值：x86_64 \| aarch64 \| arm \| i386 \| s390x  |
+  | certpath            | /etc/kubeedge/certs          |                          |
+  | certfile            | /etc/kubeedge/certs/edge.crt |                          |
+  | keyfile             | /etc/kubeedge/certs/edge.key |                          |
 
   ```shell
   ./run_daemon.sh set \
@@ -33,7 +33,7 @@
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \
           certfile=/etc/kubeedge/certs/edge.crt \
-          keyfile=/etc/kubeedge/certs/edge.key
+          keyfile=/etc/kubeedge/certs/edge.key 
   ````
 
 + 编译容器镜像

@@ -96,7 +96,7 @@ docker_set(){
     #    qemu_arch=x86_64 \
     #    certpath=/etc/kubeedge/certs \
     #    certfile=/etc/kubeedge/certs/edge.crt \
-    #    keyfile=/etc/kubeedge/certs/edge.key
+    #    keyfile=/etc/kubeedge/certs/edge.key 
 
     ARGS=$@
 

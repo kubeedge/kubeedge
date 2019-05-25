@@ -19,8 +19,8 @@ container and MQTT Broker, so make sure that docker engine listening on
   | cloudhub        | 0.0.0.0:10000                     |                            |
   | edgename        | edge-node                         |                            |
   | edge_core_image | kubeedge/edgecore:latest          |                            |
-  | arch            | amd64                             | Optional: amd64 \| arm64v8 |
-  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch  |
+  | arch            | amd64                             | Optional: amd64 \| arm64v8 \| arm32v7 \| i386 \| s390x |
+  | qemu_arch       | x86_64                            | Optional: x86_64 \| aarch64 \| arm \| i386 \| s390x  |
   | certpath        | /etc/kubeedge/certs               |                            |
   | certfile        | /etc/kubeedge/certs/edge.crt      |                            |
   | keyfile         | /etc/kubeedge/certs/edge.key      |                            |
@@ -34,7 +34,7 @@ container and MQTT Broker, so make sure that docker engine listening on
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \
           certfile=/etc/kubeedge/certs/edge.crt \
-          keyfile=/etc/kubeedge/certs/edge.key
+          keyfile=/etc/kubeedge/certs/edge.key 
   ```
 
 + Build image

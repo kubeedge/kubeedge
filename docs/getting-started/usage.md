@@ -44,7 +44,7 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 
 Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
 
-To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) is installed on the edge node as an MQTT Broker.
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
 
 ### Generate Certificates
 
