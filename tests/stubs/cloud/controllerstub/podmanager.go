@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -65,6 +66,10 @@ func (pm *PodManager) UpdatePodStatus(k string, s string) {
 	v, ok := pm.pods.Load(k)
 	if ok {
 		pod := v.(types.FakePod)
+		// Status becomes running in the first time
+		if pod.Status != s && s == constants.PodRunning {
+			pod.RunningTime = time.Now().UnixNano()
+		}
 		pod.Status = s
 		pm.pods.Store(k, pod)
 	}
@@ -138,6 +143,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		msg.BuildRouter(constants.ControllerStub, constants.GroupResource, resource, model.InsertOperation)
 
 		// Add pod in cache
+		p.CreateTime = time.Now().UnixNano()
 		pm.AddPod(ns+"/"+p.Name, p)
 
 		// Send msg

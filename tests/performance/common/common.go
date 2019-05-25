@@ -21,8 +21,10 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -307,4 +309,30 @@ func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Respon
 		utils.Info("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	}
 	return nil, resp
+}
+
+// GetLatency calculates latency based on different percent
+func GetLatency(pods []types.FakePod) types.Latency {
+	latency := types.Latency{}
+	if len(pods) > 0 {
+		// Sort fake pods
+		sort.Stable(types.FakePodSort(pods))
+
+		// Get 50% throughputs latency
+		index50 := int(math.Ceil(float64(len(pods)) * 0.50))
+		latency.Percent50 = time.Duration(pods[index50-1].RunningTime - pods[index50-1].CreateTime)
+
+		// Get 90% throughputs latency
+		index90 := int(math.Ceil(float64(len(pods)) * 0.90))
+		latency.Percent90 = time.Duration(pods[index90-1].RunningTime - pods[index90-1].CreateTime)
+
+		// Get 99% throughputs latency
+		index99 := int(math.Ceil(float64(len(pods)) * 0.99))
+		latency.Percent99 = time.Duration(pods[index99-1].RunningTime - pods[index99-1].CreateTime)
+
+		// Get 100% throughputs latency
+		index100 := int(math.Ceil(float64(len(pods)) * 1.00))
+		latency.Percent100 = time.Duration(pods[index100-1].RunningTime - pods[index100-1].CreateTime)
+	}
+	return latency
 }
