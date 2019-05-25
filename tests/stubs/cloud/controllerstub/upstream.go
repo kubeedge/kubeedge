@@ -109,10 +109,17 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
 				// Marshal message content
-				data, err := json.Marshal(msg.GetContent())
-				if err != nil {
-					log.LOGGER.Errorf("Message: %s process failure, marshal content failed with error: %v", msg.GetID(), err)
-					continue
+				var data []byte
+				switch msg.Content.(type) {
+				case []byte:
+					data = msg.GetContent().([]byte)
+				default:
+					var err error
+					data, err = json.Marshal(msg.GetContent())
+					if err != nil {
+						log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+						continue
+					}
 				}
 
 				// Get pod
