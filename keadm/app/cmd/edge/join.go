@@ -38,18 +38,17 @@ further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
-kubeedge join --edgecontrollerip=<ip address>
+kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
   - For this command --edgecontrollerip flag is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --edgecontrollerip=10.20.30.40 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
-kubeedge join --edgecontrollerip=10.20.30.40 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
-  - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
-	then default values will be used. 
-	Also options like "--docker-version", and "--kubeedge-version", version should be in 
-	format like "18.06.3" and "0.2.1".
+- In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
+  then default versions shown in help will be choosen. 
+  The versions for "--docker-version", "--kubernetes-version" and "--kubeedge-version" flags should be in the
+  format "18.06.3", "1.14.0" and "0.2.1" respectively
 `
 )
 
@@ -102,7 +101,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.MarkFlagRequired(types.EdgeControllerIP)
 
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeID, types.EdgeNodeID, "i", joinOptions.EdgeNodeID,
-		"KubeEdge Node unique idenfitcation string")
+		"KubeEdge Node unique idenfitcation string, If flag not used then the command will generate a unique id on its own")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
