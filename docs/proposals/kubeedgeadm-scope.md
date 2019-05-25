@@ -9,7 +9,7 @@ approvers:
   - "@rohitsardesai83"
   - "@sids-b"
 creation-date: 2019-04-11
-last-updated: 2019-04-15
+last-updated: 2019-05-20
 ---
 
 # Motivation
@@ -142,13 +142,12 @@ For cloud node:
 kubeedge reset
 
 For edge node:
-kubeedge reset --server 10.20.30.40:8080
-    - For this command --server option is a Mandatory option
+kubeedge reset --k8sserverip 10.20.30.40:8080
 
 
 Flags:
-  -h, --help            help for reset
-  -s, --server string   IP:Port address of k8s master 
+  -h, --help                 help for reset
+  -k, --k8sserverip string   IP:Port address of cloud components host/VM
   
 ```
 
@@ -169,23 +168,26 @@ Usage:
 
 Examples:
 
-kubeedge join --server=<ip:port>
+kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
-  - For this command --server option is a Mandatory option
+  - For this command --edgecontrollerip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --server=10.20.30.40:8080 --docker-version=18.06.0 --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
-kubeedge join --server=10.20.30.40:8080 --docker-version --kubeedge-version=0.2.1 --kubernetes-version=1.14.1
-  - Default values for --docker-version=18.06.0,--kubernetes-version=1.14.1, --kubeedge-version=0.3.0-beta.0
+kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
-		then default values will be used. 
-		
+    then default values will be used.
+    Also options like "--docker-version", and "--kubeedge-version", version should be in
+    format like "18.06.3" and "0.2.1".
+
+
 Flags:
       --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
+  -e, --edgecontrollerip string                    IP address of KubeEdge edgecontroller
+  -i, --edgenodeid string                          KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
   -h, --help                                       help for join
+  -k, --k8sserverip string                         IP:Port address of K8S API-Server
       --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
-      --kubernetes-version string[="1.14.1"]       Use this key to download and use the required Kubernetes version (default "1.14.1")
-  -s, --server string                              IP:Port address of cloud components host/VM
 
 ```
 
@@ -238,26 +240,24 @@ Flags:
     2. Check and install all the pre-requisites before executing edge-controller, which are
         * Docker (currently 18.06.0ce3-0~ubuntu) and check is service is up.
         * mosquitto (latest available in OS repos) and check if running.
-        * kubectl
     3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transfered from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
-    4. Modify `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `kubectl` command to api-server
-    5. This command will take mandatory `-s` or `--server` flag to specify the address and port of the Kubernetes API server
-    6. Modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`
-        * Update the IP address of the master in the `websocket.url` field.
-        * Replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242eq` with edge node ip in `edge.yaml` for the fields: `controller.node-id`,`edged.hostname-override`
-        * In `websocket.URL`, replace `0.0.0.0` with server ip from `-s` option.
-    7. Register or add node to master, Using Flag `-s` or `--server` mandatory field, it will connect with the master (api-server). Modify `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `kubectl` command to api-server
+    4. Create `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `curl` command to api-server
+    5. This command will take mandatory `-e` or `--edgecontrollerip` flag to specify the address of Kubeedge edgecontroller
+    6. Create `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`
+        * Use `--edgecontrollerip` flag to update the `websocket.url` field.
+        * Use `--edgenodeid` flags value to update `controller.node-id`,`edged.hostname-override` field.
+    7. Register or add node to K8S cluster, Using Flag `-k` or `--k8sserverip` value to connect with the api-server. 
+        * Create `node.json` file and update it with `-i` or `--edgenodeid` flags value in `metadata.name` field.
+        * Apply it using `curl` command to api-server
 
-      **NOTE:** you can use the `-s` or `--server` flags to specify the address and port of the Kubernetes API server. Refer [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/)
-
-    4. start edge_core
+    8. start edge_core
 
 `kubeedge reset`
 
-  - What is it? 
+  - What is it?
     * This command will be responsible to bring down KubeEdge edge component (edge_core)
 
   - What it will do?
 
-    1. Remove node using `kubectl` command
+    1. Remove node using `curl` command from K8S cluster
     2. Kill `edge_core` process
