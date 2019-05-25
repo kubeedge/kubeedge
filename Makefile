@@ -63,6 +63,17 @@ IMAGE_TAG ?= $(shell git describe --tags)
 cloudimage:
 	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
+QEMU_ARCH ?= x86_64
+ARCH ?= amd64
+
 .PHONY: edgeimage
 edgeimage:
-	cd build/edge && ./run_daemon.sh build
+	mkdir -p ./build/edge/tmp
+	rm -rf ./build/edge/tmp/*
+	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz 
+	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp 
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg RUN_FROM=${ARCH}/docker:dind \
+	-f build/edge/Dockerfile .
+  

@@ -28,7 +28,7 @@ KubeEdge 的边缘部分在 deviceTwin 和设备之间使用 MQTT 进行通信�
 
 可以使用 [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) 中的 mode 字段去配置期望的模式。
 
-使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 [mosquitto](https://mosquitto.org/) 或 [emqx edge](https://www.emqx.io/downloads/emq/edge?osType=Linux#download) 作为 MQTT Broker。
+使用 KubeEdge 的 mqtt 内部或外部模式，您都需要确保在边缘节点上安装 [mosquitto](https://mosquitto.org/) 或 [emqx edge](https://www.emqx.io/downloads/edge) 作为 MQTT Broker。
 
 ### 生成证书
 
