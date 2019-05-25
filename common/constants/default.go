@@ -31,6 +31,6 @@ const (
 	DefaultMessageLayer = "context"
 
 	DefaultContextSendModuleName     = "cloudhub"
-	DefaultContextReceiveModuleName  = EdgeControllerModuleName
-	DefaultContextResponseModuleName = CloudHubControllerModuleName
+	DefaultContextReceiveModuleName  = "controller"
+	DefaultContextResponseModuleName = "cloudhub"
 )
