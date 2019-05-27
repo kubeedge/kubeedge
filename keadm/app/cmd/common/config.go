@@ -39,11 +39,11 @@ func Write2File(path string, data interface{}) error {
 }
 
 //WriteControllerYamlFile writes controller.yaml for cloud component
-func WriteControllerYamlFile(path string) error {
+func WriteControllerYamlFile(path , kubeConfig string) error {
 	controllerData := ControllerYaml{Controller: CloudControllerSt{Kube: KubeEdgeControllerConfig{Master: "http://localhost:8080", Namespace: constants.DefaultKubeNamespace,
 		ContentType: constants.DefaultKubeContentType,
 		QPS:         constants.DefaultKubeQPS, Burst: constants.DefaultKubeBurst, NodeUpdateFrequency: constants.DefaultKubeUpdateNodeFrequency * time.Second,
-		KubeConfig: ""}},
+		KubeConfig: kubeConfig}},
 		CloudHub: CloudHubSt{IPAddress: "0.0.0.0", Port: 10000, CA: "/etc/kubeedge/ca/rootCA.crt", Cert: "/etc/kubeedge/certs/edge.crt",
 			Key: "/etc/kubeedge/certs/edge.key", KeepAliveInterval: 30, WriteTimeout: 30, NodeLimit: 10},
 		DeviceController: DeviceControllerSt{Kube: KubeEdgeControllerConfig{Master: "http://localhost:8080", Namespace: constants.DefaultKubeNamespace,

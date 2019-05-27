@@ -25,6 +25,7 @@ type InitOptions struct {
 	KubeEdgeVersion   string
 	KubernetesVersion string
 	DockerVersion     string
+	KubeConfig        string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
