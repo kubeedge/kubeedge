@@ -20,4 +20,7 @@ const (
 	DefaultContextSendModuleName     = CloudHubControllerModuleName
 	DefaultContextReceiveModuleName  = DeviceControllerModuleName
 	DefaultContextResponseModuleName = CloudHubControllerModuleName
+
+	DefaultDeviceEventBuffer      = 1
+	DefaultDeviceModelEventBuffer = 1
 )
