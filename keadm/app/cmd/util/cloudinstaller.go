@@ -58,7 +58,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	//Create controller.yaml
-	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml); err != nil {
+	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml, cu.KubeConfig); err != nil {
 		return err
 	}
 

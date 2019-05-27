@@ -39,12 +39,13 @@ kubeedge init
 
 - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3
+kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=~/.kube/config
 
   - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
     then default versions shown in help will be choosen. 
     The versions for "--docker-version", "--kubernetes-version" and "--kubeedge-version" flags should be in the
     format "18.06.3", "1.14.0" and "0.2.1" respectively
+  - kube-config is the path of kubeconfig which used to secure connectivity between edgecontroller and kube-apiserver
 `
 )
 
@@ -99,6 +100,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVar(&initOpts.KubernetesVersion, types.KubernetesVersion, initOpts.KubernetesVersion,
 		"Use this key to download and use the required Kubernetes version")
 	cmd.Flags().Lookup(types.KubernetesVersion).NoOptDefVal = initOpts.KubernetesVersion
+
+	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
+		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -111,7 +115,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		kubeVer = initOptions.KubeEdgeVersion
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer}}
+	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer}, KubeConfig: initOptions.KubeConfig}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
