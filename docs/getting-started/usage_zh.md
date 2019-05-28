@@ -99,7 +99,7 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   ```
 
   KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
-  请点击 [Cross Compilation](../docs/setup/cross-compilation.md) 获得相关说明。
+  请点击 [Cross Compilation](../setup/cross-compilation.md) 获得相关说明。
 
 + 修改`$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`配置文件
   + 将 `edgehub.websocket.certfile` 和 `edgehub.websocket.keyfile` 替换为自己的证书路径
