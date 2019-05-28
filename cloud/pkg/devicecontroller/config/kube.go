@@ -26,44 +26,44 @@ var KubeBurst int
 
 func init() {
 	if km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString(); err != nil {
-		log.LOGGER.Errorf("Kube master not set")
+		log.LOGGER.Errorf("Devicecontroller kube master not set")
 	} else {
 		KubeMaster = km
 	}
-	log.LOGGER.Infof("Kube master: %s", KubeMaster)
+	log.LOGGER.Infof("Devicecontroller kube master: %s", KubeMaster)
 
 	if kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString(); err != nil {
-		log.LOGGER.Errorf("Kube config not set")
+		log.LOGGER.Errorf("Devicecontroller kube config not set")
 	} else {
 		KubeConfig = kc
 	}
-	log.LOGGER.Infof("Kube config: %s", KubeConfig)
+	log.LOGGER.Infof("Devicecontroller kube config: %s", KubeConfig)
 
 	if kn, err := config.CONFIG.GetValue("devicecontroller.kube.namespace").ToString(); err != nil {
 		KubeNamespace = constants.DefaultKubeNamespace
 	} else {
 		KubeNamespace = kn
 	}
-	log.LOGGER.Infof("Kube namespace: %s", KubeNamespace)
+	log.LOGGER.Infof("Devicecontroller kube namespace: %s", KubeNamespace)
 
 	if kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString(); err != nil {
 		KubeContentType = constants.DefaultKubeContentType
 	} else {
 		KubeContentType = kct
 	}
-	log.LOGGER.Infof("Kube content type: %s", KubeContentType)
+	log.LOGGER.Infof("Devicecontroller kube content type: %s", KubeContentType)
 
 	if kqps, err := config.CONFIG.GetValue("devicecontroller.kube.qps").ToFloat64(); err != nil {
 		KubeQPS = constants.DefaultKubeQPS
 	} else {
 		KubeQPS = float32(kqps)
 	}
-	log.LOGGER.Infof("Kube QPS: %f", KubeQPS)
+	log.LOGGER.Infof("Devicecontroller kube QPS: %f", KubeQPS)
 
 	if kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt(); err != nil {
 		KubeBurst = constants.DefaultKubeBurst
 	} else {
 		KubeBurst = kb
 	}
-	log.LOGGER.Infof("Kube burst: %d", KubeBurst)
+	log.LOGGER.Infof("Devicecontroller kube burst: %d", KubeBurst)
 }
