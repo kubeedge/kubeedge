@@ -184,7 +184,7 @@ func (b *BLEConfig) Load() error {
 			if strings.ToUpper(deviceModel.Name) == strings.ToUpper(b.Device.Name) {
 				for _, property := range deviceModel.Properties {
 					if strings.ToUpper(property.Name) == strings.ToUpper(actionConfig.PropertyName) {
-						if strings.ToUpper(property.AccessMode) == strings.ToUpper(READWRITE){
+						if property.AccessMode == READWRITE{
 							action.Operation.Action = "Write"
 							if strings.ToUpper(property.DataType) == "INT" {
 								value := string(int(property.DefaultValue.(float64)))
@@ -202,7 +202,7 @@ func (b *BLEConfig) Load() error {
 									}
 								}
 							}
-						} else if strings.ToUpper(property.AccessMode) == strings.ToUpper(READ) {
+						} else if property.AccessMode == READ {
 							action.Operation.Action = "Read"
 						}
 					}
