@@ -2,7 +2,7 @@ mqtt:
   mode: 0       # 0 -internal mqtt broker  1 - external mqtt broker
   server: tcp://127.0.0.1:1883 # external mqtt broker url.
   internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
-device-model-name: CC2650 SensorTag
+device-model-name: cc2650-sensortag
 action-manager:
   actions:
     - name: IRTemperatureConfiguration
