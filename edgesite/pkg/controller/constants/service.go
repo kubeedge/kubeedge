@@ -6,12 +6,10 @@ const (
 	EdgeControllerModuleName     = "controller"
 	CloudHubControllerModuleName = "cloudhub"
 
-	// Resource sep
-	ResourceSep               = "/"
 	ResourceSliceLength       = 5
 	ResourceSliceLengthQuery  = 4
 	ResourceNodeIndex         = 0
-        ResourceNodeIDIndex       = 1
+	ResourceNodeIDIndex       = 1
 	ResourceNamespaceIndex    = 0
 	ResourceResourceTypeIndex = 1
 	ResourceResourceNameIndex = 2

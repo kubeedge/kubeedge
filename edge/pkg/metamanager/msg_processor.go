@@ -11,6 +11,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -19,8 +20,7 @@ import (
 
 //Constants to check metamanager processes
 const (
-	ResourceSeparator = "/"
-	OK                = "OK"
+	OK = "OK"
 
 	DefaultSyncInterval = 60
 	GroupResource       = "resource"
@@ -89,7 +89,7 @@ func send2Cloud(message *model.Message, c *context.Context) {
 // Resource format: <namespace>/<restype>[/resid]
 // return <reskey, restype, resid>
 func parseResource(resource string) (string, string, string) {
-	tokens := strings.Split(resource, ResourceSeparator)
+	tokens := strings.Split(resource, constants.ResourceSep)
 	resType := ""
 	resID := ""
 	switch len(tokens) {
@@ -367,7 +367,7 @@ func (m *metaManager) syncPodStatus() {
 		if namespace == "" {
 			namespace, _, _, _ = util.ParseResourceEdge(v.Key, model.QueryOperation)
 		}
-		podKey := strings.Replace(v.Key, ResourceSeparator+model.ResourceTypePodStatus+ResourceSeparator, ResourceSeparator+model.ResourceTypePod+ResourceSeparator, 1)
+		podKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep, 1)
 		podRecord, err := dao.QueryMeta("key", podKey)
 		if err != nil {
 			log.LOGGER.Errorf("query pod[%s] failed: %v", podKey, err)
@@ -390,7 +390,7 @@ func (m *metaManager) syncPodStatus() {
 		content = append(content, podStatus)
 	}
 
-	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+ResourceSeparator+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
+	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
 	send2Cloud(msg, m.context)
 	log.LOGGER.Infof("sync pod status successful, %s", msgDebugInfo(msg))
 }
