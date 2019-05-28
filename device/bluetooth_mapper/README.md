@@ -159,7 +159,7 @@ perform the event once.
  
  ### Configuration File
  
- The user can give the configurations specific to the bluetooth device using configurations provided in the configuration  file.
+ The user can give the configurations specific to the bluetooth device using configurations provided in the configuration file present at $GOPATH/src/github.com/kubeedge/kubeedge/device/bluetooth_mapper/configuration/config.yaml.
  The details provided in the configuration file are used by action-manager module, scheduler module, watcher module, the data-converter module and the controller.
  
  **Example:** Given below is the instructions using which user can create their own configuration file, for their device.
@@ -213,7 +213,7 @@ The following properties can be changed at runtime by publishing messages on MQT
 
 The user can add or update the watcher properties of the mapper at runtime. It will overwrite the existing watcher configurations (if exists)
 
-**Topic:** $ke/mappers/bluetooth-mapper/< deviceID >/watcher/create
+**Topic:** $ke/device/bluetooth-mapper/< deviceID >/watcher/create
 
 **Message:**
 
@@ -242,7 +242,7 @@ In the action manager module the user can perform two types of operations at run
 The user can add a set of actions to be performed by the mapper. If an action with the same name as one of the actions in the list exists
  then it updates the action and if the action does not already exist then it is added to the existing set of actions. 
 
-**Topic:** $ke/mappers/bluetooth-mapper/< deviceID >/action-manager/create
+**Topic:** $ke/device/bluetooth-mapper/< deviceID >/action-manager/create
 
 **Message:**
 
@@ -264,7 +264,7 @@ The user can add a set of actions to be performed by the mapper. If an action wi
 The users can delete a set of actions that were previously defined for the device. If the action mentioned in the list does not exist
 then it returns an error message.
 
-**Topic:** $ke/mappers/bluetooth-mapper/< deviceID >/action-manager/delete
+**Topic:** $ke/device/bluetooth-mapper/< deviceID >/action-manager/delete
 
 **Message:**
  
@@ -295,7 +295,7 @@ In the scheduler module the user can perform two types of operations at runtime,
 The user can add a set of schedules to be performed by the mapper. If a schedule with the same name as one of the schedules in the list exists
  then it updates the schedule and if the action does not already exist then it is added to the existing set of schedules.
  
-**Topic:** $ke/mappers/bluetooth-mapper/< deviceID >/scheduler/create
+**Topic:** $ke/device/bluetooth-mapper/< deviceID >/scheduler/create
 
 **Message:**
     
@@ -316,7 +316,7 @@ The user can add a set of schedules to be performed by the mapper. If a schedule
 The users can delete a set of schedules that were previously defined for the device. If the schedule mentioned in the list does not exist
 then it returns an error message.
 
-**Topic:** $ke/mappers/bluetooth-mapper/< deviceID >/scheduler/delete
+**Topic:** $ke/device/bluetooth-mapper/< deviceID >/scheduler/delete
 
 **Message:**
 
