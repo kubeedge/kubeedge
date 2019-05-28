@@ -30,7 +30,6 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext}}
-
 	case "DeviceModule":
 		dm.Worker = dtmanager.DeviceWorker{
 			Group: "DeviceModule",
