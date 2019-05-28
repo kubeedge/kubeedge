@@ -103,8 +103,8 @@ func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	DeviceConnected <- true
 	helper.ChangeDeviceState("online", deviceID)
 	for {
-		newWatcher:=&Watcher{}
-		if !reflect.DeepEqual(w,newWatcher) {
+		newWatcher := &Watcher{}
+		if !reflect.DeepEqual(w, newWatcher) {
 			err := w.EquateTwinValue(deviceID)
 			if err != nil {
 				glog.Errorf("Error in watcher functionality: %s", err)
@@ -123,9 +123,9 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 	helper.GetTwin(updateMessage, deviceID)
 	helper.Wg.Wait()
 	twinUpdated := false
-	for _, twinAttribute := range w.DeviceTwinAttributes  {
+	for _, twinAttribute := range w.DeviceTwinAttributes {
 		if helper.TwinResult.Twin[twinAttribute.Name] != nil {
-			if (helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value) {
+			if helper.TwinResult.Twin[twinAttribute.Name].Expected != nil && ((helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) && helper.TwinResult.Twin[twinAttribute.Name].Expected != nil || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)) {
 				glog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
 				if helper.TwinResult.Twin[twinAttribute.Name].Actual == nil {
 					glog.Infof("%s  Actual Value: %s", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
