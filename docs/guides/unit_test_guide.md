@@ -28,9 +28,9 @@ There is gomock package in kubeedge vendor directory without mockgen. Please use
  
  Read [godoc](https://godoc.org/github.com/onsi/ginkgo) for more information about ginkgo.
  
-See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/metamanager/dao/meta_test.go) in kubeedge where go builtin package testing and gomock is used for writing unit tests.
+See a [sample](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/dao/meta_test.go) in kubeedge where go builtin package testing and gomock is used for writing unit tests.
 
-See a [sample](https://github.com/kubeedge/kubeedge/blob/master/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
+See a [sample](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
 
 ## Writing UT using GoMock  
 
