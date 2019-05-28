@@ -80,8 +80,14 @@ func (pm *PodManager) Events() chan watch.Event {
 }
 
 // NewPodManager create PodManager from config
-func NewPodManager(kubeClient *kubernetes.Clientset, namespace string) (*PodManager, error) {
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, fields.Everything())
+func NewPodManager(kubeClient *kubernetes.Clientset, namespace, nodeName string) (*PodManager, error) {
+	var lw *cache.ListWatch
+	if "" == nodeName {
+		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, fields.Everything())
+	} else {
+		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
+		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, selector)
+	}
 	realEvents := make(chan watch.Event, config.PodEventBuffer)
 	mergedEvents := make(chan watch.Event, config.PodEventBuffer)
 	rh := NewCommonResourceEventHandler(realEvents)

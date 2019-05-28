@@ -27,7 +27,11 @@ func (cml *ContextMessageLayer) Receive() (model.Message, error) {
 
 // Response message
 func (cml *ContextMessageLayer) Response(message model.Message) error {
-	cml.Context.Send(cml.ResponseModuleName, message)
+	if !config.EdgeSiteEnabled {
+		cml.Context.Send(cml.ResponseModuleName, message)
+	} else {
+		cml.Context.SendResp(message)
+	}
 	return nil
 }
 

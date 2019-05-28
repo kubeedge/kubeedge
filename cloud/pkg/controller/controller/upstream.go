@@ -37,7 +37,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -314,14 +314,17 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					continue
 				}
 
+				// TODO: comment below for test failure. Needs to decide whether to keep post troubleshoot
 				// In case the status stored at metadata service is outdated, update the heartbeat automatically
-				for i := range nodeStatusRequest.Status.Conditions {
-					if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > config.Kube.KubeUpdateNodeFrequency {
-						nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
-					}
+				if !config.EdgeSiteEnabled {
+					for i := range nodeStatusRequest.Status.Conditions {
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > config.Kube.KubeUpdateNodeFrequency {
+							nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
+						}
 
-					if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > config.Kube.KubeUpdateNodeFrequency {
-						nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > config.Kube.KubeUpdateNodeFrequency {
+							nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
+						}
 					}
 				}
 

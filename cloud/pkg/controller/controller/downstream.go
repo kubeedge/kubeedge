@@ -1,17 +1,21 @@
 package controller
 
 import (
+	"fmt"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
-
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -194,7 +198,16 @@ func (dc *DownstreamController) Stop() error {
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
-	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
+	var (
+		pods *v1.PodList
+		err  error
+	)
+	if !config.EdgeSiteEnabled {
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
+	} else {
+		selector := fields.OneTermEqualSelector("spec.nodeName", config.KubeNodeName).String()
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{FieldSelector: selector})
+	}
 	if err != nil {
 		return err
 	}
@@ -215,7 +228,15 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll)
+	var nodeName = ""
+	if config.EdgeSiteEnabled {
+		if config.KubeNodeName == "" {
+			return nil, fmt.Errorf("kubeEdge node name is not provided in edgesite controller configuration")
+		}
+		nodeName = config.KubeNodeName
+	}
+
+	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, nodeName)
 	if err != nil {
 		log.LOGGER.Warnf("create pod manager failed with error: %s", err)
 		return nil, err
