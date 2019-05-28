@@ -47,7 +47,8 @@ KubeEdge is composed of the following components:
 
 ## Usage
 
-* [Prerequisites](./docs/getting-started/usage.md#prerequisites)
+* [Manual Installation of Docker, Kubernetes, Mosquitto](./docs/getting-started/usage.md#prerequisites)
+* [One click Kubeedge Installer to install both Cloud and Edge nodes](./keadm/README.md)
 * [Run KubeEdge](./docs/getting-started/usage.md#run-kubeedge)
 * [Deploy Application](./docs/getting-started/usage.md#deploy-application)
 * [Run Tests](./docs/getting-started/usage.md#run-tests)
