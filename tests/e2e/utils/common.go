@@ -34,15 +34,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const(
+const (
 	Namespace = "default"
 )
+
 //Function to get nginx deployment spec
 func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.DeploymentSpec {
 	var nodeselector map[string]string
-	if selector == ""{
+	if selector == "" {
 		nodeselector = map[string]string{}
-	}else {
+	} else {
 		nodeselector = map[string]string{"disktype": selector}
 	}
 	deplObj := apps.DeploymentSpec{
@@ -66,6 +67,7 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 
 	return &deplObj
 }
+
 //Function to get edgecore deploymentspec object
 func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
 	IsSecureCtx := true
@@ -95,7 +97,6 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						},
 						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
 						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edge/conf"}},
-
 					}, {
 						Name:            "dind-daemon",
 						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
@@ -109,6 +110,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},
 					},
 				},
+				NodeSelector: map[string]string{"k8snode": "kb-perf-node"},
 				Volumes: []v1.Volume{
 					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
 					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
@@ -119,6 +121,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 	}
 	return &deplObj
 }
+
 //Function to create cloudcore deploymentspec object
 func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
 	deplObj := apps.DeploymentSpec{
@@ -129,8 +132,8 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 				Labels: map[string]string{"app": "edgecontroller"},
 			},
 			Spec: v1.PodSpec{
-				HostNetwork:true,
-				RestartPolicy:"Always",
+				HostNetwork:   true,
+				RestartPolicy: "Always",
 				Containers: []v1.Container{
 					{
 						Name:            "edgecontroller",
@@ -146,7 +149,7 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("1Gi"),
 							},
 						},
-						Ports:[]v1.ContainerPort{{ContainerPort:10000, Protocol:"TCP", Name:"cloudhub"}},
+						Ports:        []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "cloudhub"}},
 						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/cloud/conf"}},
 					},
 				},
@@ -160,17 +163,17 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 	return &deplObj
 }
 
-func newDeployment(cloudcore,edgecore bool, name, imgUrl, nodeselector, configmap string, replicas int) *apps.Deployment {
+func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configmap string, replicas int) *apps.Deployment {
 	var depObj *apps.DeploymentSpec
 	var namespace string
 
 	if edgecore == true {
 		depObj = edgecoreDeploymentSpec(imgUrl, configmap, replicas)
 		namespace = Namespace
-	} else if cloudcore == true{
+	} else if cloudcore == true {
 		depObj = cloudcoreDeploymentSpec(imgUrl, configmap, replicas)
 		namespace = Namespace
-	}else{
+	} else {
 		depObj = nginxDeploymentSpec(imgUrl, nodeselector, replicas)
 		namespace = Namespace
 	}
@@ -336,9 +339,10 @@ func PrintCombinedOutput(cmd *exec.Cmd) error {
 	}
 	return nil
 }
+
 //ExposeCloudService function to expose the service for cloud deployment
-func ExposeCloudService(name, serviceHandler string) error{
-	ServiceObj :=CreateServiceObject(name)
+func ExposeCloudService(name, serviceHandler string) error {
+	ServiceObj := CreateServiceObject(name)
 	respBytes, err := json.Marshal(ServiceObj)
 	if err != nil {
 		Failf("Marshalling body failed: %v", err)
@@ -361,22 +365,24 @@ func ExposeCloudService(name, serviceHandler string) error{
 	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return nil
 }
-//CreateServiceObject function to create a servcice object
-func CreateServiceObject(name string)*v1.Service{
-	Service := v1.Service{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name:name, Labels:map[string]string{"app": "kubeedge"}},
 
-		Spec:v1.ServiceSpec{
-			Ports:[]v1.ServicePort{{Protocol:"TCP", Port:10000, TargetPort:intstr.FromInt(10000)}},
-			Selector:map[string]string{"app": "edgecontroller"},
-			Type:"NodePort",
+//CreateServiceObject function to create a servcice object
+func CreateServiceObject(name string) *v1.Service {
+	Service := v1.Service{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": "kubeedge"}},
+
+		Spec: v1.ServiceSpec{
+			Ports:    []v1.ServicePort{{Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000)}},
+			Selector: map[string]string{"app": "edgecontroller"},
+			Type:     "NodePort",
 		},
 	}
 	return &Service
 }
+
 //GetServicePort function to get the service port created for deployment.
-func GetServicePort(cloudName, serviceHandler string)int32 {
+func GetServicePort(cloudName, serviceHandler string) int32 {
 	var svc v1.ServiceList
 	var nodePort int32
 	err, resp := SendHttpRequest(http.MethodGet, serviceHandler)
@@ -399,15 +405,16 @@ func GetServicePort(cloudName, serviceHandler string)int32 {
 	}
 	defer resp.Body.Close()
 
-	for _, svcs := range svc.Items{
-		if svcs.Name == cloudName{
-			nodePort=svcs.Spec.Ports[0].NodePort
+	for _, svcs := range svc.Items {
+		if svcs.Name == cloudName {
+			nodePort = svcs.Spec.Ports[0].NodePort
 		}
 		break
 	}
 
 	return nodePort
 }
+
 //DeleteSvc function to delete service
 func DeleteSvc(svcname string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, svcname)

@@ -252,3 +252,34 @@ func GetNodes(api string) v1.NodeList {
 
 	return nodes
 }
+
+func ApplyLabelToNode(apiserver, key, val string) error {
+	var temp map[string]interface{}
+	var body string
+	body = fmt.Sprintf(`{"metadata":{"labels":{"%s":"%s"}}}`, key, val)
+	err := json.Unmarshal([]byte(body), &temp)
+	if err != nil {
+		Failf("Unmarshal body failed: %v", err)
+		return nil
+	}
+	nodebody, err := json.Marshal(temp)
+	if err != nil {
+		Failf("Marshal body failed: %v", err)
+		return err
+	}
+	BodyBuf := bytes.NewReader(nodebody)
+	req, err := http.NewRequest(http.MethodPatch, apiserver, BodyBuf)
+	Expect(err).Should(BeNil())
+	client := &http.Client{}
+	t := time.Now()
+	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		Failf("Sending HTTP request failed: %v", err)
+		return err
+	}
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	defer resp.Body.Close()
+	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	return nil
+}
