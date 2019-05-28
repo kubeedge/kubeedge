@@ -694,7 +694,9 @@ func (e *edged) handlePod(op string, content []byte) (err error) {
 	case model.UpdateOperation:
 		e.updatePod(&pod)
 	case model.DeleteOperation:
-		e.deletePod(&pod)
+		if delPod, ok := e.podManager.GetPodByName(pod.Namespace, pod.Name); ok {
+			e.deletePod(delPod)
+		}
 	}
 	return nil
 }

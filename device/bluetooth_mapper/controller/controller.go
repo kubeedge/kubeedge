@@ -79,7 +79,7 @@ func (c *ControllerConfig) Start() {
 
 	<-watcher.DeviceConnected
 	for _, action := range c.ActionManager.Actions {
-		if action.PerformImmediately{
+		if action.PerformImmediately {
 			action.PerformOperation()
 		}
 	}

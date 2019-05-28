@@ -5,8 +5,14 @@ networks:
     driver: bridge
 
 services:
+  dind:
+    image: ${ARCH}/docker:dind
+    restart: always
+    privileged: true 
+    networks:
+      - kubeedge-bridge
   emqx:
-    image: emqx/emqx-edge:v3.0.1-${ARCH}
+    image: emqx/emqx-edge:v3.1.1-${ARCH}
     restart: always
     networks:
       - kubeedge-bridge
@@ -18,10 +24,11 @@ services:
        dockerfile: ./build/edge/Dockerfile
        args: 
         - BUILD_FROM=${ARCH}/golang:1.12-alpine3.9
-        - RUN_FROM=${ARCH}/alpine:3.9
+        - RUN_FROM=${ARCH}/docker:dind 
         - QEMU_ARCH=${QEMU_ARCH}
     depends_on:
       - emqx
+      - dind
     environment:
       mqtt.server: tcp://emqx:1883
       edgehub.websocket.url: wss://${CLOUDHUB}/e632aba927ea4ac2b575ec1603d56f10/${EDGENAME}/events 
@@ -29,11 +36,12 @@ services:
       edgehub.controller.node-id: ${EDGENAME}
       edgehub.websocket.certfile: ${CERTFILE} 
       edgehub.websocket.keyfile: ${KEYFILE}
+      edged.docker-address: tcp://dind:2375
+      DOCKER_HOST: tcp://dind:2375
     volumes:
       - ${CERTPATH}:/etc/kubeedge/certs:ro
       - /var/lib/edged:/var/lib/edged 
       - /var/lib/kubeedge:/var/lib/kubeedge
-      - /var/run/docker.sock:/var/run/docker.sock
     privileged: true
     deploy:
       resources:

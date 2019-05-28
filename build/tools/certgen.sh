@@ -26,14 +26,24 @@ ensureFolder() {
     fi
 }
 
+genCsr() {
+    local name=$1
+    openssl genrsa -out ${certPath}/${name}.key 2048
+    openssl req -new -key ${certPath}/${name}.key -subj ${subject} -out ${certPath}/${name}.csr
+}
+
+genCert() {
+    local name=$1
+    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+}
+
 genCertAndKey() {
     ensureFolder
     ensureCA
     local name=$1
-    openssl genrsa -out ${certPath}/${name}.key 2048
-    openssl req -new -key ${certPath}/${name}.key -subj ${subject} -out ${certPath}/${name}.csr
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
-    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    genCsr $name
+    genCert $name
 }
 
 buildSecret() {
