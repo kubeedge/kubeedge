@@ -317,10 +317,10 @@ func TestDTController_distributeMsg(t *testing.T) {
 			wantErr: errors.New("Not found action"),
 		},
 		{
-			//Success Case
-			name:    "distributeMsgTest-ActualMessage",
+			//Failure Case
+			name:    "distributeMsgTest-ActualMessage-NoChanel",
 			message: *msg,
-			wantErr: nil,
+			wantErr: errors.New("Not found chan to communicate"),
 		},
 	}
 	for _, tt := range tests {
@@ -330,6 +330,24 @@ func TestDTController_distributeMsg(t *testing.T) {
 			}
 		})
 	}
+
+	//Successful Case
+	dh := make(chan interface{}, 1)
+	ch := make(chan interface{}, 1)
+	mh := make(chan interface{}, 1)
+	deh := make(chan interface{}, 1)
+	th := make(chan interface{}, 1)
+	dtc.DTContexts.CommChan["DeviceStateUpdate"] = dh
+	dtc.DTContexts.CommChan["CommModule"] = ch
+	dtc.DTContexts.CommChan["MemModule"] = mh
+	dtc.DTContexts.CommChan["DeviceModule"] = deh
+	dtc.DTContexts.CommChan["TwinModule"] = th
+	name := "distributeMsgTest-ActualMessage-Success"
+	t.Run(name, func(t *testing.T) {
+		if err := dtc.distributeMsg(*msg); !reflect.DeepEqual(err, nil) {
+			t.Errorf("DTController.distributeMsg() error = %v, wantError %v", err, nil)
+		}
+	})
 }
 
 //TestSyncSqlite is function to test SyncSqlite().
