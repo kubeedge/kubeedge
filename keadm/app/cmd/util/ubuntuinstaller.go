@@ -25,6 +25,8 @@ import (
 	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
 )
 
+const downloadRetryTimes int = 3
+
 //UbuntuOS struct objects shall have information of the tools version to be installed
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
@@ -433,6 +435,7 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", u.KubeEdgeVersion, arch)
+	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.txt", u.KubeEdgeVersion, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	fileStat, err := os.Stat(filePath)
 	if err == nil && fileStat.Name() != "" {
@@ -440,15 +443,52 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 		goto SKIPDOWNLOADAND
 	}
 
-	//Download the tar from repo
-	dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	for i := 0; i < downloadRetryTimes; i++ {
+		//Download the tar from repo
+		dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, u.KubeEdgeVersion, filename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
+		if err := cmd.ExecuteCmdShowOutput(); err != nil {
+			return err
+		}
+		if errout := cmd.GetStdErr(); errout != "" {
+			return fmt.Errorf("%s", errout)
+		}
+		fmt.Println()
+
+		//Verify the tar with checksum
+		fmt.Printf("%s checksum: \n", filename)
+		cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+		cmd.ExecuteCommand()
+		desiredChecksum := cmd.GetStdOutput()
+		fmt.Printf("%s \n\n", cmd.GetStdOutput())
+
+		fmt.Printf("%s content: \n", checksumFilename)
+		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, u.KubeEdgeVersion, checksumFilename)
+		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+		cmd.ExecuteCommand()
+		actualChecksum := cmd.GetStdOutput()
+		fmt.Printf("%s \n\n", cmd.GetStdOutput())
+
+		if desiredChecksum == actualChecksum {
+			break
+		}
+
+		if i < downloadRetryTimes-1 {
+			fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+			//Cleanup the downloaded files
+			cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+			cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
+			if err := cmd.ExecuteCmdShowOutput(); err != nil {
+				return err
+			}
+			if errout := cmd.GetStdErr(); errout != "" {
+				return fmt.Errorf("%s", errout)
+			}
+		} else {
+			return fmt.Errorf("failed to verify the checksum of %s", filename)
+		}
 	}
-	fmt.Println(cmd.GetStdOutput())
 
 SKIPDOWNLOADAND:
 	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
