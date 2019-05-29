@@ -123,7 +123,9 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	if message.Msg.GetParentID() != "" {
 		log.LOGGER.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
 		confirmMsg := dttype.DTMessage{Msg: model.NewMessage(message.Msg.GetParentID()), Action: dtcommon.Confirm}
-		dtc.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg)
+		if err := dtc.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg); err != nil {
+			return err
+		}
 	}
 	if !classifyMsg(&message) {
 		return errors.New("Not found action")
@@ -135,7 +137,9 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	if moduleName, exist := ActionModuleMap[message.Action]; exist {
 		//how to deal write channel error
 		log.LOGGER.Infof("Send msg to the %s module in twin", moduleName)
-		dtc.DTContexts.CommTo(moduleName, &message)
+		if err := dtc.DTContexts.CommTo(moduleName, &message); err != nil {
+			return err
+		}
 	} else {
 		log.LOGGER.Info("Not found deal module for msg")
 		return errors.New("Not found deal module for msg")
