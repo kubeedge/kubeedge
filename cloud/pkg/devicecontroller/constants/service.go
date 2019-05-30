@@ -9,8 +9,6 @@ const (
 	// group
 	DeviceControllerModuleGroup = "controller"
 
-	// Resource
-	ResourceSep                 = "/"
 	ResourceDeviceIndex         = 2
 	ResourceDeviceIDIndex       = 3
 	ResourceNode                = "node"

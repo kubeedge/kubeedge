@@ -29,8 +29,6 @@ const (
 	HubGroup        = "hub"
 	MetaGroup       = "meta"
 
-	// Resources
-	ResourceSep               = "/"
 	ResourceSliceLength       = 5
 	ResourceSliceLengthQuery  = 4
 	ResourceNodeIndex         = 0
