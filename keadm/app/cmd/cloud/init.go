@@ -115,7 +115,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		kubeVer = initOptions.KubeEdgeVersion
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer}, KubeConfig: initOptions.KubeConfig}
+	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
