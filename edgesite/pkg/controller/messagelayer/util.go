@@ -6,7 +6,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edgesite/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
+	controller "github.com/kubeedge/kubeedge/edgesite/pkg/controller/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
@@ -25,39 +26,39 @@ func BuildResource(namespace, resourceType, resourceID string) (resource string,
 // GetNodeID from "beehive/pkg/core/model".Message.Router.Resource
 func GetNodeID(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= constants.ResourceNodeIDIndex {
+	if len(sli) <= controller.ResourceNodeIDIndex {
 		return "", fmt.Errorf("node id not found")
 	}
 
-	return sli[constants.ResourceNodeIDIndex], nil
+	return sli[controller.ResourceNodeIDIndex], nil
 }
 
 // GetNamespace from "beehive/pkg/core/model".Model.Router.Resource
 func GetNamespace(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= constants.ResourceNamespaceIndex {
+	if len(sli) <= controller.ResourceNamespaceIndex {
 		return "", fmt.Errorf("namespace not found")
 	}
 
-	log.LOGGER.Infof("The namesapce is %s, %d", sli[constants.ResourceNamespaceIndex], constants.ResourceNamespaceIndex)
-	return sli[constants.ResourceNamespaceIndex], nil
+	log.LOGGER.Infof("The namesapce is %s, %d", sli[controller.ResourceNamespaceIndex], controller.ResourceNamespaceIndex)
+	return sli[controller.ResourceNamespaceIndex], nil
 }
 
 // GetResourceType from "beehive/pkg/core/model".Model.Router.Resource
 func GetResourceType(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 
-	if len(sli) <= constants.ResourceResourceTypeIndex {
+	if len(sli) <= controller.ResourceResourceTypeIndex {
 		return "", fmt.Errorf("resource type not found")
 	}
-	return sli[constants.ResourceResourceTypeIndex], nil
+	return sli[controller.ResourceResourceTypeIndex], nil
 }
 
 // GetResourceName from "beehive/pkg/core/model".Model.Router.Resource
 func GetResourceName(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= constants.ResourceResourceNameIndex {
+	if len(sli) <= controller.ResourceResourceNameIndex {
 		return "", fmt.Errorf("resource name not found")
 	}
-	return sli[constants.ResourceResourceNameIndex], nil
+	return sli[controller.ResourceResourceNameIndex], nil
 }
