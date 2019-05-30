@@ -122,7 +122,7 @@ Flags:
 2. -k, --k8sserverip, It should be in the format <IPAddress:Port>, where the default port is 8080. Please see the example above.
 
 
-**IMPORTANT NOTE:** The KubeEdge version used in cloud and cdge side should be same.
+**IMPORTANT NOTE:** The KubeEdge version used in cloud and edge side should be same.
 
 ## Reset KubeEdge Cloud and Edge components
 
