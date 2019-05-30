@@ -1,4 +1,4 @@
-FROM golang:1.12.1-alpine3.9 AS builder
+FROM golang:1.12.1-alpine3.9
 
 COPY . /go/src/github.com/kubeedge/kubeedge
 
