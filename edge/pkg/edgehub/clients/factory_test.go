@@ -36,6 +36,7 @@ func TestGetClient(t *testing.T) {
 		name string
 		args args
 		want Adapter
+		err  error
 	}{
 		{"TestGetClient: Positive Test Case", args{
 			clientType: ClientTypeWebSocket,
@@ -59,15 +60,16 @@ func TestGetClient(t *testing.T) {
 			ReadDeadline:     100 * time.Second,
 			ExtendHeader:     http.Header{},
 		}),
+			nil,
 		},
 
 		{"TestGetClient: Negative Test Case", args{
 			clientType: "WrongClientType",
-		}, nil},
+		}, nil, ErrorWrongClientType},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetClient(tt.args.clientType, tt.args.config); !reflect.DeepEqual(got, tt.want) {
+			if got, err := GetClient(tt.args.clientType, tt.args.config); !reflect.DeepEqual(got, tt.want) || err != tt.err {
 				t.Errorf("GetClient() = %v, want %v", got, tt.want)
 			}
 		})
