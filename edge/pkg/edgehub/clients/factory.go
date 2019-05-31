@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"errors"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/quicclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/wsclient"
@@ -13,10 +15,14 @@ const (
 	ClientTypeQuic      = "quic"
 )
 
-//GetClient returns an Adapter object with new web socket
-func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
+// ErrorWrongClientType is Wrong Client Type Error
+var ErrorWrongClientType = errors.New("wrong Client Type")
 
-	if clientType == ClientTypeWebSocket {
+//GetClient returns an Adapter object with new web socket
+func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error) {
+
+	switch clientType {
+	case ClientTypeWebSocket:
 		websocketConf := wsclient.WebSocketConfig{
 			URL:              config.WSConfig.URL,
 			CertFilePath:     config.WSConfig.CertFilePath,
@@ -26,8 +32,8 @@ func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
 			WriteDeadline:    config.WSConfig.WriteDeadline,
 			ExtendHeader:     config.WSConfig.ExtendHeader,
 		}
-		return wsclient.NewWebSocketClient(&websocketConf)
-	} else if clientType == ClientTypeQuic {
+		return wsclient.NewWebSocketClient(&websocketConf), nil
+	case ClientTypeQuic:
 		quicConfig := quicclient.QuicConfig{
 			Addr:             config.QcConfig.URL,
 			CaFilePath:       config.QcConfig.CaFilePath,
@@ -39,11 +45,10 @@ func GetClient(clientType string, config *config.EdgeHubConfig) Adapter {
 			ProjectID:        config.CtrConfig.ProjectID,
 			NodeID:           config.CtrConfig.NodeID,
 		}
-		return quicclient.NewQuicClient(&quicConfig)
-	} else {
-		log.LOGGER.Errorf("donot support client type: %s", clientType)
+		return quicclient.NewQuicClient(&quicConfig), nil
+	default:
+		log.LOGGER.Errorf("Client type: %s is not supported", clientType)
 	}
 
-	log.LOGGER.Errorf("donot support client type: %s", clientType)
-	return nil
+	return nil, ErrorWrongClientType
 }
