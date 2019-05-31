@@ -60,7 +60,7 @@ func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
 func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interface{}) {
 	var temp map[string]interface{}
 
-	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s"}}}`, nodeid, nodeselector)
+	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "node-role.kubernetes.io/edge": ""}}}`, nodeid, nodeselector)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
 		Failf("Unmarshal body failed: %v", err)

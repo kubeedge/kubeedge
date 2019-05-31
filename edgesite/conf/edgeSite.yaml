@@ -5,9 +5,6 @@ mqtt:
     qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
     retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
     session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
-context-send-module: metaManager
-context-receive-module: controller
-context-response-module: metaManager
 
 controller:
     kube:
@@ -19,6 +16,10 @@ controller:
        node_update_frequency: 10
        node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
        node-name: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+    context:
+       send-module: metaManager
+       receive-module: controller
+       response-module: metaManager
 
 edged:
     register-node-namespace: default
