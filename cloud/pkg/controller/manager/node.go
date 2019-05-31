@@ -9,6 +9,11 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	NodeRoleKey = "node-role.kubernetes.io/edge"
+	NodeRoleValue = ""
+)
+
 // NodesManager manage all events of nodes by SharedInformer
 type NodesManager struct {
 	events chan watch.Event
@@ -21,7 +26,7 @@ func (nm *NodesManager) Events() chan watch.Event {
 
 // NewNodesManager create NodesManager by kube clientset and namespace
 func NewNodesManager(kubeClient *kubernetes.Clientset, namespace string) (*NodesManager, error) {
-	set := labels.Set{"node-role.kubernetes.io/edge": ""}
+	set := labels.Set{NodeRoleKey: NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
 	optionModifier := func(options *metav1.ListOptions) {
 		options.LabelSelector = selector.String()

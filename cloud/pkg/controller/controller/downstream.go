@@ -235,7 +235,7 @@ func (dc *DownstreamController) Stop() error {
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
-	set := labels.Set{"node-role.kubernetes.io/edge": ""}
+	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
 	nodes, err := dc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
