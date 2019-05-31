@@ -1,4 +1,4 @@
-:# KubeEdge community membership
+# KubeEdge Community Membership
 
 **Note :** This document keeps changing based on the status and feedback of KubeEdge Community.
 
