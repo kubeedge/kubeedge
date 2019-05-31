@@ -179,7 +179,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 		case e := <-dc.nodeManager.Events():
 			node, ok := e.Object.(*v1.Node)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", node)
+				log.LOGGER.Warnf("Object type: %T unsupported", node)
 				continue
 			}
 			switch e.Type {
@@ -191,11 +191,11 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 			default:
 				// unsupported operation, no need to send to any node
-				log.LOGGER.Warnf("node event type: %s unsupported", e.Type)
+				log.LOGGER.Warnf("Node event type: %s unsupported", e.Type)
 				break
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncNodes")
+			log.LOGGER.Infof("Stop syncNodes")
 			running = false
 		}
 	}
