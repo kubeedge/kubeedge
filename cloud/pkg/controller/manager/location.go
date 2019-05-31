@@ -124,7 +124,7 @@ func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 //UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
 func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
 	lc.edgeNodes = append(lc.edgeNodes, nodeName)
-	log.LOGGER.Infof("\n edge node updated : %v \n", lc.edgeNodes)
+	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.edgeNodes)
 }
 
 // DeleteConfigMap from cache

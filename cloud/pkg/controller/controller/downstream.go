@@ -287,7 +287,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	nodesManager, err := manager.NewNodesManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("create nodes manager failed with error: %s", err)
+		log.LOGGER.Warnf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
