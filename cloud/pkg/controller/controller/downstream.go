@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 )
@@ -28,6 +29,9 @@ type DownstreamController struct {
 	secretManager *manager.SecretManager
 	secretStop    chan struct{}
 
+	nodeManager *manager.NodesManager
+	nodesStop   chan struct{}
+
 	lc *manager.LocationCache
 }
 
@@ -39,6 +43,9 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
 				log.LOGGER.Warnf("object type: %T unsupported", pod)
+				continue
+			}
+			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
 				continue
 			}
 			msg := model.NewMessage("")
@@ -165,6 +172,35 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 	}
 }
 
+func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
+	running := true
+	for running {
+		select {
+		case e := <-dc.nodeManager.Events():
+			node, ok := e.Object.(*v1.Node)
+			if !ok {
+				log.LOGGER.Warnf("Object type: %T unsupported", node)
+				continue
+			}
+			switch e.Type {
+			case watch.Added:
+				dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
+			case watch.Modified:
+				continue
+			case watch.Deleted:
+				dc.lc.DeleteNode(node.ObjectMeta.Name)
+			default:
+				// unsupported operation, no need to send to any node
+				log.LOGGER.Warnf("Node event type: %s unsupported", e.Type)
+				break
+			}
+		case <-stop:
+			log.LOGGER.Infof("Stop syncNodes")
+			running = false
+		}
+	}
+}
+
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	log.LOGGER.Infof("start downstream controller")
@@ -180,6 +216,10 @@ func (dc *DownstreamController) Start() error {
 	dc.secretStop = make(chan struct{})
 	go dc.syncSecret(dc.secretStop)
 
+	// nodes
+	dc.nodesStop = make(chan struct{})
+	go dc.syncEdgeNodes(dc.nodesStop)
+
 	return nil
 }
 
@@ -189,17 +229,29 @@ func (dc *DownstreamController) Stop() error {
 	dc.podStop <- struct{}{}
 	dc.configMapStop <- struct{}{}
 	dc.secretStop <- struct{}{}
+	dc.nodesStop <- struct{}{}
 	return nil
 }
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
+	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
+	selector := labels.SelectorFromSet(set)
+	nodes, err := dc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: selector.String()})
+	if err != nil {
+		return err
+	}
+	for _, node := range nodes.Items {
+		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
+	}
 	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 	for _, p := range pods.Items {
-		dc.lc.AddOrUpdatePod(p)
+		if dc.lc.IsEdgeNode(p.Spec.NodeName) {
+			dc.lc.AddOrUpdatePod(p)
+		}
 	}
 
 	return nil
@@ -233,13 +285,19 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
+	nodesManager, err := manager.NewNodesManager(cli, v1.NamespaceAll)
+	if err != nil {
+		log.LOGGER.Warnf("Create nodes manager failed with error: %s", err)
+		return nil, err
+	}
+
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
 		log.LOGGER.Warnf("create message layer failed with error: %s", err)
 		return nil, err
 	}
 
-	dc := &DownstreamController{kubeClient: cli, podManager: podManager, configmapManager: configMapManager, secretManager: secretManager, messageLayer: ml, lc: lc}
+	dc := &DownstreamController{kubeClient: cli, podManager: podManager, configmapManager: configMapManager, secretManager: secretManager, nodeManager: nodesManager, messageLayer: ml, lc: lc}
 	if err := dc.initLocating(); err != nil {
 		return nil, err
 	}

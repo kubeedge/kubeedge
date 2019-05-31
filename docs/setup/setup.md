@@ -110,6 +110,22 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
 + Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
++ Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
++ Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
+    ```script
+    {
+      "kind": "Node",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+        "labels": {
+          "name": "edge-node",
+          "node-role.kubernetes.io/edge": ""
+        }
+      }
+    }
+    ```
++ If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
 + Deploy node
     ```shell
     kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json

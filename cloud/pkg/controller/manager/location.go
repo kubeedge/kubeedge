@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
+	//edgeNodes is a list of valid edge nodes
+	edgeNodes []string
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
@@ -55,7 +58,6 @@ func (lc *LocationCache) newNodes(oldNodes []string, node string) []string {
 // AddOrUpdatePod add pod to node, pod to configmap, configmap to pod, pod to secret, secret to pod relation
 func (lc *LocationCache) AddOrUpdatePod(pod v1.Pod) {
 	configMaps, secrets := lc.PodConfigMapsAndSecrets(pod)
-
 	for _, c := range configMaps {
 		configMapKey := fmt.Sprintf("%s/%s", pod.Namespace, c)
 		// update configMapPod
@@ -109,6 +111,22 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 	return
 }
 
+//IsEdgeNode checks weather node is edge node or not
+func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
+	for _, node := range lc.edgeNodes {
+		if node == nodeName {
+			return true
+		}
+	}
+	return false
+}
+
+//UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
+func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
+	lc.edgeNodes = append(lc.edgeNodes, nodeName)
+	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.edgeNodes)
+}
+
 // DeleteConfigMap from cache
 func (lc *LocationCache) DeleteConfigMap(namespace, name string) {
 	lc.configMapNode.Delete(fmt.Sprintf("%s/%s", namespace, name))
@@ -117,4 +135,13 @@ func (lc *LocationCache) DeleteConfigMap(namespace, name string) {
 // DeleteSecret from cache
 func (lc *LocationCache) DeleteSecret(namespace, name string) {
 	lc.secretNode.Delete(fmt.Sprintf("%s/%s", namespace, name))
+}
+
+// DeleteNode from cache
+func (lc *LocationCache) DeleteNode(name string) {
+	for i, v := range lc.edgeNodes {
+		if v == name {
+			lc.edgeNodes = append(lc.edgeNodes[:i], lc.edgeNodes[i+1:]...)
+		}
+	}
 }
