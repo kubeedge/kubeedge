@@ -2,7 +2,7 @@
 # make kubeedge
 .PHONY: default kubeedge
 kubeedge:
-	go build -o kubeedge keadm.go
+	 @go build ${GO_GCFLAGS} ${GO_BUILD_FLAGS} -o $@ ${GO_LDFLAGS}
 
 .PHONY: clean
 clean:

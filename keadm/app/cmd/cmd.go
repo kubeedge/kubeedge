@@ -19,6 +19,8 @@ package cmd
 import (
 	"io"
 
+	"github.com/kubeedge/kubeedge/keadm/app/cmd/version"
+
 	"github.com/spf13/cobra"
 
 	cloud "github.com/kubeedge/kubeedge/keadm/app/cmd/cloud"
@@ -72,6 +74,7 @@ func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	cmds.AddCommand(cloud.NewCloudInit(out, nil))
 	cmds.AddCommand(edge.NewEdgeJoin(out, nil))
 	cmds.AddCommand(NewKubeEdgeReset(out))
+	cmds.AddCommand(version.NewVersionInfo())
 
 	return cmds
 }

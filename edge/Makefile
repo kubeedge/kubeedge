@@ -1,8 +1,9 @@
 
 # make edge_core
 .PHONY: default edge_core
+
 edge_core:
-	go build cmd/edge_core.go
+	@go build ${GO_GCFLAGS} ${GO_BUILD_FLAGS} ${GO_LDFLAGS}  cmd/edge_core.go
 
 # unit tests
 .PHONY: test

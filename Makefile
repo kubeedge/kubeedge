@@ -1,5 +1,30 @@
 # make all builds both cloud and edge binaries
-.PHONY: all  
+
+PKG=github.com/kubeedge/kubeedge
+
+# Used to populate variables in version package.
+VERSION=$(shell git describe --match 'v[0-9]*' --dirty='.m' --always)
+REVISION=$(shell git rev-parse HEAD)$(shell if ! git diff --no-ext-diff --quiet --exit-code; then echo .m; fi)
+GOVERSION=$(shell go version |awk -F ' ' '{printf $$3}')
+CURRENT_BRANCH=$(shell git symbolic-ref --short -q HEAD)
+
+export GO_LDFLAGS=-ldflags '-s -w -X $(PKG)/version.Version=$(VERSION) -X $(PKG)/version.Revision=$(REVISION) -X $(PKG)/version.Package=$(PKG) -X $(PKG)/version.GoVersion=$(GOVERSION) -X $(PKG)/version.Branch=$(CURRENT_BRANCH) $(EXTRA_LDFLAGS)'
+
+#Replaces ":" (*nix), ";" (windows) with newline for easy parsing
+GOPATHS=$(shell echo ${GOPATH} | tr ":" "\n" | tr ";" "\n")
+TESTFLAGS_RACE= -race
+
+export GO_BUILD_FLAGS=
+# See Golang issue re: '-trimpath': https://github.com/golang/go/issues/13809
+export GO_GCFLAGS=$(shell				\
+	set -- ${GOPATHS};			\
+	echo "-gcflags=-trimpath=$${1}/src";	\
+	)
+
+# Flags passed to `go test`
+#export TESTFLAGS ?= -v $(TESTFLAGS_RACE)
+
+.PHONY: all
 ifeq ($(WHAT),)
 all:
 	cd cloud && $(MAKE)
