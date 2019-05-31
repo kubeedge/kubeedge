@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	NodeRoleKey = "node-role.kubernetes.io/edge"
+	NodeRoleKey   = "node-role.kubernetes.io/edge"
 	NodeRoleValue = ""
 )
 
