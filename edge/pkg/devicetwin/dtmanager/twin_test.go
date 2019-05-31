@@ -529,7 +529,7 @@ func TestDealDeviceTwinResult(t *testing.T) {
 			deviceID:         deviceB,
 			msgTwin:          msgTwinValue,
 			dealType:         RestDealType,
-			err:              errors.New("The value type is not allowed"),
+			err:              errors.New("the value type is not allowed"),
 			filterReturn:     mockQuerySeter,
 			allReturnInt:     int64(1),
 			allReturnErr:     nil,
@@ -912,7 +912,7 @@ func TestDealTwinCompare(t *testing.T) {
 				Metadata: &dttype.TypeMetadata{typeInt},
 			},
 			dealType: RestDealType,
-			err:      errors.New("The value is not int"),
+			err:      errors.New("the value is not int"),
 		},
 		{
 			name:         "TestDealTwinCompare(): Case 3: expectedOk is true; dealVersion() returns false",
@@ -1095,7 +1095,7 @@ func TestDealTwinAdd(t *testing.T) {
 				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: RestDealType,
-			err:      errors.New("The value is not int"),
+			err:      errors.New("the value is not int"),
 		},
 		{
 			name:         "TestDealTwinAdd(): Case 6: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=1",
@@ -1242,7 +1242,7 @@ func TestDealMsgTwin(t *testing.T) {
 				Result:     result,
 				SyncResult: syncResultDevice,
 				Document:   documentDevice,
-				Err:        errors.New("The value is not int"),
+				Err:        errors.New("the value is not int"),
 			},
 		},
 		{
