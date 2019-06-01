@@ -73,7 +73,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge
-     make all WHAT=cloud
+     make cloud
     ```
 
 + The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml`. Please update the correct paths for the following :
@@ -118,7 +118,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge
-    make all WHAT=edge
+    make edge
     ```
 
     KubeEdge can also be cross compiled to run on ARM based processors.
