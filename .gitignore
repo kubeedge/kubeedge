@@ -7,3 +7,7 @@ __pycache__
 /build/
 .gradle
 .idea
+*.tar.gz
+*.checksum
+edge/edge_core
+cloud/edgecontroller
