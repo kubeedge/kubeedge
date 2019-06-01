@@ -6,7 +6,7 @@ kubeedge:
 
 .PHONY: clean
 clean:
-	rm kubeedge
+	$(RM) kubeedge
 
 # .PHONY: cross_build
 # cross_build:
