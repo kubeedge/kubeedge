@@ -31,14 +31,12 @@
   ## Cloud Vm
  
   **Note**:execute the below commands as root user
-  ```
-   wget https://github.com/kubeedge/kubeedge/releases/download/-$VERSION/kubeedge-$VERSION-$OS-$ARCH.tar.gz
-   ex:https://github.com/kubeedge/kubeedge/releases/download/v0.3.0/kubeedge-v0.3.0-linux-amd64.tar.gz
-  ```
+  ```shell
+  VERSION="v0.3.0"
+  OS="linux"
+  ARCH="amd64"
+  curl -L "https://github.com/kubeedge/kubeedge/releases/download/${VERSION}/kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz" --output kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz && tar -xf kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz  -C /etc
   
-  ### Untar the release package
-  ```
-  tar -xf kubeedge-$VERSION-$OS-$ARCH.tar.gz -C /etc
   ```
   
   ### Generate Certificates
@@ -49,7 +47,7 @@
    https://github.com/kubeedge/kubeedge/blob/master/build/tools/certgen.sh
   ```
   Copy the script from above location and execute the script
-  ```
+  ```shell
    bash -x ./certgen.sh genCertAndKey edge
   ```
   **NOTE:** The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively.
@@ -80,7 +78,8 @@
       ```
   ## Edge Vm   
    **NOTE:** scp kubeedge folder from cloud vm to edge vm
-   ```
+   
+   ```shell
    In cloud
    scp -r /etc/kubeedge root@edgeip:/etc
    ```
@@ -114,7 +113,7 @@
            + `edged:hostname-override`
     
    + Run edge   
-       ```
+       ```shell
        # run edge_core
            # `conf/` should be in the same directory as the cloned KubeEdge repository
            cd /etc/kubeedge/edge
@@ -125,8 +124,10 @@
           
       ```
     **Note**: Running edge_core on ARM based processors,follow the above steps as mentioned for Edge Vm
-    ```
-     wget https://github.com/kubeedge/kubeedge/releases/download/-$VERSION/kubeedge-$VERSION-$OS-$ARCH.tar.gz
-     ex:https://github.com/kubeedge/kubeedge/releases/download/v0.3.0/kubeedge-v0.3.0-linux-arm.tar.gz    
+    ```shell
+       VERSION="v0.3.0"
+       OS="linux"
+       ARCH="arm"
+       curl -L "https://github.com/kubeedge/kubeedge/releases/download/${VERSION}/kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz" --output kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz && tar -xf kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz  -C /etc
               
     ``` 

@@ -47,9 +47,9 @@ KubeEdge is composed of the following components:
 
 ## Usage
 
-* [One click Kubeedge Installer to install both Cloud and Edge nodes](./keadm/README.md)
-* [Run kubeedge manually using a release package](./docs/getting-started/release_package.md)
-* [Run kubeedge manually by cloning source code](./docs/getting-started/usage.md#prerequisites)
+* [One click KubeEdge Installer to install both Cloud and Edge nodes](./keadm/README.md)
+* [Run KubeEdge from release package](./docs/getting-started/release_package.md)
+* [Run KubeEdge from source](./docs/getting-started/usage.md)
 * [Deploy Application](./docs/getting-started/usage.md#deploy-application)
 * [Run Tests](./docs/getting-started/usage.md#run-tests)
 
