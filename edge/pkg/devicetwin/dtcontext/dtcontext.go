@@ -107,9 +107,9 @@ func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 func (dtc *DTContext) Lock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
-		dtc.Mutex.Lock()
+		//		dtc.Mutex.Lock()
 		deviceMutex.Lock()
-		dtc.Mutex.Unlock()
+		//		dtc.Mutex.Unlock()
 		return true
 	}
 	return false
@@ -119,9 +119,9 @@ func (dtc *DTContext) Lock(deviceID string) bool {
 func (dtc *DTContext) Unlock(deviceID string) bool {
 	deviceMutex, ok := dtc.GetMutex(deviceID)
 	if ok {
-		dtc.Mutex.Lock()
+		//		dtc.Mutex.Lock()
 		deviceMutex.Unlock()
-		dtc.Mutex.Unlock()
+		//		dtc.Mutex.Unlock()
 		return true
 	}
 	return false
