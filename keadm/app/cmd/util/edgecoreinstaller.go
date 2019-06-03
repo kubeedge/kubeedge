@@ -112,7 +112,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   edgeID,
-				Labels: map[string]string{"name": "edge-node"},
+				Labels: map[string]string{"name": "edge-node", "node-role.kubernetes.io/edge": ""},
 			}}
 
 		respBytes, err := json.Marshal(data)
@@ -136,7 +136,7 @@ func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
 	data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   edgeid,
-			Labels: map[string]string{"name": "edge-node"},
+			Labels: map[string]string{"name": "edge-node", "node-role.kubernetes.io/edge": ""},
 		}}
 
 	respBytes, err := json.Marshal(data)
