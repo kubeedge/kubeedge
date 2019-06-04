@@ -245,7 +245,7 @@ func TestGetMutex(t *testing.T) {
 //TestLock is function to test Lock().
 func TestLock(t *testing.T) {
 	dtc := &DTContext{
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		DeviceMutex: &sync.Map{},
 	}
 	var testMutex sync.Mutex
@@ -280,13 +280,13 @@ func TestLock(t *testing.T) {
 //TestUnlock is function to test Unlock().
 func TestUnlock(t *testing.T) {
 	dtc := &DTContext{
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		DeviceMutex: &sync.Map{},
 	}
 	// Creating a mutex variable and getting a lock over it.
 	var testMutex sync.Mutex
 	dtc.DeviceMutex.Store("DeviceB", &testMutex)
-	testMutex.Lock()
+	dtc.Lock("DeviceB")
 	tests := []struct {
 		name     string
 		deviceID string

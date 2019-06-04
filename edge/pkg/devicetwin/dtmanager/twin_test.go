@@ -124,7 +124,7 @@ func contextFunc(deviceID string) dtcontext.DTContext {
 	context := dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 	}
 	var testMutex sync.Mutex
 	context.DeviceMutex.Store(deviceID, &testMutex)
@@ -154,7 +154,7 @@ func TestStart(t *testing.T) {
 	context := dtcontext.DTContext{
 		DeviceList:    &sync.Map{},
 		DeviceMutex:   &sync.Map{},
-		Mutex:         &sync.Mutex{},
+		Mutex:         &sync.RWMutex{},
 		CommChan:      commChan,
 		ModulesHealth: &sync.Map{},
 	}
@@ -425,7 +425,7 @@ func TestDealDeviceTwin(t *testing.T) {
 	contextDeviceC := dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 	}
 	var testMutex sync.Mutex
 	contextDeviceC.DeviceMutex.Store(deviceC, &testMutex)
