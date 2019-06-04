@@ -570,6 +570,28 @@ status:
 
 ### Validation
 [Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation) can be used to guard against bad requests.
+Invalid values for fields ( example string value for a boolean field etc) can be validated using this.
+In some cases , we also need custom validations (e.g create a device instance which refers to a non -existent device model ) .
+[Validation admission web hooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook) can be used to implement such custom validation rules.
+
+Here is a list of validations we need to support :
+
+#### Device Model Validations
+- Don't allow model creation if any `Required` fields are missing ( like property name , type, access mode etc.)
+- Property type can be only string or int64. Other types are not supported.
+- The Property access mode for a property can be one of `ReadWrite` or `ReadOnly`. Other access modes are not supported.
+- Property visitors are currently supported for bluetooth, modbus and opcua protocols only. Other protocol visitors are not supported.
+- The BluetoothArithmeticOperationType for Bluetooth read converter can have values one of `[Add, Subtract, Multiply, Divide]`
+- The ModbusRegisterType for Modbus visitor config can have values one of `[CoilRegister, DiscreteInputRegister, InputRegister, HoldingRegister]`. Other register types are not supported.
+- Don't allow model deletion if there is at least one device instance referring to it.
+- Don't allow deletion of a device property from the model if there is a corresponding device twin property in a device instance which refers to this model.
+- Don't allow deletion of a device property visitor if the corresponding device property exists.
+
+#### Device Instance Validations
+- Don't allow device instance creation if any `Required` fields are missing ( like devicemodel ref , twin property value, twin property name etc.)
+- Don't allow device instance creation if it refers to a device model reference which doesn't exist.
+- Don't allow device instance creation if a desired twin property's name cannot be matched to a device property in the device model it refers to.
+- Protocol configs are optional , but if provided , they can be one of `[opcua, modbus and bluetooth]`. Other protocol configs are not supported.
 
 ## Synchronizing Device Twin Updates
 
