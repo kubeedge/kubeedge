@@ -11,6 +11,18 @@ import (
 // Kube container Kubernetes related configuration
 var Kube *types.KubeInfo
 
+// KubeNodeID for the current node
+var KubeNodeID string
+
+// KubeNodeName for the current node
+var KubeNodeName string
+
+// KubeUpdateNodeFrequency is the time duration for update node status(default is 20s)
+var KubeUpdateNodeFrequency time.Duration
+
+//EdgeSiteEnabled is used to enable or disable EdgeSite feature. Default is disabled
+var EdgeSiteEnabled bool
+
 func init() {
 	Kube = types.NewKubeInfo()
 
@@ -52,4 +64,24 @@ func init() {
 		Kube.KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
 	}
 	log.LOGGER.Infof("Controller kube update frequency: %v", Kube.KubeUpdateNodeFrequency)
+	if id, err := config.CONFIG.GetValue("controller.kube.node-id").ToString(); err != nil {
+		KubeNodeID = ""
+	} else {
+		KubeNodeID = id
+	}
+	log.LOGGER.Infof("Controller kube Node ID: %s", KubeNodeID)
+
+	if name, err := config.CONFIG.GetValue("controller.kube.node-name").ToString(); err != nil {
+		KubeNodeName = ""
+	} else {
+		KubeNodeName = name
+	}
+	log.LOGGER.Infof("Controller kube Node Name: %s", KubeNodeName)
+
+	if es, err := config.CONFIG.GetValue("metamanager.edgesite").ToBool(); err != nil {
+		EdgeSiteEnabled = false
+	} else {
+		EdgeSiteEnabled = es
+	}
+	log.LOGGER.Infof(" EdgeSite is %t ", EdgeSiteEnabled)
 }
