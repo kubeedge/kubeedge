@@ -25,7 +25,8 @@ It also explains the functionality of the proposed commands.
 
 ## Installing KubeEdge Cloud component
 
-Referring to `KubeEdge Installer Doc`, the command to install KubeEdge cloud component (edge controller) and pre-requisites
+Referring to `KubeEdge Installer Doc`, the command to install KubeEdge cloud component (edge controller) and pre-requisites.
+Port 8080, 6443 and 10000 in your cloud component needs to be accessible for your edge nodes.
 
 - Execute `kubeedge init`
 
