@@ -11,12 +11,12 @@
 + After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to Kubernetes apiserver.
   Please follow below steps to enable http port in Kubernetes apiserver.
 
-    ```shell
+  ```shell
     vi /etc/kubernetes/manifests/kube-apiserver.yaml
     # Add the following flags in spec: containers: -command section
     - --insecure-port=8080
     - --insecure-bind-address=0.0.0.0
-    ```
+  ```
 
 + (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
 
@@ -43,12 +43,11 @@
   
   RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
   
-  ```
-   https://github.com/kubeedge/kubeedge/blob/master/build/tools/certgen.sh
-  ```
-  Copy the script from above location and execute the script
   ```shell
-   bash -x ./certgen.sh genCertAndKey edge
+  wget -L https://github.com/kubeedge/kubeedge/blob/master/build/tools/certgen.sh
+  # make script executable
+  chmod +x certgen.sh
+  bash -x ./certgen.sh genCertAndKey edge
   ```
   **NOTE:** The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively.
   
@@ -59,23 +58,25 @@
   
   + Create device model and device CRDs.
  
-  **Note**:copy the respective yaml files in any folder, go the respective folder and execute kubectl commands as shown below
-    
-     ```
-      https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+  ```shell
+      wget -L https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+      # make script executable
+      chmod +x devices_v1alpha1_devicemodel.yaml
       kubectl create -f devices_v1alpha1_devicemodel.yaml
-      https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_device.yaml
+      wget -L https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_device.yaml
+       # make script executable
+      chmod +x devices_v1alpha1_device.yaml
       kubectl create -f devices_v1alpha1_device.yaml
      ```    
   + Run cloud
   
-      ```shell
+  ```shell
       cd /etc/kubeedge/cloud
       # run edge controller
       # `conf/` should be in the same directory where edgecontroller resides
       # verify the configurations before running cloud(edgecontroller)
       ./edgecontroller
-      ```
+  ```
   ## Edge Vm   
    **NOTE:** scp kubeedge folder from cloud vm to edge vm
    
@@ -96,14 +97,12 @@
    
    + We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
    
-   + Modify the `https://github.com/kubeedge/kubeedge/blob/master/build/node.json` file and change `metadata.name` to the name of the edge node
-   
-   **Note**:node.json must be copied to any specific folder, then run kubectl command as shown below
-   
    + Deploy node
-       ```shell
+    ```shell
+       wget -L https://github.com/kubeedge/kubeedge/blob/master/build/node.json
+       #Modify the node.json` file and change `metadata.name` to the name of the edge node 
        kubectl apply -f node.json
-       ```
+    ```
    + Modify the `/etc/kubeedge/edge/conf/edge.yaml` configuration file
        + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
        + Update the IP address of the master in the `websocket.url` field. 
@@ -113,7 +112,7 @@
            + `edged:hostname-override`
     
    + Run edge   
-       ```shell
+   ```shell
        # run edge_core
            # `conf/` should be in the same directory as the cloned KubeEdge repository
            cd /etc/kubeedge/edge
@@ -122,12 +121,11 @@
            # or
            nohup ./edge_core > edge_core.log 2>&1 &
           
-      ```
+   ```
     **Note**: Running edge_core on ARM based processors,follow the above steps as mentioned for Edge Vm
-    ```shell
+   ```shell
        VERSION="v0.3.0"
        OS="linux"
        ARCH="arm"
        curl -L "https://github.com/kubeedge/kubeedge/releases/download/${VERSION}/kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz" --output kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz && tar -xf kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz  -C /etc
-              
-    ``` 
+   ``` 
