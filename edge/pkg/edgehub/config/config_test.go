@@ -30,6 +30,10 @@ import (
 //This statement will load the config from the config files & prevent the test case from panicking
 var conf = util.LoadConfig()
 
+const (
+	defaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
+)
+
 //testYamlGenerator is a structure which is used to generate the test YAML file to test Edgehub config components
 type testYamlGenerator struct {
 	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
@@ -121,7 +125,7 @@ func TestGetConfig(t *testing.T) {
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -151,7 +155,7 @@ func TestGetConfig(t *testing.T) {
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
@@ -174,7 +178,7 @@ func TestGetConfig(t *testing.T) {
 					controllerConfigYaml{
 						Protocol:     "websocket",
 						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:    defaultProjectID,
 						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -204,7 +208,7 @@ func TestGetConfig(t *testing.T) {
 					HeartbeatPeriod: 15 * time.Second,
 					RefreshInterval: 10 * time.Minute,
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
@@ -375,7 +379,7 @@ func Test_getControllerConfig(t *testing.T) {
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -391,7 +395,7 @@ func Test_getControllerConfig(t *testing.T) {
 					controllerConfigYaml{
 						Protocol:     "websocket",
 						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:    defaultProjectID,
 						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -409,7 +413,7 @@ func Test_getControllerConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -446,7 +450,7 @@ func Test_getControllerConfig(t *testing.T) {
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 					},
 				},
 			},
