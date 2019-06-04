@@ -27,7 +27,7 @@ const (
 	KubernetesVersion = "kubernetes-version"
 
 	//KubeConfig sets the path of kubeconfig , default is ""
-	KubeConfig= "kube-config"
+	KubeConfig = "kube-config"
 
 	//K8SAPIServerIPPort sets the IP:Port of Kubernetes api-server
 	K8SAPIServerIPPort = "k8sserverip"
@@ -52,4 +52,7 @@ const (
 
 	//DefaultK8SVersion is the current default version of K8S
 	DefaultK8SVersion = "1.14.1"
+
+	// DefaultProjectID
+	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
 )
