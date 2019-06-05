@@ -713,7 +713,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2c1f62bde7baabd852485b201e3e188cec0e8214935c3cf820558e09717247d3"
+  digest = "1:0fa0d86b0f5f8b8c9335982ba21a44c7fe17d9d36db7e848b0b0590cf03f15da"
   name = "github.com/kubeedge/beehive"
   packages = [
     "pkg/common/config",
@@ -724,7 +724,7 @@
     "pkg/core/model",
   ]
   pruneopts = "UT"
-  revision = "aec6adb4c27903ea748a901126a976ef7f821077"
+  revision = "50be051df747ac7b509aadca5daba5b205e2ba81"
 
 [[projects]]
   digest = "1:1abad3afc8a8a736bbb7d643f8817c8da182b4c3b9bf2be59b47a0bcbedc52d5"
