@@ -70,6 +70,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 
 	//This makes sure the path is created, if it already exists also it is fine
 	err := os.MkdirAll(KubeEdgeConfPath, os.ModePerm)
+	fmt.Println("KubeEdge confpath", KubeEdgeConfPath)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfPath)
 	}

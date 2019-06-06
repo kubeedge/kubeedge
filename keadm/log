@@ -1,0 +1,98 @@
+IsDockerInstalled 
+InstallDocker called
+Installing 18.06.0 Version of docker
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp-srv2.kddilabs.jp
+ * epel: mirror.layeronline.com
+ * extras: ftp.ksu.edu.tw
+ * updates: ftp.twaren.net
+Package yum-utils-1.1.31-50.el7.noarch already installed and latest version
+Nothing to do
+
+utils installed
+Loaded plugins: fastestmirror
+adding repo from: https://download.docker.com/linux/centos/docker-ce.repo
+grabbing file https://download.docker.com/linux/centos/docker-ce.repo to /etc/yum.repos.d/docker-ce.repo
+repo saved to /etc/yum.repos.d/docker-ce.repo
+
+docker-ce.repo installed
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp-srv2.kddilabs.jp
+ * epel: mirror.layeronline.com
+ * extras: ftp.ksu.edu.tw
+ * updates: ftp.twaren.net
+Metadata Cache Created
+
+stdout is %s 18.06.0.ce-3.el7
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp-srv2.kddilabs.jp
+ * epel: mirror.layeronline.com
+ * extras: ftp.ksu.edu.tw
+ * updates: ftp.twaren.net
+Resolving Dependencies
+--> Running transaction check
+---> Package docker-ce.x86_64 0:18.06.0.ce-3.el7 will be installed
+--> Processing Dependency: libltdl.so.7()(64bit) for package: docker-ce-18.06.0.ce-3.el7.x86_64
+--> Running transaction check
+---> Package libtool-ltdl.x86_64 0:2.4.2-22.el7_3 will be installed
+--> Processing Conflict: docker-ce-18.06.0.ce-3.el7.x86_64 conflicts docker
+--> Processing Conflict: docker-ce-18.06.0.ce-3.el7.x86_64 conflicts docker-io
+
+Packages skipped because of dependency problems:
+    docker-ce-18.06.0.ce-3.el7.x86_64 from docker-ce-stable
+    libtool-ltdl-2.4.2-22.el7_3.x86_64 from base
+
+Docker 18.06.0 version is installed in this Host
+
+Docker 18.06.0 version is started
+Installing kubeadm 1.14.1 version
+updtRepoErr addK8SRepositoryAndUpdat4 
+
+Expected K8S(' kubeadm ') version to install is 1.14.1
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp-srv2.kddilabs.jp
+ * epel: mirror.layeronline.com
+ * extras: ftp.ksu.edu.tw
+ * updates: ftp.twaren.net
+Package kubelet-1.14.1-0.x86_64 already installed and latest version
+Package matching kubectl-1.14.1-0.x86_64 already installed. Checking for update.
+Resolving Dependencies
+--> Running transaction check
+---> Package kubeadm.x86_64 0:1.14.1-0 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package          Arch            Version             Repository           Size
+================================================================================
+Installing:
+ kubeadm          x86_64          1.14.1-0            kubernetes          8.7 M
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 8.7 M
+Installed size: 38 M
+Downloading packages:
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : kubeadm-1.14.1-0.x86_64                                      1/1 
+  Verifying  : kubeadm-1.14.1-0.x86_64                                      1/1 
+
+Installed:
+  kubeadm.x86_64 0:1.14.1-0                                                     
+
+Complete!
+
+
+kubeadm version 1.14.1 is installed in this Host
+Output failed:  exit status 127
+exit status 127
