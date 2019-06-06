@@ -96,6 +96,6 @@ func (e EventListener) Event(event *core.Event) {
 	configValue := CONFIG.GetConfigurationByKey(event.Key)
 	for _, c := range ConfigChangeCallbacks {
 		c.Callback(event.Key, configValue)
-		fmt.Printf("config value %v", event.Key, " | ", configValue)
+		fmt.Printf("config value %v | %v", event.Key, configValue)
 	}
 }
