@@ -25,6 +25,7 @@ type KubeCloudInstTool struct {
 func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
+	fmt.Println("beforeinstallkubeedge")
 
 	err := cu.InstallKubeEdge()
 	if err != nil {
@@ -32,21 +33,30 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	err = cu.generateCertificates()
+	fmt.Println("generateCertificates")
 	if err != nil {
 		return err
 	}
 
 	err = cu.tarCertificates()
+	fmt.Println("tarCertificates")
 	if err != nil {
 		return err
 	}
+	time.Sleep(5 * time.Second)
 
 	err = cu.StartK8Scluster()
+	fmt.Println("StartK8Scluster")
 	if err != nil {
 		return err
 	}
 
 	err = cu.updateManifests()
+	if err != nil {
+		return err
+	}
+	time.Sleep(5 * time.Second)
+	err = cu.createdevicemodel()
 	if err != nil {
 		return err
 	}
@@ -78,8 +88,29 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
+
 	fmt.Println("Edgecontroller started")
 
+	return nil
+}
+
+//create device model and device CRDS
+func (cu *KubeCloudInstTool) createdevicemodel() error {
+	cmdf := fmt.Sprintf("kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_devicemodel.yaml")
+	cmd := &Command{Cmd: exec.Command("sh", "-c", cmdf)}
+	err := cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s in creating device model", err)
+	}
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "sudo kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_device.yaml")}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s in creating device", err)
+	}
+
+	fmt.Println("Device model and device CRDs are created")
 	return nil
 }
 
@@ -178,26 +209,36 @@ func linesFromReader(r io.Reader) ([]string, error) {
 //RunEdgeController starts edgecontroller process
 func (cu *KubeCloudInstTool) RunEdgeController() error {
 
-	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
+	/*	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
+		cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
+		err := cmd.ExecuteCmdShowOutput()
+		errout := cmd.GetStdErr()
+		if err != nil || errout != "" {
+			fmt.Println("in error")
+			return fmt.Errorf("%s", errout)
+
+		}*/
+	//binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	/*binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	fmt.Println(binExec)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	err := cmd.ExecuteCmdShowOutput()
+	fmt.Println("err%s", err)
 	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
 		fmt.Println("in error")
 		return fmt.Errorf("%s", errout)
-
-	}
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	}*/
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	err := cmd.StartCmd()
+	if err != nil {
+		fmt.Println("in error")
 	}
-	fmt.Println(cmd.GetStdOutput())
+	//fmt.Println(cmd.GetStdOutput())
 	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	return nil
 }
