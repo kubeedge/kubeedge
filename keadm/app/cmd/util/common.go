@@ -38,9 +38,10 @@ const (
 	DefaultDownloadURL = "https://download.docker.com"
 	DockerPreqReqList  = "apt-transport-https ca-certificates curl gnupg-agent software-properties-common"
 
-	KubernetesDownloadURL = "https://apt.kubernetes.io/"
-	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-
+	KubernetesDownloadURL     = "https://apt.kubernetes.io/"
+	KubernetesGPGURL          = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+	KubernetesBaseurl         = "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+	KubernetesGpgkey          = "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeConfPath          = KubeEdgePath + "kubeedge/edge/conf"
@@ -89,7 +90,7 @@ type Common struct {
 	types.OSTypeInstaller
 	OSVersion   string
 	ToolVersion string
-	KubeConfig string
+	KubeConfig  string
 }
 
 //SetOSInterface defines a method to set the implemtation of the OS interface
