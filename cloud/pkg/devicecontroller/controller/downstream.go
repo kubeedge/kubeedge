@@ -122,13 +122,13 @@ func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha1.DeviceMod
 }
 
 // isDeviceModelUpdated is function to check if deviceModel is actually updated
-func isDeviceModelUpdated(old *CacheDeviceModel, new *v1alpha1.DeviceModel) bool {
+func isDeviceModelUpdated(oldTwin *CacheDeviceModel, newTwin *v1alpha1.DeviceModel) bool {
 	// does not care fields
-	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
-	old.ObjectMeta.Generation = new.ObjectMeta.Generation
+	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
+	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
 
 	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec)
+	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec)
 }
 
 // deviceModelUpdated is function to process updated deviceModel
@@ -424,23 +424,23 @@ func createDevice(device *v1alpha1.Device) types.Device {
 }
 
 // isDeviceUpdated checks if device is actually updated
-func isDeviceUpdated(old *CacheDevice, new *v1alpha1.Device) bool {
+func isDeviceUpdated(oldTwin *CacheDevice, newTwin *v1alpha1.Device) bool {
 	// does not care fields
-	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
-	old.ObjectMeta.Generation = new.ObjectMeta.Generation
+	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
+	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
 
 	// return true if ObjectMeta or Spec or Status changed, else false
-	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Spec, new.Spec) || !reflect.DeepEqual(old.Status, new.Status)
+	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec) || !reflect.DeepEqual(oldTwin.Status, newTwin.Status)
 }
 
 // isNodeSelectorUpdated checks if nodeSelector is updated
-func isNodeSelectorUpdated(old *v1.NodeSelector, new *v1.NodeSelector) bool {
-	return !reflect.DeepEqual(old.NodeSelectorTerms, new.NodeSelectorTerms)
+func isNodeSelectorUpdated(oldTwin *v1.NodeSelector, newTwin *v1.NodeSelector) bool {
+	return !reflect.DeepEqual(oldTwin.NodeSelectorTerms, newTwin.NodeSelectorTerms)
 }
 
 // isProtocolConfigUpdated checks if protocol is updated
-func isProtocolConfigUpdated(old *v1alpha1.ProtocolConfig, new *v1alpha1.ProtocolConfig) bool {
-	return !reflect.DeepEqual(old, new)
+func isProtocolConfigUpdated(oldTwin *v1alpha1.ProtocolConfig, newTwin *v1alpha1.ProtocolConfig) bool {
+	return !reflect.DeepEqual(oldTwin, newTwin)
 }
 
 // updateProtocolInConfigMap updates the protocol in the deviceProfile in configmap
@@ -585,11 +585,11 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 }
 
 // addDeletedTwins add deleted twins in the message
-func addDeletedTwins(old []v1alpha1.Twin, new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
+func addDeletedTwins(oldTwin []v1alpha1.Twin, newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range old {
-		if !ifTwinPresent(dtwin, new) {
+	for _, dtwin := range oldTwin {
+		if !ifTwinPresent(dtwin, newTwin) {
 			expected := &types.TwinValue{}
 			expected.Value = &dtwin.Desired.Value
 			timestamp := time.Now().UnixNano() / 1e6
@@ -625,10 +625,10 @@ func ifTwinPresent(twin v1alpha1.Twin, newTwins []v1alpha1.Twin) bool {
 }
 
 // addUpdatedTwins is function of add updated twins to send to edge
-func addUpdatedTwins(new []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
+func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range new {
+	for _, dtwin := range newTwin {
 		expected := &types.TwinValue{}
 		expected.Value = &dtwin.Desired.Value
 		timestamp := time.Now().UnixNano() / 1e6
