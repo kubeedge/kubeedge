@@ -397,9 +397,9 @@ func createDevice(device *v1alpha1.Device) types.Device {
 	opt := false
 	optional := &opt
 	twin := make(map[string]*types.MsgTwin)
-	for _, dtwin := range device.Status.Twins {
+	for i, dtwin := range device.Status.Twins {
 		expected := &types.TwinValue{}
-		expected.Value = &dtwin.Desired.Value
+		expected.Value = &device.Status.Twins[i].Desired.Value
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -588,10 +588,10 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 func addDeletedTwins(oldTwin []v1alpha1.Twin, newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range oldTwin {
+	for i, dtwin := range oldTwin {
 		if !ifTwinPresent(dtwin, newTwin) {
 			expected := &types.TwinValue{}
-			expected.Value = &dtwin.Desired.Value
+			expected.Value = &oldTwin[i].Desired.Value
 			timestamp := time.Now().UnixNano() / 1e6
 
 			metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -628,9 +628,9 @@ func ifTwinPresent(twin v1alpha1.Twin, newTwins []v1alpha1.Twin) bool {
 func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, version string) {
 	opt := false
 	optional := &opt
-	for _, dtwin := range newTwin {
+	for i, dtwin := range newTwin {
 		expected := &types.TwinValue{}
-		expected.Value = &dtwin.Desired.Value
+		expected.Value = &newTwin[i].Desired.Value
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
