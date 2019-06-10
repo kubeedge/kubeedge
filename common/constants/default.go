@@ -37,7 +37,11 @@ const (
 	DefaultPodEventBuffer       = 1
 	DefaultConfigMapEventBuffer = 1
 	DefaultSecretEventBuffer    = 1
+	DefaultServiceEventBuffer   = 1
 
 	// Resource sep
 	ResourceSep = "/"
+
+	ResourceTypeService     = "service"
+	ResourceTypeServiceList = "servicelist"
 )
