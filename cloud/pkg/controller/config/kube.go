@@ -5,11 +5,10 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/common/types"
 )
 
 // Kube container Kubernetes related configuration
-var Kube *types.KubeInfo
+var Kube *KubeInfo
 
 // KubeNodeID for the current node
 var KubeNodeID string
@@ -24,7 +23,7 @@ var KubeUpdateNodeFrequency time.Duration
 var EdgeSiteEnabled bool
 
 func init() {
-	Kube = types.NewKubeInfo()
+	Kube = NewKubeInfo()
 
 	if km, err := config.CONFIG.GetValue("controller.kube.master").ToString(); err != nil {
 		log.LOGGER.Errorf("Controller kube master not set")
