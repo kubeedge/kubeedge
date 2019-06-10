@@ -4,6 +4,10 @@
 kubeedge:
 	go build -o kubeedge keadm.go
 
+lint:
+	golangci-lint run --disable-all -E golint ./...
+	go vet ./...
+
 .PHONY: clean
 clean:
 	rm kubeedge
