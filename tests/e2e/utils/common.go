@@ -37,12 +37,14 @@ import (
 )
 
 const (
-	Namespace = "default"
+	Namespace     = "default"
+	LabelSelector = "?labelSelector="
 )
 
 var (
 	ProtocolQuic      bool
 	ProtocolWebsocket bool
+	ServiceLabel      = map[string]string{"service": "test"}
 )
 
 //Function to get nginx deployment spec
@@ -65,6 +67,8 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 					{
 						Name:  "nginx",
 						Image: imgUrl,
+						TTY:   true,
+						Ports: []v1.ContainerPort{{HostPort: 80, ContainerPort: 80}},
 					},
 				},
 				NodeSelector: nodeselector,
@@ -450,4 +454,96 @@ func DeleteSvc(svcname string) int {
 	defer resp.Body.Close()
 
 	return resp.StatusCode
+}
+
+//ExposePodService function to expose the service for deployment
+func ExposePodService(name, serviceHandler string, port int32, targetport intstr.IntOrString) error {
+	ServiceObj := CreatePodService(name, port, targetport)
+	respBytes, err := json.Marshal(ServiceObj)
+	if err != nil {
+		Failf("Marshalling body failed: %v", err)
+	}
+	req, err := http.NewRequest(http.MethodPost, serviceHandler, bytes.NewBuffer(respBytes))
+	if err != nil {
+		// handle error
+		Failf("Frame HTTP request failed: %v", err)
+		return err
+	}
+	client := &http.Client{}
+	req.Header.Set("accept", "application/json")
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Failf("HTTP request is failed :%v", err)
+		return err
+	}
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+	return nil
+}
+
+//CreatePodService function to create a service object
+func CreatePodService(name string, port int32, targetport intstr.IntOrString) *v1.Service {
+	var portInfo []v1.ServicePort
+
+	portInfo = []v1.ServicePort{
+		{
+			Protocol: v1.ProtocolTCP, Port: port, TargetPort: targetport,
+		},
+	}
+
+	Service := v1.Service{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: ServiceLabel},
+
+		Spec: v1.ServiceSpec{
+			Ports:    portInfo,
+			Selector: map[string]string{"app": "nginx"},
+		},
+	}
+	return &Service
+}
+
+//GetServices to get the Service list
+func GetServices(list *v1.ServiceList, getServiceAPI string) error {
+	err, resp := SendHttpRequest(http.MethodGet, getServiceAPI)
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Failf("HTTP Response reading has failed: %v", err)
+		return err
+	}
+	err = json.Unmarshal(contents, &list)
+	if err != nil {
+		Failf("Unmarshal HTTP Response has failed: %v", err)
+		return err
+	}
+	return nil
+
+}
+
+//DeleteService to delete service
+func DeleteService(ServiceApi, servicename string) int {
+	err, resp := SendHttpRequest(http.MethodDelete, ServiceApi+"/"+servicename)
+	if err != nil {
+		// handle error
+		Failf("HTTP request is failed :%v", err)
+		return -1
+	}
+
+	defer resp.Body.Close()
+
+	return resp.StatusCode
+}
+
+func Getname(ep string) string {
+	response, err := http.Get(ep + "/hello")
+	if err != nil {
+		Failf("\n Error :%+v \n", err)
+		return ""
+	}
+	body, _ := ioutil.ReadAll(response.Body)
+	name := string(body)
+	return name
 }

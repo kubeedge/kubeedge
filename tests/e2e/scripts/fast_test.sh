@@ -30,7 +30,7 @@ cd ../
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "image_url": ["nginx", "hello-world"],
+        "image_url": ["nginx", "hello-world", "anujmaurya/server:v1.0", "anujmaurya/client:v1.1"],
         "k8smasterforkubeedge":"http://$MASTER_IP:12418"
 }
 END
