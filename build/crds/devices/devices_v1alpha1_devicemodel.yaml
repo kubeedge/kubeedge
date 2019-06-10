@@ -68,6 +68,8 @@ spec:
                             type: string
                         type: object
                     type: object
+                required:
+                - type
                 type: object
               type: array
             propertyVisitors:
