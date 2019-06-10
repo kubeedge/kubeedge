@@ -27,6 +27,9 @@ var ConfigMapEventBuffer int
 // SecretEventBuffer is the size of channel which save secret event from k8s
 var SecretEventBuffer int
 
+// ServiceEventBuffer is the size of channel which save service event from k8s
+var ServiceEventBuffer int
+
 func init() {
 	if psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt(); err != nil {
 		UpdatePodStatusBuffer = constants.DefaultUpdatePodStatusBuffer
@@ -76,5 +79,12 @@ func init() {
 		SecretEventBuffer = seb
 	}
 	log.LOGGER.Infof("Update controller.buffer.secret-event: %d", SecretEventBuffer)
+
+	if seb, err := config.CONFIG.GetValue("controller.buffer.service-event").ToInt(); err != nil {
+		ServiceEventBuffer = constants.DefaultServiceEventBuffer
+	} else {
+		ServiceEventBuffer = seb
+	}
+	log.LOGGER.Infof("Update controller.buffer.service-event: %d", ServiceEventBuffer)
 
 }

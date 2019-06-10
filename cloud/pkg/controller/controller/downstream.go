@@ -17,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
+	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -35,6 +36,9 @@ type DownstreamController struct {
 
 	nodeManager *manager.NodesManager
 	nodesStop   chan struct{}
+
+	serviceManager *manager.ServiceManager
+	serviceStop    chan struct{}
 
 	lc *manager.LocationCache
 }
@@ -189,8 +193,31 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 			switch e.Type {
 			case watch.Added:
 				dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
+				fallthrough
 			case watch.Modified:
-				continue
+				// TODO: keep node cache for edge node to check if status has changed to Running from not running
+				// When node comes to running, send all the service information to edge
+				for _, nsc := range node.Status.Conditions {
+					if nsc.Type == "Ready" {
+						if nsc.Status == "True" {
+							msg := model.NewMessage("")
+							// TODO: what should in place of namespace and service when we are sending service list ?
+							resource, err := messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeServiceList, "service")
+							if err != nil {
+								log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+								break
+							}
+							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+							msg.Content = dc.lc.Services
+							if err := dc.messageLayer.Send(*msg); err != nil {
+								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+							} else {
+								log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+							}
+						}
+						break
+					}
+				}
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 			default:
@@ -200,6 +227,56 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 			}
 		case <-stop:
 			log.LOGGER.Infof("Stop syncNodes")
+			running = false
+		}
+	}
+}
+
+func (dc *DownstreamController) syncService(stop chan struct{}) {
+	running := true
+	var operation string
+	for running {
+		select {
+		case e := <-dc.serviceManager.Events():
+			svc, ok := e.Object.(*v1.Service)
+			if !ok {
+				log.LOGGER.Warnf("Object type: %T unsupported", svc)
+				continue
+			}
+			switch e.Type {
+			case watch.Added:
+				dc.lc.AddService(*svc)
+				operation = model.InsertOperation
+			case watch.Modified:
+				dc.lc.UpdateService(*svc)
+				operation = model.UpdateOperation
+			case watch.Deleted:
+				dc.lc.DeleteService(*svc)
+				operation = model.DeleteOperation
+			default:
+				// unsupported operation, no need to send to any node
+				log.LOGGER.Warnf("Service event type: %s unsupported", e.Type)
+				continue
+			}
+
+			// send to all nodes
+			for _, nodeName := range dc.lc.EdgeNodes {
+				msg := model.NewMessage("")
+				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
+				if err != nil {
+					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+					break
+				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
+				msg.Content = svc
+				if err := dc.messageLayer.Send(*msg); err != nil {
+					log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				} else {
+					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				}
+			}
+		case <-stop:
+			log.LOGGER.Infof("Stop sync services")
 			running = false
 		}
 	}
@@ -223,6 +300,10 @@ func (dc *DownstreamController) Start() error {
 	// nodes
 	dc.nodesStop = make(chan struct{})
 	go dc.syncEdgeNodes(dc.nodesStop)
+
+	// service
+	dc.serviceStop = make(chan struct{})
+	go dc.syncService(dc.serviceStop)
 
 	return nil
 }
@@ -314,13 +395,19 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
+	serviceManager, err := manager.NewServiceManager(cli, v1.NamespaceAll)
+	if err != nil {
+		log.LOGGER.Warnf("Create service manager failed with error: %s", err)
+		return nil, err
+	}
+
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
 		log.LOGGER.Warnf("create message layer failed with error: %s", err)
 		return nil, err
 	}
 
-	dc := &DownstreamController{kubeClient: cli, podManager: podManager, configmapManager: configMapManager, secretManager: secretManager, nodeManager: nodesManager, messageLayer: ml, lc: lc}
+	dc := &DownstreamController{kubeClient: cli, podManager: podManager, configmapManager: configMapManager, secretManager: secretManager, nodeManager: nodesManager, serviceManager: serviceManager, messageLayer: ml, lc: lc}
 	if err := dc.initLocating(); err != nil {
 		return nil, err
 	}

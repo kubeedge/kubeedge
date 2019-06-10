@@ -10,12 +10,14 @@ import (
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
-	//edgeNodes is a list of valid edge nodes
-	edgeNodes []string
+	// EdgeNodes is a list of valid edge nodes
+	EdgeNodes []string
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
 	secretNode sync.Map
+	// Services is an array of services
+	Services []v1.Service
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -113,7 +115,7 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 
 //IsEdgeNode checks weather node is edge node or not
 func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
-	for _, node := range lc.edgeNodes {
+	for _, node := range lc.EdgeNodes {
 		if node == nodeName {
 			return true
 		}
@@ -121,10 +123,10 @@ func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 	return false
 }
 
-//UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
+// UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
 func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
-	lc.edgeNodes = append(lc.edgeNodes, nodeName)
-	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.edgeNodes)
+	lc.EdgeNodes = append(lc.EdgeNodes, nodeName)
+	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.EdgeNodes)
 }
 
 // DeleteConfigMap from cache
@@ -139,9 +141,27 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 
 // DeleteNode from cache
 func (lc *LocationCache) DeleteNode(name string) {
-	for i, v := range lc.edgeNodes {
+	for i, v := range lc.EdgeNodes {
 		if v == name {
-			lc.edgeNodes = append(lc.edgeNodes[:i], lc.edgeNodes[i+1:]...)
+			lc.EdgeNodes = append(lc.EdgeNodes[:i], lc.EdgeNodes[i+1:]...)
+		}
+	}
+}
+
+func (lc *LocationCache) AddService(service v1.Service) {
+	lc.Services = append(lc.Services, service)
+}
+
+func (lc *LocationCache) UpdateService(service v1.Service) {
+	lc.DeleteService(service)
+	lc.AddService(service)
+}
+
+func (lc *LocationCache) DeleteService(service v1.Service) {
+	for i, svc := range lc.Services {
+		if svc.Name == service.Name {
+			lc.Services = append(lc.Services[:i], lc.Services[i+1:]...)
+			break
 		}
 	}
 }
