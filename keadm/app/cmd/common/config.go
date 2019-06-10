@@ -17,6 +17,7 @@ limitations under the License.
 package common
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -39,7 +40,7 @@ func Write2File(path string, data interface{}) error {
 }
 
 //WriteControllerYamlFile writes controller.yaml for cloud component
-func WriteControllerYamlFile(path , kubeConfig string) error {
+func WriteControllerYamlFile(path, kubeConfig string) error {
 	controllerData := ControllerYaml{Controller: CloudControllerSt{Kube: KubeEdgeControllerConfig{Master: "http://localhost:8080", Namespace: constants.DefaultKubeNamespace,
 		ContentType: constants.DefaultKubeContentType,
 		QPS:         constants.DefaultKubeQPS, Burst: constants.DefaultKubeBurst, NodeUpdateFrequency: constants.DefaultKubeUpdateNodeFrequency * time.Second,
@@ -96,7 +97,7 @@ func WriteEdgeModulesYamlFile(path string) error {
 func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 
 	edgeID := "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
-	url := "wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events"
+	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", DefaultProjectID)
 	version := "2.0.0"
 
 	if nil != modifiedEdgeYaml {
@@ -114,7 +115,7 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 		EdgeHub: EdgeHubSt{WebSocket: WebSocketSt{URL: url, CertFile: "/etc/kubeedge/certs/edge.crt", KeyFile: "/etc/kubeedge/certs/edge.key",
 			HandshakeTimeout: 30, WriteDeadline: 15, ReadDeadline: 15},
 			Controller: ControllerSt{Placement: false, Heartbeat: 15, RefreshAKSKInterval: 10, AuthInfoFilesPath: "/var/IEF/secret",
-				PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue", ProjectID: "e632aba927ea4ac2b575ec1603d56f10",
+				PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue", ProjectID: DefaultProjectID,
 				NodeID: edgeID}},
 		EdgeD: EdgeDSt{RegisterNodeNamespace: "default", HostnameOverride: edgeID, InterfaceName: "eth0",
 			NodeStatusUpdateFrequency: 10, DevicePluginEnabled: false, GPUPluginEnabled: false, ImageGCHighThreshold: 80, ImageGCLowThreshold: 40,
