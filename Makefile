@@ -63,6 +63,10 @@ IMAGE_TAG ?= $(shell git describe --tags)
 cloudimage:
 	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
+.PHONY: keadm_lint
+keadm_lint:
+	make -C keadm lint
+
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
 

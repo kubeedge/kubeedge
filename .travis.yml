@@ -44,3 +44,5 @@ jobs:
       name: "e2e_test"     # names the seventh Tests stage job
     - script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job
+    - script: make keadm_lint
+      name: "keadm_lint"
