@@ -9,7 +9,7 @@ spec:
     description: temperature in degree celsius
     type:
      int:
-      accessMode: Read
+      accessMode: ReadOnly
       maximum: 100
       unit: degree celsius
   - name: temperature-enable
