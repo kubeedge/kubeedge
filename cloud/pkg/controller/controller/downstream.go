@@ -195,14 +195,14 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 			}
 			switch e.Type {
 			case watch.Added:
-				dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
 				fallthrough
 			case watch.Modified:
-				// TODO: keep node cache for edge node to check if status has changed to Running from not running
 				// When node comes to running, send all the service information to edge
 				for _, nsc := range node.Status.Conditions {
 					if nsc.Type == "Ready" {
-						if nsc.Status == "True" {
+						status, ok := dc.lc.GetNodeStatus(node.ObjectMeta.Name)
+						dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, string(nsc.Status))
+						if nsc.Status == "True" && (!ok || status != "True") {
 							// send all services to edge
 							msg := model.NewMessage("")
 							// TODO: what should in place of namespace and service when we are sending service list ?
@@ -280,7 +280,8 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 			}
 
 			// send to all nodes
-			for _, nodeName := range dc.lc.EdgeNodes {
+			dc.lc.EdgeNodesLock.RLock()
+			for nodeName, _ := range dc.lc.EdgeNodes {
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
@@ -295,6 +296,7 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
+			dc.lc.EdgeNodesLock.RUnlock()
 		case <-stop:
 			log.LOGGER.Infof("Stop sync services")
 			running = false
@@ -330,7 +332,8 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 			}
 
 			// send to all nodes
-			for _, nodeName := range dc.lc.EdgeNodes {
+			dc.lc.EdgeNodesLock.RLock()
+			for nodeName, _ := range dc.lc.EdgeNodes {
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
 				if err != nil {
@@ -345,6 +348,7 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
+			dc.lc.EdgeNodesLock.RUnlock()
 		case <-stop:
 			log.LOGGER.Infof("Stop sync endpoints")
 			running = false
@@ -407,8 +411,15 @@ func (dc *DownstreamController) initLocating() error {
 	if err != nil {
 		return err
 	}
+	var status string
 	for _, node := range nodes.Items {
-		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name)
+		for _, nsc := range node.Status.Conditions {
+			if nsc.Type == "Ready" {
+				status = string(nsc.Status)
+				break
+			}
+		}
+		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
 	}
 
 	if !config.EdgeSiteEnabled {
@@ -432,6 +443,7 @@ func (dc *DownstreamController) initLocating() error {
 // NewDownstreamController create a DownstreamController from config
 func NewDownstreamController() (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
+	lc.EdgeNodes = make(map[string]string)
 
 	cli, err := utils.KubeClient()
 	if err != nil {
