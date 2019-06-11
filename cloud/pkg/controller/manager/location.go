@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
-	// EdgeNodes is a list of valid edge nodes
-	EdgeNodes []string
+	// EdgeNodes is a map, key is nodeName, value is Status
+	EdgeNodes map[string]string
+	// EdgeNodesLock is lock for edgeNodes
+	EdgeNodesLock sync.RWMutex
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
@@ -117,18 +118,25 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 
 //IsEdgeNode checks weather node is edge node or not
 func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
-	for _, node := range lc.EdgeNodes {
-		if node == nodeName {
-			return true
-		}
-	}
-	return false
+	lc.EdgeNodesLock.RLock()
+	defer lc.EdgeNodesLock.RUnlock()
+	_, ok := lc.EdgeNodes[nodeName]
+	return ok
+}
+
+//
+func (lc *LocationCache) GetNodeStatus(nodeName string) (string, bool) {
+	lc.EdgeNodesLock.RLock()
+	defer lc.EdgeNodesLock.RUnlock()
+	status, ok := lc.EdgeNodes[nodeName]
+	return status, ok
 }
 
 // UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
-func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
-	lc.EdgeNodes = append(lc.EdgeNodes, nodeName)
-	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.EdgeNodes)
+func (lc *LocationCache) UpdateEdgeNode(nodeName string, status string) {
+	lc.EdgeNodesLock.Lock()
+	defer lc.EdgeNodesLock.Unlock()
+	lc.EdgeNodes[nodeName] = status
 }
 
 // DeleteConfigMap from cache
@@ -142,12 +150,10 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 }
 
 // DeleteNode from cache
-func (lc *LocationCache) DeleteNode(name string) {
-	for i, v := range lc.EdgeNodes {
-		if v == name {
-			lc.EdgeNodes = append(lc.EdgeNodes[:i], lc.EdgeNodes[i+1:]...)
-		}
-	}
+func (lc *LocationCache) DeleteNode(nodeName string) {
+	lc.EdgeNodesLock.Lock()
+	defer lc.EdgeNodesLock.Unlock()
+	delete(lc.EdgeNodes, nodeName)
 }
 
 func (lc *LocationCache) AddService(service v1.Service) {
