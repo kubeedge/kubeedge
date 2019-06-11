@@ -53,20 +53,21 @@ func (c *CentOS) SetKubeEdgeVersion(version string) {
 }
 
 func (C *CentOS) addDockerRepositoryAndUpdate() error {
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
-	cmd.ExecuteCommand()
-	distVersion := cmd.GetStdOutput()
-	if distVersion == "" {
-		return fmt.Errorf("CentOS dist version not available")
-	}
-	fmt.Println("CentOS distribution version is", distVersion)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum install -y yum-utils")}
+	// cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
+	// cmd.ExecuteCommand()
+	// distVersion := cmd.GetStdOutput()
+	// if distVersion == "" {
+	// 	return fmt.Errorf("CentOS dist version not available")
+	// }
+	// fmt.Println("CentOS distribution version is", distVersion)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", "yum install -y yum-utils")}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
+	fmt.Println("utils installed")
 
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo")}
 	err = cmd.ExecuteCmdShowOutput()
@@ -75,6 +76,7 @@ func (C *CentOS) addDockerRepositoryAndUpdate() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
+	fmt.Println("docker-ce.repo installed")
 
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum makecache")}
 	err = cmd.ExecuteCmdShowOutput()
@@ -93,6 +95,7 @@ func (c *CentOS) IsDockerInstalled(defVersion string) (types.InstallState, error
 	//yum list installed | grep docker-ce | awk '{print $2}' | cut -d'-' -f 1
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "yum list installed | grep docker-ce | awk '{print $2}' | cut -d'-' -f 1")}
 	cmd.ExecuteCommand()
+	fmt.Println("IsDockerInstalled", cmd.GetStdOutput())
 	str := cmd.GetStdOutput()
 	if str == "" {
 		return types.NewInstallRequired, nil
@@ -138,6 +141,9 @@ func (c *CentOS) InstallDocker() error {
 	fmt.Println("InstallDocker called")
 	fmt.Println("Installing", c.DockerVersion, "Version of docker")
 
+	if err := c.addDockerRepositoryAndUpdate(); err != nil {
+		return err
+	}
 	//Do an yum update
 	/*	instPreReq := fmt.Sprintf("yum install -y %s", DockerPreqReqList)
 		cmd := &Command{Cmd: exec.Command("sh", "-c", instPreReq)}
@@ -157,7 +163,8 @@ func (c *CentOS) InstallDocker() error {
 	}
 
 	//Install docker-ce
-	dockerInst := fmt.Sprintf("yum install -y docker-ce-%s", stdout)
+	fmt.Println("stdout is %s", stdout)
+	dockerInst := fmt.Sprintf("sudo yum install -y  --skip-broken docker-ce-%s", stdout)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerInst)}
 	err := cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -167,6 +174,16 @@ func (c *CentOS) InstallDocker() error {
 	fmt.Println(cmd.GetStdOutput())
 
 	fmt.Println("Docker", c.DockerVersion, "version is installed in this Host")
+	dockerstart := "sudo systemctl start docker"
+	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerstart)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("Docker", c.DockerVersion, "version is started")
 
 	return nil
 	// yum install -y yum-utils
@@ -304,13 +321,13 @@ func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (types.In
 
 func (c *CentOS) addK8SRepositoryAndUpdate() error {
 	//Get the distribution version
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
-	cmd.ExecuteCommand()
-	distVersion := cmd.GetStdOutput()
-	if distVersion == "" {
-		return fmt.Errorf("CentOS dist version not available")
-	}
-	fmt.Println("CentOS distribution version is", distVersion)
+	// cmd := &Command{Cmd: exec.Command("sh", "-c", "lsb_release -cs")}
+	// cmd.ExecuteCommand()
+	// distVersion := cmd.GetStdOutput()
+	// if distVersion == "" {
+	// 	return fmt.Errorf("CentOS dist version not available")
+	// }
+	// fmt.Println("CentOS distribution version is", distVersion)
 
 	//Do an apt-get update
 	// cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
@@ -335,11 +352,12 @@ func (c *CentOS) addK8SRepositoryAndUpdate() error {
 	// fmt.Println(curlOutput)
 
 	//Add K8S repo to local apt-get source.list
-	aptRepo := fmt.Sprintf("[kubernetes]\n name=Kubernetes\n baseurl=%s\n enabled=1\n gpgcheck=1\n repo_gpgcheck=1\n gpgkey=%s\n exclude=kube*\n", KubernetesBaseurl, KubernetesGpgkey)
+	aptRepo := fmt.Sprintf("[kubernetes]\nname=Kubernetes\nbaseurl=%s\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=%s\nexclude=kube*\n", KubernetesBaseurl, KubernetesGpgkey)
 	updtRepo := fmt.Sprintf("echo \"%s\" > /etc/yum.repos.d/kubernetes.repo", aptRepo)
-	cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
+	cmd := &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
 	cmd.ExecuteCommand()
 	updtRepoErr := cmd.GetStdErr()
+	fmt.Printf("updtRepoErr %s", updtRepoErr)
 	if updtRepoErr != "" {
 		return fmt.Errorf("not able add update repo due to error : %s", updtRepoErr)
 	}
@@ -348,8 +366,9 @@ func (c *CentOS) addK8SRepositoryAndUpdate() error {
 	// 	# Set SELinux in permissive mode (effectively disabling it)
 	// setenforce 0
 	// sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "setenforce 0；sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config")}
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "setenforce 0 && sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config")}
 	err := cmd.ExecuteCmdShowOutput()
+	fmt.Println("addK8SRepositoryAndUpdat4 ")
 	stdout := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
@@ -367,9 +386,12 @@ func (c *CentOS) InstallK8S() error {
 	// systemctl enable --now kubelet
 	k8sComponent := "kubeadm"
 	fmt.Println("Installing", k8sComponent, c.KubernetesVersion, "version")
+	if err := c.addK8SRepositoryAndUpdate(); err != nil {
+		return err
+	}
 
 	//Get the exact version string from OS repo, so that it can search and install.
-	chkKubeadmVer := fmt.Sprintf("yum list %s| grep %s |awk '{print $2}' | cut -d'-' -f 1", k8sComponent, c.KubernetesVersion)
+	chkKubeadmVer := fmt.Sprintf("yum list --showduplicates --disableexcludes=kubernetes %s| grep %s |awk '{print $2}' | cut -d'-' -f 1", k8sComponent, c.KubernetesVersion)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", chkKubeadmVer)}
 	cmd.ExecuteCommand()
 	stdout := cmd.GetStdOutput()
@@ -381,9 +403,18 @@ func (c *CentOS) InstallK8S() error {
 	fmt.Println("Expected K8S('", k8sComponent, "') version to install is", stdout)
 
 	//Install respective K8S components based on where it is being installed
-	k8sInst := fmt.Sprintf("yum install kubeadm-%s kubelet-%s kubectl-%s --disableexcludes=kubernetes", stdout, stdout, stdout)
+	k8sInst := fmt.Sprintf("yum install -y kubeadm-%s kubelet-%s kubectl-%s --disableexcludes=kubernetes", stdout, stdout, stdout)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
 	err := cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	enaKubelet := fmt.Sprintf("systemctl enable --now kubelet")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", enaKubelet)}
+	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
@@ -397,6 +428,7 @@ func (c *CentOS) InstallK8S() error {
 
 //StartK8Scluster will do "kubeadm init" and cluster will be started
 func (c *CentOS) StartK8Scluster() error {
+	fmt.Println("StartK8sCluster")
 	var install bool
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "kubeadm version")}
 	cmd.ExecuteCommand()
@@ -407,7 +439,7 @@ func (c *CentOS) StartK8Scluster() error {
 		install = false
 	}
 	if install == true {
-		cmd := &Command{Cmd: exec.Command("sh", "-c", "swapoff -a && kubeadm init")}
+		cmd := &Command{Cmd: exec.Command("sh", "-c", "swapoff -a && kubeadm init --pod-network-cidr 10.244.0.0/16")}
 		err := cmd.ExecuteCmdShowOutput()
 		errout := cmd.GetStdErr()
 		if err != nil || errout != "" {
@@ -444,7 +476,8 @@ func (c *CentOS) InstallKubeEdge() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
 	}
 
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "dpkg --print-architecture")}
+	//cmd = &Command{Cmd: exec.Command("sh", "-c", "dpkg --print-architecture")}
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "arch")}
 	cmd.ExecuteCommand()
 	arch := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
@@ -458,6 +491,9 @@ func (c *CentOS) InstallKubeEdge() error {
 	//proper download has happened and then only proceed further.
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
+	if arch == "x86_64" {
+		arch = "amd64"
+	}
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", c.KubeEdgeVersion, arch)
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.txt", c.KubeEdgeVersion, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)

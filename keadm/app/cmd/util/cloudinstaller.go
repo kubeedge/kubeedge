@@ -25,6 +25,7 @@ type KubeCloudInstTool struct {
 func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
+	fmt.Println("beforeinstallkubeedge")
 
 	err := cu.InstallKubeEdge()
 	if err != nil {
@@ -32,16 +33,19 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	err = cu.generateCertificates()
+	fmt.Println("generateCertificates")
 	if err != nil {
 		return err
 	}
 
 	err = cu.tarCertificates()
+	fmt.Println("tarCertificates")
 	if err != nil {
 		return err
 	}
 
 	err = cu.StartK8Scluster()
+	fmt.Println("StartK8Scluster")
 	if err != nil {
 		return err
 	}
