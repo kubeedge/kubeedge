@@ -28,16 +28,16 @@ import (
 
 var (
 	resetLongDescription = `
-kubeedge reset command can be executed in both cloud and edge node
+keadm reset command can be executed in both cloud and edge node
 In cloud node it shuts down the cloud processes of KubeEdge
 In edge node it shuts down the edge processes of KubeEdge
 `
 	resetExample = `
 For cloud node:
-kubeedge reset
+keadm reset
 
 For edge node:
-kubeedge reset --k8sserverip 10.20.30.40:8080
+keadm reset --k8sserverip 10.20.30.40:8080
 `
 )
 

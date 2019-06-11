@@ -28,7 +28,7 @@ import (
 var (
 	keadmLongDescription = `
     ┌──────────────────────────────────────────────────────────┐
-    │ KubeEdge                                                 │
+    │ KEADM                                                    │
     │ Easily bootstrap a KubeEdge cluster                      │
     │                                                          │
     │ Please give us feedback at:                              │
@@ -45,13 +45,13 @@ var (
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node# sudo kubeedge init                           │
+    │ master node (on the cloud)# sudo keadm init              │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node# sudo kubeedge join <flags>                    │
+    │ worker node (at the edge)# sudo keadm join <flags>       │
     └──────────────────────────────────────────────────────────┘
 
     You can then repeat the second step on, as many other machines as you like.
@@ -62,8 +62,8 @@ var (
 func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	cmds := &cobra.Command{
-		Use:     "kubedge",
-		Short:   "kubedge: Bootstrap KubeEdge cluster",
+		Use:     "keadm",
+		Short:   "keadm: Bootstrap KubeEdge cluster",
 		Long:    keadmLongDescription,
 		Example: keadmExample,
 	}

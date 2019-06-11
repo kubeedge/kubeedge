@@ -29,13 +29,13 @@ Hence proposing the following commands for KubeEdge installation process.
 
 For cloud, commands shall be:
 
-- `kubeedge init`
-- `kubeedge reset`
+- `keadm init`
+- `keadm reset`
 
 For edge, commands shall be:
 
-- `kubeedge join`
-- `kubeedge reset`
+- `keadm join`
+- `keadm reset`
 
 **NOTE:**
 `node` key is used for edge component in the command, for superficial reasons. Because `kubeedge edge init` had `edge` used twice and didn't sound nice.
@@ -57,7 +57,7 @@ For edge, commands shall be:
 
 ```
     ┌──────────────────────────────────────────────────────────┐
-    │ KubeEdge                                                 │
+    │ KEADM                                                    │
     │ Easily bootstrap a KubeEdge cluster                      │
     │                                                          │
     │ Please give us feedback at:                              │
@@ -77,13 +77,13 @@ Examples:
     ┌──────────────────────────────────────────────────────────┐
     │ On the first machine:                                    │
     ├──────────────────────────────────────────────────────────┤
-    │ cloud-node#  kubeedge init <options>                 │
+    │ master node (on the cloud)#  keadm init <options>        │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐
     │ On the second machine:                                   │
     ├──────────────────────────────────────────────────────────┤
-    │ edge-node#  kubeedge join <options>                  │
+    │ worker node (at the edge)#  keadm join <options>         │
     └──────────────────────────────────────────────────────────┘
 
     You can then repeat the second step on as many other machines as you like.
@@ -102,20 +102,20 @@ Flags:
 Use "kubeedge [command] --help" for more information about a command.
 ```
 
-### kubeedge init --help
+### keadm init --help
 
 ```
-kubeedge init command bootstraps KubeEdge's cloud component.
+keadm init command bootstraps KubeEdge's cloud component.
 It checks if the pre-requisites are installed already,
 if not installed, this command will help in download,
 installation and execution on the host.
 
 Usage:
-  kubeedge init [flags]
+  keadm init [flags]
 
 Examples:
 
-kubeedge init
+keadm init
 
 
 Flags:
@@ -126,23 +126,23 @@ Flags:
 
 ```
 
-### kubeedge reset --help
+### keadm reset --help
 
 ```
-kubeedge reset command can be executed in both cloud and edge node
+keadm reset command can be executed in both cloud and edge node
 In cloud node it shuts down the cloud processes of KubeEdge
 In edge node it shuts down the edge processes of KubeEdge
 
 Usage:
-  kubeedge reset [flags]
+keadm reset [flags]
 
 Examples:
 
 For cloud node:
-kubeedge reset
+keadm reset
 
 For edge node:
-kubeedge reset --k8sserverip 10.20.30.40:8080
+keadm reset --k8sserverip 10.20.30.40:8080
 
 
 Flags:
@@ -151,11 +151,11 @@ Flags:
   
 ```
 
-### kubeedge join --help
+### keadm join --help
 
 ```
 
-"kubeedge join" command bootstraps KubeEdge's edge component.
+"keadm join" command bootstraps KubeEdge's edge component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
@@ -164,16 +164,16 @@ further instructions and forward telemetry data from
 devices to cloud
 
 Usage:
-  kubeedge join [flags]
+  keadm join [flags]
 
 Examples:
 
-kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
   - For this command --edgecontrollerip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
     then default values will be used.
@@ -193,9 +193,9 @@ Flags:
 
 ## Explaining the commands
 
-### Cloud commands
+### Master Node (on the Cloud) commands
 
-`kubeedge init`
+`keadm init`
   - What is it?
      * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
    
@@ -208,7 +208,7 @@ Flags:
     3. Generate certificates using openssl and save the certs in a predefined static path.
     It will also compress the folder and display on the terminal so that user can pick it up and transfer it to edge node (VM/host) manually.
     4. It will update the certificate information in `controller.yaml`
-    5. Start `kubeadm init`.
+    5. Start `keadm init`.
 
        **NOTE:** Issues encountered while performing kubeadm init need to be resolved by the user
     6. Update `/etc/kubernetes/manifests/kube-apiserver.yaml` with below information
@@ -219,7 +219,7 @@ Flags:
 
     7. start edge-controller
 
-`kubeedge reset`
+`keadm reset`
   - What is it? 
     * This command will be responsible to bring down KubeEdge cloud components edge-controller and call `kubeadm reset` (to stop K8S)
 
@@ -228,9 +228,9 @@ Flags:
     2. Kill `edge-controller` process
     3. Execute `kubeadm reset`
 
-### Edge (node) commands
+### Worker Node (at the Edge) commands
 
-`kubeedge join`
+`keadm join`
   - What is it? 
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edge_core) and start it
 
@@ -252,7 +252,7 @@ Flags:
 
     8. start edge_core
 
-`kubeedge reset`
+`keadm reset`
 
   - What is it?
     * This command will be responsible to bring down KubeEdge edge component (edge_core)

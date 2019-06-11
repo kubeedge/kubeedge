@@ -29,7 +29,7 @@ import (
 
 var (
 	edgeJoinLongDescription = `
-"kubeedge join" command bootstraps KubeEdge's edge component.
+"keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
@@ -38,12 +38,12 @@ further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
-kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
   - For this command --edgecontrollerip flag is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
 - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
   then default versions shown in help will be choosen. 
