@@ -30,6 +30,9 @@ var SecretEventBuffer int
 // ServiceEventBuffer is the size of channel which save service event from k8s
 var ServiceEventBuffer int
 
+// EndpointsEventBuffer is the size of channel which save endpoints event from k8s
+var EndpointsEventBuffer int
+
 func init() {
 	if psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt(); err != nil {
 		UpdatePodStatusBuffer = constants.DefaultUpdatePodStatusBuffer
@@ -87,4 +90,10 @@ func init() {
 	}
 	log.LOGGER.Infof("Update controller.buffer.service-event: %d", ServiceEventBuffer)
 
+	if epb, err := config.CONFIG.GetValue("controller.buffer.endpoints-event").ToInt(); err != nil {
+		EndpointsEventBuffer = constants.DefaultEndpointsEventBuffer
+	} else {
+		EndpointsEventBuffer = epb
+	}
+	log.LOGGER.Infof("Update controller.buffer.endpoint-event: %d", EndpointsEventBuffer)
 }

@@ -18,6 +18,8 @@ type LocationCache struct {
 	secretNode sync.Map
 	// Services is an array of services
 	Services []v1.Service
+	// Endpoints is an array of endpoints
+	Endpoints []v1.Endpoints
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -161,6 +163,24 @@ func (lc *LocationCache) DeleteService(service v1.Service) {
 	for i, svc := range lc.Services {
 		if svc.Name == service.Name {
 			lc.Services = append(lc.Services[:i], lc.Services[i+1:]...)
+			break
+		}
+	}
+}
+
+func (lc *LocationCache) AddEndpoints(endpoints v1.Endpoints) {
+	lc.Endpoints = append(lc.Endpoints, endpoints)
+}
+
+func (lc *LocationCache) UpdateEndpoints(endpoints v1.Endpoints) {
+	lc.DeleteEndpoints(endpoints)
+	lc.AddEndpoints(endpoints)
+}
+
+func (lc *LocationCache) DeleteEndpoints(endpoints v1.Endpoints) {
+	for i, eps := range lc.Endpoints {
+		if eps.Name == eps.Name {
+			lc.Endpoints = append(lc.Endpoints[:i], lc.Endpoints[i+1:]...)
 			break
 		}
 	}
