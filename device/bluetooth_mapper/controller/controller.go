@@ -80,7 +80,7 @@ func (c *ControllerConfig) Start() {
 	<-watcher.DeviceConnected
 	for _, action := range c.ActionManager.Actions {
 		if action.PerformImmediately {
-			action.PerformOperation()
+			action.PerformOperation(c.Converter.DataRead)
 		}
 	}
 
@@ -195,7 +195,7 @@ func (c *ControllerConfig) handleActionCreateMessage(client MQTT.Client, message
 		}
 		configuration.Config.ActionManager = c.ActionManager
 		if newAction.PerformImmediately {
-			newAction.PerformOperation()
+			newAction.PerformOperation(c.Converter.DataRead)
 		}
 	}
 }
