@@ -36,23 +36,21 @@ const (
 type EnvConfigurationSource struct {
 	Configurations map[string]interface{}
 	sync.RWMutex
+	priority int
 }
 
 var _ core.ConfigSource = &EnvConfigurationSource{}
 
-var envConfigSource *EnvConfigurationSource
-
 //NewEnvConfigurationSource configures a new environment configuration
 func NewEnvConfigurationSource() core.ConfigSource {
-	if envConfigSource == nil {
-		envConfigSource = new(EnvConfigurationSource)
-		config, err := envConfigSource.pullConfigurations()
-		if err != nil {
-			openlogging.GetLogger().Error("failed to initialize environment configurations: " + err.Error())
-			return envConfigSource
-		}
-		envConfigSource.Configurations = config
+	envConfigSource := new(EnvConfigurationSource)
+	envConfigSource.priority = envVariableSourcePriority
+	config, err := envConfigSource.pullConfigurations()
+	if err != nil {
+		openlogging.GetLogger().Error("failed to initialize environment configurations: " + err.Error())
+		return envConfigSource
 	}
+	envConfigSource.Configurations = config
 
 	return envConfigSource
 }
@@ -95,8 +93,13 @@ func (confSrc *EnvConfigurationSource) GetConfigurationByKey(key string) (interf
 }
 
 //GetPriority returns priority of environment configuration
-func (*EnvConfigurationSource) GetPriority() int {
-	return envVariableSourcePriority
+func (confSrc *EnvConfigurationSource) GetPriority() int {
+	return confSrc.priority
+}
+
+//SetPriority custom priority
+func (confSrc *EnvConfigurationSource) SetPriority(priority int) {
+	confSrc.priority = priority
 }
 
 //GetSourceName returns the name of environment source
