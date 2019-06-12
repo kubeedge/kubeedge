@@ -10,17 +10,15 @@ import (
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
 	// EdgeNodes is a map, key is nodeName, value is Status
-	EdgeNodes map[string]string
-	// EdgeNodesLock is lock for edgeNodes
-	EdgeNodesLock sync.RWMutex
+	EdgeNodes sync.Map
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
 	secretNode sync.Map
-	// Services is an array of services
-	Services []v1.Service
-	// Endpoints is an array of endpoints
-	Endpoints []v1.Endpoints
+	// services is a map, key is namespace/serviceName, value is v1.Service
+	services sync.Map
+	// endpoints is a map, key is namespace/endpointsName, value is v1.endpoints
+	endpoints sync.Map
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -118,25 +116,20 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 
 //IsEdgeNode checks weather node is edge node or not
 func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
-	lc.EdgeNodesLock.RLock()
-	defer lc.EdgeNodesLock.RUnlock()
-	_, ok := lc.EdgeNodes[nodeName]
+	_, ok := lc.EdgeNodes.Load(nodeName)
 	return ok
 }
 
 //
 func (lc *LocationCache) GetNodeStatus(nodeName string) (string, bool) {
-	lc.EdgeNodesLock.RLock()
-	defer lc.EdgeNodesLock.RUnlock()
-	status, ok := lc.EdgeNodes[nodeName]
+	value, ok := lc.EdgeNodes.Load(nodeName)
+	status, ok := value.(string)
 	return status, ok
 }
 
 // UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
 func (lc *LocationCache) UpdateEdgeNode(nodeName string, status string) {
-	lc.EdgeNodesLock.Lock()
-	defer lc.EdgeNodesLock.Unlock()
-	lc.EdgeNodes[nodeName] = status
+	lc.EdgeNodes.Store(nodeName, status)
 }
 
 // DeleteConfigMap from cache
@@ -151,43 +144,45 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 
 // DeleteNode from cache
 func (lc *LocationCache) DeleteNode(nodeName string) {
-	lc.EdgeNodesLock.Lock()
-	defer lc.EdgeNodesLock.Unlock()
-	delete(lc.EdgeNodes, nodeName)
+	lc.EdgeNodes.Delete(nodeName)
 }
 
-func (lc *LocationCache) AddService(service v1.Service) {
-	lc.Services = append(lc.Services, service)
-}
-
-func (lc *LocationCache) UpdateService(service v1.Service) {
-	lc.DeleteService(service)
-	lc.AddService(service)
+func (lc *LocationCache) AddOrUpdateService(service v1.Service) {
+	lc.services.Store(fmt.Sprintf("%s/%s", service.Namespace, service.Name), service)
 }
 
 func (lc *LocationCache) DeleteService(service v1.Service) {
-	for i, svc := range lc.Services {
-		if svc.Name == service.Name {
-			lc.Services = append(lc.Services[:i], lc.Services[i+1:]...)
-			break
+	lc.services.Delete(fmt.Sprintf("%s/%s", service.Namespace, service.Name))
+}
+
+func (lc *LocationCache) GetAllServices() []v1.Service {
+	services := []v1.Service{}
+	lc.services.Range(func(key interface{}, value interface{}) bool {
+		svc, ok := value.(v1.Service)
+		if ok {
+			services = append(services, svc)
 		}
-	}
+		return true
+	})
+	return services
 }
 
-func (lc *LocationCache) AddEndpoints(endpoints v1.Endpoints) {
-	lc.Endpoints = append(lc.Endpoints, endpoints)
-}
-
-func (lc *LocationCache) UpdateEndpoints(endpoints v1.Endpoints) {
-	lc.DeleteEndpoints(endpoints)
-	lc.AddEndpoints(endpoints)
+func (lc *LocationCache) AddOrUpdateEndpoints(endpoints v1.Endpoints) {
+	lc.endpoints.Store(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name), endpoints)
 }
 
 func (lc *LocationCache) DeleteEndpoints(endpoints v1.Endpoints) {
-	for i, eps := range lc.Endpoints {
-		if eps.Name == eps.Name {
-			lc.Endpoints = append(lc.Endpoints[:i], lc.Endpoints[i+1:]...)
-			break
+	lc.endpoints.Delete(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name))
+}
+
+func (lc *LocationCache) GetAllEndpoints() []v1.Endpoints {
+	endpoints := []v1.Endpoints{}
+	lc.endpoints.Range(func(key interface{}, value interface{}) bool {
+		eps, ok := value.(v1.Endpoints)
+		if ok {
+			endpoints = append(endpoints, eps)
 		}
-	}
+		return true
+	})
+	return endpoints
 }
