@@ -13,7 +13,7 @@ last-updated: 2019-05-08
 ## Abstract
 In order to enhance cloud and edge communication efficiency, we introduced the [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol for cloudhub and edgehub.
 It is suggested that cloudHub should support both websocket and QUIC protocol access at the same time. And the edgehub can choose one of the protocols to access to the cloudhub.
-QUIC is a new transport which reduces latency compared to that of TCP. On the surface, QUIC is very similar to TCP+[TLS](http://technet.microsoft.com/en-us/library/cc785811.aspx)+HTTP/2 implemented on [UDP](http://c3lab.poliba.it/images/3/3b/QUIC_SAC15.pdf). Because TCP is implemented in operating system kernels, and middlebox firmware,making significant changes to TCP is next to impossible.However,since QUIC is built on top of UDP,it suffers from no such limitations.
+QUIC is a new transport which reduces latency compared to that of TCP. On the surface, QUIC is very similar to TCP+[TLS](http://technet.microsoft.com/en-us/library/cc785811.aspx)+HTTP/2 implemented on [UDP](http://c3lab.poliba.it/images/3/3b/QUIC_SAC15.pdf). Because TCP is implemented in operating system kernels, and middlebox firmware, making significant changes to TCP is next to impossible. However, since QUIC is built on top of UDP, it suffers from no such limitations.
 Key features of QUIC:
 
 1. [Dramatically reduced connection establishment time](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7867726)
@@ -26,7 +26,7 @@ Key features of QUIC:
 <img src="../images/proposals/quic-connection.png">
 
 ## Motivation
-In edge scenarios , network connectivity could be unstable . With TCP + TLS , it becomes an overhead to establish / re-establish connections frequently due to intermittent networks. In such scenarios, QUIC with its zero RTT can help reduce this overhead and re-establish broken connections faster.
+In edge scenarios, network connectivity could be unstable. With TCP + TLS, it becomes an overhead to establish / re-establish connections frequently due to intermittent networks. In such scenarios, QUIC with its zero RTT can help reduce this overhead and re-establish broken connections faster.
 
 ## Architecture
 <img src="../images/proposals/quic-design.png">
