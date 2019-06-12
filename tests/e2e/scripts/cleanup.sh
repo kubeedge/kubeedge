@@ -71,6 +71,7 @@ cleanup_files(){
     sudo rm -rf tests/e2e/rootCA.crt
     sudo rm -rf tests/e2e/rootCA.key
     sudo rm -rf tests/e2e/rootCA.srl
+    sudo rm -rf tests/e2e/device_crd/device_crd.test
 }
 
 if [ "deployment" = ${setuptype} ]; then

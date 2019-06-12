@@ -1948,6 +1948,7 @@
     "github.com/opencontainers/go-digest",
     "github.com/paypal/gatt",
     "github.com/paypal/gatt/examples/option",
+    "github.com/pkg/errors",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",

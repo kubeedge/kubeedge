@@ -52,6 +52,7 @@ cloud_lint:
 
 .PHONY: e2e_test
 e2e_test:
+	bash tests/e2e/scripts/execute.sh device_crd
 	bash tests/e2e/scripts/execute.sh
 
 .PHONY: performance_test

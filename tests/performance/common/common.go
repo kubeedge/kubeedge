@@ -160,7 +160,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 	Eventually(func() int {
 		count := 0
 		for _, configmap := range NodeInfo {
-			statusCode := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
+			statusCode, _ := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
 			if statusCode == 404 {
 				count++
 			}

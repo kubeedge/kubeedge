@@ -30,6 +30,7 @@ make #builds cloud and edge_core components
 sleep 2s
 PWD=${curpath}/tests/e2e
 sudo rm -rf $PWD/deployment/deployment.test
+sudo rm -rf $PWD/device_crd/device_crd.test
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
