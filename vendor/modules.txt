@@ -1,0 +1,85 @@
+# github.com/cenkalti/backoff v2.0.0+incompatible
+github.com/cenkalti/backoff
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
+# github.com/go-chassis/foundation v0.0.0-20190203091418-304855ea28bf
+github.com/go-chassis/foundation/security
+# github.com/go-chassis/go-archaius v0.14.0
+github.com/go-chassis/go-archaius
+github.com/go-chassis/go-archaius/core
+github.com/go-chassis/go-archaius/core/cast
+github.com/go-chassis/go-archaius/core/config-manager
+github.com/go-chassis/go-archaius/core/event-system
+github.com/go-chassis/go-archaius/sources/commandline-source
+github.com/go-chassis/go-archaius/sources/configcenter
+github.com/go-chassis/go-archaius/sources/enviromentvariable-source
+github.com/go-chassis/go-archaius/sources/file-source
+github.com/go-chassis/go-archaius/sources/memory-source
+# github.com/go-chassis/go-chassis v1.4.0
+github.com/go-chassis/go-chassis/core/invocation
+github.com/go-chassis/go-chassis/core/common
+github.com/go-chassis/go-chassis/core/handler
+github.com/go-chassis/go-chassis/pkg/runtime
+github.com/go-chassis/go-chassis/pkg/util/tags
+github.com/go-chassis/go-chassis/control
+github.com/go-chassis/go-chassis/core/client
+github.com/go-chassis/go-chassis/core/config
+github.com/go-chassis/go-chassis/core/config/model
+github.com/go-chassis/go-chassis/core/fault
+github.com/go-chassis/go-chassis/core/lager
+github.com/go-chassis/go-chassis/core/loadbalancer
+github.com/go-chassis/go-chassis/core/qpslimiter
+github.com/go-chassis/go-chassis/core/registry
+github.com/go-chassis/go-chassis/core/router
+github.com/go-chassis/go-chassis/core/tracing
+github.com/go-chassis/go-chassis/pkg/backoff
+github.com/go-chassis/go-chassis/pkg/circuit
+github.com/go-chassis/go-chassis/pkg/string
+github.com/go-chassis/go-chassis/pkg/util
+github.com/go-chassis/go-chassis/session
+github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix
+github.com/go-chassis/go-chassis/core/tls
+github.com/go-chassis/go-chassis/core/config/schema
+github.com/go-chassis/go-chassis/pkg/util/fileutil
+github.com/go-chassis/go-chassis/pkg/util/iputil
+github.com/go-chassis/go-chassis/core/metadata
+github.com/go-chassis/go-chassis/healthz/client
+github.com/go-chassis/go-chassis/third_party/forked/k8s.io/apimachinery/pkg/util/sets
+github.com/go-chassis/go-chassis/core/router/weightpool
+github.com/go-chassis/go-chassis/pkg/util/httputil
+github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/metric_collector
+github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/rolling
+github.com/go-chassis/go-chassis/security/common
+github.com/go-chassis/go-chassis/client/rest
+github.com/go-chassis/go-chassis/security
+github.com/go-chassis/go-chassis/security/plugins/plain
+github.com/go-chassis/go-chassis/pkg/goplugin
+# github.com/go-chassis/go-chassis-config v0.6.0
+github.com/go-chassis/go-chassis-config
+# github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2
+github.com/go-chassis/paas-lager
+github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager
+github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager/color
+# github.com/go-mesh/openlogging v0.0.0-20181205082104-3d418c478b2d
+github.com/go-mesh/openlogging
+# github.com/gorilla/websocket v1.4.0
+github.com/gorilla/websocket
+# github.com/hashicorp/go-version v1.0.0
+github.com/hashicorp/go-version
+# github.com/opentracing/opentracing-go v1.0.2
+github.com/opentracing/opentracing-go
+github.com/opentracing/opentracing-go/ext
+github.com/opentracing/opentracing-go/log
+# github.com/patrickmn/go-cache v2.1.0+incompatible
+github.com/patrickmn/go-cache
+# github.com/spf13/cast v1.2.0
+github.com/spf13/cast
+# go.uber.org/ratelimit v0.0.0-20180316092928-c15da0234277
+go.uber.org/ratelimit
+go.uber.org/ratelimit/internal/clock
+# golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
+golang.org/x/net/context
+# golang.org/x/sys v0.0.0-20181116152217-5ac8a444bdc5
+golang.org/x/sys/unix
+# gopkg.in/yaml.v2 v2.2.1
+gopkg.in/yaml.v2
