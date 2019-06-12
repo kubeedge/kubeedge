@@ -212,7 +212,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 								break
 							}
 							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-							msg.Content = dc.lc.Services
+							msg.Content = dc.lc.GetAllServices()
 							if err := dc.messageLayer.Send(*msg); err != nil {
 								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 							} else {
@@ -228,7 +228,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 								break
 							}
 							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-							msg.Content = dc.lc.Endpoints
+							msg.Content = dc.lc.GetAllEndpoints()
 							if err := dc.messageLayer.Send(*msg); err != nil {
 								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 							} else {
@@ -265,10 +265,10 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 			}
 			switch e.Type {
 			case watch.Added:
-				dc.lc.AddService(*svc)
+				dc.lc.AddOrUpdateService(*svc)
 				operation = model.InsertOperation
 			case watch.Modified:
-				dc.lc.UpdateService(*svc)
+				dc.lc.AddOrUpdateService(*svc)
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				dc.lc.DeleteService(*svc)
@@ -280,13 +280,17 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 			}
 
 			// send to all nodes
-			dc.lc.EdgeNodesLock.RLock()
-			for nodeName, _ := range dc.lc.EdgeNodes {
+			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
+				nodeName, ok := key.(string)
+				if !ok {
+					log.LOGGER.Warnf("Failed to assert key to sting")
+					return true
+				}
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
 					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
-					break
+					return true
 				}
 				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 				msg.Content = svc
@@ -295,8 +299,8 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 				} else {
 					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
-			}
-			dc.lc.EdgeNodesLock.RUnlock()
+				return true
+			})
 		case <-stop:
 			log.LOGGER.Infof("Stop sync services")
 			running = false
@@ -317,28 +321,32 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 			}
 			switch e.Type {
 			case watch.Added:
-				dc.lc.AddEndpoints(*eps)
+				dc.lc.AddOrUpdateEndpoints(*eps)
 				operation = model.InsertOperation
 			case watch.Modified:
-				dc.lc.UpdateEndpoints(*eps)
+				dc.lc.AddOrUpdateEndpoints(*eps)
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				dc.lc.DeleteEndpoints(*eps)
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
-				log.LOGGER.Warnf("Endpoints event type: %s unsupported", e.Type)
+				log.LOGGER.Warnf("endpoints event type: %s unsupported", e.Type)
 				continue
 			}
 
 			// send to all nodes
-			dc.lc.EdgeNodesLock.RLock()
-			for nodeName, _ := range dc.lc.EdgeNodes {
+			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
+				nodeName, ok := key.(string)
+				if !ok {
+					log.LOGGER.Warnf("Failed to assert key to sting")
+					return true
+				}
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
 				if err != nil {
 					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
-					break
+					return true
 				}
 				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 				msg.Content = eps
@@ -347,8 +355,8 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 				} else {
 					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
-			}
-			dc.lc.EdgeNodesLock.RUnlock()
+				return true
+			})
 		case <-stop:
 			log.LOGGER.Infof("Stop sync endpoints")
 			running = false
@@ -443,7 +451,6 @@ func (dc *DownstreamController) initLocating() error {
 // NewDownstreamController create a DownstreamController from config
 func NewDownstreamController() (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
-	lc.EdgeNodes = make(map[string]string)
 
 	cli, err := utils.KubeClient()
 	if err != nil {
