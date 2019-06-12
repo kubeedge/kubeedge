@@ -60,6 +60,11 @@ required = [
   version = "kubernetes-1.13.2"
 
 [[override]]
+  name = "github.com/kubeedge/beehive"
+  revision = "7a6bf3b7fd9ff361a9bd4d1f253b4b58c0fd5747"
+
+
+[[override]]
   name = "github.com/astaxie/beego"
   version = "v1.9.2"
 
