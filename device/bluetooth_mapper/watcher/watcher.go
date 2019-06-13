@@ -49,8 +49,8 @@ type Attribute struct {
 }
 
 //Initiate initiates the watcher module
-func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, deviceId string, actions []actionmanager.Action, converter dataconverter.Converter) {
-	deviceID = deviceId
+func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, deviceID string, actions []actionmanager.Action, converter dataconverter.Converter) {
+	deviceID = deviceID
 	deviceName = nameOfDevice
 	actionManager = actions
 	dataConverter = converter

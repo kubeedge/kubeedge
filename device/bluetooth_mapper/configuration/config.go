@@ -31,20 +31,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//CONFIG_FILE_PATH contains the location of the configuration file
-var CONFIG_FILE_PATH = "configuration/config.yaml"
+//ConfigFilePath contains the location of the configuration file
+var ConfigFilePath = "configuration/config.yaml"
 
-//CONFIG_MAP_PATH contains the location of the configuration file
-var CONFIG_MAP_PATH = "/opt/kubeedge/deviceProfile.json"
+//ConfigMapPath contains the location of the configuration file
+var ConfigMapPath = "/opt/kubeedge/deviceProfile.json"
 
 //Config is the global configuration used by all the modules of the mapper
 var Config *BLEConfig
 
 //Blutooth protocol name
 const (
-	Protocol_Name string = "BLUETOOTH"
-	READWRITE     string = "ReadWrite"
-	READ          string = "ReadOnly"
+	ProtocolName string = "BLUETOOTH"
+	READWRITE    string = "ReadWrite"
+	READ         string = "ReadOnly"
 )
 
 //BLEConfig is the main structure that stores the configuration information read from both the config file as well as the config map
@@ -90,13 +90,13 @@ type Mqtt struct {
 
 //Device structure contains the device specific configurations
 type Device struct {
-	Id   string `yaml:"id"`
+	ID   string `yaml:"id"`
 	Name string `yaml:"name"`
 }
 
 //ReadFromConfigFile is used to load the information from the configuration file
 func (readConfigFile *ReadConfigFile) ReadFromConfigFile() error {
-	yamlFile, err := ioutil.ReadFile(CONFIG_FILE_PATH)
+	yamlFile, err := ioutil.ReadFile(ConfigFilePath)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (b *BLEConfig) Load() error {
 	// Assign device information obtained from config file
 	for _, device := range readConfigMap.DeviceInstances {
 		if strings.ToUpper(device.Model) == strings.ToUpper(readConfigFile.DeviceModelName) {
-			b.Device.Id = device.ID
+			b.Device.ID = device.ID
 			b.Device.Name = device.Model
 		}
 	}
@@ -136,7 +136,7 @@ func (b *BLEConfig) Load() error {
 		action.PerformImmediately = actionConfig.PerformImmediately
 
 		for _, propertyVisitor := range readConfigMap.PropertyVisitors {
-			if strings.ToUpper(propertyVisitor.ModelName) == strings.ToUpper(b.Device.Name) && strings.ToUpper(propertyVisitor.PropertyName) == strings.ToUpper(actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == Protocol_Name {
+			if strings.ToUpper(propertyVisitor.ModelName) == strings.ToUpper(b.Device.Name) && strings.ToUpper(propertyVisitor.PropertyName) == strings.ToUpper(actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == ProtocolName {
 				propertyVisitorBytes, err := json.Marshal(propertyVisitor.VisitorConfig)
 				if err != nil {
 					return errors.New("Error in marshalling data property visitor configuration: " + err.Error())
@@ -184,7 +184,7 @@ func (b *BLEConfig) Load() error {
 			if strings.ToUpper(deviceModel.Name) == strings.ToUpper(b.Device.Name) {
 				for _, property := range deviceModel.Properties {
 					if strings.ToUpper(property.Name) == strings.ToUpper(actionConfig.PropertyName) {
-						if property.AccessMode == READWRITE{
+						if property.AccessMode == READWRITE {
 							action.Operation.Action = "Write"
 							if strings.ToUpper(property.DataType) == "INT" {
 								value := string(int(property.DefaultValue.(float64)))
