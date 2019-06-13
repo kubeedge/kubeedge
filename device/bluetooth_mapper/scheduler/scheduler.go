@@ -64,7 +64,7 @@ type ScheduleResult struct {
 func (schedule *Schedule) ExecuteSchedule(actionManager []actionmanager.Action, dataConverter dataconverter.DataRead, deviceID string) {
 	glog.Infof("Executing schedule: %s", schedule.Name)
 	if schedule.OccurrenceLimit != 0 {
-		for iteration := 0; iteration < schedule.OccurrenceLimit; iteration += 1 {
+		for iteration := 0; iteration < schedule.OccurrenceLimit; iteration++ {
 			schedule.performScheduleOperation(actionManager, dataConverter, deviceID)
 		}
 	} else {

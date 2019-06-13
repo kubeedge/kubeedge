@@ -45,8 +45,8 @@ const (
 
 var topicMap = make(map[string]MQTT.MessageHandler)
 
-//ControllerConfig contains the configuration used by the controller
-type ControllerConfig struct {
+//Config contains the configuration used by the controller
+type Config struct {
 	Mqtt          configuration.Mqtt          `yaml:"mqtt"`
 	Device        configuration.Device        `yaml:"device"`
 	Watcher       watcher.Watcher             `yaml:"watcher"`
@@ -56,16 +56,16 @@ type ControllerConfig struct {
 }
 
 // initTopicMap initializes topics to their respective handler functions
-func (c *ControllerConfig) initTopicMap() {
-	topicMap[MapperTopicPrefix+c.Device.Id+WatcherTopicSuffix] = c.handleWatchMessage
-	topicMap[MapperTopicPrefix+c.Device.Id+SchedulerCreateTopicSuffix] = c.handleScheduleCreateMessage
-	topicMap[MapperTopicPrefix+c.Device.Id+SchedulerDeleteTopicSuffix] = c.handleScheduleDeleteMessage
-	topicMap[MapperTopicPrefix+c.Device.Id+ActionManagerCreateTopicSuffix] = c.handleActionCreateMessage
-	topicMap[MapperTopicPrefix+c.Device.Id+ActionManagerDeleteTopicSuffix] = c.handleActionDeleteMessage
+func (c *Config) initTopicMap() {
+	topicMap[MapperTopicPrefix+c.Device.ID+WatcherTopicSuffix] = c.handleWatchMessage
+	topicMap[MapperTopicPrefix+c.Device.ID+SchedulerCreateTopicSuffix] = c.handleScheduleCreateMessage
+	topicMap[MapperTopicPrefix+c.Device.ID+SchedulerDeleteTopicSuffix] = c.handleScheduleDeleteMessage
+	topicMap[MapperTopicPrefix+c.Device.ID+ActionManagerCreateTopicSuffix] = c.handleActionCreateMessage
+	topicMap[MapperTopicPrefix+c.Device.ID+ActionManagerDeleteTopicSuffix] = c.handleActionDeleteMessage
 }
 
 //Start starts the controller of the mapper
-func (c *ControllerConfig) Start() {
+func (c *Config) Start() {
 	c.initTopicMap()
 	helper.MqttConnect(c.Mqtt.Mode, c.Mqtt.InternalServer, c.Mqtt.Server)
 	subscribeAllTopics()
@@ -75,7 +75,7 @@ func (c *ControllerConfig) Start() {
 		glog.Fatalf("Failed to open device, err: %s\n", err)
 		return
 	}
-	go c.Watcher.Initiate(device, c.Device.Name, c.Device.Id, c.ActionManager.Actions, c.Converter)
+	go c.Watcher.Initiate(device, c.Device.Name, c.Device.ID, c.ActionManager.Actions, c.Converter)
 
 	<-watcher.DeviceConnected
 	for _, action := range c.ActionManager.Actions {
@@ -86,7 +86,7 @@ func (c *ControllerConfig) Start() {
 
 	for _, schedule := range c.Scheduler.Schedules {
 		helper.ControllerWg.Add(1)
-		go schedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
+		go schedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.ID)
 	}
 	helper.ControllerWg.Wait()
 }
@@ -102,7 +102,7 @@ func subscribeAllTopics() {
 }
 
 //handleWatchMessage is the MQTT handler function for changing watcher configuration at runtime
-func (c *ControllerConfig) handleWatchMessage(client MQTT.Client, message MQTT.Message) {
+func (c *Config) handleWatchMessage(client MQTT.Client, message MQTT.Message) {
 	newWatch := watcher.Watcher{}
 	err := json.Unmarshal(message.Payload(), &newWatch)
 	if err != nil {
@@ -115,7 +115,7 @@ func (c *ControllerConfig) handleWatchMessage(client MQTT.Client, message MQTT.M
 }
 
 //handleScheduleCreateMessage is the MQTT handler function for adding schedules at runtime
-func (c *ControllerConfig) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Message) {
+func (c *Config) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Message) {
 	newSchedules := []scheduler.Schedule{}
 	err := json.Unmarshal(message.Payload(), &newSchedules)
 	if err != nil {
@@ -139,12 +139,12 @@ func (c *ControllerConfig) handleScheduleCreateMessage(client MQTT.Client, messa
 			glog.Infof("New Schedule: %v", newSchedule)
 		}
 		configuration.Config.Scheduler = c.Scheduler
-		newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.Id)
+		newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.ID)
 	}
 }
 
 //handleScheduleDeleteMessage is the MQTT handler function for deleting schedules at runtime
-func (c *ControllerConfig) handleScheduleDeleteMessage(client MQTT.Client, message MQTT.Message) {
+func (c *Config) handleScheduleDeleteMessage(client MQTT.Client, message MQTT.Message) {
 	schedulesToBeDeleted := []scheduler.Schedule{}
 	err := json.Unmarshal(message.Payload(), &schedulesToBeDeleted)
 	if err != nil {
@@ -170,7 +170,7 @@ func (c *ControllerConfig) handleScheduleDeleteMessage(client MQTT.Client, messa
 }
 
 //handleActionCreateMessage MQTT handler function for adding actions at runtime
-func (c *ControllerConfig) handleActionCreateMessage(client MQTT.Client, message MQTT.Message) {
+func (c *Config) handleActionCreateMessage(client MQTT.Client, message MQTT.Message) {
 	newActions := []actionmanager.Action{}
 	err := json.Unmarshal(message.Payload(), &newActions)
 	if err != nil {
@@ -201,7 +201,7 @@ func (c *ControllerConfig) handleActionCreateMessage(client MQTT.Client, message
 }
 
 //handleActionDeleteMessage MQTT handler function for deleting actions at runtime
-func (c *ControllerConfig) handleActionDeleteMessage(client MQTT.Client, message MQTT.Message) {
+func (c *Config) handleActionDeleteMessage(client MQTT.Client, message MQTT.Message) {
 	actionsToBeDeleted := []actionmanager.Action{}
 	err := json.Unmarshal(message.Payload(), &actionsToBeDeleted)
 	if err != nil {

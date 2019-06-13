@@ -122,7 +122,7 @@ type BluetoothOperations struct {
 
 //ReadFromConfigMap is used to load the information from the configmaps that are provided from the cloud
 func (deviceProfile *DeviceProfile) ReadFromConfigMap() error {
-	jsonFile, err := ioutil.ReadFile(CONFIG_MAP_PATH)
+	jsonFile, err := ioutil.ReadFile(ConfigMapPath)
 	if err != nil {
 		return err
 	}
