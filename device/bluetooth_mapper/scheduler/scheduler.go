@@ -95,7 +95,7 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 			schedule.Interval = defaultEventFrequency
 		}
 		if !actionExists {
-			glog.Error("Action %s does not exist. Exiting from schedule !!!", actionName)
+			glog.Errorf("Action %s does not exist. Exiting from schedule !!!", actionName)
 			break
 		}
 		time.Sleep(time.Duration(time.Duration(schedule.Interval) * time.Millisecond))

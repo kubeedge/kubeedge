@@ -49,8 +49,8 @@ type Attribute struct {
 }
 
 //Initiate initiates the watcher module
-func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, deviceID string, actions []actionmanager.Action, converter dataconverter.Converter) {
-	deviceID = deviceID
+func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, idOfDevice string, actions []actionmanager.Action, converter dataconverter.Converter) {
+	deviceID = idOfDevice
 	deviceName = nameOfDevice
 	actionManager = actions
 	dataConverter = converter
@@ -128,7 +128,7 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 			if helper.TwinResult.Twin[twinAttribute.Name].Expected != nil && ((helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) && helper.TwinResult.Twin[twinAttribute.Name].Expected != nil || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)) {
 				glog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
 				if helper.TwinResult.Twin[twinAttribute.Name].Actual == nil {
-					glog.Infof("%s  Actual Value: %s", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
+					glog.Infof("%s  Actual Value: %v", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
 				} else {
 					glog.Infof("%s Actual Value: %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)
 				}
