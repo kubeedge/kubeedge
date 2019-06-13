@@ -551,14 +551,16 @@ func (c *CentOS) InstallKubeEdge() error {
 	}
 
 SKIPDOWNLOADAND:
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
+	//	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
+	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s ", KubeEdgePath, KubeEdgePath, filename)
+	fmt.Println("KubeEdge kubeedgepath", KubeEdgePath)
+	fmt.Println(untarFileAndMove)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", untarFileAndMove)}
-	err = cmd.ExecuteCmdShowOutput()
+	cmd.ExecuteCommand()
 	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
+	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
-	fmt.Println(cmd.GetStdOutput())
 
 	return nil
 }
@@ -566,13 +568,19 @@ SKIPDOWNLOADAND:
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edge_core with logs being captured
 func (c *CentOS) RunEdgeCore() error {
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+	binExec := fmt.Sprintf("chmod +x %skubeedge/edge/%s && nohup %skubeedge/edge/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgePath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	//cmd.ExecuteCommand()
+	err := cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
