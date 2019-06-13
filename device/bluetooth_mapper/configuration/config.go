@@ -44,7 +44,7 @@ var Config *BLEConfig
 const (
 	Protocol_Name string = "BLUETOOTH"
 	READWRITE     string = "ReadWrite"
-	READ          string = "Read"
+	READ          string = "ReadOnly"
 )
 
 //BLEConfig is the main structure that stores the configuration information read from both the config file as well as the config map
