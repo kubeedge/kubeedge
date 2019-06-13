@@ -31,7 +31,10 @@ cd ../
 cat >config.json<<END
 {
         "image_url": ["nginx", "hello-world"],
-        "k8smasterforkubeedge":"http://$MASTER_IP:12418"
+        "k8smasterforkubeedge":"http://$MASTER_IP:12418",
+         "dockerhubusername":"user",
+         "dockerhubpassword":"password",
+         "mqttendpoint":"tcp://127.0.0.1:1884"
 }
 END
 
@@ -41,5 +44,10 @@ if [ $# -eq 0 ]
     ./deployment/deployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
     ./edgesite/edgesite.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 else
+if compilemodule=="bluetooth"
+then
+    ./mapper/bluetooth/bluetooth.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+else
     ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+fi
 fi
