@@ -27,6 +27,12 @@ import (
 
 const downloadRetryTimes int = 3
 
+// Ubuntu releases
+const (
+	UbuntuXenial = "xenial"
+	UbuntuBionic = "bionic"
+)
+
 //UbuntuOS struct objects shall have information of the tools version to be installed
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
@@ -294,6 +300,14 @@ func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 		return fmt.Errorf("ubuntu dist version not available")
 	}
 	fmt.Println("Ubuntu distribution version is", distVersion)
+	distVersionForSuite := distVersion
+	if distVersion == UbuntuBionic {
+		// No bionic-specific version is available on apt.kubernetes.io.
+		// Use xenial version instead.
+		distVersionForSuite = UbuntuXenial
+	}
+	suite := fmt.Sprintf("kubernetes-%s", distVersionForSuite)
+	fmt.Println("Deb suite to use:", suite)
 
 	//Do an apt-get update
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "apt-get update")}
@@ -318,7 +332,7 @@ func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 	fmt.Println(curlOutput)
 
 	//Add K8S repo to local apt-get source.list
-	aptRepo := fmt.Sprintf("deb %s kubernetes-%s main", KubernetesDownloadURL, distVersion)
+	aptRepo := fmt.Sprintf("deb %s %s main", KubernetesDownloadURL, suite)
 	updtRepo := fmt.Sprintf("echo \"%s\" > /etc/apt/sources.list.d/kubernetes.list", aptRepo)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", updtRepo)}
 	cmd.ExecuteCommand()
