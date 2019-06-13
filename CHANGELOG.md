@@ -261,7 +261,7 @@ This is kubeedge's first release.
 1. A lightweight application engine running on edge node for managing user's application and monitoring node health.
 2. Supports Kubernetes API primitives, e.g. Node, Pod, Configmap, Secrets etc.
 3. Device twin and MQTT protocol for IoT devices talking to Edge node
-4. Local self-government via HTTP restful interfaces.
+4. Local self-governance via HTTP restful interfaces.
 5. Integrated with Huawei Cloud IEF service for node, device and application status updates.
 6. Edge node autonomy when its getting offline and recover post reconnection to Cloud.
 
