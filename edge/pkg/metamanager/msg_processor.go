@@ -16,6 +16,8 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+
+	"k8s.io/api/core/v1"
 )
 
 //Constants to check metamanager processes
@@ -82,6 +84,14 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 	}
 }
 
+func send2EdgeMesh(message *model.Message, sync bool, c *context.Context) {
+	if sync {
+		c.SendResp(*message)
+	} else {
+		c.Send(modules.EdgeMeshModuleName, *message)
+	}
+}
+
 func send2Cloud(message *model.Message, c *context.Context) {
 	c.Send2Group(sendModuleGroupName, *message)
 }
@@ -105,7 +115,7 @@ func parseResource(resource string) (string, string, string) {
 
 // is resource type require remote query
 func requireRemoteQuery(resType string) bool {
-	return resType == model.ResourceTypeConfigmap || resType == model.ResourceTypeSecret
+	return resType == model.ResourceTypeConfigmap || resType == model.ResourceTypeSecret || resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints
 }
 
 func isConnected() bool {
@@ -154,8 +164,15 @@ func (m *metaManager) processInsert(message model.Message) {
 		feedbackError(err, "Error to save meta to DB", message, m.context)
 		return
 	}
-	// Notify edged
-	send2Edged(&message, false, m.context)
+
+	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+		// Notify edgemesh
+		send2EdgeMesh(&message, false, m.context)
+	} else {
+		// Notify edged
+		send2Edged(&message, false, m.context)
+	}
+
 	resp := message.NewRespByMessage(&message, OK)
 	send2Cloud(resp, m.context)
 }
@@ -176,6 +193,69 @@ func (m *metaManager) processUpdate(message model.Message) {
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
+	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList {
+		switch resType {
+		case constants.ResourceTypeEndpointsList:
+			var epsList []v1.Endpoints
+			err = json.Unmarshal(content, &epsList)
+			if err != nil {
+				log.LOGGER.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
+				feedbackError(err, "Error to unmarshal", message, m.context)
+				return
+			}
+			for _, eps := range epsList {
+				data, err := json.Marshal(eps)
+				if err != nil {
+					log.LOGGER.Errorf("Marshal endpoints content failed, %v", eps)
+					continue
+				}
+
+				meta := &dao.Meta{
+					Key:   fmt.Sprintf("%s/%s/%s", eps.Namespace, constants.ResourceTypeEndpoints, eps.Name),
+					Type:  resType,
+					Value: string(data)}
+				err = dao.InsertOrUpdate(meta)
+				if err != nil {
+					log.LOGGER.Errorf("Update meta failed, %v", eps)
+					continue
+				}
+			}
+			send2EdgeMesh(&message, false, m.context)
+			resp := message.NewRespByMessage(&message, OK)
+			send2Cloud(resp, m.context)
+			return
+		case constants.ResourceTypeServiceList:
+			var svcList []v1.Service
+			err = json.Unmarshal(content, &svcList)
+			if err != nil {
+				log.LOGGER.Errorf("Unarshal update message content failed, %s", msgDebugInfo(&message))
+				feedbackError(err, "Error to unmarshal", message, m.context)
+				return
+			}
+			for _, svc := range svcList {
+				data, err := json.Marshal(svc)
+				if err != nil {
+					log.LOGGER.Errorf("Marshal service content failed, %v", svc)
+					continue
+				}
+
+				meta := &dao.Meta{
+					Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
+					Type:  resType,
+					Value: string(data)}
+				err = dao.InsertOrUpdate(meta)
+				if err != nil {
+					log.LOGGER.Errorf("update meta failed, %v", svc)
+					continue
+				}
+			}
+			send2EdgeMesh(&message, false, m.context)
+			resp := message.NewRespByMessage(&message, OK)
+			send2Cloud(resp, m.context)
+			return
+		}
+	}
+
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
 		send2Edged(resp, message.IsSync(), m.context)
@@ -239,10 +319,13 @@ func (m *metaManager) processResponse(message model.Message) {
 		return
 	}
 
-	// Notify edged if the data if coming from cloud
-	//if message.GetSource() != core.EdgedModuleName {
-	if message.GetSource() != modules.EdgedModuleName {
-		send2Edged(&message, false, m.context)
+	// Notify edged or edgemesh if the data if coming from cloud
+	if message.GetSource() == CloudControlerModel {
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+			send2EdgeMesh(&message, message.IsSync(), m.context)
+		} else {
+			send2Edged(&message, message.IsSync(), m.context)
+		}
 	} else {
 		// Send to cloud if the update request is coming from edged
 		send2Cloud(&message, m.context)
@@ -257,6 +340,14 @@ func (m *metaManager) processDelete(message model.Message) {
 		return
 	}
 
+	_, resType, _ := parseResource(message.GetResource())
+	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+		// Notify edgemesh
+		send2EdgeMesh(&message, false, m.context)
+		resp := message.NewRespByMessage(&message, OK)
+		send2Cloud(resp, m.context)
+		return
+	}
 	// Notify edged
 	send2Edged(&message, false, m.context)
 	resp := message.NewRespByMessage(&message, OK)
@@ -291,7 +382,11 @@ func (m *metaManager) processQuery(message model.Message) {
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-		send2Edged(resp, message.IsSync(), m.context)
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+			send2EdgeMesh(resp, false, m.context)
+		} else {
+			send2Edged(resp, message.IsSync(), m.context)
+		}
 	}
 }
 
@@ -331,7 +426,11 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			log.LOGGER.Errorf("update meta failed, %s", msgDebugInfo(&resp))
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
-		send2Edged(&resp, message.IsSync(), m.context)
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+			send2EdgeMesh(&resp, message.IsSync(), m.context)
+		} else {
+			send2Edged(&resp, message.IsSync(), m.context)
+		}
 	}()
 }
 

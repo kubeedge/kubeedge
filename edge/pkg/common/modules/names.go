@@ -1,6 +1,9 @@
 package modules
 
 const (
-	//EdgedModuleName name
+	// EdgedModuleName name
 	EdgedModuleName = "edged"
+
+	// EdgeMeshModuleName name
+	EdgeMeshModuleName = "edgemesh"
 )
