@@ -239,6 +239,24 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 	return nil
 
 }
+//GetDeployment to get the deployment with its name
+func GetDeployment(deployment *apps.Deployment, getDeploymentApi string, name string) error {
+
+	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi + "/" + name)
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Failf("HTTP Response reading has failed: %v", err)
+		return err
+	}
+	err = json.Unmarshal(contents, &deployment)
+	if err != nil {
+		Failf("Unmarshal HTTP Response has failed: %v", err)
+		return err
+	}
+	return nil
+
+}
 func VerifyDeleteDeployment(getDeploymentApi string) int {
 	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
 	if err != nil {
@@ -523,20 +541,6 @@ func GetServices(list *v1.ServiceList, getServiceAPI string) error {
 
 }
 
-//DeleteService to delete service
-func DeleteService(ServiceApi, servicename string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, ServiceApi+"/"+servicename)
-	if err != nil {
-		// handle error
-		Failf("HTTP request is failed :%v", err)
-		return -1
-	}
-
-	defer resp.Body.Close()
-
-	return resp.StatusCode
-}
-
 func Getname(ep string) string {
 	response, err := http.Get(ep + "/hello")
 	if err != nil {
@@ -546,4 +550,90 @@ func Getname(ep string) string {
 	body, _ := ioutil.ReadAll(response.Body)
 	name := string(body)
 	return name
+}
+
+//HandleRequest to handle request to apiserver
+func HandleRequest(operation, apiserver, UID string, object interface{}) bool {
+	var req *http.Request
+	var err error
+	var body io.Reader
+
+	defer ginkgo.GinkgoRecover()
+	client := &http.Client{}
+	switch operation {
+	case "POST":
+		depObj := object
+		if err != nil {
+			Failf("GenerateDeploymentBody marshalling failed: %v", err)
+		}
+		respBytes, err := json.Marshal(depObj)
+		if err != nil {
+			Failf("Marshalling body failed: %v", err)
+		}
+		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+	case "DELETE":
+		req, err = http.NewRequest(http.MethodDelete, apiserver+"/"+UID, body)
+	}
+	if err != nil {
+		// handle error
+		Failf("Frame HTTP request failed: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Failf("HTTP request is failed :%v", err)
+		return false
+	}
+	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	return true
+}
+
+func CreateDeployment(name, imgUrl, selector string,replicas int, label map[string]string, port int32) *apps.Deployment {
+	//var depObj *apps.DeploymentSpec
+	var namespace string
+
+	//depObj = nginxDeploymentSpec(imgUrl, nodeselector, replicas)
+
+	var nodeselector map[string]string
+	if selector == "" {
+		nodeselector = map[string]string{}
+	} else {
+		nodeselector = map[string]string{"disktype": selector}
+	}
+
+	namespace = Namespace
+
+
+	deployment := apps.Deployment{
+		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Labels:    map[string]string{"app": "kubeedge"},
+			Namespace: namespace,
+		},
+		Spec: apps.DeploymentSpec{
+			Replicas: func() *int32 { i := int32(replicas); return &i }(),
+			Selector: &metav1.LabelSelector{MatchLabels: label},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: label,
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name:  name,
+							Image: imgUrl,
+							TTY:   true,
+							Ports: []v1.ContainerPort{{HostPort: port, ContainerPort: port}},
+						},
+					},
+					NodeSelector: nodeselector,
+				},
+			},
+		},
+	}
+	return &deployment
 }
