@@ -50,3 +50,7 @@ jobs:
       name: "cloud_lint"     # names the eighth Tests stage job
     - script: make keadm_lint
       name: "keadm_lint"
+    - script: make bluetoothdevice
+      name: "build bluetooth_device"
+    - script: make bluetoothdevice_lint
+      name: "bluetooth_device_lint"
