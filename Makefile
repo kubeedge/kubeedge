@@ -84,3 +84,14 @@ edgeimage:
 .PHONY: depcheck
 depcheck:
 	dep check
+
+.PHONY: bluetoothdevice
+bluetoothdevice:
+	make -C device/bluetooth_mapper
+
+.PHONY: bluetoothdevice_image
+	make -C device/bluetooth_mapper_docker
+
+.PHONY: bluetoothdevice_lint
+bluetoothdevice_lint:
+	make -C device/bluetooth_mapper lint
