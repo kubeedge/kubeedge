@@ -76,7 +76,7 @@ Support for basic commands to bootstrap and teardown both KubeEdge cloud and edg
 Supported Commands :
     - `kubeedge init` : bootstrap cloud prerequisites and cloud components if not already present.
     - `kubeedge join` : add edge node in cloud api-server, bootstrap edge prerequisites and edge components if not already present.
-    - `kubeedge reset` : teardown cloud and edge components and associated prerequisites.
+    - `kubeedge reset` : tears down the installed components/prerequisites. The reset action has to be done on the cloud and edge nodes separately to ensure proper cleanup.
 
 ## Known Issues
 
@@ -175,7 +175,7 @@ Supported Commands :
 Supported Commands :
     - `kubeedge init` : bootstrap cloud prerequisites and cloud components if not already present.
     - `kubeedge join` : add edge node in cloud api-server, bootstrap edge prerequisites and edge components if not already present.
-    - `kubeedge reset` : teardown cloud and edge components and associated prerequisites.
+    - `kubeedge reset` : tears down the installed components/prerequisites. The reset action has to be done on the cloud and edge nodes separately to ensure proper cleanup.
 
 ### Known Issues
 
