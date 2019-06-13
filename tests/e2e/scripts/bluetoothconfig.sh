@@ -1,5 +1,4 @@
-#!/bin/bash -ex
-
+#!/usr/bin/env bash
 # Copyright 2019 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cd `dirname $0`
-workdir=`pwd`
-cd $workdir
+dockerhubusername=$1
+nodename=$2
 
-cd ../
-echo $PWD
+SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
+BLUETOOTH_PATH=${SRC_DIR}/mappers/bluetooth_mapper/deployment.yaml
 
-compilemodule=$1
-#compile all test if user doesn't specify the test else compile only specified tests.
-if [ $# -eq 0 ]
-  then
-    echo "compiling all tests !!"
-    ginkgo build -r
-else
-if [ $compilemodule = 'bluetooth' ]
-    then
-        ginkgo build -r mapper/$compilemodule
-else
-   ginkgo build -r $compilemodule
-fi
+create_bluetooth_config() {
+    if [ ! -f ${BLUETOOTH_PATH} ]; then
+        echo "There is no deployment.yaml!"
+        exit 1
+    fi
+    echo "file found !!!!!!!!!!!!!"
+    sed -i "s|image: .*|image: ${dockerhubusername}/bluetooth_mapper:v1.0|g" ${BLUETOOTH_PATH}
+    sed -i "30s|name: .*|name: device-profile-config-${nodename}|g" ${BLUETOOTH_PATH}
+}
 
-fi
+create_bluetooth_config
