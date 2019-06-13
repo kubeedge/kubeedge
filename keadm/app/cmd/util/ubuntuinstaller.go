@@ -140,16 +140,17 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, err
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "docker -v | cut -d ' ' -f3 | cut -d ',' -f1")}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
-	if str == "" {
-		return types.NewInstallRequired, nil
-	}
 
-	if strings.Contains(cmd.GetStdOutput(), u.DockerVersion) {
+	if strings.Contains(str, u.DockerVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
 
 	if err := u.addDockerRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
+	}
+
+	if str == "" {
+		return types.NewInstallRequired, nil
 	}
 
 	isReqVerAvail, err := u.IsToolVerInRepo("docker-ce", u.DockerVersion)
@@ -255,16 +256,17 @@ func (u *UbuntuOS) IsK8SComponentInstalled(component, defVersion string) (types.
 	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
-	if str == "" {
-		return types.NewInstallRequired, nil
-	}
 
-	if strings.Contains(cmd.GetStdOutput(), u.KubernetesVersion) {
+	if strings.Contains(str, u.KubernetesVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
 
 	if err := u.addK8SRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
+	}
+
+	if str == "" {
+		return types.NewInstallRequired, nil
 	}
 
 	isReqVerAvail, err := u.IsToolVerInRepo(component, u.KubernetesVersion)
