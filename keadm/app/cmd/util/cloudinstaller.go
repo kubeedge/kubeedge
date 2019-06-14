@@ -54,11 +54,11 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
-	/*err = cu.createdevicemodel()
-	fmt.Println("createdevicemodel")
+	time.Sleep(1 * time.Second)
+	err = cu.createdevicemodel()
 	if err != nil {
 		return err
-	}*/
+	}
 
 	//This makes sure the path is created, if it already exists also it is fine
 	err = os.MkdirAll(KubeEdgeCloudConfPath, os.ModePerm)
@@ -87,6 +87,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
+
 	fmt.Println("Edgecontroller started")
 
 	return nil
@@ -94,17 +95,18 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 
 //create device model and device CRDS
 func (cu *KubeCloudInstTool) createdevicemodel() error {
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_devicemodel.yaml")}
+	cmdf := fmt.Sprintf("kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_devicemodel.yaml")
+	cmd := &Command{Cmd: exec.Command("sh", "-c", cmdf)}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
-		return fmt.Errorf("%s", "error in creating device model")
+		return fmt.Errorf("%s in creating device model", err)
 	}
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_device.yaml")}
+	cmd = &Command{Cmd: exec.Command("sh", "-c", "sudo kubectl create -f $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/devices_v1alpha1_device.yaml")}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
 	if err != nil || errout != "" {
-		return fmt.Errorf("%s", "error in creating device")
+		return fmt.Errorf("%s in creating device", err)
 	}
 
 	fmt.Println("Device model and device CRDs are created")
@@ -218,15 +220,24 @@ func (cu *KubeCloudInstTool) RunEdgeController() error {
 	//binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	/*binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	fmt.Println(binExec)
+	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	err := cmd.ExecuteCmdShowOutput()
+	fmt.Println("err%s", err)
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		fmt.Println("in error")
+		return fmt.Errorf("%s", errout)
+	}*/
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	err := cmd.StartCmd()
+	if err != nil {
+		fmt.Println("in error")
 	}
-	fmt.Println(cmd.GetStdOutput())
+	//fmt.Println(cmd.GetStdOutput())
 	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	return nil
 }

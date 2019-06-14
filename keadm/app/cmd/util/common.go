@@ -131,6 +131,15 @@ func (cm Command) GetStdErr() string {
 	return ""
 }
 
+func (cm Command) StartCmd() error {
+	err := cm.Cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start because of error : %s", err.Error())
+	}
+	return nil
+
+}
+
 //ExecuteCmdShowOutput captures both StdOut and StdErr after exec.cmd().
 //It helps in the commands where it takes some time for execution.
 func (cm Command) ExecuteCmdShowOutput() error {
