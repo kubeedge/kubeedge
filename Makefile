@@ -80,4 +80,7 @@ edgeimage:
 	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
-  
+
+.PHONY: depcheck
+depcheck:
+	dep check
