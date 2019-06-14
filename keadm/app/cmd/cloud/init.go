@@ -29,17 +29,17 @@ import (
 
 var (
 	cloudInitLongDescription = `
-kubeedge init command bootstraps KubeEdge's cloud component.
+"keadm init" command bootstraps KubeEdge's master node (on the cloud) component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
 `
 	cloudInitExample = `
-kubeedge init
+keadm init
 
 - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=~/.kube/config
+keadm init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=~/.kube/config
 
   - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
     then default versions shown in help will be choosen. 
@@ -49,7 +49,7 @@ kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-vers
 `
 )
 
-// NewCloudInit represents the kubeedge init command for cloud component
+// NewCloudInit represents the keadm init command for cloud component
 func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 	if init == nil {
 		init = newInitOptions()

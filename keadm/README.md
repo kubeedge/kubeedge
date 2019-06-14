@@ -21,32 +21,32 @@ It also explains the functionality of the proposed commands.
 - `git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge`
 2. `cd $GOPATH/src/github.com/kubeedge/kubeedge/keadm`
 3. `make`
-4. Binary `kubeedge` is available in current path
+4. Binary `keadm` is available in current path
 
-## Installing KubeEdge Cloud component
+## Installing KubeEdge Master Node (on the Cloud) component
 
 Referring to `KubeEdge Installer Doc`, the command to install KubeEdge cloud component (edge controller) and pre-requisites.
 Port 8080, 6443 and 10000 in your cloud component needs to be accessible for your edge nodes.
 
-- Execute `kubeedge init`
+- Execute `keadm init`
 
 ### Command flags
 The optional flags with this command are mentioned below
 
 ```
-$  kubeedge init --help
+$  keadm init --help
 
-kubeedge init command bootstraps KubeEdge's cloud component.
+keadm init command bootstraps KubeEdge's cloud component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
 
 Usage:
-  kubeedge init [flags]
+  keadm init [flags]
 
 Examples:
 
-kubeedge init
+keadm init
 
 
 Flags:
@@ -65,26 +65,26 @@ Flags:
 command format is
 
 ```
-kubeedge init --docker-version=<expected version> --kubernetes-version=<expected version> --kubeedge-version=<expected version>
+keadm init --docker-version=<expected version> --kubernetes-version=<expected version> --kubeedge-version=<expected version>
 ```
 
 **NOTE:**
 Version mentioned as defaults for Docker and K8S are being tested with.
 
-## Installing KubeEdge Edge component
+## Installing KubeEdge Worker Node (at the Edge) component
 
 Referring to `KubeEdge Installer Doc`, the command to install KubeEdge Edge component (edge core) and pre-requisites
 
-- Execute `kubeedge join <flags>`
+- Execute `keadm join <flags>`
 
 ### Command flags
 
 The optional flags with this command are shown in below shell
 
 ```
-$  kubeedge join --help
+$  keadm join --help
  
-"kubeedge join" command bootstraps KubeEdge's edge component.
+"keadm join" command bootstraps KubeEdge's edge component.
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 to install the prerequisites.
@@ -92,16 +92,16 @@ It will help the edge node to connect to the cloud.
 
 
 Usage:
-  kubeedge join [flags]
+  keadm join [flags]
 
 Examples:
 
-kubeedge join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
 
   - For this command --edgecontrollerip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
         then default values will be used.
@@ -119,37 +119,37 @@ Flags:
 
 ```
 
-1. For KubeEdge flag the functionality is same as mentioned in `kubeedge init`
+1. For KubeEdge flag the functionality is same as mentioned in `keadm init`
 2. -k, --k8sserverip, It should be in the format <IPAddress:Port>, where the default port is 8080. Please see the example above.
 
 
 **IMPORTANT NOTE:** The KubeEdge version used in cloud and edge side should be same.
 
-## Reset KubeEdge Cloud and Edge components
+## Reset KubeEdge Master and Worker nodes
 
 Referring to `KubeEdge Installer Doc`, the command to stop KubeEdge cloud (edge controller). It doesn't uninstall/remove any of the pre-requisites.
 
-- Execute `kubeedge reset`
+- Execute `keadm reset`
 
 ### Command flags
 
 ```
-kubeedge reset --help
+keadm reset --help
 
-kubeedge reset command can be executed in both cloud and edge node
-In cloud node it shuts down the cloud processes of KubeEdge
-In edge node it shuts down the edge processes of KubeEdge
+keadm reset command can be executed in both cloud and edge node
+In master node it shuts down the cloud processes of KubeEdge
+In worker node it shuts down the edge processes of KubeEdge
 
 Usage:
-  kubeedge reset [flags]
+  keadm reset [flags]
 
 Examples:
 
-For cloud node:
-kubeedge reset
+For master node:
+keadm reset
 
-For edge node:
-kubeedge reset --k8sserverip 10.20.30.40:8080
+For worker node:
+keadm reset --k8sserverip 10.20.30.40:8080
 
 
 Flags:
@@ -167,15 +167,15 @@ Flags:
 #### Install tools with the particular version
 
 ```
-kubeedge init --kubeedge-version=<kubeedge Version>  --kubernetes-version=<kubernetes Version> --docker-version=<Docker version>
+keadm init --kubeedge-version=<kubeedge Version>  --kubernetes-version=<kubernetes Version> --docker-version=<Docker version>
 ```
 
 #### Install tools with the default version
 
 ```
-kubeedge init --kubeedge-version= --kubernetes-version= --docker-version
+keadm init --kubeedge-version= --kubernetes-version= --docker-version
 or
-kubeedge init
+keadm init
 ```
 
 **NOTE:**
@@ -212,18 +212,18 @@ tar -xvzf certs.tgz
 #### Install tools with the particular version
 
 ```
-kubeedge join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
+keadm join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
 ```
 
 #### Install tools with the default version 
 
 ```
-kubeedge join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
+keadm join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
 ```
 
 Sample execution output:
 ```
-# ./kubeedge join --edgecontrollerip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
+# ./keadm join --edgecontrollerip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
 Same version of docker already installed in this host
 Host has mosquit+ already installed and running. Hence skipping the installation steps !!!
 Expected or Default KubeEdge version 0.3.0-beta.0 is already downloaded
@@ -251,7 +251,7 @@ KubeEdge edge core is running, For logs visit /etc/kubeedge/kubeedge/edge/
 
 **Note**:Cloud IP refers to IP generated ,from the step 1 as highlighted
 
-### 4. Edge node status on edgeController console
+### 4. Edge node status on edgeController (master node) console
 
 On cloud host run,
 

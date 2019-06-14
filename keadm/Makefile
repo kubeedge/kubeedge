@@ -1,8 +1,8 @@
 
-# make kubeedge
-.PHONY: default kubeedge
-kubeedge:
-	go build -o kubeedge keadm.go
+# make keadm
+.PHONY: default keadm
+keadm:
+	go build -o keadm keadm.go
 
 lint:
 	golangci-lint run --disable-all -E golint ./...
@@ -10,7 +10,7 @@ lint:
 
 .PHONY: clean
 clean:
-	rm kubeedge
+	$(RM) keadm
 
 # .PHONY: cross_build
 # cross_build:
@@ -19,5 +19,5 @@ clean:
 # 	export GOARM=6
 # 	export CGO_ENABLED=1
 # 	export CC=arm-linux-gnueabi-gcc
-# 	go build keadm.go -o kubeedge
+# 	go build keadm.go -o keadm
 
