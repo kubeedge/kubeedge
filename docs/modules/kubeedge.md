@@ -25,13 +25,13 @@ The advantages of Kubeedge include mainly:
 ## Components
 KubeEdge is composed of these components:
 
-- **[Edged](edge/edged.html):** an agent that runs on edge nodes and manages containerized applications.
-- **[EdgeHub](edge/edgehub.html):** a web socket client responsible for interacting with Cloud Service for edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge and reporting edge-side host and device status changes to the cloud.
-- **[CloudHub](cloud/cloudhub.html):** A web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub. 
-- **[EdgeController](cloud/controller.html):** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.   
-- **[EventBus](edge/eventbus.html):** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
-- **[DeviceTwin](edge/devicetwin.html):** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
-- **[MetaManager](edge/metamanager.html):** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
+- **[Edged](edge/edged.md):** an agent that runs on edge nodes and manages containerized applications.
+- **[EdgeHub](edge/edgehub.md):** a web socket client responsible for interacting with Cloud Service for edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge and reporting edge-side host and device status changes to the cloud.
+- **[CloudHub](cloud/cloudhub.md):** A web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub. 
+- **[EdgeController](cloud/controller.md):** an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.   
+- **[EventBus](edge/eventbus.md):** an MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
+- **[DeviceTwin](edge/devicetwin.md):** responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
+- **[MetaManager](edge/metamanager.md):** the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
 
 ## Architecture  
 
@@ -42,4 +42,4 @@ KubeEdge is composed of these components:
 
 There are many ways to contribute to Kubeedge, and we welcome contributions!  
 
-Read the [contributor's guide](../getting-started/contribute.html) to get started on the code.
+Read the [contributor's guide](../getting-started/contribute.md) to get started on the code.
