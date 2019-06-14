@@ -570,21 +570,22 @@ SKIPDOWNLOADAND:
 func (c *CentOS) RunEdgeCore() error {
 	binExec := fmt.Sprintf("chmod +x %skubeedge/edge/%s && nohup %skubeedge/edge/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgePath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-	//cmd.ExecuteCommand()
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
+	//	err := cmd.ExecuteCmdShowOutput()
+	//	errout := cmd.GetStdErr()
+	//	if err != nil || errout != "" {
+	//		return fmt.Errorf("%s", errout)
+	//	}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	err = cmd.ExecuteCmdShowOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	//	err = cmd.ExecuteCmdShowOutput()
+	err := cmd.StartCmd()
+	//	errout = cmd.GetStdErr()
+	if err != nil {
+		fmt.Println("in error")
+		//return fmt.Errorf("%s", errout)
 	}
-	fmt.Println(cmd.GetStdOutput())
+	//	fmt.Println(cmd.GetStdOutput())
 	fmt.Println("KubeEdge edge core is running, For logs visit", KubeEdgePath+"kubeedge/edge/")
 	return nil
 }
