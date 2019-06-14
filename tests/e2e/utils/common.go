@@ -239,24 +239,6 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 	return nil
 
 }
-//GetDeployment to get the deployment with its name
-func GetDeployment(deployment *apps.Deployment, getDeploymentApi string, name string) error {
-
-	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi + "/" + name)
-	defer resp.Body.Close()
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
-		return err
-	}
-	err = json.Unmarshal(contents, &deployment)
-	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
-		return err
-	}
-	return nil
-
-}
 func VerifyDeleteDeployment(getDeploymentApi string) int {
 	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
 	if err != nil {
@@ -475,8 +457,8 @@ func DeleteSvc(svcname string) int {
 }
 
 //ExposePodService function to expose the service for deployment
-func ExposePodService(name, serviceHandler string, port int32, targetport intstr.IntOrString) error {
-	ServiceObj := CreatePodService(name, port, targetport)
+func ExposePodService(name, serviceHandler string, port int32, targetport intstr.IntOrString, serviceType v1.ServiceType) error {
+	ServiceObj := CreatePodService(name, port, targetport, serviceType)
 	respBytes, err := json.Marshal(ServiceObj)
 	if err != nil {
 		Failf("Marshalling body failed: %v", err)
@@ -502,8 +484,11 @@ func ExposePodService(name, serviceHandler string, port int32, targetport intstr
 }
 
 //CreatePodService function to create a service object
-func CreatePodService(name string, port int32, targetport intstr.IntOrString) *v1.Service {
+func CreatePodService(name string, port int32, targetport intstr.IntOrString, serviceType v1.ServiceType) *v1.Service {
 	var portInfo []v1.ServicePort
+	if serviceType == "" {
+		serviceType = v1.ServiceTypeClusterIP
+	}
 
 	portInfo = []v1.ServicePort{
 		{
@@ -518,6 +503,7 @@ func CreatePodService(name string, port int32, targetport intstr.IntOrString) *v
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,
 			Selector: map[string]string{"app": "nginx"},
+			Type:     serviceType,
 		},
 	}
 	return &Service
@@ -591,7 +577,7 @@ func HandleRequest(operation, apiserver, UID string, object interface{}) bool {
 	return true
 }
 
-func CreateDeployment(name, imgUrl, selector string,replicas int, label map[string]string, port int32) *apps.Deployment {
+func CreateDeployment(name, imgUrl, selector string, replicas int, label map[string]string, port int32) *apps.Deployment {
 	//var depObj *apps.DeploymentSpec
 	var namespace string
 
@@ -605,7 +591,6 @@ func CreateDeployment(name, imgUrl, selector string,replicas int, label map[stri
 	}
 
 	namespace = Namespace
-
 
 	deployment := apps.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},

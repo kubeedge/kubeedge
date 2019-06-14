@@ -18,7 +18,6 @@ package deployment
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -43,6 +42,8 @@ var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
 //Run Test cases
 var _ = Describe("Application deployment test in E2E scenario", func() {
 	var UID string
+	var UIDServer string
+	var UIDClient string
 	var testTimer *utils.TestTimer
 	var testDescription GinkgoTestDescription
 	Context("Test application deployment and delete deployment using deployment spec", func() {
@@ -240,7 +241,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			}
 		})
 	})
-	Context("Test Pod communiction with edgeMesh", func() {
+	Context("Test Pod communication with edgeMesh", func() {
 		BeforeEach(func() {
 			// Get current test description
 			testDescription = CurrentGinkgoTestDescription()
@@ -269,35 +270,36 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			err = utils.GetServices(&serviceList, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler+utils.LabelSelector+"service%3Dtest")
 			Expect(err).To(BeNil())
 			for _, service := range serviceList.Items {
-				StatusCode := utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler+"/"+ service.Name)
+				StatusCode := utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "/" + service.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_SERVICE_EDGEMESH_1: Create two pods and check the pods are communicating or not", func() {
+		It("E2E_SERVICE_EDGEMESH_1: Create two pods and check the pods are communicating or not: POSITIVE", func() {
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			var servicelist metav1.ServiceList
 			//Generate the random string and assign as a UID
-			UID = "pod-app-server"
-			IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				utils.Info("delpyment label : %+v", deployment.Labels)
-				label := nodeName
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
-				Expect(err).To(BeNil())
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
+					Expect(err).To(BeNil())
+					break
+				}
 			}
+			utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			utils.Info("\n Server app deployed \n")
-			// time.Sleep(time.Second * 30)
 
 			// Deploy service over the server pod
-			err = utils.ExposePodService(UID, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000))
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeClusterIP)
 			Expect(err).To(BeNil())
 			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 			Expect(err).To(BeNil())
@@ -305,17 +307,14 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			// Check server app is accessible with default value
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
-			UID = "pod-app-client"
-			IsAppDeployed = utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[3], nodeSelector, "", 1)
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-
-			// Check weather the name variable is changed in server
-			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Changed"))
-
 			for _, deployment := range deploymentList.Items {
-				if deployment.Name == UID {
+				if deployment.Name == UIDClient {
 					label := nodeName
 					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
@@ -323,39 +322,34 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 					break
 				}
 			}
-		})
-		It("E2E_SERVICE_EDGEMESH_2: Client pod restart: POSITIVE", func() {
-			//deploy server deployment
-			//check pods running
-			//deploy service
-			//
 
+			// Check weather the name variable is changed in server
+			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Changed"))
+		})
+
+		It("E2E_SERVICE_EDGEMESH_2: Client pod restart: POSITIVE", func() {
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			var servicelist metav1.ServiceList
-			var deployment v1.Deployment
 			//Generate the random string and assign as a UID
-			UID = "pod-app-server"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj := utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
-			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 				}
 			}
 			utils.Info("\n Server app deployed \n")
-			// time.Sleep(time.Second * 30)
 
 			// Deploy service over the server pod
-			err = utils.ExposePodService(UID, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000))
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeClusterIP)
 			Expect(err).To(BeNil())
 			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 			Expect(err).To(BeNil())
@@ -363,99 +357,83 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//deploy client deployment
-			UID = "pod-app-client"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj = utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
-			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 20)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDClient {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+					break
 				}
 			}
 			utils.Info("\n Client app deployed \n")
 
-			//check name changed(communiction happened)
+			//check name changed(communication happened)
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//delete client
-			err = utils.GetDeployment(&deployment, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,UID)
+			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
 
-			label := deployment.Spec.Selector
-			for key, value := range label.MatchLabels {
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
-				Expect(err).To(BeNil())
-				for _, pod := range podlist.Items {
-					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + AppHandler + "/" + pod.Name)
-					Expect(StatusCode).Should(Equal(http.StatusOK))
+			for _, deployment := range deploymentList.Items {
+				if deployment.Name == UIDClient {
+					label := deployment.Spec.Selector
+					for key, value := range label.MatchLabels {
+						podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+						Expect(err).To(BeNil())
+						for _, pod := range podlist.Items {
+							_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + AppHandler + "/" + pod.Name)
+							Expect(StatusCode).Should(Equal(http.StatusOK))
+						}
+					}
 				}
 			}
 
-			//_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + AppHandler + "/" + UID)
-			//Expect(StatusCode).Should(Equal(http.StatusOK))
-
 			//change the name back to default again
 			var jsonStr = []byte("Changed")
-			resp, err := http.Post("http://localhost:8000/hello", "application/json", bytes.NewBuffer(jsonStr))
-			//req, _ := http.NewRequest("POST", "http://localhost:8000", bytes.NewBuffer(jsonStr))
-			//req.Header.Set("Content-Type", "application/json")
-			//client := &http.Client{}
-			//resp, err := client.Do(req)
+			_, err = http.Post("http://localhost:8000/hello", "application/json", bytes.NewBuffer(jsonStr))
 			if err != nil {
 				panic(err)
-			} else {
-				utils.Info("---%v", resp)
-				content, _ := ioutil.ReadAll(resp.Body)
-				utils.Info("body, %s", content)
 			}
 
 			//deployment will restart it check again pod is there
 			podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+"app"+"%3D"+"client", "")
 			Expect(err).To(BeNil())
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+			utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge, podlist)
 
 			//check the name is changed of not
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Changed"))
-
 		})
-		It("E2E_SERVICE_EDGEMESH_3: Server pod restart: POSITIVE", func() {
-			//deploy server deployment
-			//check pods running
-			//deploy service
 
+		It("E2E_SERVICE_EDGEMESH_3: Server pod restart: POSITIVE", func() {
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			var servicelist metav1.ServiceList
-			var deployment v1.Deployment
 			//Generate the random string and assign as a UID
-			UID = "pod-app-server"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj := utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
-			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 				}
 			}
 			utils.Info("\n Server app deployed \n")
-			// time.Sleep(time.Second * 30)
 
 			// Deploy service over the server pod
-			err = utils.ExposePodService(UID, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000))
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeClusterIP)
 			Expect(err).To(BeNil())
 			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 			Expect(err).To(BeNil())
@@ -463,75 +441,75 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//deploy client deployment
-			UID = "pod-app-client"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj = utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
-			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 20)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDClient {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+					break
 				}
 			}
 			utils.Info("\n Client app deployed \n")
 
-			//check name changed(communiction happened)
+			//check name changed(communication happened)
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
-			//delete server pod
-			err = utils.GetDeployment(&deployment, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,"pod-app-server")
+			///delete server pod
+			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-
-			label := deployment.Spec.Selector
-			for key, value := range label.MatchLabels {
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
-				Expect(err).To(BeNil())
-				for _, pod := range podlist.Items {
-					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + AppHandler + "/" + pod.Name)
-					Expect(StatusCode).Should(Equal(http.StatusOK))
+			for _, deployment := range deploymentList.Items {
+				if deployment.Name == UIDServer {
+					label := deployment.Spec.Selector
+					for key, value := range label.MatchLabels {
+						podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+						Expect(err).To(BeNil())
+						for _, pod := range podlist.Items {
+							_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + AppHandler + "/" + pod.Name)
+							Expect(StatusCode).Should(Equal(http.StatusOK))
+						}
+					}
 				}
 			}
 
 			//deployment will restart it check again pod is there
 			podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+"app"+"%3D"+"server", "")
 			Expect(err).To(BeNil())
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+			utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge, podlist)
 
 			//check the name is changed of not
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Changed"))
 		})
+
 		It("E2E_SERVICE_EDGEMESH_4: Server deployment gets deleted: FAILURE", func() {
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			var servicelist metav1.ServiceList
 			//Generate the random string and assign as a UID
-			UID = "pod-app-server"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj := utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
-			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 				}
 			}
 			utils.Info("\n Server app deployed \n")
-			// time.Sleep(time.Second * 30)
 
 			// Deploy service over the server pod
-			err = utils.ExposePodService(UID, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000))
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeClusterIP)
 			Expect(err).To(BeNil())
 			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 			Expect(err).To(BeNil())
@@ -539,79 +517,73 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//deploy client deployment
-			UID = "pod-app-client"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj = utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
-			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 20)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDClient {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+					break
 				}
 			}
 			utils.Info("\n Client app deployed \n")
 
-			//check name changed(communiction happened)
+			//check name changed(communication happened)
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Changed"))
 
-
 			//delete server deployment
-			UID = "pod-app-server"
-			StatusCode := utils.DeleteDeployment(ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID)
+			StatusCode := utils.DeleteDeployment(ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer)
 			Expect(StatusCode).Should(Equal(http.StatusOK))
 
 			//deploy again with same deployment name
-			depobj = utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
-			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			depobj = utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 				}
 			}
-			utils.Info("\n Server app deployed \n")
+			utils.Info("\n Server app deployed again\n")
 
 			//check the name is should not have been changed
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 		})
-		FIt("E2E_SERVICE_EDGEMESH_5: delete service : FAILURE", func() {
+
+		It("E2E_SERVICE_EDGEMESH_5: delete service : FAILURE", func() {
 			var podlist metav1.PodList
 			var deploymentList v1.DeploymentList
 			var servicelist metav1.ServiceList
 			//Generate the random string and assign as a UID
-			UID = "pod-app-server"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj := utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
-			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 30)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 				}
 			}
 			utils.Info("\n Server app deployed \n")
-			// time.Sleep(time.Second * 30)
 
 			// Deploy service over the server pod
-			err = utils.ExposePodService(UID, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000))
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeClusterIP)
 			Expect(err).To(BeNil())
 			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 			Expect(err).To(BeNil())
@@ -619,52 +591,88 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//deploy client deployment
-			UID = "pod-app-client"
-			//IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[2], nodeSelector, "", 1)
-			depobj = utils.CreateDeployment(UID, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
-			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, depobj)
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
 			Expect(IsAppDeployed).Should(BeTrue())
 			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
 			Expect(err).To(BeNil())
-			time.Sleep(time.Second * 20)
 			for _, deployment := range deploymentList.Items {
-				label := deployment.Spec.Selector
-				for key, value := range label.MatchLabels {
-					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler+utils.LabelSelector+key+"%3D"+value, "")
+				if deployment.Name == UIDClient {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
 					Expect(err).To(BeNil())
 					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+					break
 				}
 			}
 			utils.Info("\n Client app deployed \n")
 
-			//check name changed(communiction happened)
+			//check name changed(communication happened)
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 
 			//delete service
-			StatusCode := utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "/" + "pod-app-server")
+			StatusCode := utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "/" + UIDServer)
 			Expect(StatusCode).Should(Equal(http.StatusOK))
 
 			//change the name back to default again
 			var jsonStr = []byte("Changed")
-			resp, err := http.Post("http://localhost:8000/hello", "application/json", bytes.NewBuffer(jsonStr))
+			_, err = http.Post("http://localhost:8000/hello", "application/json", bytes.NewBuffer(jsonStr))
 			if err != nil {
 				panic(err)
-			} else {
-				content, _ := ioutil.ReadAll(resp.Body)
-				utils.Info("body, %s", content)
 			}
 
 			//check the name should not have been changed
 			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 		})
+
 		It("E2E_SERVICE_EDGEMESH_6: create Loadbalancer service : FAILURE", func() {
-			//deploy server deployment
-			//check pods running
-			//deploy service with loadbalancer
-			//
+			var podlist metav1.PodList
+			var deploymentList v1.DeploymentList
+			var servicelist metav1.ServiceList
+			//Generate the random string and assign as a UID
+			UIDServer = "pod-app-server" + utils.GetRandomString(5)
+			depobj := utils.CreateDeployment(UIDServer, ctx.Cfg.AppImageUrl[2], nodeSelector, 1, map[string]string{"app": "server"}, 80)
+			IsAppDeployed := utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDServer, depobj)
+			Expect(IsAppDeployed).Should(BeTrue())
+			err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
+			Expect(err).To(BeNil())
+			for _, deployment := range deploymentList.Items {
+				if deployment.Name == UIDServer {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
+					Expect(err).To(BeNil())
+					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+				}
+			}
+			utils.Info("\n Server app deployed \n")
+
+			// Deploy service over the server pod
+			err = utils.ExposePodService(UIDServer, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler, 80, intstr.FromInt(8000), metav1.ServiceTypeLoadBalancer)
+			Expect(err).To(BeNil())
+			err = utils.GetServices(&servicelist, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+			Expect(err).To(BeNil())
+
 			//deploy client deployment
-			//
-			//check the name should not have changed
+			UIDClient = "pod-app-client" + utils.GetRandomString(5)
+			depobj = utils.CreateDeployment(UIDClient, ctx.Cfg.AppImageUrl[3], nodeSelector, 1, map[string]string{"app": "client"}, 81)
+			IsAppDeployed = utils.HandleRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UIDClient, depobj)
+			Expect(IsAppDeployed).Should(BeTrue())
+			err = utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+utils.LabelSelector+"app%3Dkubeedge")
+			Expect(err).To(BeNil())
+			for _, deployment := range deploymentList.Items {
+				if deployment.Name == UIDClient {
+					label := nodeName
+					podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, label)
+					Expect(err).To(BeNil())
+					utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+					break
+				}
+			}
+			utils.Info("\n Client app deployed \n")
+
+			//check the name is should not have been changed
+			Expect(utils.Getname("http://localhost:8000")).To(BeEquivalentTo("Default"))
 		})
 	})
 })
