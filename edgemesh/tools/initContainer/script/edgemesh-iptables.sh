@@ -55,13 +55,10 @@ function isIPv6() {
 	false
 }
 
-
-
 function hostNetMode() {
 	echo 'this func used for host net mode'
 	echo 'TODO'
 }
-
 
 function bridgeNetMode() {
 	echo 'this func used for bridge net mode'
@@ -154,7 +151,6 @@ EDGEMESH_HIJACK_IP=${HIJACK_IP-"*"}
 EDGEMESH_HIJACK_PORT=${HIJACK_PORT-"*"}
 EDGEMESH_EXCLUDE_IP=${EXCLUDE_IP-}
 EDGEMESH_EXCLUDE_PORT=${EXCLUDE_PORT-}
-
 
 function main() {
 	getContainerNetMode
