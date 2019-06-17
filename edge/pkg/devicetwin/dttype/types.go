@@ -263,17 +263,21 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 		if value != nil {
 			if value.Expected != nil {
 				if value.Expected.Value != nil {
-					match := dtcommon.ValidateTwinValue(*value.Expected.Value)
-					if !match {
-						return &deviceTwinUpdate, errors.New(errorValue)
+					if *value.Expected.Value != "" {
+						match := dtcommon.ValidateTwinValue(*value.Expected.Value)
+						if !match {
+							return &deviceTwinUpdate, errors.New(errorValue)
+						}
 					}
 				}
 			}
 			if value.Actual != nil {
 				if value.Actual.Value != nil {
-					match := dtcommon.ValidateTwinValue(*value.Actual.Value)
-					if !match {
-						return &deviceTwinUpdate, errors.New(errorValue)
+					if *value.Actual.Value != "" {
+						match := dtcommon.ValidateTwinValue(*value.Actual.Value)
+						if !match {
+							return &deviceTwinUpdate, errors.New(errorValue)
+						}
 					}
 				}
 			}
