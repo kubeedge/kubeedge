@@ -400,6 +400,10 @@ func createDevice(device *v1alpha1.Device) types.Device {
 	for i, dtwin := range device.Status.Twins {
 		expected := &types.TwinValue{}
 		expected.Value = &device.Status.Twins[i].Desired.Value
+		metadataType, ok := device.Status.Twins[i].Desired.Metadata["type"]
+		if !ok {
+			metadataType = "string"
+		}
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -414,7 +418,7 @@ func createDevice(device *v1alpha1.Device) types.Device {
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: "string"},
+			Metadata:        &types.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
@@ -631,6 +635,10 @@ func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, ve
 	for i, dtwin := range newTwin {
 		expected := &types.TwinValue{}
 		expected.Value = &newTwin[i].Desired.Value
+		metadataType, ok := newTwin[i].Desired.Metadata["type"]
+		if !ok {
+			metadataType = "string"
+		}
 		timestamp := time.Now().UnixNano() / 1e6
 
 		metadata := &types.ValueMetadata{Timestamp: timestamp}
@@ -645,7 +653,7 @@ func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, ve
 		msgTwin := &types.MsgTwin{
 			Expected:        expected,
 			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: "string"},
+			Metadata:        &types.TypeMetadata{Type: metadataType},
 			ExpectedVersion: twinVersion,
 		}
 		twin[dtwin.PropertyName] = msgTwin
