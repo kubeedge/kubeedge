@@ -835,7 +835,13 @@ func NewDownstreamController() (*DownstreamController, error) {
 		log.LOGGER.Warnf("Create kube client failed with error: %s", err)
 		return nil, err
 	}
+
 	config, err := utils.KubeConfig()
+	if err != nil {
+		log.LOGGER.Warnf("Get kubeConfig error: %v", err)
+		return nil, err
+	}
+
 	crdcli, err := utils.NewCRDClient(config)
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {
