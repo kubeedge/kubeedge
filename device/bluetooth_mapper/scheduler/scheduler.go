@@ -64,7 +64,7 @@ type ScheduleResult struct {
 func (schedule *Schedule) ExecuteSchedule(actionManager []actionmanager.Action, dataConverter dataconverter.DataRead, deviceID string) {
 	glog.Infof("Executing schedule: %s", schedule.Name)
 	if schedule.OccurrenceLimit != 0 {
-		for iteration := 0; iteration < schedule.OccurrenceLimit; iteration += 1 {
+		for iteration := 0; iteration < schedule.OccurrenceLimit; iteration++ {
 			schedule.performScheduleOperation(actionManager, dataConverter, deviceID)
 		}
 	} else {
@@ -95,7 +95,7 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 			schedule.Interval = defaultEventFrequency
 		}
 		if !actionExists {
-			glog.Error("Action %s does not exist. Exiting from schedule !!!", actionName)
+			glog.Errorf("Action %s does not exist. Exiting from schedule !!!", actionName)
 			break
 		}
 		time.Sleep(time.Duration(time.Duration(schedule.Interval) * time.Millisecond))
