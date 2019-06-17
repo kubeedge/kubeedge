@@ -3,14 +3,18 @@
 echo 'create edgemesh init Container image'
 
 function usage() {
-	echo "sh createImg.sh [rpm | deb]"
+	echo "execute 'sh createImg.sh [rpm | deb]' to create docker image"
+	echo "execute 'sh createImg.sh help for use help'"
 }
 
 path="${1}"
 
-if [ "${path}" != "rpm" ] || [ "${path}" != "deb" ]; then
+if [ "${path}" != "rpm" ] && [ "${path}" != "deb" ]; then
 	usage
+	exit 0
 fi
+
+echo "create a ${path} docker image"
 
 cp ./script/edgemesh-iptables.sh ./"${path}"/
 
@@ -20,7 +24,7 @@ if command -v docker > /dev/null 2>&1 ; then
 	#docker build
 	docker build -t edgemesh_init .
 	# delete iptables script
-	rm ./"${path}"/edgemesh-iptables.sh 
+	rm ./edgemesh-iptables.sh 
 else
 	exit 1
 fi
