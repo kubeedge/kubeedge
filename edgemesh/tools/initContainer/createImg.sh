@@ -20,6 +20,8 @@ cp ./script/edgemesh-iptables.sh ./"${path}"/
 
 cd ./"${path}"/
 
+chmod 0777 edgemesh-iptables.sh
+
 if command -v docker > /dev/null 2>&1 ; then
 	#docker build
 	docker build -t edgemesh_init .

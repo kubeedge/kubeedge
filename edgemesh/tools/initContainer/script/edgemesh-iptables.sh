@@ -55,12 +55,11 @@ function isIPv6() {
 	false
 }
 
-function isPortValid() {
-	:
-}
+
 
 function hostNetMode() {
     echo 'this func used for host net mode'
+	echo 'TODO'
 }
 
 
