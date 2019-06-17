@@ -49,7 +49,7 @@ func main() {
 		glog.Errorf("Error in loading configuration: %s", err)
 		os.Exit(1)
 	}
-	bleController := controller.ControllerConfig{
+	bleController := controller.Config{
 		Watcher:       BleConfig.Watcher,
 		ActionManager: BleConfig.ActionManager,
 		Scheduler:     BleConfig.Scheduler,
