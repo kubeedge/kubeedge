@@ -505,7 +505,8 @@ func (c *CentOS) InstallKubeEdge() error {
 
 	for i := 0; i < downloadRetryTimes; i++ {
 		//Download the tar from repo
-		dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, c.KubeEdgeVersion, filename)
+		//dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, c.KubeEdgeVersion, filename)
+		dwnldURL = fmt.Sprintf("cd %s && curl -O  -k  --progress-bar %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, c.KubeEdgeVersion, filename)
 		cmd = &Command{Cmd: exec.Command("sh", "-c", dwnldURL)}
 		if err := cmd.ExecuteCmdShowOutput(); err != nil {
 			return err
@@ -524,7 +525,8 @@ func (c *CentOS) InstallKubeEdge() error {
 		fmt.Printf("%s \n\n", cmd.GetStdOutput())
 
 		fmt.Printf("%s content: \n", checksumFilename)
-		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, c.KubeEdgeVersion, checksumFilename)
+		//cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, c.KubeEdgeVersion, checksumFilename)
+		cmdStr = fmt.Sprintf("curl -O %s/v%s/%s", KubeEdgeDownloadURL, c.KubeEdgeVersion, checksumFilename)
 		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
 		cmd.ExecuteCommand()
 		actualChecksum := cmd.GetStdOutput()

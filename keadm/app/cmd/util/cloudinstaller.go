@@ -43,6 +43,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
+	time.Sleep(5 * time.Second)
 
 	err = cu.StartK8Scluster()
 	fmt.Println("StartK8Scluster")
@@ -54,7 +55,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	err = cu.createdevicemodel()
 	if err != nil {
 		return err
