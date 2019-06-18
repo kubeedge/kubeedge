@@ -214,13 +214,8 @@ func (uc *UpstreamController) UpdateDeviceState(stop chan struct{}) {
 				continue
 			}
 			deviceState := &DeviceState{State: cacheDeviceState.State}
-			//deviceState := cacheDeviceState.State
 			deviceState.State.Reported.LightState = msgDevice.State
 			deviceState.State.Reported.LastOnline = msgDevice.LastOnline
-			//reported := v1alpha1.DeviceOnOffline{}
-			//reported.LightState = msgDevice.State
-			//reported.LastOnline = msgDevice.LastOnline
-			//deviceState = reported
 			cacheDeviceState.State = deviceState.State
 			uc.dc.deviceManager.Device.Store(deviceID, cacheDeviceState)
 			body, err := json.Marshal(deviceState)
