@@ -14,6 +14,7 @@ const (
 	ResourceNode                = "node"
 	ResourceDevice              = "device"
 	ResourceTypeTwinEdgeUpdated = "twin/edge_updated"
+	ResourceDeviceStateUpdate   = "led-light-instance-01"
 
 	// Group
 	GroupTwin = "twin"

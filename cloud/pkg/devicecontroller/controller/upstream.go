@@ -37,6 +37,10 @@ type DeviceStatus struct {
 	Status v1alpha1.DeviceStatus `json:"status"`
 }
 
+type DeviceState struct {
+	State v1alpha1.DeviceState `json:"state"`
+}
+
 const (
 	// MergePatchType is patch type
 	MergePatchType = "application/merge-patch+json"
@@ -46,8 +50,9 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	crdClient    *rest.RESTClient
-	messageLayer messagelayer.MessageLayer
+	crdClient             *rest.RESTClient
+	messageLayer          messagelayer.MessageLayer
+	stopUpdateDeviceState chan struct{}
 
 	// stop channel
 	stopDispatch           chan struct{}
@@ -55,6 +60,7 @@ type UpstreamController struct {
 
 	// message channel
 	deviceStatusChan chan model.Message
+	deviceStateChan  chan model.Message
 
 	// downstream controller to update device status in cache
 	dc *DownstreamController
@@ -65,13 +71,16 @@ func (uc *UpstreamController) Start() error {
 	log.LOGGER.Infof("Start upstream device controller")
 	uc.stopDispatch = make(chan struct{})
 	uc.stopUpdateDeviceStatus = make(chan struct{})
+	uc.stopUpdateDeviceState = make(chan struct{})
 
 	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
+	uc.deviceStateChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
 
 	go uc.dispatchMessage(uc.stopDispatch)
 
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
 		go uc.updateDeviceStatus(uc.stopUpdateDeviceStatus)
+		go uc.UpdateDeviceState(uc.stopUpdateDeviceState)
 	}
 
 	return nil
@@ -101,6 +110,8 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 		log.LOGGER.Infof("Message: %s, resource type is: %s", msg.GetID(), resourceType)
 
 		switch resourceType {
+		case constants.ResourceDeviceStateUpdate:
+			uc.deviceStateChan <- msg
 		case constants.ResourceTypeTwinEdgeUpdated:
 			uc.deviceStatusChan <- msg
 		default:
@@ -174,6 +185,76 @@ func (uc *UpstreamController) updateDeviceStatus(stop chan struct{}) {
 			running = false
 		}
 	}
+}
+
+func (uc *UpstreamController) UpdateDeviceState(stop chan struct{}) {
+	running := true
+	for running {
+		select {
+		case msg := <-uc.deviceStateChan:
+			log.LOGGER.Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			msgDevice, err := uc.unmarshalDeviceStateMessage(msg)
+			if err != nil {
+				log.LOGGER.Warnf("Unmarshall failed due to error %v", err)
+				continue
+			}
+			deviceID, err := messagelayer.GetDeviceID(msg.GetResource())
+			if err != nil {
+				log.LOGGER.Warnf("Failed to get device id")
+				continue
+			}
+			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
+			if !ok {
+				log.LOGGER.Warnf("Device %s does not exist in downstream controller", deviceID)
+				continue
+			}
+			cacheDeviceState, ok := device.(*CacheDevice)
+			if !ok {
+				log.LOGGER.Warnf("Failed to assert to CacheDevice type")
+				continue
+			}
+			deviceState := &DeviceState{State: cacheDeviceState.State}
+			//deviceState := cacheDeviceState.State
+			deviceState.State.Reported.LightState = msgDevice.State
+			deviceState.State.Reported.LastOnline = msgDevice.LastOnline
+			//reported := v1alpha1.DeviceOnOffline{}
+			//reported.LightState = msgDevice.State
+			//reported.LastOnline = msgDevice.LastOnline
+			//deviceState = reported
+			cacheDeviceState.State = deviceState.State
+			uc.dc.deviceManager.Device.Store(deviceID, cacheDeviceState)
+			body, err := json.Marshal(deviceState)
+			if err != nil {
+				log.LOGGER.Errorf("Failed to marshal device status %v", deviceState)
+				continue
+			}
+			result := uc.crdClient.Patch(MergePatchType).Namespace(cacheDeviceState.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do()
+			if result.Error() != nil {
+				log.LOGGER.Errorf("Failed to patch device status %v of device %v in namespace %v", deviceState, deviceID, cacheDeviceState.Namespace)
+				continue
+			}
+			log.LOGGER.Infof("Message: %s process successfully", msg.GetID())
+		case <-stop:
+			log.LOGGER.Infof("Stop updateDeviceStatus")
+			running = false
+		}
+	}
+}
+
+func (uc *UpstreamController) unmarshalDeviceStateMessage(msg model.Message) (*types.DeviceStateUpdate, error) {
+	content := msg.GetContent()
+	deviceUpdate := &types.DeviceStateUpdate{}
+	bytes, err := json.Marshal(content)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(bytes, deviceUpdate)
+	log.LOGGER.Infof("the marshaled msg is %+v", *deviceUpdate)
+	if err != nil {
+		return nil, err
+	}
+	return deviceUpdate, nil
 }
 
 func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {

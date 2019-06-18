@@ -136,6 +136,15 @@ type Twin struct {
 	Reported TwinProperty `json:"reported,omitempty"`
 }
 
+type DeviceState struct {
+	Reported DeviceOnOffline `json:"state,omitempty"`
+}
+
+type DeviceOnOffline struct {
+	LightState string `json:"light_state, omitempty"`
+	LastOnline string `json:"last_online, omitempty"`
+}
+
 // TwinProperty represents the device property for which an Expected/Actual state can be defined.
 type TwinProperty struct {
 	// Required: The value for this property.
@@ -156,6 +165,7 @@ type Device struct {
 
 	Spec   DeviceSpec   `json:"spec,omitempty"`
 	Status DeviceStatus `json:"status,omitempty"`
+	State  DeviceState  `json:"state,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

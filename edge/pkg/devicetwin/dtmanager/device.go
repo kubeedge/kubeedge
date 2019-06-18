@@ -105,17 +105,17 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if err != nil {
 
 	}
-	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
-	context.Send(device.ID,
-		dtcommon.SendToEdge,
-		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+	//topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
+	//context.Send(device.ID,
+	//	dtcommon.SendToEdge,
+	//	dtcommon.CommModule,
+	//	context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
 
 	msgResource := "device/" + device.ID + "/state"
 	context.Send(deviceID,
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
-		context.BuildModelMessage("resource", "", msgResource, "update", string(payload)))
+		context.BuildModelMessage("resource", "", msgResource, "update", payload))
 	return nil, nil
 }
 

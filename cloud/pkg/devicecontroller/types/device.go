@@ -106,3 +106,14 @@ type DeviceTwinUpdate struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
 }
+
+type DeviceStateUpdate struct {
+	BaseMessage
+	DDevice `json:"device"`
+}
+
+type DDevice struct {
+	Name       string `json:"name,omitempty"`
+	State      string `json:"state,omitempty"`
+	LastOnline string `json:"last_online,omitempty"`
+}

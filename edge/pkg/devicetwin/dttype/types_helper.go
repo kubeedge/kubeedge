@@ -156,18 +156,18 @@ type DeviceMsg struct {
 }
 
 //BuildDeviceState build the msg
-func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
+func BuildDeviceState(baseMessage BaseMessage, device Device) (DeviceMsg, error) {
 	result := DeviceMsg{
 		BaseMessage: baseMessage,
 		Device: Device{
 			Name:       device.Name,
 			State:      device.State,
 			LastOnline: device.LastOnline}}
-	payload, err := json.Marshal(result)
-	if err != nil {
-		return []byte(""), err
-	}
-	return payload, nil
+	//payload, err := json.Marshal(result)
+	//if err != nil {
+	//	return []byte(""), err
+	//}
+	return result, nil
 }
 
 //DeviceAttrUpdate the struct of device attr update msg

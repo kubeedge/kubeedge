@@ -63,6 +63,7 @@ type CacheDevice struct {
 	metav1.ObjectMeta
 	Spec   v1alpha1.DeviceSpec
 	Status v1alpha1.DeviceStatus
+	State  v1alpha1.DeviceState
 }
 
 // CacheDeviceModel is the struct save DeviceModel data for check DeviceModel is really changed
@@ -353,7 +354,7 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
-	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status})
+	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status, State: device.State})
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
 		edgeDevice := createDevice(device)
@@ -538,7 +539,7 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 // If twin is updated, send twin update message to edge
 func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 	value, ok := dc.deviceManager.Device.Load(device.Name)
-	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status})
+	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status, State: device.State})
 	if ok {
 		cachedDevice := value.(*CacheDevice)
 		if isDeviceUpdated(cachedDevice, device) {
