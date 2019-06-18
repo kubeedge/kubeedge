@@ -92,7 +92,6 @@ func (q *ChannelEventQueue) dispatchMessage() {
 		event := model.MessageToEvent(&msg)
 		select {
 		case rChannel <- event:
-		default:
 		}
 	}
 }

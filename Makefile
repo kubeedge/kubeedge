@@ -63,6 +63,10 @@ IMAGE_TAG ?= $(shell git describe --tags)
 cloudimage:
 	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
+.PHONY: keadm_lint
+keadm_lint:
+	make -C keadm lint
+
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
 
@@ -76,4 +80,18 @@ edgeimage:
 	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
-  
+
+.PHONY: depcheck
+depcheck:
+	dep check
+
+.PHONY: bluetoothdevice
+bluetoothdevice:
+	make -C device/bluetooth_mapper
+
+.PHONY: bluetoothdevice_image
+	make -C device/bluetooth_mapper_docker
+
+.PHONY: bluetoothdevice_lint
+bluetoothdevice_lint:
+	make -C device/bluetooth_mapper lint

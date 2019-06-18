@@ -4,18 +4,21 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
-	//edgeNodes is a list of valid edge nodes
-	edgeNodes []string
+	// EdgeNodes is a map, key is nodeName, value is Status
+	EdgeNodes sync.Map
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
 	secretNode sync.Map
+	// services is a map, key is namespace/serviceName, value is v1.Service
+	services sync.Map
+	// endpoints is a map, key is namespace/endpointsName, value is v1.endpoints
+	endpoints sync.Map
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -113,18 +116,20 @@ func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 
 //IsEdgeNode checks weather node is edge node or not
 func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
-	for _, node := range lc.edgeNodes {
-		if node == nodeName {
-			return true
-		}
-	}
-	return false
+	_, ok := lc.EdgeNodes.Load(nodeName)
+	return ok
 }
 
-//UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
-func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
-	lc.edgeNodes = append(lc.edgeNodes, nodeName)
-	log.LOGGER.Infof("Edge nodes updated : %v \n", lc.edgeNodes)
+//
+func (lc *LocationCache) GetNodeStatus(nodeName string) (string, bool) {
+	value, ok := lc.EdgeNodes.Load(nodeName)
+	status, ok := value.(string)
+	return status, ok
+}
+
+// UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
+func (lc *LocationCache) UpdateEdgeNode(nodeName string, status string) {
+	lc.EdgeNodes.Store(nodeName, status)
 }
 
 // DeleteConfigMap from cache
@@ -138,10 +143,46 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 }
 
 // DeleteNode from cache
-func (lc *LocationCache) DeleteNode(name string) {
-	for i, v := range lc.edgeNodes {
-		if v == name {
-			lc.edgeNodes = append(lc.edgeNodes[:i], lc.edgeNodes[i+1:]...)
+func (lc *LocationCache) DeleteNode(nodeName string) {
+	lc.EdgeNodes.Delete(nodeName)
+}
+
+func (lc *LocationCache) AddOrUpdateService(service v1.Service) {
+	lc.services.Store(fmt.Sprintf("%s/%s", service.Namespace, service.Name), service)
+}
+
+func (lc *LocationCache) DeleteService(service v1.Service) {
+	lc.services.Delete(fmt.Sprintf("%s/%s", service.Namespace, service.Name))
+}
+
+func (lc *LocationCache) GetAllServices() []v1.Service {
+	services := []v1.Service{}
+	lc.services.Range(func(key interface{}, value interface{}) bool {
+		svc, ok := value.(v1.Service)
+		if ok {
+			services = append(services, svc)
 		}
-	}
+		return true
+	})
+	return services
+}
+
+func (lc *LocationCache) AddOrUpdateEndpoints(endpoints v1.Endpoints) {
+	lc.endpoints.Store(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name), endpoints)
+}
+
+func (lc *LocationCache) DeleteEndpoints(endpoints v1.Endpoints) {
+	lc.endpoints.Delete(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name))
+}
+
+func (lc *LocationCache) GetAllEndpoints() []v1.Endpoints {
+	endpoints := []v1.Endpoints{}
+	lc.endpoints.Range(func(key interface{}, value interface{}) bool {
+		eps, ok := value.(v1.Endpoints)
+		if ok {
+			endpoints = append(endpoints, eps)
+		}
+		return true
+	})
+	return endpoints
 }
