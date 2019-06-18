@@ -28,6 +28,10 @@ endif
 edge_test:
 	cd edge && $(MAKE) test
 
+.PHONY: cloud_test
+cloud_test:
+	$(MAKE) -C cloud test
+
 # verify
 .PHONY: edge_verify
 edge_verify:
