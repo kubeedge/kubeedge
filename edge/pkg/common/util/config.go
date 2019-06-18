@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ServiceComb/go-archaius/sources/file-source"
+	"github.com/go-chassis/go-archaius/sources/file-source"
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"gopkg.in/yaml.v2"
 )
@@ -40,7 +40,7 @@ func LoadConfig(confLocation ...string) error {
 	if err != nil {
 		return err
 	}
-	fSource := filesource.NewYamlConfigurationSource()
+	fSource := filesource.NewFileSource()
 	if len(confLocation) == 0 {
 		confLocation = []string{os.Getenv("GOPATH") + "/src/github.com/kubeedge/kubeedge/edge/conf"}
 	}
@@ -53,7 +53,7 @@ func LoadConfig(confLocation ...string) error {
 		}
 		ext := strings.ToLower(path.Ext(location))
 		if ext == ".yml" || ext == ".yaml" {
-			fSource.AddFileSource(location, 0)
+			fSource.AddFile(location, 0,nil)
 		}
 		return nil
 	})
