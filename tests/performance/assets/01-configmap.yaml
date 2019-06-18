@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudcore-configmap
+  namespace: default
+  labels:
+    k8s-app: kubeedge
+    kubeedge: edgecontroller
+data:
+  controller.yaml: |
+    controller:
+      kube:
+        master: http://192.168.20.128:8080
+        namespace: ""
+        content_type: "application/vnd.kubernetes.protobuf"
+        qps: 5
+        burst: 10
+        node_update_frequency: 10
+        kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
+    cloudhub:
+      protocol_websocket: true # enable websocket protocol
+      port: 10000 # open port for websocket server
+      protocol_quic: true # enable quic protocol
+      quic_port: 10001 # open prot for quic server
+      max_incomingstreams: 10000 # the max incoming stream for quic server
+      address: 0.0.0.0
+      ca: /etc/kubeedge/certs/rootCA.crt
+      cert: /etc/kubeedge/certs/edge.crt
+      key: /etc/kubeedge/certs/edge.key
+      keepalive-interval: 30
+      write-timeout: 30
+      node-limit: 10
+    devicecontroller:
+      kube:
+        master: http://192.168.20.128:8080
+        namespace: ""
+        content_type: "application/vnd.kubernetes.protobuf"
+        qps: 5
+        burst: 10
+        kubeconfig: ""
+  logging.yaml: |
+    loggerLevel: "INFO"
+    enableRsyslog: false
+    logFormatText: true
+    writers: [stdout]
+  modules.yaml: |
+    modules:
+      enabled: [controller, cloudhub, controllerstub]

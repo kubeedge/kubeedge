@@ -1,0 +1,30 @@
+controller:
+  kube:
+    master: http://localhost:8080
+    namespace: ""
+    content_type: "application/vnd.kubernetes.protobuf"
+    qps: 5
+    burst: 10
+    node_update_frequency: 10
+    kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
+cloudhub:
+  protocol_websocket: true # enable websocket protocol
+  port: 10000 # open port for websocket server
+  protocol_quic: true # enable quic protocol
+  quic_port: 10001 # open prot for quic server
+  max_incomingstreams: 10000 # the max incoming stream for quic server
+  address: 0.0.0.0
+  ca: /etc/kubeedge/ca/rootCA.crt
+  cert: /etc/kubeedge/certs/edge.crt
+  key: /etc/kubeedge/certs/edge.key
+  keepalive-interval: 30
+  write-timeout: 30
+  node-limit: 10
+devicecontroller:
+  kube:
+    master: http://localhost:8080
+    namespace: ""
+    content_type: "application/vnd.kubernetes.protobuf"
+    qps: 5
+    burst: 10
+    kubeconfig: ""

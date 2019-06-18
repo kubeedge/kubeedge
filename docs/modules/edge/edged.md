@@ -37,7 +37,7 @@ Its primary jobs are as follows:
 
 ## Pod Lifecycle Event Generator
 
-This module helps in monitoring pod status for edged. Every second, using probe's for liveliness and readyness, it updates the information with pod status manager for every pod.
+This module helps in monitoring pod status for edged. Every second, using probe's for liveness and readiness, it updates the information with pod status manager for every pod.
 
 ![PLEG Design](../../images/edged/pleg-flow.png)  
 
@@ -63,8 +63,8 @@ Below flow diagram shows, how secret is fetched from metamanager and cloud. The 
 
 ## Probe Management
 
-Probe management creates to probes for readiness and liveliness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveliness probe helps in monitoring the health of pods, if they are up or down. 
-As explained earlier PLEG module uses its services.
+Probe management creates to probes for readiness and liveness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveness probe helps in monitoring the health of pods, if they are up or down. 
+As explained earlier, PLEG module uses its services.
 
 
 ## ConfigMap Management
@@ -86,8 +86,8 @@ Below flow diagram shows, how configmaps is fetched from metamanager and cloud. 
 
 ## Container GC
 
-Container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy
-The policy for garbage collecting containers we apply takes on three variables, which can be user-defined. MinAge is the minimum age at which a container can be garbage collected, zero for no limit. MaxPerPodContainer is the max number of dead containers any single pod (UID, container name) pair is allowed to have, less than zero for no limit. MaxContainers is the max number of total dead containers, less than zero for no limit as well. Gernerally the oldest containers are removed first.
+Container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy.
+The policy for garbage collecting containers we apply takes on three variables, which can be user-defined. MinAge is the minimum age at which a container can be garbage collected, zero for no limit. MaxPerPodContainer is the max number of dead containers any single pod (UID, container name) pair is allowed to have, less than zero for no limit. MaxContainers is the max number of total dead containers, less than zero for no limit as well. Generally, the oldest containers are removed first.
 
 ## Image GC
 

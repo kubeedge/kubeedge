@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edgecore-configmap
+  namespace: default
+  labels:
+    k8s-app: kubeedge
+    kubeedge: edgenode
+data:
+  edge.yaml: |
+    mqtt:
+        server: tcp://127.0.0.1:1883 # external mqtt broker url.
+        internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+        mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
+        qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+        retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+        session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
+    edgehub:
+        websocket:
+            url: wss://192.168.20.107:31379/e632aba927ea4ac2b575ec1603d56f10/perf-node-o19egaee6o/events
+            cafile: /etc/kubeedge/certs/rootCA.crt
+            certfile: /etc/kubeedge/certs/edge.crt
+            keyfile: /etc/kubeedge/certs/edge.key
+            handshake-timeout: 30 #second
+            write-deadline: 15 # second
+            read-deadline: 15 # second
+        quic:
+            url: 192.168.20.107:31771
+            cafile: /etc/kubeedge/certs/rootCA.crt
+            certfile: /etc/kubeedge/certs/edge.crt
+            keyfile: /etc/kubeedge/certs/edge.key
+            handshake-timeout: 30 #second
+            write-deadline: 15 # second
+            read-deadline: 15 # second
+        controller:
+            protocol: quic
+            placement: false
+            heartbeat: 15  # second
+            refresh-ak-sk-interval: 10 # minute
+            auth-info-files-path: /var/IEF/secret
+            placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
+            project-id: e632aba927ea4ac2b575ec1603d56f10
+            node-id: perf-node-o19egaee6o
+    edged:
+        register-node-namespace: default
+        hostname-override: perf-node-o19egaee6o
+        interface-name: edgecore-configmap-b7r
+        node-status-update-frequency: 10 # second
+        device-plugin-enabled: false
+        gpu-plugin-enabled: false
+        image-gc-high-threshold: 80 # percent
+        image-gc-low-threshold: 40 # percent
+        maximum-dead-containers-per-container: 1
+        docker-address: tcp://localhost:2375
+        version: 2.0.0
+  logging.yaml: |
+    loggerLevel: "DEBUG"
+    enableRsyslog: false
+    logFormatText: true
+    writers: [stdout]
+  modules.yaml: |
+    modules:
+        enabled: [eventbus, servicebus, websocket, metaManager, edged, twin, dbTest, handlerstub]

@@ -30,6 +30,10 @@ import (
 //This statement will load the config from the config files & prevent the test case from panicking
 var conf = util.LoadConfig()
 
+const (
+	defaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
+)
+
 //testYamlGenerator is a structure which is used to generate the test YAML file to test Edgehub config components
 type testYamlGenerator struct {
 	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
@@ -50,6 +54,17 @@ type webSocketConfigYaml struct {
 	WriteDeadline    string `yaml:"write-deadline,omitempty"`
 }
 
+//quicConfigYaml is a structure which is used to generate the test YAML file to test WebSocket config components
+type quicConfigYaml struct {
+	URL              string `yaml:"url,omitempty"`
+	CaFilePath       string `yaml:"cafile,omitempty"`
+	CertFilePath     string `yaml:"certfile,omitempty"`
+	KeyFilePath      string `yaml:"keyfile,omitempty"`
+	HandshakeTimeout string `yaml:"handshake-timeout,omitempty"`
+	ReadDeadline     string `yaml:"read-deadline,omitempty"`
+	WriteDeadline    string `yaml:"write-deadline,omitempty"`
+}
+
 //extendHeaderConfigYaml is a structure which is used to load the architecture and DockerRootDIr config to generate the test YAML file
 type extendHeaderConfigYaml struct {
 	Arch          string `yaml:"architecture,omitempty"`
@@ -58,6 +73,7 @@ type extendHeaderConfigYaml struct {
 
 //controllerConfigYaml is a structure which is used to generate the test YAML file to test controller config components
 type controllerConfigYaml struct {
+	Protocol        string `yaml:"protocol"`
 	HeartbeatPeroid string `yaml:"heartbeat,omitempty"`
 	RefreshInterval string `yaml:"refresh-ak-sk-interval,omitempty"`
 	CloudhubURL     string `yaml:"cloud-hub-url"`
@@ -69,8 +85,9 @@ type controllerConfigYaml struct {
 
 //edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
 type edgeHubConfigYaml struct {
-	WSConfig  webSocketConfigYaml  `yaml:"websocket"`
-	CtrConfig controllerConfigYaml `yaml:"controller"`
+	WSConfig   webSocketConfigYaml  `yaml:"websocket"`
+	QuicConfig quicConfigYaml       `yaml:"quic"`
+	CtrConfig  controllerConfigYaml `yaml:"controller"`
 }
 
 //TestGetConfig  function loads the testing config file  tests whether the edgeHubConfig variable is loaded correctly with the values from the config file
@@ -93,18 +110,28 @@ func TestGetConfig(t *testing.T) {
 						WriteDeadline:    "100",
 						ReadDeadline:     "100",
 					},
+					quicConfigYaml{
+						URL:              "127.0.0.1:10001",
+						CaFilePath:       "/tmp/rootCA.crt",
+						CertFilePath:     "/tmp/edge.crt",
+						KeyFilePath:      "/tmp/edge.key",
+						HandshakeTimeout: "500",
+						WriteDeadline:    "100",
+						ReadDeadline:     "100",
+					},
 					controllerConfigYaml{
+						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
 			&EdgeHubConfig{
-				WebSocketConfig{
+				WSConfig: WebSocketConfig{
 					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 					CertFilePath:     "/tmp/edge.crt",
 					KeyFilePath:      "/tmp/edge.key",
@@ -113,12 +140,22 @@ func TestGetConfig(t *testing.T) {
 					ReadDeadline:     100 * time.Second,
 					ExtendHeader:     http.Header{},
 				},
-				ControllerConfig{
+				QcConfig: QuicConfig{
+					URL:              "127.0.0.1:10001",
+					CaFilePath:       "/tmp/rootCA.crt",
+					CertFilePath:     "/tmp/edge.crt",
+					KeyFilePath:      "/tmp/edge.key",
+					HandshakeTimeout: 500 * time.Second,
+					WriteDeadline:    100 * time.Second,
+					ReadDeadline:     100 * time.Second,
+				},
+				CtrConfig: ControllerConfig{
+					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
 					RefreshInterval: 15 * time.Minute,
 					AuthInfosPath:   "/var/IEF/secret",
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
@@ -132,15 +169,22 @@ func TestGetConfig(t *testing.T) {
 						CertFilePath: "/tmp/edge.crt",
 						KeyFilePath:  "/tmp/edge.key",
 					},
+					quicConfigYaml{
+						URL:          "127.0.0.1:10001",
+						CaFilePath:   "/tmp/rootCA.crt",
+						CertFilePath: "/tmp/edge.crt",
+						KeyFilePath:  "/tmp/edge.key",
+					},
 					controllerConfigYaml{
+						Protocol:     "websocket",
 						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:    defaultProjectID,
 						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
 			&EdgeHubConfig{
-				WebSocketConfig{
+				WSConfig: WebSocketConfig{
 					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 					CertFilePath:     "/tmp/edge.crt",
 					KeyFilePath:      "/tmp/edge.key",
@@ -149,12 +193,22 @@ func TestGetConfig(t *testing.T) {
 					ReadDeadline:     15 * time.Second,
 					ExtendHeader:     http.Header{},
 				},
-				ControllerConfig{
+				QcConfig: QuicConfig{
+					URL:              "127.0.0.1:10001",
+					CaFilePath:       "/tmp/rootCA.crt",
+					CertFilePath:     "/tmp/edge.crt",
+					KeyFilePath:      "/tmp/edge.key",
+					HandshakeTimeout: 60 * time.Second,
+					WriteDeadline:    15 * time.Second,
+					ReadDeadline:     15 * time.Second,
+				},
+				CtrConfig: ControllerConfig{
+					Protocol:        "websocket",
 					AuthInfosPath:   "/var/IEF/secret",
 					HeartbeatPeriod: 15 * time.Second,
 					RefreshInterval: 10 * time.Minute,
 					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-					ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
 			}},
@@ -176,6 +230,10 @@ func TestGetConfig(t *testing.T) {
 			err = getWebSocketConfig()
 			if err != nil {
 				t.Errorf("getWebSocketConfig() returns an error: %v", err)
+			}
+			err = getQuicConfig()
+			if err != nil {
+				t.Errorf("getQuicConfig() returns an error: %v", err)
 			}
 			err = getControllerConfig()
 			if err != nil {
@@ -208,6 +266,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 						WriteDeadline:    "100",
 						ReadDeadline:     "100",
 					},
+					quicConfigYaml{},
 					controllerConfigYaml{},
 				},
 			},
@@ -222,6 +281,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 						CertFilePath: "/tmp/edge.crt",
 						KeyFilePath:  "/tmp/edge.key",
 					},
+					quicConfigYaml{},
 					controllerConfigYaml{},
 				},
 			},
@@ -238,6 +298,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 						WriteDeadline:    "100",
 						ReadDeadline:     "100",
 					},
+					quicConfigYaml{},
 					controllerConfigYaml{},
 				},
 			},
@@ -254,6 +315,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 						WriteDeadline:    "100",
 						ReadDeadline:     "100",
 					},
+					quicConfigYaml{},
 					controllerConfigYaml{},
 				},
 			},
@@ -270,6 +332,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 						WriteDeadline:    "100",
 						ReadDeadline:     "100",
 					},
+					quicConfigYaml{},
 					controllerConfigYaml{},
 				},
 			},
@@ -309,12 +372,14 @@ func Test_getControllerConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
+					quicConfigYaml{},
 					controllerConfigYaml{
+						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -326,9 +391,11 @@ func Test_getControllerConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
+					quicConfigYaml{},
 					controllerConfigYaml{
+						Protocol:     "websocket",
 						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:    defaultProjectID,
 						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -340,11 +407,13 @@ func Test_getControllerConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
+					quicConfigYaml{},
 					controllerConfigYaml{
+						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -356,7 +425,9 @@ func Test_getControllerConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
+					quicConfigYaml{},
 					controllerConfigYaml{
+						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
@@ -372,12 +443,14 @@ func Test_getControllerConfig(t *testing.T) {
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
+					quicConfigYaml{},
 					controllerConfigYaml{
+						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						AuthInfosPath:   "/var/IEF/secret",
 						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:       "e632aba927ea4ac2b575ec1603d56f10",
+						ProjectID:       defaultProjectID,
 					},
 				},
 			},

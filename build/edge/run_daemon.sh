@@ -90,13 +90,13 @@ docker_set(){
     # 
     #  ./build.sh set \
     #    cloudhub=0.0.0.0:10000 \
-    #    edgename=edgeNode \
+    #    edgename=edge-node \
     #    edge_core_image="kubeedge/edgecore:latest" \
     #    arch=amd64 \
     #    qemu_arch=x86_64 \
     #    certpath=/etc/kubeedge/certs \
     #    certfile=/etc/kubeedge/certs/edge.crt \
-    #    keyfile=/etc/kubeedge/certs/edge.ke
+    #    keyfile=/etc/kubeedge/certs/edge.key 
 
     ARGS=$@
 
@@ -148,7 +148,7 @@ docker_only_run_edge(){
     # 
     # Example
     # 
-    # ./run_daemon.sh only_run_edge mqtt=0.0.0.0:1883 cloudhub=0.0.0.0:10000 edgename=edgeNode image="kubeedge/edgecore:latest"
+    # ./run_daemon.sh only_run_edge mqtt=0.0.0.0:1883 cloudhub=0.0.0.0:10000 edgename=edge-node image="kubeedge/edgecore:latest"
 
     ARGS=$@
 
@@ -163,8 +163,9 @@ docker_only_run_edge(){
     edgename=${edgename:-$(hostname)}
     edgehubWebsocketUrl=wss://${cloudhub}/e632aba927ea4ac2b575ec1603d56f10/${edgename}/events 
     image=${image:-"kubeedge/edgecore:latest"}
+    containername=${containername:-"edgecore"}
 
-    docker run -d --name edgecore --restart always \
+    docker run -d --name ${containername} --restart always \
         --cpu-period=50000 --cpu-quota=100000 --memory=1g --privileged \
         -e edgehub.websocket.certfile=/etc/kubeedge/certs/edge.crt \
         -e edgehub.websocket.keyfile=/etc/kubeedge/certs/edge.key \

@@ -2,16 +2,21 @@
 .PHONY: all  
 ifeq ($(WHAT),)
 all:
-	cd cloud/edgecontroller && $(MAKE)
+	cd cloud && $(MAKE)
 	cd edge && $(MAKE)
+	cd keadm && $(MAKE)
 else ifeq ($(WHAT),cloud)
 # make all what=cloud, build cloud binary
 all:
-	cd cloud/edgecontroller && $(MAKE)
+	cd cloud && $(MAKE)
 else ifeq ($(WHAT),edge)
 all:
 # make all what=edge, build edge binary
 	cd edge && $(MAKE)
+else ifeq ($(WHAT),keadm)
+all:
+# make all what=edge, build edge binary
+	cd keadm && $(MAKE)
 else
 # invalid entry
 all:
@@ -42,11 +47,15 @@ edge_small_build:
 
 .PHONY: cloud_lint
 cloud_lint:
-	cd cloud/edgecontroller && $(MAKE) lint
+	cd cloud && $(MAKE) lint
 
 .PHONY: e2e_test
 e2e_test:
 	bash tests/e2e/scripts/execute.sh
+
+.PHONY: performance_test
+performance_test:
+	bash tests/performance/scripts/jenkins.sh
 
 IMAGE_TAG ?= $(shell git describe --tags)
 
@@ -54,6 +63,35 @@ IMAGE_TAG ?= $(shell git describe --tags)
 cloudimage:
 	docker build -t kubeedge/edgecontroller:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
+.PHONY: keadm_lint
+keadm_lint:
+	make -C keadm lint
+
+QEMU_ARCH ?= x86_64
+ARCH ?= amd64
+
 .PHONY: edgeimage
 edgeimage:
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} -f build/edge/Dockerfile .
+	mkdir -p ./build/edge/tmp
+	rm -rf ./build/edge/tmp/*
+	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz 
+	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp 
+	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg RUN_FROM=${ARCH}/docker:dind \
+	-f build/edge/Dockerfile .
+
+.PHONY: depcheck
+depcheck:
+	dep check
+
+.PHONY: bluetoothdevice
+bluetoothdevice:
+	make -C device/bluetooth_mapper
+
+.PHONY: bluetoothdevice_image
+	make -C device/bluetooth_mapper_docker
+
+.PHONY: bluetoothdevice_lint
+bluetoothdevice_lint:
+	make -C device/bluetooth_mapper lint
