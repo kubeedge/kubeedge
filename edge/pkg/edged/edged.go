@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -46,6 +44,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
@@ -133,6 +132,7 @@ type edged struct {
 	secretStore    cache.Store
 	configMapStore cache.Store
 	workQueue      queue.WorkQueue
+	reasonCache    *containers.ReasonCache
 }
 
 //Config defines configuration details
@@ -197,8 +197,10 @@ func (e *edged) Start(c *context.Context) {
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
-	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, containers.NewContainerRunner(), kubecontainer.NewRefManager(), record.NewEventRecorder())
-	e.pleg = edgepleg.NewGenericLifecycle(e.runtime.(*dockertools.DockerManager).ContainerManager, e.probeManager, plegChannelCapacity, plegRelistPeriod, e.podManager, e.statusManager)
+	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager,
+		containers.NewContainerRunner(), kubecontainer.NewRefManager(), record.NewEventRecorder())
+	e.pleg = edgepleg.NewGenericLifecycle(e.runtime.(*dockertools.DockerManager).ContainerManager,
+		e.probeManager, plegChannelCapacity, plegRelistPeriod, e.podManager, e.statusManager, e.reasonCache)
 	e.statusManager.Start()
 	e.pleg.Start()
 
@@ -289,6 +291,7 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
+		reasonCache:               containers.NewReasonCache(),
 	}
 
 	// Set docker address if it is set in the conf
@@ -553,22 +556,17 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 
 	if err := e.volumeManager.WaitForAttachAndMount(pod); err != nil {
 		log.LOGGER.Errorf("Unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
+		e.reasonCache.Add(podName, apis.ErrVolumeMountFailed, err.Error())
 		return err
 	}
 
 	secrets, err := e.getSecretsFromMetaManager(pod)
 	if err != nil {
+		e.reasonCache.Add(podName, apis.ErrGetSecretFailed, err.Error())
 		return err
 	}
-	err = e.runtime.EnsureImageExists(pod, secrets)
-	if err != nil {
-		return fmt.Errorf("consume added pod [%s] ensure image exist failed, %v", podName, err)
-	}
-	opt, err := e.GenerateContainerOptions(pod)
-	if err != nil {
-		return err
-	}
-	err = e.runtime.StartPod(pod, opt)
+
+	err = e.runtime.StartPod(pod, e, e.statusManager, secrets)
 	if err != nil {
 		return fmt.Errorf("consume added pod [%s] start pod failed, %v", podName, err)
 	}
@@ -892,4 +890,13 @@ func (e *edged) HandlePodCleanups() error {
 		return fmt.Errorf("Failed cleaning up orphaned pod directories: %s", err.Error())
 	}
 	return nil
+}
+
+// to implement podHelp interface in container_manager.go
+func (e *edged) AddToReasonCache(podName string, apisErr error, msg string) {
+	e.reasonCache.Add(podName, apisErr, msg)
+}
+
+func (e *edged) RemoveFromReasonCache(name string) {
+	e.reasonCache.Remove(name)
 }

@@ -235,8 +235,8 @@ func notRunning(statuses []v1.ContainerStatus) bool {
 	return true
 }
 
-func (e *edged) GenerateContainerOptions(pod *v1.Pod) (*kubecontainer.RunContainerOptions, error) {
-	opts := kubecontainer.RunContainerOptions{}
+func (e *edged) GenerateContainerOptions(pod *v1.Pod) (map[string]*kubecontainer.RunContainerOptions, error) {
+	opts := make(map[string]*kubecontainer.RunContainerOptions)
 	hostname, hostDomainName, err := e.GeneratePodHostNameAndDomain(pod)
 	if err != nil {
 		return nil, err
@@ -244,14 +244,16 @@ func (e *edged) GenerateContainerOptions(pod *v1.Pod) (*kubecontainer.RunContain
 	podName := util.GetUniquePodName(pod)
 	volumes := e.volumeManager.GetMountedVolumesForPod(podName)
 	for _, container := range pod.Spec.Containers {
+		opt := kubecontainer.RunContainerOptions{}
 		mounts, err := makeMounts(pod, e.getPodDir(pod.UID), &container, hostname, hostDomainName, pod.Status.PodIP, volumes)
 		if err != nil {
 			return nil, err
 		}
-		opts.Mounts = append(opts.Mounts, mounts...)
+		opt.Mounts = append(opt.Mounts, mounts...)
+		opts[container.Name] = &opt
 	}
 
-	return &opts, nil
+	return opts, nil
 }
 
 // makeMounts determines the mount points for the given container.
