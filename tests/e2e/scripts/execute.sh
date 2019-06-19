@@ -25,11 +25,13 @@ if [ ! -d "/var/lib/edged" ]; then
 fi
 bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
 bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
+bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
 #run the edge_core and edgecontroller bin to run the E2E
 make #builds cloud and edge_core components
 sleep 2s
 PWD=${curpath}/tests/e2e
 sudo rm -rf $PWD/deployment/deployment.test
+sudo rm -rf $PWD/device_crd/device_crd.test
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
