@@ -144,3 +144,10 @@
        ARCH="arm"
        curl -L "https://github.com/kubeedge/kubeedge/releases/download/${VERSION}/kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz" --output kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz && tar -xf kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz  -C /etc
    ``` 
+   + Observing CRI runtime containers
+     + Use the following command to oberve containerd runtime containers
+         + sudo ctr --namespace k8s.io containers ls
+     + Use the following command to observe containerd images
+         + sudo ctr --namespace k8s.io images ls
+     + Use the following command to get into the container
+         + sudo crictl exec -ti <containerid> /bin/bash
