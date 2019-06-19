@@ -39,6 +39,7 @@ if [ $# -eq 0 ]
   then
     #run testcase
     ./deployment/deployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./edgesite/edgesite.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 else
     ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 fi
