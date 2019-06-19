@@ -101,8 +101,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 		})
 		It("E2E_CREATE_DEVICE_MODEL_4: Create device model for incorrect device model", func() {
-			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "incorrect-model")
-			Expect(IsDeviceModelCreated).Should(BeTrue())
+			_ , statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "incorrect-model")
 			Expect(statusCode).Should(Equal(http.StatusUnprocessableEntity))
 		})
 		It("E2E_UPDATE_DEVICE_MODEL_1: Update device model for LED device (No Protocol)", func() {
@@ -149,15 +148,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceModelUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusUnprocessableEntity))
 		})
-		It("E2E_DELETE_DEVICE_MODEL_1: Delete device model for an existing device (No Protocol)", func() {
-			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "led")
-			Expect(IsDeviceModelCreated).Should(BeTrue())
-			Expect(statusCode).Should(Equal(http.StatusCreated))
-			IsDeviceModelDeleted, statusCode := utils.HandleDeviceModel(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "/"+utils.NewLedDeviceModel().Name, "")
-			Expect(IsDeviceModelDeleted).Should(BeTrue())
-			Expect(statusCode).Should(Equal(http.StatusOK))
-		})
-		It("E2E_DELETE_DEVICE_MODEL_2: Delete non existent device model(No Protocol)", func() {
+		It("E2E_DELETE_DEVICE_MODEL_1: Delete non existent device model(No Protocol)", func() {
 			IsDeviceModelDeleted, statusCode := utils.HandleDeviceModel(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "/"+utils.NewLedDeviceModel().Name, "")
 			Expect(IsDeviceModelDeleted).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusNotFound))
