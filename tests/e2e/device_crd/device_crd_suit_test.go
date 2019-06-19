@@ -18,16 +18,14 @@ package device_crd
 
 import (
 	"bytes"
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
-	"time"
-
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,16 +34,12 @@ import (
 //context to load config and access across the package
 var (
 	ctx          *utils.TestContext
-	cfg          utils.Config
 	nodeSelector string
 	NodeName     string
 )
 var (
-	runController      = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud; sudo nohup ./edgecontroller > edgecontroller.log 2>&1 &"
-	runEdgecore        = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edge_core > edge_core.log 2>&1 &"
 	deviceCRDPath      = "../../../build/crds/devices/devices_v1alpha1_device.yaml"
 	deviceModelCRDPath = "../../../build/crds/devices/devices_v1alpha1_devicemodel.yaml"
-	NodeHandler        = "/api/v1/nodes"
 	crdHandler         = "/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions"
 	deviceCRD          = "devices.devices.kubeedge.io"
 	deviceModelCRD     = "devicemodels.devices.kubeedge.io"
@@ -57,47 +51,23 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	var _ = BeforeSuite(func() {
 		client := &http.Client{}
 		utils.InfoV6("Before Suite Execution")
-		cfg = utils.LoadConfig()
-		ctx = utils.NewTestContext(cfg)
+		ctx = utils.NewTestContext(utils.LoadConfig())
 		NodeName = "integration-node-" + utils.GetRandomString(10)
 		nodeSelector = "node-" + utils.GetRandomString(3)
-		// Delete device model & device CRDs, if already existing
-		req, err := http.NewRequest(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+crdHandler+"/"+deviceModelCRD, nil)
-		Expect(err).Should(BeNil())
-		req.Header.Set("Content-Type", "application/yaml")
-		resp, err := client.Do(req)
-		Expect(err).Should(BeNil())
-		Expect(resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound).Should(Equal(true))
-		req, err = http.NewRequest(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+crdHandler+"/"+deviceCRD, nil)
-		Expect(err).Should(BeNil())
-		req.Header.Set("Content-Type", "application/yaml")
-		resp, err = client.Do(req)
-		Expect(err).Should(BeNil())
-		Expect(resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound).Should(Equal(true))
-		//Generate Certificates for Edge and Cloud nodes copy to respective folders
-		cmd := exec.Command("bash", "-x", "scripts/generate_cert.sh")
-		err = utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
+
+		//Generate Cerificates for Edge and Cloud nodes copy to respective folders
+		Expect(utils.GenerateCerts()).Should(BeNil())
 		//Do the neccessary config changes in Cloud and Edge nodes
-		cmd = exec.Command("bash", "-x", "scripts/setup.sh", NodeName, ctx.Cfg.K8SMasterForKubeEdge)
-		err = utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
-		time.Sleep(1 * time.Second)
+		Expect(utils.DeploySetup(ctx, NodeName, "deployment")).Should(BeNil())
 		//Run ./edgecontroller binary
-		cmd = exec.Command("sh", "-c", runController)
-		err = utils.PrintCombinedOutput(cmd)
-		time.Sleep(5 * time.Second)
-		Expect(err).Should(BeNil())
+		Expect(utils.StartEdgeController()).Should(BeNil())
 		//Register the Edge Node to Master
-		err = utils.RegisterNodeToMaster(NodeName, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, nodeSelector)
-		Expect(err).Should(BeNil())
+		Expect(utils.RegisterNodeToMaster(NodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
 		//Run ./edge_core after node registration
-		cmd = exec.Command("sh", "-c", runEdgecore)
-		err = utils.PrintCombinedOutput(cmd)
-		time.Sleep(5 * time.Second)
+		Expect(utils.StartEdgeCore()).Should(BeNil())
 		//Check node successfully registered or not
 		Eventually(func() string {
-			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NodeName)
+			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, NodeName)
 			utils.Info("Node Name: %v, Node Status: %v", NodeName, status)
 			return status
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
@@ -106,10 +76,10 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		deviceModelBody, err := ioutil.ReadFile(filePath)
 		Expect(err).Should(BeNil())
 		BodyBuf := bytes.NewReader(deviceModelBody)
-		req, err = http.NewRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+crdHandler, BodyBuf)
+		req, err := http.NewRequest(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+crdHandler, BodyBuf)
 		Expect(err).Should(BeNil())
 		req.Header.Set("Content-Type", "application/yaml")
-		resp, err = client.Do(req)
+		resp, err := client.Do(req)
 		Expect(err).Should(BeNil())
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 		filePath = path.Join(getpwd(), deviceCRDPath)
@@ -128,10 +98,9 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("After Suite Execution....!")
 		//Deregister the edge node from master
-		err := utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NodeName)
-		Expect(err).Should(BeNil())
+		Expect(utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, NodeName)).Should(BeNil())
 		Eventually(func() int {
-			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NodeName)
+			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, NodeName)
 			utils.Info("Node Name: %v, Node Statuscode: %v", NodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
@@ -149,10 +118,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		Expect(err).Should(BeNil())
 		Expect(resp.StatusCode).Should(Equal(http.StatusOK))
 		//Run the Cleanup steps to kill edge_core and edgecontroller binaries
-		cmd := exec.Command("bash", "-x", "scripts/cleanup.sh")
-		err = utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
-		time.Sleep(2 * time.Second)
+		Expect(utils.CleanUp("device_crd")).Should(BeNil())
 		utils.Info("Cleanup is Successfull !!")
 	})
 	RunSpecs(t, "kubeedge Device Managemnet Suite")

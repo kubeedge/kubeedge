@@ -71,13 +71,18 @@ cleanup_files(){
     sudo rm -rf tests/e2e/rootCA.crt
     sudo rm -rf tests/e2e/rootCA.key
     sudo rm -rf tests/e2e/rootCA.srl
-    sudo rm -rf tests/e2e/device_crd/device_crd.test
 }
 
 if [ "deployment" = ${setuptype} ]; then
     kill_edge_core
     kill_edgecontroller
     sudo rm -rf tests/e2e/deployment/deployment.test
+fi
+
+if [ "device_crd" = ${setuptype} ]; then
+    kill_edge_core
+    kill_edgecontroller
+    sudo rm -rf tests/e2e/device_crd/device_crd.test
 fi
 
 if [ "edgesite" = ${setuptype} ]; then
