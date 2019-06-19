@@ -8,9 +8,9 @@ We currently manage devices from the cloud and synchronize the device updates be
 
 A `device model` describes the device properties exposed by the device and property visitors to access these properties. A device model is like a reusable template using which many devices can be created and managed.
 
-Details on device model definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-instance-type-definition).
+Details on device model definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-model-type-definition).
 
-A sample device model can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-instance-sample)
+A sample device model can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-model-sample)
 
 
 ## Device Instance 
