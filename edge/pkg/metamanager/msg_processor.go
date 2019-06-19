@@ -193,7 +193,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
-	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList {
+	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
 		switch resType {
 		case constants.ResourceTypeEndpointsList:
 			var epsList []v1.Endpoints
@@ -212,7 +212,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 				meta := &dao.Meta{
 					Key:   fmt.Sprintf("%s/%s/%s", eps.Namespace, constants.ResourceTypeEndpoints, eps.Name),
-					Type:  resType,
+					Type:  constants.ResourceTypeEndpoints,
 					Value: string(data)}
 				err = dao.InsertOrUpdate(meta)
 				if err != nil {
@@ -228,7 +228,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			var svcList []v1.Service
 			err = json.Unmarshal(content, &svcList)
 			if err != nil {
-				log.LOGGER.Errorf("Unarshal update message content failed, %s", msgDebugInfo(&message))
+				log.LOGGER.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
 				feedbackError(err, "Error to unmarshal", message, m.context)
 				return
 			}
@@ -241,17 +241,35 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 				meta := &dao.Meta{
 					Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
-					Type:  resType,
+					Type:  constants.ResourceTypeService,
 					Value: string(data)}
 				err = dao.InsertOrUpdate(meta)
 				if err != nil {
-					log.LOGGER.Errorf("update meta failed, %v", svc)
+					log.LOGGER.Errorf("Update meta failed, %v", svc)
 					continue
 				}
 			}
 			send2EdgeMesh(&message, false, m.context)
 			resp := message.NewRespByMessage(&message, OK)
 			send2Cloud(resp, m.context)
+			return
+		case model.ResourceTypePodlist:
+			meta := &dao.Meta{
+				Key:   resKey,
+				Type:  resType,
+				Value: string(content)}
+			err = dao.InsertOrUpdate(meta)
+			if err != nil {
+				log.LOGGER.Errorf("Update meta failed, %s", msgDebugInfo(&message))
+				feedbackError(err, "Error to update meta to DB", message, m.context)
+				return
+			}
+			send2EdgeMesh(&message, false, m.context)
+			resp := message.NewRespByMessage(&message, OK)
+			send2Cloud(resp, m.context)
+			return
+		default:
+			log.LOGGER.Warnf("Resource type %s unknown", resType)
 			return
 		}
 	}
@@ -281,7 +299,11 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		send2Edged(resp, message.IsSync(), m.context)
 	case CloudControlerModel:
-		send2Edged(&message, false, m.context)
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+			send2EdgeMesh(&message, message.IsSync(), m.context)
+		} else {
+			send2Edged(&message, message.IsSync(), m.context)
+		}
 		resp := message.NewRespByMessage(&message, OK)
 		send2Cloud(resp, m.context)
 	case CloudFunctionModel:
@@ -382,7 +404,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
 			send2EdgeMesh(resp, false, m.context)
 		} else {
 			send2Edged(resp, message.IsSync(), m.context)

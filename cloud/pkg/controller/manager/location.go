@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"reflect"
 	"sync"
 
 	"k8s.io/api/core/v1"
@@ -19,6 +20,8 @@ type LocationCache struct {
 	services sync.Map
 	// endpoints is a map, key is namespace/endpointsName, value is v1.endpoints
 	endpoints sync.Map
+	// servicePods is a map, key is namespace/serviceName, value is []v1.Pod
+	servicePods sync.Map
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -147,14 +150,17 @@ func (lc *LocationCache) DeleteNode(nodeName string) {
 	lc.EdgeNodes.Delete(nodeName)
 }
 
+// AddOrUpdateService in cache
 func (lc *LocationCache) AddOrUpdateService(service v1.Service) {
 	lc.services.Store(fmt.Sprintf("%s/%s", service.Namespace, service.Name), service)
 }
 
+// DeleteService from cache
 func (lc *LocationCache) DeleteService(service v1.Service) {
 	lc.services.Delete(fmt.Sprintf("%s/%s", service.Namespace, service.Name))
 }
 
+// GetAllServices from cache
 func (lc *LocationCache) GetAllServices() []v1.Service {
 	services := []v1.Service{}
 	lc.services.Range(func(key interface{}, value interface{}) bool {
@@ -167,14 +173,65 @@ func (lc *LocationCache) GetAllServices() []v1.Service {
 	return services
 }
 
+// GetService from cache
+func (lc *LocationCache) GetService(name string) (v1.Service, bool) {
+	value, ok := lc.services.Load(name)
+	if !ok {
+		return v1.Service{}, ok
+	}
+	svc, ok := value.(v1.Service)
+	return svc, ok
+}
+
+// AddOrUpdateServicePods in cache
+func (lc *LocationCache) AddOrUpdateServicePods(name string, value []v1.Pod) {
+	lc.servicePods.Store(name, value)
+}
+
+// DeleteServicePods from cache
+func (lc *LocationCache) DeleteServicePods(endpoints v1.Endpoints) {
+	lc.servicePods.Delete(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name))
+}
+
+// GetServicePods from cache
+func (lc *LocationCache) GetServicePods(name string) ([]v1.Pod, bool) {
+	value, ok := lc.servicePods.Load(name)
+	if !ok {
+		return []v1.Pod{}, ok
+	}
+	pods, ok := value.([]v1.Pod)
+	return pods, ok
+}
+
+// AddOrUpdateEndpoints in cache
 func (lc *LocationCache) AddOrUpdateEndpoints(endpoints v1.Endpoints) {
 	lc.endpoints.Store(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name), endpoints)
 }
 
+// DeleteEndpoints in cache
 func (lc *LocationCache) DeleteEndpoints(endpoints v1.Endpoints) {
 	lc.endpoints.Delete(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name))
 }
 
+// IsEndpointsUpdated checks if endpoints is actually updated
+func (lc *LocationCache) IsEndpointsUpdated(new v1.Endpoints) bool {
+	eps, ok := lc.endpoints.Load(fmt.Sprintf("%s/%s", new.Namespace, new.Name))
+	if !ok {
+		// return true because the endpoint was not found in cache
+		return !ok
+	}
+	old, ok := eps.(v1.Endpoints)
+	if !ok {
+		return !ok
+	}
+	old.ObjectMeta.ResourceVersion = new.ObjectMeta.ResourceVersion
+	old.ObjectMeta.Generation = new.ObjectMeta.Generation
+	old.ObjectMeta.Annotations = new.ObjectMeta.Annotations
+	// return true if ObjectMeta or Subsets changed, else false
+	return !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) || !reflect.DeepEqual(old.Subsets, new.Subsets)
+}
+
+// GetAllEndpoints from cache
 func (lc *LocationCache) GetAllEndpoints() []v1.Endpoints {
 	endpoints := []v1.Endpoints{}
 	lc.endpoints.Range(func(key interface{}, value interface{}) bool {
