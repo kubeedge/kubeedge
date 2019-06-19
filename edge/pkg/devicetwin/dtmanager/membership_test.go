@@ -128,7 +128,7 @@ func TestDealMembershipDetailInvalidContent(t *testing.T) {
 func TestDealMembershipDetailValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
-		Mutex:      &sync.Mutex{},
+		Mutex:      &sync.RWMutex{},
 		GroupID:    "1",
 	}
 
@@ -197,7 +197,7 @@ func TestDealMembershipUpdatedValidAddedDevice(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		GroupID:     "1",
 	}
 
@@ -220,7 +220,7 @@ func TestDealMembershipUpdatedValidRemovedDevice(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		GroupID:     "1",
 	}
 
@@ -267,7 +267,7 @@ func TestDealMerbershipGetValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		GroupID:     "1",
 	}
 
@@ -286,7 +286,7 @@ func TestDealGetMembershipValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		GroupID:     "1",
 	}
 
@@ -302,7 +302,7 @@ func TestDealGetMembershipInValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
-		Mutex:       &sync.Mutex{},
+		Mutex:       &sync.RWMutex{},
 		GroupID:     "1",
 	}
 
