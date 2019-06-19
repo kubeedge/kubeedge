@@ -79,6 +79,12 @@ if [ "deployment" = ${setuptype} ]; then
     sudo rm -rf tests/e2e/deployment/deployment.test
 fi
 
+if [ "device_crd" = ${setuptype} ]; then
+    kill_edge_core
+    kill_edgecontroller
+    sudo rm -rf tests/e2e/device_crd/device_crd.test
+fi
+
 if [ "edgesite" = ${setuptype} ]; then
     kill_edgesite
     sudo rm -rf tests/e2e/edgesite/edgesite.test

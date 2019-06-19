@@ -36,6 +36,7 @@ create_edge_config() {
     sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|url: .*|url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
+    sed -i "s|mode: .*|mode: 0|g" ${EDGE_PATH}
 }
 
 create_cloud_config() {

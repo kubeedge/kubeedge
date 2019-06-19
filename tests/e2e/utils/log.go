@@ -54,6 +54,11 @@ func Debug(format string, data []byte, err error) {
 	}
 }
 
+//function for Error log
+func Err(format string, args ...interface{}) {
+	glog.Errorf(format, args...)
+}
+
 //function for log level
 func Info(format string, args ...interface{}) {
 	glog.V(4).Infof(format, args...)
