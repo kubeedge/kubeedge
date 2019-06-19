@@ -44,11 +44,11 @@ CRI support in edged must:
 ### Non-goals
 
 * Automatic detection of container runtimes and its selection.
-* 
+
 ## Proposal
 
-Currently Kubernetes kubelet CRI supports container runtimes like containerd, cri-o etc but support for docker runtime is
-provided using dockershim as well. However going forward even docker runtime will be supported through only CRI. Also 
+Currently Kubernetes kubelet CRI supports container runtimes like containerd, cri-o etc and support for docker runtime is
+provided using dockershim as well. However going forward even docker runtime will be supported through only CRI. However 
 currently kubeedge edged supports only docker runtime using the legacy dockertools. Hence we propose to support multiple 
 container runtime in kubeedge edged as follows
 1. Include CRI support as in kubernetes kubelet to support contianerd, cri-o etc
@@ -75,10 +75,11 @@ The following configuration parameters need to be added
 
 No | Parameter | Type | Values | Description
 ---|---|---|---|---
-1 | containerRuntimeName | string | DockerRuntime/RemoteRuntime | Runtime name
-2   | RemoteRuntimeEndpoint | string | /var/run/*.sock | Endpoint of remote runtime service
-3   | RemoteImageEndpoint | string | same as remoteRuntimeEndpoint if not specified | Endpoint of remote image service
+1 | runtimeType | string | docker/remote | Runtime name
+2   | remoteRuntimeEndpoint | string | /var/run/*.sock | Endpoint of remote runtime service
+3   | remoteImageEndpoint | string | same as remoteRuntimeEndpoint if not specified | Endpoint of remote image service
 4   | RuntimeRequestTimeout | Duration | time value | timeout for all runtime request
+5   | PodSandboxImage | string | image name | Image used for pause container in sandbox
 
 ```go
 type Config struct {
@@ -87,27 +88,24 @@ type Config struct {
        remoteRuntimeEndpoint string
        remoteImageEndpoint   string
        RuntimeRequestTimeout metav1.Duration
+       PodSandboxImage       string
        ....
  }
  ```
 ### Data structure modifications
 
-The edged data strcuture needs to include the generic runtime which currently has docker runtime including the runtime state and
-runtime name.
+The edged data strcuture needs to include the remote runtime and runtime name. Also need to add os interface, pod cache and container life cycle manager parameters required for initializing and executing remote runtime.
 
 ```go
 //Define edged
 type edged struct {
   ....
-  // Last timestamp when runtime responded on ping
-  // Mutex is used to protect this value
-  runtimeState *runtimeState
   containerRuntimeName string
   // Container runtime
   containerRuntime kubecontainer.Runtime
-  // updateRuntimeMux is a lock on updating runtime, because this path is not thread-safe
-  // This lock is used by Kubelet.updateRuntimeUp function and shouldn't be used anywhere else
-  updateRuntimeMux sync.Mutex
+  podCache           kubecontainer.Cache
+  os                 kubecontainer.OSInterface
+  clcm           clcm.ContainerLifecycleManager
   ....
 }
 
@@ -117,7 +115,7 @@ type edged struct {
 
 The existing newEdged() function needs to modified include creating CRI runtime object based on the runtime type including
 creations of objects for runtime and image services. However the existing edged does not provide the support for all the 
-parameters required to create the CRI runtime object and default parameters need to be considered for the same.
+parameters required to create the CRI runtime object and default parameters need to be considered for the same like Image GC manager, Container GC manager, Volume manager and container lifecycle manager (clcm)
 
 ```go
 
@@ -126,52 +124,28 @@ func newEdged() (*edged, error) {
        conf := getConfig()
        ......
        
-       switch conf.runtimeType {
+       switch based on runtimeType {
             case DockerContainerRuntime:
-              	runtime, err := dockertools.NewDockerManager(ed.livenessManager, 0, 0, backoff, true, conf.devicePluginEnabled, gpuManager, conf.interfaceName)
-	              if err != nil {
-		              return nil, fmt.Errorf("get docker manager failed, err: %s", err.Error())
-	              }
-                containerRuntimeName = DockerContainerRuntime
+	        Create runtime based on docker tools
+                Set containerRuntimeName to DockerContainerRuntime
+		Initialize Container GC, Image GC and Volume Plugin Manager accordingly
+		
             case RemoteContainerRuntime:
-                if conf.remoteRuntimeEndpoint != "" {
-		              // remoteImageEndpoint is same as remoteRuntimeEndpoint if not explicitly specified
-		              if conf.remoteImageEndpoint == "" {
-			              conf.remoteImageEndpoint = conf.remoteRuntimeEndpoint
-		              }
-                }
-                containerRefManager := kubecontainer.NewRefManager()
-                httpClient := &http.Client{}
-                runtimeService, imageService, err := getRuntimeAndImageServices(conf.remoteRuntimeEndpoint, conf.remoteImageEndpoint, conf.RuntimeRequestTimeout)
-                if err != nil {
-                  return nil, err
-                }
-                containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
-                  recorder,
-                  ed.livenessManager,
-                  nil,
-                  containerRefManager,
-                  nil,
-                  nil,
-                  nil,
-                  nil,
-                  httpClient,
-                  backoff,
-                  false,
-                  0,
-                  0,
-                  false,
-                  runtimeService,
-                  imageService,
-                  nil,
-                  nil,
-               )
-               if err != nil {
-                       return nil, fmt.Errorf("get docker manager failed, err: %s", err.Error())
-               }
-               containerRuntimeName = RemoteContainerRuntime
+                Set remoteImageEndpoint same as remoteRuntimeEndpoint if not explicitly specified
+                Initialize the following required for initializing remote runtime
+			containerRefManager
+			httpClient 
+			runtimeService
+			imageService
+			clcm
+			machineInfo with only memory capacity
+               Initialize Generic Runtime Manager
+               Set ContainerRuntimeName to RemoteContainerRuntime
+               Set runtimeService
+               Initialize Container GC, Image GC and Volume Plugin Manager accordingly
+
             default:
-		          return nil, fmt.Errorf("unsupported CRI runtime: %q", runtimeType)
+	       unsupported CRI runtime
        }
        .....
        .....
@@ -179,24 +153,26 @@ func newEdged() (*edged, error) {
 
 //Function to get CRI runtime and image service
 func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoint string, runtimeRequestTimeout metav1.Duration) (internalapi.RuntimeService, internalapi.ImageManagerService, error) {
-       rs, err := remote.NewRemoteRuntimeService(remoteRuntimeEndpoint, runtimeRequestTimeout.Duration)
-       if err != nil {
-               return nil, nil, err
-       }
-       is, err := remote.NewRemoteImageService(remoteImageEndpoint, runtimeRequestTimeout.Duration)
-       if err != nil {
-               return nil, nil, err
-       }
-       return rs, is, err
-}
+       Initialize Remote Runtime Service
+       Initialize Remote Image Service
+ }
+```
+The function to read the configuration needs to be modified to include the parameters required for remote runtime. By default
+docker runtime shall be used and also default values for the parameters need to be provided if the parameters are not provided
+in the configuration file.
 
+```
 // Get Config
 func getConfig() *Config {
 	....
-	conf.runtimeType = config.CONFIG.GetConfigurationByKey("edged.runtime-type").(string)
-	conf.remoteRuntimeEndpoint = config.CONFIG.GetConfigurationByKey("edged.remote-runtime-endpoint").(string)
-	conf.remoteImageEndpoint = config.CONFIG.GetConfigurationByKey("edged.remote-image-endpoint").(string)
-	....
+	Check for rumtime type and if not provided set to docker
+        if runtimeType is remote
+		Get edged memory capacity and set to default of 2G if not provided
+		Get remote runtime endpoint and set to /var/run/containerd/container.sock if not provided
+		Get remote image endpoint and set same as remote runtime endpoint of not provided
+                Get runtime Request Timeout and set to default of 2 min if not provided
+                Get PodSandboxImage and set to k8s.gcr.io/pause
+ 	....
 }
 
 ```
@@ -209,27 +185,14 @@ remote CRI runtime.
 ```go
 func (e *edged) Start(c *context.Context) {
   ....
-  switch (e.containerRuntimeName) {
+  switch based on runtime type {
     case DockerContainerRuntime:
-      e.volumeManager = volumemanager.NewVolumeManager(
-		    ....
-		    e.runtime.(*dockertools.DockerManager),
-        ....
-      )
-      e.pleg = edgedpleg.NewGenericLifecycle(
-        e.runtime.(*dockertools.DockerManager).ContainerManager,
-        .....
-      )
+      Initialize volume manager based on dockertools
+      Initialize PLEG based on dockertools
+      
     case RemoteContainerRuntime:
-      e.volumeManager = volumemanager.NewVolumeManager(
-		    ....
-		    e.containerRuntime,
-        ....
-      )
-      e.pleg = pleg.NewGenericLifecycle(
-        e.containerRuntime,
-        .....
-      )
+      Initialize volume manager based on remote runtime
+      Initialize PLEG based on remote runtime
   }
   ....
     
@@ -243,66 +206,79 @@ The following functionalaties which are based on the docker runtime need to be m
 ```go
 func (e *edged) initializeModules() error {
   ....
-  switch (e.containerRuntimeName) {
+  switch based on runtime type {
     case DockerContainerRuntime:
-	    e.runtime.Start(e.GetActivePods)
+	 Start with docker runtime
+	    
     case RemoteContainerRuntime:
-      //TBD for CRI
+         Start with remote runtime
   ....
 }
 func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
   ....
-  err = e.runtime.EnsureImageExists(pod, secrets)
-  //TBD for CRI
-  ....
-  err = e.runtime.StartPod(pod, opt)
-  // TBD for CRI
+  switch based on runtime type {
+    case DockerContainerRuntime:
+	 Ensure iamge exists for docker runtime
+	 Start pod with docker runtime
+	    
+    case RemoteContainerRuntime:
+         Get current status from pod cache
+	 Sync pod with remote runtime
   ....
 }
 
 func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
   ....
-  switch (e.containerRuntimeName) {
+  switch based on runtime type {
     case DockerContainerRuntime:
-	    err := e.runtime.TerminatePod(pod.UID)
+	 TerminatePod with docker runtime
+	    
     case RemoteContainerRuntime:
-      e.containerRuntime.KillPod(pod,nil,0)
+         KillPod with remote runtime
    }
   
   ....
 }
 
-func (e *edged) syncPod() {
-	//read containers from host
-	e.runtime.InitPodContainer()
-  
-  // TBD for CRI
-  
-  ....
-}
 
 func (e *edged) addPod(obj interface{}) {
   ....
-  if (e.containerRuntimeName == DockerContainerRuntime)
-    e.runtime.UpdatePluginResources(nodeInfo, attrs)
+  UpdatePluginResources for only docker runtime
   ....
 }
 
 func (e *edged) HandlePodCleanups() error {
   ....
-  switch (e.containerRuntimeName) {
+  switch switch based on runtime type {
     case DockerContainerRuntime:
-	    containerRunningPods, err := e.runtime.GetPods(true)
+       GetPods for docker runtime
+	    
     case RemoteContainerRuntime:
-      containerRunningPods, err := e.containerRuntime.GetPods(true)
+       GetPods for remote runtime
   }
   ....
-  if (e.containerRuntimeName == DockerContainerRuntime)
-    e.runtime.CleanupOrphanedPod(pods)
   ....
 }
 
 ```
 
+Existing PLEG wrapper needs to be modified to handle remote runtime. Addition new function needs to be provided to initialize
+PLEG and update pod status
 
+```
+func NewGenericLifecycleRemote(runtime kubecontainer.Runtime, probeManager prober.Manager, channelCapacity int,
+        relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager, podCache kubecontainer.Cache, clock clock.Clock, iface string) pleg.PodLifecycleEventGenerator {
+	Intialize with additional paramaters
+}
+
+
+func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
+  ....
+  Get pod status based on remote/docker runtime
+  Convert to API pod status for remote runtime
+  Set pod status phase for remote runtime
+  
+  ....
+}
+```
 
