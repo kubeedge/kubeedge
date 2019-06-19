@@ -18,6 +18,12 @@ var QueryConfigMapBuffer int
 // QuerySecretBuffer is the size of channel which save query secret message from edge
 var QuerySecretBuffer int
 
+// QueryServiceBuffer is the size of channel which save query service message from edge
+var QueryServiceBuffer int
+
+// QueryEndpointsBuffer is the size of channel which save query endpoints message from edge
+var QueryEndpointsBuffer int
+
 // PodEventBuffer is the size of channel which save pod event from k8s
 var PodEventBuffer int
 
@@ -60,7 +66,22 @@ func init() {
 	} else {
 		QuerySecretBuffer = qsb
 	}
-	log.LOGGER.Infof("Update controller.buffer.query-secret: %d", QuerySecretBuffer)
+
+	if qsb, err := config.CONFIG.GetValue("controller.buffer.query-service").ToInt(); err != nil {
+		QueryServiceBuffer = constants.DefaultQueryServiceBuffer
+	} else {
+		QueryServiceBuffer = qsb
+	}
+
+	log.LOGGER.Infof("Update controller.buffer.query-service: %d", QueryServiceBuffer)
+
+	if qeb, err := config.CONFIG.GetValue("controller.buffer.query-endpoints").ToInt(); err != nil {
+		QueryEndpointsBuffer = constants.DefaultQueryEndpointsBuffer
+	} else {
+		QueryEndpointsBuffer = qeb
+	}
+
+	log.LOGGER.Infof("Update controller.buffer.query-endpoints: %d", QueryEndpointsBuffer)
 
 	if peb, err := config.CONFIG.GetValue("controller.buffer.pod-event").ToInt(); err != nil {
 		PodEventBuffer = constants.DefaultPodEventBuffer

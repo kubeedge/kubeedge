@@ -18,6 +18,12 @@ var QueryConfigMapWorkers int
 // QuerySecretWorkers is the count of goroutines of query secret
 var QuerySecretWorkers int
 
+// QueryServiceWorkers is the count of goroutines of query service
+var QueryServiceWorkers int
+
+// QueryEndpointsWorkers is the count of goroutines of query endpoints
+var QueryEndpointsWorkers int
+
 func init() {
 	if psw, err := config.CONFIG.GetValue("controller.load.update-pod-status-workers").ToInt(); err != nil {
 		UpdatePodStatusWorkers = constants.DefaultUpdatePodStatusWorkers
@@ -46,4 +52,18 @@ func init() {
 		QuerySecretWorkers = qsw
 	}
 	log.LOGGER.Infof("query secret workers: %d", QuerySecretWorkers)
+
+	if qsw, err := config.CONFIG.GetValue("controller.load.query-service-workers").ToInt(); err != nil {
+		QueryServiceWorkers = constants.DefaultQueryServiceWorkers
+	} else {
+		QueryServiceWorkers = qsw
+	}
+	log.LOGGER.Infof("query service workers: %d", QueryServiceWorkers)
+
+	if qew, err := config.CONFIG.GetValue("controller.load.query-endpoints-workers").ToInt(); err != nil {
+		QueryEndpointsWorkers = constants.DefaultQueryEndpointsWorkers
+	} else {
+		QueryEndpointsWorkers = qew
+	}
+	log.LOGGER.Infof("query endpoints workers: %d", QueryEndpointsWorkers)
 }

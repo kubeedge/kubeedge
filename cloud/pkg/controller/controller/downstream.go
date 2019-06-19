@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -197,7 +198,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 			case watch.Added:
 				fallthrough
 			case watch.Modified:
-				// When node comes to running, send all the service information to edge
+				// When node comes to running, send all the service/endpoints/pods information to edge
 				for _, nsc := range node.Status.Conditions {
 					if nsc.Type == "Ready" {
 						status, ok := dc.lc.GetNodeStatus(node.ObjectMeta.Name)
@@ -212,11 +213,31 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 								break
 							}
 							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-							msg.Content = dc.lc.GetAllServices()
+							svcs := dc.lc.GetAllServices()
+							msg.Content = svcs
 							if err := dc.messageLayer.Send(*msg); err != nil {
 								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 							} else {
 								log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+							}
+
+							for _, svc := range svcs {
+								pods, ok := dc.lc.GetServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name))
+								if ok {
+									msg := model.NewMessage("")
+									resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
+									if err != nil {
+										log.LOGGER.Warnf("Built message resource failed with error: %v", err)
+										continue
+									}
+									msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+									msg.Content = pods
+									if err := dc.messageLayer.Send(*msg); err != nil {
+										log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+									} else {
+										log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+									}
+								}
 							}
 
 							// send all endpoints to edge
@@ -289,7 +310,7 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
-					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+					log.LOGGER.Warnf("Built message resource failed with error: %v", err)
 					return true
 				}
 				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
@@ -319,44 +340,83 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 				log.LOGGER.Warnf("Object type: %T unsupported", eps)
 				continue
 			}
+
+			ok = true
 			switch e.Type {
 			case watch.Added:
 				dc.lc.AddOrUpdateEndpoints(*eps)
 				operation = model.InsertOperation
 			case watch.Modified:
+				ok = dc.lc.IsEndpointsUpdated(*eps)
 				dc.lc.AddOrUpdateEndpoints(*eps)
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				dc.lc.DeleteEndpoints(*eps)
+				dc.lc.DeleteServicePods(*eps)
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
 				log.LOGGER.Warnf("endpoints event type: %s unsupported", e.Type)
 				continue
 			}
-
 			// send to all nodes
-			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
-				nodeName, ok := key.(string)
-				if !ok {
-					log.LOGGER.Warnf("Failed to assert key to sting")
+			if ok {
+				var listOptions metav1.ListOptions
+				var pods *v1.PodList
+				var err error
+				svc, ok := dc.lc.GetService(fmt.Sprintf("%s/%s", eps.Namespace, eps.Name))
+				if ok {
+					labelSelectorString := ""
+					for key, value := range svc.Spec.Selector {
+						labelSelectorString = labelSelectorString + key + "=" + value + ","
+					}
+					labelSelectorString = strings.TrimSuffix(labelSelectorString, ",")
+					listOptions = metav1.ListOptions{
+						LabelSelector: labelSelectorString,
+						Limit:         100,
+					}
+					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(listOptions)
+					if err == nil {
+						dc.lc.AddOrUpdateServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name), pods.Items)
+					}
+				}
+				dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
+					nodeName, check := key.(string)
+					if !check {
+						log.LOGGER.Warnf("Failed to assert key to sting")
+						return true
+					}
+					msg := model.NewMessage("")
+					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
+					if err != nil {
+						log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+						return true
+					}
+					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
+					msg.Content = eps
+					if err := dc.messageLayer.Send(*msg); err != nil {
+						log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					} else {
+						log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					}
+					if operation != model.DeleteOperation && ok {
+						msg := model.NewMessage("")
+						resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, model.ResourceTypePodlist, svc.Name)
+						if err != nil {
+							log.LOGGER.Warnf("Built message resource failed with error: %v", err)
+							return true
+						}
+						msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+						msg.Content = pods.Items
+						if err := dc.messageLayer.Send(*msg); err != nil {
+							log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+						} else {
+							log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+						}
+					}
 					return true
-				}
-				msg := model.NewMessage("")
-				resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
-				if err != nil {
-					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
-					return true
-				}
-				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
-				msg.Content = eps
-				if err := dc.messageLayer.Send(*msg); err != nil {
-					log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-				} else {
-					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-				}
-				return true
-			})
+				})
+			}
 		case <-stop:
 			log.LOGGER.Infof("Stop sync endpoints")
 			running = false
