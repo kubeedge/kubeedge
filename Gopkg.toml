@@ -59,6 +59,22 @@ required = [
   name = "k8s.io/code-generator"
   version = "kubernetes-1.13.2"
 
+[[constraint]]
+  name = "github.com/ServiceComb/go-archaius"
+  version = "v0.1"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.2.0"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.2"
+
+[[override]]
+  name = "github.com/go-mesh/openlogging"
+  version = "v1.0.0"
+
 [[override]]
   name = "github.com/astaxie/beego"
   version = "v1.9.2"
@@ -81,7 +97,7 @@ required = [
 
 [[override]]
   name = "github.com/go-chassis/paas-lager"
-  revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
+  revision = "v1.1.0"
 
 [[override]]
   name = "github.com/google/cadvisor"

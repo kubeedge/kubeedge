@@ -62,10 +62,12 @@ func (lb *LBHandler) getEndpoint(i *invocation.Invocation, lbConfig control.Load
 			break
 		}
 	}
-	ep, ok := ins.EndpointsMap[util.GenProtoEndPoint(i.Protocol, i.Port)]
+	protocolServer := util.GenProtoEndPoint(i.Protocol, i.Port)
+	ep, ok := ins.EndpointsMap[protocolServer]
 	if !ok {
-		errStr := fmt.Sprintf("No available instance support ["+i.Protocol+"] protocol,"+
-			" msName: "+i.MicroServiceName+" %v", ins.EndpointsMap)
+		errStr := fmt.Sprintf(
+			"No available instance for protocol server [%s] , microservice: %s has %v",
+			protocolServer, i.MicroServiceName, ins.EndpointsMap)
 		lbErr := loadbalancer.LBError{Message: errStr}
 		openlogging.GetLogger().Errorf(lbErr.Error())
 		return "", lbErr

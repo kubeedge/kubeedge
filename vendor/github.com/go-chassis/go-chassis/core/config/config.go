@@ -10,11 +10,9 @@ import (
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/config/schema"
-	"github.com/go-chassis/go-chassis/core/lager"
+	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-chassis/go-chassis/pkg/util/fileutil"
 	"github.com/go-chassis/go-chassis/pkg/util/iputil"
-
-	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-mesh/openlogging"
 	"gopkg.in/yaml.v2"
 )
@@ -65,7 +63,7 @@ func GetDataCenter() *model.DataCenterInfo {
 
 // parse unmarshal configurations on respective structure
 func parse() error {
-	err := readGlobalConfigFile()
+	err := ReadGlobalConfigFile()
 	if err != nil {
 		return err
 	}
@@ -160,26 +158,14 @@ func populateTenant() {
 	}
 }
 
-// readGlobalConfigFile for to unmarshal the global config file(chassis.yaml) information
-func readGlobalConfigFile() error {
+// ReadGlobalConfigFile for to unmarshal the global config file(chassis.yaml) information
+func ReadGlobalConfigFile() error {
 	globalDef := model.GlobalCfg{}
 	err := archaius.UnmarshalConfig(&globalDef)
 	if err != nil {
 		return err
 	}
 	GlobalDefinition = &globalDef
-	return nil
-}
-
-// readPanelConfig for to unmarshal the global config file(chassis.yaml) information
-func readPanelConfig() error {
-	globalDef := model.GlobalCfg{}
-	err := archaius.UnmarshalConfig(&globalDef)
-	if err != nil {
-		return err
-	}
-	GlobalDefinition = &globalDef
-
 	return nil
 }
 
@@ -243,13 +229,13 @@ func readMicroserviceConfigFiles() error {
 	defPath := fileutil.GetMicroserviceDesc()
 	data, err := ioutil.ReadFile(defPath)
 	if err != nil {
-		lager.Logger.Errorf(fmt.Sprintf("WARN: Missing microservice description file: %s", err.Error()))
+		openlogging.GetLogger().Errorf(fmt.Sprintf("WARN: Missing microservice description file: %s", err.Error()))
 		if len(microserviceNames) == 0 {
 			return errors.New("missing microservice description file")
 		}
 		msName := microserviceNames[0]
 		msDefPath := fileutil.MicroserviceDefinition(msName)
-		lager.Logger.Warnf(fmt.Sprintf("Try to find microservice description file in [%s]", msDefPath))
+		openlogging.GetLogger().Warnf(fmt.Sprintf("Try to find microservice description file in [%s]", msDefPath))
 		data, err := ioutil.ReadFile(msDefPath)
 		if err != nil {
 			return fmt.Errorf("missing microservice description file: %s", err.Error())
@@ -306,22 +292,19 @@ func Init() error {
 	}
 	openlogging.GetLogger().Infof("archaius init success")
 
-	var schemaError error
-
 	//Upload schemas using environment variable SCHEMA_ROOT
-	schemaEnv := archaius.GetString(common.EnvSchemaRoot, "")
-	if schemaEnv != "" {
-		schemaError = schema.LoadSchema(schemaEnv)
-	} else {
-		schemaError = schema.LoadSchema(fileutil.GetConfDir())
+	schemaPath := archaius.GetString(common.EnvSchemaRoot, "")
+	if schemaPath == "" {
+		schemaPath = fileutil.GetConfDir()
 	}
 
+	schemaError := schema.LoadSchema(schemaPath)
 	if schemaError != nil {
 		return schemaError
 	}
 
 	//set microservice names
-	msError := schema.SetMicroServiceNames(fileutil.GetConfDir())
+	msError := schema.SetMicroServiceNames(schemaPath)
 	if msError != nil {
 		return msError
 	}
@@ -351,12 +334,12 @@ func Init() error {
 	if runtime.HostName == "" {
 		runtime.HostName, err = os.Hostname()
 		if err != nil {
-			lager.Logger.Error("Get hostname failed:" + err.Error())
+			openlogging.Error("Get hostname failed:" + err.Error())
 			return err
 		}
 	} else if runtime.HostName == common.PlaceholderInternalIP {
 		runtime.HostName = iputil.GetLocalIP()
 	}
-	lager.Logger.Info("Host name is " + runtime.HostName)
+	openlogging.Info("Host name is " + runtime.HostName)
 	return err
 }

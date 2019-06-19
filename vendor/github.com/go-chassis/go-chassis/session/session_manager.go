@@ -75,10 +75,9 @@ func SetContextMetadata(ctx context.Context, key string, value string) context.C
 
 //GetSessionFromResp return session uuid in resp if there is
 func GetSessionFromResp(cookieKey string, resp *http.Response) string {
-	for _, c := range resp.Cookies() {
-		if c.Name == cookieKey {
-			return c.Value
-		}
+	bytes := httputil.GetRespCookie(resp, cookieKey)
+	if bytes != nil {
+		return string(bytes)
 	}
 	return ""
 }
@@ -162,9 +161,7 @@ func SaveSessionIDFromHTTP(ep string, autoTimeout int, resp *http.Response, req 
 
 	var sessionIDStr string
 
-	if c, err := req.Cookie(common.LBSessionID); err == http.ErrNoCookie {
-		sessionIDStr = ""
-	} else {
+	if c, err := req.Cookie(common.LBSessionID); err != http.ErrNoCookie {
 		sessionIDStr = c.Value
 	}
 

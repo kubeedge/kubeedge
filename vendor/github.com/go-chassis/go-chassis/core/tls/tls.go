@@ -105,7 +105,7 @@ func parseSSLConfig(sslConfigMap map[string]string) (*secCommon.SSLConfig, error
 		return nil, err
 	}
 	if len(sslConfig.CipherSuites) == 0 {
-		return nil, fmt.Errorf("No valid cipher")
+		return nil, fmt.Errorf("no valid cipher")
 	}
 
 	sslConfig.MinVersion, err = secCommon.ParseSSLProtocol(sslConfigMap[common.SslProtocolKey])

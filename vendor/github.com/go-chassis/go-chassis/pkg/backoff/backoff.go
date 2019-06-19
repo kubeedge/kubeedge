@@ -15,6 +15,7 @@ const (
 )
 
 //GetBackOff return the the back off policy
+//min and max unit is million second
 func GetBackOff(kind string, min, max int) backoff.BackOff {
 	switch kind {
 	case BackoffJittered:

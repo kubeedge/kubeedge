@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/go-chassis/go-archaius/core"
-	"github.com/go-mesh/openlogging"
 )
 
 /*
@@ -38,7 +37,6 @@ type MemoryConfigurationSource struct {
 	sync.RWMutex
 	CallbackCheck chan bool
 	ChanStatus    bool
-	priority      int
 }
 
 //MemorySource is a interface
@@ -50,12 +48,16 @@ type MemorySource interface {
 
 var _ core.ConfigSource = &MemoryConfigurationSource{}
 
+var memoryConfigSource *MemoryConfigurationSource
+
 //NewMemoryConfigurationSource initializes all necessary components for memory configuration
 func NewMemoryConfigurationSource() MemorySource {
-	memoryConfigSource := new(MemoryConfigurationSource)
-	memoryConfigSource.priority = memoryVariableSourcePriority
-	memoryConfigSource.Configurations = make(map[string]interface{})
-	memoryConfigSource.CallbackCheck = make(chan bool)
+	if memoryConfigSource == nil {
+		memoryConfigSource = new(MemoryConfigurationSource)
+		memoryConfigSource.Configurations = make(map[string]interface{})
+		memoryConfigSource.CallbackCheck = make(chan bool)
+	}
+
 	return memoryConfigSource
 }
 
@@ -85,13 +87,8 @@ func (confSrc *MemoryConfigurationSource) GetConfigurationByKey(key string) (int
 }
 
 //GetPriority returns priority of the memory configuration
-func (confSrc *MemoryConfigurationSource) GetPriority() int {
-	return confSrc.priority
-}
-
-//SetPriority custom priority
-func (confSrc *MemoryConfigurationSource) SetPriority(priority int) {
-	confSrc.priority = priority
+func (*MemoryConfigurationSource) GetPriority() int {
+	return memoryVariableSourcePriority
 }
 
 //GetSourceName returns name of memory configuration
@@ -102,7 +99,6 @@ func (*MemoryConfigurationSource) GetSourceName() string {
 //DynamicConfigHandler dynamically handles a memory configuration
 func (confSrc *MemoryConfigurationSource) DynamicConfigHandler(callback core.DynamicConfigCallback) error {
 	confSrc.callback = callback
-	openlogging.Info("mem source callback prepared")
 	confSrc.CallbackCheck <- true
 	return nil
 }
@@ -120,7 +116,6 @@ func (confSrc *MemoryConfigurationSource) AddKeyValue(key string, value interfac
 	event.Value = value
 
 	confSrc.Lock()
-	defer confSrc.Unlock()
 	if _, ok := confSrc.Configurations[key]; !ok {
 		event.EventType = core.Create
 	} else {
@@ -128,6 +123,7 @@ func (confSrc *MemoryConfigurationSource) AddKeyValue(key string, value interfac
 	}
 
 	confSrc.Configurations[key] = value
+	confSrc.Unlock()
 
 	if confSrc.callback != nil {
 		confSrc.callback.OnEvent(event)
