@@ -36,6 +36,7 @@ edged:
     register-node-namespace: default
     hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
     interface-name: eth0
+    edged-memory-capacity-bytes: 7852396000
     node-status-update-frequency: 10 # second
     device-plugin-enabled: false
     gpu-plugin-enabled: false
@@ -44,3 +45,8 @@ edged:
     maximum-dead-containers-per-container: 1
     docker-address: unix:///var/run/docker.sock
     version: 2.0.0
+    runtime-type: docker
+    remote-runtime-endpoint: /var/run/containerd/containerd.sock
+    remote-image-endpoint: /var/run/containerd/containerd.sock
+    runtime-request-timeout: 2
+    podsandbox-image: k8s.gcr.io/pause

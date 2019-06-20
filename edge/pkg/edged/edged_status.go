@@ -167,7 +167,15 @@ func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 	currentTime := metav1.NewTime(time.Now())
 	var newNodeReadyCondition v1.NodeCondition
 
-	_, err := e.runtime.Version()
+	var err error
+	switch e.containerRuntimeName {
+	case DockerContainerRuntime:
+		_, err = e.runtime.Version()
+	case RemoteContainerRuntime:
+		_, err = e.containerRuntime.Version()
+	default:
+	}
+
 	if err != nil {
 		newNodeReadyCondition = v1.NodeCondition{
 			Type:              v1.NodeReady,
@@ -218,9 +226,20 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 		return nodeInfo, err
 	}
 
-	runtimeVersion, err := e.runtime.Version()
-	if err != nil {
-		return nodeInfo, err
+	switch e.containerRuntimeName {
+	case DockerContainerRuntime:
+		runtimeVersion, err := e.runtime.Version()
+		if err != nil {
+			return nodeInfo, err
+		}
+		nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
+	case RemoteContainerRuntime:
+		runtimeVersion, err := e.containerRuntime.Version()
+		if err != nil {
+			return nodeInfo, err
+		}
+		nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
+	default:
 	}
 
 	nodeInfo.KernelVersion = kernel
@@ -228,7 +247,7 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 	nodeInfo.Architecture = runtime.GOARCH
 	nodeInfo.KubeletVersion = e.version
 	nodeInfo.OSImage = prettyName
-	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
+	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
 
@@ -332,7 +351,15 @@ func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
 }
 
 func (e *edged) getDevicePluginResourceCapacity() (v1.ResourceList, []string) {
-	return e.runtime.GetDevicePluginResourceCapacity()
+	switch e.containerRuntimeName {
+	case DockerContainerRuntime:
+		return e.runtime.GetDevicePluginResourceCapacity()
+	case RemoteContainerRuntime:
+		//resourceList, _, str := e.containerManager.GetDevicePluginResourceCapacity()
+		//return resourceList, str
+	default:
+	}
+	return nil, nil
 }
 
 func (e *edged) getNodePhase() v1.NodePhase {
