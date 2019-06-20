@@ -1735,7 +1735,7 @@
   revision = "e494cc58111187acad93e64529228a2fc0153e39"
 
 [[projects]]
-  digest = "1:331526abf14622f962b7798fa622ca53ca7e8513adfa1ced9b3e83f60a9ba168"
+  digest = "1:ecbd40a02c5fd569ef7649ed4473353762d61f12d0985436ac28d6c44247dece"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1809,6 +1809,7 @@
     "pkg/kubelet/prober",
     "pkg/kubelet/prober/results",
     "pkg/kubelet/qos",
+    "pkg/kubelet/remote",
     "pkg/kubelet/secret",
     "pkg/kubelet/server/portforward",
     "pkg/kubelet/server/remotecommand",
@@ -1928,6 +1929,7 @@
     "github.com/ghodss/yaml",
     "github.com/golang/glog",
     "github.com/golang/mock/gomock",
+    "github.com/google/cadvisor/info/v1",
     "github.com/google/uuid",
     "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
@@ -1987,10 +1989,14 @@
     "k8s.io/code-generator/cmd/defaulter-gen",
     "k8s.io/code-generator/cmd/informer-gen",
     "k8s.io/code-generator/cmd/lister-gen",
+    "k8s.io/kubernetes/pkg/api/v1/pod",
+    "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos",
     "k8s.io/kubernetes/pkg/cloudprovider",
     "k8s.io/kubernetes/pkg/features",
+    "k8s.io/kubernetes/pkg/kubelet/apis/cri",
     "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
+    "k8s.io/kubernetes/pkg/kubelet/cm/cpumanager",
     "k8s.io/kubernetes/pkg/kubelet/cm/devicemanager",
     "k8s.io/kubernetes/pkg/kubelet/config",
     "k8s.io/kubernetes/pkg/kubelet/container",
@@ -1999,12 +2005,14 @@
     "k8s.io/kubernetes/pkg/kubelet/gpu",
     "k8s.io/kubernetes/pkg/kubelet/gpu/nvidia",
     "k8s.io/kubernetes/pkg/kubelet/images",
+    "k8s.io/kubernetes/pkg/kubelet/kuberuntime",
     "k8s.io/kubernetes/pkg/kubelet/lifecycle",
     "k8s.io/kubernetes/pkg/kubelet/pleg",
     "k8s.io/kubernetes/pkg/kubelet/pod",
     "k8s.io/kubernetes/pkg/kubelet/pod/testing",
     "k8s.io/kubernetes/pkg/kubelet/prober",
     "k8s.io/kubernetes/pkg/kubelet/prober/results",
+    "k8s.io/kubernetes/pkg/kubelet/remote",
     "k8s.io/kubernetes/pkg/kubelet/status",
     "k8s.io/kubernetes/pkg/kubelet/types",
     "k8s.io/kubernetes/pkg/kubelet/util/format",
@@ -2025,6 +2033,7 @@
     "k8s.io/kubernetes/pkg/volume/secret",
     "k8s.io/kubernetes/pkg/volume/util",
     "k8s.io/kubernetes/pkg/volume/util/types",
+    "k8s.io/kubernetes/pkg/volume/util/volumepathhandler",
     "k8s.io/kubernetes/pkg/volume/validation",
   ]
   solver-name = "gps-cdcl"
