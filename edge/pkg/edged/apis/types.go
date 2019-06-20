@@ -20,7 +20,6 @@ const (
 
 //RainerCoreConfiguration is configuration object for edge node
 type RainerCoreConfiguration struct {
-
 	// IP address for the EdgeStore etcd server
 	EdgeStoreAddress string
 
@@ -50,4 +49,7 @@ var (
 	ErrPodNotFound       = errors.New("PodNotFound")
 	ErrContainerNotFound = errors.New("ContainerNotFound")
 	ErrPodStartBackOff   = errors.New("PodStartBackOff")
+	ErrImagePullBackOff  = errors.New("ImagePullBackOff")
+	ErrVolumeMountFailed = errors.New("VolumeMountFailed")
+	ErrGetSecretFailed   = errors.New("GetSecretFailed")
 )
