@@ -21,7 +21,7 @@ bluetooth protocol. The aim is to create an application through which users can 
 
  ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/device/bluetooth_mapper
-make # or `make bluetooth_mapper`
+make bluetooth_mapper_image
 docker tag bluetooth_mapper:v1.0 <your_dockerhub_username>/bluetooth_mapper:v1.0
 docker push <your_dockerhub_username>/bluetooth_mapper:v1.0
 
