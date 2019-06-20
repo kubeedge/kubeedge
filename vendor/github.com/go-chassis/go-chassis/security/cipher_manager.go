@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/go-chassis/foundation/security"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-chassis/go-chassis/pkg/goplugin"
+	"github.com/go-mesh/openlogging"
 )
 
 const pluginSuffix = ".so"
@@ -25,7 +25,7 @@ func GetCipherNewFunc(name string) (func() security.Cipher, error) {
 	if f, ok := cipherPlugins[name]; ok {
 		return f, nil
 	}
-	lager.Logger.Debugf("try to load cipher [%s] from go plugin", name)
+	openlogging.GetLogger().Debugf("try to load cipher [%s] from go plugin", name)
 	f, err := loadCipherFromPlugin(name)
 	if err == nil {
 		cipherPlugins[name] = f

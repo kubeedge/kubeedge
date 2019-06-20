@@ -2,6 +2,10 @@ package common
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+
+	"github.com/go-mesh/openlogging"
 )
 
 // constant for provider and consumer
@@ -101,6 +105,8 @@ const CallerKey = "caller"
 const (
 	// HeaderSourceName is constant for header source name
 	HeaderSourceName = "x-cse-src-microservice"
+	// HeaderXCseContent is constant for header , get some json msg about HeaderSourceName like {"k":"v"}
+	HeaderXCseContent = "x-cse-context"
 )
 
 const (
@@ -167,9 +173,9 @@ func WithContext(ctx context.Context, key, val string) context.Context {
 			key: val,
 		})
 	}
-
 	at, ok := ctx.Value(ContextHeaderKey{}).(map[string]string)
 	if !ok {
+		openlogging.Debug("context header key does not has map, re-create new context")
 		return context.WithValue(ctx, ContextHeaderKey{}, map[string]string{
 			key: val,
 		})
@@ -189,4 +195,41 @@ func FromContext(ctx context.Context) map[string]string {
 		return make(map[string]string, 0)
 	}
 	return at
+}
+
+// GetXCSEContext  get x-cse-context from req.header
+func GetXCSEContext(k string, r *http.Request) string {
+	if r == nil || r.Header == nil {
+		openlogging.GetLogger().Debug("get x-cse-header failed , request(request.Header) is nil or  key is empty, please check its")
+		return ""
+	}
+	cseContextStr := r.Header.Get(HeaderXCseContent)
+	if cseContextStr == "" {
+		return r.Header.Get(k)
+	}
+
+	var m map[string]string
+	err := json.Unmarshal([]byte(cseContextStr), &m)
+	if err != nil {
+		openlogging.GetLogger().Debugf("get x-cse-header form req failed , error : %v", err)
+		return ""
+	}
+	return m[k]
+}
+
+// SetXCSEContext  set value into x-cse-context
+func SetXCSEContext(vm map[string]string, r *http.Request) {
+	if len(vm) <= 0 || vm == nil || r == nil {
+		openlogging.GetLogger().Debug("set x-cse-header into req failed ,because one of key,value and request is empty(nil) or all empty(nil)")
+		return
+	}
+	if r.Header == nil {
+		r.Header = make(map[string][]string)
+	}
+	b, err := json.Marshal(vm)
+	if err != nil {
+		openlogging.GetLogger().Debugf("set value to x-cse-context failed , error : %v ", err.Error())
+		return
+	}
+	r.Header.Set(HeaderXCseContent, string(b))
 }

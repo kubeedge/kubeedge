@@ -18,7 +18,8 @@
 * Created by on 2017/6/22.
  */
 
-package archaius
+// Package goarchaius provides you a list of interface which helps in communciation with config-center
+package goarchaius
 
 import (
 	"errors"
@@ -29,6 +30,9 @@ import (
 	"github.com/go-chassis/go-archaius/core/cast"
 	"github.com/go-chassis/go-archaius/core/config-manager"
 	"github.com/go-chassis/go-archaius/core/event-system"
+	"github.com/go-chassis/go-archaius/sources/commandline-source"
+	"github.com/go-chassis/go-archaius/sources/enviromentvariable-source"
+	"github.com/go-chassis/go-archaius/sources/memory-source"
 	"github.com/go-mesh/openlogging"
 )
 
@@ -37,14 +41,14 @@ const (
 	UnsuccessfulArchaiusInit = "issue with go-archaius initialization"
 )
 
-// ConfigurationFactory is a list of Interface for config Center
+// ConfigurationFactory is a list of Interface for Config Center
 type ConfigurationFactory interface {
 	// Init ConfigurationFactory
 	Init() error
 	// dump complete configuration managed by config-client based on priority
-	// (1. config Center 2. Commandline Argument 3.Environment Variable  4.ConfigFile , 1 with highest priority
+	// (1. Config Center 2. Commandline Argument 3.Environment Variable  4.ConfigFile , 1 with highest priority
 	GetConfigurations() map[string]interface{}
-	// dump complete configuration managed by config-client for config Center based on dimension info.
+	// dump complete configuration managed by config-client for Config Center based on dimension info.
 	GetConfigurationsByDimensionInfo(dimensionInfo string) map[string]interface{}
 	// add the dimension info for other services
 	AddByDimensionInfo(dimensionInfo string) (map[string]string, error)
@@ -68,7 +72,6 @@ type ConfigurationFactory interface {
 	GetConfigurationByKeyAndDimensionInfo(dimensionInfo, key string) interface{}
 	// an abstraction to return key's value in respective type based on dimension info which is provided by user
 	GetValueByDI(dimensionInfo, key string) cast.Value
-	Refresh(name string) error
 }
 
 // ConfigFactory is a struct which stores configuration information
@@ -79,15 +82,32 @@ type ConfigFactory struct {
 	//logger      *ccLogger.ConfigClientLogger
 }
 
-// NewConfigFactory creates a new configuration object for config center
-func NewConfigFactory() (ConfigurationFactory, error) {
-	arc := new(ConfigFactory)
-	//// Source init should be before config manager init
-	//sources.NewSourceInit()
-	arc.dispatcher = eventsystem.NewDispatcher()
-	arc.configMgr = configmanager.NewConfigurationManager(arc.dispatcher)
+var arc *ConfigFactory
 
-	openlogging.GetLogger().Debug("ConfigurationFactory Initiated")
+// NewConfigFactory creates a new configuration object for Config center
+func NewConfigFactory(log openlogging.Logger) (ConfigurationFactory, error) {
+
+	if arc == nil {
+
+		arc = new(ConfigFactory)
+		//// Source init should be before config manager init
+		//sources.NewSourceInit()
+		arc.dispatcher = eventsystem.NewDispatcher()
+		arc.configMgr = configmanager.NewConfigurationManager(arc.dispatcher)
+
+		// Default config source init
+		// 1. Command line source
+		cmdSource := commandlinesource.NewCommandlineConfigSource()
+		arc.configMgr.AddSource(cmdSource, cmdSource.GetPriority())
+
+		// Environment variable source
+		envSource := envconfigsource.NewEnvConfigurationSource()
+		arc.configMgr.AddSource(envSource, envSource.GetPriority())
+		// External variable source
+		memorySource := memoryconfigsource.NewMemoryConfigurationSource()
+		arc.configMgr.AddSource(memorySource, memorySource.GetPriority())
+	}
+
 	return arc, nil
 }
 
@@ -100,7 +120,7 @@ func (arc *ConfigFactory) Init() error {
 // GetConfigurations dump complete configuration managed by config-client
 //   Only return highest priority key value:-
 //   1. ConfigFile 		2. Environment Variable
-//   3. Commandline Argument	4. config Center configuration
+//   3. Commandline Argument	4. Config Center configuration
 //   config-center value being the highest priority
 func (arc *ConfigFactory) GetConfigurations() map[string]interface{} {
 	if arc.initSuccess == false {
@@ -110,7 +130,7 @@ func (arc *ConfigFactory) GetConfigurations() map[string]interface{} {
 	return arc.configMgr.GetConfigurations()
 }
 
-//GetConfigurationsByDimensionInfo dump complete configuration managed by config-client Only return config Center configurations.
+//GetConfigurationsByDimensionInfo dump complete configuration managed by config-client Only return Config Center configurations.
 func (arc *ConfigFactory) GetConfigurationsByDimensionInfo(dimensionInfo string) map[string]interface{} {
 	if arc.initSuccess == false {
 		return nil
@@ -154,11 +174,7 @@ func (arc *ConfigFactory) GetConfigurationByKeyAndDimensionInfo(dimensionInfo, k
 
 // AddSource return all values of different sources
 func (arc *ConfigFactory) AddSource(source core.ConfigSource) error {
-	if source == nil {
-		return errors.New("source can not be nil")
-	}
 	if arc.initSuccess == false {
-		openlogging.Warn("Plz call factory.Init() first, failed to add source: " + source.GetSourceName())
 		return nil
 	}
 
@@ -222,7 +238,7 @@ func (arc *ConfigFactory) DeInit() error {
 	if arc.initSuccess == false {
 		return nil
 	}
-	arc.initSuccess = false
+
 	arc.configMgr.Cleanup()
 	return nil
 }
@@ -259,9 +275,4 @@ func (arc *ConfigFactory) GetValueByDI(dimensionInfo, key string) cast.Value {
 	}
 
 	return confValue
-}
-
-//Refresh pull config from source and update configuration map
-func (arc *ConfigFactory) Refresh(name string) error {
-	return arc.configMgr.Refresh(name)
 }

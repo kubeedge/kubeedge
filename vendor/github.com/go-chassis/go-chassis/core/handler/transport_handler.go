@@ -20,7 +20,7 @@ type TransportHandler struct{}
 func (th *TransportHandler) Name() string {
 	return "transport"
 }
-func errNotNill(err error, cb invocation.ResponseCallBack) {
+func errNotNil(err error, cb invocation.ResponseCallBack) {
 	r := &invocation.Response{
 		Err: err,
 	}
@@ -31,9 +31,10 @@ func errNotNill(err error, cb invocation.ResponseCallBack) {
 
 // Handle is to handle transport related things
 func (th *TransportHandler) Handle(chain *Chain, i *invocation.Invocation, cb invocation.ResponseCallBack) {
+
 	c, err := client.GetClient(i.Protocol, i.MicroServiceName, i.Endpoint)
 	if err != nil {
-		errNotNill(err, cb)
+		errNotNil(err, cb)
 		return
 	}
 
@@ -42,6 +43,9 @@ func (th *TransportHandler) Handle(chain *Chain, i *invocation.Invocation, cb in
 	//taking the time elapsed to check for latency aware strategy
 	timeBefore := time.Now()
 	err = c.Call(i.Ctx, i.Endpoint, i, i.Reply)
+	if resp, ok := i.Reply.(*http.Response); ok {
+		r.Status = resp.StatusCode
+	}
 	if err != nil {
 		r.Err = err
 		if err != client.ErrCanceled {
@@ -50,9 +54,7 @@ func (th *TransportHandler) Handle(chain *Chain, i *invocation.Invocation, cb in
 		if i.Strategy == loadbalancer.StrategySessionStickiness {
 			ProcessSpecialProtocol(i)
 			ProcessSuccessiveFailure(i)
-
 		}
-
 		cb(r)
 		return
 	}

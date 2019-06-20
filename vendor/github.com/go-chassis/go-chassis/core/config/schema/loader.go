@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chassis/go-chassis/core/common"
+	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-chassis/go-chassis/pkg/util/fileutil"
+	swagger "github.com/go-chassis/go-restful-swagger20"
 	"github.com/go-mesh/openlogging"
 	"io/ioutil"
 	"os"
@@ -217,4 +219,20 @@ func GetSchemaIDs(microserviceName string) ([]string, error) {
 func init() {
 	defaultMicroserviceMetaMgr = make(map[string]*MicroserviceMeta)
 	DefaultSchemaIDsMap = make(map[string]string)
+}
+
+// SetSchemaInfo is for fill defaultMicroserviceMetaMgr and DefaultSchemaIDsMap
+func SetSchemaInfo(sws *swagger.SwaggerService) error {
+	schemaInfoList, err := sws.GetSchemaInfoList()
+	if err != nil {
+		openlogging.Error("get schema Info err: " + err.Error())
+		return err
+	}
+	microsvcMeta := NewMicroserviceMeta(fileutil.SchemaDirectory)
+	microsvcMeta.SchemaIDs = append(microsvcMeta.SchemaIDs, runtime.ServiceName)
+	defaultMicroserviceMetaMgr[runtime.ServiceName] = microsvcMeta
+	for _, schemaInfo := range schemaInfoList {
+		DefaultSchemaIDsMap[runtime.ServiceName] = schemaInfo
+	}
+	return nil
 }

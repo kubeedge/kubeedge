@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -9,7 +8,8 @@ import (
 	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/fault"
 	"github.com/go-chassis/go-chassis/core/invocation"
-	"github.com/go-chassis/go-chassis/core/lager"
+	"github.com/go-mesh/openlogging"
+	"github.com/pkg/errors"
 )
 
 // constant for fault handler name
@@ -32,31 +32,28 @@ func (rl *FaultHandler) Name() string {
 
 // Handle is to handle the API
 func (rl *FaultHandler) Handle(chain *Chain, inv *invocation.Invocation, cb invocation.ResponseCallBack) {
-
-	faultStruct := GetFaultConfig(inv.Protocol, inv.MicroServiceName, inv.SchemaID, inv.OperationID)
-	faultConfig := model.FaultProtocolStruct{}
-	faultConfig.Fault = make(map[string]model.Fault)
-	faultConfig.Fault[inv.Protocol] = faultStruct
+	faultConfig := GetFaultConfig(inv.Protocol, inv.MicroServiceName, inv.SchemaID, inv.OperationID)
 
 	faultInject, ok := fault.Injectors[inv.Protocol]
 	r := &invocation.Response{}
 	if !ok {
-		lager.Logger.Warnf("fault injection doesn't support for protocol ", errors.New(inv.Protocol))
-		r.Err = nil
+		msg := "fault injection doesn't support for protocol " + inv.Protocol
+		openlogging.Error(msg)
+		r.Err = errors.New(msg)
 		cb(r)
 		return
 	}
 
-	faultValue := faultConfig.Fault[inv.Protocol]
+	faultValue := faultConfig
 	err := faultInject(faultValue, inv)
 	if err != nil {
 		if strings.Contains(err.Error(), "injecting abort") {
 			switch inv.Reply.(type) {
 			case *http.Response:
 				resp := inv.Reply.(*http.Response)
-				resp.StatusCode = faultConfig.Fault[inv.Protocol].Abort.HTTPStatus
+				resp.StatusCode = faultConfig.Abort.HTTPStatus
 			}
-			r.Status = faultConfig.Fault[inv.Protocol].Abort.HTTPStatus
+			r.Status = faultConfig.Abort.HTTPStatus
 		} else {
 			switch inv.Reply.(type) {
 			case *http.Response:

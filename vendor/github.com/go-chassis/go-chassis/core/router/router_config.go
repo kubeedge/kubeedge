@@ -23,7 +23,7 @@ func Init() error {
 	routerConfigFromFile := config.RouterDefinition
 	err := BuildRouter(config.GetRouterType())
 	if err != nil {
-		openlogging.Error("can not new router: " + err.Error())
+		openlogging.Error("can not init router [" + config.GetRouterType() + "]: " + err.Error())
 		return err
 	}
 

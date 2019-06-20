@@ -29,7 +29,6 @@ import (
 	"unicode"
 
 	"github.com/go-chassis/go-archaius/core/cast"
-	"github.com/go-mesh/openlogging"
 )
 
 const (
@@ -47,9 +46,7 @@ func (cMgr *ConfigurationManager) unmarshal(rValue reflect.Value, tagName string
 	// handle panic
 	defer func() {
 		if r := recover(); r != nil {
-			msg := fmt.Sprintf("unmarshalling [%s] failed, err: %s", tagName, r.(error).Error())
-			err = errors.New(msg)
-			openlogging.Error(msg)
+			err = errors.New("unmarshalling failed")
 		}
 	}()
 

@@ -19,23 +19,25 @@ type DataCenterInfo struct {
 
 //CseStruct 设置注册中心SC的地址，要开哪些传输协议， 调用链信息等
 type CseStruct struct {
-	Config      Config                      `yaml:"config"`
-	Service     ServiceStruct               `yaml:"service"`
-	Protocols   map[string]Protocol         `yaml:"protocols"`
-	Handler     HandlerStruct               `yaml:"handler"`
-	References  map[string]ReferencesStruct `yaml:"references"` //Deprecated
-	FlowControl FlowControl                 `yaml:"flowcontrol"`
-	Monitor     MonitorStruct               `yaml:"monitor"`
-	Metrics     MetricsStruct               `yaml:"metrics"`
-	Credentials CredentialStruct            `yaml:"credentials"`
-	Transport   Transport                   `yaml:"transport"`
+	Config          Config                      `yaml:"config"`
+	Service         ServiceStruct               `yaml:"service"`
+	Protocols       map[string]Protocol         `yaml:"protocols"`
+	Handler         HandlerStruct               `yaml:"handler"`
+	References      map[string]ReferencesStruct `yaml:"references"` //Deprecated
+	FlowControl     FlowControl                 `yaml:"flowcontrol"`
+	Monitor         MonitorStruct               `yaml:"monitor"`
+	Metrics         MetricsStruct               `yaml:"metrics"`
+	Credentials     CredentialStruct            `yaml:"credentials"`
+	Transport       Transport                   `yaml:"transport"`
+	NoRefreshSchema bool                        `yaml:"noRefreshSchema"`
 }
 
 //Transport defines failure
 //TODO support TLS config
 type Transport struct {
-	Failure    map[string]string `yaml:"failure"`
-	MaxIdlCons map[string]int    `yaml:"maxIdleCon"`
+	Failure      map[string]string `yaml:"failure"`
+	MaxIdlCons   map[string]int    `yaml:"maxIdleCon"`
+	MaxBodyBytes map[string]int64  `yaml:"maxBodyBytes"`
 }
 
 // MetricsStruct metrics struct
