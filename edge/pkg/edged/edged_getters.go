@@ -32,7 +32,9 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/kubernetes/pkg/kubelet/config"
 	utilfile "k8s.io/kubernetes/pkg/util/file"
 	"k8s.io/kubernetes/pkg/volume/util"
 )
@@ -162,4 +164,21 @@ func (e *edged) getPodVolumePathListFromDisk(podUID types.UID) ([]string, error)
 		}
 	}
 	return volumes, nil
+}
+
+// GetPodDir returns the full path to the per-pod data directory for the
+// specified pod. This directory may not exist if the pod does not exist.
+func (e *edged) GetPodDir(podUID types.UID) string {
+	return e.getPodDir(podUID)
+}
+
+// GetExtraSupplementalGroupsForPod returns a list of the extra
+// supplemental groups for the Pod. These extra supplemental groups come
+// from annotations on persistent volumes that the pod depends on.
+func (e *edged) GetExtraSupplementalGroupsForPod(pod *v1.Pod) []int64 {
+	return e.volumeManager.GetExtraSupplementalGroupsForPod(pod)
+}
+
+func (e *edged) getPodContainerDir(podUID types.UID, ctrName string) string {
+	return filepath.Join(e.getPodDir(podUID), config.DefaultKubeletContainersDirName, ctrName)
 }
