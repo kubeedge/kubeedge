@@ -40,7 +40,7 @@ The assumptions are
 4. The same K8s HA mechanism is to be used to enable HA
 
 ## Architecture Design
-<img src="../images/EdgeSite_arch.PNG"/>
+<img src="../images/edgesite/EdgeSite_arch.PNG"/>
 
 ## Advantages
 With the integration, the following can be enabled
