@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modbus-device-mapper-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: modbus-mapper
+  template:
+    metadata:
+      labels:
+        app: modbus-mapper
+    spec:
+      hostNetwork: true
+      containers:
+      - name: modbus-mapper-container
+        image: <your_dockerhub_username>/modbus_mapper:v1.0
+        env: 
+        - name: CONNECTOR_MQTT_PORT
+          value: "1883"
+        - name: CONNECTOR_MQTT_IP
+          value: 127.0.0.1
+        - name: CONNECTOR_DPL_NAME
+          value: dpl/deviceProfile.json
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: dpl-config-volume
+          mountPath: /opt/src/dpl
+      nodeSelector:
+        modbus: "true"      
+      volumes:
+      - name: dpl-config-volume
+        configMap:
+          name:  device-profile-config-<edge_node_name>
+      restartPolicy: Always
+      
