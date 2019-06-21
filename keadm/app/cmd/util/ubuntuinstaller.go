@@ -307,7 +307,7 @@ func (u *UbuntuOS) addK8SRepositoryAndUpdate() error {
 
 	//curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 	//Get the GPG key
-	curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesGPGURL)
+	curl := fmt.Sprintf("curl -s %s | apt-key add -", KubernetesUbuntuGPGURL)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", curl)}
 	cmd.ExecuteCommand()
 	curlOutput := cmd.GetStdOutput()

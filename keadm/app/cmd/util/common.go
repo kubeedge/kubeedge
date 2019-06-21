@@ -39,9 +39,9 @@ const (
 	DockerPreqReqList  = "apt-transport-https ca-certificates curl gnupg-agent software-properties-common"
 
 	KubernetesDownloadURL     = "https://apt.kubernetes.io/"
-	KubernetesGPGURL          = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+	KubernetesUbuntuGPGURL    = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 	KubernetesBaseurl         = "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
-	KubernetesGpgkey          = "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+	KubernetesCentosGpgkey    = "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeConfPath          = KubeEdgePath + "kubeedge/edge/conf"

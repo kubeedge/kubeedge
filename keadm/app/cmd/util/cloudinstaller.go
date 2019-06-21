@@ -25,7 +25,6 @@ type KubeCloudInstTool struct {
 func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
-	fmt.Println("beforeinstallkubeedge")
 
 	err := cu.InstallKubeEdge()
 	if err != nil {
@@ -43,7 +42,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	err = cu.StartK8Scluster()
 	fmt.Println("StartK8Scluster")
@@ -55,7 +54,6 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(5 * time.Second)
 	err = cu.createdevicemodel()
 	if err != nil {
 		return err
@@ -123,12 +121,11 @@ func (cu *KubeCloudInstTool) generateCertificates() error {
 
 	cmd := &Command{Cmd: exec.Command("bash", "-x", KubeEdgeCloudCertGenPath, "genCertAndKey", "edge")}
 	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
+	//stdout := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
 	if err != nil || errout != "" {
 		return fmt.Errorf("%s", "certificates not installed")
 	}
-	fmt.Println(stdout)
 	fmt.Println("Certificates got generated at:", KubeEdgePath, "ca and", KubeEdgePath, "certs")
 	return nil
 }
@@ -209,28 +206,8 @@ func linesFromReader(r io.Reader) ([]string, error) {
 //RunEdgeController starts edgecontroller process
 func (cu *KubeCloudInstTool) RunEdgeController() error {
 
-	/*	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
-		cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
-		err := cmd.ExecuteCmdShowOutput()
-		errout := cmd.GetStdErr()
-		if err != nil || errout != "" {
-			fmt.Println("in error")
-			return fmt.Errorf("%s", errout)
-
-		}*/
-	//binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-	/*binExec := fmt.Sprintf("chmod +x %skubeedge/cloud/%s && %skubeedge/cloud/%s > %skubeedge/cloud/%s.log 2>&1 &", KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
-	fmt.Println(binExec)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-	err := cmd.ExecuteCmdShowOutput()
-	fmt.Println("err%s", err)
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		fmt.Println("in error")
-		return fmt.Errorf("%s", errout)
-	}*/
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
@@ -238,7 +215,6 @@ func (cu *KubeCloudInstTool) RunEdgeController() error {
 	if err != nil {
 		fmt.Println("in error")
 	}
-	//fmt.Println(cmd.GetStdOutput())
 	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	return nil
 }
