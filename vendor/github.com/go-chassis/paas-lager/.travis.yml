@@ -1,0 +1,40 @@
+language: go
+sudo: required
+go: 
+  - 1.8.3
+install: true
+
+before_script:
+  - mkdir -p $HOME/gopath/src/github.com/go-chassis/paas-lager
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/go-chassis/paas-lager/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/go-chassis/paas-lager
+  - cd $HOME/gopath/src/github.com/go-chassis/paas-lager
+jobs:
+  include:
+    - stage: Format Checker
+      script: bash -x scripts/travis/formatChecker.sh
+    - stage: DeadCode Checker
+      script: 
+        - go get -u github.com/tsenart/deadcode
+        - bash -x scripts/travis/deadCodeChecker.sh
+    - stage: Misspell Checker
+      script: 
+        - go get -u github.com/client9/misspell
+        - bash -x scripts/travis/misspellChecker.sh
+    - stage: GoConst Checker
+      script:
+        - go get -u github.com/jgautheron/goconst/cmd/goconst
+        - bash -x scripts/travis/goConstChecker.sh
+    - stage: GoLint Checker
+      script:
+        - go get -u github.com/golang/lint/golint
+        - bash -x scripts/travis/goLintChecker.sh
+    - stage: GoCyclo Checker
+      script:
+        - go get github.com/fzipp/gocyclo
+        - bash -x scripts/travis/goCycloChecker.sh
+    - stage: Unit Test
+      script:
+        - go get -u gopkg.in/yaml.v2
+        - go get -u github.com/go-mesh/openlogging
+        - bash -x scripts/travis/unit_test.sh
