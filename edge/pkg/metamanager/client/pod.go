@@ -1,4 +1,4 @@
-package metaclient
+package client
 
 import (
 	"github.com/kubeedge/beehive/pkg/core/context"

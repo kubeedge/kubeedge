@@ -50,3 +50,7 @@ edged:
     remote-image-endpoint: /var/run/containerd/containerd.sock
     runtime-request-timeout: 2
     podsandbox-image: k8s.gcr.io/pause
+
+mesh:
+    loadbalance:
+        strategy-name: RoundRobin

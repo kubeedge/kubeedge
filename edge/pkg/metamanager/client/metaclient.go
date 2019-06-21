@@ -1,4 +1,4 @@
-package metaclient
+package client
 
 import (
 	"time"
@@ -23,6 +23,8 @@ type CoreInterface interface {
 	NodesGetter
 	NodeStatusGetter
 	SecretsGetter
+	EndpointsGetter
+	ServiceGetter
 }
 
 type metaClient struct {
@@ -55,6 +57,15 @@ func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 }
 
 //New creates a new metaclient
+func (m *metaClient) Endpoints(namespace string) EndpointsInterface {
+	return newEndpoints(namespace, m.context, m.send)
+}
+
+// New Services metaClient
+func (m *metaClient) Services(namespace string) ServiceInterface {
+	return newServices(namespace, m.context, m.send)
+}
+
 func New(c *context.Context) CoreInterface {
 	return &metaClient{
 		context: c,

@@ -1,4 +1,4 @@
-package metaclient
+package client
 
 import (
 	"encoding/json"
@@ -11,12 +11,12 @@ import (
 	api "k8s.io/api/core/v1"
 )
 
-//SecretsGetter is interface to get metaclient secrets
+//SecretsGetter is interface to get client secrets
 type SecretsGetter interface {
 	Secrets(namespace string) SecretsInterface
 }
 
-//SecretsInterface is interface for metaclient secret
+//SecretsInterface is interface for client secret
 type SecretsInterface interface {
 	Create(*api.Secret) (*api.Secret, error)
 	Update(*api.Secret) error

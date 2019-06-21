@@ -9,6 +9,7 @@ import (
 	_ "github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/servicebus"
+	_ "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	_ "github.com/kubeedge/kubeedge/edge/test"
 )
 
