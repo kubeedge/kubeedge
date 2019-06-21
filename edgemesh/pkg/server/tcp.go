@@ -15,7 +15,7 @@ import (
 )
 
 func StartTCP() {
-	server := config.GetString("server", "127.0.0.1")
+	server := config.GetString("server", "0.0.0.0")
 	port := config.GetString("port", "8080")
 
 	log.LOGGER.Infof("start listening at %s:%s", server, port)
