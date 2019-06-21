@@ -28,7 +28,6 @@ package containers
 import (
 	"fmt"
 	"hash/fnv"
-
 	"math/rand"
 	"net"
 	"os"
@@ -58,7 +57,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/gpu"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
-	"k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/scheduler/schedulercache"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	"k8s.io/kubernetes/pkg/util/selinux"
@@ -107,7 +105,7 @@ type containerManager struct {
 	*testing.Mock
 	backOff                  *flowcontrol.Backoff
 	runtimeService           cri.RuntimeService
-	podContainer             map[types.UID]map[string]*cri.Container
+	podContainer             map[types.UID]*cri.Container
 	podContainerLock         sync.RWMutex
 	containerRecords         map[string]*containerRecord
 	containerRecordsLock     sync.Mutex
@@ -122,7 +120,6 @@ type containerRecord struct {
 	lastUsed      time.Time
 	Status        kubecontainer.ContainerState
 	podID         types.UID
-	containerName string
 }
 
 type containerToKillInfo struct {
@@ -134,20 +131,12 @@ type containerToKillInfo struct {
 	message string
 }
 
-// PodHelper wraps edged to make container runtime
-// able to get necessary information like RunContainerOptions, reasonCache.
-type PodHelper interface {
-	GenerateContainerOptions(pod *v1.Pod) (map[string]*kubecontainer.RunContainerOptions, error)
-	AddToReasonCache(podName string, apisErr error, msg string)
-	RemoveFromReasonCache(name string)
-}
-
 type podActions struct {
 	// ContainersToStart keeps a list of indexes for the containers to start,
 	// where the index is the index of the specific container in the pod spec (
 	// pod.Spec.Containers.
 	ContainersToStart      []int
-	ContainersRestartCount map[string]int
+	ContainersRestartCount int
 	// ContainersToKill keeps a map of containers that need to be killed, note that
 	// the key is the container ID of the container, while
 	// the value contains necessary information to kill a container.
@@ -161,11 +150,11 @@ type ContainerManager interface {
 	GetDevicePluginResourceCapacity() (v1.ResourceList, []string)
 	UpdatePluginResources(*schedulercache.NodeInfo, *lifecycle.PodAdmitAttributes) error
 	InitPodContainer() error
-	StartPod(pod *v1.Pod, helper PodHelper, provider status.PodStatusProvider, secret []v1.Secret) error
+	StartPod(pod *v1.Pod, runOpt *kubecontainer.RunContainerOptions) error
 	UpdatePod(pod *v1.Pod) error
 	TerminatePod(uid types.UID) error
 	RunInContainer(id kubecontainer.ContainerID, cmd []string, timeout time.Duration) ([]byte, error)
-	GetPodStatusOwn(pod *v1.Pod, cache *ReasonCache) (*v1.PodStatus, error)
+	GetPodStatusOwn(pod *v1.Pod) (*v1.PodStatus, error)
 	GetPods(all bool) ([]*kubecontainer.Pod, error)
 	GarbageCollect(gcPolicy kubecontainer.ContainerGCPolicy, ready bool, evictNonDeletedPods bool) error
 	GeneratePodReadyCondition(statuses []v1.ContainerStatus) v1.PodCondition
@@ -186,7 +175,7 @@ func NewContainerManager(runtimeService cri.RuntimeService, livenessManager prob
 		Mock:                     new(testing.Mock),
 		runtimeService:           runtimeService,
 		backOff:                  containerBackOff,
-		podContainer:             make(map[types.UID]map[string]*cri.Container),
+		podContainer:             make(map[types.UID]*cri.Container),
 		containerRecords:         make(map[string]*containerRecord),
 		gpuManager:               gpuManager,
 		defaultHostInterfaceName: interfaceName,
@@ -314,15 +303,16 @@ func (cm *containerManager) deleteContainerRecords(id string) {
 
 func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 	log.LOGGER.Infof("compute pod actions %s: %+v", pod.Name, pod)
+	restartCount := -1
 	changes := podActions{
-		ContainersToStart:      []int{},
-		ContainersToKill:       make(map[types.UID]containerToKillInfo),
-		ContainersRestartCount: make(map[string]int),
+		ContainersToStart: []int{},
+		ContainersToKill:  make(map[types.UID]containerToKillInfo),
 	}
 
 	for idx, container := range pod.Spec.Containers {
-		innerContainer, ok := cm.getContainerFromMap(pod.UID, container.Name)
+		innerContainer, ok := cm.getContainerFromMap(pod.UID)
 		if !ok {
+			restartCount = 0
 			log.LOGGER.Infof("no container id for pod %s, need start container", pod.Name)
 			changes.ContainersToStart = append(changes.ContainersToStart, idx)
 			continue
@@ -341,7 +331,7 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 			continue
 		}
 
-		labels, err := cm.getPodContainerLabels(pod, container.Name)
+		labels, err := cm.getPodContainerLabels(pod)
 		if err != nil {
 			log.LOGGER.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
 			continue
@@ -391,10 +381,24 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 		log.LOGGER.Infof("Container %q (%q) of pod %s: %s", container.Name, status.ID.ID, pod.Name, message)
 	}
 
+	if restartCount == -1 {
+		labels, err := cm.getPodContainerLabels(pod)
+		if err != nil {
+			log.LOGGER.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
+		} else {
+			restartCount, err := strconv.Atoi(labels[containerRestartCountLabel])
+			if err != nil {
+				log.LOGGER.Errorf("Invalid restart count labbel: %v", err)
+			} else {
+				changes.ContainersRestartCount = restartCount + 1
+			}
+		}
+	}
+
 	return changes
 }
 
-func (cm *containerManager) killContainer(podID types.UID, containerID, containerName string) error {
+func (cm *containerManager) killContainer(podID types.UID, containerID string) error {
 	err := cm.runtimeService.StopContainer(containerID, defaultGracePeriod)
 	if err != nil {
 		// if an error returns when we stop container, maybe this container is
@@ -407,7 +411,7 @@ func (cm *containerManager) killContainer(podID types.UID, containerID, containe
 		return err
 	}
 	if podID != "" {
-		cm.deleteContainerFromMap(podID, containerName)
+		cm.deleteContainerFromMap(podID)
 	}
 	return nil
 }
@@ -510,8 +514,8 @@ func (cm *containerManager) InitPodContainer() error {
 			return err
 		}
 		if podID != "" {
-			if oldContainer, ok := cm.getContainerFromMap(podID, container.Name); !ok || oldContainer.StartAt.Before(container.StartAt) {
-				cm.setContainerFromMap(podID, container.Name, container)
+			if oldContainer, ok := cm.getContainerFromMap(podID); !ok || oldContainer.StartAt.Before(container.StartAt) {
+				cm.setContainerFromMap(podID, container)
 			}
 		}
 	}
@@ -590,61 +594,7 @@ func makeDevices(opts *kubecontainer.RunContainerOptions) []*cri.Device {
 	return devices
 }
 
-func (cm *containerManager) createContainerConfig(pod *v1.Pod, container *v1.Container, opts *kubecontainer.RunContainerOptions,
-	exposedPorts map[nat.Port]struct{}, restartCount int, hostname string,
-	runOpt map[string]*kubecontainer.RunContainerOptions) *cri.ContainerConfig {
-	mounts := []*kubecontainer.Mount{}
-	containerMounts := cm.makeMounts(runOpt[container.Name], container)
-	deviceMounts := cm.makeMounts(opts, container)
-	mounts = append(mounts, containerMounts...)
-	mounts = append(mounts, deviceMounts...)
-
-	envs := ConvertEnvVersion(container.Env)
-	command, args := kubecontainer.ExpandContainerCommandAndArgs(container, envs)
-	containerConfig := cri.ContainerConfig{
-		Name: makeContainerName(pod, container, restartCount),
-		Config: &dockercontainer.Config{
-			Hostname:     hostname,
-			Image:        container.Image,
-			Env:          GenerateEnvList(container.Env),
-			Labels:       newContainerLabels(pod, container, restartCount),
-			ExposedPorts: exposedPorts,
-			Entrypoint:   dockerstrslice.StrSlice(command),
-			Cmd:          dockerstrslice.StrSlice(args),
-			WorkingDir:   container.WorkingDir,
-			OpenStdin:    container.Stdin,
-			StdinOnce:    container.StdinOnce,
-			Tty:          container.TTY,
-		},
-		HostConfig: &dockercontainer.HostConfig{
-			NetworkMode: defaultNetWortMode,
-			Binds:       GenerateMountBindings(mounts),
-		},
-	}
-
-	updateCreateConfig(&containerConfig, container)
-
-	devices := make([]dockercontainer.DeviceMapping, len(opts.Devices))
-	for i, device := range opts.Devices {
-		devices[i] = dockercontainer.DeviceMapping{
-			PathOnHost:        device.PathOnHost,
-			PathInContainer:   device.PathInContainer,
-			CgroupPermissions: device.Permissions,
-		}
-	}
-	containerConfig.HostConfig.Devices = devices
-
-	if EnableHostUserNamespace(pod) {
-		containerConfig.HostConfig.UsernsMode = dockercontainer.UsernsMode("host")
-	}
-	securityContext := securitycontext.NewSimpleSecurityContextProvider()
-	securityContext.ModifyContainerConfig(pod, containerConfig.Config)
-	securityContext.ModifyHostConfig(pod, containerConfig.HostConfig)
-
-	return &containerConfig
-}
-
-func (cm *containerManager) StartPod(pod *v1.Pod, helper PodHelper, provider status.PodStatusProvider, secret []v1.Secret) error {
+func (cm *containerManager) StartPod(pod *v1.Pod, runOpt *kubecontainer.RunContainerOptions) error {
 	backOffKey := fmt.Sprintf("container_%s", pod.Name)
 	if cm.backOff.IsInBackOffSinceUpdate(backOffKey, cm.backOff.Clock.Now()) {
 		log.LOGGER.Errorf("container manager start pod backoff. Back-off pod start [%s] error, backoff: [%v]", pod.Name, cm.backOff.Get(backOffKey))
@@ -655,7 +605,7 @@ func (cm *containerManager) StartPod(pod *v1.Pod, helper PodHelper, provider sta
 	log.LOGGER.Infof("computePodActions got %+v for pod %q", podContainerChanges, pod.Name)
 	for containerID, containerInfo := range podContainerChanges.ContainersToKill {
 		log.LOGGER.Infof("Killing unwanted container %q(id=%q) for pod %q", containerInfo.name, containerID, pod.Name)
-		if err := cm.runtimeService.StopContainer(string(containerID), 0); err != nil {
+		if err := cm.killContainer(pod.UID, string(containerID)); err != nil {
 			log.LOGGER.Errorf("killContainer %q(id=%q) for pod %q failed: %v", containerInfo.name, containerID, pod.Name, err)
 			return err
 		}
@@ -666,50 +616,72 @@ func (cm *containerManager) StartPod(pod *v1.Pod, helper PodHelper, provider sta
 		log.LOGGER.Errorf("get hostname failed: %v", err)
 		hostname = string(pod.UID)
 	}
-	// get mount options for all containers
-	runOpt, err := helper.GenerateContainerOptions(pod)
-	if err != nil {
-		log.LOGGER.Errorf("generate container options error: %v", err)
-		return err
-	}
 
 	for _, idx := range podContainerChanges.ContainersToStart {
 		container := &pod.Spec.Containers[idx]
-		err := cm.runtimeService.EnsureImageExists(pod, container, secret)
-		if err != nil {
-			helper.AddToReasonCache(pod.Name+container.Name, apis.ErrImagePullBackOff, err.Error())
-			log.LOGGER.Errorf("container [%s] in pod [%s], image pull failed, %v", container.Name, pod.Name, err)
-			continue
-		}
-		log.LOGGER.Infof("create container [%s] in pod [%s]", container.Name, pod.Name)
+		log.LOGGER.Infof("create container %s in pod %v", container.Name, pod.Name)
 		exposedPorts, err := makePortsAndBindings(container.Ports)
 		if err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
 			log.LOGGER.Errorf("make container [%s] port for pod [%s] failed, %v", container.Name, pod.Name, err)
 			return err
 		}
-		// get device options
+
 		opts, err := cm.GenerateRunContainerOptions(pod, container)
 		if err != nil {
 			log.LOGGER.Errorf("generate pod [%s] container [%s] run container options failed, %v", pod.Name, container.Name, err)
 			continue
 		}
 
-		// update restart count
-		restartCount := 0
-		if podStatus, ok := provider.GetPodStatus(pod.UID); ok {
-			for _, containerStatus := range podStatus.ContainerStatuses {
-				if containerStatus.Name == container.Name {
-					// convert int32 to int
-					restartCount = int(containerStatus.RestartCount) + 1
-					break
-				}
-			}
-		} else {
-			log.LOGGER.Infof("can not get container[%s] status in pod [%s]", container.Name, pod.Name)
+		mounts := []*kubecontainer.Mount{}
+		containerMounts := cm.makeMounts(runOpt, container)
+		deviceMounts := cm.makeMounts(opts, container)
+		mounts = append(mounts, containerMounts...)
+		mounts = append(mounts, deviceMounts...)
+
+		envs := ConvertEnvVersion(container.Env)
+		command, args := kubecontainer.ExpandContainerCommandAndArgs(container, envs)
+		restartCount := podContainerChanges.ContainersRestartCount
+		containerConfig := cri.ContainerConfig{
+			Name: makeContainerName(pod, container, restartCount),
+			Config: &dockercontainer.Config{
+				Hostname:     hostname,
+				Image:        container.Image,
+				Env:          GenerateEnvList(container.Env),
+				Labels:       newContainerLabels(pod, container, restartCount),
+				ExposedPorts: exposedPorts,
+				Entrypoint:   dockerstrslice.StrSlice(command),
+				Cmd:          dockerstrslice.StrSlice(args),
+				WorkingDir:   container.WorkingDir,
+				OpenStdin:    container.Stdin,
+				StdinOnce:    container.StdinOnce,
+				Tty:          container.TTY,
+			},
+			HostConfig: &dockercontainer.HostConfig{
+				NetworkMode: defaultNetWortMode,
+				Binds:       GenerateMountBindings(mounts),
+			},
 		}
-		containerConfig := cm.createContainerConfig(pod, container, opts, exposedPorts, restartCount, hostname, runOpt)
-		containerID, err := cm.runtimeService.CreateContainer(containerConfig)
+
+		updateCreateConfig(&containerConfig, container)
+
+		devices := make([]dockercontainer.DeviceMapping, len(opts.Devices))
+		for i, device := range opts.Devices {
+			devices[i] = dockercontainer.DeviceMapping{
+				PathOnHost:        device.PathOnHost,
+				PathInContainer:   device.PathInContainer,
+				CgroupPermissions: device.Permissions,
+			}
+		}
+		containerConfig.HostConfig.Devices = devices
+
+		if EnableHostUserNamespace(pod) {
+			containerConfig.HostConfig.UsernsMode = dockercontainer.UsernsMode("host")
+		}
+		securityContext := securitycontext.NewSimpleSecurityContextProvider()
+		securityContext.ModifyContainerConfig(pod, containerConfig.Config)
+		securityContext.ModifyHostConfig(pod, containerConfig.HostConfig)
+		containerID, err := cm.runtimeService.CreateContainer(&containerConfig)
 		if err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
 			log.LOGGER.Errorf("start pod [%s] failed: %v ", string(pod.Name), err)
@@ -718,13 +690,13 @@ func (cm *containerManager) StartPod(pod *v1.Pod, helper PodHelper, provider sta
 
 		innerContainer, err := cm.getContainer(containerID)
 		if err != nil {
-			log.LOGGER.Errorf("get container for pod [%s] container id [%s] failed, %v", pod.Name, containerID, err)
+			log.LOGGER.Errorf("get container for pod %s container id %s failed, %v", string(pod.Name), containerID, err)
 		}
-		cm.setContainerFromMap(pod.UID, container.Name, innerContainer)
+		cm.setContainerFromMap(pod.UID, innerContainer)
 
 		if err = cm.runtimeService.StartContainer(containerID); err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
-			log.LOGGER.Errorf("start pod [%s], container id [%s] failed, with err: [%s], remove the container.", pod.Name, containerID, err)
+			log.LOGGER.Errorf("start pod [%s], container id [%s] failed, with err: [%s], remove the container.", string(pod.Name), containerID, err)
 			continue
 		}
 		log.LOGGER.Infof("start container for pod [%s] success", pod.Name)
@@ -738,31 +710,22 @@ func (cm *containerManager) UpdatePod(pod *v1.Pod) error {
 }
 
 func (cm *containerManager) TerminatePod(uid types.UID) error {
-	podContainersMap, ok := cm.getPodContainersMap(uid)
+	container, ok := cm.getContainerFromMap(uid)
 	if !ok {
-		log.LOGGER.Errorf("get podContainerMap error, terminate pod [%s] not found.", uid)
+		log.LOGGER.Errorf("get container id error, terminate pod [%s] not found.", uid)
 		return apis.ErrContainerNotFound
 	}
-
-	for _, container := range podContainersMap {
-		status, err := cm.runtimeService.ContainerStatus(container.ID)
-		if err != nil {
-			log.LOGGER.Errorf("get container [%s] for pod [%s] status err: %v", container.ID, uid, err)
-			return err
-		}
-		err = cm.runtimeService.StopContainer(container.ID, defaultGracePeriod)
-		if err != nil {
-			log.LOGGER.Errorf("stop container [%s] for pod [%s], err: %v", container.ID, uid, err)
-			return err
-		}
-		err = cm.runtimeService.DeleteContainer(kubecontainer.ContainerID{ID: container.ID})
-		if err != nil {
-			log.LOGGER.Errorf("remove container [%s] for pod [%s], err: %v", container.ID, uid, err)
-			return err
-		}
-		cm.deleteContainerFromMap(uid, status.Labels[KubernetesContainerNameLabel])
+	err := cm.runtimeService.StopContainer(container.ID, defaultGracePeriod)
+	if err != nil {
+		log.LOGGER.Errorf("stop container [%s] for pod [%s], err: %v", container.ID, uid, err)
+		return err
 	}
-	cm.deletePodContainersMap(uid)
+	err = cm.runtimeService.DeleteContainer(kubecontainer.ContainerID{ID: container.ID})
+	if err != nil {
+		log.LOGGER.Errorf("remove container [%s] for pod [%s], err: %v", container.ID, uid, err)
+		return err
+	}
+	cm.deleteContainerFromMap(uid)
 	return nil
 }
 
@@ -785,8 +748,8 @@ func (cm *containerManager) RemoveContainerLog(containerID string) error {
 	return nil
 }*/
 
-func (cm *containerManager) getPodContainerLabels(pod *v1.Pod, containerSpecName string) (map[string]string, error) {
-	container, ok := cm.getContainerFromMap(pod.UID, containerSpecName)
+func (cm *containerManager) getPodContainerLabels(pod *v1.Pod) (map[string]string, error) {
+	container, ok := cm.getContainerFromMap(pod.UID)
 	if !ok {
 		return nil, fmt.Errorf("get pod [%s] status failed with container nod found error", pod.Name)
 	}
@@ -845,24 +808,31 @@ func (cm *containerManager) GeneratePodReadyCondition(statuses []v1.ContainerSta
 	}
 }
 
-func (cm *containerManager) convertStatusToAPIStatus(pod *v1.Pod, status *cri.ContainerStatus) v1.ContainerStatus {
+func (cm *containerManager) convertStatusToAPIStatus(pod *v1.Pod, status *cri.ContainerStatus) *v1.PodStatus {
 	switch status.State {
 	case cri.StatusRUNNING:
-		return cm.toKubeContainerStatus(v1.PodRunning, status)
+		kubeStatus := cm.toKubeContainerStatus(v1.PodRunning, status)
+		return &v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 	case cri.StatusEXITED:
 		if (pod.Spec.RestartPolicy == v1.RestartPolicyNever || pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure) && status.ExitCode == 0 {
-			return cm.toKubeContainerStatus(v1.PodSucceeded, status)
+			kubeStatus := cm.toKubeContainerStatus(v1.PodSucceeded, status)
+			return &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		}
-		return cm.toKubeContainerStatus(v1.PodFailed, status)
+		kubeStatus := cm.toKubeContainerStatus(v1.PodFailed, status)
+		return &v1.PodStatus{Phase: v1.PodFailed, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 	case cri.StatusPAUSED:
-		return cm.toKubeContainerStatus(v1.PodUnknown, status)
+		kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
+		return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 	case cri.StatusCREATED:
 		if (pod.Spec.RestartPolicy == v1.RestartPolicyNever || pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure) && status.ExitCode != 0 {
-			return cm.toKubeContainerStatus(v1.PodFailed, status)
+			kubeStatus := cm.toKubeContainerStatus(v1.PodFailed, status)
+			return &v1.PodStatus{Phase: v1.PodFailed, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		}
-		return cm.toKubeContainerStatus(v1.PodRunning, status)
+		kubeStatus := cm.toKubeContainerStatus(v1.PodRunning, status)
+		return &v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 	default:
-		return cm.toKubeContainerStatus(v1.PodUnknown, status)
+		kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
+		return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 	}
 }
 
@@ -934,20 +904,13 @@ func GetPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 }
 
 // TODO: GetPodStatusOwn is tmp, replace with GetPodStatus(uid kubetypes.UID, name, namespace string) (*kubecontainer.PodStatus, error)
-func (cm *containerManager) GetPodStatusOwn(pod *v1.Pod, reasonCache *ReasonCache) (*v1.PodStatus, error) {
-	podContainersMap, ok := cm.getPodContainersMap(pod.UID)
+func (cm *containerManager) GetPodStatusOwn(pod *v1.Pod) (*v1.PodStatus, error) {
+	container, ok := cm.getContainerFromMap(pod.UID)
 	if !ok {
 		if pod.DeletionTimestamp == nil {
-			reason, _ := reasonCache.Get(pod.Name)
-			if reason != nil {
-				status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: reason.Err.Error(), Message: reason.Message}}
-				kubeStatus := cm.toKubeContainerStatus(v1.PodPending, status)
-				return &v1.PodStatus{Phase: v1.PodPending, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
-			}
-
 			status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: "ContainerCreating"}}
-			kubeStatus := cm.toKubeContainerStatus(v1.PodPending, status)
-			return &v1.PodStatus{Phase: v1.PodPending, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
+			kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
+			return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
 		}
 		//else
 		status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Reason: "Completed"}}
@@ -955,48 +918,28 @@ func (cm *containerManager) GetPodStatusOwn(pod *v1.Pod, reasonCache *ReasonCach
 		return &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
 
 	}
-
-	podStatus := &v1.PodStatus{}
-	for _, specContainer := range pod.Spec.Containers {
-		if container, ok := podContainersMap[specContainer.Name]; ok {
-			status, err := cm.runtimeService.ContainerStatus(container.ID)
-			if err != nil {
-				status := &cri.ContainerStatus{ContainerStatus: kubecontainer.ContainerStatus{Name: specContainer.Name}}
-				kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
-				podStatus.ContainerStatuses = append(podStatus.ContainerStatuses, kubeStatus)
-				continue
-			}
-			containerStatus := cm.convertStatusToAPIStatus(pod, status)
-			podStatus.ContainerStatuses = append(podStatus.ContainerStatuses, containerStatus)
-			continue
-		}
-
-		// especially for dealing image pull failed
-		reason, _ := reasonCache.Get(pod.Name + specContainer.Name)
-		if reason != nil {
-			status := &cri.ContainerStatus{
-				ContainerStatus: kubecontainer.ContainerStatus{Name: specContainer.Name, Message: reason.Message, Reason: reason.Err.Error()}}
-			kubeStatus := cm.toKubeContainerStatus(v1.PodPending, status)
-			podStatus.ContainerStatuses = append(podStatus.ContainerStatuses, kubeStatus)
-		}
+	status, err := cm.runtimeService.ContainerStatus(container.ID)
+	if err != nil {
+		status := &cri.ContainerStatus{}
+		kubeStatus := cm.toKubeContainerStatus(v1.PodUnknown, status)
+		return &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}, nil
 	}
 
+	podstatus := cm.convertStatusToAPIStatus(pod, status)
 	spec := &pod.Spec
-	podStatus.Phase = GetPhase(spec, podStatus.ContainerStatuses)
+	podstatus.Phase = GetPhase(spec, podstatus.ContainerStatuses)
 
 	hostIP, err := cm.getHostIPByInterface()
 	if err != nil {
 		log.LOGGER.Errorf("Cannot get host IP: %v", err)
 	} else {
-		podStatus.HostIP = hostIP
-		if pod.Spec.HostNetwork && podStatus.PodIP == "" {
-			podStatus.PodIP = hostIP
-		} else {
-			// TODO: podstatus.PodIP for multicontainers
+		podstatus.HostIP = hostIP
+		if pod.Spec.HostNetwork && podstatus.PodIP == "" {
+			podstatus.PodIP = hostIP
 		}
 	}
 
-	return podStatus, nil
+	return podstatus, nil
 }
 
 func (cm *containerManager) toKubeContainerStatus(phase v1.PodPhase, status *cri.ContainerStatus) v1.ContainerStatus {
@@ -1071,44 +1014,24 @@ func (cm *containerManager) GetPods(all bool) ([]*kubecontainer.Pod, error) {
 	return pods, nil
 }
 
-func (cm *containerManager) getPodContainersMap(podID types.UID) (map[string]*cri.Container, bool) {
+func (cm *containerManager) setContainerFromMap(podID types.UID, container *cri.Container) {
 	cm.podContainerLock.Lock()
 	defer cm.podContainerLock.Unlock()
-	containersMap, ok := cm.podContainer[podID]
-	return containersMap, ok
+
+	cm.podContainer[podID] = container
 }
 
-func (cm *containerManager) deletePodContainersMap(podID types.UID) {
+func (cm *containerManager) deleteContainerFromMap(podID types.UID) {
 	cm.podContainerLock.Lock()
 	defer cm.podContainerLock.Unlock()
+
 	delete(cm.podContainer, podID)
 }
 
-func (cm *containerManager) setContainerFromMap(podID types.UID, containerSpecName string, container *cri.Container) {
+func (cm *containerManager) getContainerFromMap(podID types.UID) (*cri.Container, bool) {
 	cm.podContainerLock.Lock()
 	defer cm.podContainerLock.Unlock()
-
-	if _, ok := cm.podContainer[podID]; !ok {
-		cm.podContainer[podID] = make(map[string]*cri.Container)
-	}
-	cm.podContainer[podID][containerSpecName] = container
-}
-
-func (cm *containerManager) deleteContainerFromMap(podID types.UID, containerSpecName string) {
-	cm.podContainerLock.Lock()
-	defer cm.podContainerLock.Unlock()
-
-	delete(cm.podContainer[podID], containerSpecName)
-}
-
-func (cm *containerManager) getContainerFromMap(podID types.UID, containerSpecName string) (*cri.Container, bool) {
-	cm.podContainerLock.Lock()
-	defer cm.podContainerLock.Unlock()
-	containersMap, ok := cm.podContainer[podID]
-	if !ok {
-		return nil, ok
-	}
-	container, ok := containersMap[containerSpecName]
+	container, ok := cm.podContainer[podID]
 	return container, ok
 }
 
@@ -1210,7 +1133,7 @@ func (cm *containerManager) freeContainer(freeTime time.Time, gcPolicy kubeconta
 			defer wg.Done()
 			log.LOGGER.Infof("Container GC Manager Removing container %s, container status %d", ei.containerID, ei.Status)
 
-			err := cm.killContainer(ei.podID, ei.containerID, ei.containerRecord.containerName)
+			err := cm.killContainer(ei.podID, ei.containerID)
 			if err != nil {
 				deletionErrors = append(deletionErrors, err)
 				return
@@ -1247,7 +1170,6 @@ func (cm *containerManager) detectContainers(detectTime time.Time, podsInUse set
 			record = &containerRecord{
 				firstDetected: container.StartAt,
 				podID:         podID,
-				containerName: container.Name,
 			}
 			cm.addContainerRecords(container.ID, record)
 		}

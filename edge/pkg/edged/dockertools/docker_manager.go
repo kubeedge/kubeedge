@@ -515,15 +515,16 @@ func (dm *DockerManager) ContainerStatus(containerID string) (*cri.ContainerStat
 }
 
 //EnsureImageExists checks existence of image in container
-func (dm *DockerManager) EnsureImageExists(pod *v1.Pod, container *v1.Container, secrets []v1.Secret) error {
+func (dm *DockerManager) EnsureImageExists(pod *v1.Pod, secrets []v1.Secret) error {
 	log.LOGGER.Infof("start to pull image for pod %s", pod.Name)
 
-	_, msg, err := dm.imgManager.EnsureImageExists(pod, container, secrets)
-	if err != nil {
-		log.LOGGER.Errorf("DockerManager EnsureImageExists failed, msg:%s, %v", msg, err)
-		return err
+	for _, container := range pod.Spec.Containers {
+		_, msg, err := dm.imgManager.EnsureImageExists(pod, &container, secrets)
+		if err != nil {
+			log.LOGGER.Errorf("DockerManager EnsureImageExists failed, msg:%s, %v", msg, err)
+			return err
+		}
 	}
-
 	return nil
 }
 

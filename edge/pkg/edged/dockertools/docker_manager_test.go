@@ -328,15 +328,11 @@ func TestEnsureImageExists(t *testing.T) {
 		Type: "kubernetes.io/dockerconfigjson",
 	}
 	secrets := []v1.Secret{secret}
-	container1 := v1.Container{
+	container := v1.Container{
 		ImagePullPolicy: v1.PullAlways,
 		Image:           "nginx:latest",
 	}
-	container2 := v1.Container{
-		ImagePullPolicy: v1.PullIfNotPresent,
-		Image:           "nginx:latest",
-	}
-	containers := []v1.Container{container1, container2}
+	containers := []v1.Container{container}
 	podSpec := v1.PodSpec{
 		Containers: containers,
 	}
@@ -344,11 +340,5 @@ func TestEnsureImageExists(t *testing.T) {
 	pod := v1.Pod{
 		Spec: podSpec,
 	}
-	for _, specContainer := range pod.Spec.Containers {
-		err := dm.EnsureImageExists(&pod, &specContainer, secrets)
-		if err != nil {
-			t.Errorf("test EnsureImageExisits failed. %v", err)
-		}
-	}
-
+	dm.EnsureImageExists(&pod, secrets)
 }

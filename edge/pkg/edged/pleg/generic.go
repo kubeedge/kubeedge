@@ -23,12 +23,11 @@ type GenericLifecycle struct {
 	status       status.Manager
 	podManager   podmanager.Manager
 	probeManager prober.Manager
-	reasonCache  *containers.ReasonCache
 }
 
 //NewGenericLifecycle creates new generic life cycle object
 func NewGenericLifecycle(manager containers.ContainerManager, probeManager prober.Manager, channelCapacity int,
-	relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager, reasonCache *containers.ReasonCache) pleg.PodLifecycleEventGenerator {
+	relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager) pleg.PodLifecycleEventGenerator {
 	kubeContainerManager := containers.NewKubeContainerRuntime(manager)
 	genericPLEG := pleg.NewGenericPLEG(kubeContainerManager, channelCapacity, relistPeriod, nil, clock.RealClock{})
 	return &GenericLifecycle{
@@ -38,7 +37,6 @@ func NewGenericLifecycle(manager containers.ContainerManager, probeManager probe
 		status:       statusManager,
 		podManager:   podManager,
 		probeManager: probeManager,
-		reasonCache:  reasonCache,
 	}
 }
 
@@ -57,7 +55,7 @@ func (gl *GenericLifecycle) Start() {
 }
 
 func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
-	podStatus, err := gl.runtime.GetPodStatusOwn(pod, gl.reasonCache)
+	podStatus, err := gl.runtime.GetPodStatusOwn(pod)
 	newStatus := *podStatus.DeepCopy()
 	gl.probeManager.UpdatePodStatus(pod.UID, &newStatus)
 	newStatus.Conditions = append(newStatus.Conditions, gl.runtime.GeneratePodReadyCondition(newStatus.ContainerStatuses))
