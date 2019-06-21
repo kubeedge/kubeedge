@@ -32,7 +32,7 @@ sed -i 's/dbTest/dbTest, testManager/g' conf/modules.yaml
 sudo pkill edge_core
 #kill the edge_core process if it exists, wait 2s delay before start the edge_core process.
 sleep 2s
-nohup ./edge_core > edge_core.log 2>&1 &
+sudo nohup ./edge_core > edge_core.log 2>&1 &
 sleep 15s
 if pgrep edge_core >/dev/null
 then
