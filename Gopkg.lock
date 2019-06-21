@@ -66,17 +66,6 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
-  digest = "1:b75aca481cf296a216157d0cf8ed4e14c7326b1783da3fca235897683ac3e974"
-  name = "github.com/ServiceComb/go-archaius"
-  packages = [
-    ".",
-    "sources/file-source",
-  ]
-  pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
-
-[[projects]]
   digest = "1:8705fe20105631d12abb6ded93eb65e4e03620ff5bef5cc25ab03ce8e265299b"
   name = "github.com/ServiceComb/paas-lager"
   packages = [
@@ -791,7 +780,7 @@
   version = "v1.1.3"
 
 [[projects]]
-  digest = "1:38b9c275bc072782cdda6a9038071ea085604a6811845d819ecdbc5a9bfdfb6e"
+  digest = "1:e9dce2ab4b8fcb86b6c6f38fb6cbb98e549e0602b25ae7bcf6aa90b4027f9849"
   name = "github.com/kubeedge/beehive"
   packages = [
     "pkg/common/config",
@@ -802,7 +791,7 @@
     "pkg/core/model",
   ]
   pruneopts = "UT"
-  revision = "1069223ffc6488dbe935bd02b481e4abe922fe68"
+  revision = "db5a773fc78fa0ae17993a67c21e46a299b6aa76"
 
 [[projects]]
   digest = "1:1abad3afc8a8a736bbb7d643f8817c8da182b4c3b9bf2be59b47a0bcbedc52d5"
@@ -2024,7 +2013,6 @@
     "github.com/256dpi/gomqtt/packet",
     "github.com/256dpi/gomqtt/topic",
     "github.com/256dpi/gomqtt/transport",
-    "github.com/ServiceComb/go-archaius/sources/file-source",
     "github.com/astaxie/beego/orm",
     "github.com/docker/distribution/reference",
     "github.com/docker/docker/api/types",
@@ -2035,7 +2023,9 @@
     "github.com/docker/docker/pkg/jsonmessage",
     "github.com/docker/go-connections/nat",
     "github.com/eclipse/paho.mqtt.golang",
+    "github.com/fsnotify/fsnotify",
     "github.com/ghodss/yaml",
+    "github.com/go-chassis/go-archaius/core",
     "github.com/go-chassis/go-chassis/control",
     "github.com/go-chassis/go-chassis/core/common",
     "github.com/go-chassis/go-chassis/core/config",
@@ -2046,6 +2036,7 @@
     "github.com/go-chassis/go-chassis/core/registry",
     "github.com/go-chassis/go-chassis/pkg/util/tags",
     "github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix",
+    "github.com/go-mesh/openlogging",
     "github.com/golang/glog",
     "github.com/golang/mock/gomock",
     "github.com/google/cadvisor/info/v1",
