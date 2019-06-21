@@ -5,7 +5,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"testing"
 	"time"
 )
@@ -18,13 +17,6 @@ var edgeHubModule core.Module
 
 //TestName is function that registers the module and tests whether the correct name of the module is returned
 func TestName(t *testing.T) {
-	//Load Configurations as go test runs in /tmp
-	err := util.LoadConfig()
-	t.Run("AddConfigSource", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("loading config failed with error: %v", err)
-		}
-	})
 	modules := core.GetModules()
 	core.Register(&EdgeHub{controller: NewEdgeHubController()})
 	for name, module := range modules {
@@ -47,13 +39,6 @@ func TestName(t *testing.T) {
 
 //TestGroup is function that registers the module and tests whether the correct group name is returned
 func TestGroup(t *testing.T) {
-	//Load Configurations as go test runs in /tmp
-	err := util.LoadConfig()
-	t.Run("AddConfigSource", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("loading config failed with error: %v", err)
-		}
-	})
 	modules := core.GetModules()
 	core.Register(&EdgeHub{controller: NewEdgeHubController()})
 	for name, module := range modules {
@@ -75,6 +60,8 @@ func TestGroup(t *testing.T) {
 
 //TestStart is a function to test the start of the edge hub module
 func TestStart(t *testing.T) {
+	// time to let config be synced again
+	time.Sleep(10 * time.Second)
 	coreContext = context.GetContext(context.MsgCtxTypeChannel)
 	modules := core.GetModules()
 	for name, module := range modules {

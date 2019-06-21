@@ -66,6 +66,7 @@ func (m *metaClient) Services(namespace string) ServiceInterface {
 	return newServices(namespace, m.context, m.send)
 }
 
+// New creates new metaclient
 func New(c *context.Context) CoreInterface {
 	return &metaClient{
 		context: c,

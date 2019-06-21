@@ -32,7 +32,6 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -108,13 +107,6 @@ func registerFakeModules() {
 
 // TestProcessInsert is function to test processInsert
 func TestProcessInsert(t *testing.T) {
-	//Load Configurations as go test runs in /tmp
-	err := util.LoadConfig()
-	t.Run("AddConfigSource", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("loading config failed with error: %v", err)
-		}
-	})
 	// Initialize Mocks
 	initMocks(t)
 	// Register Fake Modules with beehive core

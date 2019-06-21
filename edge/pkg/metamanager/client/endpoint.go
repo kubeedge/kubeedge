@@ -3,12 +3,14 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
+
 	api "k8s.io/api/core/v1"
 )
 
@@ -26,6 +28,7 @@ type EndpointsInterface interface {
 	Get(name string) (*api.Endpoints, error)
 }
 
+// Endpoints is struct implementing EndpointsInterface
 type Endpoints struct {
 	namespace string
 	context   *context.Context
@@ -40,20 +43,23 @@ func newEndpoints(namespace string, c *context.Context, s SendInterface) *Endpoi
 	}
 }
 
+// Create Endpoints
 func (c *Endpoints) Create(cm *api.Endpoints) (*api.Endpoints, error) {
 	return nil, nil
 }
 
+// Update Endpoints
 func (c *Endpoints) Update(cm *api.Endpoints) error {
 	return nil
 }
 
+// Delete Endpoints
 func (c *Endpoints) Delete(name string) error {
 	return nil
 }
 
+// Get Endpoints
 func (c *Endpoints) Get(name string) (*api.Endpoints, error) {
-
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, constants.ResourceTypeEndpoints, name)
 	endpointMsg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(endpointMsg)
@@ -76,7 +82,6 @@ func (c *Endpoints) Get(name string) (*api.Endpoints, error) {
 		return handleEndpointFromMetaDB(content)
 	}
 	return handleEndpointFromMetaManager(content)
-
 }
 
 func handleEndpointFromMetaDB(content []byte) (*api.Endpoints, error) {

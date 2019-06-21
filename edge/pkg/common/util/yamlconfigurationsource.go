@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-//Package filesource created on 2017/6/22.
 package util
 
 import (
@@ -25,14 +24,14 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-chassis/go-archaius/core"
 	"github.com/go-mesh/openlogging"
 	"gopkg.in/yaml.v2"
-	"strings"
-	"time"
 )
 
 const (

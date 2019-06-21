@@ -3,19 +3,23 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
+
 	v1 "k8s.io/api/core/v1"
 )
 
+// ServiceGetter interface
 type ServiceGetter interface {
 	Services(namespace string) ServiceInterface
 }
 
+// ServiceInterface is an interface
 type ServiceInterface interface {
 	Create(*v1.Service) (*v1.Service, error)
 	Update(service *v1.Service) error
@@ -26,15 +30,15 @@ type ServiceInterface interface {
 
 type services struct {
 	namespace string
-	context *context.Context
-	send SendInterface
+	context   *context.Context
+	send      SendInterface
 }
 
 func newServices(namespace string, c *context.Context, s SendInterface) *services {
 	return &services{
-		namespace:namespace,
-		context:c,
-		send:s,
+		namespace: namespace,
+		context:   c,
+		send:      s,
 	}
 }
 
