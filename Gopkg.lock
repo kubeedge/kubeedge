@@ -137,7 +137,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/ServiceComb/go-archaius",
     "github.com/ServiceComb/paas-lager",
     "github.com/ServiceComb/paas-lager/rotate",
     "github.com/go-chassis/go-archaius",
