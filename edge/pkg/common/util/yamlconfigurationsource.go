@@ -15,7 +15,7 @@
  */
 
 //Package filesource created on 2017/6/22.
-package filesource
+package util
 
 import (
 	"errors"
@@ -91,7 +91,6 @@ var fileConfigSource *yamlConfigurationSource
 	accepts files and directories as file-source
   		1. Directory: all yaml files considered as file source
   		2. File: specified yaml file considered as file source
-
   	TODO: Currently file sources priority not considered. if key conflicts then latest key will get considered
 */
 
@@ -344,6 +343,9 @@ func (*yamlConfigurationSource) GetSourceName() string {
 
 func (*yamlConfigurationSource) GetPriority() int {
 	return fileSourcePriority
+}
+
+func (*yamlConfigurationSource) SetPriority(priority int) {
 }
 
 func (fSource *yamlConfigurationSource) DynamicConfigHandler(callback core.DynamicConfigCallback) error {

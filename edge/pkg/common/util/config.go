@@ -29,7 +29,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ServiceComb/go-archaius/sources/file-source"
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"gopkg.in/yaml.v2"
 )
@@ -40,7 +39,8 @@ func LoadConfig(confLocation ...string) error {
 	if err != nil {
 		return err
 	}
-	fSource := filesource.NewYamlConfigurationSource()
+	// TODO(fisherxu): change to use modules in go-chassis
+	fSource := NewYamlConfigurationSource()
 	if len(confLocation) == 0 {
 		confLocation = []string{os.Getenv("GOPATH") + "/src/github.com/kubeedge/kubeedge/edge/conf"}
 	}
