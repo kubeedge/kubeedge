@@ -19,22 +19,21 @@ package dtcontext
 import (
 	"encoding/json"
 	"errors"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"reflect"
 	"sync"
 	"testing"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
+	_ "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
 
 // TestInitDTContext is function to test InitDTContext().
 func TestInitDTContext(t *testing.T) {
-	util.LoadConfig()
 	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {
 		t.Errorf("Error in getting node id %v", err)

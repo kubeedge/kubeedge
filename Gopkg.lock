@@ -66,17 +66,6 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
-  digest = "1:b75aca481cf296a216157d0cf8ed4e14c7326b1783da3fca235897683ac3e974"
-  name = "github.com/ServiceComb/go-archaius"
-  packages = [
-    ".",
-    "sources/file-source",
-  ]
-  pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
-
-[[projects]]
   digest = "1:8705fe20105631d12abb6ded93eb65e4e03620ff5bef5cc25ab03ce8e265299b"
   name = "github.com/ServiceComb/paas-lager"
   packages = [
@@ -184,6 +173,14 @@
   pruneopts = "UT"
   revision = "2ee87856327ba09384cabd113bc6b5d174e9ec0f"
   version = "v3.5.1"
+
+[[projects]]
+  digest = "1:c1100fc71e23b6a32b2c68a5202a848fd13811d5a10b12edb8019c3667d1cd9a"
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4b4cebaf850ec58f1bb1fec5bdebdf8501c2bc3f"
+  version = "v3.0.0"
 
 [[projects]]
   digest = "1:f438d91be142877c3ad83157992c91de787ddfbddcc2a7da1ef6ef61606cadc4"
@@ -438,26 +435,90 @@
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 
 [[projects]]
-  digest = "1:a81c1bc427850b9f040713c61b9df6af36edadf17297b926da0bb2f88af4b6cb"
+  branch = "master"
+  digest = "1:0a7de2fb5ca07a50f1b4c13f2e41c912c67a9e161f49ba51a220b1757d82b7eb"
+  name = "github.com/go-chassis/foundation"
+  packages = ["security"]
+  pruneopts = "UT"
+  revision = "c3b63f787f4c44e38ae6067f0decd5e7bf9163cd"
+
+[[projects]]
+  digest = "1:bdbfcb6aee2d3e081f78fd9a40ac9bf5eba021627938c99a512b46b51558a5f0"
   name = "github.com/go-chassis/go-archaius"
   packages = [
+    ".",
     "core",
     "core/cast",
     "core/config-manager",
     "core/event-system",
     "sources/commandline-source",
+    "sources/configcenter",
     "sources/enviromentvariable-source",
     "sources/file-source",
     "sources/memory-source",
   ]
   pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
+  revision = "7194a1be3948765395419f2257d00a28e285b77c"
 
 [[projects]]
-  digest = "1:9b2d81b3eb9308b375df51796c89b39dca2cb355fe510d2dedcfbb4cc7a529d2"
+  digest = "1:7fd6446e42031e3e4433f31c6eac951696bbd53f69a4781715e6c3f40b8f7424"
+  name = "github.com/go-chassis/go-chassis"
+  packages = [
+    "client/rest",
+    "control",
+    "core/client",
+    "core/common",
+    "core/config",
+    "core/config/model",
+    "core/config/schema",
+    "core/fault",
+    "core/handler",
+    "core/invocation",
+    "core/lager",
+    "core/loadbalancer",
+    "core/metadata",
+    "core/qpslimiter",
+    "core/registry",
+    "core/router",
+    "core/router/weightpool",
+    "core/tls",
+    "core/tracing",
+    "healthz/client",
+    "pkg/backoff",
+    "pkg/circuit",
+    "pkg/goplugin",
+    "pkg/runtime",
+    "pkg/string",
+    "pkg/util",
+    "pkg/util/fileutil",
+    "pkg/util/httputil",
+    "pkg/util/iputil",
+    "pkg/util/tags",
+    "security",
+    "security/common",
+    "security/plugins/plain",
+    "session",
+    "third_party/forked/afex/hystrix-go/hystrix",
+    "third_party/forked/afex/hystrix-go/hystrix/metric_collector",
+    "third_party/forked/afex/hystrix-go/hystrix/rolling",
+    "third_party/forked/k8s.io/apimachinery/pkg/util/sets",
+  ]
+  pruneopts = "UT"
+  revision = "77a20f9078065f3741912cfb4693093f34e33691"
+
+[[projects]]
+  digest = "1:71570f6210a5861889022fcd07af9ab08d40e585cc9e7a067e020692a2f9bf1a"
+  name = "github.com/go-chassis/go-chassis-config"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "12f8b643136c3a47ff3f6420cc1af4b1da25e2f7"
+  version = "v0.7.0"
+
+[[projects]]
+  digest = "1:764ee4e742aad71a0e14ccbc6e28d8c8081c87e1a45bd05d935a18df20ae7600"
   name = "github.com/go-chassis/paas-lager"
   packages = [
+    ".",
     "third_party/forked/cloudfoundry/lager",
     "third_party/forked/cloudfoundry/lager/color",
   ]
@@ -465,12 +526,11 @@
   revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c7d97aaa1af84c41ace25ecdbf61b100424db27fa4f6b019dabe9ecc325d2b79"
+  digest = "1:44b6504c0470b6ef1b247d6791982478191aec4e05c95ee61a2bb14b6bded642"
   name = "github.com/go-mesh/openlogging"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0fd4707a75abf72cce903d177396663e9adb0ad2"
+  revision = "3d418c478b2daf4684a2ddbb5c88aa7ec21cb3f2"
 
 [[projects]]
   digest = "1:57fa4c058c21ce25d0b7272518dd746065117abf6cc706158b0d361202024520"
@@ -634,6 +694,14 @@
   version = "v1.4.0"
 
 [[projects]]
+  digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
+  name = "github.com/hashicorp/go-version"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ac23dc3fea5d1a983c43f6a0f6e2c13f0195d8bd"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:3f90d23757c18b1e07bf11494dbe737ee2c44d881c0f41e681611abdadad62fa"
   name = "github.com/hashicorp/golang-lru"
   packages = [
@@ -712,8 +780,7 @@
   version = "v1.1.3"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0fa0d86b0f5f8b8c9335982ba21a44c7fe17d9d36db7e848b0b0590cf03f15da"
+  digest = "1:e9dce2ab4b8fcb86b6c6f38fb6cbb98e549e0602b25ae7bcf6aa90b4027f9849"
   name = "github.com/kubeedge/beehive"
   packages = [
     "pkg/common/config",
@@ -724,7 +791,7 @@
     "pkg/core/model",
   ]
   pruneopts = "UT"
-  revision = "50be051df747ac7b509aadca5daba5b205e2ba81"
+  revision = "db5a773fc78fa0ae17993a67c21e46a299b6aa76"
 
 [[projects]]
   digest = "1:1abad3afc8a8a736bbb7d643f8817c8da182b4c3b9bf2be59b47a0bcbedc52d5"
@@ -952,6 +1019,26 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
+  digest = "1:11e62d6050198055e6cd87ed57e5d8c669e84f839c16e16f192374d913d1a70d"
+  name = "github.com/opentracing/opentracing-go"
+  packages = [
+    ".",
+    "ext",
+    "log",
+  ]
+  pruneopts = "UT"
+  revision = "659c90643e714681897ec2521c60567dd21da733"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
   branch = "master"
   digest = "1:bab862732167cdab16ca3f26140611316f185a449daa34f44375a6fbbee7dafe"
   name = "github.com/paypal/gatt"
@@ -1164,6 +1251,17 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "13995c7128ccc8e51e9a6bd2b551020a27180abd"
+
+[[projects]]
+  branch = "master"
+  digest = "1:3e4c7966b60df887418bf1b880be9a1e6c36f97ef40491b7bad72d21a4334cd0"
+  name = "go.uber.org/ratelimit"
+  packages = [
+    ".",
+    "internal/clock",
+  ]
+  pruneopts = "UT"
+  revision = "c15da02342779cb6dc027fc95ee2277787698f36"
 
 [[projects]]
   digest = "1:50e3f9e0dd2b7eb8f4ae39bd916b7eb11412ef8bba2c41c1b04fd477b3e49efb"
@@ -1915,7 +2013,6 @@
     "github.com/256dpi/gomqtt/packet",
     "github.com/256dpi/gomqtt/topic",
     "github.com/256dpi/gomqtt/transport",
-    "github.com/ServiceComb/go-archaius/sources/file-source",
     "github.com/astaxie/beego/orm",
     "github.com/docker/distribution/reference",
     "github.com/docker/docker/api/types",
@@ -1926,7 +2023,20 @@
     "github.com/docker/docker/pkg/jsonmessage",
     "github.com/docker/go-connections/nat",
     "github.com/eclipse/paho.mqtt.golang",
+    "github.com/fsnotify/fsnotify",
     "github.com/ghodss/yaml",
+    "github.com/go-chassis/go-archaius/core",
+    "github.com/go-chassis/go-chassis/control",
+    "github.com/go-chassis/go-chassis/core/common",
+    "github.com/go-chassis/go-chassis/core/config",
+    "github.com/go-chassis/go-chassis/core/config/model",
+    "github.com/go-chassis/go-chassis/core/handler",
+    "github.com/go-chassis/go-chassis/core/invocation",
+    "github.com/go-chassis/go-chassis/core/loadbalancer",
+    "github.com/go-chassis/go-chassis/core/registry",
+    "github.com/go-chassis/go-chassis/pkg/util/tags",
+    "github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix",
+    "github.com/go-mesh/openlogging",
     "github.com/golang/glog",
     "github.com/golang/mock/gomock",
     "github.com/google/cadvisor/info/v1",

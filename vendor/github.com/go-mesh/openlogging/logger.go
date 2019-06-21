@@ -3,13 +3,19 @@ package openlogging
 type Tags map[string]interface{}
 
 type Options struct {
-	Tags Tags
+	Tags  Tags
+	Depth int
 }
 type Option func(*Options)
 
 func WithTags(tags Tags) Option {
 	return func(o *Options) {
 		o.Tags = tags
+	}
+}
+func WithDepth(d int) Option {
+	return func(o *Options) {
+		o.Depth = d
 	}
 }
 

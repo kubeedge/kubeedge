@@ -28,6 +28,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+
+	bhConfig "github.com/kubeedge/beehive/pkg/common/config"
+	bhUtil "github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -40,9 +43,8 @@ import (
 )
 
 const (
-	CertFile   = "/tmp/kubeedge/certs/edge.crt"
-	KeyFile    = "/tmp/kubeedge/certs/edge.key"
-	ConfigPath = "/tmp/kubeedge/testData"
+	CertFile = "/tmp/kubeedge/certs/edge.crt"
+	KeyFile  = "/tmp/kubeedge/certs/edge.key"
 )
 
 //testServer is a fake http server created for testing
@@ -106,6 +108,29 @@ func newTestServer() {
 			}
 		}
 	}))
+}
+
+// get the configuration file path
+func getConfigDirectory() string {
+	if config, err := bhConfig.CONFIG.GetValue("config-path").ToString(); err == nil {
+		return config
+	}
+
+	if config, err := bhConfig.CONFIG.GetValue("GOARCHAIUS_CONFIG_PATH").ToString(); err == nil {
+		return config
+	}
+
+	return bhUtil.GetCurrentDirectory()
+}
+
+var restoreConfig map[string]interface{}
+
+func init() {
+	restoreConfig = bhConfig.CONFIG.GetConfigurations()
+}
+
+func restoreConfigBack() {
+	util.GenerateTestYaml(restoreConfig, getConfigDirectory()+"/conf", "edge")
 }
 
 //TestNewEdgeHubController() tests whether the EdgeHubController returned is correct or not
@@ -697,12 +722,10 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 			Placement: "false",
 		},
 	},
-	}, ConfigPath, "edge"); err != nil {
+	}, getConfigDirectory()+"/conf", "edge"); err != nil {
 		t.Error("Unable to generate test YAML file: ", err)
 	}
-	if err := util.LoadConfig(ConfigPath); err != nil {
-		t.Error("Unable to load the configuration file: ", err)
-	}
+
 	tests := []struct {
 		name            string
 		controller      Controller
@@ -723,6 +746,8 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 		}, "wss://0.0.0.0:10000/foo/bar/events", nil,
 		},
 	}
+	// time to let config be synced again
+	time.Sleep(10 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edgeHubConfig := config.GetConfig()
@@ -734,8 +759,12 @@ func TestGetCloudHubUrlWithoutPlacement(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("Controller.getCloudHubUrl() = %v, want %v", got, tt.want)
 			}
+
 		})
 	}
+	restoreConfigBack()
+	// time to let config be synced again
+	time.Sleep(10 * time.Second)
 }
 
 //TestGetCloudHubUrlWithPlacement() tests the procurement of the cloudHub URL from the placement server
@@ -748,12 +777,10 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 			Placement: "true",
 		},
 	},
-	}, ConfigPath, "edge"); err != nil {
+	}, getConfigDirectory()+"/conf", "edge"); err != nil {
 		t.Error("Unable to generate test YAML file: ", err)
 	}
-	if err := util.LoadConfig(ConfigPath); err != nil {
-		t.Error("Unable to load the configuration file: ", err)
-	}
+
 	tests := []struct {
 		name            string
 		controller      Controller
@@ -798,6 +825,8 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 		}, "", fmt.Errorf("failed to new https client for placement, error: open /wrong_path/edge.crt: no such file or directory"),
 		},
 	}
+	// time to let config be synced again
+	time.Sleep(10 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			edgeHubConfig := config.GetConfig()
@@ -811,6 +840,9 @@ func TestGetCloudHubUrlWithPlacement(t *testing.T) {
 			}
 		})
 	}
+	restoreConfigBack()
+	// time to let config be synced again
+	time.Sleep(10 * time.Second)
 	defer func() {
 		err := os.RemoveAll("/tmp/kubeedge/")
 		if err != nil {

@@ -405,7 +405,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
-			send2EdgeMesh(resp, false, m.context)
+			send2EdgeMesh(resp, message.IsSync(), m.context)
 		} else {
 			send2Edged(resp, message.IsSync(), m.context)
 		}

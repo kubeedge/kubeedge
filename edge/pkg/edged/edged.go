@@ -43,7 +43,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
 	edgeImages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/metaclient"
 	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/rainerruntime"
@@ -53,6 +52,7 @@ import (
 	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 
 	"github.com/golang/glog"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
@@ -170,7 +170,7 @@ type edged struct {
 	imageGCManager     images.ImageGCManager
 	containerGCManager kubecontainer.ContainerGC
 	gpuManager         gpu.GPUManager
-	metaClient         metaclient.CoreInterface
+	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
 	writer             kubeio.Writer
@@ -227,7 +227,7 @@ func (e *edged) Group() string {
 
 func (e *edged) Start(c *context.Context) {
 	e.context = c
-	e.metaClient = metaclient.New(c)
+	e.metaClient = client.New(c)
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
 		log.LOGGER.Errorf("initialize module error: %v", err)
@@ -390,7 +390,7 @@ func newEdged() (*edged, error) {
 		LowThresholdPercent:  conf.imageGCLowThreshold,
 		MinAge:               minAge,
 	}
-	// TODO: consider use metaclient generate kube client
+	// TODO: consider use client generate kube client
 	kubeClient := fakekube.NewSimpleClientset()
 
 	ed := &edged{
