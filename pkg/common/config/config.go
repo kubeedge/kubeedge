@@ -11,7 +11,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/common/util"
 
-	goarchaius "github.com/ServiceComb/go-archaius"
 	archaius "github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-archaius/core"
 	commandlinesource "github.com/go-chassis/go-archaius/sources/commandline-source"
@@ -27,7 +26,7 @@ const (
 )
 
 // CONFIG conf
-var CONFIG goarchaius.ConfigurationFactory
+var CONFIG archaius.ConfigurationFactory
 var once = sync.Once{}
 
 // config file  only support .yml or .yaml  !
