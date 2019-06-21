@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/go-chassis/go-chassis/control"
 	"github.com/go-chassis/go-chassis/core/config"
+	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/loadbalancer"
 	"github.com/go-chassis/go-chassis/core/registry"
 	_ "github.com/kubeedge/kubeedge/edgemesh/pkg/panel"
@@ -17,7 +18,7 @@ func Start() {
 	//Initialize the handlers
 	//
 	//
-	config.Init()
+	config.GlobalDefinition = &model.GlobalCfg{}
 	config.GlobalDefinition.Panel.Infra = "fake"
 	opts := control.Options{
 		Infra:   config.GlobalDefinition.Panel.Infra,
@@ -31,6 +32,8 @@ func Start() {
 	loadbalancer.InstallStrategy(loadbalancer.StrategyRandom, func() loadbalancer.Strategy {
 		return &loadbalancer.RandomStrategy{}
 	})
+	//Start dns server
+	go DnsStart()
 	//Start server
 	StartTCP()
 }
