@@ -10,6 +10,7 @@ import (
 	_ "github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	_ "github.com/kubeedge/kubeedge/edge/test"
+	_ "github.com/kubeedge/kubeedge/edgemesh/pkg"
 )
 
 func main() {

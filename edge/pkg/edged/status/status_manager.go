@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/metaclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,11 +22,11 @@ type manager struct {
 	// TODO: consider need lock?
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
-	metaClient        metaclient.CoreInterface
+	metaClient        client.CoreInterface
 }
 
 //NewManager creates and returns a new manager object
-func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient metaclient.CoreInterface) status.Manager {
+func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient client.CoreInterface) status.Manager {
 	kubeManager := status.NewManager(kubeClient, podManager, podDeletionSafety)
 	return &manager{
 		Manager:           kubeManager,

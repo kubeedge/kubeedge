@@ -56,6 +56,22 @@ required = [
   version = "v1.10.9"
 
 [[override]]
+  name = "github.com/go-chassis/go-chassis"
+  revision = "77a20f9078065f3741912cfb4693093f34e33691"
+
+[[override]]
+  name = "github.com/go-mesh/openlogging"
+  revision = "3d418c478b2daf4684a2ddbb5c88aa7ec21cb3f2"
+
+[[override]]
+  name = "github.com/go-chassis/go-archaius"
+  revision = "7194a1be3948765395419f2257d00a28e285b77c"
+
+[[override]]
+  name = "github.com/kubeedge/beehive"
+  revision = "db5a773fc78fa0ae17993a67c21e46a299b6aa76"
+
+[[override]]
   name = "k8s.io/code-generator"
   version = "kubernetes-1.13.2"
 

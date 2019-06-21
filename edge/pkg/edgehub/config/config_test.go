@@ -18,17 +18,15 @@ package config
 
 import (
 	"net/http"
-	"os"
 	"reflect"
 
 	"testing"
 	"time"
 
+	bhConfig "github.com/kubeedge/beehive/pkg/common/config"
+	bhUtil "github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
-
-//This statement will load the config from the config files & prevent the test case from panicking
-var conf = util.LoadConfig()
 
 const (
 	defaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
@@ -88,6 +86,28 @@ type edgeHubConfigYaml struct {
 	WSConfig   webSocketConfigYaml  `yaml:"websocket"`
 	QuicConfig quicConfigYaml       `yaml:"quic"`
 	CtrConfig  controllerConfigYaml `yaml:"controller"`
+}
+
+func getConfigDirectory() string {
+	if config, err := bhConfig.CONFIG.GetValue("config-path").ToString(); err == nil {
+		return config
+	}
+
+	if config, err := bhConfig.CONFIG.GetValue("GOARCHAIUS_CONFIG_PATH").ToString(); err == nil {
+		return config
+	}
+
+	return bhUtil.GetCurrentDirectory()
+}
+
+var restoreConfig map[string]interface{}
+
+func init() {
+	restoreConfig = bhConfig.CONFIG.GetConfigurations()
+}
+
+func restoreConfigBack() {
+	util.GenerateTestYaml(restoreConfig, getConfigDirectory()+"/conf", "edge")
 }
 
 //TestGetConfig  function loads the testing config file  tests whether the edgeHubConfig variable is loaded correctly with the values from the config file
@@ -215,18 +235,12 @@ func TestGetConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
+			err := util.GenerateTestYaml(tt.test, getConfigDirectory()+"/conf", "edge")
 			if err != nil {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
-			err = util.LoadConfig("/tmp/kubeedge/testData")
-			if err != nil {
-				t.Error("Unable to load the configuration file: ", err)
-			}
-			err = os.RemoveAll("/tmp/kubeedge/")
-			if err != nil {
-				t.Error("Unable to delete the temporary directory: ", err)
-			}
+			// time to let config be synced again
+			time.Sleep(10 * time.Second)
 			err = getWebSocketConfig()
 			if err != nil {
 				t.Errorf("getWebSocketConfig() returns an error: %v", err)
@@ -340,18 +354,12 @@ func Test_getWebSocketConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
+			err := util.GenerateTestYaml(tt.test, getConfigDirectory()+"/conf", "edge")
 			if err != nil {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
-			err = util.LoadConfig("/tmp/kubeedge/testData")
-			if err != nil {
-				t.Error("Unable to load the configuration file")
-			}
-			err = os.RemoveAll("/tmp/kubeedge")
-			if err != nil {
-				t.Error("Unable to delete the temporary directory: ", err)
-			}
+			// time to let config be synced again
+			time.Sleep(10 * time.Second)
 			if err := getWebSocketConfig(); (err != nil) != tt.wantErr {
 				t.Errorf("getWebSocketConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -458,18 +466,12 @@ func Test_getControllerConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
+			err := util.GenerateTestYaml(tt.test, getConfigDirectory()+"/conf", "edge")
 			if err != nil {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
-			err = util.LoadConfig("/tmp/kubeedge/testData")
-			if err != nil {
-				t.Error("Unable to load the configuration file")
-			}
-			err = os.RemoveAll("/tmp/kubeedge")
-			if err != nil {
-				t.Error("Unable to delete the temporary directory: ", err)
-			}
+			// time to let config be synced again
+			time.Sleep(10 * time.Second)
 			if err := getControllerConfig(); (err != nil) != tt.wantErr {
 				t.Errorf("getControllerConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -519,21 +521,17 @@ func Test_getExtendHeader(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := util.GenerateTestYaml(tt.test, "/tmp/kubeedge/testData", "edge")
+			err := util.GenerateTestYaml(tt.test, getConfigDirectory()+"/conf", "edge")
 			if err != nil {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
-			err = util.LoadConfig("/tmp/kubeedge/testData")
-			if err != nil {
-				t.Error("Unable to load the configuration file ", err)
-			}
-			err = os.RemoveAll("/tmp/kubeedge")
-			if err != nil {
-				t.Error("Unable to delete the temporary directory: ", err)
-			}
+			// time to let config be synced again
+			time.Sleep(10 * time.Second)
 			if got := getExtendHeader(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getExtendHeader() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+
+	restoreConfigBack()
 }
