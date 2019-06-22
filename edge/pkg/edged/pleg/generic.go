@@ -150,7 +150,6 @@ func (gl *GenericLifecycle) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kub
 		true,
 	)
 
-	// Preserves conditions not controlled by kubelet
 	return &apiPodStatus
 }
 
@@ -291,39 +290,41 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	var err error
 	if gl.runtime != nil {
 		podStatus, err = gl.runtime.GetPodStatusOwn(pod)
-
+		if err != nil {
+			return err
+		}
 	}
 	if gl.remoteRuntime != nil {
 		podStatusRemote, err = gl.remoteRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
-			glog.Errorf("Unable to get runtime pod status for pod %s", pod.Name)
-			return err
-		}
-		podStatus = gl.convertStatusToAPIStatus(pod, podStatusRemote)
-		// Assume info is ready to process
-		spec := &pod.Spec
-		allStatus := append(append([]v1.ContainerStatus{}, podStatus.ContainerStatuses...), podStatus.InitContainerStatuses...)
-		podStatus.Phase = getPhase(spec, allStatus)
-		// Check for illegal phase transition
-		if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
-			// API server shows terminal phase; transitions are not allowed
-			if podStatus.Phase != pod.Status.Phase {
-				glog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
-				// Force back to phase from the API server
-				podStatus.Phase = pod.Status.Phase
+			var containerStatus *kubecontainer.ContainerStatus
+			kubeStatus := toKubeContainerStatus(v1.PodUnknown, containerStatus)
+			podStatus = &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
+		} else {
+			podStatus = gl.convertStatusToAPIStatus(pod, podStatusRemote)
+			// Assume info is ready to process
+			spec := &pod.Spec
+			allStatus := append(append([]v1.ContainerStatus{}, podStatus.ContainerStatuses...), podStatus.InitContainerStatuses...)
+			podStatus.Phase = getPhase(spec, allStatus)
+			// Check for illegal phase transition
+			if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
+				// API server shows terminal phase; transitions are not allowed
+				if podStatus.Phase != pod.Status.Phase {
+					glog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
+					// Force back to phase from the API server
+					podStatus.Phase = pod.Status.Phase
+				}
 			}
 		}
 	}
-	if err != nil {
-		return err
-	}
+
 	newStatus = *podStatus.DeepCopy()
 
 	gl.probeManager.UpdatePodStatus(pod.UID, &newStatus)
 	if gl.runtime != nil {
 		newStatus.Conditions = append(newStatus.Conditions, gl.runtime.GeneratePodReadyCondition(newStatus.ContainerStatuses))
 	}
-	if gl.remoteRuntime != nil {
+	if gl.remoteRuntime != nil && err == nil {
 		spec := &pod.Spec
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodInitializedCondition(spec, newStatus.InitContainerStatuses, newStatus.Phase))
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodReadyCondition(spec, newStatus.ContainerStatuses, newStatus.Phase))
@@ -336,6 +337,38 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	pod.Status = newStatus
 	gl.status.SetPodStatus(pod, newStatus)
 	return err
+}
+
+func toKubeContainerStatus(phase v1.PodPhase, status *kubecontainer.ContainerStatus) v1.ContainerStatus {
+
+	kubeStatus := v1.ContainerStatus{
+		Name:         status.Name,
+		RestartCount: int32(status.RestartCount),
+		ImageID:      status.ImageID,
+		Image:        status.Image,
+		ContainerID:  status.ID.ID,
+	}
+
+	switch phase {
+	case v1.PodRunning:
+		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.Time{status.StartedAt}}
+		kubeStatus.Ready = true
+	case v1.PodFailed, v1.PodSucceeded:
+		kubeStatus.State.Terminated = &v1.ContainerStateTerminated{
+			ExitCode:    int32(status.ExitCode),
+			Reason:      status.Reason,
+			Message:     status.Message,
+			StartedAt:   metav1.Time{status.StartedAt},
+			FinishedAt:  metav1.Time{status.FinishedAt},
+			ContainerID: status.ID.ID,
+		}
+	default:
+		kubeStatus.State.Waiting = &v1.ContainerStateWaiting{
+			Reason:  status.Reason,
+			Message: status.Message,
+		}
+	}
+	return kubeStatus
 }
 
 // getPhase returns the phase of a pod given its container info.
