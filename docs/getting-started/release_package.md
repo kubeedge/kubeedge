@@ -80,7 +80,7 @@
   ## Edge Vm
   ### Prerequisites
   + [Install Docker](https://docs.docker.com/install/) and/or [Containerd](https://kubernetes.io/docs/setup/cri/#containerd)
-   based on the runtimes to be used at edge
+   based on the runtime to be used at edge
 
 **NOTE:** scp kubeedge folder from cloud vm to edge vm
    
@@ -114,16 +114,16 @@
            + `websocket:URL`
            + `controller:node-id`
            + `edged:hostname-override`
-   + Configuring docker or containerd runtime in `/etc/kubeedge/edge/conf/edge.yaml` configuration file
-          + Specify the runtime type to be used as either docker or remote (for all CRI based runtimes including containerd).
+       + Configure the desired container runtime in /etc/kubeedge/edge/conf/edge.yaml configuration file
+       + Specify the runtime type to be used as either docker or remote (for all CRI based runtimes including containerd).
             If this parameter is not specified docker runtime will be used by default
-              + `runtime-type:docker` or `runtime-type:remote`
-          + Additionally specify the following parameters for remote/CRI based runtimes
-              + `remote-runtime-endpoint:/var/run/containerd/containerd.sock`
-              + `remote-image-endpoint:/var/run/containerd/containerd.sock`
-              + `runtime-request-timeout: 2`
-              + `podsandbox-image: k8s.gcr.io/pause`
-              + `kubelet-root-dir: /var/run/kubelet/`
+            + `runtime-type:docker` or `runtime-type:remote`
+       + Additionally specify the following parameters for remote/CRI based runtimes
+            + `remote-runtime-endpoint:/var/run/containerd/containerd.sock`
+            + `remote-image-endpoint:/var/run/containerd/containerd.sock`
+            + `runtime-request-timeout: 2`
+            + `podsandbox-image: k8s.gcr.io/pause`
+            + `kubelet-root-dir: /var/run/kubelet/`
    + Run edge   
    ```shell
        # run edge_core
@@ -142,10 +142,8 @@
        ARCH="arm"
        curl -L "https://github.com/kubeedge/kubeedge/releases/download/${VERSION}/kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz" --output kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz && tar -xf kubeedge-${VERSION}-${OS}-${ARCH}.tar.gz  -C /etc
    ```
-   + Observing CRI runtime containers
-        + Use the following command to oberve containerd runtime containers
-            + sudo ctr --namespace k8s.io containers ls
-        + Use the following command to observe containerd images
-            + sudo ctr --namespace k8s.io images ls
-        + Use the following command to get into the container
-            + sudo crictl exec -ti <containerid> /bin/bash
+   + Monitoring containers status
+        + If the container runtime configured to manage containers is containerd , then the following commands can be used to inspect container status and list images.
+          + sudo ctr --namespace k8s.io containers ls
+          + sudo ctr --namespace k8s.io images ls
+          + sudo crictl exec -ti <containerid> /bin/bash
