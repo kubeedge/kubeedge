@@ -44,7 +44,7 @@ edged:
     image-gc-low-threshold: 40 # percent
     maximum-dead-containers-per-container: 1
     docker-address: unix:///var/run/docker.sock
-    version: 2.0.0
+    version: v1.10.9-kubeedge-v1.0.0
     runtime-type: docker
     remote-runtime-endpoint: /var/run/containerd/containerd.sock
     remote-image-endpoint: /var/run/containerd/containerd.sock
