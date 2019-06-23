@@ -45,7 +45,7 @@ const (
 	DefaultCertPath = "/etc/kubeedge/certs"
 
 	//DefaultKubeEdgeVersion is the current default version of KubeEdge
-	DefaultKubeEdgeVersion = "0.3.0-beta.0"
+	DefaultKubeEdgeVersion = "0.3.0"
 
 	//DefaultDockerVersion is the current default version of Docker
 	DefaultDockerVersion = "18.06.0"
