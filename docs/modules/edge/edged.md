@@ -43,6 +43,27 @@ This module helps in monitoring pod status for edged. Every second, using probe'
 
 *Fig 5: PLEG at EdgeD*
 
+## CRI for edged
+
+Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes, without the need to recompile and also support multiple runtimes like docker, containerd, cri-o etc
+
+#### Why CRI for edge?
+Currently kubeedge edged supports only docker runtime using the legacy dockertools. 
++ CRI support for  multiple container runtime in kubeedge is needed due to below mentioned factors 
+  + Include CRI support as in kubernetes kubelet to support containerd, cri-o etc
+
+  + Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
+    for docker runtime using dockershim is not considered in edged
+  + Support light weight container runtimes on resource constrained edge node which are unable to run the existing docker runtime
+  + Support multiple container runtimes like docker, containerd, cri-o etc on the edge node.
+  + Support for corresponding CNI with pause container and IP will be considered later
+  + Customer can run light weight container runtime on resource constrained edge node that cannot run the existing docker runtime
+  + Customer has the option to choose from multiple container runtimes on his edge platform
+
+![CRI Design](../../images/edged/edged-cri.png)  
+
+*Fig 6: CRI at EdgeD*
+
 ## Secret Management
 
 At edged, Secrets are handled separately. For its operations like addition, deletion and modifications; there are separate set of config messages or interfaces.
@@ -51,7 +72,7 @@ Below flow diagram explains the message flow.
 
 ![Secret Message Handling](../../images/edged/secret-handling.png)  
 
-*Fig 6: Secret Message Handling at EdgeD*
+*Fig 7: Secret Message Handling at EdgeD*
 
 Also edged uses MetaClient module to fetch secret from Metamanager (if available with it) else cloud. Whenever edged queries for a new secret which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the secret, it stores a copy of it and send it to edged.
 Hence the subsequent query for same secret key will be responded by Metamanger only, hence reducing the response delay.
@@ -59,7 +80,7 @@ Below flow diagram shows, how secret is fetched from metamanager and cloud. The 
 
 ![Query Secret](../../images/edged/query-secret-from-edged.png)  
 
-*Fig 7: Query Secret by EdgeD*
+*Fig 8: Query Secret by EdgeD*
 
 ## Probe Management
 
@@ -74,7 +95,7 @@ Below flow diagram explains the message flow.
 
 ![ConfigMap Message Handling](../../images/edged/configmap-handling.png)  
 
-*Fig 8: ConfigMap Message Handling at EdgeD*
+*Fig 9: ConfigMap Message Handling at EdgeD*
 
 Also edged uses MetaClient module to fetch configmap from Metamanager (if available with it) else cloud. Whenever edged queries for a new configmaps which Metamanager doesn't has, the request is forwared to cloud. Before sending the response containing the configmaps, it stores a copy of it and send it to edged.
 Hence the subsequent query for same configmaps key will be responded by Metamanger only, hence reducing the response delay.
@@ -82,7 +103,7 @@ Below flow diagram shows, how configmaps is fetched from metamanager and cloud. 
 
 ![Query Configmaps](../../images/edged/query-configmap-from-edged.png)  
 
-*Fig 9: Query Configmaps by EdgeD*
+*Fig 10: Query Configmaps by EdgeD*
 
 ## Container GC
 
@@ -100,7 +121,7 @@ Status manager is as an independent edge routine, which collects pods statuses e
 
 ![Status Manager Flow](../../images/edged/pod-status-manger-flow.png)  
 
-*Fig 10: Status Manager Flow*
+*Fig 11: Status Manager Flow*
 
 ## Volume Management
 
