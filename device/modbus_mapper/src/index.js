@@ -235,7 +235,7 @@ WatchFiles.watchChange(path.join(__dirname, 'dpl'), ()=>{
                     logger.info('received twinGet message');
                     dt.setExpecteds(msgGet, (PropExpecteds)=>{
                         for (let expected of PropExpecteds) {
-                            dt.compareActuals(value, ActualVal.get(util.format('%s-%s', deviceID, expected[0])),(changed)=>{
+                            dt.compareActuals(expected[1], ActualVal.get(util.format('%s-%s', deviceID, expected[0])),(changed)=>{
                                 modbusProtocolTransfer(devProtocol.protocol, (transferedProtocol)=>{
                                     if (changed && modVistr.has(util.format('%s-%s-%s', devInstance.model, expected[0], transferedProtocol))) {
                                         let visitor = modVistr.get(util.format('%s-%s-%s', devInstance.model, expected[0], transferedProtocol));
