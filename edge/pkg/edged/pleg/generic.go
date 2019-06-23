@@ -297,22 +297,30 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	if gl.remoteRuntime != nil {
 		podStatusRemote, err = gl.remoteRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
-			var containerStatus *kubecontainer.ContainerStatus
+			containerStatus := &kubecontainer.ContainerStatus{}
 			kubeStatus := toKubeContainerStatus(v1.PodUnknown, containerStatus)
 			podStatus = &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		} else {
-			podStatus = gl.convertStatusToAPIStatus(pod, podStatusRemote)
-			// Assume info is ready to process
-			spec := &pod.Spec
-			allStatus := append(append([]v1.ContainerStatus{}, podStatus.ContainerStatuses...), podStatus.InitContainerStatuses...)
-			podStatus.Phase = getPhase(spec, allStatus)
-			// Check for illegal phase transition
-			if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
-				// API server shows terminal phase; transitions are not allowed
-				if podStatus.Phase != pod.Status.Phase {
-					glog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
-					// Force back to phase from the API server
-					podStatus.Phase = pod.Status.Phase
+			if pod.DeletionTimestamp != nil {
+				containerStatus := &kubecontainer.ContainerStatus{State: kubecontainer.ContainerStateExited,
+					Reason: "Completed"}
+				kubeStatus := toKubeContainerStatus(v1.PodSucceeded, containerStatus)
+				podStatus = &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
+
+			} else {
+				podStatus = gl.convertStatusToAPIStatus(pod, podStatusRemote)
+				// Assume info is ready to process
+				spec := &pod.Spec
+				allStatus := append(append([]v1.ContainerStatus{}, podStatus.ContainerStatuses...), podStatus.InitContainerStatuses...)
+				podStatus.Phase = getPhase(spec, allStatus)
+				// Check for illegal phase transition
+				if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
+					// API server shows terminal phase; transitions are not allowed
+					if podStatus.Phase != pod.Status.Phase {
+						glog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
+						// Force back to phase from the API server
+						podStatus.Phase = pod.Status.Phase
+					}
 				}
 			}
 		}
@@ -324,7 +332,7 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	if gl.runtime != nil {
 		newStatus.Conditions = append(newStatus.Conditions, gl.runtime.GeneratePodReadyCondition(newStatus.ContainerStatuses))
 	}
-	if gl.remoteRuntime != nil && err == nil {
+	if gl.remoteRuntime != nil {
 		spec := &pod.Spec
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodInitializedCondition(spec, newStatus.InitContainerStatuses, newStatus.Phase))
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodReadyCondition(spec, newStatus.ContainerStatuses, newStatus.Phase))
