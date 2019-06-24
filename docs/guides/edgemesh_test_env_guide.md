@@ -64,8 +64,8 @@ $ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT 
 ## Example for Edgemesh test env
 ![edgemesh test env example](../images/edgemesh/edgemesh-test-env-example.png)
 
-# Edgemesh end to end test guide
-## model
+## Edgemesh end to end test guide
+### model
 ![model](../images/edgemesh/model.jpg)
 1. a headless service(a service with selector but ClusterIP is None)
 2. one or more pods' labels match the headless service's selector
@@ -74,7 +74,7 @@ $ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT 
     2. query the backend pods from metaManager by service's namespace and name
     3. load balance return the real backend container's hostIP and hostPort
 
-## flow from client to server
+### flow from client to server
 ![flow](../images/edgemesh/endtoend-test-flow.jpg)
 1. client request to server's domain name
 2. DNS request hijacked to edgemesh by iptables, return a fake ip
@@ -86,7 +86,7 @@ $ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT 
     3. choose a backend based on strategy
 6. edgemesh transport request to server wait server response and then response to client
 
-## how to test end to end
+### how to test end to end
 - create a headless service(**no need specify port**):
 ```yaml
 apiVersion: v1
