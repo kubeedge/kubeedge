@@ -41,6 +41,7 @@ type KubeEdgeInstTool struct {
 	EdgeContrlrIP  string
 	K8SApiServerIP string
 	EdgeNodeID     string
+	RuntimeType    string
 }
 
 //InstallTools downloads KubeEdge for the specified verssion
@@ -89,7 +90,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 
 	url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)
 	edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
-		EdgeD: types.EdgeDSt{Version: ku.ToolVersion}}
+		EdgeD: types.EdgeDSt{Version: ku.ToolVersion, RuntimeType: ku.RuntimeType}}
 
 	if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, edgeYaml); err != nil {
 		return err
