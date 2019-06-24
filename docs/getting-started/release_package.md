@@ -95,7 +95,7 @@
    2) bothMqttMode: internal as well as external broker are enabled.
    3) externalMqttMode: only external broker is enabled.
    
-   Use mode field in [edge.yaml](etc/kubeedge/edge/conf/edge.yaml#L4) to select the desired mode.
+   Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
    
    To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
    
