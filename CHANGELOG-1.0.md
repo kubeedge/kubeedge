@@ -32,7 +32,8 @@
 
 ## Changelog since v0.3.0
 
-### 1.0.0-beta.0 What's New
+### Features Added 
+
 
 **Edge Mesh**
 
