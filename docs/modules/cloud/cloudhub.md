@@ -2,8 +2,8 @@
 
 ## CloudHub Overview
 
-CloudHub is a web socket client, which is the mediator between EdgeController and the Edge side.
-Its function is enable the communication between edge and the EdgeController.
+CloudHub is the mediator between EdgeController and the Edge side. It supports both web-socket based connection as well as a [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol access at the same time.
+The edgehub can choose one of the protocols to access to the cloudhub. CloudHub's function is to enable the communication between edge and the EdgeController.
 
 The connection to the edge(through EdgeHub module) is done through the HTTP over websocket connection.
 For internal communication it directly communicates with the EdgeController.
@@ -55,3 +55,11 @@ Event object is then passed through the channel.
     every time a request is made to websocket connection
 - If the node gets disconnected then error is thrown and an event describing
     node failure is published to the controller.
+
+## Usage
+
+The CloudHub can be configured in three ways as mentioned below :
+
+- **Start the websocket server only**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-websocket-server-only) to see the details.
+- **Start the quic server only**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-quic-server-only) to see the details.
+- **Start the websocket and quic server at the same time**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-quic-server-only) to see the details
