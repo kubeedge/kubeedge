@@ -2,7 +2,7 @@
 
 Please refer to KubeEdge Installer proposal document for details on the motivation of having KubeEdge Installer.
 It also explains the functionality of the proposed commands.
-[KubeEdge Installer Doc](<https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/kubeedgeadm-scope.md/>)
+[KubeEdge Installer Doc](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/keadm-scope.md/)
 
 ## Limitation
 
