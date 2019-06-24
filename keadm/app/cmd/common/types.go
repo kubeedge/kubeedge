@@ -35,6 +35,7 @@ type JoinOptions struct {
 	EdgeControllerIP   string
 	K8SAPIServerIPPort string
 	EdgeNodeID         string
+	RuntimeType        string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -236,6 +237,18 @@ type EdgeDSt struct {
 	MaximumDeadContainersPerContainer uint16 `yaml:"maximum-dead-containers-per-container"`
 	DockerAddress                     string `yaml:"docker-address"`
 	Version                           string `yaml:"version"`
+	EdgedMemory                       uint16 `yaml:"edged-memory-capacity-bytes"`
+	RuntimeType                       string `yaml:"runtime-type"`
+	RuntimeEndpoint                   string `yaml:"remote-runtime-endpoint"`
+	ImageEndpoint                     string `yaml:"remote-image-endpoint"`
+	RequestTimeout                    uint16 `yaml:"runtime-request-timeout"`
+	PodSandboxImage                   string `yaml:"podsandbox-image"`
+}
+type Mesh struct {
+	LB LoadBalance `yaml:"loadbalance"`
+}
+type LoadBalance struct {
+	StrategyName string `yaml:"strategy-name"`
 }
 
 //EdgeHubSt contains both websocket and controller config
@@ -249,4 +262,5 @@ type EdgeYamlSt struct {
 	MQTT    MQTTConfig `yaml:"mqtt"`
 	EdgeHub EdgeHubSt  `yaml:"edgehub"`
 	EdgeD   EdgeDSt    `yaml:"edged"`
+	Mesh    Mesh       `yaml:"mesh"`
 }
