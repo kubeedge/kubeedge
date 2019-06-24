@@ -37,7 +37,7 @@ The assumptions are
 
 ## Architecture Design
 
-<img src="../images/edgesite/EdgeSite_arch.PNG"/>
+![EdgeSite Architecture](../images/edgesite/EdgeSite_arch.PNG)
 
 ## Advantages
 
@@ -51,7 +51,8 @@ With the integration, the following can be enabled
 ## Getting Started
 
 ### Setup
-<img src="../images/edgesite/EdgeSite_Setup.PNG"/>
+
+![EdgeSite Setup](../images/edgesite/EdgeSite_Setup.PNG)
 
 ### Steps for K8S (API server) Cluster
 
