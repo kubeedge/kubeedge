@@ -14,7 +14,7 @@ The device controller makes use of device model and device instance to implement
 
  **Note**: Sample device model and device instance for a few protocols can be found at $GOPATH/src/github.com/kubeedge/kubeedge/build/crd-samples/devices
 
-<img src="../../images/device-crd/device-crd-model.png">
+![Device Model](../../images/device-crd/device-crd-model.png)
  
  
 ## Operations Performed By Device Controller
@@ -33,14 +33,13 @@ actions that the upstream controller can take:
   |-------------------------------     |---------------------------------------------- |
   |Device Twin Reported State Updated    |  The controller patches the reported state of the device twin property in the cloud. |
   
-
-<img src="../../images/device-crd/device-upstream-controller.png">
+![Device Upstream Controller](../../images/device-crd/device-upstream-controller.png)
      
 ### Syncing Reported Device Twin Property Update From Edge To Cloud
 
 The mapper watches devices for updates and reports them to the event bus via the MQTT broker. The event bus sends the reported state of the device to the device twin which stores it locally and then syncs the updates to the cloud. The device controller watches for device updates from the edge ( via the cloudhub ) and updates the reported state in the cloud.
 
-<img src="../../images/device-crd/device-updates-edge-cloud.png">
+![Device Updates Edge To Cloud](../../images/device-crd/device-updates-edge-cloud.png)
 
 
 ## Downstream Controller:
@@ -55,7 +54,7 @@ The downstream controller watches for device updates against the K8S API server.
 |Device  Twin Desired State Updated | The device controller sends a twin update event to the edge node.|
 |Device Deleted                 | The controller sends the device twin delete event to delete all device twins associated with the device. It also deletes config maps associated with the device and this delete event is synced to the edge. The mapper application effectively stops operating on the device.|
 
-<img src="../../images/device-crd/device-downstream-controller.png">
+![Device Downstream Controller](../../images/device-crd/device-downstream-controller.png)
 
 The idea behind using config map to store device properties and visitors is that these metadata are only required by the mapper applications running on the edge node in order to connect to the device and collect data.
 Mappers if run as containers can load these properties as config maps . Any additions , deletions or updates to properties , visitors etc in the cloud are watched upon by the downstream controller and config maps are updated in etcd.
@@ -65,6 +64,6 @@ it can get the properties supported by the device. In order to access the proper
 This can be retrieved from the propertyVisitors list. Finally, using the visitorConfig, the mapper can read/write the data associated with the property.
 
 ### Syncing Desired Device Twin Property Update From Cloud To Edge
-  <img src="../../images/device-crd/device-updates-cloud-edge.png">
-  The device controller watches device updates in the cloud and relays them to the edge node. These updates are stored locally by the device twin. The mapper gets these updates via the MQTT broker and operates on the device based on the updates.
+![Device Updates Cloud To Edge](../../images/device-crd/device-updates-cloud-edge.png)
+The device controller watches device updates in the cloud and relays them to the edge node. These updates are stored locally by the device twin. The mapper gets these updates via the MQTT broker and operates on the device based on the updates.
 
