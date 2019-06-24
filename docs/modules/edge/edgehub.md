@@ -2,7 +2,7 @@
 
 ## Overview
 
-Edge hub is a web socket client, which is responsible for interacting with Huawei Cloud IEF service.
+Edge hub is responsible for interacting with CloudHub component present in the cloud. It can connect to the CloudHub using either a web-socket connection or using [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol.
 It supports functions like sync cloud side resources update, report edged side host and device status changes.
 
 It acts as the communication link between the edge and the cloud.
@@ -78,3 +78,11 @@ The major steps involved in this process are as follows :-
 - If it is a response message then the message is sent to the syncKeep channel
 
 ![Route to Edge](../../images/edgehub/route-to-edge.png)
+
+
+## Usage
+
+EdgeHub can be configured to communicate in two ways as mentioned below:
+
+- **Through websocket protocol**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-websocket-protocol) for details.
+- **Through QUIC protocol**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-quic) for details.
