@@ -307,7 +307,9 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 				}
 				if strings.Compare(expectedValue, actualValue) != 0 {
 					value := expectedValue
-					delta[k] = value
+					if expectedValue != "" {
+						delta[k] = value
+					}
 				}
 			} else {
 				if expectedValue != "" {
