@@ -86,7 +86,7 @@ func WriteEdgeLoggingYamlFile(path string) error {
 
 //WriteEdgeModulesYamlFile writes modules.yaml for edge component
 func WriteEdgeModulesYamlFile(path string) error {
-	modulesData := ModulesYaml{Modules: ModulesSt{Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin"}}}
+	modulesData := ModulesYaml{Modules: ModulesSt{Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin", "edgemesh"}}}
 	if err := Write2File(path, modulesData); err != nil {
 		return err
 	}

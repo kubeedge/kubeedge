@@ -56,6 +56,8 @@ const (
 	// DefaultProjectID is default project id
 	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
 
+	VendorK8sPrefix = "v1.10.9-kubeedge-"
+
 	// RuntimeType is default runtime type
 	RuntimeType = "runtimetype"
 )
