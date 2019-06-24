@@ -5,15 +5,8 @@
 > <https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd>
 
 ## install CNI plugin 
-+ download cni plugin 
-```bash
-$ wget https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz
-```
-+ decompression and installation  
-```bash
-$ mkdir -p /opt/cni/bin
-$ tar -zxvf cni-plugins-linux-amd64-v0.8.1.tgz -C /opt/cni/bin
-```
++ get cni plugin and these five version are sopported (0.1.0, 0.2.0, 0.3.0, 0.3.1, 0.4.0)
++ and then use 'tar -zxvf' to extract to /opt/cni/bin
 + configure cni plugin
  
 ```bash
@@ -60,7 +53,10 @@ $ iptables -P FORWARD ACCEPT
 ```bash
 $ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT --to-destination containerIP:portOUT
 ``` 
-
+> + by the way, If you redeployed the service,you can use the command as follows to delete the rule, and perform the second step again.
+   ```bash
+    $ iptables -t nat -D PORT-MAP 2
+  ``` 
 ## Example for Edgemesh test env
 ![edgemesh test env example](../images/edgemesh/edgemesh-test-env-example.png)
 
@@ -180,3 +176,17 @@ spec:
 ```
 **note: -p: whitelist, only port in whitelist can go out from client to edgemesh then to server**
 - client request server: exec into client container and then run command: ```curl http://test-headless.default.svc.cluster:8080```, will get the response from server like: ```HOSTNAME:test-app-686c6dbf98-6hrdq IP:10.11.0.4```
+> * **there is two ways to exec the 'curl' command to access your service**
+> * 1st: use 'ctr' command attach in the container and make sure there is 'curl' command in the container
+    
+```bash
+$ ctr -n k8s.io t exec --exec-id 123 <containerID> sh
+      
+``` 
+> * 2nd: switch the network namespace.(Recommended Use)  
+```bash
+# first step get the id,this command will return a id start with 'cni-xx'. and make sure the 'xx' is related to the pod which you can get from 'kubectl describe <podName>' 
+$ ip netns
+# and the use this id to switch the net namespace. And the you can exec curl to access the service
+$ ip netns exec <id> bash
+``` 
