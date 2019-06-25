@@ -16,12 +16,15 @@ all:
 	cd edge && $(MAKE)
 else ifeq ($(WHAT),keadm)
 all:
+	$(MAKE) -C edgesite
+else ifeq ($(WHAT),keadm)
+all:
 # make all what=edge, build edge binary
 	cd keadm && $(MAKE)
 else
 # invalid entry
 all:
-	@echo $S"invalid option please choose to build either cloud, edge or both"
+	@echo $S"invalid option please choose to build either cloud, edge, keadm, edgesite or all together"
 endif
 
 # unit tests
