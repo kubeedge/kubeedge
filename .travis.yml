@@ -46,6 +46,8 @@ jobs:
       name: "cross build edge"     # names the fifth Tests stage job
     - script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
+    - script: make cloud_test
+      name: "unit test cloud" 
     - script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job
     - script: make keadm_lint
