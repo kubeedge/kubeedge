@@ -79,8 +79,6 @@ cloud_lint:
 
 .PHONY: e2e_test
 e2e_test:
-#	bash tests/e2e/scripts/execute.sh device_crd
-#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
 	bash tests/e2e/scripts/execute.sh
 
 .PHONY: performance_test

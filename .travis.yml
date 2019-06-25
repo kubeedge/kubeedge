@@ -1,6 +1,7 @@
 language: go
 
 sudo: required
+dist: xenial
 
 services:
   - docker
@@ -67,6 +68,25 @@ jobs:
       name: "unit test edge"     # names the third Tests stage job
     - script: make edge_integration_test
       name: "integration test edge"     # names the fourth Tests stage job
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
+    - script:
+        - sudo apt-get update && sudo apt-get install -y apt-transport-https
+        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+        - sudo apt-get update
+        - sudo apt-get install -y kubelet kubeadm kubectl
+        - sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+        - sudo mkdir -p $HOME/.kube
+        - sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+        - sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        - kubectl taint nodes --all node-role.kubernetes.io/master-
+        - kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/62e44c867a2846fefb68bd5f178daf4da3095ccb/Documentation/kube-flannel.yml
+        - sudo sed -i "s|insecure-port=.*|insecure-port=8080|g" /etc/kubernetes/manifests/kube-apiserver.yaml
+        - sudo sed -i '27i\ \ \ \ - --insecure-bind-address=0.0.0.0' /etc/kubernetes/manifests/kube-apiserver.yaml
+        - sleep 5
+        - make e2e_test
+      name: "e2e_test"     # names the seventh Tests stage job
     - script: make cloud_test
       name: "unit test cloud" 
 

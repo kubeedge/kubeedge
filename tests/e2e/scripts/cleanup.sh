@@ -36,21 +36,18 @@ kill_cloudcore() {
     if pgrep cloudcore >/dev/null
     then
         echo "Failed to kill the cloudcore !!"
-        exit 1
     else
         echo "cloudcore is successfully killed !!"
     fi
 }
 
 kill_edgesite() {
-    exit 0
     sudo pkill edgesite
     #kill the edgecore process if it exists.
     sleep 5s
     if pgrep edgesite >/dev/null
     then
         echo "Failed to kill edgesite process !!"
-        exit 1
     else
         echo "edgesite is successfully killed !!"
     fi
@@ -73,22 +70,29 @@ cleanup_files(){
     sudo rm -rf tests/e2e/rootCA.srl
 }
 
-if [ "deployment" = ${setuptype} ]; then
-    kill_edgecore
-    kill_cloudcore
-    sudo rm -rf tests/e2e/deployment/deployment.test
-fi
-
-if [ "device_crd" = ${setuptype} ]; then
-    kill_edgecore
-    kill_cloudcore
-    sudo rm -rf tests/e2e/device_crd/device_crd.test
+if [ "edgecore" = ${setuptype} ]; then
+    workdir=$GOPATH/src/github.com/kubeedge/kubeedge
+    cd $workdir
+    sudo rm -rf tests/e2e/edgecore/edgecore.test
 fi
 
 if [ "edgesite" = ${setuptype} ]; then
-    kill_edgesite
+    workdir=$GOPATH/src/github.com/kubeedge/kubeedge
+    cd $workdir
     sudo rm -rf tests/e2e/edgesite/edgesite.test
     sudo rm -rf tests/e2e/config.json
+
+fi
+
+if [ "pre_test" = ${setuptype} ]; then
+    workdir=$GOPATH/src/github.com/kubeedge/kubeedge
+    cd $workdir
+    kill_edgesite
+    kill_cloudcore
+    kill_edgecore
+    sudo rm -rf tests/e2e/edgesite/edgesite.test
+    sudo rm -rf tests/e2e/config.json
+    sudo rm -rf tests/e2e/edgecore/edgecore.test
 
 fi
 

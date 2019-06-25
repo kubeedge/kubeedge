@@ -22,26 +22,31 @@ compilemodule=$1
 runtest=$2
 debugflag="-test.v -ginkgo.v"
 
-export MASTER_IP=121.244.95.60
+export MASTER_IP=localhost
+export IMAGE_TAG=$(git describe --tags)
+echo "kubeedge/edgecore:${IMAGE_TAG}"
 #setup env
 cd ../
 #Pre-configurations required for running the suite.
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "image_url": ["nginx", "hello-world"],
-        "k8smasterforkubeedge":"http://$MASTER_IP:12418",
+         "image_url": ["nginx", "hello-world"],
          "dockerhubusername":"user",
          "dockerhubpassword":"password",
          "mqttendpoint":"tcp://127.0.0.1:1884"
+         "k8smasterforkubeedge":"http://$MASTER_IP:8080",
+         "cloudimageurl": "kubeedge/edgecontroller:${IMAGE_TAG}",
+         "edgeimageurl": "kubeedge/edgecore:${IMAGE_TAG}",
+         "edgesiteimageurl": "kubeedge/edgesite:${IMAGE_TAG}"
 }
 END
 
 if [ $# -eq 0 ]
   then
     #run testcase
-    ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-    ./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+    ./edgecore/edgecore.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./edgesite/edgesite.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
 else
 if compilemodule=="bluetooth"
 then

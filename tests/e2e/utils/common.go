@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,17 +49,25 @@ const (
 	TwinETUpdateSuffix    = "/twin/update"
 	TwinETGetSuffix       = "/twin/get"
 	TwinETGetResultSuffix = "/twin/get/result"
+	deploymentHandler     = "/apis/apps/v1/namespaces/default/deployments"
+	configmapHandler      = "/api/v1/namespaces/default/configmaps"
+	serviceHandler        = "/api/v1/namespaces/default/services"
+	nodeHandler           = "/api/v1/nodes"
 )
 
 var (
-	ProtocolQuic      bool
-	ProtocolWebsocket bool
+	ProtocolQuic           bool
+	ProtocolWebsocket      bool
+	TokenClient            Token
+	ClientOpts             *MQTT.ClientOptions
+	Client                 MQTT.Client
+	TwinResult             DeviceTwinResult
+	edgeDeploymentName     string
+	edgesiteDeploymentName string
+	NodeInfo               = make(map[string][]string)
+	EdgeSiteNodeInfo       = make(map[string][]string)
+	chconfigmapRet         = make(chan error)
 )
-
-var TokenClient Token
-var ClientOpts *MQTT.ClientOptions
-var Client MQTT.Client
-var TwinResult DeviceTwinResult
 
 // Token interface to validate the MQTT connection.
 type Token interface {
@@ -147,9 +156,19 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 	return &deplObj
 }
 
+func nodeSelectorValue(nodeSelector string) map[string]string {
+	if nodeSelector == "" {
+		return nil
+	} else {
+		return map[string]string{"k8snode": nodeSelector}
+	}
+}
+
 // Function to get edgecore deploymentspec object
-func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
+func edgecoreDeploymentSpec(imgURL, configmap string, replicas int, nodeSelector string) *apps.DeploymentSpec {
 	IsSecureCtx := true
+	var portInfo []v1.ContainerPort
+	portInfo = []v1.ContainerPort{{ContainerPort: 1884, Protocol: "TCP", Name: "mqtt"}}
 	deplObj := apps.DeploymentSpec{
 		Replicas: func() *int32 { i := int32(replicas); return &i }(),
 		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "edgecore"}},
@@ -158,6 +177,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 				Labels: map[string]string{"app": "edgecore"},
 			},
 			Spec: v1.PodSpec{
+				HostNetwork: true,
 				Containers: []v1.Container{
 					{
 						Name:            "edgecore",
@@ -174,8 +194,9 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
 						},
-						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
-						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edge/conf"}},
+						Ports: portInfo,
+						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edge/conf"},
+							{Name: "docker-sock", MountPath: "/var/run/docker.sock"}},
 					}, {
 						Name:            "dind-daemon",
 						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
@@ -189,11 +210,72 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},
 					},
 				},
-				NodeSelector: map[string]string{"k8snode": "kb-perf-node"},
+				NodeSelector: nodeSelectorValue(nodeSelector),
 				Volumes: []v1.Volume{
 					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
 					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
 					{Name: "docker-graph-storage", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
+					{Name: "docker-sock", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/var/run/docker.sock"}}},
+				},
+			},
+		},
+	}
+	return &deplObj
+}
+
+//Function to get edgesite deploymentspec object
+func edgesiteDeploymentSpec(imgURL, configmap string, replicas int, nodeSelector string) *apps.DeploymentSpec {
+	IsSecureCtx := true
+	var portInfo []v1.ContainerPort
+	portInfo = []v1.ContainerPort{{ContainerPort: 1884, Protocol: "TCP", Name: "mqtt"}}
+	deplObj := apps.DeploymentSpec{
+		Replicas: func() *int32 { i := int32(replicas); return &i }(),
+		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "edgecore"}},
+		Template: v1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{"app": "edgecore"},
+			},
+			Spec: v1.PodSpec{
+				HostNetwork: true,
+				Containers: []v1.Container{
+					{
+						Name:            "edgecore",
+						Image:           imgURL,
+						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
+						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
+							},
+							Limits: v1.ResourceList{
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
+							},
+						},
+						Ports: portInfo,
+						Env:   []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
+						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edgesite/conf"},
+							{Name: "docker-sock", MountPath: "/var/run/docker.sock"}},
+					}, {
+						Name:            "dind-daemon",
+						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
+						Image:           "docker:dind",
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("20m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("256Mi"),
+							},
+						},
+						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},
+					},
+				},
+				NodeSelector: nodeSelectorValue(nodeSelector),
+				Volumes: []v1.Volume{
+					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
+					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
+					{Name: "docker-graph-storage", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
+					{Name: "docker-sock", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/var/run/docker.sock"}}},
 				},
 			},
 		},
@@ -246,7 +328,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configm
 	var namespace string
 
 	if edgecore == true {
-		depObj = edgecoreDeploymentSpec(imgUrl, configmap, replicas)
+		depObj = edgecoreDeploymentSpec(imgUrl, configmap, replicas, nodeselector)
 		namespace = Namespace
 	} else if cloudcore == true {
 		depObj = cloudcoreDeploymentSpec(imgUrl, configmap, replicas)
@@ -362,9 +444,6 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	switch operation {
 	case "POST":
 		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageUrl, nodeselector, configmapname, replica)
-		if err != nil {
-			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
-		}
 		respBytes, err := json.Marshal(depObj)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
@@ -848,4 +927,226 @@ func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*
 		}
 	}
 	return true
+}
+
+func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, confighdl, deploymenthdl, imgURL string, nodelimit int) error {
+	nodes := strconv.FormatInt(int64(nodelimit), 10)
+	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", apiserver2, cloudConfigMap, nodes)
+	err := PrintCombinedOutput(cmd)
+	Expect(err).Should(BeNil())
+	go HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false, true)
+	ret := <-chconfigmapRet
+	Expect(ret).To(BeNil())
+	ProtocolQuic = false
+	//Handle cloudCore deployment
+	go HandleDeployment(true, false, http.MethodPost, deploymenthdl, cloudCoreDeployment, imgURL, "", cloudConfigMap, 1)
+
+	return nil
+}
+
+func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, edgeNodeName string, nodeSelector string) {
+	//Create edgecore configMaps based on the users choice of edgecore deployment.
+	configmap := "edgecore-configmap-" + GetRandomString(5)
+	//Register EdgeNodes to K8s Master
+	go RegisterNodeToMaster(edgeNodeName, nodeHandler, nodeSelector)
+	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edge_config", edgeNodeName, cloudhub, configmap)
+	err := PrintCombinedOutput(cmd)
+	Expect(err).Should(BeNil())
+	//Create ConfigMaps for Each EdgeNode created
+	go HandleConfigmap(chconfigmapRet, http.MethodPost, cmHandler, true, false)
+	ret := <-chconfigmapRet
+	Expect(ret).To(BeNil())
+	//Store the ConfigMap against each edgenode
+	NodeInfo[edgeNodeName] = append(NodeInfo[edgeNodeName], configmap, nodeSelector)
+}
+
+func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, edgeNodeName string) v1.PodList {
+	replica := 1
+	//Create edgeCore deployments as per users configuration
+	for _, configmap := range NodeInfo {
+		edgeDeploymentName = "edgecore-deployment-" + GetRandomString(5)
+		go HandleDeployment(false, true, http.MethodPost, depHandler, edgeDeploymentName, imgURL, "", configmap[0], replica)
+	}
+	time.Sleep(2 * time.Second)
+	podlist, err := GetPods(podHandler, "")
+	Expect(err).To(BeNil())
+	CheckPodRunningState(podHandler, podlist)
+
+	//Check EdgeNode are in Running state
+	Eventually(func() string {
+		status := CheckNodeReadyStatus(nodeHandler, edgeNodeName)
+		Infof("Node Name: %v, Node Status: %v", edgeNodeName, status)
+		return status
+	}, "120s", "2s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
+
+	return podlist
+}
+
+func DeleteEdgeDeployments(apiServer string) {
+	for edgeNodeName, configmap := range NodeInfo {
+		go HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServer+configmapHandler+"/"+configmap[0], true, false)
+		ret := <-chconfigmapRet
+		Expect(ret).To(BeNil())
+		//delete edgenodes and edge deployment
+		isDeleted := HandleDeployment(false, true, http.MethodDelete, apiServer+deploymentHandler+"/", edgeDeploymentName, "", "", "", 0)
+		Expect(isDeleted).Should(Equal(true))
+		err := DeRegisterNodeFromMaster(apiServer+nodeHandler, edgeNodeName)
+		Expect(err).Should(BeNil())
+		//Verify deployments, configmaps, nodes are deleted successfully
+		statusCode := VerifyDeleteDeployment(apiServer + deploymentHandler + "/" + edgeDeploymentName)
+		Expect(statusCode).To(Equal(404))
+		statusCode, _ = GetConfigmap(apiServer + configmapHandler + "/" + configmap[0])
+		Expect(statusCode).To(Equal(404))
+		statusCode = CheckNodeDeleteStatus(apiServer+nodeHandler, edgeNodeName)
+		Infof("Node Name: %v, Node Status: %v", edgeNodeName, statusCode)
+		Expect(statusCode).To(Equal(404))
+	}
+	//Cleanup globals
+	NodeInfo = map[string][]string{}
+}
+
+func DeleteCloudDeployment(apiserver string, cloudCoreDeployment string, cloudConfigMap string) {
+	//delete cloud deployment
+	go HandleDeployment(true, false, http.MethodDelete, apiserver+deploymentHandler+"/"+cloudCoreDeployment, "", "", "", "", 0)
+	//delete cloud configMap
+	go HandleConfigmap(chconfigmapRet, http.MethodDelete, apiserver+configmapHandler+"/"+cloudConfigMap, true, false)
+	ret := <-chconfigmapRet
+	Expect(ret).To(BeNil())
+	//delete cloud svc
+	StatusCode := DeleteSvc(apiserver + serviceHandler + "/" + cloudCoreDeployment)
+	Expect(StatusCode).Should(Equal(http.StatusOK))
+}
+
+// Handles Pod Deployment for edgesite
+func HandleEdgeSitePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, edgeNodeName string) v1.PodList {
+	replica := 1
+	//Create edgeSite deployments as per users configuration
+	for _, configmap := range EdgeSiteNodeInfo {
+		edgesiteDeploymentName = "edgesite-deployment-" + GetRandomString(5)
+		go HandleEdgesiteDeployment(http.MethodPost, depHandler, edgesiteDeploymentName, imgURL, "", configmap[0], replica)
+	}
+	time.Sleep(2 * time.Second)
+	podlist, err := GetPods(podHandler, "")
+	Expect(err).To(BeNil())
+	CheckEdgesiteRunningState(podHandler, podlist)
+
+	//Check EdgeNode are in Running state
+	Eventually(func() string {
+		status := CheckNodeReadyStatus(nodeHandler, edgeNodeName)
+		Infof("Node Name: %v, Node Status: %v", edgeNodeName, status)
+		return status
+	}, "120s", "2s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
+
+	return podlist
+}
+
+//CheckPodRunningState function to check the Pod state
+func CheckEdgesiteRunningState(apiserver string, podlist v1.PodList) {
+	Eventually(func() string {
+		for _, pod := range podlist.Items {
+			if strings.Contains(pod.Name, "edgesite") {
+				state, _ := GetPodState(apiserver + "/" + pod.Name)
+				Infof("PodName: %s PodStatus: %s", pod.Name, state)
+				return state
+			}
+		}
+		return ""
+	}, "3000s", "2s").Should(Equal("Running"), "Application deployment is Unsuccessfull, Pod has not come to Running State")
+
+}
+
+// Handes creation of deletion of deployment for edgesite
+func HandleEdgesiteDeployment(operation, apiserver, UID, ImageUrl, nodeselector, configmapname string, replica int) bool {
+	var req *http.Request
+	var err error
+	var body io.Reader
+
+	defer ginkgo.GinkgoRecover()
+	client := &http.Client{}
+	switch operation {
+	case "POST":
+		depObj := newEdgesiteDeployment(UID, ImageUrl, nodeselector, configmapname, replica)
+		respBytes, err := json.Marshal(depObj)
+		if err != nil {
+			Fatalf("Marshalling body failed: %v", err)
+		}
+		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+	case "DELETE":
+		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
+	}
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	return true
+}
+
+// creation of deployment object for edgesite
+func newEdgesiteDeployment(name, imgUrl, nodeselector, configmap string, replicas int) *apps.Deployment {
+	var depObj *apps.DeploymentSpec
+	var namespace string
+	depObj = edgesiteDeploymentSpec(imgUrl, configmap, replicas, nodeselector)
+	namespace = Namespace
+	deployment := apps.Deployment{
+		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Labels:    map[string]string{"app": "kubeedge"},
+			Namespace: namespace,
+		},
+		Spec: *depObj,
+	}
+	return &deployment
+}
+
+// Creation of config map for edgesite
+func CreateConfigMapforEdgeSite(cmHandler, nodeHandler string, edgeNodeName string, nodeSelector string, apiServer string) {
+	//Create edgecore configMaps based on the users choice of edgecore deployment.
+	configmap := "edgesite-configmap-" + GetRandomString(5)
+	//Register EdgeNodes to K8s Master
+	go RegisterNodeToMaster(edgeNodeName, nodeHandler, nodeSelector)
+	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edgesite_config", edgeNodeName, apiServer, configmap)
+	err := PrintCombinedOutput(cmd)
+	Expect(err).Should(BeNil())
+	//Create ConfigMaps for Each EdgeNode created
+	go HandleConfigmap(chconfigmapRet, http.MethodPost, cmHandler, false, false)
+	ret := <-chconfigmapRet
+	Expect(ret).To(BeNil())
+	//Store the ConfigMap against each edgenode
+	EdgeSiteNodeInfo[edgeNodeName] = append(EdgeSiteNodeInfo[edgeNodeName], configmap, nodeSelector)
+}
+
+// Delete deployments created for testing edgesite
+func DeleteEdgeSiteDeployments(apiServer string) {
+	for edgesiteNodeName, configmap := range EdgeSiteNodeInfo {
+		go HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServer+configmapHandler+"/"+configmap[0], false, false)
+		ret := <-chconfigmapRet
+		Expect(ret).To(BeNil())
+		//delete edgenodes and edge deployment
+		isDeleted := HandleDeployment(false, true, http.MethodDelete, apiServer+deploymentHandler+"/", edgesiteDeploymentName, "", "", "", 0)
+		Expect(isDeleted).Should(Equal(true))
+		err := DeRegisterNodeFromMaster(apiServer+nodeHandler, edgesiteNodeName)
+		Expect(err).Should(BeNil())
+		time.Sleep(500 * time.Millisecond)
+		//Verify deployments, configmaps, nodes are deleted successfully
+		statusCode := VerifyDeleteDeployment(apiServer + deploymentHandler + "/" + edgeDeploymentName)
+		Expect(statusCode).To(Equal(404))
+		statusCode, _ = GetConfigmap(apiServer + configmapHandler + "/" + configmap[0])
+		Expect(statusCode).To(Equal(404))
+		statusCode = CheckNodeDeleteStatus(apiServer+nodeHandler, edgesiteNodeName)
+		Infof("Node Name: %v, Node Status: %v", edgesiteNodeName, statusCode)
+		Expect(statusCode).To(Equal(404))
+	}
+	//Cleanup globals
+	EdgeSiteNodeInfo = map[string][]string{}
 }

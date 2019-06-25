@@ -140,14 +140,16 @@ func CheckNodeDeleteStatus(nodehandler, nodename string) int {
 }
 
 //HandleConfigmap function to create configmaps for respective edgenodes
-func HandleConfigmap(configName chan error, operation, confighandler string, IsEdgeCore bool) {
+func HandleConfigmap(configName chan error, operation, confighandler string, IsEdgeCore bool, IsCloudCore bool) {
 	var req *http.Request
 	var file string
 	curpath := getpwd()
 	if IsEdgeCore == true {
-		file = path.Join(curpath, "../../performance/assets/02-edgeconfigmap.yaml")
-	} else {
-		file = path.Join(curpath, "../../performance/assets/01-configmap.yaml")
+		file = path.Join(curpath, "../assets/02-edgeconfigmap.yaml")
+	} else if IsCloudCore == true {
+		file = path.Join(curpath, "../assets/01-configmap.yaml")
+	}else{
+		file = path.Join(curpath, "../assets/03-edgesiteconfigmap.yaml")
 	}
 	body, err := ioutil.ReadFile(file)
 	if err == nil {

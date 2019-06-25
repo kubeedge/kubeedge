@@ -123,7 +123,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+nodeHandler, nodeSelector)
 		Expect(err).Should(BeNil())
 
-		//Run ./edge_core after node registration
+		//Run ./edgecore after node registration
 		Expect(utils.StartEdgeCore()).Should(BeNil())
 
 		//Check node successfully registered or not

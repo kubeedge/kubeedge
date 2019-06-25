@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package device_crd
+package edgecore
 
 import (
 	"encoding/json"
@@ -26,16 +26,17 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
 const (
 	DeviceInstanceHandler = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devices"
 	DeviceModelHandler    = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devicemodels"
-	ConfigmapHandler      = "/api/v1/namespaces/default/configmaps"
 )
 
 var CRDTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
+var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
 
 //Run Test cases
 var _ = Describe("Device Management test in E2E scenario", func() {
@@ -217,7 +218,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newLedDevice)
 			Expect(err).To(BeNil())
 			time.Sleep(3 * time.Second)
-			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			var configMap v1.ConfigMap
 			err = json.Unmarshal(body, &configMap)
@@ -254,7 +255,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newBluetoothDevice)
 			Expect(err).To(BeNil())
 			time.Sleep(3 * time.Second)
-			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			var configMap v1.ConfigMap
 			err = json.Unmarshal(body, &configMap)
@@ -291,7 +292,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newModbusDevice)
 			Expect(err).To(BeNil())
 			time.Sleep(3 * time.Second)
-			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			var configMap v1.ConfigMap
 			err = json.Unmarshal(body, &configMap)
@@ -317,7 +318,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_CREATE_DEVICE_4: Create device instance for incorrect device instance", func() {
-			statusCode := utils.DeleteConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode := utils.DeleteConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode == http.StatusOK || statusCode == http.StatusNotFound).Should(Equal(true))
 			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "led")
 			Expect(IsDeviceModelCreated).Should(BeTrue())
@@ -325,7 +326,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, NodeName, "", "incorrect-instance")
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusUnprocessableEntity))
-			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusNotFound))
 		})
 		It("E2E_UPDATE_DEVICE_1: Update device instance for LED device (No Protocol)", func() {
@@ -340,7 +341,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			updatedLedDevice := utils.UpdatedLedDeviceInstance(NodeName)
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedLedDevice)
 			Expect(err).To(BeNil())
 			go utils.TwinSubscribe(utils.UpdatedLedDeviceInstance(NodeName).Name)
@@ -373,7 +374,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			updatedBluetoothDevice := utils.UpdatedBluetoothDeviceInstance(NodeName)
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedBluetoothDevice)
 			Expect(err).To(BeNil())
 			go utils.TwinSubscribe(utils.UpdatedBluetoothDeviceInstance(NodeName).Name)
@@ -406,7 +407,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			updatedModbusDevice := utils.UpdatedModbusDeviceInstance(NodeName)
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedModbusDevice)
 			Expect(err).To(BeNil())
 			go utils.TwinSubscribe(utils.UpdatedModbusDeviceInstance(NodeName).Name)
@@ -446,13 +447,13 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
 			time.Sleep(1 * time.Second)
-			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			IsDeviceDeleted, statusCode := utils.HandleDeviceInstance(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, NodeName, "/"+utils.NewLedDeviceInstance(NodeName).Name, "")
 			Expect(IsDeviceDeleted).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			time.Sleep(1 * time.Second)
-			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
+			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + constants.ConfigmapHandler + "/" + "device-profile-config-" + NodeName)
 			Expect(statusCode).Should(Equal(http.StatusNotFound))
 		})
 		It("E2E_DELETE_DEVICE_2: Delete device instance for a non-existing device", func() {

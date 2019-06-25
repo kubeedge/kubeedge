@@ -23,20 +23,23 @@ echo $PWD
 if [ ! -d "/var/lib/edged" ]; then
   sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
 fi
-bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
-bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
-bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
+bash ${curpath}/tests/e2e/scripts/cleanup.sh pre_test
 #run the edgecore and cloudcore bin to run the E2E
 make #builds cloud and edgecore components
 sleep 2s
+sed -i "s|CA_PATH:-.*|CA_PATH:-/etc/kubeedge/certs}|g" $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh
+sudo $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
+make cloudimage
+sudo make edgeimage
+sudo make edgesiteimage
 PWD=${curpath}/tests/e2e
-sudo rm -rf $PWD/deployment/deployment.test
-sudo rm -rf $PWD/device_crd/device_crd.test
+sudo rm -rf $PWD/edge_core/edge_core.test
+sudo rm -rf $PWD/edgesite/edgesite.test
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command
 bash -x $PWD/scripts/compile.sh $1
-export MASTER_IP=121.244.95.60
+export MASTER_IP= localhost
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/fast_test.sh $1
 #stop the edgecore after the test completion

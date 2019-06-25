@@ -24,11 +24,15 @@ import (
 	"math"
 	"net/http"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/ghodss/yaml"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 
@@ -63,7 +67,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", apiserver2, cloudConfigMap, nodes)
 	err := utils.PrintCombinedOutput(cmd)
 	Expect(err).Should(BeNil())
-	go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false)
+	go HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false)
 	ret := <-chconfigmapRet
 	Expect(ret).To(BeNil())
 	utils.ProtocolQuic = IsQuicProtocol
@@ -85,7 +89,7 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 		err := utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())
 		//Create ConfigMaps for Each EdgeNode created
-		go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, cmHandler, true)
+		go HandleConfigmap(chconfigmapRet, http.MethodPost, cmHandler, true)
 		ret := <-chconfigmapRet
 		Expect(ret).To(BeNil())
 		//Store the ConfigMap against each edgenode
@@ -98,7 +102,7 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 	//Create edgeCore deployments as per users configuration
 	for _, configmap := range NodeInfo {
 		UID := "edgecore-deployment-" + utils.GetRandomString(5)
-		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "", configmap[0], replica)
+		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "kb-perf-node", configmap[0], replica)
 		Deployments = append(Deployments, UID)
 	}
 	time.Sleep(2 * time.Second)
@@ -131,7 +135,7 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments string, nodes int) {
 	//delete confogMap
 	for _, configmap := range NodeInfo {
-		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServerForDeployments+ConfigmapHandler+"/"+configmap[0], false)
+		go HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServerForDeployments+ConfigmapHandler+"/"+configmap[0], false)
 		ret := <-chconfigmapRet
 		Expect(ret).To(BeNil())
 
@@ -190,7 +194,7 @@ func DeleteCloudDeployment(apiserver string) {
 	//delete cloud deployment
 	go utils.HandleDeployment(true, true, http.MethodDelete, apiserver+DeploymentHandler+"/"+CloudCoreDeployment, "", "", "", "", 0)
 	//delete cloud configMap
-	go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiserver+ConfigmapHandler+"/"+CloudConfigMap, false)
+	go HandleConfigmap(chconfigmapRet, http.MethodDelete, apiserver+ConfigmapHandler+"/"+CloudConfigMap, false)
 	ret := <-chconfigmapRet
 	Expect(ret).To(BeNil())
 	//delete cloud svc
@@ -344,4 +348,70 @@ func GetLatency(pods []types.FakePod) types.Latency {
 		latency.Percent100 = time.Duration(pods[index100-1].RunningTime - pods[index100-1].CreateTime)
 	}
 	return latency
+}
+
+//HandleConfigmap function to create configmaps for respective edgenodes
+func HandleConfigmap(configName chan error, operation, confighandler string, IsEdgeCore bool) {
+	var req *http.Request
+	var file string
+	curpath := getpwd()
+	if IsEdgeCore == true {
+		file = path.Join(curpath, "../assets/02-edgeconfigmap.yaml")
+	} else {
+		file = path.Join(curpath, "../assets/01-configmap.yaml")
+	}
+	body, err := ioutil.ReadFile(file)
+	if err == nil {
+		client := &http.Client{}
+		t := time.Now()
+		if operation == http.MethodPost {
+			BodyBuf := bytes.NewReader(body)
+			req, err = http.NewRequest(operation, confighandler, BodyBuf)
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/yaml")
+		} else if operation == http.MethodPatch {
+			jsondata, err := yaml.YAMLToJSON(body)
+			if err != nil {
+				utils.Errorf("err: %v\n", err)
+				return
+			}
+			BodyBuf := bytes.NewReader(jsondata)
+			req, err = http.NewRequest(operation, confighandler, BodyBuf)
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
+		} else {
+			req, err = http.NewRequest(operation, confighandler, bytes.NewReader([]byte("")))
+			Expect(err).Should(BeNil())
+			req.Header.Set("Content-Type", "application/json")
+		}
+
+		if err != nil {
+			utils.Fatalf("Frame HTTP request failed: %v", err)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			utils.Fatalf("Sending HTTP request failed: %v", err)
+		}
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		defer resp.Body.Close()
+		if operation == http.MethodPost {
+			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+		} else {
+			Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+		}
+		configName <- nil
+
+	} else {
+		configName <- err
+	}
+}
+
+func getpwd() string {
+	_, file, _, _ := runtime.Caller(0)
+	dir, err := filepath.Abs(filepath.Dir(file))
+	if err != nil {
+		utils.Errorf("get current dir fail %+v", err)
+		return " "
+	}
+	return dir
 }

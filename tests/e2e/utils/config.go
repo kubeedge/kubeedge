@@ -41,6 +41,7 @@ type Config struct {
 	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
 	CloudImageUrl                  string            `json:"cloudimageurl"`
 	EdgeImageUrl                   string            `json:"edgeimageurl"`
+	EdgeSiteImageUrl               string            `json:"edgesiteimageurl"`
 	Namespace                      string            `json:"namespace"`
 	ControllerStubPort             int               `json:"controllerstubport"`
 	Protocol                       string            `json:"protocol"`

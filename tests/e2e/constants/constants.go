@@ -8,4 +8,7 @@ const (
 	AppHandler        = "/api/v1/namespaces/default/pods"
 	NodeHandler       = "/api/v1/nodes"
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
+	ConfigmapHandler  = "/api/v1/namespaces/default/configmaps"
+	ServiceHandler    = "/api/v1/namespaces/default/services"
+	CrdHandler        = "/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions"
 )
