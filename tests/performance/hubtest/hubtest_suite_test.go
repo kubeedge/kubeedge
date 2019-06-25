@@ -27,6 +27,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 // configs across the package
@@ -34,6 +35,8 @@ var (
 	ctx              *utils.TestContext
 	cfg              utils.Config
 	cloudHubURL      string
+	wsscloudHubURL   string
+	quiccloudHubURL  string
 	controllerHubURL string
 )
 
@@ -56,6 +59,12 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		// Deploy KubeEdge Cloud Part as a k8s deployment into KubeEdge Cluster
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
+		//protocol to be used for test between edge and cloud
+		if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
+			IsQuicProtocol = true
+		} else {
+			IsQuicProtocol = false
+		}
 		err = HandleCloudDeployment(
 			CloudConfigMap,
 			CloudCoreDeployment,
@@ -87,8 +96,14 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		Expect(err).Should(BeNil())
 
 		// Get NodePort Service to access KubeEdge Cloud Part from KubeEdge Edge Nodes
-		wsPort, _ := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
-		cloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, wsPort)
+		wsPort, quicNodePort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
+		quiccloudHubURL = fmt.Sprintf("%s:%d", cloudPartHostIP, quicNodePort)
+		wsscloudHubURL = fmt.Sprintf("wss://%s:%d", cloudPartHostIP, wsPort)
+		if IsQuicProtocol {
+			cloudHubURL = quiccloudHubURL
+		} else {
+			cloudHubURL = wsscloudHubURL
+		}
 		controllerHubURL = fmt.Sprintf("http://%s:%d", cloudPartHostIP, ctx.Cfg.ControllerStubPort)
 	})
 	AfterSuite(func() {
