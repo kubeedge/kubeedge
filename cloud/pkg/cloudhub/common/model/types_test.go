@@ -60,8 +60,9 @@ func modelEvent(ID string, PID string, Timestamp int64, Source string, Group str
 
 // TestEventToMessage is function to test EventToMessage
 func TestEventToMessage(t *testing.T) {
-	msg := modelMessage("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1")
-	event := modelEvent("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1", nil)
+	timestamp := time.Now().UnixNano() / 1e6
+	msg := modelMessage("ID1", "PID1", timestamp, "Source1", "Group1", "Operation1", "Resource1")
+	event := modelEvent("ID1", "PID1", timestamp, "Source1", "Group1", "Operation1", "Resource1", nil)
 	tests := []struct {
 		name  string
 		event *Event
@@ -84,8 +85,9 @@ func TestEventToMessage(t *testing.T) {
 
 // TestMessageToEvent is function to test MessageToEvent
 func TestMessageToEvent(t *testing.T) {
-	msg := modelMessage("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1")
-	event := modelEvent("ID1", "PID1", time.Now().UnixNano()/1e6, "Source1", "Group1", "Operation1", "Resource1", nil)
+	timestamp := time.Now().UnixNano() / 1e6
+	msg := modelMessage("ID1", "PID1", timestamp, "Source1", "Group1", "Operation1", "Resource1")
+	event := modelEvent("ID1", "PID1", timestamp, "Source1", "Group1", "Operation1", "Resource1", nil)
 	tests := []struct {
 		name  string
 		msg   *model.Message
