@@ -18,6 +18,7 @@ package util
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -215,6 +216,118 @@ func (u *UbuntuOS) InstallDocker() error {
 
 	fmt.Println("Docker", u.DockerVersion, "version is installed in this Host")
 
+	return nil
+}
+
+//InstallContainerd will install the containerd in the host
+func (u *UbuntuOS) InstallContainerd() error {
+
+	//Add overlay and netfilter modules
+	instPreReq := fmt.Sprintf("modprobe overlay && modprobe br_netfilter")
+	cmd := &Command{Cmd: exec.Command("sh", "-c", instPreReq)}
+	err := cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+	criconf := fmt.Sprint(`cat > /etc/sysctl.d/99-kubernetes-cri.conf <<EOF
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF`)
+	cmd = &Command{Cmd: exec.Command("sh", "-c", criconf)}
+	cmd.ExecuteCommand()
+	stdout := cmd.GetStdOutput()
+	errout = cmd.GetStdErr()
+	if errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println("Expected certificates and software properties will get installed %s", stdout)
+
+	// Set up the repository
+	// Install packages to allow apt to use a repository over HTTPS
+	instpkg := fmt.Sprint("apt-get update && apt-get install -y apt-transport-https ca-certificates curl software-properties-common")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", instpkg)}
+	cmd.ExecuteCommand()
+	stdout = cmd.GetStdOutput()
+	errout = cmd.GetStdErr()
+	if errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println("install package is %s", stdout)
+
+	fmt.Println("Expected certificates and software properties will get installed")
+
+	// Add Docker’s official GPG key
+	dockerGpg := fmt.Sprintf("curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerGpg)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("Containerd Official Gpg is added to the repo")
+
+	// Add Docker apt repository.
+	dockerAptGpg := fmt.Sprintf("add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", dockerAptGpg)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("containerd apt is added to the repo")
+	// Install containerd
+	instContainerd := fmt.Sprintf("apt-get update && apt-get install -y containerd.io")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", instContainerd)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("Installation of containerd is sucessfull")
+
+	configureContainerd := fmt.Sprintf("mkdir -p /etc/containerd && containerd config default > /etc/containerd/config.toml")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", configureContainerd)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("Configuring Containerd is sucessfull")
+
+	//Restart containerd
+	restContainerd := fmt.Sprintf("systemctl restart containerd")
+	cmd = &Command{Cmd: exec.Command("sh", "-c", restContainerd)}
+	err = cmd.ExecuteCmdShowOutput()
+	errout = cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println("Restart of containerd is sucessfull")
+
+	return nil
+}
+
+//WriteEdgeModulesYamlFile writes modules.yaml for edge component
+func writeFile(path string, data string) error {
+	fmt.Println("Inside Writefile path is %v %v", path, data)
+	confdata := []byte(data)
+	err := ioutil.WriteFile(path, confdata, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

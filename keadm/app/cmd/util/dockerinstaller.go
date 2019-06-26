@@ -33,29 +33,35 @@ type DockerInstTool struct {
 //If required then install the said version.
 func (d *DockerInstTool) InstallTools() error {
 	d.SetOSInterface(GetOSInterface())
-	d.SetDockerVersion(d.ToolVersion)
-
-	action, err := d.IsDockerInstalled(d.DefaultToolVer)
-	if err != nil {
-		return err
-	}
-	switch action {
-	case types.VersionNAInRepo:
-		return fmt.Errorf("Expected Docker version is not available in OS repo")
-	case types.AlreadySameVersionExist:
-		return fmt.Errorf("Same version of docker already installed in this host")
-	case types.DefVerInstallRequired:
-		d.SetDockerVersion(d.DefaultToolVer)
-		fallthrough
-	case types.NewInstallRequired:
-		err := d.InstallDocker()
+	if d.Runtime == "remote" {
+		err := d.InstallContainerd()
 		if err != nil {
 			return err
 		}
-	default:
-		return fmt.Errorf("Error in getting the docker version from host")
-	}
+	} else {
+		d.SetDockerVersion(d.ToolVersion)
 
+		action, err := d.IsDockerInstalled(d.DefaultToolVer)
+		if err != nil {
+			return err
+		}
+		switch action {
+		case types.VersionNAInRepo:
+			return fmt.Errorf("Expected Docker version is not available in OS repo")
+		case types.AlreadySameVersionExist:
+			return fmt.Errorf("Same version of docker already installed in this host")
+		case types.DefVerInstallRequired:
+			d.SetDockerVersion(d.DefaultToolVer)
+			fallthrough
+		case types.NewInstallRequired:
+			err := d.InstallDocker()
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("Error in getting the docker version from host")
+		}
+	}
 	return nil
 }
 

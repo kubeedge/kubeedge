@@ -76,6 +76,22 @@ func (c *CentOS) InstallDocker() error {
 	return nil
 }
 
+func (c *CentOS) InstallContainerd() error {
+	fmt.Println("InstallContainerd called")
+	// yum install -y yum-utils
+	// yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	// yum makecache
+	// yum list --showduplicates 'docker-ce' | grep '17.06.0' | head -1 | awk '{print $2}'
+	// yum install -y docker-ce-17.06.0.ce-1.el7.centos
+	// [root@localhost ~]# systemctl start docker
+	// [root@localhost ~]# ---> Always restart  systemctl restart docker
+	// [root@localhost ~]#
+	// IF downgrade yum downgrade -y docker-ce-17.06.0.ce-1.el7.centos
+	// Check always for version, if it is a downgrade or upgrade
+
+	return nil
+}
+
 //IsToolVerInRepo checks if the tool mentioned in available in OS repo or not
 func (c *CentOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 	//yum --cacheonly list | grep openssl

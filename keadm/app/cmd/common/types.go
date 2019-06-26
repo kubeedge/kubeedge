@@ -67,6 +67,7 @@ type ToolsInstaller interface {
 
 //OSTypeInstaller interface for methods to be executed over a specified OS distribution type
 type OSTypeInstaller interface {
+	InstallContainerd() error
 	IsToolVerInRepo(string, string) (bool, error)
 	IsDockerInstalled(string) (InstallState, error)
 	InstallDocker() error

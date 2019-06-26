@@ -134,7 +134,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		dockerVer = joinOptions.DockerVersion
 	}
-	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: flgData.DefVal.(string)}
+	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer, Runtime: joinOptions.RuntimeType}, DefaultToolVer: flgData.DefVal.(string)}
 	toolList["MQTT"] = &util.MQTTInstTool{}
 }
 
@@ -143,6 +143,7 @@ func Execute(toolList map[string]types.ToolsInstaller) {
 
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
+
 		if name != "KubeEdge" {
 			err := tool.InstallTools()
 			if err != nil {

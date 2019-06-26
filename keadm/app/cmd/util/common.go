@@ -90,6 +90,7 @@ type Common struct {
 	OSVersion   string
 	ToolVersion string
 	KubeConfig  string
+	Runtime     string
 }
 
 //SetOSInterface defines a method to set the implemtation of the OS interface
