@@ -1,13 +1,93 @@
 
-   * [v1.0.0-beta.0](#v100-beta0)
-      * [Downloads for v1.0.0-beta.0](#downloads-for-v100-beta0)
+   * [v1.0.0](#v100)
+      * [Downloads for v1.0.0](#downloads-for-v100)
          * [KubeEdge Binaries](#kubeedge-binaries)
          * [Installer Binaries](#installer-binaries)
          * [EdgeSite Binaries](#edgesite-binaries)
-      * [Changelog since v0.3.0](#changelog-since-v030)
-         * [Features Added](#features-added)
+      * [KubeEdge v1.0 Release Notes](#kubeedge-v10-release-notes)
+         * [1.0 What's New](#10-whats-new)
          * [Known Issues](#known-issues)
          * [Other notable changes](#other-notable-changes)
+   * [v1.0.0-beta.0](#v100-beta0)
+      * [Downloads for v1.0.0-beta.0](#downloads-for-v100-beta0)
+         * [KubeEdge Binaries](#kubeedge-binaries-1)
+         * [Installer Binaries](#installer-binaries-1)
+         * [EdgeSite Binaries](#edgesite-binaries-1)
+      * [Changelog since v0.3.0](#changelog-since-v030)
+         * [Features Added](#features-added)
+         * [Known Issues](#known-issues-1)
+         * [Other notable changes](#other-notable-changes-1)
+
+# v1.0.0
+
+## Downloads for v1.0.0
+
+### KubeEdge Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [kubeedge-v1.0.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/kubeedge-v1.0.0-linux-amd64.tar.gz) | 46.3 MB | `43839f1e539361d8eacf6b7d2c5f8664f886c15ad5b1199253b62ddbe7f1eec48e0b407992780a51c63448228977b7956e81a208daebb8c9f2ed17ed44a2ba3a` |
+| [kubeedge-v1.0.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/kubeedge-v1.0.0-linux-arm.tar.gz) | 43.4 MB | `c6635e4c61fe88a833a1d4649ea65cd98cc4a3dc2494f4b3194e2ba84f2765a4b1c4c58cab02237c9dc772c4147baea107af283318006623e8439c72ce7b7831` |
+
+### Installer Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [keadm-v1.0.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/keadm-v1.0.0-linux-amd64.tar.gz) | 7.74 MB | `ed92444996665d1a1952da66047d389465e0e5930b47d78e88d6f146c8d480bc9b14a3fbac190ab70f76d89060da7856436f52240aa9b3f83b8bb990c6f15204` |
+
+### EdgeSite Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [edgesite-v1.0.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/edgesite-v1.0.0-linux-amd64.tar.gz) | 24.6 MB | `afe61db4908fa67e0aadd8ab26e35224a1de8096130c2df681780befdc317331c8a2be2a298d89e6603ad36dd19e339f7256f887d1d2fd5464b3ab4c43aae3c8` |
+| [edgesite-v1.0.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/edgesite-v1.0.0-linux-arm.tar.gz) | 22.5 MB | `1ea16aad0dc0f3517d9bddcc5de16d5b46dd881ac3cc4ff7522188dad176a517fa111c3b81a223e71f45d8e69096dbedf0703d9e2592dcec292a6231e455224d` |
+
+# KubeEdge v1.0 Release Notes
+
+## 1.0 What's New
+
+**Edge Mesh**
+
+This feature aims to support service mesh capabilities on the edge to support microservice communication cross cloud and edge. In v1.0.0 release, pod-to-pod communication on the same edge node or across edge nodes in the same subnet is supported.
+
+**CRI support**
+
+This feature enables edged to communicate with a CRI-compliant runtime to manage containers running on resource constrained edge nodes. Support for containerd is tested.
+
+**Quic protocol support**
+
+In order to enhance cloud and edge communication efficiency, communication between the edge and the cloud is now also supported via QUIC, a UDP-based protocol. CloudHub supports both Websocket and QUIC protocol access at the same time. The edgehub can choose one of the protocols to access the cloudhub.
+
+**Modbus Mapper**
+
+Modbus Mapper is an application that is used to connect and control devices that use Modbus(RTU/TCP) as a communication protocol. The user is required to provide the mapper with the information required to control their device through the dpl configuration file. These can be changed at runtime by updating configmap.
+
+**Edge Site**
+
+Edge Site enables to run a standalone Kubernetes cluster at the edge along with KubeEdge to get full control and improve the offline scheduling capability. A Kubernetes cluster is deployed at edge location including the management control plane. For the management control plane to manage a reasonable scale of edge worker nodes, the host master node needs to have sufficient resources.
+
+### Known Issues
+
+- Reliable message delivery is missing between cloud and edge.
+
+- Installer currently doesn't support installation of containerd, cni-plugins.
+
+- Port mapping is not supported in CRI.
+
+### Other notable changes
+
+- Pods created using CRI on deletion remain in terminating status. ([#755](https://github.com/kubeedge/kubeedge/pull/755), [@gpinaik](https://github.com/gpinaik))
+
+- fix bug: replace value in key, value by expected ([#759](https://github.com/kubeedge/kubeedge/pull/759), [@RicardoZPHuang](https://github.com/RicardoZPHuang))
+
+- update edge_core version to reflect the vendor k8s and kubeedge version ([#761](https://github.com/kubeedge/kubeedge/pull/761), [@sids-b](https://github.com/sids-b))
+
+- Edgesite documentation ([#737](https://github.com/kubeedge/kubeedge/pull/737), [@naveensriram](https://github.com/naveensriram))
+
+- Moving keadm installer readme.md to Docs folder ([#745](https://github.com/kubeedge/kubeedge/pull/745), [@srivatsav123](https://github.com/srivatsav123))
+
+- add edgemesh end to end test guide ([#758](https://github.com/kubeedge/kubeedge/pull/758), [@anyushun](https://github.com/anyushun))
+
+- Changes made to Installer to support CRI ([#795](https://github.com/kubeedge/kubeedge/pull/795), [@srivatsav123](https://github.com/srivatsav123))
+
+- Added documentation for device controller ([#743](https://github.com/kubeedge/kubeedge/pull/743), [@sujithsimon22](https://github.com/sujithsimon22))
 
 # v1.0.0-beta.0
 
