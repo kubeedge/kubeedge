@@ -300,7 +300,7 @@ These test cases should be run in both system idle and under heavy load.
 This scenario is expected to measure the performance of KubeEdge between CloudHub to EdgeHub.
 Actually this is not an E2E Test scenario for KubeEdge,
 but the message delivery channel between CloudHub to EdgeHub may be our bottleneck.
-Currently we are using web socket as the communication protocal between Cloud and Edge.
+Currently we are using web socket as the communication protocol between Cloud and Edge.
 In the following test cases, we need to mock the behaviors of CloudHub and EdgeHub,
 and the simulation messages of adding pod will be sent to EdgeHub,
 and the simulation messages of pod status will be sent back to CloudHub.

@@ -83,6 +83,22 @@ func newInitOptions() *types.InitOptions {
 	opts.DockerVersion = types.DefaultDockerVersion
 	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 	opts.KubernetesVersion = types.DefaultK8SVersion
+	opts.ControllerYaml = types.NewControllerYaml()
+	opts.LogLevel = types.DefaultLoggerLevel
+	opts.KubeConfig = types.DefaultKubeConfig
+	opts.KubeAPIServer = types.DefaultKubeAPIServer
+	opts.ModulesYaml = &types.ModulesYaml{
+		Modules: types.ModulesSt{
+			Enabled: []string{"devicecontroller", "controller", "cloudhub"},
+		},
+	}
+	opts.LogYaml = &types.LoggingYaml{
+		LoggerLevel:   "INFO",
+		EnableRsysLog: false,
+		LogFormatText: true,
+		Writers:       []string{"file", "stdout"},
+		LoggerFile:    "edgecontroller.log",
+	}
 
 	return opts
 }
@@ -103,6 +119,24 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+	initOpts.ControllerYaml.Controller.Kube.KubeConfig = initOpts.KubeConfig
+	initOpts.ControllerYaml.DeviceController.Kube.KubeConfig = initOpts.KubeConfig
+
+	cmd.Flags().StringVar(&initOpts.KubeAPIServer, types.KubeAPIServer, initOpts.KubeAPIServer,
+		"Use this key to set kube.master , eg: http://localhost:8080")
+	initOpts.ControllerYaml.Controller.Kube.Master = initOpts.KubeAPIServer
+	initOpts.ControllerYaml.DeviceController.Kube.Master = initOpts.KubeAPIServer
+
+	cmd.Flags().StringVar(&initOpts.LogLevel, types.LoggerLevel, initOpts.LogLevel,
+		"Use this key to set loggerlevel, eg: INFO")
+	initOpts.LogYaml.LoggerLevel = initOpts.LogLevel
+
+	cmd.Flags().Uint16Var(&initOpts.ControllerYaml.CloudHub.Port, types.WebSocketPort, initOpts.ControllerYaml.CloudHub.Port,
+		"Use this key to set cloudhub websocket port, default: 10000")
+
+	cmd.Flags().Uint16Var(&initOpts.ControllerYaml.CloudHub.QuicPort, types.QuicPort, initOpts.ControllerYaml.CloudHub.QuicPort,
+		"Use this key to set cloudhub quic port, default: 10001")
+
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -115,7 +149,14 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		kubeVer = initOptions.KubeEdgeVersion
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}}
+	toolList["Cloud"] = &util.KubeCloudInstTool{
+		Common: util.Common{
+			ToolVersion: kubeVer,
+		},
+		ControllerYaml: initOptions.ControllerYaml,
+		LogYaml:        initOptions.LogYaml,
+		ModulesYaml:    initOptions.ModulesYaml,
+	}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {

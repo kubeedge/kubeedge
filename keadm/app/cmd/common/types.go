@@ -17,25 +17,47 @@ limitations under the License.
 package common
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-//InitOptions has the kubeedge cloud init information filled by CLI
-type InitOptions struct {
+// GlobalOptions is global options for edge and init
+type GlobalOptions struct {
 	KubeEdgeVersion   string
 	KubernetesVersion string
 	DockerVersion     string
 	KubeConfig        string
+	LogLevel          string
+}
+
+//InitOptions has the kubeedge cloud init information filled by CLI
+type InitOptions struct {
+	GlobalOptions
+	KubeAPIServer  string
+	ControllerYaml *ControllerYaml
+	LogYaml        *LoggingYaml
+	ModulesYaml    *ModulesYaml
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
-	InitOptions
+	GlobalOptions
 	CertPath           string
 	EdgeControllerIP   string
 	K8SAPIServerIPPort string
 	EdgeNodeID         string
 	RuntimeType        string
+
+	WebSocketPort uint16
+	QuicPort      uint16
+	EdgeProjectID string
+
+	EdgeYaml    *EdgeYamlSt
+	LogYaml     *LoggingYaml
+	ModulesYaml *ModulesYaml
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -134,6 +156,7 @@ type CloudControllerSt struct {
 type CloudHubSt struct {
 	IPAddress         string `yaml:"address"`
 	Port              uint16 `yaml:"port"`
+	QuicPort          uint16 `yaml:"quic_port"`
 	CA                string `yaml:"ca"`
 	Cert              string `yaml:"cert"`
 	Key               string `yaml:"key"`
@@ -152,6 +175,41 @@ type ControllerYaml struct {
 	Controller       CloudControllerSt  `yaml:"controller"`
 	CloudHub         CloudHubSt         `yaml:"cloudhub"`
 	DeviceController DeviceControllerSt `yaml:"devicecontroller"`
+}
+
+// NewControllerYaml return ControllerYaml instance with default values
+func NewControllerYaml() *ControllerYaml {
+	return &ControllerYaml{
+		Controller: CloudControllerSt{
+			Kube: KubeEdgeControllerConfig{
+				Master:              DefaultKubeAPIServer,
+				Namespace:           constants.DefaultKubeNamespace,
+				ContentType:         constants.DefaultKubeContentType,
+				QPS:                 constants.DefaultKubeQPS,
+				Burst:               constants.DefaultKubeBurst,
+				NodeUpdateFrequency: constants.DefaultKubeUpdateNodeFrequency * time.Second,
+			},
+		},
+		CloudHub: CloudHubSt{
+			IPAddress:         "0.0.0.0",
+			Port:              DefaultWebSocketPort,
+			QuicPort:          DefaultQuicPort,
+			CA:                "/etc/kubeedge/ca/rootCA.crt",
+			Cert:              "/etc/kubeedge/certs/edge.crt",
+			Key:               "/etc/kubeedge/certs/edge.key",
+			KeepAliveInterval: DefaultKeepAliveInterval,
+			WriteTimeout:      DefaultWriteTimeout,
+			NodeLimit:         DefaultNodeLimit},
+		DeviceController: DeviceControllerSt{
+			Kube: KubeEdgeControllerConfig{
+				Master:      "http://localhost:8080",
+				Namespace:   constants.DefaultKubeNamespace,
+				ContentType: constants.DefaultKubeContentType,
+				QPS:         constants.DefaultKubeQPS,
+				Burst:       constants.DefaultKubeBurst,
+				KubeConfig:  ""},
+		},
+	}
 }
 
 //ModulesSt contains the list of modules which shall be added to edgecontroller and edge_core respectively during init
@@ -215,6 +273,7 @@ type WebSocketSt struct {
 
 //ControllerSt contain edgecontroller config which edge component uses
 type ControllerSt struct {
+	Protocol            string `yaml:"protocol"`
 	Placement           bool   `yaml:"placement"`
 	Heartbeat           uint32 `yaml:"heartbeat"`
 	RefreshAKSKInterval uint16 `yaml:"refresh-ak-sk-interval"`
@@ -255,6 +314,11 @@ type LoadBalance struct {
 type EdgeHubSt struct {
 	WebSocket  WebSocketSt  `yaml:"websocket"`
 	Controller ControllerSt `yaml:"controller"`
+	Quic       QuicSt       `yaml:"quic"`
+}
+
+type QuicSt struct {
+	URL string `yaml:"url"`
 }
 
 //EdgeYamlSt content is written into conf/edge.yaml
@@ -263,4 +327,68 @@ type EdgeYamlSt struct {
 	EdgeHub EdgeHubSt  `yaml:"edgehub"`
 	EdgeD   EdgeDSt    `yaml:"edged"`
 	Mesh    Mesh       `yaml:"mesh"`
+}
+
+func NewEdgeYamlSt() *EdgeYamlSt {
+	edgeid := uuid.New().String()
+	version := "2.0.0"
+	url := CreateWebSocketURL("0.0.0.0", uint16(DefaultWebSocketPort), DefaultProjectID, "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/")
+
+	return &EdgeYamlSt{
+		MQTT: MQTTConfig{
+			Server:         "tcp://127.0.0.1:1883",
+			InternalServer: "tcp://127.0.0.1:1884",
+			Mode:           MQTTInternalMode,
+			QOS:            MQTTQoSAtMostOnce,
+			Retain:         false, SessionQueueSize: 100},
+		EdgeHub: EdgeHubSt{
+			WebSocket: WebSocketSt{
+				URL:              url,
+				CertFile:         "/etc/kubeedge/certs/edge.crt",
+				KeyFile:          "/etc/kubeedge/certs/edge.key",
+				HandshakeTimeout: 30,
+				WriteDeadline:    15,
+				ReadDeadline:     15},
+			Quic: QuicSt{
+				URL: "127.0.0.1:10001",
+			},
+			Controller: ControllerSt{
+				Protocol:            DefaultProtocol,
+				Placement:           false,
+				Heartbeat:           15,
+				RefreshAKSKInterval: 10,
+				AuthInfoFilesPath:   "/var/IEF/secret",
+				PlacementURL:        "https://10.154.193.32:7444/v1/placement_external/message_queue",
+				ProjectID:           DefaultProjectID,
+				NodeID:              edgeid,
+			},
+		},
+		EdgeD: EdgeDSt{
+			RegisterNodeNamespace:             "default",
+			HostnameOverride:                  edgeid,
+			InterfaceName:                     "eth0",
+			NodeStatusUpdateFrequency:         10,
+			DevicePluginEnabled:               false,
+			GPUPluginEnabled:                  false,
+			ImageGCHighThreshold:              80,
+			ImageGCLowThreshold:               40,
+			MaximumDeadContainersPerContainer: 1,
+			DockerAddress:                     "unix:///var/run/docker.sock",
+			Version:                           version,
+			RuntimeType:                       DefaultRuntimeType,
+			RuntimeEndpoint:                   "/var/run/containerd/containerd.sock",
+			ImageEndpoint:                     "/var/run/containerd/containerd.sock",
+			RequestTimeout:                    2,
+			PodSandboxImage:                   "k8s.gcr.io/pause"},
+		Mesh: Mesh{
+			LB: LoadBalance{
+				StrategyName: "RoundRobin",
+			},
+		},
+	}
+}
+
+// CreateWebSocketURL create web socket url
+func CreateWebSocketURL(address string, port uint16, projectid, id string) string {
+	return fmt.Sprintf("wss://%s:%v/%s/%s/events", address, port, projectid, id)
 }

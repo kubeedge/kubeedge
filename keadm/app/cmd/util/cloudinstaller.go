@@ -18,6 +18,9 @@ import (
 //It implements ToolsInstaller interface
 type KubeCloudInstTool struct {
 	Common
+	ControllerYaml *common.ControllerYaml
+	LogYaml        *common.LoggingYaml
+	ModulesYaml    *common.ModulesYaml
 }
 
 //InstallTools downloads KubeEdge for the specified version
@@ -58,17 +61,17 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	//Create controller.yaml
-	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml, cu.KubeConfig); err != nil {
+	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml, *cu.ControllerYaml); err != nil {
 		return err
 	}
 
 	//Create logger.yaml
-	if err = common.WriteCloudLoggingYamlFile(KubeEdgeControllerLoggingYaml); err != nil {
+	if err = common.WriteCloudLoggingYamlFile(KubeEdgeControllerLoggingYaml, *cu.LogYaml); err != nil {
 		return err
 	}
 
 	//Create modules.yaml
-	if err = common.WriteCloudModulesYamlFile(KubeEdgeControllerModulesYaml); err != nil {
+	if err = common.WriteCloudModulesYamlFile(KubeEdgeControllerModulesYaml, *cu.ModulesYaml); err != nil {
 		return err
 	}
 

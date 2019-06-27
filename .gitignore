@@ -7,3 +7,8 @@ __pycache__
 /build/
 .gradle
 .idea
+
+cloud/edgecontroller
+edge/edge_core
+edgesite/edgesite
+keadm/keadm

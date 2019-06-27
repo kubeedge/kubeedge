@@ -26,7 +26,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -37,11 +36,10 @@ import (
 //It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
-	//CertPath       string
-	EdgeContrlrIP  string
+	EdgeYaml       *types.EdgeYamlSt
+	LogYaml        *types.LoggingYaml
+	ModulesYaml    *types.ModulesYaml
 	K8SApiServerIP string
-	EdgeNodeID     string
-	RuntimeType    string
 }
 
 //InstallTools downloads KubeEdge for the specified verssion
@@ -75,24 +73,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfPath)
 	}
 
-	// //Create edge.yaml
-	//Update edge.yaml with a unique id against node id
-	//If the user doesn't provide any edge ID on the command line, then it generates unique id and assigns it.
-	edgeID := uuid.New().String()
-	if "" != ku.EdgeNodeID {
-		edgeID = ku.EdgeNodeID
-	}
-
-	serverIPAddr := "0.0.0.0"
-	if "" != ku.EdgeContrlrIP {
-		serverIPAddr = ku.EdgeContrlrIP
-	}
-
-	url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)
-	edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
-		EdgeD: types.EdgeDSt{Version: types.VendorK8sPrefix + ku.ToolVersion, RuntimeType: ku.RuntimeType}}
-
-	if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, edgeYaml); err != nil {
+	if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, *ku.EdgeYaml); err != nil {
 		return err
 	}
 
@@ -104,7 +85,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	if err = types.WriteEdgeModulesYamlFile(KubeEdgeConfigModulesYaml); err != nil {
 		return err
 	}
-
+	edgeID := ku.EdgeYaml.EdgeHub.Controller.NodeID
 	if "" != ku.K8SApiServerIP {
 		if err := ku.addNodeToK8SAPIServer(edgeID, ku.K8SApiServerIP); err != nil {
 			return err

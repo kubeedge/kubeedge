@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/google/uuid"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -88,6 +90,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, types.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
+	joinOptions.EdgeYaml.EdgeD.Version = joinOptions.KubeEdgeVersion
 
 	cmd.Flags().StringVar(&joinOptions.DockerVersion, types.DockerVersion, joinOptions.DockerVersion,
 		"Use this key to download and use the required Docker version")
@@ -99,18 +102,64 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.EdgeControllerIP, types.EdgeControllerIP, "e", joinOptions.EdgeControllerIP,
 		"IP address of KubeEdge edgecontroller")
 	cmd.MarkFlagRequired(types.EdgeControllerIP)
+
 	cmd.Flags().StringVarP(&joinOptions.RuntimeType, types.RuntimeType, "r", joinOptions.RuntimeType,
 		"Container runtime type")
+	joinOptions.EdgeYaml.EdgeD.RuntimeType = joinOptions.RuntimeType
+
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeID, types.EdgeNodeID, "i", joinOptions.EdgeNodeID,
 		"KubeEdge Node unique idenfitcation string, If flag not used then the command will generate a unique id on its own")
+
+	cmd.Flags().StringVar(&joinOptions.EdgeProjectID, types.EdgeProjectID, joinOptions.EdgeProjectID,
+		fmt.Sprintf("set KubeEdge project id default: %s ", types.DefaultProjectID))
+
+	cmd.Flags().Uint16Var(&joinOptions.WebSocketPort, types.WebSocketPort, joinOptions.WebSocketPort,
+		fmt.Sprintf("WebSocket port of kubeEdge edgecontroller, default: %v", types.DefaultWebSocketPort))
+
+	cmd.Flags().Uint16Var(&joinOptions.QuicPort, types.QuicPort, joinOptions.QuicPort,
+		fmt.Sprintf("Quic port of kubeEdge edgecontroller, default: %v", types.DefaultQuicPort))
+
+	cmd.Flags().StringVar(&joinOptions.EdgeYaml.EdgeHub.Controller.Protocol, types.Protocol, joinOptions.EdgeYaml.EdgeHub.Controller.Protocol,
+		"Protocol between edge_core and edgecontroller, support websocket and quic , default: websocket")
+
+	joinOptions.EdgeYaml.EdgeHub.WebSocket.URL = types.CreateWebSocketURL(joinOptions.EdgeControllerIP, joinOptions.WebSocketPort, joinOptions.EdgeProjectID, joinOptions.EdgeNodeID)
+	joinOptions.EdgeYaml.EdgeHub.Controller.NodeID = joinOptions.EdgeNodeID
+	joinOptions.EdgeYaml.EdgeD.HostnameOverride = joinOptions.EdgeNodeID
+
+	joinOptions.EdgeYaml.EdgeHub.Quic.URL = fmt.Sprintf("%s:%v", joinOptions.EdgeControllerIP, joinOptions.QuicPort)
+
+	joinOptions.EdgeYaml.EdgeD.Version = types.VendorK8sPrefix + joinOptions.KubeEdgeVersion
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
 func newJoinOptions() *types.JoinOptions {
-	opts := &types.JoinOptions{}
-	opts.InitOptions = types.InitOptions{DockerVersion: types.DefaultDockerVersion, KubeEdgeVersion: types.DefaultKubeEdgeVersion,
-		KubernetesVersion: types.DefaultK8SVersion}
-	opts.CertPath = types.DefaultCertPath
+
+	opts := &types.JoinOptions{
+		GlobalOptions: types.GlobalOptions{
+			DockerVersion:     types.DefaultDockerVersion,
+			KubeEdgeVersion:   types.DefaultKubeEdgeVersion,
+			KubernetesVersion: types.DefaultK8SVersion,
+		},
+		CertPath: types.DefaultCertPath,
+		//If the user doesn't provide any edge ID on the command line, then it generates unique id and assigns it.
+		EdgeNodeID:    uuid.New().String(),
+		WebSocketPort: types.DefaultWebSocketPort,
+		QuicPort:      types.DefaultQuicPort,
+		RuntimeType:   types.DefaultRuntimeType,
+		EdgeYaml:      types.NewEdgeYamlSt(),
+		EdgeProjectID: types.DefaultProjectID,
+		LogYaml: &types.LoggingYaml{
+			LoggerLevel:   "INFO",
+			EnableRsysLog: false,
+			LogFormatText: true,
+			Writers:       []string{"stdout"}},
+		ModulesYaml: &types.ModulesYaml{
+			Modules: types.ModulesSt{
+				Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin", "edgemesh"},
+			},
+		},
+	}
+
 	return opts
 }
 
@@ -125,8 +174,14 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		kubeVer = joinOptions.KubeEdgeVersion
 	}
-	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort,
-		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID, RuntimeType: joinOptions.RuntimeType}
+
+	toolList["KubeEdge"] = &util.KubeEdgeInstTool{
+		Common:         util.Common{ToolVersion: kubeVer},
+		EdgeYaml:       joinOptions.EdgeYaml,
+		LogYaml:        joinOptions.LogYaml,
+		ModulesYaml:    joinOptions.ModulesYaml,
+		K8SApiServerIP: joinOptions.K8SAPIServerIPPort,
+	}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
