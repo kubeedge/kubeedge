@@ -26,20 +26,12 @@
 
 
 [[constraint]]
-  name = "github.com/ServiceComb/paas-lager"
-  version = "1.0.1"
-
-[[constraint]]
   name = "github.com/go-chassis/go-archaius"
   version = "v0.16"
 
 [[constraint]]
   name = "github.com/go-chassis/paas-lager"
   version = "v1.0.1"
-
-[[constraint]]
-  name = "github.com/kubeedge/kubeedge"
-  version = "0.2.0"
 
 [[constraint]]
   name = "github.com/satori/go.uuid"
