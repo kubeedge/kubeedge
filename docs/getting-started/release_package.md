@@ -44,7 +44,7 @@
   RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
   
   ```shell
-  wget -L https://github.com/kubeedge/kubeedge/blob/master/build/tools/certgen.sh
+  wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/tools/certgen.sh
   # make script executable
   chmod +x certgen.sh
   bash -x ./certgen.sh genCertAndKey edge
@@ -59,11 +59,11 @@
   + Create device model and device CRDs.
  
   ```shell
-      wget -L https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+      wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/devices/devices_v1alpha1_devicemodel.yaml
       # make script executable
       chmod +x devices_v1alpha1_devicemodel.yaml
       kubectl create -f devices_v1alpha1_devicemodel.yaml
-      wget -L https://github.com/kubeedge/kubeedge/blob/master/build/crds/devices/devices_v1alpha1_device.yaml
+      wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/devices/devices_v1alpha1_device.yaml
        # make script executable
       chmod +x devices_v1alpha1_device.yaml
       kubectl create -f devices_v1alpha1_device.yaml
@@ -103,7 +103,7 @@
    
    + Deploy node
     ```shell
-         wget -L https://github.com/kubeedge/kubeedge/blob/master/build/node.json
+         wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/node.json
          #Modify the node.json` file and change `metadata.name` to the name of the edge node 
          kubectl apply -f node.json
     ```
