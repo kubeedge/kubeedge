@@ -18,6 +18,7 @@ package watcher
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -100,8 +101,22 @@ func onPeripheralDisconnected(p gatt.Peripheral, err error) {
 //onPeripheralConnected contains the operations to be performed as soon as the peripheral device is connected
 func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	actionmanager.GattPeripheral = p
-	DeviceConnected <- true
 	helper.ChangeDeviceState("online", deviceID)
+	ss, err := p.DiscoverServices(nil)
+	if err != nil {
+		glog.Errorf("Failed to discover services, err: %s\n", err)
+		os.Exit(1)
+	}
+	for _, s := range ss {
+		// Discovery characteristics
+		cs, err := p.DiscoverCharacteristics(nil, s)
+		if err != nil {
+			glog.Errorf("Failed to discover characteristics for service %s, err: %v\n", s.Name(), err)
+			continue
+		}
+		actionmanager.CharacteristicsList = append(actionmanager.CharacteristicsList, cs...)
+	}
+	DeviceConnected <- true
 	for {
 		newWatcher := &Watcher{}
 		if !reflect.DeepEqual(w, newWatcher) {
