@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kubeedge/kubeedge/common/beehive/pkg/core"
-	_ "github.com/kubeedge/kubeedge/common/beehive/test/modules"
+	"github.com/kubeedge/beehive/pkg/core"
+	_ "github.com/kubeedge/beehive/test/modules"
 )
 
 func main() {
