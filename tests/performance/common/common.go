@@ -21,8 +21,10 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -58,7 +60,7 @@ var (
 
 func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, confighdl, deploymenthdl, imgURL string, nodelimit int) error {
 	nodes := strconv.FormatInt(int64(nodelimit), 10)
-	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", "http://192.168.20.128:8080", cloudConfigMap, nodes)
+	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", apiserver2, cloudConfigMap, nodes)
 	err := utils.PrintCombinedOutput(cmd)
 	Expect(err).Should(BeNil())
 	go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false)
@@ -71,7 +73,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	return nil
 }
 
-func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNodes int){
+func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNodes int) {
 	//Create edgecore configMaps based on the users choice of edgecore deployment.
 	for i := 0; i < numOfNodes; i++ {
 		nodeName := "perf-node-" + utils.GetRandomString(10)
@@ -91,7 +93,7 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 	}
 }
 
-func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, numOfNodes int) v1.PodList  {
+func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, numOfNodes int) v1.PodList {
 	replica := 1
 	//Create edgeCore deployments as per users configuration
 	for _, configmap := range NodeInfo {
@@ -316,4 +318,30 @@ func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Respon
 		utils.Info("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	}
 	return nil, resp
+}
+
+// GetLatency calculates latency based on different percent
+func GetLatency(pods []types.FakePod) types.Latency {
+	latency := types.Latency{}
+	if len(pods) > 0 {
+		// Sort fake pods
+		sort.Stable(types.FakePodSort(pods))
+
+		// Get 50% throughputs latency
+		index50 := int(math.Ceil(float64(len(pods)) * 0.50))
+		latency.Percent50 = time.Duration(pods[index50-1].RunningTime - pods[index50-1].CreateTime)
+
+		// Get 90% throughputs latency
+		index90 := int(math.Ceil(float64(len(pods)) * 0.90))
+		latency.Percent90 = time.Duration(pods[index90-1].RunningTime - pods[index90-1].CreateTime)
+
+		// Get 99% throughputs latency
+		index99 := int(math.Ceil(float64(len(pods)) * 0.99))
+		latency.Percent99 = time.Duration(pods[index99-1].RunningTime - pods[index99-1].CreateTime)
+
+		// Get 100% throughputs latency
+		index100 := int(math.Ceil(float64(len(pods)) * 1.00))
+		latency.Percent100 = time.Duration(pods[index100-1].RunningTime - pods[index100-1].CreateTime)
+	}
+	return latency
 }
