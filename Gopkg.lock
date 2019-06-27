@@ -66,17 +66,6 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
-  digest = "1:8705fe20105631d12abb6ded93eb65e4e03620ff5bef5cc25ab03ce8e265299b"
-  name = "github.com/ServiceComb/paas-lager"
-  packages = [
-    ".",
-    "rotate",
-  ]
-  pruneopts = "UT"
-  revision = "005283cca84c31e4ee549c6fd280bbd8432503f0"
-  version = "v1.0.1"
-
-[[projects]]
   digest = "1:c455036fb289e0cbce632c7f3a23f10141edb7ccbb75906d56775d3b356b826a"
   name = "github.com/abbot/go-http-auth"
   packages = ["."]
@@ -515,10 +504,11 @@
   version = "v0.7.0"
 
 [[projects]]
-  digest = "1:764ee4e742aad71a0e14ccbc6e28d8c8081c87e1a45bd05d935a18df20ae7600"
+  digest = "1:20287f5d83a612fc90ee75321ddf3332a502b34e165c70e05c23e0fb6e9050e4"
   name = "github.com/go-chassis/paas-lager"
   packages = [
     ".",
+    "rotate",
     "third_party/forked/cloudfoundry/lager",
     "third_party/forked/cloudfoundry/lager/color",
   ]
@@ -780,7 +770,7 @@
   version = "v1.1.3"
 
 [[projects]]
-  digest = "1:e9dce2ab4b8fcb86b6c6f38fb6cbb98e549e0602b25ae7bcf6aa90b4027f9849"
+  digest = "1:4ede527c5abe4f0a820fec3e94eaeb7072a77cc9f58a15bc314401817c701c34"
   name = "github.com/kubeedge/beehive"
   packages = [
     "pkg/common/config",
@@ -791,7 +781,7 @@
     "pkg/core/model",
   ]
   pruneopts = "UT"
-  revision = "db5a773fc78fa0ae17993a67c21e46a299b6aa76"
+  revision = "06e0cfa222f7190d54740dd11f0fc1bc9e8085cb"
 
 [[projects]]
   digest = "1:1abad3afc8a8a736bbb7d643f8817c8da182b4c3b9bf2be59b47a0bcbedc52d5"

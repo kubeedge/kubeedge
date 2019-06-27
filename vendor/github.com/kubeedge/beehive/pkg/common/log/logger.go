@@ -11,8 +11,8 @@ import (
 	"github.com/go-mesh/openlogging"
 	"github.com/kubeedge/beehive/pkg/common/util"
 
-	log "github.com/ServiceComb/paas-lager"
-	"github.com/ServiceComb/paas-lager/rotate"
+	log "github.com/go-chassis/paas-lager"
+	"github.com/go-chassis/paas-lager/rotate"
 	"github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager"
 	yaml "gopkg.in/yaml.v2"
 )
