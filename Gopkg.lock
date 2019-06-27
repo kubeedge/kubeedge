@@ -2,28 +2,6 @@
 
 
 [[projects]]
-  digest = "1:b75aca481cf296a216157d0cf8ed4e14c7326b1783da3fca235897683ac3e974"
-  name = "github.com/ServiceComb/go-archaius"
-  packages = [
-    ".",
-    "sources/file-source",
-  ]
-  pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
-
-[[projects]]
-  digest = "1:8705fe20105631d12abb6ded93eb65e4e03620ff5bef5cc25ab03ce8e265299b"
-  name = "github.com/ServiceComb/paas-lager"
-  packages = [
-    ".",
-    "rotate",
-  ]
-  pruneopts = "UT"
-  revision = "005283cca84c31e4ee549c6fd280bbd8432503f0"
-  version = "v1.0.1"
-
-[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -59,9 +37,11 @@
   version = "v0.7.0"
 
 [[projects]]
-  digest = "1:9e61085198e66f3705dfd5de4371fff208a5f6dfe64662167277f0e53fe479ad"
+  digest = "1:b55965967271fcb98224d53d47a8b5fd82a3f50c57ac483c42b2208300c96955"
   name = "github.com/go-chassis/paas-lager"
   packages = [
+    ".",
+    "rotate",
     "third_party/forked/cloudfoundry/lager",
     "third_party/forked/cloudfoundry/lager/color",
   ]
@@ -84,22 +64,6 @@
   pruneopts = "UT"
   revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
   version = "v1.4.0"
-
-[[projects]]
-  digest = "1:15e010b6f19eb509a8a2c7c828cabf892637678a64ac1509e63a329d62755c47"
-  name = "github.com/kubeedge/kubeedge"
-  packages = [
-    "common/beehive/pkg/common/config",
-    "common/beehive/pkg/common/log",
-    "common/beehive/pkg/common/util",
-    "common/beehive/pkg/core",
-    "common/beehive/pkg/core/context",
-    "common/beehive/pkg/core/model",
-    "common/beehive/test/modules",
-  ]
-  pruneopts = "UT"
-  revision = "d41c5db26e3c80229654ac1cd1982f8ee5b295db"
-  version = "v0.2"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -137,17 +101,15 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/ServiceComb/paas-lager",
-    "github.com/ServiceComb/paas-lager/rotate",
     "github.com/go-chassis/go-archaius",
     "github.com/go-chassis/go-archaius/core",
     "github.com/go-chassis/go-archaius/sources/commandline-source",
     "github.com/go-chassis/go-archaius/sources/enviromentvariable-source",
     "github.com/go-chassis/go-archaius/sources/memory-source",
+    "github.com/go-chassis/paas-lager",
+    "github.com/go-chassis/paas-lager/rotate",
     "github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager",
     "github.com/go-mesh/openlogging",
-    "github.com/kubeedge/kubeedge/common/beehive/pkg/core",
-    "github.com/kubeedge/kubeedge/common/beehive/test/modules",
     "github.com/satori/go.uuid",
     "gopkg.in/yaml.v2",
   ]
