@@ -69,7 +69,7 @@ required = [
 
 [[override]]
   name = "github.com/kubeedge/beehive"
-  revision = "db5a773fc78fa0ae17993a67c21e46a299b6aa76"
+  revision = "06e0cfa222f7190d54740dd11f0fc1bc9e8085cb"
 
 [[override]]
   name = "k8s.io/code-generator"
