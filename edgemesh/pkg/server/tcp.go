@@ -44,10 +44,10 @@ func httpResponseToStr(resp *http.Response) string {
 		for _, v := range values {
 			respString += v + ", "
 		}
-		respString = respString[0 : len(respString) - 2]
+		respString = respString[0 : len(respString)-2]
 		respString += "\n"
 	}
-	b, _  := ioutil.ReadAll(resp.Body)
+	b, _ := ioutil.ReadAll(resp.Body)
 	respString += "\n" + string(b)
 	return respString
 }

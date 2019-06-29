@@ -13,7 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 const (
 	// EdgeRegistry constant string
 	EdgeRegistry = "edge"
@@ -27,7 +26,6 @@ type ServiceDiscovery struct {
 	metaClient client.CoreInterface
 	Name       string
 }
-
 
 func toProtocolMap(address v1.EndpointAddress, ports []v1.EndpointPort) map[string]string {
 	ret := map[string]string{}

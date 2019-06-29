@@ -58,13 +58,13 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 		}
 	}
 
-	for i, _ := range EdgeNodePods {
+	for i := range EdgeNodePods {
 		utils.DeletePods(ctx.Cfg.K8SMasterForProvisionEdgeNodes + AppHandler + "/" + EdgeNodePods[i])
 	}
 
 	Eventually(func() int {
 		var count int
-		for i, _ := range EdgeNodePods {
+		for i := range EdgeNodePods {
 			status, statusCode := utils.GetPodState(ctx.Cfg.K8SMasterForProvisionEdgeNodes + AppHandler + "/" + EdgeNodePods[i])
 			utils.InfoV2("PodName: %s status: %s StatusCode: %d", EdgeNodePods[i], status, statusCode)
 			if statusCode == 404 {
@@ -92,7 +92,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 	//Check All EdgeNode are in Running state
 	Eventually(func() int {
 		count := 0
-		for edgenodeName, _ := range NodeInfo {
+		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == "Running" {
@@ -105,7 +105,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 	return nil
 }
 
-func PullImageInAllEdgeNodes(appDeployments []string){
+func PullImageInAllEdgeNodes(appDeployments []string) {
 	var deploymentList v1.DeploymentList
 	var podlist metav1.PodList
 	for kubenode, val := range NodeInfo {
@@ -126,7 +126,7 @@ func PullImageInAllEdgeNodes(appDeployments []string){
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	}
 	//after pulling image to all edgenodes, delete the deployments on respective edgenodes
-	for i, _ := range appDeployments {
+	for i := range appDeployments {
 		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
 		Expect(IsAppDeployed).Should(BeTrue())
 	}
@@ -316,7 +316,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
-			for i, _ := range appDeployments {
+			for i := range appDeployments {
 				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
 				Expect(IsAppDeployed).Should(BeTrue())
 			}
