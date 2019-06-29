@@ -33,6 +33,28 @@ func (a *cloudHub) Group() string {
 func (a *cloudHub) Start(c *context.Context) {
 	a.context = c
 
+	initHubConfig()
+
+	eventq := channelq.NewChannelEventQueue(c)
+
+	// start the cloudhub server
+	if util.HubConfig.ProtocolWebsocket {
+		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
+	}
+
+	if util.HubConfig.ProtocolQuic {
+		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
+	}
+
+	stopchan := make(chan bool)
+	<-stopchan
+}
+
+func (a *cloudHub) Cleanup() {
+	a.context.Cleanup(a.Name())
+}
+
+func initHubConfig() {
 	cafile, err := config.CONFIG.GetValue("cloudhub.ca").ToString()
 	if err != nil {
 		log.LOGGER.Info("missing cloudhub.ca configuration key, loading default path and filename ./" + chconfig.DefaultCAFile)
@@ -70,21 +92,4 @@ func (a *cloudHub) Start(c *context.Context) {
 		log.LOGGER.Errorf("cloudhub failed with errors : %v", errs)
 		os.Exit(1)
 	}
-
-	eventq, err := channelq.NewChannelEventQueue(c)
-	// start the cloudhub server
-	if util.HubConfig.ProtocolWebsocket {
-		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
-	}
-
-	if util.HubConfig.ProtocolQuic {
-		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
-	}
-
-	stopchan := make(chan bool)
-	<-stopchan
-}
-
-func (a *cloudHub) Cleanup() {
-	a.context.Cleanup(a.Name())
 }
