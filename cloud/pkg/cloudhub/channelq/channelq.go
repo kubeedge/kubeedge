@@ -54,10 +54,10 @@ type ChannelEventQueue struct {
 }
 
 // NewChannelEventQueue initializes a new ChannelEventQueue
-func NewChannelEventQueue(ctx *context.Context) (*ChannelEventQueue, error) {
+func NewChannelEventQueue(ctx *context.Context) *ChannelEventQueue {
 	q := ChannelEventQueue{ctx: ctx}
 	go q.dispatchMessage()
-	return &q, nil
+	return &q
 }
 
 // dispatchMessage gets the message from the cloud , extracts the
