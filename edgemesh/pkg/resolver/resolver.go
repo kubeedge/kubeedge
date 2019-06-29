@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/kubeedge/beehive/pkg/common/log"
-
 )
 
 type Resolver interface {

@@ -201,11 +201,11 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 	err, resp := SendHttpRequest(http.MethodGet, apiConfigMap)
 	if err != nil {
 		Failf("Sending SenHttpRequest failed: %v", err)
-		return -1,nil
+		return -1, nil
 	}
-	body,_:=ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	return resp.StatusCode,body
+	return resp.StatusCode, body
 
 }
 

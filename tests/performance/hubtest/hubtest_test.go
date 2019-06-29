@@ -79,7 +79,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 				// Loop for Pod Numbers
 				for i := 0; i < numOfPodsPerEdgeNode; i++ {
 					// Loop for Edge Node Numbers
-					for nodeName, _ := range NodeInfo {
+					for nodeName := range NodeInfo {
 						// Contruct fake pods
 						var pod types.FakePod
 						pod.Name = nodeName + "-fakepod-" + utils.GetRandomString(10)
