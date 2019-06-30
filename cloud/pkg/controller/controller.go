@@ -49,7 +49,7 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 		downstream.Start()
 
 		<-stopChannel
-		log.LOGGER.Warnf("election as slave, start to stop downstream controller")
+		log.LOGGER.Warnf("elected slave, stopping downstream controller...")
 		downstream.Stop()
 		log.LOGGER.Warnf("downstream controller stopped")
 	}
