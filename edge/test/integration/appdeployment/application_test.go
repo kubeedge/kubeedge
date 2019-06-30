@@ -276,7 +276,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_16: Test application deployment with container network configuration as port mapping", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			port := []v1.ContainerPort{{HostPort: 10255, ContainerPort: 10255, Protocol: v1.ProtocolTCP, HostIP: "127.0.0.1"}}
+			port := []v1.ContainerPort{{HostPort: 10256, ContainerPort: 10256, Protocol: v1.ProtocolTCP, HostIP: "127.0.0.1"}}
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Ports: port, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
