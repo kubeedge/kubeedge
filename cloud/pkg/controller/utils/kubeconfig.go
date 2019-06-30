@@ -16,5 +16,5 @@ func KubeConfig() (conf *rest.Config, err error) {
 	kubeConfig.Burst = config.Kube.KubeBurst
 	kubeConfig.ContentType = config.Kube.KubeContentType
 
-	return kubeConfig, err
+	return kubeConfig, nil
 }
