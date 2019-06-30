@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis/runtime/cri"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 )
 
 const (
@@ -162,7 +162,7 @@ func TestCreateContainer(t *testing.T) {
 	if err != nil {
 		t.Errorf("test new docker manager failed. %v", err)
 	}
-	config := cri.ContainerConfig{
+	config := apis.ContainerConfig{
 		Name: "qcjtest",
 		Config: &container.Config{
 			Hostname: "127.0.0.1",
@@ -173,7 +173,7 @@ func TestCreateContainer(t *testing.T) {
 	if err != nil {
 		t.Errorf("test create container failed, err [%v]", err)
 	}
-	config2 := cri.ContainerConfig{
+	config2 := apis.ContainerConfig{
 		Name: "qcjtest",
 		Config: &container.Config{
 			Hostname: "127.0.0.1",
@@ -191,7 +191,7 @@ func TestStartContainer(t *testing.T) {
 	if err != nil {
 		t.Errorf("test new docker manager failed. %v", err)
 	}
-	config := cri.ContainerConfig{
+	config := apis.ContainerConfig{
 		Name: "qcjtest",
 		Config: &container.Config{
 			Hostname: "127.0.0.1",
@@ -225,7 +225,7 @@ func TestStopContainer(t *testing.T) {
 	if err != nil {
 		t.Errorf("test new docker manager failed. %v", err)
 	}
-	config := cri.ContainerConfig{
+	config := apis.ContainerConfig{
 		Name: "qcjtest",
 		Config: &container.Config{
 			Hostname: "127.0.0.1",
@@ -259,7 +259,7 @@ func TestRemoveContainer(t *testing.T) {
 	if err != nil {
 		t.Errorf("test new docker manager failed. %v", err)
 	}
-	config := cri.ContainerConfig{
+	config := apis.ContainerConfig{
 		Name: "qcjtest",
 		Config: &container.Config{
 			Hostname: "127.0.0.1",

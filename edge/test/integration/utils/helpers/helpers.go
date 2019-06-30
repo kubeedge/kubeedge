@@ -36,6 +36,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 //DeviceUpdate device update
@@ -297,7 +298,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	case "PUT":
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID},
+			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
 			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
@@ -308,7 +309,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	case "DELETE":
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID},
+			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
 			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
