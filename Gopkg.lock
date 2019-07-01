@@ -2,28 +2,6 @@
 
 
 [[projects]]
-  digest = "1:b75aca481cf296a216157d0cf8ed4e14c7326b1783da3fca235897683ac3e974"
-  name = "github.com/ServiceComb/go-archaius"
-  packages = [
-    ".",
-    "sources/file-source",
-  ]
-  pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
-
-[[projects]]
-  digest = "1:8705fe20105631d12abb6ded93eb65e4e03620ff5bef5cc25ab03ce8e265299b"
-  name = "github.com/ServiceComb/paas-lager"
-  packages = [
-    ".",
-    "rotate",
-  ]
-  pruneopts = "UT"
-  revision = "005283cca84c31e4ee549c6fd280bbd8432503f0"
-  version = "v1.0.1"
-
-[[projects]]
   branch = "master"
   digest = "1:e05c7b72aeba7570b1d2f9c6dc9f0373d224b16b70fa886c504de867bffe1c2e"
   name = "github.com/aead/chacha20"
@@ -52,34 +30,11 @@
   revision = "9127e812e1e9e501ce899a18121d316ecb52e4ba"
 
 [[projects]]
-  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
-  name = "github.com/fsnotify/fsnotify"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
-  version = "v1.4.7"
-
-[[projects]]
-  digest = "1:a81c1bc427850b9f040713c61b9df6af36edadf17297b926da0bb2f88af4b6cb"
-  name = "github.com/go-chassis/go-archaius"
-  packages = [
-    "core",
-    "core/cast",
-    "core/config-manager",
-    "core/event-system",
-    "sources/commandline-source",
-    "sources/enviromentvariable-source",
-    "sources/file-source",
-    "sources/memory-source",
-  ]
-  pruneopts = "UT"
-  revision = "32bc89fe32ac9777e93e4140d338ce3001a89f85"
-  version = "v0.1"
-
-[[projects]]
-  digest = "1:9e61085198e66f3705dfd5de4371fff208a5f6dfe64662167277f0e53fe479ad"
+  digest = "1:b55965967271fcb98224d53d47a8b5fd82a3f50c57ac483c42b2208300c96955"
   name = "github.com/go-chassis/paas-lager"
   packages = [
+    ".",
+    "rotate",
     "third_party/forked/cloudfoundry/lager",
     "third_party/forked/cloudfoundry/lager/color",
   ]
@@ -94,6 +49,14 @@
   pruneopts = "UT"
   revision = "3d418c478b2daf4684a2ddbb5c88aa7ec21cb3f2"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:be408f349cae090a7c17a279633d6e62b00068e64af66a582cae0983de8890ea"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "UT"
+  revision = "9fa652df1129bef0e734c9cf9bf6dbae9ef3b9fa"
+  version = "1.3.1"
 
 [[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
@@ -122,17 +85,15 @@
   revision = "0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
 
 [[projects]]
-  branch = "master"
-  digest = "1:03ac5b0e1bc72a175d5e231ef97bac52b5e1dae549188871b4fc4d9ea4d69a94"
+  digest = "1:6f466af3a665e8b0c3b7988b186990f59db467cb10060f4a8acd613cf32cc80e"
   name = "github.com/kubeedge/beehive"
   packages = [
-    "pkg/common/config",
     "pkg/common/log",
     "pkg/common/util",
     "pkg/core/model",
   ]
   pruneopts = "UT"
-  revision = "502b3465fc66a7264ea3e36378dd822055509b4d"
+  revision = "06e0cfa222f7190d54740dd11f0fc1bc9e8085cb"
 
 [[projects]]
   branch = "master"
@@ -178,14 +139,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
-  name = "github.com/spf13/cast"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "8c9545af88b134710ab1cd196795e7f2388358d7"
-  version = "v1.3.0"
-
-[[projects]]
   digest = "1:5fa7ffa0b0721b59345a126aa81fcf4344f34ab74bdd620f6eb9a0b5043605f9"
   name = "golang.org/x/crypto"
   packages = [
@@ -218,6 +171,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/golang/mock/gomock",
     "github.com/golang/protobuf/proto",
     "github.com/gorilla/websocket",
     "github.com/kubeedge/beehive/pkg/common/log",
