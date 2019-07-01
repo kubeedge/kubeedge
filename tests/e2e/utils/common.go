@@ -838,12 +838,12 @@ func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
 
 // CompareTwin is used to compare 2 device Twins
 func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*MsgTwin) bool {
-	for key, _ := range expectedDeviceTwin {
-		if deviceTwin[key].Metadata!=nil && deviceTwin[key].Expected.Value!=nil {
+	for key := range expectedDeviceTwin {
+		if deviceTwin[key].Metadata != nil && deviceTwin[key].Expected.Value != nil {
 			if *deviceTwin[key].Metadata != *expectedDeviceTwin[key].Metadata || *deviceTwin[key].Expected.Value != *expectedDeviceTwin[key].Expected.Value {
 				return false
 			}
-		}else {
+		} else {
 			return false
 		}
 	}

@@ -32,10 +32,10 @@ import (
 
 //context to load config and access across the package
 var (
-	ctx      *utils.TestContext
-	cfg      utils.Config
-	cloudHubURL string
-	wsscloudHubURL string
+	ctx             *utils.TestContext
+	cfg             utils.Config
+	cloudHubURL     string
+	wsscloudHubURL  string
 	quiccloudHubURL string
 )
 
@@ -55,9 +55,9 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
 		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
 		//protocol to be used for test between edge and cloud
-		if ctx.Cfg.Protocol == api.ProtocolTypeQuic{
+		if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
 			IsQuicProtocol = true
-		}else{
+		} else {
 			IsQuicProtocol = false
 		}
 		//Deploye cloudcore as a k8s resource to cluster-1

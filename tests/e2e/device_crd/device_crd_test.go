@@ -101,7 +101,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 		})
 		It("E2E_CREATE_DEVICE_MODEL_4: Create device model for incorrect device model", func() {
-			_ , statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "incorrect-model")
+			_, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "incorrect-model")
 			Expect(statusCode).Should(Equal(http.StatusUnprocessableEntity))
 		})
 		It("E2E_UPDATE_DEVICE_MODEL_1: Update device model for LED device (No Protocol)", func() {
