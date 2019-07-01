@@ -17,7 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -62,13 +61,13 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: cloudInitExample,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
 			Add2ToolsList(tools, flagVals, init)
-			Execute(tools)
+			return Execute(tools)
 		},
 	}
 
@@ -136,20 +135,15 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 }
 
 //Execute the installation for each tool and start edgecontroller
-func Execute(toolList map[string]types.ToolsInstaller) {
+func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	for name, tool := range toolList {
 		if name != "Cloud" {
 			err := tool.InstallTools()
 			if err != nil {
-				fmt.Println(err.Error())
-				continue
+				return err
 			}
 		}
 	}
-	err := toolList["Cloud"].InstallTools()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
+	return toolList["Cloud"].InstallTools()
 }
