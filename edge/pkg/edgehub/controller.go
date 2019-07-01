@@ -26,9 +26,13 @@ const (
 
 var (
 	authEventType = "auth_info_event"
-	groupMap      = map[string]string{"resource": modules.MetaGroup,
-		"twin": modules.TwinGroup, "app": "sync",
-		"func": modules.MetaGroup, "user": modules.BusGroup}
+	groupMap      = map[string]string{
+		"resource": modules.MetaGroup,
+		"twin":     modules.TwinGroup,
+		"app":      "sync",
+		"func":     modules.MetaGroup,
+		"user":     modules.BusGroup,
+	}
 
 	// clear the number of data of the stop channel
 	times = 2
