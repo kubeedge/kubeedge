@@ -86,7 +86,7 @@ func (dtc *DTController) Start() error {
 	for {
 		select {
 		case <-time.After((time.Duration)(60) * time.Second):
-			//range tocheck whether has bug
+			//range to check whether has bug
 			for dtmName := range dtc.DTModules {
 				health, ok := dtc.DTContexts.ModulesHealth.Load(dtmName)
 				if ok {
