@@ -223,7 +223,7 @@ func WaitforPodsRunning(apiserver string, podlist v1.PodList, timout time.Durati
 				}
 				// calculate the pods in running status
 				count := 0
-				for i, _ := range podlist.Items {
+				for i := range podlist.Items {
 					// update pod status in podlist
 					if podlist.Items[i].Name == p.Name {
 						InfoV2("PodName: %s PodStatus: %s", p.Name, p.Status.Phase)

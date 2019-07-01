@@ -26,8 +26,8 @@ import (
 	metav1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/e2e/testsuite"
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
 var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
@@ -126,7 +126,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 		It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
-			podlist:= CreatePodTest(nodeName, nodeSelector, ctx)
+			podlist := CreatePodTest(nodeName, nodeSelector, ctx)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -134,7 +134,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 		})
 		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
-			podlist:= CreatePodTest(nodeName, nodeSelector, ctx)
+			podlist := CreatePodTest(nodeName, nodeSelector, ctx)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -146,7 +146,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
 			for i := 0; i < 10; i++ {
-				podlist:= CreatePodTest(nodeName, nodeSelector, ctx)
+				podlist := CreatePodTest(nodeName, nodeSelector, ctx)
 				for _, pod := range podlist.Items {
 					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 					Expect(StatusCode).Should(Equal(http.StatusOK))

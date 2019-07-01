@@ -8,7 +8,6 @@ import (
 )
 
 type FakePanel struct {
-
 }
 
 func (fp *FakePanel) GetCircuitBreaker(inv invocation.Invocation, serviceType string) (string, hystrix.CommandConfig) {
@@ -27,7 +26,6 @@ func (fp *FakePanel) GetFaultInjection(inv invocation.Invocation) model.Fault {
 func (fp *FakePanel) GetEgressRule() []control.EgressConfig {
 	return []control.EgressConfig{}
 }
-
 
 func init() {
 	control.InstallPlugin("fake", func(options control.Options) control.Panel {

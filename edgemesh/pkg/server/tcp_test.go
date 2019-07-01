@@ -95,7 +95,7 @@ func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, i
 	}
 }
 
-type TestHandler struct {}
+type TestHandler struct{}
 
 //Handle
 func (h *TestHandler) Handle(chain *handler.Chain, inv *invocation.Invocation, cb invocation.ResponseCallBack) {
@@ -134,7 +134,7 @@ func StartTCPServer() {
 }
 
 func helloHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello " + r.Method)
+	fmt.Fprintf(w, "Hello "+r.Method)
 }
 
 func StartHTTPServer() {
@@ -195,7 +195,7 @@ func TestTCPRawBytes(t *testing.T) {
 		t.Errorf("write failed , err : %v\n", err)
 	}
 
-	<- done
+	<-done
 	time.Sleep(3 * time.Second)
 }
 
@@ -226,7 +226,7 @@ func TestResolveHTTP(t *testing.T) {
 	log.LOGGER.Infof("GET response: %v\n", resp1)
 
 	//do POST request
-	data := url.Values{"Name":{"Mark"}, "Age":{"20"}}
+	data := url.Values{"Name": {"Mark"}, "Age": {"20"}}
 	body := strings.NewReader(data.Encode())
 	req, err = http.NewRequest("POST", "http://127.0.0.1:8080", body)
 	if err != nil {
@@ -246,6 +246,3 @@ func TestResolveHTTP(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 }
-
-
-

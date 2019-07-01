@@ -22,8 +22,8 @@ func Start() {
 	config.HystrixConfig = &model.HystrixConfigWrapper{}
 	config.HystrixConfig.HystrixConfig = &model.HystrixConfig{}
 	config.HystrixConfig.HystrixConfig.IsolationProperties = &model.IsolationWrapper{
-		Consumer:&model.IsolationSpec{},
-		Provider:&model.IsolationSpec{},
+		Consumer: &model.IsolationSpec{},
+		Provider: &model.IsolationSpec{},
 	}
 	config.GlobalDefinition.Panel.Infra = "fake"
 	opts := control.Options{
