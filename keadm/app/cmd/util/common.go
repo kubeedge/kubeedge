@@ -142,7 +142,7 @@ func (cm Command) ExecuteCmdShowOutput() error {
 	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
 	err := cm.Cmd.Start()
 	if err != nil {
-		return fmt.Errorf("failed to start because of error : %s", err.Error())
+		return fmt.Errorf("failed to start '%s' because of error : %s", strings.Join(cm.Cmd.Args, " "), err.Error())
 	}
 
 	var wg sync.WaitGroup
@@ -158,7 +158,7 @@ func (cm Command) ExecuteCmdShowOutput() error {
 
 	err = cm.Cmd.Wait()
 	if err != nil {
-		return fmt.Errorf("failed to run because of error : %s", err.Error())
+		return fmt.Errorf("failed to run '%s' because of error : %s", strings.Join(cm.Cmd.Args, " "), err.Error())
 	}
 	if errStdout != nil || errStderr != nil {
 		return fmt.Errorf("failed to capture stdout or stderr")
