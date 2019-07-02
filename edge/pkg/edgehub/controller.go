@@ -22,21 +22,18 @@ import (
 const (
 	waitConnectionPeriod = time.Minute
 	defaultPlacement     = true
-)
-
-var (
-	authEventType = "auth_info_event"
-	groupMap      = map[string]string{
-		"resource": modules.MetaGroup,
-		"twin":     modules.TwinGroup,
-		"app":      "sync",
-		"func":     modules.MetaGroup,
-		"user":     modules.BusGroup,
-	}
-
+	authEventType        = "auth_info_event"
 	// clear the number of data of the stop channel
 	times = 2
 )
+
+var groupMap = map[string]string{
+	"resource": modules.MetaGroup,
+	"twin":     modules.TwinGroup,
+	"app":      "sync",
+	"func":     modules.MetaGroup,
+	"user":     modules.BusGroup,
+}
 
 //Controller is EdgeHub controller object
 type Controller struct {
