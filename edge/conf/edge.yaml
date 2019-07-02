@@ -50,6 +50,10 @@ edged:
     remote-image-endpoint: /var/run/containerd/containerd.sock
     runtime-request-timeout: 2
     podsandbox-image: k8s.gcr.io/pause
+    cgroup-driver: systemd
+    node-ip: ""
+    cluster-dns: ""
+    cluster-domain: ""
 
 mesh:
     loadbalance:
