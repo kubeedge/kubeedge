@@ -18,9 +18,8 @@ package status
 import (
 	"time"
 
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
-
 	"github.com/kubeedge/beehive/pkg/common/log"
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"k8s.io/api/core/v1"

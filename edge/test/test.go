@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
