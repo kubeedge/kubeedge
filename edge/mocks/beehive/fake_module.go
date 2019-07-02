@@ -5,9 +5,10 @@
 package beehive
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	context "github.com/kubeedge/beehive/pkg/core/context"
-	reflect "reflect"
 )
 
 // MockModule is a mock of Module interface

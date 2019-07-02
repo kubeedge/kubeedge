@@ -18,6 +18,7 @@ and changed most of the realization.
 2. The methods are also pruned and modifed
 */
 
+// Package podmanager
 package podmanager
 
 import (

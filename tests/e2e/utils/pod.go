@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package utils
 package utils
 
 import (
@@ -28,8 +29,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 
-	. "github.com/onsi/gomega"
 	"strings"
+
+	. "github.com/onsi/gomega"
 )
 
 const (

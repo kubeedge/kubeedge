@@ -20,6 +20,7 @@ Changes done are
 1. setNodeReadyCondition is partially come from "k8s.io/kubernetes/pkg/kubelet.setNodeReadyCondition"
 */
 
+// Package edged
 package edged
 
 import (

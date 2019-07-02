@@ -22,6 +22,7 @@ Changes done are
  and made some variant.
 */
 
+// Package edged
 package edged
 
 import (

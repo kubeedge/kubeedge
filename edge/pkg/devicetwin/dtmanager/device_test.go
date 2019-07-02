@@ -14,15 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package dtmanager
 package dtmanager
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"

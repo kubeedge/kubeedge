@@ -14,13 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package device_crd
 package device_crd
 
 import (
 	"encoding/json"
-	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

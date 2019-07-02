@@ -5,9 +5,10 @@
 package beego
 
 import (
+	reflect "reflect"
+
 	orm "github.com/astaxie/beego/orm"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockOrmer is a mock of Ormer interface

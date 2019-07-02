@@ -22,6 +22,7 @@ and changed most of the realization.
 2. Function from k8s.io\kubernetes\pkg\credentialprovider\secrets\secrets.go is derived here
 */
 
+// Package dockertools
 package dockertools
 
 import (

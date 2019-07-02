@@ -23,6 +23,7 @@ Changes done are
 2. Struct containerManager partially derived from kubernetes/pkg/kubelet/cm/devicemanager.ManagerImpl
 */
 
+// Package containers
 package containers
 
 import (

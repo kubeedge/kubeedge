@@ -14,18 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package device_crd
 package device_crd
 
 import (
 	"bytes"
-	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	"io/ioutil"
 	"net/http"
 	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

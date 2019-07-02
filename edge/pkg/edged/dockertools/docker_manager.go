@@ -22,6 +22,7 @@ Changes done are
 2. Directly call docker client methods for container and image operations
 */
 
+// Package dockertools
 package dockertools
 
 import (

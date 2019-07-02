@@ -21,6 +21,8 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 3. normalizePodStatus
 4. isPodNotRunning
 */
+
+// Package controller
 package controller
 
 import (

@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// Package test
 package test
 
 import (
@@ -23,11 +25,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"k8s.io/api/core/v1"
