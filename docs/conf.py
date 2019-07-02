@@ -180,6 +180,11 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
+from recommonmark.transform import AutoStructify
+
 def setup(app):
     app.add_stylesheet('css/custom.css')
-
+    app.add_config_value('recommonmark_config', {
+        'enable_auto_doc_ref': True,
+    }, True)
+    app.add_transform(AutoStructify)

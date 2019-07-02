@@ -1,7 +1,7 @@
 
 # Support
 
-If you need support, start with the [troubleshooting guide](../troubleshooting/troubleshooting.html), and work your way through the process that we've outlined.
+If you need support, start with the [troubleshooting guide](../troubleshooting/troubleshooting.md), and work your way through the process that we've outlined.
 
 ## Community
 
