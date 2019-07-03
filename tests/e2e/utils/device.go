@@ -1040,7 +1040,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					},
 					ShiftRight: 2,
 					StartIndex: 2,
-					EndIndex:1,
+					EndIndex:   1,
 				},
 			},
 		},

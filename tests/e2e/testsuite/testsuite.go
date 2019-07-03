@@ -23,9 +23,9 @@ import (
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
-	. "github.com/onsi/gomega"
 )
 
 func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, ctx *utils.TestContext) metav1.PodList {
@@ -48,7 +48,7 @@ func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, 
 	return podlist
 }
 
-func CreatePodTest(nodeName, nodeSelector string, ctx *utils.TestContext)metav1.PodList{
+func CreatePodTest(nodeName, nodeSelector string, ctx *utils.TestContext) metav1.PodList {
 	var podlist metav1.PodList
 	//Generate the random string and assign as a UID
 	UID := "pod-app-" + utils.GetRandomString(5)

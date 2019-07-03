@@ -8,15 +8,16 @@ import (
 	bhLog "github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/server"
 )
 
-// constants for api path
-const (
-	PathEvent = "/{project_id}/{node_id}/events"
+// the api path
+var (
+	pathEvent = fmt.Sprintf("/{%s}/{%s}/events", model.ProjectID, model.NodeID)
 )
 
 // StartCloudHub starts the cloud hub service

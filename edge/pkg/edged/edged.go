@@ -26,33 +26,12 @@ package edged
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
-
-	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/beehive/pkg/common/util"
-	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
-	edgeImages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
-	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/rainerruntime"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
-	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
-	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 
 	"github.com/golang/glog"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
@@ -68,16 +47,21 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/client-go/util/workqueue"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
+	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/kubeletconfig"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/dockershim"
+	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/gpu"
 	"k8s.io/kubernetes/pkg/kubelet/gpu/nvidia"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
+	kubedns "k8s.io/kubernetes/pkg/kubelet/network/dns"
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
+	"k8s.io/kubernetes/pkg/kubelet/server/streaming"
 	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
@@ -90,6 +74,29 @@ import (
 	"k8s.io/kubernetes/pkg/volume/empty_dir"
 	"k8s.io/kubernetes/pkg/volume/host_path"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
+
+	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/common/util"
+	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
+	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
+	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/rainerruntime"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
+	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
+	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 const (
@@ -120,11 +127,37 @@ const (
 	//RemoteContainerRuntime give Remote container runtime name
 	RemoteContainerRuntime = "remote"
 	//RemoteRuntimeEndpoint gives the default endpoint for CRI runtime
-	RemoteRuntimeEndpoint = "/var/run/containerd/containerd.sock"
+	RemoteRuntimeEndpoint = "unix:///var/run/dockershim.sock"
 	//MinimumEdgedMemoryCapacity gives the minimum default memory (2G) of edge
 	MinimumEdgedMemoryCapacity = 2147483647
 	//PodSandboxImage gives the default pause container image
 	PodSandboxImage = "k8s.gcr.io/pause"
+	//DockerEndpoint gives the default endpoint for docker engine
+	DockerEndpoint = "unix:///var/run/docker.sock"
+	//DockerShimEndpoint gives the default endpoint for Docker shim runtime
+	DockerShimEndpoint = "unix:///var/run/dockershim.sock"
+	//DockerShimEndpointDeprecated this is the deprecated dockershim endpoint
+	DockerShimEndpointDeprecated = "/var/run/dockershim.sock"
+	//DockershimRootDir givesthe default path to the dockershim root directory
+	DockershimRootDir = "/var/lib/dockershim"
+	//HairpinMode only use forkubenetNetworkPlugin.Currently not working
+	HairpinMode = kubeletinternalconfig.HairpinVeth
+	//NonMasqueradeCIDR only use forkubenetNetworkPlugin.Currently not working
+	NonMasqueradeCIDR = "10.0.0.1/8"
+	//cgroupName used for check if the cgroup is mounted.(default "")
+	cgroupName = ""
+	// PluginName gives the plugin name.(default "",use noop plugin)
+	pluginName = ""
+	//PluginBinDir gives the dir of cni plugin executable file
+	pluginBinDir = "/opt/cni/bin"
+	// PluginConfDir gives the dir of cni plugin confguration file
+	pluginConfDir = "/etc/cni/net.d"
+	//MTU give the default maximum transmission unit of  net interface
+	mtu = 1500
+	// redirectContainerStream decide whether to redirect the container stream
+	redirectContainerStream = false
+	// ResolvConfDefault gives the default dns resolv configration file
+	ResolvConfDefault = "/etc/resolv.conf"
 )
 
 var (
@@ -141,6 +174,8 @@ type podReady struct {
 
 //Define edged
 type edged struct {
+	//dns config
+	dnsConfigurer             *kubedns.Configurer
 	context                   *context.Context
 	hostname                  string
 	namespace                 string
@@ -185,6 +220,12 @@ type edged struct {
 	configMapStore cache.Store
 	workQueue      queue.WorkQueue
 	clcm           clcm.ContainerLifecycleManager
+	//edged cgroup driver for container runtime
+	cgroupDriver string
+	//clusterDns dns
+	clusterDNS []net.IP
+	// edge node IP
+	nodeIP net.IP
 }
 
 //Config defines configuration details
@@ -206,6 +247,10 @@ type Config struct {
 	remoteImageEndpoint      string
 	RuntimeRequestTimeout    metav1.Duration
 	PodSandboxImage          string
+	cgroupDriver             string
+	nodeIP                   string
+	clusterDNS               string
+	clusterDomain            string
 }
 
 func init() {
@@ -327,6 +372,7 @@ func (e *edged) setInitPodReady(readyStatus bool) {
 
 func getConfig() *Config {
 	var conf Config
+	var ok bool
 	conf.nodeName = config.CONFIG.GetConfigurationByKey("edged.hostname-override").(string)
 	conf.nodeNamespace = config.CONFIG.GetConfigurationByKey("edged.register-node-namespace").(string)
 	conf.interfaceName = config.CONFIG.GetConfigurationByKey("edged.interface-name").(string)
@@ -340,6 +386,19 @@ func getConfig() *Config {
 	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
 	conf.DockerAddress = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
 	conf.runtimeType = config.CONFIG.GetConfigurationByKey("edged.runtime-type").(string)
+	if conf.cgroupDriver, ok = config.CONFIG.GetConfigurationByKey("edged.cgroup-driver").(string); !ok {
+		conf.cgroupDriver = ""
+	}
+	if conf.nodeIP, ok = config.CONFIG.GetConfigurationByKey("edged.node-ip").(string); !ok {
+		conf.nodeIP = ""
+	}
+	if conf.clusterDNS, ok = config.CONFIG.GetConfigurationByKey("edged.cluster-dns").(string); !ok {
+		conf.clusterDNS = ""
+	}
+	if conf.clusterDomain, ok = config.CONFIG.GetConfigurationByKey("edged.cluster-domain").(string); !ok {
+		conf.clusterDomain = ""
+	}
+
 	if conf.runtimeType == "" {
 		conf.runtimeType = DockerContainerRuntime
 	}
@@ -361,6 +420,13 @@ func getConfig() *Config {
 		conf.PodSandboxImage = config.CONFIG.GetConfigurationByKey("edged.podsandbox-image").(string)
 		if conf.PodSandboxImage == "" {
 			conf.PodSandboxImage = PodSandboxImage
+		}
+		if conf.cgroupDriver == "" {
+			conf.cgroupDriver = "systemd"
+		}
+		if net.ParseIP(conf.nodeIP) == nil {
+			//loopback
+			conf.nodeIP = "127.0.0.1"
 		}
 	}
 	return &conf
@@ -398,6 +464,7 @@ func newEdged() (*edged, error) {
 		interfaceName:             conf.interfaceName,
 		namespace:                 conf.nodeNamespace,
 		gpuPluginEnabled:          conf.gpuPluginEnabled,
+		cgroupDriver:              conf.cgroupDriver,
 		podManager:                podManager,
 		podAdditionQueue:          workqueue.New(),
 		podCache:                  kubecontainer.NewCache(),
@@ -414,6 +481,7 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
+		nodeIP:                    net.ParseIP(conf.nodeIP),
 	}
 
 	// Set docker address if it is set in the conf
@@ -436,7 +504,7 @@ func newEdged() (*edged, error) {
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
-	statsProvider := edgeImages.NewStatsProvider()
+	statsProvider := edgeimages.NewStatsProvider()
 	containerGCPolicy := kubecontainer.ContainerGCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
@@ -473,6 +541,42 @@ func newEdged() (*edged, error) {
 				conf.remoteImageEndpoint = conf.remoteRuntimeEndpoint
 			}
 		}
+		//create and start the docker shim running as a grpc server
+		if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+			streamingConfig := &streaming.Config{}
+			DockerClientConfig := &dockershim.ClientConfig{
+				DockerEndpoint:    DockerEndpoint,
+				EnableSleep:       true,
+				WithTraceDisabled: true,
+			}
+
+			pluginConfigs := dockershim.NetworkPluginSettings{
+				HairpinMode:       kubeletinternalconfig.HairpinMode(HairpinMode),
+				NonMasqueradeCIDR: NonMasqueradeCIDR,
+				PluginName:        pluginName,
+				PluginBinDir:      pluginBinDir,
+				PluginConfDir:     pluginConfDir,
+				MTU:               mtu,
+			}
+
+			redirectContainerStream := redirectContainerStream
+			cgroupDriver := ed.cgroupDriver
+
+			ds, err := dockershim.NewDockerService(DockerClientConfig, conf.PodSandboxImage, streamingConfig,
+				&pluginConfigs, cgroupName, cgroupDriver, DockershimRootDir, redirectContainerStream)
+
+			if err != nil {
+				return nil, err
+			}
+
+			server := dockerremote.NewDockerServer(conf.remoteRuntimeEndpoint, ds)
+			if err := server.Start(); err != nil {
+				return nil, err
+			}
+
+		}
+		ed.clusterDNS = convertStrToIP(conf.clusterDNS)
+		ed.dnsConfigurer = kubedns.NewConfigurer(recorder, nodeRef, ed.nodeIP, ed.clusterDNS, conf.clusterDomain, ResolvConfDefault) //TODO
 		containerRefManager := kubecontainer.NewRefManager()
 		httpClient := &http.Client{}
 		runtimeService, imageService, err := getRuntimeAndImageServices(conf.remoteRuntimeEndpoint, conf.remoteRuntimeEndpoint, conf.RuntimeRequestTimeout)
@@ -1161,4 +1265,15 @@ func (e *edged) HandlePodCleanups() error {
 	}
 
 	return nil
+}
+
+func convertStrToIP(s string) []net.IP {
+	substrs := strings.Split(s, ",")
+	ips := make([]net.IP, 0)
+	for _, substr := range substrs {
+		if ip := net.ParseIP(substr); ip != nil {
+			ips = append(ips, ip)
+		}
+	}
+	return ips
 }

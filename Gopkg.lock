@@ -1823,7 +1823,7 @@
   revision = "e494cc58111187acad93e64529228a2fc0153e39"
 
 [[projects]]
-  digest = "1:ecbd40a02c5fd569ef7649ed4473353762d61f12d0985436ac28d6c44247dece"
+  digest = "1:b177d93c954a669093a53e6cb94bbe1ebbf77b94649654f176c3164e1f8c800a"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1876,6 +1876,7 @@
     "pkg/kubelet/dockershim/cm",
     "pkg/kubelet/dockershim/libdocker",
     "pkg/kubelet/dockershim/metrics",
+    "pkg/kubelet/dockershim/remote",
     "pkg/kubelet/events",
     "pkg/kubelet/eviction/api",
     "pkg/kubelet/gpu",
@@ -1888,6 +1889,7 @@
     "pkg/kubelet/metrics",
     "pkg/kubelet/network",
     "pkg/kubelet/network/cni",
+    "pkg/kubelet/network/dns",
     "pkg/kubelet/network/hostport",
     "pkg/kubelet/network/kubenet",
     "pkg/kubelet/network/metrics",
@@ -1947,6 +1949,7 @@
     "pkg/util/goroutinemap",
     "pkg/util/goroutinemap/exponentialbackoff",
     "pkg/util/hash",
+    "pkg/util/interrupt",
     "pkg/util/io",
     "pkg/util/iptables",
     "pkg/util/mount",
@@ -2095,6 +2098,7 @@
     "k8s.io/kubernetes/pkg/features",
     "k8s.io/kubernetes/pkg/kubelet/apis/cri",
     "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2",
+    "k8s.io/kubernetes/pkg/kubelet/apis/kubeletconfig",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
     "k8s.io/kubernetes/pkg/kubelet/cm/cpumanager",
     "k8s.io/kubernetes/pkg/kubelet/cm/devicemanager",
@@ -2102,17 +2106,20 @@
     "k8s.io/kubernetes/pkg/kubelet/container",
     "k8s.io/kubernetes/pkg/kubelet/container/testing",
     "k8s.io/kubernetes/pkg/kubelet/dockershim",
+    "k8s.io/kubernetes/pkg/kubelet/dockershim/remote",
     "k8s.io/kubernetes/pkg/kubelet/gpu",
     "k8s.io/kubernetes/pkg/kubelet/gpu/nvidia",
     "k8s.io/kubernetes/pkg/kubelet/images",
     "k8s.io/kubernetes/pkg/kubelet/kuberuntime",
     "k8s.io/kubernetes/pkg/kubelet/lifecycle",
+    "k8s.io/kubernetes/pkg/kubelet/network/dns",
     "k8s.io/kubernetes/pkg/kubelet/pleg",
     "k8s.io/kubernetes/pkg/kubelet/pod",
     "k8s.io/kubernetes/pkg/kubelet/pod/testing",
     "k8s.io/kubernetes/pkg/kubelet/prober",
     "k8s.io/kubernetes/pkg/kubelet/prober/results",
     "k8s.io/kubernetes/pkg/kubelet/remote",
+    "k8s.io/kubernetes/pkg/kubelet/server/streaming",
     "k8s.io/kubernetes/pkg/kubelet/status",
     "k8s.io/kubernetes/pkg/kubelet/types",
     "k8s.io/kubernetes/pkg/kubelet/util/format",

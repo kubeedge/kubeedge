@@ -50,7 +50,8 @@ import (
 )
 
 const (
-	etcHostsPath = "/etc/hosts"
+	etcHostsPath  = "/etc/hosts"
+	systemdSuffix = ".slice"
 )
 
 // GetActivePods returns non-terminal pods
@@ -535,10 +536,13 @@ func (e *edged) removeOrphanedPodStatuses(pods []*v1.Pod) {
 
 // GetPodCgroupParent gets pod cgroup parent from container manager.
 func (e *edged) GetPodCgroupParent(pod *v1.Pod) string {
-	/*pcm := e.containerManager.NewPodContainerManager()
-	_, cgroupParent := pcm.GetPodContainerName(pod)
-	return cgroupParent*/
-	return "systemd"
+	conf := getConfig()
+	ret := e.cgroupDriver
+	if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+		//always have a ".slice" suffix
+		ret = ret + systemdSuffix
+	}
+	return ret
 }
 
 // GenerateRunContainerOptions generates the RunContainerOptions, which can be used by
@@ -599,8 +603,8 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 // This function is defined in kubecontainer.RuntimeHelper interface so we
 // have to implement it.
 func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
-	dnsConfig := &runtimeapi.DNSConfig{Servers: []string{""}}
-	return dnsConfig, nil
+	dnsConfig, err := e.dnsConfigurer.GetPodDNS(pod)
+	return dnsConfig, err
 }
 
 // Make the environment variables for a pod in the given namespace.

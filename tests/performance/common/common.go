@@ -109,7 +109,7 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 	//Check All EdgeNode are in Running state
 	Eventually(func() int {
 		count := 0
-		for edgenodeName, _ := range NodeInfo {
+		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeReadyStatus(nodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == "Running" {
@@ -141,7 +141,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 		go utils.HandleDeployment(true, true, http.MethodDelete, apiServerForDeployments+DeploymentHandler+"/"+depName, "", "", "", "", 0)
 	}
 	//delete edgenodes
-	for edgenodeName, _ := range NodeInfo {
+	for edgenodeName := range NodeInfo {
 		err := utils.DeRegisterNodeFromMaster(apiServerForRegisterNode+NodeHandler, edgenodeName)
 		if err != nil {
 			utils.Failf("DeRegisterNodeFromMaster failed: %v", err)
@@ -172,7 +172,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 
 	Eventually(func() int {
 		count := 0
-		for edgenodeName, _ := range NodeInfo {
+		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeDeleteStatus(apiServerForRegisterNode+NodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == 404 {
@@ -203,7 +203,7 @@ func ApplyLabel(nodeHandler string) error {
 	nodes := utils.GetNodes(nodeHandler)
 	for _, node := range nodes.Items {
 		isMasterNode = false
-		for key, _ := range node.Labels {
+		for key := range node.Labels {
 			if strings.Contains(key, "node-role.kubernetes.io/master") {
 				isMasterNode = true
 				break
