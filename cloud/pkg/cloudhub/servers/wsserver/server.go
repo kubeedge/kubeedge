@@ -11,15 +11,16 @@ import (
 
 	bhLog "github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 
 	"github.com/gorilla/mux"
 )
 
-// constants for api path
-const (
-	PathEvent = "/{project_id}/{node_id}/events"
+// the api path
+var (
+	pathEvent = fmt.Sprintf("/{%s}/{%s}/events", model.ProjectID, model.NodeID)
 )
 
 // FilterWriter filter writer
@@ -65,7 +66,7 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue) erro
 	handler.WebSocketHandler.EventHandler.Handlers = []handler.HandleFunc{handler.WebSocketHandler.EventReadLoop, handler.WebSocketHandler.EventWriteLoop}
 
 	router := mux.NewRouter()
-	router.HandleFunc(PathEvent, handler.WebSocketHandler.ServeEvent)
+	router.HandleFunc(pathEvent, handler.WebSocketHandler.ServeEvent)
 
 	// start server
 	s := http.Server{
