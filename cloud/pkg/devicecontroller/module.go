@@ -10,13 +10,11 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 )
 
 // DeviceController use beehive context message layer
 type DeviceController struct {
-	messageLayer messagelayer.MessageLayer
-	stopChan     chan bool
+	stopChan chan bool
 }
 
 func init() {
