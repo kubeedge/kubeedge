@@ -15,7 +15,8 @@ import (
 )
 
 type cloudHub struct {
-	context *context.Context
+	context  *context.Context
+	stopChan chan bool
 }
 
 func init() {
@@ -32,6 +33,7 @@ func (a *cloudHub) Group() string {
 
 func (a *cloudHub) Start(c *context.Context) {
 	a.context = c
+	a.stopChan = make(chan bool)
 
 	initHubConfig()
 
@@ -46,11 +48,11 @@ func (a *cloudHub) Start(c *context.Context) {
 		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
 	}
 
-	stopchan := make(chan bool)
-	<-stopchan
+	<-a.stopChan
 }
 
 func (a *cloudHub) Cleanup() {
+	a.stopChan <- true
 	a.context.Cleanup(a.Name())
 }
 
