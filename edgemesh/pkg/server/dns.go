@@ -8,9 +8,13 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 	"unsafe"
 
-	"github.com/golang/glog"
+	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 )
 
 var (
@@ -38,6 +42,7 @@ type dnsHeader struct {
 }
 
 type dnsQuestion struct {
+	from    *net.UDPAddr
 	head    *dnsHeader
 	name    []byte
 	queByte []byte
@@ -57,6 +62,12 @@ type dnsAnswer struct {
 
 //define the dns Question list type
 type dnsQs []dnsQuestion
+
+//metaClient is a query client
+var metaClient client.CoreInterface
+
+//dnsConn save DNS server
+var dnsConn *net.UDPConn
 
 //DnsStart is a External interface
 func DnsStart() {
@@ -83,26 +94,30 @@ func getDnsServer() (net.IP, error) {
 
 // startDnsServer start the DNS Server
 func startDnsServer() {
+	// init meta client
+	c := context.GetContext(context.MsgCtxTypeChannel)
+	metaClient = client.New(c)
+	//get DNS server name
 	lip, err := getDnsServer()
 	if err != nil {
-		glog.Errorf("Dns server Start error : %s", err)
+		log.LOGGER.Errorf("Dns server Start error : %s", err)
 	}
 
 	laddr := &net.UDPAddr{
 		IP:   lip,
 		Port: 53,
 	}
-	dnsConn, err := net.ListenUDP("udp", laddr)
-	defer dnsConn.Close()
+	udpConn, err := net.ListenUDP("udp", laddr)
+	defer udpConn.Close()
 	if err != nil {
-		glog.Errorf("Dns server Start error : %s", err)
+		log.LOGGER.Errorf("Dns server Start error : %s", err)
 	}
-
+	dnsConn = udpConn
 	for {
 		req := make([]byte, bufSize)
 		n, from, err := dnsConn.ReadFromUDP(req)
 		if err != nil || n <= 0 {
-			glog.Infof("Dns Server get an read mistake : %s", err)
+			log.LOGGER.Infof("DNS server get an IO error : %s", err)
 			continue
 		}
 
@@ -110,10 +125,15 @@ func startDnsServer() {
 		if err != nil {
 			continue
 		}
-
+		for _, q := range que {
+			q.from = from
+		}
 		rsp := make([]byte, 0)
-		rsp, _ = recordHandler(que, req[0:n])
-
+		rsp, err = recordHandler(que, req[0:n])
+		if err != nil {
+			log.LOGGER.Infof("DNS server get an resolve abnormal : %s", err)
+			continue
+		}
 		dnsConn.WriteTo(rsp, from)
 	}
 }
@@ -129,16 +149,12 @@ func recordHandler(que []dnsQuestion, req []byte) (rsp []byte, err error) {
 			return
 		}
 		if !exist {
-			break
+			//if this service don't belongs to this cluster
+			go getfromRealDNS(req, q.from)
+			return rsp, fmt.Errorf("get from real DNS")
 		}
 	}
 
-	if !exist {
-		//if this service don't belongs to this cluster
-		rsp = getfromRealDNS(req)
-		err = nil
-		return
-	}
 	//gen
 	pre, err := modifyRspPrefix(que)
 	rsp = append(rsp, pre...)
@@ -256,20 +272,30 @@ func (q *dnsQuestion) getQName(req []byte, offset uint16) uint16 {
 }
 
 // lookupFromMetaManager implement confirm the service exists
-// for earlier version returns true by default
-func lookupFromMetaManager(name string) (exist bool, err error) {
-	return true, nil
+func lookupFromMetaManager(serviceUrl string) (exist bool, err error) {
+	name, namespace := common.SplitServiceKey(serviceUrl)
+	s, _ := metaClient.Services(namespace).Get(name)
+	if s != nil {
+		log.LOGGER.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)
+		return true, nil
+	}
+	log.LOGGER.Infof("Service %s is not found in this cluster", serviceUrl)
+	return false, nil
 }
 
 // getfromRealDNS returns the dns response from the real DNS server
-func getfromRealDNS(req []byte) []byte {
-	ips := parseNameServer()
-
+func getfromRealDNS(req []byte, from *net.UDPAddr) {
 	rsp := make([]byte, 0)
+	ips, err := parseNameServer()
+	if err != nil {
+		return
+	}
+
 	laddr := &net.UDPAddr{
 		IP:   net.IPv4zero,
 		Port: 0,
 	}
+
 	for _, ip := range ips { // get from real
 		raddr := &net.UDPAddr{
 			IP:   ip,
@@ -280,12 +306,13 @@ func getfromRealDNS(req []byte) []byte {
 		if err != nil {
 			continue
 		}
-
 		_, err = conn.Write(req)
 		if err != nil {
 			continue
 		}
-
+		if err = conn.SetReadDeadline(time.Now().Add(time.Minute)); err != nil {
+			continue
+		}
 		var n int
 		buf := make([]byte, bufSize)
 		n, err = conn.Read(buf)
@@ -295,16 +322,17 @@ func getfromRealDNS(req []byte) []byte {
 
 		if n > 0 {
 			rsp = append(rsp, buf[:n]...)
+			dnsConn.WriteToUDP(rsp, from)
+			break
 		}
 	}
-	return rsp
 }
 
 // parseNameServer gets the nameserver from the resolv.conf
-func parseNameServer() []net.IP {
+func parseNameServer() ([]net.IP, error) {
 	file, err := os.Open("/etc/resolv.conf")
 	if err != nil {
-		glog.Errorf("error opening /etc/resolv.conf : %s", err)
+		return nil, fmt.Errorf("error opening /etc/resolv.conf : %s", err)
 	}
 	defer file.Close()
 
@@ -325,7 +353,10 @@ func parseNameServer() []net.IP {
 			}
 		}
 	}
-	return ip
+	if len(ip) == 0 {
+		return nil, fmt.Errorf("there is no nameserver in /etc/resolv.conf")
+	}
+	return ip, nil
 }
 
 // modifyRspPrefix use req' head generate a rsp head
