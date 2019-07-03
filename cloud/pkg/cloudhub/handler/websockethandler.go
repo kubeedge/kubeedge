@@ -27,8 +27,8 @@ type WebsocketHandle struct {
 // ServeEvent handle the event coming from websocket
 func (wh *WebsocketHandle) ServeEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	projectID := vars["project_id"]
-	nodeID := vars["node_id"]
+	projectID := vars[emodel.ProjectID]
+	nodeID := vars[emodel.NodeID]
 
 	if wh.EventHandler.GetNodeCount() >= wh.NodeLimit {
 		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)

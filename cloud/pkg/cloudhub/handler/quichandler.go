@@ -22,8 +22,8 @@ type QuicHandle struct {
 
 // HandleServer handle all the request from quic
 func (qh *QuicHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	nodeID := container.Header.Get("node_id")
-	projectID := container.Header.Get("project_id")
+	nodeID := container.Header.Get(emodel.NodeID)
+	projectID := container.Header.Get(emodel.ProjectID)
 
 	if qh.EventHandler.GetNodeCount() >= qh.NodeLimit {
 		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)
@@ -45,8 +45,8 @@ func (qh *QuicHandle) HandleServer(container *mux.MessageContainer, writer mux.R
 
 // OnRegister regist node on first connection
 func (qh *QuicHandle) OnRegister(connection conn.Connection) {
-	nodeID := connection.ConnectionState().Headers.Get("node_id")
-	projectID := connection.ConnectionState().Headers.Get("project_id")
+	nodeID := connection.ConnectionState().Headers.Get(emodel.NodeID)
+	projectID := connection.ConnectionState().Headers.Get(emodel.ProjectID)
 
 	quicio := &hubio.JSONQuicIO{Connection: connection}
 	go qh.EventHandler.ServeConn(quicio, &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID})
