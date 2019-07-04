@@ -14,7 +14,7 @@ else ifeq ($(WHAT),edge)
 all:
 # make all what=edge, build edge binary
 	cd edge && $(MAKE)
-else ifeq ($(WHAT),keadm)
+else ifeq ($(WHAT),edgesite)
 all:
 	$(MAKE) -C edgesite
 else ifeq ($(WHAT),keadm)
