@@ -12,7 +12,9 @@ import (
 )
 
 // Controller use beehive context message layer
-type Controller struct{}
+type Controller struct {
+	stopChan chan bool
+}
 
 func init() {
 	edgeController := Controller{}
@@ -32,6 +34,7 @@ func (ctl *Controller) Group() string {
 // Start controller
 func (ctl *Controller) Start(c *bcontext.Context) {
 	config.Context = c
+	ctl.stopChan = make(chan bool)
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
@@ -39,23 +42,25 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 	}
 	upstream.Start()
 
-	for {
-		stopChannel := make(<-chan struct{})
-		downstream, err := controller.NewDownstreamController()
-		if err != nil {
-			log.LOGGER.Warnf("new downstream controller failed with error: %s", err)
-			continue
-		}
-		downstream.Start()
-
-		<-stopChannel
-		log.LOGGER.Warnf("elected slave, stopping downstream controller...")
-		downstream.Stop()
-		log.LOGGER.Warnf("downstream controller stopped")
+	downstream, err := controller.NewDownstreamController()
+	if err != nil {
+		log.LOGGER.Warnf("new downstream controller failed with error: %s", err)
+		os.Exit(1)
 	}
+	downstream.Start()
+
+	<-ctl.stopChan
+	log.LOGGER.Warnf("stopping upstream controller...")
+	upstream.Stop()
+	log.LOGGER.Warnf("upstream controller stopped")
+	log.LOGGER.Warnf("stopping downstream controller...")
+	downstream.Stop()
+	log.LOGGER.Warnf("downstream controller stopped")
+
 }
 
 // Cleanup controller
 func (ctl *Controller) Cleanup() {
-	// TODO
+	ctl.stopChan <- true
+	config.Context.Cleanup(ctl.Name())
 }
