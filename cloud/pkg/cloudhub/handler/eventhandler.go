@@ -13,6 +13,9 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/viaduct/pkg/conn"
+	"github.com/kubeedge/viaduct/pkg/mux"
 )
 
 // ExitCode exit code
@@ -40,9 +43,92 @@ type EventHandle struct {
 	EventQueue        *channelq.ChannelEventQueue
 	Context           *context.Context
 	Handlers          []HandleFunc
+	NodeLimit         int
+	KeepaliveChannel  map[string]chan struct{}
 }
 
 type HandleFunc func(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode)
+
+var once sync.Once
+
+// CloudhubHandler the shared handler for both websocket and quic servers
+var CloudhubHandler *EventHandle
+
+// InitHandler create a handler for websocket and quic servers
+func InitHandler(config *util.Config, eventq *channelq.ChannelEventQueue, c *context.Context) {
+	once.Do(func() {
+		CloudhubHandler = &EventHandle{
+			KeepaliveInterval: config.KeepaliveInterval,
+			WriteTimeout:      config.WriteTimeout,
+			EventQueue:        eventq,
+			NodeLimit:         config.NodeLimit,
+			Context:           c,
+		}
+
+		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
+		CloudhubHandler.Handlers = []HandleFunc{CloudhubHandler.KeepaliveCheckLoop, CloudhubHandler.EventWriteLoop}
+
+		CloudhubHandler.initServerEntries()
+	})
+}
+
+// initServerEntries regist handler func
+func (eh *EventHandle) initServerEntries() {
+	mux.Entry(mux.NewPattern("*").Op("*"), eh.HandleServer)
+}
+
+// HandleServer handle all the request from node
+func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
+	nodeID := container.Header.Get("node_id")
+	projectID := container.Header.Get("project_id")
+
+	if eh.GetNodeCount() >= eh.NodeLimit {
+		bhLog.LOGGER.Errorf("Fail to serve node %s, reach node limit", nodeID)
+		return
+	}
+
+	if container.Message.GetOperation() == emodel.OpKeepalive {
+		bhLog.LOGGER.Infof("Keepalive message received from node: %s", nodeID)
+		eh.KeepaliveChannel[nodeID] <- struct{}{}
+		return
+	}
+
+	err := eh.Pub2Controller(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+	if err != nil {
+		// if err, we should stop node, write data to edgehub, stop nodify
+		bhLog.LOGGER.Errorf("Failed to serve handle with error: %s", err.Error())
+	}
+}
+
+// OnRegister regist node on first connection
+func (eh *EventHandle) OnRegister(connection conn.Connection) {
+	nodeID := connection.ConnectionState().Headers.Get("node_id")
+	projectID := connection.ConnectionState().Headers.Get("project_id")
+
+	if _, ok := eh.KeepaliveChannel[nodeID]; !ok {
+		eh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
+	}
+
+	io := &hubio.JSONIO{Connection: connection}
+	go eh.ServeConn(io, &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID})
+}
+
+// KeepaliveCheckLoop checks whether the edge node is still alive
+func (eh *EventHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
+	for {
+		keepaliveTimer := time.NewTimer(time.Duration(eh.KeepaliveInterval) * time.Second)
+		select {
+		case <-eh.KeepaliveChannel[info.NodeID]:
+			bhLog.LOGGER.Infof("Node %s is still alive", info.NodeID)
+			keepaliveTimer.Stop()
+		case <-keepaliveTimer.C:
+			bhLog.LOGGER.Warnf("Timeout to receive heart beat from edge node %s for project %s",
+				info.NodeID, info.ProjectID)
+			stop <- nodeStop
+			return
+		}
+	}
+}
 
 func dumpEventMetadata(event *emodel.Event) string {
 	return fmt.Sprintf("id: %s, parent_id: %s, group: %s, source: %s, resource: %s, operation: %s",
@@ -97,10 +183,6 @@ func constructConnectEvent(info *emodel.HubInfo, isConnected bool) *emodel.Event
 }
 
 func (eh *EventHandle) Pub2Controller(info *emodel.HubInfo, msg *model.Message) error {
-	if msg.GetOperation() == emodel.OpKeepalive {
-		bhLog.LOGGER.Infof("Keepalive message received from node: %s", info.NodeID)
-		return nil
-	}
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
 	event := emodel.MessageToEvent(msg)
 	bhLog.LOGGER.Infof("event received for node %s %s, content: %s", info.NodeID, dumpEventMetadata(&event), event.Content)
@@ -225,7 +307,7 @@ func (eh *EventHandle) GetWorkload() (float64, error) {
 }
 
 // EventWriteLoop processes all write requests
-func (eh *EventHandle) eventWriteLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
+func (eh *EventHandle) EventWriteLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
 	events, err := eh.EventQueue.Consume(info)
 	if err != nil {
 		bhLog.LOGGER.Errorf("failed to consume event for node %s, reason: %s", info.NodeID, err.Error())
