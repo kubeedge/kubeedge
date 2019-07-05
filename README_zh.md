@@ -87,3 +87,5 @@ KubeEdge 由以下组件构成:
 ## 许可证
 
 KubeEdge基于Apache 2.0许可证，查看[LICENSE](LICENSE)获取更多信息。
+
+---
