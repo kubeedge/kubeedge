@@ -115,7 +115,7 @@ func parseResource(resource string) (string, string, string) {
 
 // is resource type require remote query
 func requireRemoteQuery(resType string) bool {
-	return resType == model.ResourceTypeConfigmap || resType == model.ResourceTypeSecret || resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints
+	return resType == model.ResourceTypeConfigmap || resType == model.ResourceTypeSecret || resType == constants.ResourceTypeEndpoints
 }
 
 func isConnected() bool {
