@@ -4,6 +4,5 @@
 __pycache__
 *.swp
 .idea/**
-/build/
 .gradle
 .idea
