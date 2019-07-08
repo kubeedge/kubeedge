@@ -2,6 +2,7 @@ package dtmodule
 
 import (
 	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
 )
@@ -14,36 +15,47 @@ type DTModule struct {
 
 // InitWorker init worker
 func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, heartBeat chan interface{}, dtContext *dtcontext.DTContext) {
-
 	switch dm.Name {
-	case "MemModule":
+	case dtcommon.MemModule:
 		dm.Worker = dtmanager.MemWorker{
-			Group: "MemModule",
-			Worker: dtmanager.Worker{ReceiverChan: recv,
+			Group: dtcommon.MemModule,
+			Worker: dtmanager.Worker{
+				ReceiverChan:  recv,
 				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
-				DTContexts:    dtContext}}
-	case "TwinModule":
+				DTContexts:    dtContext,
+			},
+		}
+	case dtcommon.TwinModule:
 		dm.Worker = dtmanager.TwinWorker{
-			Group: "TwinModule",
-			Worker: dtmanager.Worker{ReceiverChan: recv,
+			Group: dtcommon.TwinModule,
+			Worker: dtmanager.Worker{
+				ReceiverChan:  recv,
 				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
-				DTContexts:    dtContext}}
-	case "DeviceModule":
+				DTContexts:    dtContext,
+			},
+		}
+	case dtcommon.DeviceModule:
 		dm.Worker = dtmanager.DeviceWorker{
-			Group: "DeviceModule",
-			Worker: dtmanager.Worker{ReceiverChan: recv,
+			Group: dtcommon.DeviceModule,
+			Worker: dtmanager.Worker{
+				ReceiverChan:  recv,
 				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
-				DTContexts:    dtContext}}
-	case "CommModule":
+				DTContexts:    dtContext,
+			},
+		}
+	case dtcommon.CommModule:
 		dm.Worker = dtmanager.CommWorker{
-			Group: "CommModule",
-			Worker: dtmanager.Worker{ReceiverChan: recv,
+			Group: dtcommon.CommModule,
+			Worker: dtmanager.Worker{
+				ReceiverChan:  recv,
 				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
-				DTContexts:    dtContext}}
+				DTContexts:    dtContext,
+			},
+		}
 	}
 }
 

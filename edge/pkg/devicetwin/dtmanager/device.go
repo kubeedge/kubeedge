@@ -124,12 +124,13 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	var err error
+
 	updateDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
 		log.LOGGER.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
 	}
+
 	deviceID := resource
 
 	context.Lock(deviceID)
@@ -180,9 +181,6 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 				dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
 		}
-
-	}
-	if err != nil {
 	}
 
 	return nil, nil
