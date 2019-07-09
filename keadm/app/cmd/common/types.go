@@ -26,6 +26,7 @@ type InitOptions struct {
 	KubernetesVersion string
 	DockerVersion     string
 	KubeConfig        string
+	KubeCidr          string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -75,7 +76,7 @@ type OSTypeInstaller interface {
 	StartK8Scluster() error
 	InstallKubeEdge() error
 	SetDockerVersion(string)
-	SetK8SVersionAndIsNodeFlag(version string, flag bool)
+	SetK8SVersionAndIsNodeFlag(version string, cidr string, flag bool)
 	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error

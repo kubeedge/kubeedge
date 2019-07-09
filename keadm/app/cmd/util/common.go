@@ -91,6 +91,7 @@ type Common struct {
 	OSVersion   string
 	ToolVersion string
 	KubeConfig  string
+	KubeCidr    string
 }
 
 //SetOSInterface defines a method to set the implemtation of the OS interface
@@ -189,8 +190,8 @@ func GetOSVersion() string {
 func GetOSInterface() types.OSTypeInstaller {
 
 	switch GetOSVersion() {
-	case UbuntuOSType:
-		return &UbuntuOS{}
+	//	case UbuntuOSType:
+	//		return &UbuntuOS{}
 	case CentOSType:
 		return &CentOS{}
 	default:

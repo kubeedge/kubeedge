@@ -32,8 +32,11 @@ type CentOS struct {
 	DockerVersion     string
 	KubernetesVersion string
 	KubeEdgeVersion   string
+	KubeCidr          string
 	IsEdgeNode        bool //True - Edgenode False - Cloudnode
 }
+
+const downloadRetryTimes int = 3
 
 //SetDockerVersion sets the Docker version for the objects instance
 func (c *CentOS) SetDockerVersion(version string) {
@@ -42,8 +45,10 @@ func (c *CentOS) SetDockerVersion(version string) {
 
 //SetK8SVersionAndIsNodeFlag sets the K8S version for the objects instance
 //It also sets if this host shall act as edge node or not
-func (c *CentOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
+//edited by claire
+func (c *CentOS) SetK8SVersionAndIsNodeFlag(version string, cidr string, flag bool) {
 	c.KubernetesVersion = version
+	c.KubeCidr = cidr
 	c.IsEdgeNode = flag
 }
 
@@ -60,7 +65,6 @@ func (C *CentOS) addDockerRepositoryAndUpdate() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo")}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -69,7 +73,6 @@ func (C *CentOS) addDockerRepositoryAndUpdate() error {
 	}
 	fmt.Println(cmd.GetStdOutput())
 	fmt.Println("docker-ce.repo installed")
-
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum makecache")}
 	err = cmd.ExecuteCmdShowOutput()
 	errout = cmd.GetStdErr()
@@ -77,13 +80,11 @@ func (C *CentOS) addDockerRepositoryAndUpdate() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-
 	return nil
 }
 
 //IsDockerInstalled checks if docker is installed in the host or not
 func (c *CentOS) IsDockerInstalled(defVersion string) (types.InstallState, error) {
-
 	//yum list installed | grep docker-ce | awk '{print $2}' | cut -d'-' -f 1
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "yum list installed | grep docker-ce | awk '{print $2}' | cut -d'-' -f 1")}
 	cmd.ExecuteCommand()
@@ -92,20 +93,16 @@ func (c *CentOS) IsDockerInstalled(defVersion string) (types.InstallState, error
 	if str == "" {
 		return types.NewInstallRequired, nil
 	}
-
 	if strings.Contains(cmd.GetStdOutput(), c.DockerVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
-
 	if err := c.addDockerRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
 	}
-
 	isReqVerAvail, err := c.IsToolVerInRepo("docker-ce", c.DockerVersion)
 	if err != nil {
 		return types.VersionNAInRepo, err
 	}
-
 	var isDefVerAvail bool
 	if c.DockerVersion != defVersion {
 		isDefVerAvail, err = c.IsToolVerInRepo("docker-ce", defVersion)
@@ -113,22 +110,18 @@ func (c *CentOS) IsDockerInstalled(defVersion string) (types.InstallState, error
 			return types.VersionNAInRepo, err
 		}
 	}
-
 	if isReqVerAvail {
 		return types.NewInstallRequired, nil
 	}
-
 	if isDefVerAvail {
 		return types.DefVerInstallRequired, nil
 	}
-
 	return types.VersionNAInRepo, nil
 }
 
 //InstallDocker will install the specified docker in the host
 func (c *CentOS) InstallDocker() error {
 	fmt.Println("Installing", c.DockerVersion, "Version of docker")
-
 	if err := c.addDockerRepositoryAndUpdate(); err != nil {
 		return err
 	}
@@ -140,7 +133,6 @@ func (c *CentOS) InstallDocker() error {
 	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
-
 	//Install docker-ce
 	fmt.Println("stdout is %s", stdout)
 	dockerInst := fmt.Sprintf("sudo yum install -y  --skip-broken docker-ce-%s", stdout)
@@ -161,9 +153,7 @@ func (c *CentOS) InstallDocker() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-
 	fmt.Println("Docker", c.DockerVersion, "version is started")
-
 	return nil
 
 }
@@ -178,12 +168,10 @@ func (c *CentOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 	if errout != "" {
 		return false, fmt.Errorf("%s", errout)
 	}
-
 	if stdout != "" {
 		fmt.Println(toolName, stdout, "is available in OS repo")
 		return true, nil
 	}
-
 	fmt.Println(toolName, "version", version, "not found in OS repo")
 	return false, nil
 	//For K8S, dont check in repo, just install
@@ -192,7 +180,6 @@ func (c *CentOS) IsToolVerInRepo(toolName, version string) (bool, error) {
 //InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 //Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (c *CentOS) InstallMQTT() error {
-
 	cmd := &Command{Cmd: exec.Command("sh", "-c", "yum -y install epel-release")}
 	err := cmd.ExecuteCmdShowOutput()
 	stdout := cmd.GetStdOutput()
@@ -201,7 +188,6 @@ func (c *CentOS) InstallMQTT() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(stdout)
-
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum -y install mosquitto")}
 	err = cmd.ExecuteCmdShowOutput()
 	stdout = cmd.GetStdOutput()
@@ -210,7 +196,6 @@ func (c *CentOS) InstallMQTT() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(stdout)
-
 	//systemctl start mosquitto
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "systemctl start mosquitto")}
 	cmd.ExecuteCommand()
@@ -220,7 +205,6 @@ func (c *CentOS) InstallMQTT() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(stdout)
-
 	//systemctl enable mosquitto
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "systemctl enable mosquitto")}
 	cmd.ExecuteCommand()
@@ -230,13 +214,11 @@ func (c *CentOS) InstallMQTT() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(stdout)
-
 	return nil
 }
 
 //IsK8SComponentInstalled checks if said K8S version is already installed in the host
 func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (types.InstallState, error) {
-
 	find := fmt.Sprintf("yum list installed | grep %s | awk '{print $2}' | cut -d'-' -f 1", component)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", find)}
 	cmd.ExecuteCommand()
@@ -244,20 +226,16 @@ func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (types.In
 	if str == "" {
 		return types.NewInstallRequired, nil
 	}
-
 	if strings.Contains(cmd.GetStdOutput(), c.KubernetesVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
-
 	if err := c.addK8SRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
 	}
-
 	isReqVerAvail, err := c.IsToolVerInRepo(component, c.KubernetesVersion)
 	if err != nil {
 		return types.VersionNAInRepo, err
 	}
-
 	var isDefVerAvail bool
 	if c.KubernetesVersion != defVersion {
 		isDefVerAvail, _ = c.IsToolVerInRepo(component, defVersion)
@@ -265,15 +243,12 @@ func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) (types.In
 			return types.VersionNAInRepo, err
 		}
 	}
-
 	if isReqVerAvail {
 		return types.NewInstallRequired, nil
 	}
-
 	if isDefVerAvail {
 		return types.DefVerInstallRequired, nil
 	}
-
 	return types.VersionNAInRepo, nil
 }
 
@@ -314,9 +289,7 @@ func (c *CentOS) InstallK8S() error {
 	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
-
 	fmt.Println("Expected K8S('", k8sComponent, "') version to install is", stdout)
-
 	//Install respective K8S components based on where it is being installed
 	k8sInst := fmt.Sprintf("yum install -y kubeadm-%s kubelet-%s kubectl-%s --disableexcludes=kubernetes", stdout, stdout, stdout)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", k8sInst)}
@@ -326,7 +299,6 @@ func (c *CentOS) InstallK8S() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-
 	enaKubelet := fmt.Sprintf("systemctl enable --now kubelet")
 	cmd = &Command{Cmd: exec.Command("sh", "-c", enaKubelet)}
 	err = cmd.ExecuteCmdShowOutput()
@@ -335,9 +307,7 @@ func (c *CentOS) InstallK8S() error {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())
-
 	fmt.Println(k8sComponent, "version", c.KubernetesVersion, "is installed in this Host")
-
 	return nil
 }
 
@@ -354,15 +324,14 @@ func (c *CentOS) StartK8Scluster() error {
 		install = false
 	}
 	if install == true {
-		cmd := &Command{Cmd: exec.Command("sh", "-c", "swapoff -a && kubeadm init --pod-network-cidr 10.244.0.0/16")}
+		installk8s := fmt.Sprintf("swapoff -a && kubeadm init --pod-network-cidr %s", c.KubeCidr)
+		cmd := &Command{Cmd: exec.Command("sh", "-c", installk8s)}
 		err := cmd.ExecuteCmdShowOutput()
 		errout := cmd.GetStdErr()
 		if err != nil || errout != "" {
 			return fmt.Errorf("kubeadm init failed:%s", errout)
 		}
-
 		fmt.Println(cmd.GetStdOutput())
-
 		cmd = &Command{Cmd: exec.Command("sh", "-c", " mkdir -p $HOME/.kube && cp -r /etc/kubernetes/admin.conf $HOME/.kube/config &&  sudo chown $(id -u):$(id -g) $HOME/.kube/config")}
 		err = cmd.ExecuteCmdShowOutput()
 		errout = cmd.GetStdErr()
@@ -385,12 +354,10 @@ func (c *CentOS) InstallKubeEdge() error {
 		dwnldURL string
 		cmd      *Command
 	)
-
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
 	}
-
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "arch")}
 	cmd.ExecuteCommand()
 	arch := cmd.GetStdOutput()
@@ -398,7 +365,6 @@ func (c *CentOS) InstallKubeEdge() error {
 	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
-
 	//Check if the same version exists, then skip the download and just untar and continue
 	//TODO: It is always better to have the checksum validation of the downloaded file
 	//and checksum available at download URL. So that both can be compared to see if
@@ -418,7 +384,6 @@ func (c *CentOS) InstallKubeEdge() error {
 	}
 	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum install -y wget")}
 	cmd.ExecuteCommand()
-
 	for i := 0; i < downloadRetryTimes; i++ {
 		//Download the tar from repo
 		dwnldURL = fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s", KubeEdgePath, KubeEdgeDownloadURL, c.KubeEdgeVersion, filename)
@@ -431,7 +396,6 @@ func (c *CentOS) InstallKubeEdge() error {
 			return fmt.Errorf("%s", errout)
 		}
 		fmt.Println()
-
 		//Verify the tar with checksum
 		fmt.Printf("%s checksum: \n", filename)
 		cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
@@ -446,7 +410,6 @@ func (c *CentOS) InstallKubeEdge() error {
 		cmd.ExecuteCommand()
 		actualChecksum := cmd.GetStdOutput()
 		fmt.Printf("%s \n\n", cmd.GetStdOutput())
-
 		if desiredChecksum == actualChecksum {
 			break
 		}
@@ -477,7 +440,6 @@ SKIPDOWNLOADAND:
 	if errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
-
 	return nil
 }
 

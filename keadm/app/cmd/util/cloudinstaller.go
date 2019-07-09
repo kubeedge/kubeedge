@@ -74,21 +74,16 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err = common.WriteCloudLoggingYamlFile(KubeEdgeControllerLoggingYaml); err != nil {
 		return err
 	}
-
 	//Create modules.yaml
 	if err = common.WriteCloudModulesYamlFile(KubeEdgeControllerModulesYaml); err != nil {
 		return err
 	}
-
 	time.Sleep(1 * time.Second)
-
 	err = cu.RunEdgeController()
 	if err != nil {
 		return err
 	}
-
 	fmt.Println("Edgecontroller started")
-
 	return nil
 }
 
@@ -213,7 +208,7 @@ func (cu *KubeCloudInstTool) RunEdgeController() error {
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	err := cmd.StartCmd()
 	if err != nil {
-		fmt.Println("in error")
+		return err
 	}
 	fmt.Println("KubeEdge controller is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	return nil

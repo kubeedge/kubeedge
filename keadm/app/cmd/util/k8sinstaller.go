@@ -29,13 +29,14 @@ type K8SInstTool struct {
 	Common
 	IsEdgeNode     bool //True - Edgenode False - Cloudnode
 	DefaultToolVer string
+	//	DefaultKubeCidr string
 }
 
 //InstallTools sets the OS interface, checks if K8S installation is required or not.
 //If required then install the said version.
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
-	ks.SetK8SVersionAndIsNodeFlag(ks.ToolVersion, ks.IsEdgeNode)
+	ks.SetK8SVersionAndIsNodeFlag(ks.ToolVersion, ks.KubeCidr, ks.IsEdgeNode)
 
 	component := "kubeadm"
 	if ks.IsEdgeNode == true {
@@ -51,7 +52,7 @@ func (ks *K8SInstTool) InstallTools() error {
 	case types.AlreadySameVersionExist:
 		return fmt.Errorf("Same version of %s already installed in this host", component)
 	case types.DefVerInstallRequired:
-		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
+		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, "10.244.0.0/16", ks.IsEdgeNode)
 		fallthrough
 	case types.NewInstallRequired:
 		err := ks.InstallK8S()

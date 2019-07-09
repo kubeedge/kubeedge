@@ -39,7 +39,7 @@ kubeedge init
 
 - This command will download and install the default version of pre-requisites and KubeEdge
 
-kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=~/.kube/config
+kubeedge init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --pod-network-cidr=10.244.0.0/16 --kube-config=~/.kube/config
 
   - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
     then default versions shown in help will be choosen. 
@@ -83,7 +83,6 @@ func newInitOptions() *types.InitOptions {
 	opts.DockerVersion = types.DefaultDockerVersion
 	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 	opts.KubernetesVersion = types.DefaultK8SVersion
-
 	return opts
 }
 
@@ -103,6 +102,8 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+	cmd.Flags().StringVar(&initOpts.KubeCidr, types.KubeCidr, initOpts.KubeCidr,
+		"Use this key to set cidr")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -131,7 +132,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		k8sVer = initOptions.KubernetesVersion
 	}
-	toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer}, IsEdgeNode: false, DefaultToolVer: flgData.DefVal.(string)}
+	toolList["Kubernetes"] = &util.K8SInstTool{Common: util.Common{ToolVersion: k8sVer, KubeCidr: initOptions.KubeCidr}, IsEdgeNode: false, DefaultToolVer: flgData.DefVal.(string)}
 
 }
 

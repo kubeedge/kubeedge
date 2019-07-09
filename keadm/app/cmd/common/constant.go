@@ -27,7 +27,10 @@ const (
 	KubernetesVersion = "kubernetes-version"
 
 	//KubeConfig sets the path of kubeconfig , default is ""
-	KubeConfig= "kube-config"
+	KubeConfig = "kube-config"
+
+	//KubeCidr sets the cidr of k8s ,  edited by claire
+	KubeCidr = "pod-network-cidr"
 
 	//K8SAPIServerIPPort sets the IP:Port of Kubernetes api-server
 	K8SAPIServerIPPort = "k8sserverip"
@@ -52,4 +55,7 @@ const (
 
 	//DefaultK8SVersion is the current default version of K8S
 	DefaultK8SVersion = "1.14.1"
+
+	//DefaultKubeCidr is the current default cidr of K8S,edited by claire
+	//DefaultKubeCidr = "10.244.0.0/16"
 )
