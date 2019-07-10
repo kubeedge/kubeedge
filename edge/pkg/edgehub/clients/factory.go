@@ -30,6 +30,7 @@ func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error)
 			HandshakeTimeout: config.WSConfig.HandshakeTimeout,
 			ReadDeadline:     config.WSConfig.ReadDeadline,
 			WriteDeadline:    config.WSConfig.WriteDeadline,
+			ExtendHeader:     config.WSConfig.ExtendHeader,
 			ProjectID:        config.CtrConfig.ProjectID,
 			NodeID:           config.CtrConfig.NodeID,
 		}

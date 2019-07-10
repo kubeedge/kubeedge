@@ -17,6 +17,7 @@ limitations under the License.
 package clients
 
 import (
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -47,6 +48,7 @@ func TestGetClient(t *testing.T) {
 					HandshakeTimeout: 500 * time.Second,
 					WriteDeadline:    100 * time.Second,
 					ReadDeadline:     100 * time.Second,
+					ExtendHeader:     http.Header{},
 				},
 				CtrConfig: config.ControllerConfig{
 					ProjectID: "test-projectid",
@@ -62,6 +64,7 @@ func TestGetClient(t *testing.T) {
 			ReadDeadline:     100 * time.Second,
 			ProjectID:        "test-projectid",
 			NodeID:           "test-nodeid",
+			ExtendHeader:     http.Header{},
 		}),
 			nil,
 		},

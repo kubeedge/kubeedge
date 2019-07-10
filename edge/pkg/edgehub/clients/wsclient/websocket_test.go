@@ -19,6 +19,7 @@ package wsclient
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -54,6 +55,7 @@ func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSoc
 			ReadDeadline:     100 * time.Second,
 			NodeID:           "test-nodeid",
 			ProjectID:        "test-projectid",
+			ExtendHeader:     http.Header{},
 		},
 	}
 }
@@ -121,6 +123,7 @@ func TestNewWebSocketClient(t *testing.T) {
 				HandshakeTimeout: 500 * time.Second,
 				WriteDeadline:    100 * time.Second,
 				ReadDeadline:     100 * time.Second,
+				ExtendHeader:     http.Header{},
 				NodeID:           "test-nodeid",
 				ProjectID:        "test-projectid",
 			},

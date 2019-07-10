@@ -33,6 +33,7 @@ type WebSocketConfig struct {
 	HandshakeTimeout time.Duration
 	ReadDeadline     time.Duration
 	WriteDeadline    time.Duration
+	ExtendHeader     http.Header
 	NodeID           string
 	ProjectID        string
 }
@@ -67,6 +68,8 @@ func (wsc *WebSocketClient) Init() error {
 	exOpts := api.WSClientOption{Header: make(http.Header)}
 	exOpts.Header.Set("node_id", wsc.config.NodeID)
 	exOpts.Header.Set("project_id", wsc.config.ProjectID)
+	exOpts.Header.Set("Arch", wsc.config.ExtendHeader.Get("Arch"))
+	exOpts.Header.Set("Dockerrootdir", wsc.config.ExtendHeader.Get("Dockerrootdir"))
 	client := &wsclient.Client{Options: option, ExOpts: exOpts}
 
 	for i := 0; i < retryCount; i++ {

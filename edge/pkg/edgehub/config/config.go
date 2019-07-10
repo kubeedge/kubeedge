@@ -32,6 +32,7 @@ type WebSocketConfig struct {
 	HandshakeTimeout time.Duration
 	ReadDeadline     time.Duration
 	WriteDeadline    time.Duration
+	ExtendHeader     http.Header
 }
 
 //ControllerConfig defines controller configuration object type
@@ -133,6 +134,8 @@ func getWebSocketConfig() error {
 		handshakeTimeout = handshakeTimeoutDefault
 	}
 	edgeHubConfig.WSConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
+
+	edgeHubConfig.WSConfig.ExtendHeader = getExtendHeader()
 
 	return nil
 }
