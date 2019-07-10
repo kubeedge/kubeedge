@@ -52,7 +52,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/version"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis/runtime/cri"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
@@ -353,7 +353,7 @@ func (dm *DockerManager) Version() (kubecontainer.Version, error) {
 }
 
 //CreateContainer creates container and returns ID
-func (dm *DockerManager) CreateContainer(config *cri.ContainerConfig) (string, error) {
+func (dm *DockerManager) CreateContainer(config *apis.ContainerConfig) (string, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
 	dockerNetwork := &network.NetworkingConfig{}
@@ -404,7 +404,7 @@ func (dm *DockerManager) DeleteContainer(containerID kubecontainer.ContainerID) 
 }
 
 //ListContainers returns all containers list
-func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
+func (dm *DockerManager) ListContainers() ([]*apis.Container, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
 	dcontainers, err := dm.client.ContainerList(ctx, types.ContainerListOptions{All: true})
@@ -414,9 +414,9 @@ func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	containers := make([]*cri.Container, 0)
+	containers := make([]*apis.Container, 0)
 	for _, v := range dcontainers {
-		container := &cri.Container{
+		container := &apis.Container{
 			ID:      v.ID,
 			StartAt: time.Unix(v.Created, 0),
 			Status:  toEdgedStatus(v.Status),
@@ -428,7 +428,7 @@ func (dm *DockerManager) ListContainers() ([]*cri.Container, error) {
 }
 
 //InspectContainer is to inspect the container returning ContainerInspect object
-func (dm *DockerManager) InspectContainer(containerID string) (*cri.ContainerInspect, error) {
+func (dm *DockerManager) InspectContainer(containerID string) (*apis.ContainerInspect, error) {
 	ctx, cancel := dm.getTimeoutContext()
 	defer cancel()
 	containerJSON, err := dm.client.ContainerInspect(ctx, containerID)
@@ -441,7 +441,7 @@ func (dm *DockerManager) InspectContainer(containerID string) (*cri.ContainerIns
 		}
 		return nil, err
 	}
-	status := cri.ContainerStatus{
+	status := apis.ContainerStatus{
 		ContainerStatus: kubecontainer.ContainerStatus{
 			ID: kubecontainer.ContainerID{
 				ID: containerJSON.ID,
@@ -472,11 +472,11 @@ func (dm *DockerManager) InspectContainer(containerID string) (*cri.ContainerIns
 	}
 	status.State = kubecontainer.ContainerState(containerJSON.State.Status)
 	setStatusReason(&status)
-	return &cri.ContainerInspect{Status: status}, nil
+	return &apis.ContainerInspect{Status: status}, nil
 }
 
-func setStatusReason(status *cri.ContainerStatus) {
-	if status.State == cri.StatusCREATED &&
+func setStatusReason(status *apis.ContainerStatus) {
+	if status.State == kubecontainer.ContainerStateCreated &&
 		status.ExitCode != 0 && status.FinishedAt.IsZero() {
 		status.Reason = "ContainerCannotRun"
 	}
@@ -484,21 +484,19 @@ func setStatusReason(status *cri.ContainerStatus) {
 
 func toEdgedStatus(state string) kubecontainer.ContainerState {
 	switch {
-	case strings.Contains(state, statusPausedSuffix):
-		return cri.StatusPAUSED
 	case strings.HasPrefix(state, statusRunningPrefix):
-		return cri.StatusRUNNING
+		return kubecontainer.ContainerStateRunning
 	case strings.HasPrefix(state, statusExitedPrefix):
-		return cri.StatusEXITED
+		return kubecontainer.ContainerStateExited
 	case strings.HasPrefix(state, statusCreatedPrefix):
-		return cri.StatusCREATED
+		return kubecontainer.ContainerStateCreated
 	default:
-		return cri.StatusUNKNOWN
+		return kubecontainer.ContainerStateUnknown
 	}
 }
 
 //ContainerStatus gives container status
-func (dm *DockerManager) ContainerStatus(containerID string) (*cri.ContainerStatus, error) {
+func (dm *DockerManager) ContainerStatus(containerID string) (*apis.ContainerStatus, error) {
 
 	containerInspect, err := dm.InspectContainer(containerID)
 	if err != nil {
@@ -569,9 +567,9 @@ func (e containerNotFoundError) Error() string {
 func toPullableImageID(id string, image *types.ImageInspect) string {
 	// Default to the image ID, but if RepoDigests is not empty, use
 	// the first digest instead.
-	imageID := cri.DockerImageIDPrefix + id
+	imageID := apis.DockerPrefix + id
 	if len(image.RepoDigests) > 0 {
-		imageID = cri.DockerPullableImageIDPrefix + image.RepoDigests[0]
+		imageID = apis.DockerPullablePrefix + image.RepoDigests[0]
 	}
 	return imageID
 }

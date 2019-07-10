@@ -118,7 +118,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	nodeStatus.Status = *node.Status.DeepCopy()
 	nodeStatus.Status.Phase = e.getNodePhase()
 
-	devicePluginCapacity, removedDevicePlugins := e.getDevicePluginResourceCapacity()
+	devicePluginCapacity, _, removedDevicePlugins := e.getDevicePluginResourceCapacity()
 	if devicePluginCapacity != nil {
 		for k, v := range devicePluginCapacity {
 			log.LOGGER.Infof("Update capacity for %s to %d", k, v.Value())
@@ -168,13 +168,7 @@ func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 	var newNodeReadyCondition v1.NodeCondition
 
 	var err error
-	switch e.containerRuntimeName {
-	case DockerContainerRuntime:
-		_, err = e.runtime.Version()
-	case RemoteContainerRuntime:
-		_, err = e.containerRuntime.Version()
-	default:
-	}
+	_, err = e.containerRuntime.Version()
 
 	if err != nil {
 		newNodeReadyCondition = v1.NodeCondition{
@@ -226,21 +220,11 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 		return nodeInfo, err
 	}
 
-	switch e.containerRuntimeName {
-	case DockerContainerRuntime:
-		runtimeVersion, err := e.runtime.Version()
-		if err != nil {
-			return nodeInfo, err
-		}
-		nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
-	case RemoteContainerRuntime:
-		runtimeVersion, err := e.containerRuntime.Version()
-		if err != nil {
-			return nodeInfo, err
-		}
-		nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
-	default:
+	runtimeVersion, err := e.containerRuntime.Version()
+	if err != nil {
+		return nodeInfo, err
 	}
+	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
 
 	nodeInfo.KernelVersion = kernel
 	nodeInfo.OperatingSystem = runtime.GOOS
@@ -350,16 +334,8 @@ func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
 	return nil
 }
 
-func (e *edged) getDevicePluginResourceCapacity() (v1.ResourceList, []string) {
-	switch e.containerRuntimeName {
-	case DockerContainerRuntime:
-		return e.runtime.GetDevicePluginResourceCapacity()
-	case RemoteContainerRuntime:
-		//resourceList, _, str := e.containerManager.GetDevicePluginResourceCapacity()
-		//return resourceList, str
-	default:
-	}
-	return nil, nil
+func (e *edged) getDevicePluginResourceCapacity() (v1.ResourceList, v1.ResourceList, []string) {
+	return e.containerManager.GetDevicePluginResourceCapacity()
 }
 
 func (e *edged) getNodePhase() v1.NodePhase {
