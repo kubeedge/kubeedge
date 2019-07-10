@@ -135,7 +135,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 
 }
 
-//Execute the instalation for each tool and start edgecontroller
+//Execute the installation for each tool and start edgecontroller
 func Execute(toolList map[string]types.ToolsInstaller) {
 
 	for name, tool := range toolList {

@@ -27,13 +27,13 @@ import (
 
 var (
 	keadmLongDescription = `
-    ┌──────────────────────────────────────────────────────────┐
-    │ KEADM                                                    │
-    │ Easily bootstrap a KubeEdge cluster                      │
-    │                                                          │
-    │ Please give us feedback at:                              │
-    │ https://github.com/kubeedge/kubeedge/issues              │
-    └──────────────────────────────────────────────────────────┘
+    +----------------------------------------------------------+
+    | KEADM                                                    |
+    | Easily bootstrap a KubeEdge cluster                      |
+    |                                                          |
+    | Please give us feedback at:                              |
+    | https://github.com/kubeedge/kubeedge/issues              |
+    +----------------------------------------------------------+
 	
     Create a two-machine cluster with one cloud node
     (which controls the edge node cluster), and one edge node
@@ -42,17 +42,17 @@ var (
 
 `
 	keadmExample = `
-    ┌──────────────────────────────────────────────────────────┐
-    │ On the first machine:                                    │
-    ├──────────────────────────────────────────────────────────┤
-    │ master node (on the cloud)# sudo keadm init              │
-    └──────────────────────────────────────────────────────────┘
+    +----------------------------------------------------------+
+    | On the first machine:                                    |
+    +----------------------------------------------------------+
+    | master node (on the cloud)# sudo keadm init              |
+    +----------------------------------------------------------+
 
-    ┌──────────────────────────────────────────────────────────┐
-    │ On the second machine:                                   │
-    ├──────────────────────────────────────────────────────────┤
-    │ worker node (at the edge)# sudo keadm join <flags>       │
-    └──────────────────────────────────────────────────────────┘
+    +----------------------------------------------------------+
+    | On the second machine:                                   |
+    +----------------------------------------------------------+
+    | worker node (at the edge)# sudo keadm join <flags>       |
+    +----------------------------------------------------------+
 
     You can then repeat the second step on, as many other machines as you like.
 `

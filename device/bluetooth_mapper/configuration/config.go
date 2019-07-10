@@ -147,7 +147,8 @@ func (b *BLEConfig) Load() error {
 					return errors.New("Error in unmarshalling data property visitor configuration: " + err.Error())
 				}
 				action.Operation.CharacteristicUUID = bluetoothPropertyVisitor.CharacteristicUUID
-				if !reflect.DeepEqual(bluetoothPropertyVisitor.BluetoothDataConverter, nil) {
+				newBluetoothVisitorConfig := VisitorConfigBluetooth{}
+				if !reflect.DeepEqual(bluetoothPropertyVisitor.BluetoothDataConverter, newBluetoothVisitorConfig.BluetoothDataConverter) {
 					readAction := dataconverter.ReadAction{}
 					readAction.ActionName = actionConfig.Name
 					readAction.ConversionOperation.StartIndex = bluetoothPropertyVisitor.BluetoothDataConverter.StartIndex

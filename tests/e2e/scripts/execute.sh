@@ -23,32 +23,15 @@ echo $PWD
 if [ ! -d "/var/lib/edged" ]; then
   sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
 fi
-
+bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
+bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
+bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
 #run the edge_core and edgecontroller bin to run the E2E
 make #builds cloud and edge_core components
 sleep 2s
-#Kill the process if it exists
-sudo pkill edgecontroller
-sudo pkill edge_core
-sleep 2s
-#check the process are killed successfully
-if pgrep edgecontroller >/dev/null
-then
-    echo "edgecontroller process is still Running, Please kill edgecontroller!!"
-    exit 1
-else
-    echo "edgecontroller process is killed"
-fi
-if pgrep edge_core >/dev/null
-then
-    echo "edge_core process is still Running, Please kill edge_core!!"
-     exit 1
-else
-    echo "edge_core process is killed"
-fi
-
 PWD=${curpath}/tests/e2e
 sudo rm -rf $PWD/deployment/deployment.test
+sudo rm -rf $PWD/device_crd/device_crd.test
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
 # Specify the module name to compile in below command

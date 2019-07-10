@@ -5,6 +5,7 @@ all:
 	cd cloud && $(MAKE)
 	cd edge && $(MAKE)
 	cd keadm && $(MAKE)
+	cd edgesite && $(MAKE)
 else ifeq ($(WHAT),cloud)
 # make all what=cloud, build cloud binary
 all:
@@ -13,6 +14,9 @@ else ifeq ($(WHAT),edge)
 all:
 # make all what=edge, build edge binary
 	cd edge && $(MAKE)
+else ifeq ($(WHAT),edgesite)
+all:
+	$(MAKE) -C edgesite
 else ifeq ($(WHAT),keadm)
 all:
 # make all what=edge, build edge binary
@@ -20,13 +24,17 @@ all:
 else
 # invalid entry
 all:
-	@echo $S"invalid option please choose to build either cloud, edge or both"
+	@echo $S"invalid option please choose to build either cloud, edge, keadm, edgesite or all together"
 endif
 
 # unit tests
 .PHONY: edge_test
 edge_test:
 	cd edge && $(MAKE) test
+
+.PHONY: cloud_test
+cloud_test:
+	$(MAKE) -C cloud test
 
 # verify
 .PHONY: edge_verify
@@ -51,6 +59,8 @@ cloud_lint:
 
 .PHONY: e2e_test
 e2e_test:
+#	bash tests/e2e/scripts/execute.sh device_crd
+#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
 	bash tests/e2e/scripts/execute.sh
 
 .PHONY: performance_test
@@ -80,6 +90,17 @@ edgeimage:
 	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
+
+.PHONY: edgesiteimage
+edgesiteimage:
+	mkdir -p ./build/edgesite/tmp
+	rm -rf ./build/edgesite/tmp/*
+	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
+	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
+	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg RUN_FROM=${ARCH}/docker:dind \
+	-f build/edgesite/Dockerfile .
 
 .PHONY: depcheck
 depcheck:

@@ -35,6 +35,9 @@ const (
 // GattPeripheral  represents the remote gatt peripheral device
 var GattPeripheral gatt.Peripheral
 
+// CharacteristicsList contains the set of characteristics exposed by the device
+var CharacteristicsList = make([]*gatt.Characteristic, 0)
+
 // Operation is structure to define device operation
 type Operation struct {
 	// Action can be one of read/write corresponding to get/set respectively
@@ -63,7 +66,7 @@ type ActionManager struct {
 //PerformOperation executes the operation
 func (action *Action) PerformOperation(readConverter ...dataconverter.DataRead) {
 	glog.Infof("Performing operations associated with action:  %s", action.Name)
-	characteristic, err := FindCharacteristic(GattPeripheral, action.Operation.CharacteristicUUID)
+	characteristic, err := FindCharacteristic(action.Operation.CharacteristicUUID)
 	if err != nil {
 		glog.Errorf("Error in finding characteristics: %s", err)
 	}
@@ -100,23 +103,10 @@ func (action *Action) PerformOperation(readConverter ...dataconverter.DataRead) 
 }
 
 //FindCharacteristic is used to find the bluetooth characteristic
-func FindCharacteristic(p gatt.Peripheral, characteristicUUID string) (*gatt.Characteristic, error) {
-	ss, err := p.DiscoverServices(nil)
-	if err != nil {
-		glog.Errorf("Failed to discover services, err: %s\n", err)
-		return nil, err
-	}
-	for _, s := range ss {
-		// Discovery characteristics
-		cs, err := p.DiscoverCharacteristics(nil, s)
-		if err != nil {
-			glog.Errorf("Failed to discover characteristics, err: %s\n", err)
-			continue
-		}
-		for _, c := range cs {
-			if c.UUID().String() == characteristicUUID {
-				return c, nil
-			}
+func FindCharacteristic(characteristicUUID string) (*gatt.Characteristic, error) {
+	for _, c := range CharacteristicsList {
+		if c.UUID().String() == characteristicUUID {
+			return c, nil
 		}
 	}
 	return nil, errors.New("unable to find the specified characteristic: " + characteristicUUID)

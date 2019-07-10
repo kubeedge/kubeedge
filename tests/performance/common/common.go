@@ -73,8 +73,7 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	return nil
 }
 
-func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int) v1.PodList {
-	replica := 1
+func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNodes int) {
 	//Create edgecore configMaps based on the users choice of edgecore deployment.
 	for i := 0; i < numOfNodes; i++ {
 		nodeName := "perf-node-" + utils.GetRandomString(10)
@@ -92,7 +91,11 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 		//Store the ConfigMap against each edgenode
 		NodeInfo[nodeName] = append(NodeInfo[nodeName], configmap, nodeSelector)
 	}
-	//Create edgeCore deployments as users configuration
+}
+
+func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, numOfNodes int) v1.PodList {
+	replica := 1
+	//Create edgeCore deployments as per users configuration
 	for _, configmap := range NodeInfo {
 		UID := "edgecore-deployment-" + utils.GetRandomString(5)
 		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "", configmap[0], replica)
@@ -106,7 +109,7 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 	//Check All EdgeNode are in Running state
 	Eventually(func() int {
 		count := 0
-		for edgenodeName, _ := range NodeInfo {
+		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeReadyStatus(nodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == "Running" {
@@ -116,6 +119,12 @@ func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, 
 		return count
 	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
 
+	return podlist
+}
+
+func HandleEdgeDeployment(cloudhub, depHandler, nodeHandler, cmHandler, imgURL, podHandler string, numOfNodes int) v1.PodList {
+	CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler, numOfNodes)
+	podlist := HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler, numOfNodes)
 	return podlist
 }
 
@@ -132,7 +141,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 		go utils.HandleDeployment(true, true, http.MethodDelete, apiServerForDeployments+DeploymentHandler+"/"+depName, "", "", "", "", 0)
 	}
 	//delete edgenodes
-	for edgenodeName, _ := range NodeInfo {
+	for edgenodeName := range NodeInfo {
 		err := utils.DeRegisterNodeFromMaster(apiServerForRegisterNode+NodeHandler, edgenodeName)
 		if err != nil {
 			utils.Failf("DeRegisterNodeFromMaster failed: %v", err)
@@ -153,7 +162,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 	Eventually(func() int {
 		count := 0
 		for _, configmap := range NodeInfo {
-			statusCode := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
+			statusCode, _ := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
 			if statusCode == 404 {
 				count++
 			}
@@ -163,7 +172,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 
 	Eventually(func() int {
 		count := 0
-		for edgenodeName, _ := range NodeInfo {
+		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeDeleteStatus(apiServerForRegisterNode+NodeHandler, edgenodeName)
 			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == 404 {
@@ -194,7 +203,7 @@ func ApplyLabel(nodeHandler string) error {
 	nodes := utils.GetNodes(nodeHandler)
 	for _, node := range nodes.Items {
 		isMasterNode = false
-		for key, _ := range node.Labels {
+		for key := range node.Labels {
 			if strings.Contains(key, "node-role.kubernetes.io/master") {
 				isMasterNode = true
 				break

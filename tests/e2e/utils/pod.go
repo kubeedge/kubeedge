@@ -126,7 +126,7 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "1200s", "2s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "3000s", "2s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
 
 }
 
@@ -150,7 +150,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "1200s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
+	}, "3000s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
 
 }
 
@@ -223,7 +223,7 @@ func WaitforPodsRunning(apiserver string, podlist v1.PodList, timout time.Durati
 				}
 				// calculate the pods in running status
 				count := 0
-				for i, _ := range podlist.Items {
+				for i := range podlist.Items {
 					// update pod status in podlist
 					if podlist.Items[i].Name == p.Name {
 						InfoV2("PodName: %s PodStatus: %s", p.Name, p.Status.Phase)

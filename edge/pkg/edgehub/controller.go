@@ -22,17 +22,16 @@ import (
 const (
 	waitConnectionPeriod = time.Minute
 	defaultPlacement     = true
+	authEventType        = "auth_info_event"
 )
 
-var (
-	authEventType = "auth_info_event"
-	groupMap      = map[string]string{"resource": modules.MetaGroup,
-		"twin": modules.TwinGroup, "app": "sync",
-		"func": modules.MetaGroup, "user": modules.BusGroup}
-
-	// clear the number of data of the stop channel
-	times = 2
-)
+var groupMap = map[string]string{
+	"resource": modules.MetaGroup,
+	"twin":     modules.TwinGroup,
+	"app":      "sync",
+	"func":     modules.MetaGroup,
+	"user":     modules.BusGroup,
+}
 
 //Controller is EdgeHub controller object
 type Controller struct {
@@ -117,11 +116,12 @@ func (ehc *Controller) Start(ctx *context.Context) {
 		time.Sleep(ehc.config.HeartbeatPeriod * 2)
 
 		// clean channel
-		for i := 0; i < times; i++ {
+	clean:
+		for {
 			select {
 			case <-ehc.stopChan:
-				continue
 			default:
+				break clean
 			}
 		}
 	}

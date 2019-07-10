@@ -139,7 +139,7 @@ type Twin struct {
 // TwinProperty represents the device property for which an Expected/Actual state can be defined.
 type TwinProperty struct {
 	// Required: The value for this property.
-	Value string `json:"value,omitempty"`
+	Value string `json:"value,"`
 	// Additional metadata like timestamp when the value was reported etc.
 	// +optional
 	Metadata map[string]string `json:"metadata,omitempty"`

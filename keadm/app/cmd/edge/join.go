@@ -99,7 +99,8 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.EdgeControllerIP, types.EdgeControllerIP, "e", joinOptions.EdgeControllerIP,
 		"IP address of KubeEdge edgecontroller")
 	cmd.MarkFlagRequired(types.EdgeControllerIP)
-
+	cmd.Flags().StringVarP(&joinOptions.RuntimeType, types.RuntimeType, "r", joinOptions.RuntimeType,
+		"Container runtime type")
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeID, types.EdgeNodeID, "i", joinOptions.EdgeNodeID,
 		"KubeEdge Node unique idenfitcation string, If flag not used then the command will generate a unique id on its own")
 }
@@ -125,7 +126,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		kubeVer = joinOptions.KubeEdgeVersion
 	}
 	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort,
-		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID}
+		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID, RuntimeType: joinOptions.RuntimeType}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {

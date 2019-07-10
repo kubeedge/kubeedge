@@ -118,7 +118,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	nodeStatus.Status = *node.Status.DeepCopy()
 	nodeStatus.Status.Phase = e.getNodePhase()
 
-	devicePluginCapacity, removedDevicePlugins := e.getDevicePluginResourceCapacity()
+	devicePluginCapacity, _, removedDevicePlugins := e.getDevicePluginResourceCapacity()
 	if devicePluginCapacity != nil {
 		for k, v := range devicePluginCapacity {
 			log.LOGGER.Infof("Update capacity for %s to %d", k, v.Value())
@@ -167,7 +167,9 @@ func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 	currentTime := metav1.NewTime(time.Now())
 	var newNodeReadyCondition v1.NodeCondition
 
-	_, err := e.runtime.Version()
+	var err error
+	_, err = e.containerRuntime.Version()
+
 	if err != nil {
 		newNodeReadyCondition = v1.NodeCondition{
 			Type:              v1.NodeReady,
@@ -218,17 +220,18 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 		return nodeInfo, err
 	}
 
-	runtimeVersion, err := e.runtime.Version()
+	runtimeVersion, err := e.containerRuntime.Version()
 	if err != nil {
 		return nodeInfo, err
 	}
+	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
 
 	nodeInfo.KernelVersion = kernel
 	nodeInfo.OperatingSystem = runtime.GOOS
 	nodeInfo.Architecture = runtime.GOARCH
 	nodeInfo.KubeletVersion = e.version
 	nodeInfo.OSImage = prettyName
-	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
+	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
 
@@ -331,8 +334,8 @@ func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
 	return nil
 }
 
-func (e *edged) getDevicePluginResourceCapacity() (v1.ResourceList, []string) {
-	return e.runtime.GetDevicePluginResourceCapacity()
+func (e *edged) getDevicePluginResourceCapacity() (v1.ResourceList, v1.ResourceList, []string) {
+	return e.containerManager.GetDevicePluginResourceCapacity()
 }
 
 func (e *edged) getNodePhase() v1.NodePhase {

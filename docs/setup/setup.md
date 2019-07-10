@@ -145,7 +145,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     ```
 
     KubeEdge can also be cross compiled to run on ARM based processors.
-    Please follow the instructions given below or click [Cross Compilation](cross-compilation.html) for detailed instructions.
+    Please follow the instructions given below or click [Cross Compilation](cross-compilation.md) for detailed instructions.
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/edge

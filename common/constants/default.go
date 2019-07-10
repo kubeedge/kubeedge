@@ -16,11 +16,15 @@ const (
 	DefaultUpdateNodeStatusWorkers = 1
 	DefaultQueryConfigMapWorkers   = 4
 	DefaultQuerySecretWorkers      = 4
+	DefaultQueryServiceWorkers     = 4
+	DefaultQueryEndpointsWorkers   = 4
 
 	DefaultUpdatePodStatusBuffer  = 1024
 	DefaultUpdateNodeStatusBuffer = 1024
 	DefaultQueryConfigMapBuffer   = 1024
 	DefaultQuerySecretBuffer      = 1024
+	DefaultQueryServiceBuffer     = 1024
+	DefaultQueryEndpointsBuffer   = 1024
 
 	DefaultETCDTimeout = 10
 

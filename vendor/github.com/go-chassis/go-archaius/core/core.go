@@ -60,6 +60,7 @@ type ConfigSource interface {
 	AddDimensionInfo(dimensionInfo string) (map[string]string, error)
 	DynamicConfigHandler(DynamicConfigCallback) error
 	GetPriority() int
+	SetPriority(priority int)
 	Cleanup() error
 }
 

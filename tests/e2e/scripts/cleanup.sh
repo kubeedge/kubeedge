@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+setuptype=$1
+
 kill_edge_core() {
    sudo pkill edge_core
     #kill the edge_core process if it exists.
@@ -40,6 +42,20 @@ kill_edgecontroller() {
     fi
 }
 
+kill_edgesite() {
+    exit 0
+    sudo pkill edgesite
+    #kill the edge_core process if it exists.
+    sleep 5s
+    if pgrep edgesite >/dev/null
+    then
+        echo "Failed to kill edgesite process !!"
+        exit 1
+    else
+        echo "edgesite is successfully killed !!"
+    fi
+}
+
 cleanup_files(){
     workdir=$GOPATH/src/github.com/kubeedge/kubeedge
     cd $workdir
@@ -49,16 +65,31 @@ cleanup_files(){
     sudo rm -rf edge/edge.db
     sudo rm -rf edge/edge_core
     sudo rm -rf edge/tmp/
-    sudo rm -rf tests/e2e/config.json
     sudo rm -rf tests/e2e/kubeedge.crt
     sudo rm -rf tests/e2e/kubeedge.csr
     sudo rm -rf tests/e2e/kubeedge.key
     sudo rm -rf tests/e2e/rootCA.crt
     sudo rm -rf tests/e2e/rootCA.key
     sudo rm -rf tests/e2e/rootCA.srl
-    sudo rm -rf tests/e2e/deployment/deployment.test
 }
 
-kill_edge_core
-kill_edgecontroller
+if [ "deployment" = ${setuptype} ]; then
+    kill_edge_core
+    kill_edgecontroller
+    sudo rm -rf tests/e2e/deployment/deployment.test
+fi
+
+if [ "device_crd" = ${setuptype} ]; then
+    kill_edge_core
+    kill_edgecontroller
+    sudo rm -rf tests/e2e/device_crd/device_crd.test
+fi
+
+if [ "edgesite" = ${setuptype} ]; then
+    kill_edgesite
+    sudo rm -rf tests/e2e/edgesite/edgesite.test
+    sudo rm -rf tests/e2e/config.json
+
+fi
+
 cleanup_files

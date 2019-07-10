@@ -45,7 +45,7 @@ const (
 	DefaultCertPath = "/etc/kubeedge/certs"
 
 	//DefaultKubeEdgeVersion is the current default version of KubeEdge
-	DefaultKubeEdgeVersion = "0.3.0-beta.0"
+	DefaultKubeEdgeVersion = "0.3.0"
 
 	//DefaultDockerVersion is the current default version of Docker
 	DefaultDockerVersion = "18.06.0"
@@ -53,6 +53,11 @@ const (
 	//DefaultK8SVersion is the current default version of K8S
 	DefaultK8SVersion = "1.14.1"
 
-	// DefaultProjectID
+	// DefaultProjectID is default project id
 	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
+
+	VendorK8sPrefix = "v1.10.9-kubeedge-"
+
+	// RuntimeType is default runtime type
+	RuntimeType = "runtimetype"
 )
