@@ -2,15 +2,12 @@ package registry
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/go-chassis/go-chassis/core/registry"
 	utiltags "github.com/go-chassis/go-chassis/pkg/util/tags"
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
-	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -25,17 +22,6 @@ func init() { registry.InstallServiceDiscovery(EdgeRegistry, NewServiceDiscovery
 type ServiceDiscovery struct {
 	metaClient client.CoreInterface
 	Name       string
-}
-
-func toProtocolMap(address v1.EndpointAddress, ports []v1.EndpointPort) map[string]string {
-	ret := map[string]string{}
-	for _, port := range ports {
-		if _, ok := ret[port.Name]; !ok {
-			ret[port.Name] = address.IP + ":" + strconv.Itoa(int(port.Port))
-			continue
-		}
-	}
-	return ret
 }
 
 func NewServiceDiscovery(options registry.Options) registry.ServiceDiscovery {
@@ -54,20 +40,35 @@ func (r *ServiceDiscovery) GetAllMicroServices() ([]*registry.MicroService, erro
 // FindMicroServiceInstances find micro-service instances (subnets)
 func (r *ServiceDiscovery) FindMicroServiceInstances(consumerID, microServiceName string, tags utiltags.Tags) ([]*registry.MicroServiceInstance, error) {
 	name, namespace := common.SplitServiceKey(microServiceName)
+	servicePort, err := common.SplitToGetPort(microServiceName)
+	if err != nil {
+		log.LOGGER.Errorf("split micro service name to get port error: %v", err)
+		return nil, err
+	}
 
+	service, err := r.metaClient.Services(namespace).Get(name)
+	if err != nil {
+		log.LOGGER.Errorf("get service failed, error: %v", err)
+		return nil, err
+	}
 	pods, err := r.metaClient.Services(namespace).GetPods(name)
 	if err != nil {
 		log.LOGGER.Errorf("get service pod list failed, error: %v", err)
 		return nil, err
 	}
+
 	var microServiceInstance []*registry.MicroServiceInstance
-	for _, p := range pods {
-		microServiceInstance = append(microServiceInstance, &registry.MicroServiceInstance{
-			InstanceID:   "",
-			ServiceID:    name + "." + namespace,
-			HostName:     "",
-			EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", p.Status.HostIP, p.Spec.Containers[0].Ports[0].HostPort)},
-		})
+	for _, port := range service.Spec.Ports {
+		if port.Protocol == "TCP" && int(port.Port) == servicePort {
+			for _, p := range pods {
+				microServiceInstance = append(microServiceInstance, &registry.MicroServiceInstance{
+					InstanceID:   "",
+					ServiceID:    name + "." + namespace,
+					HostName:     "",
+					EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", p.Status.HostIP, servicePort)},
+				})
+			}
+		}
 	}
 
 	return microServiceInstance, nil
