@@ -3,6 +3,9 @@ package apis
 import (
 	"errors"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
 const (
@@ -18,36 +21,74 @@ const (
 	StatusTag = "StatusTag"
 )
 
-//RainerCoreConfiguration is configuration object for edge node
-type RainerCoreConfiguration struct {
-
-	// IP address for the EdgeStore etcd server
-	EdgeStoreAddress string
-
-	// Port for the EdgeStore to server on
-	EdgeStorePort int
-
-	// nodesStatusUpdateFrequency is the frequency that EdgeController posts edgenodes
-	// status to apiserver. Note: be cautious when changing the constant, it
-	// must work with nodeMonitorGracePeriod in nodecontroller.
-	NodesStatusUpdateFrequency time.Duration
-
-	// Todo: for now, assume single namespace
-	// registerNodeNamespace defines the namespace of the edge nodes to be registered
-	RegisterNodeNamespace string
+// Container defines container object
+type Container struct {
+	// ID of the container.
+	ID string `json:"id,omitempty"`
+	// Status of the container.
+	Status  kubecontainer.ContainerState `json:"status,omitempty"`
+	StartAt time.Time                    `json:"startat,omitempty"`
 }
 
-//Node is object type for node
-type Node struct {
-	Name string
+// Device specifies a host device to mount into a container.
+type Device struct {
+	// Path of the device within the container.
+	ContainerPath string `json:"container_path,omitempty"`
+	// Path of the device on the host.
+	HostPath string `json:"host_path,omitempty"`
+	// Cgroups permissions of the device, candidates are one or more of
+	// * r - allows container to read from the specified device.
+	// * w - allows container to write to the specified device.
+	// * m - allows container to create device files that do not yet exist.
+	Permissions string `json:"permissions,omitempty"`
 }
 
-//UID is string form to represent ID
-type UID string
+// ContainerConfig defines container configuration details
+type ContainerConfig struct {
+	Name       string
+	Config     *container.Config
+	HostConfig *container.HostConfig
+}
+
+// ContainerInspect is container inspect
+type ContainerInspect struct {
+	Status ContainerStatus `json:"Status,omitempty"`
+}
+
+// ContainerStatus represents the status of a container.
+type ContainerStatus struct {
+	kubecontainer.ContainerStatus
+	// Reference to the image in use. For most runtimes, this should be an
+	// image ID
+	ImageRef string `json:"image_ref,omitempty"`
+	// Key-value pairs that may be used to scope and select individual resources.
+	Labels map[string]string `json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Log path of container.
+	LogPath      string `json:"log_path,omitempty"`
+	RestartCount int32  `json:"restartCount"`
+}
 
 //error variables
 var (
 	ErrPodNotFound       = errors.New("PodNotFound")
 	ErrContainerNotFound = errors.New("ContainerNotFound")
 	ErrPodStartBackOff   = errors.New("PodStartBackOff")
+)
+
+// RuntimeService is docker runtime service
+type RuntimeService interface {
+	Version() (kubecontainer.Version, error)
+	CreateContainer(config *ContainerConfig) (string, error)
+	StartContainer(containerID string) error
+	StopContainer(containerID string, timeout uint32) error
+	DeleteContainer(containerID kubecontainer.ContainerID) error
+	ListContainers() ([]*Container, error)
+	ContainerStatus(containerID string) (*ContainerStatus, error)
+	InspectContainer(containerID string) (*ContainerInspect, error)
+}
+
+// constants for defining prefix in docker
+const (
+	DockerPrefix         = "docker://"
+	DockerPullablePrefix = "docker-pullable://"
 )

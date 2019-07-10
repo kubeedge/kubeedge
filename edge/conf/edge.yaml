@@ -46,11 +46,11 @@ edged:
     docker-address: unix:///var/run/docker.sock
     version: v1.10.9-kubeedge-v1.0.0
     runtime-type: docker
-    remote-runtime-endpoint: /var/run/containerd/containerd.sock
-    remote-image-endpoint: /var/run/containerd/containerd.sock
+    remote-runtime-endpoint: unix:///var/run/dockershim.sock
+    remote-image-endpoint: unix:///var/run/dockershim.sock
     runtime-request-timeout: 2
     podsandbox-image: k8s.gcr.io/pause
-    cgroup-driver: systemd
+    cgroup-driver: cgroupfs
     node-ip: ""
     cluster-dns: ""
     cluster-domain: ""
