@@ -2,9 +2,11 @@ package common
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/go-chassis/go-chassis/core/common"
+	"github.com/pkg/errors"
 )
 
 func SplitServiceKey(key string) (name, namespace string) {
@@ -21,4 +23,14 @@ func SplitServiceKey(key string) (name, namespace string) {
 		return sets[0], ns
 	}
 	return key, ns
+}
+
+func SplitToGetPort(serviceName string) (port int, err error) {
+	splitServiceName := strings.Split(serviceName, ":")
+	if len(splitServiceName) != 2 {
+		err = errors.New("invalid length after splitting")
+		return
+	}
+	port, err = strconv.Atoi(splitServiceName[1])
+	return
 }

@@ -2,7 +2,6 @@ package server
 
 import (
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/log"
+	edgemeshCommon "github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 )
 
@@ -37,66 +37,42 @@ func StartTCP() {
 	}
 }
 
-func httpResponseToStr(resp *http.Response) string {
-	respString := resp.Proto + " " + resp.Status + "\n"
-	for key, values := range resp.Header {
-		respString += key + ": "
-		for _, v := range values {
-			respString += v + ", "
-		}
-		respString = respString[0 : len(respString)-2]
-		respString += "\n"
-	}
-	b, _ := ioutil.ReadAll(resp.Body)
-	respString += "\n" + string(b)
-	return respString
-}
-
 func process(conn net.Conn) {
 	log.LOGGER.Info("start receiving data...\n")
 
 	buffer := make([]byte, 1024)
 	d := make(chan []byte, 1024)
 	s := make(chan interface{}, 1)
-	restResponse := func(data *invocation.Response) error {
+	responseCallback := func(data *invocation.Response) error {
 		if data.Err != nil {
 			log.LOGGER.Errorf("error in response:%v", data.Err)
 			conn.Write([]byte(data.Err.Error()))
 			return data.Err
 		} else {
 			if data.Result != nil {
-				conn.Write([]byte(httpResponseToStr(data.Result.(*http.Response))))
+				switch data.Result.(type) {
+				case *http.Response:
+					conn.Write([]byte(edgemeshCommon.HTTPResponseToStr(data.Result.(*http.Response))))
+				default:
+					conn.Write(data.Result.([]byte))
+				}
 			}
 		}
 		return nil
 	}
-	fakeResponse := func(data *invocation.Response) error {
-		defer conn.Close()
-		if data.Err != nil {
-			log.LOGGER.Errorf("error in response:%v", data.Err)
-			conn.Write([]byte(data.Err.Error()))
-			return data.Err
-		} else {
-			if data.Result != nil {
-				conn.Write(data.Result.([]byte))
-			}
+	invocationCallback := func(protocol string, invocation invocation.Invocation, handlerNames []string, needCloseConn bool) {
+		if needCloseConn {
+			defer conn.Close()
 		}
-		return nil
-	}
-	invocationCallback := func(protocol string, invocation invocation.Invocation) {
-		if invocation.Protocol == "rest" {
-			c, err := handler.CreateChain(common.Consumer, protocol, handler.Loadbalance, handler.Transport)
+		c, _ := handler.CreateChain(common.Consumer, protocol)
+		for _, handlerName := range handlerNames {
+			handlerToAdd, err := handler.CreateHandler(handlerName)
 			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+				log.LOGGER.Errorf("Create handler %s failed with error: %v", handlerName, err)
 			}
-			c.Next(&invocation, restResponse)
-		} else {
-			c, err := handler.CreateChain(common.Consumer, protocol)
-			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
-			}
-			c.Next(&invocation, fakeResponse)
+			c.AddHandler(handlerToAdd)
 		}
+		c.Next(&invocation, responseCallback)
 	}
 
 	//Start resolver
@@ -104,7 +80,7 @@ func process(conn net.Conn) {
 	for {
 		num, err := conn.Read(buffer)
 		if err == nil {
-			log.LOGGER.Infof("buffer:\n%s\n", buffer)
+			log.LOGGER.Infof("buffer:\n%s\n", buffer[:num])
 			d <- buffer[:num]
 		}
 		if err == io.EOF {

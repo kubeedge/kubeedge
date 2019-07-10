@@ -13,7 +13,7 @@ func init() {
 }
 
 // Resolve will loop the resolverchain to resolve the request
-func Resolve(request chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation)) (invocation.Invocation, bool) {
+func Resolve(request chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation, []string, bool)) (invocation.Invocation, bool) {
 	for resolver := ResolverChain.Front(); resolver != nil; resolver = resolver.Next() {
 		inv, isFired := resolver.Value.(Resolver).Resolve(request, stop, invCallback)
 		if isFired {

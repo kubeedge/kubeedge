@@ -13,7 +13,7 @@ import (
 
 func Start() {
 	//Initialize the resolvers
-	r := &resolver.MyResolver{"http"}
+	r := &resolver.HTTPResolver{}
 	resolver.RegisterResolver(r)
 	//Initialize the handlers
 	//
