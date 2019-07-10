@@ -76,20 +76,26 @@ func DnsStart() {
 
 // getDnsServer returns the specific interface ip of version 4
 func getDnsServer() (net.IP, error) {
-	ifaces, err := net.InterfaceByName(inter)
-	if err != nil {
-		return nil, err
-	}
-
-	addrs, _ := ifaces.Addrs()
-
-	for _, addr := range addrs {
-		if ip, inet, _ := net.ParseCIDR(addr.String()); len(inet.Mask) == 4 {
-			return ip, nil
+	for {
+		ifaces, err := net.InterfaceByName(inter)
+		if err != nil {
+			log.LOGGER.Warnf("get interface error : %s", err)
+			time.Sleep(time.Second * 3)
+			continue
 		}
+
+		addrs, _ := ifaces.Addrs()
+
+		for _, addr := range addrs {
+			if ip, inet, _ := net.ParseCIDR(addr.String()); len(inet.Mask) == 4 {
+				return ip, nil
+			}
+		}
+
+		log.LOGGER.Warnf("the interface " + inter + " has not config ip of version 4")
+		time.Sleep(time.Second * 3)
 	}
 
-	return nil, errors.New("the interface" + inter + "have not config ip of version 4")
 }
 
 // startDnsServer start the DNS Server
@@ -101,6 +107,7 @@ func startDnsServer() {
 	lip, err := getDnsServer()
 	if err != nil {
 		log.LOGGER.Errorf("Dns server Start error : %s", err)
+		return
 	}
 
 	laddr := &net.UDPAddr{
