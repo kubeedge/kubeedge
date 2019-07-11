@@ -18,19 +18,20 @@ edged:
 > <https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd>
 
 ## Install CNI plugin 
-+ get cni plugin source code of version (0.1.0, 0.2.0, 0.3.0, 0.3.1, 0.4.0) from the github.com. Compile and install.
++ get cni plugin source code of version (0.2.0) from the github.com. Compile and install.
+> It is recommended to use version 0.2.0, which have tested to ensure stability and availability.
 > make sure to run on the Go development environment.
 ```bash
-# download the cni-plugin-0.3.0
-$ wget https://github.com/containernetworking/plugins/archive/v0.3.0.tar.gz
+# download the cni-plugin-0.2.0
+$ wget https://github.com/containernetworking/plugins/archive/v0.2.0.tar.gz
 # Extract the tarball
-$ tar -zxvf v0.3.0.tar.gz
+$ tar -zxvf v0.2.0.tar.gz
 # Compile the source code
-$ cd ./plugins-0.3.0
+$ cd ./plugins-0.2.0
 $ ./build
 # install the plugin after './build'
 $ mkdir -p /opt/cni/bin
-$ cp ./plugins-0.3.0/bin/* /opt/cni/bin/
+$ cp ./bin/* /opt/cni/bin/
 ```
 + configure cni plugin
  
@@ -44,7 +45,7 @@ $ mkdir -p /etc/cni/net.d/
 ```bash
 $ cat >/etc/cni/net.d/10-mynet.conf <<EOF
 {
-	"cniVersion": "0.3.0",
+	"cniVersion": "0.2.0",
 	"name": "mynet",
 	"type": "bridge",
 	"bridge": "docker0",
