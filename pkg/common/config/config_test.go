@@ -16,13 +16,8 @@ import (
 
 func TestInitializeConfig(t *testing.T) {
 	configDir := util.GetCurrentDirectory() + "/conf"
-	//create if not exists
-	_, err := os.Stat(configDir)
-	if !os.IsExist(err) {
-		os.Mkdir(configDir, os.ModePerm)
-	}
 	defer os.RemoveAll(configDir)
-	err = prepareConfigFile(configDir)
+	err := prepareConfigFile(configDir)
 	addSources(configDir)
 	if err != nil {
 		t.Error(err)
