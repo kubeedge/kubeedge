@@ -74,8 +74,6 @@ type controllerConfigYaml struct {
 	HeartbeatPeroid string `yaml:"heartbeat,omitempty"`
 	RefreshInterval string `yaml:"refresh-ak-sk-interval,omitempty"`
 	CloudhubURL     string `yaml:"cloud-hub-url"`
-	AuthInfosPath   string `yaml:"auth-info-files-path,omitempty"`
-	PlacementURL    string `yaml:"placement-url,omitempty"`
 	ProjectID       string `yaml:"project-id,omitempty"`
 	NodeID          string `yaml:"node-id,omitempty"`
 }
@@ -142,8 +140,6 @@ func TestGetConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						AuthInfosPath:   "/var/IEF/secret",
-						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
@@ -170,9 +166,6 @@ func TestGetConfig(t *testing.T) {
 				CtrConfig: ControllerConfig{
 					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
-					RefreshInterval: 15 * time.Minute,
-					AuthInfosPath:   "/var/IEF/secret",
-					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
@@ -194,10 +187,9 @@ func TestGetConfig(t *testing.T) {
 						KeyFilePath:  "/tmp/edge.key",
 					},
 					controllerConfigYaml{
-						Protocol:     "websocket",
-						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    defaultProjectID,
-						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						Protocol:  "websocket",
+						ProjectID: defaultProjectID,
+						NodeID:    "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
@@ -221,10 +213,7 @@ func TestGetConfig(t *testing.T) {
 				},
 				CtrConfig: ControllerConfig{
 					Protocol:        "websocket",
-					AuthInfosPath:   "/var/IEF/secret",
 					HeartbeatPeriod: 15 * time.Second,
-					RefreshInterval: 10 * time.Minute,
-					PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 					ProjectID:       defaultProjectID,
 					NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 				},
@@ -382,8 +371,6 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						AuthInfosPath:   "/var/IEF/secret",
-						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       defaultProjectID,
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
@@ -398,32 +385,13 @@ func Test_getControllerConfig(t *testing.T) {
 					webSocketConfigYaml{},
 					quicConfigYaml{},
 					controllerConfigYaml{
-						Protocol:     "websocket",
-						PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue",
-						ProjectID:    defaultProjectID,
-						NodeID:       "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+						Protocol:  "websocket",
+						ProjectID: defaultProjectID,
+						NodeID:    "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
 			},
 			false},
-
-		//Negative Testcase with no placementURL  provided
-		{"Test_getControllerConfig3: No placementURL  provided ",
-			testYamlGenerator{
-				edgeHubConfigYaml{
-					webSocketConfigYaml{},
-					quicConfigYaml{},
-					controllerConfigYaml{
-						Protocol:        "websocket",
-						HeartbeatPeroid: "150",
-						RefreshInterval: "15",
-						AuthInfosPath:   "/var/IEF/secret",
-						ProjectID:       defaultProjectID,
-						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
-					},
-				},
-			},
-			true},
 
 		//Negative Testcase with no projectID  provided
 		{"Test_getControllerConfig4: No projectID provided ",
@@ -435,8 +403,6 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						AuthInfosPath:   "/var/IEF/secret",
-						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						NodeID:          "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
 					},
 				},
@@ -453,8 +419,6 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						AuthInfosPath:   "/var/IEF/secret",
-						PlacementURL:    "https://10.154.193.32:7444/v1/placement_external/message_queue",
 						ProjectID:       defaultProjectID,
 					},
 				},
