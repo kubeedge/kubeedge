@@ -46,6 +46,10 @@ func InitializeConfig() {
 		envSource := envconfigsource.NewEnvConfigurationSource()
 		CONFIG.AddSource(envSource)
 		confLocation := getConfigDirectory() + "/conf"
+		_, err = os.Stat(confLocation)
+		if !os.IsExist(err) {
+			os.Mkdir(confLocation, os.ModePerm)
+		}
 		err = filepath.Walk(confLocation, func(location string, f os.FileInfo, err error) error {
 			if f == nil {
 				return err
