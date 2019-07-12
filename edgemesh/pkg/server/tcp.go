@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
 	"io"
 	"io/ioutil"
 	"net"
@@ -58,45 +60,62 @@ func process(conn net.Conn) {
 	buffer := make([]byte, 1024)
 	d := make(chan []byte, 1024)
 	s := make(chan interface{}, 1)
-	restResponse := func(data *invocation.Response) error {
+	//restResponse := func(data *invocation.Response) error {
+	//	if data.Err != nil {
+	//		log.LOGGER.Errorf("error in response:%v", data.Err)
+	//		conn.Write([]byte(data.Err.Error()))
+	//		return data.Err
+	//	} else {
+	//		if data.Result != nil {
+	//			conn.Write([]byte(httpResponseToStr(data.Result.(*http.Response))))
+	//		}
+	//	}
+	//	return nil
+	//}
+	responseCallback := func(data *invocation.Response) error {
+		//defer conn.Close()
 		if data.Err != nil {
 			log.LOGGER.Errorf("error in response:%v", data.Err)
 			conn.Write([]byte(data.Err.Error()))
 			return data.Err
 		} else {
 			if data.Result != nil {
-				conn.Write([]byte(httpResponseToStr(data.Result.(*http.Response))))
+				switch data.Result.(type) {
+				case *http.Response:
+					conn.Write([]byte(httpResponseToStr(data.Result.(*http.Response))))
+				default:
+					conn.Write(data.Result.([]byte))
+				}
 			}
 		}
 		return nil
 	}
-	fakeResponse := func(data *invocation.Response) error {
-		defer conn.Close()
-		if data.Err != nil {
-			log.LOGGER.Errorf("error in response:%v", data.Err)
-			conn.Write([]byte(data.Err.Error()))
-			return data.Err
-		} else {
-			if data.Result != nil {
-				conn.Write(data.Result.([]byte))
-			}
+	invocationCallback := func(protocol string, invocation invocation.Invocation, handlerNames []string, closeConn bool) {
+		//if invocation.Protocol == "rest" {
+		//	c, err := handler.CreateChain(common.Consumer, protocol, handler.Loadbalance, handler.Transport)
+		//	if err != nil {
+		//		log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+		//	}
+		//	c.Next(&invocation, restResponse)
+		//} else {
+		//	c, err := handler.CreateChain(common.Consumer, protocol)
+		//	if err != nil {
+		//		log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+		//	}
+		//	c.Next(&invocation, fakeResponse)
+		//}
+		if closeConn {
+			defer conn.Close()
 		}
-		return nil
-	}
-	invocationCallback := func(protocol string, invocation invocation.Invocation) {
-		if invocation.Protocol == "rest" {
-			c, err := handler.CreateChain(common.Consumer, protocol, handler.Loadbalance, handler.Transport)
+		c, _ := handler.CreateChain(common.Consumer, protocol)
+		for _, handlerName := range handlerNames {
+			handlerToAdd, err := handler.CreateHandler(handlerName)
 			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+				log.LOGGER.Errorf("Create handler %s failed with error: %v", handlerName, err)
 			}
-			c.Next(&invocation, restResponse)
-		} else {
-			c, err := handler.CreateChain(common.Consumer, protocol)
-			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
-			}
-			c.Next(&invocation, fakeResponse)
+			c.AddHandler(handlerToAdd)
 		}
+		c.Next(&invocation, responseCallback)
 	}
 
 	//Start resolver

@@ -34,7 +34,7 @@ func isHTTPRequest(s string) bool {
 	return false
 }
 
-func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation)) (invocation.Invocation, bool) {
+func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation, []string, bool)) (invocation.Invocation, bool) {
 	content := ""
 	protocol := ""
 	for {
