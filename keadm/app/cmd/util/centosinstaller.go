@@ -48,6 +48,7 @@ func (c *CentOS) SetDockerVersion(version string) {
 //edited by claire
 func (c *CentOS) SetK8SVersionAndIsNodeFlag(version string, cidr string, flag bool) {
 	c.KubernetesVersion = version
+	fmt.Printf("setk8sversion is %s\n", cidr)
 	c.KubeCidr = cidr
 	c.IsEdgeNode = flag
 }
@@ -324,6 +325,7 @@ func (c *CentOS) StartK8Scluster() error {
 		install = false
 	}
 	if install == true {
+		fmt.Printf("KubeCidr is %s\n", c.KubeCidr)
 		installk8s := fmt.Sprintf("swapoff -a && kubeadm init --pod-network-cidr %s", c.KubeCidr)
 		cmd := &Command{Cmd: exec.Command("sh", "-c", installk8s)}
 		err := cmd.ExecuteCmdShowOutput()
@@ -402,7 +404,7 @@ func (c *CentOS) InstallKubeEdge() error {
 		cmd = &Command{Cmd: exec.Command("sh", "-c", cmdStr)}
 		cmd.ExecuteCommand()
 		desiredChecksum := cmd.GetStdOutput()
-		fmt.Printf("%s \n\n", cmd.GetStdOutput())
+		fmt.Printf("%s \n", cmd.GetStdOutput())
 
 		fmt.Printf("%s content: \n", checksumFilename)
 		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, c.KubeEdgeVersion, checksumFilename)

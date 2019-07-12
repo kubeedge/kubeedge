@@ -36,6 +36,10 @@ type K8SInstTool struct {
 //If required then install the said version.
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
+	if ks.KubeCidr == "" {
+		ks.KubeCidr = "10.244.0.0/16"
+	}
+	fmt.Printf("setk8sversionfirst %s\n", ks.KubeCidr)
 	ks.SetK8SVersionAndIsNodeFlag(ks.ToolVersion, ks.KubeCidr, ks.IsEdgeNode)
 
 	component := "kubeadm"
