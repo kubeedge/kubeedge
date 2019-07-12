@@ -251,6 +251,14 @@ type Config struct {
 }
 
 func init() {
+	_, err := os.Stat(DefaultRootDir)
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(DefaultRootDir, 0755)
+		if err != nil {
+			panic(fmt.Errorf("Create %v dir error: %v", DefaultRootDir, err))
+		}
+	}
+
 	edged, err := newEdged()
 	if err != nil {
 		log.LOGGER.Errorf("init new edged error, %v", err)
@@ -526,7 +534,9 @@ func newEdged() (*edged, error) {
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}
+
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
+
 	var machineInfo cadvisorapi.MachineInfo
 	machineInfo.MemoryCapacity = uint64(conf.memoryCapacity)
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
