@@ -41,15 +41,37 @@ func Write2File(path string, data interface{}) error {
 
 //WriteControllerYamlFile writes controller.yaml for cloud component
 func WriteControllerYamlFile(path, kubeConfig string) error {
-	controllerData := ControllerYaml{Controller: CloudControllerSt{Kube: KubeEdgeControllerConfig{Master: "http://localhost:8080", Namespace: constants.DefaultKubeNamespace,
-		ContentType: constants.DefaultKubeContentType,
-		QPS:         constants.DefaultKubeQPS, Burst: constants.DefaultKubeBurst, NodeUpdateFrequency: constants.DefaultKubeUpdateNodeFrequency * time.Second,
-		KubeConfig: kubeConfig}},
-		CloudHub: CloudHubSt{IPAddress: "0.0.0.0", Port: 10000, CA: "/etc/kubeedge/ca/rootCA.crt", Cert: "/etc/kubeedge/certs/edge.crt",
-			Key: "/etc/kubeedge/certs/edge.key", KeepAliveInterval: 30, WriteTimeout: 30, NodeLimit: 10},
-		DeviceController: DeviceControllerSt{Kube: KubeEdgeControllerConfig{Master: "http://localhost:8080", Namespace: constants.DefaultKubeNamespace,
-			ContentType: constants.DefaultKubeContentType,
-			QPS:         constants.DefaultKubeQPS, Burst: constants.DefaultKubeBurst, KubeConfig: ""}},
+	controllerData := ControllerYaml{
+		Controller: CloudControllerSt{
+			Kube: KubeEdgeControllerConfig{
+				Master:              "http://localhost:8080",
+				Namespace:           constants.DefaultKubeNamespace,
+				ContentType:         constants.DefaultKubeContentType,
+				QPS:                 constants.DefaultKubeQPS,
+				Burst:               constants.DefaultKubeBurst,
+				NodeUpdateFrequency: constants.DefaultKubeUpdateNodeFrequency * time.Second,
+				KubeConfig:          kubeConfig,
+			},
+		},
+		CloudHub: CloudHubSt{
+			IPAddress:         "0.0.0.0",
+			Port:              10000,
+			CA:                "/etc/kubeedge/ca/rootCA.crt",
+			Cert:              "/etc/kubeedge/certs/edge.crt",
+			Key:               "/etc/kubeedge/certs/edge.key",
+			KeepAliveInterval: 30,
+			WriteTimeout:      30,
+			NodeLimit:         10,
+		},
+		DeviceController: DeviceControllerSt{
+			Kube: KubeEdgeControllerConfig{
+				Master:      "http://localhost:8080",
+				Namespace:   constants.DefaultKubeNamespace,
+				ContentType: constants.DefaultKubeContentType,
+				QPS:         constants.DefaultKubeQPS,
+				Burst:       constants.DefaultKubeBurst,
+				KubeConfig:  ""},
+		},
 	}
 	if err := Write2File(path, controllerData); err != nil {
 		return err
@@ -59,7 +81,15 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 
 //WriteCloudModulesYamlFile writes modules.yaml for cloud component
 func WriteCloudModulesYamlFile(path string) error {
-	modulesData := ModulesYaml{Modules: ModulesSt{Enabled: []string{"devicecontroller", "controller", "cloudhub"}}}
+	modulesData := ModulesYaml{
+		Modules: ModulesSt{
+			Enabled: []string{
+				"devicecontroller",
+				"controller",
+				"cloudhub",
+			},
+		},
+	}
 	if err := Write2File(path, modulesData); err != nil {
 		return err
 	}
@@ -68,7 +98,13 @@ func WriteCloudModulesYamlFile(path string) error {
 
 //WriteCloudLoggingYamlFile writes logging yaml for cloud component
 func WriteCloudLoggingYamlFile(path string) error {
-	loggingData := LoggingYaml{LoggerLevel: "INFO", EnableRsysLog: false, LogFormatText: true, Writers: []string{"file", "stdout"}, LoggerFile: "edgecontroller.log"}
+	loggingData := LoggingYaml{
+		LoggerLevel:   "INFO",
+		EnableRsysLog: false,
+		LogFormatText: true,
+		Writers:       []string{"file", "stdout"},
+		LoggerFile:    "edgecontroller.log",
+	}
 	if err := Write2File(path, loggingData); err != nil {
 		return err
 	}
@@ -77,7 +113,12 @@ func WriteCloudLoggingYamlFile(path string) error {
 
 //WriteEdgeLoggingYamlFile writes logging yaml for edge component
 func WriteEdgeLoggingYamlFile(path string) error {
-	loggingData := LoggingYaml{LoggerLevel: "DEBUG", EnableRsysLog: false, LogFormatText: true, Writers: []string{"stdout"}}
+	loggingData := LoggingYaml{
+		LoggerLevel:   "DEBUG",
+		EnableRsysLog: false,
+		LogFormatText: true,
+		Writers:       []string{"stdout"},
+	}
 	if err := Write2File(path, loggingData); err != nil {
 		return err
 	}
@@ -86,7 +127,19 @@ func WriteEdgeLoggingYamlFile(path string) error {
 
 //WriteEdgeModulesYamlFile writes modules.yaml for edge component
 func WriteEdgeModulesYamlFile(path string) error {
-	modulesData := ModulesYaml{Modules: ModulesSt{Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin", "edgemesh"}}}
+	modulesData := ModulesYaml{
+		Modules: ModulesSt{
+			Enabled: []string{
+				"eventbus",
+				"servicebus",
+				"websocket",
+				"metaManager",
+				"edged",
+				"twin",
+				"edgemesh",
+			},
+		},
+	}
 	if err := Write2File(path, modulesData); err != nil {
 		return err
 	}
@@ -95,7 +148,6 @@ func WriteEdgeModulesYamlFile(path string) error {
 
 //WriteEdgeYamlFile write conf/edge.yaml for edge component
 func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
-
 	edgeID := "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
 	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", DefaultProjectID)
 	version := "2.0.0"
