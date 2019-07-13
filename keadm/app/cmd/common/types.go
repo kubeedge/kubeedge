@@ -215,13 +215,9 @@ type WebSocketSt struct {
 
 //ControllerSt contain edgecontroller config which edge component uses
 type ControllerSt struct {
-	Placement           bool   `yaml:"placement"`
-	Heartbeat           uint32 `yaml:"heartbeat"`
-	RefreshAKSKInterval uint16 `yaml:"refresh-ak-sk-interval"`
-	AuthInfoFilesPath   string `yaml:"auth-info-files-path"`
-	PlacementURL        string `yaml:"placement-url"`
-	ProjectID           string `yaml:"project-id"`
-	NodeID              string `yaml:"node-id"`
+	Heartbeat uint32 `yaml:"heartbeat"`
+	ProjectID string `yaml:"project-id"`
+	NodeID    string `yaml:"node-id"`
 }
 
 //EdgeDSt contains configuration required by edged module in KubeEdge component
