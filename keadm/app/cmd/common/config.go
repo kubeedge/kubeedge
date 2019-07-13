@@ -114,17 +114,52 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 		}
 	}
 
-	edgeData := EdgeYamlSt{MQTT: MQTTConfig{Server: "tcp://127.0.0.1:1883", InternalServer: "tcp://127.0.0.1:1884", Mode: MQTTInternalMode, QOS: MQTTQoSAtMostOnce,
-		Retain: false, SessionQueueSize: 100},
-		EdgeHub: EdgeHubSt{WebSocket: WebSocketSt{URL: url, CertFile: "/etc/kubeedge/certs/edge.crt", KeyFile: "/etc/kubeedge/certs/edge.key",
-			HandshakeTimeout: 30, WriteDeadline: 15, ReadDeadline: 15},
-			Controller: ControllerSt{Placement: false, Heartbeat: 15, RefreshAKSKInterval: 10, AuthInfoFilesPath: "/var/IEF/secret",
-				PlacementURL: "https://10.154.193.32:7444/v1/placement_external/message_queue", ProjectID: DefaultProjectID,
-				NodeID: edgeID}},
-		EdgeD: EdgeDSt{RegisterNodeNamespace: "default", HostnameOverride: edgeID, InterfaceName: "eth0",
-			NodeStatusUpdateFrequency: 10, DevicePluginEnabled: false, GPUPluginEnabled: false, ImageGCHighThreshold: 80, ImageGCLowThreshold: 40,
-			MaximumDeadContainersPerContainer: 1, DockerAddress: "unix:///var/run/docker.sock", Version: version, RuntimeType: runtimeType, RuntimeEndpoint: "/var/run/containerd/containerd.sock", ImageEndpoint: "/var/run/containerd/containerd.sock", RequestTimeout: 2, PodSandboxImage: "k8s.gcr.io/pause"},
-		Mesh: Mesh{LB: LoadBalance{StrategyName: "RoundRobin"}},
+	edgeData := EdgeYamlSt{
+		MQTT: MQTTConfig{
+			Server:           "tcp://127.0.0.1:1883",
+			InternalServer:   "tcp://127.0.0.1:1884",
+			Mode:             MQTTInternalMode,
+			QOS:              MQTTQoSAtMostOnce,
+			Retain:           false,
+			SessionQueueSize: 100,
+		},
+		EdgeHub: EdgeHubSt{
+			WebSocket: WebSocketSt{
+				URL:              url,
+				CertFile:         "/etc/kubeedge/certs/edge.crt",
+				KeyFile:          "/etc/kubeedge/certs/edge.key",
+				HandshakeTimeout: 30,
+				WriteDeadline:    15,
+				ReadDeadline:     15,
+			},
+			Controller: ControllerSt{
+				Heartbeat: 15,
+				ProjectID: DefaultProjectID,
+				NodeID:    edgeID,
+			},
+		},
+		EdgeD: EdgeDSt{
+			RegisterNodeNamespace:             "default",
+			HostnameOverride:                  edgeID,
+			InterfaceName:                     "eth0",
+			NodeStatusUpdateFrequency:         10,
+			DevicePluginEnabled:               false,
+			GPUPluginEnabled:                  false,
+			ImageGCHighThreshold:              80,
+			ImageGCLowThreshold:               40,
+			MaximumDeadContainersPerContainer: 1,
+			DockerAddress:                     "unix:///var/run/docker.sock",
+			Version:                           version, RuntimeType: runtimeType,
+			RuntimeEndpoint: "/var/run/containerd/containerd.sock",
+			ImageEndpoint:   "/var/run/containerd/containerd.sock",
+			RequestTimeout:  2,
+			PodSandboxImage: "k8s.gcr.io/pause",
+		},
+		Mesh: Mesh{
+			LB: LoadBalance{
+				StrategyName: "RoundRobin",
+			},
+		},
 	}
 	if err := Write2File(path, edgeData); err != nil {
 		return err
