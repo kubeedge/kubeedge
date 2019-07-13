@@ -22,7 +22,7 @@ func NewLane(protoType string, van interface{}) Lane {
 	case api.ProtocolTypeQuic:
 		return NewQuicLane(van)
 	case api.ProtocolTypeWS:
-		return NewWSLane(van)
+		return NewWSLaneWithoutPack(van)
 	}
 	log.LOGGER.Errorf("bad protocol type(%s)", protoType)
 	return nil
