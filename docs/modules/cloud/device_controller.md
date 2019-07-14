@@ -2,7 +2,7 @@
 
 
 ## Device Controller Overview
- The device controller is the cloud component of KubeEdge which is responsible for device management. Device management im KubeEdge is implemented by making use of Kubernetes
+ The device controller is the cloud component of KubeEdge which is responsible for device management. Device management in KubeEdge is implemented by making use of Kubernetes
  [Custom Resource Definitions (CRDs)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to describe device metadata/status and device controller to synchronize these device updates between edge and cloud. 
  The device controller starts two separate goroutines called `upstream controller` and `downstream controller`. These are not separate controllers as such but named here for clarity.
 
