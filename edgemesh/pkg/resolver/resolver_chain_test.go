@@ -14,7 +14,7 @@ type TestResolver struct {
 	Name string
 }
 
-func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation)) (invocation.Invocation, bool) {
+func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation, []string, bool)) (invocation.Invocation, bool) {
 	content := ""
 	protocol := ""
 	for {
@@ -34,7 +34,7 @@ func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, i
 			}
 		case <-stop:
 			i := invocation.Invocation{MicroServiceName: resolver.Name, Args: content}
-			invCallback(protocol, i)
+			invCallback(protocol, i, []string{"fakeHandler"}, true)
 			return i, true
 		}
 		log.LOGGER.Infof("content: %s\n", content)
@@ -47,9 +47,11 @@ func TestResolve(t *testing.T) {
 	r2 := &TestResolver{"grpc"}
 	resolver.RegisterResolver(r1)
 	resolver.RegisterResolver(r2)
-	invCallback := func(protocol string, inv invocation.Invocation) {
-		log.LOGGER.Infof("protocol in invCallback:%v", protocol)
-		log.LOGGER.Infof("content in invCallback: %v\n", inv.Args)
+	invCallback := func(protocol string, inv invocation.Invocation, handlerNames []string, needCloseConn bool) {
+		log.LOGGER.Infof("protocol in invCallback: %v", protocol)
+		log.LOGGER.Infof("content in invCallback: %v", inv.Args)
+		log.LOGGER.Infof("handlers in invCallback: %v", handlerNames)
+		log.LOGGER.Infof("need to close connection: %v", needCloseConn)
 	}
 	d := make(chan []byte, 1024)
 	s := make(chan interface{}, 1)
