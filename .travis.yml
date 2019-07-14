@@ -44,6 +44,7 @@ jobs:
       name: "keadm_lint"
     - script: make edge_verify
       name: "verify edge"     # names the second Tests stage job
+
     - stage: "Test Build"                # naming the Tests stage
       script: make 
       name: "builds cloud and edge components"            # names the first Tests stage job
@@ -53,6 +54,15 @@ jobs:
       name: "build bluetooth_device"
     - script: make edge_small_build
       name: "build small edge version"
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
+    - script: make edge_cross_build_v7
+      name: "cross build edge for armv7"     # names the fifth Tests stage job
+    - script: make edgesite_cross_build
+      name: "cross build edgesite"    # names the fifth Tests stage job
+    - script: make edgesite_cross_build_v7
+      name: "cross build edgeitefor armv7"     # names the fifth Tests stage job
+
     - stage: "unit tests"
       script: make edge_test
       name: "unit test edge"     # names the third Tests stage job
@@ -60,9 +70,11 @@ jobs:
       name: "integration test edge"     # names the fourth Tests stage job
     - script: make cloud_test
       name: "unit test cloud" 
+
     - stage: "e2e tests"
       script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
+
     - stage: "build docker container"
       script: make cloudimage
       name: "build cloudimage"
