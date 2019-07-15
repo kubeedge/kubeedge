@@ -2,8 +2,6 @@ package edgehub
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"sync"
 	"time"
 
@@ -15,13 +13,11 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
-	http_utils "github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
 const (
 	waitConnectionPeriod = time.Minute
-	defaultPlacement     = true
 	authEventType        = "auth_info_event"
 )
 
@@ -279,59 +275,6 @@ func (ehc *Controller) pubConnectInfo(isConnected bool) {
 	}
 }
 
-func (ehc *Controller) postURLRequst(client *http.Client) (string, error) {
-	req, err := http_utils.BuildRequest(http.MethodGet, ehc.config.PlacementURL, nil, "")
-	if err != nil {
-		log.LOGGER.Errorf("failed to build request: %v", err)
-		return "", err
-	}
-
-	for {
-		resp, err := http_utils.SendRequest(req, client)
-		if err != nil {
-			log.LOGGER.Errorf("%v", err)
-			time.Sleep(time.Minute)
-			continue
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			defer resp.Body.Close()
-			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			url := fmt.Sprintf("%s/%s/%s/events", string(bodyBytes), ehc.config.ProjectID, ehc.config.NodeID)
-			log.LOGGER.Infof("successfully to get cloudaccess url: %s", url)
-			return url, nil
-		case http.StatusBadRequest:
-			log.LOGGER.Errorf("no retry on error code: %d, failed to get cloudaccess url", resp.StatusCode)
-			return "", fmt.Errorf("bad request")
-		default:
-			log.LOGGER.Errorf("get cloudaccess with Error code: %d", resp.StatusCode)
-		}
-		time.Sleep(time.Minute)
-	}
-}
-
 func (ehc *Controller) getCloudHubURL() (string, error) {
-	placement, err := bhconfig.CONFIG.GetValue("edgehub.controller.placement").ToBool()
-	if err != nil {
-		placement = defaultPlacement
-	}
-	if placement {
-		// TODO: get the file path gracefully
-		certFile := config.GetConfig().WSConfig.CertFilePath
-		keyFile := config.GetConfig().WSConfig.KeyFilePath
-		placementClient, err := http_utils.NewHTTPSclient(certFile, keyFile)
-		if err != nil {
-			log.LOGGER.Warnf("failed to new https client for placement, error: %+v", err)
-			return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
-		}
-
-		cloudHubURL, err := ehc.postURLRequst(placementClient)
-		if err != nil {
-			log.LOGGER.Warnf("failed to get cloud hub url, error: %+v", err)
-			return "", fmt.Errorf("failed to new https client for placement, error: %+v", err)
-		}
-
-		return cloudHubURL, nil
-	}
 	return bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
 }
