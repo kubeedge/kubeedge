@@ -18,6 +18,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
@@ -179,11 +180,11 @@ func (uc *UpstreamController) updateDeviceStatus(stop chan struct{}) {
 func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {
 	content := msg.GetContent()
 	twinUpdate := &types.DeviceTwinUpdate{}
-	bytes, err := json.Marshal(content)
-	if err != nil {
-		return nil, err
+	bytes, ok := content.([]byte)
+	if !ok {
+		return nil, errors.New("Unable to convert incoming message to []bytes")
 	}
-	err = json.Unmarshal(bytes, twinUpdate)
+	err := json.Unmarshal(bytes, twinUpdate)
 	if err != nil {
 		return nil, err
 	}
