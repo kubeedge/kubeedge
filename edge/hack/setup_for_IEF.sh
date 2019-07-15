@@ -172,12 +172,10 @@ create_edge_config() {
     sed -i "s|keyfile: .*|keyfile: ${CERT_PATH}/${PRIVATE_KEY_FILE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|project-id: .*|project-id: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|node-id: .*|node-id: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml
-    sed -i "s|placement: .*|placement: ${DEFAULT_PLACEMENT_FLAG}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|register-node-namespace: .*|register-node-namespace: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|hostname-override: .*|hostname-override: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|device-plugin-enabled: .*|device-plugin-enabled: ${ENABLE_GPU}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|gpu-plugin-enabled: .*|gpu-plugin-enabled: ${ENABLE_GPU}|g" ${CURRENT_PATH}/conf/edge.yaml
-    sed -i "s|placement-url: .*|placement-url: ${MASTER_ADDR_FOREDGE}/v1/placement_external/message_queue|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|api-version: .*|api-version: ${DIS_API_VERSION}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|region: .*|region: ${REGION}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|obs_endpoint: .*|obs_endpoint: ${OBS_URL}|g" ${CURRENT_PATH}/conf/edge.yaml
