@@ -17,7 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -66,7 +65,7 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 		Short:   "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
 		Long:    edgeJoinLongDescription,
 		Example: edgeJoinExample,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 
 			//Visit all the flags and store their values and default values.
 			checkFlags := func(f *pflag.Flag) {
@@ -75,7 +74,7 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 			cmd.Flags().VisitAll(checkFlags)
 
 			Add2ToolsList(tools, flagVals, joinOptions)
-			Execute(tools)
+			return Execute(tools)
 		},
 	}
 
@@ -139,22 +138,18 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 }
 
 //Execute the instalation for each tool and start edge_core
-func Execute(toolList map[string]types.ToolsInstaller) {
+func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
 		if name != "KubeEdge" {
 			err := tool.InstallTools()
 			if err != nil {
-				fmt.Println(err.Error())
-				continue
+				return err
 			}
 		}
 	}
 
 	//Install and Start KubeEdge Node
-	err := toolList["KubeEdge"].InstallTools()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	return toolList["KubeEdge"].InstallTools()
 }
