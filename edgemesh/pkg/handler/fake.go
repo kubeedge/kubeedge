@@ -41,6 +41,7 @@ func (h *HTTPTestHandler) Handle(chain *handler.Chain, inv *invocation.Invocatio
 func (h *HTTPTestHandler) Name() string {
 	return "httpTestHandler"
 }
+
 func NewHTTPTestHandler() handler.Handler {
 	return &HTTPTestHandler{}
 }

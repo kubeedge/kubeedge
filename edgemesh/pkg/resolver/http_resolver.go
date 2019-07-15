@@ -51,7 +51,7 @@ func (resolver *HTTPResolver) Resolve(data chan []byte, stop chan interface{}, i
 	}
 }
 
-//Only difference between HTTPResolver and HTTPTestResolver are the handlers they use in invCallback
+//Only difference between HTTPResolver and HTTPTestResolver is the handler they use in invCallback
 type HTTPTestResolver struct{}
 
 func (resolver *HTTPTestResolver) Resolve(data chan []byte, stop chan interface{}, invCallback func(string, invocation.Invocation, []string, bool)) (invocation.Invocation, bool) {

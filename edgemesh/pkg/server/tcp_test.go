@@ -83,14 +83,14 @@ func TestStartTCP(t *testing.T) {
 	time.Sleep(10 * time.Second)
 }
 
-func assertStringEqual(t *testing.T, a, b string) {
-	if a != b {
-		t.Errorf("Not Equal. %s %s", a, b)
+func assertStringEqual(t *testing.T, m, n string) {
+	if m != n {
+		t.Errorf("Not Equal. %s %s", m, n)
 	}
 }
 
 func helloHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello "+r.Method)
+	fmt.Fprintf(w, "Hello " + r.Method)
 }
 
 func TestResolveHTTP(t *testing.T) {
