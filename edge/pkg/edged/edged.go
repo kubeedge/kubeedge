@@ -86,7 +86,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/dockertools"
 	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
 	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
@@ -122,8 +121,6 @@ const (
 	workerResyncIntervalJitterFactor = 0.5
 	//EdgeController gives controller name
 	EdgeController = "controller"
-	//DockerContainerRuntime gives Docker container runtime name
-	DockerContainerRuntime = "docker"
 	//RemoteContainerRuntime give Remote container runtime name
 	RemoteContainerRuntime = "remote"
 	//RemoteRuntimeEndpoint gives the default endpoint for CRI runtime
@@ -356,7 +353,9 @@ func getConfig() *Config {
 	conf.imageGCLowThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-low-threshold").(int)
 	conf.MaxPerPodContainerCount = config.CONFIG.GetConfigurationByKey("edged.maximum-dead-containers-per-container").(int)
 	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
-	conf.DockerAddress = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
+	if conf.DockerAddress, ok = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string); !ok {
+		conf.DockerAddress = DockerEndpoint
+	}
 	if conf.runtimeType, ok = config.CONFIG.GetConfigurationByKey("edged.runtime-type").(string); !ok {
 		conf.runtimeType = RemoteContainerRuntime
 	}
@@ -444,13 +443,10 @@ func newEdged() (*edged, error) {
 		nodeIP:                    net.ParseIP(conf.nodeIP),
 	}
 
-	// Set docker address if it is set in the conf
-	if conf.DockerAddress != "" {
-		dockertools.InitDockerAddress(conf.DockerAddress)
-	}
-
 	if conf.gpuPluginEnabled {
-		gpuManager, _ = nvidia.NewNvidiaGPUManager(ed, dockertools.NewDockerConfig())
+		gpuManager, _ = nvidia.NewNvidiaGPUManager(ed, &dockershim.ClientConfig{
+			DockerEndpoint: conf.DockerAddress,
+		})
 	} else {
 		gpuManager = gpu.NewGPUManagerStub()
 	}
@@ -484,7 +480,7 @@ func newEdged() (*edged, error) {
 	if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
 		streamingConfig := &streaming.Config{}
 		DockerClientConfig := &dockershim.ClientConfig{
-			DockerEndpoint:    DockerEndpoint,
+			DockerEndpoint:    conf.DockerAddress,
 			EnableSleep:       true,
 			WithTraceDisabled: true,
 		}
