@@ -49,7 +49,7 @@ func (ks *K8SInstTool) InstallTools() error {
 	case types.VersionNAInRepo:
 		return fmt.Errorf("Expected %s version is not available in OS repo", component)
 	case types.AlreadySameVersionExist:
-		fmt.Println("Same version of %s already installed in this host", component)
+		fmt.Printf("Same version of %s already installed in this host", component)
 		return nil
 	case types.DefVerInstallRequired:
 		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
