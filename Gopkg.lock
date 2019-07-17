@@ -784,7 +784,7 @@
   revision = "06e0cfa222f7190d54740dd11f0fc1bc9e8085cb"
 
 [[projects]]
-  digest = "1:1abad3afc8a8a736bbb7d643f8817c8da182b4c3b9bf2be59b47a0bcbedc52d5"
+  digest = "1:b7e841ab9828ad0f7fed7417f2365e1e0f345216468bf4d972d3e369a34be3ec"
   name = "github.com/kubeedge/viaduct"
   packages = [
     "pkg/api",
@@ -805,7 +805,7 @@
     "pkg/utils",
   ]
   pruneopts = "UT"
-  revision = "df4e595b4e12a411fa67b42a7cb299d0afe961ab"
+  revision = "79088c5bdbc4e58e2a5a6213fffa4d280011ea29"
 
 [[projects]]
   branch = "master"
