@@ -33,7 +33,7 @@ required = [
 
 [[constraint]]
   name = "github.com/kubeedge/viaduct"
-  revision = "df4e595b4e12a411fa67b42a7cb299d0afe961ab"
+  revision = "79088c5bdbc4e58e2a5a6213fffa4d280011ea29"
 
 [[constraint]]
   name = "k8s.io/client-go"
