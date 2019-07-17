@@ -3,6 +3,7 @@ package conn
 import (
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -27,6 +28,7 @@ type WSConnection struct {
 	consumer      io.Writer
 	autoRoute     bool
 	messageFifo   *fifo.MessageFifo
+	locker        sync.Mutex
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
@@ -81,7 +83,9 @@ func (conn *WSConnection) filterControlMessage(msg *model.Message) bool {
 
 	// feedback the response
 	resp := msg.NewRespByMessage(msg, result)
+	conn.locker.Lock()
 	err = lane.NewLane(api.ProtocolTypeWS, conn.wsConn).WriteMessage(resp)
+	conn.locker.Unlock()
 	if err != nil {
 		log.LOGGER.Errorf("failed to send response back, error:%+v", err)
 	}
@@ -173,6 +177,8 @@ func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
 	lane.SetReadDeadline(conn.WriteDeadline)
 	msg.Header.Sync = false
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
 	return lane.WriteMessage(msg)
 }
 
@@ -181,12 +187,14 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 	// send msg
 	lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = true
+	conn.locker.Lock()
 	err := lane.WriteMessage(msg)
+	conn.locker.Unlock()
 	if err != nil {
 		log.LOGGER.Errorf("write message error(%+v)", err)
 		return nil, err
 	}
-
+	conn.locker.Unlock()
 	//receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.WriteDeadline)
 	return &response, err
