@@ -251,14 +251,6 @@ type Config struct {
 }
 
 func init() {
-	_, err := os.Stat(DefaultRootDir)
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(DefaultRootDir, 0755)
-		if err != nil {
-			panic(fmt.Errorf("Create %v dir error: %v", DefaultRootDir, err))
-		}
-	}
-
 	edged, err := newEdged()
 	if err != nil {
 		log.LOGGER.Errorf("init new edged error, %v", err)
@@ -281,11 +273,6 @@ func (e *edged) Start(c *context.Context) {
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
 		log.LOGGER.Errorf("initialize module error: %v", err)
-		os.Exit(1)
-	}
-	err := e.makePodDir()
-	if err != nil {
-		log.LOGGER.Errorf("create pod dir [%s] failed: %v", e.getPodsDir(), err)
 		os.Exit(1)
 	}
 
@@ -449,6 +436,12 @@ func newEdged() (*edged, error) {
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(conf.nodeIP),
+	}
+
+	err := ed.makePodDir()
+	if err != nil {
+		log.LOGGER.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
+		os.Exit(1)
 	}
 
 	if conf.gpuPluginEnabled {
