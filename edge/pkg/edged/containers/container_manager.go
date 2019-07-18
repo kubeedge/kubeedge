@@ -53,7 +53,6 @@ import (
 	deviceplugin "k8s.io/kubernetes/pkg/kubelet/cm/devicemanager"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/container/testing"
-	"k8s.io/kubernetes/pkg/kubelet/gpu"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/scheduler/schedulercache"
@@ -109,7 +108,6 @@ type containerManager struct {
 	containerRecords         map[string]*containerRecord
 	containerRecordsLock     sync.Mutex
 	devicePluginManager      deviceplugin.Manager
-	gpuManager               gpu.GPUManager
 	defaultHostInterfaceName string
 	livenessManager          proberesults.Manager
 }
@@ -163,7 +161,7 @@ const (
 )
 
 //NewContainerManager initialises and returns a container manager object
-func NewContainerManager(runtimeService apis.RuntimeService, livenessManager proberesults.Manager, containerBackOff *flowcontrol.Backoff, devicePluginEnabled bool, gpuManager gpu.GPUManager, interfaceName string) (ContainerManager, error) {
+func NewContainerManager(runtimeService apis.RuntimeService, livenessManager proberesults.Manager, containerBackOff *flowcontrol.Backoff, devicePluginEnabled bool, interfaceName string) (ContainerManager, error) {
 	var devicePluginManager deviceplugin.Manager
 	var err error
 	cm := &containerManager{
@@ -172,7 +170,6 @@ func NewContainerManager(runtimeService apis.RuntimeService, livenessManager pro
 		backOff:                  containerBackOff,
 		podContainer:             make(map[types.UID]*apis.Container),
 		containerRecords:         make(map[string]*containerRecord),
-		gpuManager:               gpuManager,
 		defaultHostInterfaceName: interfaceName,
 		livenessManager:          livenessManager,
 	}
@@ -543,32 +540,9 @@ func (cm *containerManager) getContainer(containerID string) (*apis.Container, e
 	return container, nil
 }
 
-// makeGPUDevices determines the devices for the given container.
-// Experimental.
-func (cm *containerManager) makeGPUDevices(pod *v1.Pod, container *v1.Container) ([]kubecontainer.DeviceInfo, error) {
-	if container.Resources.Limits.NvidiaGPU().IsZero() {
-		return nil, nil
-	}
-
-	nvidiaGPUPaths, err := cm.gpuManager.AllocateGPU(pod, container)
-	if err != nil {
-		return nil, err
-	}
-	var devices []kubecontainer.DeviceInfo
-	for _, path := range nvidiaGPUPaths {
-		// Devices have to be mapped one to one because of nvidia CUDA library requirements.
-		devices = append(devices, kubecontainer.DeviceInfo{PathOnHost: path, PathInContainer: path, Permissions: "mrw"})
-	}
-
-	return devices, nil
-}
-
 func (cm *containerManager) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container) (*kubecontainer.RunContainerOptions, error) {
 	opts := cm.getResource(pod, container)
-	devices, err := cm.makeGPUDevices(pod, container)
-	if err != nil {
-		return nil, err
-	}
+	var devices []kubecontainer.DeviceInfo
 	opts.Devices = append(opts.Devices, devices...)
 
 	return opts, nil
