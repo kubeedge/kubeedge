@@ -275,11 +275,6 @@ func (e *edged) Start(c *context.Context) {
 		log.LOGGER.Errorf("initialize module error: %v", err)
 		os.Exit(1)
 	}
-	err := e.makePodDir()
-	if err != nil {
-		log.LOGGER.Errorf("create pod dir [%s] failed: %v", e.getPodsDir(), err)
-		os.Exit(1)
-	}
 
 	e.volumeManager = volumemanager.NewVolumeManager(
 		false,
@@ -443,6 +438,12 @@ func newEdged() (*edged, error) {
 		nodeIP:                    net.ParseIP(conf.nodeIP),
 	}
 
+	err := ed.makePodDir()
+	if err != nil {
+		log.LOGGER.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
+		os.Exit(1)
+	}
+
 	if conf.gpuPluginEnabled {
 		gpuManager, _ = nvidia.NewNvidiaGPUManager(ed, &dockershim.ClientConfig{
 			DockerEndpoint: conf.DockerAddress,
@@ -526,7 +527,9 @@ func newEdged() (*edged, error) {
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}
+
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
+
 	var machineInfo cadvisorapi.MachineInfo
 	machineInfo.MemoryCapacity = uint64(conf.memoryCapacity)
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
