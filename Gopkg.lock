@@ -1823,7 +1823,7 @@
   revision = "e494cc58111187acad93e64529228a2fc0153e39"
 
 [[projects]]
-  digest = "1:b177d93c954a669093a53e6cb94bbe1ebbf77b94649654f176c3164e1f8c800a"
+  digest = "1:676c0e789aac85576b99e19ef3f814f21cd3be0ba681d32289b0f0a3c362de83"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1879,8 +1879,6 @@
     "pkg/kubelet/dockershim/remote",
     "pkg/kubelet/events",
     "pkg/kubelet/eviction/api",
-    "pkg/kubelet/gpu",
-    "pkg/kubelet/gpu/nvidia",
     "pkg/kubelet/images",
     "pkg/kubelet/kuberuntime",
     "pkg/kubelet/kuberuntime/logs",
@@ -2104,8 +2102,6 @@
     "k8s.io/kubernetes/pkg/kubelet/container/testing",
     "k8s.io/kubernetes/pkg/kubelet/dockershim",
     "k8s.io/kubernetes/pkg/kubelet/dockershim/remote",
-    "k8s.io/kubernetes/pkg/kubelet/gpu",
-    "k8s.io/kubernetes/pkg/kubelet/gpu/nvidia",
     "k8s.io/kubernetes/pkg/kubelet/images",
     "k8s.io/kubernetes/pkg/kubelet/kuberuntime",
     "k8s.io/kubernetes/pkg/kubelet/lifecycle",
