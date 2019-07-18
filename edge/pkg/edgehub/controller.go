@@ -48,25 +48,11 @@ func NewEdgeHubController() *Controller {
 	}
 }
 
-func (ehc *Controller) initial(ctx *context.Context) error {
-	getURL := func() string {
-		for {
-			url, err := ehc.getCloudHubURL()
-			if err != nil {
-				log.LOGGER.Warnf("failed to get cloud hub url, error:%+v", err)
-				time.Sleep(time.Minute)
-				continue
-			}
-			return url
-		}
-	}
-
-	if ehc.config.ProjectID != "" && ehc.config.NodeID != "" {
-		cloudHubURL := getURL()
-		// TODO: set url gracefully
-		config.GetConfig().WSConfig.URL = cloudHubURL
-	} else {
-		log.LOGGER.Warnf("use the config url for testing")
+func (ehc *Controller) initial(ctx *context.Context) (err error) {
+	config.GetConfig().WSConfig.URL, err = bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
+	if err != nil {
+		log.LOGGER.Warnf("failed to get cloud hub url, error:%+v", err)
+		return err
 	}
 
 	cloudHubClient, err := clients.GetClient(ehc.config.Protocol, config.GetConfig())
@@ -273,8 +259,4 @@ func (ehc *Controller) pubConnectInfo(isConnected bool) {
 			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
 		ehc.context.Send2Group(group, *message)
 	}
-}
-
-func (ehc *Controller) getCloudHubURL() (string, error) {
-	return bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
 }
