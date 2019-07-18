@@ -244,7 +244,14 @@ func (eh *EventHandle) ServeConn(hi hubio.CloudHubIO, info *emodel.HubInfo) {
 
 // EnrollNode enroll node for the incoming connection
 func (eh *EventHandle) EnrollNode(hi hubio.CloudHubIO, info *emodel.HubInfo) error {
-	err := eh.EventQueue.Connect(info)
+	// Wait for the previous connection to be cleaned up
+	var err error
+	for i := 0; i <= eh.KeepaliveInterval; i++ {
+		if err = eh.EventQueue.Connect(info); err == nil {
+			break
+		}
+		time.Sleep(time.Duration(1) * time.Second)
+	}
 	if err != nil {
 		bhLog.LOGGER.Errorf("fail to connect to event queue for node %s, reason %s", info.NodeID, err.Error())
 		notifyEventQueueError(hi, eventQueueDisconnect, info.NodeID)
