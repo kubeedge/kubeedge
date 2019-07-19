@@ -95,13 +95,11 @@ func onPeripheralDisconnected(p gatt.Peripheral, err error) {
 	DeviceConnected <- false
 	close(done)
 	p.Device().CancelConnection(p)
-	helper.ChangeDeviceState("offline", deviceID)
 }
 
 //onPeripheralConnected contains the operations to be performed as soon as the peripheral device is connected
 func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	actionmanager.GattPeripheral = p
-	helper.ChangeDeviceState("online", deviceID)
 	ss, err := p.DiscoverServices(nil)
 	if err != nil {
 		glog.Errorf("Failed to discover services, err: %s\n", err)

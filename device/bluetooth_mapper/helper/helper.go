@@ -134,22 +134,6 @@ func MqttConnect(mqttMode int, mqttInternalServer, mqttServer string) {
 	}
 }
 
-//ChangeDeviceState function is used to change the state of the device
-func ChangeDeviceState(state string, deviceID string) {
-	glog.Infof("Changing the state of the device: %s to %s", deviceID, state)
-	var deviceStateUpdateMessage DeviceStateUpdate
-	deviceStateUpdateMessage.State = state
-	stateUpdateBody, err := json.Marshal(deviceStateUpdateMessage)
-	if err != nil {
-		glog.Errorf("Error in marshalling: %s", err)
-	}
-	deviceStatusUpdate := DeviceETPrefix + deviceID + DeviceETStateUpdateSuffix
-	TokenClient = Client.Publish(deviceStatusUpdate, 0, false, stateUpdateBody)
-	if TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("client.publish() Error in device state update  is : %s", TokenClient.Error())
-	}
-}
-
 //ChangeTwinValue sends the updated twin value to the edge through the MQTT broker
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) {
 	twinUpdateBody, err := json.Marshal(updateMessage)
