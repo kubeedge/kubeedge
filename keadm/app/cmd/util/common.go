@@ -184,6 +184,7 @@ func GetOSInterface() types.OSTypeInstaller {
 	case CentOSType:
 		return &CentOS{}
 	default:
+		panic("unsupport os-release")
 	}
 	return nil
 }
