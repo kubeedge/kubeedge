@@ -33,27 +33,27 @@ required = [
 
 [[constraint]]
   name = "github.com/kubeedge/viaduct"
-  revision = "79088c5bdbc4e58e2a5a6213fffa4d280011ea29"
+  revision = "df4e595b4e12a411fa67b42a7cb299d0afe961ab"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.10.9"
+  version = "kubernetes-1.15.0"
 
 [[constraint]]
   name = "k8s.io/api"
-  version = "kubernetes-1.10.9"
+  version = "kubernetes-1.15.0"
 
 [[constraint]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.10.9"
+  version = "kubernetes-1.15.0"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.10.9"
+  version = "kubernetes-1.15.0"
 
 [[constraint]]
   name = "k8s.io/kubernetes"
-  version = "v1.10.9"
+  version = "v1.15.0"
 
 [[override]]
   name = "github.com/go-chassis/go-chassis"
@@ -65,7 +65,7 @@ required = [
 
 [[override]]
   name = "github.com/go-chassis/go-archaius"
-  revision = "7194a1be3948765395419f2257d00a28e285b77c"
+  branch = "master"
 
 [[override]]
   name = "github.com/kubeedge/beehive"
@@ -73,22 +73,26 @@ required = [
 
 [[override]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.13.2"
+  version = "kubernetes-1.15.0"
 
 [[override]]
   name = "github.com/astaxie/beego"
   version = "v1.9.2"
 
 [[override]]
+  name = "github.com/containernetworking/cni"
+  version = "v0.6.0"
+
+[[override]]
   name = "golang.org/x/exp"
   revision = "292a51b8d262487dab23a588950e8052d63d9113"
 
 [[override]]
-  name = "github.com/docker/docker"
-  revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
+  name = "github.com/docker/distribution"
+  branch = "master"
 
 [[override]]
-  name = "github.com/docker/distribution"
+  name = "github.com/docker/docker"
   branch = "master"
 
 [[override]]
@@ -100,16 +104,16 @@ required = [
   revision = "eff93e5e67dbf7eab20c058db4e37e8739bf8df5"
 
 [[override]]
-  name = "github.com/google/cadvisor"
-  version = "v0.29.2"
+  name = "k8s.io/utils"
+  branch = "master"
 
 [[override]]
-  name = "k8s.io/utils"
-  revision = "aedf551cdb8b0119df3a19c65fde413a13b34997"
+  name = "github.com/google/cadvisor"
+  branch = "master"
 
 [[override]]
   name = "github.com/containerd/containerd"
-  revision = "27d450a01bb533d7ebc5701eb52792565396b084"
+  version = "v1.0.2"
 
 [[override]]
   name = "github.com/prometheus/client_golang"

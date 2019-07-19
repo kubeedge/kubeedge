@@ -1909,7 +1909,7 @@
   revision = "3cf2ea39288623b60ec6ed8423a75b8e996fe289"
 
 [[projects]]
-  digest = "1:58eb5f6343f5fe72b9101a92616643322bf782ffbd30e99ab3b61657253de91e"
+  digest = "1:1fbb7abce434fb00e318f2a78563c6a66c9712e6fd3c5d7b88edad989d0c1317"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1929,7 +1929,6 @@
     "pkg/apis/core/validation",
     "pkg/apis/scheduling",
     "pkg/capabilities",
-    "pkg/cloudprovider",
     "pkg/controller",
     "pkg/controller/volume/persistentvolume/util",
     "pkg/controller/volume/scheduling",
@@ -2176,6 +2175,7 @@
     "github.com/stretchr/testify/assert",
     "gopkg.in/yaml.v2",
     "k8s.io/api/apps/v1",
+    "k8s.io/api/authentication/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/equality",
     "k8s.io/apimachinery/pkg/api/errors",
@@ -2200,8 +2200,10 @@
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/client-go/tools/record",
     "k8s.io/client-go/util/flowcontrol",
     "k8s.io/client-go/util/workqueue",
+    "k8s.io/cloud-provider",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
     "k8s.io/code-generator/cmd/defaulter-gen",
@@ -2211,7 +2213,6 @@
     "k8s.io/cri-api/pkg/apis/runtime/v1alpha2",
     "k8s.io/kubernetes/pkg/api/v1/pod",
     "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos",
-    "k8s.io/kubernetes/pkg/cloudprovider",
     "k8s.io/kubernetes/pkg/features",
     "k8s.io/kubernetes/pkg/kubelet/apis/config",
     "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1",
@@ -2255,9 +2256,11 @@
     "k8s.io/kubernetes/pkg/volume/hostpath",
     "k8s.io/kubernetes/pkg/volume/secret",
     "k8s.io/kubernetes/pkg/volume/util",
+    "k8s.io/kubernetes/pkg/volume/util/subpath",
     "k8s.io/kubernetes/pkg/volume/util/types",
     "k8s.io/kubernetes/pkg/volume/util/volumepathhandler",
     "k8s.io/kubernetes/pkg/volume/validation",
+    "k8s.io/utils/io",
     "k8s.io/utils/path",
   ]
   solver-name = "gps-cdcl"
