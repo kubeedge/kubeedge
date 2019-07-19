@@ -186,7 +186,6 @@ func GetOSInterface() types.OSTypeInstaller {
 	default:
 		panic("unsupport os-release")
 	}
-	return nil
 }
 
 //IsKubeEdgeController identifies if the node is having edge controller and k8s api-server already running.
