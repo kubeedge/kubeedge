@@ -17,7 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 //Constants to check metamanager processes
@@ -577,6 +577,55 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 	send2Cloud(&message, m.context)
 
 }
+
+func (m *metaManager) processVolume(message model.Message) {
+	log.LOGGER.Infof("Process volume started")
+	var err error
+	var content []byte
+	switch message.GetContent().(type) {
+	case []uint8:
+		content = message.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(message.GetContent())
+		if err != nil {
+			log.LOGGER.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to marshal message content", message, m.context)
+			return
+		}
+	}
+
+	log.LOGGER.Infof("Process volume content: %s", string(content))
+
+	resKey, resType, _ := parseResource(message.GetResource())
+	meta := &dao.Meta{
+		Key:   resKey,
+		Type:  resType,
+		Value: string(content)}
+	err = dao.SaveMeta(meta)
+	if err != nil {
+		log.LOGGER.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+		feedbackError(err, "Error to save meta to DB", message, m.context)
+		return
+	}
+
+	log.LOGGER.Infof("Process volume resType: %s", resType)
+	if resType == CSIResourceTypeVolume {
+		// Notify edged
+		send2Edged(&message, false, m.context)
+	}
+
+	resp := message.NewRespByMessage(&message, OK)
+	send2Cloud(resp, m.context)
+}
+
+const (
+	CSIResourceTypeVolume                     = "volume"
+	CSIOperationTypeCreateVolume              = "createvolume"
+	CSIOperationTypeDeleteVolume              = "deletevolume"
+	CSIOperationTypeControllerPublishVolume   = "controllerpublishvolume"
+	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
+)
+
 func (m *metaManager) process(message model.Message) {
 	resource := message.GetOperation()
 	switch resource {
@@ -598,6 +647,11 @@ func (m *metaManager) process(message model.Message) {
 		m.processFunctionAction(message)
 	case OperationFunctionActionResult:
 		m.processFunctionActionResult(message)
+	case CSIOperationTypeCreateVolume,
+		CSIOperationTypeDeleteVolume,
+		CSIOperationTypeControllerPublishVolume,
+		CSIOperationTypeControllerUnpublishVolume:
+		m.processVolume(message)
 	}
 }
 

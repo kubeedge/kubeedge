@@ -34,7 +34,7 @@ import (
 	"time"
 
 	cadvisorapi "github.com/google/cadvisor/info/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -43,16 +43,15 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	fakekube "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	recordtools "k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/client-go/util/workqueue"
-	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
-	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/kubeletconfig"
+	internalapi "k8s.io/cri-api/pkg/apis"
+	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
-	"k8s.io/kubernetes/pkg/kubelet/gpu"
-	"k8s.io/kubernetes/pkg/kubelet/gpu/nvidia"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
@@ -66,13 +65,12 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
-	"k8s.io/kubernetes/pkg/scheduler/schedulercache"
-	kubeio "k8s.io/kubernetes/pkg/util/io"
+	schedulercache "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
-	"k8s.io/kubernetes/pkg/volume/empty_dir"
-	"k8s.io/kubernetes/pkg/volume/host_path"
+	empty_dir "k8s.io/kubernetes/pkg/volume/emptydir"
+	host_path "k8s.io/kubernetes/pkg/volume/hostpath"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
@@ -96,6 +94,11 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+
+	pluginwatcherapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1"
+	"k8s.io/kubernetes/pkg/kubelet/pluginmanager"
+	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
+	"k8s.io/kubernetes/pkg/volume/csi"
 )
 
 const (
@@ -201,11 +204,9 @@ type edged struct {
 	podDeletionBackoff *flowcontrol.Backoff
 	imageGCManager     images.ImageGCManager
 	containerGCManager kubecontainer.ContainerGC
-	gpuManager         gpu.GPUManager
 	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
-	writer             kubeio.Writer
 	volumeManager      volumemanager.VolumeManager
 	rootDirectory      string
 	gpuPluginEnabled   bool
@@ -223,6 +224,12 @@ type edged struct {
 	clusterDNS []net.IP
 	// edge node IP
 	nodeIP net.IP
+
+	// pluginmanager runs a set of asynchronous loops that figure out which
+	// plugins need to be registered/unregistered based on this node and makes it so.
+	pluginManager pluginmanager.PluginManager
+
+	recorder recordtools.EventRecorder
 }
 
 //Config defines configuration details
@@ -310,6 +317,18 @@ func (e *edged) Start(c *context.Context) {
 	e.imageGCManager.Start()
 	e.StartGarbageCollection()
 	e.syncPod()
+
+	e.pluginManager = pluginmanager.NewPluginManager(
+		e.getPluginsRegistrationDir(), /* sockDir */
+		e.getPluginsDir(),             /* deprecatedSockDir */
+		nil,
+	)
+
+	// Adding Registration Callback function for CSI Driver
+	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csi.PluginHandler))
+	// Start the plugin manager
+	log.LOGGER.Infof("starting plugin manager")
+	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 }
 
 func (e *edged) Cleanup() {
@@ -400,7 +419,6 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 
 //newEdged creates new edged object and initialises it
 func newEdged() (*edged, error) {
-	var gpuManager gpu.GPUManager
 	conf := getConfig()
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
@@ -412,6 +430,8 @@ func newEdged() (*edged, error) {
 	}
 	// TODO: consider use client generate kube client
 	kubeClient := fakekube.NewSimpleClientset()
+	// build new object to match interface
+	recorder := record.NewEventRecorder()
 
 	ed := &edged{
 		nodeName:                  conf.nodeName,
@@ -428,7 +448,6 @@ func newEdged() (*edged, error) {
 		kubeClient:                kubeClient,
 		nodeStatusUpdateFrequency: conf.nodeStatusUpdateInterval,
 		mounter:                   mount.New(""),
-		writer:                    &kubeio.StdWriter{},
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
 		version:                   conf.version,
 		rootDirectory:             DefaultRootDir,
@@ -436,6 +455,7 @@ func newEdged() (*edged, error) {
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(conf.nodeIP),
+		recorder:                  recorder,
 	}
 
 	err := ed.makePodDir()
@@ -444,17 +464,7 @@ func newEdged() (*edged, error) {
 		os.Exit(1)
 	}
 
-	if conf.gpuPluginEnabled {
-		gpuManager, _ = nvidia.NewNvidiaGPUManager(ed, &dockershim.ClientConfig{
-			DockerEndpoint: conf.DockerAddress,
-		})
-	} else {
-		gpuManager = gpu.NewGPUManagerStub()
-	}
-	ed.gpuManager = gpuManager
 	ed.livenessManager = proberesults.NewManager()
-	// build new object to match interface
-	recorder := record.NewEventRecorder()
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",
 		Name:      string(ed.nodeName),
@@ -490,7 +500,7 @@ func newEdged() (*edged, error) {
 			HairpinMode:       kubeletinternalconfig.HairpinMode(HairpinMode),
 			NonMasqueradeCIDR: NonMasqueradeCIDR,
 			PluginName:        pluginName,
-			PluginBinDir:      pluginBinDir,
+			PluginBinDirs:     []string{pluginBinDir},
 			PluginConfDir:     pluginConfDir,
 			MTU:               mtu,
 		}
@@ -527,9 +537,7 @@ func newEdged() (*edged, error) {
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}
-
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
-
 	var machineInfo cadvisorapi.MachineInfo
 	machineInfo.MemoryCapacity = uint64(conf.memoryCapacity)
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
@@ -547,9 +555,11 @@ func newEdged() (*edged, error) {
 		0,
 		0,
 		false,
+		metav1.Duration{Duration: 100 * time.Millisecond},
 		runtimeService,
 		imageService,
 		ed.clcm.InternalContainerLifecycle(),
+		nil,
 		nil,
 	)
 	if err != nil {
@@ -596,11 +606,6 @@ func newEdged() (*edged, error) {
 }
 
 func (e *edged) initializeModules() error {
-	if err := e.gpuManager.Start(); err != nil {
-		log.LOGGER.Errorf("Failed to start gpuManager %v", err)
-		return err
-	}
-
 	node, _ := e.initialNode()
 	if err := e.containerManager.Start(node, e.GetActivePods, nil, e.statusManager, e.runtimeService); err != nil {
 		log.LOGGER.Errorf("Failed to start device plugin manager %v", err)
@@ -714,6 +719,23 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 	}
 }
 
+// NewNamespacedNameFromString parses the provided string and returns a NamespacedName.
+// The expected format is as per String() above.
+// If the input string is invalid, the returned NamespacedName has all empty string field values.
+// This allows a single-value return from this function, while still allowing error checks in the caller.
+// Note that an input string which does not include exactly one Separator is not a valid input (as it could never
+// have neem returned by String() )
+func NewNamespacedNameFromString(s string) types.NamespacedName {
+	Separator := '/'
+	nn := types.NamespacedName{}
+	result := strings.Split(s, string(Separator))
+	if len(result) == 2 {
+		nn.Namespace = result[0]
+		nn.Name = result[1]
+	}
+	return nn
+}
+
 func (e *edged) podAddWorkerRun(consumers int) {
 	for i := 0; i < consumers; i++ {
 		log.LOGGER.Infof("start pod addition queue work %d", i)
@@ -724,7 +746,7 @@ func (e *edged) podAddWorkerRun(consumers int) {
 					log.LOGGER.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
 					return
 				}
-				namespacedName := types.NewNamespacedNameFromString(item.(string))
+				namespacedName := NewNamespacedNameFromString(item.(string))
 				podName := namespacedName.Name
 				log.LOGGER.Infof("worker [%d] get pod addition item [%s]", i, podName)
 				backOffKey := fmt.Sprintf("pod_addition_worker_%s", podName)
@@ -769,7 +791,7 @@ func (e *edged) podRemoveWorkerRun(consumers int) {
 					log.LOGGER.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
 					return
 				}
-				namespacedName := types.NewNamespacedNameFromString(item.(string))
+				namespacedName := NewNamespacedNameFromString(item.(string))
 				podName := namespacedName.Name
 				log.LOGGER.Infof("consumer: [%d], worker get removed pod [%s]\n", i, podName)
 				err := e.consumePodDeletion(&namespacedName)
@@ -820,8 +842,8 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		return err
 	}
 
-	desiredPodStatus, _ := e.statusManager.GetPodStatus(pod.GetUID())
-	result := e.containerRuntime.SyncPod(pod, desiredPodStatus, curPodStatus, secrets, e.podAdditionBackoff)
+	// desiredPodStatus, _ := e.statusManager.GetPodStatus(pod.GetUID())
+	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
 	if err := result.Error(); err != nil {
 		// Do not return error if the only failures were pods in backoff
 		for _, r := range result.SyncResults {
@@ -937,6 +959,12 @@ func (e *edged) syncPod() {
 					log.LOGGER.Infof("skip to handle secret with type response")
 					continue
 				}
+			case CSIResourceTypeVolume:
+				log.LOGGER.Infof("EdisonXiang OperationType: %s", op)
+				err := e.handleVolume(op, content)
+				if err != nil {
+					log.LOGGER.Errorf("handle volume failed: %v", err)
+				}
 			default:
 				log.LOGGER.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
 				continue
@@ -946,6 +974,42 @@ func (e *edged) syncPod() {
 			log.LOGGER.Errorf("failed to get pod")
 		}
 	}
+}
+
+const (
+	CSIResourceTypeVolume                     = "volume"
+	CSIOperationTypeCreateVolume              = "createvolume"
+	CSIOperationTypeDeleteVolume              = "deletevolume"
+	CSIOperationTypeControllerPublishVolume   = "controllerpublishvolume"
+	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
+)
+
+func (e *edged) handleVolume(op string, content []byte) (err error) {
+	var pod v1.Pod
+	err = json.Unmarshal(content, &pod)
+	if err != nil {
+		return err
+	}
+
+	switch op {
+	case CSIOperationTypeCreateVolume:
+		e.createVolume(&pod)
+	case CSIOperationTypeDeleteVolume:
+		e.deleteVolume(&pod)
+	}
+	return nil
+}
+
+func (e *edged) createVolume(obj interface{}) {
+	pod := obj.(*v1.Pod)
+	log.LOGGER.Infof("start create volume: %s", pod.Name)
+	log.LOGGER.Infof("end create volume: %s", pod.Name)
+}
+
+func (e *edged) deleteVolume(obj interface{}) {
+	pod := obj.(*v1.Pod)
+	log.LOGGER.Infof("start delete volume: %s", pod.Name)
+	log.LOGGER.Infof("end delete volume: %s", pod.Name)
 }
 
 func (e *edged) handlePod(op string, content []byte) (err error) {

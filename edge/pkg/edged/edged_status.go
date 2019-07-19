@@ -36,7 +36,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -280,7 +280,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 		gpuResources = append(gpuResources, gpuResource)
 	}
 
-	nodeStatus.ExtendResources[v1.ResourceNvidiaGPU] = gpuResources
+	nodeStatus.ExtendResources["alpha.kubernetes.io/nvidia-gpu"] = gpuResources
 	return nil
 }
 
