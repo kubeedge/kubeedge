@@ -118,7 +118,7 @@ func (gl *GenericLifecycle) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kub
 
 	hostIP, err := gl.getHostIPByInterface()
 	if err != nil {
-		log.LOGGER.Errorf("Unable to get host IP")
+		log.LOGGER.Errorf("Failed to get host IP: %v", err)
 	} else {
 		apiPodStatus.HostIP = hostIP
 		if pod.Spec.HostNetwork && podStatus.IP == "" {
