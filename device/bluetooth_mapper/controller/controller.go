@@ -139,6 +139,7 @@ func (c *Config) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Me
 			glog.Infof("New Schedule: %v", newSchedule)
 		}
 		configuration.Config.Scheduler = c.Scheduler
+		helper.ControllerWg.Add(1)
 		newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.ID)
 	}
 }
