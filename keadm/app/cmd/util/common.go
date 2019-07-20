@@ -184,7 +184,7 @@ func GetOSInterface() types.OSTypeInstaller {
 	case CentOSType:
 		return &CentOS{}
 	default:
-		panic("unsupport os-release")
+		panic("This OS version is currently un-supported by keadm")
 	}
 }
 
