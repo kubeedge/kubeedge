@@ -125,12 +125,8 @@ func GetInTreePluginNameFromSpec(pv *v1.PersistentVolume, vol *v1.Volume) (strin
 		}
 		return "", fmt.Errorf("could not find in-tree plugin name from persistent volume %v", pv)
 	} else if vol != nil {
-		for _, curPlugin := range inTreePlugins {
-			if curPlugin.CanSupportInline(vol) {
-				return curPlugin.GetInTreePluginName(), nil
-			}
-		}
-		return "", fmt.Errorf("could not find in-tree plugin name from volume %v", vol)
+		// TODO(dyzz): Implement inline volume migration support
+		return "", errors.New("inline volume migration not yet supported")
 	} else {
 		return "", errors.New("both persistent volume and volume are nil")
 	}
@@ -153,7 +149,7 @@ func GetInTreeNameFromCSIName(pluginName string) (string, error) {
 	if plugin, ok := inTreePlugins[pluginName]; ok {
 		return plugin.GetInTreePluginName(), nil
 	}
-	return "", fmt.Errorf("could not find In-Tree driver name for CSI plugin %v", pluginName)
+	return "", fmt.Errorf("Could not find In-Tree driver name for CSI plugin %v", pluginName)
 }
 
 // IsPVMigratable tests whether there is migration logic for the given Persistent Volume

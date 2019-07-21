@@ -3001,6 +3001,89 @@ type PodSpec struct {
 	// This field is alpha-level and is only honored by servers that enable the NonPreemptingPriority feature.
 	// +optional
 	PreemptionPolicy *PreemptionPolicy `json:"preemptionPolicy,omitempty" protobuf:"bytes,31,opt,name=preemptionPolicy"`
+	// Overhead represents the resource overhead associated with running a pod for a given RuntimeClass.
+	// This field will be autopopulated at admission time by the RuntimeClass admission controller. If
+	// the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests.
+	// The RuntimeClass admission controller will reject Pod create requests which have the overhead already
+	// set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value
+	// defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero.
+	// More info: https://git.k8s.io/enhancements/keps/sig-node/20190226-pod-overhead.md
+	// This field is alpha-level as of Kubernetes v1.16, and is only honored by servers that enable the PodOverhead feature.
+	// +optional
+	Overhead ResourceList `json:"overhead,omitempty" protobuf:"bytes,32,opt,name=overhead"`
+	// TopologySpreadConstraints describes how a group of pods ought to spread across topology
+	// domains. Scheduler will schedule pods in a way which abides by the constraints.
+	// This field is alpha-level and is only honored by clusters that enables the EvenPodsSpread
+	// feature.
+	// All topologySpreadConstraints are ANDed.
+	// +optional
+	// +patchMergeKey=topologyKey
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=topologyKey
+	// +listMapKey=whenUnsatisfiable
+	TopologySpreadConstraints []TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty" patchStrategy:"merge" patchMergeKey:"topologyKey" protobuf:"bytes,33,opt,name=topologySpreadConstraints"`
+}
+
+type UnsatisfiableConstraintAction string
+
+const (
+	// DoNotSchedule instructs the scheduler not to schedule the pod
+	// when constraints are not satisfied.
+	DoNotSchedule UnsatisfiableConstraintAction = "DoNotSchedule"
+	// ScheduleAnyway instructs the scheduler to schedule the pod
+	// even if constraints are not satisfied.
+	ScheduleAnyway UnsatisfiableConstraintAction = "ScheduleAnyway"
+)
+
+// TopologySpreadConstraint specifies how to spread matching pods among the given topology.
+type TopologySpreadConstraint struct {
+	// MaxSkew describes the degree to which pods may be unevenly distributed.
+	// It's the maximum permitted difference between the number of matching pods in
+	// any two topology domains of a given topology type.
+	// For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+	// labelSelector spread as 1/1/0:
+	// +-------+-------+-------+
+	// | zone1 | zone2 | zone3 |
+	// +-------+-------+-------+
+	// |   P   |   P   |       |
+	// +-------+-------+-------+
+	// - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 1/1/1;
+	// scheduling it onto zone1(zone2) would make the ActualSkew(2-0) on zone1(zone2)
+	// violate MaxSkew(1).
+	// - if MaxSkew is 2, incoming pod can be scheduled onto any zone.
+	// It's a required field. Default value is 1 and 0 is not allowed.
+	MaxSkew int32 `json:"maxSkew" protobuf:"varint,1,opt,name=maxSkew"`
+	// TopologyKey is the key of node labels. Nodes that have a label with this key
+	// and identical values are considered to be in the same topology.
+	// We consider each <key, value> as a "bucket", and try to put balanced number
+	// of pods into each bucket.
+	// It's a required field.
+	TopologyKey string `json:"topologyKey" protobuf:"bytes,2,opt,name=topologyKey"`
+	// WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy
+	// the spread constraint.
+	// - DoNotSchedule (default) tells the scheduler not to schedule it
+	// - ScheduleAnyway tells the scheduler to still schedule it
+	// It's considered as "Unsatisfiable" if and only if placing incoming pod on any
+	// topology violates "MaxSkew".
+	// For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+	// labelSelector spread as 3/1/1:
+	// +-------+-------+-------+
+	// | zone1 | zone2 | zone3 |
+	// +-------+-------+-------+
+	// | P P P |   P   |   P   |
+	// +-------+-------+-------+
+	// If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
+	// to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
+	// MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
+	// won't make it *more* imbalanced.
+	// It's a required field.
+	WhenUnsatisfiable UnsatisfiableConstraintAction `json:"whenUnsatisfiable" protobuf:"bytes,3,opt,name=whenUnsatisfiable,casttype=UnsatisfiableConstraintAction"`
+	// LabelSelector is used to find matching pods.
+	// Pods that match this label selector are counted to determine the number of pods
+	// in their corresponding topology domain.
+	// +optional
+	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty" protobuf:"bytes,4,opt,name=labelSelector"`
 }
 
 const (
@@ -3028,7 +3111,9 @@ type PodSecurityContext struct {
 	// takes precedence for that container.
 	// +optional
 	SELinuxOptions *SELinuxOptions `json:"seLinuxOptions,omitempty" protobuf:"bytes,1,opt,name=seLinuxOptions"`
-	// Windows security options.
+	// The Windows specific settings applied to all containers.
+	// If unspecified, the options within a container's SecurityContext will be used.
+	// If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
 	// +optional
 	WindowsOptions *WindowsSecurityContextOptions `json:"windowsOptions,omitempty" protobuf:"bytes,8,opt,name=windowsOptions"`
 	// The UID to run the entrypoint of the container process.
@@ -3116,6 +3201,14 @@ type PodDNSConfigOption struct {
 	Value *string `json:"value,omitempty" protobuf:"bytes,2,opt,name=value"`
 }
 
+// IP address information for entries in the (plural) PodIPs field.
+// Each entry includes:
+//    IP: An IP address allocated to the pod. Routable at least within the cluster.
+type PodIP struct {
+	// ip is an IP address (IPv4 or IPv6) assigned to the pod
+	IP string `json:"ip,omitempty" protobuf:"bytes,1,opt,name=ip"`
+}
+
 // PodStatus represents information about the status of a pod. Status may trail the actual
 // state of a system, especially if the node that hosts the pod cannot contact the control
 // plane.
@@ -3170,6 +3263,14 @@ type PodStatus struct {
 	// Empty if not yet allocated.
 	// +optional
 	PodIP string `json:"podIP,omitempty" protobuf:"bytes,6,opt,name=podIP"`
+
+	// podIPs holds the IP addresses allocated to the pod. If this field is specified, the 0th entry must
+	// match the podIP field. Pods may be allocated at most 1 value for each of IPv4 and IPv6. This list
+	// is empty if no IPs have been allocated yet.
+	// +optional
+	// +patchStrategy=merge
+	// +patchMergeKey=ip
+	PodIPs []PodIP `json:"podIPs,omitempty" protobuf:"bytes,12,rep,name=podIPs" patchStrategy:"merge" patchMergeKey:"ip"`
 
 	// RFC 3339 date and time at which the object was acknowledged by the Kubelet.
 	// This is before the Kubelet pulled the container image(s) for the pod.
@@ -3891,6 +3992,14 @@ type NodeSpec struct {
 	// PodCIDR represents the pod IP range assigned to the node.
 	// +optional
 	PodCIDR string `json:"podCIDR,omitempty" protobuf:"bytes,1,opt,name=podCIDR"`
+
+	// podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this
+	// field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value for
+	// each of IPv4 and IPv6.
+	// +optional
+	// +patchStrategy=merge
+	PodCIDRs []string `json:"podCIDRs,omitempty" protobuf:"bytes,7,opt,name=podCIDRs" patchStrategy:"merge"`
+
 	// ID of the node assigned by the cloud provider in the format: <ProviderName>://<ProviderSpecificNodeID>
 	// +optional
 	ProviderID string `json:"providerID,omitempty" protobuf:"bytes,3,opt,name=providerID"`
@@ -4072,6 +4181,9 @@ type NodeStatus struct {
 	// List of addresses reachable to the node.
 	// Queried from cloud provider, if available.
 	// More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses
+	// Note: This field is declared as mergeable, but the merge key is not sufficiently
+	// unique, which can cause data corruption when it is merged. Callers should instead
+	// use a full-replacement patch. See http://pr.k8s.io/79391 for an example.
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
@@ -4171,9 +4283,6 @@ type NodeConditionType string
 const (
 	// NodeReady means kubelet is healthy and ready to accept pods.
 	NodeReady NodeConditionType = "Ready"
-	// NodeOutOfDisk means the kubelet will not accept new pods due to insufficient free disk
-	// space on the node.
-	NodeOutOfDisk NodeConditionType = "OutOfDisk"
 	// NodeMemoryPressure means the kubelet is under pressure due to insufficient available memory.
 	NodeMemoryPressure NodeConditionType = "MemoryPressure"
 	// NodeDiskPressure means the kubelet is under pressure due to insufficient available disk.
@@ -5299,7 +5408,9 @@ type SecurityContext struct {
 	// PodSecurityContext, the value specified in SecurityContext takes precedence.
 	// +optional
 	SELinuxOptions *SELinuxOptions `json:"seLinuxOptions,omitempty" protobuf:"bytes,3,opt,name=seLinuxOptions"`
-	// Windows security options.
+	// The Windows specific settings applied to all containers.
+	// If unspecified, the options from the PodSecurityContext will be used.
+	// If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
 	// +optional
 	WindowsOptions *WindowsSecurityContextOptions `json:"windowsOptions,omitempty" protobuf:"bytes,10,opt,name=windowsOptions"`
 	// The UID to run the entrypoint of the container process.
@@ -5385,6 +5496,14 @@ type WindowsSecurityContextOptions struct {
 	// This field is alpha-level and is only honored by servers that enable the WindowsGMSA feature flag.
 	// +optional
 	GMSACredentialSpec *string `json:"gmsaCredentialSpec,omitempty" protobuf:"bytes,2,opt,name=gmsaCredentialSpec"`
+
+	// The UserName in Windows to run the entrypoint of the container process.
+	// Defaults to the user specified in image metadata if unspecified.
+	// May also be set in PodSecurityContext. If set in both SecurityContext and
+	// PodSecurityContext, the value specified in SecurityContext takes precedence.
+	// This field is alpha-level and it is only honored by servers that enable the WindowsRunAsUserName feature flag.
+	// +optional
+	RunAsUserName *string `json:"runAsUserName,omitempty" protobuf:"bytes,3,opt,name=runAsUserName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

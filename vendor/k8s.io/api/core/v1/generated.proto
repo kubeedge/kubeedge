@@ -2084,6 +2084,13 @@ message NodeSpec {
   // +optional
   optional string podCIDR = 1;
 
+  // podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this
+  // field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value for
+  // each of IPv4 and IPv6.
+  // +optional
+  // +patchStrategy=merge
+  repeated string podCIDRs = 7;
+
   // ID of the node assigned by the cloud provider in the format: <ProviderName>://<ProviderSpecificNodeID>
   // +optional
   optional string providerID = 3;
@@ -2136,6 +2143,9 @@ message NodeStatus {
   // List of addresses reachable to the node.
   // Queried from cloud provider, if available.
   // More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses
+  // Note: This field is declared as mergeable, but the merge key is not sufficiently
+  // unique, which can cause data corruption when it is merged. Callers should instead
+  // use a full-replacement patch. See http://pr.k8s.io/79391 for an example.
   // +optional
   // +patchMergeKey=type
   // +patchStrategy=merge
@@ -2842,6 +2852,14 @@ message PodExecOptions {
   repeated string command = 6;
 }
 
+// IP address information for entries in the (plural) PodIPs field.
+// Each entry includes:
+//    IP: An IP address allocated to the pod. Routable at least within the cluster.
+message PodIP {
+  // ip is an IP address (IPv4 or IPv6) assigned to the pod
+  optional string ip = 1;
+}
+
 // PodList is a list of Pods.
 message PodList {
   // Standard list metadata.
@@ -2937,7 +2955,9 @@ message PodSecurityContext {
   // +optional
   optional SELinuxOptions seLinuxOptions = 1;
 
-  // Windows security options.
+  // The Windows specific settings applied to all containers.
+  // If unspecified, the options within a container's SecurityContext will be used.
+  // If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
   // +optional
   optional WindowsSecurityContextOptions windowsOptions = 8;
 
@@ -3215,6 +3235,30 @@ message PodSpec {
   // This field is alpha-level and is only honored by servers that enable the NonPreemptingPriority feature.
   // +optional
   optional string preemptionPolicy = 31;
+
+  // Overhead represents the resource overhead associated with running a pod for a given RuntimeClass.
+  // This field will be autopopulated at admission time by the RuntimeClass admission controller. If
+  // the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests.
+  // The RuntimeClass admission controller will reject Pod create requests which have the overhead already
+  // set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value
+  // defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero.
+  // More info: https://git.k8s.io/enhancements/keps/sig-node/20190226-pod-overhead.md
+  // This field is alpha-level as of Kubernetes v1.16, and is only honored by servers that enable the PodOverhead feature.
+  // +optional
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> overhead = 32;
+
+  // TopologySpreadConstraints describes how a group of pods ought to spread across topology
+  // domains. Scheduler will schedule pods in a way which abides by the constraints.
+  // This field is alpha-level and is only honored by clusters that enables the EvenPodsSpread
+  // feature.
+  // All topologySpreadConstraints are ANDed.
+  // +optional
+  // +patchMergeKey=topologyKey
+  // +patchStrategy=merge
+  // +listType=map
+  // +listMapKey=topologyKey
+  // +listMapKey=whenUnsatisfiable
+  repeated TopologySpreadConstraint topologySpreadConstraints = 33;
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
@@ -3276,6 +3320,14 @@ message PodStatus {
   // Empty if not yet allocated.
   // +optional
   optional string podIP = 6;
+
+  // podIPs holds the IP addresses allocated to the pod. If this field is specified, the 0th entry must
+  // match the podIP field. Pods may be allocated at most 1 value for each of IPv4 and IPv6. This list
+  // is empty if no IPs have been allocated yet.
+  // +optional
+  // +patchStrategy=merge
+  // +patchMergeKey=ip
+  repeated PodIP podIPs = 12;
 
   // RFC 3339 date and time at which the object was acknowledged by the Kubelet.
   // This is before the Kubelet pulled the container image(s) for the pod.
@@ -4102,7 +4154,9 @@ message SecurityContext {
   // +optional
   optional SELinuxOptions seLinuxOptions = 3;
 
-  // Windows security options.
+  // The Windows specific settings applied to all containers.
+  // If unspecified, the options from the PodSecurityContext will be used.
+  // If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.
   // +optional
   optional WindowsSecurityContextOptions windowsOptions = 10;
 
@@ -4601,6 +4655,59 @@ message TopologySelectorTerm {
   repeated TopologySelectorLabelRequirement matchLabelExpressions = 1;
 }
 
+// TopologySpreadConstraint specifies how to spread matching pods among the given topology.
+message TopologySpreadConstraint {
+  // MaxSkew describes the degree to which pods may be unevenly distributed.
+  // It's the maximum permitted difference between the number of matching pods in
+  // any two topology domains of a given topology type.
+  // For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+  // labelSelector spread as 1/1/0:
+  // +-------+-------+-------+
+  // | zone1 | zone2 | zone3 |
+  // +-------+-------+-------+
+  // |   P   |   P   |       |
+  // +-------+-------+-------+
+  // - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 1/1/1;
+  // scheduling it onto zone1(zone2) would make the ActualSkew(2-0) on zone1(zone2)
+  // violate MaxSkew(1).
+  // - if MaxSkew is 2, incoming pod can be scheduled onto any zone.
+  // It's a required field. Default value is 1 and 0 is not allowed.
+  optional int32 maxSkew = 1;
+
+  // TopologyKey is the key of node labels. Nodes that have a label with this key
+  // and identical values are considered to be in the same topology.
+  // We consider each <key, value> as a "bucket", and try to put balanced number
+  // of pods into each bucket.
+  // It's a required field.
+  optional string topologyKey = 2;
+
+  // WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy
+  // the spread constraint.
+  // - DoNotSchedule (default) tells the scheduler not to schedule it
+  // - ScheduleAnyway tells the scheduler to still schedule it
+  // It's considered as "Unsatisfiable" if and only if placing incoming pod on any
+  // topology violates "MaxSkew".
+  // For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+  // labelSelector spread as 3/1/1:
+  // +-------+-------+-------+
+  // | zone1 | zone2 | zone3 |
+  // +-------+-------+-------+
+  // | P P P |   P   |   P   |
+  // +-------+-------+-------+
+  // If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
+  // to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
+  // MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
+  // won't make it *more* imbalanced.
+  // It's a required field.
+  optional string whenUnsatisfiable = 3;
+
+  // LabelSelector is used to find matching pods.
+  // Pods that match this label selector are counted to determine the number of pods
+  // in their corresponding topology domain.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector labelSelector = 4;
+}
+
 // TypedLocalObjectReference contains enough information to let you locate the
 // typed referenced object inside the same namespace.
 message TypedLocalObjectReference {
@@ -4881,5 +4988,13 @@ message WindowsSecurityContextOptions {
   // This field is alpha-level and is only honored by servers that enable the WindowsGMSA feature flag.
   // +optional
   optional string gmsaCredentialSpec = 2;
+
+  // The UserName in Windows to run the entrypoint of the container process.
+  // Defaults to the user specified in image metadata if unspecified.
+  // May also be set in PodSecurityContext. If set in both SecurityContext and
+  // PodSecurityContext, the value specified in SecurityContext takes precedence.
+  // This field is alpha-level and it is only honored by servers that enable the WindowsRunAsUserName feature flag.
+  // +optional
+  optional string runAsUserName = 3;
 }
 

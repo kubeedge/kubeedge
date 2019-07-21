@@ -26,7 +26,7 @@ import (
 	"github.com/google/cadvisor/container/common"
 	"github.com/google/cadvisor/container/libcontainer"
 	"github.com/google/cadvisor/watcher"
-	inotify "k8s.io/utils/inotify"
+	inotify "github.com/sigma/go-inotify"
 
 	"k8s.io/klog"
 )
@@ -172,13 +172,13 @@ func (self *rawContainerWatcher) processEvent(event *inotify.Event, events chan 
 	// Convert the inotify event type to a container create or delete.
 	var eventType watcher.ContainerEventType
 	switch {
-	case (event.Mask & inotify.InCreate) > 0:
+	case (event.Mask & inotify.IN_CREATE) > 0:
 		eventType = watcher.ContainerAdd
-	case (event.Mask & inotify.InDelete) > 0:
+	case (event.Mask & inotify.IN_DELETE) > 0:
 		eventType = watcher.ContainerDelete
-	case (event.Mask & inotify.InMovedFrom) > 0:
+	case (event.Mask & inotify.IN_MOVED_FROM) > 0:
 		eventType = watcher.ContainerDelete
-	case (event.Mask & inotify.InMovedTo) > 0:
+	case (event.Mask & inotify.IN_MOVED_TO) > 0:
 		eventType = watcher.ContainerAdd
 	default:
 		// Ignore other events.
