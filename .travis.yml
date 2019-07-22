@@ -21,6 +21,7 @@ before_script:
   - mkdir -p $HOME/gopath/src/github.com/kubeedge/kubeedge
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kubeedge/kubeedge/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedge
+  - export GO111MODULE=on
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
   - sudo apt-get install gcc-arm-linux-gnueabi
@@ -31,10 +32,6 @@ install: true
 
 jobs:
   include:
-    - stage: "dep check"
-      script: make depcheck
-      name: " Check if imports, Gopkg.toml, and Gopkg.lock are in sync"
-
     - stage: "Test lint"
       script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job
@@ -43,7 +40,7 @@ jobs:
     - script: make keadm_lint
       name: "keadm_lint"
     - script: make edge_verify
-      name: "verify edge"     # names the second Tests stage job
+      name: "verify edge"
 
     - stage: "Test Build"                # naming the Tests stage
       script: make 
