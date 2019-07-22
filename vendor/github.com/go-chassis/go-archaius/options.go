@@ -2,8 +2,8 @@ package archaius
 
 import (
 	"crypto/tls"
+	"github.com/go-chassis/go-archaius/sources/utils"
 
-	"github.com/go-chassis/go-archaius/sources/file-source"
 	"github.com/go-chassis/go-chassis-config"
 )
 
@@ -12,9 +12,10 @@ type ConfigCenterInfo struct {
 	//required.
 	//Key value can be in different namespace, we call it dimension.
 	//although key is same but in different dimension, the value is different.
-	//you must specify the default dimension, so that the config center source will just pull this dimension's key value
-	DefaultDimensionInfo string
-
+	//you must specify the service,app and version, so that the config center source will just pull this unique key value
+	Service string
+	App     string
+	Version string
 	//archaius config center source support 2 types of refresh mechanism:
 	//0: Web-Socket Based -  client makes an web socket connection with
 	//the config server and keeps getting an events whenever any data changes.
@@ -26,14 +27,14 @@ type ConfigCenterInfo struct {
 	RefreshInterval int
 
 	//Configurations for config client implementation
-	//if you alread create a client, don't need to set those config
+	//if you already create a client, don't need to set those config
 	URL           string
 	TenantName    string
 	EnableSSL     bool
 	TLSConfig     *tls.Config
 	AutoDiscovery bool
 	ClientType    string
-	Version       string
+	APIVersion    string
 	RefreshPort   string
 	Environment   string
 }
@@ -42,7 +43,7 @@ type ConfigCenterInfo struct {
 type Options struct {
 	RequiredFiles    []string
 	OptionalFiles    []string
-	FileHandler      filesource.FileHandler
+	FileHandler      utils.FileHandler
 	ConfigCenterInfo ConfigCenterInfo
 	ConfigClient     config.Client
 	UseCLISource     bool
@@ -69,7 +70,7 @@ func WithOptionalFiles(f []string) Option {
 
 //WithDefaultFileHandler let user custom handler
 //you can decide how to convert file into kv pairs
-func WithDefaultFileHandler(handler filesource.FileHandler) Option {
+func WithDefaultFileHandler(handler utils.FileHandler) Option {
 	return func(options *Options) {
 		options.FileHandler = handler
 	}
@@ -111,14 +112,14 @@ func WithMemorySource() Option {
 
 //FileOptions for AddFile func
 type FileOptions struct {
-	Handler filesource.FileHandler
+	Handler utils.FileHandler
 }
 
 //FileOption is a func
 type FileOption func(options *FileOptions)
 
 //WithFileHandler use custom handler
-func WithFileHandler(h filesource.FileHandler) FileOption {
+func WithFileHandler(h utils.FileHandler) FileOption {
 	return func(options *FileOptions) {
 		options.Handler = h
 	}

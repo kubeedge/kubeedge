@@ -16,6 +16,7 @@ package mqtt
 
 import (
 	"crypto/tls"
+	"net/http"
 	"net/url"
 	"time"
 )
@@ -34,6 +35,12 @@ func (r *ClientOptionsReader) Servers() []*url.URL {
 		s[i] = &nu
 	}
 
+	return s
+}
+
+//ResumeSubs returns true if resuming stored (un)sub is enabled
+func (r *ClientOptionsReader) ResumeSubs() bool {
+	s := r.options.ResumeSubs
 	return s
 }
 
@@ -96,7 +103,7 @@ func (r *ClientOptionsReader) ProtocolVersion() uint {
 	return s
 }
 
-func (r *ClientOptionsReader) TLSConfig() tls.Config {
+func (r *ClientOptionsReader) TLSConfig() *tls.Config {
 	s := r.options.TLSConfig
 	return s
 }
@@ -134,4 +141,9 @@ func (r *ClientOptionsReader) WriteTimeout() time.Duration {
 func (r *ClientOptionsReader) MessageChannelDepth() uint {
 	s := r.options.MessageChannelDepth
 	return s
+}
+
+func (r *ClientOptionsReader) HTTPHeaders() http.Header {
+	h := r.options.HTTPHeaders
+	return h
 }

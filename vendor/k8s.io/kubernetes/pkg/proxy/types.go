@@ -19,12 +19,16 @@ package proxy
 import (
 	"fmt"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	api "k8s.io/kubernetes/pkg/apis/core"
+	"k8s.io/kubernetes/pkg/proxy/config"
 )
 
 // ProxyProvider is the interface provided by proxier implementations.
 type ProxyProvider interface {
+	config.EndpointsHandler
+	config.ServiceHandler
+
 	// Sync immediately synchronizes the ProxyProvider's current state to proxy rules.
 	Sync()
 	// SyncLoop runs periodic work.
@@ -50,10 +54,16 @@ type ServicePort interface {
 	String() string
 	// ClusterIPString returns service cluster IP in string format.
 	ClusterIPString() string
+	// ExternalIPStrings returns service ExternalIPs as a string array.
+	ExternalIPStrings() []string
+	// LoadBalancerIPStrings returns service LoadBalancerIPs as a string array.
+	LoadBalancerIPStrings() []string
 	// GetProtocol returns service protocol.
-	GetProtocol() api.Protocol
+	GetProtocol() v1.Protocol
 	// GetHealthCheckNodePort returns service health check node port if present.  If return 0, it means not present.
 	GetHealthCheckNodePort() int
+	// GetNodePort returns a service Node port if present. If return 0, it means not present.
+	GetNodePort() int
 }
 
 // Endpoint in an interface which abstracts information about an endpoint.

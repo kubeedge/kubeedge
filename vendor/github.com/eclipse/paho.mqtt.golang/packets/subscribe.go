@@ -42,12 +42,22 @@ func (s *SubscribePacket) Write(w io.Writer) error {
 //Unpack decodes the details of a ControlPacket after the fixed
 //header has been read
 func (s *SubscribePacket) Unpack(b io.Reader) error {
-	s.MessageID = decodeUint16(b)
+	var err error
+	s.MessageID, err = decodeUint16(b)
+	if err != nil {
+		return err
+	}
 	payloadLength := s.FixedHeader.RemainingLength - 2
 	for payloadLength > 0 {
-		topic := decodeString(b)
+		topic, err := decodeString(b)
+		if err != nil {
+			return err
+		}
 		s.Topics = append(s.Topics, topic)
-		qos := decodeByte(b)
+		qos, err := decodeByte(b)
+		if err != nil {
+			return err
+		}
 		s.Qoss = append(s.Qoss, qos)
 		payloadLength -= 2 + len(topic) + 1 //2 bytes of string length, plus string, plus 1 byte for Qos
 	}
