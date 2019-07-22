@@ -102,10 +102,6 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-.PHONY: depcheck
-depcheck:
-	dep check
-
 .PHONY: bluetoothdevice
 bluetoothdevice:
 	make -C device/bluetooth_mapper
