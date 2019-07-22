@@ -5,9 +5,12 @@
 package beego
 
 import (
+	"context"
+	sql "database/sql"
+	reflect "reflect"
+
 	orm "github.com/astaxie/beego/orm"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockOrmer is a mock of Ormer interface
@@ -43,6 +46,18 @@ func (m *MockOrmer) Begin() error {
 // Begin indicates an expected call of Begin
 func (mr *MockOrmerMockRecorder) Begin() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Begin", reflect.TypeOf((*MockOrmer)(nil).Begin))
+}
+
+// BeginTx mocks base method
+func (m *MockOrmer) BeginTx(arg0 context.Context, arg1 *sql.TxOptions) error {
+	ret := m.ctrl.Call(m, "BeginTx", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Begin indicates an expected call of Begin
+func (mr *MockOrmerMockRecorder) BeginTx(arg0 context.Context, arg1 *sql.TxOptions) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTx", reflect.TypeOf((*MockOrmer)(nil).BeginTx), arg0, arg1)
 }
 
 // Commit mocks base method
@@ -85,6 +100,18 @@ func (m *MockOrmer) Driver() orm.Driver {
 // Driver indicates an expected call of Driver
 func (mr *MockOrmerMockRecorder) Driver() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Driver", reflect.TypeOf((*MockOrmer)(nil).Driver))
+}
+
+// DBStats mocks base method
+func (m *MockOrmer) DBStats() *sql.DBStats {
+	ret := m.ctrl.Call(m, "DBStats")
+	ret0, _ := ret[0].(*sql.DBStats)
+	return ret0
+}
+
+// DBStats indicates an expected call of DBStats
+func (mr *MockOrmerMockRecorder) DBStats() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DBStats", reflect.TypeOf((*MockOrmer)(nil).DBStats))
 }
 
 // Insert mocks base method
