@@ -12,29 +12,29 @@ before_script:
 jobs:
   include:
     - stage: Format Checker
-      script: bash -x scripts/travis/formatChecker.sh
+      script: bash scripts/travis/formatChecker.sh
     - stage: DeadCode Checker
       script: 
         - go get -u github.com/tsenart/deadcode
-        - bash -x scripts/travis/deadCodeChecker.sh
+        - bash scripts/travis/deadCodeChecker.sh
     - stage: Misspell Checker
       script: 
         - go get -u github.com/client9/misspell
-        - bash -x scripts/travis/misspellChecker.sh
+        - bash scripts/travis/misspellChecker.sh
     - stage: GoConst Checker
       script:
         - go get -u github.com/jgautheron/goconst/cmd/goconst
-        - bash -x scripts/travis/goConstChecker.sh
+        - bash scripts/travis/goConstChecker.sh
     - stage: GoLint Checker
       script:
         - go get -u golang.org/x/lint/golint
-        - bash -x scripts/travis/goLintChecker.sh
+        - bash scripts/travis/goLintChecker.sh
     - stage: GoCyclo Checker
       script:
         - go get github.com/fzipp/gocyclo
-        - bash -x scripts/travis/goCycloChecker.sh
+        - bash scripts/travis/goCycloChecker.sh
     - stage: Unit Test
       script:
         - GO111MODULE=on go mod download
         - GO111MODULE=on go mod vendor
-        - bash -x scripts/travis/unit_test.sh 
+        - bash scripts/travis/unit_test.sh

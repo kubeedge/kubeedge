@@ -44,6 +44,7 @@ var supportTag = map[string]int{
 	"decimals":     2,
 	"on_delete":    2,
 	"type":         2,
+	"description":  2,
 }
 
 // get reflect.Type name with package path.
@@ -65,7 +66,7 @@ func getTableName(val reflect.Value) string {
 	return snakeString(reflect.Indirect(val).Type().Name())
 }
 
-// get table engine, mysiam or innodb.
+// get table engine, myisam or innodb.
 func getTableEngine(val reflect.Value) string {
 	fun := val.MethodByName("TableEngine")
 	if fun.IsValid() {
@@ -109,7 +110,7 @@ func getTableUnique(val reflect.Value) [][]string {
 func getColumnName(ft int, addrField reflect.Value, sf reflect.StructField, col string) string {
 	column := col
 	if col == "" {
-		column = snakeString(sf.Name)
+		column = nameStrategyMap[nameStrategy](sf.Name)
 	}
 	switch ft {
 	case RelForeignKey, RelOneToOne:
