@@ -36,17 +36,17 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/features"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
-	utilfile "k8s.io/kubernetes/pkg/util/file"
 	"k8s.io/kubernetes/pkg/volume/util"
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
 	"k8s.io/kubernetes/pkg/volume/validation"
+	utilfile "k8s.io/utils/path"
 )
 
 const (
@@ -307,7 +307,7 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 
 			hostPath = filepath.Join(hostPath, mount.SubPath)
 
-			if subPathExists, err := utilfile.FileOrSymlinkExists(hostPath); err != nil {
+			if subPathExists, err := utilfile.Exists(utilfile.CheckSymlinkOnly, hostPath); err != nil {
 				log.LOGGER.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", hostPath)
 			} else if !subPathExists {
 				// Create the sub path now because if it's auto-created later when referenced, it may have an
@@ -390,10 +390,6 @@ func makeAbsolutePath(goos, path string) string {
 // translateMountPropagation transforms v1.MountPropagationMode to
 // runtimeapi.MountPropagation.
 func translateMountPropagation(mountMode *v1.MountPropagationMode) (runtimeapi.MountPropagation, error) {
-	if !utilfeature.DefaultFeatureGate.Enabled(features.MountPropagation) {
-		// mount propagation is disabled, use private as in the old versions
-		return runtimeapi.MountPropagation_PROPAGATION_PRIVATE, nil
-	}
 	switch {
 	case mountMode == nil:
 		// HostToContainer is the default
