@@ -69,6 +69,8 @@ const (
 	KubeEdgeHTTPPort           = "8080"
 	KubeEdgeHTTPSPort          = "6443"
 	KubeEdgeHTTPRequestTimeout = 30
+
+	InterfaceName = "eth0"
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache

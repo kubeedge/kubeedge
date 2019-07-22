@@ -35,6 +35,7 @@ type JoinOptions struct {
 	EdgeControllerIP   string
 	K8SAPIServerIPPort string
 	EdgeNodeID         string
+	InterfaceName      string
 	RuntimeType        string
 }
 
