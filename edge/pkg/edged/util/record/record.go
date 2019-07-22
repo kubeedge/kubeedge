@@ -28,3 +28,7 @@ func (er *EventRecorder) Eventf(object runtime.Object, eventtype, reason, messag
 //PastEventf logs past events info
 func (er *EventRecorder) PastEventf(object runtime.Object, timestamp metav1.Time, eventtype, reason, messageFmt string, args ...interface{}) {
 }
+
+// AnnotatedEventf is just like eventf, but with annotations attached
+func (er *EventRecorder) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventtype, reason, messageFmt string, args ...interface{}) {
+}
