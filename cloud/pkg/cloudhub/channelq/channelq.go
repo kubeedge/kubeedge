@@ -56,16 +56,15 @@ type ChannelEventQueue struct {
 // NewChannelEventQueue initializes a new ChannelEventQueue
 func NewChannelEventQueue(ctx *context.Context) *ChannelEventQueue {
 	q := ChannelEventQueue{ctx: ctx}
-	go q.dispatchMessage()
 	return &q
 }
 
-// dispatchMessage gets the message from the cloud , extracts the
-// node id from it , gets the channel associated with the node
+// DispatchMessage gets the message from the cloud, extracts the
+// node id from it, gets the channel associated with the node
 // and pushes the event on the channel
-func (q *ChannelEventQueue) dispatchMessage() {
+func (q *ChannelEventQueue) DispatchMessage() {
 	for {
-		msg, err := q.ctx.Receive("cloudhub")
+		msg, err := q.ctx.Receive(model.SrcCloudHub)
 		if err != nil {
 			log.LOGGER.Infof("receive not Message format message")
 			continue
@@ -75,7 +74,7 @@ func (q *ChannelEventQueue) dispatchMessage() {
 		numOfTokens := len(tokens)
 		var nodeID string
 		for i, token := range tokens {
-			if token == "node" && i+1 < numOfTokens {
+			if token == model.ResNode && i+1 < numOfTokens {
 				nodeID = tokens[i+1]
 				break
 			}
@@ -138,7 +137,7 @@ func (q *ChannelEventQueue) Close(info *model.HubInfo) error {
 // Publish sends message via the rchannel to Edge Controller
 func (q *ChannelEventQueue) Publish(info *model.HubInfo, event *model.Event) error {
 	msg := model.EventToMessage(event)
-	q.ctx.Send2Group("controller", msg)
+	q.ctx.Send2Group(model.SrcController, msg)
 	return nil
 }
 
