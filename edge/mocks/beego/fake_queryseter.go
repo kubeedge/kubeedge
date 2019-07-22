@@ -5,9 +5,10 @@
 package beego
 
 import (
+	reflect "reflect"
+
 	orm "github.com/astaxie/beego/orm"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockQuerySeter is a mock of QuerySeter interface
@@ -89,6 +90,18 @@ func (mr *MockQuerySeterMockRecorder) Distinct() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Distinct", reflect.TypeOf((*MockQuerySeter)(nil).Distinct))
 }
 
+// ForUpdate mocks base method
+func (m *MockQuerySeter) ForUpdate() orm.QuerySeter {
+	ret := m.ctrl.Call(m, "ForUpdate")
+	ret0, _ := ret[0].(orm.QuerySeter)
+	return ret0
+}
+
+// ForUpdate indicates an expected call of ForUpdate
+func (mr *MockQuerySeterMockRecorder) ForUpdate() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForUpdate", reflect.TypeOf((*MockQuerySeter)(nil).ForUpdate))
+}
+
 // Exclude mocks base method
 func (m *MockQuerySeter) Exclude(arg0 string, arg1 ...interface{}) orm.QuerySeter {
 	varargs := []interface{}{arg0}
@@ -133,6 +146,18 @@ func (m *MockQuerySeter) Filter(arg0 string, arg1 ...interface{}) orm.QuerySeter
 func (mr *MockQuerySeterMockRecorder) Filter(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Filter", reflect.TypeOf((*MockQuerySeter)(nil).Filter), varargs...)
+}
+
+// FilterRaw mocks base method
+func (m *MockQuerySeter) FilterRaw(arg0 string, arg1 string) orm.QuerySeter {
+	ret := m.ctrl.Call(m, "FilterRaw", arg0, arg1)
+	ret0, _ := ret[0].(orm.QuerySeter)
+	return ret0
+}
+
+// Filter indicates an expected call of Filter
+func (mr *MockQuerySeterMockRecorder) FilterRaw(arg0 string, arg1 string) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FilterRaw", reflect.TypeOf((*MockQuerySeter)(nil).FilterRaw), arg0, arg1)
 }
 
 // GetCond mocks base method

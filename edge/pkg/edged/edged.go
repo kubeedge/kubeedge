@@ -576,6 +576,7 @@ func newEdged() (*edged, error) {
 			SystemCgroupsName:  conf.cgroupDriver,
 			KubeletCgroupsName: conf.cgroupDriver,
 			ContainerRuntime:   conf.runtimeType,
+			KubeletRootDir:     DefaultRootDir,
 		},
 		false,
 		conf.devicePluginEnabled,
