@@ -1,17 +1,17 @@
 package cloudhub
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"io/ioutil"
 	"os"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 )
 
 type cloudHub struct {
@@ -38,6 +38,9 @@ func (a *cloudHub) Start(c *context.Context) {
 	initHubConfig()
 
 	eventq := channelq.NewChannelEventQueue(c)
+
+	// start dispatch message from the cloud to edge node
+	go eventq.DispatchMessage()
 
 	// start the cloudhub server
 	if util.HubConfig.ProtocolWebsocket {

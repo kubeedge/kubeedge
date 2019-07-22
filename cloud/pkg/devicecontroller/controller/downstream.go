@@ -451,90 +451,89 @@ func isProtocolConfigUpdated(oldTwin *v1alpha1.ProtocolConfig, newTwin *v1alpha1
 func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
-		if ok {
-			nodeConfigMap, ok := configMap.(*v1.ConfigMap)
-			if !ok {
-				log.LOGGER.Errorf("Failed to assert to configmap")
-				return
-			}
-			dp, ok := nodeConfigMap.Data[DeviceProfileJSON]
-			if !ok || dp == "{}" {
-				// This case should never be hit as we delete empty configmaps
-				log.LOGGER.Errorf("Failed to get deviceProfile from configmap data or deviceProfile is empty")
-				return
-			}
+		if !ok {
+			log.LOGGER.Errorf("Failed to load configmap")
+			return
+		}
 
-			deviceProfile := &types.DeviceProfile{}
-			if err := json.Unmarshal([]byte(dp), deviceProfile); err != nil {
-				log.LOGGER.Errorf("Failed to unmarshal due to error: %v", err)
-				return
-			}
-			var oldProtocol string
-			for _, devInst := range deviceProfile.DeviceInstances {
-				if device.Name == devInst.Name {
-					oldProtocol = devInst.Protocol
-					break
-				}
-			}
+		nodeConfigMap, ok := configMap.(*v1.ConfigMap)
+		if !ok {
+			log.LOGGER.Errorf("Failed to assert to configmap")
+			return
+		}
+		dp, ok := nodeConfigMap.Data[DeviceProfileJSON]
+		if !ok || dp == "{}" {
+			// This case should never be hit as we delete empty configmaps
+			log.LOGGER.Errorf("Failed to get deviceProfile from configmap data or deviceProfile is empty")
+			return
+		}
 
-			// delete the old protocol
-			for i, ptcl := range deviceProfile.Protocols {
-				if ptcl.Name == oldProtocol {
-					deviceProfile.Protocols = append(deviceProfile.Protocols[:i], deviceProfile.Protocols[i+1:]...)
-					break
-				}
-			}
-
-			// add new protocol
-			deviceProtocol := &types.Protocol{}
-			var protocol string
-			if device.Spec.Protocol.OpcUA != nil {
-				protocol = OPCUA + "-" + device.Name
-				deviceProtocol.Name = protocol
-				deviceProtocol.Protocol = OPCUA
-				deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
-			} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
-				protocol = ModbusRTU + "-" + device.Name
-				deviceProtocol.Name = protocol
-				deviceProtocol.Protocol = ModbusRTU
-				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.RTU
-			} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
-				protocol = ModbusTCP + "-" + device.Name
-				deviceProtocol.Name = protocol
-				deviceProtocol.Protocol = ModbusTCP
-				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.TCP
-			} else if device.Spec.Protocol.Bluetooth != nil {
-				protocol = Bluetooth + "-" + device.Name
-				deviceProtocol.Name = protocol
-				deviceProtocol.Protocol = Bluetooth
-				deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
-			} else {
-				log.LOGGER.Warnf("Unsupported device protocol")
-			}
-
-			// update the protocol in deviceInstance
-			for _, devInst := range deviceProfile.DeviceInstances {
-				if device.Name == devInst.Name {
-					devInst.Protocol = protocol
-					break
-				}
-			}
-			deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
-
-			bytes, err := json.Marshal(deviceProfile)
-			if err != nil {
-				log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
-				return
-			}
-			nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
-			// store new config map
-			dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
-				log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
-				return
+		deviceProfile := &types.DeviceProfile{}
+		if err := json.Unmarshal([]byte(dp), deviceProfile); err != nil {
+			log.LOGGER.Errorf("Failed to unmarshal due to error: %v", err)
+			return
+		}
+		var oldProtocol string
+		for _, devInst := range deviceProfile.DeviceInstances {
+			if device.Name == devInst.Name {
+				oldProtocol = devInst.Protocol
+				break
 			}
 		}
+
+		// delete the old protocol
+		for i, ptcl := range deviceProfile.Protocols {
+			if ptcl.Name == oldProtocol {
+				deviceProfile.Protocols = append(deviceProfile.Protocols[:i], deviceProfile.Protocols[i+1:]...)
+				break
+			}
+		}
+
+		// add new protocol
+		deviceProtocol := &types.Protocol{}
+		var protocol string
+		if device.Spec.Protocol.OpcUA != nil {
+			deviceProtocol = buildDeviceProtocol(OPCUA, device.Name, device.Spec.Protocol.OpcUA)
+		} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
+			deviceProtocol = buildDeviceProtocol(ModbusRTU, device.Name, device.Spec.Protocol.Modbus.RTU)
+		} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
+			deviceProtocol = buildDeviceProtocol(ModbusTCP, device.Name, device.Spec.Protocol.Modbus.TCP)
+		} else if device.Spec.Protocol.Bluetooth != nil {
+			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Name, device.Spec.Protocol.Bluetooth)
+		} else {
+			log.LOGGER.Warnf("Unsupported device protocol")
+		}
+
+		// update the protocol in deviceInstance
+		for _, devInst := range deviceProfile.DeviceInstances {
+			if device.Name == devInst.Name {
+				devInst.Protocol = protocol
+				break
+			}
+		}
+		deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
+
+		bytes, err := json.Marshal(deviceProfile)
+		if err != nil {
+			log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+			return
+		}
+		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
+		// store new config map
+		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+			log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			return
+		}
 	}
+}
+
+func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}) (deviceProtocol *types.Protocol) {
+	protocol = protocol + "-" + deviceName
+	deviceProtocol.Name = protocol
+	deviceProtocol.Protocol = OPCUA
+	deviceProtocol.ProtocolConfig = ProtocolConfig
+	return deviceProtocol
 }
 
 // deviceUpdated updates the map, check if device is actually updated.
