@@ -51,8 +51,6 @@ import (
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
-	"k8s.io/kubernetes/pkg/kubelet/gpu"
-	"k8s.io/kubernetes/pkg/kubelet/gpu/nvidia"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
@@ -201,7 +199,6 @@ type edged struct {
 	podDeletionBackoff *flowcontrol.Backoff
 	imageGCManager     images.ImageGCManager
 	containerGCManager kubecontainer.ContainerGC
-	gpuManager         gpu.GPUManager
 	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
@@ -400,7 +397,6 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 
 //newEdged creates new edged object and initialises it
 func newEdged() (*edged, error) {
-	var gpuManager gpu.GPUManager
 	conf := getConfig()
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
@@ -444,14 +440,6 @@ func newEdged() (*edged, error) {
 		os.Exit(1)
 	}
 
-	if conf.gpuPluginEnabled {
-		gpuManager, _ = nvidia.NewNvidiaGPUManager(ed, &dockershim.ClientConfig{
-			DockerEndpoint: conf.DockerAddress,
-		})
-	} else {
-		gpuManager = gpu.NewGPUManagerStub()
-	}
-	ed.gpuManager = gpuManager
 	ed.livenessManager = proberesults.NewManager()
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
@@ -596,11 +584,6 @@ func newEdged() (*edged, error) {
 }
 
 func (e *edged) initializeModules() error {
-	if err := e.gpuManager.Start(); err != nil {
-		log.LOGGER.Errorf("Failed to start gpuManager %v", err)
-		return err
-	}
-
 	node, _ := e.initialNode()
 	if err := e.containerManager.Start(node, e.GetActivePods, nil, e.statusManager, e.runtimeService); err != nil {
 		log.LOGGER.Errorf("Failed to start device plugin manager %v", err)
