@@ -24,6 +24,7 @@ before_script:
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
   - sudo apt-get install gcc-arm-linux-gnueabi
+  - sudo apt-get install upx-ucl
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 install: true
@@ -33,6 +34,7 @@ jobs:
     - stage: "dep check"
       script: make depcheck
       name: " Check if imports, Gopkg.toml, and Gopkg.lock are in sync"
+
     - stage: "Test Build"                # naming the Tests stage
       script: make 
       name: "builds cloud and edge components"            # names the first Tests stage job
@@ -40,6 +42,8 @@ jobs:
       name: "cross build edge"     # names the fifth Tests stage job
     - script: make bluetoothdevice
       name: "build bluetooth_device"
+    - script: make edge_small_build
+      name: "build small edge version"
     - stage: "Test lint"
       script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job
@@ -59,3 +63,12 @@ jobs:
     - stage: "e2e tests"
       script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
+    - stage: "build docker container"
+      script: make cloudimage
+      name: "build cloudimage"
+    - script: make edgeimage
+      name: "build edge image"
+    - script: make edgesiteimage
+      name: "build edgesite image"
+    - script: make bluetoothdevice_image
+      name: "build bluetoothdevice image"
