@@ -33,26 +33,29 @@ jobs:
     - stage: "dep check"
       script: make depcheck
       name: " Check if imports, Gopkg.toml, and Gopkg.lock are in sync"
-    - stage: "Test Jobs"                # naming the Tests stage
+    - stage: "Test Build"                # naming the Tests stage
       script: make 
       name: "builds cloud and edge components"            # names the first Tests stage job
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
+    - script: make bluetoothdevice
+      name: "build bluetooth_device"
+    - stage: "Test lint"
+      script: make cloud_lint
+      name: "cloud_lint"     # names the eighth Tests stage job
+    - script: make bluetoothdevice_lint
+      name: "bluetooth_device_lint"
+    - script: make keadm_lint
+      name: "keadm_lint"
     - script: make edge_verify
       name: "verify edge"     # names the second Tests stage job
-    - script: make edge_test
+    - stage: "unit tests"
+      script: make edge_test
       name: "unit test edge"     # names the third Tests stage job
     - script: make edge_integration_test
       name: "integration test edge"     # names the fourth Tests stage job
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script: make e2e_test
-      name: "e2e_test"     # names the seventh Tests stage job
     - script: make cloud_test
       name: "unit test cloud" 
-    - script: make cloud_lint
-      name: "cloud_lint"     # names the eighth Tests stage job
-    - script: make keadm_lint
-      name: "keadm_lint"
-    - script: make bluetoothdevice
-      name: "build bluetooth_device"
-    - script: make bluetoothdevice_lint
-      name: "bluetooth_device_lint"
+    - stage: "e2e tests"
+      script: make e2e_test
+      name: "e2e_test"     # names the seventh Tests stage job
