@@ -29,6 +29,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-chassis/go-archaius/core"
+	"github.com/go-chassis/go-archaius/sources/utils"
 	"github.com/go-mesh/openlogging"
 	"strings"
 	"time"
@@ -63,7 +64,7 @@ type ConfigInfo struct {
 type fileSource struct {
 	Configurations map[string]*ConfigInfo
 	files          []file
-	fileHandlers   map[string]FileHandler
+	fileHandlers   map[string]utils.FileHandler
 	watchPool      *watch
 	filelock       sync.Mutex
 	priority       int
@@ -99,7 +100,7 @@ var fileConfigSource *fileSource
 //FileSource is a interface
 type FileSource interface {
 	core.ConfigSource
-	AddFile(filePath string, priority uint32, handler FileHandler) error
+	AddFile(filePath string, priority uint32, handler utils.FileHandler) error
 }
 
 //NewFileSource creates a source which can handler local files
@@ -108,13 +109,13 @@ func NewFileSource() FileSource {
 		fileConfigSource = new(fileSource)
 		fileConfigSource.priority = fileSourcePriority
 		fileConfigSource.files = make([]file, 0)
-		fileConfigSource.fileHandlers = make(map[string]FileHandler)
+		fileConfigSource.fileHandlers = make(map[string]utils.FileHandler)
 	}
 
 	return fileConfigSource
 }
 
-func (fSource *fileSource) AddFile(p string, priority uint32, handle FileHandler) error {
+func (fSource *fileSource) AddFile(p string, priority uint32, handle utils.FileHandler) error {
 	path, err := filepath.Abs(p)
 	if err != nil {
 		return err
@@ -187,7 +188,7 @@ func fileType(fs *os.File) FileSourceTypes {
 	return InvalidFileType
 }
 
-func (fSource *fileSource) handleDirectory(dir *os.File, priority uint32, handle FileHandler) error {
+func (fSource *fileSource) handleDirectory(dir *os.File, priority uint32, handle utils.FileHandler) error {
 
 	filesInfo, err := dir.Readdir(-1)
 	if err != nil {
@@ -215,7 +216,7 @@ func (fSource *fileSource) handleDirectory(dir *os.File, priority uint32, handle
 	return nil
 }
 
-func (fSource *fileSource) handleFile(file *os.File, priority uint32, handle FileHandler) error {
+func (fSource *fileSource) handleFile(file *os.File, priority uint32, handle utils.FileHandler) error {
 	Content, err := ioutil.ReadFile(file.Name())
 	if err != nil {
 		return err
@@ -224,7 +225,7 @@ func (fSource *fileSource) handleFile(file *os.File, priority uint32, handle Fil
 	if handle != nil {
 		config, err = handle(file.Name(), Content)
 	} else {
-		config, err = Convert2JavaProps(file.Name(), Content)
+		config, err = utils.Convert2JavaProps(file.Name(), Content)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to pull configurations from [%s] file, %s", file.Name(), err)
@@ -417,7 +418,7 @@ func (wth *watch) watchFile() {
 			}
 			handle := wth.fileSource.fileHandlers[event.Name]
 			if handle == nil {
-				handle = Convert2JavaProps
+				handle = utils.Convert2JavaProps
 			}
 			content, err := ioutil.ReadFile(event.Name)
 			if err != nil {

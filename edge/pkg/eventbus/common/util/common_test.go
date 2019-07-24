@@ -161,7 +161,7 @@ func TestHubClientInit(t *testing.T) {
 			tt.want.ClientID = tt.clientID
 			tt.want.Username = tt.username
 			tt.want.Password = tt.password
-			tt.want.TLSConfig = tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
+			tt.want.TLSConfig = &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 			got := HubClientInit(tt.server, tt.clientID, tt.username, tt.password)
 			assert.Equal(t, tt.want.Servers, got.Servers)
 			assert.Equal(t, tt.want.ClientID, got.ClientID)

@@ -16,20 +16,31 @@ limitations under the License.
 
 package scheduling
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kubernetes/pkg/apis/core"
+)
 
 const (
 	// DefaultPriorityWhenNoDefaultClassExists is used to set priority of pods
 	// that do not specify any priority class and there is no priority class
 	// marked as default.
 	DefaultPriorityWhenNoDefaultClassExists = 0
+	// HighestUserDefinablePriority is the highest priority for user defined priority classes. Priority values larger than 1 billion are reserved for Kubernetes system use.
+	HighestUserDefinablePriority = int32(1000000000)
+	// SystemCriticalPriority is the beginning of the range of priority values for critical system components.
+	SystemCriticalPriority = 2 * HighestUserDefinablePriority
 	// SystemPriorityClassPrefix is the prefix reserved for system priority class names. Other priority
 	// classes are not allowed to start with this prefix.
+	// NOTE: In order to avoid conflict of names with user-defined priority classes, all the names must
+	// start with SystemPriorityClassPrefix.
 	SystemPriorityClassPrefix = "system-"
+	// SystemClusterCritical is the system priority class name that represents cluster-critical.
+	SystemClusterCritical = SystemPriorityClassPrefix + "cluster-critical"
+	// SystemNodeCritical is the system priority class name that represents node-critical.
+	SystemNodeCritical = SystemPriorityClassPrefix + "node-critical"
 )
 
-// +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PriorityClass defines the mapping from a priority class name to the priority
@@ -56,6 +67,11 @@ type PriorityClass struct {
 	// when this priority class should be used.
 	// +optional
 	Description string
+
+	// PreemptionPolicy it the Policy for preempting pods with lower priority.
+	// This field is alpha-level and is only honored by servers that enable the NonPreemptingPriority feature.
+	// +optional
+	PreemptionPolicy *core.PreemptionPolicy
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

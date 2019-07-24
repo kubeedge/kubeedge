@@ -18,5 +18,4 @@ type Options struct {
 	APIVersion        string
 	AutoDiscovery     bool
 	RefreshPort       string
-	DimensionInfo     string
 }
