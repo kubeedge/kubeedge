@@ -13,7 +13,7 @@ connectivity between edge and cloud is lost/unreliable.
 The cloud native and microservice architecture is becoming more and more popular and the edge node is becoming more and more powerful. In these scenarios, users might want to deploy their applications at the edge, 
 which could need to be accessed by external users, through services. Using ingress we would be able to provide name based virtual hosting and load balance traffic.
 
-This design document deals with enabling users to leverage powerful machines at the edge to provide external users 
+This design document deals with enabling users to leverage powerful machines at the edge to provide external users (users of the application running as a pod within Kubeedge)
 access to the services running within the different edge nodes.  
 
 
@@ -47,7 +47,7 @@ The nginx ingress controller pod can be accessed through the nginx service, whic
 
 
 1. The user first has to deploy the Nginx ingress controller pod and service on the edge through the edge core (edged component to be specific).
-2. Once the pod and service have been created, the user can define the an ingress resource, which contains the rules based on which the ingress controller forwards the requests from the user.
+2. Once the pod and service have been created, the user can define an ingress resource, which contains the rules based on which the ingress controller forwards the requests from the user.
 3. The external users can access the Nginx service either through a load balancer or a Node port service which would forward requests to the nginx service.
 4. The Nginx service forwards the request to the Nginx Ingress Controller pod.
 5. Based on the rules that have been defined in the ingress resource, the ingress controller forwards the request to the appropriate service.
