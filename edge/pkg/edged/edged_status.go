@@ -280,7 +280,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 		gpuResources = append(gpuResources, gpuResource)
 	}
 
-	nodeStatus.ExtendResources["alpha.kubernetes.io/nvidia-gpu"] = gpuResources
+	nodeStatus.ExtendResources[apis.NvidiaGPUResource] = gpuResources
 	return nil
 }
 
