@@ -380,7 +380,8 @@ func (u *UbuntuOS) StartK8Scluster() error {
 		install = false
 	}
 	if install == true {
-		stdout, err := runCommandWithShell("swapoff -a && kubeadm init")
+		k8sInit := fmt.Sprintf("swapoff -a && kubeadm init --image-repository  \"%s\" --pod-network-cidr=%s", KubernetesImageRepository, KubernetesPodNetworkCidr)
+		stdout, err := runCommandWithShell(k8sInit)
 		if err != nil {
 			return err
 		}

@@ -40,6 +40,9 @@ const (
 
 	KubernetesDownloadURL = "https://apt.kubernetes.io/"
 	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+	
+	KubernetesImageRepository = "k8s.gcr.io"
+	KubernetesPodNetworkCidr  = "10.244.0.0/16"
 
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath              = "/etc/kubeedge/"
