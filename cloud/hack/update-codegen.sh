@@ -20,7 +20,14 @@ set -o pipefail
 
 SCRIPT_ROOT=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/../.. && pwd)
 
-${SCRIPT_ROOT}/vendor/k8s.io/code-generator/generate-groups.sh "deepcopy" \
-github.com/kubeedge/kubeedge/cloud/pkg/client github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis \
+# generate the code with:
+# --output-base    because this script should also be able to run inside the vendor dir of
+#                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
+#                  instead of the $GOPATH directly. For normal projects this can be dropped.
+${SCRIPT_ROOT}/vendor/k8s.io/code-generator/generate-groups.sh "deepcopy,client,informer,lister" \
+github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/client github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis \
 "devices:v1alpha1" \
 --go-header-file ${SCRIPT_ROOT}/cloud/hack/boilerplate/boilerplate.txt
+
+# To use your own boilerplate text use:
+#   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt
