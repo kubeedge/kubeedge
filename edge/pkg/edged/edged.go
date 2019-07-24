@@ -48,6 +48,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
+	pluginwatcherapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
@@ -57,6 +58,8 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 	kubedns "k8s.io/kubernetes/pkg/kubelet/network/dns"
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
+	"k8s.io/kubernetes/pkg/kubelet/pluginmanager"
+	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
@@ -69,8 +72,9 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
-	empty_dir "k8s.io/kubernetes/pkg/volume/emptydir"
-	host_path "k8s.io/kubernetes/pkg/volume/hostpath"
+	"k8s.io/kubernetes/pkg/volume/csi"
+	"k8s.io/kubernetes/pkg/volume/emptydir"
+	"k8s.io/kubernetes/pkg/volume/hostpath"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
@@ -94,11 +98,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
-
-	pluginwatcherapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1"
-	"k8s.io/kubernetes/pkg/kubelet/pluginmanager"
-	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
-	"k8s.io/kubernetes/pkg/volume/csi"
 )
 
 const (
@@ -722,12 +721,7 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 	}
 }
 
-// NewNamespacedNameFromString parses the provided string and returns a NamespacedName.
-// The expected format is as per String() above.
-// If the input string is invalid, the returned NamespacedName has all empty string field values.
-// This allows a single-value return from this function, while still allowing error checks in the caller.
-// Note that an input string which does not include exactly one Separator is not a valid input (as it could never
-// have neem returned by String() )
+// NewNamespacedNameFromString parses the provided string and returns a NamespacedName
 func NewNamespacedNameFromString(s string) types.NamespacedName {
 	Separator := '/'
 	nn := types.NamespacedName{}
@@ -845,7 +839,6 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 		return err
 	}
 
-	// desiredPodStatus, _ := e.statusManager.GetPodStatus(pod.GetUID())
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
 	if err := result.Error(); err != nil {
 		// Do not return error if the only failures were pods in backoff
@@ -1160,9 +1153,9 @@ func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 	allPlugins := []volume.VolumePlugin{}
 	hostPathConfig := volume.VolumeConfig{}
 	allPlugins = append(allPlugins, configmap.ProbeVolumePlugins()...)
-	allPlugins = append(allPlugins, empty_dir.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, emptydir.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, secretvolume.ProbeVolumePlugins()...)
-	allPlugins = append(allPlugins, host_path.ProbeVolumePlugins(hostPathConfig)...)
+	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(hostPathConfig)...)
 	return allPlugins
 }
 

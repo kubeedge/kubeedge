@@ -17,6 +17,8 @@ const (
 	NvidiaGPUScalarResourceName = "nvidia.com/gpu"
 	// NvidiaGPUMaxUsage is the maximum possible usage of a GPU in millis
 	NvidiaGPUMaxUsage = 1000
+	// NvidiaGPUResource is the extend resource name
+	NvidiaGPUResource = "alpha.kubernetes.io/nvidia-gpu"
 	//StatusTag is to compare status of resources
 	StatusTag = "StatusTag"
 )
