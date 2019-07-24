@@ -31,12 +31,15 @@ import (
 	api "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/kubernetes/pkg/cloudprovider"
-	"k8s.io/kubernetes/pkg/util/io"
+	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 
 	"k8s.io/apimachinery/pkg/types"
+
+	authenticationv1 "k8s.io/api/authentication/v1"
+	recordtools "k8s.io/client-go/tools/record"
+	"k8s.io/kubernetes/pkg/volume/util/subpath"
 )
 
 // NewInitializedVolumePluginMgr returns a new instance of volume.VolumePluginMgr
@@ -122,7 +125,6 @@ func (evh *edgedVolumeHost) NewWrapperUnmounter(volName string, spec volume.Spec
 
 // Below is part of k8s.io/kubernetes/pkg/volume.VolumeHost interface.
 func (evh *edgedVolumeHost) GetMounter(pluginName string) mount.Interface { return evh.edge.mounter }
-func (evh *edgedVolumeHost) GetWriter() io.Writer                         { return evh.edge.writer }
 func (evh *edgedVolumeHost) GetHostName() string                          { return evh.edge.hostname }
 func (evh *edgedVolumeHost) GetCloudProvider() cloudprovider.Interface    { return nil }
 func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*api.ConfigMap, error) {
@@ -144,3 +146,26 @@ func (evh *edgedVolumeHost) GetSecretFunc() func(namespace, name string) (*api.S
 	}
 }
 func (evh *edgedVolumeHost) GetVolumeDevicePluginDir(pluginName string) string { return "" }
+
+func (evh *edgedVolumeHost) DeleteServiceAccountTokenFunc() func(podUID types.UID) {
+	return func(types.UID) {}
+}
+
+func (evh *edgedVolumeHost) GetEventRecorder() recordtools.EventRecorder {
+	return evh.edge.recorder
+}
+
+func (evh *edgedVolumeHost) GetPodsDir() string {
+	return evh.edge.getPodsDir()
+}
+
+func (evh *edgedVolumeHost) GetServiceAccountTokenFunc() func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	return func(_, _ string, _ *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+		return nil, fmt.Errorf("GetServiceAccountToken unsupported")
+	}
+}
+
+func (evh *edgedVolumeHost) GetSubpather() subpath.Interface {
+	// No volume plugin needs Subpaths
+	return nil
+}

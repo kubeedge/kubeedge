@@ -44,7 +44,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -55,7 +55,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/container/testing"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
-	"k8s.io/kubernetes/pkg/scheduler/schedulercache"
+	schedulercache "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	"k8s.io/kubernetes/pkg/util/selinux"
 )

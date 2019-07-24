@@ -1,5 +1,5 @@
 ### go-archaius
-[![Build Status](https://travis-ci.org/go-chassis/go-archaius.svg?branch=master)](https://travis-ci.org/ServiceComb/go-archaius)
+[![Build Status](https://travis-ci.org/go-chassis/go-archaius.svg?branch=master)](https://travis-ci.org/go-chassis/go-archaius)
 
 ![](arch.png)
 
@@ -75,7 +75,7 @@ give config client to init config center source
 	//input your config center source config
 	}
 	//create config client 
-	cc:=ccclient.NewClient("config_center",ccclient.Options{
+	cc,_:=ccclient.NewClient("config_center",ccclient.Options{
     		ServerURI:"the address of config server endpoint",
     	})
 	//manage local and remote key value at same time

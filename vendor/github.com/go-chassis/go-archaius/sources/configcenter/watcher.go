@@ -22,7 +22,6 @@ func newDynConfigHandlerSource(cfgSrc *Handler, callback core.DynamicConfigCallb
 	eventHandler := newConfigCenterEventHandler(cfgSrc, callback)
 	dynCfgHandler := new(DynamicConfigHandler)
 	dynCfgHandler.EventHandler = eventHandler
-	dynCfgHandler.dimensionsInfo = cfgSrc.dimensionsInfo
 	dynCfgHandler.cc = cfgSrc.cc
 	return dynCfgHandler, nil
 }

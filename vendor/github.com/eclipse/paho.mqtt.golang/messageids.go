@@ -38,13 +38,13 @@ const (
 func (mids *messageIds) cleanUp() {
 	mids.Lock()
 	for _, token := range mids.index {
-		switch t := token.(type) {
+		switch token.(type) {
 		case *PublishToken:
-			t.err = fmt.Errorf("Connection lost before Publish completed")
+			token.setError(fmt.Errorf("Connection lost before Publish completed"))
 		case *SubscribeToken:
-			t.err = fmt.Errorf("Connection lost before Subscribe completed")
+			token.setError(fmt.Errorf("Connection lost before Subscribe completed"))
 		case *UnsubscribeToken:
-			t.err = fmt.Errorf("Connection lost before Unsubscribe completed")
+			token.setError(fmt.Errorf("Connection lost before Unsubscribe completed"))
 		case nil:
 			continue
 		}
@@ -59,6 +59,18 @@ func (mids *messageIds) freeID(id uint16) {
 	mids.Lock()
 	delete(mids.index, id)
 	mids.Unlock()
+}
+
+func (mids *messageIds) claimID(token tokenCompletor, id uint16) {
+	mids.Lock()
+	defer mids.Unlock()
+	if _, ok := mids.index[id]; !ok {
+		mids.index[id] = token
+	} else {
+		old := mids.index[id]
+		old.flowComplete()
+		mids.index[id] = token
+	}
 }
 
 func (mids *messageIds) getID(t tokenCompletor) uint16 {
