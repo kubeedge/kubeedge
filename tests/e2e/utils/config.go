@@ -44,6 +44,7 @@ type Config struct {
 	Namespace                      string            `json:"namespace"`
 	ControllerStubPort             int               `json:"controllerstubport"`
 	Protocol                       string            `json:"protocol"`
+	DockerClinet                   string            `json:"dockerclient"`
 }
 
 //config struct

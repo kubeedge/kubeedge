@@ -95,6 +95,23 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
 			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
 
+		//Register EdgeNodes to K8s Master
+		for edgenodeName, val := range NodeInfo {
+			utils.RegisterNodeToMaster(edgenodeName, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, val[1])
+		}
+		//Check All EdgeNode are in Running state
+		Eventually(func() int {
+			count := 0
+			for edgenodeName := range NodeInfo {
+				status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, edgenodeName)
+				utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
+				if status == "Running" {
+					count++
+				}
+			}
+			return count
+		}, "1200s", "2s").Should(Equal(ctx.Cfg.NumOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
+
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
 		ToTaint = true
 		err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)

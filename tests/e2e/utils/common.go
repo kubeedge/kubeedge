@@ -166,12 +166,12 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("30m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("20Mi"),
 							},
 							Limits: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("30m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("20Mi"),
 							},
 						},
 						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
@@ -183,7 +183,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("20m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("256Mi"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
 						},
 						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},

@@ -46,7 +46,43 @@ const (
 	ServiceHandler    = "/api/v1/namespaces/default/services"
 	NodelabelKey      = "k8snode"
 	NodelabelVal      = "kb-perf-node"
+	ListContainer     = "/containers/json"
+	ContainerStats    = "/containers/%s/stats?stream=0" //stream – 1/True/true or 0/False/false, pull stats once then disconnect. Default true.
 )
+
+type ContainerList []struct {
+	ID     string   `json:"Id"`
+	Names  []string `json:"Names"`
+	Labels struct {
+		IoKubernetesContainerName string `json:"io.kubernetes.container.name"`
+		IoKubernetesPodName       string `json:"io.kubernetes.pod.name"`
+	} `json:"Labels"`
+	State  string `json:"State"`
+	Status string `json:"Status"`
+}
+
+type ResourceStats struct {
+	CPUStats struct {
+		CPUUsage struct {
+			TotalUsage  uint64   `json:"total_usage"`
+			PercpuUsage []uint64 `json:"percpu_usage"`
+		} `json:"cpu_usage"`
+		SystemCPUUsage uint64 `json:"system_cpu_usage"`
+	} `json:"cpu_stats"`
+	PrecpuStats struct {
+		CPUUsage struct {
+			TotalUsage  uint64   `json:"total_usage"`
+			PercpuUsage []uint64 `json:"percpu_usage"`
+		} `json:"cpu_usage"`
+		SystemCPUUsage uint64 `json:"system_cpu_usage"`
+	} `json:"precpu_stats"`
+	MemoryStats struct {
+		Usage uint64 `json:"usage"`
+		Limit uint64 `json:"limit"`
+	} `json:"memory_stats"`
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
 
 var (
 	chconfigmapRet      = make(chan error)
@@ -77,10 +113,8 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 	//Create edgecore configMaps based on the users choice of edgecore deployment.
 	for i := 0; i < numOfNodes; i++ {
 		nodeName := "perf-node-" + utils.GetRandomString(10)
-		nodeSelector := "node-" + utils.GetRandomString(5)
-		configmap := "edgecore-configmap-" + utils.GetRandomString(5)
-		//Register EdgeNodes to K8s Master
-		go utils.RegisterNodeToMaster(nodeName, nodeHandler, nodeSelector)
+		nodeSelector := nodeName + "-" + utils.GetRandomString(5)
+		configmap := nodeName + "-configmap-" + utils.GetRandomString(5)
 		cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edge_config", nodeName, cloudhub, configmap)
 		err := utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())
@@ -95,30 +129,21 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 
 func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler string, numOfNodes int) v1.PodList {
 	replica := 1
+	var podlist v1.PodList
+	var err error
 	//Create edgeCore deployments as per users configuration
-	for _, configmap := range NodeInfo {
-		UID := "edgecore-deployment-" + utils.GetRandomString(5)
-		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "", configmap[0], replica)
+	for nodeName, val := range NodeInfo {
+		UID := nodeName + "-deployment-" + utils.GetRandomString(5)
+		go utils.HandleDeployment(false, true, http.MethodPost, depHandler, UID, imgURL, "", val[0], replica)
 		Deployments = append(Deployments, UID)
 	}
-	time.Sleep(2 * time.Second)
-	podlist, err := utils.GetPods(podHandler, "")
-	Expect(err).To(BeNil())
-	utils.CheckPodRunningState(podHandler, podlist)
-
-	//Check All EdgeNode are in Running state
 	Eventually(func() int {
-		count := 0
-		for edgenodeName := range NodeInfo {
-			status := utils.CheckNodeReadyStatus(nodeHandler, edgenodeName)
-			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
-			if status == "Running" {
-				count++
-			}
-		}
-		return count
-	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
+		podlist, err = utils.GetPods(podHandler, "")
+		Expect(err).To(BeNil())
+		return len(podlist.Items)
+	}, "60s", "1s").Should(Equal(len(NodeInfo)), "EdgeCore deployments are Unsuccessfull !!")
 
+	utils.CheckPodRunningState(podHandler, podlist)
 	return podlist
 }
 
@@ -344,4 +369,67 @@ func GetLatency(pods []types.FakePod) types.Latency {
 		latency.Percent100 = time.Duration(pods[index100-1].RunningTime - pods[index100-1].CreateTime)
 	}
 	return latency
+}
+
+func GetStats(method, reqApi string, body io.Reader) ResourceStats {
+	var cStats ResourceStats
+	err, resp := SendHttpRequest(method, reqApi, body)
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+	}
+
+	if resp != nil {
+		defer resp.Body.Close()
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			utils.Failf("HTTP Response reading has failed: %v", err)
+		}
+
+		err = json.Unmarshal(contents, &cStats)
+		if err != nil {
+			utils.Failf("Unmarshal HTTP Response has failed: %v", err)
+		}
+		defer resp.Body.Close()
+	}
+
+	return cStats
+}
+
+func ListContainers(method, reqApi string, body io.Reader) ContainerList {
+	var ConList ContainerList
+	err, resp := SendHttpRequest(method, reqApi, body)
+	if err != nil {
+		utils.Failf("Frame HTTP request failed: %v", err)
+	}
+
+	if resp != nil {
+		defer resp.Body.Close()
+
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			utils.Failf("HTTP Response reading has failed: %v", err)
+		}
+
+		err = json.Unmarshal(contents, &ConList)
+		if err != nil {
+			utils.Failf("Unmarshal HTTP Response has failed: %v", err)
+		}
+		defer resp.Body.Close()
+	}
+	return ConList
+}
+
+func CalculateCPUPercent(previousCPU, previousSystem uint64, RsStats *ResourceStats) float64 {
+	var (
+		cpuPercent = 0.0
+		// calculate the change for the cpu usage of the container in between readings
+		cpuDelta = float64(RsStats.CPUStats.CPUUsage.TotalUsage) - float64(previousCPU)
+		// calculate the change for the entire system between readings
+		systemDelta = float64(RsStats.CPUStats.SystemCPUUsage) - float64(previousSystem)
+	)
+
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemDelta) * float64(len(RsStats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+	}
+	return cpuPercent
 }

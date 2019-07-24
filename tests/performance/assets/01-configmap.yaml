@@ -13,8 +13,8 @@ data:
         master: http://192.168.20.128:8080
         namespace: ""
         content_type: "application/vnd.kubernetes.protobuf"
-        qps: 5
-        burst: 10
+        qps: 200
+        burst: 400
         node_update_frequency: 10
         kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
     cloudhub:

@@ -22,15 +22,15 @@ debugflag="-v 6 -alsologtostderr"
 
 runtest=$1
 
-export K8SMasterForKubeEdge=http://121.244.95.60:12436
-export K8SMasterForProvisionEdgeNodes=http://121.244.95.60:12458
+export K8SMasterForKubeEdge=http://192.168.20.42:8080
+export K8SMasterForProvisionEdgeNodes=http://192.168.20.152:8080
 #setup env
 cd ../
 #Pre-configurations required for running the suite.
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "image_url": ["nginx", "hello-world"],
+        "image_url": ["nginx", "hello-world", "pavan187/myimg:v1.0"],
         "k8smasterforkubeedge": "$K8SMasterForKubeEdge",
         "node_num": 500,
         "imagerepo": "kubeedge",
@@ -39,7 +39,8 @@ cat >config.json<<END
         "edgeimageurl": "kubeedge/edgecore-test:v1.0.0",
         "namespace":"default",
         "controllerstubport": 54321,
-        "protocol": "websocket"
+        "protocol": "websocket",
+        "dockerclient": "http://192.168.20.27:2375"
 }
 END
 
