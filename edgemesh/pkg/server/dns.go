@@ -16,20 +16,22 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 )
 
 var (
-	dnsQr       = uint16(0x8000)
-	oneByteSize = uint16(1)
-	twoByteSize = uint16(2)
-	ttl         = uint32(64)
-	fakeIp      = []byte{5, 5, 5, 5}
+	dnsQr         = uint16(0x8000)
+	oneByteSize   = uint16(1)
+	twoByteSize   = uint16(2)
+	ttl           = uint32(64)
+	defaultFakeIP = []byte{5, 5, 5, 5}
 )
 
 const (
-	aRecord   = 1
-	bufSize   = 1024
-	notImplem = uint16(0x0004)
+	aRecord       = 1
+	bufSize       = 1024
+	notImplem     = uint16(0x0004)
+	serverFAilure = uint16(0x0002)
 )
 
 type dnsHeader struct {
@@ -124,9 +126,10 @@ func startDnsServer() {
 //recordHandler returns the Answer for the dns question
 func recordHandler(que []dnsQuestion, req []byte) (rsp []byte, err error) {
 	var exist bool
+	var ip string
 	for _, q := range que {
 		domainName := string(q.name)
-		exist, err = lookupFromMetaManager(domainName)
+		exist, ip, _ = lookupFromMetaManager(domainName)
 		if err != nil {
 			rsp = nil
 			return
@@ -137,19 +140,26 @@ func recordHandler(que []dnsQuestion, req []byte) (rsp []byte, err error) {
 			return rsp, fmt.Errorf("get from real DNS")
 		}
 	}
+	fakeIP := defaultFakeIP
+	if ip != "" {
+		fakeIP = net.ParseIP(ip).To4()
+	}
 
-	//gen
-	pre, err := modifyRspPrefix(que)
+	pre, err := modifyRspPrefix(que, fakeIP)
 	rsp = append(rsp, pre...)
 	for _, q := range que {
+		// head of each que is the same
+		if que[0].head.ansNum == 0 {
+			continue
+		}
 		//create a deceptive rep
 		dnsAns := &dnsAnswer{
 			name:    q.name,
 			qType:   q.qType,
 			qClass:  q.qClasss,
 			ttl:     ttl,
-			dataLen: uint16(len(fakeIp)),
-			addr:    fakeIp,
+			dataLen: uint16(len(fakeIP)),
+			addr:    fakeIP,
 		}
 		ans := dnsAns.getAnswer()
 		rsp = append(rsp, ans...)
@@ -255,15 +265,21 @@ func (q *dnsQuestion) getQName(req []byte, offset uint16) uint16 {
 }
 
 // lookupFromMetaManager implement confirm the service exists
-func lookupFromMetaManager(serviceUrl string) (exist bool, err error) {
+func lookupFromMetaManager(serviceUrl string) (exist bool, ip string, err error) {
 	name, namespace := common.SplitServiceKey(serviceUrl)
 	s, _ := metaClient.Services(namespace).Get(name)
 	if s != nil {
+		ip := ""
+		//Determine whether to use L4 proxy
+		if proxy.IsL4Proxy(s) {
+			svcName := namespace + "." + name
+			ip = proxy.GetServiceServer(svcName)
+		}
 		klog.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)
-		return true, nil
+		return true, ip, nil
 	}
 	klog.Infof("Service %s is not found in this cluster", serviceUrl)
-	return false, nil
+	return false, "", nil
 }
 
 // getfromRealDNS returns the dns response from the real DNS server
@@ -343,7 +359,7 @@ func parseNameServer() ([]net.IP, error) {
 }
 
 // modifyRspPrefix use req' head generate a rsp head
-func modifyRspPrefix(que []dnsQuestion) (pre []byte, err error) {
+func modifyRspPrefix(que []dnsQuestion, fakeip []byte) (pre []byte, err error) {
 	ansNum := len(que)
 	if ansNum == 0 {
 		return
@@ -351,13 +367,18 @@ func modifyRspPrefix(que []dnsQuestion) (pre []byte, err error) {
 	//use head in que. All the same
 	rspHead := que[0].head
 	rspHead.converQueryRsp(true)
-	if que[0].qType == aRecord {
+
+	serverError := false
+	if fakeip == nil || len(fakeip) != 4 {
+		serverError = true
+	}
+	if que[0].qType == aRecord && (!serverError) {
 		rspHead.setAnswerNum(uint16(ansNum))
 	} else {
 		rspHead.setAnswerNum(0)
 	}
 
-	rspHead.setRspRcode(que)
+	rspHead.setRspRcode(que, serverError)
 	pre = rspHead.getByteFromDnsHeader()
 
 	for _, q := range que {
@@ -383,11 +404,14 @@ func (h *dnsHeader) setAnswerNum(num uint16) {
 }
 
 // set the dns response return code
-func (h *dnsHeader) setRspRcode(que dnsQs) {
+func (h *dnsHeader) setRspRcode(que dnsQs, serverError bool) {
 	for _, q := range que {
 		if q.qType != aRecord {
 			h.flags &= (^notImplem)
 			h.flags |= notImplem
+		} else if serverError {
+			h.flags &= (^serverFAilure)
+			h.flags |= serverFAilure
 		}
 	}
 }
