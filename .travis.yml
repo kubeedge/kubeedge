@@ -35,15 +35,6 @@ jobs:
       script: make depcheck
       name: " Check if imports, Gopkg.toml, and Gopkg.lock are in sync"
 
-    - stage: "Test Build"                # naming the Tests stage
-      script: make 
-      name: "builds cloud and edge components"            # names the first Tests stage job
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script: make bluetoothdevice
-      name: "build bluetooth_device"
-    - script: make edge_small_build
-      name: "build small edge version"
     - stage: "Test lint"
       script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job
@@ -53,6 +44,15 @@ jobs:
       name: "keadm_lint"
     - script: make edge_verify
       name: "verify edge"     # names the second Tests stage job
+    - stage: "Test Build"                # naming the Tests stage
+      script: make 
+      name: "builds cloud and edge components"            # names the first Tests stage job
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
+    - script: make bluetoothdevice
+      name: "build bluetooth_device"
+    - script: make edge_small_build
+      name: "build small edge version"
     - stage: "unit tests"
       script: make edge_test
       name: "unit test edge"     # names the third Tests stage job
