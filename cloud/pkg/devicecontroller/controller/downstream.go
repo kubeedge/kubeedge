@@ -491,7 +491,6 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 
 		// add new protocol
 		deviceProtocol := &types.Protocol{}
-		var protocol string
 		if device.Spec.Protocol.OpcUA != nil {
 			deviceProtocol = buildDeviceProtocol(OPCUA, device.Name, device.Spec.Protocol.OpcUA)
 		} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
@@ -507,7 +506,7 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 		// update the protocol in deviceInstance
 		for _, devInst := range deviceProfile.DeviceInstances {
 			if device.Name == devInst.Name {
-				devInst.Protocol = protocol
+				devInst.Protocol = deviceProtocol.Name
 				break
 			}
 		}
@@ -529,9 +528,8 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 }
 
 func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}) (deviceProtocol *types.Protocol) {
-	protocol = protocol + "-" + deviceName
-	deviceProtocol.Name = protocol
-	deviceProtocol.Protocol = OPCUA
+	deviceProtocol.Name = protocol + "-" + deviceName
+	deviceProtocol.Protocol = protocol
 	deviceProtocol.ProtocolConfig = ProtocolConfig
 	return deviceProtocol
 }
