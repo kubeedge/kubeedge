@@ -15,7 +15,7 @@ var DeviceEventBuffer int
 // DeviceModelEventBuffer is the size of channel which save devicemodel event from k8s
 var DeviceModelEventBuffer int
 
-func init() {
+func InitBufferConfig() {
 	if psb, err := config.CONFIG.GetValue("devicecontroller.buffer.update-device-status").ToInt(); err != nil {
 		UpdateDeviceStatusBuffer = constants.DefaultUpdateDeviceStatusBuffer
 	} else {

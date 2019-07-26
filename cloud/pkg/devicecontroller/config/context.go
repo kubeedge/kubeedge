@@ -19,7 +19,7 @@ var ContextResponseModule string
 // Context is beehive context used to send message
 var Context *context.Context
 
-func init() {
+func InitContextConfig() {
 	if smn, err := config.CONFIG.GetValue("devicecontroller.context.send-module").ToString(); err != nil {
 		ContextSendModule = constants.DefaultContextSendModuleName
 	} else {

@@ -24,7 +24,7 @@ var QueryServiceWorkers int
 // QueryEndpointsWorkers is the count of goroutines of query endpoints
 var QueryEndpointsWorkers int
 
-func init() {
+func InitLoadConfig() {
 	if psw, err := config.CONFIG.GetValue("controller.load.update-pod-status-workers").ToInt(); err != nil {
 		UpdatePodStatusWorkers = constants.DefaultUpdatePodStatusWorkers
 	} else {

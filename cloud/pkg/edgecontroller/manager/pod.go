@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"

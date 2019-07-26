@@ -39,7 +39,7 @@ var ServiceEventBuffer int
 // EndpointsEventBuffer is the size of channel which save endpoints event from k8s
 var EndpointsEventBuffer int
 
-func init() {
+func InitBufferConfig() {
 	if psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt(); err != nil {
 		UpdatePodStatusBuffer = constants.DefaultUpdatePodStatusBuffer
 	} else {

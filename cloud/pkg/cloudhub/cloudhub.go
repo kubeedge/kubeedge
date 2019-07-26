@@ -19,7 +19,7 @@ type cloudHub struct {
 	stopChan chan bool
 }
 
-func init() {
+func Register() {
 	core.Register(&cloudHub{})
 }
 
@@ -79,6 +79,21 @@ func initHubConfig() {
 	}
 
 	errs := make([]string, 0)
+
+	util.HubConfig = &util.Config{}
+	util.HubConfig.ProtocolWebsocket, _ = config.CONFIG.GetValue("cloudhub.protocol_websocket").ToBool()
+	util.HubConfig.ProtocolQuic, _ = config.CONFIG.GetValue("cloudhub.protocol_quic").ToBool()
+	if !util.HubConfig.ProtocolWebsocket && !util.HubConfig.ProtocolQuic {
+		util.HubConfig.ProtocolWebsocket = true
+	}
+
+	util.HubConfig.Address, _ = config.CONFIG.GetValue("cloudhub.address").ToString()
+	util.HubConfig.Port, _ = config.CONFIG.GetValue("cloudhub.port").ToInt()
+	util.HubConfig.QuicPort, _ = config.CONFIG.GetValue("cloudhub.quic_port").ToInt()
+	util.HubConfig.MaxIncomingStreams, _ = config.CONFIG.GetValue("cloudhub.max_incomingstreams").ToInt()
+	util.HubConfig.KeepaliveInterval, _ = config.CONFIG.GetValue("cloudhub.keepalive-interval").ToInt()
+	util.HubConfig.WriteTimeout, _ = config.CONFIG.GetValue("cloudhub.write-timeout").ToInt()
+	util.HubConfig.NodeLimit, _ = config.CONFIG.GetValue("cloudhub.node-limit").ToInt()
 
 	util.HubConfig.Ca, err = ioutil.ReadFile(cafile)
 	if err != nil {

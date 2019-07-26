@@ -2,4 +2,4 @@ loggerLevel: "INFO"
 enableRsyslog: false
 logFormatText: true
 writers: [file,stdout]
-loggerFile: "edgecontroller.log"
+loggerFile: "cloudcore.log"

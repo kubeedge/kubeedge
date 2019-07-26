@@ -22,7 +22,7 @@ var KubeUpdateNodeFrequency time.Duration
 //EdgeSiteEnabled is used to enable or disable EdgeSite feature. Default is disabled
 var EdgeSiteEnabled bool
 
-func init() {
+func InitKubeConfig() {
 	Kube = NewKubeInfo()
 
 	if km, err := config.CONFIG.GetValue("controller.kube.master").ToString(); err != nil {

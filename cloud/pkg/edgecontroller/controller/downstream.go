@@ -13,11 +13,11 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/manager"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/utils"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
