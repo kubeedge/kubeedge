@@ -23,10 +23,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/scheduler"
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/watcher"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/watcher"
 
 	"gopkg.in/yaml.v2"
 )
