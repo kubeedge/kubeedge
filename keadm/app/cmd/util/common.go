@@ -184,8 +184,8 @@ func GetOSInterface() types.OSTypeInstaller {
 	case CentOSType:
 		return &CentOS{}
 	default:
+		panic("This OS version is currently un-supported by keadm")
 	}
-	return nil
 }
 
 //IsKubeEdgeController identifies if the node is having edge controller and k8s api-server already running.
