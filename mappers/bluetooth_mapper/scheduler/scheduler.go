@@ -24,9 +24,9 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/helper"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
 )
 
 const (
