@@ -6,8 +6,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
-	controller "github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 

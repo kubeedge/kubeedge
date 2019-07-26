@@ -19,7 +19,7 @@ var ContextResponseModule string
 // Context ...
 var Context *context.Context
 
-func init() {
+func InitContextConfig() {
 	if smn, err := config.CONFIG.GetValue("controller.context.send-module").ToString(); err != nil {
 		ContextSendModule = constants.DefaultContextSendModuleName
 	} else {

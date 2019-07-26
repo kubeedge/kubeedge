@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"

@@ -35,7 +35,7 @@ const (
 	DefaultMessageLayer = "context"
 
 	DefaultContextSendModuleName     = "cloudhub"
-	DefaultContextReceiveModuleName  = "controller"
+	DefaultContextReceiveModuleName  = "edgecontroller"
 	DefaultContextResponseModuleName = "cloudhub"
 
 	DefaultPodEventBuffer       = 1
