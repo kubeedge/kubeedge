@@ -41,6 +41,8 @@ type UbuntuOS struct {
 	KubernetesVersion string
 	KubeEdgeVersion   string
 	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	K8SImageRepository string
+	K8SPodNetworkCidr  string
 }
 
 //SetDockerVersion sets the Docker version for the objects instance
@@ -53,6 +55,13 @@ func (u *UbuntuOS) SetDockerVersion(version string) {
 func (u *UbuntuOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
 	u.KubernetesVersion = version
 	u.IsEdgeNode = flag
+}
+
+//SetK8SImageRepoAndPodNetworkCidr sets the K8S image Repository and pod network
+// cidr.
+func (u *UbuntuOS) SetK8SImageRepoAndPodNetworkCidr(repo, cidr string) {
+	u.K8SImageRepository = repo
+	u.K8SPodNetworkCidr = cidr
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
@@ -380,7 +389,8 @@ func (u *UbuntuOS) StartK8Scluster() error {
 		install = false
 	}
 	if install == true {
-		stdout, err := runCommandWithShell("swapoff -a && kubeadm init")
+		k8sInit := fmt.Sprintf("swapoff -a && kubeadm init --image-repository  \"%s\" --pod-network-cidr=%s", u.K8SImageRepository, u.K8SPodNetworkCidr)
+		stdout, err := runCommandWithShell(k8sInit)
 		if err != nil {
 			return err
 		}

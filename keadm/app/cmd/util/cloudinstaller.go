@@ -18,6 +18,8 @@ import (
 //It implements ToolsInstaller interface
 type KubeCloudInstTool struct {
 	Common
+	K8SImageRepository string
+	K8SPodNetworkCidr  string
 }
 
 //InstallTools downloads KubeEdge for the specified version
@@ -25,6 +27,7 @@ type KubeCloudInstTool struct {
 func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
+	cu.SetK8SImageRepoAndPodNetworkCidr(cu.K8SImageRepository, cu.K8SPodNetworkCidr)
 
 	err := cu.InstallKubeEdge()
 	if err != nil {
