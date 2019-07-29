@@ -20,6 +20,12 @@ const (
 	//KubeEdgeVersion sets the version of KubeEdge to be used
 	KubeEdgeVersion = "kubeedge-version"
 
+	// K8SImageRepository sets the image repository of Kubernetes
+	K8SImageRepository = "image-repository"
+	
+	//K8SPodNetworkCidr sets pod network cidr of Kubernetes
+	K8SPodNetworkCidr = "pod-network-cidr"	
+
 	//DockerVersion sets the version of Docker to be used
 	DockerVersion = "docker-version"
 
@@ -55,6 +61,12 @@ const (
 
 	// DefaultProjectID is default project id
 	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
+
+	//DefaultImageRepository is the default k8s image repository
+	DefaultK8SImageRepository = "k8s.gcr.io"
+
+	//DefaultPodNetworkCidr is the default k8s pod network cidr
+	DefaultK8SPodNetworkCidr = "100.64.0.0/10"
 
 	VendorK8sPrefix = "v1.10.9-kubeedge-"
 
