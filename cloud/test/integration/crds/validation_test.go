@@ -21,7 +21,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	deviceutils "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 	"github.com/kubeedge/kubeedge/cloud/test/integration/fixtures"
 
