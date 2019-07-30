@@ -19,7 +19,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the devices v1alpha1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=kubeedge/cloud/pkg/devicecontroller/apis/devices
+// +k8s:conversion-gen=kubeedge/cloud/pkg/apis/devices
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=devices.kubeedge.io
 package v1alpha1
