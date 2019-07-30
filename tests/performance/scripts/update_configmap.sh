@@ -30,7 +30,7 @@ create_edge_config() {
     fi
     echo "file found !!!!!!!!!!!!!"
     sed -i "s|namespace: .*|namespace: default|g" ${EDGE_PATH}
-    sed -i "s|name: .*|name: ${configmapName}|g" ${EDGE_PATH}
+    sed -i "s|name: edgecore-configmap.*|name: ${configmapName}|g" ${EDGE_PATH}
     sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
     if [[ ${Url} == *"wss"* ]]; then

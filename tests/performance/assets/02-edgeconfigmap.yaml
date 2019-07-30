@@ -44,7 +44,7 @@ data:
     edged:
         register-node-namespace: default
         hostname-override: perf-node-o19egaee6o
-        interface-name: edgecore-configmap-b7r
+        interface-name: eth0
         node-status-update-frequency: 10 # second
         device-plugin-enabled: false
         gpu-plugin-enabled: false
