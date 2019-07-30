@@ -48,7 +48,7 @@ spec:
           EOF
       containers:
       - name: edgecontroller
-        image: kubeedge/edgecontroller:v0.2
+        image: kubeedge/edgecontroller:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 10000
