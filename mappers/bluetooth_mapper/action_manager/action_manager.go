@@ -24,7 +24,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/paypal/gatt"
 
-	"github.com/kubeedge/kubeedge/device/bluetooth_mapper/data_converter"
+	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 )
 
 const (

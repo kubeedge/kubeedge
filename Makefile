@@ -108,11 +108,11 @@ depcheck:
 
 .PHONY: bluetoothdevice
 bluetoothdevice:
-	make -C device/bluetooth_mapper
+	make -C mappers/bluetooth_mapper
 
 .PHONY: bluetoothdevice_image
-	make -C device/bluetooth_mapper_docker
+	make -C mappers/bluetooth_mapper_docker
 
 .PHONY: bluetoothdevice_lint
 bluetoothdevice_lint:
-	make -C device/bluetooth_mapper lint
+	make -C mappers/bluetooth_mapper lint
