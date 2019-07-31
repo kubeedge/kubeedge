@@ -825,7 +825,9 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Infof("Stop downstream controller")
+	log.LOGGER.Info("Stopping downstream devicecontroller")
+	defer log.LOGGER.Info("Downstream devicecontroller stopped")
+
 	dc.deviceStop <- struct{}{}
 	dc.deviceModelStop <- struct{}{}
 	return nil

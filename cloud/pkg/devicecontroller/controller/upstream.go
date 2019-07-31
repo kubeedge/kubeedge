@@ -192,13 +192,13 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 
 // Stop UpstreamController
 func (uc *UpstreamController) Stop() error {
-	log.LOGGER.Infof("Stop upstream controller")
-	uc.stopDispatch <- struct{}{}
+	log.LOGGER.Info("Stopping upstream devicecontroller")
+	defer log.LOGGER.Info("Upstream devicecontroller stopped")
 
+	uc.stopDispatch <- struct{}{}
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
 		uc.stopUpdateDeviceStatus <- struct{}{}
 	}
-
 	return nil
 }
 
