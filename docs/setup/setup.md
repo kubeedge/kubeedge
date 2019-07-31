@@ -18,7 +18,7 @@
     - --insecure-bind-address=0.0.0.0
     ```
 
-+ **Go** The minimum required go version is 1.11. You can install this version by using [this website.](https://golang.org/dl/) 
++ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/) 
 
 + (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
 
