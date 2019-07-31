@@ -746,7 +746,9 @@ func (uc *UpstreamController) normalizePodStatus(pod *v1.Pod, status *v1.PodStat
 
 // Stop UpstreamController
 func (uc *UpstreamController) Stop() error {
-	log.LOGGER.Infof("stop upstream controller")
+	log.LOGGER.Info("Stopping upstream controller")
+	defer log.LOGGER.Info("Upstream controller stopped")
+
 	uc.stopDispatch <- struct{}{}
 	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
 		uc.stopUpdateNodeStatus <- struct{}{}
@@ -766,7 +768,6 @@ func (uc *UpstreamController) Stop() error {
 	for i := 0; i < config.QueryEndpointsWorkers; i++ {
 		uc.stopQueryEndpoints <- struct{}{}
 	}
-
 	return nil
 }
 
