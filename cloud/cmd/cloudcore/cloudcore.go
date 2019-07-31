@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app"
+	_ "github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller"
 )
 
 func main() {
