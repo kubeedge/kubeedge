@@ -26,3 +26,17 @@ rules:
   - pods
   verbs:
   - delete
+- apiGroups:
+  - "devices.kubeedge.io"
+  resources:
+  - devices
+  - devicemodels
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  
