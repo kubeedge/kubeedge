@@ -24,6 +24,7 @@ before_script:
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
   - sudo apt-get install gcc-arm-linux-gnueabi
+  - sudo apt-get install upx-ucl
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 install: true
@@ -33,26 +34,41 @@ jobs:
     - stage: "dep check"
       script: make depcheck
       name: " Check if imports, Gopkg.toml, and Gopkg.lock are in sync"
-    - stage: "Test Jobs"                # naming the Tests stage
-      script: make 
-      name: "builds cloud and edge components"            # names the first Tests stage job
+
+    - stage: "Test lint"
+      script: make cloud_lint
+      name: "cloud_lint"     # names the eighth Tests stage job
+    - script: make bluetoothdevice_lint
+      name: "bluetooth_device_lint"
+    - script: make keadm_lint
+      name: "keadm_lint"
     - script: make edge_verify
       name: "verify edge"     # names the second Tests stage job
-    - script: make edge_test
+    - stage: "Test Build"                # naming the Tests stage
+      script: make 
+      name: "builds cloud and edge components"            # names the first Tests stage job
+    - script: make edge_cross_build
+      name: "cross build edge"     # names the fifth Tests stage job
+    - script: make bluetoothdevice
+      name: "build bluetooth_device"
+    - script: make edge_small_build
+      name: "build small edge version"
+    - stage: "unit tests"
+      script: make edge_test
       name: "unit test edge"     # names the third Tests stage job
     - script: make edge_integration_test
       name: "integration test edge"     # names the fourth Tests stage job
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script: make e2e_test
-      name: "e2e_test"     # names the seventh Tests stage job
     - script: make cloud_test
       name: "unit test cloud" 
-    - script: make cloud_lint
-      name: "cloud_lint"     # names the eighth Tests stage job
-    - script: make keadm_lint
-      name: "keadm_lint"
-    - script: make bluetoothdevice
-      name: "build bluetooth_device"
-    - script: make bluetoothdevice_lint
-      name: "bluetooth_device_lint"
+    - stage: "e2e tests"
+      script: make e2e_test
+      name: "e2e_test"     # names the seventh Tests stage job
+    - stage: "build docker container"
+      script: make cloudimage
+      name: "build cloudimage"
+    - script: make edgeimage
+      name: "build edge image"
+    - script: make edgesiteimage
+      name: "build edgesite image"
+    - script: make bluetoothdevice_image
+      name: "build bluetoothdevice image"
