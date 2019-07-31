@@ -50,13 +50,8 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 	downstream.Start()
 
 	<-ctl.stopChan
-	log.LOGGER.Warnf("stopping upstream controller...")
 	upstream.Stop()
-	log.LOGGER.Warnf("upstream controller stopped")
-	log.LOGGER.Warnf("stopping downstream controller...")
 	downstream.Stop()
-	log.LOGGER.Warnf("downstream controller stopped")
-
 }
 
 // Cleanup controller

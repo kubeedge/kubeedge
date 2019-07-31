@@ -456,7 +456,9 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Infof("stop downstream controller")
+	log.LOGGER.Info("Stopping downstream controller")
+	defer log.LOGGER.Info("Downstream controller stopped")
+
 	dc.podStop <- struct{}{}
 	dc.configMapStop <- struct{}{}
 	dc.secretStop <- struct{}{}
