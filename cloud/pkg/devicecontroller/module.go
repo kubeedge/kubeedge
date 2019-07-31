@@ -53,12 +53,8 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 	upstream.Start()
 
 	<-dctl.stopChan
-	log.LOGGER.Warnf("stop upstream controller")
 	upstream.Stop()
-	log.LOGGER.Warnf("upstream controller stopped")
-	log.LOGGER.Warnf("stop downstream controller")
 	downstream.Stop()
-	log.LOGGER.Warnf("downstream controller stopped")
 }
 
 // Cleanup controller
