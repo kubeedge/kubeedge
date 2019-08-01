@@ -133,6 +133,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 
 func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
 	client := &http.Client{}
+	var kubeAPIServerURL string
 
 	data := &v1.Node{TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -146,11 +147,16 @@ func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
 	}
 
 	proto := KubeEdgeHTTPProto
-	if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
-		proto = KubeEdgeHTTPSProto
+	if strings.ContainsAny(server, ":") {
+		if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
+			proto = KubeEdgeHTTPSProto
+		}
 	}
-
-	kubeAPIServerURL := fmt.Sprintf("%s://%s:%s/api/v1/nodes", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1])
+	if strings.ContainsAny(server, ":") {
+		kubeAPIServerURL = fmt.Sprintf("%s://%s:%s/api/v1/nodes", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1])
+	} else {
+		kubeAPIServerURL = fmt.Sprintf("%s://%s:%s/api/v1/nodes", proto, strings.Split(server, ":")[0], KubeEdgeHTTPPort)
+	}
 	req, err := http.NewRequest(http.MethodPost, kubeAPIServerURL, bytes.NewBuffer(respBytes))
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
@@ -183,10 +189,12 @@ func (ku *KubeEdgeInstTool) addNodeToK8SAPIServer(edgeid, server string) error {
 func (ku *KubeEdgeInstTool) deleteNodeFromK8SAPIServer(server string) error {
 	var byte io.Reader
 	client := &http.Client{}
-
+	var kubeAPIServerURL string
 	proto := KubeEdgeHTTPProto
-	if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
-		proto = KubeEdgeHTTPSProto
+	if strings.ContainsAny(server, ":") {
+		if KubeEdgeHTTPSPort == strings.Split(server, ":")[1] {
+			proto = KubeEdgeHTTPSProto
+		}
 	}
 
 	fileData, err := ioutil.ReadFile(KubeEdgeConfigNodeJSON)
@@ -199,8 +207,11 @@ func (ku *KubeEdgeInstTool) deleteNodeFromK8SAPIServer(server string) error {
 	if err != nil {
 		return err
 	}
-
-	kubeAPIServerURL := fmt.Sprintf("%s://%s:%s/api/v1/nodes/%s", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1], node.GetName())
+	if strings.ContainsAny(server, ":") {
+		kubeAPIServerURL = fmt.Sprintf("%s://%s:%s/api/v1/nodes/%s", proto, strings.Split(server, ":")[0], strings.Split(server, ":")[1], node.GetName())
+	} else {
+		kubeAPIServerURL = fmt.Sprintf("%s://%s:%s/api/v1/nodes/%s", proto, strings.Split(server, ":")[0], KubeEdgeHTTPPort, node.GetName())
+	}
 	req, err := http.NewRequest(http.MethodDelete, kubeAPIServerURL, byte)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
