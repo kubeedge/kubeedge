@@ -1,23 +1,14 @@
-# Prerequisites
-- install containerd
-- ensure that have add follow config items to section ```edged``` in edge.yaml:
-```
-edged:
-    runtime-type: remote
-    remote-runtime-endpoint: /var/run/containerd/containerd.sock
-    remote-image-endpoint: /var/run/containerd/containerd.sock
-    runtime-request-timeout: 2
-    podsandbox-image: k8s.gcr.io/pause
-```
-- install CNI plugin
-
 # Edgemesh test env config guide
+## Docker support (recommended)
+* Refer to the [Usage](./../setup/installer_setup.md) to prepare the kubeedge environment. 
+* Then follow the [EdgeMesh guide](#Edgemesh-end-to-end-test-guide) to deploy Service
 
-## Install Containerd 
-+ please refer to the following link to install  
-> <https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd>
+## Containerd Support
+* Refer to the [Usage](./../setup/installer_setup.md) to prepare the kubeedge environment. 
+* Following steps must be taken for the container network configuration if choose containerd as the container engine. 
+> Note: CNI plugin installation and port mapping configuration only needed for containerd
 
-## Install CNI plugin 
+### step1. Install CNI plugin
 + get cni plugin source code of version (0.2.0) from the github.com. Compile and install.
 > It is recommended to use version 0.2.0, which have tested to ensure stability and availability.
 > make sure to run on the Go development environment.
@@ -62,9 +53,9 @@ $ cat >/etc/cni/net.d/10-mynet.conf <<EOF
 EOF
 ```
 
-## Configure port mapping manually on node on which server is running
+### step2 Configure port mapping manually on node on which server is running
 > can see the examples in the next section. 
-* step1. execute iptables command as follows 
+* Ⅰ. execute iptables command as follows 
 ```bash
 $ iptables -t nat -N PORT-MAP
 $ iptables -t nat -A PORT-MAP -i docker0 -j RETURN
@@ -72,7 +63,7 @@ $ iptables -t nat -A PREROUTING -p tcp -m addrtype --dst-type LOCAL -j PORT-MAP
 $ iptables -t nat -A OUTPUT ! -d 127.0.0.0/8 -p tcp -m addrtype --dst-type LOCAL -j PORT-MAP
 $ iptables -P FORWARD ACCEPT
 ```
-* step2. execute iptables command as follows 
+* Ⅱ. execute iptables command as follows 
    > * **portIN** is the service map at the host
    > * **containerIP** is the IP in the container. Can be find out on master by **kubectl get pod -o wide**
    > * **portOUT** is the port that monitored In-container 
@@ -82,7 +73,9 @@ $ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT 
 > + by the way, If you redeployed the service,you can use the command as follows to delete the rule, and perform the second step again.
    ```bash
     $ iptables -t nat -D PORT-MAP 2
-  ``` 
+  ```
+ 
+
 ## Example for Edgemesh test env
 ![edgemesh test env example](../images/edgemesh/edgemesh-test-env-example.png)
 
@@ -183,11 +176,11 @@ spec:
         - -c
         - "9292"
         name: init1
-        image: docker.io/ytsobd/edgemesh_init:v1.0
+        image: docker.io/kubeedge/edgemesh_init:v1.0.0
         securityContext:
           privileged: true
 ```
-**note: -p: whitelist, only port in whitelist can go out from client to edgemesh then to server**
+**note: -t: whitelist, only port in whitelist can go out from client to edgemesh then to server**
 - client request server: exec into client container and then run command: 
 ```bash
 curl http://edgemesh-example-service.default.svc.cluster:8080
