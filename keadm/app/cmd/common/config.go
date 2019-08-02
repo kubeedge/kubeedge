@@ -41,9 +41,9 @@ func Write2File(path string, data interface{}) error {
 
 //WriteControllerYamlFile writes controller.yaml for cloud component
 func WriteControllerYamlFile(path, kubeConfig string) error {
-	controllerData := ControllerYaml{
-		Controller: CloudControllerSt{
-			Kube: KubeEdgeControllerConfig{
+	controllerData := CloudCoreYaml{
+		EdgeController: EdgeControllerSt{
+			Kube: ControllerKubeConfig{
 				Master:              "http://localhost:8080",
 				Namespace:           constants.DefaultKubeNamespace,
 				ContentType:         constants.DefaultKubeContentType,
@@ -64,7 +64,7 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 			NodeLimit:         10,
 		},
 		DeviceController: DeviceControllerSt{
-			Kube: KubeEdgeControllerConfig{
+			Kube: ControllerKubeConfig{
 				Master:      "http://localhost:8080",
 				Namespace:   constants.DefaultKubeNamespace,
 				ContentType: constants.DefaultKubeContentType,
@@ -103,7 +103,7 @@ func WriteCloudLoggingYamlFile(path string) error {
 		EnableRsysLog: false,
 		LogFormatText: true,
 		Writers:       []string{"file", "stdout"},
-		LoggerFile:    "edgecontroller.log",
+		LoggerFile:    "cloudcore.log",
 	}
 	if err := Write2File(path, loggingData); err != nil {
 		return err

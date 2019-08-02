@@ -44,7 +44,7 @@ keadm init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version
     then default versions shown in help will be choosen. 
     The versions for "--docker-version", "--kubernetes-version" and "--kubeedge-version" flags should be in the
     format "18.06.3", "1.14.0" and "0.2.1" respectively
-  - kube-config is the path of kubeconfig which used to secure connectivity between edgecontroller and kube-apiserver
+  - kube-config is the path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
 )
 
@@ -131,14 +131,14 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		k8sImageRepo = initOptions.K8SImageRepository
 	}
-	
+
 	flgData, ok = flagData[types.K8SPodNetworkCidr]
 	if ok {
 		k8sPNCidr = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	} else {
 		k8sPNCidr = initOptions.K8SPodNetworkCidr
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}, K8SImageRepository:k8sImageRepo, K8SPodNetworkCidr:k8sPNCidr}
+	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}, K8SImageRepository: k8sImageRepo, K8SPodNetworkCidr: k8sPNCidr}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
@@ -158,7 +158,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 
 }
 
-//Execute the installation for each tool and start edgecontroller
+//Execute the installation for each tool and start cloudcore
 func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	for name, tool := range toolList {

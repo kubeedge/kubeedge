@@ -23,7 +23,7 @@ type KubeCloudInstTool struct {
 }
 
 //InstallTools downloads KubeEdge for the specified version
-//and makes the required configuration changes and initiates edgecontroller.
+//and makes the required configuration changes and initiates cloudcore.
 func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
@@ -61,27 +61,27 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	}
 
 	//Create controller.yaml
-	if err = common.WriteControllerYamlFile(KubeEdgeControllerYaml, cu.KubeConfig); err != nil {
+	if err = common.WriteControllerYamlFile(KubeEdgeCloudCoreYaml, cu.KubeConfig); err != nil {
 		return err
 	}
 
 	//Create logger.yaml
-	if err = common.WriteCloudLoggingYamlFile(KubeEdgeControllerLoggingYaml); err != nil {
+	if err = common.WriteCloudLoggingYamlFile(KubeEdgeCloudCoreLoggingYaml); err != nil {
 		return err
 	}
 
 	//Create modules.yaml
-	if err = common.WriteCloudModulesYamlFile(KubeEdgeControllerModulesYaml); err != nil {
+	if err = common.WriteCloudModulesYamlFile(KubeEdgeCloudCoreModulesYaml); err != nil {
 		return err
 	}
 
 	time.Sleep(1 * time.Second)
 
-	err = cu.RunEdgeController()
+	err = cu.RunCloudCore()
 	if err != nil {
 		return err
 	}
-	fmt.Println("Edgecontroller started")
+	fmt.Println("CloudCore started")
 
 	return nil
 }
@@ -178,8 +178,8 @@ func linesFromReader(r io.Reader) ([]string, error) {
 	return lines, nil
 }
 
-//RunEdgeController starts edgecontroller process
-func (cu *KubeCloudInstTool) RunEdgeController() error {
+//RunCloudCore starts cloudcore process
+func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
@@ -205,7 +205,7 @@ func (cu *KubeCloudInstTool) RunEdgeController() error {
 	return nil
 }
 
-//TearDown method will remove the edge node from api-server and stop edgecontroller process
+//TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudInstTool) TearDown() error {
 
 	cu.SetOSInterface(GetOSInterface())
@@ -219,7 +219,7 @@ func (cu *KubeCloudInstTool) TearDown() error {
 		return fmt.Errorf("kubeadm reset failed %s", errout)
 	}
 
-	//Kill edgecontroller process
+	//Kill cloudcore process
 	cu.KillKubeEdgeBinary(KubeCloudBinaryName)
 
 	return nil

@@ -38,7 +38,7 @@ import (
 type KubeEdgeInstTool struct {
 	Common
 	//CertPath       string
-	EdgeContrlrIP  string
+	CloudCoreIP    string
 	K8SApiServerIP string
 	EdgeNodeID     string
 	RuntimeType    string
@@ -85,8 +85,8 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	serverIPAddr := "0.0.0.0"
-	if "" != ku.EdgeContrlrIP {
-		serverIPAddr = ku.EdgeContrlrIP
+	if "" != ku.CloudCoreIP {
+		serverIPAddr = ku.CloudCoreIP
 	}
 
 	url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)

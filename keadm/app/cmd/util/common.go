@@ -51,17 +51,17 @@ const (
 	KubeEdgeConfigLoggingYaml = KubeEdgeConfPath + "/logging.yaml"
 	KubeEdgeConfigModulesYaml = KubeEdgeConfPath + "/modules.yaml"
 
-	KubeEdgeCloudCertGenPath      = KubeEdgePath + "certgen.sh"
-	KubeEdgeEdgeCertsTarFileName  = "certs.tgz"
-	KubeEdgeEdgeCertsTarFilePath  = KubeEdgePath + "certs.tgz"
-	KubeEdgeCloudConfPath         = KubeEdgePath + "kubeedge/cloud/conf"
-	KubeEdgeControllerYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
-	KubeEdgeControllerLoggingYaml = KubeEdgeCloudConfPath + "/logging.yaml"
-	KubeEdgeControllerModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
-	KubeCloudBinaryName           = "edgecontroller"
-	KubeCloudApiserverYamlPath    = "/etc/kubernetes/manifests/kube-apiserver.yaml"
-	KubeCloudReplaceIndex         = 25
-	KubeCloudReplaceString        = "    - --insecure-bind-address=0.0.0.0\n"
+	KubeEdgeCloudCertGenPath     = KubeEdgePath + "certgen.sh"
+	KubeEdgeEdgeCertsTarFileName = "certs.tgz"
+	KubeEdgeEdgeCertsTarFilePath = KubeEdgePath + "certs.tgz"
+	KubeEdgeCloudConfPath        = KubeEdgePath + "kubeedge/cloud/conf"
+	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
+	KubeEdgeCloudCoreLoggingYaml = KubeEdgeCloudConfPath + "/logging.yaml"
+	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
+	KubeCloudBinaryName          = "cloudcore"
+	KubeCloudApiserverYamlPath   = "/etc/kubernetes/manifests/kube-apiserver.yaml"
+	KubeCloudReplaceIndex        = 25
+	KubeCloudReplaceString       = "    - --insecure-bind-address=0.0.0.0\n"
 
 	KubeAPIServerName          = "kube-apiserver"
 	KubeEdgeHTTPProto          = "http"
@@ -190,11 +190,11 @@ func GetOSInterface() types.OSTypeInstaller {
 	}
 }
 
-//IsKubeEdgeController identifies if the node is having edge controller and k8s api-server already running.
-//If so, then return true, else it can used as edge node and initialise it.
-func IsKubeEdgeController() (types.ModuleRunning, error) {
+// IsCloudCore identifies if the node is having cloudcore and kube-apiserver already running.
+// If so, then return true, else it can used as edge node and initialise it.
+func IsCloudCore() (types.ModuleRunning, error) {
 	osType := GetOSInterface()
-	edgeControllerRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
+	cloudCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
 	if err != nil {
 		return types.NoneRunning, err
 	}
@@ -202,8 +202,8 @@ func IsKubeEdgeController() (types.ModuleRunning, error) {
 	if err != nil {
 		return types.NoneRunning, err
 	}
-	//If any of edgecontroller or K8S API server is running, then we believe the node is cloud node
-	if edgeControllerRunning || apiServerRunning {
+	//If any of cloudcore or K8S API server is running, then we believe the node is cloud node
+	if cloudCoreRunning || apiServerRunning {
 		return types.KubeEdgeCloudRunning, nil
 	}
 
