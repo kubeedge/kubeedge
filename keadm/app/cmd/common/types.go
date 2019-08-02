@@ -22,19 +22,19 @@ import (
 
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
-	KubeEdgeVersion   string
-	KubernetesVersion string
-	DockerVersion     string
-	KubeConfig        string
-	K8SImageRepository   string
-	K8SPodNetworkCidr    string
+	KubeEdgeVersion    string
+	KubernetesVersion  string
+	DockerVersion      string
+	KubeConfig         string
+	K8SImageRepository string
+	K8SPodNetworkCidr  string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitOptions
 	CertPath           string
-	EdgeControllerIP   string
+	CloudCoreIP        string
 	K8SAPIServerIPPort string
 	EdgeNodeID         string
 	InterfaceName      string
@@ -111,8 +111,8 @@ type NodeDefinition struct {
 	MetaData   NodeMetaDataSt
 }
 
-//KubeEdgeControllerConfig has all the below fields; (data taken from "github.com/kubeedge/kubeedge/cloud/pkg/controller/config/kube.go")
-type KubeEdgeControllerConfig struct {
+//ControllerKubeConfig has all the below fields; (data taken from "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config/kube.go")
+type ControllerKubeConfig struct {
 	//Master is the url of edge master(kube api server)
 	Master string `yaml:"master"`
 	//Namespace is the namespace to watch(default is NamespaceAll)
@@ -129,9 +129,9 @@ type KubeEdgeControllerConfig struct {
 	KubeConfig string `yaml:"kubeconfig"`
 }
 
-//CloudControllerSt consists information to access api-server @ master
-type CloudControllerSt struct {
-	Kube KubeEdgeControllerConfig `yaml:"kube"`
+//EdgeControllerSt consists information to access api-server @ master
+type EdgeControllerSt struct {
+	Kube ControllerKubeConfig `yaml:"kube"`
 }
 
 //CloudHubSt represents configuration options for http access
@@ -148,17 +148,17 @@ type CloudHubSt struct {
 
 //DeviceControllerSt consists information to access  api-server @ master for Device CRD
 type DeviceControllerSt struct {
-	Kube KubeEdgeControllerConfig `yaml:"kube"`
+	Kube ControllerKubeConfig `yaml:"kube"`
 }
 
-//ControllerYaml has the edgecontroller yaml configuration/content which shall be written in conf/controller.yaml for cloud component
-type ControllerYaml struct {
-	Controller       CloudControllerSt  `yaml:"controller"`
+//CloudCoreYaml has the edgecontroller yaml configuration/content which shall be written in conf/controller.yaml for cloud component
+type CloudCoreYaml struct {
+	EdgeController   EdgeControllerSt   `yaml:"controller"`
 	CloudHub         CloudHubSt         `yaml:"cloudhub"`
 	DeviceController DeviceControllerSt `yaml:"devicecontroller"`
 }
 
-//ModulesSt contains the list of modules which shall be added to edgecontroller and edgecore respectively during init
+//ModulesSt contains the list of modules which shall be added to cloudcore and edgecore respectively during init
 type ModulesSt struct {
 	Enabled []string `yaml:"enabled"`
 }
