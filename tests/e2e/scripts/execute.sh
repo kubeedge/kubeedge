@@ -26,7 +26,7 @@ fi
 bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
 bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
 bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
-#run the edgecore and edgecontroller bin to run the E2E
+#run the edgecore and cloudcore bin to run the E2E
 make #builds cloud and edgecore components
 sleep 2s
 PWD=${curpath}/tests/e2e
