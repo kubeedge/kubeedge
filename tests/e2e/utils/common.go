@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	"github.com/kubeedge/viaduct/pkg/api"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"

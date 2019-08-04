@@ -38,8 +38,16 @@ func (sa *SubackPacket) Write(w io.Writer) error {
 //header has been read
 func (sa *SubackPacket) Unpack(b io.Reader) error {
 	var qosBuffer bytes.Buffer
-	sa.MessageID = decodeUint16(b)
-	qosBuffer.ReadFrom(b)
+	var err error
+	sa.MessageID, err = decodeUint16(b)
+	if err != nil {
+		return err
+	}
+
+	_, err = qosBuffer.ReadFrom(b)
+	if err != nil {
+		return err
+	}
 	sa.ReturnCodes = qosBuffer.Bytes()
 
 	return nil

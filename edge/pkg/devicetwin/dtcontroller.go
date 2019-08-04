@@ -300,42 +300,32 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		log.LOGGER.Infof("Classify the msg to action %s", action)
 		return true
 	} else if (strings.Compare(msgSource, "edgemgr") == 0) || (strings.Compare(msgSource, "devicecontroller") == 0) {
-		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
-			message.Action = dtcommon.MemDetailResult
+		switch message.Msg.Content.(type) {
+		case []byte:
+			log.LOGGER.Info("Message content type is []byte, no need to marshal again")
+		default:
 			content, err := json.Marshal(message.Msg.Content)
 			if err != nil {
 				return false
 			}
 			message.Msg.Content = content
+		}
+		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
+			message.Action = dtcommon.MemDetailResult
 			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "membership") {
 			message.Action = dtcommon.MemUpdated
-			content, err := json.Marshal(message.Msg.Content)
-			if err != nil {
-				return false
-			}
-			message.Msg.Content = content
 			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "twin/cloud_updated") {
 			message.Action = dtcommon.TwinCloudSync
-			content, err := json.Marshal(message.Msg.Content)
-			if err != nil {
-				return false
-			}
 			resources := strings.Split(message.Msg.Router.Resource, "/")
 			message.Identity = resources[1]
-			message.Msg.Content = content
 			return true
 		} else if strings.Contains(message.Msg.Router.Operation, "updated") {
 			resources := strings.Split(message.Msg.Router.Resource, "/")
 			if len(resources) == 2 && strings.Compare(resources[0], "device") == 0 {
 				message.Action = dtcommon.DeviceUpdated
 				message.Identity = resources[1]
-				content, err := json.Marshal(message.Msg.Content)
-				if err != nil {
-					return false
-				}
-				message.Msg.Content = content
 			}
 			return true
 		}

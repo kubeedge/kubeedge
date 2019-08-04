@@ -31,11 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	utilio "k8s.io/kubernetes/pkg/util/io"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/removeall"
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
+	utilio "k8s.io/utils/io"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
 )
@@ -105,6 +105,17 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 		if err := e.cleanupMountPoints(e.getPodVolumesDir(uid)); err != nil {
 			log.LOGGER.Warnf("Failed to clearing up volume mount points of pod %q: %s.", uid, err)
 		}
+		// If there are any volume-subpaths, do not cleanup directories
+		volumeSubpathExists, err := e.podVolumeSubpathsDirExists(uid)
+		if err != nil {
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but error %v occurred during reading of volume-subpaths dir from disk", uid, err))
+			continue
+		}
+		if volumeSubpathExists {
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but volume subpaths are still present on disk", uid))
+			continue
+		}
+
 		log.LOGGER.Infof("Orphaned pod %q found, removing", uid)
 		if err := removeall.RemoveAllOneFilesystem(e.mounter, e.getPodDir(uid)); err != nil {
 			log.LOGGER.Errorf("Failed to remove orphaned pod %q dir; err: %v", uid, err)

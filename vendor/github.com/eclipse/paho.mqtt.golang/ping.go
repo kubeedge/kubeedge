@@ -43,8 +43,11 @@ func keepalive(c *client) {
 			DEBUG.Println(PNG, "keepalive stopped")
 			return
 		case <-intervalTicker.C:
-			DEBUG.Println(PNG, "ping check", time.Now().Unix()-atomic.LoadInt64(&c.lastSent))
-			if time.Now().Unix()-atomic.LoadInt64(&c.lastSent) >= c.options.KeepAlive || time.Now().Unix()-atomic.LoadInt64(&c.lastReceived) >= c.options.KeepAlive {
+			lastSent := c.lastSent.Load().(time.Time)
+			lastReceived := c.lastReceived.Load().(time.Time)
+
+			DEBUG.Println(PNG, "ping check", time.Since(lastSent).Seconds())
+			if time.Since(lastSent) >= time.Duration(c.options.KeepAlive*int64(time.Second)) || time.Since(lastReceived) >= time.Duration(c.options.KeepAlive*int64(time.Second)) {
 				if atomic.LoadInt32(&c.pingOutstanding) == 0 {
 					DEBUG.Println(PNG, "keepalive sending ping")
 					ping := packets.NewControlPacket(packets.Pingreq).(*packets.PingreqPacket)
@@ -52,7 +55,7 @@ func keepalive(c *client) {
 					//will block until it it able to send the packet.
 					atomic.StoreInt32(&c.pingOutstanding, 1)
 					ping.Write(c.conn)
-					atomic.StoreInt64(&c.lastSent, time.Now().Unix())
+					c.lastSent.Store(time.Now())
 					pingSent = time.Now()
 				}
 			}

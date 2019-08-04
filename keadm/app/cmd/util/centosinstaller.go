@@ -31,6 +31,8 @@ type CentOS struct {
 	KubernetesVersion string
 	KubeEdgeVersion   string
 	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	K8SImageRepository string
+	K8SPodNetworkCidr  string
 }
 
 //SetDockerVersion sets the Docker version for the objects instance
@@ -43,6 +45,13 @@ func (c *CentOS) SetDockerVersion(version string) {
 func (c *CentOS) SetK8SVersionAndIsNodeFlag(version string, flag bool) {
 	c.KubernetesVersion = version
 	c.IsEdgeNode = flag
+}
+
+//SetK8SImageRepoAndPodNetworkCidr sets the K8S image Repository and pod network
+// cidr.
+func (c *CentOS) SetK8SImageRepoAndPodNetworkCidr(repo, cidr string) {
+	c.K8SImageRepository = repo
+	c.K8SPodNetworkCidr = cidr
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance

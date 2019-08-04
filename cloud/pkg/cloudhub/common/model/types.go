@@ -105,7 +105,7 @@ func MessageToEvent(msg *model.Message) Event {
 func NewResource(resType, resID string, info *HubInfo) string {
 	var prefix string
 	if info != nil {
-		prefix = fmt.Sprintf("%s/%s/", "node", info.NodeID)
+		prefix = fmt.Sprintf("%s/%s/", model.ResourceTypeNode, info.NodeID)
 	}
 	if resID == "" {
 		return fmt.Sprintf("%s%s", prefix, resType)

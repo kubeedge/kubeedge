@@ -10,25 +10,12 @@ It forwards the messages received from the cloud to the corresponding module at 
 
 The main functions performed by edgehub are :-
 
-- Get CloudHub URL
 - Keep Alive
 - Publish Client Info
 - Route to Cloud 
 - Route to Edge
 
 
-## Get CloudHub URL
-
-The main responsibility of get cloudHub URL is to contact the placement server and get the URL of cloudHub.   
-
-1. A HTTPS client is created using the certificates provided 
-2. A get request is sent to the placement URL 
-3. ProjectID and NodeID are added to the body of the response received from the placement URL to form the cloudHub URL.
-
-```go
-bodyBytes, _ := ioutil.ReadAll(resp.Body)
-url := fmt.Sprintf("%s/%s/%s/events", string(bodyBytes), ehc.config.ProjectID, ehc.config.NodeID)
-```
 ## Keep Alive
 
 A keep-alive message or heartbeat is sent to cloudHub after every heartbeatPeriod.

@@ -26,6 +26,8 @@ type InitOptions struct {
 	KubernetesVersion string
 	DockerVersion     string
 	KubeConfig        string
+	K8SImageRepository   string
+	K8SPodNetworkCidr    string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -77,6 +79,7 @@ type OSTypeInstaller interface {
 	InstallKubeEdge() error
 	SetDockerVersion(string)
 	SetK8SVersionAndIsNodeFlag(version string, flag bool)
+	SetK8SImageRepoAndPodNetworkCidr(string, string)
 	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
@@ -215,13 +218,9 @@ type WebSocketSt struct {
 
 //ControllerSt contain edgecontroller config which edge component uses
 type ControllerSt struct {
-	Placement           bool   `yaml:"placement"`
-	Heartbeat           uint32 `yaml:"heartbeat"`
-	RefreshAKSKInterval uint16 `yaml:"refresh-ak-sk-interval"`
-	AuthInfoFilesPath   string `yaml:"auth-info-files-path"`
-	PlacementURL        string `yaml:"placement-url"`
-	ProjectID           string `yaml:"project-id"`
-	NodeID              string `yaml:"node-id"`
+	Heartbeat uint32 `yaml:"heartbeat"`
+	ProjectID string `yaml:"project-id"`
+	NodeID    string `yaml:"node-id"`
 }
 
 //EdgeDSt contains configuration required by edged module in KubeEdge component

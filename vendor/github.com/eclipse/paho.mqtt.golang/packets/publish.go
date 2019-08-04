@@ -45,18 +45,26 @@ func (p *PublishPacket) Write(w io.Writer) error {
 //header has been read
 func (p *PublishPacket) Unpack(b io.Reader) error {
 	var payloadLength = p.FixedHeader.RemainingLength
-	p.TopicName = decodeString(b)
+	var err error
+	p.TopicName, err = decodeString(b)
+	if err != nil {
+		return err
+	}
+
 	if p.Qos > 0 {
-		p.MessageID = decodeUint16(b)
+		p.MessageID, err = decodeUint16(b)
+		if err != nil {
+			return err
+		}
 		payloadLength -= len(p.TopicName) + 4
 	} else {
 		payloadLength -= len(p.TopicName) + 2
 	}
 	if payloadLength < 0 {
-		return fmt.Errorf("Error upacking publish, payload length < 0")
+		return fmt.Errorf("Error unpacking publish, payload length < 0")
 	}
 	p.Payload = make([]byte, payloadLength)
-	_, err := b.Read(p.Payload)
+	_, err = b.Read(p.Payload)
 
 	return err
 }
