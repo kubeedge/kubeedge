@@ -2,7 +2,7 @@
 
 
 ## Edge Controller Overview
- Controller(also known as edgecontroller) is the bridge between Kubernetes Api-Server and edgecore
+ EdgeController is the bridge between Kubernetes Api-Server and edgecore
 
    
 ## Operations Performed By Edge Controller

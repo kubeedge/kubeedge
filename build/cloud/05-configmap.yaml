@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: edgecontroller
+  name: cloudcore
   namespace: kubeedge
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 data:
   controller.yaml: |
     controller:
