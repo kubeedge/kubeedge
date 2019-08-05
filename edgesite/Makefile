@@ -13,6 +13,23 @@ cross_build:
         export CC=arm-linux-gnueabi-gcc; \
         go build cmd/edgesite.go
 
+.PHONY: armv7
+armv7:
+	export GOARCH=arm \
+        export GOOS="linux" \
+        export GOARM=7 \
+        export CGO_ENABLED=1 \
+        export CC=arm-linux-gnueabi-gcc; \
+        go build cmd/edgesite.go
+
+.PHONY: armv8
+armv8:
+	export GOARCH=arm64 \
+        export GOOS="linux" \
+        export CGO_ENABLED=1 \
+        export CC=aarch64-linux-gnu-gcc; \
+        go build cmd/edgesite.go
+
 .PHONY: small_build
 small_build:
 	go build -ldflags="-w -s -extldflags -static" cmd/edgesite.go

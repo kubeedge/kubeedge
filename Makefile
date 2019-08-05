@@ -49,9 +49,29 @@ edge_integration_test:
 edge_cross_build:
 	cd edge && $(MAKE) cross_build
 
+.PHONY: edge_cross_build_v7
+edge_cross_build_v7:
+	$(MAKE) -C edge armv7
+
+.PHONY: edge_cross_build_v8
+edge_cross_build_v8:
+	$(MAKE) -C edge armv8
+
+.PHONY: edgesite_cross_build
+edgesite_cross_build:
+	$(MAKE) -C edgesite cross_build
+
 .PHONY: edge_small_build
 edge_small_build:
 	cd edge && $(MAKE) small_build
+
+.PHONY: edgesite_cross_build_v7
+edgesite_cross_build_v7:
+	$(MAKE) -C edgesite armv7
+
+.PHONY: edgesite_cross_build_v8
+edgesite_cross_build_v8:
+	$(MAKE) -C edgesite armv8
 
 .PHONY: cloud_lint
 cloud_lint:
