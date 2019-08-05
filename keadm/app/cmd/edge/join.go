@@ -42,7 +42,7 @@ keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge i
   - For this command --edgecontrollerip flag is a Mandatory option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080 --interfacename eth0
 
 - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
   then default versions shown in help will be choosen. 
@@ -92,6 +92,9 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 		"Use this key to download and use the required Docker version")
 	cmd.Flags().Lookup(types.DockerVersion).NoOptDefVal = joinOptions.DockerVersion
 
+	cmd.Flags().StringVar(&joinOptions.InterfaceName, types.InterfaceName, joinOptions.InterfaceName,
+		"KubeEdge Node interface name string, the default value is eth0")
+
 	cmd.Flags().StringVarP(&joinOptions.K8SAPIServerIPPort, types.K8SAPIServerIPPort, "k", joinOptions.K8SAPIServerIPPort,
 		"IP:Port address of K8S API-Server")
 
@@ -125,7 +128,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		kubeVer = joinOptions.KubeEdgeVersion
 	}
 	toolList["KubeEdge"] = &util.KubeEdgeInstTool{Common: util.Common{ToolVersion: kubeVer}, K8SApiServerIP: joinOptions.K8SAPIServerIPPort,
-		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID, RuntimeType: joinOptions.RuntimeType}
+		EdgeContrlrIP: joinOptions.EdgeControllerIP, EdgeNodeID: joinOptions.EdgeNodeID, RuntimeType: joinOptions.RuntimeType, InterfaceName: joinOptions.InterfaceName}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
