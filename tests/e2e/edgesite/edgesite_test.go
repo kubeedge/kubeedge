@@ -90,10 +90,10 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 			label := nodeName
+			time.Sleep(1 * time.Second)
 			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 			Expect(err).To(BeNil())
 			Expect(len(podlist.Items)).Should(Equal(replica))
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
 		})
 
 	})
@@ -143,16 +143,16 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + UID)
 			Expect(StatusCode).Should(Equal(http.StatusNotFound))
 		})
-		It("E2E_ES_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
-			//Generate the random string and assign as a UID
-			for i := 0; i < 10; i++ {
-				podlist := CreatePodTest(nodeName, nodeSelector, ctx)
-				for _, pod := range podlist.Items {
-					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
-					Expect(StatusCode).Should(Equal(http.StatusOK))
-				}
-				utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
-			}
-		})
+		//It("E2E_ES_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
+		//	//Generate the random string and assign as a UID
+		//	for i := 0; i < 10; i++ {
+		//		podlist := CreatePodTest(nodeName, nodeSelector, ctx)
+		//		for _, pod := range podlist.Items {
+		//			_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
+		//			Expect(StatusCode).Should(Equal(http.StatusOK))
+		//		}
+		//		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
+		//	}
+		//})
 	})
 })

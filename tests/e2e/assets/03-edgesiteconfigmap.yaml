@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: edgesite-configmap-mo5rf
+  name: edgesite-configmap-771bq
   namespace: default
   labels:
     k8s-app: kubeedge
@@ -23,16 +23,16 @@ data:
            qps: 5
            burst: 10
            node_update_frequency: 10
-           node-id: edgesite-node-8rlulsrzyb
-           node-name: edgesite-node-8rlulsrzyb
+           node-id: edgesite-node-zy23ztjthe
+           node-name: edgesite-node-zy23ztjthe
         context:
            send-module: metaManager
-           receive-module: controller
+           receive-module: edgecontroller
            response-module: metaManager
     edged:
         register-node-namespace: default
-        hostname-override: edgesite-node-8rlulsrzyb
-        interface-name: eth0
+        hostname-override: edgesite-node-zy23ztjthe
+        interface-name: wlp1s0
         node-status-update-frequency: 10 # second
         device-plugin-enabled: false
         gpu-plugin-enabled: false
@@ -52,8 +52,8 @@ data:
         cluster-domain: ""
         edged-memory-capacity-bytes: 7852396000
     metamanager:
-        context-send-group: controller
-        context-send-module: controller
+        context-send-group: edgecontroller
+        context-send-module: edgecontroller
         edgesite: true
   logging.yaml: |
     loggerLevel: "DEBUG"
@@ -62,4 +62,4 @@ data:
     writers: [stdout]
   modules.yaml: |
     modules:
-        enabled: [controller, metaManager, edged, dbTest]
+        enabled: [edgecontroller, metaManager, edged, dbTest]

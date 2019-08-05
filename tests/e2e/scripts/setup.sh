@@ -61,7 +61,7 @@ create_edgesite_config() {
     sed -i "s|master: .*|master: ${MASTER_IP}|g" ${EDGESITE_YAML_PATH}
 }
 
-if [ "edge_core" = ${setuptype} ]; then
+if [ "edgecore" = ${setuptype} ]; then
     create_edge_config
     create_cloud_config
 fi

@@ -33,7 +33,7 @@ make cloudimage
 sudo make edgeimage
 sudo make edgesiteimage
 PWD=${curpath}/tests/e2e
-sudo rm -rf $PWD/edge_core/edge_core.test
+sudo rm -rf $PWD/edgecore/edgecore.test
 sudo rm -rf $PWD/edgesite/edgesite.test
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/

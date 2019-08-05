@@ -28,6 +28,9 @@ before_script:
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
   - sudo apt-get install build-essential
   - sudo apt-get install gcc-arm-linux-gnueabi
+  - sudo apt-get install libc6-dev-i386
+  - sudo apt-get install libc6-dev-armel-armhf-cross
+  - sudo apt-get install libc6-dev-armel-cross
   - sudo apt-get install upx-ucl
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
@@ -68,9 +71,11 @@ jobs:
       name: "unit test edge"     # names the third Tests stage job
     - script: make edge_integration_test
       name: "integration test edge"     # names the fourth Tests stage job
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script:
+    - script: make cloud_test
+      name: "unit test cloud"
+
+    - stage: "e2e tests"
+      script:
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
@@ -86,12 +91,6 @@ jobs:
         - sudo sed -i '27i\ \ \ \ - --insecure-bind-address=0.0.0.0' /etc/kubernetes/manifests/kube-apiserver.yaml
         - sleep 5
         - make e2e_test
-      name: "e2e_test"     # names the seventh Tests stage job
-    - script: make cloud_test
-      name: "unit test cloud" 
-
-    - stage: "e2e tests"
-      script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
 
     - stage: "build docker container"

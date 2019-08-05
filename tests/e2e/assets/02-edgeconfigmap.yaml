@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: edgecore-configmap-ck54r
+  name: edgecore-configmap-73nlz
   namespace: default
   labels:
     k8s-app: kubeedge
@@ -17,7 +17,7 @@ data:
         session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
     edgehub:
         websocket:
-            url: wss://11.242.157.192:31660/e632aba927ea4ac2b575ec1603d56f10/e2e-node-8s1zyotear/events
+            url: wss://11.242.157.192:31644/e632aba927ea4ac2b575ec1603d56f10/e2e-node-4pi5asnb35/events
             certfile: /etc/kubeedge/certs/edge.crt
             keyfile: /etc/kubeedge/certs/edge.key
             handshake-timeout: 30 #second
@@ -39,11 +39,11 @@ data:
             auth-info-files-path: /var/IEF/secret
             placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
             project-id: e632aba927ea4ac2b575ec1603d56f10
-            node-id: e2e-node-8s1zyotear
+            node-id: e2e-node-4pi5asnb35
     edged:
         register-node-namespace: default
-        hostname-override: e2e-node-8s1zyotear
-        interface-name: eth0
+        hostname-override: e2e-node-4pi5asnb35
+        interface-name: wlp1s0
         edged-memory-capacity-bytes: 7852396000
         node-status-update-frequency: 10 # second
         device-plugin-enabled: false
@@ -52,7 +52,7 @@ data:
         image-gc-low-threshold: 40 # percent
         maximum-dead-containers-per-container: 1
         docker-address: unix:///var/run/docker.sock
-        version: 2.0.0
+        version: v1.15.0-kubeedge-v1.0.0
         runtime-type: docker
         remote-runtime-endpoint: unix:///var/run/dockershim.sock
         remote-image-endpoint: unix:///var/run/dockershim.sock

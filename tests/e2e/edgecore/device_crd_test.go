@@ -524,7 +524,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			newLedDevice := utils.NewLedDeviceInstance(NodeName)
 			time.Sleep(3 * time.Second)
 			var deviceTwinUpdateMessage utils.DeviceTwinUpdate
-			reportedValue := "OFF"
+			reportedValue := "unknown"
 			deviceTwinUpdateMessage.Twin = map[string]*utils.MsgTwin{
 				"power-status": {Actual: &utils.TwinValue{Value: &reportedValue}, Metadata: &utils.TypeMetadata{Type: "string"}},
 			}
@@ -535,7 +535,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			list, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newLedDevice)
 			Expect(err).To(BeNil())
 			Expect(list[0].Status.Twins[0].PropertyName).To(Equal("power-status"))
-			Expect(list[0].Status.Twins[0].Reported.Value).To(Equal("OFF"))
+			Expect(list[0].Status.Twins[0].Reported.Value).To(Equal("unknown"))
 		})
 	})
 })

@@ -23,7 +23,6 @@ kill_edgecore() {
     if pgrep edgecore >/dev/null
     then
         echo "Failed to kill edgecore process !!"
-        exit 1
     else
         echo "edgecore is successfully killed !!"
     fi

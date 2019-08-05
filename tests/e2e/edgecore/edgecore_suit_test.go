@@ -135,7 +135,7 @@ func TestEdgecoreDeviceDeployment(t *testing.T) {
 
 		utils.DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge, CloudCoreDeployment, CloudConfigMap)
 		utils.DeleteEdgeDeployments(ctx.Cfg.K8SMasterForKubeEdge)
-		//Run the Cleanup steps to kill edgecore and edgecontroller binaries
+		//Run the Cleanup steps to kill edgecore and cloudcore binaries
 		Expect(utils.CleanUp("edgecore")).Should(BeNil())
 		utils.Infof("Cleanup is Successful !!")
 	})
