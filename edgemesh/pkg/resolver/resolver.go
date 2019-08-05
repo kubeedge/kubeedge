@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	mconfig "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/kubeedge/beehive/pkg/common/log"
 )
@@ -58,7 +59,7 @@ func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, inv
 				i.SourceServiceID = ""
 				i.Protocol = "rest"
 				i.Args = req
-				i.Strategy = "Random"
+				i.Strategy = mconfig.CONFIG.GetConfigurationByKey("mesh.loadbalance.strategy-name").(string)
 				i.Reply = &http.Response{}
 				invCallback("http", *i)
 			}
