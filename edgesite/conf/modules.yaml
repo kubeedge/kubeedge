@@ -1,2 +1,2 @@
 modules:
-    enabled: [controller, metaManager, edged, dbTest]
+    enabled: [edgecontroller, metaManager, edged, dbTest]
