@@ -12,12 +12,21 @@ lint:
 clean:
 	$(RM) keadm
 
-# .PHONY: cross_build
-# cross_build:
-# 	export GOARCH=arm
-# 	export GOOS="linux"
-# 	export GOARM=6
-# 	export CGO_ENABLED=1
-# 	export CC=arm-linux-gnueabi-gcc
-# 	go build keadm.go -o keadm
+.PHONY: cross_build
+cross_build:
+	export GOARCH=arm \
+	export GOOS="linux" \
+	export GOARM=6 \
+	export CGO_ENABLED=1 \
+	export CC=arm-linux-gnueabi-gcc; \
+	go build -o keadm keadm.go
+
+.PHONY: cross_build_armv7
+cross_build_armv7:
+	export GOARCH=arm \
+	export GOOS="linux" \
+	export GOARM=7 \
+	export CGO_ENABLED=1 \
+	export CC=arm-linux-gnueabi-gcc; \
+	go build -o keadm keadm.go
 

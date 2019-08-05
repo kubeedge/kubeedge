@@ -53,13 +53,39 @@ edge_cross_build:
 edge_cross_build_v7:
 	$(MAKE) -C edge armv7
 
-.PHONY: edge_cross_build_v8
-edge_cross_build_v8:
-	$(MAKE) -C edge armv8
-
 .PHONY: edgesite_cross_build
 edgesite_cross_build:
 	$(MAKE) -C edgesite cross_build
+ 
+.PHONY: cloud_cross_build
+cloud_cross_build:
+	$(MAKE) -C cloud cross_build
+
+.PHONY: cloud_cross_build_v7
+cloud_cross_build_v7:
+	$(MAKE) -C cloud cross_build_armv7
+
+.PHONY: keadm_cross_build
+keadm_cross_build:
+	$(MAKE) -C keadm cross_build
+
+.PHONY: keadm_cross_build_v7
+keadm_cross_build_v7:
+	$(MAKE) -C keadm cross_build_armv7
+
+.PHONY: cross_build
+cross_build:
+	$(MAKE) edge_cross_build
+	$(MAKE) cloud_cross_build
+	$(MAKE) edgesite_cross_build
+	$(MAKE) keadm_cross_build
+
+.PHONY: cross_build_armv7
+cross_build_armv7:
+	$(MAKE) edge_cross_build_v7
+	$(MAKE) edgesite_cross_build_v7
+	$(MAKE) cloud_cross_build_v7
+	$(MAKE) keadm_cross_build_v7
 
 .PHONY: edge_small_build
 edge_small_build:
@@ -68,10 +94,6 @@ edge_small_build:
 .PHONY: edgesite_cross_build_v7
 edgesite_cross_build_v7:
 	$(MAKE) -C edgesite armv7
-
-.PHONY: edgesite_cross_build_v8
-edgesite_cross_build_v8:
-	$(MAKE) -C edgesite armv8
 
 .PHONY: cloud_lint
 cloud_lint:

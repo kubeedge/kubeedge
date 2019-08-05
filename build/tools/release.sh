@@ -120,9 +120,9 @@ generateRel $version x86_64 $desDir
 
 
 # build arch arm v6
-make cross_build
+make edge_cross_build
 generateRel $version armv6 $desDir
 
 # build arch armv7
-make cross_build_v7
+make cross_build_armv7
 generateRel $version armv7 $desDir

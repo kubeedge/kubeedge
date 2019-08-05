@@ -53,12 +53,18 @@ jobs:
       name: "build bluetooth_device"
     - script: make edge_small_build
       name: "build small edge version"
-    - script: make edge_cross_build
+
+    - stage: "Cross Build"
+      script: make edge_cross_build
       name: "cross build edge"     # names the fifth Tests stage job
-    - script: make edge_cross_build_v7
-      name: "cross build edge for armv7"     # names the fifth Tests stage job
     - script: make edgesite_cross_build
       name: "cross build edgesite"    # names the fifth Tests stage job
+    - script: make cloud_cross_build
+      name: "cross build cloud"
+    - script: make edge_cross_build
+      name: "edge cross build"
+    - script: make edge_cross_build_v7
+      name: "cross build edge for armv7"     # names the fifth Tests stage job
     - script: make edgesite_cross_build_v7
       name: "cross build edgeitefor armv7"     # names the fifth Tests stage job
 
