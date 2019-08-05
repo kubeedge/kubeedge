@@ -1,10 +1,10 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: edgecontroller
+  name: cloudcore
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 rules:
 - apiGroups:
   - ""

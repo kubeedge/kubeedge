@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: edgecontroller
+  name: cloudcore
   namespace: kubeedge
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 spec:
   ports:
   - port: 10000
     name: cloudhub
   selector:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore

@@ -117,7 +117,7 @@ The other one is used to deploy KubeEdge Cloud Part pod and run the performance 
 | Disk Size                      |  40GB                                        |
 | Count                          |  2...N                                       |
 
-One of these VMs is used to run KubeEdge Cloud Part pod which is running EdgeController and CloudHub and so on.
+One of these VMs is used to run KubeEdge Cloud Part pod which is running Controllers and CloudHub and so on.
 The other VMs are used to run numbers of KubeEdge Edge Node pods which are running Edged and EdgeHub and so on.
 We will adjust the Count of VMs based on the KubeEdge Edge Nodes numbers.
 

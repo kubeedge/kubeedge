@@ -8,7 +8,7 @@
 
 + [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-+ After initializing Kubernetes master, we need to expose insecure port 8080 for edgecontroller/kubectl to work with http connection to Kubernetes apiserver.
++ After initializing Kubernetes master, we need to expose insecure port 8080 for cloudcore/kubectl to work with http connection to Kubernetes apiserver.
   Please follow below steps to enable http port in Kubernetes apiserver.
 
     ```shell
@@ -93,8 +93,8 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
     # run edge controller
     # `conf/` should be in the same directory as the cloned KubeEdge repository
-    # verify the configurations before running cloud(edgecontroller)
-    ./edgecontroller
+    # verify the configurations before running cloud(cloudcore)
+    ./cloudcore
     ```
 
 #### [Run as Kubernetes deployment](../../build/cloud/README.md)
