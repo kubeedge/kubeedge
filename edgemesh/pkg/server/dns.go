@@ -187,7 +187,7 @@ func parseDnsQuery(req []byte) (que []dnsQuestion, err error) {
 	head := &dnsHeader{}
 	head.getHeader(req)
 	if !head.isAQurey() {
-		return nil, errors.New("Igenore")
+		return nil, errors.New("Ignore")
 	}
 
 	question := make(dnsQs, head.queNum)
