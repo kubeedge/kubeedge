@@ -126,7 +126,7 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "3000s", "2s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "600s", "2s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
 
 }
 
@@ -150,11 +150,11 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "3000s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
+	}, "600s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
 
 }
 
-//CheckPodDeleteState function to check the Pod state
+//CheckDeploymentPodDeleteState function to check the Pod state
 func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
 	var count int
 	//count the edgecore/cloudcore deployment pods and count only application pods deployed on KubeEdge edgen node
