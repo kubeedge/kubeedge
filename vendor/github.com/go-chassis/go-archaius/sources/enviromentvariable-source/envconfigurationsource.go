@@ -43,6 +43,7 @@ var _ core.ConfigSource = &EnvConfigurationSource{}
 
 //NewEnvConfigurationSource configures a new environment configuration
 func NewEnvConfigurationSource() core.ConfigSource {
+	openlogging.Info("enable env source")
 	envConfigSource := new(EnvConfigurationSource)
 	envConfigSource.priority = envVariableSourcePriority
 	config, err := envConfigSource.pullConfigurations()
@@ -61,7 +62,12 @@ func (*EnvConfigurationSource) pullConfigurations() (map[string]interface{}, err
 	for _, value := range os.Environ() {
 		rs := []rune(value)
 		in := strings.Index(value, "=")
-		configMap[string(rs[0:in])] = string(rs[in+1:])
+		key := string(rs[0:in])
+		value := string(rs[in+1:])
+		envKey := strings.Replace(key, "_", ".", -1)
+		configMap[key] = value
+		configMap[envKey] = value
+
 	}
 
 	return configMap, nil

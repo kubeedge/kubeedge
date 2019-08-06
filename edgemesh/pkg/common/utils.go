@@ -1,12 +1,12 @@
 package common
 
 import (
-	"github.com/pkg/errors"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/go-chassis/go-chassis/core/common"
+	"github.com/pkg/errors"
 )
 
 func SplitServiceKey(key string) (name, namespace string) {

@@ -3,11 +3,10 @@
 package archaius
 
 import (
+	"errors"
 	"os"
 	"strings"
-	"sync"
 
-	"errors"
 	"github.com/go-chassis/go-archaius/core"
 	"github.com/go-chassis/go-archaius/sources/commandline-source"
 	"github.com/go-chassis/go-archaius/sources/configcenter"
@@ -23,8 +22,8 @@ var (
 	fs      filesource.FileSource
 	ms      = memoryconfigsource.NewMemoryConfigurationSource()
 
-	once             = sync.Once{}
-	onceConfigCenter = sync.Once{}
+	running             = false
+	configServerRunning = false
 )
 
 func initFileSource(o *Options) (core.ConfigSource, error) {
@@ -57,145 +56,124 @@ func initFileSource(o *Options) (core.ConfigSource, error) {
 
 // Init create a Archaius config singleton
 func Init(opts ...Option) error {
-	var errG error
-	once.Do(func() {
-		var err error
-		o := &Options{}
-		for _, opt := range opts {
-			opt(o)
-		}
+	if running {
+		openlogging.Debug("can not init archaius again, call Clean first")
+		return nil
+	}
+	var err error
+	o := &Options{}
+	for _, opt := range opts {
+		opt(o)
+	}
 
-		// created config factory object
-		factory, err = NewConfigFactory()
-		if err != nil {
-			errG = err
-			return
-		}
-		factory.DeInit()
-		factory.Init()
+	// created config factory object
+	factory, err = NewConfigFactory()
+	if err != nil {
 
-		fs, err := initFileSource(o)
-		if err != nil {
-			errG = err
-			return
-		}
-		if o.ConfigCenterInfo != (ConfigCenterInfo{}) {
-			if err := EnableConfigCenterSource(o.ConfigCenterInfo, o.ConfigClient); err != nil {
-				errG = err
-				return
-			}
-		}
-		err = factory.AddSource(fs)
-		if err != nil {
-			errG = err
-			return
-		}
+		return err
+	}
+	factory.DeInit()
+	factory.Init()
 
-		// build-in config sources
-		if o.UseMemSource {
-			ms = memoryconfigsource.NewMemoryConfigurationSource()
-			factory.AddSource(ms)
+	fs, err := initFileSource(o)
+	if err != nil {
+		return err
+	}
+	if o.ConfigCenterInfo != (ConfigCenterInfo{}) {
+		if err := EnableConfigCenterSource(o.ConfigCenterInfo, o.ConfigClient); err != nil {
+			return err
 		}
-		if o.UseCLISource {
-			cmdSource := commandlinesource.NewCommandlineConfigSource()
-			factory.AddSource(cmdSource)
-		}
-		if o.UseENVSource {
-			envSource := envconfigsource.NewEnvConfigurationSource()
-			factory.AddSource(envSource)
-		}
+	}
+	err = factory.AddSource(fs)
+	if err != nil {
+		return err
+	}
 
-		eventHandler := EventListener{
-			Name:    "EventHandler",
-			Factory: factory,
-		}
+	// build-in config sources
+	if o.UseMemSource {
+		ms = memoryconfigsource.NewMemoryConfigurationSource()
+		factory.AddSource(ms)
+	}
+	if o.UseCLISource {
+		cmdSource := commandlinesource.NewCommandlineConfigSource()
+		factory.AddSource(cmdSource)
+	}
+	if o.UseENVSource {
+		envSource := envconfigsource.NewEnvConfigurationSource()
+		factory.AddSource(envSource)
+	}
 
-		factory.RegisterListener(eventHandler, "a*")
-		openlogging.GetLogger().Info("archaius init success")
-	})
+	eventHandler := EventListener{
+		Name:    "EventHandler",
+		Factory: factory,
+	}
 
-	return errG
+	factory.RegisterListener(eventHandler, "a*")
+	openlogging.GetLogger().Info("archaius init success")
+	running = true
+	return nil
 }
 
 //CustomInit accept is able to accept a list of config source, add it into archaius runtime.
 //it almost like Init(), but you can fully control config sources you inject to archaius
 func CustomInit(sources ...core.ConfigSource) error {
-	var errG error
-	once.Do(func() {
-		var err error
-		factory, err = NewConfigFactory()
+	var err error
+	factory, err = NewConfigFactory()
+	if err != nil {
+		return err
+	}
+
+	factory.DeInit()
+	factory.Init()
+	for _, s := range sources {
+		err = factory.AddSource(s)
 		if err != nil {
-			errG = err
-			return
+			return err
 		}
-
-		factory.DeInit()
-		factory.Init()
-		for _, s := range sources {
-			err = factory.AddSource(s)
-			if err != nil {
-				errG = err
-				return
-			}
-		}
-
-		eventHandler := EventListener{
-			Name:    "EventHandler",
-			Factory: factory,
-		}
-
-		factory.RegisterListener(eventHandler, "a*")
-
-	})
-
-	return errG
+	}
+	return err
 }
 
 //EnableConfigCenterSource create a config center source singleton
 //A config center source pull remote config server key values into local memory
 //so that you can use GetXXX to get value easily
 func EnableConfigCenterSource(ci ConfigCenterInfo, cc config.Client) error {
-	var errG error
 	if ci == (ConfigCenterInfo{}) {
 		return errors.New("ConfigCenterInfo can not be empty")
 	}
-	onceConfigCenter.Do(func() {
-		var err error
-		if cc == nil {
-			opts := config.Options{
-				DimensionInfo: ci.DefaultDimensionInfo,
-				ServerURI:     ci.URL,
-				TenantName:    ci.TenantName,
-				EnableSSL:     ci.EnableSSL,
-				TLSConfig:     ci.TLSConfig,
-				RefreshPort:   ci.RefreshPort,
-				AutoDiscovery: ci.AutoDiscovery,
-				Env:           ci.Environment,
-			}
-			cc, err = config.NewClient(ci.ClientType, opts)
-			if err != nil {
-				errG = err
-				return
-			}
+	if configServerRunning {
+		openlogging.Warn("can not init config server again, call Clean first")
+		return nil
+	}
+
+	var err error
+	if cc == nil {
+		opts := config.Options{
+			ServerURI:     ci.URL,
+			TenantName:    ci.TenantName,
+			EnableSSL:     ci.EnableSSL,
+			TLSConfig:     ci.TLSConfig,
+			RefreshPort:   ci.RefreshPort,
+			AutoDiscovery: ci.AutoDiscovery,
+
+			Version:     ci.Version,
+			ServiceName: ci.Service,
+			App:         ci.App,
+			Env:         ci.Environment,
 		}
-		configCenterSource := configcenter.NewConfigCenterSource(cc,
-			ci.DefaultDimensionInfo, ci.RefreshMode,
-			ci.RefreshInterval)
-		err = factory.AddSource(configCenterSource)
+		cc, err = config.NewClient(ci.ClientType, opts)
 		if err != nil {
-			errG = err
-			return
+			return err
 		}
-
-		eventHandler := EventListener{
-			Name:    "EventHandler",
-			Factory: factory,
-		}
-
-		factory.RegisterListener(eventHandler, "a*")
-	})
-
-	return errG
+	}
+	configCenterSource := configcenter.NewConfigCenterSource(cc, ci.RefreshMode,
+		ci.RefreshInterval)
+	err = factory.AddSource(configCenterSource)
+	if err != nil {
+		return err
+	}
+	configServerRunning = true
+	return nil
 }
 
 // EventListener is a struct having information about registering key and object
@@ -207,7 +185,7 @@ type EventListener struct {
 // Event is invoked while generating events at run time
 func (e EventListener) Event(event *core.Event) {
 	value := e.Factory.GetConfigurationByKey(event.Key)
-	openlogging.GetLogger().Infof("config value after change %s | %s", event.Key, value)
+	openlogging.GetLogger().Debugf("config value after change %s | %s", event.Key, value)
 }
 
 // Get is for to get the value of configuration key
@@ -327,4 +305,17 @@ func AddSource(source core.ConfigSource) error {
 //GetConfigFactory return factory
 func GetConfigFactory() ConfigurationFactory {
 	return factory
+}
+
+//Clean will call config manager CleanUp Method,
+//it deletes all sources which means all of key value is deleted.
+//after you call Clean, you can init archaius again
+func Clean() error {
+	err := factory.DeInit()
+	if err != nil {
+		return err
+	}
+	running = false
+	configServerRunning = false
+	return nil
 }

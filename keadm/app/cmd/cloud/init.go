@@ -17,7 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -62,13 +61,13 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: cloudInitExample,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
 			Add2ToolsList(tools, flagVals, init)
-			Execute(tools)
+			return Execute(tools)
 		},
 	}
 
@@ -83,7 +82,8 @@ func newInitOptions() *types.InitOptions {
 	opts.DockerVersion = types.DefaultDockerVersion
 	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 	opts.KubernetesVersion = types.DefaultK8SVersion
-
+	opts.K8SImageRepository = types.DefaultK8SImageRepository
+	opts.K8SPodNetworkCidr = types.DefaultK8SPodNetworkCidr
 	return opts
 }
 
@@ -101,6 +101,14 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Use this key to download and use the required Kubernetes version")
 	cmd.Flags().Lookup(types.KubernetesVersion).NoOptDefVal = initOpts.KubernetesVersion
 
+	cmd.Flags().StringVar(&initOpts.K8SImageRepository, types.K8SImageRepository, initOpts.K8SImageRepository,
+		"Use this key to set the Kubernetes docker image repository")
+	cmd.Flags().Lookup(types.K8SImageRepository).NoOptDefVal = initOpts.K8SImageRepository
+
+	cmd.Flags().StringVar(&initOpts.K8SPodNetworkCidr, types.K8SPodNetworkCidr, initOpts.K8SPodNetworkCidr,
+		"Use this key to set the Kubernetes pod Network cidr ")
+	cmd.Flags().Lookup(types.K8SPodNetworkCidr).NoOptDefVal = initOpts.K8SPodNetworkCidr
+
 	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
@@ -108,6 +116,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) {
 	var kubeVer, dockerVer, k8sVer string
+	var k8sImageRepo, k8sPNCidr string
 
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
@@ -115,7 +124,21 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	} else {
 		kubeVer = initOptions.KubeEdgeVersion
 	}
-	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}}
+
+	flgData, ok = flagData[types.K8SImageRepository]
+	if ok {
+		k8sImageRepo = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	} else {
+		k8sImageRepo = initOptions.K8SImageRepository
+	}
+	
+	flgData, ok = flagData[types.K8SPodNetworkCidr]
+	if ok {
+		k8sPNCidr = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
+	} else {
+		k8sPNCidr = initOptions.K8SPodNetworkCidr
+	}
+	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}, K8SImageRepository:k8sImageRepo, K8SPodNetworkCidr:k8sPNCidr}
 
 	flgData, ok = flagData[types.DockerVersion]
 	if ok {
@@ -136,20 +159,15 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 }
 
 //Execute the installation for each tool and start edgecontroller
-func Execute(toolList map[string]types.ToolsInstaller) {
+func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	for name, tool := range toolList {
 		if name != "Cloud" {
 			err := tool.InstallTools()
 			if err != nil {
-				fmt.Println(err.Error())
-				continue
+				return err
 			}
 		}
 	}
-	err := toolList["Cloud"].InstallTools()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
+	return toolList["Cloud"].InstallTools()
 }

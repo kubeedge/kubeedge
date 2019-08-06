@@ -2,6 +2,7 @@ package registry
 
 import (
 	"fmt"
+
 	"github.com/go-chassis/go-chassis/core/registry"
 	utiltags "github.com/go-chassis/go-chassis/pkg/util/tags"
 	"github.com/kubeedge/beehive/pkg/common/log"
