@@ -1016,11 +1016,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bab862732167cdab16ca3f26140611316f185a449daa34f44375a6fbbee7dafe"
+  digest = "1:15ebe0534e4a22530add1abdedb6fe7e3157ff1eea45374321695e043d5c8cc7"
   name = "github.com/paypal/gatt"
   packages = [
     ".",
     "examples/option",
+    "examples/service",
     "linux",
     "linux/cmd",
     "linux/evt",
@@ -2157,6 +2158,7 @@
     "github.com/onsi/gomega",
     "github.com/paypal/gatt",
     "github.com/paypal/gatt/examples/option",
+    "github.com/paypal/gatt/examples/service",
     "github.com/pkg/errors",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
