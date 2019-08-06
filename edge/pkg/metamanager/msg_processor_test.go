@@ -43,7 +43,7 @@ const (
 	// ModuleNameEdgeHub is name of edgehub module
 	ModuleNameEdgeHub = "websocket"
 	// ModuleNameController is the name of the controller module
-	ModuleNameController = "controller"
+	ModuleNameController = "edgecontroller"
 	// MarshalErroris common jsonMarshall error
 	MarshalError = "Error to marshal message content: json: unsupported type: chan int"
 	// OperationNodeConnection is message with operation publish
