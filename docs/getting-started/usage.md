@@ -139,7 +139,8 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 
     **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
     lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
-    more than once etc. are applicable here as well.
+    more than once etc. are applicable here as well. There are options in upx-ucl like --best, but it has a drawback of taking too long for big files, we are using --9 since it takes less time.
+    Please refer to upx-ucl --help for more information.
 
 + Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
     + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
