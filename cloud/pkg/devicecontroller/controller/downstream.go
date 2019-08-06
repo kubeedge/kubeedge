@@ -527,11 +527,12 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 	}
 }
 
-func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}) (deviceProtocol *types.Protocol) {
+func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}) *types.Protocol {
+	var deviceProtocol types.Protocol
 	deviceProtocol.Name = protocol + "-" + deviceName
 	deviceProtocol.Protocol = protocol
 	deviceProtocol.ProtocolConfig = ProtocolConfig
-	return deviceProtocol
+	return &deviceProtocol
 }
 
 // deviceUpdated updates the map, check if device is actually updated.
