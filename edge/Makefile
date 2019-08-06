@@ -58,4 +58,7 @@ armv8:
 .PHONY: small_build
 small_build:
 	go build -ldflags="-w -s -extldflags -static" cmd/edge_core.go
-	upx-ucl --best edge_core
+	# There are options in upx-ucl like --best, which has best compression,
+	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
+	# Pls use --help for more information
+	upx-ucl -9 edge_core
