@@ -34,7 +34,7 @@ const (
 
 	EdgeFunctionModel   = "edgefunction"
 	CloudFunctionModel  = "funcmgr"
-	CloudControlerModel = "controller"
+	CloudControlerModel = "edgecontroller"
 )
 
 var connected = false
