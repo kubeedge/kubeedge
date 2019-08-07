@@ -89,7 +89,7 @@ Since Router fetches rules from DB, in later versions it can be started as a dif
 ### Router Low-level Design
 
 ### Providers
-Providers are plugins to reach a service running on edge or on cloud. For example (ServiceBus, EventBus running in edge_core) 
+Providers are plugins to reach a service running on edge or on cloud. For example (ServiceBus, EventBus running in edgecore) 
 Providers can be classified into two types
 1) Source
 2) Target

@@ -140,7 +140,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	toolList["MQTT"] = &util.MQTTInstTool{}
 }
 
-//Execute the instalation for each tool and start edge_core
+//Execute the instalation for each tool and start edgecore
 func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	//Install all the required pre-requisite tools

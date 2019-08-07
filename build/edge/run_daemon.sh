@@ -79,7 +79,7 @@ docker_set(){
     # 
     # * cloudhub
     # * edgename
-    # * edge_core_image
+    # * edgecore_image
     # * arch
     # * qemu_arch
     # * certpath
@@ -91,7 +91,7 @@ docker_set(){
     #  ./build.sh set \
     #    cloudhub=0.0.0.0:10000 \
     #    edgename=edge-node \
-    #    edge_core_image="kubeedge/edgecore:latest" \
+    #    edgecore_image="kubeedge/edgecore:latest" \
     #    arch=amd64 \
     #    qemu_arch=x86_64 \
     #    certpath=/etc/kubeedge/certs \
@@ -108,7 +108,7 @@ docker_set(){
 
     [[ ! -z $cloudhub ]] &&  sed -i "/CLOUDHUB=/c\CLOUDHUB=${cloudhub}" .env && echo "set cloudhub success"
     [[ ! -z $edgename ]] &&  sed -i "/EDGENAME=/c\EDGENAME=${edgename}" .env && echo "set edgename success"
-    [[ ! -z $edge_code_image_tag ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=kubeedge/edgecore:${edge_core_image}" .env && echo "set edge_core_image success"
+    [[ ! -z $edge_code_image_tag ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=kubeedge/edgecore:${edgecore_image}" .env && echo "set edgecore_image success"
     [[ ! -z $arch ]] &&  sed -i "/\<ARCH\>/c\ARCH=${arch}" .env && echo "set arch success"
     [[ ! -z $qemu_arch ]] &&  sed -i "/QEMU_ARCH=/c\QEMU_ARCH=${qemu_arch}" .env && echo "set qemu_arch success"
     [[ ! -z $certpath ]] &&  sed -i "/CERTPATH=/c\CERTPATH=${certpath}" .env && echo "set certpath success"
@@ -127,7 +127,7 @@ docker_build(){
 
 docker_save(){
     eval $(sed -n '/EDGECOREIMAGE/p' .env)
-    docker save -o edge_core_image.tar $EDGECOREIMAGE 
+    docker save -o edgecore_image.tar $EDGECOREIMAGE
 }
 
 docker_up(){

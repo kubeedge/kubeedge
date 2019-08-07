@@ -180,12 +180,12 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     # or run emqx edge
     # emqx start
     
-    # run edge_core
+    # run edgecore
     # `conf/` should be in the same directory as the cloned KubeEdge repository
-    # verify the configurations before running edge(edge_core)
-    ./edge_core
+    # verify the configurations before running edge(edgecore)
+    ./edgecore
     # or
-    nohup ./edge_core > edge_core.log 2>&1 &
+    nohup ./edgecore > edgecore.log 2>&1 &
     ```
 
     **Note:** Please run edge using the users who have root permission.

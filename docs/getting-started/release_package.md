@@ -126,16 +126,16 @@
             + `kubelet-root-dir: /var/run/kubelet/`
    + Run edge   
    ```shell
-       # run edge_core
+       # run edgecore
            # `conf/` should be in the same directory as the cloned KubeEdge repository
            cd /etc/kubeedge/edge
-           # verify the configurations before running edge(edge_core)
-           ./edge_core
+           # verify the configurations before running edge(edgecore)
+           ./edgecore
            # or
-           nohup ./edge_core > edge_core.log 2>&1 &
+           nohup ./edgecore > edgecore.log 2>&1 &
           
    ```
-    **Note**: Running edge_core on ARM based processors,follow the above steps as mentioned for Edge Vm
+    **Note**: Running edgecore on ARM based processors,follow the above steps as mentioned for Edge Vm
    ```shell
        VERSION="v0.3.0"
        OS="linux"

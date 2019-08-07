@@ -127,7 +127,7 @@ func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue
 	device.Twin[attributeName] = &msgTwin
 }
 
-//Function to access the edge_core DB and return the device state.
+//Function to access the edgecore DB and return the device state.
 func GetDeviceStateFromDB(deviceID string) string {
 	var device Device
 
@@ -256,7 +256,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		}}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
-			common.Failf("Add device to edge_core DB is failed: %v", err)
+			common.Failf("Add device to edgecore DB is failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPut, testMgrEndPoint, bytes.NewBuffer(respbytes))
 	case "DELETE":
@@ -265,7 +265,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		}}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
-			common.Failf("Remove device from edge_core DB failed: %v", err)
+			common.Failf("Remove device from edgecore DB failed: %v", err)
 			return false
 		}
 		req, err = http.NewRequest(http.MethodDelete, testMgrEndPoint, bytes.NewBuffer(respbytes))

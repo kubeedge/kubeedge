@@ -173,7 +173,7 @@ func (c *CentOS) InstallKubeEdge() error {
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
-//and the starts edge_core with logs being captured
+//and the starts edgecore with logs being captured
 func (c *CentOS) RunEdgeCore() error {
 	return nil
 }

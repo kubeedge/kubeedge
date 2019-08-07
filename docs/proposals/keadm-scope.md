@@ -232,7 +232,7 @@ Flags:
 
 `keadm join`
   - What is it? 
-    * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edge_core) and start it
+    * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
   - What shall be its scope ?
 
@@ -250,14 +250,14 @@ Flags:
         * Create `node.json` file and update it with `-i` or `--edgenodeid` flags value in `metadata.name` field.
         * Apply it using `curl` command to api-server
 
-    8. start edge_core
+    8. start edgecore
 
 `keadm reset`
 
   - What is it?
-    * This command will be responsible to bring down KubeEdge edge component (edge_core)
+    * This command will be responsible to bring down KubeEdge edge component (edgecore)
 
   - What it will do?
 
     1. Remove node using `curl` command from K8S cluster
-    2. Kill `edge_core` process
+    2. Kill `edgecore` process
