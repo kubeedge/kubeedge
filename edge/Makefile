@@ -1,8 +1,8 @@
 
-# make edge_core
-.PHONY: default edge_core
-edge_core:
-	go build cmd/edge_core.go
+# make edgecore
+.PHONY: default edgecore
+edgecore:
+	go build cmd/edgecore/edgecore.go
 
 # unit tests
 .PHONY: test
@@ -36,7 +36,7 @@ cross_build:
         export GOARM=6 \
         export CGO_ENABLED=1 \
         export CC=arm-linux-gnueabi-gcc; \
-        go build cmd/edge_core.go
+        go build cmd/edgecore/edgecore.go
 
 .PHONY: armv7
 armv7:
@@ -45,7 +45,7 @@ armv7:
         export GOARM=7 \
         export CGO_ENABLED=1 \
         export CC=arm-linux-gnueabi-gcc; \
-        go build cmd/edge_core.go
+        go build cmd/edgecore/edgecore.go
 
 .PHONY: armv8
 armv8:
@@ -53,12 +53,12 @@ armv8:
         export GOOS="linux" \
         export CGO_ENABLED=1 \
         export CC=aarch64-linux-gnu-gcc; \
-        go build cmd/edge_core.go
+        go build cmd/edgecore/edgecore.go
 
 .PHONY: small_build
 small_build:
-	go build -ldflags="-w -s -extldflags -static" cmd/edge_core.go
+	go build -ldflags="-w -s -extldflags -static" cmd/edgecore/edgecore.go
 	# There are options in upx-ucl like --best, which has best compression,
 	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
 	# Pls use --help for more information
-	upx-ucl -9 edge_core
+	upx-ucl -9 edgecore

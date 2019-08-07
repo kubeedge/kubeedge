@@ -95,7 +95,7 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 
   ```shell
   cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-  make # or `make edge_core`
+  make # or `make edgecore`
   ```
 
   KubeEdge 可以跨平台编译，运行在基于ARM的处理器上。
@@ -113,12 +113,12 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   # or run emqx edge
   # emqx start
   
-  # run edge_core
+  # run edgecore
   # `conf/` should be in the same directory as the cloned KubeEdge repository
-  # verify the configurations before running edge(edge_core)
-  ./edge_core
+  # verify the configurations before running edge(edgecore)
+  ./edgecore
   # or
-  nohup ./edge_core > edge_core.log 2>&1 &
+  nohup ./edgecore > edgecore.log 2>&1 &
   ```
 
   请使用具有root权限的用户运行 edge。

@@ -233,7 +233,7 @@ kubeedge/edge/conf/
 kubeedge/edge/conf/modules.yaml
 kubeedge/edge/conf/logging.yaml
 kubeedge/edge/conf/edge.yaml
-kubeedge/edge/edge_core
+kubeedge/edge/edgecore
 kubeedge/cloud/
 kubeedge/cloud/edgecontroller
 kubeedge/cloud/conf/

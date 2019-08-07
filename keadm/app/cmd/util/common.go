@@ -44,7 +44,7 @@ const (
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeConfPath          = KubeEdgePath + "kubeedge/edge/conf"
-	KubeEdgeBinaryName        = "edge_core"
+	KubeEdgeBinaryName        = "edgecore"
 	KubeEdgeDefaultCertPath   = KubeEdgePath + "certs/"
 	KubeEdgeConfigEdgeYaml    = KubeEdgeConfPath + "/edge.yaml"
 	KubeEdgeConfigNodeJSON    = KubeEdgeConfPath + "/node.json"

@@ -45,7 +45,7 @@ func StartEdgeController() error {
 }
 
 func StartEdgeCore() error {
-	//Run ./edge_core after node registration
+	//Run ./edgecore after node registration
 	cmd := exec.Command("sh", "-c", constants.RunEdgecore)
 	if err := PrintCombinedOutput(cmd); err != nil {
 		return err
@@ -77,7 +77,7 @@ func CleanUp(setupType string) error {
 }
 
 func StartEdgeSite() error {
-	//Run ./edge_core after node registration
+	//Run ./edgecore after node registration
 	cmd := exec.Command("sh", "-c", constants.RunEdgeSite)
 	if err := PrintCombinedOutput(cmd); err != nil {
 		return err

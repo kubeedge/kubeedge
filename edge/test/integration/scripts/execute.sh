@@ -24,21 +24,21 @@ if [ ! -d "/var/lib/edged" ]; then
   sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
 fi
 
-#run the edge_core bin to run the integration
-go build cmd/edge_core.go
+#run the edgecore bin to run the integration
+go build cmd/edgecore/edgecore.go
 #dynamically append testManager Module before starting integration test.
 sed -i 's/dbTest/dbTest, testManager/g' conf/modules.yaml
-#restart edge_core after appending testManager Module.
-sudo pkill edge_core
-#kill the edge_core process if it exists, wait 2s delay before start the edge_core process.
+#restart edgecore after appending testManager Module.
+sudo pkill edgecore
+#kill the edgecore process if it exists, wait 2s delay before start the edgecore process.
 sleep 2s
-sudo nohup ./edge_core > edge_core.log 2>&1 &
+sudo nohup ./edgecore > edgecore.log 2>&1 &
 sleep 15s
-if pgrep edge_core >/dev/null
+if pgrep edgecore >/dev/null
 then
-    echo "edge_core process is Running"
+    echo "edgecore process is Running"
 else
-    echo "edge_core process is not started"
+    echo "edgecore process is not started"
     exit 1
 fi
 PWD=${curpath}/test/integration
@@ -53,8 +53,8 @@ export MQTT_SERVER=127.0.0.1
 bash -x ${PWD}/scripts/fast_test $1
 #Reset env
 sed -i 's/dbTest, testManager/dbTest/g' conf/modules.yaml
-#stop the edge_core after the test completion
-sudo pkill edge_core
+#stop the edgecore after the test completion
+sudo pkill edgecore
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
 echo "==============================================="

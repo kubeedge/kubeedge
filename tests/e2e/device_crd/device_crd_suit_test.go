@@ -63,7 +63,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		Expect(utils.StartEdgeController()).Should(BeNil())
 		//Register the Edge Node to Master
 		Expect(utils.RegisterNodeToMaster(NodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
-		//Run ./edge_core after node registration
+		//Run ./edgecore after node registration
 		Expect(utils.StartEdgeCore()).Should(BeNil())
 		//Check node successfully registered or not
 		Eventually(func() string {
@@ -117,7 +117,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		resp, err = client.Do(req)
 		Expect(err).Should(BeNil())
 		Expect(resp.StatusCode).Should(Equal(http.StatusOK))
-		//Run the Cleanup steps to kill edge_core and edgecontroller binaries
+		//Run the Cleanup steps to kill edgecore and edgecontroller binaries
 		Expect(utils.CleanUp("device_crd")).Should(BeNil())
 		utils.Info("Cleanup is Successfull !!")
 	})

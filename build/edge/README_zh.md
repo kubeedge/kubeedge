@@ -17,7 +17,7 @@
   | ------------------- | ---------------------------- | ------------------------ |
   | cloudhub            | 0.0.0.0:10000                |                          |
   | edgename            | edge-node                    |                          |
-  | edge_core_image     | kubeedge/edgecore:latest     |                          |
+  | edgecore_image     | kubeedge/edgecore:latest     |                          |
   | arch                | amd64                        | 可选值：amd64 \| arm64v8 \| arm32v7 \| i386 \| s390x |
   | qemu_arch           | x86_64                       | 可选值：x86_64 \| aarch64 \| arm \| i386 \| s390x  |
   | certpath            | /etc/kubeedge/certs          |                          |
@@ -28,7 +28,7 @@
   ./run_daemon.sh set \
           cloudhub=0.0.0.0:10000 \
           edgename=edge-node \
-          edge_core_image="kubeedge/edgecore:latest" \
+          edgecore_image="kubeedge/edgecore:latest" \
           arch=amd64 \
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \

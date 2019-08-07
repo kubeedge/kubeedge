@@ -12,16 +12,16 @@ fi
 }
 
 #terminate edge core if running
-stop_edge_core () {
-if pgrep edge_core >/dev/null 2>&1 ; then
-     pkill -9 edge_core
+stop_edgecore () {
+if pgrep edgecore >/dev/null 2>&1 ; then
+     pkill -9 edgecore
 fi
 }
 
 #delete logs,covergage and database related files
 cleanup_files () {
-if [ -f edge_core ]; then
-rm -f edge_core
+if [ -f edgecore ]; then
+rm -f edgecore
 fi
 
 find . -type f -name "*db" -exec rm -f {} \;
@@ -30,5 +30,5 @@ find . -type f -name "*out" -exec rm -f {} \;
 }
 
 remove_folder
-stop_edge_core
+stop_edgecore
 cleanup_files

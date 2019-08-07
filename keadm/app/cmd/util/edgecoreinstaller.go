@@ -46,7 +46,7 @@ type KubeEdgeInstTool struct {
 }
 
 //InstallTools downloads KubeEdge for the specified verssion
-//and makes the required configuration changes and initiates edge_core.
+//and makes the required configuration changes and initiates edgecore.
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
@@ -238,7 +238,7 @@ func (ku *KubeEdgeInstTool) deleteNodeFromK8SAPIServer(server string) error {
 	return nil
 }
 
-//TearDown method will remove the edge node from api-server and stop edge_core process
+//TearDown method will remove the edge node from api-server and stop edgecore process
 func (ku *KubeEdgeInstTool) TearDown() error {
 
 	ku.SetOSInterface(GetOSInterface())
