@@ -578,6 +578,60 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
+// NewMockInstance create an instance for mock bluetooth device.
+func NewMockInstance(nodeSelector string) v1alpha1.Device {
+	deviceInstance := v1alpha1.Device{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Device",
+			APIVersion: "devices.kubeedge.io/v1alpha1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "mock-temp-sensor-instance",
+			Namespace: Namespace,
+			Labels: map[string]string{
+				"description":  "TemperatureSensor",
+				"manufacturer": "TemperatureInstruments",
+				"model":        "sensortagmock",
+			},
+		},
+		Spec: v1alpha1.DeviceSpec{
+			DeviceModelRef: &v12.LocalObjectReference{
+				Name: "mock-temp-sensor-model",
+			},
+			NodeSelector: &v12.NodeSelector{
+				NodeSelectorTerms: []v12.NodeSelectorTerm{
+					{
+						MatchExpressions: []v12.NodeSelectorRequirement{
+							{
+								Key:      "",
+								Operator: v12.NodeSelectorOpIn,
+								Values:   []string{nodeSelector},
+							},
+						},
+					},
+				},
+			},
+		},
+		Status: v1alpha1.DeviceStatus{
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "io-data",
+					Desired: v1alpha1.TwinProperty{
+						Value: "Red",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
+		},
+	}
+	return deviceInstance
+}
+
 func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
