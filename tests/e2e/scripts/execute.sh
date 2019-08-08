@@ -26,8 +26,8 @@ fi
 bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
 bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
 bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
-#run the edge_core and edgecontroller bin to run the E2E
-make #builds cloud and edge_core components
+#run the edgecore and edgecontroller bin to run the E2E
+make #builds cloud and edgecore components
 sleep 2s
 PWD=${curpath}/tests/e2e
 sudo rm -rf $PWD/deployment/deployment.test
@@ -39,7 +39,7 @@ bash -x $PWD/scripts/compile.sh $1
 export MASTER_IP=121.244.95.60
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/fast_test.sh $1
-#stop the edge_core after the test completion
+#stop the edgecore after the test completion
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
 echo "==============================================="

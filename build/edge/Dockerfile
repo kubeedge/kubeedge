@@ -10,8 +10,8 @@ COPY . /go/src/github.com/kubeedge/kubeedge
 RUN apk --no-cache update && \
 apk --no-cache upgrade && \
 apk --no-cache add build-base linux-headers sqlite-dev && \
-CGO_ENABLED=1 go build -v -o /usr/local/bin/edge_core -ldflags="-w -s -extldflags -static" \
-github.com/kubeedge/kubeedge/edge/cmd
+CGO_ENABLED=1 go build -v -o /usr/local/bin/edgecore -ldflags="-w -s -extldflags -static" \
+github.com/kubeedge/kubeedge/edge/cmd/edgecore
 
 FROM ${RUN_FROM}
 
@@ -24,7 +24,7 @@ ENV database.source /var/lib/kubeedge/edge.db
 
 VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
 
-COPY --from=builder /usr/local/bin/edge_core /usr/local/bin/edge_core
+COPY --from=builder /usr/local/bin/edgecore /usr/local/bin/edgecore
 COPY --from=builder /go/src/github.com/kubeedge/kubeedge/edge/conf /etc/kubeedge/edge/conf
 
-ENTRYPOINT ["edge_core"]
+ENTRYPOINT ["edgecore"]

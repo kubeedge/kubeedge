@@ -58,7 +58,7 @@ edegcontroller以deployment部署的相关步骤及说明
 ## crd-samples
 
 ## edge
-edge_core以deployment部署的相关步骤及说明
+edgecore以deployment部署的相关步骤及说明
 
 ## node.json
 创建node资源的示例

@@ -60,11 +60,11 @@ ubuntu                                 NotReady   master   5m22s   v1.14.0
 2. On cloud, modify deployment yaml (github.com/kubeedge/kubeedge/edge/hack/memfootprint-test/perftestimg.yaml), set the image name and set spec.replica as 5
 3. Execute `sudo kubectl create -f ./perftestimg.yaml` to deploy the first of 5 pods in edge node
 4. Execute `sudo kubectl get pods | grep Running | wc` to check if all the pods come to Running state. Once all pods come to running state, go to edge VM
-5. On Edge console, execute `ps -aux | grep edge_core`. The output shall be something like:
+5. On Edge console, execute `ps -aux | grep edgecore`. The output shall be something like:
 
 ```
 USER        PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root     102452  1.0  0.5 871704 42784 pts/0    Sl+  17:56   0:00 ./edge_core
+root     102452  1.0  0.5 871704 42784 pts/0    Sl+  17:56   0:00 ./edgecore
 root     102779  0.0  0.0  14224   936 pts/2    S+   17:56   0:00 grep --color=auto edge
 ```
 
