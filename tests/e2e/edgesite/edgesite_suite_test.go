@@ -69,7 +69,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 			utils.Info("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
-		//Run the Cleanup steps to kill edge_core and edgecontroller binaries
+		//Run the Cleanup steps to kill edgecore and edgecontroller binaries
 		Expect(utils.CleanUp("edgesite")).Should(BeNil())
 		//time.Sleep(2 * time.Second)
 		utils.Info("Cleanup is Successfull !!")

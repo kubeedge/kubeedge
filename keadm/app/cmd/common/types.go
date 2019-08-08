@@ -158,7 +158,7 @@ type ControllerYaml struct {
 	DeviceController DeviceControllerSt `yaml:"devicecontroller"`
 }
 
-//ModulesSt contains the list of modules which shall be added to edgecontroller and edge_core respectively during init
+//ModulesSt contains the list of modules which shall be added to edgecontroller and edgecore respectively during init
 type ModulesSt struct {
 	Enabled []string `yaml:"enabled"`
 }

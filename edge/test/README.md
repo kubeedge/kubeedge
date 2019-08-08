@@ -38,10 +38,10 @@ Following sections will explain the procedure to test the kubeedge with testMana
 ### Compile
 
 ```shell
-# generate the `edge_core` binary 
+# generate the `edgecore` binary 
 make
 # or
-make edge_core
+make edgecore
 ```
 ### Configure
 
@@ -100,10 +100,10 @@ edged:
 ```
 
 ```bash
-# run edge_core
-./edge_core
+# run edgecore
+./edgecore
 # or
-nohup ./edge_core > edge_core.log 2>&1 &
+nohup ./edgecore > edgecore.log 2>&1 &
 ```
 
 ### Test kubeedge with External MQTT Server
@@ -126,10 +126,10 @@ apt install -y mosquitto
 ```bash
 # run mosquitto
 mosquitto -d -p 1883
-# run edge_core
-./edge_core
+# run edgecore
+./edgecore
 # or
-nohup ./edge_core > edge_core.log 2>&1 &
+nohup ./edgecore > edgecore.log 2>&1 &
 ```
 
 ### Verify

@@ -43,7 +43,7 @@ bash -x $PWD/scripts/compileperf.sh $1
 
 :> /tmp/testcase.log
 bash -x ${PWD}/scripts/runperf.sh $1
-#stop the edge_core after the test completion
+#stop the edgecore after the test completion
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/performace_test.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Performance Test Final Summary Report"
 echo "==============================================="

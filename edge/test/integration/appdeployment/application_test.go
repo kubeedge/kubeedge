@@ -36,7 +36,7 @@ const (
 )
 
 //Run Test cases
-var _ = Describe("Application deployment in edge_core Testing", func() {
+var _ = Describe("Application deployment in edgecore Testing", func() {
 	var UID string
 	Context("Test application deployment and delete deployment", func() {
 		BeforeEach(func() {
@@ -49,7 +49,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			common.PrintTestcaseNameandStatus()
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_1: Test application deployment in edge_core", func() {
+		It("TC_TEST_APP_DEPLOYMENT_1: Test application deployment in edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
@@ -58,7 +58,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_2: Test List application deployment in edge_core", func() {
+		It("TC_TEST_APP_DEPLOYMENT_2: Test List application deployment in edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
@@ -74,7 +74,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			}
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_3: Test application deployment delete from edge_core", func() {
+		It("TC_TEST_APP_DEPLOYMENT_3: Test application deployment delete from edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[1], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
@@ -85,7 +85,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_4: Test application deployment delete from edge_core", func() {
+		It("TC_TEST_APP_DEPLOYMENT_4: Test application deployment delete from edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			for i := 0; i < 2; i++ {
@@ -97,7 +97,7 @@ var _ = Describe("Application deployment in edge_core Testing", func() {
 			}
 		})
 
-		It("TC_TEST_APP_DEPLOYMENT_5: Test application deployment delete from edge_core", func() {
+		It("TC_TEST_APP_DEPLOYMENT_5: Test application deployment delete from edgecore", func() {
 			var apps []string
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)

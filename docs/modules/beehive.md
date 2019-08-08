@@ -34,7 +34,7 @@ Message has 3 parts
   
 ## Register Module  
 
-1. On starting edge_core,  each module tries to register itself with the beehive core.
+1. On starting edgecore,  each module tries to register itself with the beehive core.
 2. Beehive core maintains a map named modules which has module name as key and implementation of module interface as value. 
 3. When a module tries to register itself with beehive core, beehive core checks from already loaded modules.yaml config file to check if the module is enabled. If it is enabled, it is added in the modules map or else it is added in the disabled modules map.
 

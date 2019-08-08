@@ -70,7 +70,7 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 
 			// Tear down edge node. It includes
 			// 1. Removing edge node from api-server
-			// 2. killing edge_core process
+			// 2. killing edgecore process
 			return TearDownKubeEdge(IsEdgeNode, K8SAPIServerIPPort)
 		},
 	}
