@@ -226,7 +226,7 @@ func TestGetConfig(t *testing.T) {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
 			// time to let config be synced again
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			err = getWebSocketConfig()
 			if err != nil {
 				t.Errorf("getWebSocketConfig() returns an error: %v", err)
@@ -345,7 +345,7 @@ func Test_getWebSocketConfig(t *testing.T) {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
 			// time to let config be synced again
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			if err := getWebSocketConfig(); (err != nil) != tt.wantErr {
 				t.Errorf("getWebSocketConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -379,7 +379,7 @@ func Test_getControllerConfig(t *testing.T) {
 			false},
 
 		//Positive Testcase which uses default input for HeartbeatPeroid, RefreshInterval & AuthInfosPath
-		{"Test_getControllerConfig2: 	Use default values for HeartbeatPeroid, RefreshInterval &  AuthInfosPath  ",
+		{"Test_getControllerConfig2:    Use default values for HeartbeatPeroid, RefreshInterval &  AuthInfosPath  ",
 			testYamlGenerator{
 				edgeHubConfigYaml{
 					webSocketConfigYaml{},
@@ -432,7 +432,7 @@ func Test_getControllerConfig(t *testing.T) {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
 			// time to let config be synced again
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			if err := getControllerConfig(); (err != nil) != tt.wantErr {
 				t.Errorf("getControllerConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -487,7 +487,7 @@ func Test_getExtendHeader(t *testing.T) {
 				t.Error("Unable to generate test YAML file: ", err)
 			}
 			// time to let config be synced again
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			if got := getExtendHeader(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getExtendHeader() = %v, want %v", got, tt.want)
 			}
