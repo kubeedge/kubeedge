@@ -11,7 +11,8 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/examples/chat/config"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -35,7 +36,7 @@ func initServerEntries() {
 }
 
 func ConnNotify(conn conn.Connection) {
-	log.LOGGER.Info("receive a connection")
+	klog.Info("receive a connection")
 }
 
 // just for testing
@@ -95,7 +96,7 @@ func StartServer(cfg *config.Config) error {
 	go func() {
 		err := server.ListenAndServeTLS("", "")
 		if err != nil {
-			log.LOGGER.Errorf("listen and serve tls failed, error: %+v", err)
+			klog.Errorf("listen and serve tls failed, error: %+v", err)
 		}
 	}()
 
@@ -104,7 +105,7 @@ func StartServer(cfg *config.Config) error {
 		fmt.Print("send message: ")
 		inputData, err := input.ReadString('\n')
 		if err != nil {
-			log.LOGGER.Errorf("failed to read input, error: %+v", err)
+			klog.Errorf("failed to read input, error: %+v", err)
 			return err
 		}
 
@@ -121,7 +122,7 @@ func StartServer(cfg *config.Config) error {
 		for _, conn := range conns {
 			err = conn.WriteMessageAsync(message)
 			if err != nil {
-				log.LOGGER.Errorf("failed to write message async, error:%+v", err)
+				klog.Errorf("failed to write message async, error:%+v", err)
 			}
 		}
 	}

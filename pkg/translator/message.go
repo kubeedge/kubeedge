@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"k8s.io/klog"
+
 	"github.com/golang/protobuf/proto"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/protos/message"
 )
@@ -46,7 +47,7 @@ func (t *MessageTranslator) modelToProto(src *model.Message, dst *message.Messag
 		default:
 			bytes, err := json.Marshal(content)
 			if err != nil {
-				log.LOGGER.Errorf("failed to marshal")
+				klog.Error("failed to marshal")
 				return err
 			}
 			dst.Content = bytes
@@ -64,7 +65,7 @@ func (t *MessageTranslator) Decode(raw []byte, msg interface{}) error {
 	protoMessage := message.Message{}
 	err := proto.Unmarshal(raw, &protoMessage)
 	if err != nil {
-		log.LOGGER.Errorf("failed to unmarshal payload")
+		klog.Error("failed to unmarshal payload")
 		return err
 	}
 	t.protoToModel(&protoMessage, modelMessage)
@@ -84,13 +85,13 @@ func (t *MessageTranslator) Encode(msg interface{}) ([]byte, error) {
 
 	err := t.modelToProto(modelMessage, &protoMessage)
 	if err != nil {
-		log.LOGGER.Errorf("failed to copy message")
+		klog.Error("failed to copy message")
 		return nil, err
 	}
 
 	msgBytes, err := proto.Marshal(&protoMessage)
 	if err != nil {
-		log.LOGGER.Errorf("failed to marshal message")
+		klog.Error("failed to marshal message")
 		return nil, err
 	}
 

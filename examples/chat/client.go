@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/examples/chat/config"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -71,7 +72,7 @@ func StartClient(cfg *config.Config) error {
 		return err
 	}
 	stat := connClient.ConnectionState()
-	log.LOGGER.Infof("connect stat:%+v", stat)
+	klog.Infof("connect stat:%+v", stat)
 
 	return SendStdin([]conn.Connection{connClient}, "client")
 }
@@ -82,7 +83,7 @@ func SendStdin(conns []conn.Connection, source string) error {
 		fmt.Print("send message: ")
 		inputData, err := input.ReadString('\n')
 		if err != nil {
-			log.LOGGER.Errorf("failed to read input, error: %+v", err)
+			klog.Errorf("failed to read input, error: %+v", err)
 			return err
 		}
 		message := model.NewMessage("").
@@ -92,7 +93,7 @@ func SendStdin(conns []conn.Connection, source string) error {
 		for _, conn := range conns {
 			err = conn.WriteMessageAsync(message)
 			if err != nil {
-				log.LOGGER.Errorf("failed to write message async, error:%+v", err)
+				klog.Errorf("failed to write message async, error:%+v", err)
 			}
 		}
 	}
