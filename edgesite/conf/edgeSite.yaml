@@ -33,7 +33,7 @@ edged:
     maximum-dead-containers-per-container: 1
     docker-address: unix:///var/run/docker.sock
     runtime-type: docker
-    version: v1.10.9-kubeedge-v1.0.0
+    version: v1.15.0-kubeedge-v1.0.0
     remote-runtime-endpoint: unix:///var/run/dockershim.sock
     remote-image-endpoint: unix:///var/run/dockershim.sock
     runtime-request-timeout: 2
