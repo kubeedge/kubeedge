@@ -3,7 +3,8 @@ package lane
 import (
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
@@ -24,6 +25,6 @@ func NewLane(protoType string, van interface{}) Lane {
 	case api.ProtocolTypeWS:
 		return NewWSLaneWithoutPack(van)
 	}
-	log.LOGGER.Errorf("bad protocol type(%s)", protoType)
+	klog.Errorf("bad protocol type(%s)", protoType)
 	return nil
 }

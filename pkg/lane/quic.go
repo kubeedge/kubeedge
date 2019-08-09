@@ -3,7 +3,8 @@ package lane
 import (
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/packer"
 	"github.com/kubeedge/viaduct/pkg/translator"
@@ -20,7 +21,7 @@ func NewQuicLane(van interface{}) *QuicLane {
 	if stream, ok := van.(quic.Stream); ok {
 		return &QuicLane{stream: stream}
 	}
-	log.LOGGER.Errorf("oops! bad type of van")
+	klog.Error("oops! bad type of van")
 	return nil
 }
 
@@ -32,7 +33,7 @@ func (l *QuicLane) ReadMessage(msg *model.Message) error {
 
 	err = translator.NewTran().Decode(rawData, msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed to decode message")
+		klog.Error("failed to decode message")
 		return err
 	}
 
@@ -42,7 +43,7 @@ func (l *QuicLane) ReadMessage(msg *model.Message) error {
 func (l *QuicLane) WriteMessage(msg *model.Message) error {
 	rawData, err := translator.NewTran().Encode(msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed to encode message")
+		klog.Error("failed to encode message")
 		return err
 	}
 

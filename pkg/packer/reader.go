@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 )
 
 type Reader struct {
@@ -22,7 +22,7 @@ func NewReader(r io.Reader) *Reader {
 // 3)read the payload
 func (r *Reader) Read() ([]byte, error) {
 	if r.reader == nil {
-		log.LOGGER.Errorf("bad io reader")
+		klog.Error("bad io reader")
 		return nil, fmt.Errorf("bad io reader")
 	}
 
@@ -30,7 +30,7 @@ func (r *Reader) Read() ([]byte, error) {
 	_, err := io.ReadFull(r.reader, headerBuffer)
 	if err != nil {
 		if err != io.EOF {
-			log.LOGGER.Errorf("failed to read package header from buffer")
+			klog.Error("failed to read package header from buffer")
 		}
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (r *Reader) Read() ([]byte, error) {
 	_, err = io.ReadFull(r.reader, payloadBuffer)
 	if err != nil {
 		if err != io.EOF {
-			log.LOGGER.Errorf("failed to read payload from buffer")
+			klog.Error("failed to read payload from buffer")
 		}
 		return nil, err
 	}

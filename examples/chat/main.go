@@ -3,9 +3,14 @@ package main
 import (
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/examples/chat/config"
 )
+
+func init() {
+	klog.InitFlags(nil)
+}
 
 func main() {
 	cfg := config.InitConfig()
@@ -17,6 +22,6 @@ func main() {
 		err = StartClient(cfg)
 	}
 	if err != nil {
-		log.LOGGER.Errorf("start %s failed, error: %+v", cfg.CmdType, err)
+		klog.Errorf("start %s failed, error: %+v", cfg.CmdType, err)
 	}
 }

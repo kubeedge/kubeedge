@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -63,7 +64,7 @@ func (conn *QuicConnection) headerMessage(msg *model.Message) error {
 	headers := make(http.Header)
 	err := json.Unmarshal(msg.GetContent().([]byte), &headers)
 	if err != nil {
-		log.LOGGER.Errorf("failed to unmarshal header, error: %+v", err)
+		klog.Errorf("failed to unmarshal header, error: %+v", err)
 		return err
 	}
 	conn.state.Headers = headers
@@ -87,7 +88,7 @@ func (conn *QuicConnection) serveControlLan() {
 		// read control message
 		err := conn.ctrlLan.ReadMessage(&msg)
 		if err != nil {
-			log.LOGGER.Errorf("failed read control message")
+			klog.Error("failed read control message")
 			return
 		}
 
@@ -102,7 +103,7 @@ func (conn *QuicConnection) serveControlLan() {
 		resp := msg.NewRespByMessage(&msg, result)
 		err = conn.ctrlLan.WriteMessage(resp)
 		if err != nil {
-			log.LOGGER.Errorf("failed to send response back, error:%+v", err)
+			klog.Errorf("failed to send response back, error:%+v", err)
 			return
 		}
 	}
@@ -115,8 +116,8 @@ func (conn *QuicConnection) serveSession() {
 		stream, err := conn.session.AcceptStream()
 		if err != nil {
 			// close the session
-			log.LOGGER.Warnf("accept stream error(%+v)"+
-				" or the session has been closed", err)
+			klog.Warningf("accept stream error(%+v) or the session has been closed",
+				err)
 			// close local session
 			conn.Close()
 			return
@@ -134,7 +135,7 @@ func (conn *QuicConnection) dispatch(stream *smgr.Stream) {
 	} else if stream.UseType == api.UseTypeStream {
 		go conn.handleRawData(stream)
 	} else {
-		log.LOGGER.Warnf("bad stream use type(%s), ignore", stream.UseType)
+		klog.Warningf("bad stream use type(%s), ignore", stream.UseType)
 	}
 }
 
@@ -149,7 +150,7 @@ func (conn *QuicConnection) Read(raw []byte) (int, error) {
 	stream, err := conn.streamManager.GetStream(api.UseTypeStream, false, nil)
 	if err != nil {
 		// close the session
-		log.LOGGER.Warnf("accept stream error(%+v) or the session has been closed", err)
+		klog.Warningf("accept stream error(%+v) or the session has been closed", err)
 		return 0, err
 	}
 	defer conn.streamManager.ReleaseStream(api.UseTypeStream, stream)
@@ -160,7 +161,7 @@ func (conn *QuicConnection) Read(raw []byte) (int, error) {
 func (conn *QuicConnection) openStreamSync(streamUse api.UseType, autoDispatch bool) (*smgr.Stream, error) {
 	stream, err := conn.session.OpenStreamSync(streamUse)
 	if err != nil {
-		log.LOGGER.Errorf("failed to open stream, error: %+v", err)
+		klog.Errorf("failed to open stream, error: %+v", err)
 		return stream, err
 	}
 	// start dispatch for the new stream
@@ -174,7 +175,7 @@ func (conn *QuicConnection) openStreamSync(streamUse api.UseType, autoDispatch b
 func (conn *QuicConnection) acceptStream(streamUse api.UseType, autoDispatch bool) (*smgr.Stream, error) {
 	stream, err := conn.session.AcceptStream()
 	if err != nil {
-		log.LOGGER.Errorf("failed to accept stream, error: %+v", err)
+		klog.Errorf("failed to accept stream, error: %+v", err)
 		return stream, err
 	}
 	// start dispatch for the new stream
@@ -188,7 +189,7 @@ func (conn *QuicConnection) acceptStream(streamUse api.UseType, autoDispatch boo
 func (conn *QuicConnection) Write(raw []byte) (int, error) {
 	stream, err := conn.streamManager.GetStream(api.UseTypeStream, false, conn.openStreamSync)
 	if err != nil {
-		log.LOGGER.Errorf("failed to acquire stream sync, error:%+v", err)
+		klog.Errorf("failed to acquire stream sync, error:%+v", err)
 		return 0, err
 	}
 	defer conn.streamManager.ReleaseStream(api.UseTypeStream, stream)
@@ -197,7 +198,7 @@ func (conn *QuicConnection) Write(raw []byte) (int, error) {
 
 func (conn *QuicConnection) handleRawData(stream *smgr.Stream) {
 	if conn.consumer == nil {
-		log.LOGGER.Errorf("bad raw data consumer")
+		klog.Warning("bad raw data consumer")
 		return
 	}
 
@@ -207,7 +208,7 @@ func (conn *QuicConnection) handleRawData(stream *smgr.Stream) {
 
 	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeQuic, stream.Stream))
 	if err != nil {
-		log.LOGGER.Errorf("failed to copy data, error: %+v", err)
+		klog.Errorf("failed to copy data, error: %+v", err)
 		return
 	}
 }
@@ -219,7 +220,7 @@ func (conn *QuicConnection) handleMessage(stream *smgr.Stream) {
 		err := lane.NewLane(api.ProtocolTypeQuic, stream.Stream).ReadMessage(msg)
 		if err != nil {
 			if err != io.EOF {
-				log.LOGGER.Errorf("failed to read message, error: %+v", err)
+				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.streamManager.FreeStream(stream)
 			return
@@ -263,13 +264,13 @@ func (conn *QuicConnection) Close() error {
 // please set write deadline before WriteMessageSync called
 func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message, error) {
 	if conn.session.Sess == nil {
-		log.LOGGER.Errorf("bad connection session")
+		klog.Error("bad connection session")
 		return nil, fmt.Errorf("bad connection session")
 	}
 
 	stream, err := conn.streamManager.GetStream(api.UseTypeMessage, true, conn.openStreamSync)
 	if err != nil {
-		log.LOGGER.Errorf("failed to acquire stream sync, error:%+v", err)
+		klog.Errorf("failed to acquire stream sync, error:%+v", err)
 		return nil, fmt.Errorf("failed to acquire stream sync, error:%+v", err)
 	}
 	defer conn.streamManager.ReleaseStream(api.UseTypeMessage, stream)
@@ -290,13 +291,13 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 // WriteMessageAsync send async message
 func (conn *QuicConnection) WriteMessageAsync(msg *model.Message) error {
 	if conn.session.Sess == nil {
-		log.LOGGER.Errorf("bad connection session")
+		klog.Error("bad connection session")
 		return fmt.Errorf("bad connection session")
 	}
 
 	stream, err := conn.streamManager.GetStream(api.UseTypeMessage, true, conn.openStreamSync)
 	if err != nil {
-		log.LOGGER.Errorf("failed to acquire stream sync, error:%+v", err)
+		klog.Errorf("failed to acquire stream sync, error:%+v", err)
 		return fmt.Errorf("failed to acquire stream sync, error:%+v", err)
 	}
 	defer conn.streamManager.ReleaseStream(api.UseTypeMessage, stream)
