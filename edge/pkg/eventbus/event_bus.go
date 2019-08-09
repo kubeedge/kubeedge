@@ -34,7 +34,8 @@ type eventbus struct {
 	mqttMode int
 }
 
-func init() {
+// Register register eventbus
+func Register() {
 	mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
 	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
 		mode = internalMqttMode

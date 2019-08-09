@@ -17,7 +17,8 @@ const (
 	MetaManagerModuleName = "metaManager"
 )
 
-func init() {
+// Register register metamanager
+func Register() {
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
 	core.Register(&metaManager{})
 }
@@ -36,7 +37,7 @@ func (*metaManager) Group() string {
 
 func (m *metaManager) Start(c *context.Context) {
 	m.context = c
-
+	InitMetaManagerConfig()
 	go func() {
 		period := getSyncInterval()
 		timer := time.NewTimer(period)

@@ -24,6 +24,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
+	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 )
 
 // coreContext is beehive context used for communication between modules
@@ -31,6 +34,13 @@ var coreContext *context.Context
 
 // metaModule is metamanager implementation of Module interface
 var metaModule core.Module
+
+func init() {
+	devicetwin.Register()
+	eventbus.Register()
+	Register()
+	servicebus.Register()
+}
 
 // TestName will initialize CONFIG and register metaManager and test Name
 func TestName(t *testing.T) {
