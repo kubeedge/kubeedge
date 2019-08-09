@@ -122,7 +122,7 @@ const (
 	DefaultRootDir                   = "/var/lib/edged"
 	workerResyncIntervalJitterFactor = 0.5
 	//EdgeController gives controller name
-	EdgeController = "controller"
+	EdgeController = "edgecontroller"
 	//RemoteContainerRuntime give Remote container runtime name
 	RemoteContainerRuntime = "remote"
 	//RemoteRuntimeEndpoint gives the default endpoint for CRI runtime

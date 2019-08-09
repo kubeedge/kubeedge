@@ -33,8 +33,8 @@ func GenerateCerts() error {
 	return nil
 }
 
-func StartEdgeController() error {
-	//Run ./edgecontroller binary
+func StartCloudCore() error {
+	//Run ./cloudcore binary
 	cmd := exec.Command("sh", "-c", constants.RunController)
 	if err := PrintCombinedOutput(cmd); err != nil {
 		return err

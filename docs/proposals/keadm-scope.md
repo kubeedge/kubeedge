@@ -168,12 +168,12 @@ Usage:
 
 Examples:
 
-keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --cloudcoreip=<ip address> --edgenodeid=<unique string as edge identifier>
 
-  - For this command --edgecontrollerip flag is a Mandatory flag
+  - For this command --cloudcoreip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --cloudcoreip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
     then default values will be used.
@@ -183,7 +183,7 @@ keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-ver
 
 Flags:
       --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
-  -e, --edgecontrollerip string                    IP address of KubeEdge edgecontroller
+  -e, --cloudcoreip string                         IP address of KubeEdge CloudCore
   -i, --edgenodeid string                          KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
   -h, --help                                       help for join
   -k, --k8sserverip string                         IP:Port address of K8S API-Server
@@ -242,9 +242,9 @@ Flags:
         * mosquitto (latest available in OS repos) and check if running.
     3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transfered from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
     4. Create `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `curl` command to api-server
-    5. This command will take mandatory `-e` or `--edgecontrollerip` flag to specify the address of Kubeedge edgecontroller
+    5. This command will take mandatory `-e` or `--cloudcoreip` flag to specify the address of Kubeedge cloudcore
     6. Create `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`
-        * Use `--edgecontrollerip` flag to update the `websocket.url` field.
+        * Use `--cloudcoreip` flag to update the `websocket.url` field.
         * Use `--edgenodeid` flags value to update `controller.node-id`,`edged.hostname-override` field.
     7. Register or add node to K8S cluster, Using Flag `-k` or `--k8sserverip` value to connect with the api-server. 
         * Create `node.json` file and update it with `-i` or `--edgenodeid` flags value in `metadata.name` field.

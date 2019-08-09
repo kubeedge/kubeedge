@@ -1,4 +1,4 @@
-package controller
+package edgecontroller
 
 import (
 	"os"
@@ -6,9 +6,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/controller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 )
 
 // Controller use beehive context message layer
@@ -16,7 +16,7 @@ type Controller struct {
 	stopChan chan bool
 }
 
-func init() {
+func Register() {
 	edgeController := Controller{}
 	core.Register(&edgeController)
 }
@@ -35,6 +35,9 @@ func (ctl *Controller) Group() string {
 func (ctl *Controller) Start(c *bcontext.Context) {
 	config.Context = c
 	ctl.stopChan = make(chan bool)
+
+	initConfig()
+
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
@@ -58,4 +61,12 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 func (ctl *Controller) Cleanup() {
 	ctl.stopChan <- true
 	config.Context.Cleanup(ctl.Name())
+}
+
+func initConfig() {
+	config.InitBufferConfig()
+	config.InitContextConfig()
+	config.InitKubeConfig()
+	config.InitLoadConfig()
+	config.InitMessageLayerConfig()
 }

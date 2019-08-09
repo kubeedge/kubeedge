@@ -5,7 +5,7 @@ metadata:
   namespace: default
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 data:
   controller.yaml: |
     controller:

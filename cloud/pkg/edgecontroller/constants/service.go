@@ -3,7 +3,7 @@ package constants
 // Service level constants
 const (
 	// module
-	EdgeControllerModuleName = "controller"
+	EdgeControllerModuleName = "edgecontroller"
 
 	ResourceNodeIDIndex       = 1
 	ResourceNamespaceIndex    = 2

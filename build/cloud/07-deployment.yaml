@@ -3,19 +3,19 @@ kind: Deployment
 metadata:
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
-  name: edgecontroller
+    kubeedge: cloudcore
+  name: cloudcore
   namespace: kubeedge
 spec:
   selector:
     matchLabels:
       k8s-app: kubeedge
-      kubeedge: edgecontroller
+      kubeedge: cloudcore
   template:
     metadata:
       labels:
         k8s-app: kubeedge
-        kubeedge: edgecontroller
+        kubeedge: cloudcore
     spec:
       initContainers:
       - name: kubeconfig
@@ -47,8 +47,8 @@ spec:
           current-context: kubeedge
           EOF
       containers:
-      - name: edgecontroller
-        image: kubeedge/edgecontroller:v1.0.0
+      - name: cloudcore
+        image: kubeedge/cloudcore:v1.0.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 10000
@@ -70,14 +70,14 @@ spec:
           mountPath: /etc/kubeedge/cloud
           subPath: kubeconfig.yaml
       restartPolicy: Always
-      serviceAccount: edgecontroller
-      serviceAccountName: edgecontroller
+      serviceAccount: cloudcore
+      serviceAccountName: cloudcore
       volumes:
       - name: conf
         configMap:
-          name: edgecontroller
+          name: cloudcore
       - name: certs
         secret:
-          secretName: edgecontroller
+          secretName: cloudcore
       - name: kubeconfig
         emptyDir: {}

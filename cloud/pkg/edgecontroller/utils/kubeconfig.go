@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/controller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )

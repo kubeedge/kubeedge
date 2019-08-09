@@ -53,11 +53,11 @@ buildSecret() {
 apiVersion: v1
 kind: Secret
 metadata:
-  name: edgecontroller
+  name: cloudcore
   namespace: kubeedge
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 stringData:
   rootCA.crt: |
 $(pr -T -o 4 ${caPath}/rootCA.crt)

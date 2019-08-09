@@ -24,7 +24,7 @@ var KubeQPS float32
 // KubeBurst default is 10
 var KubeBurst int
 
-func init() {
+func InitKubeConfig() {
 	if km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString(); err != nil {
 		log.LOGGER.Errorf("Devicecontroller kube master not set")
 	} else {
