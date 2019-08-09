@@ -15,6 +15,7 @@ import (
 var ErrInvalidReq = errors.New("rest consumer call arg is not *http.Request type")
 
 //SetURI sets host for the request.
+//set http(s)://{domain}/xxx
 func SetURI(req *http.Request, url string) {
 	if tempURL, err := req.URL.Parse(url); err == nil {
 		req.URL = tempURL

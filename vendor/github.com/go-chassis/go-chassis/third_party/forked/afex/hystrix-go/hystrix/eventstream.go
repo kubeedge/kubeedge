@@ -15,19 +15,19 @@ const (
 	streamEventBufferSize = 10
 )
 
-// NewStreamHandler returns a server capable of exposing dashboard metrics via HTTP.
+// NewStreamHandler returns a server capable of exposing dashboard Metrics via HTTP.
 func NewStreamHandler() *StreamHandler {
 	return &StreamHandler{}
 }
 
-// StreamHandler publishes metrics for each command and each pool once a second to all connected HTTP client.
+// StreamHandler publishes Metrics for each command and each pool once a second to all connected HTTP client.
 type StreamHandler struct {
 	requests map[*http.Request]chan []byte
 	mu       sync.RWMutex
 	done     chan struct{}
 }
 
-// Start begins watching the in-memory circuit breakers for metrics
+// Start begins watching the in-memory circuit breakers for Metrics
 func (sh *StreamHandler) Start() {
 	sh.requests = make(map[*http.Request]chan []byte)
 	sh.done = make(chan struct{})
@@ -82,6 +82,7 @@ func (sh *StreamHandler) loop() {
 				if err != nil {
 					openlogging.Warn("publishMetrics err: " + err.Error())
 				}
+
 				err = sh.publishThreadPools(cb.executorPool)
 				if err != nil {
 					openlogging.Warn("publishThreadPools err: " + err.Error())
@@ -96,9 +97,9 @@ func (sh *StreamHandler) loop() {
 
 func (sh *StreamHandler) publishMetrics(cb *CircuitBreaker) error {
 	now := time.Now()
-	reqCount := cb.metrics.Requests().Sum(now)
-	errCount := cb.metrics.DefaultCollector().Errors().Sum(now)
-	errPct := cb.metrics.ErrorPercent(now)
+	reqCount := cb.Metrics.Requests().Sum(now)
+	errCount := cb.Metrics.DefaultCollector().Errors().Sum(now)
+	errPct := cb.Metrics.ErrorPercent(now)
 
 	eventBytes, err := json.Marshal(&streamCmdMetric{
 		Type:           "HystrixCommand",
@@ -112,18 +113,18 @@ func (sh *StreamHandler) publishMetrics(cb *CircuitBreaker) error {
 		ErrorPct:           uint32(errPct),
 		CircuitBreakerOpen: cb.IsOpen(),
 
-		RollingCountSuccess:            uint32(cb.metrics.DefaultCollector().Successes().Sum(now)),
-		RollingCountFailure:            uint32(cb.metrics.DefaultCollector().Failures().Sum(now)),
-		RollingCountThreadPoolRejected: uint32(cb.metrics.DefaultCollector().Rejects().Sum(now)),
-		RollingCountShortCircuited:     uint32(cb.metrics.DefaultCollector().ShortCircuits().Sum(now)),
-		RollingCountTimeout:            uint32(cb.metrics.DefaultCollector().Timeouts().Sum(now)),
-		RollingCountFallbackSuccess:    uint32(cb.metrics.DefaultCollector().FallbackSuccesses().Sum(now)),
-		RollingCountFallbackFailure:    uint32(cb.metrics.DefaultCollector().FallbackFailures().Sum(now)),
+		RollingCountSuccess:            uint32(cb.Metrics.DefaultCollector().Successes().Sum(now)),
+		RollingCountFailure:            uint32(cb.Metrics.DefaultCollector().Failures().Sum(now)),
+		RollingCountThreadPoolRejected: uint32(cb.Metrics.DefaultCollector().Rejects().Sum(now)),
+		RollingCountShortCircuited:     uint32(cb.Metrics.DefaultCollector().ShortCircuits().Sum(now)),
+		RollingCountTimeout:            uint32(cb.Metrics.DefaultCollector().Timeouts().Sum(now)),
+		RollingCountFallbackSuccess:    uint32(cb.Metrics.DefaultCollector().FallbackSuccesses().Sum(now)),
+		RollingCountFallbackFailure:    uint32(cb.Metrics.DefaultCollector().FallbackFailures().Sum(now)),
 
-		LatencyTotal:       generateLatencyTimings(cb.metrics.DefaultCollector().TotalDuration()),
-		LatencyTotalMean:   cb.metrics.DefaultCollector().TotalDuration().Mean(),
-		LatencyExecute:     generateLatencyTimings(cb.metrics.DefaultCollector().RunDuration()),
-		LatencyExecuteMean: cb.metrics.DefaultCollector().RunDuration().Mean(),
+		LatencyTotal:       generateLatencyTimings(cb.Metrics.DefaultCollector().TotalDuration()),
+		LatencyTotalMean:   cb.Metrics.DefaultCollector().TotalDuration().Mean(),
+		LatencyExecute:     generateLatencyTimings(cb.Metrics.DefaultCollector().RunDuration()),
+		LatencyExecuteMean: cb.Metrics.DefaultCollector().RunDuration().Mean(),
 
 		// TODO: all hard-coded values should become configurable settings, per circuit
 

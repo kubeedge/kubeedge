@@ -1,6 +1,7 @@
 package backoff
 
 import (
+	"runtime"
 	"sync"
 	"time"
 )
@@ -33,6 +34,7 @@ func NewTicker(b BackOff) *Ticker {
 	}
 	t.b.Reset()
 	go t.run()
+	runtime.SetFinalizer(t, (*Ticker).Stop)
 	return t
 }
 

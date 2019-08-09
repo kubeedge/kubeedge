@@ -139,7 +139,7 @@ func Go(name string, run runFunc, fallback fallbackFunc) chan error {
 
 			err := cmd.circuit.ReportEvent(cmd.events, cmd.start, cmd.runDuration)
 			if err != nil {
-				openlogging.GetLogger().Warnf("can not report metrics [%s]", err.Error())
+				openlogging.GetLogger().Warnf("can not report Metrics [%s]", err.Error())
 			}
 		}()
 
@@ -201,7 +201,7 @@ func (c *command) reportEvent(eventType string) {
 
 // errorWithFallback triggers the fallback while reporting the appropriate metric events.
 // If called multiple times for a single command, only the first will execute to insure
-// accurate metrics and prevent the fallback from executing more than once.
+// accurate Metrics and prevent the fallback from executing more than once.
 func (c *command) errorWithFallback(err error) {
 	c.fallbackOnce.Do(func() {
 		eventType := "failure"

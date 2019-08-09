@@ -12,6 +12,7 @@ import (
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/go-chassis/go-chassis/core/registry"
 	wp "github.com/go-chassis/go-chassis/core/router/weightpool"
+	"github.com/go-mesh/openlogging"
 )
 
 //Templates is for source match template settings
@@ -20,7 +21,6 @@ var Templates = make(map[string]*model.Match)
 //Router return route rule, you can also set custom route rule
 type Router interface {
 	Init(Options) error
-	InitRouteRuleByKey(string)
 	SetRouteRule(map[string][]*model.RouteRule)
 	FetchRouteRuleByServiceName(service string) []*model.RouteRule
 }
@@ -34,6 +34,7 @@ var DefaultRouter Router
 
 // InstallRouterService install router service for developer
 func InstallRouterService(name string, f func() (Router, error)) {
+	openlogging.Info("install route rule plugin: " + name)
 	routerServices[name] = f
 }
 
@@ -52,7 +53,7 @@ func BuildRouter(name string) error {
 }
 
 //Route decide the target service metadata
-//it decide based on configration of route rule
+//it decide based on configuration of route rule
 //it will set RouteTag to invocation
 func Route(header map[string]string, si *registry.SourceInfo, inv *invocation.Invocation) error {
 	rules := SortRules(inv.MicroServiceName)
@@ -199,7 +200,6 @@ func valueToUpper(b, value string) string {
 
 // SortRules sort route rules
 func SortRules(name string) []*model.RouteRule {
-	DefaultRouter.InitRouteRuleByKey(name)
 	slice := DefaultRouter.FetchRouteRuleByServiceName(name)
 	return QuickSort(0, len(slice)-1, slice)
 }

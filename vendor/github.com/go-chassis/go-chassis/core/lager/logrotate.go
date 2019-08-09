@@ -165,7 +165,7 @@ func doRollover(fPath string, MaxFileSize int, MaxBackupCount int) {
 	}
 
 	//truncate the file
-	f, err := os.OpenFile(fPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	f, err := os.OpenFile(fPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 	if err != nil {
 		Logger.Errorf("truncate path: %s failed: %s", EscapPath(fPath), err)
 		return
@@ -286,7 +286,7 @@ func CopyFile(srcFile, dstFile string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(dstFile, input, 0600)
+	err = ioutil.WriteFile(dstFile, input, 0640)
 	return err
 }
 

@@ -16,6 +16,7 @@ const StackTraceBufferSize = 1024 * 100
 //Logger is a interface
 type Logger interface {
 	RegisterSink(Sink)
+	SetLogLevel(LogLevel)
 	Session(task string, data ...openlogging.Option) Logger
 	SessionName() string
 	Debug(action string, data ...openlogging.Option)
@@ -104,6 +105,19 @@ func (l *logger) WithData(data openlogging.Tags) Logger {
 	}
 }
 
+// SetLogLevel set logger level, current just support file output
+func (l *logger) SetLogLevel(level LogLevel) {
+	for _, itf := range l.sinks {
+		if s, ok := itf.(*writerSink); ok && s.name != "file" {
+			continue
+		}
+		if s, ok := itf.(*ReconfigurableSink); ok {
+			s.SetMinLevel(level)
+		}
+	}
+}
+
+
 // Find the sink need to log
 func (l *logger) activeSinks(loglevel LogLevel) []Sink {
 	ss := make([]Sink, len(l.sinks))
@@ -152,7 +166,7 @@ func (l *logger) logs(ss []Sink, loglevel LogLevel, action string, opts ...openl
 	}
 
 	// add file, lineno
-	addExtLogInfo(&log)
+	addExtLogInfo(&log, opt.Depth)
 	var logInfo string
 	for _, sink := range l.sinks {
 		if l.logFormatText {
@@ -256,10 +270,10 @@ func currentTimestamp() string {
 	return time.Now().Format("2006-01-02 15:04:05.000 -07:00")
 }
 
-func addExtLogInfo(logf *LogFormat) {
+func addExtLogInfo(logf *LogFormat, depth int) {
 
 	for i := 3; i <= 5; i++ {
-		_, file, line, ok := runtime.Caller(i)
+		_, file, line, ok := runtime.Caller(depth + i)
 
 		if strings.Index(file, "logger.go") > 0 {
 			continue

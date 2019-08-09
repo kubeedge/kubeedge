@@ -112,6 +112,7 @@ func (r *Timing) Add(duration time.Duration) {
 }
 
 // Percentile computes the percentile given with a linear interpolation.
+//it returns million seconds
 func (r *Timing) Percentile(p float64) uint32 {
 	sortedDurations := r.SortedDurations()
 	length := len(sortedDurations)

@@ -14,8 +14,8 @@ import (
 //
 // Metric Collectors do not need Mutexes as they are updated by circuits within a locked context.
 type DefaultMetricCollector struct {
-	mutex *sync.RWMutex
-
+	mutex       *sync.RWMutex
+	name        string
 	numRequests *rolling.Number
 	errors      *rolling.Number
 
@@ -35,6 +35,7 @@ func newDefaultMetricCollector(name string) MetricCollector {
 	m := &DefaultMetricCollector{}
 	m.mutex = &sync.RWMutex{}
 	m.Reset()
+	m.name = name
 	return m
 }
 

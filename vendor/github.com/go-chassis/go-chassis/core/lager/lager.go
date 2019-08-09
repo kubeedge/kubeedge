@@ -126,7 +126,7 @@ func createLogFile(localPath, outputpath string) {
 	} else if err != nil {
 		panic(err)
 	}
-	f, err := os.OpenFile(strings.Replace(filepath.Join(localPath, outputpath), "\\", "/", -1), os.O_CREATE, os.ModePerm)
+	f, err := os.OpenFile(strings.Replace(filepath.Join(localPath, outputpath), "\\", "/", -1), os.O_CREATE, 0640)
 	if err != nil {
 		panic(err)
 	}
