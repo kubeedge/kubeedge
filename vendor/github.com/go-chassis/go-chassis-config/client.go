@@ -32,6 +32,8 @@ type Client interface {
 	DeleteConfigsByKeys(keys []string, serviceName, version, app, env string) (map[string]interface{}, error)
 	//Watch get kv change results, you can compare them with local kv cache and refresh local cache
 	Watch(f func(map[string]interface{}), errHandler func(err error)) error
+
+	Options() Options
 }
 
 //NewClient create config client implementation

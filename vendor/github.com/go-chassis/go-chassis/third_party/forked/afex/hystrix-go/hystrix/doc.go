@@ -68,7 +68,7 @@ During application boot, you can call ConfigureCommand to tweak the settings for
 
 You can also use Configure which accepts a map[string]CommandConfig.
 
-Enable dashboard metrics
+Enable dashboard Metrics
 
 In your main.go, register the event stream HTTP handler on a port and launch it in a goroutine.  Once you configure turbine for your Hystrix Dashboard https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard to start streaming events, your commands will automatically begin appearing.
 

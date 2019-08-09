@@ -68,7 +68,7 @@ func ValidateAndApplyFault(fault *model.Fault, inv *invocation.Invocation) error
 // ValidateFaultAbort checks that fault injection abort HTTP status and Percentage is valid
 func ValidateFaultAbort(fault *model.Fault) error {
 	if fault.Abort.HTTPStatus < 100 || fault.Abort.HTTPStatus > 600 {
-		return errors.New("invalid httpfault status")
+		return errors.New("invalid http fault status")
 	}
 	if fault.Abort.Percent < 0 || fault.Abort.Percent > 100 {
 		return fmt.Errorf("invalid httpfault percentage:must be in range 0..100")

@@ -82,7 +82,7 @@ func GetTimeout(service, t string) int {
 	return m
 }
 
-// GetTimeoutDuration get timeout durations
+// GetTimeoutDuration get timeout durations from cache first, then get from archaius
 func GetTimeoutDuration(service, t string) time.Duration {
 	timeout := GetTimeout(service, t)
 	return time.Duration(timeout) * time.Millisecond

@@ -24,7 +24,7 @@ type CircuitBreaker struct {
 	mutex                  *sync.RWMutex
 	openedOrLastTestedTime int64
 	executorPool           *executorPool
-	metrics                *metricExchange
+	Metrics                *metricExchange
 }
 
 var (
@@ -81,7 +81,7 @@ func FlushByName(name string) {
 	cb, ok := circuitBreakers[name]
 	if ok {
 		log.Println("Delete Circuit Breaker:", name)
-		cb.metrics.Reset()
+		cb.Metrics.Reset()
 		cb.executorPool.Metrics.Reset()
 		delete(circuitBreakers, name)
 	}
@@ -94,7 +94,7 @@ func Flush() {
 	defer circuitBreakersMutex.Unlock()
 
 	for name, cb := range circuitBreakers {
-		cb.metrics.Reset()
+		cb.Metrics.Reset()
 		cb.executorPool.Metrics.Reset()
 		delete(circuitBreakers, name)
 	}
@@ -104,7 +104,7 @@ func Flush() {
 func newCircuitBreaker(name string) *CircuitBreaker {
 	c := &CircuitBreaker{}
 	c.Name = name
-	c.metrics = newMetricExchange(name, getSettings(name).MetricsConsumerNum)
+	c.Metrics = newMetricExchange(name, getSettings(name).MetricsConsumerNum)
 	c.executorPool = newExecutorPool(name)
 	c.mutex = &sync.RWMutex{}
 	//定制治理选项forceClosed
@@ -137,11 +137,11 @@ func (circuit *CircuitBreaker) IsOpen() bool {
 		return true
 	}
 
-	if uint64(circuit.metrics.Requests().Sum(time.Now())) < getSettings(circuit.Name).RequestVolumeThreshold {
+	if uint64(circuit.Metrics.Requests().Sum(time.Now())) < getSettings(circuit.Name).RequestVolumeThreshold {
 		return false
 	}
 
-	if !circuit.metrics.IsHealthy(time.Now()) {
+	if !circuit.Metrics.IsHealthy(time.Now()) {
 		// too many failures, open the circuit
 		circuit.setOpen()
 		return true
@@ -207,13 +207,13 @@ func (circuit *CircuitBreaker) setClose() {
 	openlogging.GetLogger().Warnf("hystrix-go: closing circuit %v", circuit.Name)
 
 	circuit.open = false
-	circuit.metrics.Reset()
+	circuit.Metrics.Reset()
 }
 
-// ReportEvent records command metrics for tracking recent error rates and exposing data to the dashboard.
+// ReportEvent records command Metrics for tracking recent error rates and exposing data to the dashboard.
 func (circuit *CircuitBreaker) ReportEvent(eventTypes []string, start time.Time, runDuration time.Duration) error {
 	if len(eventTypes) == 0 {
-		return fmt.Errorf("no event types sent for metrics")
+		return fmt.Errorf("no event types sent for Metrics")
 	}
 
 	if eventTypes[0] == "success" && circuit.open {
@@ -221,13 +221,13 @@ func (circuit *CircuitBreaker) ReportEvent(eventTypes []string, start time.Time,
 	}
 
 	select {
-	case circuit.metrics.Updates <- &commandExecution{
+	case circuit.Metrics.Updates <- &commandExecution{
 		Types:       eventTypes,
 		Start:       start,
 		RunDuration: runDuration,
 	}:
 	default:
-		return CircuitError{Message: fmt.Sprintf("metrics channel (%v) is at capacity", circuit.Name)}
+		return CircuitError{Message: fmt.Sprintf("Metrics channel (%v) is at capacity", circuit.Name)}
 	}
 
 	return nil

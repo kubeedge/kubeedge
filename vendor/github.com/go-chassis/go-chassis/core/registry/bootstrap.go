@@ -107,6 +107,9 @@ func RegisterMicroservice() error {
 
 // RegisterMicroserviceInstances register micro-service instances
 func RegisterMicroserviceInstances() error {
+	var err error
+	service := config.MicroserviceDefinition
+	runtime.Schemas, err = schema.GetSchemaIDs(service.ServiceDescription.Name)
 	for _, schemaID := range runtime.Schemas {
 		schemaInfo := schema.DefaultSchemaIDsMap[schemaID]
 		err := DefaultRegistrator.AddSchemas(runtime.ServiceID, schemaID, schemaInfo)
@@ -117,8 +120,6 @@ func RegisterMicroserviceInstances() error {
 	}
 
 	openlogging.Info("Start to register instance.")
-	service := config.MicroserviceDefinition
-	var err error
 
 	sid, err := DefaultServiceDiscoveryService.GetMicroServiceID(runtime.App, service.ServiceDescription.Name, service.ServiceDescription.Version, service.ServiceDescription.Environment)
 	if err != nil {
@@ -133,7 +134,7 @@ func RegisterMicroserviceInstances() error {
 		return err
 	}
 	lager.Logger.Infof("service support protocols %v", config.GlobalDefinition.Cse.Protocols)
-	if InstanceEndpoints != nil {
+	if len(InstanceEndpoints) != 0 {
 		eps = InstanceEndpoints
 	}
 	if service.ServiceDescription.ServicesStatus == "" {

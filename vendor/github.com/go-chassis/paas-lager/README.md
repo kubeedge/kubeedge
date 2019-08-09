@@ -49,4 +49,4 @@ func main() {
 }
 
 ```
-See [Example](examples/main.go)
+See [Examples](examples)

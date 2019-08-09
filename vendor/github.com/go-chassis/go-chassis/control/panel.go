@@ -16,6 +16,12 @@ var DefaultPanel Panel
 const (
 	//ScopeAPI is config const
 	ScopeAPI = "api"
+
+	//ScopeInstance is config const
+	ScopeInstance = "instance"
+
+	//ScopeInstanceAPI is config const
+	ScopeInstanceAPI = "instance-api"
 )
 
 //Panel is a abstraction of pulling configurations from various of systems, and transfer different configuration into standardized model
@@ -61,6 +67,7 @@ func NewCircuitName(serviceType, scope string, inv invocation.Invocation) string
 	if scope == "" {
 		scope = ScopeAPI
 	}
+
 	if scope == ScopeAPI {
 		if inv.SchemaID != "" {
 			cmd = strings.Join([]string{cmd, inv.SchemaID}, ".")
@@ -68,7 +75,27 @@ func NewCircuitName(serviceType, scope string, inv invocation.Invocation) string
 		if inv.OperationID != "" {
 			cmd = strings.Join([]string{cmd, inv.OperationID}, ".")
 		}
+		return cmd
 	}
+	if scope == ScopeInstance {
+		if inv.Endpoint != "" {
+			cmd = strings.Join([]string{cmd, inv.Endpoint}, ".")
+		}
+		return cmd
+	}
+	if scope == ScopeInstanceAPI {
+		if inv.Endpoint != "" {
+			cmd = strings.Join([]string{cmd, inv.Endpoint}, ".")
+		}
+		if inv.SchemaID != "" {
+			cmd = strings.Join([]string{cmd, inv.SchemaID}, ".")
+		}
+		if inv.OperationID != "" {
+			cmd = strings.Join([]string{cmd, inv.OperationID}, ".")
+		}
+		return cmd
+	}
+
 	return cmd
 
 }

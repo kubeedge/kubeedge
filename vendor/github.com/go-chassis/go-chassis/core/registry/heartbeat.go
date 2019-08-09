@@ -162,7 +162,7 @@ func reRegisterSelfMSI(sid, iid string) error {
 	if err != nil {
 		return err
 	}
-	if InstanceEndpoints != nil {
+	if len(InstanceEndpoints) != 0 {
 		eps = InstanceEndpoints
 	}
 	microServiceInstance := &MicroServiceInstance{

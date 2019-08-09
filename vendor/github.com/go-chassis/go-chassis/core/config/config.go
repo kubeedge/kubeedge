@@ -10,11 +10,9 @@ import (
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/config/schema"
-	"github.com/go-chassis/go-chassis/core/lager"
+	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-chassis/go-chassis/pkg/util/fileutil"
 	"github.com/go-chassis/go-chassis/pkg/util/iputil"
-
-	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-mesh/openlogging"
 	"gopkg.in/yaml.v2"
 )
@@ -65,7 +63,7 @@ func GetDataCenter() *model.DataCenterInfo {
 
 // parse unmarshal configurations on respective structure
 func parse() error {
-	err := readGlobalConfigFile()
+	err := ReadGlobalConfigFile()
 	if err != nil {
 		return err
 	}
@@ -79,7 +77,7 @@ func parse() error {
 		return err
 	}
 
-	err = readMicroserviceConfigFiles()
+	err = readMicroServiceConfigFiles()
 	if err != nil {
 		return err
 	}
@@ -98,29 +96,38 @@ func parse() error {
 // populateServiceRegistryAddress populate service registry address
 func populateServiceRegistryAddress() {
 	//Registry Address , higher priority for environment variable
-	registryAddrFromEnv := os.Getenv(common.EnvCSEEndpoint)
-	if registryAddrFromEnv == "" {
-		registryAddrFromEnv = archaius.GetString(common.CseRegistryAddress, "")
-	}
+	registryAddrFromEnv := readCseAddress(common.EnvCSESCEndpoint, common.CseRegistryAddress)
+	openlogging.Debug("detect env", openlogging.WithTags(
+		openlogging.Tags{
+			"ep": registryAddrFromEnv,
+		}))
 	if registryAddrFromEnv != "" {
 		GlobalDefinition.Cse.Service.Registry.Registrator.Address = registryAddrFromEnv
 		GlobalDefinition.Cse.Service.Registry.ServiceDiscovery.Address = registryAddrFromEnv
 		GlobalDefinition.Cse.Service.Registry.ContractDiscovery.Address = registryAddrFromEnv
 		GlobalDefinition.Cse.Service.Registry.Address = registryAddrFromEnv
 	}
-
 }
 
 // populateConfigCenterAddress populate config center address
 func populateConfigCenterAddress() {
 	//Config Center Address , higher priority for environment variable
-	configCenterAddrFromEnv := os.Getenv(common.EnvCSEEndpoint)
-	if configCenterAddrFromEnv == "" {
-		configCenterAddrFromEnv = archaius.GetString(common.CseConfigCenterAddress, "")
-	}
+	configCenterAddrFromEnv := readCseAddress(common.EnvCSECCEndpoint, common.CseConfigCenterAddress)
 	if configCenterAddrFromEnv != "" {
 		GlobalDefinition.Cse.Config.Client.ServerURI = configCenterAddrFromEnv
 	}
+}
+
+// readCseAddress
+func readCseAddress(firstEnv, singleEnv string) string {
+	addrFromEnv := os.Getenv(firstEnv)
+	if addrFromEnv == "" {
+		addrFromEnv = os.Getenv(common.EnvCSEEndpoint)
+		if addrFromEnv == "" {
+			addrFromEnv = archaius.GetString(singleEnv, "")
+		}
+	}
+	return addrFromEnv
 }
 
 // populateMonitorServerAddress populate monitor server address
@@ -160,26 +167,14 @@ func populateTenant() {
 	}
 }
 
-// readGlobalConfigFile for to unmarshal the global config file(chassis.yaml) information
-func readGlobalConfigFile() error {
+// ReadGlobalConfigFile for to unmarshal the global config file(chassis.yaml) information
+func ReadGlobalConfigFile() error {
 	globalDef := model.GlobalCfg{}
 	err := archaius.UnmarshalConfig(&globalDef)
 	if err != nil {
 		return err
 	}
 	GlobalDefinition = &globalDef
-	return nil
-}
-
-// readPanelConfig for to unmarshal the global config file(chassis.yaml) information
-func readPanelConfig() error {
-	globalDef := model.GlobalCfg{}
-	err := archaius.UnmarshalConfig(&globalDef)
-	if err != nil {
-		return err
-	}
-	GlobalDefinition = &globalDef
-
 	return nil
 }
 
@@ -235,26 +230,29 @@ func ReadHystrixFromArchaius() error {
 	return nil
 }
 
-// readMicroserviceConfigFiles read micro service configuration file
-func readMicroserviceConfigFiles() error {
+// readMicroServiceConfigFiles read micro service configuration file
+func readMicroServiceConfigFiles() error {
 	MicroserviceDefinition = &model.MicroserviceCfg{}
 	//find only one microservice yaml
 	microserviceNames := schema.GetMicroserviceNames()
 	defPath := fileutil.GetMicroserviceDesc()
 	data, err := ioutil.ReadFile(defPath)
 	if err != nil {
-		lager.Logger.Errorf(fmt.Sprintf("WARN: Missing microservice description file: %s", err.Error()))
+		openlogging.GetLogger().Errorf(fmt.Sprintf("WARN: Missing microservice description file: %s", err.Error()))
 		if len(microserviceNames) == 0 {
 			return errors.New("missing microservice description file")
 		}
 		msName := microserviceNames[0]
 		msDefPath := fileutil.MicroserviceDefinition(msName)
-		lager.Logger.Warnf(fmt.Sprintf("Try to find microservice description file in [%s]", msDefPath))
+		openlogging.GetLogger().Warnf(fmt.Sprintf("Try to find microservice description file in [%s]", msDefPath))
 		data, err := ioutil.ReadFile(msDefPath)
 		if err != nil {
 			return fmt.Errorf("missing microservice description file: %s", err.Error())
 		}
-		ReadMicroserviceConfigFromBytes(data)
+		err = ReadMicroserviceConfigFromBytes(data)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	return ReadMicroserviceConfigFromBytes(data)
@@ -304,24 +302,21 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	openlogging.GetLogger().Infof("archaius init success")
-
-	var schemaError error
+	openlogging.Info("archaius init success")
 
 	//Upload schemas using environment variable SCHEMA_ROOT
-	schemaEnv := archaius.GetString(common.EnvSchemaRoot, "")
-	if schemaEnv != "" {
-		schemaError = schema.LoadSchema(schemaEnv)
-	} else {
-		schemaError = schema.LoadSchema(fileutil.GetConfDir())
+	schemaPath := archaius.GetString(common.EnvSchemaRoot, "")
+	if schemaPath == "" {
+		schemaPath = fileutil.GetConfDir()
 	}
 
+	schemaError := schema.LoadSchema(schemaPath)
 	if schemaError != nil {
 		return schemaError
 	}
 
 	//set microservice names
-	msError := schema.SetMicroServiceNames(fileutil.GetConfDir())
+	msError := schema.SetMicroServiceNames(schemaPath)
 	if msError != nil {
 		return msError
 	}
@@ -351,12 +346,12 @@ func Init() error {
 	if runtime.HostName == "" {
 		runtime.HostName, err = os.Hostname()
 		if err != nil {
-			lager.Logger.Error("Get hostname failed:" + err.Error())
+			openlogging.Error("Get hostname failed:" + err.Error())
 			return err
 		}
 	} else if runtime.HostName == common.PlaceholderInternalIP {
 		runtime.HostName = iputil.GetLocalIP()
 	}
-	lager.Logger.Info("Host name is " + runtime.HostName)
+	openlogging.Info("Host name is " + runtime.HostName)
 	return err
 }

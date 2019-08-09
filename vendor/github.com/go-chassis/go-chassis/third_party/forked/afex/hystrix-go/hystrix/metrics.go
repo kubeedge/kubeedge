@@ -34,7 +34,7 @@ func newMetricExchange(name string, num int) *metricExchange {
 	for i := 0; i < num; i++ {
 		go m.Monitor()
 	}
-	openlogging.GetLogger().Debugf(" launched [%d] metrics consumer", num)
+	openlogging.GetLogger().Debugf(" launched [%d] Metrics consumer", num)
 	return m
 }
 
@@ -65,7 +65,7 @@ func (m *metricExchange) Monitor() {
 }
 
 func (m *metricExchange) IncrementMetrics(collector metricCollector.MetricCollector, update *commandExecution, totalDuration time.Duration) {
-	// granular metrics
+	// granular Metrics
 	if update.Types[0] == "success" {
 		collector.IncrementAttempts()
 		collector.IncrementSuccesses()
@@ -95,7 +95,7 @@ func (m *metricExchange) IncrementMetrics(collector metricCollector.MetricCollec
 	}
 
 	if len(update.Types) > 1 {
-		// fallback metrics
+		// fallback Metrics
 		if update.Types[1] == "fallback-success" {
 			collector.IncrementFallbackSuccesses()
 		}

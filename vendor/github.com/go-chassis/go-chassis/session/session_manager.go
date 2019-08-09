@@ -3,12 +3,12 @@ package session
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
+	"encoding/base64"
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/go-chassis/go-chassis/pkg/util/httputil"
@@ -75,10 +75,9 @@ func SetContextMetadata(ctx context.Context, key string, value string) context.C
 
 //GetSessionFromResp return session uuid in resp if there is
 func GetSessionFromResp(cookieKey string, resp *http.Response) string {
-	for _, c := range resp.Cookies() {
-		if c.Name == cookieKey {
-			return c.Value
-		}
+	bytes := httputil.GetRespCookie(resp, cookieKey)
+	if bytes != nil {
+		return string(bytes)
 	}
 	return ""
 }
@@ -109,7 +108,13 @@ func SaveSessionIDFromContext(ctx context.Context, ep string, autoTimeout int) c
 		return ctx
 	}
 
-	sessionIDValue := generateCookieSessionID()
+	sessionIDValue, err := GenerateSessionID()
+	if err != nil {
+		openlogging.Warn("session id generate fail, it is impossible", openlogging.WithTags(
+			openlogging.Tags{
+				"err": err.Error(),
+			}))
+	}
 	cookie := common.LBSessionID + "=" + sessionIDValue
 	setLBCookie(common.LBSessionID, cookie)
 	Save(sessionIDValue, ep, timeValue)
@@ -162,9 +167,7 @@ func SaveSessionIDFromHTTP(ep string, autoTimeout int, resp *http.Response, req 
 
 	var sessionIDStr string
 
-	if c, err := req.Cookie(common.LBSessionID); err == http.ErrNoCookie {
-		sessionIDStr = ""
-	} else {
+	if c, err := req.Cookie(common.LBSessionID); err != http.ErrNoCookie {
 		sessionIDStr = c.Value
 	}
 
@@ -182,30 +185,27 @@ func SaveSessionIDFromHTTP(ep string, autoTimeout int, resp *http.Response, req 
 		setCookie(resp, sessionIDStr)
 		Save(sessionIDStr, ep, timeValue)
 	} else {
-		sessionIDValue := generateCookieSessionID()
+		sessionIDValue, err := GenerateSessionID()
+		if err != nil {
+			openlogging.Warn("session id generate fail, it is impossible", openlogging.WithTags(
+				openlogging.Tags{
+					"err": err.Error(),
+				}))
+		}
 		setCookie(resp, sessionIDValue)
 		Save(sessionIDValue, ep, timeValue)
 	}
 
 }
 
-// generateCookieSessionID generate cookies for session id
-func generateCookieSessionID() string {
-
-	result := make([]byte, 16)
-
-	rand.Seed(time.Now().UTC().UnixNano())
-	tmp := rand.Int63()
-	rand.Seed(tmp)
-	for i := 0; i < 16; i++ {
-		result[i] = byte(rand.Intn(16))
+//GenerateSessionID generate a session id
+func GenerateSessionID() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
 	}
-
-	result[6] = (result[6] & 0xF) | (4 << 4)
-	result[8] = (result[8] | 0x40) & 0x7F
-
-	return fmt.Sprintf("%x-%x-%x-%x-%x", result[0:4], result[4:6], result[6:8], result[8:10], result[10:])
-
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 // DeletingKeySuccessiveFailure deleting key successes and failures

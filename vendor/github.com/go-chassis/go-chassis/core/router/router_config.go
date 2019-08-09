@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chassis/go-chassis/core/config"
 	"github.com/go-chassis/go-chassis/core/config/model"
-	"github.com/go-chassis/go-chassis/core/lager"
 	chassisTLS "github.com/go-chassis/go-chassis/core/tls"
 	"github.com/go-chassis/go-chassis/pkg/util/iputil"
 	"github.com/go-chassis/go-chassis/pkg/util/tags"
@@ -23,7 +22,7 @@ func Init() error {
 	routerConfigFromFile := config.RouterDefinition
 	err := BuildRouter(config.GetRouterType())
 	if err != nil {
-		openlogging.Error("can not new router: " + err.Error())
+		openlogging.Error("can not init router [" + config.GetRouterType() + "]: " + err.Error())
 		return err
 	}
 
@@ -40,8 +39,12 @@ func Init() error {
 	if err != nil {
 		return fmt.Errorf("router options error: %v", err)
 	}
-	DefaultRouter.Init(op)
-	openlogging.Info("Router init success")
+	err = DefaultRouter.Init(op)
+	if err != nil {
+		openlogging.Error(err.Error())
+		return err
+	}
+	openlogging.Info("router init success")
 	return nil
 }
 
@@ -56,7 +59,10 @@ func ValidateRule(rules map[string][]*model.RouteRule) bool {
 			}
 
 			if allWeight > 100 {
-				lager.Logger.Warnf("route rule for [%s] is not valid: ruleTag weight is over 100%", name)
+				openlogging.Warn("route rule is invalid: total weight is over 100%", openlogging.WithTags(
+					openlogging.Tags{
+						"service": name,
+					}))
 				return false
 			}
 		}

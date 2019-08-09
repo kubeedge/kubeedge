@@ -43,10 +43,6 @@ var (
 
 //Handler handles configs from config center
 type Handler struct {
-	Service                      string
-	Version                      string
-	App                          string
-	Env                          string
 	cc                           config.Client
 	dynamicConfigHandler         *DynamicConfigHandler
 	dimensionInfoMap             map[string]string
@@ -67,7 +63,6 @@ var ConfigCenterConfig *Handler
 //NewConfigCenterSource initializes all components of configuration center
 func NewConfigCenterSource(cc config.Client,
 	refreshMode, refreshInterval int) core.ConfigSource {
-
 	if ConfigCenterConfig == nil {
 		ConfigCenterConfig = new(Handler)
 		ConfigCenterConfig.priority = configCenterSourcePriority
@@ -152,12 +147,15 @@ func (cfgSrcHandler *Handler) refreshConfigurations(dimensionInfo string) error 
 	)
 
 	if dimensionInfo == "" {
-		config, err = cfgSrcHandler.cc.PullConfigs(cfgSrcHandler.Service,
-			cfgSrcHandler.Version, cfgSrcHandler.App, cfgSrcHandler.Env)
+		config, err = cfgSrcHandler.cc.PullConfigs(cfgSrcHandler.cc.Options().ServiceName,
+			cfgSrcHandler.cc.Options().Version, cfgSrcHandler.cc.Options().App, cfgSrcHandler.cc.Options().Env)
 		if err != nil {
 			openlogging.GetLogger().Warnf("Failed to pull configurations from config center server", err) //Warn
 			return err
 		}
+		openlogging.Debug("pull configs", openlogging.WithTags(openlogging.Tags{
+			"config": config,
+		}))
 		//Populate the events based on the changed value between current config and newly received Config
 		events, err = cfgSrcHandler.populateEvents(config)
 	} else {
