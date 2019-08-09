@@ -17,7 +17,8 @@ type EdgeHub struct {
 	controller *Controller
 }
 
-func init() {
+// Register register edgehub
+func Register() {
 	core.Register(&EdgeHub{
 		controller: NewEdgeHubController(),
 	})

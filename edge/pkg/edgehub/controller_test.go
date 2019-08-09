@@ -35,10 +35,15 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 )
 
 const (
@@ -54,6 +59,11 @@ var mockAdapter *edgehub.MockAdapter
 
 //init() starts the test server and generates test certificates for testing
 func init() {
+	devicetwin.Register()
+	eventbus.Register()
+	metamanager.Register()
+	servicebus.Register()
+	dbm.InitDBManager()
 	newTestServer()
 	err := util.GenerateTestCertificate("/tmp/kubeedge/certs/", "edge", "edge")
 	if err != nil {

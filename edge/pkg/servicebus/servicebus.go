@@ -26,7 +26,8 @@ type servicebus struct {
 	context *context.Context
 }
 
-func init() {
+// Register register servicebus
+func Register() {
 	edgeServiceBusModule := servicebus{}
 	core.Register(&edgeServiceBusModule)
 }
