@@ -29,16 +29,16 @@ kill_edgecore() {
     fi
 }
 
-kill_edgecontroller() {
+kill_cloudcore() {
     sudo pkill edge
-    #kill the edgecontroller process if it exists.
+    #kill the cloudcore process if it exists.
     sleep 5s
-    if pgrep edgecontroller >/dev/null
+    if pgrep cloudcore >/dev/null
     then
-        echo "Failed to kill the edgecontroller !!"
+        echo "Failed to kill the cloudcore !!"
         exit 1
     else
-        echo "edgecontroller is successfully killed !!"
+        echo "cloudcore is successfully killed !!"
     fi
 }
 
@@ -60,7 +60,7 @@ cleanup_files(){
     workdir=$GOPATH/src/github.com/kubeedge/kubeedge
     cd $workdir
 
-    sudo rm -rf cloud/edgecontroller
+    sudo rm -rf cloud/cloudcore
     sudo rm -rf cloud/tmp/
     sudo rm -rf edge/edge.db
     sudo rm -rf edge/edgecore
@@ -75,13 +75,13 @@ cleanup_files(){
 
 if [ "deployment" = ${setuptype} ]; then
     kill_edgecore
-    kill_edgecontroller
+    kill_cloudcore
     sudo rm -rf tests/e2e/deployment/deployment.test
 fi
 
 if [ "device_crd" = ${setuptype} ]; then
     kill_edgecore
-    kill_edgecontroller
+    kill_cloudcore
     sudo rm -rf tests/e2e/device_crd/device_crd.test
 fi
 

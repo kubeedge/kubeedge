@@ -9,7 +9,7 @@ import (
 // MessageLayer used, context or ssmq, default is context
 var MessageLayer string
 
-func init() {
+func InitMessageLayerConfig() {
 	if ml, err := config.CONFIG.GetValue("devicecontroller.message-layer").ToString(); err != nil {
 		MessageLayer = constants.DefaultMessageLayer
 	} else {

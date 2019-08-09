@@ -22,9 +22,9 @@ const (
 
 	// K8SImageRepository sets the image repository of Kubernetes
 	K8SImageRepository = "image-repository"
-	
+
 	//K8SPodNetworkCidr sets pod network cidr of Kubernetes
-	K8SPodNetworkCidr = "pod-network-cidr"	
+	K8SPodNetworkCidr = "pod-network-cidr"
 
 	//DockerVersion sets the version of Docker to be used
 	DockerVersion = "docker-version"
@@ -38,8 +38,8 @@ const (
 	//K8SAPIServerIPPort sets the IP:Port of Kubernetes api-server
 	K8SAPIServerIPPort = "k8sserverip"
 
-	//EdgeControllerIP sets the IP of KubeEdge edgecontroller cloud component
-	EdgeControllerIP = "edgecontrollerip"
+	//CloudCoreIP sets the IP of KubeEdge cloud component
+	CloudCoreIP = "cloudcoreip"
 
 	//KubeEdge Node unique idenfitcation string
 	EdgeNodeID = "edgenodeid"

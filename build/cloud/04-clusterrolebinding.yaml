@@ -1,15 +1,15 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
-  name: edgecontroller
+  name: cloudcore
   labels:
     k8s-app: kubeedge
-    kubeedge: edgecontroller
+    kubeedge: cloudcore
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: edgecontroller
+  name: cloudcore
 subjects:
 - kind: ServiceAccount
-  name: edgecontroller
+  name: cloudcore
   namespace: kubeedge

@@ -49,8 +49,8 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		Expect(utils.GenerateCerts()).Should(BeNil())
 		//Do the neccessary config changes in Cloud and Edge nodes
 		Expect(utils.DeploySetup(ctx, nodeName, "deployment")).Should(BeNil())
-		//Run ./edgecontroller binary
-		Expect(utils.StartEdgeController()).Should(BeNil())
+		//Run ./cloudcore binary
+		Expect(utils.StartCloudCore()).Should(BeNil())
 		//Register the Edge Node to Master
 		Expect(utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
 		//Run ./edgecore after node registration
@@ -72,7 +72,8 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 			utils.Info("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
 		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
-		//Run the Cleanup steps to kill edgecore and edgecontroller binaries
+
+		//Run the Cleanup steps to kill edgecore and cloudcore binaries
 		Expect(utils.CleanUp("deployment")).Should(BeNil())
 		//time.Sleep(2 * time.Second)
 		utils.Info("Cleanup is Successfull !!")

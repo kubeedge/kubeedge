@@ -60,42 +60,42 @@ var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
 var TwinResult DeviceTwinResult
 
-//Token interface to validate the MQTT connection.
+// Token interface to validate the MQTT connection.
 type Token interface {
 	Wait() bool
 	WaitTimeout(time.Duration) bool
 	Error() error
 }
 
-//BaseMessage the base struct of event message
+// BaseMessage the base struct of event message
 type BaseMessage struct {
 	EventID   string `json:"event_id"`
 	Timestamp int64  `json:"timestamp"`
 }
 
-//TwinValue the struct of twin value
+// TwinValue the struct of twin value
 type TwinValue struct {
 	Value    *string        `json:"value, omitempty"`
 	Metadata *ValueMetadata `json:"metadata,omitempty"`
 }
 
-//ValueMetadata the meta of value
+// ValueMetadata the meta of value
 type ValueMetadata struct {
 	Timestamp int64 `json:"timestamp, omitempty"`
 }
 
-//TypeMetadata the meta of value type
+// TypeMetadata the meta of value type
 type TypeMetadata struct {
 	Type string `json:"type,omitempty"`
 }
 
-//TwinVersion twin version
+// TwinVersion twin version
 type TwinVersion struct {
 	CloudVersion int64 `json:"cloud"`
 	EdgeVersion  int64 `json:"edge"`
 }
 
-//MsgTwin the struct of device twin
+// MsgTwin the struct of device twin
 type MsgTwin struct {
 	Expected        *TwinValue    `json:"expected,omitempty"`
 	Actual          *TwinValue    `json:"actual,omitempty"`
@@ -105,19 +105,19 @@ type MsgTwin struct {
 	ActualVersion   *TwinVersion  `json:"actual_version,omitempty"`
 }
 
-//DeviceTwinUpdate the struct of device twin update
+// DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
 }
 
-//DeviceTwinResult device get result
+// DeviceTwinResult device get result
 type DeviceTwinResult struct {
 	BaseMessage
 	Twin map[string]*MsgTwin `json:"twin"`
 }
 
-//Function to get nginx deployment spec
+// Function to get nginx deployment spec
 func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.DeploymentSpec {
 	var nodeselector map[string]string
 	if selector == "" {
@@ -147,7 +147,7 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 	return &deplObj
 }
 
-//Function to get edgecore deploymentspec object
+// Function to get edgecore deploymentspec object
 func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
 	IsSecureCtx := true
 	deplObj := apps.DeploymentSpec{
@@ -201,24 +201,24 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 	return &deplObj
 }
 
-//Function to create cloudcore deploymentspec object
+// Function to create cloudcore deploymentspec object
 func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
 	var portInfo []v1.ContainerPort
 	portInfo = []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "websocket"}, {ContainerPort: 10001, Protocol: "UDP", Name: "quic"}}
 
 	deplObj := apps.DeploymentSpec{
 		Replicas: func() *int32 { i := int32(replicas); return &i }(),
-		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "edgecontroller"}},
+		Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "cloudcore"}},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": "edgecontroller"},
+				Labels: map[string]string{"app": "cloudcore"},
 			},
 			Spec: v1.PodSpec{
 				HostNetwork:   true,
 				RestartPolicy: "Always",
 				Containers: []v1.Container{
 					{
-						Name:            "edgecontroller",
+						Name:            "cloudcore",
 						Image:           imgURL,
 						ImagePullPolicy: v1.PullPolicy("IfNotPresent"),
 						Resources: v1.ResourceRequirements{
@@ -289,7 +289,7 @@ func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 	return &pod
 }
 
-//GetDeployments to get the deployments list
+// GetDeployments to get the deployments list
 func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 
 	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
@@ -316,7 +316,7 @@ func VerifyDeleteDeployment(getDeploymentApi string) int {
 	return resp.StatusCode
 }
 
-//HandlePod to handle app deployment/delete using pod spec.
+// HandlePod to handle app deployment/delete using pod spec.
 func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodeselector string) bool {
 	var req *http.Request
 	var err error
@@ -351,7 +351,7 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 	return true
 }
 
-//HandleDeployment to handle app deployment/delete deployment.
+// HandleDeployment to handle app deployment/delete deployment.
 func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageUrl, nodeselector, configmapname string, replica int) bool {
 	var req *http.Request
 	var err error
@@ -390,7 +390,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	return true
 }
 
-//DeleteDeployment to delete deployment
+// DeleteDeployment to delete deployment
 func DeleteDeployment(DeploymentApi, deploymentname string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, DeploymentApi+"/"+deploymentname)
 	if err != nil {
@@ -404,7 +404,7 @@ func DeleteDeployment(DeploymentApi, deploymentname string) int {
 	return resp.StatusCode
 }
 
-//PrintCombinedOutput to show the os command injuction in combined format
+// PrintCombinedOutput to show the os command injuction in combined format
 func PrintCombinedOutput(cmd *exec.Cmd) error {
 	Info("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
 	output, err := cmd.CombinedOutput()
@@ -418,7 +418,7 @@ func PrintCombinedOutput(cmd *exec.Cmd) error {
 	return nil
 }
 
-//ExposeCloudService function to expose the service for cloud deployment
+// ExposeCloudService function to expose the service for cloud deployment
 func ExposeCloudService(name, serviceHandler string) error {
 	ServiceObj := CreateServiceObject(name)
 	respBytes, err := json.Marshal(ServiceObj)
@@ -445,7 +445,7 @@ func ExposeCloudService(name, serviceHandler string) error {
 	return nil
 }
 
-//CreateServiceObject function to create a servcice object
+// CreateServiceObject function to create a servcice object
 func CreateServiceObject(name string) *v1.Service {
 	var portInfo []v1.ServicePort
 
@@ -463,14 +463,14 @@ func CreateServiceObject(name string) *v1.Service {
 
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,
-			Selector: map[string]string{"app": "edgecontroller"},
+			Selector: map[string]string{"app": "cloudcore"},
 			Type:     "NodePort",
 		},
 	}
 	return &Service
 }
 
-//GetServicePort function to get the service port created for deployment.
+// GetServicePort function to get the service port created for deployment.
 func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	var svc v1.ServiceList
 	var wssport, quicport int32
@@ -510,7 +510,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	return wssport, quicport
 }
 
-//DeleteSvc function to delete service
+// DeleteSvc function to delete service
 func DeleteSvc(svcname string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, svcname)
 	if err != nil {
@@ -524,7 +524,7 @@ func DeleteSvc(svcname string) int {
 	return resp.StatusCode
 }
 
-//HandleDeviceModel to handle app deployment/delete using pod spec.
+// HandleDeviceModel to handle app deployment/delete using pod spec.
 func HandleDeviceModel(operation string, apiserver string, UID string, protocolType string) (bool, int) {
 	var req *http.Request
 	var err error
@@ -568,7 +568,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 	return true, resp.StatusCode
 }
 
-//HandleDeviceInstance to handle app deployment/delete using pod spec.
+// HandleDeviceInstance to handle app deployment/delete using pod spec.
 func HandleDeviceInstance(operation string, apiserver string, nodeSelector string, UID string, protocolType string) (bool, int) {
 	var req *http.Request
 	var err error
@@ -670,7 +670,7 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 	return &deviceModel
 }
 
-//GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
+// GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
 func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
 	err, resp := SendHttpRequest(http.MethodGet, getDeviceModelApi)
 	defer resp.Body.Close()
@@ -701,7 +701,7 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, ex
 	return list.Items, nil
 }
 
-//GetDevice to get the device list
+// GetDevice to get the device list
 func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
 	err, resp := SendHttpRequest(http.MethodGet, getDeviceApi)
 	defer resp.Body.Close()
@@ -760,7 +760,7 @@ func MqttClientInit(server, clientID, username, password string) *MQTT.ClientOpt
 	return opts
 }
 
-//MqttConnect function felicitates the MQTT connection
+// MqttConnect function felicitates the MQTT connection
 func MqttConnect() error {
 	// Initiate the MQTT connection
 	ClientOpts = MqttClientInit("tcp://127.0.0.1:1884", "eventbus", "", "")
@@ -771,7 +771,7 @@ func MqttConnect() error {
 	return nil
 }
 
-//ChangeTwinValue sends the updated twin value to the edge through the MQTT broker
+// ChangeTwinValue sends the updated twin value to the edge through the MQTT broker
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
@@ -785,7 +785,7 @@ func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 	return nil
 }
 
-//GetTwin function is used to get the device twin details from the edge
+// GetTwin function is used to get the device twin details from the edge
 func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
@@ -799,7 +799,7 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
 	return nil
 }
 
-//subscribe function subscribes  the device twin information through the MQTT broker
+// subscribe function subscribes  the device twin information through the MQTT broker
 func TwinSubscribe(deviceID string) {
 	getTwinResult := DeviceETPrefix + deviceID + TwinETGetResultSuffix
 	TokenClient = Client.Subscribe(getTwinResult, 0, OnTwinMessageReceived)

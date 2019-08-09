@@ -43,7 +43,7 @@ const (
 // constants for message source
 const (
 	SrcCloudHub   = "cloudhub"
-	SrcController = "controller"
+	SrcController = "edgecontroller"
 	SrcManager    = "edgemgr"
 )
 

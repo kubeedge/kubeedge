@@ -9,7 +9,7 @@ import (
 // UpdateDeviceStatusWorkers is the count of goroutines of update device status
 var UpdateDeviceStatusWorkers int
 
-func init() {
+func InitLoadConfig() {
 	if psw, err := config.CONFIG.GetValue("devicecontroller.load.update-device-status-workers").ToInt(); err != nil {
 		UpdateDeviceStatusWorkers = constants.DefaultUpdateDeviceStatusWorkers
 	} else {

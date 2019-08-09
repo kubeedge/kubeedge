@@ -4,7 +4,7 @@
 + [安装 docker](https://docs.docker.com/install/)
 + [安装 kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 + [初始化 Kubernetes](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-+ 在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 edgecontroller/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
++ 在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 cloudcore/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
 
     ```shell
     vi /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -51,7 +51,7 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
 
   ```shell
   cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
-  make # or `make edgecontroller`
+  make # or `make cloudcore`
   ```
 
 + 修改 `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml` 配置文件，将 `cloudhub.ca`、`cloudhub.cert`、`cloudhub.key`修改为生成的证书路径
@@ -68,8 +68,8 @@ KubeEdge 在云和边缘之间基于证书进行身份验证/授权。证书可�
   cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
   # run edge controller
   # `conf/` should be in the same directory as the cloned KubeEdge repository
-  # verify the configurations before running cloud(edgecontroller)
-  ./edgecontroller
+  # verify the configurations before running cloud(cloudcore)
+  ./cloudcore
   ```
 
 #### [以 k8s deployment 方式运行](../../build/cloud/README_zh.md)

@@ -51,7 +51,7 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.IsKubeEdgeController()
+			whoRunning, err := util.IsCloudCore()
 			if err != nil {
 				return err
 			}
@@ -66,7 +66,7 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Tear down cloud node. It includes
 			// 1. Executing kubeadm reset
-			// 2. killing edgecontroller process
+			// 2. killing cloudcore process
 
 			// Tear down edge node. It includes
 			// 1. Removing edge node from api-server

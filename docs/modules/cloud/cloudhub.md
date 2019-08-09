@@ -2,11 +2,11 @@
 
 ## CloudHub Overview
 
-CloudHub is the mediator between EdgeController and the Edge side. It supports both web-socket based connection as well as a [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol access at the same time.
-The edgehub can choose one of the protocols to access to the cloudhub. CloudHub's function is to enable the communication between edge and the EdgeController.
+CloudHub is one module of cloudcore and is the mediator between Controllers and the Edge side. It supports both web-socket based connection as well as a [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol access at the same time.
+The edgehub can choose one of the protocols to access to the cloudhub. CloudHub's function is to enable the communication between edge and the Controllers.
 
 The connection to the edge(through EdgeHub module) is done through the HTTP over websocket connection.
-For internal communication it directly communicates with the EdgeController.
+For internal communication it directly communicates with the Controllers.
 All the request send to CloudHub are of context object which are stored in channelQ along with the
 mapped channels of event object marked to its nodeID.
 
@@ -40,7 +40,7 @@ Event object is then passed through the channel.
 - Then the JSON message from connection is read
 - After that Message Router details are set
 - Message is then converted to event object for cloud internal communication
-- In the end the event is published to EdgeController
+- In the end the event is published to Controllers
 
 ### Write Message to Edge:
 
@@ -49,7 +49,7 @@ Event object is then passed through the channel.
 - The event object is converted to message structure
 - Write deadline is set. Then the message is passed to the websocket connection
 
-### Publish Message to EdgeController:
+### Publish Message to Controllers:
 
 - A default message with timestamp, clientID and event type is sent to controller
     every time a request is made to websocket connection

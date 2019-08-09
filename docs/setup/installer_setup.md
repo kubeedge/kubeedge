@@ -96,12 +96,12 @@ Usage:
 
 Examples:
 
-keadm join --edgecontrollerip=<ip address> --edgenodeid=<unique string as edge identifier>
+keadm join --cloudcoreip=<ip address> --edgenodeid=<unique string as edge identifier>
 
-  - For this command --edgecontrollerip flag is a Mandatory flag
+  - For this command --cloudcoreip flag is a Mandatory flag
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+keadm join --cloudcoreip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
 
   - In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value
         then default values will be used.
@@ -111,7 +111,7 @@ keadm join --edgecontrollerip=10.20.30.40 --edgenodeid=testing123 --kubeedge-ver
 
 Flags:
       --docker-version string[="18.06.0"]          Use this key to download and use the required Docker version (default "18.06.0")
-  -e, --edgecontrollerip string                    IP address of KubeEdge edgecontroller
+  -e, --cloudcoreip string                         IP address of KubeEdge cloudcore
   -i, --edgenodeid string                          KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
   -h, --help                                       help for join
   -k, --k8sserverip string                         IP:Port address of K8S API-Server
@@ -162,7 +162,7 @@ Flags:
 
 **NOTE:** All the below steps are executed as root user, to execute as sudo user ,Please add **sudo** infront of all the commands
 
-### 1. Deploy KubeEdge edgeController (With K8S Cluster)
+### 1. Deploy KubeEdge CloudCore (With K8s Cluster)
 
 #### Install tools with the particular version
 
@@ -212,18 +212,18 @@ tar -xvzf certs.tgz
 #### Install tools with the particular version
 
 ```
-keadm join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
+keadm join --cloudcoreip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
 ```
 
 #### Install tools with the default version 
 
 ```
-keadm join --edgecontrollerip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
+keadm join --cloudcoreip=<cloudIP> --edgenodeid=<unique string as edge identifier> --k8sserverip=<cloudIP>:8080 --kubeedge-version=<kubeedge Version> --docker-version=<Docker version>
 ```
 
 Sample execution output:
 ```
-# ./keadm join --edgecontrollerip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
+# ./keadm join --cloudcoreip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
 Same version of docker already installed in this host
 Host has mosquit+ already installed and running. Hence skipping the installation steps !!!
 Expected or Default KubeEdge version 0.3.0-beta.0 is already downloaded
@@ -235,7 +235,7 @@ kubeedge/edge/conf/logging.yaml
 kubeedge/edge/conf/edge.yaml
 kubeedge/edge/edgecore
 kubeedge/cloud/
-kubeedge/cloud/edgecontroller
+kubeedge/cloud/cloudcore
 kubeedge/cloud/conf/
 kubeedge/cloud/conf/controller.yaml
 kubeedge/cloud/conf/modules.yaml
@@ -251,7 +251,7 @@ KubeEdge edge core is running, For logs visit /etc/kubeedge/kubeedge/edge/
 
 **Note**:Cloud IP refers to IP generated ,from the step 1 as highlighted
 
-### 4. Edge node status on edgeController (master node) console
+### 4. Edge node status on cloudCore (master node) console
 
 On cloud host run,
 

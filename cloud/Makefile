@@ -1,8 +1,8 @@
-# make edgecontroller
+# make cloud part
 
-.PHONY: default edgecontroller test
-edgecontroller:
-	go build cmd/edgecontroller.go
+.PHONY: default cloudcore test
+cloudcore:
+	go build cmd/cloudcore/cloudcore.go
 lint:
 	golangci-lint run --disable-all -E gofmt -E golint ./...
 	go vet ./...
