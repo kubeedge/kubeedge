@@ -287,7 +287,11 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 func (e *edged) getIP() (string, error) {
 	var ipAddr net.IP
 	var err error
-	addrs, _ := net.LookupIP(e.nodeName)
+	hostName, _ := os.Hostname()
+	if hostName == "" {
+		hostName = e.nodeName
+	}
+	addrs, _ := net.LookupIP(hostName)
 	for _, addr := range addrs {
 		if err := util.ValidateNodeIP(addr); err == nil {
 			if addr.To4() != nil {
