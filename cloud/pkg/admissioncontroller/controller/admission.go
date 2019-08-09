@@ -117,12 +117,17 @@ func (ac *AdmissionController) Start(context *utils.CertContext) {
 }
 
 func (ac *AdmissionController) deployService() {
+	service, err := ac.Client.CoreV1().Services(constants.NamespaceName).Get(constants.ServiceName, metav1.GetOptions{})
+	if err == nil && service != nil {
+		klog.Infof("Service %s is already exists.", constants.ServiceName)
+		return
+	}
 	localIP := GetIPv4Addr()
 	if localIP == "" {
 		klog.Error("Cannot get one local valid IP")
 	}
 	//create service
-	service := &v1.Service{
+	service = &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: constants.NamespaceName,
 			Name:      constants.ServiceName,
@@ -137,7 +142,7 @@ func (ac *AdmissionController) deployService() {
 			},
 		},
 	}
-	_, err := ac.Client.CoreV1().Services(constants.NamespaceName).Create(service)
+	_, err = ac.Client.CoreV1().Services(constants.NamespaceName).Create(service)
 	if err != nil {
 		klog.Fatalf("Failed to create webhook service with error: %s", err)
 	}
@@ -219,9 +224,9 @@ func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *a
 	case admissionv1beta1.Create, admissionv1beta1.Update, admissionv1beta1.Delete, admissionv1beta1.Connect:
 		//TODO: abnormal configuration will be detected here, so far, greenlight for all of them.
 		reviewResponse.Allowed = true
-		log.LOGGER.Info("pass admission validation!")
+		klog.Info("pass admission validation!")
 	default:
-		log.LOGGER.Infof("Unsupported webhook operation %v", review.Request.Operation)
+		klog.Infof("Unsupported webhook operation %v", review.Request.Operation)
 		reviewResponse.Allowed = false
 		msg = msg + "Unsupported webhook operation!"
 	}
@@ -234,7 +239,7 @@ func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *a
 func configTLS(context *utils.CertContext) *tls.Config {
 	sCert, err := tls.X509KeyPair(context.Cert, context.Key)
 	if err != nil {
-		log.LOGGER.Fatalf("load certification failed with error: %v", err)
+		klog.Fatalf("load certification failed with error: %v", err)
 	}
 	return &tls.Config{
 		Certificates: []tls.Certificate{sCert},
