@@ -29,8 +29,8 @@ type Attributes struct {
 }
 
 type record struct {
-	Data          string `json:"data"`
-	Partition_key string `json:"partition_key"`
+	Data         string `json:"data"`
+	PartitionKey string `json:"partition_key"`
 }
 
 type stubCloudHub struct {

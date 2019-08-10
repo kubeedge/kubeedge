@@ -141,9 +141,9 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	deviceD := &dttype.Device{}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
 	var emptyDevUpdate dttype.DeviceUpdate
-	bytes_emptyDevUpdate, _ := json.Marshal(emptyDevUpdate)
+	bytesEmptyDevUpdate, _ := json.Marshal(emptyDevUpdate)
 	devUpdate := &dttype.DeviceUpdate{State: "online"}
-	bytes_devUpdate, _ := json.Marshal(devUpdate)
+	bytesDevUpdate, _ := json.Marshal(devUpdate)
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -173,7 +173,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-DeviceDoesNotExist",
 			context:  dtContexts,
 			resource: "DeviceB",
-			msg:      &model.Message{Content: bytes_emptyDevUpdate},
+			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -181,7 +181,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-DeviceExist",
 			context:  dtContexts,
 			resource: "DeviceC",
-			msg:      &model.Message{Content: bytes_emptyDevUpdate},
+			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -189,7 +189,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",
 			context:  dtContexts,
 			resource: "DeviceD",
-			msg:      &model.Message{Content: bytes_emptyDevUpdate},
+			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -197,7 +197,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:             "dealDeviceStateUpdateTest-UpdatePresent",
 			context:          dtContexts,
 			resource:         "DeviceD",
-			msg:              &model.Message{Content: bytes_devUpdate},
+			msg:              &model.Message{Content: bytesDevUpdate},
 			want:             nil,
 			wantErr:          nil,
 			filterReturn:     querySeterMock,
@@ -401,11 +401,11 @@ func TestDeviceUpdated(t *testing.T) {
 // TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContexts_emptyAttributes, _ := dtcontext.InitDTContext(mainContext)
-	dtContexts_NonEmptyAttributes, _ := dtcontext.InitDTContext(mainContext)
+	dtContextsEmptyAttributes, _ := dtcontext.InitDTContext(mainContext)
+	dtContextsNonEmptyAttributes, _ := dtcontext.InitDTContext(mainContext)
 	//Creating want and message attributes when device attribute is not present
 	devA := &dttype.Device{ID: "DeviceA"}
-	dtContexts_emptyAttributes.DeviceList.Store("DeviceA", devA)
+	dtContextsEmptyAttributes.DeviceList.Store("DeviceA", devA)
 	messageAttributes := make(map[string]*dttype.MsgAttr)
 	optional := true
 	msgattr := &dttype.MsgAttr{Value: "ON", Optional: &optional, Metadata: &dttype.TypeMetadata{Type: "device"}}
@@ -427,7 +427,7 @@ func TestDealMsgAttr(t *testing.T) {
 	cols["value"] = "ON"
 	upd := dtclient.DeviceAttrUpdate{Name: "DeviceB", DeviceID: "DeviceB", Cols: cols}
 	update = append(update, upd)
-	dtContexts_NonEmptyAttributes.DeviceList.Store("DeviceB", devB)
+	dtContextsNonEmptyAttributes.DeviceList.Store("DeviceB", devB)
 	want := dttype.DealAttrResult{Add: []dtclient.DeviceAttr{}, Delete: []dtclient.DeviceDelete{}, Update: update}
 	tests := []struct {
 		name          string
@@ -439,14 +439,14 @@ func TestDealMsgAttr(t *testing.T) {
 	}{
 		{
 			name:          "DealMsgAttrTest-DeviceAttribute not present",
-			context:       dtContexts_emptyAttributes,
+			context:       dtContextsEmptyAttributes,
 			deviceID:      "DeviceA",
 			msgAttributes: messageAttributes,
 			want:          wantDealAttrResult,
 		},
 		{
 			name:          "DealMsgAttrTest-DeviceAttribute present",
-			context:       dtContexts_NonEmptyAttributes,
+			context:       dtContextsNonEmptyAttributes,
 			deviceID:      "DeviceB",
 			msgAttributes: attributes,
 			dealType:      1,

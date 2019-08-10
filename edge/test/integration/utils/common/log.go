@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 )
 
 //Function to get time in millisec
@@ -31,7 +31,7 @@ func nowStamp() string {
 
 //functiont to log the Ginkgo framework logs
 func logf(level string, format string, args ...interface{}) {
-	fmt.Fprintf(GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
+	fmt.Fprintf(ginkgo.GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
 //Function to generate INFO logs
@@ -43,7 +43,7 @@ func Logf(format string, args ...interface{}) {
 func Failf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	logf("FAIL", msg)
-	Fail(nowStamp()+": "+msg, 1)
+	ginkgo.Fail(nowStamp()+": "+msg, 1)
 }
 
 //Function to log DEBUG logs
@@ -72,9 +72,9 @@ func InfoV6(format string, args ...interface{}) {
 
 //Function to print the test case name and status of execution
 func PrintTestcaseNameandStatus() {
-	var testdesc GinkgoTestDescription
+	var testdesc ginkgo.GinkgoTestDescription
 	var Status string
-	testdesc = CurrentGinkgoTestDescription()
+	testdesc = ginkgo.CurrentGinkgoTestDescription()
 	if testdesc.Failed == true {
 		Status = "FAILED"
 	} else {

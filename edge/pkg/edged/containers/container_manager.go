@@ -899,15 +899,15 @@ func (cm *containerManager) toKubeContainerStatus(phase v1.PodPhase, status *api
 
 	switch phase {
 	case v1.PodRunning:
-		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.Time{status.StartedAt}}
+		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.Time{Time: status.StartedAt}}
 		kubeStatus.Ready = true
 	case v1.PodFailed, v1.PodSucceeded:
 		kubeStatus.State.Terminated = &v1.ContainerStateTerminated{
 			ExitCode:    int32(status.ExitCode),
 			Reason:      status.Reason,
 			Message:     status.Message,
-			StartedAt:   metav1.Time{status.StartedAt},
-			FinishedAt:  metav1.Time{status.FinishedAt},
+			StartedAt:   metav1.Time{Time: status.StartedAt},
+			FinishedAt:  metav1.Time{Time: status.FinishedAt},
 			ContainerID: status.ID.ID,
 		}
 	default:

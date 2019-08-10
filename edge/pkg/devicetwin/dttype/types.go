@@ -116,7 +116,7 @@ type MsgTwin struct {
 
 //TwinValue the struct of twin value
 type TwinValue struct {
-	Value    *string        `json:"value, omitempty"`
+	Value    *string        `json:"value,omitempty"`
 	Metadata *ValueMetadata `json:"metadata,omitempty"`
 }
 
@@ -133,7 +133,7 @@ type TypeMetadata struct {
 
 //ValueMetadata the meta of value
 type ValueMetadata struct {
-	Timestamp int64 `json:"timestamp, omitempty"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
 //UpdateCloudVersion update cloud version
@@ -255,11 +255,11 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 	}
 	for key, value := range deviceTwinUpdate.Twin {
 		match := dtcommon.ValidateTwinKey(key)
-		errorKey := `The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128.`
+		errorKey := `The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128`
 		if !match {
 			return &deviceTwinUpdate, errors.New(errorKey)
 		}
-		errorValue := `The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512.`
+		errorValue := `The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512`
 		if value != nil {
 			if value.Expected != nil {
 				if value.Expected.Value != nil {

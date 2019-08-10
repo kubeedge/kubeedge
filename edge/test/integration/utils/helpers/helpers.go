@@ -33,7 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -289,7 +289,7 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 }
 
 //HandleAddAndDeletePods is function to handle app deployment/delete deployment.
-func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restart_policy v1.RestartPolicy) bool {
+func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restartPolicy v1.RestartPolicy) bool {
 	var req *http.Request
 	var err error
 
@@ -299,7 +299,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
+			Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
@@ -310,7 +310,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 		payload := &v1.Pod{
 			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
+			Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
 		}
 		respbytes, err := json.Marshal(payload)
 		if err != nil {
@@ -370,7 +370,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 
 //CheckPodRunningState is function to check the Pod state
 func CheckPodRunningState(EdgedEndPoint, podname string) {
-	Eventually(func() string {
+	gomega.Eventually(func() string {
 		var status string
 		pods, _ := GetPods(EdgedEndPoint)
 		for index := range pods.Items {
@@ -381,12 +381,12 @@ func CheckPodRunningState(EdgedEndPoint, podname string) {
 			}
 		}
 		return status
-	}, "240s", "2s").Should(Equal("Running"), "Application Deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "240s", "2s").Should(gomega.Equal("Running"), "Application Deployment is Unsuccessful, Pod has not come to Running State")
 }
 
 //CheckPodDeletion is function to check pod deletion
 func CheckPodDeletion(EdgedEndPoint, UID string) {
-	Eventually(func() bool {
+	gomega.Eventually(func() bool {
 		var IsExist = false
 		pods, _ := GetPods(EdgedEndPoint)
 		if len(pods.Items) > 0 {
@@ -399,5 +399,5 @@ func CheckPodDeletion(EdgedEndPoint, UID string) {
 			}
 		}
 		return IsExist
-	}, "30s", "4s").Should(Equal(false), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "30s", "4s").Should(gomega.Equal(false), "Delete Application deployment is Unsuccessful, Pod has not come to Running State")
 }
