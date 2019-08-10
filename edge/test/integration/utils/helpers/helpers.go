@@ -245,36 +245,38 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 
 //function to handle device addition and deletion.
 func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.Device) bool {
-	var req *http.Request
-	var err error
-
-	client := &http.Client{}
+	var httpMethod string
+	var payload dttype.MembershipUpdate
 	switch operation {
 	case "PUT":
-		payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{
+		httpMethod = http.MethodPut
+		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			device,
 		}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Add device to edgecore DB is failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPut, testMgrEndPoint, bytes.NewBuffer(respbytes))
 	case "DELETE":
-		payload := dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
+		httpMethod = http.MethodDelete
+		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			device,
 		}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Remove device from edgecore DB failed: %v", err)
-			return false
-		}
-		req, err = http.NewRequest(http.MethodDelete, testMgrEndPoint, bytes.NewBuffer(respbytes))
-	}
-	if err != nil {
-		// handle error
-		common.Failf("Open Sqlite DB failed :%v", err)
+	default:
+		common.Failf("operation %q is invalid", operation)
 		return false
 	}
+
+	respbytes, err := json.Marshal(payload)
+	if err != nil {
+		common.Failf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
+	if err != nil {
+		// handle error
+		common.Failf("Frame HTTP request failed: %v", err)
+		return false
+	}
+
+	client := &http.Client{}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
 	resp, err := client.Do(req)
@@ -290,35 +292,29 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 
 //HandleAddAndDeletePods is function to handle app deployment/delete deployment.
 func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restartPolicy v1.RestartPolicy) bool {
-	var req *http.Request
-	var err error
-
-	client := &http.Client{}
+	var httpMethod string
 	switch operation {
 	case "PUT":
-		payload := &v1.Pod{
-			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
-		}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Payload marshalling failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPut, edgedpoint, bytes.NewBuffer(respbytes))
+		httpMethod = http.MethodPut
 	case "DELETE":
-		payload := &v1.Pod{
-			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
-		}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Payload marshalling failed: %v", err)
-			return false
-		}
-		req, err = http.NewRequest(http.MethodDelete, edgedpoint, bytes.NewBuffer(respbytes))
+		httpMethod = http.MethodDelete
+	default:
+		common.Failf("operation %q is invalid", operation)
+		return false
 	}
+
+	payload := &v1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
+		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
+	}
+	respbytes, err := json.Marshal(payload)
+	if err != nil {
+		common.Failf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, edgedpoint, bytes.NewBuffer(respbytes))
 	if err != nil {
 		// handle error
 		common.Failf("Frame HTTP request failed: %v", err)
@@ -326,6 +322,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
