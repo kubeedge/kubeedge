@@ -16,10 +16,11 @@ export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
 test:
 	find ${TEST_DIR} -name "*_test.go"| xargs -I{} dirname {} | uniq | xargs -I{} go test ${T} {}
 
-# verify
-.PHONY: verify
-verify:
-	bash -x hack/verify.sh
+# lint
+.PHONY: lint
+lint:
+	golangci-lint run --disable-all -E gofmt -E golint -E misspell --deadline '10m' ./...
+	go vet ./...
 
 .PHONY: integration_test
 integration_test:

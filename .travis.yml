@@ -41,8 +41,8 @@ jobs:
       name: "bluetooth_device_lint"
     - script: make keadm_lint
       name: "keadm_lint"
-    - script: make edge_verify
-      name: "verify edge"
+    - script: make edge_lint
+      name: "edge_lint"
 
     - stage: "Test Build"                # naming the Tests stage
       script: make 
