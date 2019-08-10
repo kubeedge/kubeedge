@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/common/log"
@@ -33,7 +34,8 @@ const (
 
 var (
 	//twinActionCallBack map for action to callback
-	twinActionCallBack map[string]CallBack
+	twinActionCallBack         map[string]CallBack
+	initTwinActionCallBackOnce sync.Once
 )
 
 //TwinWorker deal twin event
@@ -74,10 +76,12 @@ func (tw TwinWorker) Start() {
 }
 
 func initTwinActionCallBack() {
-	twinActionCallBack = make(map[string]CallBack)
-	twinActionCallBack[dtcommon.TwinUpdate] = dealTwinUpdate
-	twinActionCallBack[dtcommon.TwinGet] = dealTwinGet
-	twinActionCallBack[dtcommon.TwinCloudSync] = dealTwinSync
+	initTwinActionCallBackOnce.Do(func() {
+		twinActionCallBack = make(map[string]CallBack)
+		twinActionCallBack[dtcommon.TwinUpdate] = dealTwinUpdate
+		twinActionCallBack[dtcommon.TwinGet] = dealTwinGet
+		twinActionCallBack[dtcommon.TwinCloudSync] = dealTwinSync
+	})
 }
 
 func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
