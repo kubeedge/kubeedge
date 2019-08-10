@@ -324,7 +324,6 @@ func (fSource *yamlConfigurationSource) GetConfigurationByKey(key string) (inter
 
 	for ckey, confInfo := range fSource.Configurations {
 		if confInfo == nil {
-			confInfo.Value = nil
 			continue
 		}
 
@@ -500,7 +499,6 @@ func (fSource *yamlConfigurationSource) compareUpdate(newconf map[string]interfa
 
 	for key, confInfo := range fSource.Configurations {
 		if confInfo == nil {
-			confInfo.Value = nil
 			continue
 		}
 

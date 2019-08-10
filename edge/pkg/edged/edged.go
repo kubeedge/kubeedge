@@ -663,8 +663,8 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 				}
 				log.LOGGER.Infof("Will restart pod [%s]", pod.Name)
 				key := types.NamespacedName{
-					pod.Namespace,
-					pod.Name,
+					Namespace: pod.Namespace,
+					Name:      pod.Name,
 				}
 				e.podAdditionQueue.Add(key.String())
 			}
@@ -688,8 +688,8 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 					}
 					log.LOGGER.Errorf("sync loop get event container died, restart pod [%s]", pod.Name)
 					key := types.NamespacedName{
-						pod.Namespace,
-						pod.Name,
+						Namespace: pod.Namespace,
+						Name:      pod.Name,
 					}
 					e.podAdditionQueue.Add(key.String())
 				} else {
@@ -711,8 +711,8 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 			for _, pod := range podsToSync {
 				if !e.podIsTerminated(pod) {
 					key := types.NamespacedName{
-						pod.Namespace,
-						pod.Name,
+						Namespace: pod.Namespace,
+						Name:      pod.Name,
 					}
 					e.podAdditionQueue.Add(key.String())
 				}
@@ -1028,8 +1028,8 @@ func (e *edged) addPod(obj interface{}) {
 	nodeInfo := schedulercache.NewNodeInfo(pod)
 	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
 	key := types.NamespacedName{
-		pod.Namespace,
-		pod.Name,
+		Namespace: pod.Namespace,
+		Name:      pod.Name,
 	}
 	e.podManager.AddPod(pod)
 	e.probeManager.AddPod(pod)
@@ -1041,8 +1041,8 @@ func (e *edged) updatePod(obj interface{}) {
 	newPod := obj.(*v1.Pod)
 	log.LOGGER.Infof("start update pod [%s]", newPod.Name)
 	key := types.NamespacedName{
-		newPod.Namespace,
-		newPod.Name,
+		Namespace: newPod.Namespace,
+		Name:      newPod.Name,
 	}
 	e.podManager.UpdatePod(newPod)
 	e.probeManager.AddPod(newPod)

@@ -36,7 +36,7 @@ import (
 var DeviceState string
 
 type DeviceUpdates struct {
-	EventId     string `json:"event_id"`
+	EventID     string `json:"event_id"`
 	Timestamp   int    `json:"timestamp"`
 	DeviceField `json:"device"`
 }
@@ -79,7 +79,7 @@ func SubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	DeviceState = deviceState.State
 }
 func DeviceSubscribed(client MQTT.Client, message MQTT.Message) {
-	topic := dtcommon.MemETPrefix + ctx.Cfg.NodeId + dtcommon.MemETUpdateSuffix
+	topic := dtcommon.MemETPrefix + ctx.Cfg.NodeID + dtcommon.MemETUpdateSuffix
 	if message.Topic() == topic {
 		devicePayload := (message.Payload())
 		err := json.Unmarshal(devicePayload, MemDeviceUpdate)
@@ -197,7 +197,7 @@ var _ = Describe("Event Bus Testing", func() {
 				common.Failf("client.Connect() Error is %s", TokenClient.Error())
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
-			devicetopic := dtcommon.MemETPrefix + ctx.Cfg.NodeId + dtcommon.MemETUpdateSuffix
+			devicetopic := dtcommon.MemETPrefix + ctx.Cfg.NodeID + dtcommon.MemETUpdateSuffix
 			topic := dtcommon.DeviceETPrefix + DeviceIDN + dtcommon.DeviceETStateUpdateSuffix + "/result"
 			Token := Client.Subscribe(devicetopic, 0, DeviceSubscribed)
 			if Token.Wait() && TokenClient.Error() != nil {

@@ -54,7 +54,7 @@ func (m *manager) updatePodStatus() {
 	for _, pod := range m.podManager.GetPods() {
 		uid := pod.UID
 		podStatus, ok := m.GetPodStatus(uid)
-		if !ok || &podStatus == nil {
+		if !ok {
 			continue
 		}
 		latestStatus, ok := m.apiStatusVersions[uid]

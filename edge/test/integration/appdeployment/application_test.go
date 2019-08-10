@@ -42,7 +42,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		BeforeEach(func() {
 		})
 		AfterEach(func() {
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 			time.Sleep(2 * time.Second)
@@ -52,7 +52,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_1: Test application deployment in edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
@@ -61,13 +61,13 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_2: Test List application deployment in edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 			pods, err := GetPods(ctx.Cfg.EdgedEndpoint + AppHandler)
 			Expect(err).To(BeNil())
-			common.Info("Get pods from Edged is Successfull !!")
+			common.Info("Get pods from Edged is Successful !!")
 			for index := range pods.Items {
 				pod := &pods.Items[index]
 				common.InfoV2("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
@@ -77,10 +77,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_3: Test application deployment delete from edgecore", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[1], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[1], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[1], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[1], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -90,7 +90,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			for i := 0; i < 2; i++ {
 				UID = "deployment-app-" + edge.GetRandomString(10)
-				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 				Expect(IsAppDeployed).Should(BeTrue())
 				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 				time.Sleep(5 * time.Second)
@@ -103,14 +103,14 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			for i := 0; i < 2; i++ {
 				UID = "deployment-app-" + edge.GetRandomString(10)
-				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+				IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 				Expect(IsAppDeployed).Should(BeTrue())
 				CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 				apps = append(apps, UID)
 				time.Sleep(5 * time.Second)
 			}
 			for i, appname := range apps {
-				IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, appname, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+				IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, appname, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[i], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 				Expect(IsAppDeleted).Should(BeTrue())
 				CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, appname)
 			}
@@ -119,7 +119,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_6: Test application deployment with restart policy : no restart", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyNever)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyNever)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
@@ -128,7 +128,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_7: Test application deployment with restrat policy : always", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyAlways)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyAlways)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
@@ -137,10 +137,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_8: Test application deployment without liveness probe and service probe", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -151,10 +151,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			httpact := v1.HTTPGetAction{Path: "/var/lib/edged", Scheme: "HTTP", Port: intstr.IntOrString{Type: intstr.Type(1), IntVal: 1884, StrVal: "1884"}}
 			handler := v1.Handler{HTTPGet: &httpact}
 			probe := v1.Probe{Handler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -165,10 +165,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			httpact := v1.HTTPGetAction{Path: "/var/lib/edged", Scheme: "HTTP", Port: intstr.IntOrString{Type: intstr.Type(1), IntVal: 10255, StrVal: "10255"}}
 			handler := v1.Handler{HTTPGet: &httpact}
 			probe := v1.Probe{Handler: handler, TimeoutSeconds: 1, InitialDelaySeconds: 10, PeriodSeconds: 15}
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], ReadinessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], ReadinessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], LivenessProbe: &probe, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -183,11 +183,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			limit := v1.ResourceList{v1.ResourceMemory: memory}
 			r := v1.ResourceRequirements{Limits: limit}
 
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -202,11 +202,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			limit := v1.ResourceList{v1.ResourceCPU: cpu}
 			r := v1.ResourceRequirements{Limits: limit}
 
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -228,11 +228,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			request := v1.ResourceList{v1.ResourceCPU: cpuReq, v1.ResourceMemory: memoReq}
 			r := v1.ResourceRequirements{Limits: limit, Requests: request}
 
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -253,11 +253,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			limit := v1.ResourceList{v1.ResourceCPU: cpu, v1.ResourceMemory: memory}
 			request := v1.ResourceList{v1.ResourceCPU: cpuReq, v1.ResourceMemory: memoReq}
 			r := v1.ResourceRequirements{Limits: limit, Requests: request}
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			time.Sleep(2 * time.Second)
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Resources: r, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -265,10 +265,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 		It("TC_TEST_APP_DEPLOYMENT_15: Test application deployment with container network configuration as host", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Ports: []v1.ContainerPort{}, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Ports: []v1.ContainerPort{}, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Ports: []v1.ContainerPort{}, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Ports: []v1.ContainerPort{}, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})
@@ -277,10 +277,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			//Generate the random string and assign as a UID
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			port := []v1.ContainerPort{{HostPort: 10256, ContainerPort: 10256, Protocol: v1.ProtocolTCP, HostIP: "127.0.0.1"}}
-			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Ports: port, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeployed := HandleAddAndDeletePods(http.MethodPut, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Ports: port, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeployed).Should(BeTrue())
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
-			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageUrl[0], Ports: port, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
+			IsAppDeleted := HandleAddAndDeletePods(http.MethodDelete, ctx.Cfg.TestManager+AppHandler, UID, []v1.Container{{Name: UID, Image: ctx.Cfg.AppImageURL[0], Ports: port, ImagePullPolicy: v1.PullIfNotPresent}}, v1.RestartPolicyOnFailure)
 			Expect(IsAppDeleted).Should(BeTrue())
 			CheckPodDeletion(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 		})

@@ -193,10 +193,9 @@ func TestDealSendToCloud(t *testing.T) {
 				if !exist {
 					t.Errorf("dealSendToCloud() failed to store message in ConfirmMap")
 					return
-				} else {
-					if !reflect.DeepEqual(expectedMessage, gotMsg) {
-						t.Errorf("dealSendToCloud() failed due to wrong gotMsg in ConfirmMap Got =%v Want=%v", test.msg, gotMsg)
-					}
+				}
+				if !reflect.DeepEqual(expectedMessage, gotMsg) {
+					t.Errorf("dealSendToCloud() failed due to wrong gotMsg in ConfirmMap Got =%v Want=%v", test.msg, gotMsg)
 				}
 			}
 		})

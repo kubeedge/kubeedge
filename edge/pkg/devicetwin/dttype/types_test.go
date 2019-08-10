@@ -573,21 +573,21 @@ func TestUnmarshalDeviceTwinUpdate(t *testing.T) {
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongKeyFormat",
 			payload: bytesTwinKeyError,
 			want:    &keyErrorTwinUpdate,
-			wantErr: errors.New("The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128."),
+			wantErr: errors.New("The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128"),
 		},
 		{
 			// Failure Case - wrong expected value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongExpectedValue",
 			payload: bytesTwinKeyExpectedValueError,
 			want:    &keyTwinUpdateExpectedValueError,
-			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512."),
+			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512"),
 		},
 		{
 			// Failure Case - wrong actual value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongActualValue",
 			payload: bytesTwinKeyActualValueError,
 			want:    &keyTwinUpdateActualValueError,
-			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512."),
+			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512"),
 		},
 		{
 			// Success Case

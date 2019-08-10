@@ -31,8 +31,8 @@ type Config struct {
 	MqttEndpoint  string   `json:"mqttEndpoint"`
 	TestManager   string   `json:"testManager"`
 	EdgedEndpoint string   `json:"edgedEndpoint"`
-	AppImageUrl   []string `json:"image_url"`
-	NodeId        string   `json:"nodeId"`
+	AppImageURL   []string `json:"image_url"`
+	NodeID        string   `json:"nodeId"`
 }
 
 //config struct
@@ -41,20 +41,20 @@ var config *Config
 //get config.json path
 func LoadConfig() Config {
 	if config == nil {
-		config = loadConfigJsonFromPath()
+		config = loadConfigJSONFromPath()
 	}
 	return *config
 }
 
 //Load Config.json from the PWD, and decode the config.
-func loadConfigJsonFromPath() *Config {
+func loadConfigJSONFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
 	if err != nil {
 		common.InfoV6("Failed to get Abs path: %v", err)
 		panic(err)
 	}
-	var config *Config = &Config{}
+	config := &Config{}
 	configFile, err := os.Open(path)
 	if err != nil {
 		panic(err)
