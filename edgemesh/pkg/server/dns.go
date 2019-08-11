@@ -280,7 +280,11 @@ func (q *dnsQuestion) getQName(req []byte, offset uint16) uint16 {
 
 // lookupFromMetaManager implement confirm the service exists
 func lookupFromMetaManager(serviceUrl string) (exist bool, err error) {
-	name, namespace := common.SplitServiceKey(serviceUrl)
+	name, namespace, _, _, _, err := common.ParseServiceName(serviceUrl)
+	if err != nil {
+		log.LOGGER.Errorf("parse service url error: %v", err)
+		return false, err
+	}
 	s, _ := metaClient.Services(namespace).Get(name)
 	if s != nil {
 		log.LOGGER.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)

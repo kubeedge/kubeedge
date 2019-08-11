@@ -3,7 +3,6 @@ package resolver
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"net/http"
 
 	"github.com/go-chassis/go-chassis/core/handler"
@@ -33,14 +32,7 @@ func (resolver *HTTPResolver) Resolve(data chan []byte, stop chan interface{}, i
 			if err == nil {
 				content = ""
 				req.RequestURI = ""
-				i := invocation.New(context.Background())
-				i.MicroServiceName = req.Host
-				i.SourceServiceID = ""
-				i.Protocol = "rest"
-				i.Args = req
-				i.Strategy = "Random"
-				i.Reply = &http.Response{}
-				invCallback(protocol, *i, []string{handler.Loadbalance, handler.Transport}, false)
+				invCallback(protocol, common.NewInvocationForHTTPResolver(req), []string{handler.Loadbalance, handler.Transport}, false)
 			}
 		case <-stop:
 			i := invocation.Invocation{}
@@ -73,14 +65,7 @@ func (resolver *HTTPTestResolver) Resolve(data chan []byte, stop chan interface{
 			if err == nil {
 				content = ""
 				req.RequestURI = ""
-				i := invocation.New(context.Background())
-				i.MicroServiceName = req.Host
-				i.SourceServiceID = ""
-				i.Protocol = "rest"
-				i.Args = req
-				i.Strategy = "Random"
-				i.Reply = &http.Response{}
-				invCallback(protocol, *i, []string{"httpTestHandler"}, false)
+				invCallback(protocol, common.NewInvocationForHTTPResolver(req), []string{"httpTestHandler"}, false)
 			}
 		case <-stop:
 			i := invocation.Invocation{}

@@ -2,6 +2,7 @@ package registry
 
 import (
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chassis/go-chassis/core/registry"
 	utiltags "github.com/go-chassis/go-chassis/pkg/util/tags"
@@ -40,10 +41,9 @@ func (r *ServiceDiscovery) GetAllMicroServices() ([]*registry.MicroService, erro
 
 // FindMicroServiceInstances find micro-service instances (subnets)
 func (r *ServiceDiscovery) FindMicroServiceInstances(consumerID, microServiceName string, tags utiltags.Tags) ([]*registry.MicroServiceInstance, error) {
-	name, namespace := common.SplitServiceKey(microServiceName)
-	servicePort, err := common.SplitToGetPort(microServiceName)
+	name, namespace, _, _, servicePort, err := common.ParseServiceName(microServiceName)
 	if err != nil {
-		log.LOGGER.Errorf("split micro service name to get port error: %v", err)
+		log.LOGGER.Errorf("parse micro service name error: %v", err)
 		return nil, err
 	}
 
@@ -59,15 +59,24 @@ func (r *ServiceDiscovery) FindMicroServiceInstances(consumerID, microServiceNam
 	}
 
 	var microServiceInstance []*registry.MicroServiceInstance
+	var httpPort v1.ServicePort
 	for _, port := range service.Spec.Ports {
-		if port.Protocol == "TCP" && int(port.Port) == servicePort {
-			for _, p := range pods {
-				microServiceInstance = append(microServiceInstance, &registry.MicroServiceInstance{
-					InstanceID:   "",
-					ServiceID:    name + "." + namespace,
-					HostName:     "",
-					EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", p.Status.HostIP, servicePort)},
-				})
+		if port.Name == "http" && port.Protocol == "TCP" && int(port.Port) == servicePort {
+			httpPort = port
+			break
+		}
+	}
+	for _, p := range pods {
+		for _, container := range p.Spec.Containers {
+			for _, containPort := range container.Ports {
+				if containPort.ContainerPort == int32(httpPort.TargetPort.IntValue()) {
+					microServiceInstance = append(microServiceInstance, &registry.MicroServiceInstance{
+						InstanceID:   "",
+						ServiceID:    name + "." + namespace,
+						HostName:     "",
+						EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", p.Status.HostIP, containPort.HostPort)},
+					})
+				}
 			}
 		}
 	}
