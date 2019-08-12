@@ -18,7 +18,6 @@ import (
 )
 
 var (
-	inter       = "docker0"
 	dnsQr       = uint16(0x8000)
 	oneByteSize = uint16(1)
 	twoByteSize = uint16(2)
@@ -74,37 +73,13 @@ func DnsStart() {
 	startDnsServer()
 }
 
-// getDnsServer returns the specific interface ip of version 4
-func getDnsServer() (net.IP, error) {
-	for {
-		ifaces, err := net.InterfaceByName(inter)
-		if err != nil {
-			log.LOGGER.Warnf("get interface error : %s", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-
-		addrs, _ := ifaces.Addrs()
-
-		for _, addr := range addrs {
-			if ip, inet, _ := net.ParseCIDR(addr.String()); len(inet.Mask) == 4 {
-				return ip, nil
-			}
-		}
-
-		log.LOGGER.Warnf("the interface " + inter + " has not config ip of version 4")
-		time.Sleep(time.Second * 3)
-	}
-
-}
-
 // startDnsServer start the DNS Server
 func startDnsServer() {
 	// init meta client
 	c := context.GetContext(context.MsgCtxTypeChannel)
 	metaClient = client.New(c)
 	//get DNS server name
-	lip, err := getDnsServer()
+	lip, err := getIP()
 	if err != nil {
 		log.LOGGER.Errorf("Dns server Start error : %s", err)
 		return

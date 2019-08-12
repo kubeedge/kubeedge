@@ -15,12 +15,16 @@ import (
 )
 
 func StartTCP() {
-	server := config.GetString("server", "0.0.0.0")
+	server, err:= getIP()
+	if err != nil {
+		log.LOGGER.Errorf("TCP server start error : %s", err)
+		return
+	}
+
+	serverIP := server.String()
 	port := config.GetString("port", "8080")
-
-	log.LOGGER.Infof("start listening at %s:%s", server, port)
-
-	listener, err := net.Listen("tcp", server+":"+port)
+	log.LOGGER.Infof("start listening at %s:%s", serverIP, port)
+	listener, err := net.Listen("tcp", serverIP+":"+port)
 	if err != nil {
 		log.LOGGER.Errorf("failed to start TCP server with error:%v\n", err)
 		return
