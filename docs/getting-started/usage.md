@@ -97,6 +97,14 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     ./cloudcore
     ```
 
++ (**Optional**)Run `admission`, this feature is still being evaluated.
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
+    # run admission control
+    ./admission
+    ```
+
+
 #### [Run as Kubernetes deployment](../../build/cloud/README.md)
 
 ### Run Edge

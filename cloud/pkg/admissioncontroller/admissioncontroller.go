@@ -8,10 +8,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller/utils"
 )
 
-func init() {
-	Run()
-}
-
 // Run starts admissioncontroller
 func Run() {
 	cli, err := utils.KubeClient()
