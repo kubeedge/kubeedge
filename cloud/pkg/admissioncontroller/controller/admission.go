@@ -63,11 +63,7 @@ func (ac *AdmissionController) Start(context *utils.CertContext) {
 		TLSConfig: tlsConfig,
 	}
 
-	go func() {
-		if err := server.ListenAndServeTLS("", ""); err != nil {
-			klog.Fatalf("ListenAndServeTLS for admission webhook returned error: %v", err)
-		}
-	}()
+	server.ListenAndServeTLS("", "")
 }
 
 // Register registers the admission webhook.
