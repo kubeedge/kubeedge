@@ -11,6 +11,8 @@ import (
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller/utils"
+	devicesv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	devivicecontrollerutils "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -38,6 +40,7 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme))
 	utilruntime.Must(admissionregistrationv1beta1.AddToScheme(scheme))
+	utilruntime.Must(devivicecontrollerutils.AddDeviceCrds(scheme))
 }
 
 // AdmissionController implements the admission webhook for validation of configuration.
@@ -218,13 +221,22 @@ func (ac *AdmissionController) ServeHTTP(w http.ResponseWriter, r *http.Request)
 func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
 	reviewResponse := admissionv1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
-
 	var msg string
+
 	switch review.Request.Operation {
-	case admissionv1beta1.Create, admissionv1beta1.Update, admissionv1beta1.Delete, admissionv1beta1.Connect:
-		//TODO: abnormal configuration will be detected here, so far, greenlight for all of them.
+	case admissionv1beta1.Create:
+		raw := review.Request.Object.Raw
+		devicemodel := devicesv1alpha1.DeviceModel{}
+		deserializer := codecs.UniversalDeserializer()
+		if _, _, err := deserializer.Decode(raw, nil, &devicemodel); err != nil {
+			klog.Errorf("validation failed with error: %v", err)
+			return toAdmissionResponse(err)
+		}
+		msg = validateDeviceModel(&devicemodel, &reviewResponse)
+	case admissionv1beta1.Update, admissionv1beta1.Delete, admissionv1beta1.Connect:
+		//TODO: abnormal configuration will be detected here, so far, greenlight for all of above.
 		reviewResponse.Allowed = true
-		klog.Info("pass admission validation!")
+		klog.Info("admission validation passed!")
 	default:
 		klog.Infof("Unsupported webhook operation %v", review.Request.Operation)
 		reviewResponse.Allowed = false
@@ -234,6 +246,21 @@ func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *a
 		reviewResponse.Result = &metav1.Status{Message: strings.TrimSpace(msg)}
 	}
 	return &reviewResponse
+}
+
+func validateDeviceModel(devicemodel *devicesv1alpha1.DeviceModel, response *admissionv1beta1.AdmissionResponse) string {
+	//device properties must be either Int or String while additional properties is not banned.
+	var msg string
+	for _, property := range devicemodel.Spec.Properties {
+		if property.Type.String == nil && property.Type.Int == nil {
+			msg = "Either Int or String must be set"
+			response.Allowed = false
+		} else if property.Type.String != nil && property.Type.Int != nil {
+			msg = "Only one of [Int, String] could be set for properties"
+			response.Allowed = false
+		}
+	}
+	return msg
 }
 
 func configTLS(context *utils.CertContext) *tls.Config {
