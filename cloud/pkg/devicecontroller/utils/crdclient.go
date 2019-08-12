@@ -13,7 +13,7 @@ import (
 // NewCRDClient is used to create a restClient for crd
 func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, error) {
 	scheme := runtime.NewScheme()
-	schemeBuilder := runtime.NewSchemeBuilder(addDeviceCrds)
+	schemeBuilder := runtime.NewSchemeBuilder(AddDeviceCrds)
 
 	err := schemeBuilder.AddToScheme(scheme)
 	if err != nil {
@@ -35,7 +35,7 @@ func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, error) {
 	return client, nil
 }
 
-func addDeviceCrds(scheme *runtime.Scheme) error {
+func AddDeviceCrds(scheme *runtime.Scheme) error {
 	// Add Device
 	scheme.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Device{}, &v1alpha1.DeviceList{})
 	v1.AddToGroupVersion(scheme, v1alpha1.SchemeGroupVersion)
