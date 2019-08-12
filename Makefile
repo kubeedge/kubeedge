@@ -36,10 +36,10 @@ edge_test:
 cloud_test:
 	$(MAKE) -C cloud test
 
-# verify
-.PHONY: edge_verify
-edge_verify:
-	cd edge && $(MAKE) verify
+# lint
+.PHONY: edge_lint
+edge_lint:
+	cd edge && $(MAKE) lint
 
 .PHONY: edge_integration_test
 edge_integration_test:
