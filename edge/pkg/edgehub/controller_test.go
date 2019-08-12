@@ -165,9 +165,6 @@ func TestNewEdgeHubController(t *testing.T) {
 			if !reflect.DeepEqual(got.chClient, tt.want.chClient) {
 				t.Errorf("NewEdgeHubController() chClient = %v, want %v", got.chClient, tt.want.chClient)
 			}
-			if !reflect.DeepEqual(got.keeperLock, tt.want.keeperLock) {
-				t.Errorf("NewEdgeHubController() KeeperLock = %v, want %v", got.keeperLock, tt.want.keeperLock)
-			}
 			if !reflect.DeepEqual(got.syncKeeper, tt.want.syncKeeper) {
 				t.Errorf("NewEdgeHubController() SyncKeeper = %v, want %v", got.syncKeeper, tt.want.syncKeeper)
 			}
@@ -185,13 +182,13 @@ func TestInitial(t *testing.T) {
 	}
 	tests := []struct {
 		name             string
-		controller       Controller
+		controller       *Controller
 		webSocketConfig  config.WebSocketConfig
 		controllerConfig config.ControllerConfig
 		ctx              *context.Context
 		expectedError    error
 	}{
-		{"Valid input", Controller{
+		{"Valid input", &Controller{
 			config:     &controllerConfig,
 			stopChan:   make(chan struct{}),
 			syncKeeper: make(map[string]chan model.Message),
@@ -204,7 +201,7 @@ func TestInitial(t *testing.T) {
 		},
 			context.GetContext(context.MsgCtxTypeChannel), nil},
 
-		{"No project Id & node Id", Controller{
+		{"No project Id & node Id", &Controller{
 			config:     &controllerConfig,
 			stopChan:   make(chan struct{}),
 			syncKeeper: make(map[string]chan model.Message),
@@ -234,10 +231,10 @@ func TestInitial(t *testing.T) {
 func TestAddKeepChannel(t *testing.T) {
 	tests := []struct {
 		name       string
-		controller Controller
+		controller *Controller
 		msgID      string
 	}{
-		{"Adding a valid keep channel", Controller{
+		{"Adding a valid keep channel", &Controller{
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			"test"},
@@ -256,11 +253,11 @@ func TestAddKeepChannel(t *testing.T) {
 func TestDeleteKeepChannel(t *testing.T) {
 	tests := []struct {
 		name       string
-		controller Controller
+		controller *Controller
 		msgID      string
 	}{
 		{"Deleting a valid keep channel",
-			Controller{
+			&Controller{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			"test"},
@@ -280,18 +277,18 @@ func TestDeleteKeepChannel(t *testing.T) {
 func TestIsSyncResponse(t *testing.T) {
 	tests := []struct {
 		name       string
-		controller Controller
+		controller *Controller
 		msgID      string
 		want       bool
 	}{
 		{"Sync message response case",
-			Controller{
+			&Controller{
 				syncKeeper: make(map[string]chan model.Message),
 			}, "test",
 			true,
 		},
 		{"Non sync message response  case",
-			Controller{
+			&Controller{
 				syncKeeper: make(map[string]chan model.Message),
 			}, "",
 			false,
@@ -314,26 +311,26 @@ func TestSendToKeepChannel(t *testing.T) {
 	message := model.NewMessage("test_id")
 	tests := []struct {
 		name                string
-		controller          Controller
+		controller          *Controller
 		message             *model.Message
 		keepChannelParentID string
 		expectedError       error
 	}{
-		{"SyncKeeper Error Case in send to keep channel", Controller{
+		{"SyncKeeper Error Case in send to keep channel", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		}, message,
 			"wrong_id",
 			fmt.Errorf("failed to get sync keeper channel, messageID:%+v", *message)},
 
-		{"Negative Test Case without syncKeeper Error ", Controller{
+		{"Negative Test Case without syncKeeper Error ", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		}, model.NewMessage("test_id"),
 			"test_id",
 			fmt.Errorf("failed to send message to sync keep channel")},
 
-		{"Send to keep channel with valid input", Controller{
+		{"Send to keep channel with valid input", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		}, model.NewMessage("test_id"),
@@ -361,26 +358,26 @@ func TestSendToKeepChannel(t *testing.T) {
 func TestDispatch(t *testing.T) {
 	tests := []struct {
 		name          string
-		controller    Controller
+		controller    *Controller
 		message       *model.Message
 		expectedError error
 		isResponse    bool
 	}{
-		{"dispatch with valid input", Controller{
+		{"dispatch with valid input", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
 			nil, false},
 
-		{"Error Case in dispatch", Controller{
+		{"Error Case in dispatch", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
 			fmt.Errorf("msg_group not found"), true},
 
-		{"Response Case in dispatch", Controller{
+		{"Response Case in dispatch", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			syncKeeper: make(map[string]chan model.Message),
 		},
@@ -410,17 +407,17 @@ func TestRouteToEdge(t *testing.T) {
 	initMocks(t)
 	tests := []struct {
 		name         string
-		controller   Controller
+		controller   *Controller
 		receiveTimes int
 	}{
-		{"Route to edge with proper input", Controller{
+		{"Route to edge with proper input", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			chClient:   mockAdapter,
 			syncKeeper: make(map[string]chan model.Message),
 			stopChan:   make(chan struct{}),
 		}, 0},
 
-		{"Receive Error in route to edge", Controller{
+		{"Receive Error in route to edge", &Controller{
 			context:    context.GetContext(context.MsgCtxTypeChannel),
 			chClient:   mockAdapter,
 			syncKeeper: make(map[string]chan model.Message),
@@ -448,13 +445,13 @@ func TestSendToCloud(t *testing.T) {
 	msg.Header.Sync = true
 	tests := []struct {
 		name          string
-		controller    Controller
+		controller    *Controller
 		message       model.Message
 		expectedError error
 		waitError     bool
 		mockError     error
 	}{
-		{"send to cloud with proper input", Controller{
+		{"send to cloud with proper input", &Controller{
 			context:  context.GetContext(context.MsgCtxTypeChannel),
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
@@ -467,7 +464,7 @@ func TestSendToCloud(t *testing.T) {
 			false,
 			nil},
 
-		{"Wait Error in send to cloud", Controller{
+		{"Wait Error in send to cloud", &Controller{
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
 				Protocol:        "websocket",
@@ -479,7 +476,7 @@ func TestSendToCloud(t *testing.T) {
 			true,
 			nil},
 
-		{"Send Failure in send to cloud", Controller{
+		{"Send Failure in send to cloud", &Controller{
 			chClient: mockAdapter,
 			config: &config.ControllerConfig{
 				HeartbeatPeriod: 3 * time.Second,
@@ -522,9 +519,9 @@ func TestRouteToCloud(t *testing.T) {
 	testContext := context.GetContext(context.MsgCtxTypeChannel)
 	tests := []struct {
 		name       string
-		controller Controller
+		controller *Controller
 	}{
-		{"Route to cloud with valid input", Controller{
+		{"Route to cloud with valid input", &Controller{
 			context:  testContext,
 			chClient: mockAdapter,
 			stopChan: make(chan struct{}),
@@ -552,9 +549,9 @@ func TestKeepalive(t *testing.T) {
 	initMocks(t)
 	tests := []struct {
 		name       string
-		controller Controller
+		controller *Controller
 	}{
-		{"Heartbeat failure Case", Controller{
+		{"Heartbeat failure Case", &Controller{
 			config: &config.ControllerConfig{
 				Protocol:  "websocket",
 				ProjectID: "foo",
@@ -588,18 +585,18 @@ func TestPubConnectInfo(t *testing.T) {
 	testContext := context.GetContext(context.MsgCtxTypeChannel)
 	tests := []struct {
 		name        string
-		controller  Controller
+		controller  *Controller
 		isConnected bool
 		content     string
 	}{
-		{"Cloud connected case", Controller{
+		{"Cloud connected case", &Controller{
 			context:    testContext,
 			stopChan:   make(chan struct{}),
 			syncKeeper: make(map[string]chan model.Message),
 		},
 			true,
 			connect.CloudConnected},
-		{"Cloud disconnected case", Controller{
+		{"Cloud disconnected case", &Controller{
 			context:    testContext,
 			stopChan:   make(chan struct{}),
 			syncKeeper: make(map[string]chan model.Message),

@@ -557,7 +557,7 @@ func TestBuildDeviceTwinResult(t *testing.T) {
 	devTwinResultDealType0 := createDeviceTwinResultDealTypeGet(baseMessage)
 	bytesDealType0, _ := json.Marshal(devTwinResultDealType0)
 	devTwinResult1 := createDeviceTwinResult(baseMessage)
-	bytes_DealType1, _ := json.Marshal(devTwinResult1)
+	bytesDealType1, _ := json.Marshal(devTwinResult1)
 	tests := []struct {
 		name        string
 		baseMessage BaseMessage
@@ -579,7 +579,7 @@ func TestBuildDeviceTwinResult(t *testing.T) {
 			baseMessage: baseMessage,
 			twins:       msgTwins,
 			dealType:    1,
-			want:        bytes_DealType1,
+			want:        bytesDealType1,
 			wantErr:     nil,
 		},
 	}
@@ -674,16 +674,16 @@ func TestUnmarshalDeviceUpdate(t *testing.T) {
 // createMessageTwinWithDiffValues() is function to create MessageTwin with actual and expected values.
 func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
-	twin_MetadataDeleted := MsgTwin{Metadata: &TypeMetadata{Type: "deleted"}}
+	twinMetadataDeleted := MsgTwin{Metadata: &TypeMetadata{Type: "deleted"}}
 	expected := "ON"
 	actual := "OFF"
-	twin_ActualExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, Actual: &TwinValue{Value: &actual}}
-	msgTwins["deleted"] = &twin_MetadataDeleted
-	msgTwins["twin"] = &twin_ActualExpected
-	twin_Expected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}}
-	msgTwins["expected"] = &twin_Expected
-	twin_Actual := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Actual: &TwinValue{Value: &expected}}
-	msgTwins["actual"] = &twin_Actual
+	twinActualExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, Actual: &TwinValue{Value: &actual}}
+	msgTwins["deleted"] = &twinMetadataDeleted
+	msgTwins["twin"] = &twinActualExpected
+	twinExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}}
+	msgTwins["expected"] = &twinExpected
+	twinActual := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Actual: &TwinValue{Value: &expected}}
+	msgTwins["actual"] = &twinActual
 	return msgTwins
 }
 

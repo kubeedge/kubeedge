@@ -399,7 +399,7 @@ func translateMountPropagation(mountMode *v1.MountPropagationMode) (runtimeapi.M
 	case *mountMode == v1.MountPropagationBidirectional:
 		return runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL, nil
 	default:
-		return 0, fmt.Errorf("invalid MountPropagation mode: %q", mountMode)
+		return 0, fmt.Errorf("invalid MountPropagation mode: %v", mountMode)
 	}
 }
 
@@ -829,7 +829,7 @@ func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 
 // makeBlockVolumes maps the raw block devices specified in the path of the container
 // Experimental
-func (e edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolumes kubecontainer.VolumeMap, blkutil volumepathhandler.BlockVolumePathHandler) ([]kubecontainer.DeviceInfo, error) {
+func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolumes kubecontainer.VolumeMap, blkutil volumepathhandler.BlockVolumePathHandler) ([]kubecontainer.DeviceInfo, error) {
 	var devices []kubecontainer.DeviceInfo
 	for _, device := range container.VolumeDevices {
 		// check path is absolute

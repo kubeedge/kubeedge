@@ -63,20 +63,17 @@ func (cadvisorClient) SubcontainerInfo(name string, req *cadvisorapi.ContainerIn
 //MachineInfo implement by hard code, just for initing a cadvisor client, edged will not use this function to get machine info.
 func (cadvisorClient) MachineInfo() (*cadvisorapi.MachineInfo, error) {
 	return &cadvisorapi.MachineInfo{
-		4,
-		3,
-		16000000,
-		[]cadvisorapi.HugePagesInfo{{4096, 1024}},
-		"",
-		"",
-		"",
-		[]cadvisorapi.FsInfo{},
-		make(map[string]cadvisorapi.DiskInfo),
-		[]cadvisorapi.NetInfo{},
-		[]cadvisorapi.Node{},
-		cadvisorapi.UnknownProvider,
-		cadvisorapi.UnknownInstance,
-		cadvisorapi.UnNamedInstance,
+		NumCores:       4,
+		CpuFrequency:   3,
+		MemoryCapacity: 16000000,
+		HugePages:      []cadvisorapi.HugePagesInfo{{PageSize: 4096, NumPages: 1024}},
+		Filesystems:    []cadvisorapi.FsInfo{},
+		DiskMap:        make(map[string]cadvisorapi.DiskInfo),
+		NetworkDevices: []cadvisorapi.NetInfo{},
+		Topology:       []cadvisorapi.Node{},
+		CloudProvider:  cadvisorapi.UnknownProvider,
+		InstanceType:   cadvisorapi.UnknownInstance,
+		InstanceID:     cadvisorapi.UnNamedInstance,
 	}, nil
 }
 

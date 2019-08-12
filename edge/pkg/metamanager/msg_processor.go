@@ -277,7 +277,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
 		send2Edged(resp, message.IsSync(), m.context)
-		log.LOGGER.Infof("resouce[%s] unchanged, no notice", resKey)
+		log.LOGGER.Infof("resource[%s] unchanged, no notice", resKey)
 		return
 	}
 

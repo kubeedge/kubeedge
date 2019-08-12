@@ -33,7 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -245,36 +245,38 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 
 //function to handle device addition and deletion.
 func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.Device) bool {
-	var req *http.Request
-	var err error
-
-	client := &http.Client{}
+	var httpMethod string
+	var payload dttype.MembershipUpdate
 	switch operation {
 	case "PUT":
-		payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{
+		httpMethod = http.MethodPut
+		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
 			device,
 		}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Add device to edgecore DB is failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPut, testMgrEndPoint, bytes.NewBuffer(respbytes))
 	case "DELETE":
-		payload := dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
+		httpMethod = http.MethodDelete
+		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
 			device,
 		}}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Remove device from edgecore DB failed: %v", err)
-			return false
-		}
-		req, err = http.NewRequest(http.MethodDelete, testMgrEndPoint, bytes.NewBuffer(respbytes))
-	}
-	if err != nil {
-		// handle error
-		common.Failf("Open Sqlite DB failed :%v", err)
+	default:
+		common.Failf("operation %q is invalid", operation)
 		return false
 	}
+
+	respbytes, err := json.Marshal(payload)
+	if err != nil {
+		common.Failf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
+	if err != nil {
+		// handle error
+		common.Failf("Frame HTTP request failed: %v", err)
+		return false
+	}
+
+	client := &http.Client{}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
 	resp, err := client.Do(req)
@@ -289,36 +291,30 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 }
 
 //HandleAddAndDeletePods is function to handle app deployment/delete deployment.
-func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restart_policy v1.RestartPolicy) bool {
-	var req *http.Request
-	var err error
-
-	client := &http.Client{}
+func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, container []v1.Container, restartPolicy v1.RestartPolicy) bool {
+	var httpMethod string
 	switch operation {
 	case "PUT":
-		payload := &v1.Pod{
-			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
-		}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Payload marshalling failed: %v", err)
-		}
-		req, err = http.NewRequest(http.MethodPut, edgedpoint, bytes.NewBuffer(respbytes))
+		httpMethod = http.MethodPut
 	case "DELETE":
-		payload := &v1.Pod{
-			TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-			Spec:       v1.PodSpec{RestartPolicy: restart_policy, Containers: container},
-		}
-		respbytes, err := json.Marshal(payload)
-		if err != nil {
-			common.Failf("Payload marshalling failed: %v", err)
-			return false
-		}
-		req, err = http.NewRequest(http.MethodDelete, edgedpoint, bytes.NewBuffer(respbytes))
+		httpMethod = http.MethodDelete
+	default:
+		common.Failf("operation %q is invalid", operation)
+		return false
 	}
+
+	payload := &v1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
+		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
+	}
+	respbytes, err := json.Marshal(payload)
+	if err != nil {
+		common.Failf("Payload marshalling failed: %v", err)
+		return false
+	}
+
+	req, err := http.NewRequest(httpMethod, edgedpoint, bytes.NewBuffer(respbytes))
 	if err != nil {
 		// handle error
 		common.Failf("Frame HTTP request failed: %v", err)
@@ -326,6 +322,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
@@ -370,7 +367,7 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 
 //CheckPodRunningState is function to check the Pod state
 func CheckPodRunningState(EdgedEndPoint, podname string) {
-	Eventually(func() string {
+	gomega.Eventually(func() string {
 		var status string
 		pods, _ := GetPods(EdgedEndPoint)
 		for index := range pods.Items {
@@ -381,12 +378,12 @@ func CheckPodRunningState(EdgedEndPoint, podname string) {
 			}
 		}
 		return status
-	}, "240s", "2s").Should(Equal("Running"), "Application Deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "240s", "2s").Should(gomega.Equal("Running"), "Application Deployment is Unsuccessful, Pod has not come to Running State")
 }
 
 //CheckPodDeletion is function to check pod deletion
 func CheckPodDeletion(EdgedEndPoint, UID string) {
-	Eventually(func() bool {
+	gomega.Eventually(func() bool {
 		var IsExist = false
 		pods, _ := GetPods(EdgedEndPoint)
 		if len(pods.Items) > 0 {
@@ -399,5 +396,5 @@ func CheckPodDeletion(EdgedEndPoint, UID string) {
 			}
 		}
 		return IsExist
-	}, "30s", "4s").Should(Equal(false), "Delete Application deployment is Unsuccessfull, Pod has not come to Running State")
+	}, "30s", "4s").Should(gomega.Equal(false), "Delete Application deployment is Unsuccessful, Pod has not come to Running State")
 }
