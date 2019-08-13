@@ -51,8 +51,7 @@ type AdmissionController struct {
 func strPtr(s string) *string { return &s }
 
 // Register registers the admission webhook.
-// FIXME: plugable?
-func (ac *AdmissionController) register(WebhookName string, context *utils.CertContext) error {
+func (ac *AdmissionController) registerWebhookForDeviceModel(WebhookName string, context *utils.CertContext) error {
 	webhook := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: WebhookName,
@@ -99,15 +98,15 @@ func (ac *AdmissionController) register(WebhookName string, context *utils.CertC
 
 // Start starts the webhook service
 func (ac *AdmissionController) Start(context *utils.CertContext) {
-	err := ac.register(constants.ExternalAdmissionWebhookName, context)
+	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
+	err := ac.registerWebhookForDeviceModel(constants.WebhookNameDeviceModel, context)
 	if err != nil {
 		klog.Fatalf("Failed to register the webhook with error: %v", err)
 	}
 	ac.deployService()
 	tlsConfig := configTLS(context)
-	http.Handle("/devicemodels", ac) //switch to something like http.HandleFunc("/devicemodels", admitDeviceModel) later.
+	http.HandleFunc("/devicemodels", serveDeviceModel)
 	server := &http.Server{
-		Handler:   ac,
 		Addr:      fmt.Sprintf(":%v", constants.Port),
 		TLSConfig: tlsConfig,
 	}
@@ -176,7 +175,10 @@ func (ac *AdmissionController) deployService() {
 	}
 }
 
-func (ac *AdmissionController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// admitFunc is the type we use for all of our validators and mutators
+type admitFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse
+
+func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	var body []byte
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
@@ -202,7 +204,7 @@ func (ac *AdmissionController) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		klog.Fatalf("decode failed with error: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
-		responseAdmissionReview.Response = ac.admit(requestedAdmissionReview)
+		responseAdmissionReview.Response = admit(requestedAdmissionReview)
 	}
 
 	// Return the same UID
@@ -218,7 +220,7 @@ func (ac *AdmissionController) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
+func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
 	reviewResponse := admissionv1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
 	var msg string
@@ -234,7 +236,7 @@ func (ac *AdmissionController) admit(review admissionv1beta1.AdmissionReview) *a
 		}
 		msg = validateDeviceModel(&devicemodel, &reviewResponse)
 	case admissionv1beta1.Update, admissionv1beta1.Delete, admissionv1beta1.Connect:
-		//TODO: abnormal configuration will be detected here, so far, greenlight for all of above.
+		//no rule defined for above operations, greenlight for all of above.
 		reviewResponse.Allowed = true
 		klog.Info("admission validation passed!")
 	default:
@@ -295,4 +297,8 @@ func GetIPv4Addr() string {
 		}
 	}
 	return ""
+}
+
+func serveDeviceModel(w http.ResponseWriter, r *http.Request) {
+	serve(w, r, admitDeviceModel)
 }
