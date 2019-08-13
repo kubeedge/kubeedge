@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
 	"os"
@@ -54,5 +55,15 @@ func SetupServerCert(namespaceName, serviceName string) *CertContext {
 		Cert:        EncodeCertPEM(signedCert),
 		Key:         privateKeyPEM,
 		SigningCert: EncodeCertPEM(signingCert),
+	}
+}
+
+func ConfigTLS(context *CertContext) *tls.Config {
+	sCert, err := tls.X509KeyPair(context.Cert, context.Key)
+	if err != nil {
+		log.LOGGER.Fatalf("load certification failed with error: %v", err)
+	}
+	return &tls.Config{
+		Certificates: []tls.Certificate{sCert},
 	}
 }
