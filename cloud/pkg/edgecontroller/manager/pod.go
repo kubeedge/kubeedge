@@ -4,15 +4,15 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
 // CachePod is the struct save pod data for check pod is really changed
@@ -69,7 +69,7 @@ func (pm *PodManager) merge() {
 				pm.mergedEvents <- re
 			}
 		default:
-			log.LOGGER.Warnf("event type: %s unsupported", re.Type)
+			klog.Warningf("event type: %s unsupported", re.Type)
 		}
 	}
 }

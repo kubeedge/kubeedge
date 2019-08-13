@@ -86,7 +86,7 @@ require (
 	k8s.io/client-go v0.0.0
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/cri-api v0.0.0
-	k8s.io/klog v0.3.3 // indirect
+	k8s.io/klog v0.3.3
 	k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kubernetes v1.15.1
 	k8s.io/utils v0.0.0-20190712204705-3dccf664f023

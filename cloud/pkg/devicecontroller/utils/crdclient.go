@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 )
 
 // NewCRDClient is used to create a restClient for crd
@@ -28,7 +28,7 @@ func NewCRDClient(cfg *rest.Config) (*rest.RESTClient, error) {
 
 	client, err := rest.RESTClientFor(&config)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to create REST Client due to error %v", err)
+		klog.Errorf("Failed to create REST Client due to error %v", err)
 		return nil, err
 	}
 

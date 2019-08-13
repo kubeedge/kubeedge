@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -60,7 +62,7 @@ func GetNamespace(msg model.Message) (string, error) {
 		res = sli[controller.ResourceNamespaceIndex]
 		index = controller.ResourceNamespaceIndex
 	}
-	log.LOGGER.Debugf("The namespace is %s, %d", res, index)
+	klog.V(4).Infof("The namespace is %s, %d", res, index)
 	return res, nil
 }
 
@@ -84,7 +86,7 @@ func GetResourceType(msg model.Message) (string, error) {
 		res = sli[controller.ResourceResourceTypeIndex]
 		index = controller.ResourceResourceTypeIndex
 	}
-	log.LOGGER.Infof("The resource type is %s, %d", res, index)
+	klog.Infof("The resource type is %s, %d", res, index)
 
 	return res, nil
 }
@@ -109,6 +111,6 @@ func GetResourceName(msg model.Message) (string, error) {
 		res = sli[controller.ResourceResourceNameIndex]
 		index = controller.ResourceResourceNameIndex
 	}
-	log.LOGGER.Infof("The resource name is %s, %d", res, index)
+	klog.Infof("The resource name is %s, %d", res, index)
 	return res, nil
 }

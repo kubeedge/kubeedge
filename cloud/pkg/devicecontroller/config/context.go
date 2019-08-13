@@ -1,9 +1,11 @@
 package config
 
 import (
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
@@ -25,19 +27,19 @@ func InitContextConfig() {
 	} else {
 		ContextSendModule = smn
 	}
-	log.LOGGER.Infof("Send module name: %s", ContextSendModule)
+	klog.Infof("Send module name: %s", ContextSendModule)
 
 	if rmn, err := config.CONFIG.GetValue("devicecontroller.context.receive-module").ToString(); err != nil {
 		ContextReceiveModule = constants.DefaultContextReceiveModuleName
 	} else {
 		ContextReceiveModule = rmn
 	}
-	log.LOGGER.Infof("Receive module name: %s", ContextReceiveModule)
+	klog.Infof("Receive module name: %s", ContextReceiveModule)
 
 	if rmn, err := config.CONFIG.GetValue("devicecontroller.context.response-module").ToString(); err != nil {
 		ContextResponseModule = constants.DefaultContextResponseModuleName
 	} else {
 		ContextResponseModule = rmn
 	}
-	log.LOGGER.Infof("Response module name: %s", ContextResponseModule)
+	klog.Infof("Response module name: %s", ContextResponseModule)
 }

@@ -1,8 +1,10 @@
 package config
 
 import (
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
@@ -26,44 +28,44 @@ var KubeBurst int
 
 func InitKubeConfig() {
 	if km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString(); err != nil {
-		log.LOGGER.Errorf("Devicecontroller kube master not set")
+		klog.Errorf("Devicecontroller kube master not set")
 	} else {
 		KubeMaster = km
 	}
-	log.LOGGER.Infof("Devicecontroller kube master: %s", KubeMaster)
+	klog.Infof("Devicecontroller kube master: %s", KubeMaster)
 
 	if kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString(); err != nil {
-		log.LOGGER.Errorf("Devicecontroller kube config not set")
+		klog.Error("Devicecontroller kube config not set")
 	} else {
 		KubeConfig = kc
 	}
-	log.LOGGER.Infof("Devicecontroller kube config: %s", KubeConfig)
+	klog.Infof("Devicecontroller kube config: %s", KubeConfig)
 
 	if kn, err := config.CONFIG.GetValue("devicecontroller.kube.namespace").ToString(); err != nil {
 		KubeNamespace = constants.DefaultKubeNamespace
 	} else {
 		KubeNamespace = kn
 	}
-	log.LOGGER.Infof("Devicecontroller kube namespace: %s", KubeNamespace)
+	klog.Infof("Devicecontroller kube namespace: %s", KubeNamespace)
 
 	if kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString(); err != nil {
 		KubeContentType = constants.DefaultKubeContentType
 	} else {
 		KubeContentType = kct
 	}
-	log.LOGGER.Infof("Devicecontroller kube content type: %s", KubeContentType)
+	klog.Infof("Devicecontroller kube content type: %s", KubeContentType)
 
 	if kqps, err := config.CONFIG.GetValue("devicecontroller.kube.qps").ToFloat64(); err != nil {
 		KubeQPS = constants.DefaultKubeQPS
 	} else {
 		KubeQPS = float32(kqps)
 	}
-	log.LOGGER.Infof("Devicecontroller kube QPS: %f", KubeQPS)
+	klog.Infof("Devicecontroller kube QPS: %f", KubeQPS)
 
 	if kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt(); err != nil {
 		KubeBurst = constants.DefaultKubeBurst
 	} else {
 		KubeBurst = kb
 	}
-	log.LOGGER.Infof("Devicecontroller kube burst: %d", KubeBurst)
+	klog.Infof("Devicecontroller kube burst: %d", KubeBurst)
 }

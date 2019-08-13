@@ -1,8 +1,10 @@
 package config
 
 import (
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -45,21 +47,21 @@ func InitBufferConfig() {
 	} else {
 		UpdatePodStatusBuffer = psb
 	}
-	log.LOGGER.Infof("Update controller.buffer.update-pod-status: %d", UpdatePodStatusBuffer)
+	klog.Infof("Update controller.buffer.update-pod-status: %d", UpdatePodStatusBuffer)
 
 	if nsb, err := config.CONFIG.GetValue("controller.buffer.update-node-status").ToInt(); err != nil {
 		UpdateNodeStatusBuffer = constants.DefaultUpdateNodeStatusBuffer
 	} else {
 		UpdateNodeStatusBuffer = nsb
 	}
-	log.LOGGER.Infof("Update controller.buffer.update-node-status: %d", UpdateNodeStatusBuffer)
+	klog.Infof("Update controller.buffer.update-node-status: %d", UpdateNodeStatusBuffer)
 
 	if qcb, err := config.CONFIG.GetValue("controller.buffer.query-configmap").ToInt(); err != nil {
 		QueryConfigMapBuffer = constants.DefaultQueryConfigMapBuffer
 	} else {
 		QueryConfigMapBuffer = qcb
 	}
-	log.LOGGER.Infof("Update controller.buffer.query-configmap: %d", QueryConfigMapBuffer)
+	klog.Infof("Update controller.buffer.query-configmap: %d", QueryConfigMapBuffer)
 
 	if qsb, err := config.CONFIG.GetValue("controller.buffer.query-secret").ToInt(); err != nil {
 		QuerySecretBuffer = constants.DefaultQuerySecretBuffer
@@ -73,7 +75,7 @@ func InitBufferConfig() {
 		QueryServiceBuffer = qsb
 	}
 
-	log.LOGGER.Infof("Update controller.buffer.query-service: %d", QueryServiceBuffer)
+	klog.Infof("Update controller.buffer.query-service: %d", QueryServiceBuffer)
 
 	if qeb, err := config.CONFIG.GetValue("controller.buffer.query-endpoints").ToInt(); err != nil {
 		QueryEndpointsBuffer = constants.DefaultQueryEndpointsBuffer
@@ -81,40 +83,40 @@ func InitBufferConfig() {
 		QueryEndpointsBuffer = qeb
 	}
 
-	log.LOGGER.Infof("Update controller.buffer.query-endpoints: %d", QueryEndpointsBuffer)
+	klog.Infof("Update controller.buffer.query-endpoints: %d", QueryEndpointsBuffer)
 
 	if peb, err := config.CONFIG.GetValue("controller.buffer.pod-event").ToInt(); err != nil {
 		PodEventBuffer = constants.DefaultPodEventBuffer
 	} else {
 		PodEventBuffer = peb
 	}
-	log.LOGGER.Infof("Update controller.buffer.pod-event: %d", PodEventBuffer)
+	klog.Infof("Update controller.buffer.pod-event: %d", PodEventBuffer)
 
 	if cmeb, err := config.CONFIG.GetValue("controller.buffer.configmap-event").ToInt(); err != nil {
 		ConfigMapEventBuffer = constants.DefaultConfigMapEventBuffer
 	} else {
 		ConfigMapEventBuffer = cmeb
 	}
-	log.LOGGER.Infof("Update controller.buffer.configmap-event: %d", ConfigMapEventBuffer)
+	klog.Infof("Update controller.buffer.configmap-event: %d", ConfigMapEventBuffer)
 
 	if seb, err := config.CONFIG.GetValue("controller.buffer.secret-event").ToInt(); err != nil {
 		SecretEventBuffer = constants.DefaultSecretEventBuffer
 	} else {
 		SecretEventBuffer = seb
 	}
-	log.LOGGER.Infof("Update controller.buffer.secret-event: %d", SecretEventBuffer)
+	klog.Infof("Update controller.buffer.secret-event: %d", SecretEventBuffer)
 
 	if seb, err := config.CONFIG.GetValue("controller.buffer.service-event").ToInt(); err != nil {
 		ServiceEventBuffer = constants.DefaultServiceEventBuffer
 	} else {
 		ServiceEventBuffer = seb
 	}
-	log.LOGGER.Infof("Update controller.buffer.service-event: %d", ServiceEventBuffer)
+	klog.Infof("Update controller.buffer.service-event: %d", ServiceEventBuffer)
 
 	if epb, err := config.CONFIG.GetValue("controller.buffer.endpoints-event").ToInt(); err != nil {
 		EndpointsEventBuffer = constants.DefaultEndpointsEventBuffer
 	} else {
 		EndpointsEventBuffer = epb
 	}
-	log.LOGGER.Infof("Update controller.buffer.endpoint-event: %d", EndpointsEventBuffer)
+	klog.Infof("Update controller.buffer.endpoint-event: %d", EndpointsEventBuffer)
 }

@@ -1,13 +1,13 @@
 package manager
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
 // SecretManager manage all events of secret by SharedInformer
