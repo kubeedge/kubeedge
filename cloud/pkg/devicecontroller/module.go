@@ -4,9 +4,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -41,12 +43,12 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		log.LOGGER.Errorf("New downstream controller failed with error: %s", err)
+		klog.Errorf("New downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
+		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 

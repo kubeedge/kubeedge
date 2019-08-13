@@ -10,9 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
@@ -54,7 +55,7 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 		case e := <-dc.podManager.Events():
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", pod)
+				klog.Warningf("object type: %T unsupported", pod)
 				continue
 			}
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
@@ -63,7 +64,7 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 			msg := model.NewMessage("")
 			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
 			if err != nil {
-				log.LOGGER.Warnf("built message resource failed with error: %s", err)
+				klog.Warningf("built message resource failed with error: %s", err)
 				continue
 			}
 			msg.Content = pod
@@ -77,15 +78,15 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 				dc.lc.AddOrUpdatePod(*pod)
 			default:
-				log.LOGGER.Warnf("pod event type: %s unsupported", e.Type)
+				klog.Warningf("pod event type: %s unsupported", e.Type)
 			}
 			if err := dc.messageLayer.Send(*msg); err != nil {
-				log.LOGGER.Warnf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 			} else {
-				log.LOGGER.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncPod")
+			klog.Info("stop syncPod")
 			running = false
 		}
 	}
@@ -98,16 +99,16 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 		case e := <-dc.configmapManager.Events():
 			configMap, ok := e.Object.(*v1.ConfigMap)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", configMap)
+				klog.Warningf("object type: %T unsupported", configMap)
 				continue
 			}
 			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
-			log.LOGGER.Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
+			klog.Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(n, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
-					log.LOGGER.Warnf("build message resource failed with error: %s", err)
+					klog.Warningf("build message resource failed with error: %s", err)
 				}
 				switch e.Type {
 				case watch.Added:
@@ -119,19 +120,19 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 					dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
 				default:
 					// unsupported operation, no need to send to any node
-					log.LOGGER.Warnf("config map event type: %s unsupported", e.Type)
+					klog.Warningf("config map event type: %s unsupported", e.Type)
 					break
 				}
 				msg.Content = configMap
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
-					log.LOGGER.Warnf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 				} else {
-					log.LOGGER.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncConfigMap")
+			klog.Info("stop syncConfigMap")
 			running = false
 		}
 	}
@@ -144,16 +145,16 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 		case e := <-dc.secretManager.Events():
 			secret, ok := e.Object.(*v1.Secret)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", secret)
+				klog.Warningf("object type: %T unsupported", secret)
 				continue
 			}
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
-			log.LOGGER.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
+			klog.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(n, secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
-					log.LOGGER.Warnf("build message resource failed with error: %s", err)
+					klog.Warningf("build message resource failed with error: %s", err)
 				}
 				switch e.Type {
 				case watch.Added:
@@ -166,19 +167,19 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 					dc.lc.DeleteSecret(secret.Namespace, secret.Name)
 				default:
 					// unsupported operation, no need to send to any node
-					log.LOGGER.Warnf("secret event type: %s unsupported", e.Type)
+					klog.Warningf("secret event type: %s unsupported", e.Type)
 					break
 				}
 				msg.Content = secret
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
-					log.LOGGER.Warnf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 				} else {
-					log.LOGGER.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncSecret")
+			klog.Info("stop syncSecret")
 			running = false
 		}
 	}
@@ -191,7 +192,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 		case e := <-dc.nodeManager.Events():
 			node, ok := e.Object.(*v1.Node)
 			if !ok {
-				log.LOGGER.Warnf("Object type: %T unsupported", node)
+				klog.Warningf("Object type: %T unsupported", node)
 				continue
 			}
 			switch e.Type {
@@ -209,16 +210,16 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 							// TODO: what should in place of namespace and service when we are sending service list ?
 							resource, err := messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeServiceList, "service")
 							if err != nil {
-								log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+								klog.Warningf("Built message resource failed with error: %s", err)
 								break
 							}
 							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 							svcs := dc.lc.GetAllServices()
 							msg.Content = svcs
 							if err := dc.messageLayer.Send(*msg); err != nil {
-								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+								klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 							} else {
-								log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+								klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 							}
 
 							for _, svc := range svcs {
@@ -227,15 +228,15 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 									msg := model.NewMessage("")
 									resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
 									if err != nil {
-										log.LOGGER.Warnf("Built message resource failed with error: %v", err)
+										klog.Warningf("Built message resource failed with error: %v", err)
 										continue
 									}
 									msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 									msg.Content = pods
 									if err := dc.messageLayer.Send(*msg); err != nil {
-										log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+										klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 									} else {
-										log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+										klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 									}
 								}
 							}
@@ -245,15 +246,15 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 							// TODO: what should in place of namespace and endpoints when we are sending endpoints list ?
 							resource, err = messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeEndpointsList, "endpoints")
 							if err != nil {
-								log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+								klog.Warningf("Built message resource failed with error: %s", err)
 								break
 							}
 							msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 							msg.Content = dc.lc.GetAllEndpoints()
 							if err := dc.messageLayer.Send(*msg); err != nil {
-								log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+								klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 							} else {
-								log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+								klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 							}
 						}
 						break
@@ -263,11 +264,11 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 			default:
 				// unsupported operation, no need to send to any node
-				log.LOGGER.Warnf("Node event type: %s unsupported", e.Type)
+				klog.Warningf("Node event type: %s unsupported", e.Type)
 				break
 			}
 		case <-stop:
-			log.LOGGER.Infof("Stop syncNodes")
+			klog.Info("Stop syncNodes")
 			running = false
 		}
 	}
@@ -281,7 +282,7 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 		case e := <-dc.serviceManager.Events():
 			svc, ok := e.Object.(*v1.Service)
 			if !ok {
-				log.LOGGER.Warnf("Object type: %T unsupported", svc)
+				klog.Warningf("Object type: %T unsupported", svc)
 				continue
 			}
 			switch e.Type {
@@ -296,7 +297,7 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
-				log.LOGGER.Warnf("Service event type: %s unsupported", e.Type)
+				klog.Warningf("Service event type: %s unsupported", e.Type)
 				continue
 			}
 
@@ -304,26 +305,26 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
 				nodeName, ok := key.(string)
 				if !ok {
-					log.LOGGER.Warnf("Failed to assert key to sting")
+					klog.Warning("Failed to assert key to sting")
 					return true
 				}
 				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
-					log.LOGGER.Warnf("Built message resource failed with error: %v", err)
+					klog.Warningf("Built message resource failed with error: %v", err)
 					return true
 				}
 				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 				msg.Content = svc
 				if err := dc.messageLayer.Send(*msg); err != nil {
-					log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 				} else {
-					log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 				return true
 			})
 		case <-stop:
-			log.LOGGER.Infof("Stop sync services")
+			klog.Info("Stop sync services")
 			running = false
 		}
 	}
@@ -337,7 +338,7 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 		case e := <-dc.endpointsManager.Events():
 			eps, ok := e.Object.(*v1.Endpoints)
 			if !ok {
-				log.LOGGER.Warnf("Object type: %T unsupported", eps)
+				klog.Warningf("Object type: %T unsupported", eps)
 				continue
 			}
 
@@ -356,7 +357,7 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
-				log.LOGGER.Warnf("endpoints event type: %s unsupported", e.Type)
+				klog.Warningf("endpoints event type: %s unsupported", e.Type)
 				continue
 			}
 			// send to all nodes
@@ -383,42 +384,42 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 				dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
 					nodeName, check := key.(string)
 					if !check {
-						log.LOGGER.Warnf("Failed to assert key to sting")
+						klog.Warning("Failed to assert key to sting")
 						return true
 					}
 					msg := model.NewMessage("")
 					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
 					if err != nil {
-						log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+						klog.Warningf("Built message resource failed with error: %s", err)
 						return true
 					}
 					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 					msg.Content = eps
 					if err := dc.messageLayer.Send(*msg); err != nil {
-						log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 					} else {
-						log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+						klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 					}
 					if operation != model.DeleteOperation && ok {
 						msg := model.NewMessage("")
 						resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, model.ResourceTypePodlist, svc.Name)
 						if err != nil {
-							log.LOGGER.Warnf("Built message resource failed with error: %v", err)
+							klog.Warningf("Built message resource failed with error: %v", err)
 							return true
 						}
 						msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 						msg.Content = pods.Items
 						if err := dc.messageLayer.Send(*msg); err != nil {
-							log.LOGGER.Warnf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 						} else {
-							log.LOGGER.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+							klog.Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 						}
 					}
 					return true
 				})
 			}
 		case <-stop:
-			log.LOGGER.Infof("Stop sync endpoints")
+			klog.Info("Stop sync endpoints")
 			running = false
 		}
 	}
@@ -426,7 +427,7 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
-	log.LOGGER.Infof("start downstream controller")
+	klog.Info("start downstream controller")
 	// pod
 	dc.podStop = make(chan struct{})
 	go dc.syncPod(dc.podStop)
@@ -456,8 +457,8 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Info("Stopping downstream controller")
-	defer log.LOGGER.Info("Downstream controller stopped")
+	klog.Info("Stopping downstream controller")
+	defer klog.Info("Downstream controller stopped")
 
 	dc.podStop <- struct{}{}
 	dc.configMapStop <- struct{}{}
@@ -516,7 +517,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	cli, err := utils.KubeClient()
 	if err != nil {
-		log.LOGGER.Warnf("create kube client failed with error: %s", err)
+		klog.Warningf("create kube client failed with error: %s", err)
 		return nil, err
 	}
 
@@ -530,43 +531,43 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, nodeName)
 	if err != nil {
-		log.LOGGER.Warnf("create pod manager failed with error: %s", err)
+		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
 	configMapManager, err := manager.NewConfigMapManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("create configmap manager failed with error: %s", err)
+		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
 	secretManager, err := manager.NewSecretManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("create secret manager failed with error: %s", err)
+		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
 	}
 
 	nodesManager, err := manager.NewNodesManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("Create nodes manager failed with error: %s", err)
+		klog.Warningf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
 	serviceManager, err := manager.NewServiceManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("Create service manager failed with error: %s", err)
+		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
 	endpointsManager, err := manager.NewEndpointsManager(cli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("Create endpoints manager failed with error: %s", err)
+		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
 	}
 
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
-		log.LOGGER.Warnf("create message layer failed with error: %s", err)
+		klog.Warningf("create message layer failed with error: %s", err)
 		return nil, err
 	}
 

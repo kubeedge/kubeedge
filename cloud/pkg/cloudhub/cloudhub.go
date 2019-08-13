@@ -4,10 +4,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -62,19 +64,19 @@ func (a *cloudHub) Cleanup() {
 func initHubConfig() {
 	cafile, err := config.CONFIG.GetValue("cloudhub.ca").ToString()
 	if err != nil {
-		log.LOGGER.Info("missing cloudhub.ca configuration key, loading default path and filename ./" + chconfig.DefaultCAFile)
+		klog.Infof("missing cloudhub.ca configuration key, loading default path and filename ./%s", chconfig.DefaultCAFile)
 		cafile = chconfig.DefaultCAFile
 	}
 
 	certfile, err := config.CONFIG.GetValue("cloudhub.cert").ToString()
 	if err != nil {
-		log.LOGGER.Info("missing cloudhub.cert configuration key, loading default path and filename ./" + chconfig.DefaultCertFile)
+		klog.Infof("missing cloudhub.cert configuration key, loading default path and filename ./%s", chconfig.DefaultCertFile)
 		certfile = chconfig.DefaultCertFile
 	}
 
 	keyfile, err := config.CONFIG.GetValue("cloudhub.key").ToString()
 	if err != nil {
-		log.LOGGER.Info("missing cloudhub.key configuration key, loading default path and filename ./" + chconfig.DefaultKeyFile)
+		klog.Infof("missing cloudhub.key configuration key, loading default path and filename ./%s", chconfig.DefaultKeyFile)
 		keyfile = chconfig.DefaultKeyFile
 	}
 
@@ -109,7 +111,7 @@ func initHubConfig() {
 	}
 
 	if len(errs) > 0 {
-		log.LOGGER.Errorf("cloudhub failed with errors : %v", errs)
+		klog.Errorf("cloudhub failed with errors : %v", errs)
 		os.Exit(1)
 	}
 }

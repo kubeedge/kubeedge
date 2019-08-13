@@ -22,21 +22,22 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
-
 	"github.com/satori/go.uuid"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 )
 
 // Constants for protocol, datatype, configmap, deviceProfile
@@ -95,7 +96,7 @@ func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 		case e := <-dc.deviceModelManager.Events():
 			deviceModel, ok := e.Object.(*v1alpha1.DeviceModel)
 			if !ok {
-				log.LOGGER.Warnf("object type: %T unsupported", deviceModel)
+				klog.Warningf("object type: %T unsupported", deviceModel)
 				continue
 			}
 			switch e.Type {
@@ -106,10 +107,10 @@ func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 			case watch.Modified:
 				dc.deviceModelUpdated(deviceModel)
 			default:
-				log.LOGGER.Warnf("deviceModel event type: %s unsupported", e.Type)
+				klog.Warningf("deviceModel event type: %s unsupported", e.Type)
 			}
 		case <-stop:
-			log.LOGGER.Infof("stop syncDeviceModel")
+			klog.Info("stop syncDeviceModel")
 			running = false
 		}
 	}
@@ -164,7 +165,7 @@ func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 		case e := <-dc.deviceManager.Events():
 			device, ok := e.Object.(*v1alpha1.Device)
 			if !ok {
-				log.LOGGER.Warnf("Object type: %T unsupported", device)
+				klog.Warningf("Object type: %T unsupported", device)
 				continue
 			}
 			switch e.Type {
@@ -175,10 +176,10 @@ func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 			case watch.Modified:
 				dc.deviceUpdated(device)
 			default:
-				log.LOGGER.Warnf("Device event type: %s unsupported", e.Type)
+				klog.Warningf("Device event type: %s unsupported", e.Type)
 			}
 		case <-stop:
-			log.LOGGER.Infof("Stop syncDevice")
+			klog.Info("Stop syncDevice")
 			running = false
 		}
 	}
@@ -201,26 +202,26 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha1.Device) {
 
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
 			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
-				log.LOGGER.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
+				klog.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 				return
 			}
 		}
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
-			log.LOGGER.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
+			klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
 		return
 	}
 	nodeConfigMap, ok := configMap.(*v1.ConfigMap)
 	if !ok {
-		log.LOGGER.Errorf("Failed to assert to configmap")
+		klog.Error("Failed to assert to configmap")
 		return
 	}
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
 	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
-		log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+		klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 		return
 	}
 }
@@ -238,7 +239,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 	} else {
 		err := json.Unmarshal([]byte(dp), deviceProfile)
 		if err != nil {
-			log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
+			klog.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
 			return
 		}
 	}
@@ -246,7 +247,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 	addDeviceInstanceAndProtocol(device, deviceProfile)
 	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
 	if !ok {
-		log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
 		return
 	}
 	deviceModel := dm.(*CacheDeviceModel)
@@ -263,7 +264,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 	}
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+		klog.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 		return
 	}
 	configMap.Data[DeviceProfileJSON] = string(bytes)
@@ -345,7 +346,7 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 		deviceProtocol.Protocol = Bluetooth
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
 	} else {
-		log.LOGGER.Warnf("Device doesnt support valid protocol")
+		klog.Warning("Device doesnt support valid protocol")
 	}
 	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
 	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
@@ -361,7 +362,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
 
 		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
 		if err != nil {
-			log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
 		msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
@@ -375,7 +376,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
 
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
-			log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 	}
 }
@@ -412,7 +413,7 @@ func createDevice(device *v1alpha1.Device) types.Device {
 		// TODO: how to manage versioning ??
 		cloudVersion, err := strconv.ParseInt(device.ResourceVersion, 10, 64)
 		if err != nil {
-			log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+			klog.Warningf("Failed to parse cloud version due to error %v", err)
 		}
 		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 		msgTwin := &types.MsgTwin{
@@ -452,25 +453,25 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 		if !ok {
-			log.LOGGER.Errorf("Failed to load configmap")
+			klog.Error("Failed to load configmap")
 			return
 		}
 
 		nodeConfigMap, ok := configMap.(*v1.ConfigMap)
 		if !ok {
-			log.LOGGER.Errorf("Failed to assert to configmap")
+			klog.Error("Failed to assert to configmap")
 			return
 		}
 		dp, ok := nodeConfigMap.Data[DeviceProfileJSON]
 		if !ok || dp == "{}" {
 			// This case should never be hit as we delete empty configmaps
-			log.LOGGER.Errorf("Failed to get deviceProfile from configmap data or deviceProfile is empty")
+			klog.Error("Failed to get deviceProfile from configmap data or deviceProfile is empty")
 			return
 		}
 
 		deviceProfile := &types.DeviceProfile{}
 		if err := json.Unmarshal([]byte(dp), deviceProfile); err != nil {
-			log.LOGGER.Errorf("Failed to unmarshal due to error: %v", err)
+			klog.Errorf("Failed to unmarshal due to error: %v", err)
 			return
 		}
 		var oldProtocol string
@@ -500,7 +501,7 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 		} else if device.Spec.Protocol.Bluetooth != nil {
 			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Name, device.Spec.Protocol.Bluetooth)
 		} else {
-			log.LOGGER.Warnf("Unsupported device protocol")
+			klog.Warning("Unsupported device protocol")
 		}
 
 		// update the protocol in deviceInstance
@@ -514,14 +515,14 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 
 		bytes, err := json.Marshal(deviceProfile)
 		if err != nil {
-			log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+			klog.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 			return
 		}
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
-			log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}
 	}
@@ -565,7 +566,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 
 				resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
 				if err != nil {
-					log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+					klog.Warningf("Built message resource failed with error: %s", err)
 					return
 				}
 				msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
@@ -576,7 +577,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
-					log.LOGGER.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
+					klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
 				}
 			}
 		}
@@ -602,7 +603,7 @@ func addDeletedTwins(oldTwin []v1alpha1.Twin, newTwin []v1alpha1.Twin, twin map[
 			// TODO: how to manage versioning ??
 			cloudVersion, err := strconv.ParseInt(version, 10, 64)
 			if err != nil {
-				log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+				klog.Warningf("Failed to parse cloud version due to error %v", err)
 			}
 			twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 			msgTwin := &types.MsgTwin{
@@ -645,7 +646,7 @@ func addUpdatedTwins(newTwin []v1alpha1.Twin, twin map[string]*types.MsgTwin, ve
 		// TODO: how to manage versioning ??
 		cloudVersion, err := strconv.ParseInt(version, 10, 64)
 		if err != nil {
-			log.LOGGER.Warnf("Failed to parse cloud version due to error %v", err)
+			klog.Warningf("Failed to parse cloud version due to error %v", err)
 		}
 		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
 		msgTwin := &types.MsgTwin{
@@ -667,7 +668,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 		}
 		nodeConfigMap, ok := configMap.(*v1.ConfigMap)
 		if !ok {
-			log.LOGGER.Errorf("Failed to assert to configmap")
+			klog.Error("Failed to assert to configmap")
 			return
 		}
 
@@ -685,7 +686,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
-			log.LOGGER.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}
 	}
@@ -695,21 +696,21 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device, configMap *v1.ConfigMap) {
 	dp, ok := configMap.Data[DeviceProfileJSON]
 	if !ok {
-		log.LOGGER.Errorf("Device profile does not exist in the configmap")
+		klog.Error("Device profile does not exist in the configmap")
 		return
 	}
 
 	deviceProfile := &types.DeviceProfile{}
 	err := json.Unmarshal([]byte(dp), deviceProfile)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
+		klog.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
 		return
 	}
 	deleteDeviceInstanceAndProtocol(device, deviceProfile)
 
 	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
 	if !ok {
-		log.LOGGER.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
+		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
 		return
 	}
 	deviceModel := dm.(*CacheDeviceModel)
@@ -726,7 +727,7 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device,
 	}
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+		klog.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 		return
 	}
 	configMap.Data[DeviceProfileJSON] = string(bytes)
@@ -799,19 +800,19 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 		content.Timestamp = time.Now().UnixNano() / 1e6
 		msg.Content = content
 		if err != nil {
-			log.LOGGER.Warnf("Built message resource failed with error: %s", err)
+			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
-			log.LOGGER.Errorf("Failed to send device addition message %v due to error %v", msg, err)
+			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 	}
 }
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
-	log.LOGGER.Infof("Start downstream controller")
+	klog.Info("Start downstream controller")
 
 	dc.deviceModelStop = make(chan struct{})
 	go dc.syncDeviceModel(dc.deviceModelStop)
@@ -826,8 +827,8 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Info("Stopping downstream devicecontroller")
-	defer log.LOGGER.Info("Downstream devicecontroller stopped")
+	klog.Info("Stopping downstream devicecontroller")
+	defer klog.Info("Downstream devicecontroller stopped")
 
 	dc.deviceStop <- struct{}{}
 	dc.deviceModelStop <- struct{}{}
@@ -840,26 +841,26 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	cli, err := utils.KubeClient()
 	if err != nil {
-		log.LOGGER.Warnf("Create kube client failed with error: %s", err)
+		klog.Warningf("Create kube client failed with error: %s", err)
 		return nil, err
 	}
 
 	config, err := utils.KubeConfig()
 	if err != nil {
-		log.LOGGER.Warnf("Get kubeConfig error: %v", err)
+		klog.Warningf("Get kubeConfig error: %v", err)
 		return nil, err
 	}
 
 	crdcli, err := utils.NewCRDClient(config)
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("Create device manager failed with error: %s", err)
+		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
 	deviceModelManager, err := manager.NewDeviceModelManager(crdcli, v1.NamespaceAll)
 	if err != nil {
-		log.LOGGER.Warnf("Create device manager failed with error: %s", err)
+		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
@@ -867,7 +868,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
-		log.LOGGER.Warnf("Create message layer failed with error: %s", err)
+		klog.Warningf("Create message layer failed with error: %s", err)
 		return nil, err
 	}
 

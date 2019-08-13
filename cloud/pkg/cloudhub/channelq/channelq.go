@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 )
@@ -66,7 +67,7 @@ func (q *ChannelEventQueue) DispatchMessage() {
 	for {
 		msg, err := q.ctx.Receive(model.SrcCloudHub)
 		if err != nil {
-			log.LOGGER.Infof("receive not Message format message")
+			klog.Info("receive not Message format message")
 			continue
 		}
 		resource := msg.Router.Resource
@@ -80,12 +81,12 @@ func (q *ChannelEventQueue) DispatchMessage() {
 			}
 		}
 		if nodeID == "" {
-			log.LOGGER.Warnf("node id is not found in the message")
+			klog.Warning("node id is not found in the message")
 			continue
 		}
 		rChannel, err := q.getRChannel(nodeID)
 		if err != nil {
-			log.LOGGER.Infof("fail to get dispatch channel for %s", nodeID)
+			klog.Infof("fail to get dispatch channel for %s", nodeID)
 			continue
 		}
 		event := model.MessageToEvent(&msg)
@@ -98,7 +99,7 @@ func (q *ChannelEventQueue) DispatchMessage() {
 func (q *ChannelEventQueue) getRChannel(nodeID string) (chan model.Event, error) {
 	channels, ok := q.channelPool.Load(nodeID)
 	if !ok {
-		log.LOGGER.Errorf("rChannel for edge node %s is removed", nodeID)
+		klog.Errorf("rChannel for edge node %s is removed", nodeID)
 		return nil, fmt.Errorf("rChannel not found")
 	}
 	rChannel := channels.(chan model.Event)
@@ -125,7 +126,7 @@ func (q *ChannelEventQueue) Connect(info *model.HubInfo) error {
 func (q *ChannelEventQueue) Close(info *model.HubInfo) error {
 	channels, ok := q.channelPool.Load(info.NodeID)
 	if !ok {
-		log.LOGGER.Warnf("rChannel for edge node %s is already removed", info.NodeID)
+		klog.Warningf("rChannel for edge node %s is already removed", info.NodeID)
 		return nil
 	}
 	rChannel := channels.(chan model.Event)

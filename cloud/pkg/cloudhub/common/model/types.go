@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -127,7 +128,7 @@ func (event *Event) IsNodeStopped() bool {
 	}
 	body, ok := event.Content.(map[string]interface{})
 	if !ok {
-		log.LOGGER.Errorf("fail to decode node update message: %s, type is %T", event.GetContent(), event.Content)
+		klog.Errorf("fail to decode node update message: %s, type is %T", event.GetContent(), event.Content)
 		// it can't be determined if the node has stopped
 		return false
 	}
