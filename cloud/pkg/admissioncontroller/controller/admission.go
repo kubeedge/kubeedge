@@ -1,11 +1,9 @@
 package controller
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
 
@@ -49,6 +47,28 @@ type AdmissionController struct {
 }
 
 func strPtr(s string) *string { return &s }
+
+// Start starts the webhook service
+func (ac *AdmissionController) Start(context *utils.CertContext) {
+	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
+	err := ac.registerWebhookForDeviceModel(constants.WebhookNameDeviceModel, context)
+	if err != nil {
+		klog.Fatalf("Failed to register the webhook with error: %v", err)
+	}
+	ac.deployService()
+	tlsConfig := utils.ConfigTLS(context)
+	http.HandleFunc("/devicemodels", serveDeviceModel)
+	server := &http.Server{
+		Addr:      fmt.Sprintf(":%v", constants.Port),
+		TLSConfig: tlsConfig,
+	}
+
+	go func() {
+		if err := server.ListenAndServeTLS("", ""); err != nil {
+			klog.Fatalf("ListenAndServeTLS for admission webhook returned error: %v", err)
+		}
+	}()
+}
 
 // Register registers the admission webhook.
 func (ac *AdmissionController) registerWebhookForDeviceModel(WebhookName string, context *utils.CertContext) error {
@@ -96,35 +116,13 @@ func (ac *AdmissionController) registerWebhookForDeviceModel(WebhookName string,
 	return err
 }
 
-// Start starts the webhook service
-func (ac *AdmissionController) Start(context *utils.CertContext) {
-	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
-	err := ac.registerWebhookForDeviceModel(constants.WebhookNameDeviceModel, context)
-	if err != nil {
-		klog.Fatalf("Failed to register the webhook with error: %v", err)
-	}
-	ac.deployService()
-	tlsConfig := configTLS(context)
-	http.HandleFunc("/devicemodels", serveDeviceModel)
-	server := &http.Server{
-		Addr:      fmt.Sprintf(":%v", constants.Port),
-		TLSConfig: tlsConfig,
-	}
-
-	go func() {
-		if err := server.ListenAndServeTLS("", ""); err != nil {
-			klog.Fatalf("ListenAndServeTLS for admission webhook returned error: %v", err)
-		}
-	}()
-}
-
 func (ac *AdmissionController) deployService() {
 	service, err := ac.Client.CoreV1().Services(constants.NamespaceName).Get(constants.ServiceName, metav1.GetOptions{})
 	if err == nil && service != nil {
 		klog.Infof("Service %s is already exists.", constants.ServiceName)
 		return
 	}
-	localIP := GetIPv4Addr()
+	localIP := utils.GetIPv4Addr()
 	if localIP == "" {
 		klog.Error("Cannot get one local valid IP")
 	}
@@ -265,16 +263,6 @@ func validateDeviceModel(devicemodel *devicesv1alpha1.DeviceModel, response *adm
 	return msg
 }
 
-func configTLS(context *utils.CertContext) *tls.Config {
-	sCert, err := tls.X509KeyPair(context.Cert, context.Key)
-	if err != nil {
-		klog.Fatalf("load certification failed with error: %v", err)
-	}
-	return &tls.Config{
-		Certificates: []tls.Certificate{sCert},
-	}
-}
-
 // toAdmissionResponse is a helper function to create an AdmissionResponse
 func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
 	return &admissionv1beta1.AdmissionResponse{
@@ -282,21 +270,6 @@ func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
 			Message: err.Error(),
 		},
 	}
-}
-
-func GetIPv4Addr() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
 }
 
 func serveDeviceModel(w http.ResponseWriter, r *http.Request) {
