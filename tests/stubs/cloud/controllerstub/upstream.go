@@ -19,7 +19,8 @@ package controllerstub
 import (
 	"encoding/json"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -45,7 +46,7 @@ type UpstreamController struct {
 
 // Start UpstreamController
 func (uc *UpstreamController) Start() error {
-	log.LOGGER.Infof("Start upstream controller")
+	klog.Infof("Start upstream controller")
 	uc.stopDispatch = make(chan struct{})
 	uc.stopUpdatePodStatus = make(chan struct{})
 	uc.podStatusChan = make(chan model.Message, 1024)
@@ -58,7 +59,7 @@ func (uc *UpstreamController) Start() error {
 
 // Stop UpstreamController
 func (uc *UpstreamController) Stop() error {
-	log.LOGGER.Infof("Stop upstream controller")
+	klog.Infof("Stop upstream controller")
 	uc.stopDispatch <- struct{}{}
 	uc.stopUpdatePodStatus <- struct{}{}
 	return nil
@@ -69,31 +70,31 @@ func (uc *UpstreamController) WaitforMessage(stop chan struct{}) {
 	running := true
 	go func() {
 		<-stop
-		log.LOGGER.Infof("Stop waiting for message")
+		klog.Infof("Stop waiting for message")
 		running = false
 	}()
 	for running {
 		// Receive message from cloudhub
 		msg, err := uc.context.Receive(constants.ControllerStub)
 		if err != nil {
-			log.LOGGER.Errorf("Receive message failed: %v", err)
+			klog.Errorf("Receive message failed: %v", err)
 			continue
 		}
-		log.LOGGER.Debugf("Receive message: %v", msg)
+		klog.V(4).Infof("Receive message: %v", msg)
 
 		// Get resource type in message
 		resourceType, err := utils.GetResourceType(msg)
 		if err != nil {
-			log.LOGGER.Errorf("Get message: %s resource type with error: %v", msg.GetID(), err)
+			klog.Errorf("Get message: %s resource type with error: %v", msg.GetID(), err)
 			continue
 		}
-		log.LOGGER.Infof("Message: %s resource type: %s", msg.GetID(), resourceType)
+		klog.Infof("Message: %s resource type: %s", msg.GetID(), resourceType)
 
 		switch resourceType {
 		case model.ResourceTypePodStatus:
 			uc.podStatusChan <- msg
 		default:
-			log.LOGGER.Debugf("Message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
+			klog.V(4).Infof("Message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
 	}
 }
@@ -104,7 +105,7 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 	for running {
 		select {
 		case msg := <-uc.podStatusChan:
-			log.LOGGER.Infof("Message: %s operation: %s resource: %s",
+			klog.Infof("Message: %s operation: %s resource: %s",
 				msg.GetID(), msg.GetOperation(), msg.GetResource())
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
@@ -117,7 +118,7 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 					var err error
 					data, err = json.Marshal(msg.GetContent())
 					if err != nil {
-						log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+						klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
 						continue
 					}
 				}
@@ -125,21 +126,21 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 				// Get pod
 				var pod types.FakePod
 				if err := json.Unmarshal(data, &pod); err != nil {
-					log.LOGGER.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
+					klog.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
 					continue
 				}
 
 				// Update pod status in cache
 				uc.podManager.UpdatePodStatus(pod.Namespace+"/"+pod.Name, pod.Status)
 
-				log.LOGGER.Infof("Pod namespace: %s name: %s status: %s",
+				klog.Infof("Pod namespace: %s name: %s status: %s",
 					pod.Namespace, pod.Name, pod.Status)
 			default:
-				log.LOGGER.Debugf("Pod operation: %s unsupported", msg.GetOperation())
+				klog.V(4).Infof("Pod operation: %s unsupported", msg.GetOperation())
 			}
-			log.LOGGER.Debugf("Message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("Message: %s process successfully", msg.GetID())
 		case <-stop:
-			log.LOGGER.Infof("Stop updatePodStatus")
+			klog.Infof("Stop updatePodStatus")
 			running = false
 		}
 	}
