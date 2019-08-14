@@ -609,7 +609,7 @@ func newEdged() (*edged, error) {
 
 func (e *edged) initializeModules() error {
 	node, _ := e.initialNode()
-	if err := e.containerManager.Start(node, e.GetActivePods, nil, e.statusManager, e.runtimeService); err != nil {
+	if err := e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(), e.statusManager, e.runtimeService); err != nil {
 		log.LOGGER.Errorf("Failed to start device plugin manager %v", err)
 		return err
 	}
