@@ -111,7 +111,7 @@ replace (
 	k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.0.0-20190718190424-bef8d46b95de
 	k8s.io/gengo v0.0.0 => k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1 // indirect
-	k8s.io/klog => k8s.io/klog v0.3.3 // indirect
+	k8s.io/klog => k8s.io/klog v0.4.0 // indirect
 	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
 	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
