@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/go-chassis/go-chassis/core/invocation"
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 )
 
@@ -37,7 +38,7 @@ func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, i
 			invCallback(protocol, i)
 			return i, true
 		}
-		log.LOGGER.Infof("content: %s\n", content)
+		klog.Infof("content: %s\n", content)
 	}
 }
 
@@ -48,8 +49,8 @@ func TestResolve(t *testing.T) {
 	resolver.RegisterResolver(r1)
 	resolver.RegisterResolver(r2)
 	invCallback := func(protocol string, inv invocation.Invocation) {
-		log.LOGGER.Infof("protocol in invCallback:%v", protocol)
-		log.LOGGER.Infof("content in invCallback: %v\n", inv.Args)
+		klog.Infof("protocol in invCallback:%v", protocol)
+		klog.Infof("content in invCallback: %v\n", inv.Args)
 	}
 	d := make(chan []byte, 1024)
 	s := make(chan interface{}, 1)
