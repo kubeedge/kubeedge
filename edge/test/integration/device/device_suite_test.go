@@ -21,13 +21,13 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 //context to load config and access across the package
@@ -64,11 +64,12 @@ var (
 
 //Function to run the Ginkgo Test
 func TestEdgecoreEventBus(t *testing.T) {
+
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 
 		MemDeviceUpdate = &MembershipUpdate{}
-		common.InfoV6("Before Suite execution")
+		common.Infof("Before Suite execution")
 
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
@@ -76,16 +77,19 @@ func TestEdgecoreEventBus(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")
-		common.InfoV2("Remove Mock devices from edgenode !!")
+		common.Infof("Remove Mock devices from edgenode !!")
 
 		//Deleting all the devices created for testing purposes.
-		IsDeviceDeleted := helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceN)
+		IsDeviceDeleted := helpers.HandleAddAndDeleteDevice(http.MethodDelete,
+			ctx.Cfg.TestManager+Devicehandler, DeviceN)
 		Expect(IsDeviceDeleted).Should(BeTrue())
 
-		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete,
+			ctx.Cfg.TestManager+Devicehandler, DeviceATT)
 		Expect(IsDeviceDeleted).Should(BeTrue())
 
-		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete, ctx.Cfg.TestManager+Devicehandler, DeviceTW)
+		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete,
+			ctx.Cfg.TestManager+Devicehandler, DeviceTW)
 		Expect(IsDeviceDeleted).Should(BeTrue())
 	})
 

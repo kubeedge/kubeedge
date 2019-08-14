@@ -10,14 +10,11 @@ import (
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app"
 )
 
-func init() {
+func main() {
 	klog.InitFlags(nil)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-}
 
-func main() {
 	command := app.NewEdgeSiteCommand()
-
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
 	}

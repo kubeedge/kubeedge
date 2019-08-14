@@ -41,8 +41,6 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerstrslice "github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -58,6 +56,9 @@ import (
 	schedulercache "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 	hashutil "k8s.io/kubernetes/pkg/util/hash"
 	"k8s.io/kubernetes/pkg/util/selinux"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
 )
 
 //Pod details constants

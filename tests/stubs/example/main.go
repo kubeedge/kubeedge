@@ -37,13 +37,13 @@ const (
 	ControllerHubURL = "http://127.0.0.1:54321"
 )
 
-func init() {
-	klog.InitFlags(nil)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-}
-
 func main() {
 	var pod types.FakePod
+
+	klog.InitFlags(nil)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+
 	pod.Name = "TestPod"
 	pod.Namespace = constants.NamespaceDefault
 	pod.NodeName = "edgenode1"

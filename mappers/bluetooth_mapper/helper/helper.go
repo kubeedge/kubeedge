@@ -22,9 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"k8s.io/klog"
 )
 
 var (

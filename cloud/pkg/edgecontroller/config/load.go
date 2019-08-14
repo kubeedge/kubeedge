@@ -4,7 +4,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
