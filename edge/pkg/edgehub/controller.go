@@ -5,10 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/klog"
+
 	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -51,7 +53,7 @@ func NewEdgeHubController() *Controller {
 func (ehc *Controller) initial(ctx *context.Context) (err error) {
 	config.GetConfig().WSConfig.URL, err = bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get cloud hub url, error:%+v", err)
+		klog.Warningf("failed to get cloud hub url, error:%+v", err)
 		return err
 	}
 
@@ -72,12 +74,12 @@ func (ehc *Controller) Start(ctx *context.Context) {
 	for {
 		err := ehc.initial(ctx)
 		if err != nil {
-			log.LOGGER.Fatalf("failed to init controller: %v", err)
+			klog.Fatalf("failed to init controller: %v", err)
 			return
 		}
 		err = ehc.chClient.Init()
 		if err != nil {
-			log.LOGGER.Errorf("connection error, try again after 60s: %v", err)
+			klog.Errorf("connection error, try again after 60s: %v", err)
 			time.Sleep(waitConnectionPeriod)
 			continue
 		}
@@ -140,14 +142,14 @@ func (ehc *Controller) sendToKeepChannel(message model.Message) error {
 	defer ehc.keeperLock.RUnlock()
 	channel, exist := ehc.syncKeeper[message.GetParentID()]
 	if !exist {
-		log.LOGGER.Errorf("failed to get sync keeper channel, messageID:%+v", message)
+		klog.Errorf("failed to get sync keeper channel, messageID:%+v", message)
 		return fmt.Errorf("failed to get sync keeper channel, messageID:%+v", message)
 	}
 	// send response into synckeep channel
 	select {
 	case channel <- message:
 	default:
-		log.LOGGER.Errorf("failed to send message to sync keep channel")
+		klog.Errorf("failed to send message to sync keep channel")
 		return fmt.Errorf("failed to send message to sync keep channel")
 	}
 	return nil
@@ -157,7 +159,7 @@ func (ehc *Controller) dispatch(message model.Message) error {
 	// TODO: dispatch message by the message type
 	md, ok := groupMap[message.GetGroup()]
 	if !ok {
-		log.LOGGER.Warnf("msg_group not found")
+		klog.Warningf("msg_group not found")
 		return fmt.Errorf("msg_group not found")
 	}
 
@@ -173,15 +175,15 @@ func (ehc *Controller) routeToEdge() {
 	for {
 		message, err := ehc.chClient.Receive()
 		if err != nil {
-			log.LOGGER.Errorf("websocket read error: %v", err)
+			klog.Errorf("websocket read error: %v", err)
 			ehc.stopChan <- struct{}{}
 			return
 		}
 
-		log.LOGGER.Infof("received msg from cloud-hub:%+v", message)
+		klog.Infof("received msg from cloud-hub:%+v", message)
 		err = ehc.dispatch(message)
 		if err != nil {
-			log.LOGGER.Errorf("failed to dispatch message, discard: %v", err)
+			klog.Errorf("failed to dispatch message, discard: %v", err)
 		}
 	}
 }
@@ -189,7 +191,7 @@ func (ehc *Controller) routeToEdge() {
 func (ehc *Controller) sendToCloud(message model.Message) error {
 	err := ehc.chClient.Send(message)
 	if err != nil {
-		log.LOGGER.Errorf("failed to send message: %v", err)
+		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
 	}
 
@@ -202,7 +204,7 @@ func (ehc *Controller) sendToCloud(message model.Message) error {
 			ehc.context.SendResp(response)
 			ehc.deleteKeepChannel(response.GetParentID())
 		case <-sendTimer.C:
-			log.LOGGER.Warnf("timeout to receive response for message: %+v", message)
+			klog.Warningf("timeout to receive response for message: %+v", message)
 			ehc.deleteKeepChannel(message.GetID())
 		}
 	}
@@ -218,7 +220,7 @@ func (ehc *Controller) routeToCloud() {
 	for {
 		message, err := ehc.context.Receive(ModuleNameEdgeHub)
 		if err != nil {
-			log.LOGGER.Errorf("failed to receive message from edge: %v", err)
+			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -226,7 +228,7 @@ func (ehc *Controller) routeToCloud() {
 		// post message to cloud hub
 		err = ehc.sendToCloud(message)
 		if err != nil {
-			log.LOGGER.Errorf("failed to send message to cloud: %v", err)
+			klog.Errorf("failed to send message to cloud: %v", err)
 			ehc.stopChan <- struct{}{}
 			return
 		}
@@ -240,7 +242,7 @@ func (ehc *Controller) keepalive() {
 			FillBody("ping")
 		err := ehc.chClient.Send(*msg)
 		if err != nil {
-			log.LOGGER.Errorf("websocket write error: %v", err)
+			klog.Errorf("websocket write error: %v", err)
 			ehc.stopChan <- struct{}{}
 			return
 		}

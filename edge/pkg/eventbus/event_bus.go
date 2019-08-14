@@ -6,8 +6,9 @@ import (
 	"os"
 
 	"github.com/256dpi/gomqtt/packet"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -58,7 +59,7 @@ func (eb *eventbus) Start(c *context.Context) {
 
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
 	if nodeID == nil {
-		log.LOGGER.Errorf("node id not configured")
+		klog.Errorf("node id not configured")
 		os.Exit(1)
 	}
 
@@ -102,7 +103,7 @@ func (eb *eventbus) Start(c *context.Context) {
 		}
 
 		if qos.(int) < int(packet.QOSAtMostOnce) || qos.(int) > int(packet.QOSExactlyOnce) || sessionQueueSize.(int) <= 0 {
-			log.LOGGER.Errorf("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
+			klog.Errorf("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
 			os.Exit(1)
 		}
 		// launch an internal mqtt server only
@@ -110,7 +111,7 @@ func (eb *eventbus) Start(c *context.Context) {
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {
-			log.LOGGER.Errorf("Launch mqtt broker failed, %s", err.Error())
+			klog.Errorf("Launch mqtt broker failed, %s", err.Error())
 			os.Exit(1)
 		}
 	}
@@ -125,9 +126,9 @@ func (eb *eventbus) Cleanup() {
 func pubMQTT(topic string, payload []byte) {
 	token := mqttBus.MQTTHub.PubCli.Publish(topic, 1, false, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("Error in pubMQTT with topic: %s, %v", topic, token.Error())
+		klog.Errorf("Error in pubMQTT with topic: %s, %v", topic, token.Error())
 	} else {
-		log.LOGGER.Infof("Success in pubMQTT with topic: %s", topic)
+		klog.Infof("Success in pubMQTT with topic: %s", topic)
 	}
 }
 
@@ -139,11 +140,11 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			switch operation {
 			case "subscribe":
 				eb.subscribe(resource)
-				log.LOGGER.Infof("Edge-hub-cli subscribe topic to %s", resource)
+				klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
 			case "message":
 				body, ok := accessInfo.GetContent().(map[string]interface{})
 				if !ok {
-					log.LOGGER.Errorf("Message is not map type")
+					klog.Errorf("Message is not map type")
 					return
 				}
 				message := body["message"].(map[string]interface{})
@@ -162,17 +163,17 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				eb.publish(topic, payload)
 			case "get_result":
 				if resource != "auth_info" {
-					log.LOGGER.Info("Skip none auth_info get_result message")
+					klog.Info("Skip none auth_info get_result message")
 					return
 				}
 				topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", mqttBus.NodeID)
 				payload, _ := json.Marshal(accessInfo.GetContent())
 				eb.publish(topic, payload)
 			default:
-				log.LOGGER.Warnf("Action not found")
+				klog.Warningf("Action not found")
 			}
 		} else {
-			log.LOGGER.Errorf("Fail to get a message from channel: %v", err)
+			klog.Errorf("Fail to get a message from channel: %v", err)
 		}
 	}
 }
@@ -194,7 +195,7 @@ func (eb *eventbus) subscribe(topic string) {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
+			klog.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
 		}
 	}
 

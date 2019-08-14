@@ -1,7 +1,8 @@
 package dtclient
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
@@ -16,7 +17,7 @@ const (
 
 //InitDBTable create table
 func InitDBTable() {
-	log.LOGGER.Info("Begin to register twin model")
+	klog.Info("Begin to register twin model")
 	dbm.RegisterModel("twin", new(Device))
 	dbm.RegisterModel("twin", new(DeviceAttr))
 	dbm.RegisterModel("twin", new(DeviceTwin))

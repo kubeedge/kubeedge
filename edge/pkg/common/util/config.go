@@ -29,8 +29,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"gopkg.in/yaml.v2"
+
+	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 // LoadConfig is function to Load Configurations from a specified location. If no location is specified it loads the config from the default location

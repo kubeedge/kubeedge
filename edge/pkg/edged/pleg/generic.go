@@ -26,16 +26,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
-
-	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
@@ -43,6 +39,9 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )
 
 //GenericLifecycle is object for pleg lifecycle
@@ -100,11 +99,11 @@ func NewGenericLifecycleRemote(runtime kubecontainer.Runtime, probeManager probe
 func (gl *GenericLifecycle) Start() {
 	gl.GenericPLEG.Start()
 	go wait.Until(func() {
-		log.LOGGER.Infof("GenericLifecycle: Relisting")
+		klog.Infof("GenericLifecycle: Relisting")
 		podListPm := gl.podManager.GetPods()
 		for _, pod := range podListPm {
 			if err := gl.updatePodStatus(pod); err != nil {
-				log.LOGGER.Errorf("update pod %s status error", pod.Name)
+				klog.Errorf("update pod %s status error", pod.Name)
 			}
 		}
 	}, gl.relistPeriod, wait.NeverStop)
@@ -118,7 +117,7 @@ func (gl *GenericLifecycle) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kub
 
 	hostIP, err := gl.getHostIPByInterface()
 	if err != nil {
-		log.LOGGER.Errorf("Failed to get host IP: %v", err)
+		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
 		apiPodStatus.HostIP = hostIP
 		if pod.Spec.HostNetwork && podStatus.IP == "" {
@@ -317,7 +316,7 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 				if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
 					// API server shows terminal phase; transitions are not allowed
 					if podStatus.Phase != pod.Status.Phase {
-						glog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
+						klog.Errorf("Pod attempted illegal phase transition from %s to %s: %v", pod.Status.Phase, podStatus.Phase, podStatus)
 						// Force back to phase from the API server
 						podStatus.Phase = pod.Status.Phase
 					}
@@ -457,7 +456,7 @@ func getPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 	case pendingInitialization > 0:
 		fallthrough
 	case waiting > 0:
-		glog.Infof("pod waiting > 0, pending")
+		klog.Info("pod waiting > 0, pending")
 		// One or more containers has not been started
 		return v1.PodPending
 	case running > 0 && unknown == 0:
@@ -484,7 +483,7 @@ func getPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 		// and in the process of restarting
 		return v1.PodRunning
 	default:
-		glog.Infof("pod default case, pending")
+		klog.Info("pod default case, pending")
 		return v1.PodPending
 	}
 }

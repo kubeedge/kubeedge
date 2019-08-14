@@ -1,7 +1,8 @@
 package dtmodule
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
@@ -63,7 +64,7 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 func (dm DTModule) Start() {
 	defer func() {
 		if err := recover(); err != nil {
-			log.LOGGER.Infof("%s in twin panic", dm.Name)
+			klog.Infof("%s in twin panic", dm.Name)
 		}
 	}()
 	dm.Worker.Start()

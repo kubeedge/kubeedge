@@ -25,8 +25,8 @@ import (
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/klog"
 )
 
 var clientOptions = MQTT.NewClientOptions()
@@ -206,7 +206,7 @@ func TestLoopConnect(t *testing.T) {
 						t.Errorf("common.TestLoopConnect() Options.Servers = %v, want connect =  %v", tt.clientOptions.Servers, tt.connect)
 					}
 				}
-				log.LOGGER.Infof("No servers defined to connect to")
+				klog.Info("No servers defined to connect to")
 			}
 		})
 	}

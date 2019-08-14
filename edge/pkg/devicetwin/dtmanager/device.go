@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -39,10 +41,10 @@ func (dw DeviceWorker) Start() {
 				if fn, exist := deviceActionCallBack[dtMsg.Action]; exist {
 					_, err := fn(dw.DTContexts, dtMsg.Identity, dtMsg.Msg)
 					if err != nil {
-						log.LOGGER.Errorf("DeviceModule deal %s event failed: %v", dtMsg.Action, err)
+						klog.Errorf("DeviceModule deal %s event failed: %v", dtMsg.Action, err)
 					}
 				} else {
-					log.LOGGER.Errorf("DeviceModule deal %s event failed, not found callback", dtMsg.Action)
+					klog.Errorf("DeviceModule deal %s event failed, not found callback", dtMsg.Action)
 				}
 			}
 		case v, ok := <-dw.HeartBeatChan:
@@ -70,7 +72,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 
 	updateDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
-		log.LOGGER.Errorf("Unmarshal device info failed, err: %#v", err)
+		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
 	}
 	deviceID := resource
@@ -127,7 +129,7 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 
 	updateDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
-		log.LOGGER.Errorf("Unmarshal device info failed, err: %#v", err)
+		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
 	}
 
@@ -141,7 +143,7 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 
 //DeviceUpdated update device attributes
 func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map[string]*dttype.MsgAttr, baseMessage dttype.BaseMessage, dealType int) (interface{}, error) {
-	log.LOGGER.Infof("Begin to update attributes of the device %s", deviceID)
+	klog.Infof("Begin to update attributes of the device %s", deviceID)
 	var err error
 	doc, docExist := context.DeviceList.Load(deviceID)
 	if !docExist {
@@ -166,14 +168,14 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 
 		if err != nil {
 			SyncDeviceFromSqlite(context, deviceID)
-			log.LOGGER.Errorf("Update device failed due to writing sql error: %v", err)
+			klog.Errorf("Update device failed due to writing sql error: %v", err)
 
 		} else {
-			log.LOGGER.Infof("Send update attributes of device %s event to edge app", deviceID)
+			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
 			payload, err := dttype.BuildDeviceAttrUpdate(baseMessage, result)
 			if err != nil {
 				//todo
-				log.LOGGER.Errorf("Build device attribute update failed: %v", err)
+				klog.Errorf("Build device attribute update failed: %v", err)
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
 			context.Send(deviceID,

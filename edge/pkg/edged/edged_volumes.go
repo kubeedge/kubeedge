@@ -25,19 +25,17 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/kubelet/container"
-
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/removeall"
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
 	utilio "k8s.io/utils/io"
-
-	"github.com/kubeedge/beehive/pkg/common/log"
 )
 
 // newVolumeMounterFromPlugins attempts to find a plugin by volume spec, pod
@@ -53,7 +51,7 @@ func (e *edged) newVolumeMounterFromPlugins(spec *volume.Spec, pod *api.Pod, opt
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate mounter for volume: %s using plugin: %s with a root cause: %v", spec.Name(), plugin.GetPluginName(), err)
 	}
-	log.LOGGER.Infof("Using volume plugin %q to mount %s", plugin.GetPluginName(), spec.Name())
+	klog.Infof("Using volume plugin %q to mount %s", plugin.GetPluginName(), spec.Name())
 	return physicalMounter, nil
 }
 
@@ -84,7 +82,7 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 		// If volumes have not been unmounted/detached, do not delete directory.
 		// Doing so may result in corruption of data.
 		if podVolumesExist := e.podVolumesExist(uid); podVolumesExist {
-			log.LOGGER.Infof("Orphaned pod %q found, but volumes are not cleaned up", uid)
+			klog.Infof("Orphaned pod %q found, but volumes are not cleaned up", uid)
 			continue
 		}
 		// If there are still volume directories, do not delete directory
@@ -101,9 +99,9 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 		// TODO: by paas group
 		// k8s has no cleanupMoutPoints, what the purpose of this method?
 		// can be contributed?
-		log.LOGGER.Infof("Clearing up volume directories of orphaned pod %q.", uid)
+		klog.Infof("Clearing up volume directories of orphaned pod %q.", uid)
 		if err := e.cleanupMountPoints(e.getPodVolumesDir(uid)); err != nil {
-			log.LOGGER.Warnf("Failed to clearing up volume mount points of pod %q: %s.", uid, err)
+			klog.Warningf("Failed to clearing up volume mount points of pod %q: %s.", uid, err)
 		}
 		// If there are any volume-subpaths, do not cleanup directories
 		volumeSubpathExists, err := e.podVolumeSubpathsDirExists(uid)
@@ -116,18 +114,18 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 			continue
 		}
 
-		log.LOGGER.Infof("Orphaned pod %q found, removing", uid)
+		klog.Infof("Orphaned pod %q found, removing", uid)
 		if err := removeall.RemoveAllOneFilesystem(e.mounter, e.getPodDir(uid)); err != nil {
-			log.LOGGER.Errorf("Failed to remove orphaned pod %q dir; err: %v", uid, err)
+			klog.Errorf("Failed to remove orphaned pod %q dir; err: %v", uid, err)
 			orphanRemovalErrors = append(orphanRemovalErrors, err)
 		}
 	}
 
 	logSpew := func(errs []error) {
 		if len(errs) > 0 {
-			log.LOGGER.Errorf("%v : There were a total of %v errors similar to this. Turn up verbosity to see them.", errs[0], len(errs))
+			klog.Errorf("%v : There were a total of %v errors similar to this. Turn up verbosity to see them.", errs[0], len(errs))
 			for _, err := range errs {
-				log.LOGGER.Infof("Orphan pod: %v", err)
+				klog.Infof("Orphan pod: %v", err)
 			}
 		}
 	}

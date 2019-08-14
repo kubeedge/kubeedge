@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
@@ -75,10 +76,10 @@ func (dtc *DTController) Start() error {
 	go func() {
 		for {
 			if msg, ok := dtc.DTContexts.ModulesContext.Receive("twin"); ok == nil {
-				log.LOGGER.Info("DeviceTwin receive msg")
+				klog.Info("DeviceTwin receive msg")
 				err := dtc.distributeMsg(msg)
 				if err != nil {
-					log.LOGGER.Warnf("distributeMsg failed: %v", err)
+					klog.Warningf("distributeMsg failed: %v", err)
 				}
 			}
 		}
@@ -92,7 +93,7 @@ func (dtc *DTController) Start() error {
 				if ok {
 					now := time.Now().Unix()
 					if now-health.(int64) > 60*2 {
-						log.LOGGER.Infof("%s health %v is old, and begin restart", dtmName, health)
+						klog.Infof("%s health %v is old, and begin restart", dtmName, health)
 						go dtc.DTModules[dtmName].Start()
 					}
 				}
@@ -114,12 +115,12 @@ func (dtc *DTController) Start() error {
 func (dtc *DTController) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
-		log.LOGGER.Errorf("Distribute message, msg is nil")
+		klog.Errorf("Distribute message, msg is nil")
 		return errors.New("Distribute message, msg is nil")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
-		log.LOGGER.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
+		klog.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
 		confirmMsg := dttype.DTMessage{Msg: model.NewMessage(message.Msg.GetParentID()), Action: dtcommon.Confirm}
 		if err := dtc.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg); err != nil {
 			return err
@@ -134,12 +135,12 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 
 	if moduleName, exist := ActionModuleMap[message.Action]; exist {
 		//how to deal write channel error
-		log.LOGGER.Infof("Send msg to the %s module in twin", moduleName)
+		klog.Infof("Send msg to the %s module in twin", moduleName)
 		if err := dtc.DTContexts.CommTo(moduleName, &message); err != nil {
 			return err
 		}
 	} else {
-		log.LOGGER.Info("Not found deal module for msg")
+		klog.Info("Not found deal module for msg")
 		return errors.New("Not found deal module for msg")
 	}
 
@@ -181,14 +182,14 @@ func initActionModuleMap() {
 
 // SyncSqlite sync sqlite
 func SyncSqlite(context *dtcontext.DTContext) error {
-	log.LOGGER.Info("Begin to sync sqlite ")
+	klog.Info("Begin to sync sqlite ")
 	rows, queryErr := dtclient.QueryDeviceAll()
 	if queryErr != nil {
-		log.LOGGER.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
+		klog.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
 		return queryErr
 	}
 	if rows == nil {
-		log.LOGGER.Info("Query sqlite nil while syncing sqlite")
+		klog.Info("Query sqlite nil while syncing sqlite")
 		return nil
 	}
 	for _, device := range *rows {
@@ -203,7 +204,7 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 
 //SyncDeviceFromSqlite sync device from sqlite
 func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
-	log.LOGGER.Infof("Sync device detail info from DB of device %s", deviceID)
+	klog.Infof("Sync device detail info from DB of device %s", deviceID)
 	_, exist := context.GetDevice(deviceID)
 	if !exist {
 		var deviceMutex sync.Mutex
@@ -215,7 +216,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 
 	devices, err := dtclient.QueryDevice("id", deviceID)
 	if err != nil {
-		log.LOGGER.Errorf("query device failed: %v", err)
+		klog.Errorf("query device failed: %v", err)
 		return err
 	}
 	if len(*devices) <= 0 {
@@ -225,7 +226,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 
 	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
-		log.LOGGER.Errorf("query device attr failed: %v", err)
+		klog.Errorf("query device attr failed: %v", err)
 		return err
 	}
 	attributes := make([]dtclient.DeviceAttr, 0)
@@ -235,7 +236,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 
 	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
-		log.LOGGER.Errorf("query device twin failed: %v", err)
+		klog.Errorf("query device twin failed: %v", err)
 		return err
 	}
 	twins := make([]dtclient.DeviceTwin, 0)
@@ -271,7 +272,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		}
 		topic = string(topicByte)
 
-		log.LOGGER.Infof("classify the msg with the topic %s", topic)
+		klog.Infof("classify the msg with the topic %s", topic)
 		splitString := strings.Split(topic, "/")
 		if len(splitString) == 4 {
 			if strings.HasPrefix(topic, dtcommon.LifeCycleConnectETPrefix) {
@@ -287,7 +288,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			nextLoc := loc + len(identity)
 			prefix := topic[0:loc]
 			suffix := topic[nextLoc:]
-			log.LOGGER.Infof("%s %s", prefix, suffix)
+			klog.Infof("%s %s", prefix, suffix)
 			if v, exist := EventActionMap[prefix][suffix]; exist {
 				action = v
 			} else {
@@ -297,12 +298,12 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		message.Msg.Content = []byte((message.Msg.Content).(string))
 		message.Identity = identity
 		message.Action = action
-		log.LOGGER.Infof("Classify the msg to action %s", action)
+		klog.Infof("Classify the msg to action %s", action)
 		return true
 	} else if (strings.Compare(msgSource, "edgemgr") == 0) || (strings.Compare(msgSource, "devicecontroller") == 0) {
 		switch message.Msg.Content.(type) {
 		case []byte:
-			log.LOGGER.Info("Message content type is []byte, no need to marshal again")
+			klog.Info("Message content type is []byte, no need to marshal again")
 		default:
 			content, err := json.Marshal(message.Msg.Content)
 			if err != nil {

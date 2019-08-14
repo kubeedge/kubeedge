@@ -41,7 +41,6 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerstrslice "github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/securitycontext"
 	v1 "k8s.io/api/core/v1"
@@ -50,6 +49,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/klog"
 	deviceplugin "k8s.io/kubernetes/pkg/kubelet/cm/devicemanager"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/container/testing"
@@ -245,13 +245,13 @@ func shouldContainerBeRestarted(container *v1.Container, pod *v1.Pod, status *ap
 	}
 	// Check RestartPolicy for dead container
 	if pod.Spec.RestartPolicy == v1.RestartPolicyNever {
-		log.LOGGER.Infof("Already ran container %q of pod %q, do nothing", container.Name, pod)
+		klog.Infof("Already ran container %q of pod %q, do nothing", container.Name, pod)
 		return false
 	}
 	if pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure {
 		// Check the exit code.
 		if status.ExitCode == 0 {
-			log.LOGGER.Infof("Already successfully ran container %q of pod %q, do nothing", container.Name, pod.Name)
+			klog.Infof("Already successfully ran container %q of pod %q, do nothing", container.Name, pod.Name)
 			return false
 		}
 	}
@@ -294,7 +294,7 @@ func (cm *containerManager) deleteContainerRecords(id string) {
 }
 
 func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
-	log.LOGGER.Infof("compute pod actions %s: %+v", pod.Name, pod)
+	klog.Infof("compute pod actions %s: %+v", pod.Name, pod)
 	restartCount := -1
 	changes := podActions{
 		ContainersToStart: []int{},
@@ -305,19 +305,19 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 		innerContainer, ok := cm.getContainerFromMap(pod.UID)
 		if !ok {
 			restartCount = 0
-			log.LOGGER.Infof("no container id for pod %s, need start container", pod.Name)
+			klog.Infof("no container id for pod %s, need start container", pod.Name)
 			changes.ContainersToStart = append(changes.ContainersToStart, idx)
 			continue
 		}
 		status, err := cm.runtimeService.ContainerStatus(innerContainer.ID)
 		if err != nil {
-			log.LOGGER.Errorf("get container status for pod %s failed: %v", pod.Name, err)
+			klog.Errorf("get container status for pod %s failed: %v", pod.Name, err)
 		}
 
 		if status == nil || status.State != kubecontainer.ContainerStateRunning {
 			if shouldContainerBeRestarted(&container, pod, status) {
 				message := fmt.Sprintf("Container %+v is dead, but RestartPolicy says that we should restart it.", container)
-				log.LOGGER.Infof(message)
+				klog.Infof(message)
 				changes.ContainersToStart = append(changes.ContainersToStart, idx)
 			}
 			continue
@@ -325,18 +325,18 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 
 		labels, err := cm.getPodContainerLabels(pod)
 		if err != nil {
-			log.LOGGER.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
+			klog.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
 			continue
 		}
 
 		if labels[containerHashLabel] == "" {
-			log.LOGGER.Errorf("container hash is empty for pod %s failed: %v", pod.Name, err)
+			klog.Errorf("container hash is empty for pod %s failed: %v", pod.Name, err)
 			continue
 		}
 
 		hash, err := strconv.ParseUint(labels[containerHashLabel], 16, 64)
 		if err != nil {
-			log.LOGGER.Errorf("container hash is empty for pod %s failed: %v", pod.Name, err)
+			klog.Errorf("container hash is empty for pod %s failed: %v", pod.Name, err)
 			continue
 		}
 
@@ -370,17 +370,17 @@ func (cm *containerManager) computePodActions(pod *v1.Pod) podActions {
 			container: &pod.Spec.Containers[idx],
 			message:   message,
 		}
-		log.LOGGER.Infof("Container %q (%q) of pod %s: %s", container.Name, status.ID.ID, pod.Name, message)
+		klog.Infof("Container %q (%q) of pod %s: %s", container.Name, status.ID.ID, pod.Name, message)
 	}
 
 	if restartCount == -1 {
 		labels, err := cm.getPodContainerLabels(pod)
 		if err != nil {
-			log.LOGGER.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
+			klog.Errorf("get container labels for pod %s failed: %v", pod.Name, err)
 		} else {
 			restartCount, err := strconv.Atoi(labels[containerRestartCountLabel])
 			if err != nil {
-				log.LOGGER.Errorf("Invalid restart count labbel: %v", err)
+				klog.Errorf("Invalid restart count labbel: %v", err)
 			} else {
 				changes.ContainersRestartCount = restartCount + 1
 			}
@@ -395,11 +395,11 @@ func (cm *containerManager) killContainer(podID types.UID, containerID string) e
 	if err != nil {
 		// if an error returns when we stop container, maybe this container is
 		// already stoped, ignore this error, try to remove
-		log.LOGGER.Errorf("stop container [%s] for pod [%s], err: %v", containerID, podID, err)
+		klog.Errorf("stop container [%s] for pod [%s], err: %v", containerID, podID, err)
 	}
 	err = cm.runtimeService.DeleteContainer(kubecontainer.ContainerID{ID: containerID})
 	if err != nil {
-		log.LOGGER.Errorf("remove container [%s] for pod [%s], err: %v", containerID, podID, err)
+		klog.Errorf("remove container [%s] for pod [%s], err: %v", containerID, podID, err)
 		return err
 	}
 	if podID != "" {
@@ -493,10 +493,10 @@ func updateCreateConfig(config *apis.ContainerConfig, container *v1.Container) {
 }
 
 func (cm *containerManager) InitPodContainer() error {
-	log.LOGGER.Infof("start to init pod container map")
+	klog.Infof("start to init pod container map")
 	containers, err := cm.runtimeService.ListContainers()
 	if err != nil {
-		log.LOGGER.Errorf("list container error %v", err)
+		klog.Errorf("list container error %v", err)
 		return err
 	}
 
@@ -517,7 +517,7 @@ func (cm *containerManager) InitPodContainer() error {
 func (cm *containerManager) getPodID(containerID string) (types.UID, error) {
 	status, err := cm.runtimeService.ContainerStatus(containerID)
 	if err != nil {
-		log.LOGGER.Errorf("Get container status error %v", err)
+		klog.Errorf("Get container status error %v", err)
 		return "", err
 	}
 	if podID, ok := status.Labels[KubernetesPodUIDLabel]; ok {
@@ -566,39 +566,39 @@ func makeDevices(opts *kubecontainer.RunContainerOptions) []*apis.Device {
 func (cm *containerManager) StartPod(pod *v1.Pod, runOpt *kubecontainer.RunContainerOptions) error {
 	backOffKey := fmt.Sprintf("container_%s", pod.Name)
 	if cm.backOff.IsInBackOffSinceUpdate(backOffKey, cm.backOff.Clock.Now()) {
-		log.LOGGER.Errorf("container manager start pod backoff. Back-off pod start [%s] error, backoff: [%v]", pod.Name, cm.backOff.Get(backOffKey))
+		klog.Errorf("container manager start pod backoff. Back-off pod start [%s] error, backoff: [%v]", pod.Name, cm.backOff.Get(backOffKey))
 		return apis.ErrPodStartBackOff
 	}
 
 	podContainerChanges := cm.computePodActions(pod)
-	log.LOGGER.Infof("computePodActions got %+v for pod %q", podContainerChanges, pod.Name)
+	klog.Infof("computePodActions got %+v for pod %q", podContainerChanges, pod.Name)
 	for containerID, containerInfo := range podContainerChanges.ContainersToKill {
-		log.LOGGER.Infof("Killing unwanted container %q(id=%q) for pod %q", containerInfo.name, containerID, pod.Name)
+		klog.Infof("Killing unwanted container %q(id=%q) for pod %q", containerInfo.name, containerID, pod.Name)
 		if err := cm.killContainer(pod.UID, string(containerID)); err != nil {
-			log.LOGGER.Errorf("killContainer %q(id=%q) for pod %q failed: %v", containerInfo.name, containerID, pod.Name, err)
+			klog.Errorf("killContainer %q(id=%q) for pod %q failed: %v", containerInfo.name, containerID, pod.Name, err)
 			return err
 		}
 	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.LOGGER.Errorf("get hostname failed: %v", err)
+		klog.Errorf("get hostname failed: %v", err)
 		hostname = string(pod.UID)
 	}
 
 	for _, idx := range podContainerChanges.ContainersToStart {
 		container := &pod.Spec.Containers[idx]
-		log.LOGGER.Infof("create container %s in pod %v", container.Name, pod.Name)
+		klog.Infof("create container %s in pod %v", container.Name, pod.Name)
 		exposedPorts, err := makePortsAndBindings(container.Ports)
 		if err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
-			log.LOGGER.Errorf("make container [%s] port for pod [%s] failed, %v", container.Name, pod.Name, err)
+			klog.Errorf("make container [%s] port for pod [%s] failed, %v", container.Name, pod.Name, err)
 			return err
 		}
 
 		opts, err := cm.GenerateRunContainerOptions(pod, container)
 		if err != nil {
-			log.LOGGER.Errorf("generate pod [%s] container [%s] run container options failed, %v", pod.Name, container.Name, err)
+			klog.Errorf("generate pod [%s] container [%s] run container options failed, %v", pod.Name, container.Name, err)
 			continue
 		}
 
@@ -653,22 +653,22 @@ func (cm *containerManager) StartPod(pod *v1.Pod, runOpt *kubecontainer.RunConta
 		containerID, err := cm.runtimeService.CreateContainer(&containerConfig)
 		if err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
-			log.LOGGER.Errorf("start pod [%s] failed: %v ", string(pod.Name), err)
+			klog.Errorf("start pod [%s] failed: %v ", string(pod.Name), err)
 			return err
 		}
 
 		innerContainer, err := cm.getContainer(containerID)
 		if err != nil {
-			log.LOGGER.Errorf("get container for pod %s container id %s failed, %v", string(pod.Name), containerID, err)
+			klog.Errorf("get container for pod %s container id %s failed, %v", string(pod.Name), containerID, err)
 		}
 		cm.setContainerFromMap(pod.UID, innerContainer)
 
 		if err = cm.runtimeService.StartContainer(containerID); err != nil {
 			cm.backOff.Next(backOffKey, cm.backOff.Clock.Now())
-			log.LOGGER.Errorf("start pod [%s], container id [%s] failed, with err: [%s], remove the container.", string(pod.Name), containerID, err)
+			klog.Errorf("start pod [%s], container id [%s] failed, with err: [%s], remove the container.", string(pod.Name), containerID, err)
 			continue
 		}
-		log.LOGGER.Infof("start container for pod [%s] success", pod.Name)
+		klog.Infof("start container for pod [%s] success", pod.Name)
 	}
 	cm.backOff.Reset(backOffKey)
 	return nil
@@ -873,7 +873,7 @@ func (cm *containerManager) GetPodStatusOwn(pod *v1.Pod) (*v1.PodStatus, error) 
 
 	hostIP, err := cm.getHostIPByInterface()
 	if err != nil {
-		log.LOGGER.Errorf("Cannot get host IP: %v", err)
+		klog.Errorf("Cannot get host IP: %v", err)
 	} else {
 		podstatus.HostIP = hostIP
 		if pod.Spec.HostNetwork && podstatus.PodIP == "" {
@@ -1039,21 +1039,21 @@ func (cm *containerManager) freeContainer(freeTime time.Time, gcPolicy kubeconta
 	var wg sync.WaitGroup
 	var deletionErrors []error
 	for _, record := range containersRecords {
-		log.LOGGER.Infof("Evaluating Container ID %s for possible garbage collection", record.containerID)
+		klog.Infof("Evaluating Container ID %s for possible garbage collection", record.containerID)
 		if record.lastUsed.Equal(freeTime) || record.lastUsed.After(freeTime) {
-			log.LOGGER.Infof("Container ID %s has lastUsed=%v which is >= freeTime=%v, not eligible for garbage collection", record.containerID, record.lastUsed, freeTime)
+			klog.Infof("Container ID %s has lastUsed=%v which is >= freeTime=%v, not eligible for garbage collection", record.containerID, record.lastUsed, freeTime)
 			continue
 		}
 
 		if freeTime.Sub(record.firstDetected) < gcPolicy.MinAge {
-			log.LOGGER.Infof("Container ID %s has age %v which is less than the policy minAge of %v, not eligible for garbage collection", record.containerID, freeTime.Sub(record.firstDetected), gcPolicy.MinAge)
+			klog.Infof("Container ID %s has age %v which is less than the policy minAge of %v, not eligible for garbage collection", record.containerID, freeTime.Sub(record.firstDetected), gcPolicy.MinAge)
 			continue
 		}
 
 		wg.Add(1)
 		go func(ei evictionInfo) {
 			defer wg.Done()
-			log.LOGGER.Infof("Container GC Manager Removing container %s, container status %d", ei.containerID, ei.Status)
+			klog.Infof("Container GC Manager Removing container %s, container status %s", ei.containerID, ei.Status)
 
 			err := cm.killContainer(ei.podID, ei.containerID)
 			if err != nil {
@@ -1082,12 +1082,12 @@ func (cm *containerManager) detectContainers(detectTime time.Time, podsInUse set
 	currentContainers := sets.NewString()
 
 	for _, container := range containers {
-		log.LOGGER.Infof("Adding container ID %s to currentContainers", container.ID)
+		klog.Infof("Adding container ID %s to currentContainers", container.ID)
 		currentContainers.Insert(container.ID)
 
 		record, ok := cm.getContainerRecords(container.ID)
 		if !ok {
-			log.LOGGER.Infof("Container ID %s is new", container.ID)
+			klog.Infof("Container ID %s is new", container.ID)
 			podID, _ := cm.getPodID(container.ID)
 			record = &containerRecord{
 				firstDetected: container.StartAt,
@@ -1097,17 +1097,17 @@ func (cm *containerManager) detectContainers(detectTime time.Time, podsInUse set
 		}
 
 		if cm.isContainerUsed(record.podID, podsInUse) {
-			log.LOGGER.Infof("Setting Container ID %s lastUsed to %v", container.ID, now)
+			klog.Infof("Setting Container ID %s lastUsed to %v", container.ID, now)
 			record.lastUsed = now
 		}
 
-		log.LOGGER.Infof("Container ID [%s], status is [%d], startat [%s]", container.ID, container.Status, container.StartAt)
+		klog.Infof("Container ID [%s], status is [%s], startat [%s]", container.ID, container.Status, container.StartAt)
 		record.Status = container.Status
 	}
 
 	for container := range cm.containerRecords {
 		if !currentContainers.Has(container) {
-			log.LOGGER.Infof("Container ID %s is no longer present, removing from containerRecords", container)
+			klog.Infof("Container ID %s is no longer present, removing from containerRecords", container)
 			cm.deleteContainerRecords(container)
 		}
 	}
@@ -1142,7 +1142,7 @@ func makePortsAndBindings(portMappings []v1.ContainerPort) (map[nat.Port]struct{
 		case "TCP":
 			protocol = "/tcp"
 		default:
-			log.LOGGER.Warnf("Unknown protocol %q: defaulting to TCP", port.Protocol)
+			klog.Warningf("Unknown protocol %q: defaulting to TCP", port.Protocol)
 			protocol = "/tcp"
 		}
 
