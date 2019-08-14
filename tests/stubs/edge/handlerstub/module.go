@@ -17,7 +17,8 @@ limitations under the License.
 package handlerstub
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -53,19 +54,19 @@ func (hs *HandlerStub) Start(c *context.Context) {
 	// New pod manager
 	pm, err := NewPodManager()
 	if err != nil {
-		log.LOGGER.Errorf("Failed to create pod manager with error: %v", err)
+		klog.Errorf("Failed to create pod manager with error: %v", err)
 		return
 	}
 	hs.podManager = pm
 
 	// Wait for message
-	log.LOGGER.Infof("Wait for message")
+	klog.Infof("Wait for message")
 	hs.WaitforMessage()
 
 	// Start upstream controller
 	upstream, err := NewUpstreamController(hs.context, pm)
 	if err != nil {
-		log.LOGGER.Errorf("New upstream controller failed with error: %v", err)
+		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
 	upstream.Start()

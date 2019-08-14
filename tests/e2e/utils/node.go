@@ -28,16 +28,16 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
 func getpwd() string {
 	_, file, _, _ := runtime.Caller(0)
 	dir, err := filepath.Abs(filepath.Dir(file))
 	if err != nil {
-		glog.Errorf("get current dir fail %+v", err)
+		klog.Errorf("get current dir fail %+v", err)
 		return " "
 	}
 	return dir

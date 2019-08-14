@@ -16,10 +16,10 @@ limitations under the License.
 package hubtest
 
 import (
-	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
@@ -48,10 +48,10 @@ var _ = Describe("KubeEdge hub performance test", func() {
 			// Get latency
 			if len(pods) > 0 {
 				latency = GetLatency(pods)
-				glog.Infof("HubTest 50 percent latency: %s", latency.Percent50.String())
-				glog.Infof("HubTest 90 percent latency: %s", latency.Percent90.String())
-				glog.Infof("HubTest 99 percent latency: %s", latency.Percent99.String())
-				glog.Infof("HubTest 100 percent latency: %s", latency.Percent100.String())
+				klog.Infof("HubTest 50 percent latency: %s", latency.Percent50.String())
+				klog.Infof("HubTest 90 percent latency: %s", latency.Percent90.String())
+				klog.Infof("HubTest 99 percent latency: %s", latency.Percent99.String())
+				klog.Infof("HubTest 100 percent latency: %s", latency.Percent100.String())
 			}
 
 			// Delete Pods
@@ -104,11 +104,11 @@ var _ = Describe("KubeEdge hub performance test", func() {
 							count++
 						}
 					}
-					glog.Infof("Current running pods count: %d", count)
+					klog.Infof("Current running pods count: %d", count)
 					return count
 				}, "240s", "100ms").Should(Equal(numOfEdgeNodes*numOfPodsPerEdgeNode), "Wait for Pods in running status timeout")
 			})
-			glog.Infof("HubTest runtime stats: %+v", hubTestRuntime)
+			klog.Infof("HubTest runtime stats: %+v", hubTestRuntime)
 		}, 5)
 	})
 })

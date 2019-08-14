@@ -21,14 +21,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-
-	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
 )
 
 var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
@@ -191,7 +191,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 
@@ -219,7 +219,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 
@@ -247,7 +247,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 		Measure("WSS_MEASURE_PERF_NODETEST_NODES_75: Create 75 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
@@ -274,7 +274,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 		Measure("WSS_MEASURE_PERF_NODETEST_NODES_100: Create 100 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
@@ -301,7 +301,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 	})
 
@@ -428,7 +428,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				}
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 
 		Measure("QUIC_MEASURE_PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
@@ -454,7 +454,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 
@@ -481,7 +481,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
 
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 		Measure("QUIC_MEASURE_PERF_NODETEST_NODES_75: Create 75 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
@@ -506,7 +506,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				}
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 
 		}, 5)
 		Measure("QUIC_MEASURE_PERF_NODETEST_NODES_100: Create 100 KubeEdge Node Deployment, Measure time for application comes into Running state", func(b Benchmarker) {
@@ -531,7 +531,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				}
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			klog.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 	})
 })
