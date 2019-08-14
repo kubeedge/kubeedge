@@ -1,0 +1,9 @@
+[Unit]
+Description=edge.service
+
+[Service]
+Type=simple
+ExecStart=/etc/kubeedge/edgecore
+
+[Install]
+WantedBy=multi-user.target
