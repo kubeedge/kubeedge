@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -32,7 +33,7 @@ func (cw CommWorker) Start() {
 	for {
 		select {
 		case msg, ok := <-cw.ReceiverChan:
-			log.LOGGER.Info("receive msg commModule")
+			klog.Info("receive msg commModule")
 			if !ok {
 				return
 			}
@@ -40,10 +41,10 @@ func (cw CommWorker) Start() {
 				if fn, exist := ActionCallBack[dtMsg.Action]; exist {
 					_, err := fn(cw.DTContexts, dtMsg.Identity, dtMsg.Msg)
 					if err != nil {
-						log.LOGGER.Errorf("CommModule deal %s event failed: %v", dtMsg.Action, err)
+						klog.Errorf("CommModule deal %s event failed: %v", dtMsg.Action, err)
 					}
 				} else {
-					log.LOGGER.Errorf("CommModule deal %s event failed, not found callback", dtMsg.Action)
+					klog.Errorf("CommModule deal %s event failed, not found callback", dtMsg.Action)
 				}
 			}
 
@@ -74,7 +75,7 @@ func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
-		log.LOGGER.Infof("Disconnected with cloud,not send msg to cloud")
+		klog.Infof("Disconnected with cloud,not send msg to cloud")
 		return nil, nil
 	}
 	message, ok := msg.(*model.Message)
@@ -87,7 +88,7 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	return nil, nil
 }
 func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	log.LOGGER.Infof("CONNECTED EVENT")
+	klog.Infof("CONNECTED EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")
@@ -97,7 +98,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 			_, err := detailRequest(context, msg)
 			if err != nil {
-				log.LOGGER.Errorf("detail request: %v", err)
+				klog.Errorf("detail request: %v", err)
 				return nil, err
 			}
 		}
@@ -108,12 +109,12 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	return nil, nil
 }
 func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	log.LOGGER.Infof("CONFIRM EVENT")
+	klog.Infof("CONFIRM EVENT")
 	value, ok := msg.(*model.Message)
 
 	if ok {
 		parentMsgID := value.GetParentID()
-		log.LOGGER.Infof("CommModule deal confirm msgID %s", parentMsgID)
+		klog.Infof("CommModule deal confirm msgID %s", parentMsgID)
 		context.ConfirmMap.Delete(parentMsgID)
 	} else {
 		return nil, errors.New("CommModule deal confirm, type not correct")
@@ -131,12 +132,12 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 		TimeStamp: time.Now().UnixNano() / 1000000}
 	getDetailJSON, marshalErr := json.Marshal(getDetail)
 	if marshalErr != nil {
-		log.LOGGER.Errorf("Marshal request error while request detail, err: %#v", marshalErr)
+		klog.Errorf("Marshal request error while request detail, err: %#v", marshalErr)
 		return nil, marshalErr
 	}
 
 	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
-	log.LOGGER.Info("Request detail")
+	klog.Info("Request detail")
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
 	context.ModulesContext.Send(dtcommon.HubModule, *message)
@@ -144,21 +145,21 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 }
 
 func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
-	log.LOGGER.Info("CheckConfirm")
+	klog.Info("CheckConfirm")
 	context.ConfirmMap.Range(func(key interface{}, value interface{}) bool {
 		dtmsg, ok := value.(*dttype.DTMessage)
-		log.LOGGER.Info("has msg")
+		klog.Info("has msg")
 		if !ok {
 
 		} else {
-			log.LOGGER.Info("redo task due to no recv")
+			klog.Info("redo task due to no recv")
 			if fn, exist := ActionCallBack[dtmsg.Action]; exist {
 				_, err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
 				if err != nil {
-					log.LOGGER.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
+					klog.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
 				}
 			} else {
-				log.LOGGER.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
+				klog.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
 			}
 
 		}

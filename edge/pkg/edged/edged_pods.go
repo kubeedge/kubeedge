@@ -33,13 +33,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-
-	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/features"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
@@ -82,7 +80,7 @@ func truncatePodHostnameIfNeeded(podName, hostname string) (string, error) {
 		return hostname, nil
 	}
 	truncated := hostname[:hostnameMaxLen]
-	log.LOGGER.Errorf("hostname for pod:%q was longer than %d. Truncated hostname to :%q", podName, hostnameMaxLen, truncated)
+	klog.Errorf("hostname for pod:%q was longer than %d. Truncated hostname to :%q", podName, hostnameMaxLen, truncated)
 	// hostname should not end with '-' or '.'
 	truncated = strings.TrimRight(truncated, "-.")
 	if len(truncated) == 0 {
@@ -266,14 +264,14 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 	// Kubernetes will not mount /etc/hosts if:
 	// - when the Pod sandbox is being created, its IP is still unknown. Hence, PodIP will not have been set.
 	mountEtcHostsFile := len(podIP) > 0 && runtime.GOOS != "windows"
-	log.LOGGER.Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, podIP, mountEtcHostsFile)
+	klog.Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, podIP, mountEtcHostsFile)
 	mounts := []kubecontainer.Mount{}
 	for _, mount := range container.VolumeMounts {
 		// do not mount /etc/hosts if container is already mounting on the path
 		mountEtcHostsFile = mountEtcHostsFile && (mount.MountPath != etcHostsPath)
 		vol, ok := podVolumes[mount.Name]
 		if !ok || vol.Mounter == nil {
-			log.LOGGER.Errorf("Mount cannot be satisfied for container %q, because the volume is missing or the volume mounter is nil: %+v", container.Name, mount)
+			klog.Errorf("Mount cannot be satisfied for container %q, because the volume is missing or the volume mounter is nil: %+v", container.Name, mount)
 			return nil, fmt.Errorf("cannot find volume %q to mount into container %q", mount.Name, container.Name)
 		}
 
@@ -308,14 +306,14 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 			hostPath = filepath.Join(hostPath, mount.SubPath)
 
 			if subPathExists, err := utilfile.Exists(utilfile.CheckSymlinkOnly, hostPath); err != nil {
-				log.LOGGER.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", hostPath)
+				klog.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", hostPath)
 			} else if !subPathExists {
 				// Create the sub path now because if it's auto-created later when referenced, it may have an
 				// incorrect ownership and mode. For example, the sub path directory must have at least g+rwx
 				// when the pod specifies an fsGroup, and if the directory is not created here, Docker will
 				// later auto-create it with the incorrect mode 0750
 				if err := os.MkdirAll(hostPath, perm); err != nil {
-					log.LOGGER.Errorf("failed to mkdir:%s", hostPath)
+					klog.Errorf("failed to mkdir:%s", hostPath)
 					return nil, err
 				}
 
@@ -348,7 +346,7 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 		if err != nil {
 			return nil, err
 		}
-		log.LOGGER.Infof("Pod %q container %q mount %q has propagation %q", format.Pod(pod), container.Name, mount.Name, propagation)
+		klog.Infof("Pod %q container %q mount %q has propagation %q", format.Pod(pod), container.Name, mount.Name, propagation)
 
 		mounts = append(mounts, kubecontainer.Mount{
 			Name:           mount.Name,
@@ -586,7 +584,7 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 	if len(container.TerminationMessagePath) != 0 && runtime.GOOS != "windows" {
 		p := e.getPodContainerDir(pod.UID, container.Name)
 		if err := os.MkdirAll(p, 0750); err != nil {
-			glog.Errorf("Error on creating %q: %v", p, err)
+			klog.Errorf("Error on creating %q: %v", p, err)
 		} else {
 			opts.PodContainerDir = p
 		}
@@ -838,7 +836,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 		}
 		vol, ok := podVolumes[device.Name]
 		if !ok || vol.BlockVolumeMapper == nil {
-			glog.Errorf("Block volume cannot be satisfied for container %q, because the volume is missing or the volume mapper is nil: %+v", container.Name, device)
+			klog.Errorf("Block volume cannot be satisfied for container %q, because the volume is missing or the volume mapper is nil: %+v", container.Name, device)
 			return nil, fmt.Errorf("cannot find volume %q to pass into container %q", device.Name, container.Name)
 		}
 		// Get a symbolic link associated to a block device under pod device path
@@ -852,7 +850,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 			if vol.ReadOnly {
 				permission = "r"
 			}
-			glog.V(4).Infof("Device will be attached to container %q. Path on host: %v", container.Name, symlinkPath)
+			klog.V(4).Infof("Device will be attached to container %q. Path on host: %v", container.Name, symlinkPath)
 			devices = append(devices, kubecontainer.DeviceInfo{PathOnHost: symlinkPath, PathInContainer: device.DevicePath, Permissions: permission})
 		}
 	}

@@ -4,11 +4,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/astaxie/beego/orm"
-	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
+	"k8s.io/klog"
+
+	"github.com/astaxie/beego/orm"
+	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 const (
@@ -33,9 +34,9 @@ var DBAccess orm.Ormer
 func RegisterModel(moduleName string, m interface{}) {
 	if isModuleEnabled(moduleName) {
 		orm.RegisterModel(m)
-		log.LOGGER.Infof("DB meta for module %s has been registered", moduleName)
+		klog.Infof("DB meta for module %s has been registered", moduleName)
 	} else {
-		log.LOGGER.Infof("DB meta for module %s has not been registered because this module is not enabled", moduleName)
+		klog.Infof("DB meta for module %s has not been registered because this module is not enabled", moduleName)
 	}
 }
 
@@ -55,10 +56,10 @@ func InitDBConfig() {
 	}
 
 	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
-		log.LOGGER.Fatalf("Failed to register driver: %v", err)
+		klog.Fatalf("Failed to register driver: %v", err)
 	}
 	if err := orm.RegisterDataBase(dbName, driverName, dataSource); err != nil {
-		log.LOGGER.Fatalf("Failed to register db: %v", err)
+		klog.Fatalf("Failed to register db: %v", err)
 	}
 }
 
@@ -84,9 +85,9 @@ func cleanDBFile(fileName string) {
 	err := os.Remove(fileName)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.LOGGER.Infof("DB file %s is not existing", fileName)
+			klog.Infof("DB file %s is not existing", fileName)
 		} else {
-			log.LOGGER.Errorf("Failed to remove DB file %s: %v", fileName, err)
+			klog.Errorf("Failed to remove DB file %s: %v", fileName, err)
 		}
 	}
 }

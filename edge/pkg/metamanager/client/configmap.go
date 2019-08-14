@@ -3,11 +3,14 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+
+	api "k8s.io/api/core/v1"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	api "k8s.io/api/core/v1"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.

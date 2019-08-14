@@ -6,10 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -41,7 +43,7 @@ func InitDTContext(context *context.Context) (*DTContext, error) {
 	groupID := ""
 	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("failed to get node id  for web socket client")
+		klog.Warningf("failed to get node id  for web socket client")
 	}
 	commChan := make(map[string]chan interface{})
 	confirmChan := make(chan interface{}, 1000)
@@ -80,10 +82,10 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
-		log.LOGGER.Infof("%s is healthy %v", dtmName, time.Now().Unix())
+		klog.Infof("%s is healthy %v", dtmName, time.Now().Unix())
 
 	} else if strings.Compare(content.(string), "stop") == 0 {
-		log.LOGGER.Infof("%s stop", dtmName)
+		klog.Infof("%s stop", dtmName)
 		return errors.New("stop")
 	}
 	return nil
@@ -93,7 +95,7 @@ func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 func (dtc *DTContext) GetMutex(deviceID string) (*sync.Mutex, bool) {
 	v, mutexExist := dtc.DeviceMutex.Load(deviceID)
 	if !mutexExist {
-		log.LOGGER.Errorf("GetMutex device %s not exist", deviceID)
+		klog.Errorf("GetMutex device %s not exist", deviceID)
 		return nil, false
 	}
 	mutex, isMutex := v.(*sync.Mutex)

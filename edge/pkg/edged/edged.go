@@ -47,6 +47,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/client-go/util/workqueue"
 	internalapi "k8s.io/cri-api/pkg/apis"
+	"k8s.io/klog"
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	pluginwatcherapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
@@ -78,7 +79,6 @@ import (
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
@@ -260,7 +260,7 @@ type Config struct {
 func Register() {
 	edged, err := newEdged()
 	if err != nil {
-		log.LOGGER.Errorf("init new edged error, %v", err)
+		klog.Errorf("init new edged error, %v", err)
 		return
 	}
 	core.Register(edged)
@@ -279,7 +279,7 @@ func (e *edged) Start(c *context.Context) {
 	e.metaClient = client.New(c)
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
-		log.LOGGER.Errorf("initialize module error: %v", err)
+		klog.Errorf("initialize module error: %v", err)
 		os.Exit(1)
 	}
 
@@ -327,16 +327,16 @@ func (e *edged) Start(c *context.Context) {
 	// Adding Registration Callback function for CSI Driver
 	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csi.PluginHandler))
 	// Start the plugin manager
-	log.LOGGER.Infof("starting plugin manager")
+	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 }
 
 func (e *edged) Cleanup() {
 	if err := recover(); err != nil {
-		log.LOGGER.Errorf("edged exit with error: %v", err)
+		klog.Errorf("edged exit with error: %v", err)
 	}
 	e.context.Cleanup(e.Name())
-	log.LOGGER.Info("edged exit!")
+	klog.Info("edged exit!")
 }
 
 // isInitPodReady is used to safely return initPodReady flag
@@ -460,7 +460,7 @@ func newEdged() (*edged, error) {
 
 	err := ed.makePodDir()
 	if err != nil {
-		log.LOGGER.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
+		klog.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
 		os.Exit(1)
 	}
 
@@ -515,10 +515,10 @@ func newEdged() (*edged, error) {
 			return nil, err
 		}
 
-		log.LOGGER.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
+		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
 			conf.remoteRuntimeEndpoint, conf.remoteRuntimeEndpoint)
 
-		log.LOGGER.Info("Starting the GRPC server for the docker CRI shim.")
+		klog.Info("Starting the GRPC server for the docker CRI shim.")
 		server := dockerremote.NewDockerServer(conf.remoteRuntimeEndpoint, ds)
 		if err := server.Start(); err != nil {
 			return nil, err
@@ -611,7 +611,7 @@ func newEdged() (*edged, error) {
 func (e *edged) initializeModules() error {
 	node, _ := e.initialNode()
 	if err := e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(), e.statusManager, e.runtimeService); err != nil {
-		log.LOGGER.Errorf("Failed to start device plugin manager %v", err)
+		klog.Errorf("Failed to start device plugin manager %v", err)
 		return err
 	}
 	return nil
@@ -621,7 +621,7 @@ func (e *edged) StartGarbageCollection() {
 	go utilwait.Until(func() {
 		err := e.imageGCManager.GarbageCollect()
 		if err != nil {
-			log.LOGGER.Errorf("Image garbage collection failed")
+			klog.Errorf("Image garbage collection failed")
 		}
 	}, ImageGCPeriod, utilwait.NeverStop)
 
@@ -629,7 +629,7 @@ func (e *edged) StartGarbageCollection() {
 		if e.isInitPodReady() {
 			err := e.containerGCManager.GarbageCollect()
 			if err != nil {
-				log.LOGGER.Errorf("Container garbage collection failed: %v", err)
+				klog.Errorf("Container garbage collection failed: %v", err)
 			}
 		}
 	}, ContainerGCPeriod, utilwait.NeverStop)
@@ -643,10 +643,10 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 			if update.Result == proberesults.Failure {
 				pod, ok := e.podManager.GetPodByUID(update.PodUID)
 				if !ok {
-					log.LOGGER.Infof("SyncLoop (container unhealthy): ignore irrelevant update: %#v", update)
+					klog.Infof("SyncLoop (container unhealthy): ignore irrelevant update: %#v", update)
 					break
 				}
-				log.LOGGER.Infof("SyncLoop (container unhealthy): %q", format.Pod(pod))
+				klog.Infof("SyncLoop (container unhealthy): %q", format.Pod(pod))
 				if pod.Spec.RestartPolicy == v1.RestartPolicyNever {
 					break
 				}
@@ -662,7 +662,7 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 						break
 					}
 				}
-				log.LOGGER.Infof("Will restart pod [%s]", pod.Name)
+				klog.Infof("Will restart pod [%s]", pod.Name)
 				key := types.NamespacedName{
 					Namespace: pod.Namespace,
 					Name:      pod.Name,
@@ -687,22 +687,22 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 							break
 						}
 					}
-					log.LOGGER.Errorf("sync loop get event container died, restart pod [%s]", pod.Name)
+					klog.Errorf("sync loop get event container died, restart pod [%s]", pod.Name)
 					key := types.NamespacedName{
 						Namespace: pod.Namespace,
 						Name:      pod.Name,
 					}
 					e.podAdditionQueue.Add(key.String())
 				} else {
-					log.LOGGER.Infof("sync loop get event [%s], ignore it now.", plegEvent.Type)
+					klog.Infof("sync loop get event [%s], ignore it now.", plegEvent.Type)
 				}
 			} else {
-				log.LOGGER.Infof("sync loop ignore event: [%s], with pod [%s] not found", plegEvent.Type, plegEvent.ID)
+				klog.Infof("sync loop ignore event: [%s], with pod [%s] not found", plegEvent.Type, plegEvent.ID)
 			}
 		case <-housekeepingCh:
 			err := e.HandlePodCleanups()
 			if err != nil {
-				log.LOGGER.Errorf("Handle Pod Cleanup Failed: %v", err)
+				klog.Errorf("Handle Pod Cleanup Failed: %v", err)
 			}
 		case <-syncWorkQueueCh:
 			podsToSync := e.getPodsToSync()
@@ -736,22 +736,22 @@ func NewNamespacedNameFromString(s string) types.NamespacedName {
 
 func (e *edged) podAddWorkerRun(consumers int) {
 	for i := 0; i < consumers; i++ {
-		log.LOGGER.Infof("start pod addition queue work %d", i)
+		klog.Infof("start pod addition queue work %d", i)
 		go func(i int) {
 			for {
 				item, quit := e.podAdditionQueue.Get()
 				if quit {
-					log.LOGGER.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
+					klog.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
 					return
 				}
 				namespacedName := NewNamespacedNameFromString(item.(string))
 				podName := namespacedName.Name
-				log.LOGGER.Infof("worker [%d] get pod addition item [%s]", i, podName)
+				klog.Infof("worker [%d] get pod addition item [%s]", i, podName)
 				backOffKey := fmt.Sprintf("pod_addition_worker_%s", podName)
 				if e.podAdditionBackoff.IsInBackOffSinceUpdate(backOffKey, e.podAdditionBackoff.Clock.Now()) {
-					log.LOGGER.Errorf("consume pod addition backoff: Back-off consume pod [%s] addition  error, backoff: [%v]", podName, e.podAdditionBackoff.Get(backOffKey))
+					klog.Errorf("consume pod addition backoff: Back-off consume pod [%s] addition  error, backoff: [%v]", podName, e.podAdditionBackoff.Get(backOffKey))
 					go func() {
-						log.LOGGER.Infof("worker [%d] backoff pod addition item [%s] failed, re-add to queue", i, podName)
+						klog.Infof("worker [%d] backoff pod addition item [%s] failed, re-add to queue", i, podName)
 						time.Sleep(e.podAdditionBackoff.Get(backOffKey))
 						e.podAdditionQueue.Add(item)
 					}()
@@ -761,11 +761,11 @@ func (e *edged) podAddWorkerRun(consumers int) {
 				err := e.consumePodAddition(&namespacedName)
 				if err != nil {
 					if err == apis.ErrPodNotFound {
-						log.LOGGER.Infof("worker [%d] handle pod addition item [%s] failed with not found error.", i, podName)
+						klog.Infof("worker [%d] handle pod addition item [%s] failed with not found error.", i, podName)
 						e.podAdditionBackoff.Reset(backOffKey)
 					} else {
 						go func() {
-							log.LOGGER.Errorf("worker [%d] handle pod addition item [%s] failed: %v, re-add to queue", i, podName, err)
+							klog.Errorf("worker [%d] handle pod addition item [%s] failed: %v, re-add to queue", i, podName, err)
 							e.podAdditionBackoff.Next(backOffKey, e.podAdditionBackoff.Clock.Now())
 							time.Sleep(enqueueDuration)
 							e.podAdditionQueue.Add(item)
@@ -786,19 +786,19 @@ func (e *edged) podRemoveWorkerRun(consumers int) {
 			for {
 				item, quit := e.podDeletionQueue.Get()
 				if quit {
-					log.LOGGER.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
+					klog.Errorf("consumer: [%d], worker addition queue is shutting down!", i)
 					return
 				}
 				namespacedName := NewNamespacedNameFromString(item.(string))
 				podName := namespacedName.Name
-				log.LOGGER.Infof("consumer: [%d], worker get removed pod [%s]\n", i, podName)
+				klog.Infof("consumer: [%d], worker get removed pod [%s]\n", i, podName)
 				err := e.consumePodDeletion(&namespacedName)
 				if err != nil {
 					if err == apis.ErrContainerNotFound {
-						log.LOGGER.Infof("pod [%s] is not exist, with container not found error", podName)
+						klog.Infof("pod [%s] is not exist, with container not found error", podName)
 					} else {
 						go func(item interface{}) {
-							log.LOGGER.Errorf("worker remove pod [%s] failed: %v", podName, err)
+							klog.Errorf("worker remove pod [%s] failed: %v", podName, err)
 							time.Sleep(2 * time.Second)
 							e.podDeletionQueue.Add(item)
 						}(item)
@@ -813,19 +813,19 @@ func (e *edged) podRemoveWorkerRun(consumers int) {
 
 func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	podName := namespacedName.Name
-	log.LOGGER.Infof("start to consume added pod [%s]", podName)
+	klog.Infof("start to consume added pod [%s]", podName)
 	pod, ok := e.podManager.GetPodByName(namespacedName.Namespace, podName)
 	if !ok || pod.DeletionTimestamp != nil {
 		return apis.ErrPodNotFound
 	}
 
 	if err := e.makePodDataDirs(pod); err != nil {
-		log.LOGGER.Errorf("Unable to make pod data directories for pod %q: %v", format.Pod(pod), err)
+		klog.Errorf("Unable to make pod data directories for pod %q: %v", format.Pod(pod), err)
 		return err
 	}
 
 	if err := e.volumeManager.WaitForAttachAndMount(pod); err != nil {
-		log.LOGGER.Errorf("Unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
+		klog.Errorf("Unable to mount volumes for pod %q: %v; skipping pod", format.Pod(pod), err)
 		return err
 	}
 
@@ -836,7 +836,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 
 	curPodStatus, err := e.podCache.Get(pod.GetUID())
 	if err != nil {
-		log.LOGGER.Errorf("Pod status for %s from cache failed: %v", podName, err)
+		klog.Errorf("Pod status for %s from cache failed: %v", podName, err)
 		return err
 	}
 
@@ -855,13 +855,13 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 
 	e.workQueue.Enqueue(pod.UID, utilwait.Jitter(time.Minute, workerResyncIntervalJitterFactor))
-	log.LOGGER.Infof("consume added pod [%s] successfully\n", podName)
+	klog.Infof("consume added pod [%s] successfully\n", podName)
 	return nil
 }
 
 func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 	podName := namespacedName.Name
-	log.LOGGER.Infof("start to consume removed pod [%s]", podName)
+	klog.Infof("start to consume removed pod [%s]", podName)
 	pod, ok := e.podManager.GetPodByName(namespacedName.Namespace, podName)
 	if !ok {
 		return apis.ErrPodNotFound
@@ -869,7 +869,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 
 	podStatus, err := e.podCache.Get(pod.GetUID())
 	if err != nil {
-		log.LOGGER.Errorf("Pod status for %s from cache failed: %v", podName, err)
+		klog.Errorf("Pod status for %s from cache failed: %v", podName, err)
 		return err
 	}
 
@@ -880,7 +880,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 		}
 		return fmt.Errorf("consume removed pod [%s] failed, %v", podName, err)
 	}
-	log.LOGGER.Infof("consume removed pod [%s] successfully\n", podName)
+	klog.Infof("consume removed pod [%s] successfully\n", podName)
 	return nil
 }
 
@@ -896,7 +896,7 @@ func (e *edged) syncPod() {
 			_, resType, resID, err := util.ParseResourceEdge(request.GetResource(), request.GetOperation())
 			op := request.GetOperation()
 			if err != nil {
-				log.LOGGER.Errorf("failed to parse the Resource: %v", err)
+				klog.Errorf("failed to parse the Resource: %v", err)
 				continue
 			}
 
@@ -908,31 +908,31 @@ func (e *edged) syncPod() {
 			default:
 				content, err = json.Marshal(request.Content)
 				if err != nil {
-					log.LOGGER.Errorf("marshal message content failed: %v", err)
+					klog.Errorf("marshal message content failed: %v", err)
 					continue
 				}
 			}
-			log.LOGGER.Infof("request content is %s", request.Content)
+			klog.Infof("request content is %s", request.Content)
 			switch resType {
 			case model.ResourceTypePod:
 				if op == model.ResponseOperation && resID == "" && request.GetSource() == metamanager.MetaManagerModuleName {
 					err := e.handlePodListFromMetaManager(content)
 					if err != nil {
-						log.LOGGER.Errorf("handle podList failed: %v", err)
+						klog.Errorf("handle podList failed: %v", err)
 						continue
 					}
 					e.setInitPodReady(true)
 				} else if op == model.ResponseOperation && resID == "" && request.GetSource() == EdgeController {
 					err := e.handlePodListFromEdgeController(content)
 					if err != nil {
-						log.LOGGER.Errorf("handle controllerPodList failed: %v", err)
+						klog.Errorf("handle controllerPodList failed: %v", err)
 						continue
 					}
 					e.setInitPodReady(true)
 				} else {
 					err := e.handlePod(op, content)
 					if err != nil {
-						log.LOGGER.Errorf("handle pod failed: %v", err)
+						klog.Errorf("handle pod failed: %v", err)
 						continue
 					}
 				}
@@ -940,29 +940,29 @@ func (e *edged) syncPod() {
 				if op != model.ResponseOperation {
 					err := e.handleConfigMap(op, content)
 					if err != nil {
-						log.LOGGER.Errorf("handle configMap failed: %v", err)
+						klog.Errorf("handle configMap failed: %v", err)
 					}
 				} else {
-					log.LOGGER.Infof("skip to handle configMap with type response")
+					klog.Infof("skip to handle configMap with type response")
 					continue
 				}
 			case model.ResourceTypeSecret:
 				if op != model.ResponseOperation {
 					err := e.handleSecret(op, content)
 					if err != nil {
-						log.LOGGER.Errorf("handle secret failed: %v", err)
+						klog.Errorf("handle secret failed: %v", err)
 					}
 				} else {
-					log.LOGGER.Infof("skip to handle secret with type response")
+					klog.Infof("skip to handle secret with type response")
 					continue
 				}
 			default:
-				log.LOGGER.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
+				klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
 				continue
 			}
 
 		} else {
-			log.LOGGER.Errorf("failed to get pod")
+			klog.Errorf("failed to get pod")
 		}
 	}
 }
@@ -1021,7 +1021,7 @@ func (e *edged) handlePodListFromEdgeController(content []byte) (err error) {
 
 func (e *edged) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	log.LOGGER.Infof("start sync addition for pod [%s]", pod.Name)
+	klog.Infof("start sync addition for pod [%s]", pod.Name)
 	attrs := &lifecycle.PodAdmitAttributes{}
 	attrs.Pod = pod
 	otherpods := e.podManager.GetPods()
@@ -1035,12 +1035,12 @@ func (e *edged) addPod(obj interface{}) {
 	e.podManager.AddPod(pod)
 	e.probeManager.AddPod(pod)
 	e.podAdditionQueue.Add(key.String())
-	log.LOGGER.Infof("success sync addition for pod [%s]", pod.Name)
+	klog.Infof("success sync addition for pod [%s]", pod.Name)
 }
 
 func (e *edged) updatePod(obj interface{}) {
 	newPod := obj.(*v1.Pod)
-	log.LOGGER.Infof("start update pod [%s]", newPod.Name)
+	klog.Infof("start update pod [%s]", newPod.Name)
 	key := types.NamespacedName{
 		Namespace: newPod.Namespace,
 		Name:      newPod.Name,
@@ -1052,16 +1052,16 @@ func (e *edged) updatePod(obj interface{}) {
 	} else {
 		e.podDeletionQueue.Add(key.String())
 	}
-	log.LOGGER.Infof("success update pod is %+v\n", newPod)
+	klog.Infof("success update pod is %+v\n", newPod)
 }
 
 func (e *edged) deletePod(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	log.LOGGER.Infof("start remove pod [%s]", pod.Name)
+	klog.Infof("start remove pod [%s]", pod.Name)
 	e.podManager.DeletePod(pod)
 	e.statusManager.TerminatePod(pod)
 	e.probeManager.RemovePod(pod)
-	log.LOGGER.Infof("success remove pod [%s]", pod.Name)
+	klog.Infof("success remove pod [%s]", pod.Name)
 }
 
 func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
@@ -1117,7 +1117,7 @@ func (e *edged) handleConfigMap(op string, content []byte) (err error) {
 		}
 	}
 	if err == nil {
-		log.LOGGER.Infof("%s configMap [%s] for cache success.", op, configMap.Name)
+		klog.Infof("%s configMap [%s] for cache success.", op, configMap.Name)
 	}
 	return
 }
@@ -1142,7 +1142,7 @@ func (e *edged) handleSecret(op string, content []byte) (err error) {
 		}
 	}
 	if err == nil {
-		log.LOGGER.Infof("%s secret [%s] for cache success.", op, podSecret.Name)
+		klog.Infof("%s secret [%s] for cache success.", op, podSecret.Name)
 	}
 	return
 }

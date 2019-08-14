@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 )
 
 const (
@@ -67,19 +68,19 @@ var edgeHubConfig EdgeHubConfig
 func InitEdgehubConfig() {
 	err := getControllerConfig()
 	if err != nil {
-		log.LOGGER.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
+		klog.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
 		panic(err)
 	}
 	if edgeHubConfig.CtrConfig.Protocol == protocolWebsocket {
 		err = getWebSocketConfig()
 		if err != nil {
-			log.LOGGER.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
+			klog.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
 			panic(err)
 		}
 	} else if edgeHubConfig.CtrConfig.Protocol == protocolQuic {
 		err = getQuicConfig()
 		if err != nil {
-			log.LOGGER.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
+			klog.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
 			panic(err)
 		}
 	} else {
@@ -95,7 +96,7 @@ func GetConfig() *EdgeHubConfig {
 func getWebSocketConfig() error {
 	url, err := config.CONFIG.GetValue("edgehub.websocket.url").ToString()
 	if err != nil {
-		log.LOGGER.Errorf("Failed to get url for web socket client: %v", err)
+		klog.Errorf("Failed to get url for web socket client: %v", err)
 	}
 	edgeHubConfig.WSConfig.URL = url
 
@@ -113,21 +114,21 @@ func getWebSocketConfig() error {
 
 	writeDeadline, err := config.CONFIG.GetValue("edgehub.websocket.write-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get write-deadline for web socket client: %v", err)
+		klog.Warningf("Failed to get write-deadline for web socket client: %v", err)
 		writeDeadline = writeDeadlineDefault
 	}
 	edgeHubConfig.WSConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
 
 	readDeadline, err := config.CONFIG.GetValue("edgehub.websocket.read-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get read-deadline for web socket client: %v", err)
+		klog.Warningf("Failed to get read-deadline for web socket client: %v", err)
 		readDeadline = readDeadlineDefault
 	}
 	edgeHubConfig.WSConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
 
 	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.websocket.handshake-timeout").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get handshake-timeout for web socket client: %v", err)
+		klog.Warningf("Failed to get handshake-timeout for web socket client: %v", err)
 		handshakeTimeout = handshakeTimeoutDefault
 	}
 	edgeHubConfig.WSConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
@@ -138,14 +139,14 @@ func getWebSocketConfig() error {
 func getControllerConfig() error {
 	protocol, err := config.CONFIG.GetValue("edgehub.controller.protocol").ToString()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get protocol for controller client: %v", err)
+		klog.Warningf("Failed to get protocol for controller client: %v", err)
 		protocol = protocolDefault
 	}
 	edgeHubConfig.CtrConfig.Protocol = protocol
 
 	heartbeat, err := config.CONFIG.GetValue("edgehub.controller.heartbeat").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get heartbeat for controller client: %v", err)
+		klog.Warningf("Failed to get heartbeat for controller client: %v", err)
 		heartbeat = heartbeatDefault
 	}
 	edgeHubConfig.CtrConfig.HeartbeatPeriod = time.Duration(heartbeat) * time.Second
@@ -173,7 +174,7 @@ func getExtendHeader() http.Header {
 	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker_root_dir").ToString(); err == nil {
 		header.Add("DockerRootDir", dockerRoot)
 	}
-	log.LOGGER.Infof("websocket connection header is %v", header)
+	klog.Infof("websocket connection header is %v", header)
 
 	return header
 }
@@ -205,21 +206,21 @@ func getQuicConfig() error {
 
 	writeDeadline, err := config.CONFIG.GetValue("edgehub.quic.write-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get write-deadline for quic client: %v", err)
+		klog.Warningf("Failed to get write-deadline for quic client: %v", err)
 		writeDeadline = writeDeadlineDefault
 	}
 	edgeHubConfig.QcConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
 
 	readDeadline, err := config.CONFIG.GetValue("edgehub.quic.read-deadline").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get read-deadline for quic client: %v", err)
+		klog.Warningf("Failed to get read-deadline for quic client: %v", err)
 		readDeadline = readDeadlineDefault
 	}
 	edgeHubConfig.QcConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
 
 	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.quic.handshake-timeout").ToInt()
 	if err != nil {
-		log.LOGGER.Warnf("Failed to get handshake-timeout for quic client: %v", err)
+		klog.Warningf("Failed to get handshake-timeout for quic client: %v", err)
 		handshakeTimeout = handshakeTimeoutDefault
 	}
 	edgeHubConfig.QcConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second

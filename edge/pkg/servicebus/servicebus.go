@@ -8,10 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 )
@@ -53,7 +55,7 @@ func (sb *servicebus) Start(c *context.Context) {
 	for {
 		if msg, ok := sb.context.Receive("servicebus"); ok == nil {
 			go func() {
-				log.LOGGER.Infof("ServiceBus receive msg")
+				klog.Infof("ServiceBus receive msg")
 				source := msg.GetSource()
 				if source != sourceType {
 					return
@@ -62,7 +64,7 @@ func (sb *servicebus) Start(c *context.Context) {
 				r := strings.Split(resource, ":")
 				if len(r) != 2 {
 					m := "the format of resource " + resource + " is incorrect"
-					log.LOGGER.Warnf(m)
+					klog.Warningf(m)
 					code := http.StatusBadRequest
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 						sb.context.Send2Group(modules.HubGroup, response)
@@ -71,7 +73,7 @@ func (sb *servicebus) Start(c *context.Context) {
 				}
 				content, err := json.Marshal(msg.GetContent())
 				if err != nil {
-					log.LOGGER.Errorf("marshall message content failed", err)
+					klog.Errorf("marshall message content failed %v", err)
 					m := "error to marshal request msg content"
 					code := http.StatusBadRequest
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
@@ -83,7 +85,7 @@ func (sb *servicebus) Start(c *context.Context) {
 				if err := json.Unmarshal(content, &httpRequest); err != nil {
 					m := "error to parse http request"
 					code := http.StatusBadRequest
-					log.LOGGER.Errorf(m, err)
+					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 						sb.context.Send2Group(modules.HubGroup, response)
 					}
@@ -95,7 +97,7 @@ func (sb *servicebus) Start(c *context.Context) {
 				if err != nil {
 					m := "error to call service"
 					code := http.StatusNotFound
-					log.LOGGER.Errorf(m, err)
+					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 						sb.context.Send2Group(modules.HubGroup, response)
 					}
@@ -109,7 +111,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					}
 					m := "error to receive response, err: " + err.Error()
 					code := http.StatusInternalServerError
-					log.LOGGER.Errorf(m, err)
+					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 						sb.context.Send2Group(modules.HubGroup, response)
 					}

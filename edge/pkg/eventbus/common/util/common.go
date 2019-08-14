@@ -6,9 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"k8s.io/klog"
 )
 
 var (
@@ -21,7 +20,7 @@ func CheckKeyExist(keys []string, disinfo map[string]interface{}) error {
 	for _, v := range keys {
 		_, ok := disinfo[v]
 		if !ok {
-			log.LOGGER.Errorf("key: %s not found", v)
+			klog.Errorf("key: %s not found", v)
 			return errors.New("key not found")
 		}
 	}
@@ -59,11 +58,11 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 // LoopConnect connect to mqtt server
 func LoopConnect(clientID string, client MQTT.Client) {
 	for {
-		log.LOGGER.Infof("start connect to mqtt server with client id: %s", clientID)
+		klog.Infof("start connect to mqtt server with client id: %s", clientID)
 		token := client.Connect()
-		log.LOGGER.Infof("client %s isconnected: %s", clientID, client.IsConnected())
+		klog.Infof("client %s isconnected: %v", clientID, client.IsConnected())
 		if rs, err := CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("connect error: %v", err)
+			klog.Errorf("connect error: %v", err)
 		} else {
 			return
 		}

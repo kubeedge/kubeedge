@@ -27,9 +27,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	v1 "k8s.io/api/core/v1"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/container"
 )
 
@@ -98,7 +98,7 @@ func GenerateMountBindings(mounts []*container.Mount) []string {
 		case runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 			attrs = append(attrs, "rslave")
 		default:
-			log.LOGGER.Warnf("unknown propagation mode for hostPath %q", m.HostPath)
+			klog.Warningf("unknown propagation mode for hostPath %q", m.HostPath)
 			// Falls back to "private"
 		}
 

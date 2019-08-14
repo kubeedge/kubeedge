@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
-
-	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 var (
@@ -71,12 +72,12 @@ type AccessInfo struct {
 }
 
 func onPubConnectionLost(client MQTT.Client, err error) {
-	log.LOGGER.Errorf("onPubConnectionLost with error: %v", err)
+	klog.Errorf("onPubConnectionLost with error: %v", err)
 	go MQTTHub.InitPubClient()
 }
 
 func onSubConnectionLost(client MQTT.Client, err error) {
-	log.LOGGER.Errorf("onSubConnectionLost with error: %v", err)
+	klog.Errorf("onSubConnectionLost with error: %v", err)
 	go MQTTHub.InitSubClient()
 }
 
@@ -84,17 +85,16 @@ func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			log.LOGGER.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
+			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
 			return
 		}
-		log.LOGGER.Infof("edge-hub-cli subscribe topic to %s", t)
+		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
 }
 
 // OnSubMessageReceived msg received callback
 func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
-	log.LOGGER.Infof("OnSubMessageReceived receive msg from topic: %s", message.Topic())
-
+	klog.Infof("OnSubMessageReceived receive msg from topic: %s", message.Topic())
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
@@ -111,7 +111,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(message.Payload()))
-	log.LOGGER.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
+	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	ModuleContext.Send2Group(target, *msg)
 }
 
@@ -129,7 +129,7 @@ func (mq *Client) InitSubClient() {
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
 	util.LoopConnect(subID, mq.SubCli)
-	log.LOGGER.Info("finish hub-client sub")
+	klog.Info("finish hub-client sub")
 }
 
 // InitPubClient init pub client
@@ -145,16 +145,16 @@ func (mq *Client) InitPubClient() {
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
 	util.LoopConnect(pubID, mq.PubCli)
-	log.LOGGER.Info("finish hub-client pub")
+	klog.Info("finish hub-client pub")
 }
 
 // PubMQTTMsg pub msg to mqtt broker
 func (mq *Client) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
 	token := mq.PubCli.Publish(topic, qos, retained, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		log.LOGGER.Errorf("error in PubMQTTMsg with topic: %s, %v", topic, token.Error())
+		klog.Errorf("error in PubMQTTMsg with topic: %s, %v", topic, token.Error())
 		return fmt.Errorf("pubmsg err")
 	}
-	log.LOGGER.Infof("success in PubMQTTMsg with topic: %s", topic)
+	klog.Infof("success in PubMQTTMsg with topic: %s", topic)
 	return nil
 }

@@ -30,10 +30,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	"k8s.io/kubernetes/pkg/util/mount"
 	utilfile "k8s.io/utils/path"
@@ -101,7 +100,7 @@ func (e *edged) getPodDir(podUID types.UID) string {
 		return oldPath
 	}
 	if oldExists {
-		log.LOGGER.Warnf("Data dir for pod %q exists in both old and new form, using new", podUID)
+		klog.Warningf("Data dir for pod %q exists in both old and new form, using new", podUID)
 	}
 	return newPath
 }
@@ -152,13 +151,13 @@ func (e *edged) getPodVolumePathListFromDisk(podUID types.UID) ([]string, error)
 	if pathExists, pathErr := mount.PathExists(podVolDir); pathErr != nil {
 		return volumes, fmt.Errorf("Error checking if path %q exists: %v", podVolDir, pathErr)
 	} else if !pathExists {
-		log.LOGGER.Warnf("Path %q does not exist", podVolDir)
+		klog.Warningf("Path %q does not exist", podVolDir)
 		return volumes, nil
 	}
 
 	volumePluginDirs, err := ioutil.ReadDir(podVolDir)
 	if err != nil {
-		log.LOGGER.Errorf("Could not read directory %s: %v", podVolDir, err)
+		klog.Errorf("Could not read directory %s: %v", podVolDir, err)
 		return volumes, err
 	}
 	for _, volumePluginDir := range volumePluginDirs {

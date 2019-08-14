@@ -23,14 +23,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/satori/go.uuid"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 	"github.com/kubeedge/viaduct/pkg/server"
-	"github.com/satori/go.uuid"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
 
 //init() starts the test server and generates test certificates for testing
@@ -59,7 +61,7 @@ func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSoc
 }
 
 func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	log.LOGGER.Infof("receive message: %s", container.Message.GetContent())
+	klog.Infof("receive message: %s", container.Message.GetContent())
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
 
 }
@@ -69,7 +71,7 @@ func initServerEntries() {
 }
 
 func connNotify(conn conn.Connection) {
-	log.LOGGER.Info("receive a connection")
+	klog.Info("receive a connection")
 }
 
 //newTestServer() starts a fake server for testing
@@ -80,7 +82,7 @@ func newTestServer() {
 
 	cert, err := tls.LoadX509KeyPair("/tmp/edge.crt", "/tmp/edge.key")
 	if err != nil {
-		log.LOGGER.Errorf("Failed to load x509 key pair: %v", err)
+		klog.Errorf("Failed to load x509 key pair: %v", err)
 		return
 	}
 
@@ -101,7 +103,7 @@ func newTestServer() {
 	go func() {
 		err = server.ListenAndServeTLS("", "")
 		if err != nil {
-			log.LOGGER.Errorf("listen and serve tls failed, error: %+v", err)
+			klog.Errorf("listen and serve tls failed, error: %+v", err)
 		}
 	}()
 }
