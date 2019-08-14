@@ -22,8 +22,9 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/klog"
+
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/golang/glog"
 )
 
 var (
@@ -130,7 +131,7 @@ func MqttConnect(mqttMode int, mqttInternalServer, mqttServer string) {
 	}
 	Client = MQTT.NewClient(ClientOpts)
 	if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("client.Connect() Error is %s", TokenClient.Error())
+		klog.Errorf("client.Connect() Error is %s", TokenClient.Error())
 	}
 }
 
@@ -138,12 +139,12 @@ func MqttConnect(mqttMode int, mqttInternalServer, mqttServer string) {
 func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		glog.Errorf("Error in marshalling: %s", err)
+		klog.Errorf("Error in marshalling: %s", err)
 	}
 	deviceTwinUpdate := DeviceETPrefix + deviceID + TwinETUpdateSuffix
 	TokenClient = Client.Publish(deviceTwinUpdate, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("client.publish() Error in device twin update is %s", TokenClient.Error())
+		klog.Errorf("client.publish() Error in device twin update is %s", TokenClient.Error())
 	}
 }
 
@@ -152,11 +153,11 @@ func SyncToCloud(updateMessage DeviceTwinUpdate, deviceID string) {
 	deviceTwinResultUpdate := DeviceETPrefix + deviceID + TwinETCloudSyncSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		glog.Errorf("Error in marshalling: %s", err)
+		klog.Errorf("Error in marshalling: %s", err)
 	}
 	TokenClient = Client.Publish(deviceTwinResultUpdate, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("client.publish() Error in device twin update is: %s", TokenClient.Error())
+		klog.Errorf("client.publish() Error in device twin update is: %s", TokenClient.Error())
 	}
 }
 
@@ -165,11 +166,11 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
-		glog.Errorf("Error in marshalling: %s", err)
+		klog.Errorf("Error in marshalling: %s", err)
 	}
 	TokenClient = Client.Publish(getTwin, 0, false, twinUpdateBody)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("client.publish() Error in device twin get  is: %s ", TokenClient.Error())
+		klog.Errorf("client.publish() Error in device twin get  is: %s ", TokenClient.Error())
 	}
 }
 
@@ -178,7 +179,7 @@ func TwinSubscribe(deviceID string) {
 	getTwinResult := DeviceETPrefix + deviceID + TwinETGetResultSuffix
 	TokenClient = Client.Subscribe(getTwinResult, 0, OnTwinMessageReceived)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		glog.Errorf("subscribe() Error in device twin result get  is: %s", TokenClient.Error())
+		klog.Errorf("subscribe() Error in device twin result get  is: %s", TokenClient.Error())
 	}
 	for {
 		time.Sleep(1 * time.Second)
@@ -196,7 +197,7 @@ func TwinSubscribe(deviceID string) {
 func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 	err := json.Unmarshal(message.Payload(), &TwinResult)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling:  %s", err)
+		klog.Errorf("Error in unmarshalling:  %s", err)
 	}
 }
 

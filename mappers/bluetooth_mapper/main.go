@@ -20,24 +20,27 @@ import (
 	"flag"
 	"os"
 
-	"github.com/golang/glog"
+	"github.com/spf13/pflag"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/controller"
 )
 
-//usage is responsible for setting up the default settings of all defined command-line flags for glog.
+//usage is responsible for setting up the default settings of all defined command-line flags for log.
 func usage() {
 	flag.PrintDefaults()
 	os.Exit(2)
 }
 
-//init for getting command line arguments for glog
+//init for getting command line arguments for log
 func init() {
+	klog.InitFlags(nil)
 	flag.Usage = usage
 	// NOTE: This next line is key you have to call flag.Parse() for the command line
-	// options or "flags" that are defined in the glog module to be picked up.
+	// options or "flags" that are defined in the log module to be picked up.
 	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 // main function
@@ -46,7 +49,7 @@ func main() {
 	// load config
 	err := BleConfig.Load()
 	if err != nil {
-		glog.Errorf("Error in loading configuration: %s", err)
+		klog.Errorf("Error in loading configuration: %s", err)
 		os.Exit(1)
 	}
 	bleController := controller.Config{
