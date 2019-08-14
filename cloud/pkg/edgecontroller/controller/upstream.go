@@ -570,7 +570,6 @@ func (uc *UpstreamController) queryService(stop chan struct{}) {
 			default:
 				log.LOGGER.Infof("message: %s process failure, service operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			log.LOGGER.Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
 			log.LOGGER.Infof("stop queryService")
 			running = false
