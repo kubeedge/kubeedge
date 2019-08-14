@@ -29,12 +29,12 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
-
-	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 )
 
 //K8s resource handlers
@@ -111,7 +111,7 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 		count := 0
 		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeReadyStatus(nodeHandler, edgenodeName)
-			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
+			utils.Infof("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == "Running" {
 				count++
 			}
@@ -144,7 +144,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 	for edgenodeName := range NodeInfo {
 		err := utils.DeRegisterNodeFromMaster(apiServerForRegisterNode+NodeHandler, edgenodeName)
 		if err != nil {
-			utils.Failf("DeRegisterNodeFromMaster failed: %v", err)
+			utils.Fatalf("DeRegisterNodeFromMaster failed: %v", err)
 		}
 	}
 	//Verify deployments, configmaps, nodes are deleted successfully
@@ -174,7 +174,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 		count := 0
 		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeDeleteStatus(apiServerForRegisterNode+NodeHandler, edgenodeName)
-			utils.Info("Node Name: %v, Node Status: %v", edgenodeName, status)
+			utils.Infof("Node Name: %v, Node Status: %v", edgenodeName, status)
 			if status == 404 {
 				count++
 			}
@@ -220,14 +220,14 @@ func ApplyLabel(nodeHandler string) error {
 func AddFakePod(ControllerHubURL string, pod types.FakePod) {
 	reqBody, err := json.Marshal(pod)
 	if err != nil {
-		utils.Failf("Unmarshal HTTP Response has failed: %v", err)
+		utils.Fatalf("Unmarshal HTTP Response has failed: %v", err)
 	}
 
 	err, resp := SendHttpRequest(http.MethodPost,
 		ControllerHubURL+constants.PodResource,
 		bytes.NewBuffer(reqBody))
 	if err != nil {
-		utils.Failf("Frame HTTP request failed: %v", err)
+		utils.Fatalf("Frame HTTP request failed: %v", err)
 	}
 
 	if resp != nil {
@@ -235,13 +235,13 @@ func AddFakePod(ControllerHubURL string, pod types.FakePod) {
 
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			utils.Failf("HTTP Response reading has failed: %v", err)
+			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}
 
 		if contents != nil {
-			utils.Info("AddPod response: %v", contents)
+			utils.Infof("AddPod response: %v", contents)
 		} else {
-			utils.Info("AddPod response: nil")
+			utils.Infof("AddPod response: nil")
 		}
 	}
 }
@@ -253,7 +253,7 @@ func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
 			"?name="+pod.Name+"&namespace="+pod.Namespace+"&nodename="+pod.NodeName,
 		nil)
 	if err != nil {
-		utils.Failf("Frame HTTP request failed: %v", err)
+		utils.Fatalf("Frame HTTP request failed: %v", err)
 	}
 
 	if resp != nil {
@@ -261,13 +261,13 @@ func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
 
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			utils.Failf("HTTP Response reading has failed: %v", err)
+			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}
 
 		if contents != nil {
-			utils.Info("DeletePod response: %v", contents)
+			utils.Infof("DeletePod response: %v", contents)
 		} else {
-			utils.Info("DeletePod response: nil")
+			utils.Infof("DeletePod response: nil")
 		}
 	}
 }
@@ -277,7 +277,7 @@ func ListFakePods(ControllerHubURL string) []types.FakePod {
 	pods := []types.FakePod{}
 	err, resp := SendHttpRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
 	if err != nil {
-		utils.Failf("Frame HTTP request failed: %v", err)
+		utils.Fatalf("Frame HTTP request failed: %v", err)
 	}
 
 	if resp != nil {
@@ -285,16 +285,16 @@ func ListFakePods(ControllerHubURL string) []types.FakePod {
 
 		contents, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			utils.Failf("HTTP Response reading has failed: %v", err)
+			utils.Fatalf("HTTP Response reading has failed: %v", err)
 		}
 
 		err = json.Unmarshal(contents, &pods)
 		if err != nil {
-			utils.Failf("Unmarshal message content with error: %s", err)
+			utils.Fatalf("Unmarshal message content with error: %s", err)
 		}
 	}
 
-	utils.Info("ListPods result: %d", len(pods))
+	utils.Infof("ListPods result: %d", len(pods))
 	return pods
 }
 
@@ -304,18 +304,18 @@ func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Respon
 	client := &http.Client{}
 	req, err := http.NewRequest(method, reqApi, body)
 	if err != nil {
-		utils.Failf("Frame HTTP request failed: %v", err)
+		utils.Fatalf("Frame HTTP request failed: %v", err)
 		return err, resp
 	}
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
 	if err != nil {
-		utils.Failf("HTTP request is failed :%v", err)
+		utils.Fatalf("HTTP request is failed :%v", err)
 		return err, resp
 	}
 	if resp != nil {
-		utils.Info("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	}
 	return nil, resp
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/context"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 

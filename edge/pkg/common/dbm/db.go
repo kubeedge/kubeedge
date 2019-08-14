@@ -4,11 +4,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/astaxie/beego/orm"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog"
 
-	"github.com/astaxie/beego/orm"
 	"github.com/kubeedge/beehive/pkg/common/config"
 )
 

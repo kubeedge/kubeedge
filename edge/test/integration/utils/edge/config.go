@@ -51,7 +51,7 @@ func loadConfigJSONFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
 	if err != nil {
-		common.InfoV6("Failed to get Abs path: %v", err)
+		common.Infof("Failed to get Abs path: %v", err)
 		panic(err)
 	}
 	config := &Config{}

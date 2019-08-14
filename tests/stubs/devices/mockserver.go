@@ -7,11 +7,10 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/klog"
-
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
 	"github.com/paypal/gatt/examples/service"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/tests/stubs/devices/services"
 )

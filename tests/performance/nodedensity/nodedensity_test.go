@@ -18,7 +18,6 @@ package nodedensity
 import (
 	. "github.com/onsi/ginkgo"
 	metav1 "k8s.io/api/core/v1"
-	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
@@ -56,7 +55,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			klog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 		Measure("PERF_NODETEST_NODES_5: Create 5 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
@@ -68,7 +67,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			klog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 
 		Measure("PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
@@ -81,7 +80,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			klog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 		Measure("PERF_NODETEST_NODES_20: Create 20 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
@@ -93,7 +92,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			klog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 	})
 })

@@ -28,15 +28,15 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
 
 //DeviceUpdate device update
@@ -133,24 +133,24 @@ func GetDeviceStateFromDB(deviceID string) string {
 
 	pwd, err := os.Getwd()
 	if err != nil {
-		common.Failf("Failed to get PWD: %v", err)
+		common.Fatalf("Failed to get PWD: %v", err)
 		os.Exit(1)
 	}
 	destpath := filepath.Join(pwd, "../../edge.db")
 	db, err := sql.Open("sqlite3", destpath)
 	if err != nil {
-		common.Failf("Open Sqlite DB failed : %v", err)
+		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
 	row, err := db.Query("SELECT * FROM device")
 	if err != nil {
-		common.Failf("Query Sqlite DB failed: %v", err)
+		common.Fatalf("Query Sqlite DB failed: %v", err)
 	}
 	defer row.Close()
 	for row.Next() {
 		err = row.Scan(&device.ID, &device.Name, &device.Description, &device.State, &device.LastOnline)
 		if err != nil {
-			common.Failf("Failed to scan DB rows: %v", err)
+			common.Fatalf("Failed to scan DB rows: %v", err)
 		}
 		if string(device.ID) == deviceID {
 			break
@@ -163,13 +163,13 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	var twinAttribute TwinAttribute
 	pwd, err := os.Getwd()
 	if err != nil {
-		common.Failf("Failed to get PWD: %v", err)
+		common.Fatalf("Failed to get PWD: %v", err)
 		os.Exit(1)
 	}
 	destpath := filepath.Join(pwd, "../../edge.db")
 	db, err := sql.Open("sqlite3", destpath)
 	if err != nil {
-		common.Failf("Open Sqlite DB failed : %v", err)
+		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
 	row, err := db.Query("SELECT * FROM device_twin")
@@ -191,7 +191,7 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 			&twinAttribute.MetaData)
 
 		if err != nil {
-			common.Failf("Failed to scan DB rows: %v", err)
+			common.Fatalf("Failed to scan DB rows: %v", err)
 		}
 		if string(twinAttribute.DeviceID) == deviceID && twinAttribute.Name == Name {
 			break
@@ -205,13 +205,13 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 
 	pwd, err := os.Getwd()
 	if err != nil {
-		common.Failf("Failed to get PWD: %v", err)
+		common.Fatalf("Failed to get PWD: %v", err)
 		os.Exit(1)
 	}
 	destPath := filepath.Join(pwd, "../../edge.db")
 	db, err := sql.Open("sqlite3", destPath)
 	if err != nil {
-		common.Failf("Open Sqlite DB failed : %v", err)
+		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
 	defer db.Close()
 	row, err := db.Query("SELECT * FROM device_attr")
@@ -220,7 +220,7 @@ func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	for row.Next() {
 		err = row.Scan(&attribute.ID, &attribute.DeviceID, &attribute.Name, &attribute.Description, &attribute.Value, &attribute.Optional, &attribute.Type, &attribute.MetaData)
 		if err != nil {
-			common.Failf("Failed to scan DB rows: %v", err)
+			common.Fatalf("Failed to scan DB rows: %v", err)
 		}
 		if string(attribute.DeviceID) == deviceID && attribute.Name == Name {
 			break
@@ -259,20 +259,20 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 			device,
 		}}
 	default:
-		common.Failf("operation %q is invalid", operation)
+		common.Fatalf("operation %q is invalid", operation)
 		return false
 	}
 
 	respbytes, err := json.Marshal(payload)
 	if err != nil {
-		common.Failf("Payload marshalling failed: %v", err)
+		common.Fatalf("Payload marshalling failed: %v", err)
 		return false
 	}
 
 	req, err := http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
 	if err != nil {
 		// handle error
-		common.Failf("Frame HTTP request failed: %v", err)
+		common.Fatalf("Frame HTTP request failed: %v", err)
 		return false
 	}
 
@@ -283,10 +283,10 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 
 	if err != nil {
 		// handle error
-		common.Failf("HTTP request is failed :%v", err)
+		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 
@@ -299,7 +299,7 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	case "DELETE":
 		httpMethod = http.MethodDelete
 	default:
-		common.Failf("operation %q is invalid", operation)
+		common.Fatalf("operation %q is invalid", operation)
 		return false
 	}
 
@@ -310,24 +310,24 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	}
 	respbytes, err := json.Marshal(payload)
 	if err != nil {
-		common.Failf("Payload marshalling failed: %v", err)
+		common.Fatalf("Payload marshalling failed: %v", err)
 		return false
 	}
 
 	req, err := http.NewRequest(httpMethod, edgedpoint, bytes.NewBuffer(respbytes))
 	if err != nil {
 		// handle error
-		common.Failf("Frame HTTP request failed: %v", err)
+		common.Fatalf("Frame HTTP request failed: %v", err)
 		return false
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
 		// handle error
-		common.Failf("HTTP request is failed :%v", err)
+		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
 	return true
@@ -342,24 +342,24 @@ func GetPods(EdgedEndpoint string) (v1.PodList, error) {
 	req, err := http.NewRequest(http.MethodGet, EdgedEndpoint, bytes)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
-		common.Failf("Frame HTTP request failed: %v", err)
+		common.Fatalf("Frame HTTP request failed: %v", err)
 		return pods, nil
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		common.Failf("Sending HTTP request failed: %v", err)
+		common.Fatalf("Sending HTTP request failed: %v", err)
 		return pods, nil
 	}
-	common.InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		common.Failf("HTTP Response reading has failed: %v", err)
+		common.Fatalf("HTTP Response reading has failed: %v", err)
 		return pods, nil
 	}
 	err = json.Unmarshal(contents, &pods)
 	if err != nil {
-		common.Failf("Unmarshal HTTP Response has failed: %v", err)
+		common.Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return pods, nil
 	}
 	return pods, nil
@@ -374,7 +374,7 @@ func CheckPodRunningState(EdgedEndPoint, podname string) {
 			pod := &pods.Items[index]
 			if podname == pod.Name {
 				status = string(pod.Status.Phase)
-				common.InfoV2("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
+				common.Infof("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
 			}
 		}
 		return status
@@ -389,7 +389,7 @@ func CheckPodDeletion(EdgedEndPoint, UID string) {
 		if len(pods.Items) > 0 {
 			for index := range pods.Items {
 				pod := &pods.Items[index]
-				common.InfoV2("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
+				common.Infof("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
 				if pod.Name == UID {
 					IsExist = true
 				}

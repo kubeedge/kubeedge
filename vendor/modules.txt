@@ -219,8 +219,6 @@ github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/types
-# github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-github.com/golang/glog
 # github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.3.1
@@ -316,10 +314,10 @@ github.com/konsorten/go-windows-terminal-sequences
 # github.com/kubeedge/beehive v0.0.0-20190627084409-06e0cfa222f7
 github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/common/config
-github.com/kubeedge/beehive/pkg/common/log
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
+github.com/kubeedge/beehive/pkg/common/log
 # github.com/kubeedge/viaduct v0.0.0-20190416034651-df4e595b4e12
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux
@@ -918,7 +916,7 @@ k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 # k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.0.0-20190718190424-bef8d46b95de
 k8s.io/csi-translation-lib/plugins
 k8s.io/csi-translation-lib
-# k8s.io/klog v0.3.3 => k8s.io/klog v0.3.3
+# k8s.io/klog v0.3.3 => k8s.io/klog v0.4.0
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
 k8s.io/kube-openapi/pkg/util/proto

@@ -21,13 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-	"github.com/kubeedge/viaduct/pkg/api"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 //context to load config and access across the package
@@ -47,7 +47,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 	//var toTaint bool
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
-		utils.InfoV6("Kubeedge deployment Load test Begin !!")
+		utils.Infof("Kubeedge deployment Load test Begin !!")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes

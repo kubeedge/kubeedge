@@ -18,12 +18,12 @@ package device_crd
 
 import (
 	"encoding/json"
-	v1 "k8s.io/api/core/v1"
 	"net/http"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"

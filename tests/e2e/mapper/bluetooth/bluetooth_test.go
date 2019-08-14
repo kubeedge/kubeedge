@@ -62,7 +62,7 @@ func DataConversion(client MQTT.Client, message MQTT.Message) {
 		devicePayload := message.Payload()
 		err := json.Unmarshal(devicePayload, &scheduleResult)
 		if err != nil {
-			common.Failf("Unmarshall failed %s", err)
+			utils.Fatalf("Unmarshall failed %s", err)
 		} else {
 			if reflect.DeepEqual(scheduleResult.EventResult, expectedTemp) {
 				dataConverted = true
@@ -80,7 +80,7 @@ func WriteDataReceived(client MQTT.Client, message MQTT.Message) {
 		err := json.Unmarshal(devicePayload, &scheduleResult)
 		data := []byte{1}
 		if err != nil {
-			common.Failf("Unmarshall failed %s", err)
+			utils.Fatalf("Unmarshall failed %s", err)
 		} else {
 			if reflect.DeepEqual(string(data), scheduleResult.EventResult) {
 				readWrittenData = true
@@ -97,7 +97,7 @@ func ScheduleExecute(client MQTT.Client, message MQTT.Message) {
 		devicePayload := message.Payload()
 		err := json.Unmarshal(devicePayload, &scheduleResult)
 		if err != nil {
-			common.Failf("Unmarshall failed %s", err)
+			utils.Fatalf("Unmarshall failed %s", err)
 		} else {
 			if reflect.DeepEqual(scheduleResult.EventResult, expectedTemp) {
 				timesExecuted++
@@ -114,15 +114,15 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, "bluetoothmapper", "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("client.Connect() Error is %s", TokenClient.Error())
+				utils.Fatalf("client.Connect() Error is %s", TokenClient.Error())
 			} else {
-				common.Info("Connection successful")
+				utils.Infof("Connection successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			scheduletopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 			Token := Client.Subscribe(scheduletopic, 0, WriteDataReceived)
 			if Token.Wait() && TokenClient.Error() != nil {
-				common.Failf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
+				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})
@@ -159,15 +159,15 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, "bluetoothmapper", "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("client.Connect() Error is %s", TokenClient.Error())
+				utils.Fatalf("client.Connect() Error is %s", TokenClient.Error())
 			} else {
-				common.Info("Subscribe Connection Successful")
+				utils.Infof("Subscribe Connection Successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			scheduletopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 			Token := Client.Subscribe(scheduletopic, 0, DataConversion)
 			if Token.Wait() && TokenClient.Error() != nil {
-				common.Failf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
+				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			var expectedSchedule []scheduler.Schedule
@@ -177,11 +177,11 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			scheduleCreateTopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/create"
 			scheduleCreate, err := json.Marshal(expectedSchedule)
 			if err != nil {
-				common.Failf("Error in marshalling: %s", err)
+				utils.Fatalf("Error in marshalling: %s", err)
 			}
 			TokenClient = Client.Publish(scheduleCreateTopic, 0, false, scheduleCreate)
 			if TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), scheduleCreateTopic)
+				utils.Fatalf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), scheduleCreateTopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})
@@ -203,15 +203,15 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, "bluetoothmapper", "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("client.Connect() Error is %s", TokenClient.Error())
+				utils.Fatalf("client.Connect() Error is %s", TokenClient.Error())
 			} else {
-				common.Info("Subscribe Connection successful")
+				utils.Infof("Subscribe Connection successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			scheduletopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 			Token := Client.Subscribe(scheduletopic, 0, ScheduleExecute)
 			if Token.Wait() && TokenClient.Error() != nil {
-				common.Failf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
+				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			var expectedSchedule []scheduler.Schedule
@@ -221,11 +221,11 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			scheduleCreateTopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/create"
 			scheduleCreate, err := json.Marshal(expectedSchedule)
 			if err != nil {
-				common.Failf("Error in marshalling: %s", err)
+				utils.Fatalf("Error in marshalling: %s", err)
 			}
 			TokenClient = Client.Publish(scheduleCreateTopic, 0, false, scheduleCreate)
 			if TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), scheduleCreateTopic)
+				utils.Fatalf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), scheduleCreateTopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})
@@ -252,19 +252,19 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, "bluetoothmapper", "", "")
 			Client = MQTT.NewClient(ClientOpts)
 			if TokenClient = Client.Connect(); TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("client.Connect() Error is %s", TokenClient.Error())
+				utils.Fatalf("client.Connect() Error is %s", TokenClient.Error())
 			} else {
-				common.Info("Publish Connection successful")
+				utils.Infof("Publish Connection successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			watcherCreateTopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/watcher/create"
 			scheduleCreate, err := json.Marshal(expectedWatchAttribute)
 			if err != nil {
-				common.Failf("Error in marshalling: %s", err)
+				utils.Fatalf("Error in marshalling: %s", err)
 			}
 			TokenClient = Client.Publish(watcherCreateTopic, 0, false, scheduleCreate)
 			if TokenClient.Wait() && TokenClient.Error() != nil {
-				common.Failf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), watcherCreateTopic)
+				utils.Fatalf("Publish to Topic  Failed  %s, %s", TokenClient.Error(), watcherCreateTopic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})

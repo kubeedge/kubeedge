@@ -30,7 +30,6 @@ require (
 	github.com/go-mesh/openlogging v1.0.0
 	github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/google/cadvisor v0.33.2-0.20190411163913-9db8c7dee20a
@@ -86,7 +85,7 @@ require (
 	k8s.io/client-go v0.0.0
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/cri-api v0.0.0
-	k8s.io/klog v0.3.3
+	k8s.io/klog v0.4.0
 	k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kubernetes v1.15.1
 	k8s.io/utils v0.0.0-20190712204705-3dccf664f023
