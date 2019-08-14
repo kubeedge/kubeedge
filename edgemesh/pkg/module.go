@@ -1,7 +1,8 @@
 package pkg
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -36,7 +37,7 @@ func (em *EdgeMesh) Start(c *context.Context) {
 	// we need watch message to update the cache of instances
 	for {
 		if msg, ok := em.context.Receive(constant.ModuleNameEdgeMesh); ok == nil {
-			log.LOGGER.Infof("get message: %v", msg)
+			klog.Infof("get message: %v", msg)
 			continue
 		}
 	}

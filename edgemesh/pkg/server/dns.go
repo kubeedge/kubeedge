@@ -11,7 +11,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
@@ -81,7 +82,7 @@ func startDnsServer() {
 	//get DNS server name
 	lip, err := getIP()
 	if err != nil {
-		log.LOGGER.Errorf("Dns server Start error : %s", err)
+		klog.Errorf("Dns server Start error : %s", err)
 		return
 	}
 
@@ -92,14 +93,14 @@ func startDnsServer() {
 	udpConn, err := net.ListenUDP("udp", laddr)
 	defer udpConn.Close()
 	if err != nil {
-		log.LOGGER.Errorf("Dns server Start error : %s", err)
+		klog.Errorf("Dns server Start error : %s", err)
 	}
 	dnsConn = udpConn
 	for {
 		req := make([]byte, bufSize)
 		n, from, err := dnsConn.ReadFromUDP(req)
 		if err != nil || n <= 0 {
-			log.LOGGER.Infof("DNS server get an IO error : %s", err)
+			klog.Infof("DNS server get an IO error : %s", err)
 			continue
 		}
 
@@ -113,7 +114,7 @@ func startDnsServer() {
 		rsp := make([]byte, 0)
 		rsp, err = recordHandler(que, req[0:n])
 		if err != nil {
-			log.LOGGER.Infof("DNS server get an resolve abnormal : %s", err)
+			klog.Infof("DNS server get an resolve abnormal : %s", err)
 			continue
 		}
 		dnsConn.WriteTo(rsp, from)
@@ -258,10 +259,10 @@ func lookupFromMetaManager(serviceUrl string) (exist bool, err error) {
 	name, namespace := common.SplitServiceKey(serviceUrl)
 	s, _ := metaClient.Services(namespace).Get(name)
 	if s != nil {
-		log.LOGGER.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)
+		klog.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)
 		return true, nil
 	}
-	log.LOGGER.Infof("Service %s is not found in this cluster", serviceUrl)
+	klog.Infof("Service %s is not found in this cluster", serviceUrl)
 	return false, nil
 }
 

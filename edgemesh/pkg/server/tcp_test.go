@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 
 	"github.com/go-chassis/go-chassis/core/handler"
 	"github.com/go-chassis/go-chassis/core/invocation"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
 )
@@ -42,7 +43,7 @@ func testTransferHTTPRequest(req *http.Request) (invocation.Invocation, error) {
 	clt := &http.Client{}
 	u, err := url.Parse("http://127.0.0.1:9090")
 	if err != nil {
-		log.LOGGER.Errorf("Parse new url error: %v\n", err)
+		klog.Errorf("Parse new url error: %v\n", err)
 		return invocation.Invocation{}, err
 	}
 	req.URL = u
@@ -54,11 +55,11 @@ func testTransferHTTPRequest(req *http.Request) (invocation.Invocation, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		log.LOGGER.Errorf("Resolve http request failed with error: %v\n", err)
+		klog.Errorf("Resolve http request failed with error: %v\n", err)
 		return invocation.Invocation{}, err
 	}
 	respBodyBytes, _ := ioutil.ReadAll(resp.Body)
-	log.LOGGER.Infof("resolve http resp body: %s\n", respBodyBytes)
+	klog.Infof("resolve http resp body: %s\n", respBodyBytes)
 	return invocation.Invocation{MicroServiceName: "http", Protocol: "rest", Args: resp}, nil
 }
 
@@ -91,7 +92,7 @@ func (resolver *TestResolver) Resolve(data chan []byte, stop chan interface{}, i
 			invCallback(protocol, i)
 			return i, true
 		}
-		log.LOGGER.Infof("content: %s\n", content)
+		klog.Infof("content: %s\n", content)
 	}
 }
 
@@ -143,7 +144,7 @@ func StartHTTPServer() {
 			http.HandleFunc("/", helloHTTP)
 			err := http.ListenAndServe(":9090", nil)
 			if err != nil {
-				log.LOGGER.Errorf("ListenAndServe error: %v\n", err)
+				klog.Errorf("ListenAndServe error: %v\n", err)
 			}
 		}()
 		httpServerStarted = true
@@ -155,10 +156,10 @@ func handleTCPRead(conn net.Conn, done chan string) {
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
 	if err != nil {
-		log.LOGGER.Infof("Error to read from TCP server: ", err)
+		klog.Infof("Error to read from TCP server: ", err)
 		return
 	}
-	log.LOGGER.Info("TCP server response: " + string(buf[:]))
+	klog.Info("TCP server response: " + string(buf[:]))
 
 	done <- "done"
 }
@@ -223,7 +224,7 @@ func TestResolveHTTP(t *testing.T) {
 		t.Errorf("do http GET request failed with error: %v\n", err)
 		return
 	}
-	log.LOGGER.Infof("GET response: %v\n", resp1)
+	klog.Infof("GET response: %v\n", resp1)
 
 	//do POST request
 	data := url.Values{"Name": {"Mark"}, "Age": {"20"}}
@@ -242,7 +243,7 @@ func TestResolveHTTP(t *testing.T) {
 		t.Errorf("do http POST request failed with error: %v\n", err)
 		return
 	}
-	log.LOGGER.Infof("POST response: %v\n", resp2)
+	klog.Infof("POST response: %v\n", resp2)
 
 	time.Sleep(3 * time.Second)
 }

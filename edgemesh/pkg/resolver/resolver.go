@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	mconfig "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/go-chassis/go-chassis/core/invocation"
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
+	mconfig "github.com/kubeedge/beehive/pkg/common/config"
 )
 
 type Resolver interface {
@@ -68,6 +69,6 @@ func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, inv
 			invCallback(protocol, i)
 			return i, true
 		}
-		log.LOGGER.Infof("content: %s\n", content)
+		klog.Infof("content: %s\n", content)
 	}
 }
