@@ -123,11 +123,6 @@ var (
 	//OperaMembershipResult get memebership
 	OperaMembershipResult = "membership_result"
 
-	// InsertDocument insert document
-	InsertDocument = "INSERT INTO document(deviceid, deviceName, expected, actual, metadata,attributes, lastsate,versionset) values(?,?,?,?,?,?,?,?)"
-	// DeleteDocument delete document
-	DeleteDocument = "DELETE FROM document where deviceid = ?"
-
 	//DealExpectedUpdateType deal expected update
 	DealExpectedUpdateType = "expected"
 	//DealActualUpdateType deal actual update
