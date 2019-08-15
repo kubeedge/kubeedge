@@ -11,6 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
+	"github.com/kubeedge/kubeedge/edge/test"
 )
 
 // NewEdgeCoreCommand create edgecore cmd
@@ -46,5 +47,6 @@ func registerModules() {
 	eventbus.Register()
 	metamanager.Register()
 	servicebus.Register()
+	test.Register()
 	dbm.InitDBManager()
 }
