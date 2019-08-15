@@ -93,7 +93,7 @@ func onSubConnect(client MQTT.Client) {
 
 // OnSubMessageReceived msg received callback
 func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
-	log.LOGGER.Infof("OnSubMessageReceived recevie msg from topic: %s", message.Topic())
+	log.LOGGER.Infof("OnSubMessageReceived receive msg from topic: %s", message.Topic())
 
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
