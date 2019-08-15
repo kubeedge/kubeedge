@@ -2,20 +2,20 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
+	"k8s.io/api/core/v1"
+
 	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"k8s.io/api/core/v1"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 	EdgedPodHandler = "/pods"
 )
 
-func init() {
+func Register() {
 	core.Register(&testManager{})
 }
 
