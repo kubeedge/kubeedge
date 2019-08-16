@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app"
-	_ "github.com/kubeedge/kubeedge/edgemesh/pkg"
 )
 
 func main() {
