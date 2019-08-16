@@ -63,7 +63,8 @@ type QuicConfig struct {
 
 var edgeHubConfig EdgeHubConfig
 
-func init() {
+// InitEdgehubConfig init edgehub config
+func InitEdgehubConfig() {
 	err := getControllerConfig()
 	if err != nil {
 		log.LOGGER.Errorf("Error in loading Controller configurations in edge hub:  %v", err)

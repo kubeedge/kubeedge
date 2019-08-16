@@ -256,7 +256,8 @@ type Config struct {
 	clusterDomain            string
 }
 
-func init() {
+// Register register edged
+func Register() {
 	edged, err := newEdged()
 	if err != nil {
 		log.LOGGER.Errorf("init new edged error, %v", err)
