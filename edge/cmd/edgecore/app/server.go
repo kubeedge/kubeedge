@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
+	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 )
 
 // NewEdgeCoreCommand create edgecore cmd
@@ -45,6 +46,7 @@ func registerModules() {
 	edged.Register()
 	edgehub.Register()
 	eventbus.Register()
+	edgemesh.Register()
 	metamanager.Register()
 	servicebus.Register()
 	test.Register()
