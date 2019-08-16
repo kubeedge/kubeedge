@@ -5,7 +5,7 @@ import (
 	"github.com/go-chassis/go-chassis/core/config"
 	"github.com/go-chassis/go-chassis/core/loadbalancer"
 	"github.com/go-chassis/go-chassis/core/registry"
-	_ "github.com/kubeedge/kubeedge/edgemesh/pkg"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg"
 	_ "github.com/kubeedge/kubeedge/edgemesh/pkg/panel"
 	edgeregistry "github.com/kubeedge/kubeedge/edgemesh/pkg/registry"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
@@ -16,6 +16,9 @@ func main() {
 	//Initialize the resolvers
 	r := &resolver.MyResolver{"http"}
 	resolver.RegisterResolver(r)
+
+	pkg.Register()
+
 	//Initialize the handlers
 	//
 	config.Init()

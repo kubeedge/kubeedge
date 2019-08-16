@@ -14,7 +14,8 @@ type EdgeMesh struct {
 	context *context.Context
 }
 
-func init() {
+// Register register edgemesh
+func Register() {
 	core.Register(&EdgeMesh{})
 }
 
