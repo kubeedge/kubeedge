@@ -45,7 +45,8 @@ var sendModuleGroupName = modules.HubGroup
 // sendModuleName is the name of send module for remote query
 var sendModuleName = "websocket"
 
-func init() {
+// InitMetaManagerConfig init meta config
+func InitMetaManagerConfig() {
 	var err error
 	groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
 	if err == nil && groupName != "" {

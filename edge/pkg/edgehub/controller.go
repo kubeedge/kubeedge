@@ -68,6 +68,7 @@ func (ehc *Controller) initial(ctx *context.Context) (err error) {
 
 //Start will start EdgeHub
 func (ehc *Controller) Start(ctx *context.Context) {
+	config.InitEdgehubConfig()
 	for {
 		err := ehc.initial(ctx)
 		if err != nil {

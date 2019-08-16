@@ -14,7 +14,8 @@ type DeviceTwin struct {
 	dtcontroller *DTController
 }
 
-func init() {
+// Register register devicetwin
+func Register() {
 	dtclient.InitDBTable()
 	dt := DeviceTwin{}
 	core.Register(&dt)

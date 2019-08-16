@@ -39,8 +39,8 @@ func RegisterModel(moduleName string, m interface{}) {
 	}
 }
 
-func init() {
-	//Init DB info
+// InitDBConfig Init DB info
+func InitDBConfig() {
 	driverName, _ = config.CONFIG.GetValue("database.driver").ToString()
 	dbName, _ = config.CONFIG.GetValue("database.name").ToString()
 	dataSource, _ = config.CONFIG.GetValue("database.source").ToString()
@@ -64,6 +64,7 @@ func init() {
 
 //InitDBManager initialises the database by syncing the database schema and creating orm
 func InitDBManager() {
+	InitDBConfig()
 	// sync database schema
 	orm.RunSyncdb(dbName, false, true)
 
