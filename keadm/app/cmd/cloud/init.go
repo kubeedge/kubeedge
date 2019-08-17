@@ -41,7 +41,7 @@ keadm init
 keadm init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=~/.kube/config
 
   - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
-    then default versions shown in help will be choosen. 
+    then default versions shown in help will be chosen. 
     The versions for "--docker-version", "--kubernetes-version" and "--kubeedge-version" flags should be in the
     format "18.06.3", "1.14.0" and "0.2.1" respectively
   - kube-config is the path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
