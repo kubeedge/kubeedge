@@ -8,7 +8,7 @@ import (
 type MsgSubPub struct {
 	Action  string `json:"action"`
 	Payload string `json:"payload"`
-	Qos     int    `jsob:"qos"`
+	Qos     int    `json:"qos"`
 }
 
 //DTMessage the struct of message for commutinating between cloud and edge
