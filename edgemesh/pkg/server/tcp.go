@@ -9,31 +9,32 @@ import (
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/handler"
 	"github.com/go-chassis/go-chassis/core/invocation"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 )
 
 func StartTCP() {
-	server, err:= getIP()
+	server, err := getIP()
 	if err != nil {
-		log.LOGGER.Errorf("TCP server start error : %s", err)
+		klog.Errorf("TCP server start error : %s", err)
 		return
 	}
 
 	serverIP := server.String()
 	port := config.GetString("port", "8080")
-	log.LOGGER.Infof("start listening at %s:%s", serverIP, port)
+	klog.Infof("start listening at %s:%s", serverIP, port)
 	listener, err := net.Listen("tcp", serverIP+":"+port)
 	if err != nil {
-		log.LOGGER.Errorf("failed to start TCP server with error:%v\n", err)
+		klog.Errorf("failed to start TCP server with error:%v\n", err)
 		return
 	}
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.LOGGER.Errorf("failed to accept, err: %v\n", err)
+			klog.Errorf("failed to accept, err: %v\n", err)
 			continue
 		}
 
@@ -57,14 +58,14 @@ func httpResponseToStr(resp *http.Response) string {
 }
 
 func process(conn net.Conn) {
-	log.LOGGER.Info("start receiving data...\n")
+	klog.Info("start receiving data...\n")
 
 	buffer := make([]byte, 1024)
 	d := make(chan []byte, 1024)
 	s := make(chan interface{}, 1)
 	restResponse := func(data *invocation.Response) error {
 		if data.Err != nil {
-			log.LOGGER.Errorf("error in response:%v", data.Err)
+			klog.Errorf("error in response:%v", data.Err)
 			conn.Write([]byte(data.Err.Error()))
 			return data.Err
 		} else {
@@ -77,7 +78,7 @@ func process(conn net.Conn) {
 	fakeResponse := func(data *invocation.Response) error {
 		defer conn.Close()
 		if data.Err != nil {
-			log.LOGGER.Errorf("error in response:%v", data.Err)
+			klog.Errorf("error in response:%v", data.Err)
 			conn.Write([]byte(data.Err.Error()))
 			return data.Err
 		} else {
@@ -91,13 +92,13 @@ func process(conn net.Conn) {
 		if invocation.Protocol == "rest" {
 			c, err := handler.CreateChain(common.Consumer, protocol, handler.Loadbalance, handler.Transport)
 			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+				klog.Errorf("failed to create handlerchain:%v", err)
 			}
 			c.Next(&invocation, restResponse)
 		} else {
 			c, err := handler.CreateChain(common.Consumer, protocol)
 			if err != nil {
-				log.LOGGER.Errorf("failed to create handlerchain:%v", err)
+				klog.Errorf("failed to create handlerchain:%v", err)
 			}
 			c.Next(&invocation, fakeResponse)
 		}
@@ -108,7 +109,7 @@ func process(conn net.Conn) {
 	for {
 		num, err := conn.Read(buffer)
 		if err == nil {
-			log.LOGGER.Infof("buffer:\n%s\n", buffer)
+			klog.Infof("buffer:\n%s\n", buffer)
 			d <- buffer[:num]
 		}
 		if err == io.EOF {

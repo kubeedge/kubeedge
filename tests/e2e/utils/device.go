@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -988,7 +989,7 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
-		Err("Failed to marshal deviceprofile: %v", deviceProfile)
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 	}
 	configMap.Data["deviceProfile.json"] = string(bytes)
 
@@ -1180,7 +1181,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
-		Err("Failed to marshal deviceprofile: %v", deviceProfile)
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 	}
 	configMap.Data["deviceProfile.json"] = string(bytes)
 
@@ -1270,7 +1271,7 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
-		Err("Failed to marshal deviceprofile: %v", deviceProfile)
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
 	}
 	configMap.Data["deviceProfile.json"] = string(bytes)
 

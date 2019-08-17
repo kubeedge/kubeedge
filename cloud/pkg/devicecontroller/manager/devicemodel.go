@@ -3,14 +3,13 @@ package manager
 import (
 	"sync"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 )
 
 // DeviceModelManager is a manager watch DeviceModel change event

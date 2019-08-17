@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 )
@@ -37,7 +36,7 @@ func getpwd() string {
 	_, file, _, _ := runtime.Caller(0)
 	dir, err := filepath.Abs(filepath.Dir(file))
 	if err != nil {
-		glog.Errorf("get current dir fail %+v", err)
+		Errorf("get current dir fail %+v", err)
 		return " "
 	}
 	return dir
@@ -47,7 +46,7 @@ func getpwd() string {
 func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
 	err, resp := SendHttpRequest(http.MethodDelete, nodehandler+"/"+nodename)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -63,7 +62,7 @@ func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interfa
 	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "node-role.kubernetes.io/edge": ""}}}`, nodeid, nodeselector)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
-		Failf("Unmarshal body failed: %v", err)
+		Fatalf("Unmarshal body failed: %v", err)
 		return err, temp
 	}
 
@@ -74,7 +73,7 @@ func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interfa
 func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 	err, body := GenerateNodeReqBody(UID, nodeselector)
 	if err != nil {
-		Failf("Unmarshal body failed: %v", err)
+		Fatalf("Unmarshal body failed: %v", err)
 		return err
 	}
 
@@ -82,22 +81,22 @@ func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 	t := time.Now()
 	nodebody, err := json.Marshal(body)
 	if err != nil {
-		Failf("Marshal body failed: %v", err)
+		Fatalf("Marshal body failed: %v", err)
 		return err
 	}
 	BodyBuf := bytes.NewReader(nodebody)
 	req, err := http.NewRequest(http.MethodPost, nodehandler, BodyBuf)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		Failf("Sending HTTP request failed: %v", err)
+		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
 
 	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
@@ -110,19 +109,19 @@ func CheckNodeReadyStatus(nodehandler, nodename string) string {
 	var nodeStatus = "unknown"
 	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return nodeStatus
 	}
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 		return nodeStatus
 	}
 	err = json.Unmarshal(contents, &node)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return nodeStatus
 	}
 
@@ -133,7 +132,7 @@ func CheckNodeReadyStatus(nodehandler, nodename string) string {
 func CheckNodeDeleteStatus(nodehandler, nodename string) int {
 	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1
 	}
 	defer resp.Body.Close()
@@ -176,13 +175,13 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 		}
 
 		if err != nil {
-			Failf("Frame HTTP request failed: %v", err)
+			Fatalf("Frame HTTP request failed: %v", err)
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			Failf("Sending HTTP request failed: %v", err)
+			Fatalf("Sending HTTP request failed: %v", err)
 		}
-		InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 		defer resp.Body.Close()
 		if operation == http.MethodPost {
 			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
@@ -200,7 +199,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 func GetConfigmap(apiConfigMap string) (int, []byte) {
 	err, resp := SendHttpRequest(http.MethodGet, apiConfigMap)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1, nil
 	}
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -213,7 +212,7 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 func DeleteConfigmap(apiConfigMap string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, apiConfigMap)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1
 	}
 	defer resp.Body.Close()
@@ -230,12 +229,12 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	}
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
-		Failf("Unmarshal body failed: %v", err)
+		Fatalf("Unmarshal body failed: %v", err)
 		return nil
 	}
 	nodebody, err := json.Marshal(temp)
 	if err != nil {
-		Failf("Marshal body failed: %v", err)
+		Fatalf("Marshal body failed: %v", err)
 		return err
 	}
 	BodyBuf := bytes.NewReader(nodebody)
@@ -246,10 +245,10 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
 	resp, err := client.Do(req)
 	if err != nil {
-		Failf("Sending HTTP request failed: %v", err)
+		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
 	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
 	return nil
@@ -260,17 +259,17 @@ func GetNodes(api string) v1.NodeList {
 	var nodes v1.NodeList
 	err, resp := SendHttpRequest(http.MethodGet, api)
 	if err != nil {
-		Failf("Sending SenHttpRequest failed: %v", err)
+		Fatalf("Sending SenHttpRequest failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 	}
 	err = json.Unmarshal(contents, &nodes)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 	}
 
 	return nodes
@@ -282,12 +281,12 @@ func ApplyLabelToNode(apiserver, key, val string) error {
 	body = fmt.Sprintf(`{"metadata":{"labels":{"%s":"%s"}}}`, key, val)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
-		Failf("Unmarshal body failed: %v", err)
+		Fatalf("Unmarshal body failed: %v", err)
 		return nil
 	}
 	nodebody, err := json.Marshal(temp)
 	if err != nil {
-		Failf("Marshal body failed: %v", err)
+		Fatalf("Marshal body failed: %v", err)
 		return err
 	}
 	BodyBuf := bytes.NewReader(nodebody)
@@ -298,10 +297,10 @@ func ApplyLabelToNode(apiserver, key, val string) error {
 	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
 	resp, err := client.Do(req)
 	if err != nil {
-		Failf("Sending HTTP request failed: %v", err)
+		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
 	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
 	return nil

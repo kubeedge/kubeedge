@@ -6,11 +6,12 @@ import (
 
 	"github.com/go-chassis/go-chassis/core/registry"
 	utiltags "github.com/go-chassis/go-chassis/pkg/util/tags"
-	"github.com/kubeedge/beehive/pkg/common/log"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
-	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -57,7 +58,7 @@ func (r *ServiceDiscovery) FindMicroServiceInstances(consumerID, microServiceNam
 
 	pods, err := r.metaClient.Services(namespace).GetPods(name)
 	if err != nil {
-		log.LOGGER.Errorf("get service pod list failed, error: %v", err)
+		klog.Errorf("get service pod list failed, error: %v", err)
 		return nil, err
 	}
 	var microServiceInstance []*registry.MicroServiceInstance

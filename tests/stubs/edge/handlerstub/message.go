@@ -19,7 +19,8 @@ package handlerstub
 import (
 	"encoding/json"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -31,10 +32,10 @@ func (hs *HandlerStub) WaitforMessage() {
 	go func() {
 		for {
 			if msg, err := hs.context.Receive(hs.Name()); err == nil {
-				log.LOGGER.Debugf("Receive a message %v", msg)
+				klog.V(4).Infof("Receive a message %v", msg)
 				hs.ProcessMessage(msg)
 			} else {
-				log.LOGGER.Errorf("Failed to receive message %v with error: %v", msg, err)
+				klog.Errorf("Failed to receive message %v with error: %v", msg, err)
 			}
 		}
 	}()
@@ -42,7 +43,7 @@ func (hs *HandlerStub) WaitforMessage() {
 
 // ProcessMessage based on the operation type
 func (hs *HandlerStub) ProcessMessage(msg model.Message) {
-	log.LOGGER.Debugf("Begin to process message %v", msg)
+	klog.V(4).Infof("Begin to process message %v", msg)
 	operation := msg.GetOperation()
 	switch operation {
 	case model.InsertOperation:
@@ -50,9 +51,9 @@ func (hs *HandlerStub) ProcessMessage(msg model.Message) {
 	case model.DeleteOperation:
 		hs.ProcessDelete(msg)
 	default:
-		log.LOGGER.Debugf("Unsupported message: %s operation: %s", msg.GetID(), operation)
+		klog.V(4).Infof("Unsupported message: %s operation: %s", msg.GetID(), operation)
 	}
-	log.LOGGER.Debugf("End to process message %v", msg)
+	klog.V(4).Infof("End to process message %v", msg)
 }
 
 // ProcessInsert message
@@ -60,13 +61,13 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 	// Get resource type
 	_, resType, _, err := util.ParseResourceEdge(msg.GetResource(), msg.GetOperation())
 	if err != nil {
-		log.LOGGER.Errorf("failed to parse the Resource: %v", err)
+		klog.Errorf("failed to parse the Resource: %v", err)
 		return
 	}
 
 	if resType == model.ResourceTypePod {
 		// receive pod add event
-		log.LOGGER.Debugf("Message content: %v", msg)
+		klog.V(4).Infof("Message content: %v", msg)
 
 		// Marshal message content
 		var data []byte
@@ -77,7 +78,7 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 			var err error
 			data, err = json.Marshal(msg.GetContent())
 			if err != nil {
-				log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
 				return
 			}
 		}
@@ -85,7 +86,7 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		// Get pod
 		var pod types.FakePod
 		if err := json.Unmarshal(data, &pod); err != nil {
-			log.LOGGER.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
+			klog.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
 			return
 		}
 
@@ -108,13 +109,13 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 	// Get resource type
 	_, resType, _, err := util.ParseResourceEdge(msg.GetResource(), msg.GetOperation())
 	if err != nil {
-		log.LOGGER.Errorf("failed to parse the Resource: %v", err)
+		klog.Errorf("failed to parse the Resource: %v", err)
 		return
 	}
 
 	if resType == model.ResourceTypePod {
 		// Receive pod delete event
-		log.LOGGER.Debugf("Message content: %v", msg)
+		klog.V(4).Infof("Message content: %v", msg)
 
 		// Marshal message content
 		var data []byte
@@ -125,7 +126,7 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 			var err error
 			data, err = json.Marshal(msg.GetContent())
 			if err != nil {
-				log.LOGGER.Warnf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
 				return
 			}
 		}
@@ -133,7 +134,7 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 		// Get pod
 		var pod types.FakePod
 		if err := json.Unmarshal(data, &pod); err != nil {
-			log.LOGGER.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
+			klog.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
 			return
 		}
 		// Delete pod in cache
@@ -143,7 +144,7 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 
 // Send2Cloud sends message to cloudhub by edgehub
 func (hs *HandlerStub) Send2Cloud(msg *model.Message) {
-	log.LOGGER.Debugf("Begin to send message %v", *msg)
+	klog.V(4).Infof("Begin to send message %v", *msg)
 	hs.context.Send2Group(constants.HubGroup, *msg)
-	log.LOGGER.Debugf("End to send message %v", *msg)
+	klog.V(4).Infof("End to send message %v", *msg)
 }

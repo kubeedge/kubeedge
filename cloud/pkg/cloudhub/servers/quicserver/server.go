@@ -5,7 +5,8 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	bhLog "github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
@@ -44,6 +45,6 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *c
 		ConnNotify: handler.CloudhubHandler.OnRegister,
 		ExOpts:     api.QuicServerOption{MaxIncomingStreams: config.MaxIncomingStreams},
 	}
-	bhLog.LOGGER.Infof("Start cloud hub quic server")
+	klog.Info("Start cloud hub quic server")
 	svc.ListenAndServeTLS("", "")
 }

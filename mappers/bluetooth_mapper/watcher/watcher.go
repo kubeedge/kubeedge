@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/paypal/gatt"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
@@ -63,14 +63,14 @@ func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, idOfDevice string, 
 	)
 	device.Init(onStateChanged)
 	<-done
-	glog.Infof("Watcher Done")
+	klog.Infof("Watcher Done")
 }
 
 //onStateChanged contains the operations to be performed when the state of the peripheral device changes
 func onStateChanged(device gatt.Device, s gatt.State) {
 	switch s {
 	case gatt.StatePoweredOn:
-		glog.Infof("Scanning for BLE device Broadcasts...")
+		klog.Infof("Scanning for BLE device Broadcasts...")
 		device.Scan([]gatt.UUID{}, true)
 		return
 	default:
@@ -81,17 +81,17 @@ func onStateChanged(device gatt.Device, s gatt.State) {
 //onPeripheralDiscovered contains the operations to be performed as soon as the peripheral device is discovered
 func onPeripheralDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
 	if strings.ToUpper(a.LocalName) == strings.ToUpper(strings.Replace(deviceName, "-", " ", -1)) {
-		glog.Infof("Device: %s found !!!! Stop Scanning for devices", deviceName)
+		klog.Infof("Device: %s found !!!! Stop Scanning for devices", deviceName)
 		// Stop scanning once we've got the peripheral we're looking for.
 		p.Device().StopScanning()
-		glog.Infof("Connecting to %s", deviceName)
+		klog.Infof("Connecting to %s", deviceName)
 		p.Device().Connect(p)
 	}
 }
 
 //onPeripheralDisconnected contains the operations to be performed as soon as the peripheral device is disconnected
 func onPeripheralDisconnected(p gatt.Peripheral, err error) {
-	glog.Infof("Disconnecting  from bluetooth device....")
+	klog.Infof("Disconnecting  from bluetooth device....")
 	DeviceConnected <- false
 	close(done)
 	p.Device().CancelConnection(p)
@@ -102,14 +102,14 @@ func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 	actionmanager.GattPeripheral = p
 	ss, err := p.DiscoverServices(nil)
 	if err != nil {
-		glog.Errorf("Failed to discover services, err: %s\n", err)
+		klog.Errorf("Failed to discover services, err: %s\n", err)
 		os.Exit(1)
 	}
 	for _, s := range ss {
 		// Discovery characteristics
 		cs, err := p.DiscoverCharacteristics(nil, s)
 		if err != nil {
-			glog.Errorf("Failed to discover characteristics for service %s, err: %v\n", s.Name(), err)
+			klog.Errorf("Failed to discover characteristics for service %s, err: %v\n", s.Name(), err)
 			continue
 		}
 		actionmanager.CharacteristicsList = append(actionmanager.CharacteristicsList, cs...)
@@ -120,7 +120,7 @@ func (w *Watcher) onPeripheralConnected(p gatt.Peripheral, err error) {
 		if !reflect.DeepEqual(w, newWatcher) {
 			err := w.EquateTwinValue(deviceID)
 			if err != nil {
-				glog.Errorf("Error in watcher functionality: %s", err)
+				klog.Errorf("Error in watcher functionality: %s", err)
 			}
 		}
 	}
@@ -131,7 +131,7 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 	var updateMessage helper.DeviceTwinUpdate
 	updatedActualValues := make(map[string]string)
 	helper.Wg.Add(1)
-	glog.Infof("Watching on the device twin values for device with deviceID: %s", deviceID)
+	klog.Infof("Watching on the device twin values for device with deviceID: %s", deviceID)
 	go helper.TwinSubscribe(deviceID)
 	helper.GetTwin(updateMessage, deviceID)
 	helper.Wg.Wait()
@@ -139,13 +139,13 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 	for _, twinAttribute := range w.DeviceTwinAttributes {
 		if helper.TwinResult.Twin[twinAttribute.Name] != nil {
 			if helper.TwinResult.Twin[twinAttribute.Name].Expected != nil && ((helper.TwinResult.Twin[twinAttribute.Name].Actual == nil) && helper.TwinResult.Twin[twinAttribute.Name].Expected != nil || (*helper.TwinResult.Twin[twinAttribute.Name].Expected.Value != *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)) {
-				glog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
+				klog.Infof("%s Expected Value : %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Expected.Value)
 				if helper.TwinResult.Twin[twinAttribute.Name].Actual == nil {
-					glog.Infof("%s  Actual Value: %v", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
+					klog.Infof("%s  Actual Value: %v", twinAttribute.Name, helper.TwinResult.Twin[twinAttribute.Name].Actual)
 				} else {
-					glog.Infof("%s Actual Value: %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)
+					klog.Infof("%s Actual Value: %s", twinAttribute.Name, *helper.TwinResult.Twin[twinAttribute.Name].Actual.Value)
 				}
-				glog.Infof("Equating the actual value to expected value for: %s", twinAttribute.Name)
+				klog.Infof("Equating the actual value to expected value for: %s", twinAttribute.Name)
 				for _, watcherAction := range twinAttribute.Actions {
 					actionExists := false
 					for _, action := range actionManager {
@@ -181,10 +181,10 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 		updateMessage = helper.CreateActualUpdateMessage(updatedActualValues)
 		helper.ChangeTwinValue(updateMessage, deviceID)
 		time.Sleep(2 * time.Second)
-		glog.Infof("Syncing to cloud.....")
+		klog.Infof("Syncing to cloud.....")
 		helper.SyncToCloud(updateMessage, deviceID)
 	} else {
-		glog.Infof("Actual values are in sync with Expected value")
+		klog.Infof("Actual values are in sync with Expected value")
 	}
 	return nil
 }

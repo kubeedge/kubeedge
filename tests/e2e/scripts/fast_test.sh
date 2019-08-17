@@ -18,10 +18,9 @@ cd `dirname $0`
 workdir=`pwd`
 cd $workdir
 
-debugflag="-v 6 -alsologtostderr"
-
 compilemodule=$1
 runtest=$2
+debugflag="-test.v -ginkgo.v"
 
 export MASTER_IP=121.244.95.60
 #setup env
@@ -41,13 +40,13 @@ END
 if [ $# -eq 0 ]
   then
     #run testcase
-    ./deployment/deployment.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
-    ./edgesite/edgesite.test $debugflag 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+    ./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
 else
 if compilemodule=="bluetooth"
 then
-    ./mapper/bluetooth/bluetooth.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./mapper/bluetooth/bluetooth.test  $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
 else
-    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee /tmp/fast_test.log && cat /tmp/fast_test.log >> /tmp/testcase.log && :> /tmp/fast_test.log
+    ./$compilemodule/$compilemodule.test  $debugflag  $runtest 2>&1 | tee -a  /tmp/testcase.log
 fi
 fi

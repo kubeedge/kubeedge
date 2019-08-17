@@ -23,8 +23,8 @@ package clcm
 import (
 	"time"
 
-	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
 )
 
@@ -53,7 +53,7 @@ func NewContainerLifecycleManager(kubeletRootDir string) (ContainerLifecycleMana
 		kubeletRootDir,
 	)
 	if err != nil {
-		glog.Errorf("failed to initialize cpu manager: %v", err)
+		klog.Errorf("failed to initialize cpu manager: %v", err)
 		return nil, err
 	}
 	return clcm, nil

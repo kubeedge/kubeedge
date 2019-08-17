@@ -1,18 +1,19 @@
 package status
 
 import (
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/status"
+
+	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // manager as status manager, embedded a k8s.io/kubernetes/pkg/kubelet/status.Manager
@@ -39,7 +40,7 @@ func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, p
 const syncPeriod = 10 * time.Second
 
 func (m *manager) Start() {
-	log.LOGGER.Info("Starting to sync pod status with apiserver")
+	klog.Info("Starting to sync pod status with apiserver")
 	syncTicker := time.Tick(syncPeriod)
 
 	go wait.Forever(func() {
@@ -95,9 +96,9 @@ func (m *manager) updatePodStatus() {
 
 		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, edgeapi.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
 		if err != nil {
-			log.LOGGER.Errorf("Update pod status failed err :%v", err)
+			klog.Errorf("Update pod status failed err :%v", err)
 		}
-		log.LOGGER.Infof("Status for pod %s updated successfully: %+v", pod.Name, podStatus)
+		klog.Infof("Status for pod %s updated successfully: %+v", pod.Name, podStatus)
 		m.apiStatusVersions[pod.UID] = podStatus.DeepCopy()
 	}
 }

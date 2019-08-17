@@ -19,8 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
-	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo"
 )
 
 //Function to get time in millisec
@@ -30,59 +29,37 @@ func nowStamp() string {
 
 //functiont to log the Ginkgo framework logs
 func logf(level string, format string, args ...interface{}) {
-	fmt.Fprintf(GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
-}
-
-//Function to generate INFO logs
-func Logf(format string, args ...interface{}) {
-	logf("INFO", format, args...)
+	fmt.Fprintf(ginkgo.GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
 //Funciton to log Filure logs
-func Failf(format string, args ...interface{}) {
+func Fatalf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
-	logf("FAIL", msg)
-	Fail(nowStamp()+": "+msg, 1)
-}
-
-//Function to log DEBUG logs
-func Debug(format string, data []byte, err error) {
-	if err == nil {
-		glog.V(8).Infof(format, data)
-	} else {
-		glog.ErrorDepth(2, "http err:", err)
-	}
+	logf("Fatal", msg)
+	ginkgo.Fail(nowStamp()+": "+msg, 1)
 }
 
 //function for Error log
-func Err(format string, args ...interface{}) {
-	glog.Errorf(format, args...)
+func Errorf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	logf("Error", msg)
 }
 
 //function for log level
-func Info(format string, args ...interface{}) {
-	glog.V(4).Infof(format, args...)
-}
-
-//function for log level
-func InfoV2(format string, args ...interface{}) {
-	glog.V(2).Infof(format, args...)
-}
-
-//function for log level
-func InfoV6(format string, args ...interface{}) {
-	glog.V(6).Infof(format, args...)
+func Infof(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	logf("Info", msg)
 }
 
 //Function to print the test case name and status of execution
 func PrintTestcaseNameandStatus() {
-	var testdesc GinkgoTestDescription
+	var testdesc ginkgo.GinkgoTestDescription
 	var Status string
-	testdesc = CurrentGinkgoTestDescription()
+	testdesc = ginkgo.CurrentGinkgoTestDescription()
 	if testdesc.Failed == true {
 		Status = "FAILED"
 	} else {
 		Status = "PASSED"
 	}
-	InfoV6("TestCase:%40s     Status=%s", testdesc.TestText, Status)
+	Infof("TestCase:%40s     Status=%s", testdesc.TestText, Status)
 }

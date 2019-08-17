@@ -1,7 +1,8 @@
 package dtclient
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
@@ -25,7 +26,7 @@ type DeviceTwin struct {
 //SaveDeviceTwin save device twin
 func SaveDeviceTwin(doc *DeviceTwin) error {
 	num, err := dbm.DBAccess.Insert(doc)
-	log.LOGGER.Debugf("Insert affected Num: %d, %s", num, err)
+	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
@@ -33,10 +34,10 @@ func SaveDeviceTwin(doc *DeviceTwin) error {
 func DeleteDeviceTwinByDeviceID(deviceID string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
-		log.LOGGER.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
 	}
-	log.LOGGER.Debugf("Delete affected Num: %d, %s", num)
+	klog.V(4).Infof("Delete affected Num: %d", num)
 	return nil
 }
 
@@ -44,24 +45,24 @@ func DeleteDeviceTwinByDeviceID(deviceID string) error {
 func DeleteDeviceTwin(deviceID string, name string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
-		log.LOGGER.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
 	}
-	log.LOGGER.Debugf("Delete affected Num: %d, %s", num)
+	klog.V(4).Infof("Delete affected Num: %d", num)
 	return nil
 }
 
 // UpdateDeviceTwinField update special field
 func UpdateDeviceTwinField(deviceID string, name string, col string, value interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Update(map[string]interface{}{col: value})
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
 
 // UpdateDeviceTwinFields update special fields
 func UpdateDeviceTwinFields(deviceID string, name string, cols map[string]interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceTwinTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
-	log.LOGGER.Debugf("Update affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %v", num, err)
 	return err
 }
 

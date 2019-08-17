@@ -17,7 +17,8 @@ limitations under the License.
 package controllerstub
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
@@ -38,7 +39,7 @@ type DownstreamController struct {
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
-	log.LOGGER.Infof("Start downstream controller")
+	klog.Infof("Start downstream controller")
 	dc.podStop = make(chan struct{})
 	go dc.SyncPods(dc.podStop)
 	return nil
@@ -46,7 +47,7 @@ func (dc *DownstreamController) Start() error {
 
 // Stop DownstreamController
 func (dc *DownstreamController) Stop() error {
-	log.LOGGER.Infof("Stop downstream controller")
+	klog.Infof("Stop downstream controller")
 	dc.podStop <- struct{}{}
 	return nil
 }
@@ -57,11 +58,11 @@ func (dc *DownstreamController) SyncPods(stop chan struct{}) {
 	for running {
 		select {
 		case msg := <-dc.podManager.GetEvent():
-			log.LOGGER.Infof("Send message to cloudhub: %v", *msg)
+			klog.Infof("Send message to cloudhub: %v", *msg)
 			dc.context.Send(constants.CloudHub, *msg)
-			log.LOGGER.Infof("Finish send message to cloudhub")
+			klog.Info("Finish send message to cloudhub")
 		case <-stop:
-			log.LOGGER.Infof("Stop sync pod")
+			klog.Info("Stop sync pod")
 			running = false
 		}
 	}

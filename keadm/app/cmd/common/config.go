@@ -22,8 +22,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"gopkg.in/yaml.v2"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //Write2File writes data into a file in path

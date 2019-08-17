@@ -5,7 +5,8 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	bhLog "github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
@@ -51,7 +52,7 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *c
 		ExOpts:     api.WSServerOption{Path: "/"},
 	}
 
-	bhLog.LOGGER.Infof("Start cloud hub websocket server")
+	klog.Info("Start cloud hub websocket server")
 	go s.ListenAndServeTLS("", "")
 
 	return nil

@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	wsclient "github.com/kubeedge/viaduct/pkg/client"
@@ -44,10 +45,10 @@ func NewWebSocketClient(conf *WebSocketConfig) *WebSocketClient {
 
 // Init initializes websocket client
 func (wsc *WebSocketClient) Init() error {
-	log.LOGGER.Infof("Websocket start to connect Access")
+	klog.Infof("Websocket start to connect Access")
 	cert, err := tls.LoadX509KeyPair(wsc.config.CertFilePath, wsc.config.KeyFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to load x509 key pair: %v", err)
+		klog.Errorf("Failed to load x509 key pair: %v", err)
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 
@@ -72,10 +73,10 @@ func (wsc *WebSocketClient) Init() error {
 	for i := 0; i < retryCount; i++ {
 		connection, err := client.Connect()
 		if err != nil {
-			log.LOGGER.Errorf("Init websocket connection failed %s", err.Error())
+			klog.Errorf("Init websocket connection failed %s", err.Error())
 		} else {
 			wsc.connection = connection
-			log.LOGGER.Infof("Websocket connect to cloud access successful")
+			klog.Infof("Websocket connect to cloud access successful")
 			return nil
 		}
 		time.Sleep(cloudAccessSleep)
@@ -102,5 +103,5 @@ func (wsc *WebSocketClient) Receive() (model.Message, error) {
 
 //Notify logs info
 func (wsc *WebSocketClient) Notify(authInfo map[string]string) {
-	log.LOGGER.Infof("no op")
+	klog.Infof("no op")
 }

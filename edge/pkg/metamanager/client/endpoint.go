@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	api "k8s.io/api/core/v1"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
-
-	api "k8s.io/api/core/v1"
 )
 
 // EndpointsGetter has a method to return a EndpointsInterface.

@@ -19,7 +19,8 @@ package controllerstub
 import (
 	"net/http"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -54,14 +55,14 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	// New pod manager
 	pm, err := NewPodManager()
 	if err != nil {
-		log.LOGGER.Errorf("Failed to create pod manager with error: %v", err)
+		klog.Errorf("Failed to create pod manager with error: %v", err)
 		return
 	}
 
 	// Start downstream controller
 	downstream, err := NewDownstreamController(cs.context, pm)
 	if err != nil {
-		log.LOGGER.Errorf("New downstream controller failed with error: %v", err)
+		klog.Errorf("New downstream controller failed with error: %v", err)
 		return
 	}
 	downstream.Start()
@@ -69,7 +70,7 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	// Start upstream controller
 	upstream, err := NewUpstreamController(cs.context, pm)
 	if err != nil {
-		log.LOGGER.Errorf("New upstream controller failed with error: %v", err)
+		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
 	upstream.Start()
@@ -77,7 +78,7 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	// Start http server
 	http.HandleFunc(constants.PodResource, pm.PodHandlerFunc)
 	go http.ListenAndServe(":54321", nil)
-	log.LOGGER.Info("Start http service")
+	klog.Info("Start http service")
 
 	// Receive stop signal
 	<-cs.stopChan

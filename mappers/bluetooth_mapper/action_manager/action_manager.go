@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/paypal/gatt"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 )
@@ -65,15 +65,15 @@ type ActionManager struct {
 
 //PerformOperation executes the operation
 func (action *Action) PerformOperation(readConverter ...dataconverter.DataRead) {
-	glog.Infof("Performing operations associated with action:  %s", action.Name)
+	klog.Infof("Performing operations associated with action:  %s", action.Name)
 	characteristic, err := FindCharacteristic(action.Operation.CharacteristicUUID)
 	if err != nil {
-		glog.Errorf("Error in finding characteristics: %s", err)
+		klog.Errorf("Error in finding characteristics: %s", err)
 	}
 	if strings.ToUpper(action.Operation.Action) == ActionRead {
 		readValue, err := ReadCharacteristic(GattPeripheral, characteristic)
 		if err != nil {
-			glog.Errorf("Error in reading  characteristic: %s", err)
+			klog.Errorf("Error in reading  characteristic: %s", err)
 			return
 		}
 		converted := false
@@ -87,18 +87,18 @@ func (action *Action) PerformOperation(readConverter ...dataconverter.DataRead) 
 		if !converted {
 			action.Operation.Value = readValue
 		}
-		glog.Infof("Read Successful")
+		klog.Info("Read Successful")
 	} else if strings.ToUpper(action.Operation.Action) == ActionWrite {
 		if action.Operation.Value == nil {
-			glog.Errorf("Please provide a value to be written")
+			klog.Errorf("Please provide a value to be written")
 			return
 		}
 		err := WriteCharacteristic(GattPeripheral, characteristic, action.Operation.Value)
 		if err != nil {
-			glog.Errorf("Error in writing characteristic: %s", err)
+			klog.Errorf("Error in writing characteristic: %s", err)
 			return
 		}
-		glog.Infof("Write Successful")
+		klog.Info("Write Successful")
 	}
 }
 
@@ -116,7 +116,7 @@ func FindCharacteristic(characteristicUUID string) (*gatt.Characteristic, error)
 func ReadCharacteristic(p gatt.Peripheral, c *gatt.Characteristic) ([]byte, error) {
 	value, err := p.ReadCharacteristic(c)
 	if err != nil {
-		glog.Errorf("Error in reading characteristic, err: %s\n", err)
+		klog.Errorf("Error in reading characteristic, err: %s\n", err)
 		return nil, err
 	}
 	return value, nil
@@ -126,7 +126,7 @@ func ReadCharacteristic(p gatt.Peripheral, c *gatt.Characteristic) ([]byte, erro
 func WriteCharacteristic(p gatt.Peripheral, c *gatt.Characteristic, b []byte) error {
 	err := p.WriteCharacteristic(c, b, false)
 	if err != nil {
-		glog.Errorf("Error in writing characteristic, err: %s\n", err)
+		klog.Errorf("Error in writing characteristic, err: %s\n", err)
 		return err
 	}
 	return nil

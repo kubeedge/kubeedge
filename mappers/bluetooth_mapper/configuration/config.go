@@ -23,12 +23,12 @@ import (
 	"reflect"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/watcher"
-
-	"gopkg.in/yaml.v2"
 )
 
 //ConfigFilePath contains the location of the configuration file

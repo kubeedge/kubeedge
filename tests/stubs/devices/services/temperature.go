@@ -18,6 +18,7 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/paypal/gatt"
 )
 

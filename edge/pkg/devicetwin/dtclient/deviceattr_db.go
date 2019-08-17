@@ -1,7 +1,8 @@
 package dtclient
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
@@ -20,7 +21,7 @@ type DeviceAttr struct {
 //SaveDeviceAttr save device attributes
 func SaveDeviceAttr(doc *DeviceAttr) error {
 	num, err := dbm.DBAccess.Insert(doc)
-	log.LOGGER.Debugf("Insert affected Num: %d, %s", num, err)
+	klog.V(4).Infof("Insert affected Num: %d, %s", num, err)
 	return err
 }
 
@@ -28,10 +29,10 @@ func SaveDeviceAttr(doc *DeviceAttr) error {
 func DeleteDeviceAttrByDeviceID(deviceID string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Delete()
 	if err != nil {
-		log.LOGGER.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
 	}
-	log.LOGGER.Debugf("Delete affected Num: %d, %s", num)
+	klog.V(4).Infof("Delete affected Num: %d", num)
 	return nil
 }
 
@@ -39,24 +40,24 @@ func DeleteDeviceAttrByDeviceID(deviceID string) error {
 func DeleteDeviceAttr(deviceID string, name string) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Delete()
 	if err != nil {
-		log.LOGGER.Errorf("Something wrong when deleting data: %v", err)
+		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
 	}
-	log.LOGGER.Debugf("Delete affected Num: %d, %s", num)
+	klog.V(4).Infof("Delete affected Num: %d", num)
 	return nil
 }
 
 // UpdateDeviceAttrField update special field
 func UpdateDeviceAttrField(deviceID string, name string, col string, value interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(map[string]interface{}{col: value})
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
 
 // UpdateDeviceAttrFields update special fields
 func UpdateDeviceAttrFields(deviceID string, name string, cols map[string]interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(DeviceAttrTableName).Filter("deviceid", deviceID).Filter("name", name).Update(cols)
-	log.LOGGER.Debugf("Update affected Num: %d, %s", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
 

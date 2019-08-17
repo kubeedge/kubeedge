@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
@@ -62,7 +62,7 @@ type ScheduleResult struct {
 
 // ExecuteSchedule is responsible for scheduling the operations
 func (schedule *Schedule) ExecuteSchedule(actionManager []actionmanager.Action, dataConverter dataconverter.DataRead, deviceID string) {
-	glog.Infof("Executing schedule: %s", schedule.Name)
+	klog.Infof("Executing schedule: %s", schedule.Name)
 	if schedule.OccurrenceLimit != 0 {
 		for iteration := 0; iteration < schedule.OccurrenceLimit; iteration++ {
 			schedule.performScheduleOperation(actionManager, dataConverter, deviceID)
@@ -83,7 +83,7 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 		for _, action := range actionManager {
 			if strings.ToUpper(action.Name) == strings.ToUpper(actionName) {
 				actionExists = true
-				glog.Infof("Performing scheduled operation: %s", action.Name)
+				klog.Infof("Performing scheduled operation: %s", action.Name)
 				action.PerformOperation(dataConverter)
 				scheduleResult.EventName = actionName
 				scheduleResult.TimeStamp = time.Now().UnixNano() / 1e6
@@ -95,7 +95,7 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 			schedule.Interval = defaultEventFrequency
 		}
 		if !actionExists {
-			glog.Errorf("Action %s does not exist. Exiting from schedule !!!", actionName)
+			klog.Errorf("Action %s does not exist. Exiting from schedule !!!", actionName)
 			break
 		}
 		time.Sleep(time.Duration(time.Duration(schedule.Interval) * time.Millisecond))
@@ -105,13 +105,13 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 //publishScheduleResult publishes the telemetry data on the given MQTT topic
 func publishScheduleResult(scheduleResult ScheduleResult, deviceID string) {
 	scheduleResultTopic := MapperTopicPrefix + deviceID + SchedulerResultSuffix
-	glog.Infof("Publishing schedule: %s result on topic: %s", scheduleResult.EventName, scheduleResultTopic)
+	klog.Infof("Publishing schedule: %s result on topic: %s", scheduleResult.EventName, scheduleResultTopic)
 	scheduleResultBody, err := json.Marshal(scheduleResult)
 	if err != nil {
-		glog.Errorf("Error: %s", err)
+		klog.Errorf("Error: %s", err)
 	}
 	helper.TokenClient = helper.Client.Publish(scheduleResultTopic, 0, false, scheduleResultBody)
 	if helper.TokenClient.Wait() && helper.TokenClient.Error() != nil {
-		glog.Errorf("client.publish() Error in device twin get  is %s", helper.TokenClient.Error())
+		klog.Errorf("client.publish() Error in device twin get  is %s", helper.TokenClient.Error())
 	}
 }

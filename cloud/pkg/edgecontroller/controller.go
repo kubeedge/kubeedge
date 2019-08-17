@@ -3,7 +3,8 @@ package edgecontroller
 import (
 	"os"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
@@ -40,14 +41,14 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
-		log.LOGGER.Errorf("new upstream controller failed with error: %s", err)
+		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	upstream.Start()
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		log.LOGGER.Warnf("new downstream controller failed with error: %s", err)
+		klog.Warningf("new downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	downstream.Start()

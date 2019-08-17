@@ -30,7 +30,7 @@ kill_edgecore() {
 }
 
 kill_cloudcore() {
-    sudo pkill edge
+    sudo pkill cloudcore
     #kill the cloudcore process if it exists.
     sleep 5s
     if pgrep cloudcore >/dev/null

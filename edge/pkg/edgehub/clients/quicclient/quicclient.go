@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	qclient "github.com/kubeedge/viaduct/pkg/client"
@@ -41,15 +42,15 @@ func NewQuicClient(conf *QuicConfig) *QuicClient {
 
 // Init initializes quic client
 func (qcc *QuicClient) Init() error {
-	log.LOGGER.Infof("Quic start to connect Access")
+	klog.Infof("Quic start to connect Access")
 	cert, err := tls.LoadX509KeyPair(qcc.config.CertFilePath, qcc.config.KeyFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to load x509 key pair: %v", err)
+		klog.Errorf("Failed to load x509 key pair: %v", err)
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 	caCrt, err := ioutil.ReadFile(qcc.config.CaFilePath)
 	if err != nil {
-		log.LOGGER.Errorf("Failed to load ca file: %s", err.Error())
+		klog.Errorf("Failed to load ca file: %s", err.Error())
 		return fmt.Errorf("failed to load ca file: %s", err.Error())
 	}
 	pool := x509.NewCertPool()
@@ -73,11 +74,11 @@ func (qcc *QuicClient) Init() error {
 	client := qclient.NewQuicClient(option, exOpts)
 	connection, err := client.Connect()
 	if err != nil {
-		log.LOGGER.Errorf("Init quic connection failed %s", err.Error())
+		klog.Errorf("Init quic connection failed %s", err.Error())
 		return err
 	}
 	qcc.client = connection
-	log.LOGGER.Infof("Quic connect to cloud access successful")
+	klog.Infof("Quic connect to cloud access successful")
 
 	return nil
 }
@@ -101,5 +102,5 @@ func (qcc *QuicClient) Receive() (model.Message, error) {
 
 //Notify logs info
 func (qcc *QuicClient) Notify(authInfo map[string]string) {
-	log.LOGGER.Infof("Don not care")
+	klog.Infof("Don not care")
 }

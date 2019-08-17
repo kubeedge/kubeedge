@@ -26,8 +26,8 @@ import (
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
+	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -75,7 +75,7 @@ func (tw TwinWorker) sendMsg(msg *dttype.DTMessage, msgHeart string, actionType 
 func receiveMsg(commChannel chan interface{}, message *dttype.DTMessage) {
 	msg, ok := <-commChannel
 	if !ok {
-		log.LOGGER.Errorf("No message received from communication channel")
+		klog.Errorf("No message received from communication channel")
 		return
 	}
 	*message = *msg.(*dttype.DTMessage)

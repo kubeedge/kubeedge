@@ -1,8 +1,9 @@
 package config
 
 import (
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 )
 
@@ -15,5 +16,5 @@ func InitLoadConfig() {
 	} else {
 		UpdateDeviceStatusWorkers = psw
 	}
-	log.LOGGER.Infof("Update device status workers: %d", UpdateDeviceStatusWorkers)
+	klog.Infof("Update device status workers: %d", UpdateDeviceStatusWorkers)
 }

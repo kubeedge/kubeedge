@@ -21,9 +21,9 @@ import (
 	"strings"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/golang/glog"
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"
@@ -72,7 +72,7 @@ func (c *Config) Start() {
 	helper.ControllerWg.Add(1)
 	device, err := gatt.NewDevice(option.DefaultClientOptions...)
 	if err != nil {
-		glog.Fatalf("Failed to open device, err: %s\n", err)
+		klog.Fatalf("Failed to open device, err: %s\n", err)
 		return
 	}
 	go c.Watcher.Initiate(device, c.Device.Name, c.Device.ID, c.ActionManager.Actions, c.Converter)
@@ -96,7 +96,7 @@ func subscribeAllTopics() {
 	for key, value := range topicMap {
 		helper.TokenClient = helper.Client.Subscribe(key, 0, value)
 		if helper.TokenClient.Wait() && helper.TokenClient.Error() != nil {
-			glog.Errorf("subscribe() Error in topic: %s is: %s", key, helper.TokenClient.Error())
+			klog.Errorf("subscribe() Error in topic: %s is: %s", key, helper.TokenClient.Error())
 		}
 	}
 }
@@ -106,12 +106,12 @@ func (c *Config) handleWatchMessage(client MQTT.Client, message MQTT.Message) {
 	newWatch := watcher.Watcher{}
 	err := json.Unmarshal(message.Payload(), &newWatch)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling:  %s", err)
+		klog.Errorf("Error in unmarshalling:  %s", err)
 	}
 	c.Watcher = newWatch
 	configuration.Config.Watcher = c.Watcher
-	glog.Infof("New watcher has been started")
-	glog.Infof("New Watcher: %v", c.Watcher)
+	klog.Infof("New watcher has been started")
+	klog.Infof("New Watcher: %v", c.Watcher)
 }
 
 //handleScheduleCreateMessage is the MQTT handler function for adding schedules at runtime
@@ -119,7 +119,7 @@ func (c *Config) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Me
 	newSchedules := []scheduler.Schedule{}
 	err := json.Unmarshal(message.Payload(), &newSchedules)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling: %s", err)
+		klog.Errorf("Error in unmarshalling: %s", err)
 	}
 	for _, newSchedule := range newSchedules {
 		scheduleExists := false
@@ -132,11 +132,11 @@ func (c *Config) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Me
 		}
 		if scheduleExists {
 			c.Scheduler.Schedules = append(c.Scheduler.Schedules, newSchedule)
-			glog.Infof("Schedule: %s has been updated", newSchedule.Name)
-			glog.Infof("Updated Schedule: %v", newSchedule)
+			klog.Infof("Schedule: %s has been updated", newSchedule.Name)
+			klog.Infof("Updated Schedule: %v", newSchedule)
 		} else {
-			glog.Infof("Schedule: %s has been added", newSchedule.Name)
-			glog.Infof("New Schedule: %v", newSchedule)
+			klog.Infof("Schedule: %s has been added", newSchedule.Name)
+			klog.Infof("New Schedule: %v", newSchedule)
 		}
 		configuration.Config.Scheduler = c.Scheduler
 		helper.ControllerWg.Add(1)
@@ -149,7 +149,7 @@ func (c *Config) handleScheduleDeleteMessage(client MQTT.Client, message MQTT.Me
 	schedulesToBeDeleted := []scheduler.Schedule{}
 	err := json.Unmarshal(message.Payload(), &schedulesToBeDeleted)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling:  %s", err)
+		klog.Errorf("Error in unmarshalling:  %s", err)
 	}
 	for _, scheduleToBeDeleted := range schedulesToBeDeleted {
 		scheduleExists := false
@@ -163,9 +163,9 @@ func (c *Config) handleScheduleDeleteMessage(client MQTT.Client, message MQTT.Me
 		}
 		configuration.Config.Scheduler = c.Scheduler
 		if !scheduleExists {
-			glog.Errorf("Schedule: %s does not exist", scheduleToBeDeleted.Name)
+			klog.Errorf("Schedule: %s does not exist", scheduleToBeDeleted.Name)
 		} else {
-			glog.Infof("Schedule: %s has been deleted ", scheduleToBeDeleted.Name)
+			klog.Infof("Schedule: %s has been deleted ", scheduleToBeDeleted.Name)
 		}
 	}
 }
@@ -175,7 +175,7 @@ func (c *Config) handleActionCreateMessage(client MQTT.Client, message MQTT.Mess
 	newActions := []actionmanager.Action{}
 	err := json.Unmarshal(message.Payload(), &newActions)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling:  %s", err)
+		klog.Errorf("Error in unmarshalling:  %s", err)
 	}
 	for _, newAction := range newActions {
 		actionExists := false
@@ -188,11 +188,11 @@ func (c *Config) handleActionCreateMessage(client MQTT.Client, message MQTT.Mess
 		}
 		if actionExists {
 			c.ActionManager.Actions = append(c.ActionManager.Actions, newAction)
-			glog.Infof("Action: %s has been updated", newAction.Name)
-			glog.Infof("Updated Action: %v", newAction)
+			klog.Infof("Action: %s has been updated", newAction.Name)
+			klog.Infof("Updated Action: %v", newAction)
 		} else {
-			glog.Infof("Action: %s has been added ", newAction.Name)
-			glog.Infof("New Action: %v", newAction)
+			klog.Infof("Action: %s has been added ", newAction.Name)
+			klog.Infof("New Action: %v", newAction)
 		}
 		configuration.Config.ActionManager = c.ActionManager
 		if newAction.PerformImmediately {
@@ -206,7 +206,7 @@ func (c *Config) handleActionDeleteMessage(client MQTT.Client, message MQTT.Mess
 	actionsToBeDeleted := []actionmanager.Action{}
 	err := json.Unmarshal(message.Payload(), &actionsToBeDeleted)
 	if err != nil {
-		glog.Errorf("Error in unmarshalling:  %s", err)
+		klog.Errorf("Error in unmarshalling:  %s", err)
 	}
 	for _, actionToBeDeleted := range actionsToBeDeleted {
 		actionExists := false
@@ -220,9 +220,9 @@ func (c *Config) handleActionDeleteMessage(client MQTT.Client, message MQTT.Mess
 		}
 		configuration.Config.ActionManager = c.ActionManager
 		if !actionExists {
-			glog.Errorf("Action: %s did not exist", actionToBeDeleted.Name)
+			klog.Errorf("Action: %s did not exist", actionToBeDeleted.Name)
 		} else {
-			glog.Infof("Action: %s has been deleted ", actionToBeDeleted.Name)
+			klog.Infof("Action: %s has been deleted ", actionToBeDeleted.Name)
 		}
 	}
 }
