@@ -51,8 +51,12 @@ function isIPv4() {
 }
 
 function isIPv6() {
-	# TODO
-	false
+	local ipv6matchString="^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}$"
+	if [[ ${1} =~ ${ipv6matchString} ]]; then
+		true
+	else
+		false
+	fi
 }
 
 function hostNetMode() {
