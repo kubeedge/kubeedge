@@ -19,12 +19,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"github.com/spf13/pflag"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
 )
@@ -36,6 +39,11 @@ const (
 
 func main() {
 	var pod types.FakePod
+
+	klog.InitFlags(nil)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+
 	pod.Name = "TestPod"
 	pod.Namespace = constants.NamespaceDefault
 	pod.NodeName = "edgenode1"
@@ -57,23 +65,23 @@ func main() {
 func AddPod(pod types.FakePod) {
 	reqBody, err := json.Marshal(pod)
 	if err != nil {
-		log.LOGGER.Errorf("Unmarshal HTTP Response has failed: %v", err)
+		klog.Errorf("Unmarshal HTTP Response has failed: %v", err)
 	}
 
 	err, resp := SendHttpRequest(http.MethodPost,
 		ControllerHubURL+constants.PodResource,
 		bytes.NewBuffer(reqBody))
 	if err != nil {
-		log.LOGGER.Errorf("Frame HTTP request failed: %v", err)
+		klog.Errorf("Frame HTTP request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.LOGGER.Errorf("HTTP Response reading has failed: %v", err)
+		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}
 
-	log.LOGGER.Debugf("AddPod response: %v", contents)
+	klog.V(4).Infof("AddPod response: %v", contents)
 }
 
 // DeletePod deletes a fake pod
@@ -83,38 +91,38 @@ func DeletePod(pod types.FakePod) {
 			"?name="+pod.Name+"&namespace="+pod.Namespace+"&nodename="+pod.NodeName,
 		nil)
 	if err != nil {
-		log.LOGGER.Errorf("Frame HTTP request failed: %v", err)
+		klog.Errorf("Frame HTTP request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.LOGGER.Errorf("HTTP Response reading has failed: %v", err)
+		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}
 
-	log.LOGGER.Debugf("DeletePod response: %v", contents)
+	klog.V(4).Infof("DeletePod response: %v", contents)
 }
 
 // ListPods lists all pods
 func ListPods() {
 	err, resp := SendHttpRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
 	if err != nil {
-		log.LOGGER.Errorf("Frame HTTP request failed: %v", err)
+		klog.Errorf("Frame HTTP request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.LOGGER.Errorf("HTTP Response reading has failed: %v", err)
+		klog.Errorf("HTTP Response reading has failed: %v", err)
 	}
 
 	pods := []types.FakePod{}
 	err = json.Unmarshal(contents, &pods)
 	if err != nil {
-		log.LOGGER.Errorf("Unmarshal message content with error: %s", err)
+		klog.Errorf("Unmarshal message content with error: %s", err)
 	}
 
-	log.LOGGER.Debugf("ListPods result: %v", pods)
+	klog.V(4).Infof("ListPods result: %v", pods)
 }
 
 // SendHttpRequest launches a http request
@@ -123,15 +131,15 @@ func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Respon
 	client := &http.Client{}
 	req, err := http.NewRequest(method, reqApi, body)
 	if err != nil {
-		log.LOGGER.Errorf("Frame HTTP request failed: %v", err)
+		klog.Errorf("Frame HTTP request failed: %v", err)
 		return err, resp
 	}
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
-	log.LOGGER.Debugf("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	klog.V(4).Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
-		log.LOGGER.Errorf("HTTP request is failed :%v", err)
+		klog.Errorf("HTTP request is failed :%v", err)
 		return err, resp
 	}
 	return nil, resp

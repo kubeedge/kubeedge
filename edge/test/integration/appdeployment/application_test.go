@@ -20,15 +20,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
-	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
+	. "github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
 )
 
 const (
@@ -67,10 +67,10 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			CheckPodRunningState(ctx.Cfg.EdgedEndpoint+AppHandler, UID)
 			pods, err := GetPods(ctx.Cfg.EdgedEndpoint + AppHandler)
 			Expect(err).To(BeNil())
-			common.Info("Get pods from Edged is Successful !!")
+			common.Infof("Get pods from Edged is Successful !!")
 			for index := range pods.Items {
 				pod := &pods.Items[index]
-				common.InfoV2("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
+				common.Infof("PodName: %s PodStatus: %s", pod.Name, pod.Status.Phase)
 			}
 		})
 
@@ -178,7 +178,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			memory, err2 := resource.ParseQuantity("1024Mi")
 			if err2 != nil {
-				common.InfoV2("memory error")
+				common.Infof("memory error")
 			}
 			limit := v1.ResourceList{v1.ResourceMemory: memory}
 			r := v1.ResourceRequirements{Limits: limit}
@@ -197,7 +197,7 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			cpu, err := resource.ParseQuantity("0.75")
 			if err != nil {
-				common.InfoV2("cpu resource parsing error")
+				common.Infof("cpu resource parsing error")
 			}
 			limit := v1.ResourceList{v1.ResourceCPU: cpu}
 			r := v1.ResourceRequirements{Limits: limit}
@@ -216,11 +216,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			cpu, err := resource.ParseQuantity("0.25")
 			if err != nil {
-				common.InfoV2("cpu error")
+				common.Infof("cpu error")
 			}
 			memory, err := resource.ParseQuantity("256M")
 			if err != nil {
-				common.InfoV2("memory error")
+				common.Infof("memory error")
 			}
 			cpuReq, err := resource.ParseQuantity("0.50")
 			memoReq, err := resource.ParseQuantity("512Mi")
@@ -242,11 +242,11 @@ var _ = Describe("Application deployment in edgecore Testing", func() {
 			UID = "deployment-app-" + edge.GetRandomString(10)
 			cpu, err := resource.ParseQuantity("0.75")
 			if err != nil {
-				common.InfoV2("cpu error")
+				common.Infof("cpu error")
 			}
 			memory, err2 := resource.ParseQuantity("1024Mi")
 			if err2 != nil {
-				common.InfoV2("memory error")
+				common.Infof("memory error")
 			}
 			cpuReq, err := resource.ParseQuantity("0.25")
 			memoReq, err := resource.ParseQuantity("512Mi")

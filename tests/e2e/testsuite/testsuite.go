@@ -20,12 +20,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/constants"
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/constants"
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
 func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, ctx *utils.TestContext) metav1.PodList {

@@ -19,11 +19,11 @@ package application_test
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
 
 //context to load config and access across the package
@@ -37,7 +37,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	RegisterFailHandler(Fail)
 	//var UID string
 	var _ = BeforeSuite(func() {
-		common.InfoV6("Before Suite Execution")
+		common.Infof("Before Suite Execution")
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
 	})

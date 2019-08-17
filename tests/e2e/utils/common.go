@@ -28,9 +28,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/viaduct/pkg/api"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -40,6 +37,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 const (
@@ -296,12 +296,12 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 		return err
 	}
 	err = json.Unmarshal(contents, &list)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return err
 	}
 	return nil
@@ -310,7 +310,7 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 func VerifyDeleteDeployment(getDeploymentApi string) int {
 	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
 	if err != nil {
-		Failf("SendHttpRequest is failed: %v", err)
+		Fatalf("SendHttpRequest is failed: %v", err)
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
@@ -328,7 +328,7 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 		body := newPodObj(UID, ImageUrl, nodeselector)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
 	case "DELETE":
@@ -336,7 +336,7 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 	}
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return false
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -344,10 +344,10 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 
@@ -363,11 +363,11 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	case "POST":
 		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageUrl, nodeselector, configmapname, replica)
 		if err != nil {
-			Failf("GenerateDeploymentBody marshalling failed: %v", err)
+			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
 		}
 		respBytes, err := json.Marshal(depObj)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
 	case "DELETE":
@@ -375,7 +375,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	}
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return false
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -383,10 +383,10 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 
@@ -395,7 +395,7 @@ func DeleteDeployment(DeploymentApi, deploymentname string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, DeploymentApi+"/"+deploymentname)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return -1
 	}
 
@@ -406,14 +406,14 @@ func DeleteDeployment(DeploymentApi, deploymentname string) int {
 
 // PrintCombinedOutput to show the os command injuction in combined format
 func PrintCombinedOutput(cmd *exec.Cmd) error {
-	Info("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
+	Infof("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		Failf("CombinedOutput failed", err)
+		Fatalf("CombinedOutput failed %v", err)
 		return err
 	}
 	if len(output) > 0 {
-		Info("=====> Output: %s\n", string(output))
+		Infof("=====> Output: %s\n", string(output))
 	}
 	return nil
 }
@@ -423,12 +423,12 @@ func ExposeCloudService(name, serviceHandler string) error {
 	ServiceObj := CreateServiceObject(name)
 	respBytes, err := json.Marshal(ServiceObj)
 	if err != nil {
-		Failf("Marshalling body failed: %v", err)
+		Fatalf("Marshalling body failed: %v", err)
 	}
 	req, err := http.NewRequest(http.MethodPost, serviceHandler, bytes.NewBuffer(respBytes))
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return err
 	}
 	client := &http.Client{}
@@ -437,10 +437,10 @@ func ExposeCloudService(name, serviceHandler string) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return err
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 	return nil
 }
@@ -477,19 +477,19 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	err, resp := SendHttpRequest(http.MethodGet, serviceHandler)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return -1, -1
 	}
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 		return -1, -1
 	}
 
 	err = json.Unmarshal(contents, &svc)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return -1, -1
 	}
 	defer resp.Body.Close()
@@ -515,7 +515,7 @@ func DeleteSvc(svcname string) int {
 	err, resp := SendHttpRequest(http.MethodDelete, svcname)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return -1
 	}
 
@@ -536,7 +536,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		body := newDeviceModelObject(protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -544,7 +544,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		body := newDeviceModelObject(protocolType, true)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
@@ -554,17 +554,17 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 	}
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return false, 0
 	}
 	t := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true, resp.StatusCode
 }
 
@@ -580,7 +580,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -588,7 +588,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		body := newDeviceInstanceObject(nodeSelector, protocolType, true)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
-			Failf("Marshalling body failed: %v", err)
+			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
@@ -598,17 +598,17 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 	}
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return false, 0
 	}
 	t := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true, resp.StatusCode
 }
 
@@ -676,12 +676,12 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, ex
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
 	}
 	err = json.Unmarshal(contents, &list)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return nil, err
 	}
 	if expectedDeviceModel != nil {
@@ -707,12 +707,12 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		Failf("HTTP Response reading has failed: %v", err)
+		Fatalf("HTTP Response reading has failed: %v", err)
 		return nil, err
 	}
 	err = json.Unmarshal(contents, &list)
 	if err != nil {
-		Failf("Unmarshal HTTP Response has failed: %v", err)
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
 		return nil, err
 	}
 	if expectedDevice != nil {
@@ -804,13 +804,13 @@ func TwinSubscribe(deviceID string) {
 	getTwinResult := DeviceETPrefix + deviceID + TwinETGetResultSuffix
 	TokenClient = Client.Subscribe(getTwinResult, 0, OnTwinMessageReceived)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
-		Err("subscribe() Error in device twin result get  is " + TokenClient.Error().Error())
+		Errorf("subscribe() Error in device twin result get  is %v", TokenClient.Error().Error())
 	}
 	for {
 		twin := DeviceTwinUpdate{}
 		err := GetTwin(twin, deviceID)
 		if err != nil {
-			Err("Error in getting device twin: " + err.Error())
+			Errorf("Error in getting device twin: %v", err.Error())
 		}
 		time.Sleep(1 * time.Second)
 		if TwinResult.Twin != nil {
@@ -823,7 +823,7 @@ func TwinSubscribe(deviceID string) {
 func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 	err := json.Unmarshal(message.Payload(), &TwinResult)
 	if err != nil {
-		Err("Error in unmarshalling: " + err.Error())
+		Errorf("Error in unmarshalling: %v", err.Error())
 	}
 }
 

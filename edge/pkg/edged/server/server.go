@@ -3,13 +3,14 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"net"
 	"net/http"
 	"strconv"
 
 	"k8s.io/api/core/v1"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )
 
 //constants to define server address
@@ -45,7 +46,7 @@ func (s *Server) getPodsHandler(w http.ResponseWriter, r *http.Request) {
 func getLocalIP() string {
 	addrSlice, err := net.InterfaceAddrs()
 	if nil != err {
-		log.LOGGER.Errorf("Get local IP addr failed %s", err.Error())
+		klog.Errorf("Get local IP addr failed %s", err.Error())
 		return "localhost"
 	}
 	for _, addr := range addrSlice {
@@ -61,11 +62,11 @@ func getLocalIP() string {
 // ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe() {
 	//addr := getLocalIp()
-	log.LOGGER.Infof("starting to listen on %s:%d", ServerAddr, ServerPort)
+	klog.Infof("starting to listen on %s:%d", ServerAddr, ServerPort)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/pods", s.getPodsHandler)
 	err := http.ListenAndServe(net.JoinHostPort(ServerAddr, strconv.FormatUint(uint64(ServerPort), 10)), mux)
 	if err != nil {
-		log.LOGGER.Fatalf("run server: %v", err)
+		klog.Fatalf("run server: %v", err)
 	}
 }

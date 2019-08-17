@@ -3,7 +3,8 @@ package clients
 import (
 	"errors"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/quicclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/wsclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -48,7 +49,7 @@ func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error)
 		}
 		return quicclient.NewQuicClient(&quicConfig), nil
 	default:
-		log.LOGGER.Errorf("Client type: %s is not supported", clientType)
+		klog.Errorf("Client type: %s is not supported", clientType)
 	}
 
 	return nil, ErrorWrongClientType

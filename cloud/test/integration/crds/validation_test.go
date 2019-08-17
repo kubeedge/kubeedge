@@ -21,12 +21,12 @@ import (
 	"os"
 	"testing"
 
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	deviceutils "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 	"github.com/kubeedge/kubeedge/cloud/test/integration/fixtures"
-
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 func buildCrdClient(t *testing.T) *rest.RESTClient {

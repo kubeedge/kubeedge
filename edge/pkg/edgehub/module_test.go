@@ -1,12 +1,13 @@
 package edgehub
 
 import (
+	"testing"
+	"time"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"testing"
-	"time"
 )
 
 // coreContext is beehive context used for communication between modules

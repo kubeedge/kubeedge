@@ -16,12 +16,11 @@ limitations under the License.
 package nodedensity
 
 import (
-	"github.com/kubeedge/kubeedge/tests/e2e/utils"
-	. "github.com/kubeedge/kubeedge/tests/performance/common"
-
-	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
 	metav1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/kubeedge/tests/e2e/utils"
+	. "github.com/kubeedge/kubeedge/tests/performance/common"
 )
 
 var DeploymentTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
@@ -56,7 +55,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 		Measure("PERF_NODETEST_NODES_5: Create 5 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
@@ -68,7 +67,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 
 		Measure("PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
@@ -81,7 +80,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 		Measure("PERF_NODETEST_NODES_20: Create 20 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
@@ -93,7 +92,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
-			glog.Infof("Runtime stats: %+v", runtime)
+			utils.Infof("Runtime stats: %+v", runtime)
 		}, 5)
 	})
 })

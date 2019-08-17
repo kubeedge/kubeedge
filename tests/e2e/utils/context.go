@@ -45,7 +45,7 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	req, err := http.NewRequest(method, reqApi, body)
 	if err != nil {
 		// handle error
-		Failf("Frame HTTP request failed: %v", err)
+		Fatalf("Frame HTTP request failed: %v", err)
 		return err, resp
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -53,10 +53,10 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	resp, err = client.Do(req)
 	if err != nil {
 		// handle error
-		Failf("HTTP request is failed :%v", err)
+		Fatalf("HTTP request is failed :%v", err)
 		return err, resp
 	}
-	InfoV6("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return nil, resp
 }
 

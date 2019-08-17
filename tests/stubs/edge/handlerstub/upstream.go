@@ -19,7 +19,8 @@ package handlerstub
 import (
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -41,7 +42,7 @@ type UpstreamController struct {
 
 // Start upstream
 func (dc *UpstreamController) Start() error {
-	log.LOGGER.Infof("Start upstream controller")
+	klog.Infof("Start upstream controller")
 	dc.podStop = make(chan struct{})
 	go dc.SyncPods(dc.podStop)
 	return nil
@@ -49,7 +50,7 @@ func (dc *UpstreamController) Start() error {
 
 // Stop UpstreamController
 func (dc *UpstreamController) Stop() error {
-	log.LOGGER.Infof("Stop upstream controller")
+	klog.Infof("Stop upstream controller")
 	dc.podStop <- struct{}{}
 	return nil
 }
@@ -59,12 +60,12 @@ func (dc *UpstreamController) SyncPods(stop chan struct{}) {
 	running := true
 	go func() {
 		<-stop
-		log.LOGGER.Infof("Stop sync pods")
+		klog.Infof("Stop sync pods")
 		running = false
 	}()
 	for running {
 		pods := dc.podManager.ListPods()
-		log.LOGGER.Debugf("Current pods number is: %v", len(pods))
+		klog.V(4).Infof("Current pods number is: %v", len(pods))
 		for _, pod := range pods {
 			// Periodic sync message
 			msg := model.NewMessage("")
@@ -72,9 +73,9 @@ func (dc *UpstreamController) SyncPods(stop chan struct{}) {
 			msg.Content = pod
 			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
 
-			log.LOGGER.Debugf("Begin to sync message: %v", *msg)
+			klog.V(4).Infof("Begin to sync message: %v", *msg)
 			dc.context.Send2Group(constants.HubGroup, *msg)
-			log.LOGGER.Debugf("End to sync message: %v", *msg)
+			klog.V(4).Infof("End to sync message: %v", *msg)
 		}
 		time.Sleep(5 * time.Second)
 	}

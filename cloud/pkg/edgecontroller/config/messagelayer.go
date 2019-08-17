@@ -1,8 +1,9 @@
 package config
 
 import (
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -15,5 +16,5 @@ func InitMessageLayerConfig() {
 	} else {
 		MessageLayer = ml
 	}
-	log.LOGGER.Infof("message layer: %s", MessageLayer)
+	klog.Infof("message layer: %s", MessageLayer)
 }

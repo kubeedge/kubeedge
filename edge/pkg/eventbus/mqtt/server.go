@@ -25,8 +25,8 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
+	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -76,7 +76,7 @@ func (m *Server) Run() error {
 
 	m.server, err = transport.Launch(m.url)
 	if err != nil {
-		log.LOGGER.Errorf("Launch transport failed.", err)
+		klog.Errorf("Launch transport failed %v", err)
 		return err
 	}
 
@@ -115,7 +115,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(msg.Payload))
-	log.LOGGER.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	ModuleContext.Send2Group(target, *message)
 }
 
@@ -123,7 +123,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 func (m *Server) InitInternalTopics() {
 	for _, v := range SubTopics {
 		m.tree.Set(v, packet.Subscription{Topic: v, QOS: packet.QOS(m.qos)})
-		log.LOGGER.Infof("Subscribe internal topic to %s", v)
+		klog.Infof("Subscribe internal topic to %s", v)
 	}
 }
 

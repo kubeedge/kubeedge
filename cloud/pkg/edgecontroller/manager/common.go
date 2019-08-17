@@ -1,10 +1,9 @@
 package manager
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/klog"
 )
 
 // Manager define the interface of a Manager, configmapManager and podManager implement it
@@ -20,7 +19,7 @@ type CommonResourceEventHandler struct {
 func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{}) {
 	eventObj, ok := obj.(runtime.Object)
 	if !ok {
-		log.LOGGER.Warnf("unknown type: %T, ignore", obj)
+		klog.Warningf("unknown type: %T, ignore", obj)
 		return
 	}
 	c.events <- watch.Event{Type: t, Object: eventObj}

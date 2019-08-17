@@ -52,10 +52,10 @@ func (testTimer *TestTimer) Duration() time.Duration {
 // PrintResult prints the result of the test timer
 func (testTimer *TestTimer) PrintResult() {
 	if testTimer.IsEnded() {
-		Info("Test case name: %s start time: %v duration: %v\n",
+		Infof("Test case name: %s start time: %v duration: %v\n",
 			testTimer.Name, testTimer.StartTime, testTimer.Duration())
 	} else {
-		Info("Test case name: %s start time: %v duration: %v so far\n",
+		Infof("Test case name: %s start time: %v duration: %v so far\n",
 			testTimer.Name, testTimer.StartTime, testTimer.Duration())
 	}
 }

@@ -6,9 +6,10 @@ import (
 	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/loadbalancer"
 	"github.com/go-chassis/go-chassis/core/registry"
+
+	mconfig "github.com/kubeedge/beehive/pkg/common/config"
 	_ "github.com/kubeedge/kubeedge/edgemesh/pkg/panel"
 	edgeregistry "github.com/kubeedge/kubeedge/edgemesh/pkg/registry"
-	mconfig "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 )
 
@@ -38,12 +39,13 @@ func Start() {
 	registry.DefaultServiceDiscoveryService = edgeregistry.NewServiceDiscovery(opt)
 	myStrategy := mconfig.CONFIG.GetConfigurationByKey("mesh.loadbalance.strategy-name").(string)
 	loadbalancer.InstallStrategy(myStrategy, func() loadbalancer.Strategy {
-		switch myStrategy{
+		switch myStrategy {
 		case "RoundRobin":
 			return &loadbalancer.RoundRobinStrategy{}
 		case "Random":
 			return &loadbalancer.RandomStrategy{}
-		default: return &loadbalancer.RoundRobinStrategy{}
+		default:
+			return &loadbalancer.RoundRobinStrategy{}
 		}
 	})
 	//Start dns server

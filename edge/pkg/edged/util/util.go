@@ -29,8 +29,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 )
 
 //AddressFamily is uint type var to describe family ips
@@ -180,7 +179,7 @@ func IsInterfaceUp(intf *net.Interface) bool {
 		return false
 	}
 	if intf.Flags&net.FlagUp != 0 {
-		log.LOGGER.Infof("Interface %v is up", intf.Name)
+		klog.Infof("Interface %v is up", intf.Name)
 		return true
 	}
 	return false
@@ -196,19 +195,19 @@ func IsLoopbackOrPointToPoint(intf *net.Interface) bool {
 func GetMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error) {
 	if len(addrs) > 0 {
 		for i := range addrs {
-			log.LOGGER.Infof("Checking addr  %s.", addrs[i].String())
+			klog.Infof("Checking addr  %s.", addrs[i].String())
 			ip, _, err := net.ParseCIDR(addrs[i].String())
 			if err != nil {
 				return nil, err
 			}
 			if MemberOf(ip, family) {
 				if ip.IsGlobalUnicast() {
-					log.LOGGER.Infof("IP found %v", ip)
+					klog.Infof("IP found %v", ip)
 					return ip, nil
 				}
-				log.LOGGER.Infof("Non-global unicast address found %v", ip)
+				klog.Infof("Non-global unicast address found %v", ip)
 			} else {
-				log.LOGGER.Infof("%v is not an IPv%d address", ip, int(family))
+				klog.Infof("%v is not an IPv%d address", ip, int(family))
 			}
 
 		}
@@ -228,13 +227,13 @@ func GetIPFromInterface(intfName string, forFamily AddressFamily, nw networkInte
 		if err != nil {
 			return nil, err
 		}
-		log.LOGGER.Infof("Interface %q has %d addresses :%v.", intfName, len(addrs), addrs)
+		klog.Infof("Interface %q has %d addresses :%v.", intfName, len(addrs), addrs)
 		matchingIP, err := GetMatchingGlobalIP(addrs, forFamily)
 		if err != nil {
 			return nil, err
 		}
 		if matchingIP != nil {
-			log.LOGGER.Infof("Found valid IPv%d address %v for interface %q.", int(forFamily), matchingIP, intfName)
+			klog.Infof("Found valid IPv%d address %v for interface %q.", int(forFamily), matchingIP, intfName)
 			return matchingIP, nil
 		}
 	}
@@ -262,14 +261,14 @@ func ChooseIPFromHostInterfaces(nw networkInterfacer) (net.IP, error) {
 		return nil, fmt.Errorf("no interfaces found on host")
 	}
 	for _, family := range []AddressFamily{familyIPv4, familyIPv6} {
-		log.LOGGER.Infof("Looking for system interface with a global IPv%d address", uint(family))
+		klog.Infof("Looking for system interface with a global IPv%d address", uint(family))
 		for _, intf := range intfs {
 			if !IsInterfaceUp(&intf) {
-				log.LOGGER.Infof("Skipping: down interface %q", intf.Name)
+				klog.Infof("Skipping: down interface %q", intf.Name)
 				continue
 			}
 			if IsLoopbackOrPointToPoint(&intf) {
-				log.LOGGER.Infof("Skipping: LB or P2P interface %q", intf.Name)
+				klog.Infof("Skipping: LB or P2P interface %q", intf.Name)
 				continue
 			}
 			addrs, err := nw.Addrs(&intf)
@@ -277,7 +276,7 @@ func ChooseIPFromHostInterfaces(nw networkInterfacer) (net.IP, error) {
 				return nil, err
 			}
 			if len(addrs) == 0 {
-				log.LOGGER.Infof("Skipping: no addresses on interface %q", intf.Name)
+				klog.Infof("Skipping: no addresses on interface %q", intf.Name)
 				continue
 			}
 			for _, addr := range addrs {
@@ -286,15 +285,15 @@ func ChooseIPFromHostInterfaces(nw networkInterfacer) (net.IP, error) {
 					return nil, fmt.Errorf("Unable to parse CIDR for interface %q: %s", intf.Name, err)
 				}
 				if !MemberOf(ip, family) {
-					log.LOGGER.Infof("Skipping: no address family match for %q on interface %q.", ip, intf.Name)
+					klog.Infof("Skipping: no address family match for %q on interface %q.", ip, intf.Name)
 					continue
 				}
 				// TODO: Decide if should open up to allow IPv6 LLAs in future.
 				if !ip.IsGlobalUnicast() {
-					log.LOGGER.Infof("Skipping: non-global address %q on interface %q.", ip, intf.Name)
+					klog.Infof("Skipping: non-global address %q on interface %q.", ip, intf.Name)
 					continue
 				}
-				log.LOGGER.Infof("Found global unicast address %q on interface %q.", ip, intf.Name)
+				klog.Infof("Found global unicast address %q on interface %q.", ip, intf.Name)
 				return ip, nil
 			}
 		}
@@ -366,23 +365,23 @@ func GetAllDefaultRoutes() ([]Route, error) {
 // an IPv4 IP, and then will look at each IPv6 route for an IPv6 IP.
 func ChooseHostInterfaceFromRoute(routes []Route, nw networkInterfacer) (net.IP, error) {
 	for _, family := range []AddressFamily{familyIPv4, familyIPv6} {
-		log.LOGGER.Infof("Looking for default routes with IPv%d addresses", uint(family))
+		klog.Infof("Looking for default routes with IPv%d addresses", uint(family))
 		for _, route := range routes {
 			if route.Family != family {
 				continue
 			}
-			log.LOGGER.Infof("Default route transits interface %q", route.Interface)
+			klog.Infof("Default route transits interface %q", route.Interface)
 			finalIP, err := GetIPFromInterface(route.Interface, family, nw)
 			if err != nil {
 				return nil, err
 			}
 			if finalIP != nil {
-				log.LOGGER.Infof("Found active IP %v ", finalIP)
+				klog.Infof("Found active IP %v ", finalIP)
 				return finalIP, nil
 			}
 		}
 	}
-	log.LOGGER.Infof("No active IP found by looking at default routes")
+	klog.Infof("No active IP found by looking at default routes")
 	return nil, fmt.Errorf("unable to select an IP from default routes")
 }
 
@@ -429,7 +428,7 @@ func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
 	ret, err := cmd.Output()
 	if err != nil {
-		log.LOGGER.Errorf("exec command failed: %v", err)
+		klog.Errorf("exec command failed: %v", err)
 		return string(ret), err
 	}
 	return strings.Trim(string(ret), "\n"), nil

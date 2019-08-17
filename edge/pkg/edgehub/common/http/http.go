@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 )
 
 const (
@@ -36,7 +36,7 @@ func NewHTTPClient() *http.Client {
 		ResponseHeaderTimeout: responseReadTimeout,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 	}
-	log.LOGGER.Infof("tlsConfig InsecureSkipVerify true")
+	klog.Infof("tlsConfig InsecureSkipVerify true")
 	return &http.Client{Transport: transport}
 }
 
@@ -45,7 +45,7 @@ func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
 	pool := x509.NewCertPool()
 	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		log.LOGGER.Errorf("Cannot create https client , Loadx509keypair err: %v", err)
+		klog.Errorf("Cannot create https client , Loadx509keypair err: %v", err)
 		return nil, err
 	}
 	tr := &http.Transport{
@@ -64,14 +64,6 @@ func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
 
 // SendRequest sends a http request and return the resp info
 func SendRequest(req *http.Request, client *http.Client) (*http.Response, error) {
-	//body, err := httputil.DumpRequest(req, true)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//log.LOGGER.Debugf("POST request : %s", string(body))
-	//log.LOGGER.Debugf("url: %#v", req.URL)
-	//log.LOGGER.Debugf("header: %#v", req.Header)
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

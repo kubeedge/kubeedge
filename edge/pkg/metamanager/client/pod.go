@@ -1,8 +1,9 @@
 package client
 
 import (
-	"github.com/kubeedge/beehive/pkg/core/context"
 	api "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/beehive/pkg/core/context"
 )
 
 //PodsGetter is interface to get pods

@@ -19,7 +19,6 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"reflect"
 	"testing"
 	"time"
@@ -30,6 +29,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )

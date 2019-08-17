@@ -48,7 +48,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 	// Init suite
 	var _ = BeforeSuite(func() {
 		// Init config
-		utils.InfoV6("KubeEdge hub performance test begin!")
+		utils.Infof("KubeEdge hub performance test begin!")
 		cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(cfg)
 

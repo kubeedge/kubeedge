@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -22,7 +22,7 @@ type Meta struct {
 // SaveMeta save meta to db
 func SaveMeta(meta *Meta) error {
 	num, err := dbm.DBAccess.Insert(meta)
-	log.LOGGER.Debugf("Insert affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
 	if err == nil || dbm.IsNonUniqueNameError(err) {
 		return nil
 	}
@@ -32,35 +32,35 @@ func SaveMeta(meta *Meta) error {
 // DeleteMetaByKey delete meta by key
 func DeleteMetaByKey(key string) error {
 	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Delete()
-	log.LOGGER.Debugf("Delete affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Delete affected Num: %d, %v", num, err)
 	return err
 }
 
 // UpdateMeta update meta
 func UpdateMeta(meta *Meta) error {
 	num, err := dbm.DBAccess.Update(meta) // will update all field
-	log.LOGGER.Debugf("Update affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %v", num, err)
 	return err
 }
 
 // InsertOrUpdate insert or update meta
 func InsertOrUpdate(meta *Meta) error {
 	_, err := dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta (key, type, value) VALUES (?,?,?)", meta.Key, meta.Type, meta.Value).Exec() // will update all field
-	log.LOGGER.Debugf("Update result %v", err)
+	klog.V(4).Infof("Update result %v", err)
 	return err
 }
 
 // UpdateMetaField update special field
 func UpdateMetaField(key string, col string, value interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Update(map[string]interface{}{col: value})
-	log.LOGGER.Debugf("Update affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %v", num, err)
 	return err
 }
 
 // UpdateMetaFields update special fields
 func UpdateMetaFields(key string, cols map[string]interface{}) error {
 	num, err := dbm.DBAccess.QueryTable(MetaTableName).Filter("key", key).Update(cols)
-	log.LOGGER.Debugf("Update affected Num: %d, %v", num, err)
+	klog.V(4).Infof("Update affected Num: %d, %v", num, err)
 	return err
 }
 

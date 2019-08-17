@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
-
-	v1 "k8s.io/api/core/v1"
 )
 
 // ServiceGetter interface
