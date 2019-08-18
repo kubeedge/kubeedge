@@ -579,8 +579,8 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 
 }
 func (m *metaManager) process(message model.Message) {
-	resource := message.GetOperation()
-	switch resource {
+	operation := message.GetOperation()
+	switch operation {
 	case model.InsertOperation:
 		m.processInsert(message)
 	case model.UpdateOperation:
