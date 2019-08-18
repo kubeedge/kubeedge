@@ -73,7 +73,7 @@ func InitHandler(config *util.Config, eventq *channelq.ChannelEventQueue, c *con
 	})
 }
 
-// initServerEntries regist handler func
+// initServerEntries register handler func
 func (eh *EventHandle) initServerEntries() {
 	mux.Entry(mux.NewPattern("*").Op("*"), eh.HandleServer)
 }
