@@ -72,7 +72,6 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
-	"k8s.io/kubernetes/pkg/volume/csi"
 	"k8s.io/kubernetes/pkg/volume/emptydir"
 	"k8s.io/kubernetes/pkg/volume/hostpath"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
@@ -97,6 +96,7 @@ import (
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
+	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -292,7 +292,7 @@ func (e *edged) Start(c *context.Context) {
 	}
 
 	e.volumeManager = volumemanager.NewVolumeManager(
-		false,
+		true,
 		types.NodeName(e.nodeName),
 		e.podManager,
 		e.statusManager,
@@ -324,7 +324,6 @@ func (e *edged) Start(c *context.Context) {
 
 	e.imageGCManager.Start()
 	e.StartGarbageCollection()
-	e.syncPod()
 
 	e.pluginManager = pluginmanager.NewPluginManager(
 		e.getPluginsRegistrationDir(), /* sockDir */
@@ -333,10 +332,13 @@ func (e *edged) Start(c *context.Context) {
 	)
 
 	// Adding Registration Callback function for CSI Driver
-	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csi.PluginHandler))
+	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csiplugin.PluginHandler))
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
+
+	klog.Infof("starting syncPod")
+	e.syncPod()
 }
 
 func (e *edged) Cleanup() {
@@ -1178,6 +1180,7 @@ func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 	allPlugins = append(allPlugins, emptydir.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, secretvolume.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(hostPathConfig)...)
+	allPlugins = append(allPlugins, csiplugin.ProbeVolumePlugins()...)
 	return allPlugins
 }
 
