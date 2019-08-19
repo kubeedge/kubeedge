@@ -163,30 +163,29 @@ github.com/go-chassis/go-archaius/sources/configcenter
 github.com/go-chassis/go-archaius/sources/file-source
 github.com/go-chassis/go-archaius/sources/utils
 # github.com/go-chassis/go-chassis v1.6.1
-github.com/go-chassis/go-chassis/control
-github.com/go-chassis/go-chassis/core/config
-github.com/go-chassis/go-chassis/core/loadbalancer
-github.com/go-chassis/go-chassis/core/registry
 github.com/go-chassis/go-chassis/core/common
+github.com/go-chassis/go-chassis/control
 github.com/go-chassis/go-chassis/core/config/model
 github.com/go-chassis/go-chassis/core/invocation
 github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix
+github.com/go-chassis/go-chassis/core/registry
 github.com/go-chassis/go-chassis/pkg/util/tags
+github.com/go-chassis/go-chassis/core/config
 github.com/go-chassis/go-chassis/core/handler
-github.com/go-chassis/go-chassis/core/config/schema
-github.com/go-chassis/go-chassis/pkg/backoff
+github.com/go-chassis/go-chassis/core/loadbalancer
 github.com/go-chassis/go-chassis/pkg/runtime
-github.com/go-chassis/go-chassis/pkg/util/fileutil
-github.com/go-chassis/go-chassis/pkg/util/iputil
-github.com/go-chassis/go-chassis/session
+github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/metric_collector
+github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/rolling
 github.com/go-chassis/go-chassis/core/client
+github.com/go-chassis/go-chassis/core/config/schema
 github.com/go-chassis/go-chassis/core/lager
 github.com/go-chassis/go-chassis/core/metadata
 github.com/go-chassis/go-chassis/core/tls
 github.com/go-chassis/go-chassis/healthz/client
+github.com/go-chassis/go-chassis/pkg/util/iputil
 github.com/go-chassis/go-chassis/third_party/forked/k8s.io/apimachinery/pkg/util/sets
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/metric_collector
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/rolling
+github.com/go-chassis/go-chassis/pkg/backoff
+github.com/go-chassis/go-chassis/pkg/util/fileutil
 github.com/go-chassis/go-chassis/core/fault
 github.com/go-chassis/go-chassis/core/qpslimiter
 github.com/go-chassis/go-chassis/core/router
@@ -194,9 +193,10 @@ github.com/go-chassis/go-chassis/core/tracing
 github.com/go-chassis/go-chassis/pkg/circuit
 github.com/go-chassis/go-chassis/pkg/string
 github.com/go-chassis/go-chassis/pkg/util
-github.com/go-chassis/go-chassis/pkg/util/httputil
+github.com/go-chassis/go-chassis/session
 github.com/go-chassis/go-chassis/security/common
 github.com/go-chassis/go-chassis/client/rest
+github.com/go-chassis/go-chassis/pkg/util/httputil
 github.com/go-chassis/go-chassis/core/router/weightpool
 github.com/go-chassis/go-chassis/security
 github.com/go-chassis/go-chassis/security/plugins/plain
@@ -917,7 +917,7 @@ k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 # k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.0.0-20190718190424-bef8d46b95de
 k8s.io/csi-translation-lib/plugins
 k8s.io/csi-translation-lib
-# k8s.io/klog v0.3.3 => k8s.io/klog v0.4.0
+# k8s.io/klog v0.4.0 => k8s.io/klog v0.4.0
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
 k8s.io/kube-openapi/pkg/util/proto
