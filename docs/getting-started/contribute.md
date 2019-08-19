@@ -20,20 +20,20 @@ Welcome to KubeEdge!
 
 ## Code of Conduct
 
-Please make sure to read and observe our [Code of Conduct](https://github.com/kubeedge/kubeedge/blob/master/CODE_OF_CONDUCT.md).
+Please make sure to read and observe our [Code of Conduct](../../CODE_OF_CONDUCT.md).
 
 ## Community Expectations
 
 KubeEdge is a community project driven by its community which strives to promote a healthy, friendly and productive environment.
 The goal of the community is to develop a cloud native edge computing platform built on top of Kubernetes to manage edge nodes and devices at scale and demonstrate resiliency, reliability in offline scenarios. To build a platform at such scale requires the support of a community with similar aspirations.
 
-- See [Community Membership](https://github.com/kubeedge/kubeedge/blob/master/docs/getting-started/community-membership.md) for a list of various community roles. With gradual contributions, one can move up in the chain.
+- See [Community Membership](./community-membership.md) for a list of various community roles. With gradual contributions, one can move up in the chain.
 
 
 # Getting started
 
 - Fork the repository on GitHub
-- Read the [setup](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/setup.md) for build instructions.
+- Read the [setup](../setup/setup.md) for build instructions.
 
 
 # Your First Contribution
