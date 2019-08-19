@@ -99,9 +99,9 @@ github.com/docker/distribution/digestset
 github.com/docker/distribution/registry/api/errcode
 # github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 github.com/docker/docker/api/types/container
-github.com/docker/docker/api/types/strslice
 github.com/docker/docker/api/types
 github.com/docker/docker/api/types/filters
+github.com/docker/docker/api/types/strslice
 github.com/docker/docker/pkg/jsonmessage
 github.com/docker/docker/pkg/sysinfo
 github.com/docker/docker/api/types/blkiodev
@@ -660,11 +660,11 @@ k8s.io/apimachinery/pkg/util/clock
 k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/wait
-k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/conversion
 k8s.io/apimachinery/pkg/selection
+k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/conversion/queryparams
 k8s.io/apimachinery/pkg/util/json
 k8s.io/apimachinery/pkg/util/naming
@@ -961,10 +961,6 @@ k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/pkg/kubelet/cadvisor
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager
-k8s.io/kubernetes/pkg/kubelet/cm/devicemanager
-k8s.io/kubernetes/pkg/kubelet/container/testing
-k8s.io/kubernetes/pkg/util/hash
-k8s.io/kubernetes/pkg/util/selinux
 k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1
 k8s.io/kubernetes/pkg/api/v1/pod
 k8s.io/kubernetes/pkg/apis/core/v1/helper/qos
@@ -974,6 +970,7 @@ k8s.io/kubernetes/pkg/kubelet/pod/testing
 k8s.io/kubernetes/pkg/api/v1/resource
 k8s.io/kubernetes/pkg/apis/core/v1/helper
 k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1
+k8s.io/kubernetes/pkg/kubelet/cm/devicemanager
 k8s.io/kubernetes/pkg/kubelet/cm/util
 k8s.io/kubernetes/pkg/kubelet/events
 k8s.io/kubernetes/pkg/kubelet/eviction/api
@@ -992,6 +989,7 @@ k8s.io/kubernetes/pkg/apis/core/validation
 k8s.io/kubernetes/pkg/kubelet/checkpoint
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager
 k8s.io/kubernetes/pkg/util/config
+k8s.io/kubernetes/pkg/util/hash
 k8s.io/kubernetes/third_party/forked/golang/expansion
 k8s.io/kubernetes/pkg/credentialprovider
 k8s.io/kubernetes/pkg/kubelet/apis
@@ -1017,6 +1015,7 @@ k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs
 k8s.io/kubernetes/pkg/kubelet/runtimeclass
 k8s.io/kubernetes/pkg/kubelet/util/logreduction
 k8s.io/kubernetes/pkg/securitycontext
+k8s.io/kubernetes/pkg/util/selinux
 k8s.io/kubernetes/pkg/util/tail
 k8s.io/kubernetes/pkg/scheduler/algorithm/predicates
 k8s.io/kubernetes/pkg/kubelet/pluginmanager/metrics
@@ -1045,11 +1044,11 @@ k8s.io/kubernetes/pkg/util/resizefs
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/state
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/topology
 k8s.io/kubernetes/pkg/kubelet/cm/cpuset
-k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1
-k8s.io/kubernetes/pkg/kubelet/cm/devicemanager/checkpoint
 k8s.io/kubernetes/pkg/apis/scheduling
 k8s.io/kubernetes/pkg/kubelet/configmap
 k8s.io/kubernetes/pkg/kubelet/secret
+k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1
+k8s.io/kubernetes/pkg/kubelet/cm/devicemanager/checkpoint
 k8s.io/kubernetes/pkg/apis/apps
 k8s.io/kubernetes/pkg/api/service
 k8s.io/kubernetes/pkg/apis/core/pods
