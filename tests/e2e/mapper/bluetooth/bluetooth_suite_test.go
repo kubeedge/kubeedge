@@ -116,14 +116,14 @@ func TestMapperCharacteristics(t *testing.T) {
 		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
-		//Run ./edgecontroller binary
-		Expect(utils.StartEdgeController()).Should(BeNil())
+		//Run ./cloudcore binary
+		Expect(utils.StartCloudCore()).Should(BeNil())
 
 		//Register the Edge Node to Master
 		err = utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+nodeHandler, nodeSelector)
 		Expect(err).Should(BeNil())
 
-		//Run ./edge_core after node registration
+		//Run ./edgecore after node registration
 		Expect(utils.StartEdgeCore()).Should(BeNil())
 
 		//Check node successfully registered or not
