@@ -188,8 +188,7 @@ func NewContainerManager(runtimeService apis.RuntimeService, livenessManager pro
 }
 
 func (cm *containerManager) Start(activePods deviceplugin.ActivePodsFunc) error {
-	cm.devicePluginManager.Start(deviceplugin.ActivePodsFunc(activePods), sourceImpl{})
-	return nil
+	return cm.devicePluginManager.Start(deviceplugin.ActivePodsFunc(activePods), sourceImpl{})
 }
 
 func (cm *containerManager) GetDevicePluginResourceCapacity() (v1.ResourceList, []string) {
