@@ -12,6 +12,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
+	github.com/container-storage-interface/spec v1.1.0
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50 // indirect
 	github.com/containerd/containerd v1.1.7 // indirect
 	github.com/coreos/bbolt v1.3.3 // indirect
@@ -37,6 +38,7 @@ require (
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/mock v1.3.1
+	github.com/golang/protobuf v1.3.2
 	github.com/google/cadvisor v0.33.2-0.20190411163913-9db8c7dee20a
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
@@ -98,6 +100,7 @@ require (
 	k8s.io/cloud-provider v0.0.0
 	k8s.io/component-base v0.0.0
 	k8s.io/cri-api v0.0.0
+	k8s.io/csi-translation-lib v0.0.0
 	k8s.io/klog v0.4.0
 	k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kubernetes v1.15.3
