@@ -154,6 +154,13 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 			klog.Errorf("setGPUInfo failed, err: %v", err)
 		}
 	}
+	if e.volumeManager.ReconcilerStatesHasBeenSynced() {
+		node.Status.VolumesInUse = e.volumeManager.GetVolumesInUse()
+	} else {
+		node.Status.VolumesInUse = nil
+	}
+	e.volumeManager.MarkVolumesAsReportedInUse(node.Status.VolumesInUse)
+	klog.Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
 
 	return nodeStatus, nil
 }
