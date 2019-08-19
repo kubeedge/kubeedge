@@ -34,6 +34,10 @@ install: true
 
 jobs:
   include:
+    - stage: "Verify vendor"
+      script: make vendorCheck
+      name: "check if the vendor is up to date"
+
     - stage: "Test lint"
       script: make cloud_lint
       name: "cloud_lint"     # names the eighth Tests stage job

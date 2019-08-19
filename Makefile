@@ -122,9 +122,9 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-.PHONY: depcheck
-depcheck:
-	dep check
+.PHONY: vendorCheck
+vendorCheck:
+	bash build/tools/verifyVendor.sh
 
 .PHONY: bluetoothdevice
 bluetoothdevice:
