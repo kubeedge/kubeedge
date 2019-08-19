@@ -1,7 +1,7 @@
 package constants
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Config
@@ -12,19 +12,29 @@ const (
 	DefaultKubeBurst               = 10
 	DefaultKubeUpdateNodeFrequency = 20
 
-	DefaultUpdatePodStatusWorkers  = 1
-	DefaultUpdateNodeStatusWorkers = 1
-	DefaultQueryConfigMapWorkers   = 4
-	DefaultQuerySecretWorkers      = 4
-	DefaultQueryServiceWorkers     = 4
-	DefaultQueryEndpointsWorkers   = 4
+	DefaultUpdatePodStatusWorkers            = 1
+	DefaultUpdateNodeStatusWorkers           = 1
+	DefaultQueryConfigMapWorkers             = 4
+	DefaultQuerySecretWorkers                = 4
+	DefaultQueryServiceWorkers               = 4
+	DefaultQueryEndpointsWorkers             = 4
+	DefaultQueryPersistentVolumeWorkers      = 4
+	DefaultQueryPersistentVolumeClaimWorkers = 4
+	DefaultQueryVolumeAttachmentWorkers      = 4
+	DefaultQueryNodeWorkers                  = 4
+	DefaultUpdateNodeWorkers                 = 4
 
-	DefaultUpdatePodStatusBuffer  = 1024
-	DefaultUpdateNodeStatusBuffer = 1024
-	DefaultQueryConfigMapBuffer   = 1024
-	DefaultQuerySecretBuffer      = 1024
-	DefaultQueryServiceBuffer     = 1024
-	DefaultQueryEndpointsBuffer   = 1024
+	DefaultUpdatePodStatusBuffer            = 1024
+	DefaultUpdateNodeStatusBuffer           = 1024
+	DefaultQueryConfigMapBuffer             = 1024
+	DefaultQuerySecretBuffer                = 1024
+	DefaultQueryServiceBuffer               = 1024
+	DefaultQueryEndpointsBuffer             = 1024
+	DefaultQueryPersistentVolumeBuffer      = 1024
+	DefaultQueryPersistentVolumeClaimBuffer = 1024
+	DefaultQueryVolumeAttachmentBuffer      = 1024
+	DefaultQueryNodeBuffer                  = 1024
+	DefaultUpdateNodeBuffer                 = 1024
 
 	DefaultETCDTimeout = 10
 
@@ -51,4 +61,8 @@ const (
 	ResourceTypeServiceList   = "servicelist"
 	ResourceTypeEndpoints     = "endpoints"
 	ResourceTypeEndpointsList = "endpointslist"
+
+	ResourceTypePersistentVolume      = "persistentvolume"
+	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"
+	ResourceTypeVolumeAttachment      = "volumeattachment"
 )

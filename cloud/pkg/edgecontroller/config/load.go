@@ -25,6 +25,21 @@ var QueryServiceWorkers int
 // QueryEndpointsWorkers is the count of goroutines of query endpoints
 var QueryEndpointsWorkers int
 
+// QueryPersistentVolumeWorkers is the count of goroutines of query persistentvolume
+var QueryPersistentVolumeWorkers int
+
+// QueryPersistentVolumeClaimWorkers is the count of goroutines of query persistentvolumeclaim
+var QueryPersistentVolumeClaimWorkers int
+
+// QueryVolumeAttachmentWorkers is the count of goroutines of query volumeattachment
+var QueryVolumeAttachmentWorkers int
+
+// QueryNodeWorkers is the count of goroutines of query node
+var QueryNodeWorkers int
+
+// UpdateNodeWorkers is the count of goroutines of update node
+var UpdateNodeWorkers int
+
 func InitLoadConfig() {
 	if psw, err := config.CONFIG.GetValue("controller.load.update-pod-status-workers").ToInt(); err != nil {
 		UpdatePodStatusWorkers = constants.DefaultUpdatePodStatusWorkers
@@ -67,4 +82,39 @@ func InitLoadConfig() {
 		QueryEndpointsWorkers = qew
 	}
 	klog.Infof("query endpoints workers: %d", QueryEndpointsWorkers)
+
+	if qpvw, err := config.CONFIG.GetValue("controller.load.query-persistentvolume-workers").ToInt(); err != nil {
+		QueryPersistentVolumeWorkers = constants.DefaultQueryPersistentVolumeWorkers
+	} else {
+		QueryPersistentVolumeWorkers = qpvw
+	}
+	klog.Infof("query persistentvolume workers: %d", QueryPersistentVolumeWorkers)
+
+	if qpvcw, err := config.CONFIG.GetValue("controller.load.query-persistentvolumeclaim-workers").ToInt(); err != nil {
+		QueryPersistentVolumeClaimWorkers = constants.DefaultQueryPersistentVolumeClaimWorkers
+	} else {
+		QueryPersistentVolumeClaimWorkers = qpvcw
+	}
+	klog.Infof("query persistentvolumeclaim workers: %d", QueryPersistentVolumeClaimWorkers)
+
+	if qvaw, err := config.CONFIG.GetValue("controller.load.query-volumeattachment-workers").ToInt(); err != nil {
+		QueryVolumeAttachmentWorkers = constants.DefaultQueryVolumeAttachmentWorkers
+	} else {
+		QueryVolumeAttachmentWorkers = qvaw
+	}
+	klog.Infof("query volumeattachment workers: %d", QueryVolumeAttachmentWorkers)
+
+	if qnw, err := config.CONFIG.GetValue("controller.load.query-node-workers").ToInt(); err != nil {
+		QueryNodeWorkers = constants.DefaultQueryNodeWorkers
+	} else {
+		QueryNodeWorkers = qnw
+	}
+	klog.Infof("query node workers: %d", QueryNodeWorkers)
+
+	if unw, err := config.CONFIG.GetValue("controller.load.update-node-workers").ToInt(); err != nil {
+		UpdateNodeWorkers = constants.DefaultUpdateNodeWorkers
+	} else {
+		UpdateNodeWorkers = unw
+	}
+	klog.Infof("update node workers: %d", UpdateNodeWorkers)
 }
