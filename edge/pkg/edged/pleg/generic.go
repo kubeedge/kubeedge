@@ -40,14 +40,12 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 )
 
 //GenericLifecycle is object for pleg lifecycle
 type GenericLifecycle struct {
 	pleg.GenericPLEG
-	runtime       containers.ContainerManager
 	relistPeriod  time.Duration
 	status        status.Manager
 	podManager    podmanager.Manager
@@ -56,24 +54,6 @@ type GenericLifecycle struct {
 	remoteRuntime kubecontainer.Runtime
 	interfaceName string
 	clock         clock.Clock
-}
-
-//NewGenericLifecycle creates new generic life cycle object
-func NewGenericLifecycle(manager containers.ContainerManager, probeManager prober.Manager, channelCapacity int,
-	relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager) pleg.PodLifecycleEventGenerator {
-	kubeContainerManager := containers.NewKubeContainerRuntime(manager)
-	genericPLEG := pleg.NewGenericPLEG(kubeContainerManager, channelCapacity, relistPeriod, nil, clock.RealClock{})
-	return &GenericLifecycle{
-		GenericPLEG:   *genericPLEG.(*pleg.GenericPLEG),
-		relistPeriod:  relistPeriod,
-		runtime:       manager,
-		status:        statusManager,
-		podCache:      nil,
-		podManager:    podManager,
-		probeManager:  probeManager,
-		remoteRuntime: nil,
-		clock:         clock.RealClock{},
-	}
 }
 
 //NewGenericLifecycleRemote creates new generic life cycle object for remote
@@ -90,7 +70,6 @@ func NewGenericLifecycleRemote(runtime kubecontainer.Runtime, probeManager probe
 		podManager:    podManager,
 		probeManager:  probeManager,
 		interfaceName: iface,
-		runtime:       nil,
 		clock:         clock,
 	}
 }
@@ -287,12 +266,6 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	var newStatus v1.PodStatus
 	var podStatusRemote *kubecontainer.PodStatus
 	var err error
-	if gl.runtime != nil {
-		podStatus, err = gl.runtime.GetPodStatusOwn(pod)
-		if err != nil {
-			return err
-		}
-	}
 	if gl.remoteRuntime != nil {
 		podStatusRemote, err = gl.remoteRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
@@ -328,9 +301,6 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
 	newStatus = *podStatus.DeepCopy()
 
 	gl.probeManager.UpdatePodStatus(pod.UID, &newStatus)
-	if gl.runtime != nil {
-		newStatus.Conditions = append(newStatus.Conditions, gl.runtime.GeneratePodReadyCondition(newStatus.ContainerStatuses))
-	}
 	if gl.remoteRuntime != nil {
 		spec := &pod.Spec
 		newStatus.Conditions = append(newStatus.Conditions, status.GeneratePodInitializedCondition(spec, newStatus.InitContainerStatuses, newStatus.Phase))
