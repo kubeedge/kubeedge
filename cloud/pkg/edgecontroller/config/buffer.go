@@ -40,6 +40,21 @@ var ServiceEventBuffer int
 // EndpointsEventBuffer is the size of channel which save endpoints event from k8s
 var EndpointsEventBuffer int
 
+// QueryPersistentVolumeBuffer is the size of channel which save query persistentvolume message from edge
+var QueryPersistentVolumeBuffer int
+
+// QueryPersistentVolumeClaimBuffer is the size of channel which save query persistentvolumeclaim message from edge
+var QueryPersistentVolumeClaimBuffer int
+
+// QueryVolumeAttachmentBuffer is the size of channel which save query volumeattachment message from edge
+var QueryVolumeAttachmentBuffer int
+
+// QueryNodeBuffer is the size of channel which save query node message from edge
+var QueryNodeBuffer int
+
+// UpdateNodeBuffer is the size of channel which save update node message from edge
+var UpdateNodeBuffer int
+
 func InitBufferConfig() {
 	if psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt(); err != nil {
 		UpdatePodStatusBuffer = constants.DefaultUpdatePodStatusBuffer
@@ -118,4 +133,39 @@ func InitBufferConfig() {
 		EndpointsEventBuffer = epb
 	}
 	klog.Infof("Update controller.buffer.endpoint-event: %d", EndpointsEventBuffer)
+
+	if qpvb, err := config.CONFIG.GetValue("controller.buffer.query-persistentvolume").ToInt(); err != nil {
+		QueryPersistentVolumeBuffer = constants.DefaultQueryPersistentVolumeBuffer
+	} else {
+		QueryPersistentVolumeBuffer = qpvb
+	}
+	klog.Infof("Update controller.buffer.query-persistentvolume: %d", QueryPersistentVolumeBuffer)
+
+	if qpvcb, err := config.CONFIG.GetValue("controller.buffer.query-persistentvolumeclaim").ToInt(); err != nil {
+		QueryPersistentVolumeClaimBuffer = constants.DefaultQueryPersistentVolumeClaimBuffer
+	} else {
+		QueryPersistentVolumeClaimBuffer = qpvcb
+	}
+	klog.Infof("Update controller.buffer.query-persistentvolumeclaim: %d", QueryPersistentVolumeClaimBuffer)
+
+	if qvab, err := config.CONFIG.GetValue("controller.buffer.query-volumeattachment").ToInt(); err != nil {
+		QueryVolumeAttachmentBuffer = constants.DefaultQueryVolumeAttachmentBuffer
+	} else {
+		QueryVolumeAttachmentBuffer = qvab
+	}
+	klog.Infof("Update controller.buffer.query-volumeattachment: %d", QueryVolumeAttachmentBuffer)
+
+	if qnb, err := config.CONFIG.GetValue("controller.buffer.query-node").ToInt(); err != nil {
+		QueryNodeBuffer = constants.DefaultQueryNodeBuffer
+	} else {
+		QueryNodeBuffer = qnb
+	}
+	klog.Infof("Update controller.buffer.query-node: %d", QueryNodeBuffer)
+
+	if unb, err := config.CONFIG.GetValue("controller.buffer.update-node").ToInt(); err != nil {
+		UpdateNodeBuffer = constants.DefaultUpdateNodeBuffer
+	} else {
+		UpdateNodeBuffer = unb
+	}
+	klog.Infof("Update controller.buffer.update-node: %d", UpdateNodeBuffer)
 }
