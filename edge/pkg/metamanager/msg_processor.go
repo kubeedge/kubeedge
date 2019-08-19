@@ -584,6 +584,20 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 	send2Cloud(&message, m.context)
 
 }
+
+func (m *metaManager) processVolume(message model.Message) {
+	klog.Infof("process volume started")
+	back, err := m.context.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
+	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
+	if err != nil {
+		klog.Errorf("process volume send to edged failed: %v", err)
+	}
+
+	resp := message.NewRespByMessage(&message, back.GetContent())
+	send2Cloud(resp, m.context)
+	klog.Infof("process volume send to cloud resp[%+v]", resp)
+}
+
 func (m *metaManager) process(message model.Message) {
 	operation := message.GetOperation()
 	switch operation {
@@ -605,6 +619,11 @@ func (m *metaManager) process(message model.Message) {
 		m.processFunctionAction(message)
 	case OperationFunctionActionResult:
 		m.processFunctionActionResult(message)
+	case constants.CSIOperationTypeCreateVolume,
+		constants.CSIOperationTypeDeleteVolume,
+		constants.CSIOperationTypeControllerPublishVolume,
+		constants.CSIOperationTypeControllerUnpublishVolume:
+		m.processVolume(message)
 	}
 }
 

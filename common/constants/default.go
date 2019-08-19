@@ -1,6 +1,8 @@
 package constants
 
 import (
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -65,4 +67,11 @@ const (
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"
 	ResourceTypeVolumeAttachment      = "volumeattachment"
+
+	CSIResourceTypeVolume                     = "volume"
+	CSIOperationTypeCreateVolume              = "createvolume"
+	CSIOperationTypeDeleteVolume              = "deletevolume"
+	CSIOperationTypeControllerPublishVolume   = "controllerpublishvolume"
+	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
+	CSISyncMsgRespTimeout                     = 1 * time.Minute
 )
