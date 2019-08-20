@@ -24,7 +24,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-KUBEEDGE_GO_PACKAGE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
 
 edge::version::get_version_info() {
 
@@ -96,7 +96,7 @@ edge::version::ldflags() {
     local val=${2}
     # If you update these, also update the list pkg/version/def.bzl.
     ldflags+=(
-      "-X '${KUBEEDGE_GO_PACKAGE}/pkg/version.${key}=${val}'"
+      "-X ${KUBEEDGE_GO_PACKAGE}/pkg/version.${key}=${val}"
     )
   }
 
