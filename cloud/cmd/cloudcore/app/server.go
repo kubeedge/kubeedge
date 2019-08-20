@@ -24,6 +24,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 		},
 	}
 
+	cmd.AddCommand(NewCmdVersion())
 	return cmd
 }
 
