@@ -20,7 +20,7 @@
 
 + **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/) 
 
-+ (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
++ (**Optional**)KubeEdge also supports https connection to Kubernetes (required version is 1.15+) apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
 
   Enter the path to kubeconfig file in controller.yaml
   ```yaml
