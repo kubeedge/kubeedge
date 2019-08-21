@@ -15,6 +15,7 @@ import (
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -92,6 +93,15 @@ func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.
 		klog.Infof("Keepalive message received from node: %s", nodeID)
 		eh.KeepaliveChannel[nodeID] <- struct{}{}
 		return
+	}
+
+	// handle the reponse from edge
+	resourceSplits := strings.Split(container.Message.GetResource(), "/")
+	if len(resourceSplits) == 3 {
+		if resourceSplits[1] == constants.CSIResourceTypeVolume {
+			eh.Context.SendResp(*container.Message)
+			return
+		}
 	}
 
 	err := eh.Pub2Controller(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)

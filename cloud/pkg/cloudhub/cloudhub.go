@@ -52,6 +52,10 @@ func (a *cloudHub) Start(c *context.Context) {
 		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
 	}
 
+	if util.HubConfig.ProtocolUDS {
+		go servers.StartCloudHub(servers.ProtocolUDS, eventq, c)
+	}
+
 	<-a.stopChan
 }
 
@@ -87,11 +91,13 @@ func initHubConfig() {
 	if !util.HubConfig.ProtocolWebsocket && !util.HubConfig.ProtocolQuic {
 		util.HubConfig.ProtocolWebsocket = true
 	}
+	util.HubConfig.ProtocolUDS, _ = config.CONFIG.GetValue("cloudhub.protocol_uds").ToBool()
 
 	util.HubConfig.Address, _ = config.CONFIG.GetValue("cloudhub.address").ToString()
 	util.HubConfig.Port, _ = config.CONFIG.GetValue("cloudhub.port").ToInt()
 	util.HubConfig.QuicPort, _ = config.CONFIG.GetValue("cloudhub.quic_port").ToInt()
 	util.HubConfig.MaxIncomingStreams, _ = config.CONFIG.GetValue("cloudhub.max_incomingstreams").ToInt()
+	util.HubConfig.UDSAddress, _ = config.CONFIG.GetValue("cloudhub.uds_address").ToString()
 	util.HubConfig.KeepaliveInterval, _ = config.CONFIG.GetValue("cloudhub.keepalive-interval").ToInt()
 	util.HubConfig.WriteTimeout, _ = config.CONFIG.GetValue("cloudhub.write-timeout").ToInt()
 	util.HubConfig.NodeLimit, _ = config.CONFIG.GetValue("cloudhub.node-limit").ToInt()
