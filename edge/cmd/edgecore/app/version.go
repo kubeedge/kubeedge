@@ -46,7 +46,7 @@ func RunVersion(out io.Writer, cmd *cobra.Command) error {
 
 	switch of {
 	case "":
-		fmt.Fprintf(out, "cloudcore version: %#v\n", v)
+		fmt.Fprintf(out, "version: %#v\n", v)
 	case "short":
 		fmt.Fprintf(out, "%s\n", v)
 	case "yaml":
