@@ -37,6 +37,8 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 		},
 	}
 
+	cmd.AddCommand(NewCmdVersion())
+
 	return cmd
 }
 
