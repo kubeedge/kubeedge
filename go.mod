@@ -56,6 +56,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubeedge/beehive v0.0.0-20190627084409-06e0cfa222f7
 	github.com/kubeedge/viaduct v0.0.0-20190416034651-df4e595b4e12
+	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lucas-clemente/quic-go v0.10.2 // indirect
 	github.com/mattn/go-shellwords v1.0.5 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
@@ -71,6 +72,7 @@ require (
 	github.com/opencontainers/selinux v1.2.2 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
+	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
@@ -87,8 +89,9 @@ require (
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
-	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7
 	google.golang.org/grpc v1.23.0
+	golang.org/x/net v0.0.0-20190628185345-da137c7871d7
+	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
