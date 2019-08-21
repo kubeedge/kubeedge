@@ -24,7 +24,7 @@ runs on edge nodes and manages containerized applications.`,
 			core.Run()
 		},
 	}
-
+	cmd.AddCommand(NewCmdVersion())
 	return cmd
 }
 
