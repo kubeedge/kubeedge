@@ -13,6 +13,8 @@ cloudhub:
   protocol_quic: true # enable quic protocol
   quic_port: 10001 # open prot for quic server
   max_incomingstreams: 10000 # the max incoming stream for quic server
+  protocol_uds: true # enable unix domain socket protocol
+  uds_address: unix:///var/lib/kubeedge/kubeedge.sock # unix domain socket address
   address: 0.0.0.0
   ca: /etc/kubeedge/ca/rootCA.crt
   cert: /etc/kubeedge/certs/edge.crt

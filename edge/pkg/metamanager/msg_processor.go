@@ -586,7 +586,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 }
 
 func (m *metaManager) processVolume(message model.Message) {
-	klog.Infof("process volume started")
+	klog.Info("process volume started")
 	back, err := m.context.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {

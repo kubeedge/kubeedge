@@ -7,10 +7,12 @@ var HubConfig *Config
 type Config struct {
 	ProtocolWebsocket  bool
 	ProtocolQuic       bool
+	ProtocolUDS        bool
 	MaxIncomingStreams int
 	Address            string
 	Port               int
 	QuicPort           int
+	UDSAddress         string
 	KeepaliveInterval  int
 	Ca                 []byte
 	Cert               []byte
