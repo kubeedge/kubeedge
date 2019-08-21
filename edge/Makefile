@@ -1,8 +1,9 @@
 
+GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 # make edgecore
 .PHONY: default edgecore
 edgecore:
-	go build cmd/edgecore/edgecore.go
+	go build ${GO_LDFLAGS}  cmd/edgecore/edgecore.go
 
 # unit tests
 .PHONY: test
