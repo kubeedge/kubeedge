@@ -109,6 +109,10 @@ cloudimage:
 admissionimage:
 	docker build -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
 
+.PHONY: csidriverimage
+csidriverimage:
+	docker build -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
+
 .PHONY: edgeimage
 edgeimage:
 	mkdir -p ./build/edge/tmp
