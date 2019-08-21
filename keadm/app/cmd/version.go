@@ -1,4 +1,4 @@
-package app
+package cmd
 
 import (
 	"encoding/json"
@@ -20,12 +20,12 @@ const (
 	DefaultErrorExitCode = 1
 )
 
-func NewCmdVersion() *cobra.Command {
+func NewCmdVersion(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version of kubeadm",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := RunVersion(os.Stdout, cmd)
+			err := RunVersion(out, cmd)
 			CheckErr(err, fatal)
 		},
 	}
