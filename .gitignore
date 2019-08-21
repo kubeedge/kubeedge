@@ -6,3 +6,9 @@ __pycache__
 .idea/**
 .gradle
 .idea
+
+cloud/cloudcore.log   
+cloud/cloudcore
+edge/edgecore
+edgesite/edgesite
+keadm/keadm
