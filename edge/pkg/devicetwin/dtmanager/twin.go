@@ -228,7 +228,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	return nil
 }
 
-//dealUpdateResutl build update result and send result, if success send the current state
+//dealUpdateResult build update result and send result, if success send the current state
 func dealUpdateResult(context *dtcontext.DTContext, deviceID string, eventID string, code int, err error, payload []byte) error {
 	klog.Infof("Deal update result of device %s: Build and send result", deviceID)
 
@@ -281,10 +281,10 @@ func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage d
 //dealDocument build document and save current state as last state, update sqlite
 func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twinDocument map[string]*dttype.TwinDoc) error {
 
-	klog.Infof("Deal document of devcie %s: build and send document", deviceID)
+	klog.Infof("Deal document of device %s: build and send document", deviceID)
 	payload, _ := dttype.BuildDeviceTwinDocument(baseMessage, twinDocument)
 	topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.TwinETDocumentSuffix
-	klog.Infof("Deal document of devcie %s: send document", deviceID)
+	klog.Infof("Deal document of device %s: send document", deviceID)
 	return context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
