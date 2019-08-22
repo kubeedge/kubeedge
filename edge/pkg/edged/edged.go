@@ -157,6 +157,8 @@ const (
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
 	ResolvConfDefault = "/etc/resolv.conf"
+	// ImagePullProgressDeadlineDefault gives the default image pull progress deadline
+	ImagePullProgressDeadlineDefault = 60
 )
 
 var (
@@ -233,27 +235,28 @@ type edged struct {
 
 //Config defines configuration details
 type Config struct {
-	nodeName                 string
-	nodeNamespace            string
-	interfaceName            string
-	memoryCapacity           int
-	nodeStatusUpdateInterval time.Duration
-	devicePluginEnabled      bool
-	gpuPluginEnabled         bool
-	imageGCHighThreshold     int
-	imageGCLowThreshold      int
-	MaxPerPodContainerCount  int
-	DockerAddress            string
-	version                  string
-	runtimeType              string
-	remoteRuntimeEndpoint    string
-	remoteImageEndpoint      string
-	RuntimeRequestTimeout    metav1.Duration
-	PodSandboxImage          string
-	cgroupDriver             string
-	nodeIP                   string
-	clusterDNS               string
-	clusterDomain            string
+	nodeName                  string
+	nodeNamespace             string
+	interfaceName             string
+	memoryCapacity            int
+	nodeStatusUpdateInterval  time.Duration
+	devicePluginEnabled       bool
+	gpuPluginEnabled          bool
+	imageGCHighThreshold      int
+	imageGCLowThreshold       int
+	imagePullProgressDeadline int
+	MaxPerPodContainerCount   int
+	DockerAddress             string
+	version                   string
+	runtimeType               string
+	remoteRuntimeEndpoint     string
+	remoteImageEndpoint       string
+	RuntimeRequestTimeout     metav1.Duration
+	PodSandboxImage           string
+	cgroupDriver              string
+	nodeIP                    string
+	clusterDNS                string
+	clusterDomain             string
 }
 
 // Register register edged
@@ -402,6 +405,10 @@ func getConfig() *Config {
 	if conf.PodSandboxImage == "" {
 		conf.PodSandboxImage = PodSandboxImage
 	}
+	conf.imagePullProgressDeadline = config.CONFIG.GetConfigurationByKey("edged.image-pull-progress-deadline").(int)
+	if conf.imagePullProgressDeadline == 0 {
+		conf.imagePullProgressDeadline = ImagePullProgressDeadlineDefault
+	}
 	return &conf
 }
 
@@ -491,9 +498,10 @@ func newEdged() (*edged, error) {
 	if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
 		streamingConfig := &streaming.Config{}
 		DockerClientConfig := &dockershim.ClientConfig{
-			DockerEndpoint:    conf.DockerAddress,
-			EnableSleep:       true,
-			WithTraceDisabled: true,
+			DockerEndpoint:            conf.DockerAddress,
+			ImagePullProgressDeadline: time.Duration(conf.imagePullProgressDeadline) * time.Second,
+			EnableSleep:               true,
+			WithTraceDisabled:         true,
 		}
 
 		pluginConfigs := dockershim.NetworkPluginSettings{

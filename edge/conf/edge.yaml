@@ -46,6 +46,7 @@ edged:
     remote-image-endpoint: unix:///var/run/dockershim.sock
     runtime-request-timeout: 2
     podsandbox-image: k8s.gcr.io/pause
+    image-pull-progress-deadline: 60 # second
     cgroup-driver: cgroupfs
     node-ip: ""
     cluster-dns: ""
