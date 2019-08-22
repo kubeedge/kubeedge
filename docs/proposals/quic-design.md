@@ -1,6 +1,6 @@
 ---
 title: Quic Design
-status: Alpha
+status: implementable
 authors:
     - "@Qianchenjie"
 approvers:

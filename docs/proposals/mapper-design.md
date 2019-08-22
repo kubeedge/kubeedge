@@ -1,6 +1,6 @@
 ---
 title: Mapper Design
-status: Pending
+status: implementable
 authors:
     - "@sids-b"
     - "@m1093782566"
