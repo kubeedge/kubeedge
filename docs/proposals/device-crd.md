@@ -10,7 +10,7 @@ approvers:
   - "@m1093782566"
 creation-date: 2019-02-27
 last-updated: 2019-04-01
-status: alpha
+status: implementable
 ---
 
 # Device Management using CRDs

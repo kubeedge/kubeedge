@@ -11,7 +11,7 @@ approvers:
   - "@m1093782566"
 creation-date: 2019-03-28
 last-updated: 2019-04-26
-status: Pending
+status: implementable
 ---
 
 # Performance Test Proposal

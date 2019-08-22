@@ -1,6 +1,6 @@
 ---
 title: EdgeMesh Design
-status: Alpha
+status: implementable
 authors:
     - "@qizha"
     - "@sids-b"
