@@ -1,6 +1,6 @@
 ---
 title: KubeEdge installer scope (Issue 324)
-status: Alpha
+status: implementable
 authors:
     - "@samy2019"
     - "@srivatsav123"

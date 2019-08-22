@@ -9,7 +9,7 @@ approvers:
   - "@m1093782566"
 creation-date: 2019-04-19
 last-updated: 2019-04-21
-status: alpha
+status: implementable
 ---
 
 # CRI Support in edged

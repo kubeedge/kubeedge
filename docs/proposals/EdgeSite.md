@@ -1,6 +1,6 @@
 ---
 title: EdgeSite Design
-status: Pending
+status: implementable
 authors: 
   - "@cindyxing"
 approvers:
