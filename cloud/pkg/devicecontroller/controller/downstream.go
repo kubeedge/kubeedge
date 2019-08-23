@@ -811,7 +811,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
-	klog.Info("Start downstream controller")
+	klog.Info("Start downstream devicecontroller")
 
 	dc.deviceModelStop = make(chan struct{})
 	go dc.syncDeviceModel(dc.deviceModelStop)
