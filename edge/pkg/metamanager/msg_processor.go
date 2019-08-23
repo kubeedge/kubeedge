@@ -116,7 +116,13 @@ func parseResource(resource string) (string, string, string) {
 
 // is resource type require remote query
 func requireRemoteQuery(resType string) bool {
-	return resType == model.ResourceTypeConfigmap || resType == model.ResourceTypeSecret || resType == constants.ResourceTypeEndpoints
+	return resType == model.ResourceTypeConfigmap ||
+		resType == model.ResourceTypeSecret ||
+		resType == constants.ResourceTypeEndpoints ||
+		resType == constants.ResourceTypePersistentVolume ||
+		resType == constants.ResourceTypePersistentVolumeClaim ||
+		resType == constants.ResourceTypeVolumeAttachment ||
+		resType == model.ResourceTypeNode
 }
 
 func isConnected() bool {
@@ -383,7 +389,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	var err error
 	if requireRemoteQuery(resType) && isConnected() {
 		metas, err = dao.QueryMeta("key", resKey)
-		if err != nil || len(*metas) == 0 {
+		if err != nil || len(*metas) == 0 || resType == model.ResourceTypeNode || resType == constants.ResourceTypeVolumeAttachment {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
