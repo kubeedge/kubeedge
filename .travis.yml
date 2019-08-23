@@ -28,7 +28,6 @@ before_script:
   - sudo apt-get install build-essential
   - sudo apt-get install gcc-arm-linux-gnueabi
   - sudo apt-get install upx-ucl
-  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 install: true
 
