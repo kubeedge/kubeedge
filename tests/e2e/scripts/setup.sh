@@ -37,6 +37,8 @@ create_edge_config() {
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
     sed -i "s|url: .*|url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
     sed -i "s|mode: .*|mode: 0|g" ${EDGE_PATH}
+    echo "edgecore edge.yaml config:" 
+    cat ${EDGE_PATH}
 }
 
 create_cloud_config() {
@@ -45,9 +47,12 @@ create_cloud_config() {
         exit 1
     fi
     sed -i "s|master: .*|master: ${MASTER_IP}|g" ${CLOUD_PATH}
+    sed -i "s|kubeconfig: .*|kubeconfig: \"\"|g" ${CLOUD_PATH}
     sed -i "s|ca: .*|ca: tmp/rootCA.crt|g" ${CLOUD_PATH}
     sed -i "s|cert: .*|cert: tmp/kubeedge.crt|g" ${CLOUD_PATH}
     sed -i "s|key: .*|key: tmp/kubeedge.key|g" ${CLOUD_PATH}
+    echo "cloudcore controller.yaml config:"
+    cat ${CLOUD_PATH}
 }
 
 create_edgesite_config() {
@@ -59,6 +64,8 @@ create_edgesite_config() {
     sed -i "s|node-name: .*|node-name: ${nodename}|g" ${EDGESITE_YAML_PATH}
     sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGESITE_YAML_PATH}
     sed -i "s|master: .*|master: ${MASTER_IP}|g" ${EDGESITE_YAML_PATH}
+    echo "edgeside edgeSite.yaml config:"
+    cat ${EDGESITE_YAML_PATH}
 }
 
 if [ "deployment" = ${setuptype} ]; then
