@@ -26,6 +26,9 @@ type CoreInterface interface {
 	SecretsGetter
 	EndpointsGetter
 	ServiceGetter
+	PersistentVolumesGetter
+	PersistentVolumeClaimsGetter
+	VolumeAttachmentsGetter
 }
 
 type metaClient struct {
@@ -65,6 +68,21 @@ func (m *metaClient) Endpoints(namespace string) EndpointsInterface {
 // New Services metaClient
 func (m *metaClient) Services(namespace string) ServiceInterface {
 	return newServices(namespace, m.context, m.send)
+}
+
+// New PersistentVolumes metaClient
+func (m *metaClient) PersistentVolumes(namespace string) PersistentVolumesInterface {
+	return newPersistentVolumes(namespace, m.context, m.send)
+}
+
+// New PersistentVolumeClaims metaClient
+func (m *metaClient) PersistentVolumeClaims(namespace string) PersistentVolumeClaimsInterface {
+	return newPersistentVolumeClaims(namespace, m.context, m.send)
+}
+
+// New VolumeAttachments metaClient
+func (m *metaClient) VolumeAttachments(namespace string) VolumeAttachmentsInterface {
+	return newVolumeAttachments(namespace, m.context, m.send)
 }
 
 // New creates new metaclient
