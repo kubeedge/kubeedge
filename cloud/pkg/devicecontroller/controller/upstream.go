@@ -62,7 +62,7 @@ type UpstreamController struct {
 
 // Start UpstreamController
 func (uc *UpstreamController) Start() error {
-	klog.Info("Start upstream device controller")
+	klog.Info("Start upstream devicecontroller")
 	uc.stopDispatch = make(chan struct{})
 	uc.stopUpdateDeviceStatus = make(chan struct{})
 
