@@ -26,9 +26,16 @@
   ```yaml
   controller:
     kube:
+      master: http://localhost:8080
       ...
       kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+  devicecontroller:
+    kube:
+      master: http://localhost:8080
+      ...
+      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver 
   ```
+but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
 
 ### Clone KubeEdge
 
