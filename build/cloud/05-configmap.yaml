@@ -33,4 +33,4 @@ data:
     writers: [stdout]
   modules.yaml: |
     modules:
-      enabled: [devicecontroller, controller, cloudhub]
+      enabled: [devicecontroller, edgecontroller, cloudhub]
