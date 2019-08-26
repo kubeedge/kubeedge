@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kubeedge-admission
+  name: kubeedge-admission
+  namespace: kubeedge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubeedge-admission
+  template:
+    metadata:
+      labels:
+        app: kubeedge-admission
+    spec:
+      serviceAccount: kubeedge-admission
+      containers:
+        - args:
+            - --tls-cert-file=/admission.local.config/certificates/tls.crt
+            - --tls-private-key-file=/admission.local.config/certificates/tls.key
+            - --ca-cert-file=/admission.local.config/certificates/ca.crt
+            - --webhook-namespace=kubeedge
+            - --webhook-service-name=kubeedge-admission-service
+            - --alsologtostderr
+            - --port=443
+            - -v=4
+            - 2>&1
+          image: kubeedge/admission:latest
+          imagePullPolicy: IfNotPresent
+          name: admission
+          volumeMounts:
+            - mountPath: /admission.local.config/certificates
+              name: admission-certs
+              readOnly: true
+      volumes:
+        - name: admission-certs
+          secret:
+            defaultMode: 420
+            secretName: kubeedge-admission-secret
