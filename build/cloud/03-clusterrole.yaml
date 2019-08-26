@@ -23,6 +23,14 @@ rules:
   - watch
   - update
 - apiGroups:
+  - "devices.kubeedge.io"
+  resources:
+  - devices
+  - devicemodels
+  verbs:
+  - list
+  - watch
+- apiGroups:
   - ""
   resources:
   - pods
