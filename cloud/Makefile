@@ -1,8 +1,14 @@
 # make cloud part
 
-.PHONY: default cloudcore
+.PHONY: default cloudcore admission
+
+default: cloudcore admission
+
 cloudcore:
 	go build cmd/cloudcore/cloudcore.go
+
+admission:
+	go build cmd/admission/admission.go
 
 .PHONY: lint
 lint:
