@@ -87,18 +87,22 @@ e2e_test:
 performance_test:
 	bash tests/performance/scripts/jenkins.sh
 
-IMAGE_TAG ?= $(shell git describe --tags)
-
-.PHONY: cloudimage
-cloudimage:
-	docker build -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
-
 .PHONY: keadm_lint
 keadm_lint:
 	make -C keadm lint
 
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
+
+IMAGE_TAG ?= $(shell git describe --tags)
+
+.PHONY: cloudimage
+cloudimage:
+	docker build -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
+
+.PHONY: admissionimage
+admissionimage:
+	docker build -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
 
 .PHONY: edgeimage
 edgeimage:
