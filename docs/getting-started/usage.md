@@ -98,11 +98,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     ```
 
 + (**Optional**)Run `admission`, this feature is still being evaluated.
-    ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
-    # run admission control
-    ./admission
-    ```
+    please read the docs in [install the admission webhook](../../build/admission/README.md)
 
 
 #### [Run as Kubernetes deployment](../../build/cloud/README.md)
