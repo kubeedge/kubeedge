@@ -91,7 +91,7 @@ func initHubConfig() {
 	if !util.HubConfig.ProtocolWebsocket && !util.HubConfig.ProtocolQuic {
 		util.HubConfig.ProtocolWebsocket = true
 	}
-	util.HubConfig.ProtocolUDS, _ = config.CONFIG.GetValue("cloudhub.protocol_uds").ToBool()
+	util.HubConfig.ProtocolUDS, _ = config.CONFIG.GetValue("cloudhub.enable_uds").ToBool()
 
 	util.HubConfig.Address, _ = config.CONFIG.GetValue("cloudhub.address").ToString()
 	util.HubConfig.Port, _ = config.CONFIG.GetValue("cloudhub.port").ToInt()

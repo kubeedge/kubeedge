@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -33,7 +34,11 @@ const (
 // constants for error message
 const (
 	MsgFormatError = "message format not correct"
+	VolumePattern  = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
+
+// VolumeRegExp is used to validate the volume resource
+var VolumeRegExp = regexp.MustCompile(VolumePattern)
 
 // EventHandle processes events between cloud and edge
 type EventHandle struct {
@@ -96,12 +101,9 @@ func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.
 	}
 
 	// handle the reponse from edge
-	resourceSplits := strings.Split(container.Message.GetResource(), "/")
-	if len(resourceSplits) == 3 {
-		if resourceSplits[1] == constants.CSIResourceTypeVolume {
-			eh.Context.SendResp(*container.Message)
-			return
-		}
+	if VolumeRegExp.MatchString(container.Message.GetResource()) {
+		eh.Context.SendResp(*container.Message)
+		return
 	}
 
 	err := eh.Pub2Controller(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
