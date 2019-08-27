@@ -77,9 +77,11 @@ jobs:
       script: make e2e_test
       name: "e2e_test"     # names the seventh Tests stage job
 
-    - stage: "build docker container"
+    - stage: "build docker images"
       script: make cloudimage
       name: "build cloudimage"
+    - script: make admissionimage
+      name: "build admission image"
     - script: make edgeimage
       name: "build edge image"
     - script: make edgesiteimage
