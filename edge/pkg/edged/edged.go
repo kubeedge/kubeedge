@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
-	fakekube "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 	recordtools "k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/flowcontrol"
@@ -88,6 +87,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
+	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
 	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
@@ -280,6 +280,10 @@ func (e *edged) Group() string {
 func (e *edged) Start(c *context.Context) {
 	e.context = c
 	e.metaClient = client.New(c)
+
+	// use self defined client to replace fake kube client
+	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
+
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
 		klog.Errorf("initialize module error: %v", err)
@@ -435,8 +439,6 @@ func newEdged() (*edged, error) {
 		LowThresholdPercent:  conf.imageGCLowThreshold,
 		MinAge:               minAge,
 	}
-	// TODO: consider use client generate kube client
-	kubeClient := fakekube.NewSimpleClientset()
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
 
@@ -452,7 +454,7 @@ func newEdged() (*edged, error) {
 		podAdditionBackoff:        backoff,
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
-		kubeClient:                kubeClient,
+		kubeClient:                nil,
 		nodeStatusUpdateFrequency: conf.nodeStatusUpdateInterval,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
