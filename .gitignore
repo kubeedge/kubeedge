@@ -9,6 +9,7 @@ __pycache__
 
 cloud/cloudcore.log   
 cloud/cloudcore
+cloud/admission
 edge/edgecore
 edgesite/edgesite
 keadm/keadm
