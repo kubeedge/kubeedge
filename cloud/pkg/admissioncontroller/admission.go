@@ -2,6 +2,7 @@ package admissioncontroller
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,7 +27,9 @@ import (
 
 const (
 	ValidateDeviceModelConfigName  = "validate-devicemodel"
+	ValidateDeviceConfigName       = "validate-device"
 	ValidateDeviceModelWebhookName = "validatedevicemodel.kubeedge.io"
+	ValidateDeviceWebhookName      = "validatedevice.kubeedge.io"
 )
 
 var scheme = runtime.NewScheme()
@@ -92,6 +95,7 @@ func Run(opt *options.AdmissionOptions) {
 		klog.Fatalf("Failed to register the webhook with error: %v", err)
 	}
 
+	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 
 	server := &http.Server{
@@ -132,7 +136,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 	return &tls.Config{}
 }
 
-// Register registers the admission webhook.
+// registerWebhooks registers the admission webhook.
 func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
 	ignorePolicy := admissionregistrationv1beta1.Ignore
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
@@ -166,8 +170,40 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		},
 	}
 
+	deviceCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ValidateDeviceConfigName,
+		},
+		Webhooks: []admissionregistrationv1beta1.ValidatingWebhook{
+			{
+				Name: ValidateDeviceWebhookName,
+				Rules: []admissionregistrationv1beta1.RuleWithOperations{{
+					Operations: []admissionregistrationv1beta1.OperationType{
+						admissionregistrationv1beta1.Create,
+						admissionregistrationv1beta1.Update,
+						admissionregistrationv1beta1.Delete,
+					},
+					Rule: admissionregistrationv1beta1.Rule{
+						APIGroups:   []string{"devices.kubeedge.io"},
+						APIVersions: []string{"v1alpha1"},
+						Resources:   []string{"devices"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1beta1.WebhookClientConfig{
+					Service: &admissionregistrationv1beta1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/devices"),
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy: &ignorePolicy,
+			},
+		},
+	}
+
 	if err := registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
-		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook}); err != nil {
+		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook, deviceCRDWebhook}); err != nil {
 		return err
 	}
 	return nil
@@ -194,4 +230,60 @@ func registerValidateWebhook(client admissionregistrationv1beta1client.Validatin
 		}
 	}
 	return nil
+}
+
+// admitFunc is the type we use for all of our validators and mutators
+type admitFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse
+
+func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
+	var body []byte
+	if r.Body == nil {
+		return
+	}
+	if data, err := ioutil.ReadAll(r.Body); err == nil {
+		body = data
+	}
+
+	// verify the content type is accurate
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		klog.Fatalf("contentType=%s, expect application/json", contentType)
+		return
+	}
+
+	// The AdmissionReview that was sent to the webhook
+	requestedAdmissionReview := admissionv1beta1.AdmissionReview{}
+
+	// The AdmissionReview that will be returned
+	responseAdmissionReview := admissionv1beta1.AdmissionReview{}
+
+	deserializer := codecs.UniversalDeserializer()
+	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
+		klog.Fatalf("Decode failed with error: %v", err)
+		responseAdmissionReview.Response = toAdmissionResponse(err)
+		return
+	}
+	responseAdmissionReview.Response = admit(requestedAdmissionReview)
+
+	// Return the same UID
+	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
+	klog.Infof("Sending response: %v", responseAdmissionReview.Response)
+
+	respBytes, err := json.Marshal(responseAdmissionReview)
+	if err != nil {
+		klog.Fatalf("Cannot marshal to a valid response %v", err)
+		return
+	}
+	if _, err := w.Write(respBytes); err != nil {
+		klog.Fatalf("Cannot write response %v", err)
+	}
+}
+
+// toAdmissionResponse is a helper function to create an AdmissionResponse
+func toAdmissionResponse(err error) *admissionv1beta1.AdmissionResponse {
+	return &admissionv1beta1.AdmissionResponse{
+		Result: &metav1.Status{
+			Message: err.Error(),
+		},
+	}
 }
