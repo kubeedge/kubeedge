@@ -665,12 +665,10 @@ k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/wait
 k8s.io/apimachinery/pkg/api/equality
+k8s.io/apimachinery/pkg/util/version
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/validation/field
-k8s.io/apimachinery/pkg/util/runtime
-k8s.io/apimachinery/pkg/util/version
-k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/conversion
 k8s.io/apimachinery/pkg/selection
 k8s.io/apimachinery/pkg/conversion/queryparams
@@ -781,7 +779,6 @@ k8s.io/client-go/tools/record/util
 k8s.io/client-go/tools/reference
 k8s.io/client-go/informers
 k8s.io/client-go/tools/remotecommand
-k8s.io/client-go/listers/storage/v1beta1
 k8s.io/client-go/discovery/fake
 k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1/fake
 k8s.io/client-go/kubernetes/typed/apps/v1/fake
@@ -818,12 +815,6 @@ k8s.io/client-go/kubernetes/typed/settings/v1alpha1/fake
 k8s.io/client-go/kubernetes/typed/storage/v1alpha1/fake
 k8s.io/client-go/kubernetes/typed/storage/v1beta1/fake
 k8s.io/client-go/testing
-k8s.io/client-go/tools/record/util
-k8s.io/client-go/tools/reference
-k8s.io/client-go/informers
-k8s.io/client-go/tools/remotecommand
-k8s.io/client-go/kubernetes/scheme
-k8s.io/client-go/tools/clientcmd/api/v1
 k8s.io/client-go/pkg/apis/clientauthentication
 k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1
 k8s.io/client-go/pkg/apis/clientauthentication/v1beta1

@@ -12,6 +12,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@CHANGELOG
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+this file is derived from kubernetes v1.15.3,
+and the full file path is k8s.io/kubernetes/pkg/volume/csi/csi_attacher.go
+and make some modifications including:
+1. empty Attach function
+2. empty Detach function.
+3. change VolumeAttachments Watch into Get in waitForVolumeAttachment.
+4. change VolumeAttachments Watch into Get in waitForVolumeDetachment.
+5. remove skipAttach reference.
 */
 
 package csi
@@ -80,7 +91,6 @@ func (c *csiAttacher) waitForVolumeAttachment(volumeHandle, attachID string, tim
 		klog.V(4).Info(log("probing VolumeAttachment [id=%v]", attachID))
 		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(attachID, meta.GetOptions{})
 		if err != nil {
-			klog.Error(log("attacher.WaitForAttach failed for volume [%s] (will continue to try): %v", volumeHandle, err))
 			return false, fmt.Errorf("volume %v has GET error for volume attachment %v: %v", volumeHandle, attachID, err)
 		}
 		successful, err := verifyAttachmentStatus(attach, volumeHandle)
@@ -129,17 +139,6 @@ func (c *csiAttacher) VolumesAreAttached(specs []*volume.Spec, nodeName types.No
 		}
 		driverName := pvSrc.Driver
 		volumeHandle := pvSrc.VolumeHandle
-
-		skip, err := c.plugin.skipAttach(driverName)
-		if err != nil {
-			klog.Error(log("Failed to check CSIDriver for %s: %s", driverName, err))
-		} else {
-			if skip {
-				// This volume is not attachable, pretend it's attached
-				attached[spec] = true
-				continue
-			}
-		}
 
 		attachID := getAttachmentName(volumeHandle, driverName, string(nodeName))
 		klog.V(4).Info(log("probing attachment status for VolumeAttachment %v", attachID))
@@ -305,13 +304,11 @@ func (c *csiAttacher) waitForVolumeDetachment(volumeHandle, attachID string) err
 				klog.V(4).Info(log("VolumeAttachment object [%v] for volume [%v] not found, object deleted", attachID, volumeHandle))
 				return true, nil
 			}
-			klog.Error(log("detacher.WaitForDetach failed for volume [%s] (will continue to try): %v", volumeHandle, err))
 			return false, err
 		}
 		// driver reports attach error
 		detachErr := attach.Status.DetachError
 		if detachErr != nil {
-			klog.Error(log("detachment for VolumeAttachment [%v] for volume [%s] failed: %v", attachID, volumeHandle, detachErr.Message))
 			return false, errors.New(detachErr.Message)
 		}
 		return false, nil

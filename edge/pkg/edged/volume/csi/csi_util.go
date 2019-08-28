@@ -12,6 +12,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+this file is derived from kubernetes v1.15.3,
+and the full file path is k8s.io/kubernetes/pkg/volume/csi/csi_util.go
 */
 
 package csi
