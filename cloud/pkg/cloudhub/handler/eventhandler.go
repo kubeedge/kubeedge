@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ import (
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -32,7 +34,11 @@ const (
 // constants for error message
 const (
 	MsgFormatError = "message format not correct"
+	VolumePattern  = `^\w[-\w.+]*/` + constants.CSIResourceTypeVolume + `/\w[-\w.+]*`
 )
+
+// VolumeRegExp is used to validate the volume resource
+var VolumeRegExp = regexp.MustCompile(VolumePattern)
 
 // EventHandle processes events between cloud and edge
 type EventHandle struct {
@@ -91,6 +97,12 @@ func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.
 	if container.Message.GetOperation() == emodel.OpKeepalive {
 		klog.Infof("Keepalive message received from node: %s", nodeID)
 		eh.KeepaliveChannel[nodeID] <- struct{}{}
+		return
+	}
+
+	// handle the reponse from edge
+	if VolumeRegExp.MatchString(container.Message.GetResource()) {
+		eh.Context.SendResp(*container.Message)
 		return
 	}
 
