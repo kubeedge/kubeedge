@@ -12,6 +12,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+KubeEdge Authors: To create mini-kubelet for edge deployment scenario,
+this file is derived from kubernetes v1.15.3,
+and the full file path is k8s.io/kubernetes/pkg/volume/csi/csi_drivers_store.go
 */
 
 package csi
@@ -22,7 +26,7 @@ import (
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 )
 
-// Driver is a description of a CSI Driver, defined by an enpoint and the
+// Driver is a description of a CSI Driver, defined by an endpoint and the
 // highest CSI version supported
 type Driver struct {
 	endpoint                string

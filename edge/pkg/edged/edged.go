@@ -1024,14 +1024,14 @@ func (e *edged) createVolume(content []byte) (interface{}, error) {
 		return nil, err
 	}
 
-	klog.Infof("start create volume: %s", req.Name)
+	klog.V(4).Infof("start create volume: %s", req.Name)
 	ctl := csiplugin.NewController()
 	res, err := ctl.CreateVolume(req)
 	if err != nil {
 		klog.Errorf("create volume error: %v", err)
 		return nil, err
 	}
-	klog.Infof("end create volume: %s result: %v", req.Name, res)
+	klog.V(4).Infof("end create volume: %s result: %v", req.Name, res)
 	return res, nil
 }
 
@@ -1042,14 +1042,14 @@ func (e *edged) deleteVolume(content []byte) (interface{}, error) {
 		klog.Errorf("unmarshal delete volume req error: %v", err)
 		return nil, err
 	}
-	klog.Infof("start delete volume: %s", req.VolumeId)
+	klog.V(4).Infof("start delete volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.DeleteVolume(req)
 	if err != nil {
 		klog.Errorf("delete volume error: %v", err)
 		return nil, err
 	}
-	klog.Infof("end delete volume: %s result: %v", req.VolumeId, res)
+	klog.V(4).Infof("end delete volume: %s result: %v", req.VolumeId, res)
 	return res, nil
 }
 
@@ -1060,14 +1060,14 @@ func (e *edged) controllerPublishVolume(content []byte) (interface{}, error) {
 		klog.Errorf("unmarshal controller publish volume req error: %v", err)
 		return nil, err
 	}
-	klog.Infof("start controller publish volume: %s", req.VolumeId)
+	klog.V(4).Infof("start controller publish volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.ControllerPublishVolume(req)
 	if err != nil {
 		klog.Errorf("controller publish volume error: %v", err)
 		return nil, err
 	}
-	klog.Infof("end controller publish volume:: %s result: %v", req.VolumeId, res)
+	klog.V(4).Infof("end controller publish volume:: %s result: %v", req.VolumeId, res)
 	return res, nil
 }
 
@@ -1078,14 +1078,14 @@ func (e *edged) controllerUnpublishVolume(content []byte) (interface{}, error) {
 		klog.Errorf("unmarshal controller publish volume req error: %v", err)
 		return nil, err
 	}
-	klog.Infof("start controller unpublish volume: %s", req.VolumeId)
+	klog.V(4).Infof("start controller unpublish volume: %s", req.VolumeId)
 	ctl := csiplugin.NewController()
 	res, err := ctl.ControllerUnpublishVolume(req)
 	if err != nil {
 		klog.Errorf("controller unpublish volume error: %v", err)
 		return nil, err
 	}
-	klog.Infof("end controller unpublish volume:: %s result: %v", req.VolumeId, res)
+	klog.V(4).Infof("end controller unpublish volume:: %s result: %v", req.VolumeId, res)
 	return res, nil
 }
 
