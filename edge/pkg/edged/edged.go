@@ -238,7 +238,7 @@ type Config struct {
 	nodeName                  string
 	nodeNamespace             string
 	interfaceName             string
-	memoryCapacity            int
+	memoryCapacity            int64
 	nodeStatusUpdateInterval  time.Duration
 	devicePluginEnabled       bool
 	gpuPluginEnabled          bool
@@ -393,7 +393,16 @@ func getConfig() *Config {
 		conf.clusterDomain = ""
 	}
 
-	conf.memoryCapacity = config.CONFIG.GetConfigurationByKey("edged.edged-memory-capacity-bytes").(int)
+	//Deal with 32-bit and 64-bit compatibility issues: issue #1070
+	switch v := config.CONFIG.GetConfigurationByKey("edged.edged-memory-capacity-bytes").(type) {
+	case int:
+		conf.memoryCapacity = int64(v)
+	case int64:
+		conf.memoryCapacity = v
+	default:
+		panic("Invalid type for edged.edged-memory-capacity-bytes, valid types are one of [int,int64].")
+	}
+
 	if conf.memoryCapacity == 0 {
 		conf.memoryCapacity = MinimumEdgedMemoryCapacity
 	}

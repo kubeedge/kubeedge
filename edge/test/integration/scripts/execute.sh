@@ -38,7 +38,8 @@ if pgrep edgecore >/dev/null
 then
     echo "edgecore process is Running"
 else
-    echo "edgecore process is not started"
+    echo "edgecore process is not started, log info:"
+    cat edgecore.log
     exit 1
 fi
 PWD=${curpath}/test/integration
