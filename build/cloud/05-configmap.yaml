@@ -26,6 +26,14 @@ data:
       keepalive-interval: 30
       write-timeout: 30
       node-limit: 10
+    devicecontroller:
+       kube:
+         master: https://kubernetes.default.svc.cluster.local:443
+         namespace: ""
+         content_type: "application/vnd.kubernetes.protobuf"
+         qps: 5
+         burst: 10
+         kubeconfig: "/etc/kubeedge/cloud/kubeconfig.yaml"
   logging.yaml: |
     loggerLevel: "INFO"
     enableRsyslog: false
