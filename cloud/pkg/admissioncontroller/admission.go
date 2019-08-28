@@ -66,8 +66,9 @@ type AdmissionController struct {
 func strPtr(s string) *string { return &s }
 
 // Run starts the webhook service
-func Run(config *options.Config) {
-	restConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.Kubeconfig)
+func Run(opt *options.AdmissionOptions) {
+	klog.V(4).Infof("AdmissionOptions: %++v", *opt)
+	restConfig, err := clientcmd.BuildConfigFromFlags(opt.Master, opt.Kubeconfig)
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -80,13 +81,13 @@ func Run(config *options.Config) {
 	ac := AdmissionController{}
 	ac.Client = cli
 
-	caBundle, err := ioutil.ReadFile(config.CaCertFile)
+	caBundle, err := ioutil.ReadFile(opt.CaCertFile)
 	if err != nil {
 		klog.Fatalf("Unable to read cacert file: %v\n", err)
 	}
 
 	//TODO: read somewhere to get what's kind of webhook is enabled, register those webhook only.
-	err = ac.registerWebhooks(config, caBundle)
+	err = ac.registerWebhooks(opt, caBundle)
 	if err != nil {
 		klog.Fatalf("Failed to register the webhook with error: %v", err)
 	}
@@ -94,8 +95,8 @@ func Run(config *options.Config) {
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 
 	server := &http.Server{
-		Addr:      fmt.Sprintf(":%v", config.Port),
-		TLSConfig: configTLS(config, restConfig),
+		Addr:      fmt.Sprintf(":%v", opt.Port),
+		TLSConfig: configTLS(opt, restConfig),
 	}
 
 	server.ListenAndServeTLS("", "")
@@ -104,9 +105,9 @@ func Run(config *options.Config) {
 // ConfigTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
 // These are passed in as command line for cluster certification. If tls config is passed in, we use the directly
 // defined tls config, else use that defined in kubeconfig
-func configTLS(config *options.Config, restConfig *restclient.Config) *tls.Config {
-	if len(config.CertFile) != 0 && len(config.KeyFile) != 0 {
-		sCert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
+func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tls.Config {
+	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
+		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
 		if err != nil {
 			klog.Fatal(err)
 		}
@@ -132,7 +133,7 @@ func configTLS(config *options.Config, restConfig *restclient.Config) *tls.Confi
 }
 
 // Register registers the admission webhook.
-func (ac *AdmissionController) registerWebhooks(c *options.Config, cabundle []byte) error {
+func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
 	ignorePolicy := admissionregistrationv1beta1.Ignore
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -154,8 +155,8 @@ func (ac *AdmissionController) registerWebhooks(c *options.Config, cabundle []by
 				}},
 				ClientConfig: admissionregistrationv1beta1.WebhookClientConfig{
 					Service: &admissionregistrationv1beta1.ServiceReference{
-						Namespace: c.AdmissionServiceNamespace,
-						Name:      c.AdmissionServiceName,
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
 						Path:      strPtr("/devicemodels"),
 					},
 					CABundle: cabundle,
