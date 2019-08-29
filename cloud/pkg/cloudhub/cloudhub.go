@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
 )
 
 type cloudHub struct {
@@ -53,7 +54,9 @@ func (a *cloudHub) Start(c *context.Context) {
 	}
 
 	if util.HubConfig.ProtocolUDS {
-		go servers.StartCloudHub(servers.ProtocolUDS, eventq, c)
+		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
+		// It is not used to communicate between cloud and edge.
+		go udsserver.StartServer(util.HubConfig, c)
 	}
 
 	<-a.stopChan
