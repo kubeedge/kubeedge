@@ -75,13 +75,13 @@ type BaseMessage struct {
 
 // TwinValue the struct of twin value
 type TwinValue struct {
-	Value    *string        `json:"value, omitempty"`
+	Value    *string        `json:"value,omitempty"`
 	Metadata *ValueMetadata `json:"metadata,omitempty"`
 }
 
 // ValueMetadata the meta of value
 type ValueMetadata struct {
-	Timestamp int64 `json:"timestamp, omitempty"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
 // TypeMetadata the meta of value type
@@ -203,8 +203,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 
 // Function to create cloudcore deploymentspec object
 func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.DeploymentSpec {
-	var portInfo []v1.ContainerPort
-	portInfo = []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "websocket"}, {ContainerPort: 10001, Protocol: "UDP", Name: "quic"}}
+	portInfo := []v1.ContainerPort{{ContainerPort: 10000, Protocol: "TCP", Name: "websocket"}, {ContainerPort: 10001, Protocol: "UDP", Name: "quic"}}
 
 	deplObj := apps.DeploymentSpec{
 		Replicas: func() *int32 { i := int32(replicas); return &i }(),
@@ -504,8 +503,8 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 					wssport = nodePort.NodePort
 				}
 			}
+			break
 		}
-		break
 	}
 	return wssport, quicport
 }
