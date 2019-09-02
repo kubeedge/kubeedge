@@ -1,12 +1,12 @@
 controller:
   kube:
-    master: http://localhost:8080
+    master:     # kube-apiserver address (such as:http://localhost:8080)
     namespace: ""
     content_type: "application/vnd.kubernetes.protobuf"
     qps: 5
     burst: 10
     node_update_frequency: 10
-    kubeconfig: ""   #Enter path to kubeconfig file to enable https connection to k8s apiserver
+    kubeconfig: "~/.kube/config"   #Enter path to kubeconfig file to enable https connection to k8s apiserver, if master and kubeconfig are both set, master will override any value in kubeconfig.
 cloudhub:
   protocol_websocket: true # enable websocket protocol
   port: 10000 # open port for websocket server
@@ -24,9 +24,9 @@ cloudhub:
   node-limit: 10
 devicecontroller:
   kube:
-    master: http://localhost:8080
+    master:        # kube-apiserver address (such as:http://localhost:8080)
     namespace: ""
     content_type: "application/vnd.kubernetes.protobuf"
     qps: 5
     burst: 10
-    kubeconfig: ""
+    kubeconfig: "~/.kube/config" #Enter path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
