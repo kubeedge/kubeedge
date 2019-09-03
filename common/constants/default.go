@@ -74,4 +74,6 @@ const (
 	CSIOperationTypeControllerPublishVolume   = "controllerpublishvolume"
 	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
 	CSISyncMsgRespTimeout                     = 1 * time.Minute
+
+	CurrentSupportK8sVersion = "v1.15.3"
 )
