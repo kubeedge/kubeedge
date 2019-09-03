@@ -1,8 +1,9 @@
 
+GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 # make keadm
 .PHONY: default keadm
 keadm:
-	go build -o keadm keadm.go
+	go build $(GO_LDFLAGS) -o keadm keadm.go
 
 lint:
 	golangci-lint run --deadline '10m' --disable-all -E golint ./...
