@@ -323,11 +323,11 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 				}
 
 			default:
-				klog.Infof("pod status operation: %s unsupported", msg.GetOperation())
+				klog.Warningf("pod status operation: %s unsupported", msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Info("stop updatePodStatus")
+			klog.Warning("stop updatePodStatus")
 			running = false
 		}
 	}
@@ -449,14 +449,14 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					continue
 				}
 
-				klog.Infof("message: %s, update node status successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
+				klog.V(4).Infof("message: %s, update node status successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
 
 			default:
-				klog.Infof("message: %s process failure, node status operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, node status operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Info("stop updateNodeStatus")
+			klog.Warning("stop updateNodeStatus")
 			running = false
 		}
 	}
@@ -483,7 +483,7 @@ func (uc *UpstreamController) queryConfigMap(stop chan struct{}) {
 			case model.QueryOperation:
 				configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
-					klog.Warningf("message: %s process failure, config map not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
+					klog.Warningf("message: %s process failure, configMap not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 					continue
 				}
 				if err != nil {
@@ -506,13 +506,13 @@ func (uc *UpstreamController) queryConfigMap(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, config map operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, configMap operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Info("stop queryConfigMap")
+			klog.Warning("stop queryConfigMap")
 			running = false
 		}
 	}
@@ -564,13 +564,13 @@ func (uc *UpstreamController) querySecret(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, secret operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, secret operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Info("stop querySecret")
+			klog.Warning("stop querySecret")
 			running = false
 		}
 	}
@@ -620,12 +620,12 @@ func (uc *UpstreamController) queryService(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, service operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, service operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 		case <-stop:
-			klog.Info("stop queryService")
+			klog.Warning("stop queryService")
 			running = false
 		}
 	}
@@ -677,13 +677,13 @@ func (uc *UpstreamController) queryEndpoints(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, endpoints operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, endpoints operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Info("stop queryEndpoints")
+			klog.Warning("stop queryEndpoints")
 			running = false
 		}
 	}
@@ -735,13 +735,13 @@ func (uc *UpstreamController) queryPersistentVolume(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, persistentvolume operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, persistentvolume operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Infof("stop queryPersistentVolume")
+			klog.Warning("stop queryPersistentVolume")
 			running = false
 		}
 	}
@@ -793,13 +793,13 @@ func (uc *UpstreamController) queryPersistentVolumeClaim(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, persistentvolumeclaim operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, persistentvolumeclaim operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Infof("stop queryPersistentVolumeClaim")
+			klog.Warning("stop queryPersistentVolumeClaim")
 			running = false
 		}
 	}
@@ -851,13 +851,13 @@ func (uc *UpstreamController) queryVolumeAttachment(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, volumeattachment operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, volumeattachment operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Infof("stop queryVolumeAttachment")
+			klog.Warning("stop queryVolumeAttachment")
 			running = false
 		}
 	}
@@ -944,14 +944,13 @@ func (uc *UpstreamController) updateNode(stop chan struct{}) {
 					continue
 				}
 
-				klog.Infof("message: %s, update node successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
-
+				klog.V(4).Infof("message: %s, update node successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
 			default:
-				klog.Infof("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Infof("stop updateNode")
+			klog.Warning("stop updateNode")
 			running = false
 		}
 	}
@@ -1001,13 +1000,13 @@ func (uc *UpstreamController) queryNode(stop chan struct{}) {
 					klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				klog.Warningf("message: %s process successfully", msg.GetID())
+				klog.V(4).Infof("message: %s process successfully", msg.GetID())
 			default:
-				klog.Infof("message: %s process failure, query node operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Warningf("message: %s process failure, query node operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-			klog.Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		case <-stop:
-			klog.Infof("stop queryNode")
+			klog.Warning("stop queryNode")
 			running = false
 		}
 	}
