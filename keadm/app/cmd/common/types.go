@@ -236,7 +236,6 @@ type EdgeDSt struct {
 	ImageGCLowThreshold               uint16 `yaml:"image-gc-low-threshold"`
 	MaximumDeadContainersPerContainer uint16 `yaml:"maximum-dead-containers-per-container"`
 	DockerAddress                     string `yaml:"docker-address"`
-	Version                           string `yaml:"version"`
 	EdgedMemory                       uint16 `yaml:"edged-memory-capacity-bytes"`
 	RuntimeType                       string `yaml:"runtime-type"`
 	RuntimeEndpoint                   string `yaml:"remote-runtime-endpoint"`

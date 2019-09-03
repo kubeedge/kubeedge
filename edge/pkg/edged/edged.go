@@ -82,6 +82,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
@@ -98,6 +99,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 const (
@@ -247,7 +249,6 @@ type Config struct {
 	imagePullProgressDeadline int
 	MaxPerPodContainerCount   int
 	DockerAddress             string
-	version                   string
 	runtimeType               string
 	remoteRuntimeEndpoint     string
 	remoteImageEndpoint       string
@@ -373,7 +374,6 @@ func getConfig() *Config {
 	conf.imageGCHighThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-high-threshold").(int)
 	conf.imageGCLowThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-low-threshold").(int)
 	conf.MaxPerPodContainerCount = config.CONFIG.GetConfigurationByKey("edged.maximum-dead-containers-per-container").(int)
-	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
 	if conf.DockerAddress, ok = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string); !ok {
 		conf.DockerAddress = DockerEndpoint
 	}
@@ -467,7 +467,7 @@ func newEdged() (*edged, error) {
 		nodeStatusUpdateFrequency: conf.nodeStatusUpdateInterval,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
-		version:                   conf.version,
+		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),
 		rootDirectory:             DefaultRootDir,
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
