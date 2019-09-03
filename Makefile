@@ -6,20 +6,25 @@ all:
 	cd edge && $(MAKE)
 	cd keadm && $(MAKE)
 	cd edgesite && $(MAKE)
-else ifeq ($(WHAT),cloud)
-# make all what=cloud, build cloud binary
+else ifeq ($(WHAT),cloudcore)
+# make all WHAT=cloudcore
 all:
-	cd cloud && $(MAKE)
-else ifeq ($(WHAT),edge)
+	cd cloud && $(MAKE) cloudcore
+else ifeq ($(WHAT),admission)
+# make all WHAT=admission
 all:
-# make all what=edge, build edge binary
+	cd cloud && $(MAKE) admission
+else ifeq ($(WHAT),edgecore)
+all:
+# make all WHAT=edgecore
 	cd edge && $(MAKE)
 else ifeq ($(WHAT),edgesite)
 all:
+# make all WHAT=edgesite
 	$(MAKE) -C edgesite
 else ifeq ($(WHAT),keadm)
 all:
-# make all what=edge, build edge binary
+# make all WHAT=keadm, build keadm binary
 	cd keadm && $(MAKE)
 else
 # invalid entry
