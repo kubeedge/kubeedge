@@ -75,8 +75,10 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
+	"k8s.io/kubernetes/pkg/volume/downwardapi"
 	"k8s.io/kubernetes/pkg/volume/emptydir"
 	"k8s.io/kubernetes/pkg/volume/hostpath"
+	"k8s.io/kubernetes/pkg/volume/projected"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
@@ -1280,6 +1282,8 @@ func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 	allPlugins = append(allPlugins, secretvolume.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(hostPathConfig)...)
 	allPlugins = append(allPlugins, csiplugin.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, downwardapi.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, projected.ProbeVolumePlugins()...)
 	return allPlugins
 }
 
