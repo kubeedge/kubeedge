@@ -85,7 +85,7 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 				klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
 		case <-stop:
-			klog.Info("stop syncPod")
+			klog.Warning("Stop edgecontroller downstream syncPod loop")
 			running = false
 		}
 	}
@@ -131,7 +131,7 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 				}
 			}
 		case <-stop:
-			klog.Info("stop syncConfigMap")
+			klog.Warning("Stop edgecontroller downstream syncConfigMap loop")
 			running = false
 		}
 	}
@@ -178,7 +178,7 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 				}
 			}
 		case <-stop:
-			klog.Info("stop syncSecret")
+			klog.Warning("Stop edgecontroller downstream syncSecret loop")
 			running = false
 		}
 	}
@@ -267,7 +267,7 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 				break
 			}
 		case <-stop:
-			klog.Info("Stop syncNodes")
+			klog.Warning("Stop edgecontroller downstream syncEdgeNodes loop")
 			running = false
 		}
 	}
@@ -323,7 +323,7 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 				return true
 			})
 		case <-stop:
-			klog.Info("Stop sync services")
+			klog.Warning("Stop edgecontroller downstream syncService loop")
 			running = false
 		}
 	}
@@ -418,7 +418,7 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 				})
 			}
 		case <-stop:
-			klog.Info("Stop sync endpoints")
+			klog.Warning("Stop edgecontroller downstream syncEndpoints loop")
 			running = false
 		}
 	}
