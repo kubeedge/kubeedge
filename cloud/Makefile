@@ -1,14 +1,17 @@
 # make cloud part
 
+# get ldflags 
+GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
+
 .PHONY: default cloudcore admission
 
 default: cloudcore admission
 
 cloudcore:
-	go build cmd/cloudcore/cloudcore.go
+	go build ${GO_LDFLAGS} cmd/cloudcore/cloudcore.go
 
 admission:
-	go build cmd/admission/admission.go
+	go build ${GO_LDFLAGS} cmd/admission/admission.go
 
 .PHONY: lint
 lint:
