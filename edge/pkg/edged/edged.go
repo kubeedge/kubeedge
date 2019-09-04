@@ -24,6 +24,7 @@ and made some variant
 package edged
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -33,6 +34,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/protobuf/jsonpb"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,7 +75,6 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
-	"k8s.io/kubernetes/pkg/volume/csi"
 	"k8s.io/kubernetes/pkg/volume/emptydir"
 	"k8s.io/kubernetes/pkg/volume/hostpath"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
@@ -97,6 +99,7 @@ import (
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
+	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -292,7 +295,7 @@ func (e *edged) Start(c *context.Context) {
 	}
 
 	e.volumeManager = volumemanager.NewVolumeManager(
-		false,
+		true,
 		types.NodeName(e.nodeName),
 		e.podManager,
 		e.statusManager,
@@ -324,7 +327,6 @@ func (e *edged) Start(c *context.Context) {
 
 	e.imageGCManager.Start()
 	e.StartGarbageCollection()
-	e.syncPod()
 
 	e.pluginManager = pluginmanager.NewPluginManager(
 		e.getPluginsRegistrationDir(), /* sockDir */
@@ -333,10 +335,13 @@ func (e *edged) Start(c *context.Context) {
 	)
 
 	// Adding Registration Callback function for CSI Driver
-	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csi.PluginHandler))
+	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csiplugin.PluginHandler))
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
+
+	klog.Infof("starting syncPod")
+	e.syncPod()
 }
 
 func (e *edged) Cleanup() {
@@ -977,6 +982,15 @@ func (e *edged) syncPod() {
 					klog.Infof("skip to handle secret with type response")
 					continue
 				}
+			case constants.CSIResourceTypeVolume:
+				klog.Infof("volume operation type: %s", op)
+				res, err := e.handleVolume(op, content)
+				if err != nil {
+					klog.Errorf("handle volume failed: %v", err)
+				} else {
+					resp := request.NewRespByMessage(&request, res)
+					e.context.SendResp(*resp)
+				}
 			default:
 				klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
 				continue
@@ -986,6 +1000,93 @@ func (e *edged) syncPod() {
 			klog.Errorf("failed to get pod")
 		}
 	}
+}
+
+func (e *edged) handleVolume(op string, content []byte) (interface{}, error) {
+	switch op {
+	case constants.CSIOperationTypeCreateVolume:
+		return e.createVolume(content)
+	case constants.CSIOperationTypeDeleteVolume:
+		return e.deleteVolume(content)
+	case constants.CSIOperationTypeControllerPublishVolume:
+		return e.controllerPublishVolume(content)
+	case constants.CSIOperationTypeControllerUnpublishVolume:
+		return e.controllerUnpublishVolume(content)
+	}
+	return nil, nil
+}
+
+func (e *edged) createVolume(content []byte) (interface{}, error) {
+	req := &csi.CreateVolumeRequest{}
+	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
+	if err != nil {
+		klog.Errorf("unmarshal create volume req error: %v", err)
+		return nil, err
+	}
+
+	klog.V(4).Infof("start create volume: %s", req.Name)
+	ctl := csiplugin.NewController()
+	res, err := ctl.CreateVolume(req)
+	if err != nil {
+		klog.Errorf("create volume error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("end create volume: %s result: %v", req.Name, res)
+	return res, nil
+}
+
+func (e *edged) deleteVolume(content []byte) (interface{}, error) {
+	req := &csi.DeleteVolumeRequest{}
+	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
+	if err != nil {
+		klog.Errorf("unmarshal delete volume req error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("start delete volume: %s", req.VolumeId)
+	ctl := csiplugin.NewController()
+	res, err := ctl.DeleteVolume(req)
+	if err != nil {
+		klog.Errorf("delete volume error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("end delete volume: %s result: %v", req.VolumeId, res)
+	return res, nil
+}
+
+func (e *edged) controllerPublishVolume(content []byte) (interface{}, error) {
+	req := &csi.ControllerPublishVolumeRequest{}
+	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
+	if err != nil {
+		klog.Errorf("unmarshal controller publish volume req error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("start controller publish volume: %s", req.VolumeId)
+	ctl := csiplugin.NewController()
+	res, err := ctl.ControllerPublishVolume(req)
+	if err != nil {
+		klog.Errorf("controller publish volume error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("end controller publish volume:: %s result: %v", req.VolumeId, res)
+	return res, nil
+}
+
+func (e *edged) controllerUnpublishVolume(content []byte) (interface{}, error) {
+	req := &csi.ControllerUnpublishVolumeRequest{}
+	err := jsonpb.Unmarshal(bytes.NewReader(content), req)
+	if err != nil {
+		klog.Errorf("unmarshal controller publish volume req error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("start controller unpublish volume: %s", req.VolumeId)
+	ctl := csiplugin.NewController()
+	res, err := ctl.ControllerUnpublishVolume(req)
+	if err != nil {
+		klog.Errorf("controller unpublish volume error: %v", err)
+		return nil, err
+	}
+	klog.V(4).Infof("end controller unpublish volume:: %s result: %v", req.VolumeId, res)
+	return res, nil
 }
 
 func (e *edged) handlePod(op string, content []byte) (err error) {
@@ -1178,6 +1279,7 @@ func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 	allPlugins = append(allPlugins, emptydir.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, secretvolume.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(hostPathConfig)...)
+	allPlugins = append(allPlugins, csiplugin.ProbeVolumePlugins()...)
 	return allPlugins
 }
 
