@@ -112,7 +112,6 @@ spec:
             - -v=5
             - --csi-address=/csi/csi.sock
             - --connection-timeout=15s
-            - --master=http://10.0.0.231:8080
           volumeMounts:
             - mountPath: /csi
               name: csi-socket-dir
