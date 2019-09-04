@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Kubeedge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package app
 
 import (
@@ -69,7 +85,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		klog.Errorf("failed to marshal to string with error: %s", err)
 		return nil, err
 	}
-	klog.Infof("create volume marshal to string: %s", js)
+	klog.V(4).Infof("create volume marshal to string: %s", js)
 	msg.Content = js
 	msg.BuildRouter(DefaultReceiveModuleName,
 		GroupResource,
@@ -97,7 +113,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, err
 	}
 
-	klog.Infof("create volume result: %v", result)
+	klog.V(4).Infof("create volume result: %v", result)
 	data := result.GetContent().(string)
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
@@ -117,7 +133,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		klog.Errorf("create volume unmarshal with error: %v", err)
 		return nil, nil
 	}
-	klog.Infof("create volume response: %v", response)
+	klog.V(4).Infof("create volume response: %v", response)
 
 	createVolumeResponse := &csi.CreateVolumeResponse{}
 	if req.GetVolumeContentSource() != nil {
@@ -165,7 +181,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		klog.Errorf("failed to marshal to string with error: %s", err)
 		return nil, err
 	}
-	klog.Infof("delete volume marshal to string: %s", js)
+	klog.V(4).Infof("delete volume marshal to string: %s", js)
 	msg.Content = js
 	msg.BuildRouter(DefaultReceiveModuleName,
 		GroupResource,
@@ -193,7 +209,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return nil, err
 	}
 
-	klog.Infof("delete volume result: %v", result)
+	klog.V(4).Infof("delete volume result: %v", result)
 	data := result.GetContent().(string)
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
@@ -213,7 +229,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		klog.Errorf("delete volume unmarshal with error: %v", err)
 		return nil, nil
 	}
-	klog.Infof("delete volume response: %v", deleteVolumeResponse)
+	klog.V(4).Infof("delete volume response: %v", deleteVolumeResponse)
 	return deleteVolumeResponse, nil
 }
 
@@ -247,7 +263,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		klog.Errorf("failed to marshal to string with error: %s", err)
 		return nil, err
 	}
-	klog.Infof("controller publish volume marshal to string: %s", js)
+	klog.V(4).Infof("controller publish volume marshal to string: %s", js)
 	msg.Content = js
 	msg.BuildRouter(DefaultReceiveModuleName,
 		GroupResource,
@@ -275,7 +291,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, err
 	}
 
-	klog.Infof("controller publish volume result: %v", result)
+	klog.V(4).Infof("controller publish volume result: %v", result)
 	data := result.GetContent().(string)
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
@@ -295,7 +311,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		klog.Errorf("controller publish volume unmarshal with error: %v", err)
 		return nil, nil
 	}
-	klog.Infof("controller publish volume response: %v", controllerPublishVolumeResponse)
+	klog.V(4).Infof("controller publish volume response: %v", controllerPublishVolumeResponse)
 	return controllerPublishVolumeResponse, nil
 }
 
@@ -329,7 +345,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		klog.Errorf("failed to marshal to string with error: %s", err)
 		return nil, err
 	}
-	klog.Infof("controller Unpublish Volume marshal to string: %s", js)
+	klog.V(4).Infof("controller Unpublish Volume marshal to string: %s", js)
 	msg.Content = js
 	msg.BuildRouter(DefaultReceiveModuleName,
 		GroupResource,
@@ -357,7 +373,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, err
 	}
 
-	klog.Infof("controller Unpublish Volume result: %v", result)
+	klog.V(4).Infof("controller Unpublish Volume result: %v", result)
 	data := result.GetContent().(string)
 
 	if msg.GetOperation() == model.ResponseErrorOperation {
@@ -377,7 +393,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		klog.Errorf("controller Unpublish Volume unmarshal with error: %v", err)
 		return nil, nil
 	}
-	klog.Infof("controller Unpublish Volume response: %v", controllerUnpublishVolumeResponse)
+	klog.V(4).Infof("controller Unpublish Volume response: %v", controllerUnpublishVolumeResponse)
 	return controllerUnpublishVolumeResponse, nil
 }
 
@@ -415,7 +431,7 @@ func getControllerServiceCapabilities(cl []csi.ControllerServiceCapability_RPC_T
 	var csc []*csi.ControllerServiceCapability
 
 	for _, cap := range cl {
-		klog.Infof("Enabling controller service capability: %v", cap.String())
+		klog.V(4).Infof("Enabling controller service capability: %v", cap.String())
 		csc = append(csc, &csi.ControllerServiceCapability{
 			Type: &csi.ControllerServiceCapability_Rpc{
 				Rpc: &csi.ControllerServiceCapability_RPC{

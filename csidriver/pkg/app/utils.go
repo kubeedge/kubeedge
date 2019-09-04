@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Kubeedge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package app
 
 import (
@@ -41,8 +57,13 @@ type nonBlockingGRPCServer struct {
 
 func (s *nonBlockingGRPCServer) Start(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
 	s.wg.Add(1)
-	go s.serve(endpoint, ids, cs, ns)
-	return
+	go func() {
+		defer s.wg.Done()
+		err := s.serve(endpoint, ids, cs, ns)
+		if err != nil {
+			panic(err.Error())
+		}
+	}()
 }
 
 func (s *nonBlockingGRPCServer) Wait() {
@@ -57,23 +78,25 @@ func (s *nonBlockingGRPCServer) ForceStop() {
 	s.server.Stop()
 }
 
-func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
+func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) error {
 
 	proto, addr, err := parseEndpoint(endpoint)
 	if err != nil {
-		klog.Fatal(err.Error())
+		klog.Errorf(err.Error())
+		return err
 	}
 
 	if proto == "unix" {
 		addr = "/" + addr
 		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
-			klog.Errorf("failed to remove %s, error: %s", addr, err.Error())
+			klog.Warningf("failed to remove %s, error: %s", addr, err.Error())
 		}
 	}
 
 	listener, err := net.Listen(proto, addr)
 	if err != nil {
 		klog.Errorf("failed to listen: %v", err)
+		return err
 	}
 
 	opts := []grpc.ServerOption{
@@ -92,7 +115,7 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 		csi.RegisterNodeServer(server, ns)
 	}
 	klog.Infof("listening for connections on address: %#v", listener.Addr())
-	server.Serve(listener)
+	return server.Serve(listener)
 }
 
 func parseEndpoint(ep string) (string, string, error) {
@@ -118,16 +141,15 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 }
 
 // buildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
-func buildResource(nodeID, namespace, resourceType, resourceID string) (resource string, err error) {
+func buildResource(nodeID, namespace, resourceType, resourceID string) (string, error) {
 	if nodeID == "" || namespace == "" || resourceType == "" {
-		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
-		return
+		return "", fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 	}
-	resource = fmt.Sprintf("%s%s%s%s%s%s%s", "node", constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+	resource := fmt.Sprintf("%s%s%s%s%s%s%s", "node", constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}
-	return
+	return resource, nil
 }
 
 // send2KubeEdge sends messages to KubeEdge

@@ -1,3 +1,19 @@
+/*
+Copyright 2019 The Kubeedge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package app
 
 import (
@@ -5,7 +21,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
 	"k8s.io/klog"
 )
 
@@ -23,7 +38,7 @@ func NewIdentityServer(name, version string) *identityServer {
 }
 
 func (ids *identityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
-	klog.Info("using default GetPluginInfo")
+	klog.V(4).Info("using default GetPluginInfo")
 
 	if ids.name == "" {
 		return nil, status.Error(codes.Unavailable, "driver name not configured")
@@ -44,7 +59,7 @@ func (ids *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*c
 }
 
 func (ids *identityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
-	klog.Info("using default capabilities")
+	klog.V(4).Info("using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{
 			{
