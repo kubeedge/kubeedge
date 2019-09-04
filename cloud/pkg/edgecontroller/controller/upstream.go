@@ -193,10 +193,6 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 		}
 		klog.Infof("message: %s, resource type is: %s", msg.GetID(), resourceType)
 		operationType := msg.GetOperation()
-		if err != nil {
-			klog.Warningf("parse message: %s operation type with error: %s", msg.GetID(), err)
-			continue
-		}
 		klog.Infof("message: %s, operation type is: %s", msg.GetID(), operationType)
 
 		switch resourceType {
