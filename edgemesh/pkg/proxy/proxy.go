@@ -50,6 +50,7 @@ const (
 	defaultIpPoolSize        = 20
 	defaultTcpClientTimeout  = time.Second * 2
 	defaultTcpReconnectTimes = 3
+	firstPort                = 0
 )
 
 var (
@@ -544,23 +545,18 @@ func (c *conntrack) processServerProxy() {
 
 //isL4Proxy Determine whether to use L4 proxy
 func IsL4Proxy(svc *v1.Service) bool {
+	if len(svc.Spec.Ports) == 0 {
+		return false
+	}
 	// In the defination of k8s-Service, we can use Service.Spec.Ports.Name to
 	// indicate whether the Service enables L4 proxy mode. According to our
 	// current L7 mode only support the http protocol. Other 7-layer protocols
 	// are automatically degraded to tcp until supported
-	port := svc.Spec.Ports[0]
+	port := svc.Spec.Ports[firstPort]
 	switch port.Name {
-	case "websocket":
+	case "websocket", "grpc", "https", "tcp":
 		return true
-	case "http":
-		return false
-	case "grpc":
-		return true
-	case "https":
-		return true
-	case "tcp":
-		return true
-	case "udp":
+	case "http", "udp":
 		return false
 	default:
 		return true
