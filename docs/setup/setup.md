@@ -1,61 +1,35 @@
-# Setup KubeEdge
+# Setup KubeEdge from sourcecode
+
+## Abstract
+KubeEdge is composed  of cloud and edge parts. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup kubeedge, we need to setup kubernetes cluster, cloud side and edge side.
+
++ on cloud side, we need to install docker, kubernetes cluster and cloudcore.
++ on edge side, we need to install docker, mqtt and edgecore.
 
 ## Prerequisites
 
-+ [Install docker](https://docs.docker.com/install/)
++ [Install docker on cloud and edge side](https://docs.docker.com/install/)
 
-+ [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
+    you can also run other runtime, such as [containerd](https://github.com/containerd/containerd)
 
-+ [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
++ [Install kubeadm/kubectl on cloud side](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 
-+ After initializing Kubernetes master, we need to expose insecure port 8080 for cloudcore/kubectl to work with http connection to Kubernetes apiserver.
-  Please follow below steps to enable http port in Kubernetes apiserver.
-
-    ```shell
-    vi /etc/kubernetes/manifests/kube-apiserver.yaml
-    # Add the following flags in spec: containers: -command section
-    - --insecure-port=8080
-    - --insecure-bind-address=0.0.0.0
-    ```
++ [Creating kubernetes cluster with kubeadm on cloud side](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
 + **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/) 
 
-+ (**Optional**)KubeEdge also supports https connection to Kubernetes (required version is 1.15+) apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
+## Run KubeEdge
 
-  Enter the path to kubeconfig file in controller.yaml
-  ```yaml
-  controller:
-    kube:
-      master: http://localhost:8080
-      ...
-      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
-  devicecontroller:
-    kube:
-      master: http://localhost:8080
-      ...
-      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver 
-  ```
-but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
+### Setup cloud side
 
-### Clone KubeEdge
+#### Clone KubeEdge
 
 ```shell
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
 
-### Configuring MQTT mode
-
-The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
-1) internalMqttMode: internal mqtt broker is enabled.
-2) bothMqttMode: internal as well as external broker are enabled.
-3) externalMqttMode: only external broker is enabled.
-
-Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
-
-To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
-
-### Generate Certificates
+#### Generate Certificates
 
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
@@ -63,64 +37,109 @@ RootCA certificate and a cert/key pair is required to have a setup for KubeEdge.
 # $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
 ```
 
-The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively.
-
-## Run KubeEdge
-
-### Run Cloud
+The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively. We need to copy these files to the corresponding edge side server directory.
 
 #### Run as a binary
 
 + Firstly, make sure gcc is already installed on your host. You can verify it via:
+
     ```shell
     gcc --version
     ```
 
-+ Build Cloud and edge
++ Build cloudcore 
 
     ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
-    make 
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/
+    make all WHAT=cloudcore
     ```
-
-+ Build Cloud
-
-    ```shell
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
-    make all WHAT=cloud
-    ```
-
-+ The path to the generated certificates should be updated in `$GOPATH/src/github.com/kubeedge/kubeedge/cloud/conf/controller.yaml`. Please update the correct paths for the following :
-    + cloudhub.ca
-    + cloudhub.cert
-    + cloudhub.key
-
 + Create device model and device CRDs.
+
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
     kubectl create -f devices_v1alpha1_devicemodel.yaml
     kubectl create -f devices_v1alpha1_device.yaml
     ```
 
-+ Run cloud
++ Copy cloudcore binary and config file 
+
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
     # run edge controller
     # `conf/` should be in the same directory as the cloned KubeEdge repository
     # verify the configurations before running cloud(cloudcore)
-    ./cloudcore
+    mkdir ~/cmd/conf
+    cp cloudcore ~/cmd/
+    cp -rf conf/* ~/cmd/conf/
+    ```
+    **Note** `~/cmd/` dir is an example, in the following examples we continue to use `~/cmd/` as the binary startup directory. You can move `cloudcore` or `edgecore` binary to anywhere, but you need to create `conf` dir in the same directory as binary.
+    
++ Set cloudcore config file
+
+    ```shell
+    cd ~/cmd/config
+    vim controller.yaml
     ```
 
-#### [Run as Kubernetes deployment](https://github.com/kubeedge/kubeedge/blob/master/build/cloud/README.md)
+    verify the configurations before running `cloudcore`
+    
+    ```
+    controller:
+      kube:
+        master:     # kube-apiserver address (such as:http://localhost:8080)
+        namespace: ""
+        content_type: "application/vnd.kubernetes.protobuf"
+        qps: 5
+        burst: 10
+        node_update_frequency: 10
+        kubeconfig: "~/.kube/config"   #Enter path to kubeconfig file to enable https connection to k8s apiserver, if master and kubeconfig are both set, master will override any value in kubeconfig.
+    cloudhub:
+      protocol_websocket: true # enable websocket protocol
+      port: 10000 # open port for websocket server
+      protocol_quic: true # enable quic protocol
+      quic_port: 10001 # open prot for quic server
+      max_incomingstreams: 10000 # the max incoming stream for quic server
+      enable_uds: true # enable unix domain socket protocol
+      uds_address: unix:///var/lib/kubeedge/kubeedge.sock # unix domain socket address
+      address: 0.0.0.0
+      ca: /etc/kubeedge/ca/rootCA.crt
+      cert: /etc/kubeedge/certs/edge.crt
+      key: /etc/kubeedge/certs/edge.key
+      keepalive-interval: 30
+      write-timeout: 30
+      node-limit: 10
+    devicecontroller:
+      kube:
+        master:        # kube-apiserver address (such as:http://localhost:8080)
+        namespace: ""
+        content_type: "application/vnd.kubernetes.protobuf"
+        qps: 5
+        burst: 10
+        kubeconfig: "~/.kube/config" #Enter path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
+    ```
+    cloudcore default supports https connection to Kubernetes (required version is 1.15+) apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig. 
+    Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` exist.
 
-### Run Edge
++ Run cloudcore 
 
-#### Deploy the Edge node
+    ```shell
+    cd ~/cmd/
+    nohup ./cloudcore & 
+    ```
+    
+#### Deploy the edge node 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
++ Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
+    
+    ```shell
+        mkdir ~/cmd/yaml
+        cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
+    ```
+    
 + Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
 + Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
+
     ```script
     {
       "kind": "Node",
@@ -134,13 +153,23 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
       }
     }
     ```
+    **Note: you need to remember `metadata.name` , because edgecore need it**.
 + If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
-+ Deploy node
-    ```shell
-    kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json
-    ```
-+ Transfer the certificate file to the edge node
++ Deploy edge node (**you must run on cloud side**)
 
+    ```shell
+    kubectl apply -f ~/cmd/yaml/node.json
+    ```
++ Transfer certificate files to the edge node, because `edgecore` use these certificate files to connection `cloudcore` 
+
+### Setup edge side
+
+#### Clone KubeEdge
+
+```shell
+git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
+cd $GOPATH/src/github.com/kubeedge/kubeedge
+```
 #### Run Edge
 
 ##### Run as a binary
@@ -148,7 +177,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge
-    make all WHAT=edge
+    make all WHAT=edgecore
     ```
 
     KubeEdge can also be cross compiled to run on ARM based processors.
@@ -170,34 +199,111 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
     lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
     more than once etc. are applicable here as well.
-
-+ Modify the `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` configuration file
-    + Replace `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` with your own certificate path
-    + Update the IP address of the master in the `websocket.url` field. 
-    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e`q with edge node name in edge.yaml for the below fields :
-        + `websocket:URL`
-        + `controller:node-id`
-        + `edged:hostname-override`
-
-+ Run edge
+    
++ Run mqtt on edge side
 
     ```shell
     # run mosquitto
     mosquitto -d -p 1883
     # or run emqx edge
     # emqx start
+    ``` 
+
++ Set edgecore config file
     
-    # run edgecore
-    # `conf/` should be in the same directory as the cloned KubeEdge repository
-    # verify the configurations before running edge(edgecore)
+    ```shell
+    mkdir ~/cmd/conf
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/* ~/cmd/conf
+    vim ~/cmd/conf/edge.yaml
+    ```
+    
+    **Note:** `~/cmd/` dir is also an example as well as `cloudcore`, `conf/` should be in the same directory as edgecore binary, 
+    
+    verify the configurations before running `edgecore`
+    
+    ```
+    mqtt:
+        server: tcp://127.0.0.1:1883 # external mqtt broker url.
+        internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
+        mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker
+    enable only.
+        qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+        retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
+        session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
+    
+    edgehub:
+        websocket:
+            url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events 
+            certfile: /etc/kubeedge/certs/edge.crt
+            keyfile: /etc/kubeedge/certs/edge.key
+            handshake-timeout: 30 #second
+            write-deadline: 15 # second
+            read-deadline: 15 # second
+        quic:
+            url: 127.0.0.1:10001
+            cafile: /etc/kubeedge/ca/rootCA.crt
+            certfile: /etc/kubeedge/certs/edge.crt
+            keyfile: /etc/kubeedge/certs/edge.key
+            handshake-timeout: 30 #second
+            write-deadline: 15 # second
+            read-deadline: 15 # second
+        controller:
+            protocol: websocket # websocket, quic
+            heartbeat: 15  # second
+            project-id: e632aba927ea4ac2b575ec1603d56f10
+            node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+    
+    edged:
+        register-node-namespace: default
+        hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+        interface-name: eth0
+        edged-memory-capacity-bytes: 7852396000
+        node-status-update-frequency: 10 # second
+        device-plugin-enabled: false
+        gpu-plugin-enabled: false
+        image-gc-high-threshold: 80 # percent
+        image-gc-low-threshold: 40 # percent
+        maximum-dead-containers-per-container: 1
+        docker-address: unix:///var/run/docker.sock
+        runtime-type: docker
+        remote-runtime-endpoint: unix:///var/run/dockershim.sock
+        remote-image-endpoint: unix:///var/run/dockershim.sock
+        runtime-request-timeout: 2
+        podsandbox-image: k8s.gcr.io/pause
+        image-pull-progress-deadline: 60 # second
+            cgroup-driver: cgroupfs
+            node-ip: ""
+            cluster-dns: ""
+            cluster-domain: ""
+        
+        mesh:
+            loadbalance:
+                strategy-name: RoundRobin
+    ```
+    + If you have run mosquitto on your edge host, please set `mqtt.mode` to `2`. 
+    + To use KubeEdge in double mqtt or external mode (set `mqtt.mode` to 1), you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker. 
+    + Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
+    + Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files not exist, you need to copy them from cloud side. 
+    + Update the IP address of the master in the `edgehub.websocket.url` field. You need set cloudcore ip address.
+    + If you use quic protocol, please update the IP address of the master in the `edgehub.quic.url` field. You need set cloudcore ip address.
+    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node name in edge.yaml for the below fields :
+        + `websocket:URL`
+        + `controller:node-id`
+        + `edged:hostname-override`
+
++ Run edgecore
+
+    ```shell
+
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/ 
+    cd ~/cmd
     ./edgecore
     # or
     nohup ./edgecore > edgecore.log 2>&1 &
     ```
-
     **Note:** Please run edge using the users who have root permission.
 
-+ Run edge with systemd
++ Run edgecore with systemd
 
     It is also possible to start the edgecore with systemd. If you want, you could use the example systemd-unit-file. The following command will show you how to setup this:
 
@@ -206,14 +312,12 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     sudo systemctl daemon-reload
     sudo systemctl start edgecore
     ```
+    
     If you also want also an autostart, you have to execute this, too:
+    
     ```shell
     sudo systemctl enable daemon-reload
     ```
-
-##### [Run as container](https://github.com/kubeedge/kubeedge/blob/master/build/edge/README.md)
-
-#### [Run as Kubernetes deployment](https://github.com/kubeedge/kubeedge/blob/master/build/edge/kubernetes/README.md)
 
 #### Check status
 
@@ -225,9 +329,7 @@ kubectl get nodes
 
 Please make sure the status of edge node you created is **ready**.
 
-If you are using HuaweiCloud IEF, then the edge node you created should be running (check it in the IEF console page).
-
-## Deploy Application
+## Deploy Application on cloud side
 
 Try out a sample application deployment by following below steps.
 
