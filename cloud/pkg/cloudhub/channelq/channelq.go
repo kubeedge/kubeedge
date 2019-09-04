@@ -138,7 +138,12 @@ func (q *ChannelEventQueue) Close(info *model.HubInfo) error {
 // Publish sends message via the rchannel to Edge Controller
 func (q *ChannelEventQueue) Publish(info *model.HubInfo, event *model.Event) error {
 	msg := model.EventToMessage(event)
-	q.ctx.Send2Group(model.SrcController, msg)
+	switch msg.Router.Source {
+	case model.ResTwin:
+		q.ctx.Send2Group("controller", msg)
+	default:
+		q.ctx.Send2Group(model.SrcController, msg)
+	}
 	return nil
 }
 
