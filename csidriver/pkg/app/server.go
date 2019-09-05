@@ -20,57 +20,46 @@ import (
 	"fmt"
 
 	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/csidriver/cmd/app/options"
 )
 
 type CSIDriver struct {
-	name       string
-	nodeID     string
-	version    string
-	endpoint   string
-	keEndpoint string
+	options.CSIDriverOptions
 
 	ids *identityServer
 	cs  *controllerServer
 }
 
-var (
-	vendorVersion = "dev"
-)
-
-// NewCSIDriver creates a new server
-func NewCSIDriver(driverName, nodeID, endpoint, keEndpoint, version string) (*CSIDriver, error) {
-	if driverName == "" {
-		return nil, fmt.Errorf("no driver name provided")
-	}
-	if nodeID == "" {
-		return nil, fmt.Errorf("no node id provided")
-	}
-	if endpoint == "" {
+func NewCSIDriver(opts *options.CSIDriverOptions) (*CSIDriver, error) {
+	if opts.Endpoint == "" {
 		return nil, fmt.Errorf("no driver endpoint provided")
 	}
-	if keEndpoint == "" {
+	if opts.DriverName == "" {
+		return nil, fmt.Errorf("no driver name provided")
+	}
+	if opts.NodeID == "" {
+		return nil, fmt.Errorf("no node id provided")
+	}
+	if opts.KubeEdgeEndpoint == "" {
 		return nil, fmt.Errorf("no kubeedge endpoint provided")
 	}
-	if version != "" {
-		vendorVersion = version
+	if opts.Version == "" {
+		return nil, fmt.Errorf("no version provided")
 	}
-	klog.Infof("driver: %s version: %s", driverName, vendorVersion)
-
 	return &CSIDriver{
-		name:       driverName,
-		version:    vendorVersion,
-		nodeID:     nodeID,
-		endpoint:   endpoint,
-		keEndpoint: keEndpoint,
+		CSIDriverOptions: *opts,
 	}, nil
 }
 
 func (cd *CSIDriver) Run() {
+	klog.Infof("driver information: %v", cd)
+
 	// Create GRPC servers
-	cd.ids = NewIdentityServer(cd.name, cd.version)
-	cd.cs = NewControllerServer(cd.nodeID, cd.keEndpoint)
+	cd.ids = NewIdentityServer(cd.DriverName, cd.Version)
+	cd.cs = NewControllerServer(cd.NodeID, cd.KubeEdgeEndpoint)
 
 	s := NewNonBlockingGRPCServer()
-	s.Start(cd.endpoint, cd.ids, cd.cs, nil)
+	s.Start(cd.Endpoint, cd.ids, cd.cs, nil)
 	s.Wait()
 }

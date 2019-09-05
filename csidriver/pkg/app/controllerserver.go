@@ -22,14 +22,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/container-storage-interface/spec/lib/go/csi"
-
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"

@@ -25,13 +25,11 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/klog"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"

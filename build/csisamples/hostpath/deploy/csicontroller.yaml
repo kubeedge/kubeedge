@@ -141,10 +141,10 @@ spec:
             - name: KUBEEDGE_ENDPOINT
               value: unix:///kubeedge/kubeedge.sock
             - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
+              # replace this value with the name of edge node
+              # which is in charge of Create Volume and Delete Volume,
+              # Controller Publish Volume and Controller Unpublish Volume.
+              value: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
           securityContext:
             privileged: true
           volumeMounts:
