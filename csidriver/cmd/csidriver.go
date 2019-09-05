@@ -17,36 +17,20 @@ limitations under the License.
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 
-	"github.com/kubeedge/kubeedge/csidriver/pkg/app"
-)
+	"k8s.io/component-base/logs"
 
-func init() {
-	flag.Set("logtostderr", "true")
-}
-
-var (
-	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
-	driverName = flag.String("drivername", "csidriver", "name of the driver")
-	nodeID     = flag.String("nodeid", "", "node id")
-	keEndpoint = flag.String("kubeedgeendpoint", "unix:///kubeedge/kubeedge.sock", "kubeedge endpoint")
-	version    = flag.String("version", "", "version")
+	"github.com/kubeedge/kubeedge/csidriver/cmd/app"
 )
 
 func main() {
-	flag.Parse()
-	handle()
-	os.Exit(0)
-}
+	command := app.NewCSIDriverCommand()
+	logs.InitLogs()
+	defer logs.FlushLogs()
 
-func handle() {
-	driver, err := app.NewCSIDriver(*driverName, *nodeID, *endpoint, *keEndpoint, *version)
-	if err != nil {
-		fmt.Printf("failed to initialize driver: %s", err.Error())
+	if err := command.Execute(); err != nil {
 		os.Exit(1)
 	}
-	driver.Run()
+	os.Exit(0)
 }
