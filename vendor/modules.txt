@@ -957,8 +957,10 @@ k8s.io/kubernetes/pkg/util/mount
 k8s.io/kubernetes/pkg/util/removeall
 k8s.io/kubernetes/pkg/volume
 k8s.io/kubernetes/pkg/volume/configmap
+k8s.io/kubernetes/pkg/volume/downwardapi
 k8s.io/kubernetes/pkg/volume/emptydir
 k8s.io/kubernetes/pkg/volume/hostpath
+k8s.io/kubernetes/pkg/volume/projected
 k8s.io/kubernetes/pkg/volume/secret
 k8s.io/kubernetes/pkg/volume/util
 k8s.io/kubernetes/pkg/volume/util/subpath
@@ -1044,6 +1046,7 @@ k8s.io/kubernetes/pkg/volume/util/operationexecutor
 k8s.io/kubernetes/pkg/scheduler/algorithm/priorities/util
 k8s.io/kubernetes/pkg/volume/util/fs
 k8s.io/kubernetes/pkg/volume/util/recyclerclient
+k8s.io/kubernetes/pkg/fieldpath
 k8s.io/kubernetes/pkg/volume/util/quota
 k8s.io/kubernetes/pkg/util/resizefs
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/state
@@ -1058,7 +1061,6 @@ k8s.io/kubernetes/pkg/apis/apps
 k8s.io/kubernetes/pkg/api/service
 k8s.io/kubernetes/pkg/apis/core/pods
 k8s.io/kubernetes/pkg/capabilities
-k8s.io/kubernetes/pkg/fieldpath
 k8s.io/kubernetes/pkg/master/ports
 k8s.io/kubernetes/pkg/kubelet/util/store
 k8s.io/kubernetes/pkg/util/filesystem
