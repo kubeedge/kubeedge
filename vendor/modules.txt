@@ -929,7 +929,9 @@ k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
 k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubernetes v1.15.3
+k8s.io/kubernetes/pkg/apis/core/pods
 k8s.io/kubernetes/pkg/features
+k8s.io/kubernetes/pkg/fieldpath
 k8s.io/kubernetes/pkg/kubelet/apis/config
 k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1
 k8s.io/kubernetes/pkg/kubelet/cm
@@ -967,6 +969,7 @@ k8s.io/kubernetes/pkg/volume/util/subpath
 k8s.io/kubernetes/pkg/volume/util/types
 k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
+k8s.io/kubernetes/third_party/forked/golang/expansion
 k8s.io/kubernetes/pkg/kubelet/cadvisor
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager
 k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1
@@ -999,7 +1002,6 @@ k8s.io/kubernetes/pkg/kubelet/checkpoint
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager
 k8s.io/kubernetes/pkg/util/config
 k8s.io/kubernetes/pkg/util/hash
-k8s.io/kubernetes/third_party/forked/golang/expansion
 k8s.io/kubernetes/pkg/credentialprovider
 k8s.io/kubernetes/pkg/kubelet/apis
 k8s.io/kubernetes/pkg/kubelet/checkpointmanager/checksum
@@ -1046,7 +1048,6 @@ k8s.io/kubernetes/pkg/volume/util/operationexecutor
 k8s.io/kubernetes/pkg/scheduler/algorithm/priorities/util
 k8s.io/kubernetes/pkg/volume/util/fs
 k8s.io/kubernetes/pkg/volume/util/recyclerclient
-k8s.io/kubernetes/pkg/fieldpath
 k8s.io/kubernetes/pkg/volume/util/quota
 k8s.io/kubernetes/pkg/util/resizefs
 k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/state
@@ -1059,7 +1060,6 @@ k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1
 k8s.io/kubernetes/pkg/kubelet/cm/devicemanager/checkpoint
 k8s.io/kubernetes/pkg/apis/apps
 k8s.io/kubernetes/pkg/api/service
-k8s.io/kubernetes/pkg/apis/core/pods
 k8s.io/kubernetes/pkg/capabilities
 k8s.io/kubernetes/pkg/master/ports
 k8s.io/kubernetes/pkg/kubelet/util/store

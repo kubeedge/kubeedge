@@ -19,6 +19,10 @@ This file is derived from K8S Kubelet code with reduced set of methods
 Changes done are
 1. Package edged got some functions from "k8s.io/kubernetes/pkg/kubelet/kubelet_pods.go"
 and made some variant
+2. Simplify the function of makeEnvironmentVariables,
+which is used to inject environment variables into containers.
+Currently the users can set the environment variables directly or
+by reading from the attributes of Spec.nodeName and spec.serviceAccountName.
 */
 
 package edged
@@ -38,12 +42,15 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
+	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
 	"k8s.io/kubernetes/pkg/features"
+	"k8s.io/kubernetes/pkg/fieldpath"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/volume/util"
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
 	"k8s.io/kubernetes/pkg/volume/validation"
+	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilfile "k8s.io/utils/path"
 )
 
@@ -567,11 +574,11 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 		opts.Devices = append(opts.Devices, blkVolumes...)
 	}
 
-	/*envs, err := e.makeEnvironmentVariables(pod, container, podIP)
+	envs, err := e.makeEnvironmentVariables(pod, container, podIP)
 	if err != nil {
 		return nil, nil, err
 	}
-	opts.Envs = append(opts.Envs, envs...)*/
+	opts.Envs = append(opts.Envs, envs...)
 
 	mounts, err := makeMounts(pod, e.getPodDir(pod.UID), container, hostname, hostDomainName, podIP, volumes)
 	if err != nil {
@@ -602,109 +609,7 @@ func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 }
 
 // Make the environment variables for a pod in the given namespace.
-/*func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string) ([]kubecontainer.EnvVar, error) {
-	if pod.Spec.EnableServiceLinks == nil {
-		return nil, fmt.Errorf("nil pod.spec.enableServiceLinks encountered, cannot construct envvars")
-	}
-
-	var result []kubecontainer.EnvVar
-	// Note:  These are added to the docker Config, but are not included in the checksum computed
-	// by kubecontainer.HashContainer(...).  That way, we can still determine whether an
-	// v1.Container is already running by its hash. (We don't want to restart a container just
-	// because some service changed.)
-	//
-	// Note that there is a race between Kubelet seeing the pod and kubelet seeing the service.
-	// To avoid this users can: (1) wait between starting a service and starting; or (2) detect
-	// missing service env var and exit and be restarted; or (3) use DNS instead of env vars
-	// and keep trying to resolve the DNS name of the service (recommended).
-	serviceEnv, err := e.getServiceEnvVarMap(pod.Namespace, *pod.Spec.EnableServiceLinks)
-	if err != nil {
-		return result, err
-	}
-
-	var (
-		configMaps = make(map[string]*v1.ConfigMap)
-		secrets    = make(map[string]*v1.Secret)
-		tmpEnv     = make(map[string]string)
-	)
-
-	// Env will override EnvFrom variables.
-	// Process EnvFrom first then allow Env to replace existing values.
-	for _, envFrom := range container.EnvFrom {
-		switch {
-		case envFrom.ConfigMapRef != nil:
-			cm := envFrom.ConfigMapRef
-			name := cm.Name
-			configMap, ok := configMaps[name]
-			if !ok {
-				if e.kubeClient == nil {
-					return result, fmt.Errorf("Couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
-				}
-				optional := cm.Optional != nil && *cm.Optional
-				configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
-				if err != nil {
-					if errors.IsNotFound(err) && optional {
-						// ignore error when marked optional
-						continue
-					}
-					return result, err
-				}
-				configMaps[name] = configMap
-			}
-
-			invalidKeys := []string{}
-			for k, v := range configMap.Data {
-				if len(envFrom.Prefix) > 0 {
-					k = envFrom.Prefix + k
-				}
-				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
-					invalidKeys = append(invalidKeys, k)
-					continue
-				}
-				tmpEnv[k] = v
-			}
-			if len(invalidKeys) > 0 {
-				sort.Strings(invalidKeys)
-				e.recorder.Eventf(pod, v1.EventTypeWarning, "InvalidEnvironmentVariableNames", "Keys [%s] from the EnvFrom configMap %s/%s were skipped since they are considered invalid environment variable names.", strings.Join(invalidKeys, ", "), pod.Namespace, name)
-			}
-		case envFrom.SecretRef != nil:
-			s := envFrom.SecretRef
-			name := s.Name
-			secret, ok := secrets[name]
-			if !ok {
-				if e.kubeClient == nil {
-					return result, fmt.Errorf("Couldn't get secret %v/%v, no kubeClient defined", pod.Namespace, name)
-				}
-				optional := s.Optional != nil && *s.Optional
-				secret, err = e.secretManager.GetSecret(pod.Namespace, name)
-				if err != nil {
-					if errors.IsNotFound(err) && optional {
-						// ignore error when marked optional
-						continue
-					}
-					return result, err
-				}
-				secrets[name] = secret
-			}
-
-			invalidKeys := []string{}
-			for k, v := range secret.Data {
-				if len(envFrom.Prefix) > 0 {
-					k = envFrom.Prefix + k
-				}
-				if errMsgs := utilvalidation.IsEnvVarName(k); len(errMsgs) != 0 {
-					invalidKeys = append(invalidKeys, k)
-					continue
-				}
-				tmpEnv[k] = string(v)
-			}
-			if len(invalidKeys) > 0 {
-				sort.Strings(invalidKeys)
-				e.recorder.Eventf(pod, v1.EventTypeWarning, "InvalidEnvironmentVariableNames", "Keys [%s] from the EnvFrom secret %s/%s were skipped since they are considered invalid environment variable names.", strings.Join(invalidKeys, ", "), pod.Namespace, name)
-			}
-		}
-	}
-
+func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string) ([]kubecontainer.EnvVar, error) {
 	// Determine the final values of variables:
 	//
 	// 1.  Determine the final value of each variable:
@@ -715,115 +620,51 @@ func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 	// 2.  Create the container's environment in the order variables are declared
 	// 3.  Add remaining service environment vars
 	var (
-		mappingFunc = expansion.MappingFuncFor(tmpEnv, serviceEnv)
+		result      []kubecontainer.EnvVar
+		tmpEnv      = make(map[string]string)
+		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
 		if runtimeVal != "" {
 			// Step 1a: expand variable references
 			runtimeVal = expansion.Expand(runtimeVal, mappingFunc)
+			tmpEnv[envVar.Name] = runtimeVal
 		} else if envVar.ValueFrom != nil {
 			// Step 1b: resolve alternate env var sources
 			switch {
 			case envVar.ValueFrom.FieldRef != nil:
-				runtimeVal, err = e.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod, podIP)
+				runtimeVal, err := e.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod, podIP)
 				if err != nil {
 					return result, err
 				}
-			case envVar.ValueFrom.ResourceFieldRef != nil:
-				defaultedPod, defaultedContainer, err := e.defaultPodLimitsForDownwardAPI(pod, container)
-				if err != nil {
-					return result, err
-				}
-				runtimeVal, err = containerResourceRuntimeValue(envVar.ValueFrom.ResourceFieldRef, defaultedPod, defaultedContainer)
-				if err != nil {
-					return result, err
-				}
-			case envVar.ValueFrom.ConfigMapKeyRef != nil:
-				cm := envVar.ValueFrom.ConfigMapKeyRef
-				name := cm.Name
-				key := cm.Key
-				optional := cm.Optional != nil && *cm.Optional
-				configMap, ok := configMaps[name]
-				if !ok {
-					if e.kubeClient == nil {
-						return result, fmt.Errorf("Couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
-					}
-					configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
-					if err != nil {
-						if errors.IsNotFound(err) && optional {
-							// ignore error when marked optional
-							continue
-						}
-						return result, err
-					}
-					configMaps[name] = configMap
-				}
-				runtimeVal, ok = configMap.Data[key]
-				if !ok {
-					if optional {
-						continue
-					}
-					return result, fmt.Errorf("Couldn't find key %v in ConfigMap %v/%v", key, pod.Namespace, name)
-				}
-			case envVar.ValueFrom.SecretKeyRef != nil:
-				s := envVar.ValueFrom.SecretKeyRef
-				name := s.Name
-				key := s.Key
-				optional := s.Optional != nil && *s.Optional
-				secret, ok := secrets[name]
-				if !ok {
-					if e.kubeClient == nil {
-						return result, fmt.Errorf("Couldn't get secret %v/%v, no kubeClient defined", pod.Namespace, name)
-					}
-					secret, err = e.secretManager.GetSecret(pod.Namespace, name)
-					if err != nil {
-						if errors.IsNotFound(err) && optional {
-							// ignore error when marked optional
-							continue
-						}
-						return result, err
-					}
-					secrets[name] = secret
-				}
-				runtimeValBytes, ok := secret.Data[key]
-				if !ok {
-					if optional {
-						continue
-					}
-					return result, fmt.Errorf("Couldn't find key %v in Secret %v/%v", key, pod.Namespace, name)
-				}
-				runtimeVal = string(runtimeValBytes)
+				tmpEnv[envVar.Name] = runtimeVal
 			}
 		}
-		// Accesses apiserver+Pods.
-		// So, the master may set service env vars, or kubelet may.  In case both are doing
-		// it, we delete the key from the kubelet-generated ones so we don't have duplicate
-		// env vars.
-		// TODO: remove this next line once all platforms use apiserver+Pods.
-		delete(serviceEnv, envVar.Name)
-
-		tmpEnv[envVar.Name] = runtimeVal
 	}
 
 	// Append the env vars
 	for k, v := range tmpEnv {
 		result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
 	}
-
-	// Append remaining service env vars.
-	for k, v := range serviceEnv {
-		// Accesses apiserver+Pods.
-		// So, the master may set service env vars, or kubelet may.  In case both are doing
-		// it, we skip the key from the kubelet-generated ones so we don't have duplicate
-		// env vars.
-		// TODO: remove this next line once all platforms use apiserver+Pods.
-		if _, present := tmpEnv[k]; !present {
-			result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
-		}
-	}
 	return result, nil
-}*/
+}
+
+// podFieldSelectorRuntimeValue returns the runtime value of the given
+// selector for a pod.
+func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1.Pod, podIP string) (string, error) {
+	internalFieldPath, _, err := podshelper.ConvertDownwardAPIFieldLabel(fs.APIVersion, fs.FieldPath, "")
+	if err != nil {
+		return "", err
+	}
+	switch internalFieldPath {
+	case "spec.nodeName":
+		return pod.Spec.NodeName, nil
+	case "spec.serviceAccountName":
+		return pod.Spec.ServiceAccountName, nil
+	}
+	return fieldpath.ExtractFieldPathAsString(pod, internalFieldPath)
+}
 
 // makeBlockVolumes maps the raw block devices specified in the path of the container
 // Experimental
