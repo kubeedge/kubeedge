@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Kubeedge Authors.
+Copyright 2019 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -150,9 +150,9 @@ func buildResource(nodeID, namespace, resourceType, resourceID string) (string, 
 	return resource, nil
 }
 
-// send2KubeEdge sends messages to KubeEdge
-func send2KubeEdge(context, keEndpoint string) (string, error) {
-	us := NewUnixDomainSocket(keEndpoint)
+// sendToKubeEdge sends messages to KubeEdge
+func sendToKubeEdge(context, kubeEdgeEndpoint string) (string, error) {
+	us := NewUnixDomainSocket(kubeEdgeEndpoint)
 	// connect
 	r, err := us.Connect()
 	if err != nil {

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: csi-controller
-  namespace: default
+  namespace: kubeedge
 
 ---
 kind: ClusterRole
@@ -49,7 +49,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: csi-controller
-    namespace: default
+    namespace: kubeedge
 roleRef:
   kind: ClusterRole
   name: external-controller-runner
@@ -59,7 +59,7 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  namespace: default
+  namespace: kubeedge
   name: external-controller-cfg
 rules:
 - apiGroups: [""]
@@ -77,11 +77,11 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-controller-role-cfg
-  namespace: default
+  namespace: kubeedge
 subjects:
   - kind: ServiceAccount
     name: csi-controller
-    namespace: default
+    namespace: kubeedge
 roleRef:
   kind: Role
   name: external-controller-cfg
@@ -92,6 +92,7 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: csi-hostpath-controller
+  namespace: kubeedge
 spec:
   serviceName: "csi-hostpath-controller"
   replicas: 1
@@ -131,7 +132,7 @@ spec:
             - "--v=5"
             - "--drivername=$(CSI_DRIVERNAME)"
             - "--endpoint=$(CSI_ENDPOINT)"
-            - "--kubeedgeendpoint=$(KUBEEDGE_ENDPOINT)"
+            - "--kubeedge-endpoint=$(KUBEEDGE_ENDPOINT)"
             - "--nodeid=$(KUBE_NODE_NAME)"
           env:
             - name: CSI_DRIVERNAME

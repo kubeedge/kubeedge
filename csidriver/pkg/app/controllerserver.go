@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Kubeedge Authors.
+Copyright 2019 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,21 +35,21 @@ import (
 )
 
 type controllerServer struct {
-	caps       []*csi.ControllerServiceCapability
-	nodeID     string
-	keEndpoint string
+	caps             []*csi.ControllerServiceCapability
+	nodeID           string
+	kubeEdgeEndpoint string
 }
 
 // NewControllerServer creates controller server
-func NewControllerServer(nodeID, keEndpoint string) *controllerServer {
+func NewControllerServer(nodeID, kubeEdgeEndpoint string) *controllerServer {
 	return &controllerServer{
 		caps: getControllerServiceCapabilities(
 			[]csi.ControllerServiceCapability_RPC_Type{
 				csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 				csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
 			}),
-		nodeID:     nodeID,
-		keEndpoint: keEndpoint,
+		nodeID:           nodeID,
+		kubeEdgeEndpoint: kubeEdgeEndpoint,
 	}
 }
 
@@ -98,7 +98,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	// Send message to KubeEdge
-	resdata, err := send2KubeEdge(string(reqData), cs.keEndpoint)
+	resdata, err := sendToKubeEdge(string(reqData), cs.kubeEdgeEndpoint)
 	if err != nil {
 		klog.Errorf("send to kubeedge failed with error: %v", err)
 		return nil, err
@@ -133,24 +133,15 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	klog.V(4).Infof("create volume response: %v", response)
 
-	createVolumeResponse := &csi.CreateVolumeResponse{}
+	createVolumeResponse := &csi.CreateVolumeResponse{
+		Volume: &csi.Volume{
+			VolumeId:      response.Volume.VolumeId,
+			CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
+			VolumeContext: req.GetParameters(),
+		},
+	}
 	if req.GetVolumeContentSource() != nil {
-		createVolumeResponse = &csi.CreateVolumeResponse{
-			Volume: &csi.Volume{
-				VolumeId:      response.Volume.VolumeId,
-				CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
-				VolumeContext: req.GetParameters(),
-				ContentSource: req.GetVolumeContentSource(),
-			},
-		}
-	} else {
-		createVolumeResponse = &csi.CreateVolumeResponse{
-			Volume: &csi.Volume{
-				VolumeId:      response.Volume.VolumeId,
-				CapacityBytes: req.GetCapacityRange().GetRequiredBytes(),
-				VolumeContext: req.GetParameters(),
-			},
-		}
+		createVolumeResponse.Volume.ContentSource = req.GetVolumeContentSource()
 	}
 	return createVolumeResponse, nil
 }
@@ -194,7 +185,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 
 	// Send message to KubeEdge
-	resdata, err := send2KubeEdge(string(reqData), cs.keEndpoint)
+	resdata, err := sendToKubeEdge(string(reqData), cs.kubeEdgeEndpoint)
 	if err != nil {
 		klog.Errorf("send to kubeedge failed with error: %v", err)
 		return nil, err
@@ -276,7 +267,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	// Send message to KubeEdge
-	resdata, err := send2KubeEdge(string(reqData), cs.keEndpoint)
+	resdata, err := sendToKubeEdge(string(reqData), cs.kubeEdgeEndpoint)
 	if err != nil {
 		klog.Errorf("send to kubeedge failed with error: %v", err)
 		return nil, err
@@ -358,7 +349,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	// Send message to KubeEdge
-	resdata, err := send2KubeEdge(string(reqData), cs.keEndpoint)
+	resdata, err := sendToKubeEdge(string(reqData), cs.kubeEdgeEndpoint)
 	if err != nil {
 		klog.Errorf("send to kubeedge failed with error: %v", err)
 		return nil, err
