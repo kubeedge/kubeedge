@@ -1,5 +1,7 @@
 package constants
 
+import "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+
 // Service level constants
 const (
 	// module
@@ -7,7 +9,7 @@ const (
 	CloudHubControllerModuleName = "cloudhub"
 
 	// group
-	DeviceControllerModuleGroup = "controller"
+	DeviceControllerModuleGroup = model.SrcDeviceController
 
 	ResourceDeviceIndex         = 2
 	ResourceDeviceIDIndex       = 3

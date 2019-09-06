@@ -25,7 +25,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
 	"time"
 
@@ -193,10 +192,6 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 		}
 		klog.Infof("message: %s, resource type is: %s", msg.GetID(), resourceType)
 		operationType := msg.GetOperation()
-		if err != nil {
-			klog.Warningf("parse message: %s operation type with error: %s", msg.GetID(), err)
-			continue
-		}
 		klog.Infof("message: %s, operation type is: %s", msg.GetID(), operationType)
 
 		switch resourceType {
@@ -225,10 +220,10 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 			case model.UpdateOperation:
 				uc.updateNodeChan <- msg
 			default:
-				err = fmt.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), operationType)
+				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), operationType)
 			}
 		default:
-			err = fmt.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
+			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
 	}
 }
