@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Kubeedge Authors.
+Copyright 2019 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,5 +32,4 @@ func main() {
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
 	}
-	os.Exit(0)
 }
