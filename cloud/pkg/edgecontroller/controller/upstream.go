@@ -421,6 +421,10 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					getNode.Annotations[string(name)] = string(data)
 				}
 
+				// Keep the same "VolumesAttached" attribute with upstream,
+				// since this value is maintained by kube-controller-manager.
+				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
+
 				getNode.Status = nodeStatusRequest.Status
 				if _, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(getNode); err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
