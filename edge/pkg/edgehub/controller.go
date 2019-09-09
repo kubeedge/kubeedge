@@ -188,7 +188,9 @@ func (ehc *Controller) routeToEdge() {
 }
 
 func (ehc *Controller) sendToCloud(message model.Message) error {
+	ehc.keeperLock.Lock()
 	err := ehc.chClient.Send(message)
+	ehc.keeperLock.Unlock()
 	if err != nil {
 		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
@@ -239,12 +241,15 @@ func (ehc *Controller) keepalive() {
 		msg := model.NewMessage("").
 			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
 			FillBody("ping")
-		err := ehc.chClient.Send(*msg)
+
+		// post message to cloud hub
+		err := ehc.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
 			ehc.stopChan <- struct{}{}
 			return
 		}
+
 		time.Sleep(ehc.config.HeartbeatPeriod)
 	}
 }
