@@ -25,8 +25,8 @@ import (
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/csidriver/cmd/app/options"
-	"github.com/kubeedge/kubeedge/csidriver/pkg/app"
+	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app/options"
+	"github.com/kubeedge/kubeedge/cloud/pkg/csidriver"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -48,7 +48,7 @@ func NewCSIDriverCommand() *cobra.Command {
 			klog.Infof("Version: %+v", version.Get())
 
 			// start driver
-			driver, err := app.NewCSIDriver(opts)
+			driver, err := csidriver.NewCSIDriver(opts)
 			if err != nil {
 				klog.Errorf("failed to initialize driver: %s", err.Error())
 				return

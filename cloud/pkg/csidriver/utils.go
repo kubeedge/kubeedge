@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package csidriver
 
 import (
 	"encoding/json"
@@ -42,8 +42,8 @@ const (
 	DefaultReceiveModuleName = "cloudhub"
 )
 
-// NewNonBlockingGRPCServer creates a new nonblocking server
-func NewNonBlockingGRPCServer() *nonBlockingGRPCServer {
+// newNonBlockingGRPCServer creates a new nonblocking server
+func newNonBlockingGRPCServer() *nonBlockingGRPCServer {
 	return &nonBlockingGRPCServer{}
 }
 

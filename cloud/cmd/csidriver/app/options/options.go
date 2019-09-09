@@ -39,7 +39,7 @@ func (o *CSIDriverOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("csidriver")
 	fs.StringVar(&o.Endpoint, "endpoint", "unix:///csi/csi.sock", "CSI endpoint")
 	fs.StringVar(&o.DriverName, "drivername", "csidriver", "name of the driver")
-	fs.StringVar(&o.NodeID, "nodeid", "", "node id")
+	fs.StringVar(&o.NodeID, "nodeid", "", "node id determines which node will be used to create/delete volumes")
 	fs.StringVar(&o.KubeEdgeEndpoint, "kubeedge-endpoint", "unix:///kubeedge/kubeedge.sock", "kubeedge endpoint")
 	fs.StringVar(&o.Version, "version", "dev", "version")
 	return
