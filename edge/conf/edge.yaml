@@ -44,7 +44,7 @@ edged:
     remote-runtime-endpoint: unix:///var/run/dockershim.sock
     remote-image-endpoint: unix:///var/run/dockershim.sock
     runtime-request-timeout: 2
-    podsandbox-image: k8s.gcr.io/pause
+    podsandbox-image: kubeedge/pause:3.1 # kubeedge/pause:3.1 for x86 arch , kubeedge/pause-arm:3.1 for arm arch, kubeedge/pause-arm64 for arm64 arch
     image-pull-progress-deadline: 60 # second
     cgroup-driver: cgroupfs
     node-ip: ""
