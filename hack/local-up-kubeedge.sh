@@ -44,7 +44,7 @@ function uninstall_kubeedge {
 # clean up
 function cleanup {
   echo "Cleaning up..."
-  uninstall-kubeedge
+  uninstall_kubeedge
 
   echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
   kind delete cluster ${CLUSTER_CONTEXT}
