@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-controller
+  namespace: kubeedge
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: external-controller-runner
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-controller-role
+subjects:
+  - kind: ServiceAccount
+    name: csi-controller
+    namespace: kubeedge
+roleRef:
+  kind: ClusterRole
+  name: external-controller-runner
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: kubeedge
+  name: external-controller-cfg
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "watch", "list", "delete", "update", "create"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "watch", "list", "delete", "update", "create"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-controller-role-cfg
+  namespace: kubeedge
+subjects:
+  - kind: ServiceAccount
+    name: csi-controller
+    namespace: kubeedge
+roleRef:
+  kind: Role
+  name: external-controller-cfg
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-hostpath-controller
+  namespace: kubeedge
+spec:
+  serviceName: "csi-hostpath-controller"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csi-hostpath-controller
+  template:
+    metadata:
+      labels:
+        app: csi-hostpath-controller
+    spec:
+      serviceAccountName: csi-controller
+      containers:
+        - name: csi-provisioner
+          image: quay.io/k8scsi/csi-provisioner:v1.2.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - -v=5
+            - --csi-address=/csi/csi.sock
+            - --connection-timeout=15s
+          volumeMounts:
+            - mountPath: /csi
+              name: csi-socket-dir
+        - name: csi-attacher
+          image: quay.io/k8scsi/csi-attacher:v1.1.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+          volumeMounts:
+          - mountPath: /csi
+            name: csi-socket-dir
+        - name: csi-driver
+          image: kubeedge/csidriver:v1.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--drivername=$(CSI_DRIVERNAME)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--kubeedge-endpoint=$(KUBEEDGE_ENDPOINT)"
+            - "--nodeid=$(KUBE_NODE_NAME)"
+          env:
+            - name: CSI_DRIVERNAME
+              value: csi-hostpath
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: KUBEEDGE_ENDPOINT
+              value: unix:///kubeedge/kubeedge.sock
+            - name: KUBE_NODE_NAME
+              # replace this value with the name of edge node
+              # which is in charge of Create Volume and Delete Volume,
+              # Controller Publish Volume and Controller Unpublish Volume.
+              value: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: csi-socket-dir
+            - mountPath: /kubeedge
+              name: kubeedge-socket-dir
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet/plugins/csi-hostpath
+            type: DirectoryOrCreate
+          name: csi-socket-dir
+        - hostPath:
+            path: /var/lib/kubeedge
+            type: DirectoryOrCreate
+          name: kubeedge-socket-dir
