@@ -82,7 +82,7 @@ function build_edgecore {
 function generate_certs {
   # generate the certs used for cloud and edge communication
   echo "generating the certs used for cloud and edge communication..."
-  ${KUBEEDGE_ROOT}/build/tools/certgen.sh
+  ${KUBEEDGE_ROOT}/build/tools/certgen.sh genCertAndKey edge
 }
 
 function start_cloudcore {
