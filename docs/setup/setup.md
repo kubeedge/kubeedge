@@ -269,12 +269,12 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
         remote-runtime-endpoint: unix:///var/run/dockershim.sock
         remote-image-endpoint: unix:///var/run/dockershim.sock
         runtime-request-timeout: 2
-        podsandbox-image: k8s.gcr.io/pause
+        podsandbox-image: kubeedge/pause:3.1 # kubeedge/pause:3.1 for x86 arch , kubeedge/pause-arm:3.1 for arm arch, kubeedge/pause-arm64 for arm64 arch
         image-pull-progress-deadline: 60 # second
-            cgroup-driver: cgroupfs
-            node-ip: ""
-            cluster-dns: ""
-            cluster-domain: ""
+        cgroup-driver: cgroupfs
+        node-ip: ""
+        cluster-dns: ""
+        cluster-domain: ""
         
         mesh:
             loadbalance:
@@ -284,6 +284,10 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
     + To use KubeEdge in double mqtt or external mode (set `mqtt.mode` to 1), you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker. 
     + Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
     + Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files not exist, you need to copy them from cloud side. 
+    + Check `edged.podsandbox-image`  
+        + `kubeedge/pause-arm:3.1` for arm arch
+        + `kubeedge/pause-arm64:3.1` for arm64 arch
+        + `kubeedge/pause:3.1` for x86 arch
     + Update the IP address of the master in the `edgehub.websocket.url` field. You need set cloudcore ip address.
     + If you use quic protocol, please update the IP address of the master in the `edgehub.quic.url` field. You need set cloudcore ip address.
     + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node name in edge.yaml for the below fields :
