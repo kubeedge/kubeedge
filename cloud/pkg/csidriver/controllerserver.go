@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package csidriver
 
 import (
 	"encoding/base64"
@@ -40,8 +40,8 @@ type controllerServer struct {
 	kubeEdgeEndpoint string
 }
 
-// NewControllerServer creates controller server
-func NewControllerServer(nodeID, kubeEdgeEndpoint string) *controllerServer {
+// newControllerServer creates controller server
+func newControllerServer(nodeID, kubeEdgeEndpoint string) *controllerServer {
 	return &controllerServer{
 		caps: getControllerServiceCapabilities(
 			[]csi.ControllerServiceCapability_RPC_Type{

@@ -21,7 +21,7 @@ import (
 
 	"k8s.io/component-base/logs"
 
-	"github.com/kubeedge/kubeedge/csidriver/cmd/app"
+	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app"
 )
 
 func main() {

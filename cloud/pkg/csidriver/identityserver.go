@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package csidriver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -29,8 +29,8 @@ type identityServer struct {
 	version string
 }
 
-// NewIdentityServer creates identity server
-func NewIdentityServer(name, version string) *identityServer {
+// newIdentityServer creates identity server
+func newIdentityServer(name, version string) *identityServer {
 	return &identityServer{
 		name:    name,
 		version: version,

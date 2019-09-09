@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package csidriver
 
 import (
 	"fmt"
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/csidriver/cmd/app/options"
+	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app/options"
 )
 
 type CSIDriver struct {
@@ -56,10 +56,10 @@ func (cd *CSIDriver) Run() {
 	klog.Infof("driver information: %v", cd)
 
 	// Create GRPC servers
-	cd.ids = NewIdentityServer(cd.DriverName, cd.Version)
-	cd.cs = NewControllerServer(cd.NodeID, cd.KubeEdgeEndpoint)
+	cd.ids = newIdentityServer(cd.DriverName, cd.Version)
+	cd.cs = newControllerServer(cd.NodeID, cd.KubeEdgeEndpoint)
 
-	s := NewNonBlockingGRPCServer()
+	s := newNonBlockingGRPCServer()
 	s.Start(cd.Endpoint, cd.ids, cd.cs, nil)
 	s.Wait()
 }
