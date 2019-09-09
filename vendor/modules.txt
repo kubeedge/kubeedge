@@ -231,6 +231,7 @@ github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/ptypes/struct
+github.com/golang/protobuf/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
@@ -338,6 +339,8 @@ github.com/kubeedge/viaduct/pkg/utils
 github.com/kubeedge/viaduct/pkg/packer
 github.com/kubeedge/viaduct/pkg/translator
 github.com/kubeedge/viaduct/pkg/protos/message
+# github.com/kubernetes-csi/csi-lib-utils v0.6.1
+github.com/kubernetes-csi/csi-lib-utils/protosanitizer
 # github.com/lithammer/dedent v1.1.0
 github.com/lithammer/dedent
 # github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f
@@ -449,6 +452,8 @@ github.com/paypal/gatt/linux/evt
 github.com/paypal/gatt/linux/gioctl
 github.com/paypal/gatt/linux/socket
 github.com/paypal/gatt/linux/util
+# github.com/pborman/uuid v1.2.0
+github.com/pborman/uuid
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -505,8 +510,8 @@ golang.org/x/crypto/ed25519
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
-golang.org/x/net/http2
 golang.org/x/net/context
+golang.org/x/net/http2
 golang.org/x/net/trace
 golang.org/x/net/proxy
 golang.org/x/net/websocket

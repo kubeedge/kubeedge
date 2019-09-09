@@ -1,0 +1,85 @@
+kind: DaemonSet
+apiVersion: apps/v1beta2
+metadata:
+  name: csi-hostpath-edge
+  namespace: kubeedge
+spec:
+  selector:
+    matchLabels:
+      app: csi-hostpath-edge
+  template:
+    metadata:
+      labels:
+        app: csi-hostpath-edge
+    spec:
+      hostNetwork: true
+      containers:
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/csi-hostpath /registration/csi-hostpath-reg.sock"]
+          args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/edged/plugins/csi-hostpath/csi.sock
+          securityContext:
+            privileged: true
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+        - name:  csi-hostpath-driver
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: quay.io/k8scsi/hostpathplugin:v1.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--drivername=csi-hostpath"
+            - "--v=5"
+            - "--nodeid=$(KUBE_NODE_NAME)"
+            - "--endpoint=unix:///csi/csi.sock"
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: plugins-dir
+              mountPath: /var/lib/edged/plugins
+              mountPropagation: Bidirectional
+            - name: mountpoint-dir
+              mountPath: /var/lib/edged/pods
+              mountPropagation: "Bidirectional"
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/edged/plugins/csi-hostpath
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/edged/plugins_registry
+            type: DirectoryOrCreate
+        - name: plugins-dir
+          hostPath:
+            path: /var/lib/edged/plugins
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: /var/lib/edged/pods
+            type: DirectoryOrCreate
