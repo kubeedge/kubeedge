@@ -116,13 +116,13 @@ replace (
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
 	k8s.io/api v0.0.0 => k8s.io/api v0.0.0-20190720062849-3043179095b6
 	k8s.io/apiextensions-apiserver v0.0.0 => k8s.io/apiextensions-apiserver v0.0.0-20190718185103-d1ef975d28ce // indirect
-	k8s.io/apimachinery v0.0.0 => k8s.io/apimachinery v0.0.0-20190612165923-1799e75a0719
+	k8s.io/apimachinery v0.0.0 => k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
 	k8s.io/apiserver v0.0.0 => k8s.io/apiserver v0.0.0-20190718184206-a1aa83af71a7
 	k8s.io/cli-runtime v0.0.0 => k8s.io/cli-runtime v0.0.0-20190718185405-0ce9869d0015
 	k8s.io/client-go v0.0.0 => k8s.io/client-go v0.0.0-20190718183610-8e956561bbf5 // indirect
 	k8s.io/cloud-provider v0.0.0 => k8s.io/cloud-provider v0.0.0-20190718190308-f8e43aa19282 // indirect
 	k8s.io/cluster-bootstrap v0.0.0 => k8s.io/cluster-bootstrap v0.0.0-20190718190146-f7b0473036f9
-	k8s.io/code-generator v0.0.0 => k8s.io/code-generator v0.0.0-20190612165923-18da4a14b22b
+	k8s.io/code-generator v0.0.0 => k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b
 	k8s.io/component-base v0.0.0 => k8s.io/component-base v0.0.0-20190718183727-0ececfbe9772
 	k8s.io/cri-api v0.0.0 => k8s.io/cri-api v0.0.0-20190531030430-6117653b35f1
 	k8s.io/csi-api v0.0.0 => k8s.io/csi-api v0.0.0-20190313123203-94ac839bf26c // indirect
