@@ -3,7 +3,8 @@ package mux
 import (
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -17,7 +18,7 @@ func NewPattern(resource string) *MessagePattern {
 	expression := NewExpression()
 	resExpr := expression.GetExpression(resource)
 	if resExpr == nil {
-		log.LOGGER.Errorf("bad resource(%s) for expression", resource)
+		klog.Errorf("bad resource(%s) for expression", resource)
 		return nil
 	}
 

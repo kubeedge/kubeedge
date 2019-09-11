@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -56,7 +57,7 @@ func (c *QuicClient) getControlLane(s quic.Session) error {
 
 	stream, err := s.OpenStreamSync()
 	if err != nil {
-		log.LOGGER.Errorf("open control stream error(%+v)", err)
+		klog.Errorf("open control stream error(%+v)", err)
 		return fmt.Errorf("open control stream")
 	}
 
@@ -72,7 +73,7 @@ func (c *QuicClient) sendHeader() error {
 		FillBody(c.exOpts.Header)
 	err := c.ctrlLane.WriteMessage(msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed to write message, error: %+v", err)
+		klog.Errorf("failed to write message, error: %+v", err)
 		return err
 	}
 
@@ -82,10 +83,10 @@ func (c *QuicClient) sendHeader() error {
 	var response model.Message
 	err = c.ctrlLane.ReadMessage(&response)
 	if err != nil {
-		log.LOGGER.Errorf("failed to read message, error: %+v", err)
+		klog.Errorf("failed to read message, error: %+v", err)
 		return err
 	}
-	log.LOGGER.Debugf("get response: %+v", response)
+	klog.Infof("get response: %+v", response)
 	return nil
 }
 
@@ -94,7 +95,7 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 	quicConfig := c.getQuicConfig()
 	session, err := quic.DialAddr(c.options.Addr, c.options.TLSConfig, quicConfig)
 	if err != nil {
-		log.LOGGER.Errorf("failed dial addr %s, error:%+v", c.options.Addr, err)
+		klog.Errorf("failed dial addr %s, error:%+v", c.options.Addr, err)
 		return nil, err
 	}
 
@@ -108,10 +109,10 @@ func (c *QuicClient) Connect() (conn.Connection, error) {
 	// send headers
 	err = c.sendHeader()
 	if err != nil {
-		log.LOGGER.Warnf("failed to send headers, error: %+v", err)
+		klog.Warningf("failed to send headers, error: %+v", err)
 	}
 
-	log.LOGGER.Debugf("connect remote peer successfully")
+	klog.Info("connect remote peer successfully")
 	return conn.NewConnection(&conn.ConnectionOptions{
 		ConnType: api.ProtocolTypeQuic,
 		ConnUse:  c.options.ConnUse,

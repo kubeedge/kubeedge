@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
 	"github.com/lucas-clemente/quic-go"
@@ -156,7 +157,7 @@ func (mgr *PoolManager) freeStream(stream quic.Stream) {
 // is more 80% when releaseStream called
 func (mgr *PoolManager) checkThreshold() bool {
 	totalLen := mgr.idlePool.len() + mgr.busyPool.len()
-	log.LOGGER.Debugf("total: %v, idle: %v, busy: %v", totalLen, mgr.idlePool.len(), mgr.busyPool.len())
+	klog.Infof("total: %v, idle: %v, busy: %v", totalLen, mgr.idlePool.len(), mgr.busyPool.len())
 	if totalLen >= PoolStreamMinDefault &&
 		mgr.idlePool.len() >= (int(float64(totalLen)*ThresholdDefault)+1) {
 		return true
@@ -179,7 +180,7 @@ func (mgr *PoolManager) releaseStream(stream quic.Stream) {
 	if mgr.autoFree {
 		overrun := mgr.checkThreshold()
 		if overrun {
-			log.LOGGER.Infof("start to free idle streams")
+			klog.Info("start to free idle streams")
 			mgr.idlePool.destroyStreams()
 		}
 	}
@@ -235,7 +236,7 @@ func (mgr *StreamManager) getPoolManager(useType api.UseType) *PoolManager {
 	case api.UseTypeStream:
 		poolMgr = &mgr.binaryPool
 	default:
-		log.LOGGER.Errorf("bad stream use type(%s)%s, ", useType, api.UseTypeMessage)
+		klog.Errorf("bad stream use type(%s)%s, ", useType, api.UseTypeMessage)
 	}
 	return poolMgr
 }
@@ -284,7 +285,7 @@ func (mgr *StreamManager) GetStream(useType api.UseType, autoDispatch bool, getF
 		total := mgr.binaryPool.len() + mgr.messagePool.len()
 		if total >= mgr.NumStreamsMax {
 			// if no available idle stream, block and wait
-			log.LOGGER.Debugf("wait for idle stream")
+			klog.Info("wait for idle stream")
 			mgr.lock.Unlock()
 			// check it has a available stream or wait for a stream
 			poolMgr.availableOrWait()
@@ -309,7 +310,7 @@ func (mgr *StreamManager) GetStream(useType api.UseType, autoDispatch bool, getF
 	// try to get stream from session
 	stream, err = getFuncEx(useType, autoDispatch)
 	if err != nil {
-		log.LOGGER.Warnf("get stream error(%+v)", err)
+		klog.Warningf("get stream error(%+v)", err)
 		return nil, err
 	}
 
