@@ -3,7 +3,8 @@ package fifo
 import (
 	"fmt"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/comm"
 )
@@ -28,7 +29,7 @@ func (f *MessageFifo) Put(msg *model.Message) {
 		<-f.fifo
 		// push into fifo
 		f.fifo <- *msg
-		log.LOGGER.Warnf("too many message received, fifo overflow")
+		klog.Warning("too many message received, fifo overflow")
 	}
 }
 

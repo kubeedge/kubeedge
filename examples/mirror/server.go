@@ -10,7 +10,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/examples/chat/config"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/cmgr"
@@ -49,7 +50,7 @@ func (w loggerWriter) Write(b []byte) (int, error) {
 func ConnNotify(conn conn.Connection) {
 	go func() {
 		_, err := io.Copy(loggerWriter{}, conn)
-		log.LOGGER.Debugf("error: %+v", err)
+		klog.Infof("error: %+v", err)
 	}()
 }
 

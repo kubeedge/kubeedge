@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 )
 
 type MessageExpression struct {
@@ -67,7 +67,7 @@ func (exp *MessageExpression) GetExpression(resource string) *MessageExpression 
 	expression := strings.TrimRight(buffer.String(), "/") + "(/.*)?$"
 	compiled, err := regexp.Compile(expression)
 	if err != nil {
-		log.LOGGER.Errorf("failed to compile resource expression(%s)", expression)
+		klog.Errorf("failed to compile resource expression(%s)", expression)
 		return nil
 	}
 

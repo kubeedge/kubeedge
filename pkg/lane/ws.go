@@ -4,8 +4,9 @@ import (
 	"io"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/packer"
 	"github.com/kubeedge/viaduct/pkg/translator"
@@ -21,7 +22,7 @@ func NewWSLane(van interface{}) *WSLane {
 	if wsConn, ok := van.(*websocket.Conn); ok {
 		return &WSLane{conn: wsConn}
 	}
-	log.LOGGER.Errorf("oops! bad type of van")
+	klog.Error("oops! bad type of van")
 	return nil
 }
 
@@ -29,7 +30,7 @@ func (l *WSLane) Read(p []byte) (int, error) {
 	_, msgData, err := l.conn.ReadMessage()
 	if err != nil {
 		if err != io.EOF {
-			log.LOGGER.Errorf("read message error(%+v)", err)
+			klog.Errorf("read message error(%+v)", err)
 		}
 		return len(msgData), err
 	}
@@ -45,7 +46,7 @@ func (l *WSLane) ReadMessage(msg *model.Message) error {
 
 	err = translator.NewTran().Decode(rawData, msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed to decode message")
+		klog.Error("failed to decode message")
 		return err
 	}
 
@@ -55,7 +56,7 @@ func (l *WSLane) ReadMessage(msg *model.Message) error {
 func (l *WSLane) Write(p []byte) (int, error) {
 	err := l.conn.WriteMessage(websocket.BinaryMessage, p)
 	if err != nil {
-		log.LOGGER.Errorf("write websocket message error(%+v)", err)
+		klog.Errorf("write websocket message error(%+v)", err)
 		return len(p), err
 	}
 	return len(p), err
@@ -64,7 +65,7 @@ func (l *WSLane) Write(p []byte) (int, error) {
 func (l *WSLane) WriteMessage(msg *model.Message) error {
 	rawData, err := translator.NewTran().Encode(msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed to encode message")
+		klog.Error("failed to encode message")
 		return err
 	}
 

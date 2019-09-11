@@ -4,8 +4,9 @@ import (
 	"io"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -19,7 +20,7 @@ func NewWSLaneWithoutPack(van interface{}) *WSLaneWithoutPack {
 	if wsConn, ok := van.(*websocket.Conn); ok {
 		return &WSLaneWithoutPack{conn: wsConn}
 	}
-	log.LOGGER.Errorf("oops! bad type of van")
+	klog.Error("oops! bad type of van")
 	return nil
 }
 
@@ -27,7 +28,7 @@ func (l *WSLaneWithoutPack) Read(p []byte) (int, error) {
 	_, msgData, err := l.conn.ReadMessage()
 	if err != nil {
 		if err != io.EOF {
-			log.LOGGER.Errorf("read message error(%+v)", err)
+			klog.Errorf("read message error(%+v)", err)
 		}
 		return len(msgData), err
 	}
@@ -42,7 +43,7 @@ func (l *WSLaneWithoutPack) ReadMessage(msg *model.Message) error {
 func (l *WSLaneWithoutPack) Write(p []byte) (int, error) {
 	err := l.conn.WriteMessage(websocket.BinaryMessage, p)
 	if err != nil {
-		log.LOGGER.Errorf("write websocket message error(%+v)", err)
+		klog.Errorf("write websocket message error(%+v)", err)
 		return len(p), err
 	}
 	return len(p), err

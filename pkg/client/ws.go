@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"k8s.io/klog"
+
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
@@ -42,7 +43,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	header.Add("ConnectionUse", string(c.options.ConnUse))
 	wsConn, resp, err := c.dialer.Dial(c.options.Addr, header)
 	if err == nil {
-		log.LOGGER.Infof("dial %s successfully", c.options.Addr)
+		klog.Infof("dial %s successfully", c.options.Addr)
 
 		// do user's processing on connection or response
 		if c.exOpts.Callback != nil {
@@ -75,7 +76,7 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 		resp.Body.Close()
 		return nil, err
 	}
-	log.LOGGER.Errorf("dial websocket error(%+v), response message: %s", err, respMsg)
+	klog.Errorf("dial websocket error(%+v), response message: %s", err, respMsg)
 
 	return nil, err
 }

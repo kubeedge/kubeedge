@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/examples/chat/config"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/client"
@@ -44,10 +45,10 @@ func StartClient(cfg *config.Config) error {
 
 	connClient, err := client.Connect()
 	if err != nil {
-		log.LOGGER.Errorf("failed to connect peer, error: %+v", err)
+		klog.Errorf("failed to connect peer, error: %+v", err)
 		return err
 	}
-	log.LOGGER.Debugf("connect successfully")
+	klog.Info("connect successfully")
 	return SendStdin(connClient)
 }
 
