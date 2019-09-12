@@ -13,28 +13,27 @@
 
 ## 1.1 What's New
 
-**CSI support**
+**Container Storage Interface (CSI) support**
 
-This feature enables edged to support [Basic CSI Volume Lifecycle](https://github.com/container-storage-interface/spec/blob/master/spec.md#volume-lifecycle). And it's compatible with Kubernetes and CSI.
+This feature enables running applications with persistant data store at edge and KubeEdge to support [basic CSI Volume Lifecycle](https://github.com/container-storage-interface/spec/blob/master/spec.md#volume-lifecycle) and is compatible with Kubernetes and CSI.
 
-**Admission webhook support**
+**Dynamic Admission control Webhook**
 
-Admission webhook enables to mutate and add more validation for KubeEdge Api object, like device CRD. 
+Admission control webhook is an effective way of pre-processing the object configuration for KubeEdge API objects like devicemodels, devices. 
 
-**Upgrade kubernetes to v1.15.3**
+**Kubernetes Upgrade**
 
-Upgrade the kubernetes to new version v1.15.3.
+Upgrade the venderod kubernetes version to v1.15.3.
 
-**Add local up kubeedge script**
+**KubeEdge local setup scripts**
 
-A bash script that can stand up a KubeEdge cluster in a VM with just cloudcore, edgecore binaries and kind. It uses kind to start K8s cluster and runs cloudcore, edgecore binaries as process in VM.
+A bash script that can start a KubeEdge cluster in a VM with cloudcore, edgecore binaries and kind. It uses kind to start K8s cluster and runs cloudcore, edgecore binaries as processes in a single VM.
 
 ### Known Issues
 
-- Reliable message delivery is missing between cloud and edge.
+- Reliable message delivery between cloud and edge is missing.
 
-- Installer currently doesn't support installation of containerd, cni-plugins.
-
+- There is no logic to partition the configmap containing multiple device models and device instances.
 
 ### Other notable changes
 
