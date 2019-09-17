@@ -17,13 +17,13 @@
 
 This feature enables running applications with persistant data store at edge and KubeEdge to support [basic CSI Volume Lifecycle](https://github.com/container-storage-interface/spec/blob/master/spec.md#volume-lifecycle) and is compatible with Kubernetes and CSI.
 
-**Dynamic Admission control Webhook**
+**Dynamic Admission Control Webhook**
 
-Admission control webhook is an effective way of pre-processing the object configuration for KubeEdge API objects like devicemodels, devices. 
+Admission control webhook is an effective way of validating/mutating the object configuration for KubeEdge API objects like devicemodels, devices. 
 
 **Kubernetes Upgrade**
 
-Upgrade the venderod kubernetes version to v1.15.3.
+Upgrade the venderod kubernetes version to v1.15.3, so users can use the feature of new version on the cloud and on the edge side.
 
 **KubeEdge local setup scripts**
 
@@ -37,7 +37,7 @@ A bash script that can start a KubeEdge cluster in a VM with cloudcore, edgecore
 
 ### Other notable changes
 
-- Add New Feature: support CRI Interface docking docker. ([#829](https://github.com/kubeedge/kubeedge/pull/829), [@arcanique](https://github.com/arcanique))
+- Add New Feature: support dockershim in edged. ([#829](https://github.com/kubeedge/kubeedge/pull/829), [@arcanique](https://github.com/arcanique))
 
 - Fix edge_core cannot connect to edgecontroller after disconnecting once ([#870](https://github.com/kubeedge/kubeedge/pull/870), [@shouhong](https://github.com/shouhong))
 
@@ -69,3 +69,4 @@ A bash script that can start a KubeEdge cluster in a VM with cloudcore, edgecore
 
 - Add local up kubeedge script ([#1085](https://github.com/kubeedge/kubeedge/pull/1085), [@fisherxu](https://github.com/fisherxu))
 
+- Fix panic: concurrent write to websocket ([#1112](https://github.com/kubeedge/kubeedge/pull/1112), [@fisherxu](https://github.com/fisherxu))
