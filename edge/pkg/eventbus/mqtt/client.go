@@ -146,14 +146,3 @@ func (mq *Client) InitPubClient() {
 	util.LoopConnect(pubID, mq.PubCli)
 	klog.Info("finish hub-client pub")
 }
-
-// PubMQTTMsg pub msg to mqtt broker
-func (mq *Client) PubMQTTMsg(topic string, qos byte, retained bool, payload interface{}) error {
-	token := mq.PubCli.Publish(topic, qos, retained, payload)
-	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
-		klog.Errorf("error in PubMQTTMsg with topic: %s, %v", topic, token.Error())
-		return fmt.Errorf("pubmsg err")
-	}
-	klog.Infof("success in PubMQTTMsg with topic: %s", topic)
-	return nil
-}
