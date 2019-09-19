@@ -80,7 +80,7 @@ func onStateChanged(device gatt.Device, s gatt.State) {
 
 //onPeripheralDiscovered contains the operations to be performed as soon as the peripheral device is discovered
 func onPeripheralDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
-	if strings.ToUpper(a.LocalName) == strings.ToUpper(strings.Replace(deviceName, "-", " ", -1)) {
+	if strings.EqualFold(a.LocalName, strings.Replace(deviceName, "-", " ", -1)) {
 		klog.Infof("Device: %s found !!!! Stop Scanning for devices", deviceName)
 		// Stop scanning once we've got the peripheral we're looking for.
 		p.Device().StopScanning()
@@ -149,10 +149,10 @@ func (w *Watcher) EquateTwinValue(deviceID string) error {
 				for _, watcherAction := range twinAttribute.Actions {
 					actionExists := false
 					for _, action := range actionManager {
-						if strings.ToUpper(action.Name) == strings.ToUpper(watcherAction) {
+						if strings.EqualFold(action.Name, watcherAction) {
 							actionExists = true
 							for _, converterAttribute := range dataConverter.DataWrite.Attributes {
-								if strings.ToUpper(converterAttribute.Name) == strings.ToUpper(twinAttribute.Name) {
+								if strings.EqualFold(converterAttribute.Name, twinAttribute.Name) {
 									for operationName, dataMap := range converterAttribute.Operations {
 										if action.Name == operationName {
 											expectedValue := helper.TwinResult.Twin[twinAttribute.Name].Expected.Value
