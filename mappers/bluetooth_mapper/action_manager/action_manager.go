@@ -78,7 +78,7 @@ func (action *Action) PerformOperation(readConverter ...dataconverter.DataRead) 
 		}
 		converted := false
 		for _, conversionAction := range readConverter[0].Actions {
-			if strings.ToUpper(conversionAction.ActionName) == strings.ToUpper(action.Name) {
+			if strings.EqualFold(conversionAction.ActionName, action.Name) {
 				convertedValue := fmt.Sprintf("%f", conversionAction.ConversionOperation.ConvertReadData(readValue))
 				action.Operation.Value = []byte(convertedValue)
 				converted = true
