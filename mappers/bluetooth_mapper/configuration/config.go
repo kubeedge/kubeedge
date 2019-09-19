@@ -124,7 +124,7 @@ func (b *BLEConfig) Load() error {
 	b.Watcher = readConfigFile.Watcher
 	// Assign device information obtained from config file
 	for _, device := range readConfigMap.DeviceInstances {
-		if strings.ToUpper(device.Model) == strings.ToUpper(readConfigFile.DeviceModelName) {
+		if strings.EqualFold(device.Model, readConfigFile.DeviceModelName) {
 			b.Device.ID = device.ID
 			b.Device.Name = device.Model
 		}
@@ -136,7 +136,7 @@ func (b *BLEConfig) Load() error {
 		action.PerformImmediately = actionConfig.PerformImmediately
 
 		for _, propertyVisitor := range readConfigMap.PropertyVisitors {
-			if strings.ToUpper(propertyVisitor.ModelName) == strings.ToUpper(b.Device.Name) && strings.ToUpper(propertyVisitor.PropertyName) == strings.ToUpper(actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == ProtocolName {
+			if strings.EqualFold(propertyVisitor.ModelName, b.Device.Name) && strings.EqualFold(propertyVisitor.PropertyName, actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == ProtocolName {
 				propertyVisitorBytes, err := json.Marshal(propertyVisitor.VisitorConfig)
 				if err != nil {
 					return errors.New("Error in marshalling data property visitor configuration: " + err.Error())
@@ -182,9 +182,9 @@ func (b *BLEConfig) Load() error {
 			}
 		}
 		for _, deviceModel := range readConfigMap.DeviceModels {
-			if strings.ToUpper(deviceModel.Name) == strings.ToUpper(b.Device.Name) {
+			if strings.EqualFold(deviceModel.Name, b.Device.Name) {
 				for _, property := range deviceModel.Properties {
-					if strings.ToUpper(property.Name) == strings.ToUpper(actionConfig.PropertyName) {
+					if strings.EqualFold(property.Name, actionConfig.PropertyName) {
 						if property.AccessMode == READWRITE {
 							action.Operation.Action = "Write"
 							if strings.ToUpper(property.DataType) == "INT" {
@@ -192,7 +192,7 @@ func (b *BLEConfig) Load() error {
 								action.Operation.Value = []byte(value)
 							} else if strings.ToUpper(property.DataType) == "STRING" {
 								for _, converterAttribute := range b.Converter.DataWrite.Attributes {
-									if strings.ToUpper(converterAttribute.Name) == strings.ToUpper(actionConfig.PropertyName) {
+									if strings.EqualFold(converterAttribute.Name, actionConfig.PropertyName) {
 										for operationName, dataMap := range converterAttribute.Operations {
 											if action.Name == operationName {
 												if _, ok := dataMap.DataMapping[property.DefaultValue.(string)]; ok {

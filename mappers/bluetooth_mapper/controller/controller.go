@@ -154,7 +154,7 @@ func (c *Config) handleScheduleDeleteMessage(client MQTT.Client, message MQTT.Me
 	for _, scheduleToBeDeleted := range schedulesToBeDeleted {
 		scheduleExists := false
 		for index, schedule := range c.Scheduler.Schedules {
-			if strings.ToUpper(schedule.Name) == strings.ToUpper(scheduleToBeDeleted.Name) {
+			if strings.EqualFold(schedule.Name, scheduleToBeDeleted.Name) {
 				scheduleExists = true
 				copy(c.Scheduler.Schedules[index:], c.Scheduler.Schedules[index+1:])
 				c.Scheduler.Schedules = c.Scheduler.Schedules[:len(c.Scheduler.Schedules)-1]
@@ -211,7 +211,7 @@ func (c *Config) handleActionDeleteMessage(client MQTT.Client, message MQTT.Mess
 	for _, actionToBeDeleted := range actionsToBeDeleted {
 		actionExists := false
 		for index, action := range c.ActionManager.Actions {
-			if strings.ToUpper(action.Name) == strings.ToUpper(actionToBeDeleted.Name) {
+			if strings.EqualFold(action.Name, actionToBeDeleted.Name) {
 				actionExists = true
 				copy(c.ActionManager.Actions[index:], c.ActionManager.Actions[index+1:])
 				c.ActionManager.Actions = c.ActionManager.Actions[:len(c.ActionManager.Actions)-1]

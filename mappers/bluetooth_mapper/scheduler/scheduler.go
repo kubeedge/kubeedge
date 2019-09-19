@@ -81,7 +81,7 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 	actionExists := false
 	for _, actionName := range schedule.Actions {
 		for _, action := range actionManager {
-			if strings.ToUpper(action.Name) == strings.ToUpper(actionName) {
+			if strings.EqualFold(action.Name, actionName) {
 				actionExists = true
 				klog.Infof("Performing scheduled operation: %s", action.Name)
 				action.PerformOperation(dataConverter)
