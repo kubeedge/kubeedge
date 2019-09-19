@@ -68,7 +68,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     # run edge controller
     # `conf/` should be in the same directory as the cloned KubeEdge repository
     # verify the configurations before running cloud(cloudcore)
-    mkdir ~/cmd/conf
+    mkdir -p ~/cmd/conf
     cp cloudcore ~/cmd/
     cp -rf conf/* ~/cmd/conf/
     ```
@@ -77,7 +77,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 + Set cloudcore config file
 
     ```shell
-    cd ~/cmd/config
+    cd ~/cmd/conf
     vim controller.yaml
     ```
 
