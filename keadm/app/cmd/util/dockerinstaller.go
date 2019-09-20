@@ -43,7 +43,9 @@ func (d *DockerInstTool) InstallTools() error {
 	case types.VersionNAInRepo:
 		return fmt.Errorf("Expected Docker version is not available in OS repo")
 	case types.AlreadySameVersionExist:
-		fmt.Println("Same version of docker already installed in this host")
+		//--nsriram start
+		//fmt.Println("Same version of docker already installed in this host")
+		//--nsriram end
 		return nil
 	case types.DefVerInstallRequired:
 		d.SetDockerVersion(d.DefaultToolVer)

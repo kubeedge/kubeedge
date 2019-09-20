@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
@@ -37,10 +38,10 @@ const (
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type UbuntuOS struct {
-	DockerVersion     string
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	DockerVersion      string
+	KubernetesVersion  string
+	KubeEdgeVersion    string
+	IsEdgeNode         bool //True - Edgenode False - Cloudnode
 	K8SImageRepository string
 	K8SPodNetworkCidr  string
 }
@@ -146,9 +147,62 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, err
 	cmd.ExecuteCommand()
 	str := cmd.GetStdOutput()
 
+	if str != "" {
+		fmt.Println("Docker Version installed is = ", str)
+	}
+
+	//--nsriram start
+
+	//if strings.Count(str, ".") == 2 {
+	//	fmt.Println("Docker version", str, "already installed in this host")
+	//	return types.AlreadySameVersionExist, nil
+	//}
+	// Docker version format MM.mm.PP
+	// Split version number into three parts M = Major number, m = minor number, P = patch number
+	sliceOfDockerMinimumVersionNumber := strings.SplitN(DockerMinimumVersionNumber, ".", 3)
+
+	minimumDockerMajorVersionNumber, _ := strconv.Atoi(sliceOfDockerMinimumVersionNumber[0])
+	minimumDockerMinorVersionNumber, _ := strconv.Atoi(sliceOfDockerMinimumVersionNumber[1])
+	minimumDockerPatchVersionNumber, _ := strconv.Atoi(sliceOfDockerMinimumVersionNumber[2])
+
+	// Extract only MmP data
+	sliceOfDockerVersion := strings.SplitN(str, "-", 2)
+	sliceOfDockerVersion = strings.SplitN(sliceOfDockerVersion[0], ".", 3)
+	// Slice should contain 3 parts (Major, minor and patch numbers)
+	if len(sliceOfDockerVersion) == 3 {
+
+		majorNumber, _ := strconv.Atoi(sliceOfDockerVersion[0])
+		minorNumber, _ := strconv.Atoi(sliceOfDockerVersion[1])
+		patchNumber, _ := strconv.Atoi(sliceOfDockerVersion[2])
+
+		if majorNumber < minimumDockerMajorVersionNumber {
+			fmt.Printf("Installed Docker version doesn't qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+		} else if majorNumber > minimumDockerMajorVersionNumber {
+			fmt.Printf("Installed Docker version qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+			return types.AlreadySameVersionExist, nil
+		} else if majorNumber == minimumDockerMajorVersionNumber {
+			// On Major number same, check for minor version number
+			if minorNumber < minimumDockerMinorVersionNumber {
+				fmt.Printf("Installed Docker version doesn't qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+			} else if minorNumber > minimumDockerMinorVersionNumber {
+				fmt.Printf("Installed Docker version qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+				return types.AlreadySameVersionExist, nil
+			} else {
+				// On minor number same, check for patch number
+				if patchNumber >= minimumDockerPatchVersionNumber {
+					fmt.Printf("Installed Docker version qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+					return types.AlreadySameVersionExist, nil
+				}
+				fmt.Printf("Installed Docker version doesn't qualify --%d.%d.%d--\n", majorNumber, minorNumber, patchNumber)
+			}
+		}
+	}
+
 	if strings.Contains(str, u.DockerVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
+
+	//--nsriram end
 
 	if err := u.addDockerRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
@@ -487,7 +541,7 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	}
 
 SKIPDOWNLOADAND:
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
+	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
 	stdout, err := runCommandWithShell(untarFileAndMove)
 	if err != nil {
 		return err
