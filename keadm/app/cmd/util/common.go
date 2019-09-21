@@ -38,7 +38,6 @@ const (
 	DefaultDownloadURL = "https://download.docker.com"
 	DockerPreqReqList  = "apt-transport-https ca-certificates curl gnupg-agent software-properties-common"
 
-	//-- nsriam start
 	// Among the qualified docker versions mentioned (please refer to below
 	// mentioned reference link), docker version 1.13.1 is not
 	// shown in the output 'apt-cache madison 'docker-ce'' next mentioned &
@@ -46,7 +45,6 @@ const (
 	// Reference - https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.14.md#external-dependencies
 
 	DockerMinimumVersionNumber = "17.03.1"
-	//-- nsriam end
 
 	KubernetesDownloadURL = "https://apt.kubernetes.io/"
 	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"

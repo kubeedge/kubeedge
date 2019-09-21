@@ -151,12 +151,6 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, err
 		fmt.Println("Docker Version installed is = ", str)
 	}
 
-	//--nsriram start
-
-	//if strings.Count(str, ".") == 2 {
-	//	fmt.Println("Docker version", str, "already installed in this host")
-	//	return types.AlreadySameVersionExist, nil
-	//}
 	// Docker version format MM.mm.PP
 	// Split version number into three parts M = Major number, m = minor number, P = patch number
 	sliceOfDockerMinimumVersionNumber := strings.SplitN(DockerMinimumVersionNumber, ".", 3)
@@ -201,8 +195,6 @@ func (u *UbuntuOS) IsDockerInstalled(defVersion string) (types.InstallState, err
 	if strings.Contains(str, u.DockerVersion) {
 		return types.AlreadySameVersionExist, nil
 	}
-
-	//--nsriram end
 
 	if err := u.addDockerRepositoryAndUpdate(); err != nil {
 		return types.VersionNAInRepo, err
@@ -541,7 +533,7 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	}
 
 SKIPDOWNLOADAND:
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
+	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
 	stdout, err := runCommandWithShell(untarFileAndMove)
 	if err != nil {
 		return err
