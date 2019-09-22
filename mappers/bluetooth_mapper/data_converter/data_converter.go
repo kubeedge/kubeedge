@@ -19,6 +19,7 @@ package dataconverter
 import (
 	"strconv"
 	"strings"
+	"encoding/hex"
 )
 
 // Bluetooth Protocol Operation type
@@ -90,9 +91,7 @@ func (operation *ReadOperation) ConvertReadData(data []byte) float64 {
 			initialValue = append(initialValue, data[index])
 		}
 	}
-	for _, value := range initialValue {
-		initialStringValue = initialStringValue + strconv.Itoa(int(value))
-	}
+	initialStringValue = hex.EncodeToString(initialValue)
 	initialByteValue, _ := strconv.ParseUint(initialStringValue, 16, 16)
 
 	if operation.ShiftLeft != 0 {
