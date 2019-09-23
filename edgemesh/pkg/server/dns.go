@@ -188,10 +188,7 @@ func parseDnsQuery(req []byte) (que []dnsQuestion, err error) {
 
 //isAQuery judge if the dns pkg is a Qurey process
 func (h *dnsHeader) isAQurey() bool {
-	if h.flags&dnsQr != dnsQr {
-		return true
-	}
-	return false
+	return h.flags&dnsQr != dnsQr
 }
 
 //getHeader get dns pkg head

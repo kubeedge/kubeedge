@@ -6,9 +6,7 @@ import (
 
 type sourcesReady struct{}
 
-func (s *sourcesReady) AddSource(source string) {
-	return
-}
+func (s *sourcesReady) AddSource(source string) {}
 
 func (s *sourcesReady) AllReady() bool {
 	return true

@@ -311,7 +311,6 @@ func filterResourceType(msg model.Message) []v1.Service {
 		svcs = append(svcs, ss...)
 	default:
 		klog.Infof("[L4 Proxy] process other resource: %s", msg.Router.Resource)
-		break
 	}
 
 	return svcs
