@@ -64,7 +64,7 @@ func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1
 	var msg string
 
 	switch review.Request.Operation {
-	case admissionv1beta1.Create:
+	case admissionv1beta1.Create, admissionv1beta1.Update:
 		raw := review.Request.Object.Raw
 		devicemodel := devicesv1alpha1.DeviceModel{}
 		deserializer := codecs.UniversalDeserializer()
@@ -73,7 +73,7 @@ func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1
 			return toAdmissionResponse(err)
 		}
 		msg = validateDeviceModel(&devicemodel, &reviewResponse)
-	case admissionv1beta1.Update, admissionv1beta1.Delete, admissionv1beta1.Connect:
+	case admissionv1beta1.Delete, admissionv1beta1.Connect:
 		//no rule defined for above operations, greenlight for all of above.
 		reviewResponse.Allowed = true
 		klog.Info("admission validation passed!")
