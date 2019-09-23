@@ -79,7 +79,6 @@ func receiveMsg(commChannel chan interface{}, message *dttype.DTMessage) {
 		return
 	}
 	*message = *msg.(*dttype.DTMessage)
-	return
 }
 
 // twinValueFunc returns a new TwinValue
