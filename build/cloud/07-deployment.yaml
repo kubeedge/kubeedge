@@ -28,13 +28,13 @@ spec:
         - /bin/sh
         - -c
         - |
-          apk --no-cache add coreutils && cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
+          cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
           apiVersion: v1
           kind: Config
           clusters:
           - name: kubeedge
             cluster:
-              certificate-authority-data: $(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt | base64 -w 0)
+              certificate-authority-data: $(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt | base64 | awk '{printf $0}')
           users:
           - name: kubeedge
             user:
