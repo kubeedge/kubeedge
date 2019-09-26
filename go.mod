@@ -114,6 +114,7 @@ replace (
 	github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
+	github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 	k8s.io/api v0.0.0 => k8s.io/api v0.0.0-20190720062849-3043179095b6
 	k8s.io/apiextensions-apiserver v0.0.0 => k8s.io/apiextensions-apiserver v0.0.0-20190718185103-d1ef975d28ce // indirect
 	k8s.io/apimachinery v0.0.0 => k8s.io/apimachinery v0.0.0-20190612165923-1799e75a0719
