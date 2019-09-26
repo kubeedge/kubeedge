@@ -99,7 +99,7 @@ func (lb *LBHandler) handleWithNoRetry(chain *Chain, i *invocation.Invocation, l
 func (lb *LBHandler) handleWithRetry(chain *Chain, i *invocation.Invocation, lbConfig control.LoadBalancingConfig, cb invocation.ResponseCallBack) {
 	retryOnSame := lbConfig.RetryOnSame
 	retryOnNext := lbConfig.RetryOnNext
-	handlerIndex := chain.HandlerIndex
+	handlerIndex := i.HandlerIndex
 	var invResp *invocation.Response
 	var reqBytes []byte
 	if req, ok := i.Args.(*http.Request); ok {
@@ -123,7 +123,7 @@ func (lb *LBHandler) handleWithRetry(chain *Chain, i *invocation.Invocation, lbC
 		i.Endpoint = ep
 		callTimes++
 		var respErr error
-		chain.HandlerIndex = handlerIndex
+		i.HandlerIndex = handlerIndex
 
 		if _, ok := i.Args.(*http.Request); ok {
 			i.Args.(*http.Request).Body = ioutil.NopCloser(bytes.NewBuffer(reqBytes))

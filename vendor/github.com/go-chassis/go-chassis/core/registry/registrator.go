@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/go-chassis/go-chassis/core/config"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-mesh/openlogging"
 )
 
@@ -75,12 +74,12 @@ func enableRegistrator(opts Options) error {
 	}
 
 	if err := RegisterMicroservice(); err != nil {
-		lager.Logger.Errorf("start backoff for register microservice: %s", err)
+		openlogging.GetLogger().Errorf("start backoff for register microservice: %s", err)
 		startBackOff(RegisterMicroservice)
 	}
 	go HBService.Start()
 
-	lager.Logger.Infof("Enable [%s] registrator.", rt)
+	openlogging.GetLogger().Infof("Enable [%s] registrator.", rt)
 	return nil
 }
 
@@ -167,7 +166,7 @@ func Enable() (err error) {
 	}
 	enableContractDiscovery(oCD)
 
-	lager.Logger.Info("Enabled Registry")
+	openlogging.Info("Enabled Registry")
 	IsEnabled = true
 	return nil
 }
@@ -188,13 +187,13 @@ func DoRegister() error {
 	default:
 		{
 			tmpErr := fmt.Errorf("parameter incorrect, autoregister: %s", t)
-			lager.Logger.Error(tmpErr.Error())
+			openlogging.GetLogger().Error(tmpErr.Error())
 			return tmpErr
 		}
 	}
 	if isAutoRegister {
 		if err := RegisterMicroserviceInstances(); err != nil {
-			lager.Logger.Errorf("start back off for register microservice instances background: %s", err)
+			openlogging.GetLogger().Errorf("start back off for register microservice instances background: %s", err)
 			go startBackOff(RegisterMicroserviceInstances)
 		}
 	}

@@ -2,13 +2,13 @@ package session
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"encoding/base64"
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/go-chassis/go-chassis/pkg/util/httputil"
@@ -89,7 +89,7 @@ func SaveSessionIDFromContext(ctx context.Context, ep string, autoTimeout int) c
 
 	sessionIDStr := GetContextMetadata(ctx, common.LBSessionID)
 	if sessionIDStr != "" {
-		cookieKey := strings.Split(string(sessionIDStr), "=")
+		cookieKey := strings.Split(sessionIDStr, "=")
 		if len(cookieKey) > 1 {
 			sessionIDStr = cookieKey[1]
 		}
@@ -167,7 +167,7 @@ func SaveSessionIDFromHTTP(ep string, autoTimeout int, resp *http.Response, req 
 
 	var sessionIDStr string
 
-	if c, err := req.Cookie(common.LBSessionID); err != http.ErrNoCookie {
+	if c, err := req.Cookie(common.LBSessionID); err != http.ErrNoCookie && c != nil {
 		sessionIDStr = c.Value
 	}
 
@@ -179,7 +179,7 @@ func SaveSessionIDFromHTTP(ep string, autoTimeout int, resp *http.Response, req 
 
 	valueChassisLb := GetSessionFromResp(common.LBSessionID, resp)
 	//if session is in resp, then just save it
-	if string(valueChassisLb) != "" {
+	if valueChassisLb != "" {
 		Save(valueChassisLb, ep, timeValue)
 	} else if sessionIDStr != "" && sessBool {
 		setCookie(resp, sessionIDStr)
@@ -213,8 +213,8 @@ func DeletingKeySuccessiveFailure(resp *http.Response) {
 	Cache.DeleteExpired()
 	if resp == nil {
 		valueChassisLb := getLBCookie(common.LBSessionID)
-		if string(valueChassisLb) != "" {
-			cookieKey := strings.Split(string(valueChassisLb), "=")
+		if valueChassisLb != "" {
+			cookieKey := strings.Split(valueChassisLb, "=")
 			if len(cookieKey) > 1 {
 				Delete(cookieKey[1])
 				setLBCookie(common.LBSessionID, "")
@@ -224,8 +224,8 @@ func DeletingKeySuccessiveFailure(resp *http.Response) {
 	}
 
 	valueChassisLb := GetSessionFromResp(common.LBSessionID, resp)
-	if string(valueChassisLb) != "" {
-		cookieKey := strings.Split(string(valueChassisLb), "=")
+	if valueChassisLb != "" {
+		cookieKey := strings.Split(valueChassisLb, "=")
 		if len(cookieKey) > 1 {
 			Delete(cookieKey[1])
 		}
@@ -244,8 +244,8 @@ func GetSessionCookie(ctx context.Context, resp *http.Response) string {
 	}
 
 	valueChassisLb := GetSessionFromResp(common.LBSessionID, resp)
-	if string(valueChassisLb) != "" {
-		return string(valueChassisLb)
+	if valueChassisLb != "" {
+		return valueChassisLb
 	}
 
 	return ""

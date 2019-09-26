@@ -8,10 +8,10 @@ import (
 
 	"crypto/tls"
 	"fmt"
+
 	"github.com/cenkalti/backoff"
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/config/model"
-	"github.com/go-chassis/go-chassis/core/lager"
 	chassisTLS "github.com/go-chassis/go-chassis/core/tls"
 	"github.com/go-chassis/go-chassis/pkg/util/iputil"
 	"github.com/go-mesh/openlogging"
@@ -26,7 +26,7 @@ func GetProtocolMap(eps []string) (map[string]string, string) {
 	for _, ep := range eps {
 		u, err := url.Parse(ep)
 		if err != nil {
-			lager.Logger.Errorf("Can not parse %s: %s", ep, err.Error())
+			openlogging.GetLogger().Errorf("Can not parse %s: %s", ep, err.Error())
 			continue
 		}
 		proto := u.Scheme
@@ -136,7 +136,7 @@ func startBackOff(operation func() error) {
 		Clock:               backoff.SystemClock,
 	}
 	for {
-		lager.Logger.Infof("start backoff with initial interval %v", initialInterval)
+		openlogging.GetLogger().Infof("start backoff with initial interval %v", initialInterval)
 		err := backoff.Retry(operation, backOff)
 		if err == nil {
 			return
@@ -179,10 +179,10 @@ func getTLSConfig(scheme, t string) (*tls.Config, error) {
 				openlogging.Error(tmpErr.Error() + ", err: " + err.Error())
 				return nil, tmpErr
 			}
-			lager.Logger.Errorf("Load %s TLS config failed: %s", err)
+			openlogging.GetLogger().Errorf("Load %s TLS config failed: %s", err)
 			return nil, err
 		}
-		lager.Logger.Warnf("%s TLS mode, verify peer: %t, cipher plugin: %s.",
+		openlogging.GetLogger().Warnf("%s TLS mode, verify peer: %t, cipher plugin: %s.",
 			sslTag, sslConfig.VerifyPeer, sslConfig.CipherPlugin)
 		tlsConfig = tmpTLSConfig
 	}

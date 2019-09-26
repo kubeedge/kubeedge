@@ -1,10 +1,20 @@
-hash: 1a0062ef2d587d01d6f576a71957f65375c8bb6e241175c9568a1bb78e75e961
-updated: 2016-09-15T11:05:34.222002397-07:00
+hash: 4dabcf35c29ffecd1b84d2e6bee517c9749933c606e8ab6f21a46e694374dd7b
+updated: 2019-07-29T11:36:27.328149-07:00
 imports: []
 testImports:
+- name: github.com/davecgh/go-spew
+  version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
+  subpackages:
+  - difflib
 - name: github.com/stretchr/testify
-  version: d77da356e56a7428ad25149ca77381849a6a5232
+  version: 221dbe5ed46703ee255b1da0dec05086f5035f62
   subpackages:
   - assert
-- name: github.com/uber-go/atomic
-  version: 0c9e689d64f004564b79d9a663634756df322902
+- name: go.uber.org/atomic
+  version: df976f2515e274675050de7b3f42545de80594fd
+- name: gopkg.in/yaml.v2
+  version: 51d6538a90f86fe93ac480b35f37b2be17fef232

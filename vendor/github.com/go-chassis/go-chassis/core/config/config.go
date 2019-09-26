@@ -26,8 +26,9 @@ var lbConfig *model.LBWrapper
 // and description of the instance
 var MicroserviceDefinition *model.MicroserviceCfg
 
-// RouterDefinition is route rule config
-var RouterDefinition *model.RouterConfig
+//OldRouterDefinition is route rule config
+//Deprecated
+var OldRouterDefinition *RouterConfig
 
 //HystrixConfig is having info about isolation, circuit breaker, fallback properities of the micro service
 var HystrixConfig *model.HystrixConfigWrapper
@@ -201,8 +202,8 @@ func (e *pathError) Error() string { return e.Path + ": " + e.Err.Error() }
 
 // parseRouterConfig is unmarshal the router configuration file(router.yaml)
 func parseRouterConfig(file string) error {
-	RouterDefinition = &model.RouterConfig{}
-	err := unmarshalYamlFile(file, RouterDefinition)
+	OldRouterDefinition = &RouterConfig{}
+	err := unmarshalYamlFile(file, OldRouterDefinition)
 	if err != nil && !os.IsNotExist(err) {
 		return &pathError{Path: file, Err: err}
 	}
@@ -291,9 +292,9 @@ func GetHystrixConfig() *model.HystrixConfig {
 
 // Init is initialize the configuration directory, archaius, route rule, and schema
 func Init() error {
-	if err := parseRouterConfig(fileutil.RouterDefinition()); err != nil {
+	if err := parseRouterConfig(fileutil.RouterConfigPath()); err != nil {
 		if os.IsNotExist(err) {
-			openlogging.GetLogger().Infof("[%s] not exist", fileutil.RouterDefinition())
+			openlogging.GetLogger().Infof("[%s] not exist", fileutil.RouterConfigPath())
 		} else {
 			return err
 		}

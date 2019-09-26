@@ -5,13 +5,13 @@ const DefaultRouterType = "cse"
 
 // GetRouterType returns the type of router
 func GetRouterType() string {
-	if RouterDefinition.Router.Infra != "" {
-		return RouterDefinition.Router.Infra
+	if OldRouterDefinition.Router.Infra != "" {
+		return OldRouterDefinition.Router.Infra
 	}
 	return DefaultRouterType
 }
 
 // GetRouterEndpoints returns the router address
 func GetRouterEndpoints() string {
-	return RouterDefinition.Router.Address
+	return OldRouterDefinition.Router.Address
 }
