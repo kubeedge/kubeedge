@@ -22,7 +22,8 @@ func InitArchaius() error {
 		fileutil.GetMonitoring(),
 		fileutil.GetAuth(),
 		fileutil.GetTracing(),
-		fileutil.PaasLagerDefinition(),
+		fileutil.LogConfigPath(),
+		fileutil.RouterConfigPath(),
 	}
 
 	err = archaius.Init(

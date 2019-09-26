@@ -32,8 +32,8 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-chassis/go-archaius v0.20.0
-	github.com/go-chassis/go-chassis v1.6.1
-	github.com/go-mesh/openlogging v1.0.0
+	github.com/go-chassis/go-chassis v1.7.1
+	github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
 	github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kubeedge/beehive v0.0.0-20190627084409-06e0cfa222f7
+	github.com/kubeedge/beehive v0.0.0-20190809132808-14b9c1bfd040
 	github.com/kubeedge/viaduct v0.0.0-20190416034651-df4e595b4e12
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lucas-clemente/quic-go v0.10.2 // indirect
@@ -64,8 +64,8 @@ require (
 	github.com/mindprince/gonvml v0.0.0-20180514031326-b364b296c732 // indirect
 	github.com/mistifyio/go-zfs v2.1.1+incompatible // indirect
 	github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618 // indirect
-	github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega v1.5.0
+	github.com/onsi/ginkgo v1.10.1
+	github.com/onsi/gomega v1.7.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
@@ -84,15 +84,14 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
-	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
 	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
 	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7
 	google.golang.org/grpc v1.23.0
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.2.2

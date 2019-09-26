@@ -6,7 +6,6 @@ import (
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/config"
 	"github.com/go-chassis/go-chassis/core/config/schema"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-chassis/go-chassis/core/metadata"
 	"github.com/go-chassis/go-chassis/pkg/runtime"
 	"github.com/go-mesh/openlogging"
@@ -24,7 +23,7 @@ var InstanceEndpoints = make(map[string]string)
 func RegisterMicroservice() error {
 	service := config.MicroserviceDefinition
 	if e := service.ServiceDescription.Environment; e != "" {
-		lager.Logger.Infof("Microservice environment: [%s]", e)
+		openlogging.GetLogger().Infof("Microservice environment: [%s]", e)
 	} else {
 		openlogging.Debug("No microservice environment defined")
 	}
@@ -86,13 +85,13 @@ func RegisterMicroservice() error {
 	} else {
 		service.ServiceDescription.Properties["allowCrossApp"] = common.FALSE
 	}
-	lager.Logger.Debugf("Update micro service properties%v", service.ServiceDescription.Properties)
-	lager.Logger.Infof("Framework registered is [ %s:%s ]", framework.Name, framework.Version)
-	lager.Logger.Infof("Micro service registered by [ %s ]", framework.Register)
+	openlogging.GetLogger().Debugf("Update micro service properties%v", service.ServiceDescription.Properties)
+	openlogging.GetLogger().Infof("Framework registered is [ %s:%s ]", framework.Name, framework.Version)
+	openlogging.GetLogger().Infof("Micro service registered by [ %s ]", framework.Register)
 
 	sid, err := DefaultRegistrator.RegisterService(microservice)
 	if err != nil {
-		lager.Logger.Errorf("Register [%s] failed: %s", microservice.ServiceName, err)
+		openlogging.GetLogger().Errorf("Register [%s] failed: %s", microservice.ServiceName, err)
 		return err
 	}
 	if sid == "" {
@@ -100,7 +99,7 @@ func RegisterMicroservice() error {
 		return errEmptyServiceIDFromRegistry
 	}
 	runtime.ServiceID = sid
-	lager.Logger.Infof("Register [%s/%s] success", runtime.ServiceID, microservice.ServiceName)
+	openlogging.GetLogger().Infof("Register [%s/%s] success", runtime.ServiceID, microservice.ServiceName)
 
 	return nil
 }
@@ -123,7 +122,7 @@ func RegisterMicroserviceInstances() error {
 
 	sid, err := DefaultServiceDiscoveryService.GetMicroServiceID(runtime.App, service.ServiceDescription.Name, service.ServiceDescription.Version, service.ServiceDescription.Environment)
 	if err != nil {
-		lager.Logger.Errorf("Get service failed, key: %s:%s:%s, err %s",
+		openlogging.GetLogger().Errorf("Get service failed, key: %s:%s:%s, err %s",
 			runtime.App,
 			service.ServiceDescription.Name,
 			service.ServiceDescription.Version, err)
@@ -133,7 +132,7 @@ func RegisterMicroserviceInstances() error {
 	if err != nil {
 		return err
 	}
-	lager.Logger.Infof("service support protocols %v", config.GlobalDefinition.Cse.Protocols)
+	openlogging.GetLogger().Infof("service support protocols %v", config.GlobalDefinition.Cse.Protocols)
 	if len(InstanceEndpoints) != 0 {
 		eps = InstanceEndpoints
 	}
@@ -157,7 +156,7 @@ func RegisterMicroserviceInstances() error {
 
 	instanceID, err := DefaultRegistrator.RegisterServiceInstance(sid, microServiceInstance)
 	if err != nil {
-		lager.Logger.Errorf("Register instance failed, serviceID: %s, err %s", sid, err.Error())
+		openlogging.GetLogger().Errorf("Register instance failed, serviceID: %s, err %s", sid, err.Error())
 		return err
 	}
 	//Set to runtime

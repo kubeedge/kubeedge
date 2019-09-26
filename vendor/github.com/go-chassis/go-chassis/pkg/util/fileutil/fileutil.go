@@ -130,13 +130,13 @@ func GlobalDefinition() string {
 	return filepath.Join(GetConfDir(), Global)
 }
 
-//PaasLagerDefinition is a function used to join .yaml file name with configuration directory
-func PaasLagerDefinition() string {
+//LogConfigPath is a function used to join .yaml file name with configuration directory
+func LogConfigPath() string {
 	return filepath.Join(GetConfDir(), PaasLager)
 }
 
-//RouterDefinition is a function used to join .yaml file name with configuration directory
-func RouterDefinition() string {
+//RouterConfigPath is a function used to join .yaml file name with configuration directory
+func RouterConfigPath() string {
 	return filepath.Join(GetConfDir(), Router)
 }
 

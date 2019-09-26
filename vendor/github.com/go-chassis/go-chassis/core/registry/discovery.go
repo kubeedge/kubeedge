@@ -2,8 +2,8 @@ package registry
 
 import (
 	"fmt"
+
 	"github.com/go-chassis/go-chassis/core/config"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-chassis/go-chassis/pkg/util/tags"
 	"github.com/go-mesh/openlogging"
 )
@@ -80,7 +80,7 @@ func enableServiceDiscovery(opts Options) error {
 
 	DefaultServiceDiscoveryService.AutoSync()
 
-	lager.Logger.Infof("Enable %s service discovery.", t)
+	openlogging.GetLogger().Infof("Enable %s service discovery.", t)
 	return nil
 }
 
@@ -95,9 +95,9 @@ func enableContractDiscovery(opts Options) {
 	}
 	f := cdFunc[t]
 	if f == nil {
-		lager.Logger.Warn("No contract discovery plugin")
+		openlogging.GetLogger().Warn("No contract discovery plugin")
 		return
 	}
 	DefaultContractDiscoveryService = f(opts)
-	lager.Logger.Infof("Enable %s contract discovery.", t)
+	openlogging.GetLogger().Infof("Enable %s contract discovery.", t)
 }
