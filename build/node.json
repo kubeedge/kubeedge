@@ -2,7 +2,7 @@
   "kind": "Node",
   "apiVersion": "v1",
   "metadata": {
-    "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+    "name": "edge-node",
     "labels": {
       "name": "edge-node",
       "node-role.kubernetes.io/edge": ""

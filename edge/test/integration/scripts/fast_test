@@ -32,7 +32,7 @@ cat >config.json<<END
         "testManager": "http://127.0.0.1:12345",
         "edgedEndpoint": "http://127.0.0.1:10255",
         "image_url": ["nginx:latest", "redis:latest"],
-        "nodeId": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
+        "nodeId": "edge-node"
 }
 END
 

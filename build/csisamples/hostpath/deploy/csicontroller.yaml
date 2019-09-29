@@ -145,7 +145,7 @@ spec:
               # replace this value with the name of edge node
               # which is in charge of Create Volume and Delete Volume,
               # Controller Publish Volume and Controller Unpublish Volume.
-              value: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+              value: edge-node
           securityContext:
             privileged: true
           volumeMounts:
