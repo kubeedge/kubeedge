@@ -3,8 +3,8 @@ package handler
 import (
 	"github.com/go-chassis/go-chassis/core/common"
 	"github.com/go-chassis/go-chassis/core/invocation"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-chassis/go-chassis/core/tracing"
+	"github.com/go-mesh/openlogging"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
@@ -25,9 +25,9 @@ func (t *TracingProviderHandler) Handle(chain *Chain, i *invocation.Invocation, 
 	switch err {
 	case nil:
 	case opentracing.ErrSpanContextNotFound:
-		lager.Logger.Debug(err.Error())
+		openlogging.GetLogger().Debug(err.Error())
 	default:
-		lager.Logger.Errorf("Extract span failed, err [%s]", err.Error())
+		openlogging.GetLogger().Errorf("Extract span failed, err [%s]", err.Error())
 	}
 	wireContext, err = opentracing.GlobalTracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(i.Headers()))
 	if wireContext == nil {
@@ -93,7 +93,7 @@ func (t *TracingConsumerHandler) Handle(chain *Chain, i *invocation.Invocation, 
 		opentracing.TextMap,
 		(opentracing.TextMapCarrier)(i.Headers()),
 	); err != nil {
-		lager.Logger.Errorf("Inject span failed, err [%s]", err.Error())
+		openlogging.GetLogger().Errorf("Inject span failed, err [%s]", err.Error())
 	}
 	// To ensure accuracy, spans should finish immediately once client send req.
 	// So the best way is that spans finish in the callback func, not after it.

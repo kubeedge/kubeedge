@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/go-chassis/go-chassis/core/common"
-	"github.com/go-chassis/go-chassis/core/config/model"
+	"github.com/go-chassis/go-chassis/core/config"
 )
 
 var weightPool *SafePool
@@ -62,7 +62,7 @@ while (true) {
 
 // Pool defines sets of weighted tags
 type Pool struct {
-	tags []model.RouteTag
+	tags []config.RouteTag
 
 	mu  sync.RWMutex
 	gcd int
@@ -73,9 +73,9 @@ type Pool struct {
 }
 
 // NewPool returns pool for provided tags
-func NewPool(routeTags ...*model.RouteTag) *Pool {
+func NewPool(routeTags ...*config.RouteTag) *Pool {
 	var total int
-	p := &Pool{tags: make([]model.RouteTag, len(routeTags))}
+	p := &Pool{tags: make([]config.RouteTag, len(routeTags))}
 	for i, t := range routeTags {
 		if t.Weight > 0 {
 			total += t.Weight
@@ -85,7 +85,7 @@ func NewPool(routeTags ...*model.RouteTag) *Pool {
 	}
 
 	if total < 100 {
-		latestT := model.RouteTag{
+		latestT := config.RouteTag{
 			Weight: 100 - total,
 			Tags: map[string]string{
 				common.BuildinTagVersion: common.LatestVersion,
@@ -101,7 +101,7 @@ func NewPool(routeTags ...*model.RouteTag) *Pool {
 }
 
 // PickOne returns tag according to its weight
-func (p *Pool) PickOne() *model.RouteTag {
+func (p *Pool) PickOne() *config.RouteTag {
 	if p.num == 0 || p.max == 0 {
 		return nil
 	}
@@ -127,7 +127,7 @@ func (p *Pool) PickOne() *model.RouteTag {
 	}
 }
 
-func (p *Pool) refreshGCD(t *model.RouteTag) {
+func (p *Pool) refreshGCD(t *config.RouteTag) {
 	p.gcd = gcd(p.gcd, t.Weight)
 	if p.max < t.Weight {
 		p.max = t.Weight

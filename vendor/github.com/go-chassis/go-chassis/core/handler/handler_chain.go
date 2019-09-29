@@ -17,10 +17,9 @@ var ChainMap = make(map[string]*Chain)
 
 // Chain struct for service and handlers
 type Chain struct {
-	ServiceType  string
-	Name         string
-	Handlers     []Handler
-	HandlerIndex int
+	ServiceType string
+	Name        string
+	Handlers    []Handler
 }
 
 // AddHandler chain can add a handler
@@ -30,7 +29,7 @@ func (c *Chain) AddHandler(h Handler) {
 
 // Next is for to handle next handler in the chain
 func (c *Chain) Next(i *invocation.Invocation, f invocation.ResponseCallBack) {
-	index := c.HandlerIndex
+	index := i.HandlerIndex
 	if index >= len(c.Handlers) {
 		r := &invocation.Response{
 			Err: nil,
@@ -38,13 +37,8 @@ func (c *Chain) Next(i *invocation.Invocation, f invocation.ResponseCallBack) {
 		f(r)
 		return
 	}
-	c.HandlerIndex++
+	i.HandlerIndex++
 	c.Handlers[index].Handle(c, i, f)
-}
-
-// Reset for to reset the handler index
-func (c *Chain) Reset() {
-	c.HandlerIndex = 0
 }
 
 // ChainOptions chain options
@@ -127,11 +121,9 @@ func GetChain(serviceType string, name string) (*Chain, error) {
 	if name == "" {
 		name = common.DefaultChainName
 	}
-	c := &Chain{}
 	origin, ok := ChainMap[serviceType+name]
 	if !ok {
 		return nil, fmt.Errorf("get chain [%s] failed", serviceType+name)
 	}
-	*c = *origin
-	return c, nil
+	return origin, nil
 }

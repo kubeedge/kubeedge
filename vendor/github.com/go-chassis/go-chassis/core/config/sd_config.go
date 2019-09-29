@@ -52,10 +52,7 @@ func GetServiceDiscoveryAPIVersion() string {
 
 // GetServiceDiscoveryDisable returns the Disable of SD registry
 func GetServiceDiscoveryDisable() bool {
-	if b := archaius.GetBool("cse.service.registry.serviceDiscovery.disabled", false); b {
-		return b
-	}
-	return archaius.GetBool("cse.service.registry.disabled", false)
+	return archaius.GetBool("cse.service.registry.serviceDiscovery.disabled", false)
 }
 
 // GetServiceDiscoveryHealthCheck returns the HealthCheck of SD registry

@@ -3,12 +3,12 @@ package router
 
 import (
 	"errors"
+	"github.com/go-chassis/go-chassis/core/config"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-chassis/go-chassis/core/common"
-	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"github.com/go-chassis/go-chassis/core/registry"
 	wp "github.com/go-chassis/go-chassis/core/router/weightpool"
@@ -16,13 +16,13 @@ import (
 )
 
 //Templates is for source match template settings
-var Templates = make(map[string]*model.Match)
+var Templates = make(map[string]*config.Match)
 
 //Router return route rule, you can also set custom route rule
 type Router interface {
 	Init(Options) error
-	SetRouteRule(map[string][]*model.RouteRule)
-	FetchRouteRuleByServiceName(service string) []*model.RouteRule
+	SetRouteRule(map[string][]*config.RouteRule)
+	FetchRouteRuleByServiceName(service string) []*config.RouteRule
 }
 
 // ErrNoExist means if there is no router implementation
@@ -68,7 +68,7 @@ func Route(header map[string]string, si *registry.SourceInfo, inv *invocation.In
 }
 
 // FitRate fit rate
-func FitRate(tags []*model.RouteTag, dest string) *model.RouteTag {
+func FitRate(tags []*config.RouteTag, dest string) *config.RouteTag {
 	if tags[0].Weight == 100 {
 		return tags[0]
 	}
@@ -83,7 +83,7 @@ func FitRate(tags []*model.RouteTag, dest string) *model.RouteTag {
 }
 
 // Match check the route rule
-func Match(match model.Match, headers map[string]string, source *registry.SourceInfo) bool {
+func Match(match config.Match, headers map[string]string, source *registry.SourceInfo) bool {
 	//validate template first
 	if refer := match.Refer; refer != "" {
 		return SourceMatch(Templates[refer], headers, source)
@@ -97,7 +97,7 @@ func Match(match model.Match, headers map[string]string, source *registry.Source
 }
 
 // SourceMatch check the source route
-func SourceMatch(match *model.Match, headers map[string]string, source *registry.SourceInfo) bool {
+func SourceMatch(match *config.Match, headers map[string]string, source *registry.SourceInfo) bool {
 	//source not match
 	if match.Source != "" && match.Source != source.Name {
 		return false
@@ -199,13 +199,13 @@ func valueToUpper(b, value string) string {
 }
 
 // SortRules sort route rules
-func SortRules(name string) []*model.RouteRule {
+func SortRules(name string) []*config.RouteRule {
 	slice := DefaultRouter.FetchRouteRuleByServiceName(name)
 	return QuickSort(0, len(slice)-1, slice)
 }
 
 // QuickSort for sorting the routes it will follow quicksort technique
-func QuickSort(left int, right int, rules []*model.RouteRule) (s []*model.RouteRule) {
+func QuickSort(left int, right int, rules []*config.RouteRule) (s []*config.RouteRule) {
 	s = rules
 	if left >= right {
 		return
@@ -214,7 +214,7 @@ func QuickSort(left int, right int, rules []*model.RouteRule) (s []*model.RouteR
 	i := left
 	j := right
 	base := s[left]
-	var tmp *model.RouteRule
+	var tmp *config.RouteRule
 	for i != j {
 		for s[j].Precedence <= base.Precedence && i < j {
 			j--

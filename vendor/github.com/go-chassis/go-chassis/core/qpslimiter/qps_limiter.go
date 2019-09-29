@@ -1,11 +1,12 @@
 package qpslimiter
 
 import (
-	"github.com/go-chassis/go-archaius"
-	"github.com/go-chassis/go-chassis/core/lager"
-	"go.uber.org/ratelimit"
 	"strconv"
 	"sync"
+
+	"github.com/go-chassis/go-archaius"
+	"github.com/go-mesh/openlogging"
+	"go.uber.org/ratelimit"
 )
 
 // constant qps default rate
@@ -112,12 +113,12 @@ func (qpsL *LimiterMap) UpdateRateLimit(key string, value interface{}) {
 	case string:
 		convertedIntValue, err := strconv.Atoi(value.(string))
 		if err != nil {
-			lager.Logger.Warnf("Invalid Value type received for QPSLateLimiter: %v", v, err)
+			openlogging.GetLogger().Warnf("Invalid Value type received for QPSLateLimiter: %v", v, err)
 		} else {
 			qpsL.ProcessDefaultRateRpsTokenReq(key, convertedIntValue)
 		}
 	default:
-		lager.Logger.Warnf("Invalid Value type received for QPSLateLimiter: %v", v)
+		openlogging.GetLogger().Warnf("Invalid Value type received for QPSLateLimiter: %v", v)
 	}
 }
 
