@@ -139,10 +139,7 @@ func (dtc *DTContext) UnlockAll() {
 //IsDeviceExist judge device is exist
 func (dtc *DTContext) IsDeviceExist(deviceID string) bool {
 	_, ok := dtc.DeviceList.Load(deviceID)
-	if ok {
-		return true
-	}
-	return false
+	return ok
 }
 
 //GetDevice get device
