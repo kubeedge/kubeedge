@@ -41,6 +41,11 @@ type JoinOptions struct {
 	RuntimeType        string
 }
 
+// StartOptions has the option, which is used to start the components
+type StartOptions struct {
+	Dir string
+}
+
 //InstallState enum set used for verifying a tool version is installed in host
 type InstallState uint8
 

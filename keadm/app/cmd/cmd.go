@@ -42,17 +42,21 @@ var (
 
 `
 	keadmExample = `
-    +----------------------------------------------------------+
-    | On the first machine:                                    |
-    +----------------------------------------------------------+
-    | master node (on the cloud)# sudo keadm init              |
-    +----------------------------------------------------------+
+    +-----------------------------------------------------------+
+    | On the first machine:                                     |
+    +-----------------------------------------------------------+
+    | master node (on the cloud)# sudo keadm init               |
+    +-----------------------------------------------------------+
+    | master node (on the cloud)# sudo keadm start cloud <flags>|
+    +-----------------------------------------------------------+
 
-    +----------------------------------------------------------+
-    | On the second machine:                                   |
-    +----------------------------------------------------------+
-    | worker node (at the edge)# sudo keadm join <flags>       |
-    +----------------------------------------------------------+
+    +-----------------------------------------------------------+
+    | On the second machine:                                    |
+    +-----------------------------------------------------------+
+    | worker node (at the edge)# sudo keadm join <flags>        |
+    +-----------------------------------------------------------+
+    | worker node (at the edge)# sudo keadm start edge <flags>  |
+    +-----------------------------------------------------------+
 
     You can then repeat the second step on, as many other machines as you like.
 `
@@ -73,6 +77,7 @@ func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	cmds.AddCommand(edge.NewEdgeJoin(out, nil))
 	cmds.AddCommand(NewKubeEdgeReset(out))
 	cmds.AddCommand(NewCmdVersion(out))
+	cmds.AddCommand(Start(out, nil))
 
 	return cmds
 }
