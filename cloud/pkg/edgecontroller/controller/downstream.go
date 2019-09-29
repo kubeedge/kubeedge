@@ -101,6 +101,21 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 				klog.Warningf("object type: %T unsupported", configMap)
 				continue
 			}
+			var operation string
+			switch e.Type {
+			case watch.Added:
+				operation = model.InsertOperation
+			case watch.Modified:
+				operation = model.UpdateOperation
+			case watch.Deleted:
+				operation = model.DeleteOperation
+				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
+			default:
+				// unsupported operation, no need to send to any node
+				klog.Warningf("config map event type: %s unsupported", e.Type)
+				continue // continue to next select
+			}
+
 			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
 			klog.Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
@@ -108,20 +123,9 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 				resource, err := messagelayer.BuildResource(n, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
+					continue
 				}
-				switch e.Type {
-				case watch.Added:
-					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
-				case watch.Modified:
-					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-				case watch.Deleted:
-					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
-					dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
-				default:
-					// unsupported operation, no need to send to any node
-					klog.Warningf("config map event type: %s unsupported", e.Type)
-					break
-				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 				msg.Content = configMap
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
@@ -147,6 +151,22 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 				klog.Warningf("object type: %T unsupported", secret)
 				continue
 			}
+			var operation string
+			switch e.Type {
+			case watch.Added:
+				// TODO: rollback when all edge upgrade to 2.1.6 or upper
+				fallthrough
+			case watch.Modified:
+				operation = model.UpdateOperation
+			case watch.Deleted:
+				operation = model.DeleteOperation
+				dc.lc.DeleteSecret(secret.Namespace, secret.Name)
+			default:
+				// unsupported operation, no need to send to any node
+				klog.Warningf("secret event type: %s unsupported", e.Type)
+				continue // continue to next select
+			}
+
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
 			klog.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
@@ -154,21 +174,9 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 				resource, err := messagelayer.BuildResource(n, secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
+					continue
 				}
-				switch e.Type {
-				case watch.Added:
-					// TODO: rollback when all edge upgrade to 2.1.6 or upper
-					fallthrough
-				case watch.Modified:
-					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-				case watch.Deleted:
-					msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
-					dc.lc.DeleteSecret(secret.Namespace, secret.Name)
-				default:
-					// unsupported operation, no need to send to any node
-					klog.Warningf("secret event type: %s unsupported", e.Type)
-					break
-				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
 				msg.Content = secret
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
@@ -264,7 +272,6 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
-				break
 			}
 		case <-stop:
 			klog.Warning("Stop edgecontroller downstream syncEdgeNodes loop")
