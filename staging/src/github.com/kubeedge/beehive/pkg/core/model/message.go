@@ -27,7 +27,7 @@ const (
 // Message struct
 type Message struct {
 	Header  MessageHeader `json:"header"`
-	Router  MessageRoute  `json:"route, omitempty"`
+	Router  MessageRoute  `json:"route,omitempty"`
 	Content interface{}   `json:"content"`
 }
 
@@ -36,7 +36,7 @@ type MessageRoute struct {
 	// where the message come from
 	Source string `json:"source,omitempty"`
 	// where the message will broadcasted to
-	Group string `json:"group, omitempty"`
+	Group string `json:"group,omitempty"`
 
 	// what's the operation on resource
 	Operation string `json:"operation,omitempty"`
@@ -50,11 +50,11 @@ type MessageHeader struct {
 	ID string `json:"msg_id"`
 	// the response message parentid must be same with message received
 	// please use NewRespByMessage to new response message
-	ParentID string `json:"parent_msg_id, omitempty"`
+	ParentID string `json:"parent_msg_id,omitempty"`
 	// the time of creating
 	Timestamp int64 `json:"timestamp"`
 	// the flag will be set in sendsync
-	Sync bool `json:"sync, omitempty"`
+	Sync bool `json:"sync,omitempty"`
 }
 
 //BuildRouter sets route and resource operation in message

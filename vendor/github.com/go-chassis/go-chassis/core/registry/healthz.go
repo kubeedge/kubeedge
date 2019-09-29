@@ -8,7 +8,6 @@ import (
 
 	chassisClient "github.com/go-chassis/go-chassis/core/client"
 	"github.com/go-chassis/go-chassis/core/config"
-	"github.com/go-chassis/go-chassis/core/lager"
 	"github.com/go-chassis/go-chassis/healthz/client"
 	"github.com/go-mesh/openlogging"
 )
@@ -102,12 +101,12 @@ func (hc *HealthChecker) check() {
 		for _, r := range rs {
 			cr := <-r
 			if cr.Err != nil {
-				lager.Logger.Debugf("Health check instance %s failed, %s",
+				openlogging.GetLogger().Debugf("Health check instance %s failed, %s",
 					cr.Item.ServiceKey(), cr.Err)
 				hc.removeFromCache(cr.Item)
 				continue
 			}
-			lager.Logger.Debugf("Health check instance %s %s is still alive, keep it in simpleCache",
+			openlogging.GetLogger().Debugf("Health check instance %s %s is still alive, keep it in simpleCache",
 				cr.Item.ServiceKey(), cr.Item.Instance.EndpointsMap)
 		}
 	}
@@ -149,7 +148,7 @@ func (hc *HealthChecker) removeFromCache(i *WrapInstance) {
 		is = append(is, inst)
 	}
 	MicroserviceInstanceIndex.Set(i.ServiceName, is)
-	lager.Logger.Debugf("Health check: cached [%d] Instances of service [%s]", len(is), i.ServiceName)
+	openlogging.GetLogger().Debugf("Health check: cached [%d] Instances of service [%s]", len(is), i.ServiceName)
 }
 
 // HealthCheck is the function adds the instance to HealthChecker
@@ -194,7 +193,7 @@ func RefreshCache(service string, ups []*MicroServiceInstance, downs map[string]
 		// case: keep still alive instances
 		if _, ok := mapUps[exp.InstanceID]; ok {
 			lefts = append(lefts, exp)
-			openlogging.Debug(fmt.Sprintf("cache instance: %s", exp))
+			openlogging.Debug(fmt.Sprintf("cache instance: %v", exp))
 			continue
 		} else {
 			for p, ep := range exp.EndpointsMap {
@@ -235,5 +234,5 @@ func RefreshCache(service string, ups []*MicroServiceInstance, downs map[string]
 		MicroserviceInstanceIndex.Set(service, lefts)
 	}
 
-	lager.Logger.Debugf("Cached [%d] Instances of service [%s]", len(lefts), service)
+	openlogging.GetLogger().Debugf("Cached [%d] Instances of service [%s]", len(lefts), service)
 }

@@ -27,6 +27,7 @@ type ResponseCallBack func(*Response) error
 //developer should implements a client which is able to transfer invocation to there own request
 //a protocol server should transfer request to invocation and then back to request
 type Invocation struct {
+	HandlerIndex       int
 	Endpoint           string //service's ip and port, it is decided in load balancing
 	Protocol           string
 	Port               string //Port is the name of a real service port
