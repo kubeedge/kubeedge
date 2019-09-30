@@ -49,7 +49,8 @@ fi
 function check-and-add-upstream() {
   local upstream=$1
   local upstream_url=$2
-  git remote -v | grep -qE "^${upstream}\b.*${upstream_url}" || rc="$?"
+  # git remote -v | grep -qE "^${upstream}\b.*${upstream_url}" || rc="$?"
+  git remote get-url ${upstream} | grep -qE "${upstream_url}" || rc="$?"
   if [[ "${rc}" -ne "0" ]]; then
     printf "[INFO] git remote not found, adding: %s\t%s\n" ${upstream} ${upstream_url}
     git remote add ${upstream} ${upstream_url}
