@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
 )
 
 type Writer struct {
@@ -23,7 +23,7 @@ func NewWriter(w io.Writer) *Writer {
 // 3) write message raw data
 func (w *Writer) Write(data []byte) (int, error) {
 	if w.writer == nil {
-		log.LOGGER.Errorf("bad io writer")
+		klog.Error("bad io writer")
 		return 0, fmt.Errorf("bad io writer")
 	}
 
@@ -36,14 +36,14 @@ func (w *Writer) Write(data []byte) (int, error) {
 	// write header
 	_, err := w.writer.Write(headerBuffer)
 	if err != nil {
-		log.LOGGER.Errorf("failed to write header")
+		klog.Error("failed to write header")
 		return 0, err
 	}
 
 	// write payload
 	_, err = w.writer.Write(data)
 	if err != nil {
-		log.LOGGER.Errorf("failed to write payload")
+		klog.Error("failed to write payload")
 		return 0, err
 	}
 	return len(data), nil

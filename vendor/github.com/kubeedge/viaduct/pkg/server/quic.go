@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -62,7 +63,7 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
 	stream, err := session.AcceptStream()
 	if err != nil {
-		log.LOGGER.Errorf("failed to accept stream, error:%+v", err)
+		klog.Errorf("failed to accept stream, error:%+v", err)
 		return nil
 	}
 	return stream
@@ -74,7 +75,7 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 	// read control message
 	err := lane.ReadMessage(&msg)
 	if err != nil {
-		log.LOGGER.Errorf("failed read control message")
+		klog.Error("failed read control message")
 		return nil, err
 	}
 
@@ -83,7 +84,7 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 	headers := make(http.Header)
 	err = json.Unmarshal(msg.GetContent().([]byte), &headers)
 	if err != nil {
-		log.LOGGER.Errorf("failed to unmarshal header, error: %+v", err)
+		klog.Errorf("failed to unmarshal header, error: %+v", err)
 		result = comm.RespTypeNack
 	}
 
@@ -91,7 +92,7 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 	resp := msg.NewRespByMessage(&msg, result)
 	err = lane.WriteMessage(resp)
 	if err != nil {
-		log.LOGGER.Errorf("failed to send response back, error:%+v", err)
+		klog.Errorf("failed to send response back, error:%+v", err)
 		return nil, err
 	}
 	return headers, nil
@@ -105,14 +106,14 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 func (srv *QuicServer) handleSession(session quic.Session) {
 	ctrlStream := srv.acceptControlStream(session)
 	if ctrlStream == nil {
-		log.LOGGER.Errorf("failed to accept control stream")
+		klog.Error("failed to accept control stream")
 		return
 	}
 
 	ctrlLane := lane.NewLane(api.ProtocolTypeQuic, ctrlStream)
 	header, err := srv.receiveHeader(ctrlLane)
 	if err != nil {
-		log.LOGGER.Errorf("failed to complete get header, error: %+v", err)
+		klog.Errorf("failed to complete get header, error: %+v", err)
 	}
 
 	conn := conn.NewConnection(&conn.ConnectionOptions{
