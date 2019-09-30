@@ -98,7 +98,7 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
 1. User edit edge.yaml
 ```yaml
     websocket:
-        url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events
+        url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
         certfile: /etc/kubeedge/certs/edge.crt
         keyfile: /etc/kubeedge/certs/edge.key
         handshake-timeout: 30 #second
@@ -112,7 +112,7 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
         auth-info-files-path: /var/IEF/secret
         placement-url: https://x.x.x.x:7444/v1/placement_external/message_queue
         project-id: e632aba927ea4ac2b575ec1603d56f10
-        node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+        node-id: edge-node
   ```
 2. Running the edgecore, and start to connect to cloudhub through websocket protocol.
 
@@ -135,7 +135,7 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
         auth-info-files-path: /var/IEF/secret
         placement-url: https://x.x.x.x:7444/v1/placement_external/message_queue
         project-id: e632aba927ea4ac2b575ec1603d56f10
-        node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+        node-id: edge-node
   ```
     
 2. Run the edgecore, and start to connect to cloudhub through quic protocol.
