@@ -137,7 +137,7 @@ edgesiteimage:
 
 .PHONY: vendorCheck
 vendorCheck:
-	bash build/tools/verifyVendor.sh
+	bash hack/update-vendor.sh
 
 .PHONY: bluetoothdevice
 bluetoothdevice:
