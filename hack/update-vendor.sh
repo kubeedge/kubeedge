@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 #Copyright 2019 The KubeEdge Authors.
@@ -16,6 +16,10 @@
 #limitations under the License.
 ###
 
+set -o errexit
+set -o nounset
+set -o pipefail
+
 # The root of the build/dist directory
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
@@ -30,38 +34,15 @@ function kubeedge::util::list_staging_repos() {
 }
 
 
-function kubeedge::git::check_status() {
-	modified=$( git status --short 2>/dev/null | wc -l)
-	echo $modified
-}
- 
-
+echo "running 'go mod tidy'"
 go mod tidy
-ret=$(kubeedge::git::check_status)
-if [ ${ret} -eq 0 ]; then
-	echo "SUCCESS: go.mod and go.sum are in tiny"
-else
-	echo  "FAILED: go.mod / go.sum needs an update"
-	exit 1
-fi
 
-
+echo "running 'go mod vendor'"
 go mod vendor
 
 # create a symlink in vendor directory pointing to the staging components.
 # This lets other packages and tools use the local staging components as if they were vendored.
 for repo in $(kubeedge::util::list_staging_repos); do
   rm -fr "${KUBEEDGE_ROOT}/vendor/github.com/kubeedge/${repo}"
-  echo "PWD:"
-  pwd
   ln -s "../../../staging/src/github.com/kubeedge/${repo}/" "${KUBEEDGE_ROOT}/vendor/github.com/kubeedge/${repo}"
 done
-
-
-ret=$(kubeedge::git::check_status)
-if [ ${ret} -eq 0 ]; then
-	echo "SUCCESS: vendor is up to date"
-else
-	echo  "FAILED: vendor needs an update"
-	exit 1
-fi
