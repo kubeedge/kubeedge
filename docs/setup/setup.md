@@ -145,7 +145,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
       "kind": "Node",
       "apiVersion": "v1",
       "metadata": {
-        "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+        "name": "edge-node",
         "labels": {
           "name": "edge-node",
           "node-role.kubernetes.io/edge": ""
@@ -233,7 +233,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
     
     edgehub:
         websocket:
-            url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events 
+            url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events 
             certfile: /etc/kubeedge/certs/edge.crt
             keyfile: /etc/kubeedge/certs/edge.key
             handshake-timeout: 30 #second
@@ -251,11 +251,11 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
             protocol: websocket # websocket, quic
             heartbeat: 15  # second
             project-id: e632aba927ea4ac2b575ec1603d56f10
-            node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+            node-id: edge-node
     
     edged:
         register-node-namespace: default
-        hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+        hostname-override: edge-node
         interface-name: eth0
         edged-memory-capacity-bytes: 7852396000
         node-status-update-frequency: 10 # second
@@ -290,7 +290,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
         + `kubeedge/pause:3.1` for x86 arch
     + Update the IP address of the master in the `edgehub.websocket.url` field. You need set cloudcore ip address.
     + If you use quic protocol, please update the IP address of the master in the `edgehub.quic.url` field. You need set cloudcore ip address.
-    + replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with edge node name in edge.yaml for the below fields :
+    + replace `edge-node` with edge node name in edge.yaml for the below fields :
         + `websocket:URL`
         + `controller:node-id`
         + `edged:hostname-override`

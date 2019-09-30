@@ -150,8 +150,8 @@ func WriteEdgeModulesYamlFile(path string) error {
 //WriteEdgeYamlFile write conf/edge.yaml for edge component
 func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 	iface := "eth0"
-	edgeID := "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e"
-	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/fb4ebb70-2783-42b8-b3ef-63e2fd6d242e/events", DefaultProjectID)
+	edgeID := "edge-node"
+	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/edge-node/events", DefaultProjectID)
 	runtimeType := "docker"
 
 	if nil != modifiedEdgeYaml {

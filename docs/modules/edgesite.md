@@ -123,7 +123,7 @@ Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite
 
 + Add EdgeSite (Worker) Node ID/name
 
-  Replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` with an unique edge id/name in below fields :
+  Replace `edge-node` with an unique edge id/name in below fields :
     - `controller.kube.node-id`
     - `controller.edged.hostname-override`
   
@@ -131,12 +131,12 @@ Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite
   controller:
     kube:
       ...
-      node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
-      node-name: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+      node-id: edge-node
+      node-name: edge-node
       ...
     edged:
       ...
-      hostname-override: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+      hostname-override: edge-node
       ...
   ```
 
@@ -179,12 +179,12 @@ Run below steps:
 
 + Modify node.json
   
-  Replace `fb4ebb70-2783-42b8-b3ef-63e2fd6d242e` in [node.json](https://github.com/kubeedge/kubeedge/blob/master/build/node.json#L5) file, to the id/name of the edgesite node. ID/Name should be same as used before while updating `edgesite.yaml`
+  Replace `edge-node` in [node.json](https://github.com/kubeedge/kubeedge/blob/master/build/node.json#L5) file, to the id/name of the edgesite node. ID/Name should be same as used before while updating `edgesite.yaml`
 
   ```json
     {
       "metadata": {
-        "name": "fb4ebb70-2783-42b8-b3ef-63e2fd6d242e",
+        "name": "edge-node",
       }
     }
   ```

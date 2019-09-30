@@ -83,7 +83,7 @@ edgehub:
         auth-info-files-path: /var/IEF/secret
         placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
         project-id: e632aba927ea4ac2b575ec1603d56f10
-        node-id: fb4ebb70-2783-42b8-b3ef-63e2fd6d242e
+        node-id: edge-node
 
 edged:
     register-node-namespace: default
