@@ -321,7 +321,7 @@ github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
 github.com/kubeedge/beehive/pkg/common/log
-# github.com/kubeedge/viaduct v0.0.0-20190416034651-df4e595b4e12
+# github.com/kubeedge/viaduct v0.0.0-20190911054553-9137f056b93e => ./staging/src/github.com/kubeedge/viaduct
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux
 github.com/kubeedge/viaduct/pkg/api

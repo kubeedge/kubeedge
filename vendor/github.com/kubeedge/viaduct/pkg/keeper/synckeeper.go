@@ -5,7 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -20,7 +21,7 @@ func NewSyncKeeper() *SyncKeeper {
 func (k *SyncKeeper) sendToKeepChannel(msg model.Message) error {
 	obj, exist := k.keeper.Load(msg.GetParentID())
 	if !exist {
-		log.LOGGER.Errorf("failed to get sync keeper channel, message id:%s", msg.GetID())
+		klog.Errorf("failed to get sync keeper channel, message id:%s", msg.GetID())
 		return fmt.Errorf("failed to get sync keeper channel")
 	}
 
@@ -28,7 +29,7 @@ func (k *SyncKeeper) sendToKeepChannel(msg model.Message) error {
 	select {
 	case channel <- msg:
 	default:
-		log.LOGGER.Errorf("keeper channel is full")
+		klog.Error("keeper channel is full")
 		return fmt.Errorf("keeper channel is full")
 	}
 	return nil
@@ -55,7 +56,7 @@ func (k *SyncKeeper) MatchAndNotify(msg model.Message) bool {
 	}
 
 	if err := k.sendToKeepChannel(msg); err != nil {
-		log.LOGGER.Errorf("failed to send to keep channel, error:%+v", err)
+		klog.Errorf("failed to send to keep channel, error:%+v", err)
 	}
 	return true
 }
@@ -70,7 +71,7 @@ func (k *SyncKeeper) WaitResponse(msg *model.Message, deadline time.Time) (model
 		k.keeper.Delete(msgID)
 		return resp, nil
 	case <-timer.C:
-		log.LOGGER.Warnf("wait response timeout, message id:%s", msgID)
+		klog.Warningf("wait response timeout, message id:%s", msgID)
 		k.keeper.Delete(msgID)
 		return model.Message{}, fmt.Errorf("wait response timeout, message id:%s", msgID)
 	}

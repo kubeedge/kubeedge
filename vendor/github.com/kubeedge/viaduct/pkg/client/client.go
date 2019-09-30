@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -66,7 +67,7 @@ func (c *Client) Connect() (conn.Connection, error) {
 	case api.ProtocolTypeWS:
 		protoClient = NewWSClient(c.Options, c.ExOpts)
 	default:
-		log.LOGGER.Errorf("bad protocol type(%v)", c.Type)
+		klog.Errorf("bad protocol type(%v)", c.Type)
 		return nil, fmt.Errorf("bad protocol type(%v)", c.Type)
 	}
 

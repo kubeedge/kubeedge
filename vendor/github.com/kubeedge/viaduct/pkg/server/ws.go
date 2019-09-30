@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"k8s.io/klog"
+
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/lane"
@@ -29,7 +30,7 @@ func (f *LoggerFilter) Write(p []byte) (n int, err error) {
 	if strings.Contains(output, "http: TLS handshake error from") {
 		return 0, nil
 	}
-	log.LOGGER.Error(output)
+	klog.Error(output)
 	return os.Stderr.Write(p)
 }
 
@@ -60,7 +61,7 @@ func (srv *WSServer) upgrade(w http.ResponseWriter, r *http.Request) *websocket.
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.LOGGER.Errorf("failed to upgrade to websocket")
+		klog.Error("failed to upgrade to websocket")
 		return nil
 	}
 	return conn
@@ -69,7 +70,7 @@ func (srv *WSServer) upgrade(w http.ResponseWriter, r *http.Request) *websocket.
 func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if srv.exOpts.Filter != nil {
 		if filtered := srv.exOpts.Filter(w, req); filtered {
-			log.LOGGER.Warnf("failed to filter req")
+			klog.Warning("failed to filter req")
 			return
 		}
 	}

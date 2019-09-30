@@ -3,7 +3,8 @@ package smgr
 import (
 	"io"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/lucas-clemente/quic-go"
 )
@@ -23,14 +24,14 @@ type Session struct {
 func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
 	stream, err := s.Sess.OpenStreamSync()
 	if err != nil {
-		log.LOGGER.Errorf("failed to open stream, error: %+v", err)
+		klog.Errorf("failed to open stream, error: %+v", err)
 		return nil, err
 	}
 
 	// TODO: add write timeout
 	_, err = stream.Write([]byte(streamUse))
 	if err != nil {
-		log.LOGGER.Errorf("write stream type, error: %+v", err)
+		klog.Errorf("write stream type, error: %+v", err)
 		return nil, err
 	}
 
@@ -43,7 +44,7 @@ func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
 func (s *Session) AcceptStream() (*Stream, error) {
 	stream, err := s.Sess.AcceptStream()
 	if err != nil {
-		log.LOGGER.Errorf("failed to accept stream, error: %+v", err)
+		klog.Errorf("failed to accept stream, error: %+v", err)
 		return nil, err
 	}
 
@@ -51,11 +52,11 @@ func (s *Session) AcceptStream() (*Stream, error) {
 	typeBytes := make([]byte, api.UseLen)
 	_, err = io.ReadFull(stream, typeBytes)
 	if err != nil {
-		log.LOGGER.Errorf("read stream type, error: %+v", err)
+		klog.Errorf("read stream type, error: %+v", err)
 		return nil, err
 	}
 
-	log.LOGGER.Debugf("receive a stream(%s)", string(typeBytes))
+	klog.Infof("receive a stream(%s)", string(typeBytes))
 
 	return &Stream{
 		UseType: api.UseType(typeBytes),

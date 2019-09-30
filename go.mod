@@ -55,7 +55,7 @@ require (
 	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubeedge/beehive v0.0.0-20190809132808-14b9c1bfd040
-	github.com/kubeedge/viaduct v0.0.0-20190416034651-df4e595b4e12
+	github.com/kubeedge/viaduct v0.0.0-20190911054553-9137f056b93e
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lucas-clemente/quic-go v0.10.2 // indirect
 	github.com/mattn/go-shellwords v1.0.5 // indirect

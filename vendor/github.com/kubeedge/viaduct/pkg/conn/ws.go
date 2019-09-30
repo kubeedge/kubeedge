@@ -3,10 +3,12 @@ package conn
 import (
 	"io"
 	"net"
+	"sync"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/gorilla/websocket"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/comm"
@@ -27,6 +29,7 @@ type WSConnection struct {
 	consumer      io.Writer
 	autoRoute     bool
 	messageFifo   *fifo.MessageFifo
+	locker        sync.Mutex
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
@@ -49,7 +52,7 @@ func (conn *WSConnection) ServeConn() {
 	case api.UseTypeStream:
 		go conn.handleRawData()
 	case api.UseTypeShare:
-		log.LOGGER.Errorf("don't support share in websocket")
+		klog.Error("don't support share in websocket")
 	}
 }
 
@@ -81,16 +84,18 @@ func (conn *WSConnection) filterControlMessage(msg *model.Message) bool {
 
 	// feedback the response
 	resp := msg.NewRespByMessage(msg, result)
+	conn.locker.Lock()
 	err = lane.NewLane(api.ProtocolTypeWS, conn.wsConn).WriteMessage(resp)
+	conn.locker.Unlock()
 	if err != nil {
-		log.LOGGER.Errorf("failed to send response back, error:%+v", err)
+		klog.Errorf("failed to send response back, error:%+v", err)
 	}
 	return true
 }
 
 func (conn *WSConnection) handleRawData() {
 	if conn.consumer == nil {
-		log.LOGGER.Warnf("bad consumer for raw data")
+		klog.Warning("bad consumer for raw data")
 		return
 	}
 
@@ -101,7 +106,7 @@ func (conn *WSConnection) handleRawData() {
 	// TODO: support control message processing in raw data mode
 	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeQuic, conn.wsConn))
 	if err != nil {
-		log.LOGGER.Errorf("failed to copy data, error: %+v", err)
+		klog.Errorf("failed to copy data, error: %+v", err)
 		conn.state.State = api.StatDisconnected
 		conn.wsConn.Close()
 		return
@@ -114,7 +119,7 @@ func (conn *WSConnection) handleMessage() {
 		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
 		if err != nil {
 			if err != io.EOF {
-				log.LOGGER.Errorf("failed to read message, error: %+v", err)
+				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.state.State = api.StatDisconnected
 			conn.wsConn.Close()
@@ -173,6 +178,8 @@ func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
 	lane.SetReadDeadline(conn.WriteDeadline)
 	msg.Header.Sync = false
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
 	return lane.WriteMessage(msg)
 }
 
@@ -181,12 +188,14 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 	// send msg
 	lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = true
+	conn.locker.Lock()
 	err := lane.WriteMessage(msg)
+	conn.locker.Unlock()
 	if err != nil {
-		log.LOGGER.Errorf("write message error(%+v)", err)
+		klog.Errorf("write message error(%+v)", err)
 		return nil, err
 	}
-
+	conn.locker.Unlock()
 	//receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.WriteDeadline)
 	return &response, err

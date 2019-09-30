@@ -3,7 +3,8 @@ package conn
 import (
 	"io"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -37,6 +38,6 @@ func NewConnection(opts *ConnectionOptions) Connection {
 	case api.ProtocolTypeWS:
 		return NewWSConn(opts)
 	}
-	log.LOGGER.Errorf("bad connection type(%s)", opts.ConnType)
+	klog.Errorf("bad connection type(%s)", opts.ConnType)
 	return nil
 }
