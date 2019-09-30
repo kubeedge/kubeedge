@@ -8,15 +8,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/beehive/pkg/common/util"
-
 	archaius "github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-archaius/core"
 	commandlinesource "github.com/go-chassis/go-archaius/sources/commandline-source"
 	envconfigsource "github.com/go-chassis/go-archaius/sources/enviromentvariable-source"
 	memoryconfigsource "github.com/go-chassis/go-archaius/sources/memory-source"
 	yaml "gopkg.in/yaml.v2"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/beehive/pkg/common/util"
 )
 
 //constants to define config paths
@@ -34,7 +34,7 @@ func InitializeConfig() {
 	once.Do(func() {
 		err := archaius.Init()
 		if err != nil {
-			log.LOGGER.Errorf("archaius init failed!")
+			klog.Error("archaius init failed!")
 		}
 		CONFIG = archaius.GetConfigFactory()
 		ms := memoryconfigsource.NewMemoryConfigurationSource()
@@ -65,15 +65,12 @@ func InitializeConfig() {
 		})
 
 		if err != nil {
-			log.LOGGER.Errorf("filepath.Walk() returned %s\n", err.Error())
+			klog.Errorf("filepath.Walk() returned %v", err.Error())
 		}
 	})
 }
 
 func init() {
-	if log.LOGGER == nil {
-		log.InitializeLogger()
-	}
 	InitializeConfig()
 }
 

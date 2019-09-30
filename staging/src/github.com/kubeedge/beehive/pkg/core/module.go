@@ -3,8 +3,9 @@ package core
 import (
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/common/log"
 	"github.com/kubeedge/beehive/pkg/core/context"
 )
 
@@ -38,11 +39,10 @@ func init() {
 func Register(m Module) {
 	if isModuleEnabled(m.Name()) {
 		modules[m.Name()] = m
-		log.LOGGER.Info("module " + m.Name() + " registered")
+		klog.Infof("Module %v registered", m.Name())
 	} else {
 		disabledModules[m.Name()] = m
-		log.LOGGER.Info("module " + m.Name() +
-			" is not register, please check modules.yaml")
+		klog.Warningf("Module %v is not register, please check modules.yaml", m.Name())
 	}
 }
 
@@ -79,33 +79,33 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 	if k == "modules.enabled" {
 		currentModules, ok := v.([]interface{})
 		if !ok {
-			log.LOGGER.Infof("retry read key: %+v", k)
+			klog.Infof("Callback: retry read key: %+v", k)
 			modules := retryReadKey()
 			if currentModules, ok = modules.([]interface{}); !ok {
-				log.LOGGER.Warnf("bad value of key(%s)", k)
+				klog.Warningf("Callback: bad value of key(%s)", k)
 				return
 			}
 		}
 
 		newModules, deletedModules := calculateModuleChanges(currentModules)
-		log.LOGGER.Infof("current module list: %+v, disabledmodule: %+v addmodule: %+v  deletedmodule: %+v", currentModules, disabledModules, newModules, deletedModules)
+		klog.Infof("Current module list: %+v, disabledmodule: %+v addmodule: %+v  deletedmodule: %+v", currentModules, disabledModules, newModules, deletedModules)
 		//Remove disabled modules
 		for _, m := range deletedModules {
 			module, exist := modules[m]
 			if !exist {
-				log.LOGGER.Infof("module %s is not existing", m)
+				klog.Warningf("Callback Module %s is not existing", m)
 				break
 			}
 			module.Cleanup()
 			delete(modules, m)
 			disabledModules[m] = module
-			log.LOGGER.Infof("module %s is disabled", m)
+			klog.Infof("Module %s is disabled", m)
 		}
 		//Enable new modules
 		for _, m := range newModules {
 			module := disabledModules[m]
 			if module == nil {
-				log.LOGGER.Infof("module %s is not existing", m)
+				klog.Infof("Callback: Module %s is not existing", m)
 				break
 			}
 			Register(module)
@@ -116,7 +116,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 			coreContext.AddModuleGroup(module.Name(), module.Group())
 			go module.Start(coreContext)
 			delete(disabledModules, m)
-			log.LOGGER.Infof("module %s is enabled", m)
+			klog.Infof("Callback: Module %s is enabled", m)
 		}
 	}
 }

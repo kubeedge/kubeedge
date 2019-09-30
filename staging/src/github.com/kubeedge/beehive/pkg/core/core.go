@@ -5,7 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 )
 
@@ -20,7 +21,7 @@ func StartModules() {
 		//Assemble typeChannels for send2Group
 		coreContext.AddModuleGroup(name, module.Group())
 		go module.Start(coreContext)
-		log.LOGGER.Info("starting module " + name)
+		klog.Infof("Starting module %v", name)
 	}
 }
 
@@ -31,11 +32,11 @@ func GracefulShutdown() {
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
 	select {
 	case s := <-c:
-		log.LOGGER.Info("got os signal " + s.String())
+		klog.Warningf("Get os signal %v", s.String())
 		//Cleanup each modules
 		modules := GetModules()
 		for name, module := range modules {
-			log.LOGGER.Info("Cleanup module " + name)
+			klog.Warningf("Cleanup module %v", name)
 			module.Cleanup()
 		}
 	}
