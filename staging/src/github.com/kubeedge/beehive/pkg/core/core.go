@@ -32,11 +32,11 @@ func GracefulShutdown() {
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
 	select {
 	case s := <-c:
-		klog.Warningf("Get os signal %v", s.String())
+		klog.Infof("Get os signal %v", s.String())
 		//Cleanup each modules
 		modules := GetModules()
 		for name, module := range modules {
-			klog.Warningf("Cleanup module %v", name)
+			klog.Infof("Cleanup module %v", name)
 			module.Cleanup()
 		}
 	}
