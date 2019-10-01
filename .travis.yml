@@ -34,7 +34,7 @@ install: true
 jobs:
   include:
     - stage: "Verify vendor"
-      script: make vendorCheck
+      script: make verify
       name: "check if the vendor is up to date"
 
     - stage: "Test lint"

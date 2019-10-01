@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 #Copyright 2019 The KubeEdge Authors.
@@ -16,34 +16,23 @@
 #limitations under the License.
 ###
 
+set -o errexit
+set -o nounset
+set -o pipefail
 
-function checkModified {
-	modified=$( git status --short 2>/dev/null | grep -e "^.M" | wc -l)
+# The root of the build/dist directory
+KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
-	if [ ${modified} -eq 0 ]; then
-		echo 0
-		return
-	fi
-
-	echo 2
+function kubeedge::git::check_status() {
+	echo $( git status --short 2>/dev/null | wc -l)
 }
- 
-go mod vendor
-ret=$(checkModified)
-if [ ${ret} -eq 0 ]; then
-	echo "SUCCESS: vendor is up to date"
-else
-	echo  "FAILED: vendor needs an update; The diff is:"
-	git diff
-	exit 1
-fi
 
-go mod tidy
-ret=$(checkModified)
+${KUBEEDGE_ROOT}/hack/update-vendor.sh
+ 
+ret=$(kubeedge::git::check_status)
 if [ ${ret} -eq 0 ]; then
-	echo "SUCCESS: go.mod and go.sum are in tiny"
+	echo "SUCCESS: Vendor Verified."
 else
-	echo  "FAILED: go.mod / go.dum needs an update; The diff is:"
-	git diff
+	echo  "FAILED: Vendor Verify failed. Please run the command to check your directories: git status"
 	exit 1
 fi
