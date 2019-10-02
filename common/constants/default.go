@@ -77,3 +77,22 @@ const (
 
 	CurrentSupportK8sVersion = "v1.15.3"
 )
+
+const (
+	DefaultConfigDir = "/etc/kubeedge/config/"
+	DefaultCADir     = "/etc/kubeedge/ca/"
+	DefaultCertDir   = "/etc/kubeedge/certs/"
+)
+
+const (
+	ProtocolWebsocket = "websocket"
+	ProtocolQuic      = "quic"
+)
+
+const (
+	RuntimeTypeDocker = "docker"
+	RuntimeTypeRemote = "remote"
+)
+const (
+	StrategyRoundRobin = "RoundRobin"
+)
