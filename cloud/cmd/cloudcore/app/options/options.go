@@ -18,10 +18,14 @@ package options
 
 import (
 	cliflag "k8s.io/component-base/cli/flag"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
 )
 
 // TODO set cloudcore config
 type CloudCoreOptions struct {
+	ConfigFile string
 }
 
 func NewCloudCoreOptions() *CloudCoreOptions {
@@ -32,4 +36,24 @@ func (o *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	// TODO set CloudCoreOptions field
 	//fs := fss.FlagSet("general")
 	return
+}
+
+func (o *CloudCoreOptions) Validate() []error {
+	var errs []error
+	/*
+		if len(o.ConfigFile) == 0 {
+		errs = append(errs, field.Required(field.NewPath("ConfigFile"), ""))
+		}
+	*/
+
+	return errs
+}
+
+func (o *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
+	cfg := config.NewDefaultCloudCoreConfig()
+	if err := cfg.Parse(o.ConfigFile); err != nil {
+		klog.Errorf("Parse config %s error %v", o.ConfigFile, err)
+		return nil, err
+	}
+	return cfg, nil
 }

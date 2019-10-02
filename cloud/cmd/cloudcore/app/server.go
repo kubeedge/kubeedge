@@ -32,11 +32,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			// To help debugging, immediately log version
-			klog.Infof("Version: %+v", version.Get())
-			registerModules()
-			// start all modules
-			core.Run()
+			Run()
 		},
 	}
 	fs := cmd.Flags()
@@ -60,6 +56,14 @@ kubernetes controller which manages devices so that the device metadata/status d
 	})
 
 	return cmd
+}
+
+func Run() {
+	// To help debugging, immediately log version
+	klog.Infof("Version: %+v", version.Get())
+	registerModules()
+	// start all modules
+	core.Run()
 }
 
 // registerModules register all the modules started in cloudcore
