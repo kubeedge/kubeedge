@@ -204,11 +204,6 @@ github.com/go-chassis/go-chassis/pkg/goplugin
 github.com/go-chassis/go-chassis-config
 # github.com/go-chassis/go-restful-swagger20 v1.0.1
 github.com/go-chassis/go-restful-swagger20
-# github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2
-github.com/go-chassis/paas-lager
-github.com/go-chassis/paas-lager/rotate
-github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager
-github.com/go-chassis/paas-lager/third_party/forked/cloudfoundry/lager/color
 # github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
 github.com/go-mesh/openlogging
 # github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f
@@ -320,7 +315,6 @@ github.com/kubeedge/beehive/pkg/common/config
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
-github.com/kubeedge/beehive/pkg/common/log
 # github.com/kubeedge/viaduct v0.0.0-20190911054553-9137f056b93e => ./staging/src/github.com/kubeedge/viaduct
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux

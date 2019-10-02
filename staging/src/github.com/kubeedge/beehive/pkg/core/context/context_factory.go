@@ -4,7 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -29,7 +30,7 @@ func GetContext(contextType string) *Context {
 			context.messageContext = channelContext
 			context.moduleContext = channelContext
 		default:
-			log.LOGGER.Warnf("do not support context type(%s)", contextType)
+			klog.Warningf("Do not support context type:%s", contextType)
 		}
 	})
 	return context
@@ -62,7 +63,7 @@ func (ctx *Context) Receive(module string) (model.Message, error) {
 	if err == nil {
 		return message, nil
 	}
-	log.LOGGER.Warnf("failed to receive message")
+	klog.Warning("Receive: failed to receive message")
 	return message, err
 }
 
