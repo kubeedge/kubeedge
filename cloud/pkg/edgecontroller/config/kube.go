@@ -40,11 +40,6 @@ func InitKubeConfig() {
 	}
 	klog.Infof("Controller kube config: %s", Kube.KubeConfig)
 
-	if kn, err := config.CONFIG.GetValue("controller.kube.namespace").ToString(); err == nil {
-		Kube.KubeNamespace = kn
-	}
-	klog.Infof("Controller kube namespace: %s", Kube.KubeNamespace)
-
 	if kct, err := config.CONFIG.GetValue("controller.kube.content_type").ToString(); err == nil {
 		Kube.KubeContentType = kct
 	}
