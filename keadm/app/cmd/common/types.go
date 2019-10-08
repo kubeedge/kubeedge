@@ -168,15 +168,6 @@ type ModulesYaml struct {
 	Modules ModulesSt `yaml:"modules"`
 }
 
-//LoggingYaml shall be written in conf/logging.yaml for cloud and edge component
-type LoggingYaml struct {
-	LoggerLevel   string   `yaml:"loggerLevel,omitempty"`
-	EnableRsysLog bool     `yaml:"enableRsyslog,omitempty"`
-	LogFormatText bool     `yaml:"logFormatText,omitempty"`
-	Writers       []string `yaml:"writers,omitempty"`
-	LoggerFile    string   `yaml:"loggerFile,omitempty"`
-}
-
 //MQTTMode = # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only.
 type MQTTMode uint8
 

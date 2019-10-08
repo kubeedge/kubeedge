@@ -63,11 +63,6 @@ data:
         node-ip: ""
         cluster-dns: ""
         cluster-domain: ""
-  logging.yaml: |
-    loggerLevel: "DEBUG"
-    enableRsyslog: false
-    logFormatText: true
-    writers: [stdout]
   modules.yaml: |
     modules:
         enabled: [eventbus, servicebus, websocket, metaManager, edged, twin, dbTest, handlerstub]

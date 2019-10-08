@@ -38,11 +38,6 @@ data:
         qps: 5
         burst: 10
         kubeconfig: ""
-  logging.yaml: |
-    loggerLevel: "INFO"
-    enableRsyslog: false
-    logFormatText: true
-    writers: [stdout]
   modules.yaml: |
     modules:
       enabled: [controller, cloudhub, controllerstub]
