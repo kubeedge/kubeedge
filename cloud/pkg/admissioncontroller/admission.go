@@ -31,7 +31,7 @@ const (
 
 var scheme = runtime.NewScheme()
 
-//Codecs is for retrieving serializers for the supported wire formats
+//codecs is for retrieving serializers for the supported wire formats
 //and conversion wrappers to define preferred internal and external versions.
 var codecs = serializer.NewCodecFactory(scheme)
 
@@ -102,7 +102,7 @@ func Run(opt *options.AdmissionOptions) {
 	server.ListenAndServeTLS("", "")
 }
 
-// ConfigTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
+// configTLS is a helper function that generate tls certificates from directly defined tls config or kubeconfig
 // These are passed in as command line for cluster certification. If tls config is passed in, we use the directly
 // defined tls config, else use that defined in kubeconfig
 func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tls.Config {
@@ -132,7 +132,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 	return &tls.Config{}
 }
 
-// Register registers the admission webhook.
+// registerWebhooks registers the admission webhook.
 func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
 	ignorePolicy := admissionregistrationv1beta1.Ignore
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
