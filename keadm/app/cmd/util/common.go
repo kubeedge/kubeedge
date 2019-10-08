@@ -48,7 +48,6 @@ const (
 	KubeEdgeDefaultCertPath   = KubeEdgePath + "certs/"
 	KubeEdgeConfigEdgeYaml    = KubeEdgeConfPath + "/edge.yaml"
 	KubeEdgeConfigNodeJSON    = KubeEdgeConfPath + "/node.json"
-	KubeEdgeConfigLoggingYaml = KubeEdgeConfPath + "/logging.yaml"
 	KubeEdgeConfigModulesYaml = KubeEdgeConfPath + "/modules.yaml"
 
 	KubeEdgeCloudCertGenPath     = KubeEdgePath + "certgen.sh"
@@ -56,7 +55,6 @@ const (
 	KubeEdgeEdgeCertsTarFilePath = KubeEdgePath + "certs.tgz"
 	KubeEdgeCloudConfPath        = KubeEdgePath + "kubeedge/cloud/conf"
 	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
-	KubeEdgeCloudCoreLoggingYaml = KubeEdgeCloudConfPath + "/logging.yaml"
 	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
 	KubeCloudBinaryName          = "cloudcore"
 	KubeCloudApiserverYamlPath   = "/etc/kubernetes/manifests/kube-apiserver.yaml"

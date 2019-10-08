@@ -43,11 +43,6 @@ data:
         maximum-dead-containers-per-container: 1
         docker-address: tcp://localhost:2375
         version: 2.0.0
-  logging.yaml: |
-    loggerLevel: "DEBUG"
-    enableRsyslog: false
-    logFormatText: true
-    writers: [stdout]
   modules.yaml: |
     modules:
         enabled: [eventbus, servicebus, websocket, metaManager, edged, twin, dbTest]

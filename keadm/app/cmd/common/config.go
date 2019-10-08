@@ -97,35 +97,6 @@ func WriteCloudModulesYamlFile(path string) error {
 	return nil
 }
 
-//WriteCloudLoggingYamlFile writes logging yaml for cloud component
-func WriteCloudLoggingYamlFile(path string) error {
-	loggingData := LoggingYaml{
-		LoggerLevel:   "INFO",
-		EnableRsysLog: false,
-		LogFormatText: true,
-		Writers:       []string{"file", "stdout"},
-		LoggerFile:    "cloudcore.log",
-	}
-	if err := Write2File(path, loggingData); err != nil {
-		return err
-	}
-	return nil
-}
-
-//WriteEdgeLoggingYamlFile writes logging yaml for edge component
-func WriteEdgeLoggingYamlFile(path string) error {
-	loggingData := LoggingYaml{
-		LoggerLevel:   "DEBUG",
-		EnableRsysLog: false,
-		LogFormatText: true,
-		Writers:       []string{"stdout"},
-	}
-	if err := Write2File(path, loggingData); err != nil {
-		return err
-	}
-	return nil
-}
-
 //WriteEdgeModulesYamlFile writes modules.yaml for edge component
 func WriteEdgeModulesYamlFile(path string) error {
 	modulesData := ModulesYaml{
