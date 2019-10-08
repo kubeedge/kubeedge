@@ -1,7 +1,6 @@
 controller:
   kube:
     master:     # kube-apiserver address (such as:http://localhost:8080)
-    namespace: ""
     content_type: "application/vnd.kubernetes.protobuf"
     qps: 5
     burst: 10
@@ -25,7 +24,6 @@ cloudhub:
 devicecontroller:
   kube:
     master:        # kube-apiserver address (such as:http://localhost:8080)
-    namespace: ""
     content_type: "application/vnd.kubernetes.protobuf"
     qps: 5
     burst: 10
