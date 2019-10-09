@@ -89,10 +89,7 @@ func (q *ChannelEventQueue) DispatchMessage() {
 			klog.Infof("fail to get dispatch channel for %s", nodeID)
 			continue
 		}
-		event := model.MessageToEvent(&msg)
-		select {
-		case rChannel <- event:
-		}
+		rChannel <- model.MessageToEvent(&msg)
 	}
 }
 
