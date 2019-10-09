@@ -37,11 +37,13 @@ clean:
 
 .PHONY: cross_build
 cross_build: verify
-	export GOARCH=arm \
+	export GOARCH=arm64 \
         export GOOS="linux" \
-        export GOARM=6 \
         export CGO_ENABLED=1 \
-        export CC=arm-linux-gnueabi-gcc; \
+        export CC_FOR_TARGET=gcc-aarch64-linux-gnu \
+        export CC=aarch64-linux-gnu-gcc \
+        export CGO_CFLAGS="-I/usr/include -I/usr/aarch64-linux-gnu/include" \
+        export CGO_LDFLAGS="-L/usr/lib -I/usr/aarch64-linux-gnu/lib"; \
         go build cmd/edgecore/edgecore.go
 
 .PHONY: armv7

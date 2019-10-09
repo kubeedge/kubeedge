@@ -5,7 +5,7 @@ git:
 
 sudo: required
 
-dist: xenial
+dist: cosmic
 
 services:
   - docker
@@ -37,10 +37,12 @@ jobs:
     - stage: "Test on amd64"
       name: "build, smallbuild, crossbuild"
       arch: amd64
-      dist: trusty
       before_script:
         - sudo apt-get install upx-ucl -y
+        - sudo apt-get install gcc-aarch64-linux-gnu -y
+        - sudo apt-get install libc6-dev-arm64-cross -y
         - sudo apt-get install gcc-arm-linux-gnueabi -y
+        - sudo apt-get install libc6-dev-armel-cross -y
         - export GOFLAGS=-mod=vendor
       script:
         - make
@@ -51,6 +53,7 @@ jobs:
         - make edgesite_cross_build
         - make edgesite_cross_build_v7
         - make edgesite_small_build
+
     - name: "unit test, integration test edge"
       arch: amd64
       before_script:
@@ -85,7 +88,6 @@ jobs:
     - stage: "Test on arm64"
       name: "build, smallbuild"
       arch: arm64
-      dist: trusty
       before_script:
         - export GOFLAGS=-mod=vendor
         - sudo apt-get install upx-ucl -y
