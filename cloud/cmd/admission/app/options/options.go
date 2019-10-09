@@ -33,12 +33,12 @@ type AdmissionOptions struct {
 	SchedulerName             string
 }
 
-// AdmissionOptions create new config
+// NewAdmissionOptions create new config
 func NewAdmissionOptions() *AdmissionOptions {
 	return &AdmissionOptions{}
 }
 
-// AddFlags add flags
+// Flags add flags for admission webhook
 func (o *AdmissionOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("admission")
 	fs.StringVar(&o.Master, "master", o.Master, "The address of the Kubernetes API server (overrides any value in kubeconfig)")
