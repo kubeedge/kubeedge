@@ -333,6 +333,18 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 	}
 }
 
+func (uc *UpstreamController) createNode(name string) (*v1.Node, error) {
+	node := &v1.Node{}
+	labels := make(map[string]string)
+	labels["name"] = name
+	labels["node-role.kubernetes.io/edge"] = ""
+
+	// create node
+	node.Name = name
+	node.Labels = labels
+	return uc.kubeClient.CoreV1().Nodes().Create(node)
+}
+
 func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 	running := true
 	for running {
@@ -375,11 +387,12 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 			case model.UpdateOperation:
 				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
-					klog.Warningf("message: %s process failure, node %s not found", msg.GetID(), name)
-					continue
-				}
-
-				if err != nil {
+					klog.Infof("Node: %s not found, creating node", name)
+					if getNode, err = uc.createNode(name); err != nil {
+						klog.Errorf("Failed to create node: %s with error: %s", name, err)
+						continue
+					}
+				} else if err != nil {
 					klog.Warningf("message: %s process failure with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, name)
 					continue
 				}
