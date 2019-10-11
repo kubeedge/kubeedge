@@ -65,11 +65,6 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		return err
 	}
 
-	//Create logger.yaml
-	if err = common.WriteCloudLoggingYamlFile(KubeEdgeCloudCoreLoggingYaml); err != nil {
-		return err
-	}
-
 	//Create modules.yaml
 	if err = common.WriteCloudModulesYamlFile(KubeEdgeCloudCoreModulesYaml); err != nil {
 		return err
