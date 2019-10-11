@@ -14,9 +14,6 @@ type KubeInfo struct {
 	// KubeConfig is the config used connect to edge master
 	KubeConfig string
 
-	// KubeNamespace is the namespace to watch(default is NamespaceAll)
-	KubeNamespace string
-
 	// KubeContentType is the content type communicate with edge master(default is "application/vnd.kubernetes.protobuf")
 	KubeContentType string
 
@@ -39,7 +36,6 @@ type KubeInfo struct {
 // NewKubeInfo create KubeInfo struct with default values
 func NewKubeInfo() *KubeInfo {
 	return &KubeInfo{
-		KubeNamespace:           constants.DefaultKubeNamespace,
 		KubeContentType:         constants.DefaultKubeContentType,
 		KubeQPS:                 constants.DefaultKubeQPS,
 		KubeBurst:               constants.DefaultKubeBurst,
