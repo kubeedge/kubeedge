@@ -25,7 +25,6 @@ const (
 var groupMap = map[string]string{
 	"resource": modules.MetaGroup,
 	"twin":     modules.TwinGroup,
-	"app":      "sync",
 	"func":     modules.MetaGroup,
 	"user":     modules.BusGroup,
 }
