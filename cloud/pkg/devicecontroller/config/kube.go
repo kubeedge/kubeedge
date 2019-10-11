@@ -13,9 +13,6 @@ var KubeMaster string
 // KubeConfig is the config used connect to edge master
 var KubeConfig string
 
-// KubeNamespace is the namespace to watch(default is NamespaceAll)
-var KubeNamespace string
-
 // KubeContentType is the content type communicate with edge master(default is "application/vnd.kubernetes.protobuf")
 var KubeContentType string
 
@@ -39,13 +36,6 @@ func InitKubeConfig() {
 		KubeConfig = kc
 	}
 	klog.Infof("Devicecontroller kube config: %s", KubeConfig)
-
-	if kn, err := config.CONFIG.GetValue("devicecontroller.kube.namespace").ToString(); err != nil {
-		KubeNamespace = constants.DefaultKubeNamespace
-	} else {
-		KubeNamespace = kn
-	}
-	klog.Infof("Devicecontroller kube namespace: %s", KubeNamespace)
 
 	if kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString(); err != nil {
 		KubeContentType = constants.DefaultKubeContentType
