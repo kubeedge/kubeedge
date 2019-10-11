@@ -1,117 +1,63 @@
 package config
 
-import (
-	"io/ioutil"
-	"path"
-
-	"gopkg.in/yaml.v2"
-	"k8s.io/klog"
-
-	"github.com/kubeedge/kubeedge/common/constants"
-)
-
 type CloudCoreConfig struct {
-	Kube           *KubeConfig           `yaml:"kube"`
-	EdgeController *EdgeControllerConfig `yaml:"edgeController"`
-	Cloudhub       *CloudHubConfig       `yaml:"cloudHub"`
-	Modules        *Modules              `yaml:"modules"`
-}
-
-func NewDefaultCloudCoreConfig() *CloudCoreConfig {
-	return &CloudCoreConfig{
-		Kube:           NewDefaultKubeConfig(),
-		EdgeController: NewDefaultEdgeControllerConfig(),
-		Cloudhub:       NewDefaultCloudHubConfig(),
-		Modules:        NewDefaultModules(),
-	}
+	Kube             *KubeConfig             `json:"kube,omitempty"`
+	EdgeController   *EdgeControllerConfig   `json:"edgeController,omitempty"`
+	DeviceController *DeviceControllerConfig `json:"deviceController,omitempty"`
+	Cloudhub         *CloudHubConfig         `json:"cloudHub,omitempty"`
+	Modules          *Modules                `json:"modules,omitempty"`
 }
 
 type EdgeControllerConfig struct {
-	NodeUpdateFrequency int32 `yaml:"nodeUpdateFrequency"`
+	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
 }
 
-func NewDefaultEdgeControllerConfig() *EdgeControllerConfig {
-	return &EdgeControllerConfig{
-		NodeUpdateFrequency: 10,
-	}
+type DeviceControllerConfig struct {
 }
 
 type CloudHubConfig struct {
-	EnableWebsocket    bool   `yaml:"enableWebsocket"`    //default true # enable websocket protocol
-	WebsocketPort      int32  `yaml:"websocketPort"`      //default 10000 # open port for websocket server
-	EnableQuic         bool   `yaml:"enableQuic"`         //default false # enable quic protocol
-	QuicPort           int32  `yaml:"quicPort"`           //default 10001 # open prot for quic server
-	MaxIncomingStreams int32  `yaml:"maxIncomingStreams"` //default 10000 # the max incoming stream for quic server
-	EnableUnixSocket   bool   `yaml:"enableUnixSocket"`   //default true # enable unix domain socket protocol
-	UnixSocketAddress  string `yaml:"unixSocketAddress"`  //default unix:///var/lib/kubeedge/kubeedge.sock # unix domain socket address
-	Address            string `yaml:"address"`            //default 0.0.0.0
-	TLSCaFile          string `yaml:"tlsCaFile"`          //default /etc/kubeedge/ca/rootCA.crt
-	TLSCertFile        string `yaml:"tlsCertFile"`        //default /etc/kubeedge/certs/edge.crt
-	TLSPrivateKeyFile  string `yaml:"tlsPrivateKeyFile"`  //default /etc/kubeedge/certs/edge.key
-	KeepaliveInterval  int32  `yaml:"keepaliveInterval"`  //default 30
-	WriteTimeout       int32  `yaml:"writeTimeout"`       //default 30
-	NodeLimit          int32  `yaml:"nodeLimit"`          //default 10
-}
-
-func NewDefaultCloudHubConfig() *CloudHubConfig {
-	return &CloudHubConfig{
-		EnableWebsocket:    true,
-		WebsocketPort:      10000,
-		EnableQuic:         false,
-		QuicPort:           10001,
-		MaxIncomingStreams: 10000,
-		EnableUnixSocket:   true,
-		UnixSocketAddress:  "unix:///var/lib/kubeedge/kubeedge.sock",
-		Address:            "0.0.0.0",
-		TLSCaFile:          path.Join(constants.DefaultCADir, "rootCA.crt"),
-		TLSCertFile:        path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile:  path.Join(constants.DefaultCertDir, "edge.key"),
-		KeepaliveInterval:  30,
-		WriteTimeout:       30,
-		NodeLimit:          10,
-	}
+	// enable websocket protocol ,default true
+	EnableWebsocket bool `json:"enableWebsocket,omitempty"`
+	// open port for websocket server, default 10000
+	WebsocketPort int32 `json:"websocketPort,omitempty"`
+	// enable quic protocol, default false
+	EnableQuic bool `json:"enableQuic,omitempty"`
+	// open prot for quic server, default 10001
+	QuicPort int32 `json:"quicPort,omitempty"`
+	// the max incoming stream for quic server, default 10000
+	MaxIncomingStreams int32 `json:"maxIncomingStreams,omitempty"`
+	// enable unix domain socket protocol, default true
+	EnableUnixSocket bool `json:"enableUnixSocket,omitempty"`
+	// unix domain socket address, default unix:///var/lib/kubeedge/kubeedge.sock
+	UnixSocketAddress string `json:"unixSocketAddress,omitempty"`
+	//default 0.0.0.0
+	Address string `json:"address,omitempty"`
+	//default /etc/kubeedge/ca/rootCA.crt
+	TLSCaFile string `json:"tlsCaFile,omitempty"`
+	// TLSCertFile is the file containing x509 Certificate for HTTPS.  default /etc/kubeedge/certs/edge.crt
+	TLSCertFile string `json:"tlsCertFile,omitempty"`
+	// TLSPrivateKeyFile is the file containing x509 private key matching tlsCertFile, default /etc/kubeedge/certs/edge.key
+	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
+	//default 30
+	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
+	//default 30
+	WriteTimeout int32 `json:"writeTimeout,omitempty"`
+	//default 10
+	NodeLimit int32 `json:"nodeLimit,omitempty"`
 }
 
 type KubeConfig struct {
-	Master     string `yaml:"master"`     // kube-apiserver address (such as:http://localhost:8080)
-	Kubeconfig string `yaml:"kubeconfig"` // default "/root/.kube/config"
-}
-
-func NewDefaultKubeConfig() *KubeConfig {
-	return &KubeConfig{
-		Master:     "",
-		Kubeconfig: "/root/.kube/config",
-	}
+	// The address of the Kubernetes API server (overrides any value in kubeconfig)
+	Master string `json:"master,omitempty"`
+	// Path to kubeconfig file with authorization and master location information. default "/root/.kube/config"
+	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
 type Modules struct {
-	Enabled []string `yaml:"enabled"` //default devicecontroller, edgecontroller, cloudhub
-}
-
-func NewDefaultModules() *Modules {
-	return &Modules{
-		Enabled: []string{"devicecontroller", "edgecontroller", "cloudhub"},
-	}
+	//default devicecontroller, edgecontroller, cloudhub
+	Enabled []string `json:"enabled,omitempty"`
 }
 
 // TODO @kadisi  add AdmissionControllerConfig
 type AdmissionControllerConfig struct {
-}
-
-func NewDefaultAdmissionControllerConfig() *AdmissionControllerConfig {
-	return &AdmissionControllerConfig{}
-}
-
-func (c *CloudCoreConfig) Parse(fname string) error {
-	data, err := ioutil.ReadFile(fname)
-	if err != nil {
-		klog.Errorf("ReadConfig file %s error %v", fname, err)
-		return err
-	}
-	err = yaml.Unmarshal(data, c)
-	if err != nil {
-		klog.Errorf("Unmarshal file %s data error %v", fname, err)
-		return err
-	}
-	return nil
 }

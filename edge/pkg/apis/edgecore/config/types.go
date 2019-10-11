@@ -30,18 +30,18 @@ type EdgeHubConfig struct {
 }
 
 type WebSocketConfig struct {
-	//ip:port
-	//old : wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
+	// ip:port
+	// old : wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
 	Server string `json:"server,omitempty"`
-	//default /etc/kubeedge/certs/edge.crt
+	// TLSCertFile is the file containing x509 Certificate for HTTPS, default /etc/kubeedge/certs/edge.crt
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
-	//default /etc/kubeedge/certs/edge.key
+	// TLSPrivateKeyFile is the file containing x509 private key matching tlsCertFile, default /etc/kubeedge/certs/edge.key
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
-	//default  30 #second
+	// default  30 #second
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
-	//default 15 # second
+	// default 15 # second
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
-	//default 15 # second
+	// default 15 # second
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
 }
 
@@ -50,9 +50,9 @@ type QuicConfig struct {
 	Server string `json:"server,omitempty"`
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSCaFile string `json:"tlsCaFile,omitempty"`
-	// default /etc/kubeedge/certs/edge.crt
+	// TLSCertFile is the file containing x509 Certificate for HTTPS, default /etc/kubeedge/certs/edge.crt
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
-	// default /etc/kubeedge/certs/edge.key
+	// TLSPrivateKeyFile is the file containing x509 private key matching tlsCertFile, default /etc/kubeedge/certs/edge.key
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// default 30 #second
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
