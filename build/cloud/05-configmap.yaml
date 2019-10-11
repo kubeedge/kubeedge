@@ -34,11 +34,6 @@ data:
          qps: 5
          burst: 10
          kubeconfig: "/etc/kubeedge/cloud/kubeconfig.yaml"
-  logging.yaml: |
-    loggerLevel: "INFO"
-    enableRsyslog: false
-    logFormatText: true
-    writers: [stdout]
   modules.yaml: |
     modules:
       enabled: [devicecontroller, edgecontroller, cloudhub]

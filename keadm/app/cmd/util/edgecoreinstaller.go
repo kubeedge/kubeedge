@@ -97,10 +97,6 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		return err
 	}
 
-	//Create logging.yaml
-	if err = types.WriteEdgeLoggingYamlFile(KubeEdgeConfigLoggingYaml); err != nil {
-		return err
-	}
 	//Create modules.yaml
 	if err = types.WriteEdgeModulesYamlFile(KubeEdgeConfigModulesYaml); err != nil {
 		return err
