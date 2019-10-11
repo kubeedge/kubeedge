@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.43.0 // indirect
 	github.com/256dpi/gomqtt v0.10.4
 	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/Microsoft/hcsshim v0.8.6
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/astaxie/beego v1.12.0
 	github.com/aws/aws-sdk-go v1.21.10 // indirect
@@ -78,6 +79,7 @@ require (
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
+	github.com/smallnest/epoller v0.0.0-20190530062813-ac15129c1ee5
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
