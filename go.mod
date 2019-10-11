@@ -107,6 +107,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kubernetes v1.15.3
 	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
+	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (
