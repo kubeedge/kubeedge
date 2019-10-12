@@ -59,8 +59,6 @@ To build KubeEdge from source there is one option:
 
 ##### You have a working [Go environment].
 
-**Note: The recommended golang version is 1.12 **
-
 ```
 mkdir -p $GOPATH/src/github.com/kubeedge
 cd $GOPATH/src/github.com/kubeedge
