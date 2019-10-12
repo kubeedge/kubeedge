@@ -7,16 +7,20 @@ GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 
 default: cloudcore admission
 
-cloudcore:
+cloudcore: verify
 	go build ${GO_LDFLAGS} cmd/cloudcore/cloudcore.go
 
-admission:
+admission: verify
 	go build ${GO_LDFLAGS} cmd/admission/admission.go
 
 .PHONY: lint
 lint:
 	golangci-lint run --disable-all -E gofmt -E golint --deadline '10m' ./...
 	go vet ./...
+
+.PHONY: verify 
+verify:
+	bash ../hack/verify-golang.sh
 
 # Build and run tests.
 #

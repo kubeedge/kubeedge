@@ -2,8 +2,12 @@
 GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 # make edgecore
 .PHONY: default edgecore
-edgecore:
+edgecore: verify
 	go build ${GO_LDFLAGS}  cmd/edgecore/edgecore.go
+
+.PHONY: verify 
+verify:
+	bash ../hack/verify-golang.sh
 
 # unit tests
 .PHONY: test
@@ -32,7 +36,7 @@ clean:
 	bash -x hack/clean.sh
 
 .PHONY: cross_build
-cross_build:
+cross_build: verify
 	export GOARCH=arm \
         export GOOS="linux" \
         export GOARM=6 \
@@ -41,7 +45,7 @@ cross_build:
         go build cmd/edgecore/edgecore.go
 
 .PHONY: armv7
-armv7:
+armv7: verify
 	export GOARCH=arm \
         export GOOS="linux" \
         export GOARM=7 \
@@ -50,7 +54,7 @@ armv7:
         go build cmd/edgecore/edgecore.go
 
 .PHONY: armv8
-armv8:
+armv8: verify
 	export GOARCH=arm64 \
         export GOOS="linux" \
         export CGO_ENABLED=1 \
@@ -58,7 +62,7 @@ armv8:
         go build cmd/edgecore/edgecore.go
 
 .PHONY: small_build
-small_build:
+small_build: verify
 	go build -ldflags="-w -s -extldflags -static" cmd/edgecore/edgecore.go
 	# There are options in upx-ucl like --best, which has best compression,
 	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
