@@ -37,10 +37,10 @@ const (
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type UbuntuOS struct {
-	DockerVersion     string
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	DockerVersion      string
+	KubernetesVersion  string
+	KubeEdgeVersion    string
+	IsEdgeNode         bool //True - Edgenode False - Cloudnode
 	K8SImageRepository string
 	K8SPodNetworkCidr  string
 }
@@ -487,7 +487,7 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 	}
 
 SKIPDOWNLOADAND:
-	untarFileAndMove := fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
+	untarFileAndMove := fmt.Sprintf("cd %s && rm -rf kubeedge && mkdir kubeedge && tar -C %skubeedge -xvzf %s --strip-components 1 && cp %skubeedge/edge/%s /usr/local/bin/.", KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName)
 	stdout, err := runCommandWithShell(untarFileAndMove)
 	if err != nil {
 		return err
@@ -500,7 +500,7 @@ SKIPDOWNLOADAND:
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edgecore with logs being captured
 func (u *UbuntuOS) RunEdgeCore() error {
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
