@@ -17,12 +17,14 @@ func InitEdgeControllerConfig(c *cconfig.CloudCoreConfig) {
 	once.Do(func() {
 		config.EdgeController = *(c.EdgeController)
 		config.Kube = *(c.Kube)
+		config.ContextController = *(c.ControllerContext)
 	})
 }
 
 type Config struct {
-	EdgeController cconfig.EdgeControllerConfig
-	Kube           cconfig.KubeConfig
+	EdgeController    cconfig.EdgeControllerConfig
+	Kube              cconfig.KubeConfig
+	ContextController cconfig.ControllerContext
 }
 
 func Conf() *Config {

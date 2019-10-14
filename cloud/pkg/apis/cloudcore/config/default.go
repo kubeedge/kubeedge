@@ -8,11 +8,12 @@ import (
 
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 	return &CloudCoreConfig{
-		Kube:             NewDefaultKubeConfig(),
-		EdgeController:   NewDefaultEdgeControllerConfig(),
-		DeviceController: NewDeviceControllerConfig(),
-		Cloudhub:         NewDefaultCloudHubConfig(),
-		Modules:          NewDefaultModules(),
+		Kube:              NewDefaultKubeConfig(),
+		EdgeController:    NewDefaultEdgeControllerConfig(),
+		DeviceController:  NewDeviceControllerConfig(),
+		Cloudhub:          NewDefaultCloudHubConfig(),
+		Modules:           NewDefaultModules(),
+		ControllerContext: NewControllerContext(),
 	}
 }
 
@@ -60,4 +61,12 @@ func NewDefaultModules() *Modules {
 
 func NewDefaultAdmissionControllerConfig() *AdmissionControllerConfig {
 	return &AdmissionControllerConfig{}
+}
+
+func NewControllerContext() *ControllerContext {
+	return &ControllerContext{
+		SendModule:     constants.DefaultContextSendModuleName,
+		ReceiveModule:  constants.DefaultContextReceiveModuleName,
+		ResponseModule: constants.DefaultContextResponseModuleName,
+	}
 }

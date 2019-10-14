@@ -1,11 +1,12 @@
 package config
 
 type CloudCoreConfig struct {
-	Kube             *KubeConfig             `json:"kube,omitempty"`
-	EdgeController   *EdgeControllerConfig   `json:"edgeController,omitempty"`
-	DeviceController *DeviceControllerConfig `json:"deviceController,omitempty"`
-	Cloudhub         *CloudHubConfig         `json:"cloudHub,omitempty"`
-	Modules          *Modules                `json:"modules,omitempty"`
+	Kube              *KubeConfig             `json:"kube,omitempty"`
+	EdgeController    *EdgeControllerConfig   `json:"edgeController,omitempty"`
+	DeviceController  *DeviceControllerConfig `json:"deviceController,omitempty"`
+	Cloudhub          *CloudHubConfig         `json:"cloudHub,omitempty"`
+	Modules           *Modules                `json:"modules,omitempty"`
+	ControllerContext *ControllerContext      `json:"controllerContext"`
 }
 
 type EdgeControllerConfig struct {
@@ -60,4 +61,10 @@ type Modules struct {
 
 // TODO @kadisi  add AdmissionControllerConfig
 type AdmissionControllerConfig struct {
+}
+
+type ControllerContext struct {
+	SendModule     string `json:"sendModule,omitempty"`
+	ReceiveModule  string `json:"receiveModule,omitempty"`
+	ResponseModule string `json:"responseModule,omitempty"`
 }
