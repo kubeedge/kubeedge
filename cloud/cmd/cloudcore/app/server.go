@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -11,6 +13,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config/validation"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
@@ -20,7 +24,7 @@ import (
 )
 
 func NewCloudCoreCommand() *cobra.Command {
-	opts := options.NewCloudCoreOptions()
+	opts := options.NewDefaultCloudCoreOptions()
 	cmd := &cobra.Command{
 		Use: "cloudcore",
 		Long: `CloudCore is the core cloud part of KubeEdge, which contains three modules: cloudhub,
@@ -32,7 +36,23 @@ kubernetes controller which manages devices so that the device metadata/status d
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			Run()
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateCloudCoreConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			Run(c)
 		},
 	}
 	fs := cmd.Flags()
@@ -58,17 +78,17 @@ kubernetes controller which manages devices so that the device metadata/status d
 	return cmd
 }
 
-func Run() {
+func Run(c *config.CloudCoreConfig) {
 	// To help debugging, immediately log version
 	klog.Infof("Version: %+v", version.Get())
-	registerModules()
+	registerModules(c)
 	// start all modules
 	core.Run()
 }
 
 // registerModules register all the modules started in cloudcore
-func registerModules() {
-	cloudhub.Register()
-	edgecontroller.Register()
+func registerModules(c *config.CloudCoreConfig) {
+	cloudhub.Register(c.Cloudhub)
+	edgecontroller.Register(c.EdgeController)
 	devicecontroller.Register()
 }

@@ -17,6 +17,10 @@ limitations under the License.
 package options
 
 import (
+	"path"
+
+	"github.com/kubeedge/kubeedge/common/constants"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/klog"
 
@@ -28,23 +32,24 @@ type CloudCoreOptions struct {
 	ConfigFile string
 }
 
-func NewCloudCoreOptions() *CloudCoreOptions {
-	return &CloudCoreOptions{}
+func NewDefaultCloudCoreOptions() *CloudCoreOptions {
+	return &CloudCoreOptions{
+		ConfigFile: path.Join(constants.DefaultConfigDir, "cloudcore.yaml"),
+	}
 }
 
 func (o *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	// TODO set CloudCoreOptions field
-	//fs := fss.FlagSet("general")
+	fs := fss.FlagSet("general")
+	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
 	return
 }
 
 func (o *CloudCoreOptions) Validate() []error {
 	var errs []error
-	/*
-		if len(o.ConfigFile) == 0 {
+	if len(o.ConfigFile) == 0 {
 		errs = append(errs, field.Required(field.NewPath("ConfigFile"), ""))
-		}
-	*/
+	}
 
 	return errs
 }

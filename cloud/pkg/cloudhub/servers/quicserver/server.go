@@ -9,14 +9,14 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/server"
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *context.Context) {
+func StartCloudHub(config *config.HubConfig, eventq *channelq.ChannelEventQueue, c *context.Context) {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
@@ -43,7 +43,7 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *c
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
-		ExOpts:     api.QuicServerOption{MaxIncomingStreams: config.MaxIncomingStreams},
+		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(config.MaxIncomingStreams)},
 	}
 	klog.Info("Start cloud hub quic server")
 	svc.ListenAndServeTLS("", "")

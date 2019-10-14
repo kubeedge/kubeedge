@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/server"
@@ -22,7 +22,7 @@ var (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *context.Context) error {
+func StartCloudHub(config *config.HubConfig, eventq *channelq.ChannelEventQueue, c *context.Context) error {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
@@ -45,7 +45,7 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *c
 
 	s := server.Server{
 		Type:       api.ProtocolTypeWS,
-		Addr:       fmt.Sprintf("%s:%d", config.Address, config.Port),
+		Addr:       fmt.Sprintf("%s:%d", config.Address, config.WebsocketPort),
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,

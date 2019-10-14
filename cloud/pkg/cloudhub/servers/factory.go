@@ -3,9 +3,10 @@ package servers
 import (
 	"fmt"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/quicserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/wsserver"
 )
@@ -18,9 +19,9 @@ const (
 func StartCloudHub(protocol string, eventq *channelq.ChannelEventQueue, c *context.Context) {
 	switch protocol {
 	case ProtocolWebsocket:
-		wsserver.StartCloudHub(util.HubConfig, eventq, c)
+		wsserver.StartCloudHub(config.Config(), eventq, c)
 	case ProtocolQuic:
-		quicserver.StartCloudHub(util.HubConfig, eventq, c)
+		quicserver.StartCloudHub(config.Config(), eventq, c)
 	default:
 		panic(fmt.Errorf("invalid protocol, should be websocket or quic or uds"))
 	}
