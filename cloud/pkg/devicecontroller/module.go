@@ -11,6 +11,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
+	cloudconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 // DeviceController use beehive context message layer
@@ -18,9 +19,9 @@ type DeviceController struct {
 	stopChan chan bool
 }
 
-func Register() {
-	deviceController := DeviceController{}
-	core.Register(&deviceController)
+func Register(cc *cloudconfig.ControllerContext, k *cloudconfig.KubeConfig) {
+	config.InitDeviceControllerConfig(cc, k)
+	core.Register(&DeviceController{})
 }
 
 // Name of controller
@@ -37,8 +38,6 @@ func (dctl *DeviceController) Group() string {
 func (dctl *DeviceController) Start(c *bcontext.Context) {
 	config.Context = c
 	dctl.stopChan = make(chan bool)
-
-	initConfig()
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
@@ -65,12 +64,4 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 func (dctl *DeviceController) Cleanup() {
 	dctl.stopChan <- true
 	config.Context.Cleanup(dctl.Name())
-}
-
-func initConfig() {
-	config.InitBufferConfig()
-	config.InitContextConfig()
-	config.InitKubeConfig()
-	config.InitLoadConfig()
-	config.InitMessageLayerConfig()
 }

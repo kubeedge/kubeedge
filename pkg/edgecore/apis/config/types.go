@@ -1,11 +1,19 @@
 package config
 
+import commonconfig "github.com/kubeedge/kubeedge/pkg/common/apis/config"
+
+const (
+	InternalMqttMode = iota // 0: launch an internal mqtt broker.
+	BothMqttMode            // 1: launch an internal and external mqtt broker.
+	ExternalMqttMode        // 2: launch an external mqtt broker.
+)
+
 type EdgeCoreConfig struct {
-	Mqtt    *MqttConfig    `json:"mqtt,omitempty"`
-	EdgeHub *EdgeHubConfig `json:"edgehub,omitempty"`
-	Edged   *EdgedConfig   `json:"edged,omitempty"`
-	Mesh    *MeshConfig    `json:"mesh,omitempty"`
-	Modules *Modules       `json:"modules,omitempty"`
+	Mqtt    *MqttConfig           `json:"mqtt,omitempty"`
+	EdgeHub *EdgeHubConfig        `json:"edgehub,omitempty"`
+	Edged   *EdgedConfig          `json:"edged,omitempty"`
+	Mesh    *MeshConfig           `json:"mesh,omitempty"`
+	Modules *commonconfig.Modules `json:"modules,omitempty"`
 }
 
 type MqttConfig struct {
@@ -122,9 +130,4 @@ type MeshConfig struct {
 type LoadbalanceConfig struct {
 	// default RoundRobin
 	StrategyName string `json:"strategyName,omitempty"`
-}
-
-type Modules struct {
-	//default devicecontroller, edgecontroller, cloudhub
-	Enabled []string `json:"enabled,omitempty"`
 }

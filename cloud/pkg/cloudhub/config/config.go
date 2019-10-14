@@ -13,10 +13,10 @@ import (
 var c Config
 var once sync.Once
 
-func InitHubConfig(h cconfig.CloudHubConfig) {
+func InitHubConfig(h *cconfig.CloudHubConfig) {
 	once.Do(func() {
 		var err error
-		c.CloudHubConfig = h
+		c.CloudHubConfig = *h
 
 		c.Ca, err = ioutil.ReadFile(h.TLSCaFile)
 		if err != nil {

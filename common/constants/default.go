@@ -39,19 +39,6 @@ const (
 )
 
 const (
-
-	// DefaultMessageLayer used, context or ssmq, default is context
-	DefaultMessageLayer = "context"
-
-	// DefaultContextSendModule is the name send message to
-	DefaultContextSendModuleName = "cloudhub"
-	// DefaultContextReceiveModule is the name receive message from
-	DefaultContextReceiveModuleName = "edgecontroller"
-	// DefaultContextResponseModule is the name response message from
-	DefaultContextResponseModuleName = "cloudhub"
-)
-
-const (
 	// DefaultUpdatePodStatusBuffer is the size of channel which save update pod status message from edge
 	DefaultUpdatePodStatusBuffer = 1024
 	// DefaultUpdateNodeStatusBuffer is the size of channel which save update node status message from edge
@@ -127,4 +114,15 @@ const (
 )
 const (
 	StrategyRoundRobin = "RoundRobin"
+)
+
+const (
+	// DefaultUpdateDeviceStatusBuffer is the size of channel which save update device status message from edge
+	DefaultUpdateDeviceStatusBuffer = 1024
+	// DefaultDeviceEventBuffer is the size of channel which save device event from k8s
+	DefaultDeviceEventBuffer = 1
+	// DefaultDeviceModelEventBuffer is the size of channel which save devicemodel event from k8s
+	DefaultDeviceModelEventBuffer = 1
+	// DefaultUpdateDeviceStatusWorkers is the count of goroutines of update device status
+	DefaultUpdateDeviceStatusWorkers = 1
 )

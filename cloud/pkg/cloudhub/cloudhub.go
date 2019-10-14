@@ -16,7 +16,7 @@ type cloudHub struct {
 }
 
 func Register(c *cloudconfig.CloudHubConfig) {
-	config.InitHubConfig(*c)
+	config.InitHubConfig(c)
 	core.Register(&cloudHub{})
 }
 

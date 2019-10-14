@@ -4,6 +4,7 @@ import (
 	"path"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	commonconfig "github.com/kubeedge/kubeedge/pkg/common/apis/config"
 )
 
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
@@ -104,8 +105,8 @@ func NewDefaultLoadbalanceConfig() *LoadbalanceConfig {
 	}
 }
 
-func NewDefaultModules() *Modules {
-	return &Modules{
+func NewDefaultModules() *commonconfig.Modules {
+	return &commonconfig.Modules{
 		Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin", "dbTest", "edgemesh"},
 	}
 }

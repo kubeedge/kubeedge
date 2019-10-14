@@ -5,7 +5,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	"github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
+	commonconfig "github.com/kubeedge/kubeedge/pkg/common/apis/config"
 )
 
 func ValidateCloudCoreConfiguration(c *config.CloudCoreConfig) field.ErrorList {
@@ -51,7 +52,7 @@ func ValidateKubeConfiguration(k *config.KubeConfig) field.ErrorList {
 	return allErrs
 }
 
-func ValidateModulesuration(m *config.Modules) field.ErrorList {
+func ValidateModulesuration(m *commonconfig.Modules) field.ErrorList {
 	allErrs := field.ErrorList{}
 	return allErrs
 }

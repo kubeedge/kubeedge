@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DeviceModelManager is a manager watch DeviceModel change event
@@ -29,7 +29,7 @@ func (dmm *DeviceModelManager) Events() chan watch.Event {
 // NewDeviceModelManager create DeviceModelManager from config
 func NewDeviceModelManager(crdClient *rest.RESTClient, namespace string) (*DeviceModelManager, error) {
 	lw := cache.NewListWatchFromClient(crdClient, "devicemodels", namespace, fields.Everything())
-	events := make(chan watch.Event, config.DeviceModelEventBuffer)
+	events := make(chan watch.Event, constants.DefaultDeviceModelEventBuffer)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1alpha1.DeviceModel{}, 0)
 	si.AddEventHandler(rh)

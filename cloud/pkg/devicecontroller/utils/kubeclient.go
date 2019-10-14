@@ -7,6 +7,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // KubeClient from config
@@ -21,13 +22,14 @@ func KubeClient() (*kubernetes.Clientset, error) {
 
 // KubeConfig from flags
 func KubeConfig() (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.KubeMaster, config.KubeConfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Conf().Kube.Master, config.Conf().Kube.Kubeconfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeConfig.QPS = config.KubeQPS
-	kubeConfig.Burst = config.KubeBurst
-	kubeConfig.ContentType = config.KubeContentType
+
+	kubeConfig.QPS = constants.DefaultKubeQPS
+	kubeConfig.Burst = constants.DefaultKubeBurst
+	kubeConfig.ContentType = constants.DefaultKubeContentType
 
 	return kubeConfig, err
 }

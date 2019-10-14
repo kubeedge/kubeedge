@@ -1,19 +1,22 @@
 package config
 
+import commonconfig "github.com/kubeedge/kubeedge/pkg/common/apis/config"
+
 type CloudCoreConfig struct {
-	Kube              *KubeConfig             `json:"kube,omitempty"`
-	EdgeController    *EdgeControllerConfig   `json:"edgeController,omitempty"`
-	DeviceController  *DeviceControllerConfig `json:"deviceController,omitempty"`
-	Cloudhub          *CloudHubConfig         `json:"cloudHub,omitempty"`
-	Modules           *Modules                `json:"modules,omitempty"`
-	ControllerContext *ControllerContext      `json:"controllerContext"`
+	Kube             *KubeConfig             `json:"kube,omitempty"`
+	EdgeController   *EdgeControllerConfig   `json:"edgeController,omitempty"`
+	DeviceController *DeviceControllerConfig `json:"deviceController,omitempty"`
+	Cloudhub         *CloudHubConfig         `json:"cloudHub,omitempty"`
+	Modules          *commonconfig.Modules   `json:"modules,omitempty"`
 }
 
 type EdgeControllerConfig struct {
-	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
+	NodeUpdateFrequency int32              `json:"nodeUpdateFrequency,omitempty"`
+	ControllerContext   *ControllerContext `json:"Context"`
 }
 
 type DeviceControllerConfig struct {
+	ControllerContext *ControllerContext `json:"Context"`
 }
 
 type CloudHubConfig struct {
@@ -47,18 +50,6 @@ type CloudHubConfig struct {
 	NodeLimit int32 `json:"nodeLimit,omitempty"`
 }
 
-type KubeConfig struct {
-	// The address of the Kubernetes API server (overrides any value in kubeconfig)
-	Master string `json:"master,omitempty"`
-	// Path to kubeconfig file with authorization and master location information. default "/root/.kube/config"
-	Kubeconfig string `json:"kubeconfig,omitempty"`
-}
-
-type Modules struct {
-	//default devicecontroller, edgecontroller, cloudhub
-	Enabled []string `json:"enabled,omitempty"`
-}
-
 // TODO @kadisi  add AdmissionControllerConfig
 type AdmissionControllerConfig struct {
 }
@@ -67,4 +58,11 @@ type ControllerContext struct {
 	SendModule     string `json:"sendModule,omitempty"`
 	ReceiveModule  string `json:"receiveModule,omitempty"`
 	ResponseModule string `json:"responseModule,omitempty"`
+}
+
+type KubeConfig struct {
+	// The address of the Kubernetes API server (overrides any value in kubeconfig)
+	Master string `json:"master,omitempty"`
+	// Path to kubeconfig file with authorization and master location information. default "/root/.kube/config"
+	Kubeconfig string `json:"kubeconfig,omitempty"`
 }

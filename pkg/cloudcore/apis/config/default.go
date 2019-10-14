@@ -4,27 +4,38 @@ import (
 	"path"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	commonconfig "github.com/kubeedge/kubeedge/pkg/common/apis/config"
 )
 
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 	return &CloudCoreConfig{
-		Kube:              NewDefaultKubeConfig(),
-		EdgeController:    NewDefaultEdgeControllerConfig(),
-		DeviceController:  NewDeviceControllerConfig(),
-		Cloudhub:          NewDefaultCloudHubConfig(),
-		Modules:           NewDefaultModules(),
-		ControllerContext: NewControllerContext(),
+		Kube:             NewDefaultKubeConfig(),
+		EdgeController:   NewDefaultEdgeControllerConfig(),
+		DeviceController: NewDeviceControllerConfig(),
+		Cloudhub:         NewDefaultCloudHubConfig(),
+		Modules:          NewDefaultModules(),
 	}
 }
 
 func NewDefaultEdgeControllerConfig() *EdgeControllerConfig {
 	return &EdgeControllerConfig{
 		NodeUpdateFrequency: 10,
+		ControllerContext: &ControllerContext{
+			SendModule:     constants.CloudHubControllerModuleName,
+			ReceiveModule:  constants.EdgeControllerModuleName,
+			ResponseModule: constants.CloudHubControllerModuleName,
+		},
 	}
 }
 
 func NewDeviceControllerConfig() *DeviceControllerConfig {
-	return &DeviceControllerConfig{}
+	return &DeviceControllerConfig{
+		ControllerContext: &ControllerContext{
+			SendModule:     constants.CloudHubControllerModuleName,
+			ReceiveModule:  constants.DeviceControllerModuleName,
+			ResponseModule: constants.CloudHubControllerModuleName,
+		},
+	}
 }
 
 func NewDefaultCloudHubConfig() *CloudHubConfig {
@@ -53,20 +64,12 @@ func NewDefaultKubeConfig() *KubeConfig {
 	}
 }
 
-func NewDefaultModules() *Modules {
-	return &Modules{
+func NewDefaultModules() *commonconfig.Modules {
+	return &commonconfig.Modules{
 		Enabled: []string{"devicecontroller", "edgecontroller", "cloudhub"},
 	}
 }
 
 func NewDefaultAdmissionControllerConfig() *AdmissionControllerConfig {
 	return &AdmissionControllerConfig{}
-}
-
-func NewControllerContext() *ControllerContext {
-	return &ControllerContext{
-		SendModule:     constants.DefaultContextSendModuleName,
-		ReceiveModule:  constants.DefaultContextReceiveModuleName,
-		ResponseModule: constants.DefaultContextResponseModuleName,
-	}
 }

@@ -25,11 +25,11 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
+	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DeviceStatus is structure to patch device status
@@ -66,11 +66,11 @@ func (uc *UpstreamController) Start() error {
 	uc.stopDispatch = make(chan struct{})
 	uc.stopUpdateDeviceStatus = make(chan struct{})
 
-	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
+	uc.deviceStatusChan = make(chan model.Message, common.DefaultUpdateDeviceStatusBuffer)
 
 	go uc.dispatchMessage(uc.stopDispatch)
 
-	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
+	for i := 0; i < common.DefaultUpdateDeviceStatusWorkers; i++ {
 		go uc.updateDeviceStatus(uc.stopUpdateDeviceStatus)
 	}
 
@@ -201,7 +201,7 @@ func (uc *UpstreamController) Stop() error {
 	defer klog.Info("Upstream devicecontroller stopped")
 
 	uc.stopDispatch <- struct{}{}
-	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
+	for i := 0; i < common.DefaultUpdateDeviceStatusWorkers; i++ {
 		uc.stopUpdateDeviceStatus <- struct{}{}
 	}
 	return nil

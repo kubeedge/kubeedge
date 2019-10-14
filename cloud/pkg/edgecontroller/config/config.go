@@ -6,6 +6,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 	econfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
+	sideconfig "github.com/kubeedge/kubeedge/pkg/edgesite/apis/config"
 )
 
 var (
@@ -14,12 +15,17 @@ var (
 	once    sync.Once
 )
 
-func InitEdgeControllerConfig(cc *cconfig.CloudCoreConfig, ec *econfig.EdgedConfig) {
+func InitEdgeControllerConfig(econtroller *cconfig.EdgeControllerConfig,
+	kube *cconfig.KubeConfig,
+	cc *cconfig.ControllerContext,
+	ec *econfig.EdgedConfig,
+	m *sideconfig.Metamanager) {
 	once.Do(func() {
-		c.EdgeController = *(cc.EdgeController)
-		c.Kube = *(cc.Kube)
-		c.ContextController = *(cc.ControllerContext)
+		c.EdgeController = *econtroller
+		c.Kube = *kube
+		c.ContextController = *cc
 		c.EdgedConfig = *ec
+		c.EdgeSiteEnabled = m.EdgeSite
 	})
 }
 
@@ -28,6 +34,7 @@ type Config struct {
 	Kube              cconfig.KubeConfig
 	ContextController cconfig.ControllerContext
 	EdgedConfig       econfig.EdgedConfig
+	EdgeSiteEnabled   bool
 }
 
 func Conf() *Config {
