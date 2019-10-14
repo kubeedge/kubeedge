@@ -7,7 +7,7 @@ import (
 
 	"k8s.io/klog"
 
-	cconfig "github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 var hubConfig Config

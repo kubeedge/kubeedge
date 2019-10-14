@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/kubeedge/beehive/pkg/core/context"
-	cconfig "github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 // Context ...

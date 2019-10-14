@@ -3,11 +3,11 @@ package cloudhub
 import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
-	cloudconfig "github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	cloudconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 type cloudHub struct {

@@ -7,10 +7,10 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
-	cloudconfig "github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
+	cloudconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 // Controller use beehive context message layer
