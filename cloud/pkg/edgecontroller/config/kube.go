@@ -11,9 +11,6 @@ import (
 // Kube container Kubernetes related configuration
 var Kube *KubeInfo
 
-// KubeNodeID for the current node
-var KubeNodeID string
-
 // KubeNodeName for the current node
 var KubeNodeName string
 
@@ -59,12 +56,6 @@ func InitKubeConfig() {
 		Kube.KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
 	}
 	klog.Infof("Controller kube update frequency: %v", Kube.KubeUpdateNodeFrequency)
-	if id, err := config.CONFIG.GetValue("controller.kube.node-id").ToString(); err != nil {
-		KubeNodeID = ""
-	} else {
-		KubeNodeID = id
-	}
-	klog.Infof("Controller kube Node ID: %s", KubeNodeID)
 
 	if name, err := config.CONFIG.GetValue("controller.kube.node-name").ToString(); err != nil {
 		KubeNodeName = ""

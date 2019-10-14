@@ -27,15 +27,20 @@ const (
 	// DefaultQueryServiceWorkers is the count of goroutines of query service
 	DefaultQueryServiceWorkers = 4
 	// DefaultQueryEndpointsWorkers is the count of goroutines of query endpoints
-	DefaultQueryEndpointsWorkers             = 4
-	DefaultQueryPersistentVolumeWorkers      = 4
+	DefaultQueryEndpointsWorkers = 4
+	// DefaultQueryPersistentVolumeWorkers is the count of goroutines of query persistentvolume
+	DefaultQueryPersistentVolumeWorkers = 4
+	// DefaultQueryPersistentVolumeClaimWorkers is the count of goroutines of query persistentvolumeclaim
 	DefaultQueryPersistentVolumeClaimWorkers = 4
-	DefaultQueryVolumeAttachmentWorkers      = 4
-	DefaultQueryNodeWorkers                  = 4
-	DefaultUpdateNodeWorkers                 = 4
+	// DefaultQueryVolumeAttachmentWorkers is the count of goroutines of query volumeattachment
+	DefaultQueryVolumeAttachmentWorkers = 4
+	// DefaultQueryNodeWorkers is the count of goroutines of query node
+	DefaultQueryNodeWorkers = 4
 )
 
 const (
+
+	// DefaultMessageLayer used, context or ssmq, default is context
 	DefaultMessageLayer = "context"
 
 	// DefaultContextSendModule is the name send message to

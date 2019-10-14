@@ -155,13 +155,13 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeWorkers; i++ {
 		go uc.queryPersistentVolume(uc.stopQueryPersistentVolume)
 	}
-	for i := 0; i < config.QueryPersistentVolumeClaimWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeClaimWorkers; i++ {
 		go uc.queryPersistentVolumeClaim(uc.stopQueryPersistentVolumeClaim)
 	}
-	for i := 0; i < config.QueryVolumeAttachmentWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryVolumeAttachmentWorkers; i++ {
 		go uc.queryVolumeAttachment(uc.stopQueryVolumeAttachment)
 	}
-	for i := 0; i < config.QueryNodeWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryNodeWorkers; i++ {
 		go uc.queryNode(uc.stopQueryNode)
 	}
 	for i := 0; i < commonconstants.DefaultUpdateNodeBuffer; i++ {
@@ -1147,6 +1147,16 @@ func (uc *UpstreamController) Stop() error {
 	}
 	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeWorkers; i++ {
 		uc.stopQueryPersistentVolume <- struct{}{}
+	}
+	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeClaimWorkers; i++ {
+		uc.stopQueryPersistentVolumeClaim <- struct{}{}
+	}
+	for i := 0; i < commonconstants.DefaultQueryVolumeAttachmentWorkers; i++ {
+		uc.stopQueryVolumeAttachment <- struct{}{}
+	}
+
+	for i := 0; i < commonconstants.DefaultQueryNodeWorkers; i++ {
+		uc.stopQueryNode <- struct{}{}
 	}
 	return nil
 }

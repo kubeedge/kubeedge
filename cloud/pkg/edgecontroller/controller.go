@@ -18,8 +18,8 @@ type Controller struct {
 	stopChan chan bool
 }
 
-func Register(e *cloudconfig.EdgeControllerConfig) {
-	config.InitEdgeControllerConfig(*e)
+func Register(c *cloudconfig.CloudCoreConfig) {
+	config.InitEdgeControllerConfig(c)
 	core.Register(&Controller{})
 }
 
