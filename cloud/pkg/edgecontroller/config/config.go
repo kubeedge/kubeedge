@@ -5,19 +5,21 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/context"
 	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
+	econfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
-// Context ...
-var Context *context.Context
+var (
+	Context *context.Context
+	c       Config
+	once    sync.Once
+)
 
-var config Config
-var once sync.Once
-
-func InitEdgeControllerConfig(c *cconfig.CloudCoreConfig) {
+func InitEdgeControllerConfig(cc *cconfig.CloudCoreConfig, ec *econfig.EdgedConfig) {
 	once.Do(func() {
-		config.EdgeController = *(c.EdgeController)
-		config.Kube = *(c.Kube)
-		config.ContextController = *(c.ControllerContext)
+		c.EdgeController = *(cc.EdgeController)
+		c.Kube = *(cc.Kube)
+		c.ContextController = *(cc.ControllerContext)
+		c.EdgedConfig = *ec
 	})
 }
 
@@ -25,8 +27,9 @@ type Config struct {
 	EdgeController    cconfig.EdgeControllerConfig
 	Kube              cconfig.KubeConfig
 	ContextController cconfig.ControllerContext
+	EdgedConfig       econfig.EdgedConfig
 }
 
 func Conf() *Config {
-	return &config
+	return &c
 }

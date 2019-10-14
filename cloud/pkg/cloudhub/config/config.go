@@ -10,26 +10,26 @@ import (
 	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
-var hubConfig Config
+var c Config
 var once sync.Once
 
 func InitHubConfig(h cconfig.CloudHubConfig) {
 	once.Do(func() {
 		var err error
-		hubConfig.CloudHubConfig = h
+		c.CloudHubConfig = h
 
-		hubConfig.Ca, err = ioutil.ReadFile(h.TLSCaFile)
+		c.Ca, err = ioutil.ReadFile(h.TLSCaFile)
 		if err != nil {
 			klog.Errorf("Read Ca file %s error", h.TLSCaFile)
 			os.Exit(1)
 		}
 
-		hubConfig.Cert, err = ioutil.ReadFile(h.TLSCertFile)
+		c.Cert, err = ioutil.ReadFile(h.TLSCertFile)
 		if err != nil {
 			klog.Errorf("Read cert file %s error", h.TLSCaFile)
 			os.Exit(1)
 		}
-		hubConfig.Key, err = ioutil.ReadFile(h.TLSPrivateKeyFile)
+		c.Key, err = ioutil.ReadFile(h.TLSPrivateKeyFile)
 		if err != nil {
 			klog.Errorf("Read key file %s error", h.TLSCaFile)
 			os.Exit(1)
@@ -46,5 +46,5 @@ type Config struct {
 }
 
 func Conf() *Config {
-	return &hubConfig
+	return &c
 }

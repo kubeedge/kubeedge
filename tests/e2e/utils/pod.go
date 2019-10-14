@@ -29,6 +29,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -186,7 +188,7 @@ func NewKubeClient(apiserver string) *kubernetes.Clientset {
 	}
 	kubeConfig.QPS = 5
 	kubeConfig.Burst = 10
-	kubeConfig.ContentType = "application/vnd.kubernetes.protobuf"
+	kubeConfig.ContentType = constants.DefaultKubeContentType
 	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		Fatalf("Get kube client failed with error: %v", err)

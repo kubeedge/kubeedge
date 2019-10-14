@@ -63,7 +63,6 @@ func NewDefaultControllerConfig() *ControllerConfig {
 		Protocol:  constants.ProtocolWebsocket,
 		Heartbeat: 15,
 		ProjectId: "e632aba927ea4ac2b575ec1603d56f10",
-		NodeId:    "edge-node",
 	}
 }
 

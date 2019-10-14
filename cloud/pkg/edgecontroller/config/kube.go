@@ -11,31 +11,11 @@ import (
 // Kube container Kubernetes related configuration
 var Kube *KubeInfo
 
-// KubeNodeName for the current node
-var KubeNodeName string
-
-// KubeUpdateNodeFrequency is the time duration for update node status(default is 20s)
-var KubeUpdateNodeFrequency time.Duration
-
 //EdgeSiteEnabled is used to enable or disable EdgeSite feature. Default is disabled
 var EdgeSiteEnabled bool
 
 func InitKubeConfig() {
 	Kube = NewKubeInfo()
-
-	if km, err := config.CONFIG.GetValue("controller.kube.master").ToString(); err != nil {
-		klog.Errorf("Controller kube master not set")
-	} else {
-		Kube.KubeMaster = km
-	}
-	klog.Infof("Controller kube master: %s", Kube.KubeMaster)
-
-	if kc, err := config.CONFIG.GetValue("controller.kube.kubeconfig").ToString(); err != nil {
-		klog.Errorf("Controller kube config not set")
-	} else {
-		Kube.KubeConfig = kc
-	}
-	klog.Infof("Controller kube config: %s", Kube.KubeConfig)
 
 	if kct, err := config.CONFIG.GetValue("controller.kube.content_type").ToString(); err == nil {
 		Kube.KubeContentType = kct
@@ -56,13 +36,6 @@ func InitKubeConfig() {
 		Kube.KubeUpdateNodeFrequency = time.Duration(kuf) * time.Second
 	}
 	klog.Infof("Controller kube update frequency: %v", Kube.KubeUpdateNodeFrequency)
-
-	if name, err := config.CONFIG.GetValue("controller.kube.node-name").ToString(); err != nil {
-		KubeNodeName = ""
-	} else {
-		KubeNodeName = name
-	}
-	klog.Infof("Controller kube Node Name: %s", KubeNodeName)
 
 	if es, err := config.CONFIG.GetValue("metamanager.edgesite").ToBool(); err != nil {
 		EdgeSiteEnabled = false

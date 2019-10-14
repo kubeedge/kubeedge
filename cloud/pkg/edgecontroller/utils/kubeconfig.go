@@ -5,6 +5,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // KubeConfig from flags
@@ -15,7 +16,6 @@ func KubeConfig() (conf *rest.Config, err error) {
 	}
 	kubeConfig.QPS = config.Kube.KubeQPS
 	kubeConfig.Burst = config.Kube.KubeBurst
-	kubeConfig.ContentType = config.Kube.KubeContentType
-
+	kubeConfig.ContentType = constants.DefaultKubeContentType
 	return kubeConfig, nil
 }

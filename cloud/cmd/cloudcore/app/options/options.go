@@ -24,7 +24,7 @@ import (
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	"github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 // TODO set cloudcore config

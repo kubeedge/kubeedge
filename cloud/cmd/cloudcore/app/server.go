@@ -89,6 +89,6 @@ func Run(c *config.CloudCoreConfig) {
 // registerModules register all the modules started in cloudcore
 func registerModules(c *config.CloudCoreConfig) {
 	cloudhub.Register(c.Cloudhub)
-	edgecontroller.Register(c)
+	edgecontroller.Register(c, nil)
 	devicecontroller.Register()
 }

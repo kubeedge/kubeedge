@@ -69,8 +69,6 @@ type ControllerConfig struct {
 	Heartbeat int32 `json:"heartbeat,omitempty"`
 	//default e632aba927ea4ac2b575ec1603d56f10
 	ProjectId string `json:"projectId,omitempty"`
-	//default edge-node
-	NodeId string `json:"nodeId,omitempty"`
 }
 
 type EdgedConfig struct {

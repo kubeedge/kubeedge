@@ -7,10 +7,11 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	bcontext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	controllerconfig "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
-	cloudconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
+	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 // Controller use beehive context message layer
@@ -18,8 +19,8 @@ type Controller struct {
 	stopChan chan bool
 }
 
-func Register(c *cloudconfig.CloudCoreConfig) {
-	config.InitEdgeControllerConfig(c)
+func Register(c *cloudcoreconfig.CloudCoreConfig, ec *edgecoreconfig.EdgedConfig) {
+	controllerconfig.InitEdgeControllerConfig(c, ec)
 	core.Register(&Controller{})
 }
 
@@ -35,7 +36,8 @@ func (ctl *Controller) Group() string {
 
 // Start controller
 func (ctl *Controller) Start(c *bcontext.Context) {
-	config.Context = c
+	controllerconfig.Context = c
+
 	ctl.stopChan = make(chan bool)
 
 	upstream, err := controller.NewUpstreamController()
@@ -60,5 +62,5 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 // Cleanup controller
 func (ctl *Controller) Cleanup() {
 	ctl.stopChan <- true
-	config.Context.Cleanup(ctl.Name())
+	controllerconfig.Context.Cleanup(ctl.Name())
 }

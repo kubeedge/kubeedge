@@ -5,6 +5,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // KubeMaster is the url of edge master(kube api server)
@@ -38,7 +39,7 @@ func InitKubeConfig() {
 	klog.Infof("Devicecontroller kube config: %s", KubeConfig)
 
 	if kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString(); err != nil {
-		KubeContentType = constants.DefaultKubeContentType
+		KubeContentType = commonconstants.DefaultKubeContentType
 	} else {
 		KubeContentType = kct
 	}
