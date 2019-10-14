@@ -7,13 +7,13 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
+	cconfig "github.com/kubeedge/kubeedge/cloud/pkg/apis/cloudcore/config"
 )
 
-var hubConfig HubConfig
+var hubConfig Config
 var once sync.Once
 
-func InitHubConfig(h config.CloudHubConfig) {
+func InitHubConfig(h cconfig.CloudHubConfig) {
 	once.Do(func() {
 		var err error
 		hubConfig.CloudHubConfig = h
@@ -37,14 +37,14 @@ func InitHubConfig(h config.CloudHubConfig) {
 	})
 }
 
-func Config() *HubConfig {
-	return &hubConfig
-}
-
 // HubConfig represents configuration options for http access
-type HubConfig struct {
-	config.CloudHubConfig
+type Config struct {
+	cconfig.CloudHubConfig
 	Ca   []byte
 	Cert []byte
 	Key  []byte
+}
+
+func Conf() *Config {
+	return &hubConfig
 }

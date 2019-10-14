@@ -13,49 +13,76 @@ const (
 	DefaultKubeQPS                 = 100.0
 	DefaultKubeBurst               = 10
 	DefaultKubeUpdateNodeFrequency = 20
+)
 
-	DefaultUpdatePodStatusWorkers            = 1
-	DefaultUpdateNodeStatusWorkers           = 1
-	DefaultQueryConfigMapWorkers             = 4
-	DefaultQuerySecretWorkers                = 4
-	DefaultQueryServiceWorkers               = 4
+const (
+	// DefaultUpdatePodStatusWorkers is the count of goroutines of update pod status
+	DefaultUpdatePodStatusWorkers = 1
+	// DefaultUpdateNodeStatusWorkers is the count of goroutines of update node status
+	DefaultUpdateNodeStatusWorkers = 1
+	// DefaultQueryConfigMapWorkers is the count of goroutines of query configmap
+	DefaultQueryConfigMapWorkers = 4
+	// DefaultQuerySecretWorkers is the count of goroutines of query secret
+	DefaultQuerySecretWorkers = 4
+	// DefaultQueryServiceWorkers is the count of goroutines of query service
+	DefaultQueryServiceWorkers = 4
+	// DefaultQueryEndpointsWorkers is the count of goroutines of query endpoints
 	DefaultQueryEndpointsWorkers             = 4
 	DefaultQueryPersistentVolumeWorkers      = 4
 	DefaultQueryPersistentVolumeClaimWorkers = 4
 	DefaultQueryVolumeAttachmentWorkers      = 4
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
+)
 
-	DefaultUpdatePodStatusBuffer            = 1024
-	DefaultUpdateNodeStatusBuffer           = 1024
-	DefaultQueryConfigMapBuffer             = 1024
-	DefaultQuerySecretBuffer                = 1024
-	DefaultQueryServiceBuffer               = 1024
-	DefaultQueryEndpointsBuffer             = 1024
-	DefaultQueryPersistentVolumeBuffer      = 1024
-	DefaultQueryPersistentVolumeClaimBuffer = 1024
-	DefaultQueryVolumeAttachmentBuffer      = 1024
-	DefaultQueryNodeBuffer                  = 1024
-	DefaultUpdateNodeBuffer                 = 1024
-
-	DefaultETCDTimeout = 10
-
-	DefaultEnableElection = false
-	DefaultElectionTTL    = 30
-	DefaultElectionPrefix = "/controller/leader"
-
+const (
 	DefaultMessageLayer = "context"
 
-	DefaultContextSendModuleName     = "cloudhub"
-	DefaultContextReceiveModuleName  = "edgecontroller"
+	// DefaultContextSendModule is the name send message to
+	DefaultContextSendModuleName = "cloudhub"
+	// DefaultContextReceiveModule is the name receive message from
+	DefaultContextReceiveModuleName = "edgecontroller"
+	// DefaultContextResponseModule is the name response message from
 	DefaultContextResponseModuleName = "cloudhub"
+)
 
-	DefaultPodEventBuffer       = 1
+const (
+	// DefaultUpdatePodStatusBuffer is the size of channel which save update pod status message from edge
+	DefaultUpdatePodStatusBuffer = 1024
+	// DefaultUpdateNodeStatusBuffer is the size of channel which save update node status message from edge
+	DefaultUpdateNodeStatusBuffer = 1024
+	// DefaultQueryConfigMapBuffer is the size of channel which save query configmap message from edge
+	DefaultQueryConfigMapBuffer = 1024
+	// DefaultQuerySecretBuffer is the size of channel which save query secret message from edge
+	DefaultQuerySecretBuffer = 1024
+	// DefaultQueryServiceBuffer is the size of channel which save query service message from edge
+	DefaultQueryServiceBuffer = 1024
+	// DefaultQueryEndpointsBuffer is the size of channel which save query endpoints message from edge
+	DefaultQueryEndpointsBuffer = 1024
+	// DefaultQueryPersistentVolumeBuffer is the size of channel which save query persistentvolume message from edge
+	DefaultQueryPersistentVolumeBuffer = 1024
+	// DefaultQueryPersistentVolumeClaimBuffer is the size of channel which save query persistentvolumeclaim message from edge
+	DefaultQueryPersistentVolumeClaimBuffer = 1024
+	// DefaultQueryVolumeAttachmentBuffer is the size of channel which save query volumeattachment message from edge
+	DefaultQueryVolumeAttachmentBuffer = 1024
+	// DefaultQueryNodeBuffer is the size of channel which save query node message from edge
+	DefaultQueryNodeBuffer = 1024
+	// DefaultUpdateNodeBuffer is the size of channel which save update node message from edge
+	DefaultUpdateNodeBuffer = 1024
+
+	// DefaultPodEventBuffer is the size of channel which save pod event from k8s
+	DefaultPodEventBuffer = 1
+	// DefaultConfigMapEventBuffer is the size of channel which save configmap event from k8s
 	DefaultConfigMapEventBuffer = 1
-	DefaultSecretEventBuffer    = 1
-	DefaultServiceEventBuffer   = 1
+	// DefaultSecretEventBuffer is the size of channel which save secret event from k8s
+	DefaultSecretEventBuffer = 1
+	// DefaultServiceEventBuffer is the size of channel which save service event from k8s
+	DefaultServiceEventBuffer = 1
+	// DefaultEndpointsEventBuffer is the size of channel which save endpoints event from k8s
 	DefaultEndpointsEventBuffer = 1
+)
 
+const (
 	// Resource sep
 	ResourceSep = "/"
 

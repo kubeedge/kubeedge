@@ -38,18 +38,18 @@ func (a *cloudHub) Start(c *context.Context) {
 	go eventq.DispatchMessage()
 
 	// start the cloudhub server
-	if config.Config().EnableWebsocket {
+	if config.Conf().EnableWebsocket {
 		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
 	}
 
-	if config.Config().EnableQuic {
+	if config.Conf().EnableQuic {
 		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
 	}
 
-	if config.Config().EnableUnixSocket {
+	if config.Conf().EnableUnixSocket {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
 		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(config.Config(), c)
+		go udsserver.StartServer(config.Conf(), c)
 	}
 
 	<-a.stopChan

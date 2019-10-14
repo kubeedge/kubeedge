@@ -19,9 +19,9 @@ const (
 func StartCloudHub(protocol string, eventq *channelq.ChannelEventQueue, c *context.Context) {
 	switch protocol {
 	case ProtocolWebsocket:
-		wsserver.StartCloudHub(config.Config(), eventq, c)
+		wsserver.StartCloudHub(config.Conf(), eventq, c)
 	case ProtocolQuic:
-		quicserver.StartCloudHub(config.Config(), eventq, c)
+		quicserver.StartCloudHub(config.Conf(), eventq, c)
 	default:
 		panic(fmt.Errorf("invalid protocol, should be websocket or quic or uds"))
 	}

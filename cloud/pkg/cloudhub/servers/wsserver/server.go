@@ -22,7 +22,7 @@ var (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *config.HubConfig, eventq *channelq.ChannelEventQueue, c *context.Context) error {
+func StartCloudHub(config *config.Config, eventq *channelq.ChannelEventQueue, c *context.Context) error {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)

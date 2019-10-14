@@ -41,6 +41,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	common "github.com/kubeedge/kubeedge/common/constants"
+	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -119,39 +120,39 @@ func (uc *UpstreamController) Start() error {
 	uc.stopQueryNode = make(chan struct{})
 	uc.stopUpdateNode = make(chan struct{})
 
-	uc.nodeStatusChan = make(chan model.Message, config.UpdateNodeStatusBuffer)
-	uc.podStatusChan = make(chan model.Message, config.UpdatePodStatusBuffer)
-	uc.configMapChan = make(chan model.Message, config.QueryConfigMapBuffer)
-	uc.secretChan = make(chan model.Message, config.QuerySecretBuffer)
-	uc.serviceChan = make(chan model.Message, config.QueryServiceBuffer)
-	uc.endpointsChan = make(chan model.Message, config.QueryEndpointsBuffer)
-	uc.persistentVolumeChan = make(chan model.Message, config.QueryPersistentVolumeBuffer)
-	uc.persistentVolumeClaimChan = make(chan model.Message, config.QueryPersistentVolumeClaimBuffer)
-	uc.volumeAttachmentChan = make(chan model.Message, config.QueryVolumeAttachmentBuffer)
-	uc.queryNodeChan = make(chan model.Message, config.QueryNodeBuffer)
-	uc.updateNodeChan = make(chan model.Message, config.UpdateNodeBuffer)
+	uc.nodeStatusChan = make(chan model.Message, commonconstants.DefaultUpdateNodeStatusBuffer)
+	uc.podStatusChan = make(chan model.Message, commonconstants.DefaultUpdatePodStatusBuffer)
+	uc.configMapChan = make(chan model.Message, commonconstants.DefaultQueryConfigMapBuffer)
+	uc.secretChan = make(chan model.Message, commonconstants.DefaultQuerySecretBuffer)
+	uc.serviceChan = make(chan model.Message, commonconstants.DefaultQueryServiceBuffer)
+	uc.endpointsChan = make(chan model.Message, commonconstants.DefaultQueryEndpointsBuffer)
+	uc.persistentVolumeChan = make(chan model.Message, commonconstants.DefaultQueryPersistentVolumeBuffer)
+	uc.persistentVolumeClaimChan = make(chan model.Message, commonconstants.DefaultQueryPersistentVolumeClaimBuffer)
+	uc.volumeAttachmentChan = make(chan model.Message, commonconstants.DefaultQueryVolumeAttachmentBuffer)
+	uc.queryNodeChan = make(chan model.Message, commonconstants.DefaultQueryNodeBuffer)
+	uc.updateNodeChan = make(chan model.Message, commonconstants.DefaultUpdateNodeBuffer)
 
 	go uc.dispatchMessage(uc.stopDispatch)
 
-	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultUpdateNodeStatusWorkers; i++ {
 		go uc.updateNodeStatus(uc.stopUpdateNodeStatus)
 	}
-	for i := 0; i < config.UpdatePodStatusWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultUpdatePodStatusWorkers; i++ {
 		go uc.updatePodStatus(uc.stopUpdatePodStatus)
 	}
-	for i := 0; i < config.QueryConfigMapWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryConfigMapWorkers; i++ {
 		go uc.queryConfigMap(uc.stopQueryConfigMap)
 	}
-	for i := 0; i < config.QuerySecretWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQuerySecretWorkers; i++ {
 		go uc.querySecret(uc.stopQuerySecret)
 	}
-	for i := 0; i < config.QueryServiceWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryServiceWorkers; i++ {
 		go uc.queryService(uc.stopQueryService)
 	}
-	for i := 0; i < config.QueryEndpointsWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryEndpointsWorkers; i++ {
 		go uc.queryEndpoints(uc.stopQueryEndpoints)
 	}
-	for i := 0; i < config.QueryPersistentVolumeWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeWorkers; i++ {
 		go uc.queryPersistentVolume(uc.stopQueryPersistentVolume)
 	}
 	for i := 0; i < config.QueryPersistentVolumeClaimWorkers; i++ {
@@ -163,7 +164,7 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < config.QueryNodeWorkers; i++ {
 		go uc.queryNode(uc.stopQueryNode)
 	}
-	for i := 0; i < config.UpdateNodeBuffer; i++ {
+	for i := 0; i < commonconstants.DefaultUpdateNodeBuffer; i++ {
 		go uc.updateNode(uc.stopUpdateNode)
 	}
 	return nil
@@ -1126,23 +1127,26 @@ func (uc *UpstreamController) Stop() error {
 	defer klog.Info("Upstream controller stopped")
 
 	uc.stopDispatch <- struct{}{}
-	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultUpdateNodeStatusWorkers; i++ {
 		uc.stopUpdateNodeStatus <- struct{}{}
 	}
-	for i := 0; i < config.UpdatePodStatusWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultUpdatePodStatusWorkers; i++ {
 		uc.stopUpdatePodStatus <- struct{}{}
 	}
-	for i := 0; i < config.QueryConfigMapWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryConfigMapWorkers; i++ {
 		uc.stopQueryConfigMap <- struct{}{}
 	}
-	for i := 0; i < config.QuerySecretWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQuerySecretWorkers; i++ {
 		uc.stopQuerySecret <- struct{}{}
 	}
-	for i := 0; i < config.QueryServiceWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryServiceWorkers; i++ {
 		uc.stopQueryService <- struct{}{}
 	}
-	for i := 0; i < config.QueryEndpointsWorkers; i++ {
+	for i := 0; i < commonconstants.DefaultQueryEndpointsWorkers; i++ {
 		uc.stopQueryEndpoints <- struct{}{}
+	}
+	for i := 0; i < commonconstants.DefaultQueryPersistentVolumeWorkers; i++ {
+		uc.stopQueryPersistentVolume <- struct{}{}
 	}
 	return nil
 }

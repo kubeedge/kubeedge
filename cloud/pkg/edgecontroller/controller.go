@@ -19,8 +19,8 @@ type Controller struct {
 }
 
 func Register(e *cloudconfig.EdgeControllerConfig) {
-	edgeController := Controller{}
-	core.Register(&edgeController)
+	config.InitEdgeControllerConfig(*e)
+	core.Register(&Controller{})
 }
 
 // Name of controller
@@ -37,8 +37,6 @@ func (ctl *Controller) Group() string {
 func (ctl *Controller) Start(c *bcontext.Context) {
 	config.Context = c
 	ctl.stopChan = make(chan bool)
-
-	initConfig()
 
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
@@ -63,12 +61,4 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 func (ctl *Controller) Cleanup() {
 	ctl.stopChan <- true
 	config.Context.Cleanup(ctl.Name())
-}
-
-func initConfig() {
-	config.InitBufferConfig()
-	config.InitContextConfig()
-	config.InitKubeConfig()
-	config.InitLoadConfig()
-	config.InitMessageLayerConfig()
 }

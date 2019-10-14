@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // CachePod is the struct save pod data for check pod is really changed
@@ -88,8 +88,8 @@ func NewPodManager(kubeClient *kubernetes.Clientset, namespace, nodeName string)
 		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
 		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, selector)
 	}
-	realEvents := make(chan watch.Event, config.PodEventBuffer)
-	mergedEvents := make(chan watch.Event, config.PodEventBuffer)
+	realEvents := make(chan watch.Event, constants.DefaultPodEventBuffer)
+	mergedEvents := make(chan watch.Event, constants.DefaultPodEventBuffer)
 	rh := NewCommonResourceEventHandler(realEvents)
 	si := cache.NewSharedInformer(lw, &v1.Pod{}, 0)
 	si.AddEventHandler(rh)

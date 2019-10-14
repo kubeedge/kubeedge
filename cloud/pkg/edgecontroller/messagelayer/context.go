@@ -4,6 +4,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // ContextMessageLayer build on context
@@ -37,5 +38,9 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 
 // NewContextMessageLayer create a ContextMessageLayer
 func NewContextMessageLayer() (*ContextMessageLayer, error) {
-	return &ContextMessageLayer{SendModuleName: config.ContextSendModule, ReceiveModuleName: config.ContextReceiveModule, ResponseModuleName: config.ContextResponseModule, Context: config.Context}, nil
+	return &ContextMessageLayer{
+		SendModuleName:     constants.DefaultContextSendModuleName,
+		ReceiveModuleName:  constants.DefaultContextReceiveModuleName,
+		ResponseModuleName: constants.DefaultContextResponseModuleName,
+		Context:            config.Context}, nil
 }
