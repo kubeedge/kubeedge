@@ -920,86 +920,87 @@ func (e *edged) syncPod() {
 		model.QueryOperation)
 	e.context.Send(metamanager.MetaManagerModuleName, *info)
 	for {
-		if request, err := e.context.Receive(e.Name()); err == nil {
-			_, resType, resID, err := util.ParseResourceEdge(request.GetResource(), request.GetOperation())
-			op := request.GetOperation()
-			if err != nil {
-				klog.Errorf("failed to parse the Resource: %v", err)
-				continue
-			}
-
-			var content []byte
-
-			switch request.Content.(type) {
-			case []byte:
-				content = request.GetContent().([]byte)
-			default:
-				content, err = json.Marshal(request.Content)
-				if err != nil {
-					klog.Errorf("marshal message content failed: %v", err)
-					continue
-				}
-			}
-			klog.Infof("request content is %s", request.Content)
-			switch resType {
-			case model.ResourceTypePod:
-				if op == model.ResponseOperation && resID == "" && request.GetSource() == metamanager.MetaManagerModuleName {
-					err := e.handlePodListFromMetaManager(content)
-					if err != nil {
-						klog.Errorf("handle podList failed: %v", err)
-						continue
-					}
-					e.setInitPodReady(true)
-				} else if op == model.ResponseOperation && resID == "" && request.GetSource() == EdgeController {
-					err := e.handlePodListFromEdgeController(content)
-					if err != nil {
-						klog.Errorf("handle controllerPodList failed: %v", err)
-						continue
-					}
-					e.setInitPodReady(true)
-				} else {
-					err := e.handlePod(op, content)
-					if err != nil {
-						klog.Errorf("handle pod failed: %v", err)
-						continue
-					}
-				}
-			case model.ResourceTypeConfigmap:
-				if op != model.ResponseOperation {
-					err := e.handleConfigMap(op, content)
-					if err != nil {
-						klog.Errorf("handle configMap failed: %v", err)
-					}
-				} else {
-					klog.Infof("skip to handle configMap with type response")
-					continue
-				}
-			case model.ResourceTypeSecret:
-				if op != model.ResponseOperation {
-					err := e.handleSecret(op, content)
-					if err != nil {
-						klog.Errorf("handle secret failed: %v", err)
-					}
-				} else {
-					klog.Infof("skip to handle secret with type response")
-					continue
-				}
-			case constants.CSIResourceTypeVolume:
-				klog.Infof("volume operation type: %s", op)
-				res, err := e.handleVolume(op, content)
-				if err != nil {
-					klog.Errorf("handle volume failed: %v", err)
-				} else {
-					resp := request.NewRespByMessage(&request, res)
-					e.context.SendResp(*resp)
-				}
-			default:
-				klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
-				continue
-			}
-
-		} else {
+		result, err := e.context.Receive(e.Name())
+		if err != nil {
 			klog.Errorf("failed to get pod")
+			continue
+		}
+
+		_, resType, resID, err := util.ParseResourceEdge(result.GetResource(), result.GetOperation())
+		if err != nil {
+			klog.Errorf("failed to parse the Resource: %v", err)
+			continue
+		}
+		op := result.GetOperation()
+
+		var content []byte
+
+		switch result.Content.(type) {
+		case []byte:
+			content = result.GetContent().([]byte)
+		default:
+			content, err = json.Marshal(result.Content)
+			if err != nil {
+				klog.Errorf("marshal message content failed: %v", err)
+				continue
+			}
+		}
+		klog.Infof("result content is %s", result.Content)
+		switch resType {
+		case model.ResourceTypePod:
+			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
+				err := e.handlePodListFromMetaManager(content)
+				if err != nil {
+					klog.Errorf("handle podList failed: %v", err)
+					continue
+				}
+				e.setInitPodReady(true)
+			} else if op == model.ResponseOperation && resID == "" && result.GetSource() == EdgeController {
+				err := e.handlePodListFromEdgeController(content)
+				if err != nil {
+					klog.Errorf("handle controllerPodList failed: %v", err)
+					continue
+				}
+				e.setInitPodReady(true)
+			} else {
+				err := e.handlePod(op, content)
+				if err != nil {
+					klog.Errorf("handle pod failed: %v", err)
+					continue
+				}
+			}
+		case model.ResourceTypeConfigmap:
+			if op != model.ResponseOperation {
+				err := e.handleConfigMap(op, content)
+				if err != nil {
+					klog.Errorf("handle configMap failed: %v", err)
+				}
+			} else {
+				klog.Infof("skip to handle configMap with type response")
+				continue
+			}
+		case model.ResourceTypeSecret:
+			if op != model.ResponseOperation {
+				err := e.handleSecret(op, content)
+				if err != nil {
+					klog.Errorf("handle secret failed: %v", err)
+				}
+			} else {
+				klog.Infof("skip to handle secret with type response")
+				continue
+			}
+		case constants.CSIResourceTypeVolume:
+			klog.Infof("volume operation type: %s", op)
+			res, err := e.handleVolume(op, content)
+			if err != nil {
+				klog.Errorf("handle volume failed: %v", err)
+			} else {
+				resp := result.NewRespByMessage(&result, res)
+				e.context.SendResp(*resp)
+			}
+		default:
+			klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
+			continue
 		}
 	}
 }
