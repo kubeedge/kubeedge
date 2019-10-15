@@ -48,7 +48,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			}
 
 			if errs := validation.ValidateCloudCoreConfiguration(c); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
 				os.Exit(1)
 			}
 
@@ -88,6 +88,9 @@ func Run(c *config.CloudCoreConfig) {
 
 // registerModules register all the modules started in cloudcore
 func registerModules(c *config.CloudCoreConfig) {
+
+	core.SetEnabledModules(c.Modules.Enabled...)
+
 	cloudhub.Register(c.Cloudhub)
 	edgecontroller.Register(c.EdgeController, c.Kube, c.EdgeController.ControllerContext, nil, nil)
 	devicecontroller.Register(c.EdgeController.ControllerContext, c.Kube)

@@ -78,6 +78,9 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 // registerModules register all the modules started in edgecore
 func registerModules() {
+
+	core.SetEnabledModules(c.Modules.Enabled...)
+
 	devicetwin.Register()
 	edged.Register()
 	edgehub.Register()

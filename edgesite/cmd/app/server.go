@@ -65,6 +65,8 @@ runs on edge nodes and manages containerized applications.`,
 
 // registerModules register all the modules started in edgesite
 func registerModules() {
+	core.SetEnabledModules(c.Modules.Enabled...)
+
 	edged.Register()
 	edgecontroller.Register()
 	metamanager.Register()

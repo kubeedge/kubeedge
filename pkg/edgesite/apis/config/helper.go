@@ -7,7 +7,7 @@ import (
 	kyaml "sigs.k8s.io/yaml"
 )
 
-func (c *CloudCoreConfig) Parse(fname string) error {
+func (c *EdgeSideConfig) Parse(fname string) error {
 	data, err := ioutil.ReadFile(fname)
 	if err != nil {
 		klog.Errorf("ReadConfig file %s error %v", fname, err)

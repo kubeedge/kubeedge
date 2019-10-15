@@ -10,8 +10,10 @@ import (
 	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
-var c Config
-var once sync.Once
+var (
+	c    Config
+	once sync.Once
+)
 
 func InitHubConfig(h *cconfig.CloudHubConfig) {
 	once.Do(func() {

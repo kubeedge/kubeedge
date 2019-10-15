@@ -15,7 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -62,7 +62,7 @@ var once sync.Once
 var CloudhubHandler *EventHandle
 
 // InitHandler create a handler for websocket and quic servers
-func InitHandler(config *util.HubConfig, eventq *channelq.ChannelEventQueue, c *context.Context) {
+func InitHandler(config *config.Config, eventq *channelq.ChannelEventQueue, c *context.Context) {
 	once.Do(func() {
 		CloudhubHandler = &EventHandle{
 			KeepaliveInterval: int(config.KeepaliveInterval),
