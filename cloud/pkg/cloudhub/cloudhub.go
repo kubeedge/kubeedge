@@ -1,8 +1,10 @@
 package cloudhub
 
 import (
+	"context"
+
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
@@ -11,8 +13,8 @@ import (
 )
 
 type cloudHub struct {
-	context  *context.Context
-	stopChan chan bool
+	context *bcontext.Context
+	cancel  context.CancelFunc
 }
 
 func Register(c *cloudconfig.CloudHubConfig) {
@@ -28,14 +30,16 @@ func (a *cloudHub) Group() string {
 	return "cloudhub"
 }
 
-func (a *cloudHub) Start(c *context.Context) {
+func (a *cloudHub) Start(c *bcontext.Context) {
 	a.context = c
-	a.stopChan = make(chan bool)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	a.cancel = cancel
 
 	eventq := channelq.NewChannelEventQueue(c)
 
 	// start dispatch message from the cloud to edge node
-	go eventq.DispatchMessage()
+	go eventq.DispatchMessage(ctx)
 
 	// start the cloudhub server
 	if config.Conf().EnableWebsocket {
@@ -51,11 +55,9 @@ func (a *cloudHub) Start(c *context.Context) {
 		// It is not used to communicate between cloud and edge.
 		go udsserver.StartServer(config.Conf(), c)
 	}
-
-	<-a.stopChan
 }
 
 func (a *cloudHub) Cleanup() {
-	a.stopChan <- true
+	a.cancel()
 	a.context.Cleanup(a.Name())
 }

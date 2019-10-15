@@ -47,12 +47,7 @@ func NewChannelContext() *ChannelContext {
 
 // Cleanup close modules
 func (ctx *ChannelContext) Cleanup(module string) {
-	if channel := ctx.getChannel(module); channel != nil {
-		ctx.delChannel(module)
-		// decrease probable exception of channel closing
-		time.Sleep(20 * time.Millisecond)
-		close(channel)
-	}
+	ctx.delChannel(module)
 }
 
 // Send send msg to a module. Todo: do not stuck
@@ -292,7 +287,7 @@ func (ctx *ChannelContext) getChannel(module string) chan model.Message {
 		return ctx.channels[module]
 	}
 
-	klog.Warningf("Failed to get channel, type:%s", module)
+	klog.Warningf("Failed to get model[%s] channel", module)
 	return nil
 }
 
@@ -308,14 +303,18 @@ func (ctx *ChannelContext) addChannel(module string, moduleCh chan model.Message
 func (ctx *ChannelContext) delChannel(module string) {
 	// delete module channel from channels map
 	ctx.chsLock.Lock()
-	_, exist := ctx.channels[module]
+	channel, exist := ctx.channels[module]
 	if !exist {
-		klog.Warningf("Failed to get channel, module:%s", module)
+		klog.Warningf("Failed to get channel when delete module[%s] channel", module)
+		ctx.chsLock.Unlock()
 		return
 	}
 	delete(ctx.channels, module)
 
 	ctx.chsLock.Unlock()
+	// decrease probable exception of channel closing
+	time.Sleep(20 * time.Millisecond)
+	close(channel)
 
 	// delete module channel from typechannels map
 	ctx.typeChsLock.Lock()

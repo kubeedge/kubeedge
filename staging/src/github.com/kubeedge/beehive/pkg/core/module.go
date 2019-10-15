@@ -6,10 +6,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 )
 
-const (
-	tryReadKeyTimes = 5
-)
-
 // Module interface
 type Module interface {
 	Name() string

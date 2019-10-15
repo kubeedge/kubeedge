@@ -1,13 +1,14 @@
 package channelq
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 )
 
@@ -50,12 +51,12 @@ func (s *ChannelEventSet) Get() (*model.Event, error) {
 
 // ChannelEventQueue is the channel implementation of EventQueue
 type ChannelEventQueue struct {
-	ctx         *context.Context
+	ctx         *bcontext.Context
 	channelPool sync.Map
 }
 
 // NewChannelEventQueue initializes a new ChannelEventQueue
-func NewChannelEventQueue(ctx *context.Context) *ChannelEventQueue {
+func NewChannelEventQueue(ctx *bcontext.Context) *ChannelEventQueue {
 	q := ChannelEventQueue{ctx: ctx}
 	return &q
 }
@@ -63,8 +64,14 @@ func NewChannelEventQueue(ctx *context.Context) *ChannelEventQueue {
 // DispatchMessage gets the message from the cloud, extracts the
 // node id from it, gets the channel associated with the node
 // and pushes the event on the channel
-func (q *ChannelEventQueue) DispatchMessage() {
+func (q *ChannelEventQueue) DispatchMessage(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+
+		}
 		msg, err := q.ctx.Receive(model.SrcCloudHub)
 		if err != nil {
 			klog.Infof("receive Message from module %s error %v", model.SrcCloudHub, err)
