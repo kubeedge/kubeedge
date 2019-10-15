@@ -16,8 +16,12 @@ var (
 
 func InitDeviceControllerConfig(cc *cloudconfig.ControllerContext, k *cloudconfig.KubeConfig) {
 	once.Do(func() {
-		c.ControllerContext = *cc
-		c.Kube = *k
+		if cc != nil {
+			c.ControllerContext = *cc
+		}
+		if k != nil {
+			c.Kube = *k
+		}
 	})
 }
 

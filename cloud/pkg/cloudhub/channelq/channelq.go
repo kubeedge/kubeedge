@@ -67,7 +67,7 @@ func (q *ChannelEventQueue) DispatchMessage() {
 	for {
 		msg, err := q.ctx.Receive(model.SrcCloudHub)
 		if err != nil {
-			klog.Info("receive not Message format message")
+			klog.Infof("receive Message from module %s error %v", model.SrcCloudHub, err)
 			continue
 		}
 		resource := msg.Router.Resource

@@ -42,6 +42,7 @@ func Register(m Module) {
 func SetEnabledModules(names ...string) {
 	for _, n := range names {
 		enabledModules[n] = struct{}{}
+		klog.Infof("Set Module %v enabled", n)
 	}
 }
 

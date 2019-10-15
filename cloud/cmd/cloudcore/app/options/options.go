@@ -20,11 +20,9 @@ import (
 	"path"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/klog"
-
-	"github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 )
 
 // TODO set cloudcore config
@@ -57,7 +55,6 @@ func (o *CloudCoreOptions) Validate() []error {
 func (o *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
 	cfg := config.NewDefaultCloudCoreConfig()
 	if err := cfg.Parse(o.ConfigFile); err != nil {
-		klog.Errorf("Parse config %s error %v", o.ConfigFile, err)
 		return nil, err
 	}
 	return cfg, nil

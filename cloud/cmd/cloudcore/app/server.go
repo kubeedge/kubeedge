@@ -26,7 +26,7 @@ import (
 func NewCloudCoreCommand() *cobra.Command {
 	opts := options.NewDefaultCloudCoreOptions()
 	cmd := &cobra.Command{
-		Use: "cloudcore",
+		Use: "core",
 		Long: `CloudCore is the core cloud part of KubeEdge, which contains three modules: cloudhub,
 edgecontroller, and devicecontroller. Cloudhub is a web server responsible for watching changes at the cloud side,
 caching and sending messages to EdgeHub. EdgeController is an extended kubernetes controller which manages 

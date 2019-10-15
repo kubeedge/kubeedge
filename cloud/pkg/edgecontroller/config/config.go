@@ -21,11 +21,21 @@ func InitEdgeControllerConfig(econtroller *cconfig.EdgeControllerConfig,
 	ec *econfig.EdgedConfig,
 	m *sideconfig.Metamanager) {
 	once.Do(func() {
-		c.EdgeController = *econtroller
-		c.Kube = *kube
-		c.ContextController = *cc
-		c.EdgedConfig = *ec
-		c.EdgeSiteEnabled = m.EdgeSite
+		if econtroller != nil {
+			c.EdgeController = *econtroller
+		}
+		if kube != nil {
+			c.Kube = *kube
+		}
+		if cc != nil {
+			c.ContextController = *cc
+		}
+		if ec != nil {
+			c.EdgedConfig = *ec
+		}
+		if m != nil {
+			c.EdgeSiteEnabled = m.EdgeSite
+		}
 	})
 }
 

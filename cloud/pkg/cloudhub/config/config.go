@@ -18,23 +18,25 @@ var (
 func InitHubConfig(h *cconfig.CloudHubConfig) {
 	once.Do(func() {
 		var err error
-		c.CloudHubConfig = *h
+		if h != nil {
+			c.CloudHubConfig = *h
 
-		c.Ca, err = ioutil.ReadFile(h.TLSCaFile)
-		if err != nil {
-			klog.Errorf("Read Ca file %s error", h.TLSCaFile)
-			os.Exit(1)
-		}
+			c.Ca, err = ioutil.ReadFile(h.TLSCaFile)
+			if err != nil {
+				klog.Errorf("Read Ca file %s error", h.TLSCaFile)
+				os.Exit(1)
+			}
 
-		c.Cert, err = ioutil.ReadFile(h.TLSCertFile)
-		if err != nil {
-			klog.Errorf("Read cert file %s error", h.TLSCaFile)
-			os.Exit(1)
-		}
-		c.Key, err = ioutil.ReadFile(h.TLSPrivateKeyFile)
-		if err != nil {
-			klog.Errorf("Read key file %s error", h.TLSCaFile)
-			os.Exit(1)
+			c.Cert, err = ioutil.ReadFile(h.TLSCertFile)
+			if err != nil {
+				klog.Errorf("Read cert file %s error", h.TLSCaFile)
+				os.Exit(1)
+			}
+			c.Key, err = ioutil.ReadFile(h.TLSPrivateKeyFile)
+			if err != nil {
+				klog.Errorf("Read key file %s error", h.TLSCaFile)
+				os.Exit(1)
+			}
 		}
 	})
 }

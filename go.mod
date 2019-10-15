@@ -57,6 +57,7 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
+	github.com/lithammer/dedent v1.1.0
 	github.com/lucas-clemente/quic-go v0.10.2 // indirect
 	github.com/mattn/go-shellwords v1.0.5 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0

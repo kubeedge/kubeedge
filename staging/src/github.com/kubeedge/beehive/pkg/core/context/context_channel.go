@@ -79,7 +79,7 @@ func (ctx *ChannelContext) Receive(module string) (model.Message, error) {
 		return content, nil
 	}
 
-	klog.Warningf("Failed to get channel for module:%s when receive message", module)
+	klog.Warningf("Failed to get channel for module[%s] when receive message", module)
 	return model.Message{}, fmt.Errorf("failed to get channel for module(%s)", module)
 }
 
