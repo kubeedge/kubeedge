@@ -81,7 +81,6 @@ import (
 	"k8s.io/kubernetes/pkg/volume/projected"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
@@ -91,6 +90,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
+	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
@@ -104,6 +104,7 @@ import (
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -120,11 +121,9 @@ const (
 	// ContainerGCPeriod is the period for performing container garbage collection.
 	ContainerGCPeriod = 60 * time.Second
 	// Period for performing global cleanup tasks.
-	housekeepingPeriod   = time.Second * 2
-	syncWorkQueuePeriod  = time.Second * 2
-	minAge               = 60 * time.Second
-	imageGcHighThreshold = "edged.image-gc-high-threshold"
-	syncMsgRespTimeout   = 1 * time.Minute
+	housekeepingPeriod  = time.Second * 2
+	syncWorkQueuePeriod = time.Second * 2
+	minAge              = 60 * time.Second
 	//DefaultRootDir give default directory
 	DefaultRootDir                   = "/var/lib/edged"
 	workerResyncIntervalJitterFactor = 0.5
@@ -132,14 +131,6 @@ const (
 	EdgeController = "edgecontroller"
 	//RemoteContainerRuntime give Remote container runtime name
 	RemoteContainerRuntime = "remote"
-	//RemoteRuntimeEndpoint gives the default endpoint for CRI runtime
-	RemoteRuntimeEndpoint = "unix:///var/run/dockershim.sock"
-	//MinimumEdgedMemoryCapacity gives the minimum default memory (2G) of edge
-	MinimumEdgedMemoryCapacity = 2147483647
-	//PodSandboxImage gives the default pause container image
-	PodSandboxImage = "k8s.gcr.io/pause"
-	//DockerEndpoint gives the default endpoint for docker engine
-	DockerEndpoint = "unix:///var/run/docker.sock"
 	//DockerShimEndpoint gives the default endpoint for Docker shim runtime
 	DockerShimEndpoint = "unix:///var/run/dockershim.sock"
 	//DockerShimEndpointDeprecated this is the deprecated dockershim endpoint
@@ -164,8 +155,6 @@ const (
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
 	ResolvConfDefault = "/etc/resolv.conf"
-	// ImagePullProgressDeadlineDefault gives the default image pull progress deadline
-	ImagePullProgressDeadlineDefault = 60
 )
 
 var (
@@ -240,33 +229,9 @@ type edged struct {
 	recorder recordtools.EventRecorder
 }
 
-//Config defines configuration details
-type Config struct {
-	nodeName                  string
-	nodeNamespace             string
-	interfaceName             string
-	memoryCapacity            int64
-	nodeStatusUpdateInterval  time.Duration
-	devicePluginEnabled       bool
-	gpuPluginEnabled          bool
-	imageGCHighThreshold      int
-	imageGCLowThreshold       int
-	imagePullProgressDeadline int
-	MaxPerPodContainerCount   int
-	DockerAddress             string
-	runtimeType               string
-	remoteRuntimeEndpoint     string
-	remoteImageEndpoint       string
-	RuntimeRequestTimeout     metav1.Duration
-	PodSandboxImage           string
-	cgroupDriver              string
-	nodeIP                    string
-	clusterDNS                string
-	clusterDomain             string
-}
-
 // Register register edged
-func Register() {
+func Register(e *edgecoreconfig.EdgedConfig) {
+	edgedconfig.InitEdgedConfig(e)
 	edged, err := newEdged()
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
@@ -368,70 +333,6 @@ func (e *edged) setInitPodReady(readyStatus bool) {
 	e.initPodReady = readyStatus
 }
 
-func getConfig() *Config {
-	var conf Config
-	var ok bool
-	conf.nodeName = config.CONFIG.GetConfigurationByKey("edged.hostname-override").(string)
-	conf.nodeNamespace = config.CONFIG.GetConfigurationByKey("edged.register-node-namespace").(string)
-	conf.interfaceName = config.CONFIG.GetConfigurationByKey("edged.interface-name").(string)
-	nodeStatusUpdateInterval := config.CONFIG.GetConfigurationByKey("edged.node-status-update-frequency").(int)
-	conf.nodeStatusUpdateInterval = time.Duration(nodeStatusUpdateInterval) * time.Second
-	conf.devicePluginEnabled = config.CONFIG.GetConfigurationByKey("edged.device-plugin-enabled").(bool)
-	conf.gpuPluginEnabled = config.CONFIG.GetConfigurationByKey("edged.gpu-plugin-enabled").(bool)
-	conf.imageGCHighThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-high-threshold").(int)
-	conf.imageGCLowThreshold = config.CONFIG.GetConfigurationByKey("edged.image-gc-low-threshold").(int)
-	conf.MaxPerPodContainerCount = config.CONFIG.GetConfigurationByKey("edged.maximum-dead-containers-per-container").(int)
-	if conf.DockerAddress, ok = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string); !ok {
-		conf.DockerAddress = DockerEndpoint
-	}
-	if conf.runtimeType, ok = config.CONFIG.GetConfigurationByKey("edged.runtime-type").(string); !ok {
-		conf.runtimeType = RemoteContainerRuntime
-	}
-	if conf.cgroupDriver, ok = config.CONFIG.GetConfigurationByKey("edged.cgroup-driver").(string); !ok {
-		conf.cgroupDriver = "systemd"
-	}
-	if conf.nodeIP, ok = config.CONFIG.GetConfigurationByKey("edged.node-ip").(string); !ok {
-		conf.nodeIP = "127.0.0.1"
-	}
-	if conf.clusterDNS, ok = config.CONFIG.GetConfigurationByKey("edged.cluster-dns").(string); !ok {
-		conf.clusterDNS = ""
-	}
-	if conf.clusterDomain, ok = config.CONFIG.GetConfigurationByKey("edged.cluster-domain").(string); !ok {
-		conf.clusterDomain = ""
-	}
-
-	//Deal with 32-bit and 64-bit compatibility issues: issue #1070
-	switch v := config.CONFIG.GetConfigurationByKey("edged.edged-memory-capacity-bytes").(type) {
-	case int:
-		conf.memoryCapacity = int64(v)
-	case int64:
-		conf.memoryCapacity = v
-	default:
-		panic("Invalid type for edged.edged-memory-capacity-bytes, valid types are one of [int,int64].")
-	}
-
-	if conf.memoryCapacity == 0 {
-		conf.memoryCapacity = MinimumEdgedMemoryCapacity
-	}
-	conf.remoteRuntimeEndpoint = config.CONFIG.GetConfigurationByKey("edged.remote-runtime-endpoint").(string)
-	if conf.remoteRuntimeEndpoint == "" {
-		conf.remoteRuntimeEndpoint = RemoteRuntimeEndpoint
-	}
-	conf.remoteImageEndpoint = config.CONFIG.GetConfigurationByKey("edged.remote-image-endpoint").(string)
-	if conf.RuntimeRequestTimeout == zeroDuration {
-		conf.RuntimeRequestTimeout = metav1.Duration{Duration: 2 * time.Minute}
-	}
-	conf.PodSandboxImage = config.CONFIG.GetConfigurationByKey("edged.podsandbox-image").(string)
-	if conf.PodSandboxImage == "" {
-		conf.PodSandboxImage = PodSandboxImage
-	}
-	conf.imagePullProgressDeadline = config.CONFIG.GetConfigurationByKey("edged.image-pull-progress-deadline").(int)
-	if conf.imagePullProgressDeadline == 0 {
-		conf.imagePullProgressDeadline = ImagePullProgressDeadlineDefault
-	}
-	return &conf
-}
-
 func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoint string, runtimeRequestTimeout metav1.Duration) (internalapi.RuntimeService, internalapi.ImageManagerService, error) {
 	rs, err := remote.NewRemoteRuntimeService(remoteRuntimeEndpoint, runtimeRequestTimeout.Duration)
 	if err != nil {
@@ -446,24 +347,23 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 
 //newEdged creates new edged object and initialises it
 func newEdged() (*edged, error) {
-	conf := getConfig()
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
 	podManager := podmanager.NewPodManager()
 	policy := images.ImageGCPolicy{
-		HighThresholdPercent: conf.imageGCHighThreshold,
-		LowThresholdPercent:  conf.imageGCLowThreshold,
+		HighThresholdPercent: int(edgedconfig.Conf().ImageGCHighThreshold),
+		LowThresholdPercent:  int(edgedconfig.Conf().ImageGCLowThreshold),
 		MinAge:               minAge,
 	}
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
 
 	ed := &edged{
-		nodeName:                  conf.nodeName,
-		interfaceName:             conf.interfaceName,
-		namespace:                 conf.nodeNamespace,
-		gpuPluginEnabled:          conf.gpuPluginEnabled,
-		cgroupDriver:              conf.cgroupDriver,
+		nodeName:                  edgedconfig.Conf().HostnameOverride,
+		interfaceName:             edgedconfig.Conf().InterfaceName,
+		namespace:                 edgedconfig.Conf().RegisterNodeNamespace,
+		gpuPluginEnabled:          edgedconfig.Conf().GpuPluginEnabled,
+		cgroupDriver:              edgedconfig.Conf().CgroupDriver,
 		podManager:                podManager,
 		podAdditionQueue:          workqueue.New(),
 		podCache:                  kubecontainer.NewCache(),
@@ -471,7 +371,7 @@ func newEdged() (*edged, error) {
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
 		kubeClient:                nil,
-		nodeStatusUpdateFrequency: conf.nodeStatusUpdateInterval,
+		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Conf().NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
 		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),
@@ -479,7 +379,7 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
-		nodeIP:                    net.ParseIP(conf.nodeIP),
+		nodeIP:                    net.ParseIP(edgedconfig.Conf().NodeIP),
 		recorder:                  recorder,
 	}
 
@@ -500,24 +400,15 @@ func newEdged() (*edged, error) {
 	containerGCPolicy := kubecontainer.ContainerGCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
-		MaxPerPodContainer: conf.MaxPerPodContainerCount,
-	}
-
-	//ed.podCache = kubecontainer.NewCache()
-
-	if conf.remoteRuntimeEndpoint != "" {
-		// remoteImageEndpoint is same as remoteRuntimeEndpoint if not explicitly specified
-		if conf.remoteImageEndpoint == "" {
-			conf.remoteImageEndpoint = conf.remoteRuntimeEndpoint
-		}
+		MaxPerPodContainer: int(edgedconfig.Conf().MaximumDeadContainersPerPod),
 	}
 
 	//create and start the docker shim running as a grpc server
-	if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+	if edgedconfig.Conf().RemoteRuntimeEndpoint == DockerShimEndpoint || edgedconfig.Conf().RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
 		streamingConfig := &streaming.Config{}
 		DockerClientConfig := &dockershim.ClientConfig{
-			DockerEndpoint:            conf.DockerAddress,
-			ImagePullProgressDeadline: time.Duration(conf.imagePullProgressDeadline) * time.Second,
+			DockerEndpoint:            edgedconfig.Conf().DockerAddress,
+			ImagePullProgressDeadline: time.Duration(edgedconfig.Conf().ImagePullProgressDeadline) * time.Second,
 			EnableSleep:               true,
 			WithTraceDisabled:         true,
 		}
@@ -534,7 +425,7 @@ func newEdged() (*edged, error) {
 		redirectContainerStream := redirectContainerStream
 		cgroupDriver := ed.cgroupDriver
 
-		ds, err := dockershim.NewDockerService(DockerClientConfig, conf.PodSandboxImage, streamingConfig,
+		ds, err := dockershim.NewDockerService(DockerClientConfig, edgedconfig.Conf().PodsandboxImage, streamingConfig,
 			&pluginConfigs, cgroupName, cgroupDriver, DockershimRootDir, redirectContainerStream)
 
 		if err != nil {
@@ -542,21 +433,23 @@ func newEdged() (*edged, error) {
 		}
 
 		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
-			conf.remoteRuntimeEndpoint, conf.remoteRuntimeEndpoint)
+			edgedconfig.Conf().RemoteRuntimeEndpoint, edgedconfig.Conf().RemoteImageEndpoint)
 
 		klog.Info("Starting the GRPC server for the docker CRI shim.")
-		server := dockerremote.NewDockerServer(conf.remoteRuntimeEndpoint, ds)
+		server := dockerremote.NewDockerServer(edgedconfig.Conf().RemoteRuntimeEndpoint, ds)
 		if err := server.Start(); err != nil {
 			return nil, err
 		}
 
 	}
-	ed.clusterDNS = convertStrToIP(conf.clusterDNS)
-	ed.dnsConfigurer = kubedns.NewConfigurer(recorder, nodeRef, ed.nodeIP, ed.clusterDNS, conf.clusterDomain, ResolvConfDefault)
+	ed.clusterDNS = convertStrToIP(edgedconfig.Conf().ClusterDNS)
+	ed.dnsConfigurer = kubedns.NewConfigurer(recorder, nodeRef, ed.nodeIP, ed.clusterDNS, edgedconfig.Conf().ClusterDomain, ResolvConfDefault)
 
 	containerRefManager := kubecontainer.NewRefManager()
 	httpClient := &http.Client{}
-	runtimeService, imageService, err := getRuntimeAndImageServices(conf.remoteRuntimeEndpoint, conf.remoteRuntimeEndpoint, conf.RuntimeRequestTimeout)
+	runtimeService, imageService, err := getRuntimeAndImageServices(edgedconfig.Conf().RemoteRuntimeEndpoint,
+		edgedconfig.Conf().RemoteImageEndpoint,
+		metav1.Duration{time.Duration(edgedconfig.Conf().RuntimeRequestTimeout) * time.Second})
 	if err != nil {
 		return nil, err
 	}
@@ -567,7 +460,7 @@ func newEdged() (*edged, error) {
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
 
 	var machineInfo cadvisorapi.MachineInfo
-	machineInfo.MemoryCapacity = uint64(conf.memoryCapacity)
+	machineInfo.MemoryCapacity = uint64(edgedconfig.Conf().EdgedMemoryCapacity)
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
 		ed.livenessManager,
@@ -598,14 +491,14 @@ func newEdged() (*edged, error) {
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		cadvisorInterface,
 		cm.NodeConfig{
-			CgroupDriver:       conf.cgroupDriver,
-			SystemCgroupsName:  conf.cgroupDriver,
-			KubeletCgroupsName: conf.cgroupDriver,
-			ContainerRuntime:   conf.runtimeType,
+			CgroupDriver:       edgedconfig.Conf().CgroupDriver,
+			SystemCgroupsName:  edgedconfig.Conf().CgroupDriver,
+			KubeletCgroupsName: edgedconfig.Conf().CgroupDriver,
+			ContainerRuntime:   edgedconfig.Conf().RuntimeType,
 			KubeletRootDir:     DefaultRootDir,
 		},
 		false,
-		conf.devicePluginEnabled,
+		edgedconfig.Conf().DevicePluginEnabled,
 		recorder)
 	if err != nil {
 		return nil, fmt.Errorf("init container manager failed with error: %v", err)
@@ -614,7 +507,7 @@ func newEdged() (*edged, error) {
 	ed.containerRuntimeName = RemoteContainerRuntime
 	ed.containerManager = containerManager
 	ed.runtimeService = runtimeService
-	imageGCManager, err := images.NewImageGCManager(ed.containerRuntime, statsProvider, recorder, nodeRef, policy, conf.PodSandboxImage)
+	imageGCManager, err := images.NewImageGCManager(ed.containerRuntime, statsProvider, recorder, nodeRef, policy, edgedconfig.Conf().PodsandboxImage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize image manager: %v", err)
 	}

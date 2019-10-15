@@ -25,7 +25,6 @@ import (
 	cliflag "k8s.io/component-base/cli/flag"
 )
 
-// TODO set cloudcore config
 type CloudCoreOptions struct {
 	ConfigFile string
 }
@@ -37,7 +36,6 @@ func NewDefaultCloudCoreOptions() *CloudCoreOptions {
 }
 
 func (o *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
-	// TODO set CloudCoreOptions field
 	fs := fss.FlagSet("general")
 	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
 	return

@@ -117,6 +117,11 @@ const (
 )
 
 const (
+	CgroupDriver_CGROUPFS = "cgroupfs"
+	CgroupDriver_SYSTEMD  = "systemd"
+)
+
+const (
 	// DefaultUpdateDeviceStatusBuffer is the size of channel which save update device status message from edge
 	DefaultUpdateDeviceStatusBuffer = 1024
 	// DefaultDeviceEventBuffer is the size of channel which save device event from k8s

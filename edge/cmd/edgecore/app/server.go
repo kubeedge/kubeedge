@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -20,6 +22,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
 	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
+	"github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
+	"github.com/kubeedge/kubeedge/pkg/edgecore/apis/config/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -29,7 +33,7 @@ import (
 func NewEdgeCoreCommand() *cobra.Command {
 	opts := options.NewEdgeCoreOptions()
 	cmd := &cobra.Command{
-		Use: "edgecore",
+		Use: "core",
 		Long: `Edgecore is the core edge part of KubeEdge, which contains six modules: devicetwin, edged, 
 edgehub, eventbus, metamanager, and servicebus. DeviceTwin is responsible for storing device status 
 and syncing device status to the cloud. It also provides query interfaces for applications. Edged is an 
@@ -45,12 +49,23 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			// To help debugging, immediately log version
-			klog.Infof("Version: %+v", version.Get())
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
 
-			registerModules()
-			// start all modules
-			core.Run()
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateEdgeCoreConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
+			Run(c)
 		},
 	}
 	fs := cmd.Flags()
@@ -76,13 +91,22 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	return cmd
 }
 
+func Run(c *config.EdgeCoreConfig) {
+	// To help debugging, immediately log version
+	klog.Infof("Version: %+v", version.Get())
+
+	registerModules(c)
+	// start all modules
+	core.Run()
+}
+
 // registerModules register all the modules started in edgecore
-func registerModules() {
+func registerModules(c *config.EdgeCoreConfig) {
 
 	core.SetEnabledModules(c.Modules.Enabled...)
 
 	devicetwin.Register()
-	edged.Register()
+	edged.Register(c.Edged)
 	edgehub.Register()
 	eventbus.Register()
 	edgemesh.Register()

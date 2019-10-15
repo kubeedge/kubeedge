@@ -3,13 +3,14 @@ package validation
 import (
 	"fmt"
 
+	"github.com/kubeedge/kubeedge/common/constants"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 func ValidateEdgeCoreConfiguration(c *config.EdgeCoreConfig) field.ErrorList {
-
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateMqttConfiguration(c.Mqtt)...)
 	allErrs = append(allErrs, ValidateEdgeHubConfiguration(c.EdgeHub)...)
@@ -28,7 +29,6 @@ func ValidateMqttConfiguration(m *config.MqttConfig) field.ErrorList {
 }
 
 func ValidateEdgeHubConfiguration(h *config.EdgeHubConfig) field.ErrorList {
-
 	allErrs := field.ErrorList{}
 	return allErrs
 }
@@ -40,11 +40,16 @@ func ValidateEdgedConfiguration(e *config.EdgedConfig) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeIp"), e.NodeIP,
 			"Need sed NodeIP"))
 	}
+	switch e.CgroupDriver {
+	case constants.CgroupDriver_CGROUPFS, constants.CgroupDriver_SYSTEMD:
+	default:
+		allErrs = append(allErrs, field.Invalid(field.NewPath("CgroupDriver"), e.CgroupDriver,
+			"CgroupDriver value error"))
+	}
 	return allErrs
 }
 
 func ValidateMeshConfiguration(m *config.MeshConfig) field.ErrorList {
-
 	// TODO check meshconfig @kadisi
 	allErrs := field.ErrorList{}
 	return allErrs

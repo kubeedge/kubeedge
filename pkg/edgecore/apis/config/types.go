@@ -99,7 +99,7 @@ type EdgedConfig struct {
 	//default 40 # percent
 	ImageGCLowThreshold int32 `json:"imageGCLowThreshold,omitempty"`
 	//default 1
-	MaximumDeadContainersPerContainer int32 `json:"maximumDeadContainersPerContainer,omitempty"`
+	MaximumDeadContainersPerPod int32 `json:"maximumDeadContainersPerPod,omitempty"`
 	// default unix:///var/run/docker.sock
 	DockerAddress string `json:"dockerAddress,omitempty"`
 	// docker, remote, default docker
