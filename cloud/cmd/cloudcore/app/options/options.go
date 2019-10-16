@@ -42,18 +42,18 @@ func (c *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	return
 }
 
-func (o *CloudCoreOptions) Validate() []error {
+func (c *CloudCoreOptions) Validate() []error {
 	var errs []error
-	if len(o.ConfigFile) == 0 {
+	if len(c.ConfigFile) == 0 {
 		errs = append(errs, field.Required(field.NewPath("ConfigFile"), ""))
 	}
 
 	return errs
 }
 
-func (o *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
+func (c *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
 	cfg := config.NewDefaultCloudCoreConfig()
-	if err := cfg.Parse(o.ConfigFile); err != nil {
+	if err := cfg.Parse(c.ConfigFile); err != nil {
 		return nil, err
 	}
 	return cfg, nil

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	command := app.NewEdgeSiteCommand()
+	command := app.NewCommand()
 	logs.InitLogs()
 	defer logs.FlushLogs()
 

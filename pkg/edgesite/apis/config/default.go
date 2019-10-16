@@ -31,8 +31,8 @@ func NewDefaultModules() *commonconfig.Modules {
 	}
 }
 
-func NewDefaultMetamanager() *Metamanager {
-	return &Metamanager{
+func NewDefaultMetamanager() *edgecoreconfig.Metamanager {
+	return &edgecoreconfig.Metamanager{
 		ContextSendGroup:  "edgecontroller",
 		ContextSendModule: "edgecontroller",
 		EdgeSite:          true,

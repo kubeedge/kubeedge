@@ -24,17 +24,13 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 // LoadConfig is function to Load Configurations from a specified location. If no location is specified it loads the config from the default location
+/*
 func LoadConfig(confLocation ...string) error {
 	err := config.CONFIG.DeInit()
 	if err != nil {
@@ -64,7 +60,7 @@ func LoadConfig(confLocation ...string) error {
 	config.CONFIG.AddSource(fSource)
 	return nil
 }
-
+*/
 //GenerateTestYaml is a function is used to create a temporary file to be used for testing
 //It accepts 3 arguments:"test" is the interface used to generate the YAML,
 // "path" is the directory path at which the directory is to be created,

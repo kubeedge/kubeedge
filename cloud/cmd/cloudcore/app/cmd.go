@@ -27,13 +27,13 @@ func NewCommand() *cobra.Command {
 			    ┌──────────────────────────────────────────────────────────┐
 			    │ Create default config:                                   │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # cloudcore config default                               │
+			    │ # cloudcore defaultconfig                                │
 			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
 			    │ run cloudcore :                                          │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # cloudcore core &                                       │
+			    │ # cloudcore run &                                        │
 			    └──────────────────────────────────────────────────────────┘
 
 		`),
@@ -47,6 +47,6 @@ func NewCommand() *cobra.Command {
 	cmd.ResetFlags()
 
 	cmd.AddCommand(NewCloudCoreCommand())
-	cmd.AddCommand(NewConfig())
+	cmd.AddCommand(NewDefaultConfig())
 	return cmd
 }

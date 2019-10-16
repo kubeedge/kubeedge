@@ -8,11 +8,11 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	eventbusconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
@@ -37,8 +37,8 @@ type eventbus struct {
 }
 
 // Register register eventbus
-func Register(m *edgecoreconfig.MqttConfig) {
-
+func Register(e *edgecoreconfig.EdgedConfig, m *edgecoreconfig.MqttConfig) {
+	eventbusconfig.InitEventbusConfig(e, m)
 	edgeEventHubModule := eventbus{mqttMode: int(m.Mode)}
 	core.Register(&edgeEventHubModule)
 }
@@ -55,24 +55,12 @@ func (eb *eventbus) Start(c *context.Context) {
 	// no need to call TopicInit now, we have fixed topic
 	eb.context = c
 
-	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
-	if nodeID == nil {
-		klog.Errorf("node id not configured")
-		os.Exit(1)
-	}
-
-	mqttBus.NodeID = nodeID.(string)
+	mqttBus.NodeID = eventbusconfig.Conf().Edged.HostnameOverride
 	mqttBus.ModuleContext = c
 
 	if eb.mqttMode >= bothMqttMode {
-		// launch an external mqtt server
-		externalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.server")
-		if externalMqttURL == nil {
-			panic(" mqtt server url not configured")
-		}
-
 		hub := &mqttBus.Client{
-			MQTTUrl: externalMqttURL.(string),
+			MQTTUrl: eventbusconfig.Conf().Mqtt.Server,
 		}
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()
@@ -80,32 +68,18 @@ func (eb *eventbus) Start(c *context.Context) {
 	}
 
 	if eb.mqttMode <= bothMqttMode {
-		internalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.internal-server")
-		if internalMqttURL == nil {
-			internalMqttURL = defaultInternalMqttURL
-		}
+		internalMqttURL := eventbusconfig.Conf().Mqtt.InternalServer
+		qos := int(eventbusconfig.Conf().Mqtt.QOS)
+		retain := eventbusconfig.Conf().Mqtt.Retain
 
-		qos := config.CONFIG.GetConfigurationByKey("mqtt.qos")
-		if qos == nil {
-			qos = defaultQos
-		}
+		sessionQueueSize := int(eventbusconfig.Conf().Mqtt.SessionQueueSize)
 
-		retain := config.CONFIG.GetConfigurationByKey("mqtt.retain")
-		if retain == nil {
-			retain = defaultRetain
-		}
-
-		sessionQueueSize := config.CONFIG.GetConfigurationByKey("mqtt.session-queue-size")
-		if sessionQueueSize == nil {
-			sessionQueueSize = defaultSessionQueueSize
-		}
-
-		if qos.(int) < int(packet.QOSAtMostOnce) || qos.(int) > int(packet.QOSExactlyOnce) || sessionQueueSize.(int) <= 0 {
+		if qos < int(packet.QOSAtMostOnce) || qos > int(packet.QOSExactlyOnce) || sessionQueueSize <= 0 {
 			klog.Errorf("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
 			os.Exit(1)
 		}
 		// launch an internal mqtt server only
-		mqttServer = mqttBus.NewMqttServer(sessionQueueSize.(int), internalMqttURL.(string), retain.(bool), qos.(int))
+		mqttServer = mqttBus.NewMqttServer(sessionQueueSize, internalMqttURL, retain, qos)
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {

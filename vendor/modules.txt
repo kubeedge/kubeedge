@@ -311,10 +311,10 @@ github.com/karrick/godirwalk
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 github.com/kubeedge/beehive/pkg/core
-github.com/kubeedge/beehive/pkg/common/config
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
+github.com/kubeedge/beehive/pkg/common/config
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux
@@ -647,6 +647,8 @@ k8s.io/api/storage/v1alpha1
 # k8s.io/apiextensions-apiserver v0.0.0 => k8s.io/apiextensions-apiserver v0.0.0-20190718185103-d1ef975d28ce
 k8s.io/apiextensions-apiserver/pkg/features
 # k8s.io/apimachinery v0.0.0 => k8s.io/apimachinery v0.0.0-20190612165923-1799e75a0719
+k8s.io/apimachinery/pkg/util/errors
+k8s.io/apimachinery/pkg/util/validation/field
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/runtime
@@ -659,14 +661,12 @@ k8s.io/apimachinery/pkg/labels
 k8s.io/apimachinery/pkg/api/resource
 k8s.io/apimachinery/pkg/types
 k8s.io/apimachinery/pkg/util/clock
-k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/wait
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/util/version
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/util/intstr
-k8s.io/apimachinery/pkg/util/validation/field
 k8s.io/apimachinery/pkg/conversion
 k8s.io/apimachinery/pkg/selection
 k8s.io/apimachinery/pkg/conversion/queryparams

@@ -9,11 +9,12 @@ import (
 
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	return &EdgeCoreConfig{
-		Mqtt:    NewDefaultMqttConfig(),
-		EdgeHub: NewDefaultEdgeHubConfig(),
-		Edged:   NewDefaultEdgedConfig(),
-		Mesh:    NewDefaultMeshConfig(),
-		Modules: NewDefaultModules(),
+		Mqtt:        NewDefaultMqttConfig(),
+		EdgeHub:     NewDefaultEdgeHubConfig(),
+		Edged:       NewDefaultEdgedConfig(),
+		Mesh:        NewDefaultMeshConfig(),
+		Modules:     NewDefaultModules(),
+		Metamanager: NewDefaultMetamanager(),
 	}
 }
 
@@ -21,7 +22,7 @@ func NewDefaultMqttConfig() *MqttConfig {
 	return &MqttConfig{
 		Server:           "tcp://127.0.0.1:1883",
 		InternalServer:   "tcp://127.0.0.1:1884",
-		Mode:             0,
+		Mode:             ExternalMqttMode,
 		QOS:              0,
 		Retain:           false,
 		SessionQueueSize: 100,
@@ -38,7 +39,7 @@ func NewDefaultEdgeHubConfig() *EdgeHubConfig {
 
 func NewDefaultWebSocketConfig() *WebSocketConfig {
 	return &WebSocketConfig{
-		Server:            "127.0.0.1:1000",
+		Server:            "127.0.0.1:10000",
 		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
 		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
 		HandshakeTimeout:  30,
@@ -108,5 +109,13 @@ func NewDefaultLoadbalanceConfig() *LoadbalanceConfig {
 func NewDefaultModules() *commonconfig.Modules {
 	return &commonconfig.Modules{
 		Enabled: []string{"eventbus", "servicebus", "websocket", "metaManager", "edged", "twin", "dbTest", "edgemesh"},
+	}
+}
+
+func NewDefaultMetamanager() *Metamanager {
+	return &Metamanager{
+		ContextSendGroup:  "hub",
+		ContextSendModule: "websocket",
+		EdgeSite:          false,
 	}
 }

@@ -449,7 +449,7 @@ func newEdged() (*edged, error) {
 	httpClient := &http.Client{}
 	runtimeService, imageService, err := getRuntimeAndImageServices(edgedconfig.Conf().RemoteRuntimeEndpoint,
 		edgedconfig.Conf().RemoteImageEndpoint,
-		metav1.Duration{time.Duration(edgedconfig.Conf().RuntimeRequestTimeout) * time.Second})
+		metav1.Duration{Duration: time.Duration(edgedconfig.Conf().RuntimeRequestTimeout) * time.Second})
 	if err != nil {
 		return nil, err
 	}

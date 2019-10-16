@@ -79,7 +79,6 @@ func TestInitDTController(t *testing.T) {
 				HeartBeatToModule: make(map[string]chan interface{}),
 				DTContexts:        dtContexts,
 				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
 			},
 			wantError: nil,
 		},
@@ -107,9 +106,6 @@ func TestInitDTController(t *testing.T) {
 				t.Errorf("InitDTController() failed due to wrong DTModules, Got =%v Want =%v", got.DTModules, test.want.DTModules)
 				return
 			}
-			if cap(got.Stop) != cap(test.want.Stop) {
-				t.Errorf("InitDTController failed due to wrong Stop Chan Size,Got = %v Want =%v", got.Stop, test.want.Stop)
-			}
 		})
 	}
 }
@@ -123,7 +119,6 @@ func TestRegisterDTModule(t *testing.T) {
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTContexts:        dtContexts,
 		DTModules:         make(map[string]dtmodule.DTModule),
-		Stop:              make(chan bool, 1),
 	}
 	tests := []struct {
 		name       string
@@ -201,7 +196,6 @@ func TestDTController_Start(t *testing.T) {
 				HeartBeatToModule: make(map[string]chan interface{}),
 				DTContexts:        dtContexts,
 				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
 			},
 			wantErr:               errors.New("Query sqlite failed while syncing sqlite"),
 			filterReturn:          querySeterMock,
@@ -224,7 +218,6 @@ func TestDTController_Start(t *testing.T) {
 				HeartBeatToModule: make(map[string]chan interface{}),
 				DTContexts:        dtContexts,
 				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
 			},
 			wantErr:               nil,
 			filterReturn:          querySeterMock,
@@ -251,7 +244,6 @@ func TestDTController_Start(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterMockTimes)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableMockTimes)
 			go test.dtc.DTContexts.ModulesContext.Send("twin", msg)
-			test.dtc.Stop <- true
 			if err := test.dtc.Start(); !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("DTController.Start() error = %v, wantError %v", err, test.wantErr)
 			}

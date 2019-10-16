@@ -95,17 +95,6 @@ func TestIsNonUniqueNameError(t *testing.T) {
 	}
 }
 
-// TestCleanUp() is function to test CleanUp().
-func TestCleanup(t *testing.T) {
-	t.Run("CleanUpTest", func(t *testing.T) {
-		Cleanup()
-		_, err := os.Stat(dataSource)
-		if os.IsExist(err) {
-			t.Errorf("CleanUp failed ,File not removed")
-		}
-	})
-}
-
 // TestCleanDBFile is function to test cleanDBFile().
 func TestCleanDBFile(t *testing.T) {
 	tests := []struct {

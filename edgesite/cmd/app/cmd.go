@@ -8,34 +8,32 @@ import (
 )
 
 func NewCommand() *cobra.Command {
-
 	cmd := &cobra.Command{
-		Use:   "edgecore",
-		Short: "edgecore: is the core edge part of KubeEdge",
+		Use:   "edgesite",
+		Short: "edgesite: edgesite helps running lightweight clusters at edge",
 		Long: dedent.Dedent(`
 			    ┌──────────────────────────────────────────────────────────┐
-			    │ edgecore                                                 │
-			    │ the core edge part of KubeEdge                           │
+			    │ edgesite                                                 │
+			    │ edgesite helps running lightweight clusters at edge      │
 			    └──────────────────────────────────────────────────────────┘
 
 			Example usage:
-
-			    ┌──────────────────────────────────────────────────────────┐
-			    │ Get current version:                                     │
+   			    ┌──────────────────────────────────────────────────────────┐
+			    │ Get current version:	                                   │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # edgecore --version									   │
+			    │ # edgesite --version									   │
 			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
 			    │ Create default config:                                   │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # edgecore defaultconfig                                 │
+			    │ # edgesite defaultconfig                                 │
 			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
-			    │ run edgecore :                                           │
+			    │ run edgesite :                                           │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # edgecore run &                                         │
+			    │ # edgesite run &                                         │
 			    └──────────────────────────────────────────────────────────┘
 
 		`),
@@ -45,9 +43,10 @@ func NewCommand() *cobra.Command {
 			verflag.PrintAndExitIfRequested()
 		},
 	}
+
 	cmd.ResetFlags()
 
-	cmd.AddCommand(NewEdgeCoreCommand())
+	cmd.AddCommand(NewEdgeSiteCommand())
 	cmd.AddCommand(NewDefaultConfig())
 	return cmd
 }

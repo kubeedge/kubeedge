@@ -12,11 +12,5 @@ type EdgeSideConfig struct {
 	ControllerContext *cloudcoreconfig.ControllerContext `json:"controllerContext"`
 	Edged             *edgecoreconfig.EdgedConfig        `json:"edged,omitempty"`
 	Modules           *commonconfig.Modules              `json:"modules,omitempty"`
-	Metamanager       *Metamanager                       `json:"metamanager,omitempty"`
-}
-
-type Metamanager struct {
-	ContextSendGroup  string `json:"contextSendGroup,omitempty"`
-	ContextSendModule string `json:"contextSendModule,omitempty"`
-	EdgeSite          bool   `json:"edgeSite,omitempty"`
+	Metamanager       *edgecoreconfig.Metamanager        `json:"metamanager,omitempty"`
 }

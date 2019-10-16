@@ -12,7 +12,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
-	sideconfig "github.com/kubeedge/kubeedge/pkg/edgesite/apis/config"
 )
 
 // Controller use beehive context message layer
@@ -24,7 +23,7 @@ func Register(ecc *cloudcoreconfig.EdgeControllerConfig,
 	k *cloudcoreconfig.KubeConfig,
 	cc *cloudcoreconfig.ControllerContext,
 	ec *edgecoreconfig.EdgedConfig,
-	m *sideconfig.Metamanager) {
+	m *edgecoreconfig.Metamanager) {
 	controllerconfig.InitEdgeControllerConfig(ecc, k, cc, ec, m)
 	core.Register(&Controller{})
 }

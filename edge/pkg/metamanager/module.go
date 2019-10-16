@@ -3,13 +3,14 @@ package metamanager
 import (
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	metaconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 //constant metamanager module name
@@ -18,7 +19,8 @@ const (
 )
 
 // Register register metamanager
-func Register() {
+func Register(m *edgecoreconfig.Metamanager) {
+	metaconfig.InitMetamanagerConfig(m)
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
 	core.Register(&metaManager{})
 }
@@ -37,7 +39,6 @@ func (*metaManager) Group() string {
 
 func (m *metaManager) Start(c *context.Context) {
 	m.context = c
-	InitMetaManagerConfig()
 	go func() {
 		period := getSyncInterval()
 		timer := time.NewTimer(period)
@@ -58,9 +59,5 @@ func (m *metaManager) Cleanup() {
 }
 
 func getSyncInterval() time.Duration {
-	syncInterval, _ := config.CONFIG.GetValue("meta.sync.podstatus.interval").ToInt()
-	if syncInterval < DefaultSyncInterval {
-		syncInterval = DefaultSyncInterval
-	}
-	return time.Duration(syncInterval) * time.Second
+	return time.Duration(DefaultSyncInterval) * time.Second
 }

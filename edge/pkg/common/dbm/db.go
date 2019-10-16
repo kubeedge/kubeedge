@@ -9,7 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/beehive/pkg/core"
 )
 
 const (
@@ -21,18 +21,12 @@ const (
 	defaultDataSource = "edge.db"
 )
 
-var (
-	driverName string
-	dbName     string
-	dataSource string
-)
-
 //DBAccess is Ormer object interface for all transaction processing and switching database
 var DBAccess orm.Ormer
 
 //RegisterModel registers the defined model in the orm if model is enabled
 func RegisterModel(moduleName string, m interface{}) {
-	if isModuleEnabled(moduleName) {
+	if core.IsModuleEnabled(moduleName) {
 		orm.RegisterModel(m)
 		klog.Infof("DB meta for module %s has been registered", moduleName)
 	} else {
@@ -54,16 +48,16 @@ func InitDBConfig() {
 func InitDBManager() {
 	InitDBConfig()
 	// sync database schema
-	orm.RunSyncdb(dbName, false, true)
+	orm.RunSyncdb(defaultDbName, false, true)
 
 	// create orm
 	DBAccess = orm.NewOrm()
-	DBAccess.Using(dbName)
+	DBAccess.Using(defaultDbName)
 }
 
 // Cleanup cleans up resources
 func Cleanup() {
-	cleanDBFile(dataSource)
+	cleanDBFile(defaultDataSource)
 }
 
 // cleanDBFile removes db file
@@ -77,18 +71,6 @@ func cleanDBFile(fileName string) {
 			klog.Errorf("Failed to remove DB file %s: %v", fileName, err)
 		}
 	}
-}
-
-func isModuleEnabled(m string) bool {
-	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
-	if modules != nil {
-		for _, value := range modules.([]interface{}) {
-			if m == value.(string) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // IsNonUniqueNameError tests if the error returned by sqlite is unique.

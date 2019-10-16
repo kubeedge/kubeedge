@@ -11,13 +11,10 @@ var (
 	c    Config
 )
 
-func InitEventbusConfig(e *edgecoreconfig.EdgedConfig, m *edgecoreconfig.MqttConfig) {
+func InitEdgeMeshConfig(m *edgecoreconfig.MeshConfig) {
 	once.Do(func() {
-		if e != nil {
-			c.Edged = *e
-		}
 		if m != nil {
-			c.Mqtt = *m
+			c.Mesh = *m
 		}
 	})
 }
@@ -27,6 +24,5 @@ func Conf() *Config {
 }
 
 type Config struct {
-	Edged edgecoreconfig.EdgedConfig
-	Mqtt  edgecoreconfig.MqttConfig
+	Mesh edgecoreconfig.MeshConfig
 }

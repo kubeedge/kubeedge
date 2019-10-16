@@ -9,11 +9,12 @@ const (
 )
 
 type EdgeCoreConfig struct {
-	Mqtt    *MqttConfig           `json:"mqtt,omitempty"`
-	EdgeHub *EdgeHubConfig        `json:"edgehub,omitempty"`
-	Edged   *EdgedConfig          `json:"edged,omitempty"`
-	Mesh    *MeshConfig           `json:"mesh,omitempty"`
-	Modules *commonconfig.Modules `json:"modules,omitempty"`
+	Mqtt        *MqttConfig           `json:"mqtt,omitempty"`
+	EdgeHub     *EdgeHubConfig        `json:"edgehub,omitempty"`
+	Edged       *EdgedConfig          `json:"edged,omitempty"`
+	Mesh        *MeshConfig           `json:"mesh,omitempty"`
+	Modules     *commonconfig.Modules `json:"modules,omitempty"`
+	Metamanager *Metamanager          `json:"metamanager,omitempty"`
 }
 
 type MqttConfig struct {
@@ -130,4 +131,10 @@ type MeshConfig struct {
 type LoadbalanceConfig struct {
 	// default RoundRobin
 	StrategyName string `json:"strategyName,omitempty"`
+}
+
+type Metamanager struct {
+	ContextSendGroup  string `json:"contextSendGroup,omitempty"`
+	ContextSendModule string `json:"contextSendModule,omitempty"`
+	EdgeSite          bool   `json:"edgeSite,omitempty"`
 }

@@ -6,9 +6,11 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	edgemeshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 //EdgeMesh defines EdgeMesh object structure
@@ -17,7 +19,8 @@ type EdgeMesh struct {
 }
 
 // Register register edgemesh
-func Register() {
+func Register(m *edgecoreconfig.MeshConfig) {
+	edgemeshconfig.InitEdgeMeshConfig(m)
 	core.Register(&EdgeMesh{})
 }
 

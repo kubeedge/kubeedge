@@ -9,7 +9,6 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -17,6 +16,7 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	metaconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -36,33 +36,6 @@ const (
 	CloudFunctionModel  = "funcmgr"
 	CloudControlerModel = "edgecontroller"
 )
-
-var connected = false
-
-// sendModuleGroupName is the name of the group to which we send the message
-var sendModuleGroupName = modules.HubGroup
-
-// sendModuleName is the name of send module for remote query
-var sendModuleName = "websocket"
-
-// InitMetaManagerConfig init meta config
-func InitMetaManagerConfig() {
-	var err error
-	groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
-	if err == nil && groupName != "" {
-		sendModuleGroupName = groupName
-	}
-
-	edgeSite, err := config.CONFIG.GetValue("metamanager.edgesite").ToBool()
-	if err == nil && edgeSite == true {
-		connected = true
-	}
-
-	moduleName, err := config.CONFIG.GetValue("metamanager.context-send-module").ToString()
-	if err == nil && moduleName != "" {
-		sendModuleName = moduleName
-	}
-}
 
 func feedbackError(err error, info string, request model.Message, c *context.Context) {
 	errInfo := "Something wrong"
@@ -94,7 +67,7 @@ func send2EdgeMesh(message *model.Message, sync bool, c *context.Context) {
 }
 
 func send2Cloud(message *model.Message, c *context.Context) {
-	c.Send2Group(sendModuleGroupName, *message)
+	c.Send2Group(metaconfig.Conf().Meta.ContextSendGroup, *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -126,7 +99,7 @@ func requireRemoteQuery(resType string) bool {
 }
 
 func isConnected() bool {
-	return connected
+	return metaconfig.Conf().Connected
 }
 
 func msgDebugInfo(message *model.Message) string {
@@ -424,8 +397,8 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		// TODO: retry
 		originalID := message.GetID()
 		message.UpdateID()
-		resp, err := m.context.SendSync(sendModuleName, message, 60*time.Second) // TODO: configurable
-		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
+		resp, err := m.context.SendSync(metaconfig.Conf().Meta.ContextSendModule, message, 60*time.Second) // TODO: configurable
+		klog.Infof("Process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
 		if err != nil {
 			klog.Errorf("remote query failed: %v", err)
 			feedbackError(err, "Error to query meta in DB", message, m.context)
@@ -467,9 +440,9 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	content, _ := message.GetContent().(string)
 	klog.Infof("node connection event occur: %s", content)
 	if content == connect.CloudConnected {
-		connected = true
+		metaconfig.Conf().Connected = true
 	} else if content == connect.CloudDisconnected {
-		connected = false
+		metaconfig.Conf().Connected = false
 	}
 }
 

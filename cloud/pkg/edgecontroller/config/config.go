@@ -6,7 +6,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	cconfig "github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 	econfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
-	sideconfig "github.com/kubeedge/kubeedge/pkg/edgesite/apis/config"
 )
 
 var (
@@ -19,7 +18,7 @@ func InitEdgeControllerConfig(econtroller *cconfig.EdgeControllerConfig,
 	kube *cconfig.KubeConfig,
 	cc *cconfig.ControllerContext,
 	ec *econfig.EdgedConfig,
-	m *sideconfig.Metamanager) {
+	m *econfig.Metamanager) {
 	once.Do(func() {
 		if econtroller != nil {
 			c.EdgeController = *econtroller

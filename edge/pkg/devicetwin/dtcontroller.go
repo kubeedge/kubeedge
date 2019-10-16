@@ -1,6 +1,7 @@
 package devicetwin
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -31,21 +32,19 @@ type DTController struct {
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
-	Stop              chan bool
 }
 
 //InitDTController init dtcontroller
-func InitDTController(context *context.Context) (*DTController, error) {
+func InitDTController(context *bcontext.Context) (*DTController, error) {
 	dtContexts, _ := dtcontext.InitDTContext(context)
 	heartBeatToModule := make(map[string]chan interface{})
 	dtModule := make(map[string]dtmodule.DTModule)
-	stop := make(chan bool, 1)
 
 	return &DTController{
 		HeartBeatToModule: heartBeatToModule,
 		DTContexts:        dtContexts,
 		DTModules:         dtModule,
-		Stop:              stop}, nil
+	}, nil
 }
 
 //RegisterDTModule register dtmodule
@@ -63,7 +62,7 @@ func (dtc *DTController) RegisterDTModule(name string) {
 }
 
 //Start devicetwin controller
-func (dtc *DTController) Start() error {
+func (dtc *DTController) Start(ctx context.Context) error {
 	err := SyncSqlite(dtc.DTContexts)
 	if err != nil {
 		return err
@@ -75,11 +74,17 @@ func (dtc *DTController) Start() error {
 	}
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+
+			}
 			if msg, ok := dtc.DTContexts.ModulesContext.Receive("twin"); ok == nil {
 				klog.Info("DeviceTwin receive msg")
 				err := dtc.distributeMsg(msg)
 				if err != nil {
-					klog.Warningf("distributeMsg failed: %v", err)
+					klog.Warningf("Devicetwin distributeMsg failed: %v", err)
 				}
 			}
 		}
@@ -101,7 +106,7 @@ func (dtc *DTController) Start() error {
 			for _, v := range dtc.HeartBeatToModule {
 				v <- "ping"
 			}
-		case <-dtc.Stop:
+		case <-ctx.Done():
 			for _, v := range dtc.HeartBeatToModule {
 				v <- "stop"
 			}

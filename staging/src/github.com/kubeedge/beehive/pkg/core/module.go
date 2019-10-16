@@ -27,7 +27,7 @@ func init() {
 
 // Register register module
 func Register(m Module) {
-	if isModuleEnabled(m.Name()) {
+	if IsModuleEnabled(m.Name()) {
 		modules[m.Name()] = m
 		klog.Infof("Module %v registered", m.Name())
 	} else {
@@ -42,7 +42,7 @@ func SetEnabledModules(names ...string) {
 	}
 }
 
-func isModuleEnabled(m string) bool {
+func IsModuleEnabled(m string) bool {
 	_, ok := enabledModules[m]
 	return ok
 }

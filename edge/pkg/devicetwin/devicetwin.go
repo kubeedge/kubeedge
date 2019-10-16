@@ -1,10 +1,12 @@
 package devicetwin
 
 import (
+	"context"
+
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	devicetwinconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
@@ -13,8 +15,9 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
-	context      *context.Context
+	context      *bcontext.Context
 	dtcontroller *DTController
+	cancel       context.CancelFunc
 }
 
 // Register register devicetwin
@@ -36,14 +39,17 @@ func (dt *DeviceTwin) Group() string {
 }
 
 //Start run the module
-func (dt *DeviceTwin) Start(c *context.Context) {
+func (dt *DeviceTwin) Start(c *bcontext.Context) {
+	ctx, cancel := context.WithCancel(context.Background())
+	dt.cancel = cancel
+
 	controller, err := InitDTController(c)
 	if err != nil {
 		klog.Errorf("Start device twin failed, due to %v", err)
 	}
 	dt.dtcontroller = controller
 	dt.context = c
-	err = controller.Start()
+	err = controller.Start(ctx)
 	if err != nil {
 		klog.Errorf("Start device twin failed, due to %v", err)
 	}
@@ -51,6 +57,6 @@ func (dt *DeviceTwin) Start(c *context.Context) {
 
 //Cleanup clean resource after quit
 func (dt *DeviceTwin) Cleanup() {
-	dt.dtcontroller.Stop <- true
+	dt.cancel()
 	dt.context.Cleanup(dt.Name())
 }

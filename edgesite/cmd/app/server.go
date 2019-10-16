@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -15,6 +17,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
+	"github.com/kubeedge/kubeedge/pkg/edgesite/apis/config"
+	"github.com/kubeedge/kubeedge/pkg/edgesite/apis/config/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -23,22 +27,32 @@ import (
 func NewEdgeSiteCommand() *cobra.Command {
 	opts := options.NewEdgeSiteOptions()
 	cmd := &cobra.Command{
-		Use: "edgesite",
+		Use: "run",
 		Long: `EdgeSite helps running lightweight clusters at edge, which contains three modules: edgecontroller,
 metamanager, and edged. EdgeController is an extended kubernetes controller which manages edge nodes and pods metadata 
 so that the data can be targeted to a specific edge node. MetaManager is the message processor between edged and edgehub. 
 It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).Edged is an agent that 
 runs on edge nodes and manages containerized applications.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			verflag.PrintAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
-			// To help debugging, immediately log version
-			klog.Infof("Version: %+v", version.Get())
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
 
-			registerModules()
-			// start all modules
-			core.Run()
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateEdgeSideConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
+			Run(c)
 		},
 	}
 	fs := cmd.Flags()
@@ -63,12 +77,21 @@ runs on edge nodes and manages containerized applications.`,
 	return cmd
 }
 
+func Run(c *config.EdgeSideConfig) {
+	// To help debugging, immediately log version
+	klog.Infof("Version: %+v", version.Get())
+
+	registerModules(c)
+	// start all modules
+	core.Run()
+}
+
 // registerModules register all the modules started in edgesite
-func registerModules() {
+func registerModules(c *config.EdgeSideConfig) {
 	core.SetEnabledModules(c.Modules.Enabled...)
 
-	edged.Register()
-	edgecontroller.Register()
-	metamanager.Register()
+	edged.Register(c.Edged)
+	edgecontroller.Register(nil, nil, nil, c.Edged, c.Metamanager)
+	metamanager.Register(c.Metamanager)
 	dbm.InitDBManager()
 }

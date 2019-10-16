@@ -9,20 +9,10 @@ import (
 )
 
 func ValidateEdgeSideConfiguration(c *config.EdgeSideConfig) field.ErrorList {
-	/*
-		Mqtt              *edgecoreconfig.MqttConfig         `json:"mqtt,omitempty"`
-		Kube              *cloudcoreconfig.KubeConfig        `json:"kube,omitempty"`
-		ControllerContext *cloudcoreconfig.ControllerContext `json:"controllerContext"`
-		Edged             *edgecoreconfig.EdgedConfig        `json:"edged,omitempty"`
-		Modules           *commonconfig.Modules              `json:"modules,omitempty"`
-		Metamanager       *Metamanager                       `json:"metamanager,omitempty"`
-
-	*/
 
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, edgevalidation.ValidateMqttConfiguration(c.Mqtt)...)
 	allErrs = append(allErrs, cloudvalidation.ValidateKubeConfiguration(c.Kube)...)
-	allErrs = append(allErrs, cloudvalidation.ValidateControllerContextConfiguration(c.ControllerContext)...)
 	allErrs = append(allErrs, edgevalidation.ValidateEdgedConfiguration(c.Edged)...)
 	return allErrs
 }

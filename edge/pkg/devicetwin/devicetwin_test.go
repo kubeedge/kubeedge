@@ -164,18 +164,10 @@ func TestStart(t *testing.T) {
 // TestCleanup is function to test Cleanup().
 func TestCleanup(t *testing.T) {
 	deviceTwin := DeviceTwin{
-		context: mainContext,
-		dtcontroller: &DTController{
-			Stop: make(chan bool, 1),
-		},
+		context:      mainContext,
+		dtcontroller: &DTController{},
 	}
 	deviceTwin.Cleanup()
-	//Testing the value of stop channel in dtcontroller
-	t.Run("CleanUpTestStopChanTest", func(t *testing.T) {
-		if <-deviceTwin.dtcontroller.Stop == false {
-			t.Errorf("Want %v on StopChan Got %v", true, false)
-		}
-	})
 	//Send message to avoid deadlock if channel deletion has failed after cleanup
 	go mainContext.Send(DeviceTwinModuleName, test)
 	_, err := mainContext.Receive(DeviceTwinModuleName)

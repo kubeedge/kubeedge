@@ -33,7 +33,8 @@ import (
 func NewEdgeCoreCommand() *cobra.Command {
 	opts := options.NewEdgeCoreOptions()
 	cmd := &cobra.Command{
-		Use: "core",
+		Use:   "run",
+		Short: "run main edgecore process",
 		Long: `Edgecore is the core edge part of KubeEdge, which contains six modules: devicetwin, edged, 
 edgehub, eventbus, metamanager, and servicebus. DeviceTwin is responsible for storing device status 
 and syncing device status to the cloud. It also provides query interfaces for applications. Edged is an 
@@ -107,9 +108,9 @@ func registerModules(e *config.EdgeCoreConfig) {
 	devicetwin.Register(e.Edged)
 	edged.Register(e.Edged)
 	edgehub.Register(e.EdgeHub, e.Edged)
-	eventbus.Register(e.Mqtt)
-	metamanager.Register()
-	edgemesh.Register()
+	eventbus.Register(e.Edged, e.Mqtt)
+	metamanager.Register(e.Metamanager)
+	edgemesh.Register(e.Mesh)
 	servicebus.Register()
 	test.Register()
 	dbm.InitDBManager()
