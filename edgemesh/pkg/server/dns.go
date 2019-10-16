@@ -93,10 +93,11 @@ func startDnsServer() {
 		Port: 53,
 	}
 	udpConn, err := net.ListenUDP("udp", laddr)
-	defer udpConn.Close()
 	if err != nil {
 		klog.Errorf("Dns server Start error : %s", err)
+		return
 	}
+	defer udpConn.Close()
 	dnsConn = udpConn
 	for {
 		req := make([]byte, bufSize)
