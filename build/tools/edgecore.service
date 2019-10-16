@@ -1,5 +1,5 @@
 [Unit]
-Description=edge.service
+Description=edgecore.service
 
 [Service]
 Type=simple
