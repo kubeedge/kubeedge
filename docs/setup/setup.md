@@ -16,7 +16,8 @@ KubeEdge is composed  of cloud and edge parts. It is built upon Kubernetes and p
 
 + [Creating kubernetes cluster with kubeadm on cloud side](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-+ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/) 
++ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/)
++ [Install mosquitto on every edge side](https://mosquitto.org/download/)
 
 ## Run KubeEdge
 
@@ -34,10 +35,10 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
 ```bash
-# $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
+$GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
 ```
 
-The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively. We need to copy these files to the corresponding edge side server directory.
+The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively, so this command should be run with root or users who have access to those directories. We need to copy these files to the corresponding edge side server directory.
 
 #### Run as a binary
 
@@ -117,26 +118,44 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
         burst: 10
         kubeconfig: "~/.kube/config" #Enter path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
     ```
-    cloudcore default supports https connection to Kubernetes (required version is 1.15+) apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig. 
+    cloudcore default supports https connection to Kubernetes (required version is 1.15+) apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
     Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` exist.
 
-+ Run cloudcore 
++ Run cloudcore
 
     ```shell
     cd ~/cmd/
-    nohup ./cloudcore & 
+    nohup ./cloudcore &
     ```
-    
-#### Deploy the edge node 
+
++ Run cloudcore with systemd
+
+    It is also possible to start the cloudcore with systemd. If you want, you could use the example systemd-unit-file. The following command will show you how to setup this:
+
+    ```shell
+    sudo ln build/tools/cloudcore.service /etc/systemd/system/cloudcore.service
+    sudo systemctl daemon-reload
+    sudo systemctl start cloudcore
+    ```
+    **Note:** Please fix __ExecStart__ path in cloudcore.service. Do __NOT__ use relative path, use absoulte path instead.
+
+    If you also want also an autostart, you have to execute this, too:
+
+    ```shell
+    sudo systemctl enable cloudcore
+    ```
+
+
+#### Deploy the edge node
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
 + Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
-    
+
     ```shell
         mkdir ~/cmd/yaml
         cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
     ```
-    
+
 + Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
 + Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
 
@@ -196,31 +215,22 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
     make edge_small_build
     ```
 
-    **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage, 
-    lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory 
+    **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage,
+    lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory
     more than once etc. are applicable here as well.
-    
-+ Run mqtt on edge side
-
-    ```shell
-    # run mosquitto
-    mosquitto -d -p 1883
-    # or run emqx edge
-    # emqx start
-    ``` 
 
 + Set edgecore config file
-    
+
     ```shell
     mkdir ~/cmd/conf
     cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/* ~/cmd/conf
     vim ~/cmd/conf/edge.yaml
     ```
-    
-    **Note:** `~/cmd/` dir is also an example as well as `cloudcore`, `conf/` should be in the same directory as edgecore binary, 
-    
+
+    **Note:** `~/cmd/` dir is also an example as well as `cloudcore`, `conf/` should be in the same directory as edgecore binary,
+
     verify the configurations before running `edgecore`
-    
+
     ```
     mqtt:
         server: tcp://127.0.0.1:1883 # external mqtt broker url.
@@ -299,28 +309,30 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 
     ```shell
 
-    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/ 
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
     cd ~/cmd
     ./edgecore
     # or
     nohup ./edgecore > edgecore.log 2>&1 &
     ```
-    **Note:** Please run edge using the users who have root permission.
+    **Note:** Please run edgecore using the users who have root permission.
 
 + Run edgecore with systemd
 
     It is also possible to start the edgecore with systemd. If you want, you could use the example systemd-unit-file. The following command will show you how to setup this:
 
     ```shell
-    sudo ln build/tools/edge.service /etc/systemd/system/edge.service
+    sudo ln build/tools/edgecore.service /etc/systemd/system/edgecore.service
     sudo systemctl daemon-reload
     sudo systemctl start edgecore
     ```
-    
+    **Note:** Please fix __ExecStart__ path in edgecore.service. Do __NOT__ use relative path, use absoulte path instead.
+
+
     If you also want also an autostart, you have to execute this, too:
-    
+
     ```shell
-    sudo systemctl enable daemon-reload
+    sudo systemctl enable edgecore
     ```
 
 #### Check status

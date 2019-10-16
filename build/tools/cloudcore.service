@@ -1,0 +1,9 @@
+[Unit]
+Description=cloudcore.service
+
+[Service]
+Type=simple
+ExecStart=/etc/kubeedge/cloudcore
+
+[Install]
+WantedBy=multi-user.target
