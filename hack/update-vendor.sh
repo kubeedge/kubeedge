@@ -33,7 +33,7 @@ function kubeedge::util::list_staging_repos() {
   )
 }
 
-
+# update go.mod and go.sum for staging repos
 for repo in $(kubeedge::util::list_staging_repos); do
   pushd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/${repo}"
   echo "running 'go mod tidy' for ${repo}"
@@ -42,10 +42,10 @@ for repo in $(kubeedge::util::list_staging_repos); do
 done
 
 
-echo "running 'go mod tidy'"
+echo "running 'go mod tidy' for repo root"
 go mod tidy
 
-echo "running 'go mod vendor'"
+echo "running 'go mod vendor' for repo root"
 go mod vendor
 
 # create a symlink in vendor directory pointing to the staging components.

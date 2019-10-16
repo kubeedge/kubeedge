@@ -922,7 +922,7 @@ k8s.io/cri-api/pkg/apis/runtime/v1alpha2
 # k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.0.0-20190718190424-bef8d46b95de
 k8s.io/csi-translation-lib/plugins
 k8s.io/csi-translation-lib
-# k8s.io/klog v0.4.0 => k8s.io/klog v0.4.0
+# k8s.io/klog v1.0.0 => k8s.io/klog v0.4.0
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
 k8s.io/kube-openapi/pkg/util/proto
