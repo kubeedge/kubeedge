@@ -3,6 +3,8 @@ package app
 import (
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
+
+	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
 func NewCommand() *cobra.Command {
@@ -12,28 +14,35 @@ func NewCommand() *cobra.Command {
 		Short: "edgecore: is the core edge part of KubeEdge",
 		Long: dedent.Dedent(`
 			    ┌──────────────────────────────────────────────────────────┐
-			    │ edgecore                                                │
-			    │ the core edge part of KubeEdge                          │
+			    │ edgecore                                                 │
+			    │ the core edge part of KubeEdge                           │
 			    └──────────────────────────────────────────────────────────┘
 
 			Example usage:
 
 			    ┌──────────────────────────────────────────────────────────┐
-			    │ Create default config:                                   │
+			    │ Get current version:                                     │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # edgecore defaultconfig                                │
+			    │ # edgecore --version									   │
 			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
-			    │ run edgecore :                                          │
+			    │ Create default config:                                   │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # edgecore core &                                       │
+			    │ # edgecore config default                                │
+			    └──────────────────────────────────────────────────────────┘
+
+			    ┌──────────────────────────────────────────────────────────┐
+			    │ run edgecore :                                           │
+			    ├──────────────────────────────────────────────────────────┤
+			    │ # edgecore core &                                        │
 			    └──────────────────────────────────────────────────────────┘
 
 		`),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, args []string) {
+			verflag.PrintAndExitIfRequested()
 		},
 	}
 	cmd.ResetFlags()

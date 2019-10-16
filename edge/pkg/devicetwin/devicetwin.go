@@ -6,7 +6,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	devicetwinconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 //DeviceTwin the module
@@ -16,7 +18,8 @@ type DeviceTwin struct {
 }
 
 // Register register devicetwin
-func Register() {
+func Register(e *edgecoreconfig.EdgedConfig) {
+	devicetwinconfig.InitDeviceTwinConfig(e)
 	dtclient.InitDBTable()
 	dt := DeviceTwin{}
 	core.Register(&dt)

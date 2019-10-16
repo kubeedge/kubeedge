@@ -42,23 +42,10 @@ func RegisterModel(moduleName string, m interface{}) {
 
 // InitDBConfig Init DB info
 func InitDBConfig() {
-	driverName, _ = config.CONFIG.GetValue("database.driver").ToString()
-	dbName, _ = config.CONFIG.GetValue("database.name").ToString()
-	dataSource, _ = config.CONFIG.GetValue("database.source").ToString()
-	if driverName == "" {
-		driverName = defaultDriverName
-	}
-	if dbName == "" {
-		dbName = defaultDbName
-	}
-	if dataSource == "" {
-		dataSource = defaultDataSource
-	}
-
-	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
+	if err := orm.RegisterDriver(defaultDriverName, orm.DRSqlite); err != nil {
 		klog.Fatalf("Failed to register driver: %v", err)
 	}
-	if err := orm.RegisterDataBase(dbName, driverName, dataSource); err != nil {
+	if err := orm.RegisterDataBase(defaultDbName, defaultDriverName, defaultDataSource); err != nil {
 		klog.Fatalf("Failed to register db: %v", err)
 	}
 }

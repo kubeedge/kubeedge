@@ -8,10 +8,10 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	devicetwinconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
@@ -40,10 +40,6 @@ type DTContext struct {
 //InitDTContext init dtcontext
 func InitDTContext(context *context.Context) (*DTContext, error) {
 	groupID := ""
-	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-	if err != nil {
-		klog.Warningf("failed to get node id  for web socket client")
-	}
 	commChan := make(map[string]chan interface{})
 	confirmChan := make(chan interface{}, 1000)
 	var modulesHealth sync.Map
@@ -55,7 +51,7 @@ func InitDTContext(context *context.Context) (*DTContext, error) {
 
 	return &DTContext{
 		GroupID:        groupID,
-		NodeID:         nodeID,
+		NodeID:         devicetwinconfig.Conf().Edged.HostnameOverride,
 		CommChan:       commChan,
 		ConfirmChan:    confirmChan,
 		ConfirmMap:     &confirm,

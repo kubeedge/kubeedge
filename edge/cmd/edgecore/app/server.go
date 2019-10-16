@@ -70,7 +70,6 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	}
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
-	verflag.AddFlags(namedFs.FlagSet("global"))
 	globalflag.AddGlobalFlags(namedFs.FlagSet("global"), cmd.Name())
 	for _, f := range namedFs.FlagSets {
 		fs.AddFlagSet(f)
@@ -101,16 +100,16 @@ func Run(c *config.EdgeCoreConfig) {
 }
 
 // registerModules register all the modules started in edgecore
-func registerModules(c *config.EdgeCoreConfig) {
+func registerModules(e *config.EdgeCoreConfig) {
 
-	core.SetEnabledModules(c.Modules.Enabled...)
+	core.SetEnabledModules(e.Modules.Enabled...)
 
-	devicetwin.Register()
-	edged.Register(c.Edged)
-	edgehub.Register(c.EdgeHub, c.Edged)
-	eventbus.Register()
-	edgemesh.Register()
+	devicetwin.Register(e.Edged)
+	edged.Register(e.Edged)
+	edgehub.Register(e.EdgeHub, e.Edged)
+	eventbus.Register(e.Mqtt)
 	metamanager.Register()
+	edgemesh.Register()
 	servicebus.Register()
 	test.Register()
 	dbm.InitDBManager()

@@ -12,7 +12,20 @@ import (
 
 func NewConfig() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "defaultconfig",
+		Use:   "config",
+		Short: "create or get config for cloudcore",
+		Run: func(cmd *cobra.Command, args []string) {
+		},
+	}
+	cmd.ResetFlags()
+
+	cmd.AddCommand(NewDefaultConfig())
+	return cmd
+}
+
+func NewDefaultConfig() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "default",
 		Short: "create default config for cloudcore",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := config.NewDefaultCloudCoreConfig()

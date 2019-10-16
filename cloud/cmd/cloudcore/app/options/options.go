@@ -19,10 +19,11 @@ package options
 import (
 	"path"
 
+	cliflag "k8s.io/component-base/cli/flag"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/cloudcore/apis/config"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	cliflag "k8s.io/component-base/cli/flag"
 )
 
 type CloudCoreOptions struct {
@@ -35,9 +36,9 @@ func NewDefaultCloudCoreOptions() *CloudCoreOptions {
 	}
 }
 
-func (o *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
-	fs := fss.FlagSet("general")
-	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
+func (c *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
+	fs := fss.FlagSet("global")
+	fs.StringVar(&c.ConfigFile, "config", c.ConfigFile, "The path to the configuration file. Flags override values in this file.")
 	return
 }
 

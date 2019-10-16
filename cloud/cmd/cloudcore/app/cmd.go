@@ -3,10 +3,11 @@ package app
 import (
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
+
+	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
 func NewCommand() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "cloudcore",
 		Short: "cloudcore: core cloud part of KubeEdge",
@@ -17,11 +18,16 @@ func NewCommand() *cobra.Command {
 			    └──────────────────────────────────────────────────────────┘
 
 			Example usage:
+   			    ┌──────────────────────────────────────────────────────────┐
+			    │ Get current version:	                                   │
+			    ├──────────────────────────────────────────────────────────┤
+			    │ # cloudcore --version									   │
+			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
 			    │ Create default config:                                   │
 			    ├──────────────────────────────────────────────────────────┤
-			    │ # cloudcore defaultconfig                                │
+			    │ # cloudcore config default                               │
 			    └──────────────────────────────────────────────────────────┘
 
 			    ┌──────────────────────────────────────────────────────────┐
@@ -34,8 +40,10 @@ func NewCommand() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, args []string) {
+			verflag.PrintAndExitIfRequested()
 		},
 	}
+
 	cmd.ResetFlags()
 
 	cmd.AddCommand(NewCloudCoreCommand())

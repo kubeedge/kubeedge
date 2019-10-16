@@ -12,8 +12,21 @@ import (
 
 func NewConfig() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "defaultconfig",
-		Short: "create default config for cloudcore",
+		Use:   "config",
+		Short: "create or get config for edgecore",
+		Run: func(cmd *cobra.Command, args []string) {
+		},
+	}
+	cmd.ResetFlags()
+
+	cmd.AddCommand(NewDefaultConfig())
+	return cmd
+}
+
+func NewDefaultConfig() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "default",
+		Short: "create default config for edgecore",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := config.NewDefaultEdgeCoreConfig()
 			data, err := kyaml.Marshal(cfg)

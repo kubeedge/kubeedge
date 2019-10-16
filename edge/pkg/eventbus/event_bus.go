@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 var mqttServer *mqttBus.Server
@@ -36,12 +37,9 @@ type eventbus struct {
 }
 
 // Register register eventbus
-func Register() {
-	mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
-	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
-		mode = internalMqttMode
-	}
-	edgeEventHubModule := eventbus{mqttMode: mode}
+func Register(m *edgecoreconfig.MqttConfig) {
+
+	edgeEventHubModule := eventbus{mqttMode: int(m.Mode)}
 	core.Register(&edgeEventHubModule)
 }
 
