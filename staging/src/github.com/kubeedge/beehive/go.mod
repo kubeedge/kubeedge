@@ -20,3 +20,5 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+replace github.com/apache/servicecomb-kie v0.1.0 => github.com/apache/servicecomb-kie v0.0.0-20190905142319-5ee098c8886f // indirect. TODO: remove this line when servicecomb-kie has a stable release
