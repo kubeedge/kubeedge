@@ -34,6 +34,14 @@ function kubeedge::util::list_staging_repos() {
 }
 
 
+for repo in $(kubeedge::util::list_staging_repos); do
+  pushd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/${repo}"
+  echo "running 'go mod tidy' for ${repo}"
+  go mod tidy
+  popd
+done
+
+
 echo "running 'go mod tidy'"
 go mod tidy
 
