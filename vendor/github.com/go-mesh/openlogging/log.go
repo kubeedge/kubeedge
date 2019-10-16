@@ -33,17 +33,17 @@ func (l golog) Fatal(message string, opts ...Option) {
 }
 
 func (l golog) Debugf(template string, args ...interface{}) {
-	log.Printf(debug+template, args)
+	log.Printf(debug+template, args...)
 }
 func (l golog) Infof(template string, args ...interface{}) {
-	log.Printf(info+template, args)
+	log.Printf(info+template, args...)
 }
 func (l golog) Warnf(template string, args ...interface{}) {
-	log.Printf(warn+template, args)
+	log.Printf(warn+template, args...)
 }
 func (l golog) Errorf(template string, args ...interface{}) {
-	log.Printf(error+template, args)
+	log.Printf(error+template, args...)
 }
 func (l golog) Fatalf(template string, args ...interface{}) {
-	log.Panicf(fatal+template, args)
+	log.Panicf(fatal+template, args...)
 }

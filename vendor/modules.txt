@@ -150,19 +150,18 @@ github.com/fsnotify/fsnotify
 github.com/ghodss/yaml
 # github.com/go-chassis/foundation v0.0.0-20190621030543-c3b63f787f4c
 github.com/go-chassis/foundation/security
-# github.com/go-chassis/go-archaius v0.20.0
-github.com/go-chassis/go-archaius/core
+# github.com/go-chassis/go-archaius v0.23.0
 github.com/go-chassis/go-archaius
-github.com/go-chassis/go-archaius/sources/commandline-source
-github.com/go-chassis/go-archaius/sources/enviromentvariable-source
-github.com/go-chassis/go-archaius/sources/memory-source
-github.com/go-chassis/go-archaius/core/cast
-github.com/go-chassis/go-archaius/core/config-manager
-github.com/go-chassis/go-archaius/core/event-system
-github.com/go-chassis/go-archaius/sources/configcenter
-github.com/go-chassis/go-archaius/sources/file-source
-github.com/go-chassis/go-archaius/sources/utils
-# github.com/go-chassis/go-chassis v1.7.1
+github.com/go-chassis/go-archaius/cast
+github.com/go-chassis/go-archaius/event
+github.com/go-chassis/go-archaius/source
+github.com/go-chassis/go-archaius/source/cli
+github.com/go-chassis/go-archaius/source/env
+github.com/go-chassis/go-archaius/source/file
+github.com/go-chassis/go-archaius/source/mem
+github.com/go-chassis/go-archaius/source/remote
+github.com/go-chassis/go-archaius/source/util
+# github.com/go-chassis/go-chassis v1.7.2
 github.com/go-chassis/go-chassis/core/common
 github.com/go-chassis/go-chassis/control
 github.com/go-chassis/go-chassis/core/config/model
@@ -200,11 +199,11 @@ github.com/go-chassis/go-chassis/core/router/weightpool
 github.com/go-chassis/go-chassis/security
 github.com/go-chassis/go-chassis/security/plugins/plain
 github.com/go-chassis/go-chassis/pkg/goplugin
-# github.com/go-chassis/go-chassis-config v0.10.0
+# github.com/go-chassis/go-chassis-config v0.12.1-0.20190924031444-785da26fa7df
 github.com/go-chassis/go-chassis-config
 # github.com/go-chassis/go-restful-swagger20 v1.0.1
 github.com/go-chassis/go-restful-swagger20
-# github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
+# github.com/go-mesh/openlogging v1.0.1
 github.com/go-mesh/openlogging
 # github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f
 github.com/godbus/dbus

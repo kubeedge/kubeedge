@@ -85,8 +85,8 @@ func GetConfDir() string {
 	return configDir
 }
 
-//HystrixDefinition is a function used to join .yaml file name with configuration path
-func HystrixDefinition() string {
+//CircuitBreakerConfigPath is a function used to join .yaml file name with configuration path
+func CircuitBreakerConfigPath() string {
 	return filepath.Join(GetConfDir(), Hystric)
 }
 
@@ -95,23 +95,23 @@ func GetDefinition() string {
 	return filepath.Join(GetConfDir(), Definition)
 }
 
-//GetLoadBalancing is a function used to join .yaml file name with configuration directory
-func GetLoadBalancing() string {
+//LoadBalancingConfigPath is a function used to join .yaml file name with configuration directory
+func LoadBalancingConfigPath() string {
 	return filepath.Join(GetConfDir(), LoadBalancing)
 }
 
-//GetRateLimiting is a function used to join .yaml file name with configuration directory
-func GetRateLimiting() string {
+//RateLimitingFile is a function used to join .yaml file name with configuration directory
+func RateLimitingFile() string {
 	return filepath.Join(GetConfDir(), RateLimiting)
 }
 
-//GetTLS is a function used to join .yaml file name with configuration directory
-func GetTLS() string {
+//TLSConfigPath is a function used to join .yaml file name with configuration directory
+func TLSConfigPath() string {
 	return filepath.Join(GetConfDir(), TLS)
 }
 
-//GetMonitoring is a function used to join .yaml file name with configuration directory
-func GetMonitoring() string {
+//MonitoringConfigPath is a function used to join .yaml file name with configuration directory
+func MonitoringConfigPath() string {
 	return filepath.Join(GetConfDir(), Monitoring)
 }
 
@@ -120,13 +120,13 @@ func MicroserviceDefinition(microserviceName string) string {
 	return filepath.Join(GetConfDir(), microserviceName, Definition)
 }
 
-//GetMicroserviceDesc is a function used to join .yaml file name with configuration directory
-func GetMicroserviceDesc() string {
+//MicroServiceConfigPath is a function used to join .yaml file name with configuration directory
+func MicroServiceConfigPath() string {
 	return filepath.Join(GetConfDir(), Definition)
 }
 
-//GlobalDefinition is a function used to join .yaml file name with configuration directory
-func GlobalDefinition() string {
+//GlobalConfigPath is a function used to join .yaml file name with configuration directory
+func GlobalConfigPath() string {
 	return filepath.Join(GetConfDir(), Global)
 }
 
@@ -140,13 +140,13 @@ func RouterConfigPath() string {
 	return filepath.Join(GetConfDir(), Router)
 }
 
-//GetAuth is a function used to join .yaml file name with configuration directory
-func GetAuth() string {
+//AuthConfigPath is a function used to join .yaml file name with configuration directory
+func AuthConfigPath() string {
 	return filepath.Join(GetConfDir(), Auth)
 }
 
-//GetTracing is a function used to join .yaml file name with configuration directory
-func GetTracing() string {
+//TracingPath is a function used to join .yaml file name with configuration directory
+func TracingPath() string {
 	return filepath.Join(GetConfDir(), Tracing)
 }
 

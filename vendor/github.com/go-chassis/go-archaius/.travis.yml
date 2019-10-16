@@ -37,4 +37,7 @@ jobs:
       script:
         - GO111MODULE=on go mod download
         - GO111MODULE=on go mod vendor
+        - go get golang.org/x/tools/cmd/cover
+        - go get github.com/mattn/goveralls
         - bash scripts/travis/unit_test.sh
+

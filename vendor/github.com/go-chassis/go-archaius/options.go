@@ -2,20 +2,18 @@ package archaius
 
 import (
 	"crypto/tls"
-	"github.com/go-chassis/go-archaius/sources/utils"
+	"github.com/go-chassis/go-archaius/source/util"
 
 	"github.com/go-chassis/go-chassis-config"
 )
 
-// ConfigCenterInfo has attribute for config center source initialization
-type ConfigCenterInfo struct {
+// RemoteInfo has attribute for config center source initialization
+type RemoteInfo struct {
 	//required.
 	//Key value can be in different namespace, we call it dimension.
 	//although key is same but in different dimension, the value is different.
-	//you must specify the service,app and version, so that the config center source will just pull this unique key value
-	Service string
-	App     string
-	Version string
+	//you must specify the service,app and version, so that the remote source will pull key value
+	DefaultDimension map[string]string
 	//archaius config center source support 2 types of refresh mechanism:
 	//0: Web-Socket Based -  client makes an web socket connection with
 	//the config server and keeps getting an events whenever any data changes.
@@ -26,7 +24,7 @@ type ConfigCenterInfo struct {
 	//Pull Configuration interval, unit is second
 	RefreshInterval int
 
-	//Configurations for config client implementation
+	//currentConfig for config client implementation
 	//if you already create a client, don't need to set those config
 	URL           string
 	TenantName    string
@@ -36,19 +34,18 @@ type ConfigCenterInfo struct {
 	ClientType    string
 	APIVersion    string
 	RefreshPort   string
-	Environment   string
 }
 
 //Options hold options
 type Options struct {
-	RequiredFiles    []string
-	OptionalFiles    []string
-	FileHandler      utils.FileHandler
-	ConfigCenterInfo ConfigCenterInfo
-	ConfigClient     config.Client
-	UseCLISource     bool
-	UseENVSource     bool
-	UseMemSource     bool
+	RequiredFiles []string
+	OptionalFiles []string
+	FileHandler   util.FileHandler
+	RemoteInfo    *RemoteInfo
+	ConfigClient  config.Client
+	UseCLISource  bool
+	UseENVSource  bool
+	UseMemSource  bool
 }
 
 //Option is a func
@@ -70,19 +67,19 @@ func WithOptionalFiles(f []string) Option {
 
 //WithDefaultFileHandler let user custom handler
 //you can decide how to convert file into kv pairs
-func WithDefaultFileHandler(handler utils.FileHandler) Option {
+func WithDefaultFileHandler(handler util.FileHandler) Option {
 	return func(options *Options) {
 		options.FileHandler = handler
 	}
 }
 
-//WithConfigCenterSource accept the information for initiating a config center source,
-//ConfigCenterInfo is required if you want to use config center source
-//client is optional,if client is nil, archaius will create one based on ConfigCenterInfo
+//WithRemoteSource accept the information for initiating a config center source,
+//RemoteInfo is required if you want to use config center source
+//client is optional,if client is nil, archaius will create one based on RemoteInfo
 //config client will be injected into config source as a client to interact with a config server
-func WithConfigCenterSource(cci ConfigCenterInfo, c config.Client) Option {
+func WithRemoteSource(ri *RemoteInfo, c config.Client) Option {
 	return func(options *Options) {
-		options.ConfigCenterInfo = cci
+		options.RemoteInfo = ri
 		options.ConfigClient = c
 	}
 }
@@ -112,14 +109,14 @@ func WithMemorySource() Option {
 
 //FileOptions for AddFile func
 type FileOptions struct {
-	Handler utils.FileHandler
+	Handler util.FileHandler
 }
 
 //FileOption is a func
 type FileOption func(options *FileOptions)
 
 //WithFileHandler use custom handler
-func WithFileHandler(h utils.FileHandler) FileOption {
+func WithFileHandler(h util.FileHandler) FileOption {
 	return func(options *FileOptions) {
 		options.Handler = h
 	}

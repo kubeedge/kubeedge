@@ -11,17 +11,17 @@ func InitArchaius() error {
 	var err error
 
 	requiredFiles := []string{
-		fileutil.GlobalDefinition(),
-		fileutil.GetMicroserviceDesc(),
+		fileutil.GlobalConfigPath(),
+		fileutil.MicroServiceConfigPath(),
 	}
 	optionalFiles := []string{
-		fileutil.HystrixDefinition(),
-		fileutil.GetLoadBalancing(),
-		fileutil.GetRateLimiting(),
-		fileutil.GetTLS(),
-		fileutil.GetMonitoring(),
-		fileutil.GetAuth(),
-		fileutil.GetTracing(),
+		fileutil.CircuitBreakerConfigPath(),
+		fileutil.LoadBalancingConfigPath(),
+		fileutil.RateLimitingFile(),
+		fileutil.TLSConfigPath(),
+		fileutil.MonitoringConfigPath(),
+		fileutil.AuthConfigPath(),
+		fileutil.TracingPath(),
 		fileutil.LogConfigPath(),
 		fileutil.RouterConfigPath(),
 	}

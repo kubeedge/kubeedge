@@ -3,6 +3,7 @@ package registry
 import (
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -146,24 +147,33 @@ func startBackOff(operation func() error) {
 
 //URIs2Hosts return hosts and scheme
 func URIs2Hosts(uris []string) ([]string, string, error) {
-	hosts := make([]string, 0, len(uris))
+	hosts := make([]string, 0)
 	var scheme string
+	var hostPortRegex = "(\\.*://.*):(\\d*)\\/?(.*)"
 	for _, addr := range uris {
-		u, e := url.Parse(addr)
-		if e != nil {
-			//not uri. but still permitted, like zookeeper,file system
+		ok, err := regexp.MatchString(hostPortRegex, addr)
+		if err != nil {
+			return nil, "", err
+		}
+		if ok {
+			u, e := url.Parse(addr)
+			if e != nil {
+				openlogging.Warn("registry address is invalid:" + addr)
+				continue
+			}
+			if len(u.Host) == 0 {
+				continue
+			}
+			if len(scheme) != 0 && u.Scheme != scheme {
+				return nil, "", fmt.Errorf("inconsistent scheme found in registry address")
+			}
+			scheme = u.Scheme
 			hosts = append(hosts, u.Host)
+		} else {
+			//not uri. but still permitted, like zookeeper,file system
+			hosts = append(hosts, addr)
 			continue
 		}
-		if len(u.Host) == 0 {
-			continue
-		}
-		if len(scheme) != 0 && u.Scheme != scheme {
-			return nil, "", fmt.Errorf("inconsistent scheme found in registry address")
-		}
-		scheme = u.Scheme
-		hosts = append(hosts, u.Host)
-
 	}
 	return hosts, scheme, nil
 }

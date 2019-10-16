@@ -9,6 +9,14 @@ import (
 
 var configClientPlugins = make(map[string]func(options Options) (Client, error))
 
+//const
+const (
+	LabelService     = "serviceName"
+	LabelVersion     = "version"
+	LabelEnvironment = "environment"
+	LabelApp         = "app"
+)
+
 //DefaultClient is config server's client
 var DefaultClient Client
 
@@ -21,18 +29,15 @@ func InstallConfigClientPlugin(name string, f func(options Options) (Client, err
 //Client is the interface of config server client, it has basic func to interact with config server
 type Client interface {
 	//PullConfigs pull all configs from remote
-	PullConfigs(serviceName, version, app, env string) (map[string]interface{}, error)
+	PullConfigs(labels ...map[string]string) (map[string]interface{}, error)
 	//PullConfig pull one config from remote
-	PullConfig(serviceName, version, app, env, key, contentType string) (interface{}, error)
-	//PullConfigsByDI pulls the configurations with customized DimensionInfo/Project
-	PullConfigsByDI(dimensionInfo string) (map[string]map[string]interface{}, error)
+	PullConfig(key, contentType string, labels map[string]string) (interface{}, error)
 	// PushConfigs push config to cc
-	PushConfigs(data map[string]interface{}, serviceName, version, app, env string) (map[string]interface{}, error)
+	PushConfigs(data map[string]interface{}, labels map[string]string) (map[string]interface{}, error)
 	// DeleteConfigsByKeys delete config for cc by keys
-	DeleteConfigsByKeys(keys []string, serviceName, version, app, env string) (map[string]interface{}, error)
+	DeleteConfigsByKeys(keys []string, labels map[string]string) (map[string]interface{}, error)
 	//Watch get kv change results, you can compare them with local kv cache and refresh local cache
-	Watch(f func(map[string]interface{}), errHandler func(err error)) error
-
+	Watch(f func(map[string]interface{}), errHandler func(err error), labels map[string]string) error
 	Options() Options
 }
 

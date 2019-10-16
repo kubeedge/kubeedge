@@ -4,29 +4,29 @@ package archaius
 
 import (
 	"errors"
+	"github.com/go-chassis/go-archaius/cast"
 	"os"
 	"strings"
 
-	"github.com/go-chassis/go-archaius/core"
-	"github.com/go-chassis/go-archaius/sources/commandline-source"
-	"github.com/go-chassis/go-archaius/sources/configcenter"
-	"github.com/go-chassis/go-archaius/sources/enviromentvariable-source"
-	"github.com/go-chassis/go-archaius/sources/file-source"
-	"github.com/go-chassis/go-archaius/sources/memory-source"
+	"github.com/go-chassis/go-archaius/event"
+	"github.com/go-chassis/go-archaius/source"
+	"github.com/go-chassis/go-archaius/source/cli"
+	"github.com/go-chassis/go-archaius/source/env"
+	"github.com/go-chassis/go-archaius/source/file"
+	"github.com/go-chassis/go-archaius/source/mem"
+	"github.com/go-chassis/go-archaius/source/remote"
 	"github.com/go-chassis/go-chassis-config"
 	"github.com/go-mesh/openlogging"
 )
 
 var (
-	factory ConfigurationFactory
-	fs      filesource.FileSource
-	ms      = memoryconfigsource.NewMemoryConfigurationSource()
-
+	manager             *source.Manager
+	fs                  filesource.FileSource
 	running             = false
 	configServerRunning = false
 )
 
-func initFileSource(o *Options) (core.ConfigSource, error) {
+func initFileSource(o *Options) (source.ConfigSource, error) {
 	files := make([]string, 0)
 	// created file source object
 	fs = filesource.NewFileSource()
@@ -57,7 +57,7 @@ func initFileSource(o *Options) (core.ConfigSource, error) {
 // Init create a Archaius config singleton
 func Init(opts ...Option) error {
 	if running {
-		openlogging.Debug("can not init archaius again, call Clean first")
+		openlogging.Warn("can not init archaius again, call Clean first")
 		return nil
 	}
 	var err error
@@ -66,67 +66,49 @@ func Init(opts ...Option) error {
 		opt(o)
 	}
 
-	// created config factory object
-	factory, err = NewConfigFactory()
-	if err != nil {
-
-		return err
-	}
-	factory.DeInit()
-	factory.Init()
+	manager = source.NewManager()
 
 	fs, err := initFileSource(o)
 	if err != nil {
 		return err
 	}
-	if o.ConfigCenterInfo != (ConfigCenterInfo{}) {
-		if err := EnableConfigCenterSource(o.ConfigCenterInfo, o.ConfigClient); err != nil {
-			return err
-		}
-	}
-	err = factory.AddSource(fs)
+	err = manager.AddSource(fs, fs.GetPriority())
 	if err != nil {
 		return err
+	}
+
+	if o.RemoteInfo != nil {
+		if err := EnableRemoteSource(o.RemoteInfo, o.ConfigClient); err != nil {
+			return err
+		}
 	}
 
 	// build-in config sources
 	if o.UseMemSource {
-		ms = memoryconfigsource.NewMemoryConfigurationSource()
-		factory.AddSource(ms)
+		ms := mem.NewMemoryConfigurationSource()
+		manager.AddSource(ms, ms.GetPriority())
 	}
 	if o.UseCLISource {
-		cmdSource := commandlinesource.NewCommandlineConfigSource()
-		factory.AddSource(cmdSource)
+		cmdSource := cli.NewCommandlineConfigSource()
+		manager.AddSource(cmdSource, cmdSource.GetPriority())
 	}
 	if o.UseENVSource {
-		envSource := envconfigsource.NewEnvConfigurationSource()
-		factory.AddSource(envSource)
+		envSource := env.NewEnvConfigurationSource()
+		manager.AddSource(envSource, envSource.GetPriority())
 	}
 
-	eventHandler := EventListener{
-		Name:    "EventHandler",
-		Factory: factory,
-	}
-
-	factory.RegisterListener(eventHandler, "a*")
-	openlogging.GetLogger().Info("archaius init success")
+	openlogging.Info("archaius init success")
 	running = true
 	return nil
 }
 
-//CustomInit accept is able to accept a list of config source, add it into archaius runtime.
+//CustomInit accept a list of config source, add it into archaius runtime.
 //it almost like Init(), but you can fully control config sources you inject to archaius
-func CustomInit(sources ...core.ConfigSource) error {
+func CustomInit(sources ...source.ConfigSource) error {
 	var err error
-	factory, err = NewConfigFactory()
-	if err != nil {
-		return err
-	}
-
-	factory.DeInit()
-	factory.Init()
+	manager = source.NewManager()
 	for _, s := range sources {
-		err = factory.AddSource(s)
+		err = manager.AddSource(s, s.GetPriority())
 		if err != nil {
 			return err
 		}
@@ -134,12 +116,12 @@ func CustomInit(sources ...core.ConfigSource) error {
 	return err
 }
 
-//EnableConfigCenterSource create a config center source singleton
+//EnableRemoteSource create a remote source singleton
 //A config center source pull remote config server key values into local memory
 //so that you can use GetXXX to get value easily
-func EnableConfigCenterSource(ci ConfigCenterInfo, cc config.Client) error {
-	if ci == (ConfigCenterInfo{}) {
-		return errors.New("ConfigCenterInfo can not be empty")
+func EnableRemoteSource(ci *RemoteInfo, cc config.Client) error {
+	if ci == nil {
+		return errors.New("RemoteInfo can not be empty")
 	}
 	if configServerRunning {
 		openlogging.Warn("can not init config server again, call Clean first")
@@ -155,20 +137,16 @@ func EnableConfigCenterSource(ci ConfigCenterInfo, cc config.Client) error {
 			TLSConfig:     ci.TLSConfig,
 			RefreshPort:   ci.RefreshPort,
 			AutoDiscovery: ci.AutoDiscovery,
-
-			Version:     ci.Version,
-			ServiceName: ci.Service,
-			App:         ci.App,
-			Env:         ci.Environment,
+			Labels:        ci.DefaultDimension,
 		}
 		cc, err = config.NewClient(ci.ClientType, opts)
 		if err != nil {
 			return err
 		}
 	}
-	configCenterSource := configcenter.NewConfigCenterSource(cc, ci.RefreshMode,
+	configCenterSource := remote.NewConfigCenterSource(cc, ci.RefreshMode,
 		ci.RefreshInterval)
-	err = factory.AddSource(configCenterSource)
+	err = manager.AddSource(configCenterSource, configCenterSource.GetPriority())
 	if err != nil {
 		return err
 	}
@@ -176,36 +154,37 @@ func EnableConfigCenterSource(ci ConfigCenterInfo, cc config.Client) error {
 	return nil
 }
 
-// EventListener is a struct having information about registering key and object
-type EventListener struct {
-	Name    string
-	Factory ConfigurationFactory
-}
-
-// Event is invoked while generating events at run time
-func (e EventListener) Event(event *core.Event) {
-	value := e.Factory.GetConfigurationByKey(event.Key)
-	openlogging.GetLogger().Debugf("config value after change %s | %s", event.Key, value)
-}
-
 // Get is for to get the value of configuration key
 func Get(key string) interface{} {
-	return factory.GetConfigurationByKey(key)
+	return manager.GetConfig(key)
+}
+
+//GetValue return interface
+func GetValue(key string) cast.Value {
+	var confValue cast.Value
+	val := manager.GetConfig(key)
+	if val == nil {
+		confValue = cast.NewValue(nil, errors.New("key does not exist"))
+	} else {
+		confValue = cast.NewValue(val, nil)
+	}
+
+	return confValue
 }
 
 // Exist check the configuration key existence
 func Exist(key string) bool {
-	return factory.IsKeyExist(key)
+	return manager.IsKeyExist(key)
 }
 
-// UnmarshalConfig is for unmarshalling the configuraions of receiving object
+// UnmarshalConfig unmarshal the config of receiving object
 func UnmarshalConfig(obj interface{}) error {
-	return factory.Unmarshal(obj)
+	return manager.Unmarshal(obj)
 }
 
 // GetBool is gives the key value in the form of bool
 func GetBool(key string, defaultValue bool) bool {
-	b, err := factory.GetValue(key).ToBool()
+	b, err := GetValue(key).ToBool()
 	if err != nil {
 		return defaultValue
 	}
@@ -214,7 +193,7 @@ func GetBool(key string, defaultValue bool) bool {
 
 // GetFloat64 gives the key value in the form of float64
 func GetFloat64(key string, defaultValue float64) float64 {
-	result, err := factory.GetValue(key).ToFloat64()
+	result, err := GetValue(key).ToFloat64()
 	if err != nil {
 		return defaultValue
 	}
@@ -223,7 +202,7 @@ func GetFloat64(key string, defaultValue float64) float64 {
 
 // GetInt gives the key value in the form of GetInt
 func GetInt(key string, defaultValue int) int {
-	result, err := factory.GetValue(key).ToInt()
+	result, err := GetValue(key).ToInt()
 	if err != nil {
 		return defaultValue
 	}
@@ -232,7 +211,7 @@ func GetInt(key string, defaultValue int) int {
 
 // GetString gives the key value in the form of GetString
 func GetString(key string, defaultValue string) string {
-	result, err := factory.GetValue(key).ToString()
+	result, err := GetValue(key).ToString()
 	if err != nil {
 		return defaultValue
 	}
@@ -241,40 +220,26 @@ func GetString(key string, defaultValue string) string {
 
 // GetConfigs gives the information about all configurations
 func GetConfigs() map[string]interface{} {
-	return factory.GetConfigurations()
+	return manager.Configs()
 }
 
-// GetStringByDI get the value of configuration key in other dimension
-func GetStringByDI(dimensionInfo, key string, defaultValue string) string {
-	result, err := factory.GetValueByDI(dimensionInfo, key).ToString()
-	if err != nil {
-		return defaultValue
-	}
-	return result
-}
-
-// GetConfigsByDI get the all configurations in other dimension
-func GetConfigsByDI(dimensionInfo string) map[string]interface{} {
-	return factory.GetConfigurationsByDimensionInfo(dimensionInfo)
-}
-
-// AddDI adds a NewDimensionInfo of which configurations needs to be taken
-func AddDI(dimensionInfo string) (map[string]string, error) {
-	config, err := factory.AddByDimensionInfo(dimensionInfo)
+// AddDimensionInfo adds a NewDimensionInfo of which configurations needs to be taken
+func AddDimensionInfo(labels map[string]string) (map[string]string, error) {
+	config, err := manager.AddDimensionInfo(labels)
 	return config, err
 }
 
 //RegisterListener to Register all listener for different key changes, each key could be a regular expression
-func RegisterListener(listenerObj core.EventListener, key ...string) error {
-	return factory.RegisterListener(listenerObj, key...)
+func RegisterListener(listenerObj event.Listener, key ...string) error {
+	return manager.RegisterListener(listenerObj, key...)
 }
 
 // UnRegisterListener is to remove the listener
-func UnRegisterListener(listenerObj core.EventListener, key ...string) error {
-	return factory.UnRegisterListener(listenerObj, key...)
+func UnRegisterListener(listenerObj event.Listener, key ...string) error {
+	return manager.UnRegisterListener(listenerObj, key...)
 }
 
-// AddFile is for to add the configuration files into the configfactory at run time
+// AddFile is for to add the configuration files at runtime
 func AddFile(file string, opts ...FileOption) error {
 	o := &FileOptions{}
 	for _, f := range opts {
@@ -283,39 +248,30 @@ func AddFile(file string, opts ...FileOption) error {
 	if err := fs.AddFile(file, filesource.DefaultFilePriority, o.Handler); err != nil {
 		return err
 	}
-	return factory.Refresh(fs.GetSourceName())
+	return manager.Refresh(fs.GetSourceName())
 }
 
-//AddKeyValue add the configuration key, value pairs into memory source at runtime
+//Set add the configuration key, value pairs into memory source at runtime
 //it is just affect the local configs
-func AddKeyValue(key string, value interface{}) error {
-	return ms.AddKeyValue(key, value)
+func Set(key string, value interface{}) error {
+	return manager.Set(key, value)
 }
 
-// DeleteKeyValue delete the configuration key, value pairs in memory source
-func DeleteKeyValue(key string, value interface{}) error {
-	return ms.DeleteKeyValue(key, value)
+// Delete delete the configuration key, value pairs in memory source
+func Delete(key string) error {
+	return manager.Delete(key)
 }
 
 //AddSource add source implementation
-func AddSource(source core.ConfigSource) error {
-	return factory.AddSource(source)
-}
-
-//GetConfigFactory return factory
-func GetConfigFactory() ConfigurationFactory {
-	return factory
+func AddSource(source source.ConfigSource) error {
+	return manager.AddSource(source, source.GetPriority())
 }
 
 //Clean will call config manager CleanUp Method,
 //it deletes all sources which means all of key value is deleted.
 //after you call Clean, you can init archaius again
 func Clean() error {
-	err := factory.DeInit()
-	if err != nil {
-		return err
-	}
+	manager.Cleanup()
 	running = false
-	configServerRunning = false
 	return nil
 }

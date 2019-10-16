@@ -136,7 +136,6 @@ func isMatch(headers map[string]string, k string, v map[string]string) bool {
 	header := valueToUpper(v["caseInsensitive"], headers[k])
 
 	if regex, ok := v["regex"]; ok {
-
 		reg := regexp.MustCompilePOSIX(valueToUpper(v["caseInsensitive"], regex))
 		if !reg.Match([]byte(header)) {
 			return false

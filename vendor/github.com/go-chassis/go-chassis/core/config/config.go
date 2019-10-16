@@ -22,7 +22,7 @@ import (
 var GlobalDefinition *model.GlobalCfg
 var lbConfig *model.LBWrapper
 
-// MicroserviceDefinition is having the info about application id, provider info, description of the service,
+// MicroserviceDefinition has info about application id, provider info, description of the service,
 // and description of the instance
 var MicroserviceDefinition *model.MicroserviceCfg
 
@@ -35,14 +35,6 @@ var HystrixConfig *model.HystrixConfigWrapper
 
 // NodeIP gives the information of node ip
 var NodeIP string
-
-// SelfServiceName is self micro service name
-//Deprecated, plz use runtime.ServiceName
-var SelfServiceName string
-
-// SelfVersion gives version of the self micro service
-//Deprecated, use runtime pkg
-var SelfVersion string
 
 // ErrNoName is used to represent the service name missing error
 var ErrNoName = errors.New("micro service name is missing in description file")
@@ -62,9 +54,9 @@ func GetDataCenter() *model.DataCenterInfo {
 	return GlobalDefinition.DataCenter
 }
 
-// parse unmarshal configurations on respective structure
-func parse() error {
-	err := ReadGlobalConfigFile()
+// readFromArchaius unmarshal configurations to expected pointer
+func readFromArchaius() error {
+	err := ReadGlobalConfigFromArchaius()
 	if err != nil {
 		return err
 	}
@@ -98,11 +90,11 @@ func parse() error {
 func populateServiceRegistryAddress() {
 	//Registry Address , higher priority for environment variable
 	registryAddrFromEnv := readCseAddress(common.EnvCSESCEndpoint, common.CseRegistryAddress)
-	openlogging.Debug("detect env", openlogging.WithTags(
-		openlogging.Tags{
-			"ep": registryAddrFromEnv,
-		}))
 	if registryAddrFromEnv != "" {
+		openlogging.Debug("detect env", openlogging.WithTags(
+			openlogging.Tags{
+				"ep": registryAddrFromEnv,
+			}))
 		GlobalDefinition.Cse.Service.Registry.Registrator.Address = registryAddrFromEnv
 		GlobalDefinition.Cse.Service.Registry.ServiceDiscovery.Address = registryAddrFromEnv
 		GlobalDefinition.Cse.Service.Registry.ContractDiscovery.Address = registryAddrFromEnv
@@ -168,14 +160,13 @@ func populateTenant() {
 	}
 }
 
-// ReadGlobalConfigFile for to unmarshal the global config file(chassis.yaml) information
-func ReadGlobalConfigFile() error {
-	globalDef := model.GlobalCfg{}
-	err := archaius.UnmarshalConfig(&globalDef)
+// ReadGlobalConfigFromArchaius for to unmarshal the global config file(chassis.yaml) information
+func ReadGlobalConfigFromArchaius() error {
+	GlobalDefinition = &model.GlobalCfg{}
+	err := archaius.UnmarshalConfig(&GlobalDefinition)
 	if err != nil {
 		return err
 	}
-	GlobalDefinition = &globalDef
 	return nil
 }
 
@@ -236,7 +227,7 @@ func readMicroServiceConfigFiles() error {
 	MicroserviceDefinition = &model.MicroserviceCfg{}
 	//find only one microservice yaml
 	microserviceNames := schema.GetMicroserviceNames()
-	defPath := fileutil.GetMicroserviceDesc()
+	defPath := fileutil.MicroServiceConfigPath()
 	data, err := ioutil.ReadFile(defPath)
 	if err != nil {
 		openlogging.GetLogger().Errorf(fmt.Sprintf("WARN: Missing microservice description file: %s", err.Error()))
@@ -316,21 +307,19 @@ func Init() error {
 		return schemaError
 	}
 
-	//set microservice names
+	//set micro service names
 	msError := schema.SetMicroServiceNames(schemaPath)
 	if msError != nil {
 		return msError
 	}
 
 	NodeIP = archaius.GetString(common.EnvNodeIP, "")
-	err = parse()
+	err = readFromArchaius()
 	if err != nil {
 		return err
 	}
 
-	SelfServiceName = MicroserviceDefinition.ServiceDescription.Name
 	runtime.ServiceName = MicroserviceDefinition.ServiceDescription.Name
-	SelfVersion = MicroserviceDefinition.ServiceDescription.Version
 	runtime.Version = MicroserviceDefinition.ServiceDescription.Version
 	runtime.Environment = MicroserviceDefinition.ServiceDescription.Environment
 	runtime.MD = MicroserviceDefinition.ServiceDescription.Properties
