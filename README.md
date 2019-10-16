@@ -51,6 +51,23 @@ KubeEdge is composed of the following components:
 
 <img src="./docs/images/kubeedge_arch.png">
 
+## To start developing KubeEdge
+
+The [set up] hosts all information about building KubeEdge from source, how to setup. etc.
+
+To build KubeEdge from source there is one option:
+
+##### You have a working [Go environment].
+
+```
+mkdir -p $GOPATH/src/github.com/kubeedge
+cd $GOPATH/src/github.com/kubeedge
+git clone git@github.com:kubeedge/kubeedge.git
+# If you only want to compile quickly without using go mod, please set GO111MODULE=off (e.g. export GO111MODULE=off) 
+cd kubeedge 
+make
+```
+
 ## Usage
 
 * [One click KubeEdge Installer to install both Cloud and Edge nodes](./docs/setup/installer_setup.md)
@@ -98,3 +115,6 @@ details on submitting patches and the contribution workflow.
 ## License
 
 KubeEdge is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+
+[set up]: docs/setup/setup.md
+[Go environment]: https://golang.org/doc/install
