@@ -4,6 +4,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/edgecore/apis/config"
 )
 
 //define edgehub module name
@@ -18,7 +20,8 @@ type EdgeHub struct {
 }
 
 // Register register edgehub
-func Register() {
+func Register(h *edgecoreconfig.EdgeHubConfig, ed *edgecoreconfig.EdgedConfig) {
+	config.InitEdgehubConfig(h, ed)
 	core.Register(&EdgeHub{
 		controller: NewEdgeHubController(),
 	})

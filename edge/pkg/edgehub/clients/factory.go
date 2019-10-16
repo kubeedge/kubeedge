@@ -2,6 +2,7 @@ package clients
 
 import (
 	"errors"
+	"time"
 
 	"k8s.io/klog"
 
@@ -20,32 +21,32 @@ const (
 var ErrorWrongClientType = errors.New("wrong Client Type")
 
 //GetClient returns an Adapter object with new web socket
-func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error) {
+func GetClient(clientType string, config *config.Config) (Adapter, error) {
 
 	switch clientType {
 	case ClientTypeWebSocket:
 		websocketConf := wsclient.WebSocketConfig{
-			URL:              config.WSConfig.URL,
-			CertFilePath:     config.WSConfig.CertFilePath,
-			KeyFilePath:      config.WSConfig.KeyFilePath,
-			HandshakeTimeout: config.WSConfig.HandshakeTimeout,
-			ReadDeadline:     config.WSConfig.ReadDeadline,
-			WriteDeadline:    config.WSConfig.WriteDeadline,
-			ProjectID:        config.CtrConfig.ProjectID,
-			NodeID:           config.CtrConfig.NodeID,
+			URL:              config.WebSocketURL,
+			CertFilePath:     config.EdgeHubConfig.WebSocket.TLSCertFile,
+			KeyFilePath:      config.EdgeHubConfig.WebSocket.TLSPrivateKeyFile,
+			HandshakeTimeout: time.Duration(config.EdgeHubConfig.WebSocket.HandshakeTimeout) * time.Second,
+			ReadDeadline:     time.Duration(config.EdgeHubConfig.WebSocket.ReadDeadline) * time.Second,
+			WriteDeadline:    time.Duration(config.EdgeHubConfig.WebSocket.WriteDeadline) * time.Second,
+			ProjectID:        config.EdgeHubConfig.Controller.ProjectId,
+			NodeID:           config.EdgedConfig.HostnameOverride,
 		}
 		return wsclient.NewWebSocketClient(&websocketConf), nil
 	case ClientTypeQuic:
 		quicConfig := quicclient.QuicConfig{
-			Addr:             config.QcConfig.URL,
-			CaFilePath:       config.QcConfig.CaFilePath,
-			CertFilePath:     config.QcConfig.CertFilePath,
-			KeyFilePath:      config.QcConfig.KeyFilePath,
-			HandshakeTimeout: config.QcConfig.HandshakeTimeout,
-			ReadDeadline:     config.QcConfig.ReadDeadline,
-			WriteDeadline:    config.QcConfig.WriteDeadline,
-			ProjectID:        config.CtrConfig.ProjectID,
-			NodeID:           config.CtrConfig.NodeID,
+			Addr:             config.EdgeHubConfig.Quic.Server,
+			CaFilePath:       config.EdgeHubConfig.Quic.TLSCaFile,
+			CertFilePath:     config.EdgeHubConfig.Quic.TLSCertFile,
+			KeyFilePath:      config.EdgeHubConfig.Quic.TLSPrivateKeyFile,
+			HandshakeTimeout: time.Duration(config.EdgeHubConfig.Quic.HandshakeTimeout) * time.Second,
+			ReadDeadline:     time.Duration(config.EdgeHubConfig.Quic.ReadDeadline) * time.Second,
+			WriteDeadline:    time.Duration(config.EdgeHubConfig.Quic.WriteDeadline) * time.Second,
+			ProjectID:        config.EdgeHubConfig.Controller.ProjectId,
+			NodeID:           config.EdgedConfig.HostnameOverride,
 		}
 		return quicclient.NewQuicClient(&quicConfig), nil
 	default:

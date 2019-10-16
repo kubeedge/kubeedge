@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/klog"
 
-	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -33,7 +32,6 @@ var groupMap = map[string]string{
 type Controller struct {
 	context    *context.Context
 	chClient   clients.Adapter
-	config     *config.ControllerConfig
 	stopChan   chan struct{}
 	syncKeeper map[string]chan model.Message
 	keeperLock sync.RWMutex
@@ -42,20 +40,14 @@ type Controller struct {
 //NewEdgeHubController creates and returns a EdgeHubController object
 func NewEdgeHubController() *Controller {
 	return &Controller{
-		config:     &config.GetConfig().CtrConfig,
 		stopChan:   make(chan struct{}),
 		syncKeeper: make(map[string]chan model.Message),
 	}
 }
 
 func (ehc *Controller) initial(ctx *context.Context) (err error) {
-	config.GetConfig().WSConfig.URL, err = bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
-	if err != nil {
-		klog.Warningf("failed to get cloud hub url, error:%+v", err)
-		return err
-	}
 
-	cloudHubClient, err := clients.GetClient(ehc.config.Protocol, config.GetConfig())
+	cloudHubClient, err := clients.GetClient(config.Conf().EdgeHubConfig.Controller.Protocol, config.Conf())
 	if err != nil {
 		return err
 	}
@@ -68,7 +60,6 @@ func (ehc *Controller) initial(ctx *context.Context) (err error) {
 
 //Start will start EdgeHub
 func (ehc *Controller) Start(ctx *context.Context) {
-	config.InitEdgehubConfig()
 	for {
 		err := ehc.initial(ctx)
 		if err != nil {
@@ -96,7 +87,7 @@ func (ehc *Controller) Start(ctx *context.Context) {
 		ehc.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(ehc.config.HeartbeatPeriod * 2)
+		time.Sleep(time.Duration(config.Conf().EdgeHubConfig.Controller.Heartbeat) * 2 * time.Second)
 
 		// clean channel
 	clean:
@@ -197,7 +188,7 @@ func (ehc *Controller) sendToCloud(message model.Message) error {
 
 	syncKeep := func(message model.Message) {
 		tempChannel := ehc.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(ehc.config.HeartbeatPeriod)
+		sendTimer := time.NewTimer(time.Duration(config.Conf().EdgeHubConfig.Controller.Heartbeat) * time.Second)
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
@@ -249,7 +240,7 @@ func (ehc *Controller) keepalive() {
 			return
 		}
 
-		time.Sleep(ehc.config.HeartbeatPeriod)
+		time.Sleep(time.Duration(config.Conf().EdgeHubConfig.Controller.Heartbeat) * time.Second)
 	}
 }
 

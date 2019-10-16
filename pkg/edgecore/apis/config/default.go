@@ -38,7 +38,7 @@ func NewDefaultEdgeHubConfig() *EdgeHubConfig {
 
 func NewDefaultWebSocketConfig() *WebSocketConfig {
 	return &WebSocketConfig{
-		Server:            "",
+		Server:            "127.0.0.1:1000",
 		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
 		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
 		HandshakeTimeout:  30,
@@ -49,7 +49,7 @@ func NewDefaultWebSocketConfig() *WebSocketConfig {
 
 func NewDefaultQuicConfig() *QuicConfig {
 	return &QuicConfig{
-		Server:            "",
+		Server:            "127.0.0.1:10001",
 		TLSCaFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
 		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
 		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),

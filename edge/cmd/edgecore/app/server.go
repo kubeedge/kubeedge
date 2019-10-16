@@ -107,7 +107,7 @@ func registerModules(c *config.EdgeCoreConfig) {
 
 	devicetwin.Register()
 	edged.Register(c.Edged)
-	edgehub.Register()
+	edgehub.Register(c.EdgeHub, c.Edged)
 	eventbus.Register()
 	edgemesh.Register()
 	metamanager.Register()
