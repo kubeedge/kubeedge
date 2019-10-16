@@ -10,7 +10,7 @@ KubeEdge 1.1 is our current stable branch. The roadmap below outlines new featur
 - Support HA for cloudcore
 - Support exec&logs API for edge application
 - Support reliable message delivery from cloud to edge.
-- Replace data exchange format between cloud and edge from json to protobuf.
+- Add protobuf support for data exchange format between cloud and edge
 - Enhance performance and reliability of KubeEdge infrastructure.
 - Support ingress at edge.
 - Upgrade Kubernetes dependencies in vendor to v1.16.
