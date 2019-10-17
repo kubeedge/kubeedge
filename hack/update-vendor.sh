@@ -38,6 +38,11 @@ for repo in $(kubeedge::util::list_staging_repos); do
   pushd "${KUBEEDGE_ROOT}/staging/src/github.com/kubeedge/${repo}"
   echo "running 'go mod tidy' for ${repo}"
   go mod tidy
+
+  # go mod tidy sometimes removes lines that build seems to need. See also https://github.com/golang/go/issues/31248.
+  # We would have to always execute go mod vendor after go mod tidy to ensure correctness.
+  echo "running 'go mod vendor' for ${repo}"
+  go mod vendor
   popd
 done
 
