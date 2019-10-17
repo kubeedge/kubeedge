@@ -11,11 +11,15 @@ KubeEdge 1.1 is our current stable branch. The roadmap below outlines new featur
 - Support exec&logs API for edge application
 - Support reliable message delivery from cloud to edge.
 - Add protobuf support for data exchange format between cloud and edge
+- Finish scalability test and publish report
+- Support managing clusters at edge from cloud (aka. EdgeSite)
 - Enhance performance and reliability of KubeEdge infrastructure.
 - Support ingress at edge.
 - Upgrade Kubernetes dependencies in vendor to v1.16.
 - Improve contributor experience by defining project governance policies, release process, membership rules etc.
 - Improve the performance and e2e tests with more metrics and scenarios.
+- Improve KubeEdge installation experience
+- Add more docs and move docs out of main repo
 
 ## Future
 - Support edge-cloud communication using edgemesh.
