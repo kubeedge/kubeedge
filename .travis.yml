@@ -110,9 +110,12 @@ jobs:
     - script: make admissionimage
       arch: arm64
       name: "build admission image on arm64"
-    - script: make edgeimage
+    - script: make edgeimage ARCH="amd64"
       arch: amd64
-      name: "build edge image"
+      name: "build edge image on amd64"
+    - script: make edgeimage ARCH="arm64v8"
+      arch: arm64
+      name: "build edge image on arm64"
     - script: make edgesiteimage ARCH="amd64"
       arch: amd64
       name: "build edgesite image on amd64"
