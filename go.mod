@@ -43,7 +43,6 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.3.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
@@ -55,8 +54,8 @@ require (
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kubeedge/beehive v0.0.0-20190809132808-14b9c1bfd040
-	github.com/kubeedge/viaduct v0.0.0-20190911054553-9137f056b93e
+	github.com/kubeedge/beehive v0.0.0
+	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lucas-clemente/quic-go v0.10.2 // indirect
 	github.com/mattn/go-shellwords v1.0.5 // indirect
@@ -79,7 +78,6 @@ require (
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
-	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
