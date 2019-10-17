@@ -309,13 +309,13 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/kubeedge/beehive v0.0.0-20190809132808-14b9c1bfd040 => ./staging/src/github.com/kubeedge/beehive
+# github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 github.com/kubeedge/beehive/pkg/core
 github.com/kubeedge/beehive/pkg/common/config
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
-# github.com/kubeedge/viaduct v0.0.0-20190911054553-9137f056b93e => ./staging/src/github.com/kubeedge/viaduct
+# github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux
 github.com/kubeedge/viaduct/pkg/api
