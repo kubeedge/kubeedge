@@ -8,7 +8,7 @@ KubeEdge 1.1 版本是我们目前的稳定版本， 在2019年Q4将添加如下
 
 ## 2019 Q4 Roadmap
 
-- 云上组件Cloudcore支持多实例部署（HA）
+- 云上组件CloudCore支持高可用部署（HA）
 - 支持针对边缘应用的exec、logs API
 - 支持云边消息的可靠传输
 - 云边消息的传输支持使用protobuf格式
