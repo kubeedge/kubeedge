@@ -6,6 +6,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	DefaultConfigDir = "/etc/kubeedge/config/"
+	DefaultCADir     = "/etc/kubeedge/ca/"
+	DefaultCertDir   = "/etc/kubeedge/certs/"
+)
+
 // Config
 const (
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
