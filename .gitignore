@@ -13,5 +13,4 @@ cloud/admission
 edge/edgecore
 edgesite/edgesite
 keadm/keadm
-staging/**/vendor
 _output
