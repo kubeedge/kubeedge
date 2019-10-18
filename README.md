@@ -78,7 +78,7 @@ make
 
 ## Roadmap
 
-* [Release 1.1](./docs/getting-started/roadmap.md#release-11)
+* [2019 Q4 Roadmap](./docs/getting-started/roadmap.md#2019-q4-roadmap)
 
 ## Meeting
 

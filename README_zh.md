@@ -60,8 +60,7 @@ KubeEdge 由以下组件构成:
 
 ## 路线图
 
-* [Release 1.0 onwards](./docs/getting-started/roadmap_zh.md#release-1.0-onwards)
-* [Release 0.3](./docs/getting-started/roadmap_zh.md#release-0.3) - 计划在2019年5月31日发布
+* [2019 Q4 Roadmap](./docs/getting-started/roadmap_zh.md#2019-q4-roadmap)
 
 ## 社区例会
 
