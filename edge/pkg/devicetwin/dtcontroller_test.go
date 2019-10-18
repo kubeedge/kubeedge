@@ -17,6 +17,7 @@ limitations under the License.
 package devicetwin
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -26,7 +27,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	bcontext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -64,11 +65,11 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestInitDTController is function to test InitDTController().
 func TestInitDTController(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	tests := []struct {
 		name      string
-		context   *context.Context
+		context   *bcontext.Context
 		want      *DTController
 		wantError error
 	}{
@@ -112,7 +113,7 @@ func TestInitDTController(t *testing.T) {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	var moduleRegistered bool
 	dtc := &DTController{
@@ -160,7 +161,7 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTontroller_Start is function to test Start().
 func TestDTController_Start(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	mainContext.AddModule("twin")
 	// fakeDevice is used to set the argument of All function
@@ -244,7 +245,9 @@ func TestDTController_Start(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterMockTimes)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableMockTimes)
 			go test.dtc.DTContexts.ModulesContext.Send("twin", msg)
-			if err := test.dtc.Start(); !reflect.DeepEqual(err, test.wantErr) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if err := test.dtc.Start(ctx); !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("DTController.Start() error = %v, wantError %v", err, test.wantErr)
 			}
 			//Testing all DTModules are registered and started successfully.
@@ -273,7 +276,7 @@ func TestDTController_Start(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtc, _ := InitDTController(mainContext)
 	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}}
 	var msg = &model.Message{
@@ -344,7 +347,7 @@ func TestDTController_distributeMsg(t *testing.T) {
 
 //TestSyncSqlite is function to test SyncSqlite().
 func TestSyncSqlite(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
@@ -426,7 +429,7 @@ func TestSyncSqlite(t *testing.T) {
 //TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
 func TestSyncDeviceFromSqlite(t *testing.T) {
 	initMocks(t)
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := bcontext.GetContext(bcontext.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()

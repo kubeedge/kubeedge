@@ -43,6 +43,8 @@ for repo in $(kubeedge::util::list_staging_repos); do
   # We would have to always execute go mod vendor after go mod tidy to ensure correctness.
   echo "running 'go mod vendor' for ${repo}"
   go mod vendor
+
+  rm -rf vendor/
   popd
 done
 
