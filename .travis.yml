@@ -21,15 +21,16 @@ before_install:
 before_script:
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.20.0
   - mkdir -p $HOME/gopath/src/github.com/kubeedge/kubeedge
+  - sudo apt-get install build-essential -y
+  - sudo apt-get install gcc-arm-linux-gnueabi -y
+  - sudo apt-get install upx-ucl -y
+  - sudo apt-get install rsync -y
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kubeedge/kubeedge/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedgee
   - go get github.com/onsi/ginkgo/ginkgo
   - export GO111MODULE=on
   - export GOFLAGS=-mod=vendor
   - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
-  - sudo apt-get install build-essential
-  - sudo apt-get install gcc-arm-linux-gnueabi
-  - sudo apt-get install upx-ucl
 
 install: true
 
@@ -41,7 +42,7 @@ jobs:
 
     - stage: "Test lint"
       script: make cloud_lint
-      name: "cloud_lint"     # names the eighth Tests stage job
+      name: "cloud_lint"
     - script: make bluetoothdevice_lint
       name: "bluetooth_device_lint"
     - script: make keadm_lint
@@ -49,42 +50,81 @@ jobs:
     - script: make edge_lint
       name: "edge_lint"
 
-    - stage: "Test Build"                # naming the Tests stage
-      script: make 
-      name: "builds cloud and edge components"            # names the first Tests stage job
+    - stage: "Test Build"
+      script: make
+      arch: amd64
+      name: "builds cloud and edge components on amd64"
+    - script: make
+      arch: arm64
+      name: "builds cloud and edge components on arm64"
     - script: make bluetoothdevice
-      name: "build bluetooth_device"
+      arch: amd64
+      name: "build bluetooth_device on amd64"
+    - script: make bluetoothdevice
+      arch: arm64
+      name: "build bluetooth_device on arm64"
     - script: make edge_small_build
-      name: "build small edge version"
+      arch: amd64
+      name: "build small edge version on amd64"
+    - script: make edge_small_build
+      arch: arm64
+      name: "build small edge version on arm64"
     - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
+      name: "cross build edge"
     - script: make edge_cross_build_v7
-      name: "cross build edge for armv7"     # names the fifth Tests stage job
+      name: "cross build edge for armv7"
     - script: make edgesite_cross_build
-      name: "cross build edgesite"    # names the fifth Tests stage job
+      name: "cross build edgesite"
     - script: make edgesite_cross_build_v7
-      name: "cross build edgeitefor armv7"     # names the fifth Tests stage job
+      name: "cross build edgeite for armv7"
 
     - stage: "unit tests"
       script: make edge_test
-      name: "unit test edge"     # names the third Tests stage job
+      arch: amd64
+      name: "unit test edge on amd64"
     - script: make edge_integration_test
-      name: "integration test edge"     # names the fourth Tests stage job
+      arch: amd64
+      name: "integration test edgeo on amd64"
     - script: make cloud_test
-      name: "unit test cloud" 
+      arch: amd64
+      name: "unit test cloud on amd64"
+    - script: make cloud_test
+      arch: arm64
+      name: "unit test cloud on arm64"
 
     - stage: "e2e tests"
       script: make e2e_test
-      name: "e2e_test"     # names the seventh Tests stage job
+      arch: amd64
+      name: "e2e_test on amd64"
 
     - stage: "build docker images"
       script: make cloudimage
-      name: "build cloudimage"
+      arch: amd64
+      name: "build cloudimage on amd64"
+    - script: make cloudimage
+      arch: arm64
+      name: "build cloudimage on arm64"
     - script: make admissionimage
-      name: "build admission image"
-    - script: make edgeimage
-      name: "build edge image"
-    - script: make edgesiteimage
-      name: "build edgesite image"
+      arch: amd64
+      name: "build admission image on amd64"
+    - script: make admissionimage
+      arch: arm64
+      name: "build admission image on arm64"
+    - script: make edgeimage ARCH="amd64"
+      arch: amd64
+      name: "build edge image on amd64"
+    - script: make edgeimage ARCH="arm64v8"
+      arch: arm64
+      name: "build edge image on arm64"
+    - script: make edgesiteimage ARCH="amd64"
+      arch: amd64
+      name: "build edgesite image on amd64"
+    - script: make edgesiteimage ARCH="arm64v8"
+      arch: arm64
+      name: "build edgesite image on arm64"
     - script: make bluetoothdevice_image
-      name: "build bluetoothdevice image"
+      arch: amd64
+      name: "build bluetoothdevice image on amd64"
+    - script: make bluetoothdevice_image
+      arch: arm64
+      name: "build bluetoothdevice image on arm64"
