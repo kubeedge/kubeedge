@@ -384,15 +384,40 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 			}
 
 			switch msg.GetOperation() {
+			case model.InsertOperation:
+				klog.Infof("Received register node request, creating node")
+				if _, err := uc.createNode(name); err != nil {
+					klog.Errorf("Failed to create node: %s with error: %s", name, err)
+					continue
+				}
+				resMsg := model.NewMessage(msg.GetID())
+				resMsg.Content = "OK"
+				nodeID, err := messagelayer.GetNodeID(msg)
+				if err != nil {
+					klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeNode, name)
+				if err != nil {
+					klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+					continue
+				}
+				resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				if err = uc.messageLayer.Response(*resMsg); err != nil {
+					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
+					continue
+				}
+
+				klog.V(4).Infof("message: %s, update node status successfully, name: %s", msg.GetID(), name)
+
 			case model.UpdateOperation:
 				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
-					klog.Infof("Node: %s not found, creating node", name)
-					if getNode, err = uc.createNode(name); err != nil {
-						klog.Errorf("Failed to create node: %s with error: %s", name, err)
-						continue
-					}
-				} else if err != nil {
+					klog.Warningf("message: %s process failure, node %s not found", msg.GetID(), name)
+					continue
+				}
+
+				if err != nil {
 					klog.Warningf("message: %s process failure with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, name)
 					continue
 				}

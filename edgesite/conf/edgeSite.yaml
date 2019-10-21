@@ -43,6 +43,7 @@ edged:
     cluster-dns: ""
     cluster-domain: ""
     edged-memory-capacity-bytes: 7852396000
+    register-node: true
 
 metamanager:
     context-send-group: edgecontroller

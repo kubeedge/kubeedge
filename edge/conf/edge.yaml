@@ -50,6 +50,7 @@ edged:
     node-ip: ""
     cluster-dns: ""
     cluster-domain: ""
+    register-node: true
 
 mesh:
     loadbalance:

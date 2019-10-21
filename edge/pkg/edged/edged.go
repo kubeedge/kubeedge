@@ -87,6 +87,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
@@ -286,6 +287,23 @@ func (e *edged) Group() string {
 func (e *edged) Start(c *context.Context) {
 	e.context = c
 	e.metaClient = client.New(c)
+
+	autoRegister := config.CONFIG.GetConfigurationByKey("edged.register-node").(bool)
+	if autoRegister {
+		go func() {
+			// keep trying to register with apiserver every 10 seconds
+			for {
+				resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
+				msg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, "")
+				_, err := e.context.SendSync("websocket", *msg, 60*time.Second)
+				if err == nil {
+					klog.Infof("edge node registration successful")
+					return
+				}
+				time.Sleep(e.nodeStatusUpdateFrequency * time.Second)
+			}
+		}()
+	}
 
 	// use self defined client to replace fake kube client
 	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
