@@ -24,6 +24,7 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"sort"
 	"time"
@@ -75,20 +76,6 @@ type UpstreamController struct {
 	kubeClient   *kubernetes.Clientset
 	messageLayer messagelayer.MessageLayer
 
-	//stop channel
-	stopDispatch                   chan struct{}
-	stopUpdateNodeStatus           chan struct{}
-	stopUpdatePodStatus            chan struct{}
-	stopQueryConfigMap             chan struct{}
-	stopQuerySecret                chan struct{}
-	stopQueryService               chan struct{}
-	stopQueryEndpoints             chan struct{}
-	stopQueryPersistentVolume      chan struct{}
-	stopQueryPersistentVolumeClaim chan struct{}
-	stopQueryVolumeAttachment      chan struct{}
-	stopQueryNode                  chan struct{}
-	stopUpdateNode                 chan struct{}
-
 	// message channel
 	nodeStatusChan            chan model.Message
 	podStatusChan             chan model.Message
@@ -104,20 +91,8 @@ type UpstreamController struct {
 }
 
 // Start UpstreamController
-func (uc *UpstreamController) Start() error {
+func (uc *UpstreamController) Start(ctx context.Context) error {
 	klog.Info("start upstream controller")
-	uc.stopDispatch = make(chan struct{})
-	uc.stopUpdateNodeStatus = make(chan struct{})
-	uc.stopUpdatePodStatus = make(chan struct{})
-	uc.stopQueryConfigMap = make(chan struct{})
-	uc.stopQuerySecret = make(chan struct{})
-	uc.stopQueryService = make(chan struct{})
-	uc.stopQueryEndpoints = make(chan struct{})
-	uc.stopQueryPersistentVolume = make(chan struct{})
-	uc.stopQueryPersistentVolumeClaim = make(chan struct{})
-	uc.stopQueryVolumeAttachment = make(chan struct{})
-	uc.stopQueryNode = make(chan struct{})
-	uc.stopUpdateNode = make(chan struct{})
 
 	uc.nodeStatusChan = make(chan model.Message, config.UpdateNodeStatusBuffer)
 	uc.podStatusChan = make(chan model.Message, config.UpdatePodStatusBuffer)
@@ -131,59 +106,60 @@ func (uc *UpstreamController) Start() error {
 	uc.queryNodeChan = make(chan model.Message, config.QueryNodeBuffer)
 	uc.updateNodeChan = make(chan model.Message, config.UpdateNodeBuffer)
 
-	go uc.dispatchMessage(uc.stopDispatch)
+	go uc.dispatchMessage(ctx)
 
 	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
-		go uc.updateNodeStatus(uc.stopUpdateNodeStatus)
+		go uc.updateNodeStatus(ctx)
 	}
 	for i := 0; i < config.UpdatePodStatusWorkers; i++ {
-		go uc.updatePodStatus(uc.stopUpdatePodStatus)
+		go uc.updatePodStatus(ctx)
 	}
 	for i := 0; i < config.QueryConfigMapWorkers; i++ {
-		go uc.queryConfigMap(uc.stopQueryConfigMap)
+		go uc.queryConfigMap(ctx)
 	}
 	for i := 0; i < config.QuerySecretWorkers; i++ {
-		go uc.querySecret(uc.stopQuerySecret)
+		go uc.querySecret(ctx)
 	}
 	for i := 0; i < config.QueryServiceWorkers; i++ {
-		go uc.queryService(uc.stopQueryService)
+		go uc.queryService(ctx)
 	}
 	for i := 0; i < config.QueryEndpointsWorkers; i++ {
-		go uc.queryEndpoints(uc.stopQueryEndpoints)
+		go uc.queryEndpoints(ctx)
 	}
 	for i := 0; i < config.QueryPersistentVolumeWorkers; i++ {
-		go uc.queryPersistentVolume(uc.stopQueryPersistentVolume)
+		go uc.queryPersistentVolume(ctx)
 	}
 	for i := 0; i < config.QueryPersistentVolumeClaimWorkers; i++ {
-		go uc.queryPersistentVolumeClaim(uc.stopQueryPersistentVolumeClaim)
+		go uc.queryPersistentVolumeClaim(ctx)
 	}
 	for i := 0; i < config.QueryVolumeAttachmentWorkers; i++ {
-		go uc.queryVolumeAttachment(uc.stopQueryVolumeAttachment)
+		go uc.queryVolumeAttachment(ctx)
 	}
 	for i := 0; i < config.QueryNodeWorkers; i++ {
-		go uc.queryNode(uc.stopQueryNode)
+		go uc.queryNode(ctx)
 	}
-	for i := 0; i < config.UpdateNodeBuffer; i++ {
-		go uc.updateNode(uc.stopUpdateNode)
+	for i := 0; i < config.UpdateNodeWorkers; i++ {
+		go uc.updateNode(ctx)
 	}
 	return nil
 }
 
-func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
-	running := true
-	go func() {
-		<-stop
-		klog.Info("stop dispatchMessage")
-		running = false
-	}()
-	for running {
+func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			klog.Info("stop dispatchMessage")
+			return
+		default:
+		}
 		msg, err := uc.messageLayer.Receive()
 		if err != nil {
 			klog.Warningf("receive message failed, %s", err)
 			continue
 		}
 
-		klog.Infof("dispatch message: %s", msg.GetID())
+		klog.Infof("dispatch message ID: %s", msg.GetID())
+		klog.V(5).Infof("dispatch message content: %++v", msg)
 
 		resourceType, err := messagelayer.GetResourceType(msg)
 		if err != nil {
@@ -228,10 +204,12 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 	}
 }
 
-func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) updatePodStatus(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop updatePodStatus")
+			return
 		case msg := <-uc.podStatusChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
@@ -326,17 +304,16 @@ func (uc *UpstreamController) updatePodStatus(stop chan struct{}) {
 				klog.Warningf("pod status operation: %s unsupported", msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop updatePodStatus")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) updateNodeStatus(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop updateNodeStatus")
+			return
 		case msg := <-uc.nodeStatusChan:
 			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			nodeStatusRequest := &edgeapi.NodeStatusRequest{}
@@ -455,17 +432,16 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, node status operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop updateNodeStatus")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryConfigMap(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryConfigMap(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryConfigMap")
+			return
 		case msg := <-uc.configMapChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -511,17 +487,16 @@ func (uc *UpstreamController) queryConfigMap(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, configMap operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryConfigMap")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) querySecret(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) querySecret(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop querySecret")
+			return
 		case msg := <-uc.secretChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -569,17 +544,16 @@ func (uc *UpstreamController) querySecret(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, secret operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop querySecret")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryService(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryService(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryService")
+			return
 		case msg := <-uc.serviceChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -624,17 +598,16 @@ func (uc *UpstreamController) queryService(stop chan struct{}) {
 			default:
 				klog.Warningf("message: %s process failure, service operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
-		case <-stop:
-			klog.Warning("stop queryService")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryEndpoints(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryEndpoints(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryEndpoints")
+			return
 		case msg := <-uc.endpointsChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -682,17 +655,16 @@ func (uc *UpstreamController) queryEndpoints(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, endpoints operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryEndpoints")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryPersistentVolume(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryPersistentVolume(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryPersistentVolume")
+			return
 		case msg := <-uc.persistentVolumeChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -740,17 +712,16 @@ func (uc *UpstreamController) queryPersistentVolume(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, persistentvolume operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryPersistentVolume")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryPersistentVolumeClaim(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryPersistentVolumeClaim(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryPersistentVolumeClaim")
+			return
 		case msg := <-uc.persistentVolumeClaimChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -798,17 +769,16 @@ func (uc *UpstreamController) queryPersistentVolumeClaim(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, persistentvolumeclaim operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryPersistentVolumeClaim")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryVolumeAttachment(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryVolumeAttachment(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryVolumeAttachment")
+			return
 		case msg := <-uc.volumeAttachmentChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -856,17 +826,16 @@ func (uc *UpstreamController) queryVolumeAttachment(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, volumeattachment operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryVolumeAttachment")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) updateNode(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) updateNode(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop updateNode")
+			return
 		case msg := <-uc.updateNodeChan:
 			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			noderequest := &v1.Node{}
@@ -949,17 +918,16 @@ func (uc *UpstreamController) updateNode(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop updateNode")
-			running = false
 		}
 	}
 }
 
-func (uc *UpstreamController) queryNode(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) queryNode(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("stop queryNode")
+			return
 		case msg := <-uc.queryNodeChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -1005,9 +973,6 @@ func (uc *UpstreamController) queryNode(stop chan struct{}) {
 				klog.Warningf("message: %s process failure, query node operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Warning("stop queryNode")
-			running = false
 		}
 	}
 }
@@ -1118,33 +1083,6 @@ func (uc *UpstreamController) normalizePodStatus(pod *v1.Pod, status *v1.PodStat
 	// Sort the container statuses, so that the order won't affect the result of comparison
 	SortInitContainerStatuses(pod, status.InitContainerStatuses)
 	return status
-}
-
-// Stop UpstreamController
-func (uc *UpstreamController) Stop() error {
-	klog.Info("Stopping upstream controller")
-	defer klog.Info("Upstream controller stopped")
-
-	uc.stopDispatch <- struct{}{}
-	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
-		uc.stopUpdateNodeStatus <- struct{}{}
-	}
-	for i := 0; i < config.UpdatePodStatusWorkers; i++ {
-		uc.stopUpdatePodStatus <- struct{}{}
-	}
-	for i := 0; i < config.QueryConfigMapWorkers; i++ {
-		uc.stopQueryConfigMap <- struct{}{}
-	}
-	for i := 0; i < config.QuerySecretWorkers; i++ {
-		uc.stopQuerySecret <- struct{}{}
-	}
-	for i := 0; i < config.QueryServiceWorkers; i++ {
-		uc.stopQueryService <- struct{}{}
-	}
-	for i := 0; i < config.QueryEndpointsWorkers; i++ {
-		uc.stopQueryEndpoints <- struct{}{}
-	}
-	return nil
 }
 
 // NewUpstreamController create UpstreamController from config

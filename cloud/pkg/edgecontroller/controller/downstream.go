@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -27,30 +28,26 @@ type DownstreamController struct {
 	messageLayer messagelayer.MessageLayer
 
 	podManager *manager.PodManager
-	podStop    chan struct{}
 
 	configmapManager *manager.ConfigMapManager
-	configMapStop    chan struct{}
 
 	secretManager *manager.SecretManager
-	secretStop    chan struct{}
 
 	nodeManager *manager.NodesManager
-	nodesStop   chan struct{}
 
 	serviceManager *manager.ServiceManager
-	serviceStop    chan struct{}
 
 	endpointsManager *manager.EndpointsManager
-	endpointsStop    chan struct{}
 
 	lc *manager.LocationCache
 }
 
-func (dc *DownstreamController) syncPod(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncPod(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncPod loop")
+			return
 		case e := <-dc.podManager.Events():
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
@@ -84,17 +81,16 @@ func (dc *DownstreamController) syncPod(stop chan struct{}) {
 			} else {
 				klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncPod loop")
-			running = false
 		}
 	}
 }
 
-func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncConfigMap(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncConfigMap loop")
+			return
 		case e := <-dc.configmapManager.Events():
 			configMap, ok := e.Object.(*v1.ConfigMap)
 			if !ok {
@@ -134,17 +130,16 @@ func (dc *DownstreamController) syncConfigMap(stop chan struct{}) {
 					klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncConfigMap loop")
-			running = false
 		}
 	}
 }
 
-func (dc *DownstreamController) syncSecret(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncSecret(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncSecret loop")
+			return
 		case e := <-dc.secretManager.Events():
 			secret, ok := e.Object.(*v1.Secret)
 			if !ok {
@@ -185,17 +180,16 @@ func (dc *DownstreamController) syncSecret(stop chan struct{}) {
 					klog.Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 				}
 			}
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncSecret loop")
-			running = false
 		}
 	}
 }
 
-func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncEdgeNodes(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncEdgeNodes loop")
+			return
 		case e := <-dc.nodeManager.Events():
 			node, ok := e.Object.(*v1.Node)
 			if !ok {
@@ -273,18 +267,17 @@ func (dc *DownstreamController) syncEdgeNodes(stop chan struct{}) {
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
 			}
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncEdgeNodes loop")
-			running = false
 		}
 	}
 }
 
-func (dc *DownstreamController) syncService(stop chan struct{}) {
-	running := true
+func (dc *DownstreamController) syncService(ctx context.Context) {
 	var operation string
-	for running {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncService loop")
+			return
 		case e := <-dc.serviceManager.Events():
 			svc, ok := e.Object.(*v1.Service)
 			if !ok {
@@ -329,18 +322,17 @@ func (dc *DownstreamController) syncService(stop chan struct{}) {
 				}
 				return true
 			})
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncService loop")
-			running = false
 		}
 	}
 }
 
-func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
-	running := true
+func (dc *DownstreamController) syncEndpoints(ctx context.Context) {
 	var operation string
-	for running {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Warning("Stop edgecontroller downstream syncEndpoints loop")
+			return
 		case e := <-dc.endpointsManager.Events():
 			eps, ok := e.Object.(*v1.Endpoints)
 			if !ok {
@@ -424,54 +416,31 @@ func (dc *DownstreamController) syncEndpoints(stop chan struct{}) {
 					return true
 				})
 			}
-		case <-stop:
-			klog.Warning("Stop edgecontroller downstream syncEndpoints loop")
-			running = false
 		}
 	}
 }
 
 // Start DownstreamController
-func (dc *DownstreamController) Start() error {
+func (dc *DownstreamController) Start(ctx context.Context) error {
 	klog.Info("start downstream controller")
 	// pod
-	dc.podStop = make(chan struct{})
-	go dc.syncPod(dc.podStop)
+	go dc.syncPod(ctx)
 
 	// configmap
-	dc.configMapStop = make(chan struct{})
-	go dc.syncConfigMap(dc.configMapStop)
+	go dc.syncConfigMap(ctx)
 
 	// secret
-	dc.secretStop = make(chan struct{})
-	go dc.syncSecret(dc.secretStop)
+	go dc.syncSecret(ctx)
 
 	// nodes
-	dc.nodesStop = make(chan struct{})
-	go dc.syncEdgeNodes(dc.nodesStop)
+	go dc.syncEdgeNodes(ctx)
 
 	// service
-	dc.serviceStop = make(chan struct{})
-	go dc.syncService(dc.serviceStop)
+	go dc.syncService(ctx)
 
 	// endpoints
-	dc.endpointsStop = make(chan struct{})
-	go dc.syncEndpoints(dc.endpointsStop)
+	go dc.syncEndpoints(ctx)
 
-	return nil
-}
-
-// Stop DownstreamController
-func (dc *DownstreamController) Stop() error {
-	klog.Info("Stopping downstream controller")
-	defer klog.Info("Downstream controller stopped")
-
-	dc.podStop <- struct{}{}
-	dc.configMapStop <- struct{}{}
-	dc.secretStop <- struct{}{}
-	dc.nodesStop <- struct{}{}
-	dc.serviceStop <- struct{}{}
-	dc.endpointsStop <- struct{}{}
 	return nil
 }
 
