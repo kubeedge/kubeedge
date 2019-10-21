@@ -45,10 +45,9 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		nodeName = "integration-node-" + utils.GetRandomString(10)
 		nodeSelector = "node-" + utils.GetRandomString(3)
 		Expect(utils.DeploySetup(ctx, nodeName, "edgesite")).Should(BeNil())
-		Expect(utils.StartEdgeSite()).Should(BeNil())
-
 		Expect(utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
-
+		Expect(utils.StartEdgeSite()).Should(BeNil())
+		
 		//Check node successfully registered or not
 		Eventually(func() string {
 			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
