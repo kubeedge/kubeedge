@@ -125,6 +125,8 @@ const (
 	MinimumEdgedMemoryCapacity = 2147483647
 	//PodSandboxImage gives the default pause container image
 	PodSandboxImage = "k8s.gcr.io/pause"
+	//The default value of the CgroupDriver is cgroupfs
+	CgroupDriver = "cgroupfs"
 )
 
 var (
@@ -185,6 +187,8 @@ type edged struct {
 	configMapStore cache.Store
 	workQueue      queue.WorkQueue
 	clcm           clcm.ContainerLifecycleManager
+	// cgroup-driver
+	cgroupDriver string
 }
 
 //Config defines configuration details
@@ -206,6 +210,7 @@ type Config struct {
 	remoteImageEndpoint      string
 	RuntimeRequestTimeout    metav1.Duration
 	PodSandboxImage          string
+	cgroupDriver             string
 }
 
 func init() {
@@ -340,6 +345,7 @@ func getConfig() *Config {
 	conf.version = config.CONFIG.GetConfigurationByKey("edged.version").(string)
 	conf.DockerAddress = config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
 	conf.runtimeType = config.CONFIG.GetConfigurationByKey("edged.runtime-type").(string)
+	conf.cgroupDriver = config.CONFIG.GetConfigurationByKey("edged.cgroup-driver").(string)
 	if conf.runtimeType == "" {
 		conf.runtimeType = DockerContainerRuntime
 	}
@@ -362,6 +368,9 @@ func getConfig() *Config {
 		if conf.PodSandboxImage == "" {
 			conf.PodSandboxImage = PodSandboxImage
 		}
+	}
+	if conf.cgroupDriver == "" {
+		conf.cgroupDriver = CgroupDriver
 	}
 	return &conf
 }
@@ -414,6 +423,7 @@ func newEdged() (*edged, error) {
 		secretStore:               cache.NewStore(cache.MetaNamespaceKeyFunc),
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
+		cgroupDriver:              conf.cgroupDriver,
 	}
 
 	// Set docker address if it is set in the conf

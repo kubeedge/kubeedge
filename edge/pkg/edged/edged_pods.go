@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"os"
 	"path"
 	"path/filepath"
@@ -538,6 +539,10 @@ func (e *edged) GetPodCgroupParent(pod *v1.Pod) string {
 	/*pcm := e.containerManager.NewPodContainerManager()
 	_, cgroupParent := pcm.GetPodContainerName(pod)
 	return cgroupParent*/
+	if e.cgroupDriver == "systemd" {
+		cgroupName := (cm.CgroupName)(pod.Name)
+		return cm.ConvertCgroupNameToSystemd(cgroupName, false)
+	}
 	return "systemd"
 }
 
