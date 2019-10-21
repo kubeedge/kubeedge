@@ -147,7 +147,8 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 
 
 #### Deploy the edge node
-We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
+KubeEdge supports auto registration of edge-nodes but we have provided a sample node.json to manually add a node in kubernetes if required. 
+Run below steps to add edge-node.
 
 + Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
 
