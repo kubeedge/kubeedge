@@ -1,13 +1,14 @@
 package devicecontroller
 
 import (
+	"context"
 	"os"
 	"time"
 
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	bcontext "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -15,7 +16,7 @@ import (
 
 // DeviceController use beehive context message layer
 type DeviceController struct {
-	stopChan chan bool
+	cancel context.CancelFunc
 }
 
 func Register() {
@@ -34,9 +35,11 @@ func (dctl *DeviceController) Group() string {
 }
 
 // Start controller
-func (dctl *DeviceController) Start(c *bcontext.Context) {
+func (dctl *DeviceController) Start(c *beehiveContext.Context) {
+	var ctx context.Context
 	config.Context = c
-	dctl.stopChan = make(chan bool)
+
+	ctx, dctl.cancel = context.WithCancel(context.Background())
 
 	initConfig()
 
@@ -51,19 +54,16 @@ func (dctl *DeviceController) Start(c *bcontext.Context) {
 		os.Exit(1)
 	}
 
-	downstream.Start()
+	downstream.Start(ctx)
 	// wait for downstream controller to start and load deviceModels and devices
+	// TODO think about sync
 	time.Sleep(1 * time.Second)
-	upstream.Start()
-
-	<-dctl.stopChan
-	upstream.Stop()
-	downstream.Stop()
+	upstream.Start(ctx)
 }
 
 // Cleanup controller
 func (dctl *DeviceController) Cleanup() {
-	dctl.stopChan <- true
+	dctl.cancel()
 	config.Context.Cleanup(dctl.Name())
 }
 

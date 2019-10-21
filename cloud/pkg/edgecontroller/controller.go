@@ -1,12 +1,13 @@
 package edgecontroller
 
 import (
+	"context"
 	"os"
 
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	bcontext "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
@@ -14,7 +15,7 @@ import (
 
 // Controller use beehive context message layer
 type Controller struct {
-	stopChan chan bool
+	cancel context.CancelFunc
 }
 
 func Register() {
@@ -33,9 +34,11 @@ func (ctl *Controller) Group() string {
 }
 
 // Start controller
-func (ctl *Controller) Start(c *bcontext.Context) {
+func (ctl *Controller) Start(c *beehiveContext.Context) {
+	var ctx context.Context
+
 	config.Context = c
-	ctl.stopChan = make(chan bool)
+	ctx, ctl.cancel = context.WithCancel(context.Background())
 
 	initConfig()
 
@@ -44,23 +47,20 @@ func (ctl *Controller) Start(c *bcontext.Context) {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	upstream.Start()
+	upstream.Start(ctx)
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Warningf("new downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	downstream.Start()
+	downstream.Start(ctx)
 
-	<-ctl.stopChan
-	upstream.Stop()
-	downstream.Stop()
 }
 
 // Cleanup controller
 func (ctl *Controller) Cleanup() {
-	ctl.stopChan <- true
+	ctl.cancel()
 	config.Context.Cleanup(ctl.Name())
 }
 
