@@ -408,7 +408,7 @@ func (uc *UpstreamController) updateNodeStatus(stop chan struct{}) {
 					continue
 				}
 
-				klog.V(4).Infof("message: %s, update node status successfully, name: %s", msg.GetID(), name)
+				klog.V(4).Infof("message: %s, create node successfully, name: %s", msg.GetID(), name)
 
 			case model.UpdateOperation:
 				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
