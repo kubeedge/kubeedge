@@ -158,6 +158,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 						Namespace: opt.AdmissionServiceNamespace,
 						Name:      opt.AdmissionServiceName,
 						Path:      strPtr("/devicemodels"),
+						Port:      &opt.Port,
 					},
 					CABundle: cabundle,
 				},
