@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Stop right away if there's an error
+set -e
+
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
@@ -125,6 +128,10 @@ function healthcheck {
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 verify_go_version
+
+build_cloudcore
+build_edgecore
+
 verify_docker_installed
 
 kind_up_cluster
@@ -137,8 +144,6 @@ check_control_plane_ready
 kubectl delete daemonset kindnet -nkube-system
 
 create_device_crd
-build_cloudcore
-build_edgecore
 generate_certs
 start_cloudcore
 create_node
