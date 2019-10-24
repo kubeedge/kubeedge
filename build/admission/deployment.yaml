@@ -30,6 +30,9 @@ spec:
           image: kubeedge/admission:latest
           imagePullPolicy: IfNotPresent
           name: admission
+          ports:
+          - containerPort: 443
+            protocol: TCP
           volumeMounts:
             - mountPath: /admission.local.config/certificates
               name: admission-certs

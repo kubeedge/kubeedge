@@ -26,7 +26,7 @@ type AdmissionOptions struct {
 	CertFile                  string
 	KeyFile                   string
 	CaCertFile                string
-	Port                      int
+	Port                      int32
 	PrintVersion              bool
 	AdmissionServiceName      string
 	AdmissionServiceNamespace string
@@ -47,7 +47,7 @@ func (o *AdmissionOptions) Flags() (fss cliflag.NamedFlagSets) {
 		"File containing the default x509 Certificate for HTTPS. (CA cert, if any, concatenated "+"after server cert).")
 	fs.StringVar(&o.KeyFile, "tls-private-key-file", o.KeyFile, "File containing the default x509 private key matching --tls-cert-file.")
 	fs.StringVar(&o.CaCertFile, "ca-cert-file", o.CaCertFile, "File containing the x509 Certificate for HTTPS.")
-	fs.IntVar(&o.Port, "port", 443, "the port used by admission-controller-server.")
+	fs.Int32Var(&o.Port, "port", 443, "the port used by admission-controller-server.")
 	fs.StringVar(&o.AdmissionServiceNamespace, "webhook-namespace", "kubeedge", "The namespace of this webhook")
 	fs.StringVar(&o.AdmissionServiceName, "webhook-service-name", "kubeedge-admission-service", "The name of this admission service")
 	return
