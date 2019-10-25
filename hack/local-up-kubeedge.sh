@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Stop right away if there's an error
-set -e
-
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
@@ -28,10 +25,15 @@ fi
 
 export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 
+function check_prerequisites {
+  check_kubectl
+  check_kind
+  verify_go_version
+  verify_docker_installed
+}
+
 # spin up cluster with kind command
 function kind_up_cluster {
-  check_prerequisites
-  check_kind
   echo "Running kind: [kind create cluster ${CLUSTER_CONTEXT}]"
   kind create cluster ${CLUSTER_CONTEXT}
 }
@@ -70,8 +72,6 @@ function build_cloudcore {
   mkdir -p ${KUBEEDGE_ROOT}/_output/bin/cloud
   mv ${KUBEEDGE_ROOT}/cloud/cloudcore ${KUBEEDGE_ROOT}/_output/bin/cloud
   cp -r ${KUBEEDGE_ROOT}/cloud/conf ${KUBEEDGE_ROOT}/_output/bin/cloud
-  sed -i "s|kubeconfig: .*|kubeconfig: ${KUBECONFIG}|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
-  sed -i "s|master: .*|master: \"\"|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
 }
 
 function build_edgecore {
@@ -90,6 +90,9 @@ function generate_certs {
 
 function start_cloudcore {
   echo "start cloudcore..."
+  sed -i "s|kubeconfig: .*|kubeconfig: ${KUBECONFIG}|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
+  sed -i "s|master: .*|master: \"\"|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
+
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   cd ${KUBEEDGE_ROOT}/_output/bin/cloud && nohup ./cloudcore > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
@@ -127,12 +130,13 @@ function healthcheck {
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
-verify_go_version
+check_prerequisites
+
+# Stop right away if there's an error
+set -e
 
 build_cloudcore
 build_edgecore
-
-verify_docker_installed
 
 kind_up_cluster
 

@@ -15,8 +15,8 @@
 # limitations under the License.
 
 # check if kubectl installed
-function check_prerequisites {
-  echo "checking prerequisites"
+function check_kubectl {
+  echo "checking kubectl"
   which kubectl >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "kubectl not installed, exiting."
@@ -33,6 +33,10 @@ function check_kind {
   if [[ $? -ne 0 ]]; then
     echo "installing kind ."
     GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1
+    if [[ $? -ne 0 ]]; then
+      echo "kind installed failed, exiting."
+      exit 1
+    fi
     export PATH=$PATH:$GOPATH/bin
   else
     echo -n "found kind, version: " && kind version
