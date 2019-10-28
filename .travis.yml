@@ -101,30 +101,31 @@ jobs:
       script: make cloudimage
       arch: amd64
       name: "build cloudimage on amd64"
-    - script: make cloudimage
-      arch: arm64
-      name: "build cloudimage on arm64"
     - script: make admissionimage
       arch: amd64
       name: "build admission image on amd64"
-    - script: make admissionimage
-      arch: arm64
-      name: "build admission image on arm64"
     - script: make edgeimage ARCH="amd64"
       arch: amd64
       name: "build edge image on amd64"
-    - script: make edgeimage ARCH="arm64v8"
-      arch: arm64
-      name: "build edge image on arm64"
     - script: make edgesiteimage ARCH="amd64"
       arch: amd64
       name: "build edgesite image on amd64"
-    - script: make edgesiteimage ARCH="arm64v8"
-      arch: arm64
-      name: "build edgesite image on arm64"
     - script: make bluetoothdevice_image
       arch: amd64
       name: "build bluetoothdevice image on amd64"
     - script: make bluetoothdevice_image
       arch: arm64
       name: "build bluetoothdevice image on arm64"
+# TODO: When the arm support of travis becomes stable, we will uncomment these cases.
+#    - script: make cloudimage
+#      arch: arm64
+#      name: "build cloudimage on arm64"
+#    - script: make admissionimage
+#      arch: arm64
+#      name: "build admission image on arm64"
+#    - script: make edgeimage ARCH="arm64v8"
+#      arch: arm64
+#      name: "build edge image on arm64"
+#    - script: make edgesiteimage ARCH="arm64v8"
+#      arch: arm64
+#      name: "build edgesite image on arm64"
