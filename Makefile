@@ -1,3 +1,7 @@
+DESTDIR?=
+USR_DIR?=/usr/local
+INSTALL_DIR?=${DESTDIR}${USR_DIR}
+INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
 # make all builds both cloud and edge binaries
 
 BINARIES=cloudcore \
@@ -294,3 +298,33 @@ bluetoothdevice: clean
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:bluetoothdevice
 	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+
+
+define INSTALL_HELP_INFO
+# install
+#
+# Args:
+#   WHAT: Component names to be installed to $${INSTALL_BIN_DIR} (${INSTALL_BIN_DIR})
+#         If not specified, "everything" will be installed
+#
+##
+# Example:
+#   make install
+#   make install WHAT=edgecore
+#
+endef
+.PHONY: help
+ifeq ($(HELP),y)
+install:
+	@echo "$$INSTALL_HELP_INFO"
+else
+install: _output/local/bin
+	install -d "${INSTALL_BIN_DIR}"
+	if [ "" != "${WHAT}" ]; then \
+          install "$</${WHAT}"  "${INSTALL_BIN_DIR}" ;\
+        else \
+          for file in ${BINARIES} ; do \
+            install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
+          done ; \
+        fi
+endif
