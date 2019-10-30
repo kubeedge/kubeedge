@@ -54,21 +54,12 @@ jobs:
       script: make
       arch: amd64
       name: "builds cloud and edge components on amd64"
-    - script: make
-      arch: arm64
-      name: "builds cloud and edge components on arm64"
     - script: make bluetoothdevice
       arch: amd64
       name: "build bluetooth_device on amd64"
-    - script: make bluetoothdevice
-      arch: arm64
-      name: "build bluetooth_device on arm64"
     - script: make edge_small_build
       arch: amd64
       name: "build small edge version on amd64"
-    - script: make edge_small_build
-      arch: arm64
-      name: "build small edge version on arm64"
     - script: make edge_cross_build
       name: "cross build edge"
     - script: make edge_cross_build_v7
@@ -88,9 +79,6 @@ jobs:
     - script: make cloud_test
       arch: amd64
       name: "unit test cloud on amd64"
-    - script: make cloud_test
-      arch: arm64
-      name: "unit test cloud on arm64"
 
     - stage: "e2e tests"
       script: make e2e_test
@@ -129,3 +117,15 @@ jobs:
 #    - script: make bluetoothdevice_image
 #      arch: arm64
 #      name: "build bluetoothdevice image on arm64"
+#    - script: make
+#      arch: arm64
+#      name: "builds cloud and edge components on arm64"
+#    - script: make bluetoothdevice
+#      arch: arm64
+#      name: "build bluetooth_device on arm64"
+#    - script: make edge_small_build
+#      arch: arm64
+#      name: "build small edge version on arm64"
+#    - script: make cloud_test
+#      arch: arm64
+#      name: "unit test cloud on arm64"
