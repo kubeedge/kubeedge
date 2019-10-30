@@ -145,7 +145,8 @@ bluetoothdevice:
 	make -C mappers/bluetooth_mapper
 
 .PHONY: bluetoothdevice_image
-	make -C mappers/bluetooth_mapper_docker
+bluetoothdevice_image:
+	make -C mappers/bluetooth_mapper bluetooth_mapper_image
 
 .PHONY: bluetoothdevice_lint
 bluetoothdevice_lint:
