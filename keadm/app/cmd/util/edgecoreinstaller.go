@@ -51,9 +51,12 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	err := ku.InstallKubeEdge()
-	if err != nil {
-		return err
+	var err error
+	if InstallersOnline {
+		err = ku.InstallKubeEdge()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = ku.createEdgeConfigFiles()

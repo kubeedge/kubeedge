@@ -29,11 +29,13 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 	cu.SetK8SImageRepoAndPodNetworkCidr(cu.K8SImageRepository, cu.K8SPodNetworkCidr)
 
-	err := cu.InstallKubeEdge()
-	if err != nil {
-		return err
+	var err error
+	if InstallersOnline {
+		err = cu.InstallKubeEdge()
+		if err != nil {
+			return err
+		}
 	}
-
 	err = cu.generateCertificates()
 	if err != nil {
 		return err
@@ -176,14 +178,18 @@ func linesFromReader(r io.Reader) ([]string, error) {
 //RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 
-	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s %s/", KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
-	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
-	err := cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		fmt.Println("in error")
-		return fmt.Errorf("%s", errout)
-
+	var err error
+	var errout string
+	var cmd *Command
+	if InstallersOnline {
+		filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s %s/", KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+		cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
+		err := cmd.ExecuteCmdShowOutput()
+		errout := cmd.GetStdErr()
+		if err != nil || errout != "" {
+			fmt.Println("in error")
+			return fmt.Errorf("%s", errout)
+		}
 	}
 	binExec := fmt.Sprintf("chmod +x %s/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", binExec)}

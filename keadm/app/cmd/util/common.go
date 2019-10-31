@@ -32,6 +32,8 @@ import (
 
 //Constants used by installers
 const (
+	InstallersOnline = true
+
 	UbuntuOSType = "ubuntu"
 	CentOSType   = "centos"
 
