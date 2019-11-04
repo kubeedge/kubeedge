@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"strconv"
@@ -76,22 +77,20 @@ type DownstreamController struct {
 	kubeClient   *kubernetes.Clientset
 	messageLayer messagelayer.MessageLayer
 
-	deviceManager *manager.DeviceManager
-	deviceStop    chan struct{}
-
+	deviceManager      *manager.DeviceManager
 	deviceModelManager *manager.DeviceModelManager
-	deviceModelStop    chan struct{}
-
-	configMapManager *manager.ConfigMapManager
+	configMapManager   *manager.ConfigMapManager
 
 	crdClient *rest.RESTClient
 }
 
 // syncDeviceModel is used to get events from informer
-func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncDeviceModel(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Info("stop syncDeviceModel")
+			return
 		case e := <-dc.deviceModelManager.Events():
 			deviceModel, ok := e.Object.(*v1alpha1.DeviceModel)
 			if !ok {
@@ -108,9 +107,6 @@ func (dc *DownstreamController) syncDeviceModel(stop chan struct{}) {
 			default:
 				klog.Warningf("deviceModel event type: %s unsupported", e.Type)
 			}
-		case <-stop:
-			klog.Info("stop syncDeviceModel")
-			running = false
 		}
 	}
 }
@@ -157,10 +153,12 @@ func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha1.DeviceM
 }
 
 // syncDevice is used to get device events from informer
-func (dc *DownstreamController) syncDevice(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) syncDevice(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Info("Stop syncDevice")
+			return
 		case e := <-dc.deviceManager.Events():
 			device, ok := e.Object.(*v1alpha1.Device)
 			if !ok {
@@ -177,9 +175,6 @@ func (dc *DownstreamController) syncDevice(stop chan struct{}) {
 			default:
 				klog.Warningf("Device event type: %s unsupported", e.Type)
 			}
-		case <-stop:
-			klog.Info("Stop syncDevice")
-			running = false
 		}
 	}
 }
@@ -810,27 +805,16 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 }
 
 // Start DownstreamController
-func (dc *DownstreamController) Start() error {
+func (dc *DownstreamController) Start(ctx context.Context) error {
 	klog.Info("Start downstream devicecontroller")
 
-	dc.deviceModelStop = make(chan struct{})
-	go dc.syncDeviceModel(dc.deviceModelStop)
+	go dc.syncDeviceModel(ctx)
 
 	// Wait for adding all device model
+	// TODO need to think about sync
 	time.Sleep(1 * time.Second)
-	dc.deviceStop = make(chan struct{})
-	go dc.syncDevice(dc.deviceStop)
+	go dc.syncDevice(ctx)
 
-	return nil
-}
-
-// Stop DownstreamController
-func (dc *DownstreamController) Stop() error {
-	klog.Info("Stopping downstream devicecontroller")
-	defer klog.Info("Downstream devicecontroller stopped")
-
-	dc.deviceStop <- struct{}{}
-	dc.deviceModelStop <- struct{}{}
 	return nil
 }
 
