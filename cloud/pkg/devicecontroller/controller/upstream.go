@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
@@ -48,11 +49,6 @@ const (
 type UpstreamController struct {
 	crdClient    *rest.RESTClient
 	messageLayer messagelayer.MessageLayer
-
-	// stop channel
-	stopDispatch           chan struct{}
-	stopUpdateDeviceStatus chan struct{}
-
 	// message channel
 	deviceStatusChan chan model.Message
 
@@ -61,30 +57,28 @@ type UpstreamController struct {
 }
 
 // Start UpstreamController
-func (uc *UpstreamController) Start() error {
+func (uc *UpstreamController) Start(ctx context.Context) error {
 	klog.Info("Start upstream devicecontroller")
-	uc.stopDispatch = make(chan struct{})
-	uc.stopUpdateDeviceStatus = make(chan struct{})
 
 	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
 
-	go uc.dispatchMessage(uc.stopDispatch)
+	go uc.dispatchMessage(ctx)
 
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
-		go uc.updateDeviceStatus(uc.stopUpdateDeviceStatus)
+		go uc.updateDeviceStatus(ctx)
 	}
 
 	return nil
 }
 
-func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
-	running := true
-	go func() {
-		<-stop
-		klog.Info("Stop dispatchMessage")
-		running = false
-	}()
-	for running {
+func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			klog.Info("Stop dispatchMessage")
+			return
+		default:
+		}
 		msg, err := uc.messageLayer.Receive()
 		if err != nil {
 			klog.Warningf("Receive message failed, %s", err)
@@ -109,10 +103,12 @@ func (uc *UpstreamController) dispatchMessage(stop chan struct{}) {
 	}
 }
 
-func (uc *UpstreamController) updateDeviceStatus(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) updateDeviceStatus(ctx context.Context) {
+	for {
 		select {
+		case <-ctx.Done():
+			klog.Info("Stop updateDeviceStatus")
+			return
 		case msg := <-uc.deviceStatusChan:
 			klog.Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			msgTwin, err := uc.unmarshalDeviceStatusMessage(msg)
@@ -169,9 +165,6 @@ func (uc *UpstreamController) updateDeviceStatus(stop chan struct{}) {
 				continue
 			}
 			klog.Infof("Message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Info("Stop updateDeviceStatus")
-			running = false
 		}
 	}
 }
@@ -193,18 +186,6 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 		return nil, err
 	}
 	return twinUpdate, nil
-}
-
-// Stop UpstreamController
-func (uc *UpstreamController) Stop() error {
-	klog.Info("Stopping upstream devicecontroller")
-	defer klog.Info("Upstream devicecontroller stopped")
-
-	uc.stopDispatch <- struct{}{}
-	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
-		uc.stopUpdateDeviceStatus <- struct{}{}
-	}
-	return nil
 }
 
 // NewUpstreamController create UpstreamController from config
