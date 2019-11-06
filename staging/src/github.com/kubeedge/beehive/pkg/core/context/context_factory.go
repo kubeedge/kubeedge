@@ -63,7 +63,7 @@ func (ctx *Context) Receive(module string) (model.Message, error) {
 	if err == nil {
 		return message, nil
 	}
-	klog.Warning("Receive: failed to receive message")
+	klog.Warningf("Receive: failed to receive message err:%v", err)
 	return message, err
 }
 

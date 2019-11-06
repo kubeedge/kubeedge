@@ -28,6 +28,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -165,6 +167,17 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTontroller_Start is function to test Start().
 func TestDTController_Start(t *testing.T) {
+	// ormerMock is mocked Ormer implementation.
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation.
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	mainContext.AddModule("twin")
@@ -283,7 +296,15 @@ func TestDTController_Start(t *testing.T) {
 func TestDTController_distributeMsg(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtc, _ := InitDTController(mainContext)
-	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}}
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+	}
 	var msg = &model.Message{
 		Header: model.MessageHeader{
 			ParentID: DeviceTwinModuleName,
@@ -352,6 +373,17 @@ func TestDTController_distributeMsg(t *testing.T) {
 
 //TestSyncSqlite is function to test SyncSqlite().
 func TestSyncSqlite(t *testing.T) {
+	// ormerMock is mocked Ormer implementation.
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation.
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
@@ -433,7 +465,17 @@ func TestSyncSqlite(t *testing.T) {
 
 //TestSyncDeviceFromSqlite is function to test SyncDeviceFromSqlite().
 func TestSyncDeviceFromSqlite(t *testing.T) {
-	initMocks(t)
+	// ormerMock is mocked Ormer implementation.
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation.
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
@@ -571,7 +613,15 @@ func Test_classifyMsg(t *testing.T) {
 	eventbusTopic := "$hw/events/device/+/state/update"
 	eventbusResource := base64.URLEncoding.EncodeToString([]byte(eventbusTopic))
 	//Creating content for model.message type
-	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}}
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+	}
 	content, _ := json.Marshal(payload)
 	tests := []struct {
 		name     string

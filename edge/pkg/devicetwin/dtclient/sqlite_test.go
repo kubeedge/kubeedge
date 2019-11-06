@@ -20,13 +20,23 @@ import (
 	"testing"
 
 	"github.com/astaxie/beego/orm"
+
 	"github.com/golang/mock/gomock"
+
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
 // TestSaveTwin is function to test SaveTwin
 func TestSaveTwin(t *testing.T) {
-	//Initialize Global Variables (Mocks)
-	initMocks(t)
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	InitDBTable()
 
 	cases := []struct {
@@ -63,6 +73,17 @@ func TestSaveTwin(t *testing.T) {
 
 // TestDeleteTwinByID is function to test DeleteTwinByID
 func TestDeleteTwinByID(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -107,6 +128,17 @@ func TestDeleteTwinByID(t *testing.T) {
 
 // TestUpdateTwinField is function to test UpdateTwinField
 func TestUpdateTwinField(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -151,6 +183,17 @@ func TestUpdateTwinField(t *testing.T) {
 
 // TestUpdateTwinFields is function to test UpdateTwinFields
 func TestUpdateTwinFields(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -195,6 +238,17 @@ func TestUpdateTwinFields(t *testing.T) {
 
 // TestQueryTwin is function to test QueryTwin
 func TestQueryTwin(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -253,6 +307,17 @@ func TestQueryTwin(t *testing.T) {
 
 // TestQueryTwinAll is function to test QueryTwinAll
 func TestQueryTwinAll(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -291,7 +356,6 @@ func TestQueryTwinAll(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			twin, err := QueryTwinAll()
 			if test.allReturnErr != err {

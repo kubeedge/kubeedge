@@ -19,122 +19,20 @@ package edgehub
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 
-	bhConfig "github.com/kubeedge/beehive/pkg/common/config"
-	bhUtil "github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
-	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 )
-
-const (
-	CertFile = "/tmp/kubeedge/certs/edge.crt"
-	KeyFile  = "/tmp/kubeedge/certs/edge.key"
-)
-
-//testServer is a fake http server created for testing
-var testServer *httptest.Server
-
-// mockAdapter is a mocked adapter implementation
-var mockAdapter *edgehub.MockAdapter
-
-//init() starts the test server and generates test certificates for testing
-func init() {
-	devicetwin.Register()
-	eventbus.Register()
-	metamanager.Register()
-	servicebus.Register()
-	dbm.InitDBManager()
-	newTestServer()
-	err := util.GenerateTestCertificate("/tmp/kubeedge/certs/", "edge", "edge")
-	if err != nil {
-		panic("Error in creating fake certificates")
-	}
-}
-
-// initMocks is function to initialize mocks
-func initMocks(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	mockAdapter = edgehub.NewMockAdapter(mockCtrl)
-}
-
-//testEdgeConfigYaml is a structure which is used to generate the test YAML file to test Edgehub config components
-type testEdgeConfigYaml struct {
-	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
-}
-
-//edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
-type edgeHubConfigYaml struct {
-	WSConfig webSocketConfigYaml `yaml:"websocket"`
-}
-
-//webSocketConfigYaml is a structure which is used to generate the test YAML file to test WebSocket config components
-type webSocketConfigYaml struct {
-	URL string `yaml:"url,omitempty"`
-}
-
-//newTestServer() starts a fake server for testing
-func newTestServer() {
-	flag := true
-	testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case strings.Contains(r.RequestURI, "/proper_request"):
-			w.Write([]byte("ws://127.0.0.1:20000"))
-		case strings.Contains(r.RequestURI, "/bad_request"):
-			w.WriteHeader(http.StatusBadRequest)
-		case strings.Contains(r.RequestURI, "/wrong_url"):
-			if flag {
-				w.WriteHeader(http.StatusNotFound)
-				flag = false
-			} else {
-				w.Write([]byte("ws://127.0.0.1:20000"))
-			}
-		}
-	}))
-}
-
-// get the configuration file path
-func getConfigDirectory() string {
-	if config, err := bhConfig.CONFIG.GetValue("config-path").ToString(); err == nil {
-		return config
-	}
-
-	if config, err := bhConfig.CONFIG.GetValue("GOARCHAIUS_CONFIG_PATH").ToString(); err == nil {
-		return config
-	}
-
-	return bhUtil.GetCurrentDirectory()
-}
-
-var restoreConfig map[string]interface{}
-
-func init() {
-	restoreConfig = bhConfig.CONFIG.GetConfigurations()
-}
-
-func restoreConfigBack() {
-	util.GenerateTestYaml(restoreConfig, getConfigDirectory()+"/conf", "edge")
-}
 
 //TestNewEdgeHubController() tests whether the EdgeHubController returned is correct or not
 func TestNewEdgeHubController(t *testing.T) {
@@ -182,61 +80,6 @@ func TestNewEdgeHubController(t *testing.T) {
 	}
 }
 
-//TestInitial() tests the procurement of the cloudhub client
-func TestInitial(t *testing.T) {
-	controllerConfig := config.ControllerConfig{
-		Protocol:        "websocket",
-		HeartbeatPeriod: 150 * time.Second,
-		ProjectID:       "foo",
-		NodeID:          "bar",
-	}
-	tests := []struct {
-		name             string
-		controller       *Controller
-		webSocketConfig  config.WebSocketConfig
-		controllerConfig config.ControllerConfig
-		ctx              *context.Context
-		expectedError    error
-	}{
-		{"Valid input", &Controller{
-			config:     &controllerConfig,
-			stopChan:   make(chan struct{}),
-			syncKeeper: make(map[string]chan model.Message),
-		}, config.WebSocketConfig{
-			CertFilePath: CertFile,
-			KeyFilePath:  KeyFile,
-		}, config.ControllerConfig{
-			ProjectID: "foo",
-			NodeID:    "bar",
-		},
-			context.GetContext(context.MsgCtxTypeChannel), nil},
-
-		{"No project Id & node Id", &Controller{
-			config:     &controllerConfig,
-			stopChan:   make(chan struct{}),
-			syncKeeper: make(map[string]chan model.Message),
-		}, config.WebSocketConfig{
-			CertFilePath: CertFile,
-			KeyFilePath:  KeyFile,
-		}, config.ControllerConfig{
-			Protocol:  "websocket",
-			ProjectID: "",
-			NodeID:    "",
-		},
-			context.GetContext(context.MsgCtxTypeChannel), nil},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edgeHubConfig := config.GetConfig()
-			edgeHubConfig.WSConfig = tt.webSocketConfig
-			edgeHubConfig.CtrConfig = tt.controllerConfig
-			if err := tt.controller.initial(tt.ctx); err != tt.expectedError {
-				t.Errorf("EdgeHubController_initial() error = %v, expectedError %v", err, tt.expectedError)
-			}
-		})
-	}
-}
-
 //TestAddKeepChannel() tests the addition of channel to the syncKeeper
 func TestAddKeepChannel(t *testing.T) {
 	tests := []struct {
@@ -244,10 +87,13 @@ func TestAddKeepChannel(t *testing.T) {
 		controller *Controller
 		msgID      string
 	}{
-		{"Adding a valid keep channel", &Controller{
-			syncKeeper: make(map[string]chan model.Message),
+		{
+			name: "Adding a valid keep channel",
+			controller: &Controller{
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			msgID: "test",
 		},
-			"test"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -266,11 +112,13 @@ func TestDeleteKeepChannel(t *testing.T) {
 		controller *Controller
 		msgID      string
 	}{
-		{"Deleting a valid keep channel",
-			&Controller{
+		{
+			name: "Deleting a valid keep channel",
+			controller: &Controller{
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			"test"},
+			msgID: "test",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -291,17 +139,21 @@ func TestIsSyncResponse(t *testing.T) {
 		msgID      string
 		want       bool
 	}{
-		{"Sync message response case",
-			&Controller{
+		{
+			name: "Sync message response case",
+			controller: &Controller{
 				syncKeeper: make(map[string]chan model.Message),
-			}, "test",
-			true,
+			},
+			msgID: "test",
+			want:  true,
 		},
-		{"Non sync message response  case",
-			&Controller{
+		{
+			name: "Non sync message response  case",
+			controller: &Controller{
 				syncKeeper: make(map[string]chan model.Message),
-			}, "",
-			false,
+			},
+			msgID: "",
+			want:  false,
 		},
 	}
 	for _, tt := range tests {
@@ -326,25 +178,35 @@ func TestSendToKeepChannel(t *testing.T) {
 		keepChannelParentID string
 		expectedError       error
 	}{
-		{"SyncKeeper Error Case in send to keep channel", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
-		}, message,
-			"wrong_id",
-			fmt.Errorf("failed to get sync keeper channel, messageID:%+v", *message)},
-
-		{"Negative Test Case without syncKeeper Error ", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
-		}, model.NewMessage("test_id"),
-			"test_id",
-			fmt.Errorf("failed to send message to sync keep channel")},
-
-		{"Send to keep channel with valid input", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
-		}, model.NewMessage("test_id"),
-			"test_id", nil},
+		{
+			name: "SyncKeeper Error Case in send to keep channel",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:             message,
+			keepChannelParentID: "wrong_id",
+			expectedError:       fmt.Errorf("failed to get sync keeper channel, messageID:%+v", *message),
+		},
+		{
+			name: "Negative Test Case without syncKeeper Error ",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:             model.NewMessage("test_id"),
+			keepChannelParentID: "test_id",
+			expectedError:       fmt.Errorf("failed to send message to sync keep channel"),
+		},
+		{
+			name: "Send to keep channel with valid input",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:             model.NewMessage("test_id"),
+			keepChannelParentID: "test_id",
+			expectedError:       nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -373,26 +235,36 @@ func TestDispatch(t *testing.T) {
 		expectedError error
 		isResponse    bool
 	}{
-		{"dispatch with valid input", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
+		{
+			name: "dispatch with valid input",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:       model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			expectedError: nil,
+			isResponse:    false,
 		},
-			model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
-			nil, false},
-
-		{"Error Case in dispatch", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
+		{
+			name: "Error Case in dispatch",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
+			expectedError: fmt.Errorf("msg_group not found"),
+			isResponse:    true,
 		},
-			model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
-			fmt.Errorf("msg_group not found"), true},
-
-		{"Response Case in dispatch", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			syncKeeper: make(map[string]chan model.Message),
+		{
+			name: "Response Case in dispatch",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			expectedError: nil,
+			isResponse:    true,
 		},
-			model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
-			nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -414,25 +286,34 @@ func TestDispatch(t *testing.T) {
 
 //TestRouteToEdge() is used to test whether the message received from websocket is dispatched to the required modules
 func TestRouteToEdge(t *testing.T) {
-	initMocks(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
 		name         string
 		controller   *Controller
 		receiveTimes int
 	}{
-		{"Route to edge with proper input", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			chClient:   mockAdapter,
-			syncKeeper: make(map[string]chan model.Message),
-			stopChan:   make(chan struct{}),
-		}, 0},
-
-		{"Receive Error in route to edge", &Controller{
-			context:    context.GetContext(context.MsgCtxTypeChannel),
-			chClient:   mockAdapter,
-			syncKeeper: make(map[string]chan model.Message),
-			stopChan:   make(chan struct{}),
-		}, 1},
+		{
+			name: "Route to edge with proper input",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				chClient:   mockAdapter,
+				syncKeeper: make(map[string]chan model.Message),
+				stopChan:   make(chan struct{}),
+			},
+			receiveTimes: 0,
+		},
+		{
+			name: "Receive Error in route to edge",
+			controller: &Controller{
+				context:    context.GetContext(context.MsgCtxTypeChannel),
+				chClient:   mockAdapter,
+				syncKeeper: make(map[string]chan model.Message),
+				stopChan:   make(chan struct{}),
+			},
+			receiveTimes: 1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -450,7 +331,10 @@ func TestRouteToEdge(t *testing.T) {
 
 //TestSendToCloud() tests whether the send to cloud functionality works properly
 func TestSendToCloud(t *testing.T) {
-	initMocks(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
 	msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 	msg.Header.Sync = true
 	tests := []struct {
@@ -461,41 +345,51 @@ func TestSendToCloud(t *testing.T) {
 		waitError     bool
 		mockError     error
 	}{
-		{"send to cloud with proper input", &Controller{
-			context:  context.GetContext(context.MsgCtxTypeChannel),
-			chClient: mockAdapter,
-			config: &config.ControllerConfig{
-				Protocol:        "websocket",
-				HeartbeatPeriod: 6 * time.Second,
+		{
+			name: "send to cloud with proper input",
+			controller: &Controller{
+				context:  context.GetContext(context.MsgCtxTypeChannel),
+				chClient: mockAdapter,
+				config: &config.ControllerConfig{
+					Protocol:        "websocket",
+					HeartbeatPeriod: 6 * time.Second,
+				},
+				syncKeeper: make(map[string]chan model.Message),
 			},
-			syncKeeper: make(map[string]chan model.Message),
-		}, *msg,
-			nil,
-			false,
-			nil},
-
-		{"Wait Error in send to cloud", &Controller{
-			chClient: mockAdapter,
-			config: &config.ControllerConfig{
-				Protocol:        "websocket",
-				HeartbeatPeriod: 3 * time.Second,
+			message:       *msg,
+			expectedError: nil,
+			waitError:     false,
+			mockError:     nil,
+		},
+		{
+			name: "Wait Error in send to cloud",
+			controller: &Controller{
+				chClient: mockAdapter,
+				config: &config.ControllerConfig{
+					Protocol:        "websocket",
+					HeartbeatPeriod: 3 * time.Second,
+				},
+				syncKeeper: make(map[string]chan model.Message),
 			},
-			syncKeeper: make(map[string]chan model.Message),
-		}, *msg,
-			nil,
-			true,
-			nil},
-
-		{"Send Failure in send to cloud", &Controller{
-			chClient: mockAdapter,
-			config: &config.ControllerConfig{
-				HeartbeatPeriod: 3 * time.Second,
+			message:       *msg,
+			expectedError: nil,
+			waitError:     true,
+			mockError:     nil,
+		},
+		{
+			name: "Send Failure in send to cloud",
+			controller: &Controller{
+				chClient: mockAdapter,
+				config: &config.ControllerConfig{
+					HeartbeatPeriod: 3 * time.Second,
+				},
+				syncKeeper: make(map[string]chan model.Message),
 			},
-			syncKeeper: make(map[string]chan model.Message),
-		}, model.Message{},
-			fmt.Errorf("failed to send message, error: Connection Refused"),
-			false,
-			errors.New("Connection Refused")},
+			message:       model.Message{},
+			expectedError: fmt.Errorf("failed to send message, error: Connection Refused"),
+			waitError:     false,
+			mockError:     errors.New("Connection Refused"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -525,17 +419,22 @@ func TestSendToCloud(t *testing.T) {
 
 //TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
 func TestRouteToCloud(t *testing.T) {
-	initMocks(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	testContext := context.GetContext(context.MsgCtxTypeChannel)
 	tests := []struct {
 		name       string
 		controller *Controller
 	}{
-		{"Route to cloud with valid input", &Controller{
-			context:  testContext,
-			chClient: mockAdapter,
-			stopChan: make(chan struct{}),
-		}},
+		{
+			name: "Route to cloud with valid input",
+			controller: &Controller{
+				context:  testContext,
+				chClient: mockAdapter,
+				stopChan: make(chan struct{}),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -556,20 +455,27 @@ func TestRouteToCloud(t *testing.T) {
 
 //TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
 func TestKeepalive(t *testing.T) {
-	initMocks(t)
+	CertFile := "/tmp/kubeedge/certs/edge.crt"
+	KeyFile := "/tmp/kubeedge/certs/edge.key"
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
 		name       string
 		controller *Controller
 	}{
-		{"Heartbeat failure Case", &Controller{
-			config: &config.ControllerConfig{
-				Protocol:  "websocket",
-				ProjectID: "foo",
-				NodeID:    "bar",
+		{
+			name: "Heartbeat failure Case",
+			controller: &Controller{
+				config: &config.ControllerConfig{
+					Protocol:  "websocket",
+					ProjectID: "foo",
+					NodeID:    "bar",
+				},
+				chClient: mockAdapter,
+				stopChan: make(chan struct{}),
 			},
-			chClient: mockAdapter,
-			stopChan: make(chan struct{}),
-		}},
+		},
 	}
 	edgeHubConfig := config.GetConfig()
 	edgeHubConfig.WSConfig = config.WebSocketConfig{
@@ -585,51 +491,6 @@ func TestKeepalive(t *testing.T) {
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
 			}
-		})
-	}
-}
-
-//TestPubConnectInfo() checks the connection information sent to the required group
-func TestPubConnectInfo(t *testing.T) {
-	initMocks(t)
-	testContext := context.GetContext(context.MsgCtxTypeChannel)
-	tests := []struct {
-		name        string
-		controller  *Controller
-		isConnected bool
-		content     string
-	}{
-		{"Cloud connected case", &Controller{
-			context:    testContext,
-			stopChan:   make(chan struct{}),
-			syncKeeper: make(map[string]chan model.Message),
-		},
-			true,
-			connect.CloudConnected},
-		{"Cloud disconnected case", &Controller{
-			context:    testContext,
-			stopChan:   make(chan struct{}),
-			syncKeeper: make(map[string]chan model.Message),
-		},
-			false,
-			connect.CloudDisconnected},
-	}
-	for _, tt := range tests {
-		modules := core.GetModules()
-		for name, module := range modules {
-			testContext.AddModule(name)
-			testContext.AddModuleGroup(name, module.Group())
-		}
-		t.Run(tt.name, func(t *testing.T) {
-			tt.controller.pubConnectInfo(tt.isConnected)
-			t.Run("TestMessageContent", func(t *testing.T) {
-				msg, err := testContext.Receive(module.TwinGroup)
-				if err != nil {
-					t.Errorf("Error in receiving message from twin group: %v", err)
-				} else if msg.Content != tt.content {
-					t.Errorf("TestPubConnectInfo() Content of message received in twin group : %v, want: %v", msg.Content, tt.content)
-				}
-			})
 		})
 	}
 }

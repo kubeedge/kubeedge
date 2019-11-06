@@ -177,9 +177,7 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 				klog.Errorf("Build device attribute update failed: %v", err)
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
-			context.Send(deviceID,
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
+			context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
 		}
 	}

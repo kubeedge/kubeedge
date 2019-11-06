@@ -28,6 +28,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -50,10 +52,22 @@ func TestDeviceStartAction(t *testing.T) {
 	content := dttype.DeviceUpdate{}
 	bytes, _ := json.Marshal(content)
 	msg := model.Message{Content: bytes}
+
 	receiveChanActionPresent := make(chan interface{}, 1)
-	receiveChanActionPresent <- &dttype.DTMessage{Action: "testAction", Identity: "identity", Msg: &msg}
+	receiveChanActionPresent <- &dttype.DTMessage{
+		Action:   "testAction",
+		Identity: "identity",
+		Msg:      &msg,
+	}
+
 	receiveChanActionNotPresent := make(chan interface{}, 1)
-	receiveChanActionNotPresent <- &dttype.DTMessage{Action: "action", Identity: "identity", Msg: &model.Message{Content: "msg"}}
+	receiveChanActionNotPresent <- &dttype.DTMessage{
+		Action:   "action",
+		Identity: "identity",
+		Msg: &model.Message{
+			Content: "msg",
+		},
+	}
 	tests := []struct {
 		name   string
 		Worker Worker
@@ -75,7 +89,11 @@ func TestDeviceStartAction(t *testing.T) {
 			time.Sleep(1 * time.Millisecond)
 			//Adding a dummy function to callback to ensure Start is successful.
 			deviceActionCallBack["testAction"] = testAction
-			dw.ReceiverChan <- &dttype.DTMessage{Action: "testAction", Identity: "identity", Msg: &msg}
+			dw.ReceiverChan <- &dttype.DTMessage{
+				Action:   "testAction",
+				Identity: "identity",
+				Msg:      &msg,
+			}
 			time.Sleep(1 * time.Millisecond)
 			if !called {
 				t.Errorf("Start failed")
@@ -134,16 +152,38 @@ func TestDeviceStartHeartBeat(t *testing.T) {
 
 // TestDealDeviceStatusUpdate test dealDeviceStatusUpdate
 func TestDealDeviceStateUpdate(t *testing.T) {
-	initMocks(t)
+	var ormerMock *beego.MockOrmer
+	var querySeterMock *beego.MockQuerySeter
+	var emptyDevUpdate dttype.DeviceUpdate
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, err := dtcontext.InitDTContext(mainContext)
+	if err != nil {
+		t.Errorf("InitDTContext error %v", err)
+		return
+	}
+
 	dtContexts.DeviceList.Store("DeviceC", "DeviceC")
 	deviceD := &dttype.Device{}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
-	var emptyDevUpdate dttype.DeviceUpdate
-	bytesEmptyDevUpdate, _ := json.Marshal(emptyDevUpdate)
+	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
+	if err != nil {
+		t.Errorf("marshal error %v", err)
+		return
+	}
 	devUpdate := &dttype.DeviceUpdate{State: "online"}
-	bytesDevUpdate, _ := json.Marshal(devUpdate)
+	bytesDevUpdate, err := json.Marshal(devUpdate)
+	if err != nil {
+		t.Errorf("marshal error %v", err)
+		return
+	}
+
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -229,7 +269,11 @@ func TestDealDeviceUpdated(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	content := dttype.DeviceUpdate{}
-	bytes, _ := json.Marshal(content)
+	bytes, err := json.Marshal(content)
+	if err != nil {
+		t.Errorf("marshal error %v", err)
+		return
+	}
 	msg := model.Message{Content: bytes}
 	tests := []struct {
 		name     string
@@ -272,28 +316,53 @@ func TestDealDeviceUpdated(t *testing.T) {
 
 // TestDeviceUpdated is function to test DeviceUpdated().
 func TestDeviceUpdated(t *testing.T) {
-	initMocks(t)
+	var ormerMock *beego.MockOrmer
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	// adds is fake DeviceAttr used as argument
 	adds := make([]dtclient.DeviceAttr, 0)
 	// deletes is fake DeviceDelete used as argument
 	deletes := make([]dtclient.DeviceDelete, 0)
 	// updates is fake DeviceAttrUpdate used as argument
 	updates := make([]dtclient.DeviceAttrUpdate, 0)
-	adds = append(adds, dtclient.DeviceAttr{DeviceID: "Test"})
-	deletes = append(deletes, dtclient.DeviceDelete{DeviceID: "test", Name: "test"})
-	updates = append(updates, dtclient.DeviceAttrUpdate{DeviceID: "test", Name: "test", Cols: make(map[string]interface{})})
+	adds = append(adds, dtclient.DeviceAttr{
+		DeviceID: "Test",
+	})
+	deletes = append(deletes, dtclient.DeviceDelete{
+		DeviceID: "test",
+		Name:     "test",
+	})
+	updates = append(updates, dtclient.DeviceAttrUpdate{
+		DeviceID: "test",
+		Name:     "test",
+		Cols:     make(map[string]interface{}),
+	})
 
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
+
 	devA := &dttype.Device{ID: "DeviceA"}
 	dtContexts.DeviceList.Store("DeviceA", devA)
 
 	messageAttributes := make(map[string]*dttype.MsgAttr)
 	optional := true
-	msgattr := &dttype.MsgAttr{Value: "ON", Optional: &optional, Metadata: &dttype.TypeMetadata{Type: "device"}}
+	msgattr := &dttype.MsgAttr{
+		Value:    "ON",
+		Optional: &optional,
+		Metadata: &dttype.TypeMetadata{
+			Type: "device",
+		},
+	}
 	messageAttributes["DeviceA"] = msgattr
 	baseMessage := dttype.BuildBaseMessage()
+
 	tests := []struct {
 		name        string
 		context     *dtcontext.DTContext
@@ -363,18 +432,18 @@ func TestDeviceUpdated(t *testing.T) {
 			commitTimes:      1,
 			beginTimes:       1,
 			filterReturn:     querySeterMock,
-			filterTimes:      6,
+			filterTimes:      0,
 			insertReturnInt:  int64(1),
 			insertReturnErr:  nil,
 			insertTimes:      1,
 			deleteReturnInt:  int64(1),
 			deleteReturnErr:  nil,
-			deleteTimes:      1,
+			deleteTimes:      0,
 			updateReturnInt:  int64(1),
 			updateReturnErr:  nil,
-			updateTimes:      1,
+			updateTimes:      0,
 			queryTableReturn: querySeterMock,
-			queryTableTimes:  2,
+			queryTableTimes:  0,
 		},
 	}
 	for _, test := range tests {
@@ -401,34 +470,79 @@ func TestDeviceUpdated(t *testing.T) {
 // TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContextsEmptyAttributes, _ := dtcontext.InitDTContext(mainContext)
-	dtContextsNonEmptyAttributes, _ := dtcontext.InitDTContext(mainContext)
+	dtContextsEmptyAttributes, err := dtcontext.InitDTContext(mainContext)
+	if err != nil {
+		t.Errorf("initDtcontext error %v", err)
+		return
+	}
+	dtContextsNonEmptyAttributes, err := dtcontext.InitDTContext(mainContext)
+	if err != nil {
+		t.Errorf("initDtcontext error %v", err)
+		return
+	}
 	//Creating want and message attributes when device attribute is not present
 	devA := &dttype.Device{ID: "DeviceA"}
 	dtContextsEmptyAttributes.DeviceList.Store("DeviceA", devA)
+
 	messageAttributes := make(map[string]*dttype.MsgAttr)
 	optional := true
-	msgattr := &dttype.MsgAttr{Value: "ON", Optional: &optional, Metadata: &dttype.TypeMetadata{Type: "device"}}
+
+	msgattr := &dttype.MsgAttr{
+		Value:    "ON",
+		Optional: &optional,
+		Metadata: &dttype.TypeMetadata{
+			Type: "device",
+		},
+	}
 	messageAttributes["DeviceA"] = msgattr
 	add := []dtclient.DeviceAttr{}
-	add = append(add, dtclient.DeviceAttr{ID: 0, DeviceID: "DeviceA", Name: "DeviceA", Value: "ON", Optional: true, AttrType: "device", Metadata: "{}"})
+	add = append(add, dtclient.DeviceAttr{
+		ID:       0,
+		DeviceID: "DeviceA",
+		Name:     "DeviceA",
+		Value:    "ON",
+		Optional: true,
+		AttrType: "device",
+		Metadata: "{}",
+	})
 	result := make(map[string]*dttype.MsgAttr)
 	result["DeviceA"] = msgattr
-	wantDealAttrResult := dttype.DealAttrResult{Add: add, Delete: []dtclient.DeviceDelete{}, Update: []dtclient.DeviceAttrUpdate{}, Result: result, Err: nil}
+	wantDealAttrResult := dttype.DealAttrResult{
+		Add:    add,
+		Delete: []dtclient.DeviceDelete{},
+		Update: []dtclient.DeviceAttrUpdate{},
+		Result: result,
+		Err:    nil,
+	}
 	//Creating want and message attributes when device attribute is present
 	attributes := map[string]*dttype.MsgAttr{}
 	attributes["DeviceB"] = msgattr
 	attr := map[string]*dttype.MsgAttr{}
 	opt := false
-	attr["DeviceB"] = &dttype.MsgAttr{Value: "OFF", Optional: &opt, Metadata: &dttype.TypeMetadata{Type: "device"}}
+	attr["DeviceB"] = &dttype.MsgAttr{
+		Value:    "OFF",
+		Optional: &opt,
+		Metadata: &dttype.TypeMetadata{
+			Type: "device",
+		},
+	}
 	devB := &dttype.Device{ID: "DeviceB", Attributes: attr}
 	update := []dtclient.DeviceAttrUpdate{}
 	cols := make(map[string]interface{})
 	cols["value"] = "ON"
-	upd := dtclient.DeviceAttrUpdate{Name: "DeviceB", DeviceID: "DeviceB", Cols: cols}
+	upd := dtclient.DeviceAttrUpdate{
+		Name:     "DeviceB",
+		DeviceID: "DeviceB",
+		Cols:     cols,
+	}
 	update = append(update, upd)
 	dtContextsNonEmptyAttributes.DeviceList.Store("DeviceB", devB)
-	want := dttype.DealAttrResult{Add: []dtclient.DeviceAttr{}, Delete: []dtclient.DeviceDelete{}, Update: update}
+	want := dttype.DealAttrResult{
+		Add:    []dtclient.DeviceAttr{},
+		Delete: []dtclient.DeviceDelete{},
+		Update: update,
+	}
+
 	tests := []struct {
 		name          string
 		context       *dtcontext.DTContext
