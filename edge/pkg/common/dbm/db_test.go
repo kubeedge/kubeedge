@@ -17,6 +17,7 @@ package dbm
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -95,17 +96,6 @@ func TestIsNonUniqueNameError(t *testing.T) {
 	}
 }
 
-// TestCleanUp() is function to test CleanUp().
-func TestCleanup(t *testing.T) {
-	t.Run("CleanUpTest", func(t *testing.T) {
-		Cleanup()
-		_, err := os.Stat(dataSource)
-		if os.IsExist(err) {
-			t.Errorf("CleanUp failed ,File not removed")
-		}
-	})
-}
-
 // TestCleanDBFile is function to test cleanDBFile().
 func TestCleanDBFile(t *testing.T) {
 	tests := []struct {
@@ -120,9 +110,16 @@ func TestCleanDBFile(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleanDBFile(test.fileName)
-			_, err := os.Stat(test.fileName)
-			if os.IsExist(err) {
+			f, err := ioutil.TempFile("", test.fileName)
+			if err != nil {
+				t.Errorf("create tempfile error %v", err)
+				return
+			}
+			defer os.RemoveAll(f.Name())
+
+			cleanDBFile(f.Name())
+			_, err = os.Stat(test.fileName)
+			if err != nil && os.IsExist(err) {
 				t.Errorf("CleanUp failed ,file exist")
 			}
 		})

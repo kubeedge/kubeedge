@@ -30,25 +30,15 @@ import (
 // errFailedDBOperation is common DB operation fail error
 var errFailedDBOperation = errors.New("Failed DB Operation")
 
-// ormerMock is mocked Ormer implementation
-var ormerMock *beego.MockOrmer
+// TestSaveDevice is function to test SaveDevice
+func TestSaveDevice(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
 
-// querySeterMock is mocked QuerySeter implementation
-var querySeterMock *beego.MockQuerySeter
-
-// initMocks is function to initialize mocks
-func initMocks(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-}
-
-// TestSaveDevice is function to test SaveDevice
-func TestSaveDevice(t *testing.T) {
-	//Initialize Global Variables (Mocks)
-	initMocks(t)
 
 	cases := []struct {
 		// name is name of the testcase
@@ -84,6 +74,17 @@ func TestSaveDevice(t *testing.T) {
 
 // TestDeleteDeviceByID is function to test DeleteDeviceByID
 func TestDeleteDeviceByID(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -128,6 +129,17 @@ func TestDeleteDeviceByID(t *testing.T) {
 
 // TestUpdateDeviceField is function to test UpdateDeviceField
 func TestUpdateDeviceField(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -172,6 +184,17 @@ func TestUpdateDeviceField(t *testing.T) {
 
 // TestUpdateDeviceFields is function to test UpdateDeviceFields
 func TestUpdateDeviceFields(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -216,6 +239,17 @@ func TestUpdateDeviceFields(t *testing.T) {
 
 // TestQueryDevice is function to test QueryDevice
 func TestQueryDevice(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -273,6 +307,17 @@ func TestQueryDevice(t *testing.T) {
 
 // TestQueryDeviceAll is function to test QueryDeviceAll
 func TestQueryDeviceAll(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -311,7 +356,6 @@ func TestQueryDeviceAll(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			device, err := QueryDeviceAll()
 			if test.allReturnErr != err {
@@ -330,6 +374,17 @@ func TestQueryDeviceAll(t *testing.T) {
 
 // TestUpdateDeviceMulti is function to test UpdateDeviceMulti
 func TestUpdateDeviceMulti(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -378,6 +433,14 @@ func TestUpdateDeviceMulti(t *testing.T) {
 
 // TestAddDeviceTrans is function to test AddDeviceTrans
 func TestAddDeviceTrans(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -486,6 +549,17 @@ func TestAddDeviceTrans(t *testing.T) {
 
 // TestDeleteDeviceTrans is function to test DeleteDeviceTrans
 func TestDeleteDeviceTrans(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
