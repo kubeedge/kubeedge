@@ -111,7 +111,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(message.Payload()))
 	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	ModuleContext.Send2Group(target, *msg)
+	ModuleContext.SendToGroup(target, *msg)
 }
 
 // InitSubClient init sub client

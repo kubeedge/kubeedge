@@ -18,7 +18,7 @@ func StartModules() {
 	for name, module := range modules {
 		//Init the module
 		coreContext.AddModule(name)
-		//Assemble typeChannels for send2Group
+		//Assemble typeChannels for sendToGroup
 		coreContext.AddModuleGroup(name, module.Group())
 		go module.Start(coreContext)
 		klog.Infof("Starting module %v", name)

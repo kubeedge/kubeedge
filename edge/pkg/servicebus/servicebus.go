@@ -66,7 +66,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					klog.Warningf(m)
 					code := http.StatusBadRequest
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
+						sb.context.SendToGroup(modules.HubGroup, response)
 					}
 					return
 				}
@@ -76,7 +76,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					m := "error to marshal request msg content"
 					code := http.StatusBadRequest
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
+						sb.context.SendToGroup(modules.HubGroup, response)
 					}
 					return
 				}
@@ -86,7 +86,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					code := http.StatusBadRequest
 					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
+						sb.context.SendToGroup(modules.HubGroup, response)
 					}
 					return
 				}
@@ -98,7 +98,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					code := http.StatusNotFound
 					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
+						sb.context.SendToGroup(modules.HubGroup, response)
 					}
 					return
 				}
@@ -112,7 +112,7 @@ func (sb *servicebus) Start(c *context.Context) {
 					code := http.StatusInternalServerError
 					klog.Errorf(m, err)
 					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
+						sb.context.SendToGroup(modules.HubGroup, response)
 					}
 					return
 				}
@@ -121,7 +121,7 @@ func (sb *servicebus) Start(c *context.Context) {
 				responseMsg := model.NewMessage(msg.GetID())
 				responseMsg.Content = response
 				responseMsg.SetRoute("servicebus", modules.UserGroup)
-				sb.context.Send2Group(modules.HubGroup, *responseMsg)
+				sb.context.SendToGroup(modules.HubGroup, *responseMsg)
 			}()
 		}
 	}

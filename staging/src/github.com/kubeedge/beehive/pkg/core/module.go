@@ -112,7 +112,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 			coreContext := context.GetContext(context.MsgCtxTypeChannel)
 			//Init the module
 			coreContext.AddModule(module.Name())
-			//Assemble typeChannels for send2Group
+			//Assemble typeChannels for sendToGroup
 			coreContext.AddModuleGroup(module.Name(), module.Group())
 			go module.Start(coreContext)
 			delete(disabledModules, m)

@@ -85,12 +85,12 @@ func (ctx *Context) SendResp(resp model.Message) {
 	ctx.messageContext.SendResp(resp)
 }
 
-// Send2Group broadcasts the message to all of group members
-func (ctx *Context) Send2Group(moduleType string, message model.Message) {
-	ctx.messageContext.Send2Group(moduleType, message)
+// SendToGroup broadcasts the message to all of group members
+func (ctx *Context) SendToGroup(moduleType string, message model.Message) {
+	ctx.messageContext.SendToGroup(moduleType, message)
 }
 
-// send2GroupSync broadcasts the message to all of group members in sync mode
-func (ctx *Context) send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	return ctx.messageContext.Send2GroupSync(moduleType, message, timeout)
+// sendToGroupSync broadcasts the message to all of group members in sync mode
+func (ctx *Context) sendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
+	return ctx.messageContext.SendToGroupSync(moduleType, message, timeout)
 }

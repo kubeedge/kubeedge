@@ -92,12 +92,12 @@ coreContext.Send(“edged”,message)
 
 ### Send to a Group  
 
-1. Send2Group gets all modules(map) from the typeChannels map.
+1. SendToGroup gets all modules(map) from the typeChannels map.
 2. Then it iterates over the map and sends the message on the channels of all modules in the map.
 3. Eg: message to be sent to all modules in edged group.  
 
 ```
-coreContext.Send2Group(“edged”,message) message will be sent to all modules in edged group.
+coreContext.SendToGroup(“edged”,message) message will be sent to all modules in edged group.
 ```
 ### Receive by a Module  
 
@@ -131,7 +131,7 @@ response, err := coreContext.SendSync("edged",message,60*time.Second)
 6. Eg: send sync message to edged group with timeout duration 60 seconds  
 
 ```go
-err := coreContext.Send2GroupSync("edged",message,60*time.Second)
+err := coreContext.SendToGroupSync("edged",message,60*time.Second)
 ```
 
 ### SendResp to a sync message  
