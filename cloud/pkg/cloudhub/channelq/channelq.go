@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 )
 
@@ -17,30 +18,30 @@ const (
 	rChanBufSize = 10
 )
 
-// EventSet holds a set of events
-type EventSet interface {
+// MessageSet holds a set of messages
+type MessageSet interface {
 	Ack() error
-	Get() (*model.Event, error)
+	Get() (*beehiveModel.Message, error)
 }
 
-// ChannelEventSet is the channel implementation of EventSet
-type ChannelEventSet struct {
-	current  model.Event
-	messages <-chan model.Event
+// ChannelMessageSet is the channel implementation of MessageSet
+type ChannelMessageSet struct {
+	current  beehiveModel.Message
+	messages <-chan beehiveModel.Message
 }
 
-// NewChannelEventSet initializes a new ChannelEventSet instance
-func NewChannelEventSet(messages <-chan model.Event) *ChannelEventSet {
-	return &ChannelEventSet{messages: messages}
+// NewChannelMessageSet initializes a new ChannelMessageSet instance
+func NewChannelMessageSet(messages <-chan beehiveModel.Message) *ChannelMessageSet {
+	return &ChannelMessageSet{messages: messages}
 }
 
 // Ack acknowledges once the event is processed
-func (s *ChannelEventSet) Ack() error {
+func (s *ChannelMessageSet) Ack() error {
 	return nil
 }
 
 // Get obtains one event from the queue
-func (s *ChannelEventSet) Get() (*model.Event, error) {
+func (s *ChannelMessageSet) Get() (*beehiveModel.Message, error) {
 	var ok bool
 	s.current, ok = <-s.messages
 	if !ok {
@@ -49,22 +50,22 @@ func (s *ChannelEventSet) Get() (*model.Event, error) {
 	return &s.current, nil
 }
 
-// ChannelEventQueue is the channel implementation of EventQueue
-type ChannelEventQueue struct {
+// ChannelMessageQueue is the channel implementation of MessageQueue
+type ChannelMessageQueue struct {
 	ctx         *beehiveContext.Context
 	channelPool sync.Map
 }
 
-// NewChannelEventQueue initializes a new ChannelEventQueue
-func NewChannelEventQueue(ctx *beehiveContext.Context) *ChannelEventQueue {
-	q := ChannelEventQueue{ctx: ctx}
+// NewChannelMessageQueue initializes a new ChannelMessageQueue
+func NewChannelMessageQueue(ctx *beehiveContext.Context) *ChannelMessageQueue {
+	q := ChannelMessageQueue{ctx: ctx}
 	return &q
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
 // node id from it, gets the channel associated with the node
 // and pushes the event on the channel
-func (q *ChannelEventQueue) DispatchMessage(ctx context.Context) {
+func (q *ChannelMessageQueue) DispatchMessage(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -96,28 +97,28 @@ func (q *ChannelEventQueue) DispatchMessage(ctx context.Context) {
 			klog.Infof("fail to get dispatch channel for %s", nodeID)
 			continue
 		}
-		rChannel <- model.MessageToEvent(&msg)
+		rChannel <- msg
 	}
 }
 
-func (q *ChannelEventQueue) getRChannel(nodeID string) (chan model.Event, error) {
+func (q *ChannelMessageQueue) getRChannel(nodeID string) (chan beehiveModel.Message, error) {
 	channels, ok := q.channelPool.Load(nodeID)
 	if !ok {
 		klog.Errorf("rChannel for edge node %s is removed", nodeID)
 		return nil, fmt.Errorf("rChannel not found")
 	}
-	rChannel := channels.(chan model.Event)
+	rChannel := channels.(chan beehiveModel.Message)
 	return rChannel, nil
 }
 
 // Connect allocates rChannel for given project and group
-func (q *ChannelEventQueue) Connect(info *model.HubInfo) error {
+func (q *ChannelMessageQueue) Connect(info *model.HubInfo) error {
 	_, ok := q.channelPool.Load(info.NodeID)
 	if ok {
 		return fmt.Errorf("edge node %s is already connected", info.NodeID)
 	}
 	// allocate a new rchannel with default buffer size
-	rChannel := make(chan model.Event, rChanBufSize)
+	rChannel := make(chan beehiveModel.Message, rChanBufSize)
 	_, ok = q.channelPool.LoadOrStore(info.NodeID, rChannel)
 	if ok {
 		// rchannel is already allocated
@@ -127,40 +128,39 @@ func (q *ChannelEventQueue) Connect(info *model.HubInfo) error {
 }
 
 // Close closes rChannel for given project and group
-func (q *ChannelEventQueue) Close(info *model.HubInfo) error {
+func (q *ChannelMessageQueue) Close(info *model.HubInfo) error {
 	channels, ok := q.channelPool.Load(info.NodeID)
 	if !ok {
 		klog.Warningf("rChannel for edge node %s is already removed", info.NodeID)
 		return nil
 	}
-	rChannel := channels.(chan model.Event)
+	rChannel := channels.(chan beehiveModel.Message)
 	close(rChannel)
 	q.channelPool.Delete(info.NodeID)
 	return nil
 }
 
 // Publish sends message via the rchannel to Edge Controller
-func (q *ChannelEventQueue) Publish(info *model.HubInfo, event *model.Event) error {
-	msg := model.EventToMessage(event)
+func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
 	case model.ResTwin:
-		q.ctx.SendToGroup(model.SrcDeviceController, msg)
+		q.ctx.SendToGroup(model.SrcDeviceController, *msg)
 	default:
-		q.ctx.SendToGroup(model.SrcEdgeController, msg)
+		q.ctx.SendToGroup(model.SrcEdgeController, *msg)
 	}
 	return nil
 }
 
 // Consume retrieves message from the rChannel for given project and group
-func (q *ChannelEventQueue) Consume(info *model.HubInfo) (EventSet, error) {
+func (q *ChannelMessageQueue) Consume(info *model.HubInfo) (MessageSet, error) {
 	rChannel, err := q.getRChannel(info.NodeID)
 	if err != nil {
 		return nil, err
 	}
-	return NewChannelEventSet((<-chan model.Event)(rChannel)), nil
+	return NewChannelMessageSet((<-chan beehiveModel.Message)(rChannel)), nil
 }
 
 // Workload returns the number of queue channels connected to queue
-func (q *ChannelEventQueue) Workload() (float64, error) {
+func (q *ChannelMessageQueue) Workload() (float64, error) {
 	return 1, nil
 }

@@ -15,7 +15,7 @@ const (
 	ProtocolQuic      = "quic"
 )
 
-func StartCloudHub(protocol string, eventq *channelq.ChannelEventQueue, c *context.Context) {
+func StartCloudHub(protocol string, eventq *channelq.ChannelMessageQueue, c *context.Context) {
 	switch protocol {
 	case ProtocolWebsocket:
 		wsserver.StartCloudHub(util.HubConfig, eventq, c)

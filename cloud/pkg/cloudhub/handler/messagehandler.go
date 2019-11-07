@@ -11,10 +11,10 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
-	emodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
@@ -27,7 +27,7 @@ type ExitCode int
 const (
 	hubioReadFail ExitCode = iota
 	hubioWriteFail
-	eventQueueDisconnect
+	messageQueueDisconnect
 	nodeStop
 )
 
@@ -40,73 +40,73 @@ const (
 // VolumeRegExp is used to validate the volume resource
 var VolumeRegExp = regexp.MustCompile(VolumePattern)
 
-// EventHandle processes events between cloud and edge
-type EventHandle struct {
+// MessageHandle processes messages between cloud and edge
+type MessageHandle struct {
 	KeepaliveInterval int
 	WriteTimeout      int
 	Nodes             sync.Map
 	nodeConns         sync.Map
 	nodeLocks         sync.Map
-	EventQueue        *channelq.ChannelEventQueue
+	MessageQueue      *channelq.ChannelMessageQueue
 	Context           *context.Context
 	Handlers          []HandleFunc
 	NodeLimit         int
 	KeepaliveChannel  map[string]chan struct{}
 }
 
-type HandleFunc func(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode)
+type HandleFunc func(hi hubio.CloudHubIO, info *model.HubInfo, stop chan ExitCode)
 
 var once sync.Once
 
 // CloudhubHandler the shared handler for both websocket and quic servers
-var CloudhubHandler *EventHandle
+var CloudhubHandler *MessageHandle
 
 // InitHandler create a handler for websocket and quic servers
-func InitHandler(config *util.Config, eventq *channelq.ChannelEventQueue, c *context.Context) {
+func InitHandler(config *util.Config, eventq *channelq.ChannelMessageQueue, c *context.Context) {
 	once.Do(func() {
-		CloudhubHandler = &EventHandle{
+		CloudhubHandler = &MessageHandle{
 			KeepaliveInterval: config.KeepaliveInterval,
 			WriteTimeout:      config.WriteTimeout,
-			EventQueue:        eventq,
+			MessageQueue:      eventq,
 			NodeLimit:         config.NodeLimit,
 			Context:           c,
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
-		CloudhubHandler.Handlers = []HandleFunc{CloudhubHandler.KeepaliveCheckLoop, CloudhubHandler.EventWriteLoop}
+		CloudhubHandler.Handlers = []HandleFunc{CloudhubHandler.KeepaliveCheckLoop, CloudhubHandler.MessageWriteLoop}
 
 		CloudhubHandler.initServerEntries()
 	})
 }
 
 // initServerEntries register handler func
-func (eh *EventHandle) initServerEntries() {
-	mux.Entry(mux.NewPattern("*").Op("*"), eh.HandleServer)
+func (mh *MessageHandle) initServerEntries() {
+	mux.Entry(mux.NewPattern("*").Op("*"), mh.HandleServer)
 }
 
 // HandleServer handle all the request from node
-func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
+func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
-	if eh.GetNodeCount() >= eh.NodeLimit {
+	if mh.GetNodeCount() >= mh.NodeLimit {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
 		return
 	}
 
-	if container.Message.GetOperation() == emodel.OpKeepalive {
+	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.Infof("Keepalive message received from node: %s", nodeID)
-		eh.KeepaliveChannel[nodeID] <- struct{}{}
+		mh.KeepaliveChannel[nodeID] <- struct{}{}
 		return
 	}
 
 	// handle the reponse from edge
 	if VolumeRegExp.MatchString(container.Message.GetResource()) {
-		eh.Context.SendResp(*container.Message)
+		mh.Context.SendResp(*container.Message)
 		return
 	}
 
-	err := eh.PubToController(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+	err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
 	if err != nil {
 		// if err, we should stop node, write data to edgehub, stop nodify
 		klog.Errorf("Failed to serve handle with error: %s", err.Error())
@@ -114,24 +114,24 @@ func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.
 }
 
 // OnRegister regist node on first connection
-func (eh *EventHandle) OnRegister(connection conn.Connection) {
+func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
 
-	if _, ok := eh.KeepaliveChannel[nodeID]; !ok {
-		eh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
+	if _, ok := mh.KeepaliveChannel[nodeID]; !ok {
+		mh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
 	}
 
 	io := &hubio.JSONIO{Connection: connection}
-	go eh.ServeConn(io, &emodel.HubInfo{ProjectID: projectID, NodeID: nodeID})
+	go mh.ServeConn(io, &model.HubInfo{ProjectID: projectID, NodeID: nodeID})
 }
 
 // KeepaliveCheckLoop checks whether the edge node is still alive
-func (eh *EventHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
+func (mh *MessageHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *model.HubInfo, stop chan ExitCode) {
 	for {
-		keepaliveTimer := time.NewTimer(time.Duration(eh.KeepaliveInterval) * time.Second)
+		keepaliveTimer := time.NewTimer(time.Duration(mh.KeepaliveInterval) * time.Second)
 		select {
-		case <-eh.KeepaliveChannel[info.NodeID]:
+		case <-mh.KeepaliveChannel[info.NodeID]:
 			klog.Infof("Node %s is still alive", info.NodeID)
 			keepaliveTimer.Stop()
 		case <-keepaliveTimer.C:
@@ -143,14 +143,14 @@ func (eh *EventHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *emodel.HubI
 	}
 }
 
-func dumpEventMetadata(event *emodel.Event) string {
+func dumpMessageMetadata(msg *beehiveModel.Message) string {
 	return fmt.Sprintf("id: %s, parent_id: %s, group: %s, source: %s, resource: %s, operation: %s",
-		event.ID, event.ParentID, event.Group, event.Source, event.UserGroup.Resource, event.UserGroup.Operation)
+		msg.Header.ID, msg.Header.ParentID, msg.Router.Group, msg.Router.Source, msg.Router.Resource, msg.Router.Operation)
 }
 
-func trimMessage(msg *model.Message) {
+func trimMessage(msg *beehiveModel.Message) {
 	resource := msg.GetResource()
-	if strings.HasPrefix(resource, emodel.ResNode) {
+	if strings.HasPrefix(resource, model.ResNode) {
 		tokens := strings.Split(resource, "/")
 		if len(tokens) < 3 {
 			klog.Warningf("event resource %s starts with node but length less than 3", resource)
@@ -161,8 +161,8 @@ func trimMessage(msg *model.Message) {
 }
 
 func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
-	if code == eventQueueDisconnect {
-		msg := model.NewMessage("").BuildRouter(emodel.GpResource, emodel.SrcCloudHub, emodel.NewResource(emodel.ResNode, nodeID, nil), emodel.OpDisConnect)
+	if code == messageQueueDisconnect {
+		msg := beehiveModel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub, model.NewResource(model.ResNode, nodeID, nil), model.OpDisConnect)
 		err := hi.WriteData(msg)
 		if err != nil {
 			klog.Errorf("fail to notify node %s event queue disconnected, reason: %s", nodeID, err.Error())
@@ -170,62 +170,40 @@ func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 	}
 }
 
-func constructConnectEvent(info *emodel.HubInfo, isConnected bool) *emodel.Event {
-	connected := emodel.OpConnect
+func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveModel.Message {
+	connected := model.OpConnect
 	if !isConnected {
-		connected = emodel.OpDisConnect
+		connected = model.OpDisConnect
 	}
 	body := map[string]interface{}{
 		"event_type": connected,
 		"timestamp":  time.Now().Unix(),
 		"client_id":  info.NodeID}
 	content, _ := json.Marshal(body)
-	msg := model.NewMessage("")
-	return &emodel.Event{
-		Group:  emodel.GpResource,
-		Source: emodel.SrcCloudHub,
-		UserGroup: emodel.UserGroupInfo{
-			Resource:  emodel.NewResource(emodel.ResNode, info.NodeID, nil),
-			Operation: connected,
-		},
-		ID:        msg.GetID(),
-		ParentID:  msg.GetParentID(),
-		Timestamp: msg.GetTimestamp(),
-		Content:   string(content),
-	}
+
+	msg := beehiveModel.NewMessage("")
+	msg.BuildRouter(model.SrcCloudHub, model.GpResource, model.NewResource(model.ResNode, info.NodeID, nil), connected)
+	msg.FillBody(content)
+	return msg
 }
 
-func (eh *EventHandle) PubToController(info *emodel.HubInfo, msg *model.Message) error {
+func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.Message) error {
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
-	event := emodel.MessageToEvent(msg)
-	klog.Infof("event received for node %s %s, content: %s", info.NodeID, dumpEventMetadata(&event), event.Content)
-	if event.IsFromEdge() {
-		err := eh.EventQueue.Publish(info, &event)
+	klog.Infof("event received for node %s %s, content: %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
+	if model.IsFromEdge(msg) {
+		err := mh.MessageQueue.Publish(msg)
 		if err != nil {
 			// content is not logged since it may contain sensitive information
 			klog.Errorf("fail to publish event for node %s, %s, reason: %s",
-				info.NodeID, dumpEventMetadata(&event), err.Error())
+				info.NodeID, dumpMessageMetadata(msg), err.Error())
 			return err
 		}
 	}
 	return nil
 }
 
-func (eh *EventHandle) handleNodeQuery(info *emodel.HubInfo, event *emodel.Event) (bool, error) {
-	if event.UserGroup.Operation != "request_exist" {
-		return false, nil
-	}
-	msg := model.NewMessage(event.ID)
-	event.ID = msg.GetID()
-	event.ParentID = msg.GetParentID()
-	event.Timestamp = msg.GetTimestamp()
-	event.UserGroup.Operation = "response_exist"
-
-	return true, eh.EventQueue.Publish(info, event)
-}
-
-func (eh *EventHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *model.Message) error {
-	value, ok := eh.nodeLocks.Load(nodeID)
+func (mh *MessageHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *beehiveModel.Message) error {
+	value, ok := mh.nodeLocks.Load(nodeID)
 	if !ok {
 		return fmt.Errorf("node disconnected")
 	}
@@ -237,8 +215,8 @@ func (eh *EventHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *model
 }
 
 // ServeConn starts serving the incoming connection
-func (eh *EventHandle) ServeConn(hi hubio.CloudHubIO, info *emodel.HubInfo) {
-	err := eh.EnrollNode(hi, info)
+func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
+	err := mh.EnrollNode(hi, info)
 	if err != nil {
 		klog.Errorf("fail to enroll node %s, reason %s", info.NodeID, err.Error())
 		return
@@ -247,27 +225,27 @@ func (eh *EventHandle) ServeConn(hi hubio.CloudHubIO, info *emodel.HubInfo) {
 	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
 	stop := make(chan ExitCode, 2)
 
-	for _, handle := range eh.Handlers {
+	for _, handle := range mh.Handlers {
 		go handle(hi, info, stop)
 	}
 
 	code := <-stop
-	eh.CancelNode(hi, info, code)
+	mh.CancelNode(hi, info, code)
 }
 
 // EnrollNode enroll node for the incoming connection
-func (eh *EventHandle) EnrollNode(hi hubio.CloudHubIO, info *emodel.HubInfo) error {
+func (mh *MessageHandle) EnrollNode(hi hubio.CloudHubIO, info *model.HubInfo) error {
 	// Wait for the previous connection to be cleaned up
 	var err error
-	for i := 0; i <= eh.KeepaliveInterval; i++ {
-		if err = eh.EventQueue.Connect(info); err == nil {
+	for i := 0; i <= mh.KeepaliveInterval; i++ {
+		if err = mh.MessageQueue.Connect(info); err == nil {
 			break
 		}
 		time.Sleep(time.Duration(1) * time.Second)
 	}
 	if err != nil {
 		klog.Errorf("fail to connect to event queue for node %s, reason %s", info.NodeID, err.Error())
-		notifyEventQueueError(hi, eventQueueDisconnect, info.NodeID)
+		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
 		err = hi.Close()
 		if err != nil {
 			klog.Errorf("fail to close connection, reason: %s", err.Error())
@@ -275,114 +253,105 @@ func (eh *EventHandle) EnrollNode(hi hubio.CloudHubIO, info *emodel.HubInfo) err
 		return err
 	}
 
-	err = eh.EventQueue.Publish(info, constructConnectEvent(info, true))
+	err = mh.MessageQueue.Publish(constructConnectMessage(info, true))
 	if err != nil {
 		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
-		notifyEventQueueError(hi, eventQueueDisconnect, info.NodeID)
+		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
 		err = hi.Close()
 		if err != nil {
 			klog.Errorf("fail to close connection, reason: %s", err.Error())
 		}
-		eh.EventQueue.Close(info)
+		mh.MessageQueue.Close(info)
 		return err
 	}
 
-	eh.nodeConns.Store(info.NodeID, hi)
-	eh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
-	eh.Nodes.Store(info.NodeID, true)
+	mh.nodeConns.Store(info.NodeID, hi)
+	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
+	mh.Nodes.Store(info.NodeID, true)
 	return nil
 }
 
-func (eh *EventHandle) CancelNode(hi hubio.CloudHubIO, info *emodel.HubInfo, code ExitCode) {
-	eh.nodeLocks.Delete(info.NodeID)
-	eh.nodeConns.Delete(info.NodeID)
+func (mh *MessageHandle) CancelNode(hi hubio.CloudHubIO, info *model.HubInfo, code ExitCode) {
+	mh.nodeLocks.Delete(info.NodeID)
+	mh.nodeConns.Delete(info.NodeID)
 
-	err := eh.EventQueue.Publish(info, constructConnectEvent(info, false))
+	err := mh.MessageQueue.Publish(constructConnectMessage(info, false))
 	if err != nil {
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
 	notifyEventQueueError(hi, code, info.NodeID)
-	eh.Nodes.Delete(info.NodeID)
+	mh.Nodes.Delete(info.NodeID)
 	err = hi.Close()
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
 	}
-	eh.EventQueue.Close(info)
+	mh.MessageQueue.Close(info)
 }
 
 // GetNodeCount returns the number of connected Nodes
-func (eh *EventHandle) GetNodeCount() int {
+func (mh *MessageHandle) GetNodeCount() int {
 	var num int
 	iter := func(key, value interface{}) bool {
 		num++
 		return true
 	}
-	eh.Nodes.Range(iter)
+	mh.Nodes.Range(iter)
 	return num
 }
 
 // GetWorkload returns the workload of the event queue
-func (eh *EventHandle) GetWorkload() (float64, error) {
-	return eh.EventQueue.Workload()
+func (mh *MessageHandle) GetWorkload() (float64, error) {
+	return mh.MessageQueue.Workload()
 }
 
-// EventWriteLoop processes all write requests
-func (eh *EventHandle) EventWriteLoop(hi hubio.CloudHubIO, info *emodel.HubInfo, stop chan ExitCode) {
-	events, err := eh.EventQueue.Consume(info)
+// MessageWriteLoop processes all write requests
+func (mh *MessageHandle) MessageWriteLoop(hi hubio.CloudHubIO, info *model.HubInfo, stop chan ExitCode) {
+	messages, err := mh.MessageQueue.Consume(info)
 	if err != nil {
 		klog.Errorf("failed to consume event for node %s, reason: %s", info.NodeID, err.Error())
-		stop <- eventQueueDisconnect
+		stop <- messageQueueDisconnect
 		return
 	}
 	for {
-		event, err := events.Get()
+		msg, err := messages.Get()
 		if err != nil {
 			klog.Errorf("failed to consume event for node %s, reason: %s", info.NodeID, err.Error())
 			if err.Error() == MsgFormatError {
 				// error format message should not impact other message
-				events.Ack()
+				messages.Ack()
 				continue
 			}
-			stop <- eventQueueDisconnect
+			stop <- messageQueueDisconnect
 			return
 		}
-		isQuery, err := eh.handleNodeQuery(info, event)
-		if err != nil {
-			klog.Errorf("failed to process node query event for node %s, reason %s", info.NodeID, err.Error())
-		}
-		if isQuery {
-			events.Ack()
-			continue
-		}
 
-		if event.IsNodeStopped() {
+		if model.IsNodeStopped(msg) {
 			klog.Infof("node %s is stopped, will disconnect", info.NodeID)
-			events.Ack()
+			messages.Ack()
 			stop <- nodeStop
 			return
 		}
-		if !event.IsToEdge() {
-			klog.Infof("skip only to cloud event for node %s, %s, content %s", info.NodeID, dumpEventMetadata(event), event.Content)
-			events.Ack()
+		if !model.IsToEdge(msg) {
+			klog.Infof("skip only to cloud event for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
+			messages.Ack()
 			continue
 		}
-		klog.Infof("event to send for node %s, %s, content %s", info.NodeID, dumpEventMetadata(event), event.Content)
+		klog.Infof("event to send for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 
-		msg := emodel.EventToMessage(event)
-		trimMessage(&msg)
-		err = hi.SetWriteDeadline(time.Now().Add(time.Duration(eh.WriteTimeout) * time.Second))
+		trimMessage(msg)
+		err = hi.SetWriteDeadline(time.Now().Add(time.Duration(mh.WriteTimeout) * time.Second))
 		if err != nil {
 			klog.Errorf("SetWriteDeadline error, %s", err.Error())
 			stop <- hubioWriteFail
 			return
 		}
-		err = eh.hubIoWrite(hi, info.NodeID, &msg)
+		err = mh.hubIoWrite(hi, info.NodeID, msg)
 		if err != nil {
 			klog.Errorf("write error, connection for node %s will be closed, affected event %s, reason %s",
-				info.NodeID, dumpEventMetadata(event), err.Error())
+				info.NodeID, dumpMessageMetadata(msg), err.Error())
 			stop <- hubioWriteFail
 			return
 		}
-		events.Ack()
+		messages.Ack()
 	}
 }
