@@ -144,9 +144,9 @@ func (q *ChannelEventQueue) Publish(info *model.HubInfo, event *model.Event) err
 	msg := model.EventToMessage(event)
 	switch msg.Router.Source {
 	case model.ResTwin:
-		q.ctx.Send2Group(model.SrcDeviceController, msg)
+		q.ctx.SendToGroup(model.SrcDeviceController, msg)
 	default:
-		q.ctx.Send2Group(model.SrcEdgeController, msg)
+		q.ctx.SendToGroup(model.SrcEdgeController, msg)
 	}
 	return nil
 }

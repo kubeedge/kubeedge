@@ -158,13 +158,13 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 	klog.Warningf("Get bad anonName:%s when sendresp message, do nothing", anonName)
 }
 
-// Send2Group send msg to modules. Todo: do not stuck
-func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) {
+// SendToGroup send msg to modules. Todo: do not stuck
+func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
-			klog.Warningf("Recover when send2group message, exception: %+v", exception)
+			klog.Warningf("Recover when sendToGroup message, exception: %+v", exception)
 		}
 	}()
 
@@ -184,17 +184,17 @@ func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) 
 		}
 		return
 	}
-	klog.Warningf("Get bad module type:%s when send2group message, do nothing", moduleType)
+	klog.Warningf("Get bad module type:%s when sendToGroup message, do nothing", moduleType)
 }
 
-// Send2GroupSync : broadcast the message to echo module channel, the module send response back anon channel
+// SendToGroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
-func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error {
+func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
-			klog.Warningf("Recover when send2groupsync message, exception: %+v", exception)
+			klog.Warningf("Recover when sendToGroupsync message, exception: %+v", exception)
 		}
 	}()
 
@@ -231,7 +231,7 @@ func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Messa
 			}
 		}
 		if uninvitedGuests != 0 {
-			klog.Errorf("Get some unexpected:%d resp when send2groupsync message", uninvitedGuests)
+			klog.Errorf("Get some unexpected:%d resp when sendToGroupsync message", uninvitedGuests)
 			return fmt.Errorf("got some unexpected(%d) resp", uninvitedGuests)
 		}
 		return nil
@@ -269,7 +269,7 @@ func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Messa
 				errInfo := fmt.Sprintf("timeout to send message, several %d timeout when send", timeoutCounter)
 				return fmt.Errorf(errInfo)
 			}
-			klog.Error("Timeout to send2groupsync message")
+			klog.Error("Timeout to sendToGroupsync message")
 			return fmt.Errorf("Timeout to send message")
 		}
 	}

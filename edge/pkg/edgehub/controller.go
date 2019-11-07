@@ -163,7 +163,7 @@ func (ehc *Controller) dispatch(message model.Message) error {
 
 	isResponse := ehc.isSyncResponse(message.GetParentID())
 	if !isResponse {
-		ehc.context.Send2Group(md, message)
+		ehc.context.SendToGroup(md, message)
 		return nil
 	}
 	return ehc.sendToKeepChannel(message)
@@ -263,6 +263,6 @@ func (ehc *Controller) pubConnectInfo(isConnected bool) {
 	for _, group := range groupMap {
 		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
 			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
-		ehc.context.Send2Group(group, *message)
+		ehc.context.SendToGroup(group, *message)
 	}
 }

@@ -74,7 +74,7 @@ func (dc *UpstreamController) SyncPods(stop chan struct{}) {
 			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
 
 			klog.V(4).Infof("Begin to sync message: %v", *msg)
-			dc.context.Send2Group(constants.HubGroup, *msg)
+			dc.context.SendToGroup(constants.HubGroup, *msg)
 			klog.V(4).Infof("End to sync message: %v", *msg)
 		}
 		time.Sleep(5 * time.Second)

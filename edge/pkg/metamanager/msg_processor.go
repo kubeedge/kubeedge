@@ -71,13 +71,13 @@ func feedbackError(err error, info string, request model.Message, c *context.Con
 	}
 	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
 	if request.GetSource() == modules.EdgedModuleName {
-		send2Edged(errResponse, request.IsSync(), c)
+		sendToEdged(errResponse, request.IsSync(), c)
 	} else {
-		send2Cloud(errResponse, c)
+		sendToCloud(errResponse, c)
 	}
 }
 
-func send2Edged(message *model.Message, sync bool, c *context.Context) {
+func sendToEdged(message *model.Message, sync bool, c *context.Context) {
 	if sync {
 		c.SendResp(*message)
 	} else {
@@ -85,7 +85,7 @@ func send2Edged(message *model.Message, sync bool, c *context.Context) {
 	}
 }
 
-func send2EdgeMesh(message *model.Message, sync bool, c *context.Context) {
+func sendToEdgeMesh(message *model.Message, sync bool, c *context.Context) {
 	if sync {
 		c.SendResp(*message)
 	} else {
@@ -93,8 +93,8 @@ func send2EdgeMesh(message *model.Message, sync bool, c *context.Context) {
 	}
 }
 
-func send2Cloud(message *model.Message, c *context.Context) {
-	c.Send2Group(sendModuleGroupName, *message)
+func sendToCloud(message *model.Message, c *context.Context) {
+	c.SendToGroup(sendModuleGroupName, *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -174,14 +174,14 @@ func (m *metaManager) processInsert(message model.Message) {
 
 	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 		// Notify edgemesh
-		send2EdgeMesh(&message, false, m.context)
+		sendToEdgeMesh(&message, false, m.context)
 	} else {
 		// Notify edged
-		send2Edged(&message, false, m.context)
+		sendToEdged(&message, false, m.context)
 	}
 
 	resp := message.NewRespByMessage(&message, OK)
-	send2Cloud(resp, m.context)
+	sendToCloud(resp, m.context)
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
@@ -227,9 +227,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 					continue
 				}
 			}
-			send2EdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false, m.context)
 			resp := message.NewRespByMessage(&message, OK)
-			send2Cloud(resp, m.context)
+			sendToCloud(resp, m.context)
 			return
 		case constants.ResourceTypeServiceList:
 			var svcList []v1.Service
@@ -256,9 +256,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 					continue
 				}
 			}
-			send2EdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false, m.context)
 			resp := message.NewRespByMessage(&message, OK)
-			send2Cloud(resp, m.context)
+			sendToCloud(resp, m.context)
 			return
 		case model.ResourceTypePodlist:
 			meta := &dao.Meta{
@@ -271,9 +271,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 				feedbackError(err, "Error to update meta to DB", message, m.context)
 				return
 			}
-			send2EdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false, m.context)
 			resp := message.NewRespByMessage(&message, OK)
-			send2Cloud(resp, m.context)
+			sendToCloud(resp, m.context)
 			return
 		default:
 			klog.Warningf("Resource type %s unknown", resType)
@@ -283,7 +283,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
-		send2Edged(resp, message.IsSync(), m.context)
+		sendToEdged(resp, message.IsSync(), m.context)
 		klog.Infof("resource[%s] unchanged, no notice", resKey)
 		return
 	}
@@ -302,21 +302,21 @@ func (m *metaManager) processUpdate(message model.Message) {
 	switch message.GetSource() {
 	//case core.EdgedModuleName:
 	case modules.EdgedModuleName:
-		send2Cloud(&message, m.context)
+		sendToCloud(&message, m.context)
 		resp := message.NewRespByMessage(&message, OK)
-		send2Edged(resp, message.IsSync(), m.context)
+		sendToEdged(resp, message.IsSync(), m.context)
 	case CloudControlerModel:
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			send2EdgeMesh(&message, message.IsSync(), m.context)
+			sendToEdgeMesh(&message, message.IsSync(), m.context)
 		} else {
-			send2Edged(&message, message.IsSync(), m.context)
+			sendToEdged(&message, message.IsSync(), m.context)
 		}
 		resp := message.NewRespByMessage(&message, OK)
-		send2Cloud(resp, m.context)
+		sendToCloud(resp, m.context)
 	case CloudFunctionModel:
 		m.context.Send(EdgeFunctionModel, message)
 	case EdgeFunctionModel:
-		send2Cloud(&message, m.context)
+		sendToCloud(&message, m.context)
 	}
 }
 
@@ -351,13 +351,13 @@ func (m *metaManager) processResponse(message model.Message) {
 	// Notify edged or edgemesh if the data if coming from cloud
 	if message.GetSource() == CloudControlerModel {
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			send2EdgeMesh(&message, message.IsSync(), m.context)
+			sendToEdgeMesh(&message, message.IsSync(), m.context)
 		} else {
-			send2Edged(&message, message.IsSync(), m.context)
+			sendToEdged(&message, message.IsSync(), m.context)
 		}
 	} else {
 		// Send to cloud if the update request is coming from edged
-		send2Cloud(&message, m.context)
+		sendToCloud(&message, m.context)
 	}
 }
 
@@ -372,15 +372,15 @@ func (m *metaManager) processDelete(message model.Message) {
 	_, resType, _ := parseResource(message.GetResource())
 	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 		// Notify edgemesh
-		send2EdgeMesh(&message, false, m.context)
+		sendToEdgeMesh(&message, false, m.context)
 		resp := message.NewRespByMessage(&message, OK)
-		send2Cloud(resp, m.context)
+		sendToCloud(resp, m.context)
 		return
 	}
 	// Notify edged
-	send2Edged(&message, false, m.context)
+	sendToEdged(&message, false, m.context)
 	resp := message.NewRespByMessage(&message, OK)
-	send2Cloud(resp, m.context)
+	sendToCloud(resp, m.context)
 }
 
 func (m *metaManager) processQuery(message model.Message) {
@@ -394,7 +394,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
 			resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-			send2Edged(resp, message.IsSync(), m.context)
+			sendToEdged(resp, message.IsSync(), m.context)
 		}
 		return
 	}
@@ -412,9 +412,9 @@ func (m *metaManager) processQuery(message model.Message) {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
-			send2EdgeMesh(resp, message.IsSync(), m.context)
+			sendToEdgeMesh(resp, message.IsSync(), m.context)
 		} else {
-			send2Edged(resp, message.IsSync(), m.context)
+			sendToEdged(resp, message.IsSync(), m.context)
 		}
 	}
 }
@@ -456,9 +456,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			send2EdgeMesh(&resp, message.IsSync(), m.context)
+			sendToEdgeMesh(&resp, message.IsSync(), m.context)
 		} else {
-			send2Edged(&resp, message.IsSync(), m.context)
+			sendToEdged(&resp, message.IsSync(), m.context)
 		}
 	}()
 }
@@ -519,7 +519,7 @@ func (m *metaManager) syncPodStatus() {
 	}
 
 	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
-	send2Cloud(msg, m.context)
+	sendToCloud(msg, m.context)
 	klog.Infof("sync pod status successful, %s", msgDebugInfo(msg))
 }
 
@@ -581,7 +581,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 		return
 	}
 
-	send2Cloud(&message, m.context)
+	sendToCloud(&message, m.context)
 
 }
 
@@ -594,7 +594,7 @@ func (m *metaManager) processVolume(message model.Message) {
 	}
 
 	resp := message.NewRespByMessage(&message, back.GetContent())
-	send2Cloud(resp, m.context)
+	sendToCloud(resp, m.context)
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 

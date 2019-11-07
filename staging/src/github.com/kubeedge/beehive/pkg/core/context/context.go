@@ -22,8 +22,8 @@ type MessageContext interface {
 	SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error)
 	SendResp(message model.Message)
 	// group broadcast
-	Send2Group(moduleType string, message model.Message)
-	Send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error
+	SendToGroup(moduleType string, message model.Message)
+	SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error
 }
 
 // Context is global context object
