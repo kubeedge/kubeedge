@@ -16,7 +16,7 @@ import (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *context.Context) {
+func StartCloudHub(config *util.Config, messageq *channelq.ChannelMessageQueue, c *context.Context) {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
@@ -35,7 +35,7 @@ func StartCloudHub(config *util.Config, eventq *channelq.ChannelEventQueue, c *c
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 	}
 
-	handler.InitHandler(config, eventq, c)
+	handler.InitHandler(config, messageq, c)
 
 	svc := server.Server{
 		Type:       api.ProtocolTypeQuic,
