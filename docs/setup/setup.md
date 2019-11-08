@@ -16,7 +16,11 @@ KubeEdge is composed  of cloud and edge parts. It is built upon Kubernetes and p
 
 + [Creating kubernetes cluster with kubeadm on cloud side](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-+ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/)
++ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/). For go version 1.3, please run the following command first
+```bash
+. $GOPATH/src/github.com/kubeedge/kubeedge/go13.sh
+```
+    
 + [Install mosquitto on every edge side](https://mosquitto.org/download/)
 
 ## Run KubeEdge
