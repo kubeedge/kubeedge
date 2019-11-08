@@ -118,7 +118,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
         burst: 10
         kubeconfig: "~/.kube/config" #Enter path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
     ```
-    cloudcore default supports https connection to Kubernetes (required version is 1.15+) apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
+    cloudcore default supports https connection to Kubernetes apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
     Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` exist.
 
 + Run cloudcore
