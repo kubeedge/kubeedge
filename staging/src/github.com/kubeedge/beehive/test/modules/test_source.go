@@ -48,7 +48,7 @@ func (m *testModuleSource) Start(c *context.Context) {
 
 	message = model.NewMessage("").SetRoute(SourceModule, DestinationGroup).
 		SetResourceOperation("test", model.DeleteOperation).FillBody("fine")
-	c.Send2Group(DestinationGroup, *message)
+	c.SendToGroup(DestinationGroup, *message)
 }
 
 func (m *testModuleSource) Cleanup() {
