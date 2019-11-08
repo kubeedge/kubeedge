@@ -129,7 +129,7 @@ func TestProcessInsert(t *testing.T) {
 	mainContext.AddModuleGroup(metaMgrModule.Name(), metaMgrModule.Group())
 	metaMgrModule.Start(mainContext)
 
-	//SaveMeta Failed, feedbackError Send2Cloud
+	//SaveMeta Failed, feedbackError SendToCloud
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, model.InsertOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)
@@ -145,7 +145,7 @@ func TestProcessInsert(t *testing.T) {
 		}
 	})
 
-	//SaveMeta Failed, feedbackError Send2Edged and 2 resources
+	//SaveMeta Failed, feedbackError SendToEdged and 2 resources
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), errFailedDBOperation).Times(1)
 	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypePodStatus+"/secondRes", model.InsertOperation)
 	mainContext.Send(MetaManagerModuleName, *msg)

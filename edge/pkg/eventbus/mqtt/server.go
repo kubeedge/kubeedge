@@ -116,7 +116,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(msg.Payload))
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	ModuleContext.Send2Group(target, *message)
+	ModuleContext.SendToGroup(target, *message)
 }
 
 // InitInternalTopics sets internal topics to server by default.

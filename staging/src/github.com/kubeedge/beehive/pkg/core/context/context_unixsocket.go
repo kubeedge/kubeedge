@@ -65,7 +65,7 @@ func (ctx *UnixSocketContext) SendResp(messageID string, content interface{}) {
 
 }
 
-// Send2Group broadcasts the message to all of group members
-func (ctx *UnixSocketContext) Send2Group(moduleType string, content interface{}) {
+// SendToGroup broadcasts the message to all of group members
+func (ctx *UnixSocketContext) SendToGroup(moduleType string, content interface{}) {
 
 }

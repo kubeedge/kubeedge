@@ -106,7 +106,7 @@ func (eh *EventHandle) HandleServer(container *mux.MessageContainer, writer mux.
 		return
 	}
 
-	err := eh.Pub2Controller(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+	err := eh.PubToController(&emodel.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
 	if err != nil {
 		// if err, we should stop node, write data to edgehub, stop nodify
 		klog.Errorf("Failed to serve handle with error: %s", err.Error())
@@ -195,7 +195,7 @@ func constructConnectEvent(info *emodel.HubInfo, isConnected bool) *emodel.Event
 	}
 }
 
-func (eh *EventHandle) Pub2Controller(info *emodel.HubInfo, msg *model.Message) error {
+func (eh *EventHandle) PubToController(info *emodel.HubInfo, msg *model.Message) error {
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
 	event := emodel.MessageToEvent(msg)
 	klog.Infof("event received for node %s %s, content: %s", info.NodeID, dumpEventMetadata(&event), event.Content)
