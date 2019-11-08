@@ -224,7 +224,7 @@ func (eh *EventHandle) handleNodeQuery(info *emodel.HubInfo, event *emodel.Event
 	return true, eh.EventQueue.Publish(info, event)
 }
 
-func (eh *EventHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, v interface{}) error {
+func (eh *EventHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *model.Message) error {
 	value, ok := eh.nodeLocks.Load(nodeID)
 	if !ok {
 		return fmt.Errorf("node disconnected")
@@ -233,7 +233,7 @@ func (eh *EventHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, v interfac
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	return hi.WriteData(v)
+	return hi.WriteData(msg)
 }
 
 // ServeConn starts serving the incoming connection
