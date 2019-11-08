@@ -41,18 +41,18 @@ func (a *cloudHub) Start(c *beehiveContext.Context) {
 
 	initHubConfig()
 
-	eventq := channelq.NewChannelEventQueue(c)
+	messageq := channelq.NewChannelMessageQueue(c)
 
 	// start dispatch message from the cloud to edge node
-	go eventq.DispatchMessage(ctx)
+	go messageq.DispatchMessage(ctx)
 
 	// start the cloudhub server
 	if util.HubConfig.ProtocolWebsocket {
-		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
+		go servers.StartCloudHub(servers.ProtocolWebsocket, messageq, c)
 	}
 
 	if util.HubConfig.ProtocolQuic {
-		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
+		go servers.StartCloudHub(servers.ProtocolQuic, messageq, c)
 	}
 
 	if util.HubConfig.ProtocolUDS {
