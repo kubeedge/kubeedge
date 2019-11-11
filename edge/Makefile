@@ -19,7 +19,7 @@ endif
 
 export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
 test:
-	find ${TEST_DIR} -name "*_test.go"| xargs -I{} dirname {} | uniq | xargs -I{} go test -v ${T} {}
+	find ${TEST_DIR} -name "*_test.go"| xargs -I{} dirname {} | uniq | xargs -I{} go test ${T} {}
 
 # lint
 .PHONY: lint
