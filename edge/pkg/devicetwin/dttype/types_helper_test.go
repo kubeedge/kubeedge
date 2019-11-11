@@ -163,10 +163,27 @@ func TestUnmarshalBaseMessage(t *testing.T) {
 // TestDeviceAttrToMsgAttr is function to test DeviceAttrtoMsgAttr().
 func TestDeviceAttrToMsgAttr(t *testing.T) {
 	var devAttr []dtclient.DeviceAttr
-	attr := dtclient.DeviceAttr{ID: 00, DeviceID: "DeviceA", Name: "SensorTag", Description: "Sensor", Value: "Temperature", Optional: true, AttrType: "float", Metadata: "CelsiusScale"}
+	attr := dtclient.DeviceAttr{
+		ID:          00,
+		DeviceID:    "DeviceA",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		Value:       "Temperature",
+		Optional:    true,
+		AttrType:    "float",
+		Metadata:    "CelsiusScale",
+	}
+
 	devAttr = append(devAttr, attr)
 	wantAttr := make(map[string]*MsgAttr)
-	wantAttr[attr.Name] = &MsgAttr{Value: attr.Value, Optional: &attr.Optional, Metadata: &TypeMetadata{Type: attr.AttrType}}
+	wantAttr[attr.Name] = &MsgAttr{
+		Value:    attr.Value,
+		Optional: &attr.Optional,
+		Metadata: &TypeMetadata{
+			Type: attr.AttrType,
+		},
+	}
+
 	tests := []struct {
 		name        string
 		deviceAttrs []dtclient.DeviceAttr
@@ -224,14 +241,36 @@ func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*Ms
 	var actualVersion TwinVersion
 	json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
 	msgTwins := make(map[string]*MsgTwin)
-	msgTwin := &MsgTwin{Optional: &devTwin.Optional, Metadata: &TypeMetadata{Type: devTwin.AttrType}, Expected: expectedValue, Actual: actualValue, ExpectedVersion: &expectedVersion, ActualVersion: &actualVersion}
+	msgTwin := &MsgTwin{
+		Optional: &devTwin.Optional,
+		Metadata: &TypeMetadata{
+			Type: devTwin.AttrType,
+		},
+		Expected:        expectedValue,
+		Actual:          actualValue,
+		ExpectedVersion: &expectedVersion,
+		ActualVersion:   &actualVersion,
+	}
 	msgTwins[devTwin.Name] = msgTwin
 	return msgTwins
 }
 
 // TestDeviceTwinToMsgTwin is function to test DeviceTwinToMsgTwin().
 func TestDeviceTwinToMsgTwin(t *testing.T) {
-	devTwin := dtclient.DeviceTwin{ID: 00, DeviceID: "DeviceA", Name: "SensorTag", Description: "Sensor", Expected: "ON", Actual: "ON", ExpectedVersion: "Version1", ActualVersion: "Version1", Optional: true, ExpectedMeta: "Updation", ActualMeta: "Updation", AttrType: "Temperature"}
+	devTwin := dtclient.DeviceTwin{
+		ID:              00,
+		DeviceID:        "DeviceA",
+		Name:            "SensorTag",
+		Description:     "Sensor",
+		Expected:        "ON",
+		Actual:          "ON",
+		ExpectedVersion: "Version1",
+		ActualVersion:   "Version1",
+		Optional:        true,
+		ExpectedMeta:    "Updation",
+		ActualMeta:      "Updation",
+		AttrType:        "Temperature",
+	}
 	deviceTwin := createDeviceTwin(devTwin)
 	msgTwins := createMessageTwinFromDeviceTwin(devTwin)
 	tests := []struct {
@@ -257,9 +296,19 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 // TestMsgAttrToDeviceAttr is function to test MsgAttrToDeviceAttr().
 func TestMsgAttrToDeviceAttr(t *testing.T) {
 	optional := true
-	metadata := &TypeMetadata{Type: "string"}
-	msgAttr := MsgAttr{Optional: &optional, Metadata: metadata}
-	wantDeviceAttr := dtclient.DeviceAttr{Name: "Sensor", AttrType: metadata.Type, Optional: optional}
+	metadata := &TypeMetadata{
+		Type: "string",
+	}
+	msgAttr := MsgAttr{
+		Optional: &optional,
+		Metadata: metadata,
+	}
+	wantDeviceAttr := dtclient.DeviceAttr{
+		Name:     "Sensor",
+		AttrType: metadata.Type,
+		Optional: optional,
+	}
+
 	tests := []struct {
 		name         string
 		attrname     string
@@ -293,8 +342,14 @@ func TestCopyMsgTwin(t *testing.T) {
 		{
 			name: "CopyMsgTwinTest/noVersion-true",
 			msgTwin: &MsgTwin{
-				ActualVersion:   &TwinVersion{CloudVersion: 10, EdgeVersion: 10},
-				ExpectedVersion: &TwinVersion{CloudVersion: 11, EdgeVersion: 11},
+				ActualVersion: &TwinVersion{
+					CloudVersion: 10,
+					EdgeVersion:  10,
+				},
+				ExpectedVersion: &TwinVersion{
+					CloudVersion: 11,
+					EdgeVersion:  11,
+				},
 			},
 			noVersion: true,
 			want: MsgTwin{
@@ -305,13 +360,25 @@ func TestCopyMsgTwin(t *testing.T) {
 		{
 			name: "CopyMsgTwinTest/noVersion-false",
 			msgTwin: &MsgTwin{
-				ActualVersion:   &TwinVersion{CloudVersion: 10, EdgeVersion: 10},
-				ExpectedVersion: &TwinVersion{CloudVersion: 11, EdgeVersion: 11},
+				ActualVersion: &TwinVersion{
+					CloudVersion: 10,
+					EdgeVersion:  10,
+				},
+				ExpectedVersion: &TwinVersion{
+					CloudVersion: 11,
+					EdgeVersion:  11,
+				},
 			},
 			noVersion: false,
 			want: MsgTwin{
-				ActualVersion:   &TwinVersion{CloudVersion: 10, EdgeVersion: 10},
-				ExpectedVersion: &TwinVersion{CloudVersion: 11, EdgeVersion: 11},
+				ActualVersion: &TwinVersion{
+					CloudVersion: 10,
+					EdgeVersion:  10,
+				},
+				ExpectedVersion: &TwinVersion{
+					CloudVersion: 11,
+					EdgeVersion:  11,
+				},
 			},
 		},
 	}
@@ -334,9 +401,17 @@ func TestCopyMsgAttr(t *testing.T) {
 		want    MsgAttr
 	}{
 		{
-			name:    "CopyMsgAttrTest",
-			msgAttr: &MsgAttr{Value: "value", Optional: &optional, Metadata: &metaData},
-			want:    MsgAttr{Value: "value", Optional: &optional, Metadata: &metaData},
+			name: "CopyMsgAttrTest",
+			msgAttr: &MsgAttr{
+				Value:    "value",
+				Optional: &optional,
+				Metadata: &metaData,
+			},
+			want: MsgAttr{
+				Value:    "value",
+				Optional: &optional,
+				Metadata: &metaData,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -384,8 +459,15 @@ func TestMsgTwinToDeviceTwin(t *testing.T) {
 //TestBuildDeviceState is function to test BuildDeviceState().
 func TestBuildDeviceState(t *testing.T) {
 	baseMessage := BaseMessage{EventID: uuid.NewV4().String(), Timestamp: time.Now().UnixNano() / 1e6}
-	device := Device{Name: "SensorTag", State: "ON", LastOnline: "Today"}
-	deviceMsg := DeviceMsg{BaseMessage: baseMessage, Device: device}
+	device := Device{
+		Name:       "SensorTag",
+		State:      "ON",
+		LastOnline: "Today",
+	}
+	deviceMsg := DeviceMsg{
+		BaseMessage: baseMessage,
+		Device:      device,
+	}
 	want, _ := json.Marshal(deviceMsg)
 	tests := []struct {
 		name        string
@@ -418,11 +500,32 @@ func TestBuildDeviceState(t *testing.T) {
 
 // TestBuildDeviceAttrUpdate is function to test BuildDeviceAttrUpdate().
 func TestBuildDeviceAttrUpdate(t *testing.T) {
-	baseMessage := BaseMessage{EventID: uuid.NewV4().String(), Timestamp: time.Now().UnixNano() / 1e6}
-	attr := dtclient.DeviceAttr{ID: 00, DeviceID: "DeviceA", Name: "SensorTag", Description: "Sensor", Value: "Temperature", Optional: true, AttrType: "float", Metadata: "CelsiusScale"}
+	baseMessage := BaseMessage{
+		EventID:   uuid.NewV4().String(),
+		Timestamp: time.Now().UnixNano() / 1e6,
+	}
+	attr := dtclient.DeviceAttr{
+		ID:          00,
+		DeviceID:    "DeviceA",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		Value:       "Temperature",
+		Optional:    true,
+		AttrType:    "float",
+		Metadata:    "CelsiusScale",
+	}
 	attrs := make(map[string]*MsgAttr)
-	attrs[attr.Name] = &MsgAttr{Value: attr.Value, Optional: &attr.Optional, Metadata: &TypeMetadata{Type: attr.AttrType}}
-	devAttrUpdate := DeviceAttrUpdate{BaseMessage: baseMessage, Attributes: attrs}
+	attrs[attr.Name] = &MsgAttr{
+		Value:    attr.Value,
+		Optional: &attr.Optional,
+		Metadata: &TypeMetadata{
+			Type: attr.AttrType,
+		},
+	}
+	devAttrUpdate := DeviceAttrUpdate{
+		BaseMessage: baseMessage,
+		Attributes:  attrs,
+	}
 	bytesDevAttrUpdate, _ := json.Marshal(devAttrUpdate)
 	tests := []struct {
 		name        string
@@ -457,8 +560,13 @@ func TestBuildDeviceAttrUpdate(t *testing.T) {
 func createMessageAttribute() map[string]*MsgAttr {
 	attrs := make(map[string]*MsgAttr)
 	optional := true
-	metadata := &TypeMetadata{Type: "string"}
-	msgAttr := MsgAttr{Optional: &optional, Metadata: metadata}
+	metadata := &TypeMetadata{
+		Type: "string",
+	}
+	msgAttr := MsgAttr{
+		Optional: &optional,
+		Metadata: metadata,
+	}
 	attrs["SensorTag"] = &msgAttr
 	return attrs
 }
@@ -467,7 +575,14 @@ func createMessageAttribute() map[string]*MsgAttr {
 func createDevice() []*Device {
 	attrs := createMessageAttribute()
 	devices := []*Device{}
-	device := &Device{ID: "id1", Name: "SensorTag", Description: "Sensor", State: "ON", LastOnline: "TODAY", Attributes: attrs}
+	device := &Device{
+		ID:          "id1",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		State:       "ON",
+		LastOnline:  "TODAY",
+		Attributes:  attrs,
+	}
 	devices = append(devices, device)
 	return devices
 }
@@ -476,10 +591,24 @@ func createDevice() []*Device {
 func createMembershipGetResult(message BaseMessage) MembershipGetResult {
 	attrs := createMessageAttribute()
 	devices := []*Device{}
-	device := &Device{ID: "id1", Name: "SensorTag", Description: "Sensor", State: "ON", LastOnline: "TODAY", Attributes: attrs}
+	device := &Device{
+		ID:          "id1",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		State:       "ON",
+		LastOnline:  "TODAY",
+		Attributes:  attrs,
+	}
 	devices = append(devices, device)
 	wantDevice := []Device{}
-	wantDev := Device{ID: device.ID, Name: device.Name, Description: device.Description, State: device.State, LastOnline: device.LastOnline, Attributes: device.Attributes}
+	wantDev := Device{
+		ID:          device.ID,
+		Name:        device.Name,
+		Description: device.Description,
+		State:       device.State,
+		LastOnline:  device.LastOnline,
+		Attributes:  device.Attributes,
+	}
 	wantDevice = append(wantDevice, wantDev)
 	memGetResult := MembershipGetResult{BaseMessage: message, Devices: wantDevice}
 	return memGetResult
@@ -523,8 +652,15 @@ func TestBuildMembershipGetResult(t *testing.T) {
 //createMessageTwin() is function to create a map of MessageTwin with MetaDataType updated and deleted.
 func createMessageTwin() map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
-	twinMetadataDeleted := MsgTwin{Metadata: &TypeMetadata{Type: "deleted"}}
-	twinMetadataUpdated := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}}
+	twinMetadataDeleted := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "deleted"},
+	}
+	twinMetadataUpdated := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+	}
 	msgTwins["empty"] = nil
 	msgTwins["deleted"] = &twinMetadataDeleted
 	msgTwins["updated"] = &twinMetadataUpdated
@@ -535,9 +671,16 @@ func createMessageTwin() map[string]*MsgTwin {
 func createDeviceTwinResultDealTypeGet(baseMessage BaseMessage) DeviceTwinResult {
 	resultDealType0Twin := make(map[string]*MsgTwin)
 	resultDealType0Twin["empty"] = nil
-	twinMetadataUpdated := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}}
+	twinMetadataUpdated := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+	}
 	resultDealType0Twin["updated"] = &twinMetadataUpdated
-	devTwinResult := DeviceTwinResult{BaseMessage: baseMessage, Twin: resultDealType0Twin}
+	devTwinResult := DeviceTwinResult{
+		BaseMessage: baseMessage,
+		Twin:        resultDealType0Twin,
+	}
 	return devTwinResult
 }
 
@@ -546,7 +689,10 @@ func createDeviceTwinResult(baseMessage BaseMessage) DeviceTwinResult {
 	resultDealTypeTwin := make(map[string]*MsgTwin)
 	msgTwins := createMessageTwin()
 	resultDealTypeTwin = msgTwins
-	devTwinResult := DeviceTwinResult{BaseMessage: baseMessage, Twin: resultDealTypeTwin}
+	devTwinResult := DeviceTwinResult{
+		BaseMessage: baseMessage,
+		Twin:        resultDealTypeTwin,
+	}
 	return devTwinResult
 }
 
@@ -674,15 +820,43 @@ func TestUnmarshalDeviceUpdate(t *testing.T) {
 // createMessageTwinWithDiffValues() is function to create MessageTwin with actual and expected values.
 func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwin {
 	msgTwins := make(map[string]*MsgTwin)
-	twinMetadataDeleted := MsgTwin{Metadata: &TypeMetadata{Type: "deleted"}}
+	twinMetadataDeleted := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "deleted",
+		},
+	}
 	expected := "ON"
 	actual := "OFF"
-	twinActualExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, Actual: &TwinValue{Value: &actual}}
+	twinActualExpected := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+		Actual: &TwinValue{
+			Value: &actual,
+		},
+	}
 	msgTwins["deleted"] = &twinMetadataDeleted
 	msgTwins["twin"] = &twinActualExpected
-	twinExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}}
+	twinExpected := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+	}
 	msgTwins["expected"] = &twinExpected
-	twinActual := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Actual: &TwinValue{Value: &expected}}
+	twinActual := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Actual: &TwinValue{
+			Value: &expected,
+		},
+	}
 	msgTwins["actual"] = &twinActual
 	return msgTwins
 }
@@ -691,7 +865,17 @@ func createMessageTwinWithDiffValues(baseMessage BaseMessage) map[string]*MsgTwi
 func createMessageTwinWithSameValues() map[string]*MsgTwin {
 	value := "ON"
 	msgTwin := make(map[string]*MsgTwin)
-	twins := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Actual: &TwinValue{Value: &value}, Expected: &TwinValue{Value: &value}}
+	twins := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Actual: &TwinValue{
+			Value: &value,
+		},
+		Expected: &TwinValue{
+			Value: &value,
+		},
+	}
 	msgTwin["twins"] = &twins
 	return msgTwin
 }
@@ -701,13 +885,51 @@ func createMessageTwinAndDeltaWithDiffValues() (map[string]*MsgTwin, map[string]
 	delta := make(map[string]string)
 	expected := "ON"
 	actual := "OFF"
-	twinActualExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, Actual: &TwinValue{Value: &actual}}
-	twinExpected := MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}}
+	twinActualExpected := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+		Actual: &TwinValue{
+			Value: &actual,
+		},
+	}
+	twinExpected := MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+	}
 	delta["twin"] = *twinActualExpected.Expected.Value
 	delta["expected"] = *twinExpected.Expected.Value
 	resultTwin := make(map[string]*MsgTwin)
-	resultTwin["twin"] = &MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, Actual: &TwinValue{Value: &actual}, ActualVersion: nil, ExpectedVersion: nil}
-	resultTwin["expected"] = &MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Expected: &TwinValue{Value: &expected}, ActualVersion: nil, ExpectedVersion: nil}
+	resultTwin["twin"] = &MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+		Actual: &TwinValue{
+			Value: &actual,
+		},
+		ActualVersion:   nil,
+		ExpectedVersion: nil,
+	}
+	resultTwin["expected"] = &MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Expected: &TwinValue{
+			Value: &expected,
+		},
+		ActualVersion:   nil,
+		ExpectedVersion: nil,
+	}
 	return resultTwin, delta
 }
 
@@ -716,7 +938,19 @@ func createMessageTwinAndDeltaWithSameValues() (map[string]*MsgTwin, map[string]
 	value := "ON"
 	deltas := make(map[string]string)
 	resultTwins := make(map[string]*MsgTwin)
-	resultTwins["twins"] = &MsgTwin{Metadata: &TypeMetadata{Type: "updated"}, Actual: &TwinValue{Value: &value}, Expected: &TwinValue{Value: &value}, ActualVersion: nil, ExpectedVersion: nil}
+	resultTwins["twins"] = &MsgTwin{
+		Metadata: &TypeMetadata{
+			Type: "updated",
+		},
+		Actual: &TwinValue{
+			Value: &value,
+		},
+		Expected: &TwinValue{
+			Value: &value,
+		},
+		ActualVersion:   nil,
+		ExpectedVersion: nil,
+	}
 	return resultTwins, deltas
 }
 
@@ -768,10 +1002,27 @@ func TestBuildDeviceTwinDelta(t *testing.T) {
 // TestBuildDeviceTwinDocument is function to test BuildDeviceTwinDocument().
 func TestBuildDeviceTwinDocument(t *testing.T) {
 	twinDoc := make(map[string]*TwinDoc)
-	doc := TwinDoc{LastState: &MsgTwin{Metadata: &TypeMetadata{"updated"}}, CurrentState: &MsgTwin{Metadata: &TypeMetadata{"deleted"}}}
+	doc := TwinDoc{
+		LastState: &MsgTwin{
+			Metadata: &TypeMetadata{
+				Type: "updated",
+			},
+		},
+		CurrentState: &MsgTwin{
+			Metadata: &TypeMetadata{
+				Type: "deleted",
+			},
+		},
+	}
 	twinDoc["SensorTag"] = &doc
 	timeStamp := time.Now().UnixNano() / 1e6
-	devTwinDoc := DeviceTwinDocument{BaseMessage: BaseMessage{EventID: "", Timestamp: timeStamp}, Twin: twinDoc}
+	devTwinDoc := DeviceTwinDocument{
+		BaseMessage: BaseMessage{
+			EventID:   "",
+			Timestamp: timeStamp,
+		},
+		Twin: twinDoc,
+	}
 	bytesdevTwinDoc, _ := json.Marshal(devTwinDoc)
 	tests := []struct {
 		name        string

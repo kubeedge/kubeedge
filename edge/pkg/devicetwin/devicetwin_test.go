@@ -22,39 +22,6 @@ const (
 	DeviceTwinModuleName = "twin"
 )
 
-// ormerMock is mocked Ormer implementation.
-var ormerMock *beego.MockOrmer
-
-// querySeterMock is mocked QuerySeter implementation.
-var querySeterMock *beego.MockQuerySeter
-
-// fakeModule is mocked implementation of TestModule.
-var fakeModule *beehive.MockModule
-
-// mainContext is beehive context used for communication between modules.
-var mainContext *context.Context
-
-//test is for sending test messages from devicetwin module.
-var test model.Message
-
-// initMocks is function to initialize mocks.
-func initMocks(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	fakeModule = beehive.NewMockModule(mockCtrl)
-	dbm.DBAccess = ormerMock
-}
-
-// registerFakeModule is fuction to register all mock modules used.
-func registerFakeModule() {
-	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
-	core.Register(fakeModule)
-	mainContext = context.GetContext(context.MsgCtxTypeChannel)
-	mainContext.AddModule(TestModule)
-}
-
 // TestName is function to test Name().
 func TestName(t *testing.T) {
 	tests := []struct {
@@ -99,8 +66,29 @@ func TestGroup(t *testing.T) {
 
 // TestStart is function to test Start().
 func TestStart(t *testing.T) {
-	initMocks(t)
-	registerFakeModule()
+	//test is for sending test messages from devicetwin module.
+	var test model.Message
+	// ormerMock is mocked Ormer implementation.
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation.
+	var querySeterMock *beego.MockQuerySeter
+	// fakeModule is mocked implementation of TestModule.
+	var fakeModule *beehive.MockModule
+	// mainContext is beehive context used for communication between modules.
+	var mainContext *context.Context
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	fakeModule = beehive.NewMockModule(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
+	core.Register(fakeModule)
+	mainContext = context.GetContext(context.MsgCtxTypeChannel)
+	mainContext.AddModule(TestModule)
+
 	core.Register(&DeviceTwin{})
 	dt := DeviceTwin{}
 	mainContext.AddModule(dt.Name())
@@ -163,6 +151,16 @@ func TestStart(t *testing.T) {
 
 // TestCleanup is function to test Cleanup().
 func TestCleanup(t *testing.T) {
+	//test is for sending test messages from devicetwin module.
+	var test model.Message
+	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext.AddModule(TestModule)
+
+	core.Register(&DeviceTwin{})
+	dt := DeviceTwin{}
+	mainContext.AddModule(dt.Name())
+	mainContext.AddModuleGroup(dt.Name(), dt.Group())
+
 	deviceTwin := DeviceTwin{
 		context: mainContext,
 		dtcontroller: &DTController{

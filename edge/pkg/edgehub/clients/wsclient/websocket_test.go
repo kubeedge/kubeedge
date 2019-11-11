@@ -189,7 +189,12 @@ func TestUninit(t *testing.T) {
 
 //TestSend checks send function by sending message to server
 func TestSend(t *testing.T) {
-	var msg = model.Message{Header: model.MessageHeader{ID: uuid.NewV4().String(), ParentID: "12", Timestamp: time.Now().UnixNano() / 1e6},
+	var msg = model.Message{
+		Header: model.MessageHeader{
+			ID:        uuid.NewV4().String(),
+			ParentID:  "12",
+			Timestamp: time.Now().UnixNano() / 1e6,
+		},
 		Content: "test",
 	}
 	tests := []struct {
@@ -198,7 +203,8 @@ func TestSend(t *testing.T) {
 		message       model.Message
 		expectedError error
 	}{
-		{name: "Test sending small message: ",
+		{
+			name:          "Test sending small message: ",
 			fields:        newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
 			message:       msg,
 			expectedError: nil,
@@ -219,7 +225,12 @@ func TestSend(t *testing.T) {
 
 //TestReceive sends the message through send function then calls receive function to see same message is received or not
 func TestReceive(t *testing.T) {
-	var msg = model.Message{Header: model.MessageHeader{ID: uuid.NewV4().String(), ParentID: "12", Timestamp: time.Now().UnixNano() / 1e6},
+	var msg = model.Message{
+		Header: model.MessageHeader{
+			ID:        uuid.NewV4().String(),
+			ParentID:  "12",
+			Timestamp: time.Now().UnixNano() / 1e6,
+		},
 		Content: "test",
 	}
 	tests := []struct {

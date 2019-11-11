@@ -23,83 +23,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	_ "github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
-
-// TestInitDTContext is function to test InitDTContext().
-func TestInitDTContext(t *testing.T) {
-	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-	if err != nil {
-		t.Errorf("Error in getting node id %v", err)
-		return
-	}
-	tests := []struct {
-		name    string
-		context *context.Context
-		want    *DTContext
-		wantErr error
-	}{
-		{
-			name:    "ActualContextArgumentTest",
-			context: context.GetContext(context.MsgCtxTypeChannel),
-			want: &DTContext{
-				NodeID:         nodeID,
-				CommChan:       make(map[string]chan interface{}),
-				ConfirmChan:    make(chan interface{}, 1000),
-				ModulesContext: context.GetContext(context.MsgCtxTypeChannel),
-				State:          dtcommon.Disconnected,
-			},
-			wantErr: nil,
-		},
-		{
-			name:    "EmptyContextArgumentTest",
-			context: context.GetContext("test"),
-			want: &DTContext{
-				NodeID:         nodeID,
-				CommChan:       make(map[string]chan interface{}),
-				ConfirmChan:    make(chan interface{}, 1000),
-				ModulesContext: context.GetContext("test"),
-				State:          dtcommon.Disconnected,
-			},
-			wantErr: nil,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := InitDTContext(test.context)
-			if err != test.wantErr {
-				t.Errorf("InitDTContext() error = %v, wantError %v", err, test.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got.NodeID, test.want.NodeID) {
-				t.Errorf("NodeID = %v, Want = %v", got.NodeID, test.want.NodeID)
-				return
-			}
-			if !reflect.DeepEqual(got.CommChan, test.want.CommChan) {
-				t.Errorf("CommunicationChannel = %v, Want =%v", got.CommChan, test.want.CommChan)
-				return
-			}
-			if cap(got.ConfirmChan) != cap(test.want.ConfirmChan) {
-				t.Errorf("ConfirmChan size = %v, Want = %v", cap(got.ConfirmChan), cap(test.want.ConfirmChan))
-				return
-			}
-			if !reflect.DeepEqual(got.ModulesContext, test.want.ModulesContext) {
-				t.Errorf("ModulesContext = %v, Want = %v", got.ModulesContext, test.want.ModulesContext)
-				return
-			}
-			if !reflect.DeepEqual(got.State, test.want.State) {
-				t.Errorf("State = %v, Want = %v", got.State, test.want.State)
-				return
-			}
-		})
-	}
-}
 
 //TestCommTo is function to test CommTo().
 func TestCommTo(t *testing.T) {
@@ -399,7 +328,15 @@ func TestGetDevice(t *testing.T) {
 
 //Function TestSend is function to test Send().
 func TestSend(t *testing.T) {
-	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}}
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+	}
 	content, err := json.Marshal(payload)
 	if err != nil {
 		t.Errorf("Got error on marshalling: %v", err)
@@ -450,7 +387,15 @@ func TestSend(t *testing.T) {
 //TestBuildModelMessage is to test BuildModelMessage().
 func TestBuildModelMessage(t *testing.T) {
 	dtc := &DTContext{}
-	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}}
+	payload := dttype.MembershipUpdate{
+		AddDevices: []dttype.Device{
+			{
+				ID:    "DeviceA",
+				Name:  "Router",
+				State: "unknown",
+			},
+		},
+	}
 	content, err := json.Marshal(payload)
 	if err != nil {
 		t.Errorf("Error on Marshalling: %v", err)
