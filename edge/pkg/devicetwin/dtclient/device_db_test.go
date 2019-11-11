@@ -30,7 +30,7 @@ import (
 // errFailedDBOperation is common DB operation fail error
 var errFailedDBOperation = errors.New("Failed DB Operation")
 
-// TestSaveDevice is function to test SaveDevice
+// TestSaveDevice is used to test SaveDevice
 func TestSaveDevice(t *testing.T) {
 	// ormerMock is mocked Ormer implementation
 	var ormerMock *beego.MockOrmer

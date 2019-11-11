@@ -175,18 +175,15 @@ func TestDealMembershipUpdatedInvalidContent(t *testing.T) {
 
 func TestDealMembershipUpdatedValidAddedDevice(t *testing.T) {
 	var ormerMock *beego.MockOrmer
-	var querySeterMock *beego.MockQuerySeter
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
 	ormerMock.EXPECT().Begin().Return(nil)
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
 	ormerMock.EXPECT().Commit().Return(nil)
-	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(0)
 
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
@@ -217,20 +214,6 @@ func TestDealMembershipUpdatedValidAddedDevice(t *testing.T) {
 }
 
 func TestDealMembershipUpdatedValidRemovedDevice(t *testing.T) {
-	var ormerMock *beego.MockOrmer
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	ormerMock.EXPECT().Begin().Return(nil).Times(0)
-	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(0)
-	ormerMock.EXPECT().Commit().Return(nil).Times(0)
-	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(0)
-
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -353,3 +336,52 @@ func TestDealGetMembershipInValid(t *testing.T) {
 	err := DealGetMembership(dtc, []byte("invalid"))
 	assert.NoError(t, err)
 }
+
+//Commented As we are not considering about the coverage incase for coverage we can uncomment below cases.
+/*
+func TestAdded(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.Mutex{},
+		GroupID:     "1",
+	}
+	var d = []dttype.Device{{
+		ID:    "DeviceA",
+		Name:  "Router",
+		State: "unknown",
+	}}
+	var b = dttype.BaseMessage{
+		EventID: "eventid",
+	}
+	Added(dtc, d, b, true)
+}
+func TestRemoved(t *testing.T) {
+	ormerMock.EXPECT().Begin().Return(nil).Times(1)
+	ormerMock.EXPECT().Rollback().Return(nil).Times(0)
+	ormerMock.EXPECT().Commit().Return(nil).Times(1)
+	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(3)
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(3)
+	// success delete
+	querySeterMock.EXPECT().Delete().Return(int64(1), nil).Times(3)
+	// fail delete
+	querySeterMock.EXPECT().Delete().Return(int64(1), errors.New("failed to delete")).Times(0)
+	dtc := &dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.Mutex{},
+		GroupID:     "1",
+	}
+	var device dttype.Device
+	dtc.DeviceList.Store("DeviceA", &device)
+	var d = []dttype.Device{{
+		ID:    "DeviceA",
+		Name:  "Router",
+		State: "unknown",
+	}}
+	var b = dttype.BaseMessage{
+		EventID: "eventid",
+	}
+	Removed(dtc, d, b, true)
+}
+*/
