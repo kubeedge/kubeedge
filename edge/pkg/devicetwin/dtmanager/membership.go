@@ -116,7 +116,7 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 }
 
 func dealMembershipUpdated(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	klog.Infof("MEMBERSHIP EVENT")
+	klog.Infof("Membership event")
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")

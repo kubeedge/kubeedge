@@ -33,12 +33,30 @@ import (
 // TestStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestStartAction(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+
 	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected.State = dtcommon.Connected
 	receiveChanActionPresent := make(chan interface{}, 1)
-	receiveChanActionPresent <- &dttype.DTMessage{Action: dtcommon.SendToCloud, Identity: "identity", Msg: &model.Message{Header: model.MessageHeader{ID: "message"}, Content: "msg"}}
+
+	receiveChanActionPresent <- &dttype.DTMessage{
+		Action:   dtcommon.SendToCloud,
+		Identity: "identity",
+		Msg: &model.Message{
+			Header: model.MessageHeader{
+				ID: "message",
+			},
+			Content: "msg",
+		},
+	}
+
 	receiveChanActionNotPresent := make(chan interface{}, 1)
-	receiveChanActionNotPresent <- &dttype.DTMessage{Action: "action", Identity: "identity", Msg: &model.Message{Content: "msg"}}
+	receiveChanActionNotPresent <- &dttype.DTMessage{
+		Action:   "action",
+		Identity: "identity",
+		Msg: &model.Message{
+			Content: "msg",
+		},
+	}
 	tests := []struct {
 		name   string
 		Worker Worker
@@ -83,6 +101,7 @@ func TestStartHeartBeat(t *testing.T) {
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
 	heartChanPing <- "ping"
+
 	tests := []struct {
 		name   string
 		Worker Worker
@@ -123,37 +142,23 @@ func TestStartHeartBeat(t *testing.T) {
 	}
 }
 
-// TestDealSendToEdge is function to test dealsendToedge().
-func TestDealSendToEdge(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
-	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		resource string
-		msg      interface{}
-	}{
-		{
-			name:    "dealSendToEdgeTest",
-			context: dtContexts,
-			msg:     &model.Message{},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			dealSendToEdge(test.context, test.resource, test.msg)
-		})
-	}
-}
-
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContextStateDisconnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected.State = dtcommon.Connected
-	msg := &model.Message{Header: model.MessageHeader{ID: "message"}}
-	expectedMessage := &dttype.DTMessage{Msg: msg, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule}
+	msg := &model.Message{
+		Header: model.MessageHeader{
+			ID: "message",
+		},
+	}
+
+	expectedMessage := &dttype.DTMessage{
+		Msg:    msg,
+		Action: dtcommon.SendToCloud,
+		Type:   dtcommon.CommModule,
+	}
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -289,7 +294,10 @@ func TestCheckConfirm(t *testing.T) {
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	dtContext.State = dtcommon.Connected
 	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})
-	dtContext.ConfirmMap.Store("actionMessage", &dttype.DTMessage{Msg: &model.Message{}, Action: dtcommon.SendToCloud})
+	dtContext.ConfirmMap.Store("actionMessage", &dttype.DTMessage{
+		Msg:    &model.Message{},
+		Action: dtcommon.SendToCloud,
+	})
 	tests := []struct {
 		name    string
 		Worker  Worker

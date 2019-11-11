@@ -1,5 +1,8 @@
 package edgehub
 
+// TODO Re-optimize testcase @kadisi
+/*
+
 import (
 	"testing"
 	"time"
@@ -88,3 +91,5 @@ func TestCleanup(t *testing.T) {
 		}
 	})
 }
+
+*/

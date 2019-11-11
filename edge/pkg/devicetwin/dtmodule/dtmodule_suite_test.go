@@ -19,11 +19,11 @@ package dtmodule_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 )
 
 func TestDtmodule(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Dtmodule Unit Test Suite")
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Dtmodule Unit Test Suite")
 }

@@ -74,8 +74,15 @@ func TestBuildBaseMessage(t *testing.T) {
 func createDevTwinMetaDeleted(deviceID string) map[string]*MsgTwin {
 	value := "ON"
 	devTwin := map[string]*MsgTwin{}
-	metaData := TypeMetadata{Type: "deleted"}
-	msgTwin := MsgTwin{Expected: &TwinValue{Value: &value}, Metadata: &metaData}
+	metaData := TypeMetadata{
+		Type: "deleted",
+	}
+	msgTwin := MsgTwin{
+		Expected: &TwinValue{
+			Value: &value,
+		},
+		Metadata: &metaData,
+	}
 	devTwin[deviceID] = &msgTwin
 	return devTwin
 }
@@ -85,12 +92,24 @@ func createMembershipUpdateAndBaseMessage() ([]byte, BaseMessage) {
 	addDevices := []Device{}
 	twinAddDevice := make(map[string]*MsgTwin)
 	twinAddDevice["DeviceA"] = nil
-	deviceA := Device{ID: "DeviceA", Name: "SensorTag", Description: "Sensor", State: "ON", Twin: twinAddDevice}
+	deviceA := Device{
+		ID:          "DeviceA",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		State:       "ON",
+		Twin:        twinAddDevice,
+	}
 	addDevices = append(addDevices, deviceA)
 	removeDevices := []Device{}
 	twinRemDevice := make(map[string]*MsgTwin)
 	twinRemDevice["DeviceB"] = nil
-	deviceB := Device{ID: "DeviceB", Name: "SensorTag", Description: "Sensor", State: "ON", Twin: twinRemDevice}
+	deviceB := Device{
+		ID:          "DeviceB",
+		Name:        "SensorTag",
+		Description: "Sensor",
+		State:       "ON",
+		Twin:        twinRemDevice,
+	}
 	removeDevices = append(removeDevices, deviceB)
 	baseMessage := BuildBaseMessage()
 	want := MembershipUpdate{
@@ -113,8 +132,28 @@ func TestMarshalMembershipUpdate(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "MarshalMembershipUpdateTest",
-			result:  MembershipUpdate{BaseMessage: baseMessage, AddDevices: []Device{{ID: "DeviceA", Name: "SensorTag", Description: "Sensor", State: "ON", Twin: createDevTwinMetaDeleted("DeviceA")}}, RemoveDevices: []Device{{ID: "DeviceB", Name: "SensorTag", Description: "Sensor", State: "ON", Twin: createDevTwinMetaDeleted("DeviceB")}}},
+			name: "MarshalMembershipUpdateTest",
+			result: MembershipUpdate{
+				BaseMessage: baseMessage,
+				AddDevices: []Device{
+					{
+						ID:          "DeviceA",
+						Name:        "SensorTag",
+						Description: "Sensor",
+						State:       "ON",
+						Twin:        createDevTwinMetaDeleted("DeviceA"),
+					},
+				},
+				RemoveDevices: []Device{
+					{
+						ID:          "DeviceB",
+						Name:        "SensorTag",
+						Description: "Sensor",
+						State:       "ON",
+						Twin:        createDevTwinMetaDeleted("DeviceB"),
+					},
+				},
+			},
 			wantErr: nil,
 			want:    wantMembershipUpdate,
 		},
@@ -488,12 +527,17 @@ func createTwinUpdate() (DeviceTwinUpdate, []byte) {
 	var expected TwinValue
 	var actual TwinValue
 	value := "value"
-	valueMetaData := &ValueMetadata{Timestamp: time.Now().UnixNano() / 1e6}
+	valueMetaData := &ValueMetadata{
+		Timestamp: time.Now().UnixNano() / 1e6,
+	}
 	expected.Value = &value
 	expected.Metadata = valueMetaData
 	actual.Value = &value
 	actual.Metadata = valueMetaData
-	twinKey["key1"] = &MsgTwin{Expected: &expected, Actual: &actual}
+	twinKey["key1"] = &MsgTwin{
+		Expected: &expected,
+		Actual:   &actual,
+	}
 	keyTwinUpdate.Twin = twinKey
 	bytesTwinKey, _ := json.Marshal(keyTwinUpdate)
 	return keyTwinUpdate, bytesTwinKey
@@ -507,12 +551,17 @@ func createTwinUpdateWrongActual() (DeviceTwinUpdate, []byte) {
 	var actualValueErrorActual TwinValue
 	valueExpected := "value"
 	valueActual := "value~"
-	valueMetaDataActualValueError := &ValueMetadata{Timestamp: time.Now().UnixNano() / 1e6}
+	valueMetaDataActualValueError := &ValueMetadata{
+		Timestamp: time.Now().UnixNano() / 1e6,
+	}
 	actualValueErrorExpected.Value = &valueExpected
 	actualValueErrorExpected.Metadata = valueMetaDataActualValueError
 	actualValueErrorActual.Value = &valueActual
 	actualValueErrorActual.Metadata = valueMetaDataActualValueError
-	twinKeyActualValueError["key1"] = &MsgTwin{Expected: &actualValueErrorExpected, Actual: &actualValueErrorActual}
+	twinKeyActualValueError["key1"] = &MsgTwin{
+		Expected: &actualValueErrorExpected,
+		Actual:   &actualValueErrorActual,
+	}
 	keyTwinUpdateActualValueError.Twin = twinKeyActualValueError
 	bytesTwinKeyActualValueError, _ := json.Marshal(keyTwinUpdateActualValueError)
 	return keyTwinUpdateActualValueError, bytesTwinKeyActualValueError
@@ -525,12 +574,17 @@ func createTwinUpdateWrongExpected() (DeviceTwinUpdate, []byte) {
 	var expectedValueErrorExpected TwinValue
 	var expectedValueErrorActual TwinValue
 	valueExpectedValueError := "value~"
-	valueMetaDataExpectedValueError := &ValueMetadata{Timestamp: time.Now().UnixNano() / 1e6}
+	valueMetaDataExpectedValueError := &ValueMetadata{
+		Timestamp: time.Now().UnixNano() / 1e6,
+	}
 	expectedValueErrorExpected.Value = &valueExpectedValueError
 	expectedValueErrorExpected.Metadata = valueMetaDataExpectedValueError
 	expectedValueErrorActual.Value = &valueExpectedValueError
 	expectedValueErrorActual.Metadata = valueMetaDataExpectedValueError
-	twinKeyExpectedValueError["key1"] = &MsgTwin{Expected: &expectedValueErrorExpected, Actual: &expectedValueErrorActual}
+	twinKeyExpectedValueError["key1"] = &MsgTwin{
+		Expected: &expectedValueErrorExpected,
+		Actual:   &expectedValueErrorActual,
+	}
 	keyTwinUpdateExpectedValueError.Twin = twinKeyExpectedValueError
 	bytesTwinKeyExpectedValueError, _ := json.Marshal(keyTwinUpdateExpectedValueError)
 	return keyTwinUpdateExpectedValueError, bytesTwinKeyExpectedValueError

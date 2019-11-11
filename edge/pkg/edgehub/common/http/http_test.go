@@ -61,28 +61,35 @@ func TestNewHTTPSclient(t *testing.T) {
 		want    *http.Client
 		wantErr bool
 	}{
-		{"TestNewHTTPSclient: ", args{
-			keyFile:  KeyFile,
-			certFile: CertFile,
-		}, &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					RootCAs:      x509.NewCertPool(),
-					Certificates: []tls.Certificate{certificate},
-					MinVersion:   tls.VersionTLS12,
-					CipherSuites: []uint16{
-						tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-					},
-					InsecureSkipVerify: true},
+		{
+			name: "TestNewHTTPSclient: ",
+			args: args{
+				keyFile:  KeyFile,
+				certFile: CertFile,
 			},
-			Timeout: connectTimeout,
-		}, false},
-
-		{"Wrong path given while getting HTTPS client", args{
-			keyFile:  "WrongKeyFilePath",
-			certFile: "WrongCertFilePath",
-		}, nil,
-			true,
+			want: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						RootCAs:      x509.NewCertPool(),
+						Certificates: []tls.Certificate{certificate},
+						MinVersion:   tls.VersionTLS12,
+						CipherSuites: []uint16{
+							tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+						},
+						InsecureSkipVerify: true},
+				},
+				Timeout: connectTimeout,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Wrong path given while getting HTTPS client",
+			args: args{
+				keyFile:  "WrongKeyFilePath",
+				certFile: "WrongCertFilePath",
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

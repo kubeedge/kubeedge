@@ -37,38 +37,45 @@ func TestGetClient(t *testing.T) {
 		want Adapter
 		err  error
 	}{
-		{"TestGetClient: Positive Test Case", args{
-			clientType: ClientTypeWebSocket,
-			config: &config.EdgeHubConfig{
-				WSConfig: config.WebSocketConfig{
-					URL:              "ws://127.0.0.1:20000/fake_group_id/events",
-					CertFilePath:     "/tmp/edge.crt",
-					KeyFilePath:      "/tmp/edge.key",
-					HandshakeTimeout: 500 * time.Second,
-					WriteDeadline:    100 * time.Second,
-					ReadDeadline:     100 * time.Second,
-				},
-				CtrConfig: config.ControllerConfig{
-					ProjectID: "test-projectid",
-					NodeID:    "test-nodeid",
+		{
+			name: "TestGetClient: Positive Test Case",
+			args: args{
+				clientType: ClientTypeWebSocket,
+				config: &config.EdgeHubConfig{
+					WSConfig: config.WebSocketConfig{
+						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
+						CertFilePath:     "/tmp/edge.crt",
+						KeyFilePath:      "/tmp/edge.key",
+						HandshakeTimeout: 500 * time.Second,
+						WriteDeadline:    100 * time.Second,
+						ReadDeadline:     100 * time.Second,
+					},
+					CtrConfig: config.ControllerConfig{
+						ProjectID: "test-projectid",
+						NodeID:    "test-nodeid",
+					},
 				},
 			},
-		}, wsclient.NewWebSocketClient(&wsclient.WebSocketConfig{
-			URL:              "ws://127.0.0.1:20000/fake_group_id/events",
-			CertFilePath:     "/tmp/edge.crt",
-			KeyFilePath:      "/tmp/edge.key",
-			HandshakeTimeout: 500 * time.Second,
-			WriteDeadline:    100 * time.Second,
-			ReadDeadline:     100 * time.Second,
-			ProjectID:        "test-projectid",
-			NodeID:           "test-nodeid",
-		}),
-			nil,
+			want: wsclient.NewWebSocketClient(&wsclient.WebSocketConfig{
+				URL:              "ws://127.0.0.1:20000/fake_group_id/events",
+				CertFilePath:     "/tmp/edge.crt",
+				KeyFilePath:      "/tmp/edge.key",
+				HandshakeTimeout: 500 * time.Second,
+				WriteDeadline:    100 * time.Second,
+				ReadDeadline:     100 * time.Second,
+				ProjectID:        "test-projectid",
+				NodeID:           "test-nodeid",
+			}),
+			err: nil,
 		},
-
-		{"TestGetClient: Negative Test Case", args{
-			clientType: "WrongClientType",
-		}, nil, ErrorWrongClientType},
+		{
+			name: "TestGetClient: Negative Test Case",
+			args: args{
+				clientType: "WrongClientType",
+			},
+			want: nil,
+			err:  ErrorWrongClientType,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

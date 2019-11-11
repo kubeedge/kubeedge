@@ -31,15 +31,6 @@ import (
 // errFailedDBOperation is common DB operation fail error
 var errFailedDBOperation = errors.New("Failed DB Operation")
 
-// ormerMock is mocked Ormer implementation
-var ormerMock *beego.MockOrmer
-
-// querySeterMock is mocked QuerySeter implementation
-var querySeterMock *beego.MockQuerySeter
-
-// rawSeterMock is mocked RawSeter implementation
-var rawSeterMock *beego.MockRawSeter
-
 // meta is global variable for passing as test parameter
 var meta = Meta{
 	Key:   "TestKey",
@@ -47,20 +38,13 @@ var meta = Meta{
 	Type:  "TestType",
 }
 
-// initMocks is function to initialize mocks
-func initMocks(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	rawSeterMock = beego.NewMockRawSeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-}
-
 // TestSaveMeta is function to initialize all global variable and test SaveMeta
 func TestSaveMeta(t *testing.T) {
 	//Initialize Global Variables (Mocks)
-	initMocks(t)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	cases := []struct {
 		// name is name of the testcase
@@ -96,6 +80,13 @@ func TestSaveMeta(t *testing.T) {
 
 // TestDeleteMetaByKey is function to test DeleteMetaByKey
 func TestDeleteMetaByKey(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -140,6 +131,12 @@ func TestDeleteMetaByKey(t *testing.T) {
 
 // TestUpdateMeta is function to test UpdateMeta
 func TestUpdateMeta(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -174,6 +171,13 @@ func TestUpdateMeta(t *testing.T) {
 
 // TestInsertOrUpdate is function to test InsertOrUpdate
 func TestInsertOrUpdate(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	rawSeterMock := beego.NewMockRawSeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -213,6 +217,13 @@ func TestInsertOrUpdate(t *testing.T) {
 
 // TestUpdateMetaField is function to test UpdateMetaField
 func TestUpdateMetaField(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -257,6 +268,13 @@ func TestUpdateMetaField(t *testing.T) {
 
 // TestUpdateMetaFields is function to test UpdateMetaFields
 func TestUpdateMetaFields(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -302,6 +320,13 @@ func TestUpdateMetaFields(t *testing.T) {
 
 // TestQueryMeta is function to test QueryMeta
 func TestQueryMeta(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -359,6 +384,13 @@ func TestQueryMeta(t *testing.T) {
 
 // TestQueryAllMeta is function to test QueryAllMeta
 func TestQueryAllMeta(t *testing.T) {
+	//Initialize Global Variables (Mocks)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock := beego.NewMockOrmer(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -370,21 +402,23 @@ func TestQueryAllMeta(t *testing.T) {
 		allReturnErr error
 		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
 		queryTableReturn orm.QuerySeter
-	}{{
-		// Success Case
-		name:             "SuccessCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(1),
-		allReturnErr:     nil,
-		queryTableReturn: querySeterMock,
-	}, {
-		// Failure Case
-		name:             "FailureCase",
-		filterReturn:     querySeterMock,
-		allReturnInt:     int64(0),
-		allReturnErr:     errFailedDBOperation,
-		queryTableReturn: querySeterMock,
-	},
+	}{
+		{
+			// Success Case
+			name:             "SuccessCase",
+			filterReturn:     querySeterMock,
+			allReturnInt:     int64(1),
+			allReturnErr:     nil,
+			queryTableReturn: querySeterMock,
+		},
+		{
+			// Failure Case
+			name:             "FailureCase",
+			filterReturn:     querySeterMock,
+			allReturnInt:     int64(0),
+			allReturnErr:     errFailedDBOperation,
+			queryTableReturn: querySeterMock,
+		},
 	}
 
 	// fakeDao is used to set the argument of All function
