@@ -271,7 +271,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 	return false
 }
 
-func (dt *DeviceTwin) start(ctx context.Context) {
+func (dt *DeviceTwin) runDeviceTwin(ctx context.Context) {
 
 	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
 	for _, v := range moduleNames {

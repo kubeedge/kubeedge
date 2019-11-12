@@ -61,7 +61,7 @@ func (m *metaManager) Start(c *beehiveContext.Context) {
 		}
 	}()
 
-	m.mainLoop(ctx)
+	m.runMetaManager(ctx)
 }
 
 func (m *metaManager) Cleanup() {

@@ -12,7 +12,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,7 +29,7 @@ func Register() {
 }
 
 type testManager struct {
-	context    *context.Context
+	context    *beehiveContext.Context
 	moduleWait *sync.WaitGroup
 }
 
@@ -217,7 +217,7 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 	}
 }
 
-func (tm *testManager) Start(c *context.Context) {
+func (tm *testManager) Start(c *beehiveContext.Context) {
 	tm.context = c
 	defer tm.Cleanup()
 

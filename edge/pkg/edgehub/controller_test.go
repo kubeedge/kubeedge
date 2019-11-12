@@ -254,20 +254,20 @@ func TestRouteToEdge(t *testing.T) {
 		{
 			name: "Route to edge with proper input",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
-				chClient:   mockAdapter,
-				syncKeeper: make(map[string]chan model.Message),
-				retryChan:  make(chan struct{}),
+				context:       beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				chClient:      mockAdapter,
+				syncKeeper:    make(map[string]chan model.Message),
+				reconnectChan: make(chan struct{}),
 			},
 			receiveTimes: 0,
 		},
 		{
 			name: "Receive Error in route to edge",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
-				chClient:   mockAdapter,
-				syncKeeper: make(map[string]chan model.Message),
-				retryChan:  make(chan struct{}),
+				context:       beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				chClient:      mockAdapter,
+				syncKeeper:    make(map[string]chan model.Message),
+				reconnectChan: make(chan struct{}),
 			},
 			receiveTimes: 1,
 		},
@@ -278,7 +278,7 @@ func TestRouteToEdge(t *testing.T) {
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
 			go tt.hub.routeToEdge(ctx)
-			stop := <-tt.hub.retryChan
+			stop := <-tt.hub.reconnectChan
 			if stop != struct{}{} {
 				t.Errorf("TestRouteToEdge error got: %v want: %v", stop, struct{}{})
 			}
@@ -389,9 +389,9 @@ func TestRouteToCloud(t *testing.T) {
 		{
 			name: "Route to cloud with valid input",
 			hub: &EdgeHub{
-				context:   testContext,
-				chClient:  mockAdapter,
-				retryChan: make(chan struct{}),
+				context:       testContext,
+				chClient:      mockAdapter,
+				reconnectChan: make(chan struct{}),
 			},
 		},
 	}
@@ -404,7 +404,7 @@ func TestRouteToCloud(t *testing.T) {
 			testContext.AddModule(ModuleNameEdgeHub)
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 			testContext.Send(ModuleNameEdgeHub, *msg)
-			stopChan := <-tt.hub.retryChan
+			stopChan := <-tt.hub.reconnectChan
 			if stopChan != struct{}{} {
 				t.Errorf("Error in route to cloud")
 			}
@@ -433,8 +433,8 @@ func TestKeepalive(t *testing.T) {
 					ProjectID: "foo",
 					NodeID:    "bar",
 				},
-				chClient:  mockAdapter,
-				retryChan: make(chan struct{}),
+				chClient:      mockAdapter,
+				reconnectChan: make(chan struct{}),
 			},
 		},
 	}
@@ -448,7 +448,7 @@ func TestKeepalive(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
 			go tt.hub.keepalive(ctx)
-			got := <-tt.hub.retryChan
+			got := <-tt.hub.reconnectChan
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
 			}

@@ -45,57 +45,6 @@ func (eh *EdgeHub) initial() (err error) {
 	return nil
 }
 
-//Start will start EdgeHub
-func (eh *EdgeHub) start(ctx context.Context) {
-	config.InitEdgehubConfig()
-	for {
-		select {
-		case <-ctx.Done():
-			klog.Warning("EdgeHub stop")
-			return
-		default:
-
-		}
-		err := eh.initial()
-		if err != nil {
-			klog.Fatalf("failed to init controller: %v", err)
-			return
-		}
-		err = eh.chClient.Init()
-		if err != nil {
-			klog.Errorf("connection error, try again after 60s: %v", err)
-			time.Sleep(waitConnectionPeriod)
-			continue
-		}
-		// execute hook func after connect
-		eh.pubConnectInfo(true)
-		go eh.routeToEdge(ctx)
-		go eh.routeToCloud(ctx)
-		go eh.keepalive(ctx)
-
-		// wait the stop singal
-		// stop authinfo manager/websocket connection
-		<-eh.retryChan
-		eh.chClient.Uninit()
-
-		// execute hook fun after disconnect
-		eh.pubConnectInfo(false)
-
-		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(eh.config.HeartbeatPeriod * 2)
-
-		// clean channel
-	clean:
-		for {
-			select {
-			case <-eh.retryChan:
-			default:
-				break clean
-			}
-		}
-	}
-}
-
 func (eh *EdgeHub) addKeepChannel(msgID string) chan model.Message {
 	eh.keeperLock.Lock()
 	defer eh.keeperLock.Unlock()
@@ -167,7 +116,7 @@ func (eh *EdgeHub) routeToEdge(ctx context.Context) {
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.retryChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 
@@ -228,7 +177,7 @@ func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.retryChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 	}
@@ -251,7 +200,7 @@ func (eh *EdgeHub) keepalive(ctx context.Context) {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.retryChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 
