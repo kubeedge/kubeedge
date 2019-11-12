@@ -17,6 +17,7 @@ limitations under the License.
 package devicetwin
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -26,7 +27,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -66,14 +67,15 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	var moduleRegistered bool
+	_, cancel := context.WithCancel(context.Background())
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTContexts:        dtContexts,
 		DTModules:         make(map[string]dtmodule.DTModule),
-		Stop:              make(chan bool, 1),
+		cancel:            cancel,
 	}
 	tests := []struct {
 		name       string
@@ -115,14 +117,13 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTModules:         make(map[string]dtmodule.DTModule),
 		DTContexts:        dtContexts,
-		Stop:              make(chan bool, 1),
-		context:           mainContext,
+		Context:           mainContext,
 	}
 
 	payload := dttype.MembershipUpdate{
@@ -213,7 +214,7 @@ func TestSyncSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
@@ -305,7 +306,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
