@@ -34,62 +34,16 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-//TestNewEdgeHubController() tests whether the EdgeHubController returned is correct or not
-func TestNewEdgeHubController(t *testing.T) {
-	tests := []struct {
-		name             string
-		want             *Controller
-		controllerConfig config.ControllerConfig
-	}{
-		{"Testing if EdgeHubController is returned with correct values",
-			&Controller{
-				config: &config.ControllerConfig{
-					Protocol:        "websocket",
-					HeartbeatPeriod: 150 * time.Second,
-					ProjectID:       "project_id",
-					NodeID:          "node_id",
-				},
-				stopChan:   make(chan struct{}),
-				syncKeeper: make(map[string]chan model.Message),
-			},
-			config.ControllerConfig{
-				Protocol:        "websocket",
-				HeartbeatPeriod: 150 * time.Second,
-				ProjectID:       "project_id",
-				NodeID:          "node_id",
-			},
-		}}
-	for _, tt := range tests {
-		edgeHubConfig := config.GetConfig()
-		edgeHubConfig.CtrConfig = tt.controllerConfig
-		t.Run(tt.name, func(t *testing.T) {
-			got := NewEdgeHubController()
-			if !reflect.DeepEqual(got.context, tt.want.context) {
-				t.Errorf("NewEdgeHubController() Context= %v, want %v", got.context, tt.want.context)
-			}
-			if !reflect.DeepEqual(got.config, tt.want.config) {
-				t.Errorf("NewEdgeHubController() Config = %v, want %v", got.config, tt.want.config)
-			}
-			if !reflect.DeepEqual(got.chClient, tt.want.chClient) {
-				t.Errorf("NewEdgeHubController() chClient = %v, want %v", got.chClient, tt.want.chClient)
-			}
-			if !reflect.DeepEqual(got.syncKeeper, tt.want.syncKeeper) {
-				t.Errorf("NewEdgeHubController() SyncKeeper = %v, want %v", got.syncKeeper, tt.want.syncKeeper)
-			}
-		})
-	}
-}
-
 //TestAddKeepChannel() tests the addition of channel to the syncKeeper
 func TestAddKeepChannel(t *testing.T) {
 	tests := []struct {
-		name       string
-		controller *Controller
-		msgID      string
+		name  string
+		hub   *EdgeHub
+		msgID string
 	}{
 		{
 			name: "Adding a valid keep channel",
-			controller: &Controller{
+			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			msgID: "test",
@@ -97,9 +51,9 @@ func TestAddKeepChannel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.controller.addKeepChannel(tt.msgID)
-			if !reflect.DeepEqual(tt.controller.syncKeeper[tt.msgID], got) {
-				t.Errorf("TestController_addKeepChannel() = %v, want %v", got, tt.controller.syncKeeper[tt.msgID])
+			got := tt.hub.addKeepChannel(tt.msgID)
+			if !reflect.DeepEqual(tt.hub.syncKeeper[tt.msgID], got) {
+				t.Errorf("TestController_addKeepChannel() = %v, want %v", got, tt.hub.syncKeeper[tt.msgID])
 			}
 		})
 	}
@@ -108,13 +62,13 @@ func TestAddKeepChannel(t *testing.T) {
 //TestDeleteKeepChannel() tests the deletion of channel in the syncKeeper
 func TestDeleteKeepChannel(t *testing.T) {
 	tests := []struct {
-		name       string
-		controller *Controller
-		msgID      string
+		name  string
+		hub   *EdgeHub
+		msgID string
 	}{
 		{
 			name: "Deleting a valid keep channel",
-			controller: &Controller{
+			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			msgID: "test",
@@ -122,10 +76,10 @@ func TestDeleteKeepChannel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.controller.addKeepChannel(tt.msgID)
-			tt.controller.deleteKeepChannel(tt.msgID)
-			if _, exist := tt.controller.syncKeeper[tt.msgID]; exist {
-				t.Errorf("TestController_deleteKeepChannel = %v, want %v", tt.controller.syncKeeper[tt.msgID], nil)
+			tt.hub.addKeepChannel(tt.msgID)
+			tt.hub.deleteKeepChannel(tt.msgID)
+			if _, exist := tt.hub.syncKeeper[tt.msgID]; exist {
+				t.Errorf("TestController_deleteKeepChannel = %v, want %v", tt.hub.syncKeeper[tt.msgID], nil)
 			}
 		})
 	}
@@ -134,14 +88,14 @@ func TestDeleteKeepChannel(t *testing.T) {
 //TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
 func TestIsSyncResponse(t *testing.T) {
 	tests := []struct {
-		name       string
-		controller *Controller
-		msgID      string
-		want       bool
+		name  string
+		hub   *EdgeHub
+		msgID string
+		want  bool
 	}{
 		{
 			name: "Sync message response case",
-			controller: &Controller{
+			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			msgID: "test",
@@ -149,7 +103,7 @@ func TestIsSyncResponse(t *testing.T) {
 		},
 		{
 			name: "Non sync message response  case",
-			controller: &Controller{
+			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			msgID: "",
@@ -159,9 +113,9 @@ func TestIsSyncResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.want {
-				tt.controller.addKeepChannel(tt.msgID)
+				tt.hub.addKeepChannel(tt.msgID)
 			}
-			if got := tt.controller.isSyncResponse(tt.msgID); got != tt.want {
+			if got := tt.hub.isSyncResponse(tt.msgID); got != tt.want {
 				t.Errorf("TestController_isSyncResponse() = %v, want %v", got, tt.want)
 			}
 		})
@@ -173,14 +127,14 @@ func TestSendToKeepChannel(t *testing.T) {
 	message := model.NewMessage("test_id")
 	tests := []struct {
 		name                string
-		controller          *Controller
+		hub                 *EdgeHub
 		message             *model.Message
 		keepChannelParentID string
 		expectedError       error
 	}{
 		{
 			name: "SyncKeeper Error Case in send to keep channel",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -190,7 +144,7 @@ func TestSendToKeepChannel(t *testing.T) {
 		},
 		{
 			name: "Negative Test Case without syncKeeper Error ",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -200,7 +154,7 @@ func TestSendToKeepChannel(t *testing.T) {
 		},
 		{
 			name: "Send to keep channel with valid input",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -210,7 +164,7 @@ func TestSendToKeepChannel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keep := tt.controller.addKeepChannel(tt.keepChannelParentID)
+			keep := tt.hub.addKeepChannel(tt.keepChannelParentID)
 			if tt.expectedError == nil {
 				receive := func() {
 					<-keep
@@ -218,7 +172,7 @@ func TestSendToKeepChannel(t *testing.T) {
 				go receive()
 			}
 			time.Sleep(1 * time.Second)
-			err := tt.controller.sendToKeepChannel(*tt.message)
+			err := tt.hub.sendToKeepChannel(*tt.message)
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("TestController_sendToKeepChannel() error = %v, expectedError %v", err, tt.expectedError)
 			}
@@ -230,14 +184,14 @@ func TestSendToKeepChannel(t *testing.T) {
 func TestDispatch(t *testing.T) {
 	tests := []struct {
 		name          string
-		controller    *Controller
+		hub           *EdgeHub
 		message       *model.Message
 		expectedError error
 		isResponse    bool
 	}{
 		{
 			name: "dispatch with valid input",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -247,7 +201,7 @@ func TestDispatch(t *testing.T) {
 		},
 		{
 			name: "Error Case in dispatch",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -257,7 +211,7 @@ func TestDispatch(t *testing.T) {
 		},
 		{
 			name: "Response Case in dispatch",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
@@ -270,13 +224,13 @@ func TestDispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.expectedError == nil && !tt.isResponse {
 				receive := func() {
-					keepChannel := tt.controller.addKeepChannel(tt.message.GetParentID())
+					keepChannel := tt.hub.addKeepChannel(tt.message.GetParentID())
 					<-keepChannel
 				}
 				go receive()
 			}
 			time.Sleep(1 * time.Second)
-			err := tt.controller.dispatch(*tt.message)
+			err := tt.hub.dispatch(*tt.message)
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("TestController_dispatch() error = %v, wantErr %v", err, tt.expectedError)
 			}
@@ -291,12 +245,12 @@ func TestRouteToEdge(t *testing.T) {
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
 		name         string
-		controller   *Controller
+		hub          *EdgeHub
 		receiveTimes int
 	}{
 		{
 			name: "Route to edge with proper input",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
@@ -306,7 +260,7 @@ func TestRouteToEdge(t *testing.T) {
 		},
 		{
 			name: "Receive Error in route to edge",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:    context.GetContext(context.MsgCtxTypeChannel),
 				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
@@ -320,8 +274,8 @@ func TestRouteToEdge(t *testing.T) {
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
-			go tt.controller.routeToEdge()
-			stop := <-tt.controller.stopChan
+			go tt.hub.routeToEdge()
+			stop := <-tt.hub.stopChan
 			if stop != struct{}{} {
 				t.Errorf("TestRouteToEdge error got: %v want: %v", stop, struct{}{})
 			}
@@ -339,7 +293,7 @@ func TestSendToCloud(t *testing.T) {
 	msg.Header.Sync = true
 	tests := []struct {
 		name          string
-		controller    *Controller
+		hub           *EdgeHub
 		message       model.Message
 		expectedError error
 		waitError     bool
@@ -347,7 +301,7 @@ func TestSendToCloud(t *testing.T) {
 	}{
 		{
 			name: "send to cloud with proper input",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:  context.GetContext(context.MsgCtxTypeChannel),
 				chClient: mockAdapter,
 				config: &config.ControllerConfig{
@@ -363,7 +317,7 @@ func TestSendToCloud(t *testing.T) {
 		},
 		{
 			name: "Wait Error in send to cloud",
-			controller: &Controller{
+			hub: &EdgeHub{
 				chClient: mockAdapter,
 				config: &config.ControllerConfig{
 					Protocol:        "websocket",
@@ -378,7 +332,7 @@ func TestSendToCloud(t *testing.T) {
 		},
 		{
 			name: "Send Failure in send to cloud",
-			controller: &Controller{
+			hub: &EdgeHub{
 				chClient: mockAdapter,
 				config: &config.ControllerConfig{
 					HeartbeatPeriod: 3 * time.Second,
@@ -395,22 +349,22 @@ func TestSendToCloud(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
 			if !tt.waitError && tt.expectedError == nil {
-				go tt.controller.sendToCloud(tt.message)
+				go tt.hub.sendToCloud(tt.message)
 				time.Sleep(1 * time.Second)
-				tempChannel := tt.controller.syncKeeper["test_id"]
+				tempChannel := tt.hub.syncKeeper["test_id"]
 				tempChannel <- *model.NewMessage("test_id")
 				time.Sleep(1 * time.Second)
-				if _, exist := tt.controller.syncKeeper["test_id"]; exist {
+				if _, exist := tt.hub.syncKeeper["test_id"]; exist {
 					t.Errorf("SendToCloud() error in receiving message")
 				}
 				return
 			}
-			err := tt.controller.sendToCloud(tt.message)
+			err := tt.hub.sendToCloud(tt.message)
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("SendToCloud() error = %v, wantErr %v", err, tt.expectedError)
 			}
-			time.Sleep(tt.controller.config.HeartbeatPeriod + 2*time.Second)
-			if _, exist := tt.controller.syncKeeper["test_id"]; exist {
+			time.Sleep(tt.hub.config.HeartbeatPeriod + 2*time.Second)
+			if _, exist := tt.hub.syncKeeper["test_id"]; exist {
 				t.Errorf("SendToCloud() error in waiting for timeout")
 			}
 		})
@@ -424,12 +378,12 @@ func TestRouteToCloud(t *testing.T) {
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	testContext := context.GetContext(context.MsgCtxTypeChannel)
 	tests := []struct {
-		name       string
-		controller *Controller
+		name string
+		hub  *EdgeHub
 	}{
 		{
 			name: "Route to cloud with valid input",
-			controller: &Controller{
+			hub: &EdgeHub{
 				context:  testContext,
 				chClient: mockAdapter,
 				stopChan: make(chan struct{}),
@@ -439,13 +393,13 @@ func TestRouteToCloud(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).AnyTimes()
-			go tt.controller.routeToCloud()
+			go tt.hub.routeToCloud()
 			time.Sleep(2 * time.Second)
 			core.Register(&EdgeHub{})
 			testContext.AddModule(ModuleNameEdgeHub)
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 			testContext.Send(ModuleNameEdgeHub, *msg)
-			stopChan := <-tt.controller.stopChan
+			stopChan := <-tt.hub.stopChan
 			if stopChan != struct{}{} {
 				t.Errorf("Error in route to cloud")
 			}
@@ -461,12 +415,12 @@ func TestKeepalive(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
-		name       string
-		controller *Controller
+		name string
+		hub  *EdgeHub
 	}{
 		{
 			name: "Heartbeat failure Case",
-			controller: &Controller{
+			hub: &EdgeHub{
 				config: &config.ControllerConfig{
 					Protocol:  "websocket",
 					ProjectID: "foo",
@@ -486,8 +440,8 @@ func TestKeepalive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
-			go tt.controller.keepalive()
-			got := <-tt.controller.stopChan
+			go tt.hub.keepalive()
+			got := <-tt.hub.stopChan
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
 			}
