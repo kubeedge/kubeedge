@@ -69,7 +69,7 @@ func (q *ChannelMessageQueue) DispatchMessage(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			klog.Warningf("Cloudhub channel eventqueue dispatch message loop stoped")
+			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
 			return
 		default:
 		}

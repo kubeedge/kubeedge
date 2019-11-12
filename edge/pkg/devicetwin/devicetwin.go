@@ -1,6 +1,8 @@
 package devicetwin
 
 import (
+	"context"
+
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -13,11 +15,11 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
-	context           *beehiveContext.Context
+	Context           *beehiveContext.Context
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
-	Stop              chan bool
+	cancel            context.CancelFunc
 }
 
 // Register register devicetwin
@@ -39,23 +41,23 @@ func (dt *DeviceTwin) Group() string {
 
 //Start run the module
 func (dt *DeviceTwin) Start(c *beehiveContext.Context) {
+	var ctx context.Context
 	dtContexts, _ := dtcontext.InitDTContext(c)
 	dt.HeartBeatToModule = make(map[string]chan interface{})
 	dt.DTModules = make(map[string]dtmodule.DTModule)
 	dt.DTContexts = dtContexts
-	dt.Stop = make(chan bool, 1)
-	dt.context = c
-
+	dt.Context = c
+	ctx, dt.cancel = context.WithCancel(context.Background())
 	err := SyncSqlite(dt.DTContexts)
 	if err != nil {
 		klog.Errorf("Start DeviceTwin Failed, Sync Sqlite error:%v", err)
 		return
 	}
-	dt.start()
+	dt.start(ctx)
 }
 
 //Cleanup clean resource after quit
 func (dt *DeviceTwin) Cleanup() {
-	dt.Stop <- true
-	dt.context.Cleanup(dt.Name())
+	dt.cancel()
+	dt.Context.Cleanup(dt.Name())
 }
