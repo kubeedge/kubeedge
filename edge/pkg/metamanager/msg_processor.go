@@ -1,6 +1,7 @@
 package metamanager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/util"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -64,7 +65,7 @@ func InitMetaManagerConfig() {
 	}
 }
 
-func feedbackError(err error, info string, request model.Message, c *context.Context) {
+func feedbackError(err error, info string, request model.Message, c *beehiveContext.Context) {
 	errInfo := "Something wrong"
 	if err != nil {
 		errInfo = fmt.Sprintf(info+": %v", err)
@@ -77,7 +78,7 @@ func feedbackError(err error, info string, request model.Message, c *context.Con
 	}
 }
 
-func sendToEdged(message *model.Message, sync bool, c *context.Context) {
+func sendToEdged(message *model.Message, sync bool, c *beehiveContext.Context) {
 	if sync {
 		c.SendResp(*message)
 	} else {
@@ -85,7 +86,7 @@ func sendToEdged(message *model.Message, sync bool, c *context.Context) {
 	}
 }
 
-func sendToEdgeMesh(message *model.Message, sync bool, c *context.Context) {
+func sendToEdgeMesh(message *model.Message, sync bool, c *beehiveContext.Context) {
 	if sync {
 		c.SendResp(*message)
 	} else {
@@ -93,7 +94,7 @@ func sendToEdgeMesh(message *model.Message, sync bool, c *context.Context) {
 	}
 }
 
-func sendToCloud(message *model.Message, c *context.Context) {
+func sendToCloud(message *model.Message, c *beehiveContext.Context) {
 	c.SendToGroup(sendModuleGroupName, *message)
 }
 
@@ -627,9 +628,16 @@ func (m *metaManager) process(message model.Message) {
 	}
 }
 
-func (m *metaManager) mainLoop() {
+func (m *metaManager) mainLoop(ctx context.Context) {
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				klog.Warning("MetaManager mainloop stop")
+				return
+			default:
+
+			}
 			if msg, err := m.context.Receive(m.Name()); err == nil {
 				klog.Infof("get a message %+v", msg)
 				m.process(msg)
