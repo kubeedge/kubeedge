@@ -53,7 +53,7 @@ func (dt *DeviceTwin) Start(c *beehiveContext.Context) {
 		klog.Errorf("Start DeviceTwin Failed, Sync Sqlite error:%v", err)
 		return
 	}
-	dt.start(ctx)
+	dt.runDeviceTwin(ctx)
 }
 
 //Cleanup clean resource after quit

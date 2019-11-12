@@ -628,7 +628,7 @@ func (m *metaManager) process(message model.Message) {
 	}
 }
 
-func (m *metaManager) mainLoop(ctx context.Context) {
+func (m *metaManager) runMetaManager(ctx context.Context) {
 	go func() {
 		for {
 			select {
