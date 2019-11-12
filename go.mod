@@ -35,7 +35,6 @@ require (
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
 	github.com/godbus/dbus v0.0.0-20181101234600-2ff6f7ffd60f // indirect
-	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.3.2
@@ -43,6 +42,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.3.0 // indirect
+	github.com/gophercloud/gophercloud v0.1.0 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
@@ -52,6 +52,7 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.7 // indirect
+	github.com/kadisi/test v0.0.0-20191111013547-b3fc1244c581 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubeedge/beehive v0.0.0
