@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,9 +46,16 @@ func (eh *EdgeHub) initial() (err error) {
 }
 
 //Start will start EdgeHub
-func (eh *EdgeHub) start() {
+func (eh *EdgeHub) start(ctx context.Context) {
 	config.InitEdgehubConfig()
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub stop")
+			return
+		default:
+
+		}
 		err := eh.initial()
 		if err != nil {
 			klog.Fatalf("failed to init controller: %v", err)
@@ -61,13 +69,13 @@ func (eh *EdgeHub) start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		go eh.routeToEdge()
-		go eh.routeToCloud()
-		go eh.keepalive()
+		go eh.routeToEdge(ctx)
+		go eh.routeToCloud(ctx)
+		go eh.keepalive(ctx)
 
 		// wait the stop singal
 		// stop authinfo manager/websocket connection
-		<-eh.stopChan
+		<-eh.retryChan
 		eh.chClient.Uninit()
 
 		// execute hook fun after disconnect
@@ -80,7 +88,7 @@ func (eh *EdgeHub) start() {
 	clean:
 		for {
 			select {
-			case <-eh.stopChan:
+			case <-eh.retryChan:
 			default:
 				break clean
 			}
@@ -147,12 +155,19 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	return eh.sendToKeepChannel(message)
 }
 
-func (eh *EdgeHub) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToEdge stop")
+			return
+		default:
+
+		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.stopChan <- struct{}{}
+			eh.retryChan <- struct{}{}
 			return
 		}
 
@@ -194,8 +209,14 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToCloud stop")
+			return
+		default:
+		}
 		message, err := eh.context.Receive(ModuleNameEdgeHub)
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
@@ -207,14 +228,21 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.stopChan <- struct{}{}
+			eh.retryChan <- struct{}{}
 			return
 		}
 	}
 }
 
-func (eh *EdgeHub) keepalive() {
+func (eh *EdgeHub) keepalive(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		default:
+
+		}
 		msg := model.NewMessage("").
 			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
 			FillBody("ping")
@@ -223,7 +251,7 @@ func (eh *EdgeHub) keepalive() {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.stopChan <- struct{}{}
+			eh.retryChan <- struct{}{}
 			return
 		}
 

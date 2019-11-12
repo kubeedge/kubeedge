@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"sync"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -21,7 +22,8 @@ type EdgeHub struct {
 	context    *beehiveContext.Context
 	chClient   clients.Adapter
 	config     *config.ControllerConfig
-	stopChan   chan struct{}
+	retryChan  chan struct{}
+	cancel     context.CancelFunc
 	syncKeeper map[string]chan model.Message
 	keeperLock sync.RWMutex
 }
@@ -30,7 +32,7 @@ type EdgeHub struct {
 func Register() {
 	core.Register(&EdgeHub{
 		config:     &config.GetConfig().CtrConfig,
-		stopChan:   make(chan struct{}),
+		retryChan:  make(chan struct{}),
 		syncKeeper: make(map[string]chan model.Message),
 	})
 }
@@ -47,11 +49,14 @@ func (eh *EdgeHub) Group() string {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start(c *beehiveContext.Context) {
+	var ctx context.Context
 	eh.context = c
-	eh.start()
+	ctx, eh.cancel = context.WithCancel(context.Background())
+	eh.start(ctx)
 }
 
 //Cleanup sets up context cleanup through Edgehub name
 func (eh *EdgeHub) Cleanup() {
+	eh.cancel()
 	eh.context.Cleanup(eh.Name())
 }
