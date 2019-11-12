@@ -1,6 +1,7 @@
 package eventbus
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
@@ -31,7 +32,8 @@ const (
 
 // eventbus struct
 type eventbus struct {
-	context  *context.Context
+	context  *beehiveContext.Context
+	cancel   context.CancelFunc
 	mqttMode int
 }
 
@@ -53,9 +55,11 @@ func (*eventbus) Group() string {
 	return modules.BusGroup
 }
 
-func (eb *eventbus) Start(c *context.Context) {
+func (eb *eventbus) Start(c *beehiveContext.Context) {
 	// no need to call TopicInit now, we have fixed topic
 	eb.context = c
+	var ctx context.Context
+	ctx, eb.cancel = context.WithCancel(context.Background())
 
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
 	if nodeID == nil {
@@ -116,10 +120,11 @@ func (eb *eventbus) Start(c *context.Context) {
 		}
 	}
 
-	eb.pubCloudMsgToEdge()
+	eb.pubCloudMsgToEdge(ctx)
 }
 
 func (eb *eventbus) Cleanup() {
+	eb.cancel()
 	eb.context.Cleanup(eb.Name())
 }
 
@@ -132,48 +137,55 @@ func pubMQTT(topic string, payload []byte) {
 	}
 }
 
-func (eb *eventbus) pubCloudMsgToEdge() {
+func (eb *eventbus) pubCloudMsgToEdge(ctx context.Context) {
 	for {
-		if accessInfo, err := eb.context.Receive(eb.Name()); err == nil {
-			operation := accessInfo.GetOperation()
-			resource := accessInfo.GetResource()
-			switch operation {
-			case "subscribe":
-				eb.subscribe(resource)
-				klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
-			case "message":
-				body, ok := accessInfo.GetContent().(map[string]interface{})
-				if !ok {
-					klog.Errorf("Message is not map type")
-					return
-				}
-				message := body["message"].(map[string]interface{})
-				topic := message["topic"].(string)
-				payload, _ := json.Marshal(&message)
-				eb.publish(topic, payload)
-			case "publish":
-				topic := resource
-				var ok bool
-				// cloud and edge will send different type of content, need to check
-				payload, ok := accessInfo.GetContent().([]byte)
-				if !ok {
-					content := accessInfo.GetContent().(string)
-					payload = []byte(content)
-				}
-				eb.publish(topic, payload)
-			case "get_result":
-				if resource != "auth_info" {
-					klog.Info("Skip none auth_info get_result message")
-					return
-				}
-				topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", mqttBus.NodeID)
-				payload, _ := json.Marshal(accessInfo.GetContent())
-				eb.publish(topic, payload)
-			default:
-				klog.Warningf("Action not found")
-			}
-		} else {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EventBus PubCloudMsg To Edge stop")
+			return
+		default:
+		}
+		accessInfo, err := eb.context.Receive(eb.Name())
+		if err != nil {
 			klog.Errorf("Fail to get a message from channel: %v", err)
+			continue
+		}
+		operation := accessInfo.GetOperation()
+		resource := accessInfo.GetResource()
+		switch operation {
+		case "subscribe":
+			eb.subscribe(resource)
+			klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
+		case "message":
+			body, ok := accessInfo.GetContent().(map[string]interface{})
+			if !ok {
+				klog.Errorf("Message is not map type")
+				return
+			}
+			message := body["message"].(map[string]interface{})
+			topic := message["topic"].(string)
+			payload, _ := json.Marshal(&message)
+			eb.publish(topic, payload)
+		case "publish":
+			topic := resource
+			var ok bool
+			// cloud and edge will send different type of content, need to check
+			payload, ok := accessInfo.GetContent().([]byte)
+			if !ok {
+				content := accessInfo.GetContent().(string)
+				payload = []byte(content)
+			}
+			eb.publish(topic, payload)
+		case "get_result":
+			if resource != "auth_info" {
+				klog.Info("Skip none auth_info get_result message")
+				return
+			}
+			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", mqttBus.NodeID)
+			payload, _ := json.Marshal(accessInfo.GetContent())
+			eb.publish(topic, payload)
+		default:
+			klog.Warningf("Action not found")
 		}
 	}
 }
