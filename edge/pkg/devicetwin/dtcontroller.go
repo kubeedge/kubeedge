@@ -10,7 +10,6 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -26,93 +25,22 @@ var (
 	ActionModuleMap map[string]string
 )
 
-//DTController controller for devicetwin
-type DTController struct {
-	HeartBeatToModule map[string]chan interface{}
-	DTContexts        *dtcontext.DTContext
-	DTModules         map[string]dtmodule.DTModule
-	Stop              chan bool
-}
-
-//InitDTController init dtcontroller
-func InitDTController(context *context.Context) (*DTController, error) {
-	dtContexts, _ := dtcontext.InitDTContext(context)
-	heartBeatToModule := make(map[string]chan interface{})
-	dtModule := make(map[string]dtmodule.DTModule)
-	stop := make(chan bool, 1)
-
-	return &DTController{
-		HeartBeatToModule: heartBeatToModule,
-		DTContexts:        dtContexts,
-		DTModules:         dtModule,
-		Stop:              stop}, nil
-}
-
 //RegisterDTModule register dtmodule
-func (dtc *DTController) RegisterDTModule(name string) {
+func (dt *DeviceTwin) RegisterDTModule(name string) {
 	module := dtmodule.DTModule{
 		Name: name,
 	}
 
-	dtc.DTContexts.CommChan[name] = make(chan interface{}, 128)
-	dtc.HeartBeatToModule[name] = make(chan interface{}, 128)
-	module.InitWorker(dtc.DTContexts.CommChan[name], dtc.DTContexts.ConfirmChan,
-		dtc.HeartBeatToModule[name], dtc.DTContexts)
-	dtc.DTModules[name] = module
+	dt.DTContexts.CommChan[name] = make(chan interface{}, 128)
+	dt.HeartBeatToModule[name] = make(chan interface{}, 128)
+	module.InitWorker(dt.DTContexts.CommChan[name], dt.DTContexts.ConfirmChan,
+		dt.HeartBeatToModule[name], dt.DTContexts)
+	dt.DTModules[name] = module
 
-}
-
-//Start devicetwin controller
-func (dtc *DTController) Start() error {
-	err := SyncSqlite(dtc.DTContexts)
-	if err != nil {
-		return err
-	}
-	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
-	for _, v := range moduleNames {
-		dtc.RegisterDTModule(v)
-		go dtc.DTModules[v].Start()
-	}
-	go func() {
-		for {
-			if msg, ok := dtc.DTContexts.ModulesContext.Receive("twin"); ok == nil {
-				klog.Info("DeviceTwin receive msg")
-				err := dtc.distributeMsg(msg)
-				if err != nil {
-					klog.Warningf("distributeMsg failed: %v", err)
-				}
-			}
-		}
-	}()
-	for {
-		select {
-		case <-time.After((time.Duration)(60) * time.Second):
-			//range to check whether has bug
-			for dtmName := range dtc.DTModules {
-				health, ok := dtc.DTContexts.ModulesHealth.Load(dtmName)
-				if ok {
-					now := time.Now().Unix()
-					if now-health.(int64) > 60*2 {
-						klog.Infof("%s health %v is old, and begin restart", dtmName, health)
-						go dtc.DTModules[dtmName].Start()
-					}
-				}
-			}
-			for _, v := range dtc.HeartBeatToModule {
-				v <- "ping"
-			}
-		case <-dtc.Stop:
-			for _, v := range dtc.HeartBeatToModule {
-				v <- "stop"
-			}
-			return nil
-
-		}
-	}
 }
 
 //distributeMsg distribute message to diff module
-func (dtc *DTController) distributeMsg(m interface{}) error {
+func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
 		klog.Errorf("Distribute message, msg is nil")
@@ -122,7 +50,7 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	if message.Msg.GetParentID() != "" {
 		klog.Infof("Send msg to the %s module in twin", dtcommon.CommModule)
 		confirmMsg := dttype.DTMessage{Msg: model.NewMessage(message.Msg.GetParentID()), Action: dtcommon.Confirm}
-		if err := dtc.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg); err != nil {
+		if err := dt.DTContexts.CommTo(dtcommon.CommModule, &confirmMsg); err != nil {
 			return err
 		}
 	}
@@ -136,7 +64,7 @@ func (dtc *DTController) distributeMsg(m interface{}) error {
 	if moduleName, exist := ActionModuleMap[message.Action]; exist {
 		//how to deal write channel error
 		klog.Infof("Send msg to the %s module in twin", moduleName)
-		if err := dtc.DTContexts.CommTo(moduleName, &message); err != nil {
+		if err := dt.DTContexts.CommTo(moduleName, &message); err != nil {
 			return err
 		}
 	} else {
@@ -340,4 +268,48 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		return false
 	}
 	return false
+}
+
+func (dt *DeviceTwin) start() {
+
+	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
+	for _, v := range moduleNames {
+		dt.RegisterDTModule(v)
+		go dt.DTModules[v].Start()
+	}
+	go func() {
+		for {
+			if msg, ok := dt.DTContexts.ModulesContext.Receive("twin"); ok == nil {
+				klog.Info("DeviceTwin receive msg")
+				err := dt.distributeMsg(msg)
+				if err != nil {
+					klog.Warningf("distributeMsg failed: %v", err)
+				}
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-time.After((time.Duration)(60) * time.Second):
+			//range to check whether has bug
+			for dtmName := range dt.DTModules {
+				health, ok := dt.DTContexts.ModulesHealth.Load(dtmName)
+				if ok {
+					now := time.Now().Unix()
+					if now-health.(int64) > 60*2 {
+						klog.Infof("%s health %v is old, and begin restart", dtmName, health)
+						go dt.DTModules[dtmName].Start()
+					}
+				}
+			}
+			for _, v := range dt.HeartBeatToModule {
+				v <- "ping"
+			}
+		case <-dt.Stop:
+			for _, v := range dt.HeartBeatToModule {
+				v <- "stop"
+			}
+		}
+	}
 }

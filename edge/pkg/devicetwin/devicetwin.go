@@ -4,15 +4,20 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 )
 
 //DeviceTwin the module
 type DeviceTwin struct {
-	context      *context.Context
-	dtcontroller *DTController
+	context           *beehiveContext.Context
+	HeartBeatToModule map[string]chan interface{}
+	DTContexts        *dtcontext.DTContext
+	DTModules         map[string]dtmodule.DTModule
+	Stop              chan bool
 }
 
 // Register register devicetwin
@@ -33,21 +38,24 @@ func (dt *DeviceTwin) Group() string {
 }
 
 //Start run the module
-func (dt *DeviceTwin) Start(c *context.Context) {
-	controller, err := InitDTController(c)
-	if err != nil {
-		klog.Errorf("Start device twin failed, due to %v", err)
-	}
-	dt.dtcontroller = controller
+func (dt *DeviceTwin) Start(c *beehiveContext.Context) {
+	dtContexts, _ := dtcontext.InitDTContext(c)
+	dt.HeartBeatToModule = make(map[string]chan interface{})
+	dt.DTModules = make(map[string]dtmodule.DTModule)
+	dt.DTContexts = dtContexts
+	dt.Stop = make(chan bool, 1)
 	dt.context = c
-	err = controller.Start()
+
+	err := SyncSqlite(dt.DTContexts)
 	if err != nil {
-		klog.Errorf("Start device twin failed, due to %v", err)
+		klog.Errorf("Start DeviceTwin Failed, Sync Sqlite error:%v", err)
+		return
 	}
+	dt.start()
 }
 
 //Cleanup clean resource after quit
 func (dt *DeviceTwin) Cleanup() {
-	dt.dtcontroller.Stop <- true
+	dt.Stop <- true
 	dt.context.Cleanup(dt.Name())
 }

@@ -64,64 +64,12 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 	return fakeDeviceTwin
 }
 
-//TestInitDTController is function to test InitDTController().
-func TestInitDTController(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
-	tests := []struct {
-		name      string
-		context   *context.Context
-		want      *DTController
-		wantError error
-	}{
-		{
-			name:    "InitDTControllerActualContextTest",
-			context: mainContext,
-			want: &DTController{
-				HeartBeatToModule: make(map[string]chan interface{}),
-				DTContexts:        dtContexts,
-				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
-			},
-			wantError: nil,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := InitDTController(test.context)
-			if !reflect.DeepEqual(test.wantError, err) {
-				t.Errorf("InitDTController() error = %v, wantError %v", err, test.wantError)
-				return
-			}
-			if reflect.TypeOf(got) != reflect.TypeOf(test.want) {
-				t.Errorf("InitDTController() = %v, wantError %v", got.DTContexts, test.want.DTContexts)
-				return
-			}
-			if !reflect.DeepEqual(got.HeartBeatToModule, test.want.HeartBeatToModule) {
-				t.Errorf("InitDTController() failed due to wrong HeartBeatToModule, Got= %v Want = %v", got.HeartBeatToModule, test.want.HeartBeatToModule)
-				return
-			}
-			if !reflect.DeepEqual(got.DTContexts.ModulesContext, test.want.DTContexts.ModulesContext) {
-				t.Errorf("IniDTController() failed due to wrong context, Got =%v Want = %v", got.DTContexts.ModulesContext, test.want.DTContexts.ModulesContext)
-				return
-			}
-			if !reflect.DeepEqual(got.DTModules, test.want.DTModules) {
-				t.Errorf("InitDTController() failed due to wrong DTModules, Got =%v Want =%v", got.DTModules, test.want.DTModules)
-				return
-			}
-			if cap(got.Stop) != cap(test.want.Stop) {
-				t.Errorf("InitDTController failed due to wrong Stop Chan Size,Got = %v Want =%v", got.Stop, test.want.Stop)
-			}
-		})
-	}
-}
-
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	var moduleRegistered bool
-	dtc := &DTController{
+	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTContexts:        dtContexts,
 		DTModules:         make(map[string]dtmodule.DTModule),
@@ -165,137 +113,18 @@ func TestRegisterDTModule(t *testing.T) {
 	}
 }
 
-//TestDTontroller_Start is function to test Start().
-func TestDTController_Start(t *testing.T) {
-	// ormerMock is mocked Ormer implementation.
-	var ormerMock *beego.MockOrmer
-	// querySeterMock is mocked QuerySeter implementation.
-	var querySeterMock *beego.MockQuerySeter
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	dbm.DBAccess = ormerMock
-
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
-	mainContext.AddModule("twin")
-	// fakeDevice is used to set the argument of All function
-	fakeDevice := createFakeDevice()
-	// fakeDeviceAttr is used to set the argument of All function
-	fakeDeviceAttr := createFakeDeviceAttribute()
-	// fakeDeviceTwin is used to set the argument of All function
-	fakeDeviceTwin := createFakeDeviceTwin()
-	var msg model.Message
-	tests := []struct {
-		name                  string
-		dtc                   *DTController
-		wantErr               error
-		filterReturn          orm.QuerySeter
-		allReturnIntDevice    int64
-		allReturnErrDevice    error
-		allReturnIntAttribute int64
-		allReturnErrAttribute error
-		queryTableReturn      orm.QuerySeter
-		queryTableMockTimes   int
-		filterMockTimes       int
-		deviceMockTimes       int
-		attributeMockTimes    int
-		allReturnIntTwin      int64
-		allReturnErrTwin      error
-		twinMockTimes         int
-		testModules           bool
-	}{
-		{
-			//Failure Case
-			name: "DTControllerStart-SyncSqliteError",
-			dtc: &DTController{
-				HeartBeatToModule: make(map[string]chan interface{}),
-				DTContexts:        dtContexts,
-				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
-			},
-			wantErr:               errors.New("Query sqlite failed while syncing sqlite"),
-			filterReturn:          querySeterMock,
-			allReturnIntDevice:    int64(0),
-			allReturnErrDevice:    errors.New("Query sqlite failed while syncing sqlite"),
-			allReturnIntAttribute: int64(0),
-			allReturnErrAttribute: nil,
-			queryTableReturn:      querySeterMock,
-			queryTableMockTimes:   int(1),
-			filterMockTimes:       int(0),
-			deviceMockTimes:       int(1),
-			attributeMockTimes:    int(0),
-			twinMockTimes:         int(0),
-			testModules:           false,
-		},
-		{
-			//Success Case
-			name: "DTControllerStart-SuccessCase",
-			dtc: &DTController{
-				HeartBeatToModule: make(map[string]chan interface{}),
-				DTContexts:        dtContexts,
-				DTModules:         make(map[string]dtmodule.DTModule),
-				Stop:              make(chan bool, 1),
-			},
-			wantErr:               nil,
-			filterReturn:          querySeterMock,
-			allReturnIntDevice:    int64(1),
-			allReturnErrDevice:    nil,
-			allReturnIntAttribute: int64(1),
-			allReturnErrAttribute: nil,
-			allReturnIntTwin:      int64(1),
-			allReturnErrTwin:      nil,
-			queryTableReturn:      querySeterMock,
-			queryTableMockTimes:   int(4),
-			filterMockTimes:       int(3),
-			deviceMockTimes:       int(2),
-			attributeMockTimes:    int(1),
-			twinMockTimes:         int(1),
-			testModules:           true,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnIntDevice, test.allReturnErrDevice).Times(test.deviceMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnIntAttribute, test.allReturnErrAttribute).Times(test.attributeMockTimes)
-			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnIntTwin, test.allReturnErrTwin).Times(test.twinMockTimes)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterMockTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableMockTimes)
-			go test.dtc.DTContexts.ModulesContext.Send("twin", msg)
-			test.dtc.Stop <- true
-			if err := test.dtc.Start(); !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("DTController.Start() error = %v, wantError %v", err, test.wantErr)
-			}
-			//Testing all DTModules are registered and started successfully.
-			if test.testModules == true {
-				moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
-				for _, module := range moduleNames {
-					moduleCheck := false
-					for _, mod := range test.dtc.DTModules {
-						if module == mod.Name {
-							moduleCheck = true
-							err := test.dtc.DTContexts.HeartBeat(module, "ping")
-							if err != nil {
-								t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", module)
-							}
-							break
-						}
-					}
-					if moduleCheck == false {
-						t.Errorf("Registration of module %v failed", module)
-					}
-				}
-			}
-		})
-	}
-}
-
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
 	mainContext := context.GetContext(context.MsgCtxTypeChannel)
-	dtc, _ := InitDTController(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtc := &DeviceTwin{
+		HeartBeatToModule: make(map[string]chan interface{}),
+		DTModules:         make(map[string]dtmodule.DTModule),
+		DTContexts:        dtContexts,
+		Stop:              make(chan bool, 1),
+		context:           mainContext,
+	}
+
 	payload := dttype.MembershipUpdate{
 		AddDevices: []dttype.Device{
 			{

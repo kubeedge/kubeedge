@@ -132,10 +132,10 @@ func TestStart(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			moduleCheck := false
-			for _, module := range dt.dtcontroller.DTModules {
+			for _, module := range dt.DTModules {
 				if test.moduleName == module.Name {
 					moduleCheck = true
-					err := dt.dtcontroller.DTContexts.HeartBeat(test.moduleName, "ping")
+					err := dt.DTContexts.HeartBeat(test.moduleName, "ping")
 					if err != nil {
 						t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
 					}
@@ -163,14 +163,12 @@ func TestCleanup(t *testing.T) {
 
 	deviceTwin := DeviceTwin{
 		context: mainContext,
-		dtcontroller: &DTController{
-			Stop: make(chan bool, 1),
-		},
+		Stop:    make(chan bool, 1),
 	}
 	deviceTwin.Cleanup()
 	//Testing the value of stop channel in dtcontroller
 	t.Run("CleanUpTestStopChanTest", func(t *testing.T) {
-		if <-deviceTwin.dtcontroller.Stop == false {
+		if <-deviceTwin.Stop == false {
 			t.Errorf("Want %v on StopChan Got %v", true, false)
 		}
 	})
