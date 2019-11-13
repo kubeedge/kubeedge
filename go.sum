@@ -215,6 +215,8 @@ github.com/go-chassis/go-restful-swagger20 v1.0.1/go.mod h1:s+06mcAnGsVYQ2sqM4ZP
 github.com/go-chassis/paas-lager v1.0.1/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
 github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2 h1:iORWPbIQ81tJPKWs9TNvcjCQnqvyTlL41F9ILgiTcyM=
 github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
+github.com/go-chassis/paas-lager v1.1.0 h1:aHGS8QkijpUhekWQABDuC+fcZLGl020lFRvkNaVwvn0=
+github.com/go-chassis/paas-lager v1.1.0/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
 github.com/go-ini/ini v1.25.4/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
