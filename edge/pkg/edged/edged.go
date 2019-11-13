@@ -25,6 +25,7 @@ package edged
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -84,7 +85,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -184,7 +185,8 @@ type podReady struct {
 type edged struct {
 	//dns config
 	dnsConfigurer             *kubedns.Configurer
-	context                   *context.Context
+	context                   *beehiveContext.Context
+	cancel                    context.CancelFunc
 	hostname                  string
 	namespace                 string
 	nodeName                  string
@@ -283,10 +285,12 @@ func (e *edged) Group() string {
 	return modules.EdgedGroup
 }
 
-func (e *edged) Start(c *context.Context) {
+func (e *edged) Start(c *beehiveContext.Context) {
 	e.context = c
 	e.metaClient = client.New(c)
+	var ctx context.Context
 
+	ctx, e.cancel = context.WithCancel(context.Background())
 	// use self defined client to replace fake kube client
 	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
 
@@ -343,15 +347,12 @@ func (e *edged) Start(c *context.Context) {
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 
 	klog.Infof("starting syncPod")
-	e.syncPod()
+	e.syncPod(ctx)
 }
 
 func (e *edged) Cleanup() {
-	if err := recover(); err != nil {
-		klog.Errorf("edged exit with error: %v", err)
-	}
+	e.cancel()
 	e.context.Cleanup(e.Name())
-	klog.Info("edged exit!")
 }
 
 // isInitPodReady is used to safely return initPodReady flag
@@ -912,7 +913,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 	return nil
 }
 
-func (e *edged) syncPod() {
+func (e *edged) syncPod(ctx context.Context) {
 	time.Sleep(10 * time.Second)
 
 	//send msg to metamanager to get existing pods
@@ -920,6 +921,12 @@ func (e *edged) syncPod() {
 		model.QueryOperation)
 	e.context.Send(metamanager.MetaManagerModuleName, *info)
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("Sync pod stop")
+			return
+		default:
+		}
 		result, err := e.context.Receive(e.Name())
 		if err != nil {
 			klog.Errorf("failed to get pod")
