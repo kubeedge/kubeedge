@@ -79,7 +79,7 @@ func DnsStart() {
 // startDnsServer start the DNS Server
 func startDnsServer() {
 	// init meta client
-	c := context.GetContext(context.MsgCtxTypeChannel)
+	c := context.InitContext(context.MsgCtxTypeChannel)
 	metaClient = client.New(c)
 	//get DNS server name
 	lip, err := getIP()

@@ -46,7 +46,7 @@ func testAction(context *dtcontext.DTContext, resource string, msg interface{}) 
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestDeviceStartAction(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected.State = dtcommon.Connected
 	content := dttype.DeviceUpdate{}
@@ -104,7 +104,7 @@ func TestDeviceStartAction(t *testing.T) {
 
 // TestDevicetHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestDeviceStartHeartBeat(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
@@ -162,7 +162,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContexts, err := dtcontext.InitDTContext(mainContext)
 	if err != nil {
 		t.Errorf("InitDTContext error %v", err)
@@ -266,7 +266,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 
 //TestDealDeviceUpdated is function to test dealDeviceUpdated().
 func TestDealDeviceUpdated(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	content := dttype.DeviceUpdate{}
 	bytes, err := json.Marshal(content)
@@ -344,7 +344,7 @@ func TestDeviceUpdated(t *testing.T) {
 		Cols:     make(map[string]interface{}),
 	})
 
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
 
@@ -471,7 +471,7 @@ func TestDeviceUpdated(t *testing.T) {
 
 // TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContextsEmptyAttributes, err := dtcontext.InitDTContext(mainContext)
 	if err != nil {
 		t.Errorf("initDtcontext error %v", err)

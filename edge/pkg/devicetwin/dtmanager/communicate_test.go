@@ -32,7 +32,7 @@ import (
 
 // TestStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestStartAction(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 
 	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected.State = dtcommon.Connected
@@ -95,7 +95,7 @@ func TestStartAction(t *testing.T) {
 
 // TestStartHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestStartHeartBeat(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
@@ -144,7 +144,7 @@ func TestStartHeartBeat(t *testing.T) {
 
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContextStateDisconnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
 	dtContextStateConnected.State = dtcommon.Connected
@@ -209,7 +209,7 @@ func TestDealSendToCloud(t *testing.T) {
 
 // TestDealLifeCycle is function to test dealLifeCycle().
 func TestDealLifeCycle(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	tests := []struct {
 		name     string
@@ -249,7 +249,7 @@ func TestDealLifeCycle(t *testing.T) {
 
 // TestDealConfirm is function to test dealConfirm().
 func TestDealConfirm(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	tests := []struct {
 		name     string
@@ -290,7 +290,7 @@ func TestDealConfirm(t *testing.T) {
 
 // TestCheckConfirm is function to test checkConfirm().
 func TestCheckConfirm(t *testing.T) {
-	mainContext := context.GetContext(context.MsgCtxTypeChannel)
+	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	dtContext.State = dtcommon.Connected
 	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})

@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
@@ -16,7 +15,7 @@ import (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(config *util.Config, messageq *channelq.ChannelMessageQueue, c *context.Context) {
+func StartCloudHub(config *util.Config, messageq *channelq.ChannelMessageQueue) {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
@@ -35,7 +34,7 @@ func StartCloudHub(config *util.Config, messageq *channelq.ChannelMessageQueue, 
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 	}
 
-	handler.InitHandler(config, messageq, c)
+	handler.InitHandler(config, messageq)
 
 	svc := server.Server{
 		Type:       api.ProtocolTypeQuic,

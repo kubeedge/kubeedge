@@ -10,7 +10,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
@@ -48,7 +48,6 @@ type MessageHandle struct {
 	nodeConns         sync.Map
 	nodeLocks         sync.Map
 	MessageQueue      *channelq.ChannelMessageQueue
-	Context           *context.Context
 	Handlers          []HandleFunc
 	NodeLimit         int
 	KeepaliveChannel  map[string]chan struct{}
@@ -62,14 +61,13 @@ var once sync.Once
 var CloudhubHandler *MessageHandle
 
 // InitHandler create a handler for websocket and quic servers
-func InitHandler(config *util.Config, eventq *channelq.ChannelMessageQueue, c *context.Context) {
+func InitHandler(config *util.Config, eventq *channelq.ChannelMessageQueue) {
 	once.Do(func() {
 		CloudhubHandler = &MessageHandle{
 			KeepaliveInterval: config.KeepaliveInterval,
 			WriteTimeout:      config.WriteTimeout,
 			MessageQueue:      eventq,
 			NodeLimit:         config.NodeLimit,
-			Context:           c,
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
@@ -102,7 +100,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 
 	// handle the reponse from edge
 	if VolumeRegExp.MatchString(container.Message.GetResource()) {
-		mh.Context.SendResp(*container.Message)
+		beehiveContext.SendResp(*container.Message)
 		return
 	}
 

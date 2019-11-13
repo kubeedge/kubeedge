@@ -40,7 +40,7 @@ func toProtocolMap(address v1.EndpointAddress, ports []v1.EndpointPort) map[stri
 }
 
 func NewServiceDiscovery(options registry.Options) registry.ServiceDiscovery {
-	c := context.GetContext(context.MsgCtxTypeChannel)
+	c := context.InitContext(context.MsgCtxTypeChannel)
 	return &ServiceDiscovery{
 		metaClient: client.New(c),
 		Name:       EdgeRegistry,

@@ -17,7 +17,7 @@ const (
 type Module interface {
 	Name() string
 	Group() string
-	Start(c *context.Context)
+	Start()
 	Cleanup()
 }
 
@@ -109,7 +109,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 				break
 			}
 			Register(module)
-			coreContext := context.GetContext(context.MsgCtxTypeChannel)
+			coreContext := context.InitContext(context.MsgCtxTypeChannel)
 			//Init the module
 			coreContext.AddModule(module.Name())
 			//Assemble typeChannels for sendToGroup

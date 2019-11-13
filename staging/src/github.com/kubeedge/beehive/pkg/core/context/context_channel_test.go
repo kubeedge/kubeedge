@@ -9,7 +9,7 @@ import (
 )
 
 func TestSendSync(t *testing.T) {
-	coreContext := GetContext(MsgCtxTypeChannel)
+	coreContext := InitContext(MsgCtxTypeChannel)
 	coreContext.AddModule("test_src")
 	messsage := model.NewMessage("")
 	messsage.Content = "hello"

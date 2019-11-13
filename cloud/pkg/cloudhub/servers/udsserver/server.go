@@ -7,7 +7,7 @@ import (
 
 	"k8s.io/klog"
 
-	ctx "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	hubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
@@ -15,7 +15,7 @@ import (
 )
 
 // StartServer serves
-func StartServer(config *util.Config, c *ctx.Context) {
+func StartServer(config *util.Config) {
 	uds := NewUnixDomainSocket(config.UDSAddress)
 	uds.SetContextHandler(func(context string) string {
 		// receive message from client
@@ -27,7 +27,7 @@ func StartServer(config *util.Config, c *ctx.Context) {
 		}
 
 		// Send message to edge
-		resp, err := c.SendSync(hubmodel.SrcCloudHub, *msg, constants.CSISyncMsgRespTimeout)
+		resp, err := beehiveContext.SendSync(hubmodel.SrcCloudHub, *msg, constants.CSISyncMsgRespTimeout)
 		if err != nil {
 			klog.Errorf("failed to send message to edge: %v", err)
 			return feedbackError(err, msg)

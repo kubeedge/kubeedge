@@ -87,7 +87,7 @@ func TestStart(t *testing.T) {
 
 	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
 	core.Register(fakeModule)
-	mainContext = beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext = beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mainContext.AddModule(TestModule)
 
 	core.Register(&DeviceTwin{})
@@ -154,7 +154,7 @@ func TestStart(t *testing.T) {
 func TestCleanup(t *testing.T) {
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mainContext.AddModule(TestModule)
 
 	core.Register(&DeviceTwin{})

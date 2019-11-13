@@ -136,7 +136,7 @@ func TestSendToKeepChannel(t *testing.T) {
 		{
 			name: "SyncKeeper Error Case in send to keep channel",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:             message,
@@ -146,7 +146,7 @@ func TestSendToKeepChannel(t *testing.T) {
 		{
 			name: "Negative Test Case without syncKeeper Error ",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:             model.NewMessage("test_id"),
@@ -156,7 +156,7 @@ func TestSendToKeepChannel(t *testing.T) {
 		{
 			name: "Send to keep channel with valid input",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:             model.NewMessage("test_id"),
@@ -193,7 +193,7 @@ func TestDispatch(t *testing.T) {
 		{
 			name: "dispatch with valid input",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:       model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
@@ -203,7 +203,7 @@ func TestDispatch(t *testing.T) {
 		{
 			name: "Error Case in dispatch",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
@@ -213,7 +213,7 @@ func TestDispatch(t *testing.T) {
 		{
 			name: "Response Case in dispatch",
 			hub: &EdgeHub{
-				context:    beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:    beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
@@ -254,7 +254,7 @@ func TestRouteToEdge(t *testing.T) {
 		{
 			name: "Route to edge with proper input",
 			hub: &EdgeHub{
-				context:       beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:       beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				chClient:      mockAdapter,
 				syncKeeper:    make(map[string]chan model.Message),
 				reconnectChan: make(chan struct{}),
@@ -264,7 +264,7 @@ func TestRouteToEdge(t *testing.T) {
 		{
 			name: "Receive Error in route to edge",
 			hub: &EdgeHub{
-				context:       beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:       beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				chClient:      mockAdapter,
 				syncKeeper:    make(map[string]chan model.Message),
 				reconnectChan: make(chan struct{}),
@@ -305,7 +305,7 @@ func TestSendToCloud(t *testing.T) {
 		{
 			name: "send to cloud with proper input",
 			hub: &EdgeHub{
-				context:  beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel),
+				context:  beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel),
 				chClient: mockAdapter,
 				config: &config.ControllerConfig{
 					Protocol:        "websocket",
@@ -381,7 +381,7 @@ func TestRouteToCloud(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	testContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	testContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name string
 		hub  *EdgeHub

@@ -7,20 +7,20 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
 // StartModules starts modules that are registered
 func StartModules() {
-	coreContext := context.GetContext(context.MsgCtxTypeChannel)
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 
 	modules := GetModules()
 	for name, module := range modules {
 		//Init the module
-		coreContext.AddModule(name)
+		beehiveContext.AddModule(name)
 		//Assemble typeChannels for sendToGroup
-		coreContext.AddModuleGroup(name, module.Group())
-		go module.Start(coreContext)
+		beehiveContext.AddModuleGroup(name, module.Group())
+		go module.Start()
 		klog.Infof("Starting module %v", name)
 	}
 }
@@ -37,6 +37,7 @@ func GracefulShutdown() {
 		modules := GetModules()
 		for name, module := range modules {
 			klog.Infof("Cleanup module %v", name)
+			beehiveContext.Cleanup(name)
 			module.Cleanup()
 		}
 	}
