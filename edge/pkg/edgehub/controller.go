@@ -1,14 +1,13 @@
 package edgehub
 
 import (
+	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"k8s.io/klog"
 
 	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
@@ -29,116 +28,52 @@ var groupMap = map[string]string{
 	"user":     modules.BusGroup,
 }
 
-//Controller is EdgeHub controller object
-type Controller struct {
-	context    *context.Context
-	chClient   clients.Adapter
-	config     *config.ControllerConfig
-	stopChan   chan struct{}
-	syncKeeper map[string]chan model.Message
-	keeperLock sync.RWMutex
-}
-
-//NewEdgeHubController creates and returns a EdgeHubController object
-func NewEdgeHubController() *Controller {
-	return &Controller{
-		config:     &config.GetConfig().CtrConfig,
-		stopChan:   make(chan struct{}),
-		syncKeeper: make(map[string]chan model.Message),
-	}
-}
-
-func (ehc *Controller) initial(ctx *context.Context) (err error) {
+func (eh *EdgeHub) initial() (err error) {
 	config.GetConfig().WSConfig.URL, err = bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
 	if err != nil {
 		klog.Warningf("failed to get cloud hub url, error:%+v", err)
 		return err
 	}
 
-	cloudHubClient, err := clients.GetClient(ehc.config.Protocol, config.GetConfig())
+	cloudHubClient, err := clients.GetClient(eh.config.Protocol, config.GetConfig())
 	if err != nil {
 		return err
 	}
 
-	ehc.context = ctx
-	ehc.chClient = cloudHubClient
+	eh.chClient = cloudHubClient
 
 	return nil
 }
 
-//Start will start EdgeHub
-func (ehc *Controller) Start(ctx *context.Context) {
-	config.InitEdgehubConfig()
-	for {
-		err := ehc.initial(ctx)
-		if err != nil {
-			klog.Fatalf("failed to init controller: %v", err)
-			return
-		}
-		err = ehc.chClient.Init()
-		if err != nil {
-			klog.Errorf("connection error, try again after 60s: %v", err)
-			time.Sleep(waitConnectionPeriod)
-			continue
-		}
-		// execute hook func after connect
-		ehc.pubConnectInfo(true)
-		go ehc.routeToEdge()
-		go ehc.routeToCloud()
-		go ehc.keepalive()
-
-		// wait the stop singal
-		// stop authinfo manager/websocket connection
-		<-ehc.stopChan
-		ehc.chClient.Uninit()
-
-		// execute hook fun after disconnect
-		ehc.pubConnectInfo(false)
-
-		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(ehc.config.HeartbeatPeriod * 2)
-
-		// clean channel
-	clean:
-		for {
-			select {
-			case <-ehc.stopChan:
-			default:
-				break clean
-			}
-		}
-	}
-}
-
-func (ehc *Controller) addKeepChannel(msgID string) chan model.Message {
-	ehc.keeperLock.Lock()
-	defer ehc.keeperLock.Unlock()
+func (eh *EdgeHub) addKeepChannel(msgID string) chan model.Message {
+	eh.keeperLock.Lock()
+	defer eh.keeperLock.Unlock()
 
 	tempChannel := make(chan model.Message)
-	ehc.syncKeeper[msgID] = tempChannel
+	eh.syncKeeper[msgID] = tempChannel
 
 	return tempChannel
 }
 
-func (ehc *Controller) deleteKeepChannel(msgID string) {
-	ehc.keeperLock.Lock()
-	defer ehc.keeperLock.Unlock()
+func (eh *EdgeHub) deleteKeepChannel(msgID string) {
+	eh.keeperLock.Lock()
+	defer eh.keeperLock.Unlock()
 
-	delete(ehc.syncKeeper, msgID)
+	delete(eh.syncKeeper, msgID)
 }
 
-func (ehc *Controller) isSyncResponse(msgID string) bool {
-	ehc.keeperLock.RLock()
-	defer ehc.keeperLock.RUnlock()
+func (eh *EdgeHub) isSyncResponse(msgID string) bool {
+	eh.keeperLock.RLock()
+	defer eh.keeperLock.RUnlock()
 
-	_, exist := ehc.syncKeeper[msgID]
+	_, exist := eh.syncKeeper[msgID]
 	return exist
 }
 
-func (ehc *Controller) sendToKeepChannel(message model.Message) error {
-	ehc.keeperLock.RLock()
-	defer ehc.keeperLock.RUnlock()
-	channel, exist := ehc.syncKeeper[message.GetParentID()]
+func (eh *EdgeHub) sendToKeepChannel(message model.Message) error {
+	eh.keeperLock.RLock()
+	defer eh.keeperLock.RUnlock()
+	channel, exist := eh.syncKeeper[message.GetParentID()]
 	if !exist {
 		klog.Errorf("failed to get sync keeper channel, messageID:%+v", message)
 		return fmt.Errorf("failed to get sync keeper channel, messageID:%+v", message)
@@ -153,7 +88,7 @@ func (ehc *Controller) sendToKeepChannel(message model.Message) error {
 	return nil
 }
 
-func (ehc *Controller) dispatch(message model.Message) error {
+func (eh *EdgeHub) dispatch(message model.Message) error {
 	// TODO: dispatch message by the message type
 	md, ok := groupMap[message.GetGroup()]
 	if !ok {
@@ -161,51 +96,58 @@ func (ehc *Controller) dispatch(message model.Message) error {
 		return fmt.Errorf("msg_group not found")
 	}
 
-	isResponse := ehc.isSyncResponse(message.GetParentID())
+	isResponse := eh.isSyncResponse(message.GetParentID())
 	if !isResponse {
-		ehc.context.SendToGroup(md, message)
+		eh.context.SendToGroup(md, message)
 		return nil
 	}
-	return ehc.sendToKeepChannel(message)
+	return eh.sendToKeepChannel(message)
 }
 
-func (ehc *Controller) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(ctx context.Context) {
 	for {
-		message, err := ehc.chClient.Receive()
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToEdge stop")
+			return
+		default:
+
+		}
+		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			ehc.stopChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 
 		klog.Infof("received msg from cloud-hub:%+v", message)
-		err = ehc.dispatch(message)
+		err = eh.dispatch(message)
 		if err != nil {
 			klog.Errorf("failed to dispatch message, discard: %v", err)
 		}
 	}
 }
 
-func (ehc *Controller) sendToCloud(message model.Message) error {
-	ehc.keeperLock.Lock()
-	err := ehc.chClient.Send(message)
-	ehc.keeperLock.Unlock()
+func (eh *EdgeHub) sendToCloud(message model.Message) error {
+	eh.keeperLock.Lock()
+	err := eh.chClient.Send(message)
+	eh.keeperLock.Unlock()
 	if err != nil {
 		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
 	}
 
 	syncKeep := func(message model.Message) {
-		tempChannel := ehc.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(ehc.config.HeartbeatPeriod)
+		tempChannel := eh.addKeepChannel(message.GetID())
+		sendTimer := time.NewTimer(eh.config.HeartbeatPeriod)
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
-			ehc.context.SendResp(response)
-			ehc.deleteKeepChannel(response.GetParentID())
+			eh.context.SendResp(response)
+			eh.deleteKeepChannel(response.GetParentID())
 		case <-sendTimer.C:
 			klog.Warningf("timeout to receive response for message: %+v", message)
-			ehc.deleteKeepChannel(message.GetID())
+			eh.deleteKeepChannel(message.GetID())
 		}
 	}
 
@@ -216,9 +158,15 @@ func (ehc *Controller) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (ehc *Controller) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 	for {
-		message, err := ehc.context.Receive(ModuleNameEdgeHub)
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToCloud stop")
+			return
+		default:
+		}
+		message, err := eh.context.Receive(ModuleNameEdgeHub)
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
@@ -226,34 +174,41 @@ func (ehc *Controller) routeToCloud() {
 		}
 
 		// post message to cloud hub
-		err = ehc.sendToCloud(message)
+		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			ehc.stopChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 	}
 }
 
-func (ehc *Controller) keepalive() {
+func (eh *EdgeHub) keepalive(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		default:
+
+		}
 		msg := model.NewMessage("").
 			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
 			FillBody("ping")
 
 		// post message to cloud hub
-		err := ehc.sendToCloud(*msg)
+		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			ehc.stopChan <- struct{}{}
+			eh.reconnectChan <- struct{}{}
 			return
 		}
 
-		time.Sleep(ehc.config.HeartbeatPeriod)
+		time.Sleep(eh.config.HeartbeatPeriod)
 	}
 }
 
-func (ehc *Controller) pubConnectInfo(isConnected bool) {
+func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	// var info model.Message
 	content := connect.CloudConnected
 	if !isConnected {
@@ -263,6 +218,6 @@ func (ehc *Controller) pubConnectInfo(isConnected bool) {
 	for _, group := range groupMap {
 		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
 			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
-		ehc.context.SendToGroup(group, *message)
+		eh.context.SendToGroup(group, *message)
 	}
 }
