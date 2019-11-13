@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
