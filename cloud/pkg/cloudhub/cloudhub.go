@@ -9,7 +9,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -18,8 +17,7 @@ import (
 )
 
 type cloudHub struct {
-	context *beehiveContext.Context
-	cancel  context.CancelFunc
+	cancel context.CancelFunc
 }
 
 func Register() {
@@ -34,38 +32,36 @@ func (a *cloudHub) Group() string {
 	return "cloudhub"
 }
 
-func (a *cloudHub) Start(c *beehiveContext.Context) {
+func (a *cloudHub) Start() {
 	var ctx context.Context
-	a.context = c
 	ctx, a.cancel = context.WithCancel(context.Background())
 
 	initHubConfig()
 
-	messageq := channelq.NewChannelMessageQueue(c)
+	messageq := channelq.NewChannelMessageQueue()
 
 	// start dispatch message from the cloud to edge node
 	go messageq.DispatchMessage(ctx)
 
 	// start the cloudhub server
 	if util.HubConfig.ProtocolWebsocket {
-		go servers.StartCloudHub(servers.ProtocolWebsocket, messageq, c)
+		go servers.StartCloudHub(servers.ProtocolWebsocket, messageq)
 	}
 
 	if util.HubConfig.ProtocolQuic {
-		go servers.StartCloudHub(servers.ProtocolQuic, messageq, c)
+		go servers.StartCloudHub(servers.ProtocolQuic, messageq)
 	}
 
 	if util.HubConfig.ProtocolUDS {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
 		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(util.HubConfig, c)
+		go udsserver.StartServer(util.HubConfig)
 	}
 
 }
 
 func (a *cloudHub) Cleanup() {
 	a.cancel()
-	a.context.Cleanup(a.Name())
 }
 
 func initHubConfig() {

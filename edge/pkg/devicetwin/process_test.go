@@ -67,7 +67,7 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	var moduleRegistered bool
 	_, cancel := context.WithCancel(context.Background())
@@ -117,7 +117,7 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
@@ -214,7 +214,7 @@ func TestSyncSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
@@ -306,7 +306,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
+	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext(mainContext)
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()

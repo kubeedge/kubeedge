@@ -52,13 +52,12 @@ func (s *ChannelMessageSet) Get() (*beehiveModel.Message, error) {
 
 // ChannelMessageQueue is the channel implementation of MessageQueue
 type ChannelMessageQueue struct {
-	ctx         *beehiveContext.Context
 	channelPool sync.Map
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue(ctx *beehiveContext.Context) *ChannelMessageQueue {
-	q := ChannelMessageQueue{ctx: ctx}
+func NewChannelMessageQueue() *ChannelMessageQueue {
+	q := ChannelMessageQueue{}
 	return &q
 }
 
@@ -73,7 +72,7 @@ func (q *ChannelMessageQueue) DispatchMessage(ctx context.Context) {
 			return
 		default:
 		}
-		msg, err := q.ctx.Receive(model.SrcCloudHub)
+		msg, err := beehiveContext.Receive(model.SrcCloudHub)
 		if err != nil {
 			klog.Info("receive not Message format message")
 			continue
@@ -144,9 +143,9 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) error {
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
 	case model.ResTwin:
-		q.ctx.SendToGroup(model.SrcDeviceController, *msg)
+		beehiveContext.SendToGroup(model.SrcDeviceController, *msg)
 	default:
-		q.ctx.SendToGroup(model.SrcEdgeController, *msg)
+		beehiveContext.SendToGroup(model.SrcEdgeController, *msg)
 	}
 	return nil
 }

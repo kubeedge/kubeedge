@@ -67,7 +67,7 @@ func Init() {
 	go func() {
 		unused = make([]string, 0)
 		addrByService = &addrTable{}
-		c := context.GetContext(context.MsgCtxTypeChannel)
+		c := context.InitContext(context.MsgCtxTypeChannel)
 		metaClient = client.New(c)
 		//create virtual network device
 		for {

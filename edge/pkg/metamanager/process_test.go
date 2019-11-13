@@ -18,7 +18,6 @@ package metamanager
 
 // TODO re-optimize testcase @kadisi
 /*
-
 import (
 	"encoding/json"
 	"errors"
