@@ -13,28 +13,28 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 )
 
-// Controller use beehive context message layer
-type Controller struct {
+// EdgeController use beehive context message layer
+type EdgeController struct {
 	cancel context.CancelFunc
 }
 
 func Register() {
-	edgeController := Controller{}
+	edgeController := EdgeController{}
 	core.Register(&edgeController)
 }
 
 // Name of controller
-func (ctl *Controller) Name() string {
+func (ctl *EdgeController) Name() string {
 	return constants.EdgeControllerModuleName
 }
 
 // Group of controller
-func (ctl *Controller) Group() string {
+func (ctl *EdgeController) Group() string {
 	return constants.EdgeControllerModuleName
 }
 
 // Start controller
-func (ctl *Controller) Start(c *beehiveContext.Context) {
+func (ctl *EdgeController) Start(c *beehiveContext.Context) {
 	var ctx context.Context
 
 	config.Context = c
@@ -59,7 +59,7 @@ func (ctl *Controller) Start(c *beehiveContext.Context) {
 }
 
 // Cleanup controller
-func (ctl *Controller) Cleanup() {
+func (ctl *EdgeController) Cleanup() {
 	ctl.cancel()
 	config.Context.Cleanup(ctl.Name())
 }
