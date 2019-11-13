@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/klog"
 
-	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -49,12 +48,6 @@ func NewEdgeHubController() *Controller {
 }
 
 func (ehc *Controller) initial(ctx *context.Context) (err error) {
-	config.GetConfig().WSConfig.URL, err = bhconfig.CONFIG.GetValue("edgehub.websocket.url").ToString()
-	if err != nil {
-		klog.Warningf("failed to get cloud hub url, error:%+v", err)
-		return err
-	}
-
 	cloudHubClient, err := clients.GetClient(ehc.config.Protocol, config.GetConfig())
 	if err != nil {
 		return err
