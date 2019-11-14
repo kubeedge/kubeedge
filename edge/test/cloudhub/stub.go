@@ -12,7 +12,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -32,8 +32,7 @@ type record struct {
 }
 
 type stubCloudHub struct {
-	context *context.Context
-	wsConn  *websocket.Conn
+	wsConn *websocket.Conn
 }
 
 func (*stubCloudHub) Name() string {
@@ -110,8 +109,7 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (tm *stubCloudHub) Start(c *context.Context) {
-	tm.context = c
+func (tm *stubCloudHub) Start() {
 	defer tm.Cleanup()
 
 	router := mux.NewRouter()
@@ -131,5 +129,5 @@ func (tm *stubCloudHub) Start(c *context.Context) {
 }
 
 func (tm *stubCloudHub) Cleanup() {
-	tm.context.Cleanup(tm.Name())
+	beehiveContext.Cleanup(tm.Name())
 }
