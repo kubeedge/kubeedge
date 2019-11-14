@@ -4,7 +4,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -16,9 +15,6 @@ var ContextReceiveModule string
 
 // ContextResponseModule is the name response message from
 var ContextResponseModule string
-
-// Context ...
-var Context *context.Context
 
 func InitContextConfig() {
 	if smn, err := config.CONFIG.GetValue("controller.context.send-module").ToString(); err != nil {
