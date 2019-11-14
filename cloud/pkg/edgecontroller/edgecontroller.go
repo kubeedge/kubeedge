@@ -7,7 +7,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
@@ -34,10 +33,9 @@ func (ctl *EdgeController) Group() string {
 }
 
 // Start controller
-func (ctl *EdgeController) Start(c *beehiveContext.Context) {
+func (ctl *EdgeController) Start() {
 	var ctx context.Context
 
-	config.Context = c
 	ctx, ctl.cancel = context.WithCancel(context.Background())
 
 	initConfig()
@@ -61,7 +59,6 @@ func (ctl *EdgeController) Start(c *beehiveContext.Context) {
 // Cleanup controller
 func (ctl *EdgeController) Cleanup() {
 	ctl.cancel()
-	config.Context.Cleanup(ctl.Name())
 }
 
 func initConfig() {
