@@ -350,6 +350,7 @@ func (e *edged) Start() {
 
 func (e *edged) Cleanup() {
 	e.cancel()
+	beehiveContext.Cleanup(e.Name())
 }
 
 // isInitPodReady is used to safely return initPodReady flag

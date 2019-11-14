@@ -15,8 +15,7 @@ import (
 
 //EdgeMesh defines EdgeMesh object structure
 type EdgeMesh struct {
-	context *beehiveContext.Context
-	cancel  context.CancelFunc
+	cancel context.CancelFunc
 }
 
 // Register register edgemesh
@@ -35,8 +34,7 @@ func (em *EdgeMesh) Group() string {
 }
 
 //Start sets context and starts the controller
-func (em *EdgeMesh) Start(c *beehiveContext.Context) {
-	em.context = c
+func (em *EdgeMesh) Start() {
 	var ctx context.Context
 	ctx, em.cancel = context.WithCancel(context.Background())
 	proxy.Init()
@@ -49,7 +47,7 @@ func (em *EdgeMesh) Start(c *beehiveContext.Context) {
 			return
 		default:
 		}
-		msg, err := em.context.Receive(constant.ModuleNameEdgeMesh)
+		msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
 		if err != nil {
 			klog.Warningf("edgemesh receive msg error %v", err)
 			continue
@@ -62,5 +60,5 @@ func (em *EdgeMesh) Start(c *beehiveContext.Context) {
 //Cleanup sets up context cleanup through EdgeMesh name
 func (em *EdgeMesh) Cleanup() {
 	em.cancel()
-	em.context.Cleanup(em.Name())
+	beehiveContext.Cleanup(em.Name())
 }

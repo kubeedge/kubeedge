@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	cloudconn "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -32,9 +31,8 @@ import (
 
 // TestStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestStartAction(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
 
-	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
+	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
 	receiveChanActionPresent := make(chan interface{}, 1)
 
@@ -95,8 +93,7 @@ func TestStartAction(t *testing.T) {
 
 // TestStartHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestStartHeartBeat(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
@@ -135,7 +132,7 @@ func TestStartHeartBeat(t *testing.T) {
 			if test.Worker.HeartBeatChan == heartChanPing {
 				_, exist := test.Worker.DTContexts.ModulesHealth.Load("group")
 				if !exist {
-					t.Errorf("Start Failed to add module in context")
+					t.Errorf("Start Failed to add module in beehiveContext")
 				}
 			}
 		})
@@ -144,9 +141,8 @@ func TestStartHeartBeat(t *testing.T) {
 
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContextStateDisconnected, _ := dtcontext.InitDTContext(mainContext)
-	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
+	dtContextStateDisconnected, _ := dtcontext.InitDTContext()
+	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
 	msg := &model.Message{
 		Header: model.MessageHeader{
@@ -192,7 +188,7 @@ func TestDealSendToCloud(t *testing.T) {
 				t.Errorf("dealSendToCloud() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
-			// Testing whether the message is properly stored in ConfirmMap of context when correct message is passed
+			// Testing whether the message is properly stored in ConfirmMap of beehiveContext when correct message is passed
 			if err == nil && test.context.State == dtcommon.Connected {
 				gotMsg, exist := test.context.ConfirmMap.Load("message")
 				if !exist {
@@ -209,8 +205,7 @@ func TestDealSendToCloud(t *testing.T) {
 
 // TestDealLifeCycle is function to test dealLifeCycle().
 func TestDealLifeCycle(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContext, _ := dtcontext.InitDTContext(mainContext)
+	dtContext, _ := dtcontext.InitDTContext()
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -249,8 +244,7 @@ func TestDealLifeCycle(t *testing.T) {
 
 // TestDealConfirm is function to test dealConfirm().
 func TestDealConfirm(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContext, _ := dtcontext.InitDTContext(mainContext)
+	dtContext, _ := dtcontext.InitDTContext()
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -281,7 +275,7 @@ func TestDealConfirm(t *testing.T) {
 			if err == nil {
 				_, exist := test.context.ConfirmMap.Load("parentId")
 				if exist {
-					t.Errorf("dealConfirm failed() ParentMessageId still present in context ConfirmMap")
+					t.Errorf("dealConfirm failed() ParentMessageId still present in beehiveContext ConfirmMap")
 				}
 			}
 		})
@@ -290,8 +284,7 @@ func TestDealConfirm(t *testing.T) {
 
 // TestCheckConfirm is function to test checkConfirm().
 func TestCheckConfirm(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContext, _ := dtcontext.InitDTContext(mainContext)
+	dtContext, _ := dtcontext.InitDTContext()
 	dtContext.State = dtcommon.Connected
 	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})
 	dtContext.ConfirmMap.Store("actionMessage", &dttype.DTMessage{

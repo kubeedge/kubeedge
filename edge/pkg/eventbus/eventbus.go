@@ -122,6 +122,7 @@ func (eb *eventbus) Start() {
 
 func (eb *eventbus) Cleanup() {
 	eb.cancel()
+	beehiveContext.Cleanup(eb.Name())
 }
 
 func pubMQTT(topic string, payload []byte) {

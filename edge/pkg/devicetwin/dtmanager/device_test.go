@@ -26,7 +26,6 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -46,8 +45,7 @@ func testAction(context *dtcontext.DTContext, resource string, msg interface{}) 
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestDeviceStartAction(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContextStateConnected, _ := dtcontext.InitDTContext(mainContext)
+	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
 	content := dttype.DeviceUpdate{}
 	bytes, _ := json.Marshal(content)
@@ -104,8 +102,7 @@ func TestDeviceStartAction(t *testing.T) {
 
 // TestDevicetHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestDeviceStartHeartBeat(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
@@ -143,7 +140,7 @@ func TestDeviceStartHeartBeat(t *testing.T) {
 			if test.Worker.HeartBeatChan == heartChanPing {
 				_, exist := test.Worker.DTContexts.ModulesHealth.Load("group")
 				if !exist {
-					t.Errorf("Start Failed to add module in context")
+					t.Errorf("Start Failed to add module in beehiveContext")
 				}
 			}
 		})
@@ -162,8 +159,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContexts, err := dtcontext.InitDTContext(mainContext)
+	dtContexts, err := dtcontext.InitDTContext()
 	if err != nil {
 		t.Errorf("InitDTContext error %v", err)
 		return
@@ -266,8 +262,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 
 //TestDealDeviceUpdated is function to test dealDeviceUpdated().
 func TestDealDeviceUpdated(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	content := dttype.DeviceUpdate{}
 	bytes, err := json.Marshal(content)
 	if err != nil {
@@ -344,8 +339,7 @@ func TestDeviceUpdated(t *testing.T) {
 		Cols:     make(map[string]interface{}),
 	})
 
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
 
 	devA := &dttype.Device{ID: "DeviceA"}
@@ -471,13 +465,12 @@ func TestDeviceUpdated(t *testing.T) {
 
 // TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
-	mainContext := context.InitContext(context.MsgCtxTypeChannel)
-	dtContextsEmptyAttributes, err := dtcontext.InitDTContext(mainContext)
+	dtContextsEmptyAttributes, err := dtcontext.InitDTContext()
 	if err != nil {
 		t.Errorf("initDtcontext error %v", err)
 		return
 	}
-	dtContextsNonEmptyAttributes, err := dtcontext.InitDTContext(mainContext)
+	dtContextsNonEmptyAttributes, err := dtcontext.InitDTContext()
 	if err != nil {
 		t.Errorf("initDtcontext error %v", err)
 		return

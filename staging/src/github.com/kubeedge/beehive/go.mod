@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1 // indirect
+	github.com/golang/mock v1.3.1
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect

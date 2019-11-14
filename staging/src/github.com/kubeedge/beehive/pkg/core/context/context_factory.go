@@ -20,8 +20,12 @@ var (
 	once    sync.Once
 )
 
+func init()  {
+	InitContext(MsgCtxTypeChannel)
+}
+
 // InitContext gets global context instance
-func InitContext(contextType string) *Context {
+func InitContext(contextType string) {
 	once.Do(func() {
 		context = &Context{}
 		switch contextType {
@@ -33,12 +37,6 @@ func InitContext(contextType string) *Context {
 			klog.Fatalf("Do not support context type:%s", contextType)
 		}
 	})
-	return context
-}
-
-// DestroyContext is used for Unit test
-func DestroyContext() {
-	context = nil
 }
 
 // AddModule adds module into module context

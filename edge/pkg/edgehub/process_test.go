@@ -125,8 +125,6 @@ func TestIsSyncResponse(t *testing.T) {
 
 //TestSendToKeepChannel() tests the reception of response in the syncKeep channel
 func TestSendToKeepChannel(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	defer beehiveContext.DestroyContext()
 	message := model.NewMessage("test_id")
 	tests := []struct {
 		name                string
@@ -182,8 +180,6 @@ func TestSendToKeepChannel(t *testing.T) {
 
 //TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	defer beehiveContext.DestroyContext()
 
 	tests := []struct {
 		name          string
@@ -245,8 +241,6 @@ func TestRouteToEdge(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	defer beehiveContext.DestroyContext()
 
 	tests := []struct {
 		name         string
@@ -291,8 +285,6 @@ func TestSendToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	defer beehiveContext.DestroyContext()
 
 	msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 	msg.Header.Sync = true
@@ -382,8 +374,6 @@ func TestRouteToCloud(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	defer beehiveContext.DestroyContext()
 
 	tests := []struct {
 		name string

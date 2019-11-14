@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -62,6 +63,7 @@ func (dctl *DeviceController) Start() {
 // Cleanup controller
 func (dctl *DeviceController) Cleanup() {
 	dctl.cancel()
+	beehiveContext.Cleanup(dctl.Name())
 }
 
 func initConfig() {

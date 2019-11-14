@@ -27,8 +27,7 @@ func Register() {
 }
 
 type metaManager struct {
-	context *beehiveContext.Context
-	cancel  context.CancelFunc
+	cancel context.CancelFunc
 }
 
 func (*metaManager) Name() string {
@@ -39,9 +38,8 @@ func (*metaManager) Group() string {
 	return modules.MetaGroup
 }
 
-func (m *metaManager) Start(c *beehiveContext.Context) {
+func (m *metaManager) Start() {
 	var ctx context.Context
-	m.context = c
 	ctx, m.cancel = context.WithCancel(context.Background())
 	InitMetaManagerConfig()
 
@@ -56,7 +54,7 @@ func (m *metaManager) Start(c *beehiveContext.Context) {
 			case <-timer.C:
 				timer.Reset(period)
 				msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
-				m.context.Send(MetaManagerModuleName, *msg)
+				beehiveContext.Send(MetaManagerModuleName, *msg)
 			}
 		}
 	}()
@@ -66,7 +64,7 @@ func (m *metaManager) Start(c *beehiveContext.Context) {
 
 func (m *metaManager) Cleanup() {
 	m.cancel()
-	m.context.Cleanup(m.Name())
+	beehiveContext.Cleanup(m.Name())
 }
 
 func getSyncInterval() time.Duration {
