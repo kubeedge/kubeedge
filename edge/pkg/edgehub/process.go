@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 
 	bhconfig "github.com/kubeedge/beehive/pkg/common/config"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
@@ -98,7 +99,7 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 
 	isResponse := eh.isSyncResponse(message.GetParentID())
 	if !isResponse {
-		eh.context.SendToGroup(md, message)
+		beehiveContext.SendToGroup(md, message)
 		return nil
 	}
 	return eh.sendToKeepChannel(message)
@@ -143,7 +144,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
-			eh.context.SendResp(response)
+			beehiveContext.SendResp(response)
 			eh.deleteKeepChannel(response.GetParentID())
 		case <-sendTimer.C:
 			klog.Warningf("timeout to receive response for message: %+v", message)
@@ -166,7 +167,7 @@ func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 			return
 		default:
 		}
-		message, err := eh.context.Receive(ModuleNameEdgeHub)
+		message, err := beehiveContext.Receive(ModuleNameEdgeHub)
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
@@ -218,6 +219,6 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	for _, group := range groupMap {
 		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
 			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
-		eh.context.SendToGroup(group, *message)
+		beehiveContext.SendToGroup(group, *message)
 	}
 }

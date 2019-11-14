@@ -6,7 +6,6 @@ import (
 
 	api "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,13 +28,11 @@ type ConfigMapsInterface interface {
 
 type configMaps struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newConfigMaps(namespace string, c *context.Context, s SendInterface) *configMaps {
+func newConfigMaps(namespace string, s SendInterface) *configMaps {
 	return &configMaps{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}

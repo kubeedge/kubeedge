@@ -10,7 +10,7 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
@@ -19,8 +19,6 @@ import (
 var (
 	// MQTTHub client
 	MQTTHub *Client
-	// ModuleContext variable
-	ModuleContext *context.Context
 	// NodeID stands for node id
 	NodeID string
 	// GroupID stands for group id
@@ -111,7 +109,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(message.Payload()))
 	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	ModuleContext.SendToGroup(target, *msg)
+	beehiveContext.SendToGroup(target, *msg)
 }
 
 // InitSubClient init sub client

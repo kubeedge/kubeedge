@@ -185,7 +185,6 @@ type podReady struct {
 type edged struct {
 	//dns config
 	dnsConfigurer             *kubedns.Configurer
-	context                   *beehiveContext.Context
 	cancel                    context.CancelFunc
 	hostname                  string
 	namespace                 string
@@ -285,9 +284,8 @@ func (e *edged) Group() string {
 	return modules.EdgedGroup
 }
 
-func (e *edged) Start(c *beehiveContext.Context) {
-	e.context = c
-	e.metaClient = client.New(c)
+func (e *edged) Start() {
+	e.metaClient = client.New()
 	var ctx context.Context
 
 	ctx, e.cancel = context.WithCancel(context.Background())
@@ -352,7 +350,6 @@ func (e *edged) Start(c *beehiveContext.Context) {
 
 func (e *edged) Cleanup() {
 	e.cancel()
-	e.context.Cleanup(e.Name())
 }
 
 // isInitPodReady is used to safely return initPodReady flag
@@ -919,7 +916,7 @@ func (e *edged) syncPod(ctx context.Context) {
 	//send msg to metamanager to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
-	e.context.Send(metamanager.MetaManagerModuleName, *info)
+	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {
 		select {
 		case <-ctx.Done():
@@ -927,7 +924,7 @@ func (e *edged) syncPod(ctx context.Context) {
 			return
 		default:
 		}
-		result, err := e.context.Receive(e.Name())
+		result, err := beehiveContext.Receive(e.Name())
 		if err != nil {
 			klog.Errorf("failed to get pod")
 			continue
@@ -1003,7 +1000,7 @@ func (e *edged) syncPod(ctx context.Context) {
 				klog.Errorf("handle volume failed: %v", err)
 			} else {
 				resp := result.NewRespByMessage(&result, res)
-				e.context.SendResp(*resp)
+				beehiveContext.SendResp(*resp)
 			}
 		default:
 			klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)

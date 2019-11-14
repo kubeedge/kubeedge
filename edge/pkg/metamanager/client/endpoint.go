@@ -6,7 +6,6 @@ import (
 
 	api "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
@@ -31,13 +30,11 @@ type EndpointsInterface interface {
 // Endpoints is struct implementing EndpointsInterface
 type Endpoints struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newEndpoints(namespace string, c *context.Context, s SendInterface) *Endpoints {
+func newEndpoints(namespace string, s SendInterface) *Endpoints {
 	return &Endpoints{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}

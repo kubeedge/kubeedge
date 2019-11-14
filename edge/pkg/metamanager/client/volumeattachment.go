@@ -7,7 +7,6 @@ import (
 	api "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,14 +28,12 @@ type VolumeAttachmentsInterface interface {
 
 type volumeattachments struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newVolumeAttachments(n string, c *context.Context, s SendInterface) *volumeattachments {
+func newVolumeAttachments(n string, s SendInterface) *volumeattachments {
 	return &volumeattachments{
 		namespace: n,
-		context:   c,
 		send:      s,
 	}
 }

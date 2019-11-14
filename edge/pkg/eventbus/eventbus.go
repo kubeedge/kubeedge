@@ -32,7 +32,6 @@ const (
 
 // eventbus struct
 type eventbus struct {
-	context  *beehiveContext.Context
 	cancel   context.CancelFunc
 	mqttMode int
 }
@@ -55,9 +54,8 @@ func (*eventbus) Group() string {
 	return modules.BusGroup
 }
 
-func (eb *eventbus) Start(c *beehiveContext.Context) {
+func (eb *eventbus) Start() {
 	// no need to call TopicInit now, we have fixed topic
-	eb.context = c
 	var ctx context.Context
 	ctx, eb.cancel = context.WithCancel(context.Background())
 
@@ -68,7 +66,6 @@ func (eb *eventbus) Start(c *beehiveContext.Context) {
 	}
 
 	mqttBus.NodeID = nodeID.(string)
-	mqttBus.ModuleContext = c
 
 	if eb.mqttMode >= bothMqttMode {
 		// launch an external mqtt server
@@ -125,7 +122,6 @@ func (eb *eventbus) Start(c *beehiveContext.Context) {
 
 func (eb *eventbus) Cleanup() {
 	eb.cancel()
-	eb.context.Cleanup(eb.Name())
 }
 
 func pubMQTT(topic string, payload []byte) {
@@ -145,7 +141,7 @@ func (eb *eventbus) pubCloudMsgToEdge(ctx context.Context) {
 			return
 		default:
 		}
-		accessInfo, err := eb.context.Receive(eb.Name())
+		accessInfo, err := beehiveContext.Receive(eb.Name())
 		if err != nil {
 			klog.Errorf("Fail to get a message from channel: %v", err)
 			continue
