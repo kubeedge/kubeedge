@@ -37,7 +37,6 @@ func GracefulShutdown() {
 		modules := GetModules()
 		for name, module := range modules {
 			klog.Infof("Cleanup module %v", name)
-			beehiveContext.Cleanup(name)
 			module.Cleanup()
 		}
 	}

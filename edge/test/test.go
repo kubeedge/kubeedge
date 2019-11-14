@@ -29,7 +29,6 @@ func Register() {
 }
 
 type testManager struct {
-	context    *beehiveContext.Context
 	moduleWait *sync.WaitGroup
 }
 
@@ -121,7 +120,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 			ns = p.Namespace
 		}
 		msgReq := message.BuildMsg("resource", string(p.UID), "edgecontroller", ns+"/pod/"+string(p.Name), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -152,7 +151,7 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 			operation = model.UpdateOperation
 		}
 		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
-		tm.context.Send("twin", *msgReq)
+		beehiveContext.Send("twin", *msgReq)
 		klog.Infof("send message to twingrp is %+v\n", msgReq)
 	}
 }
@@ -182,7 +181,7 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/secret/"+string(p.UID), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -212,13 +211,12 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/configmap/"+string(p.UID), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
 
-func (tm *testManager) Start(c *beehiveContext.Context) {
-	tm.context = c
+func (tm *testManager) Start() {
 	defer tm.Cleanup()
 
 	http.HandleFunc("/pods", tm.podHandler)
@@ -232,5 +230,5 @@ func (tm *testManager) Start(c *beehiveContext.Context) {
 }
 
 func (tm *testManager) Cleanup() {
-	tm.context.Cleanup(tm.Name())
+	beehiveContext.Cleanup(tm.Name())
 }

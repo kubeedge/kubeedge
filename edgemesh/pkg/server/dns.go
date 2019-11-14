@@ -13,7 +13,6 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
@@ -78,9 +77,7 @@ func DnsStart() {
 
 // startDnsServer start the DNS Server
 func startDnsServer() {
-	// init meta client
-	c := context.InitContext(context.MsgCtxTypeChannel)
-	metaClient = client.New(c)
+	metaClient = client.New()
 	//get DNS server name
 	lip, err := getIP()
 	if err != nil {

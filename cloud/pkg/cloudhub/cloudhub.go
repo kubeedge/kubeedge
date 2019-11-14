@@ -9,6 +9,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -62,6 +63,7 @@ func (a *cloudHub) Start() {
 
 func (a *cloudHub) Cleanup() {
 	a.cancel()
+	beehiveContext.Cleanup(a.Name())
 }
 
 func initHubConfig() {

@@ -27,7 +27,6 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -67,8 +66,7 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	var moduleRegistered bool
 	_, cancel := context.WithCancel(context.Background())
 	dtc := &DeviceTwin{
@@ -117,13 +115,11 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTModules:         make(map[string]dtmodule.DTModule),
 		DTContexts:        dtContexts,
-		Context:           mainContext,
 	}
 
 	payload := dttype.MembershipUpdate{
@@ -214,8 +210,7 @@ func TestSyncSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
 	// fakeDeviceAttr is used to set the argument of All function
@@ -306,8 +301,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	dtContext, _ := dtcontext.InitDTContext(mainContext)
+	dtContext, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
 	// fakeDeviceAttr is used to set the argument of All function

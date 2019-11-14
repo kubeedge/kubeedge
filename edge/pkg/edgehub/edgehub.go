@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -106,4 +107,5 @@ func (eh *EdgeHub) Start() {
 //Cleanup sets up context cleanup through Edgehub name
 func (eh *EdgeHub) Cleanup() {
 	eh.cancel()
+	beehiveContext.Cleanup(eh.Name())
 }

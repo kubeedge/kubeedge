@@ -75,8 +75,6 @@ func TestStart(t *testing.T) {
 	var querySeterMock *beego.MockQuerySeter
 	// fakeModule is mocked implementation of TestModule.
 	var fakeModule *beehive.MockModule
-	// mainContext is beehive context used for communication between modules.
-	var mainContext *beehiveContext.Context
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -87,21 +85,19 @@ func TestStart(t *testing.T) {
 
 	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
 	core.Register(fakeModule)
-	mainContext = beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	mainContext.AddModule(TestModule)
+	beehiveContext.AddModule(TestModule)
 
 	core.Register(&DeviceTwin{})
 	dt := DeviceTwin{}
-	mainContext.AddModule(dt.Name())
-	mainContext.AddModuleGroup(dt.Name(), dt.Group())
-	dt.Context = mainContext
+	beehiveContext.AddModule(dt.Name())
+	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)
-	go dt.Start(mainContext)
+	go dt.Start()
 	time.Sleep(1 * time.Millisecond)
 	// Sending a message from devicetwin module to the created fake module(TestModule) to check context is initialized properly.
-	dt.Context.Send(TestModule, test)
-	_, err := mainContext.Receive(TestModule)
+	beehiveContext.Send(TestModule, test)
+	_, err := beehiveContext.Receive(TestModule)
 	t.Run("MessagePingTest", func(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error while receiving message: %v", err)
@@ -154,22 +150,20 @@ func TestStart(t *testing.T) {
 func TestCleanup(t *testing.T) {
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
-	mainContext := beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	mainContext.AddModule(TestModule)
+	beehiveContext.AddModule(TestModule)
 
 	core.Register(&DeviceTwin{})
 	dt := DeviceTwin{}
-	mainContext.AddModule(dt.Name())
-	mainContext.AddModuleGroup(dt.Name(), dt.Group())
+	beehiveContext.AddModule(dt.Name())
+	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
 	_, cancel := context.WithCancel(context.Background())
 	deviceTwin := DeviceTwin{
-		Context: mainContext,
-		cancel:  cancel,
+		cancel: cancel,
 	}
 	deviceTwin.Cleanup()
 	//Send message to avoid deadlock if channel deletion has failed after cleanup
-	go mainContext.Send(DeviceTwinModuleName, test)
-	_, err := mainContext.Receive(DeviceTwinModuleName)
+	go beehiveContext.Send(DeviceTwinModuleName, test)
+	_, err := beehiveContext.Receive(DeviceTwinModuleName)
 	t.Run("CheckCleanUp", func(t *testing.T) {
 		if err == nil {
 			t.Errorf("DeviceTwin Module still has channel after cleanup")
