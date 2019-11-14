@@ -1,6 +1,7 @@
 package dtcontext
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -9,7 +10,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -38,7 +38,7 @@ type DTContext struct {
 }
 
 //InitDTContext init dtcontext
-func InitDTContext(context *context.Context) (*DTContext, error) {
+func InitDTContext() (*DTContext, error) {
 	groupID := ""
 	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {
@@ -54,17 +54,16 @@ func InitDTContext(context *context.Context) (*DTContext, error) {
 	// var deviceVersionList sync.Map
 
 	return &DTContext{
-		GroupID:        groupID,
-		NodeID:         nodeID,
-		CommChan:       commChan,
-		ConfirmChan:    confirmChan,
-		ConfirmMap:     &confirm,
-		ModulesHealth:  &modulesHealth,
-		ModulesContext: context,
-		DeviceList:     &deviceList,
-		DeviceMutex:    &deviceMutex,
-		Mutex:          &mutex,
-		State:          dtcommon.Disconnected,
+		GroupID:       groupID,
+		NodeID:        nodeID,
+		CommChan:      commChan,
+		ConfirmChan:   confirmChan,
+		ConfirmMap:    &confirm,
+		ModulesHealth: &modulesHealth,
+		DeviceList:    &deviceList,
+		DeviceMutex:   &deviceMutex,
+		Mutex:         &mutex,
+		State:         dtcommon.Disconnected,
 	}, nil
 }
 

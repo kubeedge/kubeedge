@@ -8,7 +8,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
@@ -35,9 +34,8 @@ func (dctl *DeviceController) Group() string {
 }
 
 // Start controller
-func (dctl *DeviceController) Start(c *beehiveContext.Context) {
+func (dctl *DeviceController) Start() {
 	var ctx context.Context
-	config.Context = c
 
 	ctx, dctl.cancel = context.WithCancel(context.Background())
 
@@ -64,7 +62,6 @@ func (dctl *DeviceController) Start(c *beehiveContext.Context) {
 // Cleanup controller
 func (dctl *DeviceController) Cleanup() {
 	dctl.cancel()
-	config.Context.Cleanup(dctl.Name())
 }
 
 func initConfig() {

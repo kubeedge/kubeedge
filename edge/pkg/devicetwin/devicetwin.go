@@ -6,7 +6,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -15,7 +14,6 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
-	Context           *beehiveContext.Context
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
@@ -40,13 +38,12 @@ func (dt *DeviceTwin) Group() string {
 }
 
 //Start run the module
-func (dt *DeviceTwin) Start(c *beehiveContext.Context) {
+func (dt *DeviceTwin) Start() {
 	var ctx context.Context
-	dtContexts, _ := dtcontext.InitDTContext(c)
+	dtContexts, _ := dtcontext.InitDTContext()
 	dt.HeartBeatToModule = make(map[string]chan interface{})
 	dt.DTModules = make(map[string]dtmodule.DTModule)
 	dt.DTContexts = dtContexts
-	dt.Context = c
 	ctx, dt.cancel = context.WithCancel(context.Background())
 	err := SyncSqlite(dt.DTContexts)
 	if err != nil {
@@ -59,5 +56,4 @@ func (dt *DeviceTwin) Start(c *beehiveContext.Context) {
 //Cleanup clean resource after quit
 func (dt *DeviceTwin) Cleanup() {
 	dt.cancel()
-	dt.Context.Cleanup(dt.Name())
 }

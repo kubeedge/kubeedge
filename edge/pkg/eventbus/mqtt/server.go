@@ -27,6 +27,7 @@ import (
 	"github.com/256dpi/gomqtt/transport"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
@@ -116,7 +117,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, "response").FillBody(string(msg.Payload))
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	ModuleContext.SendToGroup(target, *message)
+	beehiveContext.SendToGroup(target, *message)
 }
 
 // InitInternalTopics sets internal topics to server by default.

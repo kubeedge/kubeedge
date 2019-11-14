@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
@@ -26,13 +25,11 @@ type NodeStatusInterface interface {
 
 type nodeStatus struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newNodeStatus(namespace string, c *context.Context, s SendInterface) *nodeStatus {
+func newNodeStatus(namespace string, s SendInterface) *nodeStatus {
 	return &nodeStatus{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}

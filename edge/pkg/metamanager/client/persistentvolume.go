@@ -7,7 +7,6 @@ import (
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,14 +28,12 @@ type PersistentVolumesInterface interface {
 
 type persistentvolumes struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newPersistentVolumes(n string, c *context.Context, s SendInterface) *persistentvolumes {
+func newPersistentVolumes(n string, s SendInterface) *persistentvolumes {
 	return &persistentvolumes{
 		namespace: n,
-		context:   c,
 		send:      s,
 	}
 }

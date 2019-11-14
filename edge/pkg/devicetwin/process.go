@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -287,7 +288,7 @@ func (dt *DeviceTwin) runDeviceTwin(ctx context.Context) {
 			default:
 
 			}
-			if msg, ok := dt.DTContexts.ModulesContext.Receive("twin"); ok == nil {
+			if msg, ok := beehiveContext.Receive("twin"); ok == nil {
 				klog.Info("DeviceTwin receive msg")
 				err := dt.distributeMsg(msg)
 				if err != nil {
