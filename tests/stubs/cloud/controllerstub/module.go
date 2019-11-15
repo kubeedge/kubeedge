@@ -86,8 +86,7 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	downstream.Stop()
 }
 
-// Cleanup resources
-func (cs *ControllerStub) Cleanup() {
+// Cancel resources
+func (cs *ControllerStub) Cancel() {
 	cs.stopChan <- true
-	cs.context.Cleanup(cs.Name())
 }

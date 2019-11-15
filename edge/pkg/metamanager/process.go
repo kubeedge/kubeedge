@@ -1,7 +1,6 @@
 package metamanager
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -628,11 +627,11 @@ func (m *metaManager) process(message model.Message) {
 	}
 }
 
-func (m *metaManager) runMetaManager(ctx context.Context) {
+func (m *metaManager) runMetaManager() {
 	go func() {
 		for {
 			select {
-			case <-ctx.Done():
+			case <-m.ctx.Done():
 				klog.Warning("MetaManager mainloop stop")
 				return
 			default:

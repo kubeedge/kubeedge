@@ -183,9 +183,10 @@ type podReady struct {
 
 //Define edged
 type edged struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 	//dns config
 	dnsConfigurer             *kubedns.Configurer
-	cancel                    context.CancelFunc
 	hostname                  string
 	namespace                 string
 	nodeName                  string
@@ -286,9 +287,6 @@ func (e *edged) Group() string {
 
 func (e *edged) Start() {
 	e.metaClient = client.New()
-	var ctx context.Context
-
-	ctx, e.cancel = context.WithCancel(context.Background())
 	// use self defined client to replace fake kube client
 	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
 
@@ -345,12 +343,11 @@ func (e *edged) Start() {
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 
 	klog.Infof("starting syncPod")
-	e.syncPod(ctx)
+	e.syncPod()
 }
 
-func (e *edged) Cleanup() {
+func (e *edged) Cancel() {
 	e.cancel()
-	beehiveContext.Cleanup(e.Name())
 }
 
 // isInitPodReady is used to safely return initPodReady flag
@@ -456,8 +453,11 @@ func newEdged() (*edged, error) {
 	}
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	ed := &edged{
+		ctx:                       ctx,
+		cancel:                    cancel,
 		nodeName:                  conf.nodeName,
 		interfaceName:             conf.interfaceName,
 		namespace:                 conf.nodeNamespace,
@@ -911,7 +911,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 	return nil
 }
 
-func (e *edged) syncPod(ctx context.Context) {
+func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
 	//send msg to metamanager to get existing pods
@@ -920,7 +920,7 @@ func (e *edged) syncPod(ctx context.Context) {
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {
 		select {
-		case <-ctx.Done():
+		case <-e.ctx.Done():
 			klog.Warning("Sync pod stop")
 			return
 		default:

@@ -1,7 +1,6 @@
 package edgehub
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -98,10 +97,10 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	return eh.sendToKeepChannel(message)
 }
 
-func (eh *EdgeHub) routeToEdge(ctx context.Context) {
+func (eh *EdgeHub) routeToEdge() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-eh.ctx.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
 			return
 		default:
@@ -152,10 +151,10 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud(ctx context.Context) {
+func (eh *EdgeHub) routeToCloud() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-eh.ctx.Done():
 			klog.Warning("EdgeHub RouteToCloud stop")
 			return
 		default:
@@ -177,10 +176,10 @@ func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 	}
 }
 
-func (eh *EdgeHub) keepalive(ctx context.Context) {
+func (eh *EdgeHub) keepalive() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-eh.ctx.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
 			return
 		default:

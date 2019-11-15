@@ -63,7 +63,7 @@ func (dctl *DeviceController) Start() {
 	upstream.Start()
 }
 
-// Cleanup controller
+// Cancel controller
 func (dctl *DeviceController) Cancel() {
 	dctl.cancel()
 }

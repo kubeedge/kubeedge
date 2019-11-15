@@ -1,7 +1,6 @@
 package devicetwin
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -272,7 +271,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 	return false
 }
 
-func (dt *DeviceTwin) runDeviceTwin(ctx context.Context) {
+func (dt *DeviceTwin) runDeviceTwin() {
 
 	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
 	for _, v := range moduleNames {
@@ -282,7 +281,7 @@ func (dt *DeviceTwin) runDeviceTwin(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case <-ctx.Done():
+			case <-dt.ctx.Done():
 				klog.Warning("Stop DeviceTwin ModulesContext Receive loop")
 				return
 			default:
@@ -315,7 +314,7 @@ func (dt *DeviceTwin) runDeviceTwin(ctx context.Context) {
 			for _, v := range dt.HeartBeatToModule {
 				v <- "ping"
 			}
-		case <-ctx.Done():
+		case <-dt.ctx.Done():
 			for _, v := range dt.HeartBeatToModule {
 				v <- "stop"
 			}

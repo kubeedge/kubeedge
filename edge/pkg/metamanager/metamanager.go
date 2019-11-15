@@ -20,14 +20,23 @@ const (
 	MetaManagerModuleName = "metaManager"
 )
 
+type metaManager struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func newMetaManager() *metaManager {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &metaManager{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+
 // Register register metamanager
 func Register() {
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
 	core.Register(&metaManager{})
-}
-
-type metaManager struct {
-	cancel context.CancelFunc
 }
 
 func (*metaManager) Name() string {
@@ -39,8 +48,6 @@ func (*metaManager) Group() string {
 }
 
 func (m *metaManager) Start() {
-	var ctx context.Context
-	ctx, m.cancel = context.WithCancel(context.Background())
 	InitMetaManagerConfig()
 
 	go func() {
@@ -48,7 +55,7 @@ func (m *metaManager) Start() {
 		timer := time.NewTimer(period)
 		for {
 			select {
-			case <-ctx.Done():
+			case <-m.ctx.Done():
 				klog.Warning("MetaManager stop")
 				return
 			case <-timer.C:
@@ -59,12 +66,11 @@ func (m *metaManager) Start() {
 		}
 	}()
 
-	m.runMetaManager(ctx)
+	m.runMetaManager()
 }
 
-func (m *metaManager) Cleanup() {
+func (m *metaManager) Cancel() {
 	m.cancel()
-	beehiveContext.Cleanup(m.Name())
 }
 
 func getSyncInterval() time.Duration {

@@ -8,7 +8,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -22,21 +21,29 @@ const (
 
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
+	ctx           context.Context
+	cancel        context.CancelFunc
 	chClient      clients.Adapter
 	config        *config.ControllerConfig
 	reconnectChan chan struct{}
-	cancel        context.CancelFunc
 	syncKeeper    map[string]chan model.Message
 	keeperLock    sync.RWMutex
 }
 
-// Register register edgehub
-func Register() {
-	core.Register(&EdgeHub{
+func newEdgeHub() *EdgeHub {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &EdgeHub{
+		ctx:           ctx,
+		cancel:        cancel,
 		config:        &config.GetConfig().CtrConfig,
 		reconnectChan: make(chan struct{}),
 		syncKeeper:    make(map[string]chan model.Message),
-	})
+	}
+}
+
+// Register register edgehub
+func Register() {
+	core.Register(newEdgeHub())
 }
 
 //Name returns the name of EdgeHub module
@@ -51,14 +58,11 @@ func (eh *EdgeHub) Group() string {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
-	var ctx context.Context
-	ctx, eh.cancel = context.WithCancel(context.Background())
-
 	config.InitEdgehubConfig()
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-eh.ctx.Done():
 			klog.Warning("EdgeHub stop")
 			return
 		default:
@@ -77,9 +81,9 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		go eh.routeToEdge(ctx)
-		go eh.routeToCloud(ctx)
-		go eh.keepalive(ctx)
+		go eh.routeToEdge()
+		go eh.routeToCloud()
+		go eh.keepalive()
 
 		// wait the stop singal
 		// stop authinfo manager/websocket connection
@@ -105,7 +109,6 @@ func (eh *EdgeHub) Start() {
 }
 
 //Cleanup sets up context cleanup through Edgehub name
-func (eh *EdgeHub) Cleanup() {
+func (eh *EdgeHub) Cancel() {
 	eh.cancel()
-	beehiveContext.Cleanup(eh.Name())
 }
