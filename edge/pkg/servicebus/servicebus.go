@@ -25,8 +25,7 @@ const (
 
 // servicebus struct
 type servicebus struct {
-	context *beehiveContext.Context
-	cancel  context.CancelFunc
+	cancel context.CancelFunc
 }
 
 // Register register servicebus
@@ -43,10 +42,9 @@ func (*servicebus) Group() string {
 	return modules.BusGroup
 }
 
-func (sb *servicebus) Start(c *beehiveContext.Context) {
+func (sb *servicebus) Start() {
 	// no need to call TopicInit now, we have fixed topic
 	var ctx context.Context
-	sb.context = c
 	ctx, sb.cancel = context.WithCancel(context.Background())
 	var htc = new(http.Client)
 	htc.Timeout = time.Second * 10
@@ -63,7 +61,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 		default:
 
 		}
-		msg, err := sb.context.Receive("servicebus")
+		msg, err := beehiveContext.Receive("servicebus")
 		if err != nil {
 			klog.Warningf("servicebus receive msg error %v", err)
 			continue
@@ -81,7 +79,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 				klog.Warningf(m)
 				code := http.StatusBadRequest
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					sb.context.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(modules.HubGroup, response)
 				}
 				return
 			}
@@ -91,7 +89,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 				m := "error to marshal request msg content"
 				code := http.StatusBadRequest
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					sb.context.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(modules.HubGroup, response)
 				}
 				return
 			}
@@ -101,7 +99,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 				code := http.StatusBadRequest
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					sb.context.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(modules.HubGroup, response)
 				}
 				return
 			}
@@ -113,7 +111,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 				code := http.StatusNotFound
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					sb.context.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(modules.HubGroup, response)
 				}
 				return
 			}
@@ -127,7 +125,7 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 				code := http.StatusInternalServerError
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					sb.context.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(modules.HubGroup, response)
 				}
 				return
 			}
@@ -136,14 +134,14 @@ func (sb *servicebus) Start(c *beehiveContext.Context) {
 			responseMsg := model.NewMessage(msg.GetID())
 			responseMsg.Content = response
 			responseMsg.SetRoute("servicebus", modules.UserGroup)
-			sb.context.SendToGroup(modules.HubGroup, *responseMsg)
+			beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
 		}()
 	}
 }
 
 func (sb *servicebus) Cleanup() {
 	sb.cancel()
-	sb.context.Cleanup(sb.Name())
+	beehiveContext.Cleanup(sb.Name())
 }
 
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {

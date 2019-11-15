@@ -22,7 +22,6 @@ const (
 
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
-	context       *beehiveContext.Context
 	chClient      clients.Adapter
 	config        *config.ControllerConfig
 	reconnectChan chan struct{}
@@ -51,9 +50,8 @@ func (eh *EdgeHub) Group() string {
 }
 
 //Start sets context and starts the controller
-func (eh *EdgeHub) Start(c *beehiveContext.Context) {
+func (eh *EdgeHub) Start() {
 	var ctx context.Context
-	eh.context = c
 	ctx, eh.cancel = context.WithCancel(context.Background())
 
 	config.InitEdgehubConfig()
@@ -109,5 +107,5 @@ func (eh *EdgeHub) Start(c *beehiveContext.Context) {
 //Cleanup sets up context cleanup through Edgehub name
 func (eh *EdgeHub) Cleanup() {
 	eh.cancel()
-	eh.context.Cleanup(eh.Name())
+	beehiveContext.Cleanup(eh.Name())
 }

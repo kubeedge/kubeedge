@@ -65,37 +65,37 @@ func InitMetaManagerConfig() {
 	}
 }
 
-func feedbackError(err error, info string, request model.Message, c *beehiveContext.Context) {
+func feedbackError(err error, info string, request model.Message) {
 	errInfo := "Something wrong"
 	if err != nil {
 		errInfo = fmt.Sprintf(info+": %v", err)
 	}
 	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
 	if request.GetSource() == modules.EdgedModuleName {
-		sendToEdged(errResponse, request.IsSync(), c)
+		sendToEdged(errResponse, request.IsSync())
 	} else {
-		sendToCloud(errResponse, c)
+		sendToCloud(errResponse)
 	}
 }
 
-func sendToEdged(message *model.Message, sync bool, c *beehiveContext.Context) {
+func sendToEdged(message *model.Message, sync bool) {
 	if sync {
-		c.SendResp(*message)
+		beehiveContext.SendResp(*message)
 	} else {
-		c.Send(modules.EdgedModuleName, *message)
+		beehiveContext.Send(modules.EdgedModuleName, *message)
 	}
 }
 
-func sendToEdgeMesh(message *model.Message, sync bool, c *beehiveContext.Context) {
+func sendToEdgeMesh(message *model.Message, sync bool) {
 	if sync {
-		c.SendResp(*message)
+		beehiveContext.SendResp(*message)
 	} else {
-		c.Send(modules.EdgeMeshModuleName, *message)
+		beehiveContext.Send(modules.EdgeMeshModuleName, *message)
 	}
 }
 
-func sendToCloud(message *model.Message, c *beehiveContext.Context) {
-	c.SendToGroup(sendModuleGroupName, *message)
+func sendToCloud(message *model.Message) {
+	beehiveContext.SendToGroup(sendModuleGroupName, *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -156,7 +156,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		content, err = json.Marshal(message.GetContent())
 		if err != nil {
 			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message, m.context)
+			feedbackError(err, "Error to marshal message content", message)
 			return
 		}
 	}
@@ -169,20 +169,20 @@ func (m *metaManager) processInsert(message model.Message) {
 	err = dao.SaveMeta(meta)
 	if err != nil {
 		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message, m.context)
+		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}
 
 	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 		// Notify edgemesh
-		sendToEdgeMesh(&message, false, m.context)
+		sendToEdgeMesh(&message, false)
 	} else {
 		// Notify edged
-		sendToEdged(&message, false, m.context)
+		sendToEdged(&message, false)
 	}
 
 	resp := message.NewRespByMessage(&message, OK)
-	sendToCloud(resp, m.context)
+	sendToCloud(resp)
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
@@ -195,7 +195,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		content, err = json.Marshal(message.GetContent())
 		if err != nil {
 			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message, m.context)
+			feedbackError(err, "Error to marshal message content", message)
 			return
 		}
 	}
@@ -208,7 +208,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			err = json.Unmarshal(content, &epsList)
 			if err != nil {
 				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to unmarshal", message, m.context)
+				feedbackError(err, "Error to unmarshal", message)
 				return
 			}
 			for _, eps := range epsList {
@@ -228,16 +228,16 @@ func (m *metaManager) processUpdate(message model.Message) {
 					continue
 				}
 			}
-			sendToEdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false)
 			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp, m.context)
+			sendToCloud(resp)
 			return
 		case constants.ResourceTypeServiceList:
 			var svcList []v1.Service
 			err = json.Unmarshal(content, &svcList)
 			if err != nil {
 				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to unmarshal", message, m.context)
+				feedbackError(err, "Error to unmarshal", message)
 				return
 			}
 			for _, svc := range svcList {
@@ -257,9 +257,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 					continue
 				}
 			}
-			sendToEdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false)
 			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp, m.context)
+			sendToCloud(resp)
 			return
 		case model.ResourceTypePodlist:
 			meta := &dao.Meta{
@@ -269,12 +269,12 @@ func (m *metaManager) processUpdate(message model.Message) {
 			err = dao.InsertOrUpdate(meta)
 			if err != nil {
 				klog.Errorf("Update meta failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to update meta to DB", message, m.context)
+				feedbackError(err, "Error to update meta to DB", message)
 				return
 			}
-			sendToEdgeMesh(&message, false, m.context)
+			sendToEdgeMesh(&message, false)
 			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp, m.context)
+			sendToCloud(resp)
 			return
 		default:
 			klog.Warningf("Resource type %s unknown", resType)
@@ -284,7 +284,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
-		sendToEdged(resp, message.IsSync(), m.context)
+		sendToEdged(resp, message.IsSync())
 		klog.Infof("resource[%s] unchanged, no notice", resKey)
 		return
 	}
@@ -296,28 +296,28 @@ func (m *metaManager) processUpdate(message model.Message) {
 	err = dao.InsertOrUpdate(meta)
 	if err != nil {
 		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to update meta to DB", message, m.context)
+		feedbackError(err, "Error to update meta to DB", message)
 		return
 	}
 
 	switch message.GetSource() {
 	//case core.EdgedModuleName:
 	case modules.EdgedModuleName:
-		sendToCloud(&message, m.context)
+		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
-		sendToEdged(resp, message.IsSync(), m.context)
+		sendToEdged(resp, message.IsSync())
 	case CloudControlerModel:
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			sendToEdgeMesh(&message, message.IsSync(), m.context)
+			sendToEdgeMesh(&message, message.IsSync())
 		} else {
-			sendToEdged(&message, message.IsSync(), m.context)
+			sendToEdged(&message, message.IsSync())
 		}
 		resp := message.NewRespByMessage(&message, OK)
-		sendToCloud(resp, m.context)
+		sendToCloud(resp)
 	case CloudFunctionModel:
-		m.context.Send(EdgeFunctionModel, message)
+		beehiveContext.Send(EdgeFunctionModel, message)
 	case EdgeFunctionModel:
-		sendToCloud(&message, m.context)
+		sendToCloud(&message)
 	}
 }
 
@@ -332,7 +332,7 @@ func (m *metaManager) processResponse(message model.Message) {
 		content, err = json.Marshal(message.GetContent())
 		if err != nil {
 			klog.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message, m.context)
+			feedbackError(err, "Error to marshal message content", message)
 			return
 		}
 	}
@@ -345,20 +345,20 @@ func (m *metaManager) processResponse(message model.Message) {
 	err = dao.InsertOrUpdate(meta)
 	if err != nil {
 		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to update meta to DB", message, m.context)
+		feedbackError(err, "Error to update meta to DB", message)
 		return
 	}
 
 	// Notify edged or edgemesh if the data if coming from cloud
 	if message.GetSource() == CloudControlerModel {
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			sendToEdgeMesh(&message, message.IsSync(), m.context)
+			sendToEdgeMesh(&message, message.IsSync())
 		} else {
-			sendToEdged(&message, message.IsSync(), m.context)
+			sendToEdged(&message, message.IsSync())
 		}
 	} else {
 		// Send to cloud if the update request is coming from edged
-		sendToCloud(&message, m.context)
+		sendToCloud(&message)
 	}
 }
 
@@ -366,22 +366,22 @@ func (m *metaManager) processDelete(message model.Message) {
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to delete meta to DB", message, m.context)
+		feedbackError(err, "Error to delete meta to DB", message)
 		return
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
 	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 		// Notify edgemesh
-		sendToEdgeMesh(&message, false, m.context)
+		sendToEdgeMesh(&message, false)
 		resp := message.NewRespByMessage(&message, OK)
-		sendToCloud(resp, m.context)
+		sendToCloud(resp)
 		return
 	}
 	// Notify edged
-	sendToEdged(&message, false, m.context)
+	sendToEdged(&message, false)
 	resp := message.NewRespByMessage(&message, OK)
-	sendToCloud(resp, m.context)
+	sendToCloud(resp)
 }
 
 func (m *metaManager) processQuery(message model.Message) {
@@ -395,7 +395,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
 			resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-			sendToEdged(resp, message.IsSync(), m.context)
+			sendToEdged(resp, message.IsSync())
 		}
 		return
 	}
@@ -408,14 +408,14 @@ func (m *metaManager) processQuery(message model.Message) {
 	}
 	if err != nil {
 		klog.Errorf("query meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to query meta in DB", message, m.context)
+		feedbackError(err, "Error to query meta in DB", message)
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
-			sendToEdgeMesh(resp, message.IsSync(), m.context)
+			sendToEdgeMesh(resp, message.IsSync())
 		} else {
-			sendToEdged(resp, message.IsSync(), m.context)
+			sendToEdged(resp, message.IsSync())
 		}
 	}
 }
@@ -425,11 +425,11 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		// TODO: retry
 		originalID := message.GetID()
 		message.UpdateID()
-		resp, err := m.context.SendSync(sendModuleName, message, 60*time.Second) // TODO: configurable
+		resp, err := beehiveContext.SendSync(sendModuleName, message, 60*time.Second) // TODO: configurable
 		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
 		if err != nil {
 			klog.Errorf("remote query failed: %v", err)
-			feedbackError(err, "Error to query meta in DB", message, m.context)
+			feedbackError(err, "Error to query meta in DB", message)
 			return
 		}
 
@@ -441,7 +441,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			content, err = json.Marshal(resp.GetContent())
 			if err != nil {
 				klog.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
-				feedbackError(err, "Error to marshal message content", message, m.context)
+				feedbackError(err, "Error to marshal message content", message)
 				return
 			}
 		}
@@ -457,9 +457,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			sendToEdgeMesh(&resp, message.IsSync(), m.context)
+			sendToEdgeMesh(&resp, message.IsSync())
 		} else {
-			sendToEdged(&resp, message.IsSync(), m.context)
+			sendToEdged(&resp, message.IsSync())
 		}
 	}()
 }
@@ -520,7 +520,7 @@ func (m *metaManager) syncPodStatus() {
 	}
 
 	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
-	sendToCloud(msg, m.context)
+	sendToCloud(msg)
 	klog.Infof("sync pod status successful, %s", msgDebugInfo(msg))
 }
 
@@ -535,7 +535,7 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 		content, err = json.Marshal(message.GetContent())
 		if err != nil {
 			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message, m.context)
+			feedbackError(err, "Error to marshal message content", message)
 			return
 		}
 	}
@@ -548,11 +548,11 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 	err = dao.SaveMeta(meta)
 	if err != nil {
 		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message, m.context)
+		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}
 
-	m.context.Send(EdgeFunctionModel, message)
+	beehiveContext.Send(EdgeFunctionModel, message)
 }
 
 func (m *metaManager) processFunctionActionResult(message model.Message) {
@@ -565,7 +565,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 		content, err = json.Marshal(message.GetContent())
 		if err != nil {
 			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message, m.context)
+			feedbackError(err, "Error to marshal message content", message)
 			return
 		}
 	}
@@ -578,24 +578,24 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 	err = dao.SaveMeta(meta)
 	if err != nil {
 		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message, m.context)
+		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}
 
-	sendToCloud(&message, m.context)
+	sendToCloud(&message)
 
 }
 
 func (m *metaManager) processVolume(message model.Message) {
 	klog.Info("process volume started")
-	back, err := m.context.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
+	back, err := beehiveContext.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {
 		klog.Errorf("process volume send to edged failed: %v", err)
 	}
 
 	resp := message.NewRespByMessage(&message, back.GetContent())
-	sendToCloud(resp, m.context)
+	sendToCloud(resp)
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 
@@ -638,7 +638,7 @@ func (m *metaManager) runMetaManager(ctx context.Context) {
 			default:
 
 			}
-			if msg, err := m.context.Receive(m.Name()); err == nil {
+			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
 				klog.Infof("get a message %+v", msg)
 				m.process(msg)
 			} else {

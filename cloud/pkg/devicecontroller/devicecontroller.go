@@ -35,9 +35,8 @@ func (dctl *DeviceController) Group() string {
 }
 
 // Start controller
-func (dctl *DeviceController) Start(c *beehiveContext.Context) {
+func (dctl *DeviceController) Start() {
 	var ctx context.Context
-	config.Context = c
 
 	ctx, dctl.cancel = context.WithCancel(context.Background())
 
@@ -64,7 +63,7 @@ func (dctl *DeviceController) Start(c *beehiveContext.Context) {
 // Cleanup controller
 func (dctl *DeviceController) Cleanup() {
 	dctl.cancel()
-	config.Context.Cleanup(dctl.Name())
+	beehiveContext.Cleanup(dctl.Name())
 }
 
 func initConfig() {
