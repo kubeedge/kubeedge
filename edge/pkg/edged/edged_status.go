@@ -24,10 +24,12 @@ package edged
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -323,11 +325,20 @@ func (e *edged) getIP() (string, error) {
 }
 
 func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
-	totalMem, err := util.Command("/bin/sh", []string{"-c", `free -m | grep Mem | awk '{print$2}'`})
+	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
 	}
-	mem := resource.MustParse(totalMem + "Mi")
+	matches := regexp.MustCompile(`MemTotal:\s*([0-9]+) kB`).FindSubmatch(out)
+	if len(matches) != 2 {
+		return fmt.Errorf("failed to match regexp in output: %q", string(out))
+	}
+	m, err := strconv.ParseInt(string(matches[1]), 10, 64)
+	if err != nil {
+		return err
+	}
+	totalMem := m / 1024
+	mem := resource.MustParse(strconv.FormatInt(totalMem, 10) + "Mi")
 	total[v1.ResourceMemory] = mem.DeepCopy()
 
 	if mem.Cmp(reservationMemory) > 0 {
