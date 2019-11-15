@@ -20,10 +20,6 @@ var (
 	once    sync.Once
 )
 
-func init()  {
-	InitContext(MsgCtxTypeChannel)
-}
-
 // InitContext gets global context instance
 func InitContext(contextType string) {
 	once.Do(func() {

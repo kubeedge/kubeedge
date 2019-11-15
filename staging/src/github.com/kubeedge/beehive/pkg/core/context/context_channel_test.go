@@ -9,20 +9,20 @@ import (
 )
 
 func TestSendSync(t *testing.T) {
-	coreContext := InitContext(MsgCtxTypeChannel)
-	coreContext.AddModule("test_src")
+	InitContext(MsgCtxTypeChannel)
+	AddModule("test_src")
 	messsage := model.NewMessage("")
 	messsage.Content = "hello"
 
 	go func() {
-		resp, err := coreContext.SendSync("test_dest", *messsage, 5*time.Second)
+		resp, err := SendSync("test_dest", *messsage, 5*time.Second)
 		fmt.Printf("resp: %v, error: %v\n", resp, err)
 	}()
 
-	msg, err := coreContext.Receive("test_dest")
+	msg, err := Receive("test_dest")
 	fmt.Printf("receive msg: %v, error: %v\n", msg, err)
 	resp := msg.NewRespByMessage(&msg, "how are you")
-	coreContext.SendResp(*resp)
+	SendResp(*resp)
 
 	time.Sleep(5 * time.Second)
 }
