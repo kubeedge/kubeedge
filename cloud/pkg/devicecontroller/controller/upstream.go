@@ -47,6 +47,7 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
+	ctx          context.Context
 	crdClient    *rest.RESTClient
 	messageLayer messagelayer.MessageLayer
 	// message channel
@@ -57,24 +58,24 @@ type UpstreamController struct {
 }
 
 // Start UpstreamController
-func (uc *UpstreamController) Start(ctx context.Context) error {
+func (uc *UpstreamController) Start() error {
 	klog.Info("Start upstream devicecontroller")
 
 	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
 
-	go uc.dispatchMessage(ctx)
+	go uc.dispatchMessage()
 
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
-		go uc.updateDeviceStatus(ctx)
+		go uc.updateDeviceStatus()
 	}
 
 	return nil
 }
 
-func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
+func (uc *UpstreamController) dispatchMessage() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-uc.ctx.Done():
 			klog.Info("Stop dispatchMessage")
 			return
 		default:
@@ -103,10 +104,10 @@ func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) updateDeviceStatus(ctx context.Context) {
+func (uc *UpstreamController) updateDeviceStatus() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-uc.ctx.Done():
 			klog.Info("Stop updateDeviceStatus")
 			return
 		case msg := <-uc.deviceStatusChan:
@@ -189,13 +190,18 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
+func NewUpstreamController(dc *DownstreamController, ctx context.Context) (*UpstreamController, error) {
 	config, err := utils.KubeConfig()
 	crdcli, err := utils.NewCRDClient(config)
 	ml, err := messagelayer.NewMessageLayer()
 	if err != nil {
 		klog.Warningf("Create message layer failed with error: %s", err)
 	}
-	uc := &UpstreamController{crdClient: crdcli, messageLayer: ml, dc: dc}
+	uc := &UpstreamController{
+		crdClient:    crdcli,
+		messageLayer: ml,
+		dc:           dc,
+		ctx:          ctx,
+	}
 	return uc, nil
 }

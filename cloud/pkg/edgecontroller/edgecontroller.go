@@ -7,7 +7,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
@@ -16,11 +15,19 @@ import (
 // EdgeController use beehive context message layer
 type EdgeController struct {
 	cancel context.CancelFunc
+	ctx    context.Context
+}
+
+func newEdgeController() *EdgeController {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &EdgeController{
+		cancel: cancel,
+		ctx:    ctx,
+	}
 }
 
 func Register() {
-	edgeController := EdgeController{}
-	core.Register(&edgeController)
+	core.Register(newEdgeController())
 }
 
 // Name of controller
@@ -35,32 +42,26 @@ func (ctl *EdgeController) Group() string {
 
 // Start controller
 func (ctl *EdgeController) Start() {
-	var ctx context.Context
-
-	ctx, ctl.cancel = context.WithCancel(context.Background())
-
 	initConfig()
 
-	upstream, err := controller.NewUpstreamController()
+	upstream, err := controller.NewUpstreamController(ctl.ctx)
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	upstream.Start(ctx)
+	upstream.Start()
 
-	downstream, err := controller.NewDownstreamController()
+	downstream, err := controller.NewDownstreamController(ctl.ctx)
 	if err != nil {
 		klog.Warningf("new downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	downstream.Start(ctx)
-
+	downstream.Start()
 }
 
 // Cleanup controller
-func (ctl *EdgeController) Cleanup() {
+func (ctl *EdgeController) Cancel() {
 	ctl.cancel()
-	beehiveContext.Cleanup(ctl.Name())
 }
 
 func initConfig() {
