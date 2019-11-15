@@ -176,7 +176,7 @@ func linesFromReader(r io.Reader) ([]string, error) {
 //RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 
-	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s /usr/local/bin/.", KubeEdgePath, KubeCloudBinaryName)
+	filetoCopy := fmt.Sprintf("cp %s/kubeedge/cloud/%s %s/", KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
 	cmd := &Command{Cmd: exec.Command("sh", "-c", filetoCopy)}
 	err := cmd.ExecuteCmdShowOutput()
 	errout := cmd.GetStdErr()
@@ -185,7 +185,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 		return fmt.Errorf("%s", errout)
 
 	}
-	binExec := fmt.Sprintf("chmod +x /usr/local/bin/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	binExec := fmt.Sprintf("chmod +x %s/%s && %s > %s/kubeedge/cloud/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	cmd = &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)

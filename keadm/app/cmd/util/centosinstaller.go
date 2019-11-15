@@ -166,7 +166,7 @@ func (c *CentOS) StartK8Scluster() error {
 
 //InstallKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
-//the binary to /usr/local/bin path.
+//the binary to excecutables' path (eg: /usr/local/bin)
 func (c *CentOS) InstallKubeEdge() error {
 	fmt.Println("InstallKubeEdge called")
 	return nil
