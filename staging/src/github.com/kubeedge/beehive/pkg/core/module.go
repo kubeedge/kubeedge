@@ -64,7 +64,6 @@ func isModuleEnabled(m string) bool {
 type moduleChangeCallback struct{}
 
 func (cb moduleChangeCallback) Callback(k string, v interface{}) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 
 	retryReadKey := func() interface{} {
 		for times := 0; times < tryReadKeyTimes; times++ {

@@ -37,6 +37,7 @@ import (
 
 //TestAddKeepChannel() tests the addition of channel to the syncKeeper
 func TestAddKeepChannel(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name  string
 		hub   *EdgeHub
@@ -62,6 +63,7 @@ func TestAddKeepChannel(t *testing.T) {
 
 //TestDeleteKeepChannel() tests the deletion of channel in the syncKeeper
 func TestDeleteKeepChannel(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name  string
 		hub   *EdgeHub
@@ -88,6 +90,7 @@ func TestDeleteKeepChannel(t *testing.T) {
 
 //TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
 func TestIsSyncResponse(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name  string
 		hub   *EdgeHub
@@ -125,6 +128,7 @@ func TestIsSyncResponse(t *testing.T) {
 
 //TestSendToKeepChannel() tests the reception of response in the syncKeep channel
 func TestSendToKeepChannel(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	message := model.NewMessage("test_id")
 	tests := []struct {
 		name                string
@@ -180,7 +184,7 @@ func TestSendToKeepChannel(t *testing.T) {
 
 //TestDispatch() tests whether the messages are properly dispatched to their respective modules
 func TestDispatch(t *testing.T) {
-
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	tests := []struct {
 		name          string
 		hub           *EdgeHub
@@ -236,6 +240,7 @@ func TestDispatch(t *testing.T) {
 
 //TestRouteToEdge() is used to test whether the message received from websocket is dispatched to the required modules
 func TestRouteToEdge(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -282,6 +287,7 @@ func TestRouteToEdge(t *testing.T) {
 
 //TestSendToCloud() tests whether the send to cloud functionality works properly
 func TestSendToCloud(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
@@ -369,6 +375,7 @@ func TestSendToCloud(t *testing.T) {
 
 //TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
 func TestRouteToCloud(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -408,6 +415,7 @@ func TestRouteToCloud(t *testing.T) {
 func TestKeepalive(t *testing.T) {
 	CertFile := "/tmp/kubeedge/certs/edge.crt"
 	KeyFile := "/tmp/kubeedge/certs/edge.key"
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())

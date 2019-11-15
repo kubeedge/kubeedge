@@ -67,6 +67,7 @@ func TestGroup(t *testing.T) {
 
 // TestStart is function to test Start().
 func TestStart(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
 	// ormerMock is mocked Ormer implementation.
@@ -148,7 +149,8 @@ func TestStart(t *testing.T) {
 
 // TestCleanup is function to test Cleanup().
 func TestCleanup(t *testing.T) {
-	//test is for sending test messages from devicetwin module.
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+
 	var test model.Message
 	beehiveContext.AddModule(TestModule)
 

@@ -26,6 +26,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -45,6 +46,7 @@ func testAction(context *dtcontext.DTContext, resource string, msg interface{}) 
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
 func TestDeviceStartAction(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
 	content := dttype.DeviceUpdate{}
@@ -102,6 +104,7 @@ func TestDeviceStartAction(t *testing.T) {
 
 // TestDevicetHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestDeviceStartHeartBeat(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
 	heartChanPing := make(chan interface{}, 1)
@@ -152,7 +155,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
 	var emptyDevUpdate dttype.DeviceUpdate
-
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
@@ -262,6 +265,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 
 //TestDealDeviceUpdated is function to test dealDeviceUpdated().
 func TestDealDeviceUpdated(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	content := dttype.DeviceUpdate{}
 	bytes, err := json.Marshal(content)
@@ -313,7 +317,7 @@ func TestDealDeviceUpdated(t *testing.T) {
 func TestDeviceUpdated(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
-
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
