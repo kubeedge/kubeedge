@@ -74,6 +74,7 @@ type CacheDeviceModel struct {
 
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
+	ctx          context.Context
 	kubeClient   *kubernetes.Clientset
 	messageLayer messagelayer.MessageLayer
 
@@ -85,10 +86,10 @@ type DownstreamController struct {
 }
 
 // syncDeviceModel is used to get events from informer
-func (dc *DownstreamController) syncDeviceModel(ctx context.Context) {
+func (dc *DownstreamController) syncDeviceModel() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-dc.ctx.Done():
 			klog.Info("stop syncDeviceModel")
 			return
 		case e := <-dc.deviceModelManager.Events():
@@ -153,10 +154,10 @@ func (dc *DownstreamController) deviceModelDeleted(deviceModel *v1alpha1.DeviceM
 }
 
 // syncDevice is used to get device events from informer
-func (dc *DownstreamController) syncDevice(ctx context.Context) {
+func (dc *DownstreamController) syncDevice() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-dc.ctx.Done():
 			klog.Info("Stop syncDevice")
 			return
 		case e := <-dc.deviceManager.Events():
@@ -805,23 +806,21 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 }
 
 // Start DownstreamController
-func (dc *DownstreamController) Start(ctx context.Context) error {
+func (dc *DownstreamController) Start() error {
 	klog.Info("Start downstream devicecontroller")
 
-	go dc.syncDeviceModel(ctx)
+	go dc.syncDeviceModel()
 
 	// Wait for adding all device model
 	// TODO need to think about sync
 	time.Sleep(1 * time.Second)
-	go dc.syncDevice(ctx)
+	go dc.syncDevice()
 
 	return nil
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController() (*DownstreamController, error) {
-	/*lc := &manager.LocationCache{}*/
-
+func NewDownstreamController(ctx context.Context) (*DownstreamController, error) {
 	cli, err := utils.KubeClient()
 	if err != nil {
 		klog.Warningf("Create kube client failed with error: %s", err)
@@ -855,6 +854,13 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	dc := &DownstreamController{kubeClient: cli, deviceManager: deviceManager, deviceModelManager: deviceModelManager, messageLayer: ml, configMapManager: cm}
+	dc := &DownstreamController{
+		ctx:                ctx,
+		kubeClient:         cli,
+		deviceManager:      deviceManager,
+		deviceModelManager: deviceModelManager,
+		messageLayer:       ml,
+		configMapManager:   cm,
+	}
 	return dc, nil
 }

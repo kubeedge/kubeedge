@@ -18,7 +18,7 @@ type Module interface {
 	Name() string
 	Group() string
 	Start()
-	Cleanup()
+	Cancel()
 }
 
 var (
@@ -97,7 +97,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 				klog.Warningf("Callback Module %s is not existing", m)
 				break
 			}
-			module.Cleanup()
+			beehiveContext.Cleanup(module.Name())
 			delete(modules, m)
 			disabledModules[m] = module
 			klog.Infof("Module %s is disabled", m)

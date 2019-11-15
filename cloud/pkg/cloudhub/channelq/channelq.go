@@ -53,21 +53,23 @@ func (s *ChannelMessageSet) Get() (*beehiveModel.Message, error) {
 // ChannelMessageQueue is the channel implementation of MessageQueue
 type ChannelMessageQueue struct {
 	channelPool sync.Map
+	ctx         context.Context
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue() *ChannelMessageQueue {
-	q := ChannelMessageQueue{}
-	return &q
+func NewChannelMessageQueue(ctx context.Context) *ChannelMessageQueue {
+	return &ChannelMessageQueue{
+		ctx: ctx,
+	}
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
 // node id from it, gets the channel associated with the node
 // and pushes the event on the channel
-func (q *ChannelMessageQueue) DispatchMessage(ctx context.Context) {
+func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-q.ctx.Done():
 			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
 			return
 		default:
