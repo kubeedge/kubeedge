@@ -59,7 +59,7 @@ func (ctl *EdgeController) Start() {
 	downstream.Start()
 }
 
-// Cleanup controller
+// Cancel controller
 func (ctl *EdgeController) Cancel() {
 	ctl.cancel()
 }

@@ -76,8 +76,7 @@ func (hs *HandlerStub) Start(c *context.Context) {
 	upstream.Stop()
 }
 
-// Cleanup resources
-func (hs *HandlerStub) Cleanup() {
+// Cancel resources
+func (hs *HandlerStub) Cancel() {
 	hs.stopChan <- true
-	hs.context.Cleanup(hs.Name())
 }

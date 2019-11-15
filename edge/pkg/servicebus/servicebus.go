@@ -25,13 +25,21 @@ const (
 
 // servicebus struct
 type servicebus struct {
+	ctx    context.Context
 	cancel context.CancelFunc
+}
+
+func newServicebus() *servicebus {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &servicebus{
+		ctx:    ctx,
+		cancel: cancel,
+	}
 }
 
 // Register register servicebus
 func Register() {
-	edgeServiceBusModule := servicebus{}
-	core.Register(&edgeServiceBusModule)
+	core.Register(newServicebus())
 }
 
 func (*servicebus) Name() string {
@@ -44,8 +52,6 @@ func (*servicebus) Group() string {
 
 func (sb *servicebus) Start() {
 	// no need to call TopicInit now, we have fixed topic
-	var ctx context.Context
-	ctx, sb.cancel = context.WithCancel(context.Background())
 	var htc = new(http.Client)
 	htc.Timeout = time.Second * 10
 
@@ -55,7 +61,7 @@ func (sb *servicebus) Start() {
 	//Get message from channel
 	for {
 		select {
-		case <-ctx.Done():
+		case <-sb.ctx.Done():
 			klog.Warning("ServiceBus stop")
 			return
 		default:
@@ -139,9 +145,8 @@ func (sb *servicebus) Start() {
 	}
 }
 
-func (sb *servicebus) Cleanup() {
+func (sb *servicebus) Cancel() {
 	sb.cancel()
-	beehiveContext.Cleanup(sb.Name())
 }
 
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {

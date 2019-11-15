@@ -6,7 +6,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -15,17 +14,25 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
+	ctx               context.Context
+	cancel            context.CancelFunc
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
-	cancel            context.CancelFunc
+}
+
+func newDeviceTwin() *DeviceTwin {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &DeviceTwin{
+		ctx:    ctx,
+		cancel: cancel,
+	}
 }
 
 // Register register devicetwin
 func Register() {
 	dtclient.InitDBTable()
-	dt := DeviceTwin{}
-	core.Register(&dt)
+	core.Register(newDeviceTwin())
 }
 
 //Name get name of the module
@@ -40,22 +47,19 @@ func (dt *DeviceTwin) Group() string {
 
 //Start run the module
 func (dt *DeviceTwin) Start() {
-	var ctx context.Context
 	dtContexts, _ := dtcontext.InitDTContext()
 	dt.HeartBeatToModule = make(map[string]chan interface{})
 	dt.DTModules = make(map[string]dtmodule.DTModule)
 	dt.DTContexts = dtContexts
-	ctx, dt.cancel = context.WithCancel(context.Background())
 	err := SyncSqlite(dt.DTContexts)
 	if err != nil {
 		klog.Errorf("Start DeviceTwin Failed, Sync Sqlite error:%v", err)
 		return
 	}
-	dt.runDeviceTwin(ctx)
+	dt.runDeviceTwin()
 }
 
-//Cleanup clean resource after quit
-func (dt *DeviceTwin) Cleanup() {
+//Cancel clean resource after quit
+func (dt *DeviceTwin) Cancel() {
 	dt.cancel()
-	beehiveContext.Cleanup(dt.Name())
 }
