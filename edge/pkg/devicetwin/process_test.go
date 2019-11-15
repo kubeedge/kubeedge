@@ -67,8 +67,8 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	dtContexts, _ := dtcontext.InitDTContext()
 	var moduleRegistered bool
 	_, cancel := context.WithCancel(context.Background())
 	dtc := &DeviceTwin{
@@ -117,13 +117,12 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	dtContexts, _ := dtcontext.InitDTContext()
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTModules:         make(map[string]dtmodule.DTModule),
 		DTContexts:        dtContexts,
-		Context:           mainContext,
 	}
 
 	payload := dttype.MembershipUpdate{
@@ -207,15 +206,14 @@ func TestSyncSqlite(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	// querySeterMock is mocked QuerySeter implementation.
 	var querySeterMock *beego.MockQuerySeter
-
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
-	dtContexts, _ := dtcontext.InitDTContext(mainContext)
+	dtContexts, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
 	// fakeDeviceAttr is used to set the argument of All function
@@ -300,14 +298,14 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	// querySeterMock is mocked QuerySeter implementation.
 	var querySeterMock *beego.MockQuerySeter
 
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	mainContext := beehiveContext.GetContext(beehiveContext.MsgCtxTypeChannel)
-	dtContext, _ := dtcontext.InitDTContext(mainContext)
+	dtContext, _ := dtcontext.InitDTContext()
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := createFakeDevice()
 	// fakeDeviceAttr is used to set the argument of All function

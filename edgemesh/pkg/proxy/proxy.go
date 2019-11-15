@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -67,8 +66,7 @@ func Init() {
 	go func() {
 		unused = make([]string, 0)
 		addrByService = &addrTable{}
-		c := context.GetContext(context.MsgCtxTypeChannel)
-		metaClient = client.New(c)
+		metaClient = client.New()
 		//create virtual network device
 		for {
 			err := vdev.CreateDevice()

@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -69,7 +70,7 @@ func initActionCallBack() {
 }
 
 func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	context.ModulesContext.Send(dtcommon.EventHubModule, *msg.(*model.Message))
+	beehiveContext.Send(dtcommon.EventHubModule, *msg.(*model.Message))
 	return nil, nil
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
@@ -81,7 +82,7 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-	context.ModulesContext.Send(dtcommon.HubModule, *message)
+	beehiveContext.Send(dtcommon.HubModule, *message)
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
 	return nil, nil
@@ -139,7 +140,7 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 	klog.Info("Request detail")
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
-	context.ModulesContext.Send(dtcommon.HubModule, *message)
+	beehiveContext.Send(dtcommon.HubModule, *message)
 	return nil, nil
 }
 

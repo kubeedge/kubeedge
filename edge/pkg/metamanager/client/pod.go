@@ -1,10 +1,6 @@
 package client
 
-import (
-	api "k8s.io/api/core/v1"
-
-	"github.com/kubeedge/beehive/pkg/core/context"
-)
+import api "k8s.io/api/core/v1"
 
 //PodsGetter is interface to get pods
 type PodsGetter interface {
@@ -21,13 +17,11 @@ type PodsInterface interface {
 
 type pods struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newPods(namespace string, c *context.Context, s SendInterface) *pods {
+func newPods(namespace string, s SendInterface) *pods {
 	return &pods{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}

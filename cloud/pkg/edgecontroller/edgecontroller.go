@@ -34,10 +34,9 @@ func (ctl *EdgeController) Group() string {
 }
 
 // Start controller
-func (ctl *EdgeController) Start(c *beehiveContext.Context) {
+func (ctl *EdgeController) Start() {
 	var ctx context.Context
 
-	config.Context = c
 	ctx, ctl.cancel = context.WithCancel(context.Background())
 
 	initConfig()
@@ -61,7 +60,7 @@ func (ctl *EdgeController) Start(c *beehiveContext.Context) {
 // Cleanup controller
 func (ctl *EdgeController) Cleanup() {
 	ctl.cancel()
-	config.Context.Cleanup(ctl.Name())
+	beehiveContext.Cleanup(ctl.Name())
 }
 
 func initConfig() {

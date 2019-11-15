@@ -6,7 +6,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 type Module interface {
 	Name() string
 	Group() string
-	Start(c *context.Context)
+	Start()
 	Cleanup()
 }
 
@@ -64,6 +64,7 @@ func isModuleEnabled(m string) bool {
 type moduleChangeCallback struct{}
 
 func (cb moduleChangeCallback) Callback(k string, v interface{}) {
+
 	retryReadKey := func() interface{} {
 		for times := 0; times < tryReadKeyTimes; times++ {
 			// try to read the key again
@@ -109,12 +110,11 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 				break
 			}
 			Register(module)
-			coreContext := context.GetContext(context.MsgCtxTypeChannel)
 			//Init the module
-			coreContext.AddModule(module.Name())
+			beehiveContext.AddModule(module.Name())
 			//Assemble typeChannels for sendToGroup
-			coreContext.AddModuleGroup(module.Name(), module.Group())
-			go module.Start(coreContext)
+			beehiveContext.AddModuleGroup(module.Name(), module.Group())
+			go module.Start()
 			delete(disabledModules, m)
 			klog.Infof("Callback: Module %s is enabled", m)
 		}

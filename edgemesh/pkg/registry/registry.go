@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 )
@@ -40,9 +39,8 @@ func toProtocolMap(address v1.EndpointAddress, ports []v1.EndpointPort) map[stri
 }
 
 func NewServiceDiscovery(options registry.Options) registry.ServiceDiscovery {
-	c := context.GetContext(context.MsgCtxTypeChannel)
 	return &ServiceDiscovery{
-		metaClient: client.New(c),
+		metaClient: client.New(),
 		Name:       EdgeRegistry,
 	}
 }
