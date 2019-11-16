@@ -243,9 +243,9 @@ func TestRouteToEdge(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := newEdgeHub()
+	hub.chClient = mockAdapter
 
 	tests := []struct {
 		name         string
@@ -253,21 +253,13 @@ func TestRouteToEdge(t *testing.T) {
 		receiveTimes int
 	}{
 		{
-			name: "Route to edge with proper input",
-			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				syncKeeper:    make(map[string]chan model.Message),
-				reconnectChan: make(chan struct{}),
-			},
+			name:         "Route to edge with proper input",
+			hub:          hub,
 			receiveTimes: 0,
 		},
 		{
-			name: "Receive Error in route to edge",
-			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				syncKeeper:    make(map[string]chan model.Message),
-				reconnectChan: make(chan struct{}),
-			},
+			name:         "Receive Error in route to edge",
+			hub:          hub,
 			receiveTimes: 1,
 		},
 	}
@@ -276,7 +268,7 @@ func TestRouteToEdge(t *testing.T) {
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
-			go tt.hub.routeToEdge(ctx)
+			go tt.hub.routeToEdge()
 			stop := <-tt.hub.reconnectChan
 			if stop != struct{}{} {
 				t.Errorf("TestRouteToEdge error got: %v want: %v", stop, struct{}{})
@@ -378,9 +370,9 @@ func TestRouteToCloud(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := newEdgeHub()
+	hub.chClient = mockAdapter
 
 	tests := []struct {
 		name string
@@ -388,16 +380,13 @@ func TestRouteToCloud(t *testing.T) {
 	}{
 		{
 			name: "Route to cloud with valid input",
-			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				reconnectChan: make(chan struct{}),
-			},
+			hub:  hub,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).AnyTimes()
-			go tt.hub.routeToCloud(ctx)
+			go tt.hub.routeToCloud()
 			time.Sleep(2 * time.Second)
 			core.Register(&EdgeHub{})
 			beehiveContext.AddModule(ModuleNameEdgeHub)
@@ -419,7 +408,6 @@ func TestKeepalive(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
 		name string
@@ -428,6 +416,8 @@ func TestKeepalive(t *testing.T) {
 		{
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
+				ctx:    ctx,
+				cancel: cancel,
 				config: &config.ControllerConfig{
 					Protocol:  "websocket",
 					ProjectID: "foo",
@@ -447,7 +437,7 @@ func TestKeepalive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
-			go tt.hub.keepalive(ctx)
+			go tt.hub.keepalive()
 			got := <-tt.hub.reconnectChan
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})

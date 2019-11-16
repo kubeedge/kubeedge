@@ -1,7 +1,6 @@
 package devicetwin
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -87,9 +86,8 @@ func TestStart(t *testing.T) {
 	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
 	core.Register(fakeModule)
 	beehiveContext.AddModule(TestModule)
-
-	core.Register(&DeviceTwin{})
-	dt := DeviceTwin{}
+	dt := newDeviceTwin()
+	core.Register(dt)
 	beehiveContext.AddModule(dt.Name())
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
@@ -145,30 +143,4 @@ func TestStart(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestCleanup is function to test Cleanup().
-func TestCleanup(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-
-	var test model.Message
-	beehiveContext.AddModule(TestModule)
-
-	core.Register(&DeviceTwin{})
-	dt := DeviceTwin{}
-	beehiveContext.AddModule(dt.Name())
-	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
-	_, cancel := context.WithCancel(context.Background())
-	deviceTwin := DeviceTwin{
-		cancel: cancel,
-	}
-	deviceTwin.Cleanup()
-	//Send message to avoid deadlock if channel deletion has failed after cleanup
-	go beehiveContext.Send(DeviceTwinModuleName, test)
-	_, err := beehiveContext.Receive(DeviceTwinModuleName)
-	t.Run("CheckCleanUp", func(t *testing.T) {
-		if err == nil {
-			t.Errorf("DeviceTwin Module still has channel after cleanup")
-		}
-	})
 }

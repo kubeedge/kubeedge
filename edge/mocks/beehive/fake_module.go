@@ -73,14 +73,14 @@ func (mr *MockModuleMockRecorder) Start() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockModule)(nil).Start))
 }
 
-// Cleanup mocks base method
-func (m *MockModule) Cleanup() {
+// Cancel mocks base method
+func (m *MockModule) Cancel() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Cleanup")
+	m.ctrl.Call(m, "Cancel")
 }
 
-// Cleanup indicates an expected call of Cleanup
-func (mr *MockModuleMockRecorder) Cleanup() *gomock.Call {
+// Cancel indicates an expected call of Cancel
+func (mr *MockModuleMockRecorder) Cancel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cleanup", reflect.TypeOf((*MockModule)(nil).Cleanup))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockModule)(nil).Cancel))
 }
