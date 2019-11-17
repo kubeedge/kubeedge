@@ -8,14 +8,14 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/server"
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(protocolType string, config *util.Config, messageq *channelq.ChannelMessageQueue) {
+func StartCloudHub(protocolType string, config hubconfig.Configure, messageq *channelq.ChannelMessageQueue) {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)
