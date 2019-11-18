@@ -21,6 +21,7 @@ func newDeviceController() *DeviceController {
 }
 
 func Register() {
+	config.InitConfigure()
 	core.Register(newDeviceController())
 }
 
@@ -36,8 +37,6 @@ func (dctl *DeviceController) Group() string {
 
 // Start controller
 func (dctl *DeviceController) Start() {
-	initConfig()
-
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Errorf("New downstream controller failed with error: %s", err)
@@ -54,12 +53,4 @@ func (dctl *DeviceController) Start() {
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	upstream.Start()
-}
-
-func initConfig() {
-	config.InitBufferConfig()
-	config.InitContextConfig()
-	config.InitKubeConfig()
-	config.InitLoadConfig()
-	config.InitMessageLayerConfig()
 }
