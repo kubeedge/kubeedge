@@ -29,7 +29,7 @@ func (dmm *DeviceModelManager) Events() chan watch.Event {
 // NewDeviceModelManager create DeviceModelManager from config
 func NewDeviceModelManager(crdClient *rest.RESTClient, namespace string) (*DeviceModelManager, error) {
 	lw := cache.NewListWatchFromClient(crdClient, "devicemodels", namespace, fields.Everything())
-	events := make(chan watch.Event, config.DeviceModelEventBuffer)
+	events := make(chan watch.Event, config.Get().DeviceModelEventBuffer)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1alpha1.DeviceModel{}, 0)
 	si.AddEventHandler(rh)

@@ -60,11 +60,11 @@ type UpstreamController struct {
 func (uc *UpstreamController) Start() error {
 	klog.Info("Start upstream devicecontroller")
 
-	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
-
+	uc.deviceStatusChan = make(chan model.Message, config.Get().UpdateDeviceStatusBuffer)
 	go uc.dispatchMessage()
 
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
+		for i := 0; i < config.Get().UpdateDeviceStatusWorkers; i++ {
 		go uc.updateDeviceStatus()
 	}
 

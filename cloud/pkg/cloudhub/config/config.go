@@ -36,17 +36,18 @@ func InitConfigure() {
 		var errs []error
 		defer func() {
 			if len(errs) != 0 {
-				klog.Error("init cloudhub config error")
 				for _, e := range errs {
 					klog.Errorf("%v", e)
 				}
+				klog.Error("init cloudhub config error")
 				os.Exit(1)
+			} else {
+				klog.Infof("init cloudhub config successfully，config info %++v", c)
 			}
 		}()
 		protocolWebsocket, err := config.CONFIG.GetValue("cloudhub.protocol_websocket").ToBool()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get cloudhub.protocol_websocket configuration key error %v", err))
-			return
 		}
 		protocolQuic, err := config.CONFIG.GetValue("cloudhub.protocol_quic").ToBool()
 		if err != nil {
