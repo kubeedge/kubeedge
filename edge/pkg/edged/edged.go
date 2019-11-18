@@ -230,6 +230,7 @@ type edged struct {
 
 // Register register edged
 func Register() {
+	edgedconfig.InitConfigure()
 	edged, err := newEdged()
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)

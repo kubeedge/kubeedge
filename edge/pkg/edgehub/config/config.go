@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"sync"
 	"time"
 
 	"k8s.io/klog"
@@ -208,4 +210,33 @@ func getQuicConfig() error {
 	}
 	edgeHubConfig.QcConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
 	return nil
+}
+
+//////////////////////////
+
+var c Configure
+var once sync.Once
+
+type Configure struct {
+}
+
+func InitConfigure() {
+	once.Do(func() {
+		var errs []error
+		defer func() {
+			if len(errs) != 0 {
+				for _, e := range errs {
+					klog.Errorf("%v", e)
+				}
+				klog.Error("init edgehub config error")
+				os.Exit(1)
+			} else {
+				klog.Infof("init edgehub config successfully，config info %++v", c)
+			}
+		}()
+	})
+}
+
+func Get() Configure {
+	return c
 }
