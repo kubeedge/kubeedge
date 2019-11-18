@@ -37,10 +37,12 @@ func (a *cloudHub) Start() {
 
 	// start the cloudhub server
 	if hubconfig.Get().ProtocolWebsocket {
+		// TODO delete second param  @kadisi
 		go servers.StartCloudHub(api.ProtocolTypeWS, hubconfig.Get(), messageq)
 	}
 
 	if hubconfig.Get().ProtocolQuic {
+		// TODO delete second param  @kadisi
 		go servers.StartCloudHub(api.ProtocolTypeQuic, hubconfig.Get(), messageq)
 	}
 

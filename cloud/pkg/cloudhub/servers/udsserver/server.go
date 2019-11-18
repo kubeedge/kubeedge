@@ -15,7 +15,7 @@ import (
 )
 
 // StartServer serves
-func StartServer(config hubconfig.Configure) {
+func StartServer(config *hubconfig.Configure) {
 	uds := NewUnixDomainSocket(config.UDSAddress)
 	uds.SetContextHandler(func(context string) string {
 		// receive message from client

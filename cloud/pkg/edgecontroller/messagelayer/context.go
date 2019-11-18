@@ -26,7 +26,7 @@ func (cml *ContextMessageLayer) Receive() (model.Message, error) {
 
 // Response message
 func (cml *ContextMessageLayer) Response(message model.Message) error {
-	if !config.EdgeSiteEnabled {
+	if !config.Get().EdgeSiteEnabled {
 		beehiveContext.Send(cml.ResponseModuleName, message)
 	} else {
 		beehiveContext.SendResp(message)
@@ -36,5 +36,9 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 
 // NewContextMessageLayer create a ContextMessageLayer
 func NewContextMessageLayer() (*ContextMessageLayer, error) {
-	return &ContextMessageLayer{SendModuleName: config.ContextSendModule, ReceiveModuleName: config.ContextReceiveModule, ResponseModuleName: config.ContextResponseModule}, nil
+	return &ContextMessageLayer{
+		SendModuleName:     config.Get().ContextSendModule,
+		ReceiveModuleName:  config.Get().ContextReceiveModule,
+		ResponseModuleName: config.Get().ContextResponseModule,
+	}, nil
 }

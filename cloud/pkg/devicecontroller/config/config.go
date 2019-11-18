@@ -7,7 +7,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"k8s.io/klog"
 )
 
@@ -46,58 +45,43 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init devicecontroller config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init devicecontroller config successfully, config info %++v", c)
-			}
-		}()
+
 		km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString()
 		if err != nil {
-			errs = append(errs,
-				fmt.Errorf("get devicecontroller.kube.master configuration key error %v", err))
+			errs = append(errs, fmt.Errorf("get devicecontroller.kube.master configuration key error %v", err))
 		}
 		kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString()
 		if err != nil {
-			errs = append(errs,
-				fmt.Errorf("get devicecontroller.kube.kubeconfig configuration key error %v", err))
+			errs = append(errs, fmt.Errorf("get devicecontroller.kube.kubeconfig configuration key error %v", err))
 		}
 		kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString()
 		if err != nil {
-			errs = append(errs,
-				fmt.Errorf("get devicecontroller.kube.content_type configuration key error %v", err))
+			errs = append(errs, fmt.Errorf("get devicecontroller.kube.content_type configuration key error %v", err))
 		}
 		kqps, err := config.CONFIG.GetValue("devicecontroller.kube.qps").ToFloat64()
 		if err != nil {
-			errs = append(errs,
-				fmt.Errorf("get devicecontroller.kube.qps configuration key error %v", err))
+			errs = append(errs, fmt.Errorf("get devicecontroller.kube.qps configuration key error %v", err))
 		}
 		kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt()
 		if err != nil {
-			errs = append(errs,
-				fmt.Errorf("get devicecontroller.kube.burst configuration key error %v", err))
+			errs = append(errs, fmt.Errorf("get devicecontroller.kube.burst configuration key error %v", err))
 		}
 		smn, err := config.CONFIG.GetValue("devicecontroller.context.send-module").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			smn = constants.DefaultContextSendModuleName
+			smn = deviceconstants.DefaultContextSendModuleName
 			klog.Infof("can not get devicecontroller.context.send-module key, use default value %v", smn)
 		}
 		rmn, err := config.CONFIG.GetValue("devicecontroller.context.receive-module").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			rmn = constants.DefaultContextReceiveModuleName
+			rmn = deviceconstants.DefaultContextReceiveModuleName
 			klog.Infof("can not get devicecontroller.context.receive-module key, use default value %v", rmn)
 		}
 		res, err := config.CONFIG.GetValue("devicecontroller.context.response-module").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			res = constants.DefaultContextResponseModuleName
+			res = deviceconstants.DefaultContextResponseModuleName
 			klog.Infof("can not get devicecontroller.context.response-module key, use default value %v", res)
 		}
 		uds, err := config.CONFIG.GetValue("devicecontroller.buffer.update-device-status").ToInt()
@@ -127,10 +111,18 @@ func InitConfigure() {
 		ml, err := config.CONFIG.GetValue("devicecontroller.message-layer").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			ml = constants.DefaultMessageLayer
+			ml = deviceconstants.DefaultMessageLayer
 			klog.Infof("can not get devicecontroller.message-layer key, use default value %v", ml)
 		}
-
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init devicecontroller config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init devicecontroller config successfully, config info %++v", c)
+		}
 		c = Configure{
 			KubeMaster:                km,
 			KubeConfig:                kc,
@@ -149,6 +141,6 @@ func InitConfigure() {
 	})
 }
 
-func Get() Configure {
-	return c
+func Get() *Configure {
+	return &c
 }
