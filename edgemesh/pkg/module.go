@@ -1,8 +1,6 @@
 package pkg
 
 import (
-	"context"
-
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -15,7 +13,6 @@ import (
 
 //EdgeMesh defines EdgeMesh object structure
 type EdgeMesh struct {
-	cancel context.CancelFunc
 }
 
 // Register register edgemesh
@@ -35,14 +32,12 @@ func (em *EdgeMesh) Group() string {
 
 //Start sets context and starts the controller
 func (em *EdgeMesh) Start() {
-	var ctx context.Context
-	ctx, em.cancel = context.WithCancel(context.Background())
 	proxy.Init()
 	go server.Start()
 	// we need watch message to update the cache of instances
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EdgeMesh Stop")
 			return
 		default:
@@ -55,9 +50,4 @@ func (em *EdgeMesh) Start() {
 		klog.V(4).Infof("edgemesh get message: %v", msg)
 		proxy.MsgProcess(msg)
 	}
-}
-
-//Cleanup sets up context cleanup through EdgeMesh name
-func (em *EdgeMesh) Cancel() {
-	em.cancel()
 }

@@ -281,7 +281,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 	go func() {
 		for {
 			select {
-			case <-dt.ctx.Done():
+			case <-beehiveContext.Done():
 				klog.Warning("Stop DeviceTwin ModulesContext Receive loop")
 				return
 			default:
@@ -314,7 +314,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 			for _, v := range dt.HeartBeatToModule {
 				v <- "ping"
 			}
-		case <-dt.ctx.Done():
+		case <-beehiveContext.Done():
 			for _, v := range dt.HeartBeatToModule {
 				v <- "stop"
 			}

@@ -34,10 +34,10 @@ func GracefulShutdown() {
 	case s := <-c:
 		klog.Infof("Get os signal %v", s.String())
 		//Cleanup each modules
+		beehiveContext.Cancel()
 		modules := GetModules()
-		for name, module := range modules {
+		for name, _ := range modules {
 			klog.Infof("Cleanup module %v", name)
-			module.Cancel()
 			beehiveContext.Cleanup(name)
 		}
 	}

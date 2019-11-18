@@ -19,51 +19,40 @@ package controllerstub
 import (
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // NewDownstreamController creates a downstream controller
-func NewDownstreamController(context *context.Context, pm *PodManager) (*DownstreamController, error) {
+func NewDownstreamController(pm *PodManager) (*DownstreamController, error) {
 	// New downstream controller
-	dc := &DownstreamController{context: context, podManager: pm}
+	dc := &DownstreamController{podManager: pm}
 	return dc, nil
 }
 
 // DownstreamController receives http request and send to cloudhub
 type DownstreamController struct {
-	context    *context.Context
 	podManager *PodManager
-	podStop    chan struct{}
 }
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Infof("Start downstream controller")
-	dc.podStop = make(chan struct{})
-	go dc.SyncPods(dc.podStop)
-	return nil
-}
-
-// Stop DownstreamController
-func (dc *DownstreamController) Stop() error {
-	klog.Infof("Stop downstream controller")
-	dc.podStop <- struct{}{}
+	go dc.SyncPods()
 	return nil
 }
 
 // SyncPods is used to send message to cloudhub
-func (dc *DownstreamController) SyncPods(stop chan struct{}) {
-	running := true
-	for running {
+func (dc *DownstreamController) SyncPods() {
+	for {
 		select {
+		case <-beehiveContext.Done():
+			klog.Info("Stop sync pod")
+			return
 		case msg := <-dc.podManager.GetEvent():
 			klog.Infof("Send message to cloudhub: %v", *msg)
-			dc.context.Send(constants.CloudHub, *msg)
+			beehiveContext.Send(constants.CloudHub, *msg)
 			klog.Info("Finish send message to cloudhub")
-		case <-stop:
-			klog.Info("Stop sync pod")
-			running = false
 		}
 	}
 }

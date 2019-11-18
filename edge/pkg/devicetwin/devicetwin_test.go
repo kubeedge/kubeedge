@@ -78,6 +78,7 @@ func TestStart(t *testing.T) {
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	fakeModule = beehive.NewMockModule(mockCtrl)

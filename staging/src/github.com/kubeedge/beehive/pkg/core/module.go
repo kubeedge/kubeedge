@@ -18,7 +18,6 @@ type Module interface {
 	Name() string
 	Group() string
 	Start()
-	Cancel()
 }
 
 var (

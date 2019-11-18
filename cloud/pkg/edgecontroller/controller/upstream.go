@@ -24,7 +24,6 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"sort"
 	"time"
@@ -35,6 +34,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -73,7 +73,6 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	ctx          context.Context
 	kubeClient   *kubernetes.Clientset
 	messageLayer messagelayer.MessageLayer
 
@@ -148,7 +147,7 @@ func (uc *UpstreamController) Start() error {
 func (uc *UpstreamController) dispatchMessage() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("stop dispatchMessage")
 			return
 		default:
@@ -208,7 +207,7 @@ func (uc *UpstreamController) dispatchMessage() {
 func (uc *UpstreamController) updatePodStatus() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updatePodStatus")
 			return
 		case msg := <-uc.podStatusChan:
@@ -312,7 +311,7 @@ func (uc *UpstreamController) updatePodStatus() {
 func (uc *UpstreamController) updateNodeStatus() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updateNodeStatus")
 			return
 		case msg := <-uc.nodeStatusChan:
@@ -440,7 +439,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 func (uc *UpstreamController) queryConfigMap() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryConfigMap")
 			return
 		case msg := <-uc.configMapChan:
@@ -495,7 +494,7 @@ func (uc *UpstreamController) queryConfigMap() {
 func (uc *UpstreamController) querySecret() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop querySecret")
 			return
 		case msg := <-uc.secretChan:
@@ -552,7 +551,7 @@ func (uc *UpstreamController) querySecret() {
 func (uc *UpstreamController) queryService() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryService")
 			return
 		case msg := <-uc.serviceChan:
@@ -606,7 +605,7 @@ func (uc *UpstreamController) queryService() {
 func (uc *UpstreamController) queryEndpoints() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryEndpoints")
 			return
 		case msg := <-uc.endpointsChan:
@@ -663,7 +662,7 @@ func (uc *UpstreamController) queryEndpoints() {
 func (uc *UpstreamController) queryPersistentVolume() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryPersistentVolume")
 			return
 		case msg := <-uc.persistentVolumeChan:
@@ -720,7 +719,7 @@ func (uc *UpstreamController) queryPersistentVolume() {
 func (uc *UpstreamController) queryPersistentVolumeClaim() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryPersistentVolumeClaim")
 			return
 		case msg := <-uc.persistentVolumeClaimChan:
@@ -777,7 +776,7 @@ func (uc *UpstreamController) queryPersistentVolumeClaim() {
 func (uc *UpstreamController) queryVolumeAttachment() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryVolumeAttachment")
 			return
 		case msg := <-uc.volumeAttachmentChan:
@@ -834,7 +833,7 @@ func (uc *UpstreamController) queryVolumeAttachment() {
 func (uc *UpstreamController) updateNode() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updateNode")
 			return
 		case msg := <-uc.updateNodeChan:
@@ -926,7 +925,7 @@ func (uc *UpstreamController) updateNode() {
 func (uc *UpstreamController) queryNode() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryNode")
 			return
 		case msg := <-uc.queryNodeChan:
@@ -1087,7 +1086,7 @@ func (uc *UpstreamController) normalizePodStatus(pod *v1.Pod, status *v1.PodStat
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(ctx context.Context) (*UpstreamController, error) {
+func NewUpstreamController() (*UpstreamController, error) {
 	cli, err := utils.KubeClient()
 	if err != nil {
 		klog.Warningf("create kube client failed with error: %s", err)
@@ -1098,7 +1097,6 @@ func NewUpstreamController(ctx context.Context) (*UpstreamController, error) {
 		klog.Warningf("create message layer failed with error: %s", err)
 	}
 	uc := &UpstreamController{
-		ctx:          ctx,
 		kubeClient:   cli,
 		messageLayer: ml,
 	}

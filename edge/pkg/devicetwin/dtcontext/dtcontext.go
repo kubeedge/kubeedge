@@ -44,25 +44,17 @@ func InitDTContext() (*DTContext, error) {
 	if err != nil {
 		klog.Warningf("failed to get node id  for web socket client")
 	}
-	commChan := make(map[string]chan interface{})
-	confirmChan := make(chan interface{}, 1000)
-	var modulesHealth sync.Map
-	var confirm sync.Map
-	var deviceList sync.Map
-	var deviceMutex sync.Map
-	var mutex sync.RWMutex
-	// var deviceVersionList sync.Map
 
 	return &DTContext{
 		GroupID:       groupID,
 		NodeID:        nodeID,
-		CommChan:      commChan,
-		ConfirmChan:   confirmChan,
-		ConfirmMap:    &confirm,
-		ModulesHealth: &modulesHealth,
-		DeviceList:    &deviceList,
-		DeviceMutex:   &deviceMutex,
-		Mutex:         &mutex,
+		CommChan:      make(map[string]chan interface{}),
+		ConfirmChan:   make(chan interface{}, 1000),
+		ConfirmMap:    &sync.Map{},
+		ModulesHealth: &sync.Map{},
+		DeviceList:    &sync.Map{},
+		DeviceMutex:   &sync.Map{},
+		Mutex:         &sync.RWMutex{},
 		State:         dtcommon.Disconnected,
 	}, nil
 }

@@ -1,8 +1,6 @@
 package devicetwin
 
 import (
-	"context"
-
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -14,18 +12,15 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
-	ctx               context.Context
-	cancel            context.CancelFunc
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
 }
 
 func newDeviceTwin() *DeviceTwin {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &DeviceTwin{
-		ctx:    ctx,
-		cancel: cancel,
+		HeartBeatToModule: make(map[string]chan interface{}),
+		DTModules:         make(map[string]dtmodule.DTModule),
 	}
 }
 
@@ -48,8 +43,6 @@ func (dt *DeviceTwin) Group() string {
 //Start run the module
 func (dt *DeviceTwin) Start() {
 	dtContexts, _ := dtcontext.InitDTContext()
-	dt.HeartBeatToModule = make(map[string]chan interface{})
-	dt.DTModules = make(map[string]dtmodule.DTModule)
 	dt.DTContexts = dtContexts
 	err := SyncSqlite(dt.DTContexts)
 	if err != nil {
@@ -57,9 +50,4 @@ func (dt *DeviceTwin) Start() {
 		return
 	}
 	dt.runDeviceTwin()
-}
-
-//Cancel clean resource after quit
-func (dt *DeviceTwin) Cancel() {
-	dt.cancel()
 }

@@ -22,7 +22,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
@@ -33,8 +32,6 @@ func init() {
 
 // HandlerStub definition
 type ControllerStub struct {
-	context  *context.Context
-	stopChan chan bool
 }
 
 // Return module name
@@ -48,10 +45,7 @@ func (*ControllerStub) Group() string {
 }
 
 // Start controller hub
-func (cs *ControllerStub) Start(c *context.Context) {
-	cs.context = c
-	cs.stopChan = make(chan bool)
-
+func (cs *ControllerStub) Start() {
 	// New pod manager
 	pm, err := NewPodManager()
 	if err != nil {
@@ -60,7 +54,7 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	}
 
 	// Start downstream controller
-	downstream, err := NewDownstreamController(cs.context, pm)
+	downstream, err := NewDownstreamController(pm)
 	if err != nil {
 		klog.Errorf("New downstream controller failed with error: %v", err)
 		return
@@ -68,7 +62,7 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	downstream.Start()
 
 	// Start upstream controller
-	upstream, err := NewUpstreamController(cs.context, pm)
+	upstream, err := NewUpstreamController(pm)
 	if err != nil {
 		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
@@ -77,16 +71,6 @@ func (cs *ControllerStub) Start(c *context.Context) {
 
 	// Start http server
 	http.HandleFunc(constants.PodResource, pm.PodHandlerFunc)
-	go http.ListenAndServe(":54321", nil)
 	klog.Info("Start http service")
-
-	// Receive stop signal
-	<-cs.stopChan
-	upstream.Stop()
-	downstream.Stop()
-}
-
-// Cancel resources
-func (cs *ControllerStub) Cancel() {
-	cs.stopChan <- true
+	go http.ListenAndServe(":54321", nil)
 }

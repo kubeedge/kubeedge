@@ -17,7 +17,6 @@ limitations under the License.
 package devicetwin
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -70,12 +69,10 @@ func TestRegisterDTModule(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	var moduleRegistered bool
-	_, cancel := context.WithCancel(context.Background())
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTContexts:        dtContexts,
 		DTModules:         make(map[string]dtmodule.DTModule),
-		cancel:            cancel,
 	}
 	tests := []struct {
 		name       string

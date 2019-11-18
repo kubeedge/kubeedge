@@ -25,7 +25,6 @@ package edged
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -183,8 +182,6 @@ type podReady struct {
 
 //Define edged
 type edged struct {
-	ctx    context.Context
-	cancel context.CancelFunc
 	//dns config
 	dnsConfigurer             *kubedns.Configurer
 	hostname                  string
@@ -346,10 +343,6 @@ func (e *edged) Start() {
 	e.syncPod()
 }
 
-func (e *edged) Cancel() {
-	e.cancel()
-}
-
 // isInitPodReady is used to safely return initPodReady flag
 func (e *edged) isInitPodReady() bool {
 	e.podReadyLock.RLock()
@@ -453,11 +446,8 @@ func newEdged() (*edged, error) {
 	}
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
-	ctx, cancel := context.WithCancel(context.Background())
 
 	ed := &edged{
-		ctx:                       ctx,
-		cancel:                    cancel,
 		nodeName:                  conf.nodeName,
 		interfaceName:             conf.interfaceName,
 		namespace:                 conf.nodeNamespace,
@@ -920,7 +910,7 @@ func (e *edged) syncPod() {
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {
 		select {
-		case <-e.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Sync pod stop")
 			return
 		default:

@@ -1,7 +1,6 @@
 package eventbus
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -32,16 +31,11 @@ const (
 
 // eventbus struct
 type eventbus struct {
-	ctx      context.Context
-	cancel   context.CancelFunc
 	mqttMode int
 }
 
 func newEventbus() *eventbus {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &eventbus{
-		ctx:      ctx,
-		cancel:   cancel,
 		mqttMode: externalMqttMode,
 	}
 }
@@ -128,10 +122,6 @@ func (eb *eventbus) Start() {
 	eb.pubCloudMsgToEdge()
 }
 
-func (eb *eventbus) Cancel() {
-	eb.cancel()
-}
-
 func pubMQTT(topic string, payload []byte) {
 	token := mqttBus.MQTTHub.PubCli.Publish(topic, 1, false, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
@@ -144,7 +134,7 @@ func pubMQTT(topic string, payload []byte) {
 func (eb *eventbus) pubCloudMsgToEdge() {
 	for {
 		select {
-		case <-eb.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EventBus PubCloudMsg To Edge stop")
 			return
 		default:

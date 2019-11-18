@@ -227,6 +227,3 @@ func (tm *testManager) Start() {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
 }
-
-func (tm *testManager) Cancel() {
-}

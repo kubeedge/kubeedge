@@ -1,7 +1,6 @@
 package devicecontroller
 
 import (
-	"context"
 	"os"
 	"time"
 
@@ -15,16 +14,10 @@ import (
 
 // DeviceController use beehive context message layer
 type DeviceController struct {
-	cancel context.CancelFunc
-	ctx    context.Context
 }
 
 func newDeviceController() *DeviceController {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &DeviceController{
-		cancel: cancel,
-		ctx:    ctx,
-	}
+	return &DeviceController{}
 }
 
 func Register() {
@@ -45,12 +38,12 @@ func (dctl *DeviceController) Group() string {
 func (dctl *DeviceController) Start() {
 	initConfig()
 
-	downstream, err := controller.NewDownstreamController(dctl.ctx)
+	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Errorf("New downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	upstream, err := controller.NewUpstreamController(downstream, dctl.ctx)
+	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
@@ -61,11 +54,6 @@ func (dctl *DeviceController) Start() {
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	upstream.Start()
-}
-
-// Cancel controller
-func (dctl *DeviceController) Cancel() {
-	dctl.cancel()
 }
 
 func initConfig() {

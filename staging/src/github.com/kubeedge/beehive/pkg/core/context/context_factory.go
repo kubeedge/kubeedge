@@ -1,7 +1,7 @@
 package context
 
 import (
-	gcontext "context"
+	gocontext "context"
 	"sync"
 	"time"
 
@@ -17,15 +17,15 @@ const (
 
 var (
 	// singleton
-	context *BeehiveContext
+	context *beehiveContext
 	once    sync.Once
 )
 
 // InitContext gets global context instance
 func InitContext(contextType string) {
 	once.Do(func() {
-		ctx, cancel := gcontext.WithCancel(gcontext.Background())
-		context = &BeehiveContext{
+		ctx, cancel := gocontext.WithCancel(gocontext.Background())
+		context = &beehiveContext{
 			ctx:    ctx,
 			cancel: cancel,
 		}
@@ -54,9 +54,13 @@ func AddModuleGroup(module, group string) {
 	context.moduleContext.AddModuleGroup(module, group)
 }
 
+// Cancel function
+func Cancel() {
+	context.cancel()
+}
+
 // Cleanup cleans up module
 func Cleanup(module string) {
-	context.cancel()
 	context.moduleContext.Cleanup(module)
 }
 

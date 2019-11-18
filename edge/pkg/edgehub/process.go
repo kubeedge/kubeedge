@@ -100,7 +100,7 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 func (eh *EdgeHub) routeToEdge() {
 	for {
 		select {
-		case <-eh.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
 			return
 		default:
@@ -154,7 +154,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 func (eh *EdgeHub) routeToCloud() {
 	for {
 		select {
-		case <-eh.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToCloud stop")
 			return
 		default:
@@ -179,7 +179,7 @@ func (eh *EdgeHub) routeToCloud() {
 func (eh *EdgeHub) keepalive() {
 	for {
 		select {
-		case <-eh.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
 			return
 		default:
