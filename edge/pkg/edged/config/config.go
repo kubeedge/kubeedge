@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/staging/src/github.com/kubeedge/beehive/pkg/common/config"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
+
+	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 const (
