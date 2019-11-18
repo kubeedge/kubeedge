@@ -631,7 +631,7 @@ func (m *metaManager) runMetaManager() {
 	go func() {
 		for {
 			select {
-			case <-m.ctx.Done():
+			case <-beehiveContext.Done():
 				klog.Warning("MetaManager mainloop stop")
 				return
 			default:

@@ -20,7 +20,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
@@ -31,9 +30,7 @@ func init() {
 
 // HandlerStub definition
 type HandlerStub struct {
-	context    *context.Context
 	podManager *PodManager
-	stopChan   chan bool
 }
 
 // Return module name
@@ -47,10 +44,7 @@ func (*HandlerStub) Group() string {
 }
 
 // Start handler hub
-func (hs *HandlerStub) Start(c *context.Context) {
-	hs.context = c
-	hs.stopChan = make(chan bool)
-
+func (hs *HandlerStub) Start() {
 	// New pod manager
 	pm, err := NewPodManager()
 	if err != nil {
@@ -64,19 +58,10 @@ func (hs *HandlerStub) Start(c *context.Context) {
 	hs.WaitforMessage()
 
 	// Start upstream controller
-	upstream, err := NewUpstreamController(hs.context, pm)
+	upstream, err := NewUpstreamController(pm)
 	if err != nil {
 		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
 	upstream.Start()
-
-	// Receive stop signal
-	<-hs.stopChan
-	upstream.Stop()
-}
-
-// Cancel resources
-func (hs *HandlerStub) Cancel() {
-	hs.stopChan <- true
 }

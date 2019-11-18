@@ -1,7 +1,6 @@
 package edgecontroller
 
 import (
-	"context"
 	"os"
 
 	"k8s.io/klog"
@@ -14,16 +13,10 @@ import (
 
 // EdgeController use beehive context message layer
 type EdgeController struct {
-	cancel context.CancelFunc
-	ctx    context.Context
 }
 
 func newEdgeController() *EdgeController {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &EdgeController{
-		cancel: cancel,
-		ctx:    ctx,
-	}
+	return &EdgeController{}
 }
 
 func Register() {
@@ -44,24 +37,19 @@ func (ctl *EdgeController) Group() string {
 func (ctl *EdgeController) Start() {
 	initConfig()
 
-	upstream, err := controller.NewUpstreamController(ctl.ctx)
+	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	upstream.Start()
 
-	downstream, err := controller.NewDownstreamController(ctl.ctx)
+	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Warningf("new downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
 	downstream.Start()
-}
-
-// Cancel controller
-func (ctl *EdgeController) Cancel() {
-	ctl.cancel()
 }
 
 func initConfig() {

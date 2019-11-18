@@ -1,13 +1,13 @@
 package edgehub
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -21,8 +21,6 @@ const (
 
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
-	ctx           context.Context
-	cancel        context.CancelFunc
 	chClient      clients.Adapter
 	config        *config.ControllerConfig
 	reconnectChan chan struct{}
@@ -31,10 +29,7 @@ type EdgeHub struct {
 }
 
 func newEdgeHub() *EdgeHub {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &EdgeHub{
-		ctx:           ctx,
-		cancel:        cancel,
 		config:        &config.GetConfig().CtrConfig,
 		reconnectChan: make(chan struct{}),
 		syncKeeper:    make(map[string]chan model.Message),
@@ -62,7 +57,7 @@ func (eh *EdgeHub) Start() {
 
 	for {
 		select {
-		case <-eh.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub stop")
 			return
 		default:
@@ -106,9 +101,4 @@ func (eh *EdgeHub) Start() {
 			}
 		}
 	}
-}
-
-//Cleanup sets up context cleanup through Edgehub name
-func (eh *EdgeHub) Cancel() {
-	eh.cancel()
 }

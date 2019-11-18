@@ -1,7 +1,6 @@
 package servicebus
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -25,16 +24,10 @@ const (
 
 // servicebus struct
 type servicebus struct {
-	ctx    context.Context
-	cancel context.CancelFunc
 }
 
 func newServicebus() *servicebus {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &servicebus{
-		ctx:    ctx,
-		cancel: cancel,
-	}
+	return &servicebus{}
 }
 
 // Register register servicebus
@@ -61,7 +54,7 @@ func (sb *servicebus) Start() {
 	//Get message from channel
 	for {
 		select {
-		case <-sb.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("ServiceBus stop")
 			return
 		default:
@@ -143,10 +136,6 @@ func (sb *servicebus) Start() {
 			beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
 		}()
 	}
-}
-
-func (sb *servicebus) Cancel() {
-	sb.cancel()
 }
 
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {

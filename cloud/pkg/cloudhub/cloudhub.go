@@ -1,7 +1,6 @@
 package cloudhub
 
 import (
-	"context"
 	"io/ioutil"
 	"os"
 
@@ -17,16 +16,10 @@ import (
 )
 
 type cloudHub struct {
-	cancel context.CancelFunc
-	ctx    context.Context
 }
 
 func newCloudHub() *cloudHub {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &cloudHub{
-		cancel: cancel,
-		ctx:    ctx,
-	}
+	return &cloudHub{}
 }
 
 func Register() {
@@ -44,7 +37,7 @@ func (a *cloudHub) Group() string {
 func (a *cloudHub) Start() {
 	initHubConfig()
 
-	messageq := channelq.NewChannelMessageQueue(a.ctx)
+	messageq := channelq.NewChannelMessageQueue()
 
 	// start dispatch message from the cloud to edge node
 	go messageq.DispatchMessage()
@@ -64,10 +57,6 @@ func (a *cloudHub) Start() {
 		go udsserver.StartServer(util.HubConfig)
 	}
 
-}
-
-func (a *cloudHub) Cancel() {
-	a.cancel()
 }
 
 func initHubConfig() {

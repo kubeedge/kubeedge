@@ -1,7 +1,6 @@
 package channelq
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -53,14 +52,11 @@ func (s *ChannelMessageSet) Get() (*beehiveModel.Message, error) {
 // ChannelMessageQueue is the channel implementation of MessageQueue
 type ChannelMessageQueue struct {
 	channelPool sync.Map
-	ctx         context.Context
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue(ctx context.Context) *ChannelMessageQueue {
-	return &ChannelMessageQueue{
-		ctx: ctx,
-	}
+func NewChannelMessageQueue() *ChannelMessageQueue {
+	return &ChannelMessageQueue{}
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
@@ -69,7 +65,7 @@ func NewChannelMessageQueue(ctx context.Context) *ChannelMessageQueue {
 func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
-		case <-q.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
 			return
 		default:

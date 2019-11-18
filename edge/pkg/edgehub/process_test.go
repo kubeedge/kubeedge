@@ -17,7 +17,6 @@ limitations under the License.
 package edgehub
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -407,7 +406,6 @@ func TestKeepalive(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx, cancel := context.WithCancel(context.Background())
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	tests := []struct {
 		name string
@@ -416,8 +414,6 @@ func TestKeepalive(t *testing.T) {
 		{
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
-				ctx:    ctx,
-				cancel: cancel,
 				config: &config.ControllerConfig{
 					Protocol:  "websocket",
 					ProjectID: "foo",

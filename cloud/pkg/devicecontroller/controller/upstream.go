@@ -17,13 +17,13 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"strconv"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
@@ -47,7 +47,6 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	ctx          context.Context
 	crdClient    *rest.RESTClient
 	messageLayer messagelayer.MessageLayer
 	// message channel
@@ -75,7 +74,7 @@ func (uc *UpstreamController) Start() error {
 func (uc *UpstreamController) dispatchMessage() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("Stop dispatchMessage")
 			return
 		default:
@@ -107,7 +106,7 @@ func (uc *UpstreamController) dispatchMessage() {
 func (uc *UpstreamController) updateDeviceStatus() {
 	for {
 		select {
-		case <-uc.ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("Stop updateDeviceStatus")
 			return
 		case msg := <-uc.deviceStatusChan:
@@ -190,7 +189,7 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(dc *DownstreamController, ctx context.Context) (*UpstreamController, error) {
+func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
 	config, err := utils.KubeConfig()
 	crdcli, err := utils.NewCRDClient(config)
 	ml, err := messagelayer.NewMessageLayer()
@@ -201,7 +200,6 @@ func NewUpstreamController(dc *DownstreamController, ctx context.Context) (*Upst
 		crdClient:    crdcli,
 		messageLayer: ml,
 		dc:           dc,
-		ctx:          ctx,
 	}
 	return uc, nil
 }
