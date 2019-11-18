@@ -1,6 +1,7 @@
 package context
 
 import (
+	gcontext "context"
 	"sync"
 	"time"
 
@@ -16,14 +17,18 @@ const (
 
 var (
 	// singleton
-	context *Context
+	context *BeehiveContext
 	once    sync.Once
 )
 
 // InitContext gets global context instance
 func InitContext(contextType string) {
 	once.Do(func() {
-		context = &Context{}
+		ctx, cancel := gcontext.WithCancel(gcontext.Background())
+		context = &BeehiveContext{
+			ctx:    ctx,
+			cancel: cancel,
+		}
 		switch contextType {
 		case MsgCtxTypeChannel:
 			channelContext := NewChannelContext()
@@ -33,6 +38,10 @@ func InitContext(contextType string) {
 			klog.Fatalf("Do not support context type:%s", contextType)
 		}
 	})
+}
+
+func Done() <-chan struct{} {
+	return context.ctx.Done()
 }
 
 // AddModule adds module into module context
@@ -47,6 +56,7 @@ func AddModuleGroup(module, group string) {
 
 // Cleanup cleans up module
 func Cleanup(module string) {
+	context.cancel()
 	context.moduleContext.Cleanup(module)
 }
 

@@ -58,7 +58,6 @@ func (em *EdgeMesh) Start() {
 }
 
 //Cleanup sets up context cleanup through EdgeMesh name
-func (em *EdgeMesh) Cleanup() {
+func (em *EdgeMesh) Cancel() {
 	em.cancel()
-	beehiveContext.Cleanup(em.Name())
 }
