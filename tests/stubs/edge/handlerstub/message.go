@@ -22,6 +22,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/util"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
@@ -31,7 +32,14 @@ import (
 func (hs *HandlerStub) WaitforMessage() {
 	go func() {
 		for {
-			if msg, err := hs.context.Receive(hs.Name()); err == nil {
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("stop waiting for message")
+				return
+			default:
+
+			}
+			if msg, err := beehiveContext.Receive(hs.Name()); err == nil {
 				klog.V(4).Infof("Receive a message %v", msg)
 				hs.ProcessMessage(msg)
 			} else {
@@ -145,6 +153,6 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 // SendToCloud sends message to cloudhub by edgehub
 func (hs *HandlerStub) SendToCloud(msg *model.Message) {
 	klog.V(4).Infof("Begin to send message %v", *msg)
-	hs.context.SendToGroup(constants.HubGroup, *msg)
+	beehiveContext.SendToGroup(constants.HubGroup, *msg)
 	klog.V(4).Infof("End to send message %v", *msg)
 }

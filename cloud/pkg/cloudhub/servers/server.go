@@ -15,7 +15,7 @@ import (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(protocolType string, config hubconfig.Configure, messageq *channelq.ChannelMessageQueue) {
+func StartCloudHub(protocolType string, config *hubconfig.Configure, messageq *channelq.ChannelMessageQueue) {
 	// init certificate
 	pool := x509.NewCertPool()
 	ok := pool.AppendCertsFromPEM(config.Ca)

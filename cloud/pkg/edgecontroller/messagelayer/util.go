@@ -15,7 +15,7 @@ import (
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource string, err error) {
 	if namespace == "" || resourceType == "" {
-		if !config.EdgeSiteEnabled && nodeID == "" {
+		if !config.Get().EdgeSiteEnabled && nodeID == "" {
 			err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 		} else {
 			err = fmt.Errorf("required parameter are not set (namespace or resource type)")
@@ -24,7 +24,7 @@ func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource
 	}
 
 	resource = fmt.Sprintf("%s%s%s%s%s%s%s", controller.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		resource = fmt.Sprintf("%s%s%s", namespace, constants.ResourceSep, resourceType)
 	}
 	if resourceID != "" {
@@ -46,7 +46,7 @@ func GetNodeID(msg model.Message) (string, error) {
 func GetNamespace(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	length := controller.ResourceNamespaceIndex
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		length = controller.EdgeSiteResourceNamespaceIndex
 	}
 	if len(sli) <= length {
@@ -54,7 +54,7 @@ func GetNamespace(msg model.Message) (string, error) {
 	}
 	var res string
 	var index uint8
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		res = sli[controller.EdgeSiteResourceNamespaceIndex]
 		index = controller.EdgeSiteResourceNamespaceIndex
 	} else {
@@ -69,7 +69,7 @@ func GetNamespace(msg model.Message) (string, error) {
 func GetResourceType(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	length := controller.ResourceResourceTypeIndex
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		length = controller.EdgeSiteResourceResourceTypeIndex
 	}
 	if len(sli) <= length {
@@ -78,7 +78,7 @@ func GetResourceType(msg model.Message) (string, error) {
 
 	var res string
 	var index uint8
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		res = sli[controller.EdgeSiteResourceResourceTypeIndex]
 		index = controller.EdgeSiteResourceResourceTypeIndex
 	} else {
@@ -94,7 +94,7 @@ func GetResourceType(msg model.Message) (string, error) {
 func GetResourceName(msg model.Message) (string, error) {
 	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
 	length := controller.ResourceResourceNameIndex
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		length = controller.EdgeSiteResourceResourceNameIndex
 	}
 	if len(sli) <= length {
@@ -103,7 +103,7 @@ func GetResourceName(msg model.Message) (string, error) {
 
 	var res string
 	var index uint8
-	if config.EdgeSiteEnabled {
+	if config.Get().EdgeSiteEnabled {
 		res = sli[controller.EdgeSiteResourceResourceNameIndex]
 		index = controller.EdgeSiteResourceResourceNameIndex
 	} else {

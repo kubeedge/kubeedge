@@ -34,17 +34,7 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init cloudhub config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init cloudhub config successfully，config info %++v", c)
-			}
-		}()
+
 		protocolWebsocket, err := config.CONFIG.GetValue("cloudhub.protocol_websocket").ToBool()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get cloudhub.protocol_websocket configuration key error %v", err))
@@ -113,6 +103,15 @@ func InitConfigure() {
 		if err != nil {
 			errs = append(errs, fmt.Errorf("read key file %v error %v", keyfile, err))
 		}
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init cloudhub config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init cloudhub config successfully，config info %++v", c)
+		}
 		c = Configure{
 			ProtocolWebsocket:  protocolWebsocket,
 			ProtocolQuic:       protocolQuic,
@@ -134,6 +133,6 @@ func InitConfigure() {
 		}
 	})
 }
-func Get() Configure {
-	return c
+func Get() *Configure {
+	return &c
 }

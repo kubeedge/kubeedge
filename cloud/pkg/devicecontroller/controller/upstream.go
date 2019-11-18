@@ -63,11 +63,9 @@ func (uc *UpstreamController) Start() error {
 	uc.deviceStatusChan = make(chan model.Message, config.Get().UpdateDeviceStatusBuffer)
 	go uc.dispatchMessage()
 
-	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
-		for i := 0; i < config.Get().UpdateDeviceStatusWorkers; i++ {
+	for i := 0; i < config.Get().UpdateDeviceStatusWorkers; i++ {
 		go uc.updateDeviceStatus()
 	}
-
 	return nil
 }
 

@@ -23,7 +23,7 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 // NewConfigMapManager create ConfigMapManager by kube clientset and namespace
 func NewConfigMapManager(kubeClient *kubernetes.Clientset, namespace string) (*ConfigMapManager, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "configmaps", namespace, fields.Everything())
-	events := make(chan watch.Event, config.ConfigMapEventBuffer)
+	events := make(chan watch.Event, config.Get().ConfigMapEventBuffer)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1.ConfigMap{}, 0)
 	si.AddEventHandler(rh)
