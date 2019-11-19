@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -42,10 +42,10 @@ type DownstreamController struct {
 	lc *manager.LocationCache
 }
 
-func (dc *DownstreamController) syncPod(ctx context.Context) {
+func (dc *DownstreamController) syncPod() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncPod loop")
 			return
 		case e := <-dc.podManager.Events():
@@ -85,10 +85,10 @@ func (dc *DownstreamController) syncPod(ctx context.Context) {
 	}
 }
 
-func (dc *DownstreamController) syncConfigMap(ctx context.Context) {
+func (dc *DownstreamController) syncConfigMap() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncConfigMap loop")
 			return
 		case e := <-dc.configmapManager.Events():
@@ -134,10 +134,10 @@ func (dc *DownstreamController) syncConfigMap(ctx context.Context) {
 	}
 }
 
-func (dc *DownstreamController) syncSecret(ctx context.Context) {
+func (dc *DownstreamController) syncSecret() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncSecret loop")
 			return
 		case e := <-dc.secretManager.Events():
@@ -184,10 +184,10 @@ func (dc *DownstreamController) syncSecret(ctx context.Context) {
 	}
 }
 
-func (dc *DownstreamController) syncEdgeNodes(ctx context.Context) {
+func (dc *DownstreamController) syncEdgeNodes() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncEdgeNodes loop")
 			return
 		case e := <-dc.nodeManager.Events():
@@ -271,11 +271,11 @@ func (dc *DownstreamController) syncEdgeNodes(ctx context.Context) {
 	}
 }
 
-func (dc *DownstreamController) syncService(ctx context.Context) {
+func (dc *DownstreamController) syncService() {
 	var operation string
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncService loop")
 			return
 		case e := <-dc.serviceManager.Events():
@@ -326,11 +326,11 @@ func (dc *DownstreamController) syncService(ctx context.Context) {
 	}
 }
 
-func (dc *DownstreamController) syncEndpoints(ctx context.Context) {
+func (dc *DownstreamController) syncEndpoints() {
 	var operation string
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Stop edgecontroller downstream syncEndpoints loop")
 			return
 		case e := <-dc.endpointsManager.Events():
@@ -421,25 +421,25 @@ func (dc *DownstreamController) syncEndpoints(ctx context.Context) {
 }
 
 // Start DownstreamController
-func (dc *DownstreamController) Start(ctx context.Context) error {
+func (dc *DownstreamController) Start() error {
 	klog.Info("start downstream controller")
 	// pod
-	go dc.syncPod(ctx)
+	go dc.syncPod()
 
 	// configmap
-	go dc.syncConfigMap(ctx)
+	go dc.syncConfigMap()
 
 	// secret
-	go dc.syncSecret(ctx)
+	go dc.syncSecret()
 
 	// nodes
-	go dc.syncEdgeNodes(ctx)
+	go dc.syncEdgeNodes()
 
 	// service
-	go dc.syncService(ctx)
+	go dc.syncService()
 
 	// endpoints
-	go dc.syncEndpoints(ctx)
+	go dc.syncEndpoints()
 
 	return nil
 }
@@ -546,7 +546,17 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	dc := &DownstreamController{kubeClient: cli, podManager: podManager, configmapManager: configMapManager, secretManager: secretManager, nodeManager: nodesManager, serviceManager: serviceManager, endpointsManager: endpointsManager, messageLayer: ml, lc: lc}
+	dc := &DownstreamController{
+		kubeClient:       cli,
+		podManager:       podManager,
+		configmapManager: configMapManager,
+		secretManager:    secretManager,
+		nodeManager:      nodesManager,
+		serviceManager:   serviceManager,
+		endpointsManager: endpointsManager,
+		messageLayer:     ml,
+		lc:               lc,
+	}
 	if err := dc.initLocating(); err != nil {
 		return nil, err
 	}

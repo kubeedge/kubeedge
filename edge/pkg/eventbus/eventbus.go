@@ -1,7 +1,6 @@
 package eventbus
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -32,8 +31,13 @@ const (
 
 // eventbus struct
 type eventbus struct {
-	cancel   context.CancelFunc
 	mqttMode int
+}
+
+func newEventbus() *eventbus {
+	return &eventbus{
+		mqttMode: externalMqttMode,
+	}
 }
 
 // Register register eventbus
@@ -42,8 +46,9 @@ func Register() {
 	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
 		mode = internalMqttMode
 	}
-	edgeEventHubModule := eventbus{mqttMode: mode}
-	core.Register(&edgeEventHubModule)
+	edgeEventHubModule := newEventbus()
+	edgeEventHubModule.mqttMode = mode
+	core.Register(edgeEventHubModule)
 }
 
 func (*eventbus) Name() string {
@@ -55,9 +60,6 @@ func (*eventbus) Group() string {
 }
 
 func (eb *eventbus) Start() {
-	// no need to call TopicInit now, we have fixed topic
-	var ctx context.Context
-	ctx, eb.cancel = context.WithCancel(context.Background())
 
 	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
 	if nodeID == nil {
@@ -117,12 +119,7 @@ func (eb *eventbus) Start() {
 		}
 	}
 
-	eb.pubCloudMsgToEdge(ctx)
-}
-
-func (eb *eventbus) Cleanup() {
-	eb.cancel()
-	beehiveContext.Cleanup(eb.Name())
+	eb.pubCloudMsgToEdge()
 }
 
 func pubMQTT(topic string, payload []byte) {
@@ -134,10 +131,10 @@ func pubMQTT(topic string, payload []byte) {
 	}
 }
 
-func (eb *eventbus) pubCloudMsgToEdge(ctx context.Context) {
+func (eb *eventbus) pubCloudMsgToEdge() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("EventBus PubCloudMsg To Edge stop")
 			return
 		default:

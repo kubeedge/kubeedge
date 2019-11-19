@@ -1,7 +1,6 @@
 package channelq
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -57,17 +56,16 @@ type ChannelMessageQueue struct {
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
 func NewChannelMessageQueue() *ChannelMessageQueue {
-	q := ChannelMessageQueue{}
-	return &q
+	return &ChannelMessageQueue{}
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
 // node id from it, gets the channel associated with the node
 // and pushes the event on the channel
-func (q *ChannelMessageQueue) DispatchMessage(ctx context.Context) {
+func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Cloudhub channel eventqueue dispatch message loop stoped")
 			return
 		default:

@@ -217,7 +217,6 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (tm *testManager) Start() {
-	defer tm.Cleanup()
 
 	http.HandleFunc("/pods", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
@@ -227,8 +226,4 @@ func (tm *testManager) Start() {
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
-}
-
-func (tm *testManager) Cleanup() {
-	beehiveContext.Cleanup(tm.Name())
 }

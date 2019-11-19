@@ -1,7 +1,6 @@
 package metamanager
 
 import (
-	"context"
 	"time"
 
 	"k8s.io/klog"
@@ -20,14 +19,17 @@ const (
 	MetaManagerModuleName = "metaManager"
 )
 
+type metaManager struct {
+}
+
+func newMetaManager() *metaManager {
+	return &metaManager{}
+}
+
 // Register register metamanager
 func Register() {
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
-	core.Register(&metaManager{})
-}
-
-type metaManager struct {
-	cancel context.CancelFunc
+	core.Register(newMetaManager())
 }
 
 func (*metaManager) Name() string {
@@ -39,8 +41,6 @@ func (*metaManager) Group() string {
 }
 
 func (m *metaManager) Start() {
-	var ctx context.Context
-	ctx, m.cancel = context.WithCancel(context.Background())
 	InitMetaManagerConfig()
 
 	go func() {
@@ -48,7 +48,7 @@ func (m *metaManager) Start() {
 		timer := time.NewTimer(period)
 		for {
 			select {
-			case <-ctx.Done():
+			case <-beehiveContext.Done():
 				klog.Warning("MetaManager stop")
 				return
 			case <-timer.C:
@@ -59,12 +59,7 @@ func (m *metaManager) Start() {
 		}
 	}()
 
-	m.runMetaManager(ctx)
-}
-
-func (m *metaManager) Cleanup() {
-	m.cancel()
-	beehiveContext.Cleanup(m.Name())
+	m.runMetaManager()
 }
 
 func getSyncInterval() time.Duration {

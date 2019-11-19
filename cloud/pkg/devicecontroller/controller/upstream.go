@@ -17,13 +17,13 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"strconv"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
@@ -57,24 +57,24 @@ type UpstreamController struct {
 }
 
 // Start UpstreamController
-func (uc *UpstreamController) Start(ctx context.Context) error {
+func (uc *UpstreamController) Start() error {
 	klog.Info("Start upstream devicecontroller")
 
 	uc.deviceStatusChan = make(chan model.Message, config.UpdateDeviceStatusBuffer)
 
-	go uc.dispatchMessage(ctx)
+	go uc.dispatchMessage()
 
 	for i := 0; i < config.UpdateDeviceStatusWorkers; i++ {
-		go uc.updateDeviceStatus(ctx)
+		go uc.updateDeviceStatus()
 	}
 
 	return nil
 }
 
-func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
+func (uc *UpstreamController) dispatchMessage() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("Stop dispatchMessage")
 			return
 		default:
@@ -103,10 +103,10 @@ func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) updateDeviceStatus(ctx context.Context) {
+func (uc *UpstreamController) updateDeviceStatus() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("Stop updateDeviceStatus")
 			return
 		case msg := <-uc.deviceStatusChan:
@@ -196,6 +196,10 @@ func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error
 	if err != nil {
 		klog.Warningf("Create message layer failed with error: %s", err)
 	}
-	uc := &UpstreamController{crdClient: crdcli, messageLayer: ml, dc: dc}
+	uc := &UpstreamController{
+		crdClient:    crdcli,
+		messageLayer: ml,
+		dc:           dc,
+	}
 	return uc, nil
 }

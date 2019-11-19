@@ -1,6 +1,7 @@
 package context
 
 import (
+	gocontext "context"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -27,7 +28,9 @@ type MessageContext interface {
 }
 
 // Context is global context object
-type Context struct {
+type beehiveContext struct {
 	moduleContext  ModuleContext
 	messageContext MessageContext
+	ctx            gocontext.Context
+	cancel         gocontext.CancelFunc
 }
