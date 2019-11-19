@@ -22,7 +22,6 @@ const (
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
 	chClient      clients.Adapter
-	config        *config.ControllerConfig
 	reconnectChan chan struct{}
 	syncKeeper    map[string]chan model.Message
 	keeperLock    sync.RWMutex
@@ -30,7 +29,6 @@ type EdgeHub struct {
 
 func newEdgeHub() *EdgeHub {
 	return &EdgeHub{
-		config:        &config.GetConfig().CtrConfig,
 		reconnectChan: make(chan struct{}),
 		syncKeeper:    make(map[string]chan model.Message),
 	}
@@ -38,6 +36,7 @@ func newEdgeHub() *EdgeHub {
 
 // Register register edgehub
 func Register() {
+	config.InitConfigure()
 	core.Register(newEdgeHub())
 }
 
@@ -53,7 +52,6 @@ func (eh *EdgeHub) Group() string {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
-	config.InitEdgehubConfig()
 
 	for {
 		select {
@@ -89,7 +87,7 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(eh.config.HeartbeatPeriod * 2)
+		time.Sleep(config.Get().CtrConfig.HeartbeatPeriod * 2)
 
 		// clean channel
 	clean:

@@ -5,50 +5,30 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/256dpi/gomqtt/packet"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
 )
 
 var mqttServer *mqttBus.Server
 
-const (
-	internalMqttMode = iota // 0: launch an internal mqtt broker.
-	bothMqttMode            // 1: launch an internal and external mqtt broker.
-	externalMqttMode        // 2: launch an external mqtt broker.
-
-	defaultInternalMqttURL  = "tcp://127.0.0.1:1884"
-	defaultQos              = 0
-	defaultRetain           = false
-	defaultSessionQueueSize = 100
-)
-
 // eventbus struct
 type eventbus struct {
-	mqttMode int
 }
 
 func newEventbus() *eventbus {
-	return &eventbus{
-		mqttMode: externalMqttMode,
-	}
+	return &eventbus{}
 }
 
 // Register register eventbus
 func Register() {
-	mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
-	if err != nil || mode > externalMqttMode || mode < internalMqttMode {
-		mode = internalMqttMode
-	}
-	edgeEventHubModule := newEventbus()
-	edgeEventHubModule.mqttMode = mode
-	core.Register(edgeEventHubModule)
+	eventconfig.InitConfigure()
+	core.Register(newEventbus())
 }
 
 func (*eventbus) Name() string {
@@ -61,56 +41,23 @@ func (*eventbus) Group() string {
 
 func (eb *eventbus) Start() {
 
-	nodeID := config.CONFIG.GetConfigurationByKey("edgehub.controller.node-id")
-	if nodeID == nil {
-		klog.Errorf("node id not configured")
-		os.Exit(1)
-	}
-
-	mqttBus.NodeID = nodeID.(string)
-
-	if eb.mqttMode >= bothMqttMode {
-		// launch an external mqtt server
-		externalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.server")
-		if externalMqttURL == nil {
-			panic(" mqtt server url not configured")
-		}
+	if eventconfig.Get().Mode >= eventconfig.BothMqttMode {
 
 		hub := &mqttBus.Client{
-			MQTTUrl: externalMqttURL.(string),
+			MQTTUrl: eventconfig.Get().ExternalMqttURL,
 		}
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()
 		hub.InitPubClient()
 	}
 
-	if eb.mqttMode <= bothMqttMode {
-		internalMqttURL := config.CONFIG.GetConfigurationByKey("mqtt.internal-server")
-		if internalMqttURL == nil {
-			internalMqttURL = defaultInternalMqttURL
-		}
-
-		qos := config.CONFIG.GetConfigurationByKey("mqtt.qos")
-		if qos == nil {
-			qos = defaultQos
-		}
-
-		retain := config.CONFIG.GetConfigurationByKey("mqtt.retain")
-		if retain == nil {
-			retain = defaultRetain
-		}
-
-		sessionQueueSize := config.CONFIG.GetConfigurationByKey("mqtt.session-queue-size")
-		if sessionQueueSize == nil {
-			sessionQueueSize = defaultSessionQueueSize
-		}
-
-		if qos.(int) < int(packet.QOSAtMostOnce) || qos.(int) > int(packet.QOSExactlyOnce) || sessionQueueSize.(int) <= 0 {
-			klog.Errorf("mqtt.qos must be one of [0,1,2] or mqtt.session-queue-size must > 0")
-			os.Exit(1)
-		}
+	if eventconfig.Get().Mode <= eventconfig.BothMqttMode {
 		// launch an internal mqtt server only
-		mqttServer = mqttBus.NewMqttServer(sessionQueueSize.(int), internalMqttURL.(string), retain.(bool), qos.(int))
+		mqttServer = mqttBus.NewMqttServer(
+			eventconfig.Get().SessionQueueSize,
+			eventconfig.Get().InternalMqttURL,
+			eventconfig.Get().Retain,
+			eventconfig.Get().QOS)
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {
@@ -175,7 +122,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				klog.Info("Skip none auth_info get_result message")
 				return
 			}
-			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", mqttBus.NodeID)
+			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Get().NodeID)
 			payload, _ := json.Marshal(accessInfo.GetContent())
 			eb.publish(topic, payload)
 		default:
@@ -185,19 +132,19 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 }
 
 func (eb *eventbus) publish(topic string, payload []byte) {
-	if eb.mqttMode >= bothMqttMode {
+	if eventconfig.Get().Mode >= eventconfig.BothMqttMode {
 		// pub msg to external mqtt broker.
 		pubMQTT(topic, payload)
 	}
 
-	if eb.mqttMode <= bothMqttMode {
+	if eventconfig.Get().Mode <= eventconfig.BothMqttMode {
 		// pub msg to internal mqtt broker.
 		mqttServer.Publish(topic, payload)
 	}
 }
 
 func (eb *eventbus) subscribe(topic string) {
-	if eb.mqttMode >= bothMqttMode {
+	if eventconfig.Get().Mode >= eventconfig.BothMqttMode {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
@@ -205,7 +152,7 @@ func (eb *eventbus) subscribe(topic string) {
 		}
 	}
 
-	if eb.mqttMode <= bothMqttMode {
+	if eventconfig.Get().Mode <= eventconfig.BothMqttMode {
 		// set topic to internal mqtt broker.
 		mqttServer.SetTopic(topic)
 	}
