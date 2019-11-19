@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"k8s.io/klog"
@@ -15,10 +14,7 @@ const (
 	readDeadlineDefault     = 15
 	writeDeadlineDefault    = 15
 
-	authInfoFilesPathDefault = "/var/IEF/secret"
-
 	heartbeatDefault = 15
-	refreshInterval  = 10
 
 	protocolDefault   = protocolWebsocket
 	protocolWebsocket = "websocket"
@@ -164,19 +160,6 @@ func getControllerConfig() error {
 	edgeHubConfig.CtrConfig.NodeID = nodeID
 
 	return nil
-}
-
-func getExtendHeader() http.Header {
-	header := http.Header{}
-	if arch, err := config.CONFIG.GetValue("systeminfo.architecture").ToString(); err == nil {
-		header.Add("Arch", arch)
-	}
-	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker_root_dir").ToString(); err == nil {
-		header.Add("DockerRootDir", dockerRoot)
-	}
-	klog.Infof("websocket connection header is %v", header)
-
-	return header
 }
 
 func getQuicConfig() error {
