@@ -20,27 +20,28 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init devicetwin config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init devicetwin config successfully，config info %++v", c)
-			}
-		}()
+
 		nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v"), err)
+			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v", err))
 		}
+
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init devicetwin config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init devicetwin config successfully，config info %++v", c)
+		}
+
 		c = Configure{
 			NodeID: nodeID,
 		}
 	})
 }
 
-func Get() Configure {
-	return c
+func Get() *Configure {
+	return &c
 }

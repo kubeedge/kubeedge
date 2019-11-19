@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -56,19 +55,6 @@ type QuicConfig struct {
 	WriteDeadline    time.Duration
 }
 
-func getExtendHeader() http.Header {
-	header := http.Header{}
-	if arch, err := config.CONFIG.GetValue("systeminfo.architecture").ToString(); err == nil {
-		header.Add("Arch", arch)
-	}
-	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker_root_dir").ToString(); err == nil {
-		header.Add("DockerRootDir", dockerRoot)
-	}
-	klog.Infof("websocket connection header is %v", header)
-
-	return header
-}
-
 type Configure struct {
 	WSConfig  WebSocketConfig
 	CtrConfig ControllerConfig
@@ -78,17 +64,6 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init edgehub config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init edgehub config successfully，config info %++v", c)
-			}
-		}()
 		protocol, err := config.CONFIG.GetValue("edgehub.controller.protocol").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
@@ -182,6 +157,17 @@ func InitConfigure() {
 			quicHandshakeTimeout = handshakeTimeoutDefault
 			klog.Infof("can to get edgehub.quic.handshake-timeout key, use default %v", quicHandshakeTimeout)
 		}
+
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init edgehub config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init edgehub config successfully，config info %++v", c)
+		}
+
 		c = Configure{
 			WSConfig: WebSocketConfig{
 				URL:              websocketURL,
@@ -210,6 +196,6 @@ func InitConfigure() {
 	})
 }
 
-func Get() Configure {
-	return c
+func Get() *Configure {
+	return &c
 }

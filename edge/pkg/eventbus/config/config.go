@@ -40,17 +40,6 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init eventbus config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init eventbus config successfully，config info %++v", c)
-			}
-		}()
 		internalMqttURL, err := config.CONFIG.GetValue("mqtt.internal-server").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
@@ -93,7 +82,15 @@ func InitConfigure() {
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v", err))
 		}
-
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init eventbus config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init eventbus config successfully，config info %++v", c)
+		}
 		c = Configure{
 			ExternalMqttURL:  externalMqttURL,
 			InternalMqttURL:  internalMqttURL,
@@ -106,6 +103,6 @@ func InitConfigure() {
 	})
 
 }
-func Get() Configure {
-	return c
+func Get() *Configure {
+	return &c
 }

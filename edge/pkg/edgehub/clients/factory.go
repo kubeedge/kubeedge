@@ -20,7 +20,7 @@ const (
 var ErrorWrongClientType = errors.New("wrong Client Type")
 
 //GetClient returns an Adapter object with new web socket
-func GetClient(clientType string, config config.Configure) (Adapter, error) {
+func GetClient(clientType string, config *config.Configure) (Adapter, error) {
 
 	switch clientType {
 	case ClientTypeWebSocket:
