@@ -5,9 +5,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/kubeedge/kubeedge/staging/src/github.com/kubeedge/beehive/pkg/common/config"
-
 	"k8s.io/klog"
+
+	"github.com/kubeedge/beehive/pkg/common/config"
 )
 
 var c Configure
