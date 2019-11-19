@@ -6,7 +6,7 @@ RUN CGO_ENABLED=0 go build -v -o /usr/local/bin/cloudcore -ldflags="-w -s" \
 github.com/kubeedge/kubeedge/cloud/cmd/cloudcore
 
 
-FROM gcr.io/distroless/static
+FROM alpine:3.9
 
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/cloud
 
