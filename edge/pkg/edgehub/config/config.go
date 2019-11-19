@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -23,6 +24,9 @@ const (
 	protocolQuic      = "quic"
 )
 
+var c Configure
+var once sync.Once
+
 //WebSocketConfig defines web socket configuration object type
 type WebSocketConfig struct {
 	URL              string
@@ -37,16 +41,8 @@ type WebSocketConfig struct {
 type ControllerConfig struct {
 	Protocol        string
 	HeartbeatPeriod time.Duration
-	CloudhubURL     string
 	ProjectID       string
 	NodeID          string
-}
-
-//EdgeHubConfig edge hub configuration object containing web socket and controller configuration
-type EdgeHubConfig struct {
-	WSConfig  WebSocketConfig
-	CtrConfig ControllerConfig
-	QcConfig  QuicConfig
 }
 
 //QuicConfig defines quic configuration object type
@@ -60,164 +56,23 @@ type QuicConfig struct {
 	WriteDeadline    time.Duration
 }
 
-var edgeHubConfig EdgeHubConfig
+func getExtendHeader() http.Header {
+	header := http.Header{}
+	if arch, err := config.CONFIG.GetValue("systeminfo.architecture").ToString(); err == nil {
+		header.Add("Arch", arch)
+	}
+	if dockerRoot, err := config.CONFIG.GetValue("systeminfo.docker_root_dir").ToString(); err == nil {
+		header.Add("DockerRootDir", dockerRoot)
+	}
+	klog.Infof("websocket connection header is %v", header)
 
-// InitEdgehubConfig init edgehub config
-func InitEdgehubConfig() {
-	err := getControllerConfig()
-	if err != nil {
-		klog.Errorf("Error in loading Controller configurations in edge hub:  %v", err)
-		panic(err)
-	}
-	if edgeHubConfig.CtrConfig.Protocol == protocolWebsocket {
-		err = getWebSocketConfig()
-		if err != nil {
-			klog.Errorf("Error in loading Web Socket configurations in edgehub:  %v", err)
-			panic(err)
-		}
-	} else if edgeHubConfig.CtrConfig.Protocol == protocolQuic {
-		err = getQuicConfig()
-		if err != nil {
-			klog.Errorf("Error in loading Quic configurations in edge hub:  %v", err)
-			panic(err)
-		}
-	} else {
-		panic(fmt.Errorf("error in loading Controller configurations, protocol %s is invalid", edgeHubConfig.CtrConfig.Protocol))
-	}
+	return header
 }
-
-//GetConfig returns the EdgeHub configuration object
-func GetConfig() *EdgeHubConfig {
-	return &edgeHubConfig
-}
-
-func getWebSocketConfig() error {
-	url, err := config.CONFIG.GetValue("edgehub.websocket.url").ToString()
-	if err != nil {
-		klog.Errorf("Failed to get url for web socket client: %v", err)
-	}
-	edgeHubConfig.WSConfig.URL = url
-
-	certFile, err := config.CONFIG.GetValue("edgehub.websocket.certfile").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get cert file for web socket client, error: %v", err)
-	}
-	edgeHubConfig.WSConfig.CertFilePath = certFile
-
-	keyFile, err := config.CONFIG.GetValue("edgehub.websocket.keyfile").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get key file for web socket client, error: %v", err)
-	}
-	edgeHubConfig.WSConfig.KeyFilePath = keyFile
-
-	writeDeadline, err := config.CONFIG.GetValue("edgehub.websocket.write-deadline").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get write-deadline for web socket client: %v", err)
-		writeDeadline = writeDeadlineDefault
-	}
-	edgeHubConfig.WSConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
-
-	readDeadline, err := config.CONFIG.GetValue("edgehub.websocket.read-deadline").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get read-deadline for web socket client: %v", err)
-		readDeadline = readDeadlineDefault
-	}
-	edgeHubConfig.WSConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
-
-	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.websocket.handshake-timeout").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get handshake-timeout for web socket client: %v", err)
-		handshakeTimeout = handshakeTimeoutDefault
-	}
-	edgeHubConfig.WSConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
-
-	return nil
-}
-
-func getControllerConfig() error {
-	protocol, err := config.CONFIG.GetValue("edgehub.controller.protocol").ToString()
-	if err != nil {
-		klog.Warningf("Failed to get protocol for controller client: %v", err)
-		protocol = protocolDefault
-	}
-	edgeHubConfig.CtrConfig.Protocol = protocol
-
-	heartbeat, err := config.CONFIG.GetValue("edgehub.controller.heartbeat").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get heartbeat for controller client: %v", err)
-		heartbeat = heartbeatDefault
-	}
-	edgeHubConfig.CtrConfig.HeartbeatPeriod = time.Duration(heartbeat) * time.Second
-
-	projectID, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get project id for controller client: %v", err)
-	}
-	edgeHubConfig.CtrConfig.ProjectID = projectID
-
-	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get node id for controller client: %v", err)
-	}
-	edgeHubConfig.CtrConfig.NodeID = nodeID
-
-	return nil
-}
-
-func getQuicConfig() error {
-	url, err := config.CONFIG.GetValue("edgehub.quic.url").ToString()
-	if err != nil {
-		return fmt.Errorf("Failed to get url for quic client: %v", err)
-	}
-	edgeHubConfig.QcConfig.URL = url
-
-	caFile, err := config.CONFIG.GetValue("edgehub.quic.cafile").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get cert file for quic client, error: %v", err)
-	}
-	edgeHubConfig.QcConfig.CaFilePath = caFile
-
-	certFile, err := config.CONFIG.GetValue("edgehub.quic.certfile").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get cert file for quic client, error: %v", err)
-	}
-	edgeHubConfig.QcConfig.CertFilePath = certFile
-
-	keyFile, err := config.CONFIG.GetValue("edgehub.quic.keyfile").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get key file for quic client, error: %v", err)
-	}
-	edgeHubConfig.QcConfig.KeyFilePath = keyFile
-
-	writeDeadline, err := config.CONFIG.GetValue("edgehub.quic.write-deadline").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get write-deadline for quic client: %v", err)
-		writeDeadline = writeDeadlineDefault
-	}
-	edgeHubConfig.QcConfig.WriteDeadline = time.Duration(writeDeadline) * time.Second
-
-	readDeadline, err := config.CONFIG.GetValue("edgehub.quic.read-deadline").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get read-deadline for quic client: %v", err)
-		readDeadline = readDeadlineDefault
-	}
-	edgeHubConfig.QcConfig.ReadDeadline = time.Duration(readDeadline) * time.Second
-
-	handshakeTimeout, err := config.CONFIG.GetValue("edgehub.quic.handshake-timeout").ToInt()
-	if err != nil {
-		klog.Warningf("Failed to get handshake-timeout for quic client: %v", err)
-		handshakeTimeout = handshakeTimeoutDefault
-	}
-	edgeHubConfig.QcConfig.HandshakeTimeout = time.Duration(handshakeTimeout) * time.Second
-	return nil
-}
-
-//////////////////////////
-
-var c Configure
-var once sync.Once
 
 type Configure struct {
+	WSConfig  WebSocketConfig
+	CtrConfig ControllerConfig
+	QcConfig  QuicConfig
 }
 
 func InitConfigure() {
@@ -234,6 +89,124 @@ func InitConfigure() {
 				klog.Infof("init edgehub config successfully，config info %++v", c)
 			}
 		}()
+		protocol, err := config.CONFIG.GetValue("edgehub.controller.protocol").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			protocol = protocolDefault
+			klog.Infof("can not get edgehub.controller.protocol key, use default %v", protocol)
+		}
+		heartbeat, err := config.CONFIG.GetValue("edgehub.controller.heartbeat").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			heartbeat = heartbeatDefault
+			klog.Infof("can not get edgehub.controller.heartbeat key, use default %v", heartbeat)
+		}
+		projectID, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.controller.project-id key error %v", err))
+		}
+		nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v", err))
+		}
+		websocketURL, err := config.CONFIG.GetValue("edgehub.websocket.url").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.websocket.url key error %v", err))
+		}
+		websocketCertFile, err := config.CONFIG.GetValue("edgehub.websocket.certfile").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.websocket.certfile key error %v", err))
+		}
+		websocketKeyFile, err := config.CONFIG.GetValue("edgehub.websocket.keyfile").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.websocket.keyfile key error %v", err))
+		}
+		websocketWriteDeadline, err := config.CONFIG.GetValue("edgehub.websocket.write-deadline").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			websocketWriteDeadline = writeDeadlineDefault
+			klog.Infof("can not get edgehub.websocket.write-deadline key, use default %v", websocketWriteDeadline)
+		}
+		websocketReadDeadline, err := config.CONFIG.GetValue("edgehub.websocket.read-deadline").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			websocketReadDeadline = readDeadlineDefault
+			klog.Infof("can not get edgehub.websocket.read-deadline key, use default %v", websocketReadDeadline)
+		}
+		websocketHandshakeTimeout, err := config.CONFIG.GetValue("edgehub.websocket.handshake-timeout").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			websocketHandshakeTimeout = handshakeTimeoutDefault
+			klog.Infof("can not get edgehub.websocket.handshake-timeout key, use default %v", websocketHandshakeTimeout)
+		}
+		quicURL, err := config.CONFIG.GetValue("edgehub.quic.url").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.quic.url key error %v", err))
+		}
+		quickCAFile, err := config.CONFIG.GetValue("edgehub.quic.cafile").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.quic.cafile key error %v", err))
+		}
+		quicCertFile, err := config.CONFIG.GetValue("edgehub.quic.certfile").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.quic.certfile key error %v", err))
+		}
+		quickKeyFile, err := config.CONFIG.GetValue("edgehub.quic.keyfile").ToString()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			errs = append(errs, fmt.Errorf("get edgehub.quic.keyfile key error %v", err))
+		}
+		quickWriteDeadline, err := config.CONFIG.GetValue("edgehub.quic.write-deadline").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			quickWriteDeadline = writeDeadlineDefault
+			klog.Infof("can not get edgehub.quic.write-deadline key, use default %v", quickWriteDeadline)
+		}
+		quicReadDeadline, err := config.CONFIG.GetValue("edgehub.quic.read-deadline").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			quicReadDeadline = readDeadlineDefault
+			klog.Infof("can not  get edgehub.quic.read-deadline key, use default %v", quicReadDeadline)
+		}
+		quicHandshakeTimeout, err := config.CONFIG.GetValue("edgehub.quic.handshake-timeout").ToInt()
+		if err != nil {
+			// Guaranteed forward compatibility @kadisi
+			quicHandshakeTimeout = handshakeTimeoutDefault
+			klog.Infof("can to get edgehub.quic.handshake-timeout key, use default %v", quicHandshakeTimeout)
+		}
+		c = Configure{
+			WSConfig: WebSocketConfig{
+				URL:              websocketURL,
+				CertFilePath:     websocketCertFile,
+				KeyFilePath:      websocketKeyFile,
+				WriteDeadline:    time.Duration(websocketWriteDeadline) * time.Second,
+				ReadDeadline:     time.Duration(websocketReadDeadline) * time.Second,
+				HandshakeTimeout: time.Duration(websocketHandshakeTimeout) * time.Second,
+			},
+			CtrConfig: ControllerConfig{
+				Protocol:        protocol,
+				HeartbeatPeriod: time.Duration(heartbeat) * time.Second,
+				ProjectID:       projectID,
+				NodeID:          nodeID,
+			},
+			QcConfig: QuicConfig{
+				URL:              quicURL,
+				CaFilePath:       quickCAFile,
+				CertFilePath:     quicCertFile,
+				KeyFilePath:      quickKeyFile,
+				WriteDeadline:    time.Duration(quickWriteDeadline) * time.Second,
+				ReadDeadline:     time.Duration(quicReadDeadline) * time.Second,
+				HandshakeTimeout: time.Duration(quicHandshakeTimeout) * time.Second,
+			},
+		}
 	})
 }
 

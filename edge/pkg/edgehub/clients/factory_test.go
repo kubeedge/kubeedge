@@ -29,7 +29,7 @@ import (
 func TestGetClient(t *testing.T) {
 	type args struct {
 		clientType string
-		config     *config.EdgeHubConfig
+		config     config.Configure
 	}
 	tests := []struct {
 		name string
@@ -41,7 +41,7 @@ func TestGetClient(t *testing.T) {
 			name: "TestGetClient: Positive Test Case",
 			args: args{
 				clientType: ClientTypeWebSocket,
-				config: &config.EdgeHubConfig{
+				config: config.Configure{
 					WSConfig: config.WebSocketConfig{
 						URL:              "ws://127.0.0.1:20000/fake_group_id/events",
 						CertFilePath:     "/tmp/edge.crt",

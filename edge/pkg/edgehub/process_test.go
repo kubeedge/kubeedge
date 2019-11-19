@@ -286,56 +286,49 @@ func TestSendToCloud(t *testing.T) {
 	msg := model.NewMessage("").BuildHeader("test_id", "", 1)
 	msg.Header.Sync = true
 	tests := []struct {
-		name          string
-		hub           *EdgeHub
-		message       model.Message
-		expectedError error
-		waitError     bool
-		mockError     error
+		name           string
+		hub            *EdgeHub
+		heartbeatPerid time.Duration
+		message        model.Message
+		expectedError  error
+		waitError      bool
+		mockError      error
 	}{
 		{
 			name: "send to cloud with proper input",
 			hub: &EdgeHub{
-				chClient: mockAdapter,
-				config: &config.ControllerConfig{
-					Protocol:        "websocket",
-					HeartbeatPeriod: 6 * time.Second,
-				},
+				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       *msg,
-			expectedError: nil,
-			waitError:     false,
-			mockError:     nil,
+			heartbeatPerid: 6 * time.Second,
+			message:        *msg,
+			expectedError:  nil,
+			waitError:      false,
+			mockError:      nil,
 		},
 		{
 			name: "Wait Error in send to cloud",
 			hub: &EdgeHub{
-				chClient: mockAdapter,
-				config: &config.ControllerConfig{
-					Protocol:        "websocket",
-					HeartbeatPeriod: 3 * time.Second,
-				},
+				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       *msg,
-			expectedError: nil,
-			waitError:     true,
-			mockError:     nil,
+			heartbeatPerid: 3 * time.Second,
+			message:        *msg,
+			expectedError:  nil,
+			waitError:      true,
+			mockError:      nil,
 		},
 		{
 			name: "Send Failure in send to cloud",
 			hub: &EdgeHub{
-				chClient: mockAdapter,
-				config: &config.ControllerConfig{
-					HeartbeatPeriod: 3 * time.Second,
-				},
+				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       model.Message{},
-			expectedError: fmt.Errorf("failed to send message, error: Connection Refused"),
-			waitError:     false,
-			mockError:     errors.New("Connection Refused"),
+			heartbeatPerid: 3 * time.Second,
+			message:        model.Message{},
+			expectedError:  fmt.Errorf("failed to send message, error: Connection Refused"),
+			waitError:      false,
+			mockError:      errors.New("Connection Refused"),
 		},
 	}
 	for _, tt := range tests {
@@ -356,7 +349,7 @@ func TestSendToCloud(t *testing.T) {
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("SendToCloud() error = %v, wantErr %v", err, tt.expectedError)
 			}
-			time.Sleep(tt.hub.config.HeartbeatPeriod + 2*time.Second)
+			time.Sleep(tt.heartbeatPerid + 2*time.Second)
 			if _, exist := tt.hub.syncKeeper["test_id"]; exist {
 				t.Errorf("SendToCloud() error in waiting for timeout")
 			}
@@ -414,17 +407,12 @@ func TestKeepalive(t *testing.T) {
 		{
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
-				config: &config.ControllerConfig{
-					Protocol:  "websocket",
-					ProjectID: "foo",
-					NodeID:    "bar",
-				},
 				chClient:      mockAdapter,
 				reconnectChan: make(chan struct{}),
 			},
 		},
 	}
-	edgeHubConfig := config.GetConfig()
+	edgeHubConfig := config.Get()
 	edgeHubConfig.WSConfig = config.WebSocketConfig{
 		CertFilePath: CertFile,
 		KeyFilePath:  KeyFile,
