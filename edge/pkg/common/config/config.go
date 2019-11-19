@@ -22,28 +22,9 @@ const (
 var c Configure
 var once sync.Once
 
-type Configure struct {
-	Modules    []string
-	DriverName string
-	DBName     string
-	DataSource string
-}
-
-func InitConfigure() {
+func init() {
 	once.Do(func() {
 		var errs []error
-		defer func() {
-			if len(errs) != 0 {
-				for _, e := range errs {
-					klog.Errorf("%v", e)
-				}
-				klog.Error("init common config error")
-				os.Exit(1)
-			} else {
-				klog.Infof("init common config successfully，config info %++v", c)
-			}
-		}()
-
 		driverName, err := config.CONFIG.GetValue("database.driver").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
@@ -72,6 +53,17 @@ func InitConfigure() {
 		for _, value := range modulesList.([]interface{}) {
 			modules = append(modules, value.(string))
 		}
+
+		if len(errs) != 0 {
+			for _, e := range errs {
+				klog.Errorf("%v", e)
+			}
+			klog.Error("init common config error")
+			os.Exit(1)
+		} else {
+			klog.Infof("init common config successfully，config info %++v", c)
+		}
+
 		c = Configure{
 			DriverName: driverName,
 			DBName:     dbName,
@@ -81,6 +73,13 @@ func InitConfigure() {
 	})
 }
 
-func Get() Configure {
-	return c
+type Configure struct {
+	Modules    []string
+	DriverName string
+	DBName     string
+	DataSource string
+}
+
+func Get() *Configure {
+	return &c
 }
