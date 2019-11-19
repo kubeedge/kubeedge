@@ -45,10 +45,10 @@ func InitConfigure() {
 				for _, e := range errs {
 					klog.Errorf("%v", e)
 				}
-				klog.Error("init edgehub config error")
+				klog.Error("init eventbus config error")
 				os.Exit(1)
 			} else {
-				klog.Infof("init edgehub config successfully，config info %++v", c)
+				klog.Infof("init eventbus config successfully，config info %++v", c)
 			}
 		}()
 		internalMqttURL, err := config.CONFIG.GetValue("mqtt.internal-server").ToString()

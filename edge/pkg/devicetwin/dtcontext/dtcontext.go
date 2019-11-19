@@ -9,9 +9,9 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
@@ -39,15 +39,9 @@ type DTContext struct {
 
 //InitDTContext init dtcontext
 func InitDTContext() (*DTContext, error) {
-	groupID := ""
-	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-	if err != nil {
-		klog.Warningf("failed to get node id  for web socket client")
-	}
-
 	return &DTContext{
-		GroupID:       groupID,
-		NodeID:        nodeID,
+		GroupID:       "",
+		NodeID:        deviceconfig.Get().NodeID,
 		CommChan:      make(map[string]chan interface{}),
 		ConfirmChan:   make(chan interface{}, 1000),
 		ConfirmMap:    &sync.Map{},
