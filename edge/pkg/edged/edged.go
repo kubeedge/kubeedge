@@ -25,7 +25,6 @@ package edged
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -185,7 +184,6 @@ type podReady struct {
 type edged struct {
 	//dns config
 	dnsConfigurer             *kubedns.Configurer
-	cancel                    context.CancelFunc
 	hostname                  string
 	namespace                 string
 	nodeName                  string
@@ -286,9 +284,6 @@ func (e *edged) Group() string {
 
 func (e *edged) Start() {
 	e.metaClient = client.New()
-	var ctx context.Context
-
-	ctx, e.cancel = context.WithCancel(context.Background())
 	// use self defined client to replace fake kube client
 	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
 
@@ -345,12 +340,7 @@ func (e *edged) Start() {
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 
 	klog.Infof("starting syncPod")
-	e.syncPod(ctx)
-}
-
-func (e *edged) Cleanup() {
-	e.cancel()
-	beehiveContext.Cleanup(e.Name())
+	e.syncPod()
 }
 
 // isInitPodReady is used to safely return initPodReady flag
@@ -911,7 +901,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 	return nil
 }
 
-func (e *edged) syncPod(ctx context.Context) {
+func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
 	//send msg to metamanager to get existing pods
@@ -920,7 +910,7 @@ func (e *edged) syncPod(ctx context.Context) {
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("Sync pod stop")
 			return
 		default:

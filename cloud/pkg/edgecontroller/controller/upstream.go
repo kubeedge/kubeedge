@@ -24,7 +24,6 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"sort"
 	"time"
@@ -35,6 +34,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -91,7 +91,7 @@ type UpstreamController struct {
 }
 
 // Start UpstreamController
-func (uc *UpstreamController) Start(ctx context.Context) error {
+func (uc *UpstreamController) Start() error {
 	klog.Info("start upstream controller")
 
 	uc.nodeStatusChan = make(chan model.Message, config.UpdateNodeStatusBuffer)
@@ -106,48 +106,48 @@ func (uc *UpstreamController) Start(ctx context.Context) error {
 	uc.queryNodeChan = make(chan model.Message, config.QueryNodeBuffer)
 	uc.updateNodeChan = make(chan model.Message, config.UpdateNodeBuffer)
 
-	go uc.dispatchMessage(ctx)
+	go uc.dispatchMessage()
 
 	for i := 0; i < config.UpdateNodeStatusWorkers; i++ {
-		go uc.updateNodeStatus(ctx)
+		go uc.updateNodeStatus()
 	}
 	for i := 0; i < config.UpdatePodStatusWorkers; i++ {
-		go uc.updatePodStatus(ctx)
+		go uc.updatePodStatus()
 	}
 	for i := 0; i < config.QueryConfigMapWorkers; i++ {
-		go uc.queryConfigMap(ctx)
+		go uc.queryConfigMap()
 	}
 	for i := 0; i < config.QuerySecretWorkers; i++ {
-		go uc.querySecret(ctx)
+		go uc.querySecret()
 	}
 	for i := 0; i < config.QueryServiceWorkers; i++ {
-		go uc.queryService(ctx)
+		go uc.queryService()
 	}
 	for i := 0; i < config.QueryEndpointsWorkers; i++ {
-		go uc.queryEndpoints(ctx)
+		go uc.queryEndpoints()
 	}
 	for i := 0; i < config.QueryPersistentVolumeWorkers; i++ {
-		go uc.queryPersistentVolume(ctx)
+		go uc.queryPersistentVolume()
 	}
 	for i := 0; i < config.QueryPersistentVolumeClaimWorkers; i++ {
-		go uc.queryPersistentVolumeClaim(ctx)
+		go uc.queryPersistentVolumeClaim()
 	}
 	for i := 0; i < config.QueryVolumeAttachmentWorkers; i++ {
-		go uc.queryVolumeAttachment(ctx)
+		go uc.queryVolumeAttachment()
 	}
 	for i := 0; i < config.QueryNodeWorkers; i++ {
-		go uc.queryNode(ctx)
+		go uc.queryNode()
 	}
 	for i := 0; i < config.UpdateNodeWorkers; i++ {
-		go uc.updateNode(ctx)
+		go uc.updateNode()
 	}
 	return nil
 }
 
-func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
+func (uc *UpstreamController) dispatchMessage() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Info("stop dispatchMessage")
 			return
 		default:
@@ -204,10 +204,10 @@ func (uc *UpstreamController) dispatchMessage(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) updatePodStatus(ctx context.Context) {
+func (uc *UpstreamController) updatePodStatus() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updatePodStatus")
 			return
 		case msg := <-uc.podStatusChan:
@@ -308,10 +308,10 @@ func (uc *UpstreamController) updatePodStatus(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) updateNodeStatus(ctx context.Context) {
+func (uc *UpstreamController) updateNodeStatus() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updateNodeStatus")
 			return
 		case msg := <-uc.nodeStatusChan:
@@ -436,10 +436,10 @@ func (uc *UpstreamController) updateNodeStatus(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryConfigMap(ctx context.Context) {
+func (uc *UpstreamController) queryConfigMap() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryConfigMap")
 			return
 		case msg := <-uc.configMapChan:
@@ -491,10 +491,10 @@ func (uc *UpstreamController) queryConfigMap(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) querySecret(ctx context.Context) {
+func (uc *UpstreamController) querySecret() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop querySecret")
 			return
 		case msg := <-uc.secretChan:
@@ -548,10 +548,10 @@ func (uc *UpstreamController) querySecret(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryService(ctx context.Context) {
+func (uc *UpstreamController) queryService() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryService")
 			return
 		case msg := <-uc.serviceChan:
@@ -602,10 +602,10 @@ func (uc *UpstreamController) queryService(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryEndpoints(ctx context.Context) {
+func (uc *UpstreamController) queryEndpoints() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryEndpoints")
 			return
 		case msg := <-uc.endpointsChan:
@@ -659,10 +659,10 @@ func (uc *UpstreamController) queryEndpoints(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryPersistentVolume(ctx context.Context) {
+func (uc *UpstreamController) queryPersistentVolume() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryPersistentVolume")
 			return
 		case msg := <-uc.persistentVolumeChan:
@@ -716,10 +716,10 @@ func (uc *UpstreamController) queryPersistentVolume(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryPersistentVolumeClaim(ctx context.Context) {
+func (uc *UpstreamController) queryPersistentVolumeClaim() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryPersistentVolumeClaim")
 			return
 		case msg := <-uc.persistentVolumeClaimChan:
@@ -773,10 +773,10 @@ func (uc *UpstreamController) queryPersistentVolumeClaim(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryVolumeAttachment(ctx context.Context) {
+func (uc *UpstreamController) queryVolumeAttachment() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryVolumeAttachment")
 			return
 		case msg := <-uc.volumeAttachmentChan:
@@ -830,10 +830,10 @@ func (uc *UpstreamController) queryVolumeAttachment(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) updateNode(ctx context.Context) {
+func (uc *UpstreamController) updateNode() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop updateNode")
 			return
 		case msg := <-uc.updateNodeChan:
@@ -922,10 +922,10 @@ func (uc *UpstreamController) updateNode(ctx context.Context) {
 	}
 }
 
-func (uc *UpstreamController) queryNode(ctx context.Context) {
+func (uc *UpstreamController) queryNode() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-beehiveContext.Done():
 			klog.Warning("stop queryNode")
 			return
 		case msg := <-uc.queryNodeChan:
@@ -1096,6 +1096,9 @@ func NewUpstreamController() (*UpstreamController, error) {
 	if err != nil {
 		klog.Warningf("create message layer failed with error: %s", err)
 	}
-	uc := &UpstreamController{kubeClient: cli, messageLayer: ml}
+	uc := &UpstreamController{
+		kubeClient:   cli,
+		messageLayer: ml,
+	}
 	return uc, nil
 }

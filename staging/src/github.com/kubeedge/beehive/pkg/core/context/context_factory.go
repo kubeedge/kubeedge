@@ -1,6 +1,7 @@
 package context
 
 import (
+	gocontext "context"
 	"sync"
 	"time"
 
@@ -16,14 +17,18 @@ const (
 
 var (
 	// singleton
-	context *Context
+	context *beehiveContext
 	once    sync.Once
 )
 
 // InitContext gets global context instance
 func InitContext(contextType string) {
 	once.Do(func() {
-		context = &Context{}
+		ctx, cancel := gocontext.WithCancel(gocontext.Background())
+		context = &beehiveContext{
+			ctx:    ctx,
+			cancel: cancel,
+		}
 		switch contextType {
 		case MsgCtxTypeChannel:
 			channelContext := NewChannelContext()
@@ -35,6 +40,10 @@ func InitContext(contextType string) {
 	})
 }
 
+func Done() <-chan struct{} {
+	return context.ctx.Done()
+}
+
 // AddModule adds module into module context
 func AddModule(module string) {
 	context.moduleContext.AddModule(module)
@@ -43,6 +52,11 @@ func AddModule(module string) {
 // AddModuleGroup adds module into module context group
 func AddModuleGroup(module, group string) {
 	context.moduleContext.AddModuleGroup(module, group)
+}
+
+// Cancel function
+func Cancel() {
+	context.cancel()
 }
 
 // Cleanup cleans up module
