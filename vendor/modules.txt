@@ -316,9 +316,9 @@ github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
 github.com/kubeedge/beehive/pkg/common/util
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
+github.com/kubeedge/viaduct/pkg/api
 github.com/kubeedge/viaduct/pkg/conn
 github.com/kubeedge/viaduct/pkg/mux
-github.com/kubeedge/viaduct/pkg/api
 github.com/kubeedge/viaduct/pkg/server
 github.com/kubeedge/viaduct/pkg/client
 github.com/kubeedge/viaduct/pkg/comm
