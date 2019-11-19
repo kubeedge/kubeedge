@@ -59,19 +59,6 @@ const (
 	DeviceProfileJSON = "deviceProfile.json"
 )
 
-// CacheDevice is the struct save device data for check device is really changed
-type CacheDevice struct {
-	metav1.ObjectMeta
-	Spec   v1alpha1.DeviceSpec
-	Status v1alpha1.DeviceStatus
-}
-
-// CacheDeviceModel is the struct save DeviceModel data for check DeviceModel is really changed
-type CacheDeviceModel struct {
-	metav1.ObjectMeta
-	Spec v1alpha1.DeviceModelSpec
-}
-
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
 	kubeClient   *kubernetes.Clientset
@@ -114,11 +101,11 @@ func (dc *DownstreamController) syncDeviceModel() {
 // deviceModelAdded is function to process addition of new deviceModel in apiserver
 func (dc *DownstreamController) deviceModelAdded(deviceModel *v1alpha1.DeviceModel) {
 	// nothing to do when deviceModel added, only add in map
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, &CacheDeviceModel{ObjectMeta: deviceModel.ObjectMeta, Spec: deviceModel.Spec})
+	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
 }
 
 // isDeviceModelUpdated is function to check if deviceModel is actually updated
-func isDeviceModelUpdated(oldTwin *CacheDeviceModel, newTwin *v1alpha1.DeviceModel) bool {
+func isDeviceModelUpdated(oldTwin *v1alpha1.DeviceModel, newTwin *v1alpha1.DeviceModel) bool {
 	// does not care fields
 	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
 	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
@@ -130,9 +117,9 @@ func isDeviceModelUpdated(oldTwin *CacheDeviceModel, newTwin *v1alpha1.DeviceMod
 // deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1alpha1.DeviceModel) {
 	value, ok := dc.deviceModelManager.DeviceModel.Load(deviceModel.Name)
-	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, &CacheDeviceModel{ObjectMeta: deviceModel.ObjectMeta, Spec: deviceModel.Spec})
+	dc.deviceModelManager.DeviceModel.Store(deviceModel.Name, deviceModel)
 	if ok {
-		cachedDeviceModel := value.(*CacheDeviceModel)
+		cachedDeviceModel := value.(*v1alpha1.DeviceModel)
 		if isDeviceModelUpdated(cachedDeviceModel, deviceModel) {
 			dc.updateAllConfigMaps(deviceModel)
 		}
@@ -244,7 +231,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
 		return
 	}
-	deviceModel := dm.(*CacheDeviceModel)
+	deviceModel := dm.(*v1alpha1.DeviceModel)
 	// if model already exists no need to add model and visitors
 	checkModelExists := false
 	for _, dm := range deviceProfile.DeviceModels {
@@ -265,7 +252,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 }
 
 // addDeviceModelAndVisitors adds deviceModels and deviceVisitors in configMap
-func addDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
+func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
 	model.Properties = make([]*types.Property, 0)
@@ -348,7 +335,7 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
-	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status})
+	dc.deviceManager.Device.Store(device.Name, device)
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
 		edgeDevice := createDevice(device)
@@ -423,7 +410,7 @@ func createDevice(device *v1alpha1.Device) types.Device {
 }
 
 // isDeviceUpdated checks if device is actually updated
-func isDeviceUpdated(oldTwin *CacheDevice, newTwin *v1alpha1.Device) bool {
+func isDeviceUpdated(oldTwin *v1alpha1.Device, newTwin *v1alpha1.Device) bool {
 	// does not care fields
 	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
 	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
@@ -535,9 +522,9 @@ func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}
 // If twin is updated, send twin update message to edge
 func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 	value, ok := dc.deviceManager.Device.Load(device.Name)
-	dc.deviceManager.Device.Store(device.Name, &CacheDevice{ObjectMeta: device.ObjectMeta, Spec: device.Spec, Status: device.Status})
+	dc.deviceManager.Device.Store(device.Name, device)
 	if ok {
-		cachedDevice := value.(*CacheDevice)
+		cachedDevice := value.(*v1alpha1.Device)
 		if isDeviceUpdated(cachedDevice, device) {
 			// if node selector updated delete from old node and create in new node
 			if isNodeSelectorUpdated(cachedDevice.Spec.NodeSelector, device.Spec.NodeSelector) {
@@ -707,7 +694,7 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device,
 		klog.Errorf("Failed to get device model %v", device.Spec.DeviceModelRef.Name)
 		return
 	}
-	deviceModel := dm.(*CacheDeviceModel)
+	deviceModel := dm.(*v1alpha1.DeviceModel)
 	// if model referenced by other devices, no need to delete the model
 	checkModelReferenced := false
 	for _, dvc := range deviceProfile.DeviceInstances {
@@ -751,7 +738,7 @@ func deleteDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *typ
 }
 
 // deleteDeviceModelAndVisitors deletes deviceModel and visitor from deviceProfile
-func deleteDeviceModelAndVisitors(deviceModel *CacheDeviceModel, deviceProfile *types.DeviceProfile) {
+func deleteDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile *types.DeviceProfile) {
 	for i, dm := range deviceProfile.DeviceModels {
 		if dm.Name == deviceModel.Name {
 			deviceProfile.DeviceModels[i] = deviceProfile.DeviceModels[len(deviceProfile.DeviceModels)-1]

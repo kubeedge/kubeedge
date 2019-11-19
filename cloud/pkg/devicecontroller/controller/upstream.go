@@ -126,7 +126,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
 				continue
 			}
-			cacheDevice, ok := device.(*CacheDevice)
+			cacheDevice, ok := device.(*v1alpha1.Device)
 			if !ok {
 				klog.Warning("Failed to assert to CacheDevice type")
 				continue
