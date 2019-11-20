@@ -1,5 +1,5 @@
 # make all builds both cloud and edge binaries
-.PHONY: all  
+.PHONY: all
 ifeq ($(WHAT),)
 all:
 	cd cloud && $(MAKE)
@@ -117,10 +117,10 @@ csidriverimage:
 edgeimage:
 	mkdir -p ./build/edge/tmp
 	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz 
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp 
+	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
+	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.10 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
@@ -131,7 +131,7 @@ edgesiteimage:
 	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
 	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
 	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.10 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
