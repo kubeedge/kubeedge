@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: kubeedge
   labels:
-    kubeedge: cloudcore
+    k8s-app: kubeedge
