@@ -15,9 +15,8 @@ import (
 
 //constants to define server address
 const (
-	NetInterface = "eth0"
-	ServerAddr   = "127.0.0.1"
-	ServerPort   = 10255
+	ServerAddr = "127.0.0.1"
+	ServerPort = 10255
 )
 
 //Server is object to define server
@@ -43,25 +42,8 @@ func (s *Server) getPodsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(rspBodyBytes.Bytes())
 }
 
-func getLocalIP() string {
-	addrSlice, err := net.InterfaceAddrs()
-	if nil != err {
-		klog.Errorf("Get local IP addr failed %s", err.Error())
-		return "localhost"
-	}
-	for _, addr := range addrSlice {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if nil != ipnet.IP.To4() {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return "localhost"
-}
-
 // ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe() {
-	//addr := getLocalIp()
 	klog.Infof("starting to listen on %s:%d", ServerAddr, ServerPort)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/pods", s.getPodsHandler)
