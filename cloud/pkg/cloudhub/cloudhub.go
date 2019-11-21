@@ -13,6 +13,7 @@ import (
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 type cloudHub struct {
@@ -44,11 +45,11 @@ func (a *cloudHub) Start() {
 
 	// start the cloudhub server
 	if util.HubConfig.ProtocolWebsocket {
-		go servers.StartCloudHub(servers.ProtocolWebsocket, messageq)
+		go servers.StartCloudHub(api.ProtocolTypeWS, util.HubConfig, messageq)
 	}
 
 	if util.HubConfig.ProtocolQuic {
-		go servers.StartCloudHub(servers.ProtocolQuic, messageq)
+		go servers.StartCloudHub(api.ProtocolTypeQuic, util.HubConfig, messageq)
 	}
 
 	if util.HubConfig.ProtocolUDS {
