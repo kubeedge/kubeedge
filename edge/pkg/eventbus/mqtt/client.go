@@ -12,7 +12,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 )
 
@@ -98,15 +98,15 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
 	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
-		target = modules.TwinGroup
+		target = constants.TwinGroup
 	} else {
-		target = modules.HubGroup
+		target = constants.HubGroup
 		if message.Topic() == "SYS/dis/upload_records" {
 			resource = "SYS/dis/upload_records"
 		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+	msg := model.NewMessage("").BuildRouter(constants.BusGroup, "user",
 		resource, "response").FillBody(string(message.Payload()))
 	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *msg)

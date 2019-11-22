@@ -295,13 +295,13 @@ func filterResourceType(msg model.Message) []v1.Service {
 		return svcs
 	}
 	switch getReourceType(msg.GetResource()) {
-	case constants.ResourceTypeService:
+	case constants.ResService:
 		s, err := handleServiceMessage(content)
 		if err != nil {
 			break
 		}
 		svcs = append(svcs, *s)
-	case constants.ResourceTypeServiceList:
+	case constants.ResServiceList:
 		ss, err := handleServiceMessageList(content)
 		if err != nil {
 			break

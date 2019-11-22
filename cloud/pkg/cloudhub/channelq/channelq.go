@@ -10,6 +10,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // Read channel buffer size
@@ -70,7 +71,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			return
 		default:
 		}
-		msg, err := beehiveContext.Receive(model.SrcCloudHub)
+		msg, err := beehiveContext.Receive(constants.CloudHubModuleName)
 		if err != nil {
 			klog.Info("receive not Message format message")
 			continue
@@ -80,7 +81,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 		numOfTokens := len(tokens)
 		var nodeID string
 		for i, token := range tokens {
-			if token == model.ResNode && i+1 < numOfTokens {
+			if token == constants.ResNode && i+1 < numOfTokens {
 				nodeID = tokens[i+1]
 				break
 			}
@@ -140,10 +141,10 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) error {
 // Publish sends message via the rchannel to Edge Controller
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
-	case model.ResTwin:
-		beehiveContext.SendToGroup(model.SrcDeviceController, *msg)
+	case constants.ResTwin:
+		beehiveContext.SendToGroup(constants.DeviceControllerModuleName, *msg)
 	default:
-		beehiveContext.SendToGroup(model.SrcEdgeController, *msg)
+		beehiveContext.SendToGroup(constants.EdgeControllerModuleName, *msg)
 	}
 	return nil
 }

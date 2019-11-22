@@ -62,7 +62,7 @@ func (dc *UpstreamController) SyncPods() {
 			msg := model.NewMessage("")
 			resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
 			msg.Content = pod
-			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
+			msg.BuildRouter(constants.HandlerStub, constants.ResourceGroup, resource, model.UpdateOperation)
 
 			klog.V(4).Infof("Begin to sync message: %v", *msg)
 			beehiveContext.SendToGroup(constants.HubGroup, *msg)

@@ -9,14 +9,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-)
-
-//constant metamanager module name
-const (
-	MetaManagerModuleName = "metaManager"
 )
 
 type metaManager struct {
@@ -28,16 +23,16 @@ func newMetaManager() *metaManager {
 
 // Register register metamanager
 func Register() {
-	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
+	dbm.RegisterModel(constants.MetaManagerModuleName, new(dao.Meta))
 	core.Register(newMetaManager())
 }
 
 func (*metaManager) Name() string {
-	return MetaManagerModuleName
+	return constants.MetaManagerModuleName
 }
 
 func (*metaManager) Group() string {
-	return modules.MetaGroup
+	return constants.MetaGroup
 }
 
 func (m *metaManager) Start() {
@@ -53,8 +48,8 @@ func (m *metaManager) Start() {
 				return
 			case <-timer.C:
 				timer.Reset(period)
-				msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
-				beehiveContext.Send(MetaManagerModuleName, *msg)
+				msg := model.NewMessage("").BuildRouter(constants.MetaManagerModuleName, constants.ResourceGroup, model.ResourceTypePodStatus, constants.OpMetaSync)
+				beehiveContext.Send(constants.MetaManagerModuleName, *msg)
 			}
 		}
 	}()

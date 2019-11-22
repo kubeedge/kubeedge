@@ -8,9 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // VolumeAttachmentsGetter is interface to get client VolumeAttachments
@@ -40,7 +39,7 @@ func newVolumeAttachments(n string, s SendInterface) *volumeattachments {
 
 func (c *volumeattachments) Create(va *api.VolumeAttachment) (*api.VolumeAttachment, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", va.Name)
-	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, va)
+	vaMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.InsertOperation, va)
 	_, err := c.send.SendSync(vaMsg)
 	if err != nil {
 		return nil, fmt.Errorf("create VolumeAttachment failed, err: %v", err)
@@ -54,7 +53,7 @@ func (c *volumeattachments) Update(va *api.VolumeAttachment) error {
 
 func (c *volumeattachments) Delete(name string) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", name)
-	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, nil)
+	vaMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.DeleteOperation, nil)
 	_, err := c.send.SendSync(vaMsg)
 	if err != nil {
 		return fmt.Errorf("delete VolumeAttachment failed, err: %v", err)
@@ -64,7 +63,7 @@ func (c *volumeattachments) Delete(name string) error {
 
 func (c *volumeattachments) Get(name string, options metav1.GetOptions) (*api.VolumeAttachment, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "volumeattachment", name)
-	vaMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	vaMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(vaMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get volumeattachment from metaManager failed, err: %v", err)
@@ -81,7 +80,7 @@ func (c *volumeattachments) Get(name string, options metav1.GetOptions) (*api.Vo
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleVolumeAttachmentFromMetaDB(content)
 	}
 	return handleVolumeAttachmentFromMetaManager(content)

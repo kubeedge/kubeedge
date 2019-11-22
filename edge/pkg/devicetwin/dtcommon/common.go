@@ -105,8 +105,6 @@ var (
 
 	//GetMembershipEvent event type
 	GetMembershipEvent = "group_membership_event"
-	//GetResult operation get_result
-	GetResult = "get_result"
 	//DeviceTwinEvent event type
 	DeviceTwinEvent = "device_twin_event"
 	//EdgeUpdated operation

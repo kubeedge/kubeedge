@@ -33,11 +33,11 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // Constants for protocol, datatype, configmap, deviceProfile
@@ -346,7 +346,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha1.Device) {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
-		msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+		msg.BuildRouter(constants.DeviceControllerModuleName, constants.TwinGroup, resource, model.UpdateOperation)
 
 		content := types.MembershipUpdate{AddDevices: []types.Device{
 			edgeDevice,
@@ -550,7 +550,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 					klog.Warningf("Built message resource failed with error: %s", err)
 					return
 				}
-				msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+				msg.BuildRouter(constants.DeviceControllerModuleName, constants.TwinGroup, resource, model.UpdateOperation)
 				content := types.DeviceTwinUpdate{Twin: twin}
 				content.EventID = uuid.NewV4().String()
 				content.Timestamp = time.Now().UnixNano() / 1e6
@@ -772,7 +772,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha1.Device) {
 
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
-		msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+		msg.BuildRouter(constants.DeviceControllerModuleName, constants.TwinGroup, resource, model.UpdateOperation)
 
 		content := types.MembershipUpdate{RemoveDevices: []types.Device{
 			edgeDevice,

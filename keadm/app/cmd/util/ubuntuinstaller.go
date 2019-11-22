@@ -37,10 +37,10 @@ const (
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type UbuntuOS struct {
-	DockerVersion     string
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	DockerVersion      string
+	KubernetesVersion  string
+	KubeEdgeVersion    string
+	IsEdgeNode         bool //True - Edgenode False - Cloudnode
 	K8SImageRepository string
 	K8SPodNetworkCidr  string
 }

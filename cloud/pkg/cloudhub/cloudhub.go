@@ -13,6 +13,7 @@ import (
 	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
 
@@ -28,11 +29,11 @@ func Register() {
 }
 
 func (a *cloudHub) Name() string {
-	return "cloudhub"
+	return constants.CloudHubModuleName
 }
 
 func (a *cloudHub) Group() string {
-	return "cloudhub"
+	return constants.CloudhubGroup
 }
 
 func (a *cloudHub) Start() {

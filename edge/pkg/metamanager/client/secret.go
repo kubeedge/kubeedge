@@ -7,9 +7,8 @@ import (
 	api "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 //SecretsGetter is interface to get client secrets
@@ -52,7 +51,7 @@ func (c *secrets) Delete(name string) error {
 func (c *secrets) Get(name string) (*api.Secret, error) {
 
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
-	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	secretMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(secretMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get secret from metaManager failed, err: %v", err)
@@ -70,7 +69,7 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	}
 
 	//op := msg.GetOperation()
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleSecretFromMetaDB(content)
 	}
 	//else

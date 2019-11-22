@@ -141,7 +141,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		msg.Content = p
-		msg.BuildRouter(constants.ControllerStub, constants.GroupResource, resource, model.InsertOperation)
+		msg.BuildRouter(constants.ControllerStub, constants.ResourceGroup, resource, model.InsertOperation)
 
 		// Add pod in cache
 		p.CreateTime = time.Now().UnixNano()
@@ -173,7 +173,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		msg.Content = pm.GetPod(ns + "/" + name)
-		msg.BuildRouter(constants.ControllerStub, constants.GroupResource, resource, model.DeleteOperation)
+		msg.BuildRouter(constants.ControllerStub, constants.ResourceGroup, resource, model.DeleteOperation)
 
 		// Delete pod in cache
 		pm.DeletePod(ns + "/" + name)

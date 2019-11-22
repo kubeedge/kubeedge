@@ -4,7 +4,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // UpdateDeviceStatusWorkers is the count of goroutines of update device status

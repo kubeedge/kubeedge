@@ -15,8 +15,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -25,25 +23,15 @@ const (
 	OK = "OK"
 
 	DefaultSyncInterval = 60
-	GroupResource       = "resource"
-	OperationMetaSync   = "meta-internal-sync"
-
-	OperationFunctionAction = "action"
-
-	OperationFunctionActionResult = "action_result"
-
-	EdgeFunctionModel   = "edgefunction"
-	CloudFunctionModel  = "funcmgr"
-	CloudControlerModel = "edgecontroller"
 )
 
 var connected = false
 
 // sendModuleGroupName is the name of the group to which we send the message
-var sendModuleGroupName = modules.HubGroup
+var sendModuleGroupName = constants.HubGroup
 
 // sendModuleName is the name of send module for remote query
-var sendModuleName = "websocket"
+var sendModuleName = constants.WebsocketName
 
 // InitMetaManagerConfig init meta config
 func InitMetaManagerConfig() {
@@ -69,8 +57,8 @@ func feedbackError(err error, info string, request model.Message) {
 	if err != nil {
 		errInfo = fmt.Sprintf(info+": %v", err)
 	}
-	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
-	if request.GetSource() == modules.EdgedModuleName {
+	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(constants.MetaManagerModuleName, request.GetGroup())
+	if request.GetSource() == constants.EdgedModuleName {
 		sendToEdged(errResponse, request.IsSync())
 	} else {
 		sendToCloud(errResponse)
@@ -81,7 +69,7 @@ func sendToEdged(message *model.Message, sync bool) {
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
-		beehiveContext.Send(modules.EdgedModuleName, *message)
+		beehiveContext.Send(constants.EdgedModuleName, *message)
 	}
 }
 
@@ -89,7 +77,7 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
-		beehiveContext.Send(modules.EdgeMeshModuleName, *message)
+		beehiveContext.Send(constants.EdgeMeshModuleName, *message)
 	}
 }
 
@@ -118,7 +106,7 @@ func parseResource(resource string) (string, string, string) {
 func requireRemoteQuery(resType string) bool {
 	return resType == model.ResourceTypeConfigmap ||
 		resType == model.ResourceTypeSecret ||
-		resType == constants.ResourceTypeEndpoints ||
+		resType == constants.ResEndpoints ||
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
@@ -172,7 +160,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+	if resType == constants.ResService || resType == constants.ResEndpoints {
 		// Notify edgemesh
 		sendToEdgeMesh(&message, false)
 	} else {
@@ -200,9 +188,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
-	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
+	if resType == constants.ResServiceList || resType == constants.ResEndpointsList || resType == model.ResourceTypePodlist {
 		switch resType {
-		case constants.ResourceTypeEndpointsList:
+		case constants.ResEndpointsList:
 			var epsList []v1.Endpoints
 			err = json.Unmarshal(content, &epsList)
 			if err != nil {
@@ -218,8 +206,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 				}
 
 				meta := &dao.Meta{
-					Key:   fmt.Sprintf("%s/%s/%s", eps.Namespace, constants.ResourceTypeEndpoints, eps.Name),
-					Type:  constants.ResourceTypeEndpoints,
+					Key:   fmt.Sprintf("%s/%s/%s", eps.Namespace, constants.ResEndpoints, eps.Name),
+					Type:  constants.ResEndpoints,
 					Value: string(data)}
 				err = dao.InsertOrUpdate(meta)
 				if err != nil {
@@ -231,7 +219,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			resp := message.NewRespByMessage(&message, OK)
 			sendToCloud(resp)
 			return
-		case constants.ResourceTypeServiceList:
+		case constants.ResServiceList:
 			var svcList []v1.Service
 			err = json.Unmarshal(content, &svcList)
 			if err != nil {
@@ -247,8 +235,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 				}
 
 				meta := &dao.Meta{
-					Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
-					Type:  constants.ResourceTypeService,
+					Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResService, svc.Name),
+					Type:  constants.ResService,
 					Value: string(data)}
 				err = dao.InsertOrUpdate(meta)
 				if err != nil {
@@ -301,21 +289,21 @@ func (m *metaManager) processUpdate(message model.Message) {
 
 	switch message.GetSource() {
 	//case core.EdgedModuleName:
-	case modules.EdgedModuleName:
+	case constants.EdgedModuleName:
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case CloudControlerModel:
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+	case constants.EdgeControllerModuleName:
+		if resType == constants.ResService || resType == constants.ResEndpoints {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
 			sendToEdged(&message, message.IsSync())
 		}
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
-	case CloudFunctionModel:
-		beehiveContext.Send(EdgeFunctionModel, message)
-	case EdgeFunctionModel:
+	case constants.CloudFunctionModelName:
+		beehiveContext.Send(constants.EdgeFunctionModelName, message)
+	case constants.EdgeFunctionModelName:
 		sendToCloud(&message)
 	}
 }
@@ -349,8 +337,8 @@ func (m *metaManager) processResponse(message model.Message) {
 	}
 
 	// Notify edged or edgemesh if the data if coming from cloud
-	if message.GetSource() == CloudControlerModel {
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+	if message.GetSource() == constants.EdgeControllerModuleName {
+		if resType == constants.ResService || resType == constants.ResEndpoints {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
 			sendToEdged(&message, message.IsSync())
@@ -370,7 +358,7 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
-	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+	if resType == constants.ResService || resType == constants.ResEndpoints {
 		// Notify edgemesh
 		sendToEdgeMesh(&message, false)
 		resp := message.NewRespByMessage(&message, OK)
@@ -393,7 +381,7 @@ func (m *metaManager) processQuery(message model.Message) {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
-			resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
+			resp.SetRoute(constants.MetaManagerModuleName, resp.GetGroup())
 			sendToEdged(resp, message.IsSync())
 		}
 		return
@@ -410,8 +398,8 @@ func (m *metaManager) processQuery(message model.Message) {
 		feedbackError(err, "Error to query meta in DB", message)
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
-		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
+		resp.SetRoute(constants.MetaManagerModuleName, resp.GetGroup())
+		if resType == constants.ResService || resType == constants.ResEndpoints || resType == model.ResourceTypePodlist {
 			sendToEdgeMesh(resp, message.IsSync())
 		} else {
 			sendToEdged(resp, message.IsSync())
@@ -455,7 +443,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			klog.Errorf("update meta failed, %s", msgDebugInfo(&resp))
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+		if resType == constants.ResService || resType == constants.ResEndpoints {
 			sendToEdgeMesh(&resp, message.IsSync())
 		} else {
 			sendToEdged(&resp, message.IsSync())
@@ -518,7 +506,7 @@ func (m *metaManager) syncPodStatus() {
 		content = append(content, podStatus)
 	}
 
-	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
+	msg := model.NewMessage("").BuildRouter(constants.MetaManagerModuleName, constants.ResourceGroup, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
 	sendToCloud(msg)
 	klog.Infof("sync pod status successful, %s", msgDebugInfo(msg))
 }
@@ -551,7 +539,7 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 		return
 	}
 
-	beehiveContext.Send(EdgeFunctionModel, message)
+	beehiveContext.Send(constants.EdgeFunctionModelName, message)
 }
 
 func (m *metaManager) processFunctionActionResult(message model.Message) {
@@ -587,7 +575,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 
 func (m *metaManager) processVolume(message model.Message) {
 	klog.Info("process volume started")
-	back, err := beehiveContext.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
+	back, err := beehiveContext.SendSync(constants.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {
 		klog.Errorf("process volume send to edged failed: %v", err)
@@ -611,13 +599,13 @@ func (m *metaManager) process(message model.Message) {
 		m.processQuery(message)
 	case model.ResponseOperation:
 		m.processResponse(message)
-	case messagepkg.OperationNodeConnection:
+	case constants.OpPublish:
 		m.processNodeConnection(message)
-	case OperationMetaSync:
+	case constants.OpMetaSync:
 		m.processSync(message)
-	case OperationFunctionAction:
+	case constants.OpFunctionAction:
 		m.processFunctionAction(message)
-	case OperationFunctionActionResult:
+	case constants.OpFunctionActionResult:
 		m.processFunctionActionResult(message)
 	case constants.CSIOperationTypeCreateVolume,
 		constants.CSIOperationTypeDeleteVolume,

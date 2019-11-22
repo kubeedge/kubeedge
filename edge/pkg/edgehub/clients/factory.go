@@ -8,12 +8,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/quicclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/wsclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-)
-
-//constant for reference to web socket of client
-const (
-	ClientTypeWebSocket = "websocket"
-	ClientTypeQuic      = "quic"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 // ErrorWrongClientType is Wrong Client Type Error
@@ -23,7 +18,7 @@ var ErrorWrongClientType = errors.New("wrong Client Type")
 func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error) {
 
 	switch clientType {
-	case ClientTypeWebSocket:
+	case api.ProtocolTypeWS:
 		websocketConf := wsclient.WebSocketConfig{
 			URL:              config.WSConfig.URL,
 			CertFilePath:     config.WSConfig.CertFilePath,
@@ -35,7 +30,7 @@ func GetClient(clientType string, config *config.EdgeHubConfig) (Adapter, error)
 			NodeID:           config.CtrConfig.NodeID,
 		}
 		return wsclient.NewWebSocketClient(&websocketConf), nil
-	case ClientTypeQuic:
+	case api.ProtocolTypeQuic:
 		quicConfig := quicclient.QuicConfig{
 			Addr:             config.QcConfig.URL,
 			CaFilePath:       config.QcConfig.CaFilePath,

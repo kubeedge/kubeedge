@@ -5,8 +5,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
 )
@@ -22,12 +21,12 @@ func Register() {
 
 //Name returns the name of EdgeMesh module
 func (em *EdgeMesh) Name() string {
-	return constant.ModuleNameEdgeMesh
+	return constants.EdgeMeshModuleName
 }
 
 //Group returns EdgeMesh group
 func (em *EdgeMesh) Group() string {
-	return modules.MeshGroup
+	return constants.MeshGroup
 }
 
 //Start sets context and starts the controller
@@ -42,7 +41,7 @@ func (em *EdgeMesh) Start() {
 			return
 		default:
 		}
-		msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
+		msg, err := beehiveContext.Receive(constants.EdgeMeshModuleName)
 		if err != nil {
 			klog.Warningf("edgemesh receive msg error %v", err)
 			continue

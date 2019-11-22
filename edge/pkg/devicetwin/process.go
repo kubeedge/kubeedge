@@ -12,6 +12,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -262,7 +263,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		return false
 
 	} else if strings.Compare(msgSource, "edgehub") == 0 {
-		if strings.Compare(message.Msg.Router.Resource, "node/connection") == 0 {
+		if strings.Compare(message.Msg.Router.Resource, constants.ResNodeConnection) == 0 {
 			message.Action = dtcommon.LifeCycle
 			return true
 		}

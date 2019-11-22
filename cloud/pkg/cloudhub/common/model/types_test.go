@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // modelMessage returns a new model.Message
@@ -54,14 +55,14 @@ func TestNewResource(t *testing.T) {
 	}{
 		{
 			name:    "TestNewResource(): Case 1: resID is empty",
-			resType: ResNode,
+			resType: constants.ResNode,
 			resID:   "",
 			info:    &HubInfo{ProjectID: "Project1", NodeID: "Node1"},
 			str:     "node/Node1/node",
 		},
 		{
 			name:    "TestNewResource(): Case 2: resID is not empty",
-			resType: ResNode,
+			resType: constants.ResNode,
 			resID:   "res1",
 			info:    &HubInfo{ProjectID: "Project1", NodeID: "Node1"},
 			str:     "node/Node1/node/res1",
@@ -79,21 +80,21 @@ func TestNewResource(t *testing.T) {
 // TestIsNodeStopped is function to test IsNodeStopped
 func TestIsNodeStopped(t *testing.T) {
 	body := map[string]interface{}{
-		"event_type": OpConnect,
+		"event_type": constants.OpConnect,
 		"timestamp":  time.Now().Unix(),
 	}
 	content, _ := json.Marshal(body)
 	bodyAction := map[string]interface{}{
-		"event_type": OpConnect,
+		"event_type": constants.OpConnect,
 		"timestamp":  time.Now().Unix(),
 		"action":     "stop",
 	}
 	msgResource := modelMessage("", "", 0, "", "", "", "Resource1", nil)
-	msgOpDelete := modelMessage("", "", 0, "", "", OpDelete, "node/Node1", nil)
+	msgOpDelete := modelMessage("", "", 0, "", "", constants.OpDelete, "node/Node1", nil)
 	msgNoContent := modelMessage("", "", 0, "", "", "", "node/Node1", nil)
-	msgContent := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", content)
-	msgNoAction := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", body)
-	msgActionStop := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", bodyAction)
+	msgContent := modelMessage("", "", 0, "", "", constants.OpUpdate, "node/Node1", content)
+	msgNoAction := modelMessage("", "", 0, "", "", constants.OpUpdate, "node/Node1", body)
+	msgActionStop := modelMessage("", "", 0, "", "", constants.OpUpdate, "node/Node1", bodyAction)
 	tests := []struct {
 		name      string
 		msg       *model.Message
@@ -165,8 +166,8 @@ func TestIsFromEdge(t *testing.T) {
 // TestIsToEdge is function to test IsToEdge
 func TestIsToEdge(t *testing.T) {
 	msgSource := modelMessage("", "", 0, "Source1", "", "", "", nil)
-	msgResource := modelMessage("", "", 0, SrcManager, "", "", "node/Node1/node/res1", nil)
-	msgOperation := modelMessage("", "", 0, SrcManager, "", "get", "membership", nil)
+	msgResource := modelMessage("", "", 0, constants.EdgeManagerModuleName, "", "", "node/Node1/node/res1", nil)
+	msgOperation := modelMessage("", "", 0, constants.EdgeManagerModuleName, "", "get", "membership", nil)
 	tests := []struct {
 		name      string
 		msg       *model.Message

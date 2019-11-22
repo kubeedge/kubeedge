@@ -9,8 +9,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 )
 
 // EndpointsGetter has a method to return a EndpointsInterface.
@@ -57,8 +55,8 @@ func (c *Endpoints) Delete(name string) error {
 
 // Get Endpoints
 func (c *Endpoints) Get(name string) (*api.Endpoints, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, constants.ResourceTypeEndpoints, name)
-	endpointMsg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	resource := fmt.Sprintf("%s/%s/%s", c.namespace, constants.ResEndpoints, name)
+	endpointMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgeMeshModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(endpointMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get endpointMsg from metaManager failed, err: %v", err)

@@ -7,8 +7,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // EdgeController use beehive context message layer
@@ -30,7 +30,7 @@ func (ctl *EdgeController) Name() string {
 
 // Group of controller
 func (ctl *EdgeController) Group() string {
-	return constants.EdgeControllerModuleName
+	return constants.EdgeControllerGroup
 }
 
 // Start controller

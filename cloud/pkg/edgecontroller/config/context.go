@@ -18,21 +18,21 @@ var ContextResponseModule string
 
 func InitContextConfig() {
 	if smn, err := config.CONFIG.GetValue("controller.context.send-module").ToString(); err != nil {
-		ContextSendModule = constants.DefaultContextSendModuleName
+		ContextSendModule = constants.CloudHubModuleName
 	} else {
 		ContextSendModule = smn
 	}
 	klog.Infof(" send module name: %s", ContextSendModule)
 
 	if rmn, err := config.CONFIG.GetValue("controller.context.receive-module").ToString(); err != nil {
-		ContextReceiveModule = constants.DefaultContextReceiveModuleName
+		ContextReceiveModule = constants.EdgeControllerModuleName
 	} else {
 		ContextReceiveModule = rmn
 	}
 	klog.Infof("receive module name: %s", ContextReceiveModule)
 
 	if rmn, err := config.CONFIG.GetValue("controller.context.response-module").ToString(); err != nil {
-		ContextResponseModule = constants.DefaultContextResponseModuleName
+		ContextResponseModule = constants.CloudHubModuleName
 	} else {
 		ContextResponseModule = rmn
 	}

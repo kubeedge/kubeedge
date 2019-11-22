@@ -46,7 +46,7 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 		EdgeController: EdgeControllerSt{
 			Kube: ControllerKubeConfig{
 				Master:              "http://localhost:8080",
-				Namespace:           constants.DefaultKubeNamespace,
+				Namespace:           constants.NamespaceAll,
 				ContentType:         constants.DefaultKubeContentType,
 				QPS:                 constants.DefaultKubeQPS,
 				Burst:               constants.DefaultKubeBurst,
@@ -67,7 +67,7 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 		DeviceController: DeviceControllerSt{
 			Kube: ControllerKubeConfig{
 				Master:      "http://localhost:8080",
-				Namespace:   constants.DefaultKubeNamespace,
+				Namespace:   constants.NamespaceAll,
 				ContentType: constants.DefaultKubeContentType,
 				QPS:         constants.DefaultKubeQPS,
 				Burst:       constants.DefaultKubeBurst,

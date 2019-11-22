@@ -27,10 +27,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DeviceStatus is structure to patch device status

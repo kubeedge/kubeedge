@@ -2,8 +2,9 @@ package constants
 
 // Service level constants
 const (
-	// module
-	EdgeControllerModuleName = "edgecontroller"
+	ResourceDeviceIndex         = 2
+	ResourceDeviceIDIndex       = 3
+	ResourceTypeTwinEdgeUpdated = "twin/edge_updated"
 
 	ResourceNodeIDIndex       = 1
 	ResourceNamespaceIndex    = 2
@@ -13,11 +14,6 @@ const (
 	EdgeSiteResourceNamespaceIndex    = 0
 	EdgeSiteResourceResourceTypeIndex = 1
 	EdgeSiteResourceResourceNameIndex = 2
-
-	ResourceNode = "node"
-
-	// Group
-	GroupResource = "resource"
 
 	// Nvidia Constants
 	// NvidiaGPUStatusAnnotationKey is the key of the node annotation for GPU status

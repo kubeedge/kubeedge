@@ -92,7 +92,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		return
 	}
 
-	if container.Message.GetOperation() == model.OpKeepalive {
+	if container.Message.GetOperation() == constants.OpKeepalive {
 		klog.Infof("Keepalive message received from node: %s", nodeID)
 		mh.KeepaliveChannel[nodeID] <- struct{}{}
 		return
@@ -148,7 +148,7 @@ func dumpMessageMetadata(msg *beehiveModel.Message) string {
 
 func trimMessage(msg *beehiveModel.Message) {
 	resource := msg.GetResource()
-	if strings.HasPrefix(resource, model.ResNode) {
+	if strings.HasPrefix(resource, constants.ResNode) {
 		tokens := strings.Split(resource, "/")
 		if len(tokens) < 3 {
 			klog.Warningf("event resource %s starts with node but length less than 3", resource)
@@ -160,7 +160,7 @@ func trimMessage(msg *beehiveModel.Message) {
 
 func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 	if code == messageQueueDisconnect {
-		msg := beehiveModel.NewMessage("").BuildRouter(model.GpResource, model.SrcCloudHub, model.NewResource(model.ResNode, nodeID, nil), model.OpDisConnect)
+		msg := beehiveModel.NewMessage("").BuildRouter(constants.ResourceGroup, constants.CloudHubModuleName, model.NewResource(constants.ResNode, nodeID, nil), constants.OpDisConnect)
 		err := hi.WriteData(msg)
 		if err != nil {
 			klog.Errorf("fail to notify node %s event queue disconnected, reason: %s", nodeID, err.Error())
@@ -169,9 +169,9 @@ func notifyEventQueueError(hi hubio.CloudHubIO, code ExitCode, nodeID string) {
 }
 
 func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveModel.Message {
-	connected := model.OpConnect
+	connected := constants.OpConnect
 	if !isConnected {
-		connected = model.OpDisConnect
+		connected = constants.OpDisConnect
 	}
 	body := map[string]interface{}{
 		"event_type": connected,
@@ -180,7 +180,7 @@ func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveMode
 	content, _ := json.Marshal(body)
 
 	msg := beehiveModel.NewMessage("")
-	msg.BuildRouter(model.SrcCloudHub, model.GpResource, model.NewResource(model.ResNode, info.NodeID, nil), connected)
+	msg.BuildRouter(constants.CloudHubModuleName, constants.ResourceGroup, model.NewResource(constants.ResNode, info.NodeID, nil), connected)
 	msg.FillBody(content)
 	return msg
 }

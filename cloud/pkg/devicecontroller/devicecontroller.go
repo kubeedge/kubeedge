@@ -8,8 +8,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DeviceController use beehive context message layer
@@ -31,7 +31,7 @@ func (dctl *DeviceController) Name() string {
 
 // Group of controller
 func (dctl *DeviceController) Group() string {
-	return constants.DeviceControllerModuleGroup
+	return constants.DeviceControllerGroup
 }
 
 // Start controller

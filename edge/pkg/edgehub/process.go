@@ -8,9 +8,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
@@ -21,10 +20,10 @@ const (
 )
 
 var groupMap = map[string]string{
-	"resource": modules.MetaGroup,
-	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+	"resource": constants.MetaGroup,
+	"twin":     constants.TwinGroup,
+	"func":     constants.MetaGroup,
+	"user":     constants.BusGroup,
 }
 
 func (eh *EdgeHub) initial() (err error) {
@@ -159,7 +158,7 @@ func (eh *EdgeHub) routeToCloud() {
 			return
 		default:
 		}
-		message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+		message, err := beehiveContext.Receive(constants.EdgeHubModuleName)
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
@@ -186,7 +185,7 @@ func (eh *EdgeHub) keepalive() {
 
 		}
 		msg := model.NewMessage("").
-			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
+			BuildRouter(constants.EdgeHubModuleName, "resource", "node", "keepalive").
 			FillBody("ping")
 
 		// post message to cloud hub
@@ -209,8 +208,8 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	}
 
 	for _, group := range groupMap {
-		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
-			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
+		message := model.NewMessage("").BuildRouter(constants.EdgeHubModuleName, group,
+			constants.ResNodeConnection, constants.OpPublish).FillBody(content)
 		beehiveContext.SendToGroup(group, *message)
 	}
 }

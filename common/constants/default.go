@@ -1,17 +1,9 @@
 package constants
 
-import (
-	"time"
-
-	v1 "k8s.io/api/core/v1"
-)
+import "k8s.io/api/core/v1"
 
 // Config
 const (
-	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
-	DefaultKubeNamespace           = v1.NamespaceAll
-	DefaultKubeQPS                 = 100.0
-	DefaultKubeBurst               = 10
 	DefaultKubeUpdateNodeFrequency = 20
 
 	DefaultUpdatePodStatusWorkers            = 1
@@ -46,10 +38,6 @@ const (
 
 	DefaultMessageLayer = "context"
 
-	DefaultContextSendModuleName     = "cloudhub"
-	DefaultContextReceiveModuleName  = "edgecontroller"
-	DefaultContextResponseModuleName = "cloudhub"
-
 	DefaultPodEventBuffer       = 1
 	DefaultConfigMapEventBuffer = 1
 	DefaultSecretEventBuffer    = 1
@@ -59,21 +47,17 @@ const (
 	// Resource sep
 	ResourceSep = "/"
 
-	ResourceTypeService       = "service"
-	ResourceTypeServiceList   = "servicelist"
-	ResourceTypeEndpoints     = "endpoints"
-	ResourceTypeEndpointsList = "endpointslist"
-
-	ResourceTypePersistentVolume      = "persistentvolume"
-	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"
-	ResourceTypeVolumeAttachment      = "volumeattachment"
-
-	CSIResourceTypeVolume                     = "volume"
-	CSIOperationTypeCreateVolume              = "createvolume"
-	CSIOperationTypeDeleteVolume              = "deletevolume"
-	CSIOperationTypeControllerPublishVolume   = "controllerpublishvolume"
-	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
-	CSISyncMsgRespTimeout                     = 1 * time.Minute
-
 	CurrentSupportK8sVersion = "v1.15.3"
+
+	DefaultKubeContentType = "application/vnd.kubernetes.protobuf"
+	DefaultKubeNamespace   = v1.NamespaceAll
+	DefaultKubeQPS         = 100.0
+	DefaultKubeBurst       = 10
+
+	DefaultUpdateDeviceStatusWorkers = 1
+
+	DefaultUpdateDeviceStatusBuffer = 1024
+
+	DefaultDeviceEventBuffer      = 1
+	DefaultDeviceModelEventBuffer = 1
 )

@@ -7,9 +7,8 @@ import (
 	api "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 //NodesGetter to get node interface
@@ -43,7 +42,7 @@ func (c *nodes) Create(cm *api.Node) (*api.Node, error) {
 
 func (c *nodes) Update(cm *api.Node) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, cm.Name)
-	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, cm)
+	nodeMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.UpdateOperation, cm)
 	_, err := c.send.SendSync(nodeMsg)
 	if err != nil {
 		return fmt.Errorf("update node failed, err: %v", err)
@@ -57,7 +56,7 @@ func (c *nodes) Delete(name string) error {
 
 func (c *nodes) Get(name string) (*api.Node, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, name)
-	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	nodeMsg := message.BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(nodeMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get node failed, err: %v", err)
@@ -74,7 +73,7 @@ func (c *nodes) Get(name string) (*api.Node, error) {
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleNodeFromMetaDB(content)
 	}
 	return handleNodeFromMetaManager(content)

@@ -28,8 +28,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
-	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	_ "github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
@@ -196,7 +196,7 @@ func TestDispatch(t *testing.T) {
 			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			message:       model.NewMessage("").BuildRouter(constants.EdgeHubModuleName, constants.TwinGroup, "", ""),
 			expectedError: nil,
 			isResponse:    false,
 		},
@@ -205,7 +205,7 @@ func TestDispatch(t *testing.T) {
 			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
+			message:       model.NewMessage("test").BuildRouter(constants.EdgeHubModuleName, constants.EdgedGroup, "", ""),
 			expectedError: fmt.Errorf("msg_group not found"),
 			isResponse:    true,
 		},
@@ -214,7 +214,7 @@ func TestDispatch(t *testing.T) {
 			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			message:       model.NewMessage("test").BuildRouter(constants.EdgeHubModuleName, constants.TwinGroup, "", ""),
 			expectedError: nil,
 			isResponse:    true,
 		},
@@ -264,8 +264,8 @@ func TestRouteToEdge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(constants.EdgeHubModuleName, constants.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(constants.EdgeHubModuleName, constants.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
 			go tt.hub.routeToEdge()
 			stop := <-tt.hub.reconnectChan
@@ -388,9 +388,9 @@ func TestRouteToCloud(t *testing.T) {
 			go tt.hub.routeToCloud()
 			time.Sleep(2 * time.Second)
 			core.Register(&EdgeHub{})
-			beehiveContext.AddModule(ModuleNameEdgeHub)
+			beehiveContext.AddModule(constants.EdgeHubModuleName)
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
-			beehiveContext.Send(ModuleNameEdgeHub, *msg)
+			beehiveContext.Send(constants.EdgeHubModuleName, *msg)
 			stopChan := <-tt.hub.reconnectChan
 			if stopChan != struct{}{} {
 				t.Errorf("Error in route to cloud")

@@ -14,12 +14,11 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 const (
-	name            = "testManager"
 	edgedEndPoint   = "http://127.0.0.1:10255"
 	EdgedPodHandler = "/pods"
 )
@@ -37,12 +36,12 @@ type meta struct {
 }
 
 func (tm *testManager) Name() string {
-	return name
+	return constants.TestModuleName
 }
 
 func (tm *testManager) Group() string {
 	//return core.MetaGroup
-	return modules.MetaGroup
+	return constants.MetaGroup
 }
 
 //Function to get the pods from Edged

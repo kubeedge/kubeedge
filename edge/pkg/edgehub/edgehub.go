@@ -9,14 +9,9 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-)
-
-//define edgehub module name
-const (
-	ModuleNameEdgeHub = "websocket"
 )
 
 //EdgeHub defines edgehub object structure
@@ -43,12 +38,12 @@ func Register() {
 
 //Name returns the name of EdgeHub module
 func (eh *EdgeHub) Name() string {
-	return ModuleNameEdgeHub
+	return constants.EdgeHubModuleName
 }
 
 //Group returns EdgeHub group
 func (eh *EdgeHub) Group() string {
-	return modules.HubGroup
+	return constants.HubGroup
 }
 
 //Start sets context and starts the controller

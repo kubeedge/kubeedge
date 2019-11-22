@@ -4,7 +4,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // UpdateDeviceStatusBuffer is the size of channel which save update device status message from edge

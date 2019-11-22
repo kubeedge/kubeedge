@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/wsclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 //TestGetClient() tests whether the webSocket client is returned properly
@@ -40,7 +41,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name: "TestGetClient: Positive Test Case",
 			args: args{
-				clientType: ClientTypeWebSocket,
+				clientType: api.ProtocolTypeWS,
 				config: &config.EdgeHubConfig{
 					WSConfig: config.WebSocketConfig{
 						URL:              "ws://127.0.0.1:20000/fake_group_id/events",

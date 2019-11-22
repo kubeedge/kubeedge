@@ -87,7 +87,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
@@ -102,7 +101,6 @@ import (
 	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -275,11 +273,11 @@ func Register() {
 }
 
 func (e *edged) Name() string {
-	return modules.EdgedModuleName
+	return constants.EdgedModuleName
 }
 
 func (e *edged) Group() string {
-	return modules.EdgedGroup
+	return constants.EdgedGroup
 }
 
 func (e *edged) Start() {
@@ -907,7 +905,7 @@ func (e *edged) syncPod() {
 	//send msg to metamanager to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
-	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
+	beehiveContext.Send(constants.MetaManagerModuleName, *info)
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -943,7 +941,7 @@ func (e *edged) syncPod() {
 		klog.Infof("result content is %s", result.Content)
 		switch resType {
 		case model.ResourceTypePod:
-			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
+			if op == model.ResponseOperation && resID == "" && result.GetSource() == constants.MetaManagerModuleName {
 				err := e.handlePodListFromMetaManager(content)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)

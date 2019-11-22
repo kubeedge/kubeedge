@@ -69,7 +69,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	// Build message struct
 	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
-		DefaultNamespace,
+		constants.NamespaceDefault,
 		constants.CSIResourceTypeVolume,
 		volumeID)
 	if err != nil {
@@ -85,8 +85,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	klog.V(4).Infof("create volume marshal to string: %s", js)
 	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
+	msg.BuildRouter(constants.CloudHubModuleName,
+		constants.ResourceGroup,
 		resource,
 		constants.CSIOperationTypeCreateVolume)
 
@@ -156,7 +156,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	// Build message struct
 	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
-		DefaultNamespace,
+		constants.NamespaceDefault,
 		constants.CSIResourceTypeVolume,
 		req.GetVolumeId())
 	if err != nil {
@@ -172,8 +172,8 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 	klog.V(4).Infof("delete volume marshal to string: %s", js)
 	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
+	msg.BuildRouter(constants.CloudHubModuleName,
+		constants.ResourceGroup,
 		resource,
 		constants.CSIOperationTypeDeleteVolume)
 
@@ -238,7 +238,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// Build message struct
 	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
-		DefaultNamespace,
+		constants.NamespaceDefault,
 		constants.CSIResourceTypeVolume,
 		volumeID)
 	if err != nil {
@@ -254,8 +254,8 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 	klog.V(4).Infof("controller publish volume marshal to string: %s", js)
 	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
+	msg.BuildRouter(constants.CloudHubModuleName,
+		constants.ResourceGroup,
 		resource,
 		constants.CSIOperationTypeControllerPublishVolume)
 
@@ -320,7 +320,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	// Build message struct
 	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
-		DefaultNamespace,
+		constants.NamespaceDefault,
 		constants.CSIResourceTypeVolume,
 		volumeID)
 	if err != nil {
@@ -336,8 +336,8 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 	klog.V(4).Infof("controller Unpublish Volume marshal to string: %s", js)
 	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
+	msg.BuildRouter(constants.CloudHubModuleName,
+		constants.ResourceGroup,
 		resource,
 		constants.CSIOperationTypeControllerUnpublishVolume)
 

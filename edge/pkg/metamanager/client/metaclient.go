@@ -8,7 +8,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -108,7 +108,7 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 	var resp model.Message
 	retries := 0
 	err = wait.Poll(syncPeriod, syncMsgRespTimeout, func() (bool, error) {
-		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncMsgRespTimeout)
+		resp, err = beehiveContext.SendSync(constants.MetaManagerModuleName, *message, syncMsgRespTimeout)
 		retries++
 		if err == nil {
 			klog.Infof("send sync message %s successed and response: %v", message.GetResource(), resp)

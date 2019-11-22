@@ -35,13 +35,6 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-// Constant defines csi related parameters
-const (
-	GroupResource            = "resource"
-	DefaultNamespace         = "default"
-	DefaultReceiveModuleName = "cloudhub"
-)
-
 // newNonBlockingGRPCServer creates a new nonblocking server
 func newNonBlockingGRPCServer() *nonBlockingGRPCServer {
 	return &nonBlockingGRPCServer{}

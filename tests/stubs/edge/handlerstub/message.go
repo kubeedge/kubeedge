@@ -95,7 +95,7 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		respMessage := model.NewMessage("")
 		resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
 		respMessage.Content = pod
-		respMessage.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
+		respMessage.BuildRouter(constants.HandlerStub, constants.ResourceGroup, resource, model.UpdateOperation)
 
 		hs.SendToCloud(respMessage)
 

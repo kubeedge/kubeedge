@@ -9,44 +9,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-)
-
-// constants for resource types
-const (
-	ResNode   = "node"
-	ResMember = "membership"
-	ResTwin   = "twin"
-	ResAuth   = "auth_info"
-	ResDevice = "device"
-)
-
-// constants for resource operations
-const (
-	OpGet        = "get"
-	OpResult     = "get_result"
-	OpList       = "list"
-	OpDetail     = "detail"
-	OpDelta      = "delta"
-	OpDoc        = "document"
-	OpUpdate     = "updated"
-	OpInsert     = "insert"
-	OpDelete     = "deleted"
-	OpConnect    = "connected"
-	OpDisConnect = "disconnected"
-	OpKeepalive  = "keepalive"
-)
-
-// constants for message group
-const (
-	GpResource = "resource"
-)
-
-// constants for message source
-const (
-	SrcCloudHub         = "cloudhub"
-	SrcEdgeController   = "edgecontroller"
-	SrcDeviceController = "devicecontroller"
-	SrcManager          = "edgemgr"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // constants for identifier information for edge hub
@@ -76,13 +39,13 @@ func NewResource(resType, resID string, info *HubInfo) string {
 // IsNodeStopped indicates if the node is stopped or running
 func IsNodeStopped(msg *model.Message) bool {
 	tokens := strings.Split(msg.Router.Resource, "/")
-	if len(tokens) != 2 || tokens[0] != ResNode {
+	if len(tokens) != 2 || tokens[0] != constants.ResNode {
 		return false
 	}
-	if msg.Router.Operation == OpDelete {
+	if msg.Router.Operation == constants.OpDelete {
 		return true
 	}
-	if msg.Router.Operation != OpUpdate || msg.Content == nil {
+	if msg.Router.Operation != constants.OpUpdate || msg.Content == nil {
 		return false
 	}
 	body, ok := msg.Content.(map[string]interface{})
@@ -106,11 +69,11 @@ func IsFromEdge(msg *model.Message) bool {
 
 // IsToEdge judges if the vent should be sent to edge
 func IsToEdge(msg *model.Message) bool {
-	if msg.Router.Source != SrcManager {
+	if msg.Router.Source != constants.EdgeManagerModuleName {
 		return true
 	}
 	resource := msg.Router.Resource
-	if strings.HasPrefix(resource, ResNode) {
+	if strings.HasPrefix(resource, constants.ResNode) {
 		tokens := strings.Split(resource, "/")
 		if len(tokens) >= 3 {
 			resource = strings.Join(tokens[2:], "/")
@@ -119,10 +82,10 @@ func IsToEdge(msg *model.Message) bool {
 
 	// apply special check for edge manager
 	resOpMap := map[string][]string{
-		ResMember: {OpGet},
-		ResTwin:   {OpDelta, OpDoc, OpGet},
-		ResAuth:   {OpGet},
-		ResNode:   {OpDelete},
+		constants.ResMember: {constants.OpGet},
+		constants.ResTwin:   {constants.OpDelta, constants.OpDoc, constants.OpGet},
+		constants.ResAuth:   {constants.OpGet},
+		constants.ResNode:   {constants.OpDelete},
 	}
 	for res, ops := range resOpMap {
 		for _, op := range ops {
