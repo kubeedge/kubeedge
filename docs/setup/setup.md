@@ -93,7 +93,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
         qps: 5
         burst: 10
         node_update_frequency: 10
-        kubeconfig: "~/.kube/config"   #Enter path to kubeconfig file to enable https connection to k8s apiserver, if master and kubeconfig are both set, master will override any value in kubeconfig.
+        kubeconfig: "/root/.kube/config"   #Enter absolute path to kubeconfig file to enable https connection to k8s apiserver, if master and kubeconfig are both set, master will override any value in kubeconfig.
     cloudhub:
       protocol_websocket: true # enable websocket protocol
       port: 10000 # open port for websocket server
@@ -116,7 +116,7 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
         content_type: "application/vnd.kubernetes.protobuf"
         qps: 5
         burst: 10
-        kubeconfig: "~/.kube/config" #Enter path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
+        kubeconfig: "/root/.kube/config" #Enter absolute path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
     ```
     cloudcore default supports https connection to Kubernetes apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
     Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` exist.
