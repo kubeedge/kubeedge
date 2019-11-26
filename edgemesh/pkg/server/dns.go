@@ -108,8 +108,8 @@ func startDnsServer() {
 		if err != nil {
 			continue
 		}
-		for _, q := range que {
-			q.from = from
+		for i, _ := range que {
+			que[i].from = from
 		}
 		rsp := make([]byte, 0)
 		rsp, err = recordHandler(que, req[0:n])
