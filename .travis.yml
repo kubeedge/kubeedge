@@ -36,22 +36,33 @@ install: true
 
 jobs:
   include:
-    - stage: "Verify vendor"
-      script: make verify
-      name: "check if the vendor is up to date"
 
-    - stage: "Test lint"
-      script: make cloud_lint
+    - stage: "Verify Vendor ,Test lint, Unit Test, Build, Build DockerImage in amd64"
+      script: make verify
+      arch: amd64
+      name: "check if the vendor is up to date"
+    - script: make cloud_lint
+      arch: amd64
       name: "cloud_lint"
     - script: make bluetoothdevice_lint
+      arch: amd64
       name: "bluetooth_device_lint"
     - script: make keadm_lint
+      arch: amd64
       name: "keadm_lint"
     - script: make edge_lint
+      arch: amd64
       name: "edge_lint"
-
-    - stage: "Test Build on amd64"
-      script: make
+    - script: make edge_test
+      arch: amd64
+      name: "unit test edge"
+    - script: make edge_integration_test
+      arch: amd64
+      name: "integration test edge"
+    - script: make cloud_test
+      arch: amd64
+      name: "unit test cloud"
+    - script: make
       arch: amd64
       name: "builds cloud and edge components"
     - script: make bluetoothdevice
@@ -62,50 +73,17 @@ jobs:
       name: "build small edge version"
     - script: make edge_cross_build
       name: "cross build edge"
+      arch: amd64
     - script: make edge_cross_build_v7
       name: "cross build edge for armv7"
+      arch: amd64
     - script: make edgesite_cross_build
       name: "cross build edgesite"
+      arch: amd64
     - script: make edgesite_cross_build_v7
       name: "cross build edgeite for armv7"
-
-    - stage: "Test Build on arm64"
-      script: make
-      arch: arm64
-      name: "builds cloud and edge components"
-    - script: make bluetoothdevice
-      arch: arm64
-      name: "build bluetooth_device"
-    - script: make edge_small_build
-      arch: arm64
-      name: "build small edge version"
-
-    - stage: "unit tests on amd64"
-      script: make edge_test
       arch: amd64
-      name: "unit test edge"
-    - script: make edge_integration_test
-      arch: amd64
-      name: "integration test edge"
-    - script: make cloud_test
-      arch: amd64
-      name: "unit test cloud"
-
-    - stage: "unit tests on arm64"
-      script: make edge_test
-      arch: arm64
-      name: "unit test edge"
-    - script: make cloud_test
-      arch: arm64
-      name: "unit test cloud"
-
-    - stage: "e2e tests on amd64"
-      script: make e2e_test
-      arch: amd64
-      name: "e2e_test"
-
-    - stage: "build docker images on amd64"
-      script: make cloudimage
+    - script: make cloudimage
       arch: amd64
       name: "build cloudimage"
     - script: make admissionimage
@@ -120,9 +98,29 @@ jobs:
     - script: make bluetoothdevice_image
       arch: amd64
       name: "build bluetoothdevice image"
+    # The e2e_test step must be placed in the last step of this stage 
+    # because it will modify the configuration file 
+    - script: make e2e_test
+      arch: amd64
+      name: "e2e_test"
 
-    - stage: "build docker images on arm64"
-      script: make cloudimage
+    - stage: "Build ,Unit test, Build DockerImage on arm64"
+      script: make
+      arch: arm64
+      name: "builds cloud and edge components"
+    - script: make bluetoothdevice
+      arch: arm64
+      name: "build bluetooth_device"
+    - script: make edge_small_build
+      arch: arm64
+      name: "build small edge version"
+    - script: make edge_test
+      arch: arm64
+      name: "unit test edge"
+    - script: make cloud_test
+      arch: arm64
+      name: "unit test cloud"
+    - script: make cloudimage
       arch: arm64
       name: "build cloudimage"
     - script: make admissionimage
