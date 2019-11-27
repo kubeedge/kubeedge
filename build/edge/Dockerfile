@@ -27,6 +27,4 @@ VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/
 COPY --from=builder /usr/local/bin/edgecore /usr/local/bin/edgecore
 COPY --from=builder /go/src/github.com/kubeedge/kubeedge/edge/conf /etc/kubeedge/edge/conf
 
-EXPOSE 1884
-
 ENTRYPOINT ["edgecore"]
