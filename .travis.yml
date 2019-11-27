@@ -36,102 +36,103 @@ install: true
 
 jobs:
   include:
+    # Multiple stages in travis cannot run in parallel
+    # But jobs in a stage can run in parallel
+    # Now travis can only run 3 jobs in parallel
+    # So we just use 2 stages and 3 jobs in each stage
+    # The first stage is "ci on amd64", run in amd64 platform
+    # The second stage is "ci on arm64", run in arm64 platform
+    # And we put the longest-consuming job first
+    - stage: "CI on amd64"
+      name: "e2e test, edge test, cloud test"
+      arch: amd64
+      script: 
+        # Now e2e_test takes the longest time, so we put it first
+        - make e2e_test 
+         # unit test edge
+        - make edge_test 
+        # unit test cloud
+        - make cloud_test 
+        
+   
+    - name: "Verify Vendor, lint, build, edge integration test, crossbuild"
+      arch: amd64
+      script: 
+        # check if the vendor is up to date
+        - make verify 
+        # cloud_lint
+        - make cloud_lint 
+        # bluetooth_device_lint
+        - make bluetoothdevice_lint 
+        # keadm_lint
+        - make keadm_lint 
+        # edge_lint
+        - make edge_lint 
+        # make cloudcore edgecore edgesite keadm
+        - make 
+        # build bluetooth_device
+        - make bluetoothdevice 
+        # build small edge version
+        - make edge_small_build 
+        # builds cloudcore edgecore and edgesite components
+        # integration test edge
+        # Note: "make edge_integration_test"  and "make e2e_test" cannot run in the same job at the same time
+        - make edge_integration_test 
 
-    - stage: "Verify Vendor ,Test lint, Unit Test, Build, Build DockerImage in amd64"
-      script: make verify
-      arch: amd64
-      name: "check if the vendor is up to date"
-    - script: make cloud_lint
-      arch: amd64
-      name: "cloud_lint"
-    - script: make bluetoothdevice_lint
-      arch: amd64
-      name: "bluetooth_device_lint"
-    - script: make keadm_lint
-      arch: amd64
-      name: "keadm_lint"
-    - script: make edge_lint
-      arch: amd64
-      name: "edge_lint"
-    - script: make edge_test
-      arch: amd64
-      name: "unit test edge"
-    - script: make edge_integration_test
-      arch: amd64
-      name: "integration test edge"
-    - script: make cloud_test
-      arch: amd64
-      name: "unit test cloud"
-    - script: make
-      arch: amd64
-      name: "builds cloud and edge components"
-    - script: make bluetoothdevice
-      arch: amd64
-      name: "build bluetooth_device"
-    - script: make edge_small_build
-      arch: amd64
-      name: "build small edge version"
-    - script: make edge_cross_build
-      name: "cross build edge"
-      arch: amd64
-    - script: make edge_cross_build_v7
-      name: "cross build edge for armv7"
-      arch: amd64
-    - script: make edgesite_cross_build
-      name: "cross build edgesite"
-      arch: amd64
-    - script: make edgesite_cross_build_v7
-      name: "cross build edgeite for armv7"
-      arch: amd64
-    - script: make cloudimage
-      arch: amd64
-      name: "build cloudimage"
-    - script: make admissionimage
-      arch: amd64
-      name: "build admission image"
-    - script: make edgeimage ARCH="amd64"
-      arch: amd64
-      name: "build edge image"
-    - script: make edgesiteimage ARCH="amd64"
-      arch: amd64
-      name: "build edgesite image"
-    - script: make bluetoothdevice_image
-      arch: amd64
-      name: "build bluetoothdevice image"
-    # The e2e_test step must be placed in the last step of this stage 
-    # because it will modify the configuration file 
-    - script: make e2e_test
-      arch: amd64
-      name: "e2e_test"
 
-    - stage: "Build ,Unit test, Build DockerImage on arm64"
-      script: make
+        # cross build edge
+        - make edge_cross_build 
+        # cross build edge for armv7
+        - make edge_cross_build_v7 
+        # cross build edgesite
+        - make edgesite_cross_build 
+        # cross build edgeite for armv7
+        - make edgesite_cross_build_v7 
+
+    - name: "build cloud image, admissionimage, edgeimage, edgesiteimage, bluetoothdevice image" 
+      arch: amd64
+      script: 
+        # build cloudimage
+        - make cloudimage 
+        # build admission image
+        - make admissionimage 
+        # build edge image
+        - make edgeimage ARCH="amd64" 
+        # build edgesite image
+        - make edgesiteimage ARCH="amd64" 
+        # build bluetoothdevice image
+        - make bluetoothdevice_image 
+
+
+    - stage: "CI on arm64"
       arch: arm64
-      name: "builds cloud and edge components"
-    - script: make bluetoothdevice
+      name: "Build components, bluetoothdevice, edge_small_build"
+      script: 
+        # builds cloud and edge components
+        - make 
+        # build bluetooth_device
+        - make bluetoothdevice 
+        # build small edge version
+        - make edge_small_build 
+
+    - name: "cloud test, edge test"
       arch: arm64
-      name: "build bluetooth_device"
-    - script: make edge_small_build
+      script:
+        # unit test cloud
+        - make cloud_test  
+        # unit test edge 
+        - make edge_test
+
+    - name: "build cloudimage,admissionimage,edgeimage,bluetoothdevice image, edgesiteimage"
       arch: arm64
-      name: "build small edge version"
-    - script: make edge_test
-      arch: arm64
-      name: "unit test edge"
-    - script: make cloud_test
-      arch: arm64
-      name: "unit test cloud"
-    - script: make cloudimage
-      arch: arm64
-      name: "build cloudimage"
-    - script: make admissionimage
-      arch: arm64
-      name: "build admission image"
-    - script: make edgeimage ARCH="arm64v8"
-      arch: arm64
-      name: "build edge image"
-    - script: make edgesiteimage ARCH="arm64v8"
-      arch: arm64
-      name: "build edgesite image"
-    - script: make bluetoothdevice_image
-      arch: arm64
-      name: "build bluetoothdevice image"
+      script:
+        # build cloudimage 
+        - make cloudimage 
+        # build admission image
+        - make admissionimage 
+        # build edge image
+        - make edgeimage ARCH="arm64v8" 
+        # build bluetoothdevice image
+        - make bluetoothdevice_image 
+         # build edgesite image
+        - make edgesiteimage ARCH="arm64v8" 
