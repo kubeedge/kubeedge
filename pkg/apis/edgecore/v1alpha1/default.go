@@ -152,8 +152,8 @@ func newDefaultModules() metaconfig.Modules {
 // newDefaultMetamanager return a default Metamanager object
 func newDefaultMetamanager() MetaManager {
 	return MetaManager{
-		ContextSendGroup:  "hub",
-		ContextSendModule: "websocket",
+		ContextSendGroup:  metaconfig.GroupNameHub,
+		ContextSendModule: metaconfig.ModuleNameWebsocket,
 		EdgeSite:          false,
 	}
 }

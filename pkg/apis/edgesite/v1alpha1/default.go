@@ -110,8 +110,8 @@ func newDefaultModules() metaconfig.Modules {
 // newDefaultMetamanager return a default MetaManager object
 func newDefaultMetamanager() edgecoreconfig.MetaManager {
 	return edgecoreconfig.MetaManager{
-		ContextSendGroup:  "edgecontroller",
-		ContextSendModule: "edgecontroller",
+		ContextSendGroup:  metaconfig.GroupNameEdgeController,
+		ContextSendModule: metaconfig.ModuleNameEdgeController,
 		EdgeSite:          true,
 	}
 }

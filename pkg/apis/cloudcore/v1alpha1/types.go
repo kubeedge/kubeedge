@@ -96,11 +96,11 @@ type CloudHubConfig struct {
 
 type ControllerContext struct {
 	// SendModule set which module will send message to
-	SendModule string `json:"sendModule,omitempty"`
+	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
 	// ReceiveModule set which module will receive message from
-	ReceiveModule string `json:"receiveModule,omitempty"`
+	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
 	// ResponseModule set which module will response message to
-	ResponseModule string `json:"responseModule,omitempty"`
+	ResponseModule metaconfig.ModuleName `json:"responseModule,omitempty"`
 }
 
 type KubeConfig struct {

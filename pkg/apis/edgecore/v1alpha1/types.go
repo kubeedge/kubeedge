@@ -206,9 +206,9 @@ type LoadbalanceConfig struct {
 
 type MetaManager struct {
 	// ContextSendGroup set send group
-	ContextSendGroup string `json:"contextSendGroup,omitempty"`
+	ContextSendGroup metaconfig.GroupName `json:"contextSendGroup,omitempty"`
 	// ContextSendModule set send module
-	ContextSendModule string `json:"contextSendModule,omitempty"`
+	ContextSendModule metaconfig.ModuleName `json:"contextSendModule,omitempty"`
 	// EdgeSite standfor whether set edgesite
 	EdgeSite bool `json:"edgeSite,omitempty"`
 }
