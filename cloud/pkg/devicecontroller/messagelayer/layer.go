@@ -14,7 +14,7 @@ type MessageLayer interface {
 
 // NewMessageLayer by config, currently only context
 func NewMessageLayer() (MessageLayer, error) {
-	switch config.MessageLayer {
+	switch config.Get().MessageLayer {
 	case "context":
 		return NewContextMessageLayer()
 	default:

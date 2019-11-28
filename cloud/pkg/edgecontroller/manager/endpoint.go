@@ -23,7 +23,7 @@ func (sm *EndpointsManager) Events() chan watch.Event {
 // NewEndpointsManager create EndpointsManager by kube clientset and namespace
 func NewEndpointsManager(kubeClient *kubernetes.Clientset, namespace string) (*EndpointsManager, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "endpoints", namespace, fields.Everything())
-	events := make(chan watch.Event, config.EndpointsEventBuffer)
+	events := make(chan watch.Event, config.Get().EndpointsEventBuffer)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1.Endpoints{}, 0)
 	si.AddEventHandler(rh)

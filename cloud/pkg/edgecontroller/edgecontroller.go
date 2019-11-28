@@ -20,6 +20,7 @@ func newEdgeController() *EdgeController {
 }
 
 func Register() {
+	config.InitConfigure()
 	core.Register(newEdgeController())
 }
 
@@ -35,8 +36,6 @@ func (ctl *EdgeController) Group() string {
 
 // Start controller
 func (ctl *EdgeController) Start() {
-	initConfig()
-
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
@@ -50,12 +49,4 @@ func (ctl *EdgeController) Start() {
 		os.Exit(1)
 	}
 	downstream.Start()
-}
-
-func initConfig() {
-	config.InitBufferConfig()
-	config.InitContextConfig()
-	config.InitKubeConfig()
-	config.InitLoadConfig()
-	config.InitMessageLayerConfig()
 }
