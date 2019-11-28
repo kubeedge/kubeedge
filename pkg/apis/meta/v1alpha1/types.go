@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 type ModuleName string
+type GroupName string
 
 const (
 	// Available modules for CloudCore
@@ -33,6 +34,12 @@ const (
 	ModuleNameTwin        ModuleName = "twin"
 	ModuleNameDBTest      ModuleName = "dbTest"
 	ModuleNameEdgeMesh    ModuleName = "edgemesh"
+)
+
+const (
+	// Available modules group
+	GroupNameHub            GroupName = "hub"
+	GroupNameEdgeController GroupName = "edgecontroller"
 )
 
 type Modules struct {

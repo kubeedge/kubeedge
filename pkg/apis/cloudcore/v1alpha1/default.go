@@ -43,9 +43,9 @@ func newDefaultEdgeControllerConfig() EdgeControllerConfig {
 	return EdgeControllerConfig{
 		NodeUpdateFrequency: 10,
 		ControllerContext: ControllerContext{
-			SendModule:     constants.CloudHubControllerModuleName,
-			ReceiveModule:  constants.EdgeControllerModuleName,
-			ResponseModule: constants.CloudHubControllerModuleName,
+			SendModule:     metaconfig.ModuleNameCloudHub,
+			ReceiveModule:  metaconfig.ModuleNameEdgeController,
+			ResponseModule: metaconfig.ModuleNameCloudHub,
 		},
 	}
 }
@@ -54,9 +54,9 @@ func newDefaultEdgeControllerConfig() EdgeControllerConfig {
 func newDefaultDeviceControllerConfig() DeviceControllerConfig {
 	return DeviceControllerConfig{
 		ControllerContext: ControllerContext{
-			SendModule:     constants.CloudHubControllerModuleName,
-			ReceiveModule:  constants.DeviceControllerModuleName,
-			ResponseModule: constants.CloudHubControllerModuleName,
+			SendModule:     metaconfig.ModuleNameCloudHub,
+			ReceiveModule:  metaconfig.ModuleNameDeviceController,
+			ResponseModule: metaconfig.ModuleNameCloudHub,
 		},
 	}
 }
