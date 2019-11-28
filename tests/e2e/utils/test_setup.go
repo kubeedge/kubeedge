@@ -18,7 +18,9 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
@@ -35,12 +37,21 @@ func GenerateCerts() error {
 
 func StartCloudCore() error {
 	//Run ./cloudcore binary
-	cmd := exec.Command("sh", "-c", constants.RunController)
+	cmd := exec.Command("sh", "-c", constants.RunCloudcore)
 	if err := PrintCombinedOutput(cmd); err != nil {
 		return err
 	}
 	//Expect(err).Should(BeNil())
 	time.Sleep(5 * time.Second)
+
+	checkcmd := exec.Command("sh", "-c", constants.CheckCloudcore)
+	if err := PrintCombinedOutput(checkcmd); err != nil {
+		catcmd := exec.Command("sh", "-c", constants.CatCloudcoreLog)
+		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
+		bytes, _ := catcmd.CombinedOutput()
+		Errorf("Failed to run cloudcore, error log:\n %v", string(bytes))
+		os.Exit(1)
+	}
 	return nil
 }
 
@@ -52,6 +63,35 @@ func StartEdgeCore() error {
 	}
 	//Expect(err).Should(BeNil())
 	time.Sleep(5 * time.Second)
+
+	checkcmd := exec.Command("sh", "-c", constants.CheckEdgecore)
+	if err := PrintCombinedOutput(checkcmd); err != nil {
+		catcmd := exec.Command("sh", "-c", constants.CatEdgecoreLog)
+		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
+		bytes, _ := catcmd.CombinedOutput()
+		Errorf("Failed to run edgecore, error log:\n %v", string(bytes))
+		os.Exit(1)
+	}
+	return nil
+}
+
+func StartEdgeSite() error {
+	//Run ./edgecore after node registration
+	cmd := exec.Command("sh", "-c", constants.RunEdgeSite)
+	if err := PrintCombinedOutput(cmd); err != nil {
+		return err
+	}
+	//Expect(err).Should(BeNil())
+	time.Sleep(5 * time.Second)
+
+	checkcmd := exec.Command("sh", "-c", constants.CheckEdgesite)
+	if err := PrintCombinedOutput(checkcmd); err != nil {
+		catcmd := exec.Command("sh", "-c", constants.CatEdgeSiteLog)
+		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
+		bytes, _ := catcmd.CombinedOutput()
+		Errorf("Failed to run edgesite, error log:\n %v", string(bytes))
+		os.Exit(1)
+	}
 	return nil
 }
 
@@ -73,16 +113,5 @@ func CleanUp(setupType string) error {
 		return err
 	}
 	time.Sleep(2 * time.Second)
-	return nil
-}
-
-func StartEdgeSite() error {
-	//Run ./edgecore after node registration
-	cmd := exec.Command("sh", "-c", constants.RunEdgeSite)
-	if err := PrintCombinedOutput(cmd); err != nil {
-		return err
-	}
-	//Expect(err).Should(BeNil())
-	time.Sleep(5 * time.Second)
 	return nil
 }

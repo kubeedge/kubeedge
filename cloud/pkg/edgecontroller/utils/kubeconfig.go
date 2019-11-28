@@ -9,13 +9,13 @@ import (
 
 // KubeConfig from flags
 func KubeConfig() (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Kube.KubeMaster, config.Kube.KubeConfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Get().KubeMaster, config.Get().KubeConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeConfig.QPS = config.Kube.KubeQPS
-	kubeConfig.Burst = config.Kube.KubeBurst
-	kubeConfig.ContentType = config.Kube.KubeContentType
+	kubeConfig.QPS = config.Get().KubeQPS
+	kubeConfig.Burst = config.Get().KubeBurst
+	kubeConfig.ContentType = config.Get().KubeContentType
 
 	return kubeConfig, nil
 }
