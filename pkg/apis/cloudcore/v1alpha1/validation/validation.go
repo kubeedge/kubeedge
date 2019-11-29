@@ -17,7 +17,9 @@ limitations under the License.
 package validation
 
 import (
+	"fmt"
 	"path"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -60,25 +62,12 @@ func ValidateDeviceControllerConfiguration(d cloudconfig.DeviceControllerConfig)
 // ValidateCloudHubConfiguration validates `c` and returns an errorList if it is invalid
 func ValidateCloudHubConfiguration(c cloudconfig.CloudHubConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	validWPort := utilvalidation.IsValidPortNum(int(c.WebsocketPort))
-	validQPort := utilvalidation.IsValidPortNum(int(c.QuicPort))
-	validAddress := utilvalidation.IsValidIP(c.Address)
+
+	allErrs = append(allErrs, ValidateCloudHubWebSocket(c.WebSocket)...)
+	allErrs = append(allErrs, ValidateCloudHubQuic(c.Quic)...)
+	allErrs = append(allErrs, ValidateCloudHubUnixSocket(c.UnixSocket)...)
+
 	switch {
-	case len(validWPort) > 0:
-		for _, m := range validWPort {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.WebsocketPort, m))
-		}
-		fallthrough
-	case len(validQPort) > 0:
-		for _, m := range validWPort {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.QuicPort, m))
-		}
-		fallthrough
-	case len(validAddress) > 0:
-		for _, m := range validAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Address, m))
-		}
-		fallthrough
 	case !utilvalidation.FileIsExist(c.TLSPrivateKeyFile):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
 		fallthrough
@@ -89,6 +78,66 @@ func ValidateCloudHubConfiguration(c cloudconfig.CloudHubConfig) field.ErrorList
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"), c.TLSCAFile, "TLSCAFile not exist"))
 		fallthrough
 	default:
+	}
+	return allErrs
+}
+
+// ValidateCloudHubWebSocket validates `ws` and returns an errorList if it is invalid
+func ValidateCloudHubWebSocket(ws cloudconfig.CloudHubWebSocket) field.ErrorList {
+	allErrs := field.ErrorList{}
+	validWPort := utilvalidation.IsValidPortNum(int(ws.WebsocketPort))
+	validAddress := utilvalidation.IsValidIP(ws.Address)
+	switch {
+	case len(validWPort) > 0:
+		for _, m := range validWPort {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), ws.WebsocketPort, m))
+		}
+		fallthrough
+	case len(validAddress) > 0:
+		for _, m := range validAddress {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), ws.Address, m))
+		}
+		fallthrough
+	default:
+	}
+	return allErrs
+}
+
+// ValidateCloudHubQuic validates `q` and returns an errorList if it is invalid
+func ValidateCloudHubQuic(q cloudconfig.CloudHubQuic) field.ErrorList {
+	allErrs := field.ErrorList{}
+	validQPort := utilvalidation.IsValidPortNum(int(q.QuicPort))
+	validAddress := utilvalidation.IsValidIP(q.Address)
+	switch {
+	case len(validQPort) > 0:
+		for _, m := range validQPort {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), q.QuicPort, m))
+		}
+		fallthrough
+	case len(validAddress) > 0:
+		for _, m := range validAddress {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), q.Address, m))
+		}
+		fallthrough
+	default:
+	}
+	return allErrs
+}
+
+// ValidateCloudHubUnixSocket validates `us` and returns an errorList if it is invalid
+func ValidateCloudHubUnixSocket(us cloudconfig.CloudHubUnixSocket) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !strings.HasPrefix(strings.ToLower(us.UnixSocketAddress), "unix://") {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("unixSocketAddress"),
+			us.UnixSocketAddress, "unixSocketAddress must has prefix unix://"))
+	}
+	s := strings.SplitN(us.UnixSocketAddress, "://", 2)
+	if len(s) > 1 && !utilvalidation.FileIsExist(path.Dir(s[1])) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("unixSocketAddress"),
+			us.UnixSocketAddress,
+			fmt.Sprintf("unixSocketAddress %v dir %v not exist , need create it",
+				us.UnixSocketAddress, path.Dir(s[1]))))
 	}
 	return allErrs
 }

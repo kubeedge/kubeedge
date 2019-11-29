@@ -17,12 +17,6 @@ limitations under the License.
 package v1alpha1
 
 const (
-	InternalMqttMode = iota // 0: launch an internal mqtt broker.
-	BothMqttMode            // 1: launch an internal and external mqtt broker.
-	ExternalMqttMode        // 2: launch an external mqtt broker.
-)
-
-const (
 	GroupName  = "edgecore.config.kubeedge.io"
 	APIVersion = "v1alpha1"
 	Kind       = "edgecore"

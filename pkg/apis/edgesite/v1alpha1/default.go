@@ -79,7 +79,7 @@ func newDefaultMqttConfig() edgecoreconfig.MqttConfig {
 	return edgecoreconfig.MqttConfig{
 		Server:           "tcp://127.0.0.1:1883",
 		InternalServer:   "tcp://127.0.0.1:1884",
-		Mode:             edgecoreconfig.ExternalMqttMode,
+		Mode:             edgecoreconfig.MqttModeExternal,
 		QOS:              0,
 		Retain:           false,
 		SessionQueueSize: 100,

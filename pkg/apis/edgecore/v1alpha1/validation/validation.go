@@ -38,10 +38,11 @@ func ValidateEdgeCoreConfiguration(c *edgecoreconfig.EdgeCoreConfig) field.Error
 func ValidateMqttConfiguration(m edgecoreconfig.MqttConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	switch {
-	case m.Mode > edgecoreconfig.ExternalMqttMode || m.Mode < edgecoreconfig.InternalMqttMode:
+	case m.Mode > edgecoreconfig.MqttModeExternal || m.Mode < edgecoreconfig.MqttModeInternal:
 		allErrs = append(allErrs, field.Invalid(field.NewPath("Mode"), m.Mode,
-			fmt.Sprintf("Mode need in [%v,%v] range", edgecoreconfig.InternalMqttMode,
-				edgecoreconfig.ExternalMqttMode)))
+			fmt.Sprintf("Mode need in [%v,%v] range", edgecoreconfig.MqttModeInternal,
+				edgecoreconfig.MqttModeExternal)))
+		fallthrough
 	default:
 
 	}
