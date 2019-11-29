@@ -18,6 +18,19 @@ package v1alpha1
 
 import metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 
+const (
+	LoadBalanceStrategNameRoundRobin LoadBalanceStrategName = "RoundRobin"
+)
+
+const (
+	MqttModeInternal MqttMode = 0
+	MqttModeBoth     MqttMode = 1
+	MqttModeExternal MqttMode = 2
+)
+
+type LoadBalanceStrategName string
+type MqttMode int
+
 type EdgeCoreConfig struct {
 	metaconfig.TypeMeta
 	// Mqtt set mqtt config for edgecore
@@ -50,15 +63,17 @@ type MqttConfig struct {
 	// Mode set which broker type will be choose
 	// 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only
 	// default: 0
-	Mode uint8 `json:"mode,omitempty"`
+	Mode MqttMode `json:"mode,omitempty"`
 	// QOS set mqtt qos
 	// 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce
 	// default 0
-	QOS uint8 `json:"qos,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	QOS uint8 `json:"qos"`
 	// Retain set whether server will store the message and can be delivered to future subscribers
 	// if this flag set true, sever will store the message and can be delivered to future subscribers
 	// default false
-	Retain bool `json:"retain,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	Retain bool `json:"retain"`
 	// SessionQueueSize set size of how many sessions will be handled.
 	// default 100
 	SessionQueueSize int32 `json:"sessionQueueSize,omitempty"`
@@ -69,19 +84,28 @@ type EdgeHubConfig struct {
 	WebSocket WebSocketConfig `json:"webSocket,omitempty"`
 	// Quic set quic config for edgehub module
 	Quic QuicConfig `json:"quic,omitempty"`
-	// Controller set controller config for edgehub module
-	Controller ControllerConfig `json:"controller,omitempty"`
-}
-
-type WebSocketConfig struct {
-	// Server set websocket server address (ip:port)
-	Server string `json:"server,omitempty"`
+	// Protocol set which protocol will be use, now support:websocket, quic
+	// default: websocket
+	Protocol string `json:"protocol,omitempty"`
+	// Heartbeat set heart beat (second)
+	// default 15
+	Heartbeat int32 `json:"heartbeat,omitempty"`
+	// ProjectId set project id
+	// default e632aba927ea4ac2b575ec1603d56f10
+	// TLSCaFile set ca file path
+	// default /etc/kubeedge/ca/rootCA.crt
+	TLSCaFile string `json:"tlsCaFile,omitempty"`
 	// TLSCertFile is the file containing x509 Certificate for HTTPS
 	// default /etc/kubeedge/certs/edge.crt
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile is the file containing x509 private key matching tlsCertFile
 	// default /etc/kubeedge/certs/edge.key
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
+}
+
+type WebSocketConfig struct {
+	// Server set websocket server address (ip:port)
+	Server string `json:"server,omitempty"`
 	// HandshakeTimeout set handshake timeout (second)
 	// default  30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
@@ -96,15 +120,6 @@ type WebSocketConfig struct {
 type QuicConfig struct {
 	// Server set quic server addres (ip:port)
 	Server string `json:"server,omitempty"`
-	// TLSCaFile set ca file path
-	// default /etc/kubeedge/ca/rootCA.crt
-	TLSCaFile string `json:"tlsCaFile,omitempty"`
-	// TLSCertFile is the file containing x509 Certificate for HTTPS
-	// default /etc/kubeedge/certs/edge.crt
-	TLSCertFile string `json:"tlsCertFile,omitempty"`
-	// TLSPrivateKeyFile is the file containing x509 private key matching tlsCertFile
-	// default /etc/kubeedge/certs/edge.key
-	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// HandshakeTimeout set hand shake timeout (second)
 	// default 30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
@@ -114,17 +129,6 @@ type QuicConfig struct {
 	// ReadDeadline set read dead line (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
-}
-
-type ControllerConfig struct {
-	// Protocol set which protocol will be use, now support:websocket, quic
-	// default: websocket
-	Protocol string `json:"protocol,omitempty"`
-	// Heartbeat set heart beat (second)
-	// default 15
-	Heartbeat int32 `json:"heartbeat,omitempty"`
-	// ProjectId set project id
-	// default e632aba927ea4ac2b575ec1603d56f10
 }
 
 type EdgedConfig struct {
@@ -144,10 +148,12 @@ type EdgedConfig struct {
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
 	// DevicePluginEnabled set enable device plugin
 	// default false
-	DevicePluginEnabled bool `json:"devicePluginEnabled,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	DevicePluginEnabled bool `json:"devicePluginEnabled"`
 	// GPUPluginEnabled set enable gpu gplugin
-	// default false
-	GPUPluginEnabled bool `json:"gpuPluginEnabled,omitempty"`
+	// default false,
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	GPUPluginEnabled bool `json:"gpuPluginEnabled"`
 	// ImageGCHighThreshold set image gc high threshold (percent)
 	// default 80
 	ImageGCHighThreshold int32 `json:"imageGCHighThreshold,omitempty"`
@@ -185,11 +191,14 @@ type EdgedConfig struct {
 	// default cgroupfs
 	CgroupDriver string `json:"cgroupDriver,omitempty"`
 	// NodeIP set current node ip
-	NodeIP string `json:"nodeIP,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	NodeIP string `json:"nodeIP"`
 	// ClusterDNS set cluster dns
-	ClusterDNS string `json:"clusterDNS,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	ClusterDNS string `json:"clusterDNS"`
 	// ClusterDomain set cluster domain
-	ClusterDomain string `json:"clusterDomain,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	ClusterDomain string `json:"clusterDomain"`
 }
 
 type MeshConfig struct {
@@ -201,7 +210,7 @@ type MeshConfig struct {
 type LoadbalanceConfig struct {
 	// StrategyName set loadbalance stragey
 	// default RoundRobin
-	StrategyName string `json:"strategyName,omitempty"`
+	StrategyName LoadBalanceStrategName `json:"strategyName,omitempty"`
 }
 
 type MetaManager struct {
@@ -210,5 +219,7 @@ type MetaManager struct {
 	// ContextSendModule set send module
 	ContextSendModule metaconfig.ModuleName `json:"contextSendModule,omitempty"`
 	// EdgeSite standfor whether set edgesite
-	EdgeSite bool `json:"edgeSite,omitempty"`
+	// default false
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	EdgeSite bool `json:"edgeSite"`
 }

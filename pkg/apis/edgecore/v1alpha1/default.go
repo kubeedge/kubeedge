@@ -44,7 +44,7 @@ func newDefaultMqttConfig() MqttConfig {
 	return MqttConfig{
 		Server:           "tcp://127.0.0.1:1883",
 		InternalServer:   "tcp://127.0.0.1:1884",
-		Mode:             ExternalMqttMode,
+		Mode:             MqttModeExternal,
 		QOS:              0,
 		Retain:           false,
 		SessionQueueSize: 100,
@@ -54,42 +54,33 @@ func newDefaultMqttConfig() MqttConfig {
 // newDefaultEdgeHubConfig return a default EdgeHubConfig object
 func newDefaultEdgeHubConfig() EdgeHubConfig {
 	return EdgeHubConfig{
-		WebSocket:  newDefaultWebSocketConfig(),
-		Quic:       newDefaultQuicConfig(),
-		Controller: newDefaultControllerConfig(),
+		WebSocket:         newDefaultWebSocketConfig(),
+		Quic:              newDefaultQuicConfig(),
+		TLSCaFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
+		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
+		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
+		Protocol:          "websocket",
+		Heartbeat:         15,
 	}
 }
 
 // newDefaultWebSocketConfig return a default WebSocketConfig object
 func newDefaultWebSocketConfig() WebSocketConfig {
 	return WebSocketConfig{
-		Server:            "127.0.0.1:10000",
-		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
-		HandshakeTimeout:  30,
-		WriteDeadline:     15,
-		ReadDeadline:      15,
+		Server:           "127.0.0.1:10000",
+		HandshakeTimeout: 30,
+		WriteDeadline:    15,
+		ReadDeadline:     15,
 	}
 }
 
 // newDefaultQuicConfig return a default QuicConfig object
 func newDefaultQuicConfig() QuicConfig {
 	return QuicConfig{
-		Server:            "127.0.0.1:10001",
-		TLSCaFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
-		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
-		HandshakeTimeout:  30,
-		WriteDeadline:     15,
-		ReadDeadline:      15,
-	}
-}
-
-// newDefaultControllerConfig return a default ControllerConfig object
-func newDefaultControllerConfig() ControllerConfig {
-	return ControllerConfig{
-		Protocol:  "websocket",
-		Heartbeat: 15,
+		Server:           "127.0.0.1:10001",
+		HandshakeTimeout: 30,
+		WriteDeadline:    15,
+		ReadDeadline:     15,
 	}
 }
 
@@ -129,7 +120,7 @@ func newDefaultMeshConfig() MeshConfig {
 // newDefaultLoadbalanceConfig return a default LoadbalanceConfig object
 func newDefaultLoadbalanceConfig() LoadbalanceConfig {
 	return LoadbalanceConfig{
-		StrategyName: "RoundRobin",
+		StrategyName: LoadBalanceStrategNameRoundRobin,
 	}
 }
 
@@ -139,7 +130,7 @@ func newDefaultModules() metaconfig.Modules {
 		Enabled: []metaconfig.ModuleName{
 			metaconfig.ModuleNameEventBus,
 			metaconfig.ModuleNameServiceBus,
-			metaconfig.ModuleNameWebsocket,
+			metaconfig.ModuleNameEdgeHub,
 			metaconfig.ModuleNameMetaManager,
 			metaconfig.ModuleNameEdged,
 			metaconfig.ModuleNameTwin,
@@ -153,7 +144,7 @@ func newDefaultModules() metaconfig.Modules {
 func newDefaultMetamanager() MetaManager {
 	return MetaManager{
 		ContextSendGroup:  metaconfig.GroupNameHub,
-		ContextSendModule: metaconfig.ModuleNameWebsocket,
+		ContextSendModule: metaconfig.ModuleNameEdgeHub,
 		EdgeSite:          false,
 	}
 }

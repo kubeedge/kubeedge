@@ -50,30 +50,13 @@ type DeviceControllerConfig struct {
 }
 
 type CloudHubConfig struct {
-	// EnableWebsocket enable websocket protocol
-	// default true
-	EnableWebsocket bool `json:"enableWebsocket,omitempty"`
-	// WebsocketPort set open port for websocket server
-	// default 10000
-	WebsocketPort uint32 `json:"websocketPort,omitempty"`
-	// EnableQuic enable quic protocol
-	// default false
-	EnableQuic bool `json:"enableQuic,omitempty"`
-	// QuicPort set open port for quic server
-	// default 10001
-	QuicPort uint32 `json:"quicPort,omitempty"`
-	// MaxIncomingStreams set the max incoming stream for quic server
-	// default 10000
-	MaxIncomingStreams int32 `json:"maxIncomingStreams,omitempty"`
-	// EnableUnixSocket set enable unix domain socket protocol
-	// default true
-	EnableUnixSocket bool `json:"enableUnixSocket,omitempty"`
-	// UnixSocketAddress set unix domain socket address
-	// default unix:///var/lib/kubeedge/kubeedge.sock
-	UnixSocketAddress string `json:"unixSocketAddress,omitempty"`
-	// Address set server ip address
-	// default 0.0.0.0
-	Address string `json:"address,omitempty"`
+	// WebSocket set websocket server info
+	WebSocket CloudHubWebSocket `json:"websocket,omitempty"`
+	// Quic set quic server info
+	Quic CloudHubQuic `json:"quic,omitempty"`
+	// UnixSocket set unixsocket server info
+	UnixSocket CloudHubUnixSocket `json:"unixsocket,omitempty"`
+
 	// TLSCaFile set ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSCAFile string `json:"tlsCAFile,omitempty"`
@@ -94,6 +77,45 @@ type CloudHubConfig struct {
 	NodeLimit uint32 `json:"nodeLimit,omitempty"`
 }
 
+type CloudHubWebSocket struct {
+	// EnableWebsocket enable websocket protocol
+	// default true
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	EnableWebsocket bool `json:"enableWebsocket"`
+	// Address set server ip address
+	// default 0.0.0.0
+	Address string `json:"address,omitempty"`
+	// WebsocketPort set open port for websocket server
+	// default 10000
+	WebsocketPort uint32 `json:"websocketPort,omitempty"`
+}
+
+type CloudHubQuic struct {
+	// EnableQuic enable quic protocol
+	// default false
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	EnableQuic bool `json:"enableQuic,omitempty"`
+	// Address set server ip address
+	// default 0.0.0.0
+	Address string `json:"address,omitempty"`
+	// QuicPort set open port for quic server
+	// default 10001
+	QuicPort uint32 `json:"quicPort,omitempty"`
+	// MaxIncomingStreams set the max incoming stream for quic server
+	// default 10000
+	MaxIncomingStreams int32 `json:"maxIncomingStreams,omitempty"`
+}
+
+type CloudHubUnixSocket struct {
+	// EnableUnixSocket set enable unix domain socket protocol
+	// default true
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	EnableUnixSocket bool `json:"enableUnixSocket"`
+	// UnixSocketAddress set unix domain socket address
+	// default unix:///var/lib/kubeedge/kubeedge.sock
+	UnixSocketAddress string `json:"unixSocketAddress,omitempty"`
+}
+
 type ControllerContext struct {
 	// SendModule set which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
@@ -107,7 +129,8 @@ type KubeConfig struct {
 	// Master set the address of the Kubernetes API server (overrides any value in Kubeconfig)
 	// such as https://127.0.0.1:8443
 	// default ""
-	Master string `json:"master,omitempty"`
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	Master string `json:"master"`
 	// Kubeconfig set path to kubeconfig file with authorization and master location information.
 	// default "/root/.kube/config"
 	KubeConfig string `json:"kubeConfig,omitempty"`

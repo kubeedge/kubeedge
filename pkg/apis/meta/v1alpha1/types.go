@@ -19,16 +19,18 @@ package v1alpha1
 type ModuleName string
 type GroupName string
 
+// Available modules for CloudCore
 const (
-	// Available modules for CloudCore
 	ModuleNameEdgeController   ModuleName = "edgecontroller"
 	ModuleNameDeviceController ModuleName = "devicecontroller"
 	ModuleNameCloudHub         ModuleName = "cloudhub"
+)
 
-	// Available modules for EdgeCore
+// Available modules for EdgeCore
+const (
 	ModuleNameEventBus    ModuleName = "eventbus"
 	ModuleNameServiceBus  ModuleName = "servicebus"
-	ModuleNameWebsocket   ModuleName = "websocket"
+	ModuleNameEdgeHub     ModuleName = "websocket"
 	ModuleNameMetaManager ModuleName = "metaManager"
 	ModuleNameEdged       ModuleName = "edged"
 	ModuleNameTwin        ModuleName = "twin"
@@ -36,10 +38,16 @@ const (
 	ModuleNameEdgeMesh    ModuleName = "edgemesh"
 )
 
+// Available modules group
 const (
-	// Available modules group
 	GroupNameHub            GroupName = "hub"
 	GroupNameEdgeController GroupName = "edgecontroller"
+	GroupNameBus            GroupName = "bus"
+	GroupNameTwin           GroupName = "twin"
+	GroupNameMeta           GroupName = "meta"
+	GroupNameEdged          GroupName = "edged"
+	GroupNameUser           GroupName = "user"
+	GroupNameMesh           GroupName = "mesh"
 )
 
 type Modules struct {

@@ -64,20 +64,39 @@ func newDefaultDeviceControllerConfig() DeviceControllerConfig {
 // newDefaultCloudHubConfig return a default CloudHubConfig object
 func newDefaultCloudHubConfig() CloudHubConfig {
 	return CloudHubConfig{
-		EnableWebsocket:    true,
-		WebsocketPort:      10000,
+		WebSocket:         newDefaultCloudHubWebSocket(),
+		Quic:              newDefaultCloudHubQuic(),
+		UnixSocket:        newDefaultCloudHubUnixSocket(),
+		TLSCAFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
+		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
+		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
+		KeepaliveInterval: 30,
+		WriteTimeout:      30,
+		NodeLimit:         10,
+	}
+}
+
+func newDefaultCloudHubWebSocket() CloudHubWebSocket {
+	return CloudHubWebSocket{
+		EnableWebsocket: true,
+		WebsocketPort:   10000,
+		Address:         "0.0.0.0",
+	}
+}
+
+func newDefaultCloudHubQuic() CloudHubQuic {
+	return CloudHubQuic{
 		EnableQuic:         false,
 		QuicPort:           10001,
 		MaxIncomingStreams: 10000,
-		EnableUnixSocket:   true,
-		UnixSocketAddress:  "unix:///var/lib/kubeedge/kubeedge.sock",
 		Address:            "0.0.0.0",
-		TLSCAFile:          path.Join(constants.DefaultCADir, "rootCA.crt"),
-		TLSCertFile:        path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile:  path.Join(constants.DefaultCertDir, "edge.key"),
-		KeepaliveInterval:  30,
-		WriteTimeout:       30,
-		NodeLimit:          10,
+	}
+}
+
+func newDefaultCloudHubUnixSocket() CloudHubUnixSocket {
+	return CloudHubUnixSocket{
+		EnableUnixSocket:  true,
+		UnixSocketAddress: "unix:///var/lib/kubeedge/kubeedge.sock",
 	}
 }
 
