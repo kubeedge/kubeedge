@@ -18,10 +18,13 @@ package validation
 
 import (
 	"fmt"
+	"os"
+	"path"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 // ValidateEdgeCoreConfiguration validates `c` and returns an errorList if it is invalid
@@ -31,6 +34,7 @@ func ValidateEdgeCoreConfiguration(c *edgecoreconfig.EdgeCoreConfig) field.Error
 	allErrs = append(allErrs, ValidateEdgeHubConfiguration(c.EdgeHub)...)
 	allErrs = append(allErrs, ValidateEdgedConfiguration(c.Edged)...)
 	allErrs = append(allErrs, ValidateMeshConfiguration(c.Mesh)...)
+	allErrs = append(allErrs, ValidateDataBaseConfiguration(c.DataBase)...)
 	return allErrs
 }
 
@@ -76,5 +80,20 @@ func ValidateEdgedConfiguration(e edgecoreconfig.EdgedConfig) field.ErrorList {
 func ValidateMeshConfiguration(m edgecoreconfig.MeshConfig) field.ErrorList {
 	// TODO check meshconfig @kadisi
 	allErrs := field.ErrorList{}
+	return allErrs
+}
+
+// ValidateDataBaseConfiguration validates `db` and returns an errorList if it is invalid
+func ValidateDataBaseConfiguration(db edgecoreconfig.DataBase) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	sourceDir := path.Dir(db.DataSource)
+	if !utilvalidation.FileIsExist(sourceDir) {
+		if err := os.MkdirAll(sourceDir, os.ModePerm); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("DataSource"), db.DataSource,
+				fmt.Sprintf("create DataSoure dir %v error ", sourceDir)))
+		}
+	}
+
 	return allErrs
 }

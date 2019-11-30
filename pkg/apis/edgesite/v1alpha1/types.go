@@ -42,4 +42,7 @@ type EdgeSideConfig struct {
 	// +Required
 	// set meta module config ,shared with edgecore Metamanager config
 	MetaManager edgecoreconfig.MetaManager `json:"metaManager,omitempty"`
+	// DataBase set DataBase config
+	// +Required
+	DataBase edgecoreconfig.DataBase `json:"database,omitempty"`
 }

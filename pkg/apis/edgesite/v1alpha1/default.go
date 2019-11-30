@@ -37,6 +37,7 @@ func NewDefaultEdgeSideConfig() *EdgeSideConfig {
 		Edged:             newDefaultEdgedConfig(),
 		Modules:           newDefaultModules(),
 		MetaManager:       newDefaultMetamanager(),
+		DataBase:          newDefaultDataBase(),
 	}
 }
 
@@ -113,5 +114,14 @@ func newDefaultMetamanager() edgecoreconfig.MetaManager {
 		ContextSendGroup:  metaconfig.GroupNameEdgeController,
 		ContextSendModule: metaconfig.ModuleNameEdgeController,
 		EdgeSite:          true,
+	}
+}
+
+// newDefaultDataBase return a default DataBase object
+func newDefaultDataBase() edgecoreconfig.DataBase {
+	return edgecoreconfig.DataBase{
+		DriverName: edgecoreconfig.DataBaseDriverName,
+		AliasName:  edgecoreconfig.DataBaseAliasName,
+		DataSource: edgecoreconfig.DataBaseDataSource,
 	}
 }
