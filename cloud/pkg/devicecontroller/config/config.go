@@ -48,12 +48,14 @@ func InitConfigure() {
 
 		km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get devicecontroller.kube.master configuration key error %v", err))
+			km = ""
+			klog.Infof("can not get devicecontroller.kube.master key, use default value %v", km)
 		}
 		kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get devicecontroller.kube.kubeconfig configuration key error %v", err))
 		}
+
 		kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get devicecontroller.kube.content_type configuration key error %v", err))

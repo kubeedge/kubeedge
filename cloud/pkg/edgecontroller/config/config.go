@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -250,10 +249,6 @@ func InitConfigure() {
 			kc = ""
 			klog.Infof("can not get key controller.kube.kubeconfig, use default value %v", kc)
 		}
-		if km == "" && kc == "" {
-			errs = append(errs, fmt.Errorf("controller.kube.kubeconfig and controller.kube.master are not both setd"))
-		}
-
 		kct, err := config.CONFIG.GetValue("controller.kube.content_type").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
