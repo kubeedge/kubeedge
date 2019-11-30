@@ -88,7 +88,7 @@ docker_set(){
     #
     # Example
     # 
-    #  ./build.sh set \
+    #  ./run_daemon.sh set \
     #    cloudhub=0.0.0.0:10000 \
     #    edgename=edge-node \
     #    edgecore_image="kubeedge/edgecore:latest" \
@@ -108,7 +108,7 @@ docker_set(){
 
     [[ ! -z $cloudhub ]] &&  sed -i "/CLOUDHUB=/c\CLOUDHUB=${cloudhub}" .env && echo "set cloudhub success"
     [[ ! -z $edgename ]] &&  sed -i "/EDGENAME=/c\EDGENAME=${edgename}" .env && echo "set edgename success"
-    [[ ! -z $edge_code_image_tag ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=kubeedge/edgecore:${edgecore_image}" .env && echo "set edgecore_image success"
+    [[ ! -z $edgecore_image ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=${edgecore_image}" .env && echo "set edgecore_image success"
     [[ ! -z $arch ]] &&  sed -i "/\<ARCH\>/c\ARCH=${arch}" .env && echo "set arch success"
     [[ ! -z $qemu_arch ]] &&  sed -i "/QEMU_ARCH=/c\QEMU_ARCH=${qemu_arch}" .env && echo "set qemu_arch success"
     [[ ! -z $certpath ]] &&  sed -i "/CERTPATH=/c\CERTPATH=${certpath}" .env && echo "set certpath success"
