@@ -31,5 +31,6 @@ func ValidateEdgeSideConfiguration(c *siteconfig.EdgeSideConfig) field.ErrorList
 	allErrs = append(allErrs, edgevalidation.ValidateMqttConfiguration(c.Mqtt)...)
 	allErrs = append(allErrs, cloudvalidation.ValidateKubeConfiguration(c.Kube)...)
 	allErrs = append(allErrs, edgevalidation.ValidateEdgedConfiguration(c.Edged)...)
+	allErrs = append(allErrs, edgevalidation.ValidateDataBaseConfiguration(c.DataBase)...)
 	return allErrs
 }

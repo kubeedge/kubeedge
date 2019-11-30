@@ -36,6 +36,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		Mesh:        newDefaultMeshConfig(),
 		Modules:     newDefaultModules(),
 		MetaManager: newDefaultMetamanager(),
+		DataBase:    newDefaultDataBase(),
 	}
 }
 
@@ -59,7 +60,7 @@ func newDefaultEdgeHubConfig() EdgeHubConfig {
 		TLSCaFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
 		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
 		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
-		Protocol:          "websocket",
+		Protocol:          ProtocolNameWebSocket,
 		Heartbeat:         15,
 	}
 }
@@ -146,5 +147,14 @@ func newDefaultMetamanager() MetaManager {
 		ContextSendGroup:  metaconfig.GroupNameHub,
 		ContextSendModule: metaconfig.ModuleNameEdgeHub,
 		EdgeSite:          false,
+	}
+}
+
+// newDefaultDataBase return a default DataBase object
+func newDefaultDataBase() DataBase {
+	return DataBase{
+		DriverName: DataBaseDriverName,
+		AliasName:  DataBaseAliasName,
+		DataSource: DataBaseDataSource,
 	}
 }

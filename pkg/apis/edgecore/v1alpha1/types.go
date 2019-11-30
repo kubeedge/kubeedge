@@ -28,7 +28,22 @@ const (
 	MqttModeExternal MqttMode = 2
 )
 
+const (
+	ProtocolNameWebSocket ProtocolName = "websocket"
+	ProtocolNameQuic      ProtocolName = "quic"
+)
+
+const (
+	// DataBaseDriverName is sqlite3
+	DataBaseDriverName = "sqlite3"
+	// DataBaseAliasName is default
+	DataBaseAliasName = "default"
+	// DataBaseDataSource is edge.db
+	DataBaseDataSource = "/var/lib/kubeedge/edge.db"
+)
+
 type LoadBalanceStrategName string
+type ProtocolName string
 type MqttMode int
 
 type EdgeCoreConfig struct {
@@ -51,6 +66,9 @@ type EdgeCoreConfig struct {
 	// MetaManager set meta module config
 	// +Required
 	MetaManager MetaManager `json:"metaManager,omitempty"`
+	// DataBase set DataBase config
+	// +Required
+	DataBase DataBase `json:"database,omitempty"`
 }
 
 type MqttConfig struct {
@@ -86,7 +104,7 @@ type EdgeHubConfig struct {
 	Quic QuicConfig `json:"quic,omitempty"`
 	// Protocol set which protocol will be use, now support:websocket, quic
 	// default: websocket
-	Protocol string `json:"protocol,omitempty"`
+	Protocol ProtocolName `json:"protocol,omitempty"`
 	// Heartbeat set heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
@@ -222,4 +240,17 @@ type MetaManager struct {
 	// default false
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
 	EdgeSite bool `json:"edgeSite"`
+}
+
+type DataBase struct {
+	// DriverName set database driver name
+	// default sqlite3
+	DriverName string `json:"drivername,omitempty"`
+	// AliasName set alias name
+	// default default
+	AliasName string `json:"aliasname,omitempty"`
+	// DataSource set the data source path
+	// default /var/lib/kubeedge/edge.db
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	DataSource string `json:"datasource,omitempty"`
 }
