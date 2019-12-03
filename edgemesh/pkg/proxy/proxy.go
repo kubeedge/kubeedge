@@ -290,9 +290,16 @@ func (at *addrTable) getAddrTable(key string) *serviceTable {
 // filterResourceType implement filter. Proxy cares "Service" and "ServiceList" type
 func filterResourceType(msg model.Message) []v1.Service {
 	svcs := make([]v1.Service, 0)
-	content, ok := msg.Content.([]byte)
-	if !ok {
-		return svcs
+	var content []byte
+	var err error
+	switch msg.Content.(type) {
+	case []byte:
+		content = msg.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(msg.GetContent())
+		if err != nil {
+			klog.Errorf("marshal message to edgemesh failed, err: %v", err)
+		}
 	}
 	switch getReourceType(msg.GetResource()) {
 	case constants.ResourceTypeService:
