@@ -51,6 +51,29 @@ KubeEdge is composed of the following components:
 
 <img src="./docs/images/kubeedge_arch.png">
 
+## Compatibility matrix
+
+### Kubernetes compatibility
+
+|                     | Kubernetes 1.10 | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 |
+|---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------| --------------- |
+| KubeEdge 1.0        | ✓               | ✓               | ✓              | ✓               | ✓              | ✓               | -               |
+| KubeEdge 1.1        | +               | ✓               | ✓               | ✓               | ✓               | ✓              | ✓               |
+| KubeEdge HEAD       | +               | ✓               | ✓               | ✓               | ✓               | ✓              | ✓               |
+
+Key:
+* `✓` KubeEdge and the Kubernetes version are exactly compatible.
+* `+` KubeEdge has features or API objects that may not be present in the Kubernetes version.
+* `-` The Kubernetes version has features or API objects that KubeEdge can't use.
+
+### Golang dependency
+
+|                     | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     |
+|---------------------|----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓              | ✓              | ✓               | ✗               |
+| KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✗               |
+
 ## To start developing KubeEdge
 
 The [set up] hosts all information about building KubeEdge from source, how to setup. etc.
