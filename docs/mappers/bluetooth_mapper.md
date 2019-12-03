@@ -33,7 +33,7 @@ Note: Before trying to push the docker image to the remote repository please ens
 ### Deploying bluetooth mapper application
 
 ```shell
-cd $GOPATH/src/github.com/kubeedge/kubeedge/device/bluetooth_mapper
+cd $GOPATH/src/github.com/kubeedge/kubeedge/mapper/bluetooth_mapper
     
 # Please enter the following details in the deployment.yaml :-
 #    1. Replace <edge_node_name> with the name of your edge node at spec.template.spec.voluems.configMap.name
