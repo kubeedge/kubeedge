@@ -8,7 +8,7 @@ mqtt:
 
 edgehub:
     websocket:
-        url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
+        url: wss://0.0.0.0:10000/edge-node/events
         certfile: /etc/kubeedge/certs/edge.crt
         keyfile: /etc/kubeedge/certs/edge.key
         handshake-timeout: 30 #second
@@ -25,7 +25,6 @@ edgehub:
     controller:
         protocol: websocket # websocket, quic
         heartbeat: 15  # second
-        project-id: e632aba927ea4ac2b575ec1603d56f10
         node-id: edge-node
 
 edged:

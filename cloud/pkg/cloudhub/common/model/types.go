@@ -51,14 +51,12 @@ const (
 
 // constants for identifier information for edge hub
 const (
-	ProjectID = "project_id"
-	NodeID    = "node_id"
+	NodeID = "node_id"
 )
 
 // HubInfo saves identifier information for edge hub
 type HubInfo struct {
-	ProjectID string
-	NodeID    string
+	NodeID string
 }
 
 // NewResource constructs a resource field using resource type and ID

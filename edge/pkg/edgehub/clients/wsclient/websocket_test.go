@@ -54,7 +54,6 @@ func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSoc
 			WriteDeadline:    100 * time.Second,
 			ReadDeadline:     100 * time.Second,
 			NodeID:           "test-nodeid",
-			ProjectID:        "test-projectid",
 		},
 	}
 }
@@ -123,7 +122,6 @@ func TestNewWebSocketClient(t *testing.T) {
 				WriteDeadline:    100 * time.Second,
 				ReadDeadline:     100 * time.Second,
 				NodeID:           "test-nodeid",
-				ProjectID:        "test-projectid",
 			},
 			newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
 		},

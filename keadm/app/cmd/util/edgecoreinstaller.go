@@ -89,7 +89,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		serverIPAddr = ku.CloudCoreIP
 	}
 
-	url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)
+	url := fmt.Sprintf("wss://%s:10000/%s/events", serverIPAddr, edgeID)
 	edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
 		EdgeD: types.EdgeDSt{RuntimeType: ku.RuntimeType, InterfaceName: ku.InterfaceName}}
 

@@ -51,8 +51,7 @@ func TestGetClient(t *testing.T) {
 						ReadDeadline:     100 * time.Second,
 					},
 					CtrConfig: config.ControllerConfig{
-						ProjectID: "test-projectid",
-						NodeID:    "test-nodeid",
+						NodeID: "test-nodeid",
 					},
 				},
 			},
@@ -63,7 +62,6 @@ func TestGetClient(t *testing.T) {
 				HandshakeTimeout: 500 * time.Second,
 				WriteDeadline:    100 * time.Second,
 				ReadDeadline:     100 * time.Second,
-				ProjectID:        "test-projectid",
 				NodeID:           "test-nodeid",
 			}),
 			err: nil,

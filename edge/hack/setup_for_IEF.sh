@@ -170,7 +170,6 @@ create_edge_config() {
     fi
     sed -i "s|certfile: .*|certfile: ${CERT_PATH}/${PRIVATE_CERT_FILE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|keyfile: .*|keyfile: ${CERT_PATH}/${PRIVATE_KEY_FILE}|g" ${CURRENT_PATH}/conf/edge.yaml
-    sed -i "s|project-id: .*|project-id: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|node-id: .*|node-id: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|register-node-namespace: .*|register-node-namespace: ${EDGE_NAMESPACE}|g" ${CURRENT_PATH}/conf/edge.yaml
     sed -i "s|hostname-override: .*|hostname-override: ${NODE_HOST_NAME}|g" ${CURRENT_PATH}/conf/edge.yaml

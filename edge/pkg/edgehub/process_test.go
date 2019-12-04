@@ -415,9 +415,8 @@ func TestKeepalive(t *testing.T) {
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
 				config: &config.ControllerConfig{
-					Protocol:  "websocket",
-					ProjectID: "foo",
-					NodeID:    "bar",
+					Protocol: "websocket",
+					NodeID:   "bar",
 				},
 				chClient:      mockAdapter,
 				reconnectChan: make(chan struct{}),

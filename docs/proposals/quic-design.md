@@ -111,7 +111,6 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
         refresh-ak-sk-interval: 10 # minute
         auth-info-files-path: /var/IEF/secret
         placement-url: https://x.x.x.x:7444/v1/placement_external/message_queue
-        project-id: e632aba927ea4ac2b575ec1603d56f10
         node-id: edge-node
   ```
 2. Running the edgecore, and start to connect to cloudhub through websocket protocol.
@@ -134,7 +133,6 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
         refresh-ak-sk-interval: 10 # minute
         auth-info-files-path: /var/IEF/secret
         placement-url: https://x.x.x.x:7444/v1/placement_external/message_queue
-        project-id: e632aba927ea4ac2b575ec1603d56f10
         node-id: edge-node
   ```
     

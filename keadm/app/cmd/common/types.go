@@ -211,7 +211,6 @@ type WebSocketSt struct {
 //ControllerSt contain edgecontroller config which edge component uses
 type ControllerSt struct {
 	Heartbeat uint32 `yaml:"heartbeat"`
-	ProjectID string `yaml:"project-id"`
 	NodeID    string `yaml:"node-id"`
 }
 

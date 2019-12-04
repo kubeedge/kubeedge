@@ -180,8 +180,6 @@ type Rule struct {
 	ID              string    `orm:"column(id); size(36); pk" json:"id" yaml:"id"`
 	// Name is the name of the Rule
 	Name            string    `orm:"column(name); size(64)" json:"name" yaml:"name"`
-	// ProjectID can be used to differentiate rules across projects
-	ProjectID       string    `orm:"column(project_id); size(36); index" json:"project_id" yaml:"project_id"`
 	// DomainID is the domain from where the source is accessed
 	DomainID        string    `orm:"column(domain_id); size(36); index" json:"domain_id" yaml:"domain_id"`
 	// Source is the source Endpoint
@@ -221,8 +219,6 @@ type Endpoint struct {
 	Type       string    `orm:"column(type); size(64)" json:"type" yaml:"type"`
 	// Name is name of the endpoint
 	Name       string    `orm:"column(name); size(64)" json:"name" yaml:"name"`
-	// ProjectID can be used to differentiate endpoints across projects
-	ProjectID  string    `orm:"column(project_id); size(36); index; null" json:"project_id" yaml:"project_id"`
 	// IsShared is flag to check if endpoint is shared
 	IsShared   bool      `orm:"column(is_shared); default(false)" json:"is_shared" `
 	// URI is unique resource identifier of the endpoint

@@ -28,10 +28,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 )
 
-const (
-	defaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
-)
-
 //testYamlGenerator is a structure which is used to generate the test YAML file to test Edgehub config components
 type testYamlGenerator struct {
 	Edgehub edgeHubConfigYaml `yaml:"edgehub"`
@@ -75,7 +71,6 @@ type controllerConfigYaml struct {
 	HeartbeatPeroid string `yaml:"heartbeat,omitempty"`
 	RefreshInterval string `yaml:"refresh-ak-sk-interval,omitempty"`
 	CloudhubURL     string `yaml:"cloud-hub-url"`
-	ProjectID       string `yaml:"project-id,omitempty"`
 	NodeID          string `yaml:"node-id,omitempty"`
 }
 
@@ -141,7 +136,6 @@ func TestGetConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						ProjectID:       defaultProjectID,
 						NodeID:          "edge-node",
 					},
 				},
@@ -167,7 +161,6 @@ func TestGetConfig(t *testing.T) {
 				CtrConfig: ControllerConfig{
 					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
-					ProjectID:       defaultProjectID,
 					NodeID:          "edge-node",
 				},
 			}},
@@ -189,7 +182,6 @@ func TestGetConfig(t *testing.T) {
 					},
 					controllerConfigYaml{
 						Protocol:  "websocket",
-						ProjectID: defaultProjectID,
 						NodeID:    "edge-node",
 					},
 				},
@@ -215,7 +207,6 @@ func TestGetConfig(t *testing.T) {
 				CtrConfig: ControllerConfig{
 					Protocol:        "websocket",
 					HeartbeatPeriod: 15 * time.Second,
-					ProjectID:       defaultProjectID,
 					NodeID:          "edge-node",
 				},
 			}},
@@ -372,7 +363,6 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						ProjectID:       defaultProjectID,
 						NodeID:          "edge-node",
 					},
 				},
@@ -387,28 +377,11 @@ func Test_getControllerConfig(t *testing.T) {
 					quicConfigYaml{},
 					controllerConfigYaml{
 						Protocol:  "websocket",
-						ProjectID: defaultProjectID,
 						NodeID:    "edge-node",
 					},
 				},
 			},
 			false},
-
-		//Negative Testcase with no projectID  provided
-		{"Test_getControllerConfig4: No projectID provided ",
-			testYamlGenerator{
-				edgeHubConfigYaml{
-					webSocketConfigYaml{},
-					quicConfigYaml{},
-					controllerConfigYaml{
-						Protocol:        "websocket",
-						HeartbeatPeroid: "150",
-						RefreshInterval: "15",
-						NodeID:          "edge-node",
-					},
-				},
-			},
-			true},
 
 		//Negative Testcase with no node ID provided
 		{"Test_getControllerConfig5: No node ID provided ",
@@ -420,7 +393,6 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						ProjectID:       defaultProjectID,
 					},
 				},
 			},

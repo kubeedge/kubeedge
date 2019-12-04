@@ -85,7 +85,6 @@ func (mh *MessageHandle) initServerEntries() {
 // HandleServer handle all the request from node
 func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	nodeID := container.Header.Get("node_id")
-	projectID := container.Header.Get("project_id")
 
 	if mh.GetNodeCount() >= mh.NodeLimit {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
@@ -104,7 +103,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		return
 	}
 
-	err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+	err := mh.PubToController(&model.HubInfo{NodeID: nodeID}, container.Message)
 	if err != nil {
 		// if err, we should stop node, write data to edgehub, stop nodify
 		klog.Errorf("Failed to serve handle with error: %s", err.Error())
@@ -114,14 +113,13 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 // OnRegister regist node on first connection
 func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
-	projectID := connection.ConnectionState().Headers.Get("project_id")
 
 	if _, ok := mh.KeepaliveChannel[nodeID]; !ok {
 		mh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
 	}
 
 	io := &hubio.JSONIO{Connection: connection}
-	go mh.ServeConn(io, &model.HubInfo{ProjectID: projectID, NodeID: nodeID})
+	go mh.ServeConn(io, &model.HubInfo{NodeID: nodeID})
 }
 
 // KeepaliveCheckLoop checks whether the edge node is still alive
@@ -133,8 +131,8 @@ func (mh *MessageHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *model.Hub
 			klog.Infof("Node %s is still alive", info.NodeID)
 			keepaliveTimer.Stop()
 		case <-keepaliveTimer.C:
-			klog.Warningf("Timeout to receive heart beat from edge node %s for project %s",
-				info.NodeID, info.ProjectID)
+			klog.Warningf("Timeout to receive heart beat from edge node %s",
+				info.NodeID)
 			stop <- nodeStop
 			return
 		}
@@ -220,7 +218,7 @@ func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
 		return
 	}
 
-	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
+	klog.Infof("edge node %s connected", info.NodeID)
 	stop := make(chan ExitCode, 2)
 
 	for _, handle := range mh.Handlers {

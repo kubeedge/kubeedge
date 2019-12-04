@@ -17,7 +17,6 @@ limitations under the License.
 package common
 
 import (
-	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -122,7 +121,7 @@ func WriteEdgeModulesYamlFile(path string) error {
 func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 	iface := "eth0"
 	edgeID := "edge-node"
-	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/edge-node/events", DefaultProjectID)
+	url := "wss://0.0.0.0:10000/edge-node/events"
 	runtimeType := "docker"
 
 	if nil != modifiedEdgeYaml {
@@ -158,7 +157,6 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 			},
 			Controller: ControllerSt{
 				Heartbeat: 15,
-				ProjectID: DefaultProjectID,
 				NodeID:    edgeID,
 			},
 		},

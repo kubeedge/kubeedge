@@ -32,7 +32,6 @@ type QuicConfig struct {
 	ReadDeadline     time.Duration
 	WriteDeadline    time.Duration
 	NodeID           string
-	ProjectID        string
 }
 
 // NewQuicClient initializes a new quic client instance
@@ -70,7 +69,6 @@ func (qcc *QuicClient) Init() error {
 	}
 	exOpts := api.QuicClientOption{Header: make(http.Header)}
 	exOpts.Header.Set("node_id", qcc.config.NodeID)
-	exOpts.Header.Set("project_id", qcc.config.ProjectID)
 	client := qclient.NewQuicClient(option, exOpts)
 	connection, err := client.Connect()
 	if err != nil {

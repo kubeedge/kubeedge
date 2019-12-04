@@ -56,14 +56,14 @@ func TestNewResource(t *testing.T) {
 			name:    "TestNewResource(): Case 1: resID is empty",
 			resType: ResNode,
 			resID:   "",
-			info:    &HubInfo{ProjectID: "Project1", NodeID: "Node1"},
+			info:    &HubInfo{NodeID: "Node1"},
 			str:     "node/Node1/node",
 		},
 		{
 			name:    "TestNewResource(): Case 2: resID is not empty",
 			resType: ResNode,
 			resID:   "res1",
-			info:    &HubInfo{ProjectID: "Project1", NodeID: "Node1"},
+			info:    &HubInfo{NodeID: "Node1"},
 			str:     "node/Node1/node/res1",
 		},
 	}

@@ -35,7 +35,6 @@ type WebSocketConfig struct {
 	ReadDeadline     time.Duration
 	WriteDeadline    time.Duration
 	NodeID           string
-	ProjectID        string
 }
 
 // NewWebSocketClient initializes a new websocket client instance
@@ -67,7 +66,6 @@ func (wsc *WebSocketClient) Init() error {
 	}
 	exOpts := api.WSClientOption{Header: make(http.Header)}
 	exOpts.Header.Set("node_id", wsc.config.NodeID)
-	exOpts.Header.Set("project_id", wsc.config.ProjectID)
 	client := &wsclient.Client{Options: option, ExOpts: exOpts}
 
 	for i := 0; i < retryCount; i++ {

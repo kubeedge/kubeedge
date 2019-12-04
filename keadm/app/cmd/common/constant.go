@@ -62,9 +62,6 @@ const (
 	//DefaultK8SVersion is the current default version of K8S
 	DefaultK8SVersion = "1.14.1"
 
-	// DefaultProjectID is default project id
-	DefaultProjectID = "e632aba927ea4ac2b575ec1603d56f10"
-
 	//DefaultImageRepository is the default k8s image repository
 	DefaultK8SImageRepository = "k8s.gcr.io"
 

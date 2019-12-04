@@ -22,8 +22,7 @@ func init() {
 }
 
 type Attributes struct {
-	RoleName  string `json:"iam_role"`
-	ProjectID string `json:"project_id"`
+	RoleName string `json:"iam_role"`
 }
 
 type record struct {

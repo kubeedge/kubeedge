@@ -17,7 +17,7 @@ data:
         session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
     edgehub:
         websocket:
-            url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edgenode1/events
+            url: wss://0.0.0.0:10000/edgenode1/events
             certfile: /etc/kubeedge/certs/edge.crt
             keyfile: /etc/kubeedge/certs/edge.key
             handshake-timeout: 30 #second
@@ -26,10 +26,6 @@ data:
         controller:
             placement: false
             heartbeat: 15  # second
-            refresh-ak-sk-interval: 10 # minute
-            auth-info-files-path: /var/IEF/secret
-            placement-url: https://10.154.193.32:7444/v1/placement_external/message_queue
-            project-id: e632aba927ea4ac2b575ec1603d56f10
             node-id: edgenode1
     edged:
         register-node-namespace: default

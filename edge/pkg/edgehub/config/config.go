@@ -36,7 +36,6 @@ type ControllerConfig struct {
 	Protocol        string
 	HeartbeatPeriod time.Duration
 	CloudhubURL     string
-	ProjectID       string
 	NodeID          string
 }
 
@@ -146,12 +145,6 @@ func getControllerConfig() error {
 		heartbeat = heartbeatDefault
 	}
 	edgeHubConfig.CtrConfig.HeartbeatPeriod = time.Duration(heartbeat) * time.Second
-
-	projectID, err := config.CONFIG.GetValue("edgehub.controller.project-id").ToString()
-	if err != nil {
-		return fmt.Errorf("failed to get project id for controller client: %v", err)
-	}
-	edgeHubConfig.CtrConfig.ProjectID = projectID
 
 	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 	if err != nil {

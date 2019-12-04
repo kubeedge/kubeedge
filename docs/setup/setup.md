@@ -260,7 +260,6 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
         controller:
             protocol: websocket # websocket, quic
             heartbeat: 15  # second
-            project-id: e632aba927ea4ac2b575ec1603d56f10
             node-id: edge-node
     
     edged:
