@@ -51,6 +51,29 @@ KubeEdge 由以下组件构成:
 
 ![架构图](docs/images/kubeedge_arch.png)
 
+## 兼容性
+
+### Kubernetes 版本兼容
+
+|                     | Kubernetes 1.10 | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 |
+|---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | -               |
+| KubeEdge 1.1        | +               | ✓               | ✓               | ✓              | ✓               | ✓               | ✓               |
+| KubeEdge HEAD       | +               | ✓               | ✓               | ✓              | ✓               | ✓               | ✓               |
+
+说明:
+* `✓` KubeEdge和Kubernetes的版本是完全兼容的
+* `+` KubeEdge中有些特性或API对象可能在对应的Kubernetes版本中不存在
+* `-` Kubernetes中有些特性或API对象可能在对应的KubeEdge版本中不可用
+
+### Golang 版本依赖
+
+|                     | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     |
+|---------------------|----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓              | ✓              | ✓               | ✗               |
+| KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✗               |
+
 ## 使用
 
 * [先决条件](./docs/getting-started/usage_zh.md#先决条件)
