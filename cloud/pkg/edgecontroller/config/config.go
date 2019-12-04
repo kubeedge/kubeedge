@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"sync"
 	"time"
 
@@ -104,7 +103,6 @@ type Configure struct {
 
 func InitConfigure() {
 	once.Do(func() {
-		var errs []error
 
 		psb, err := config.CONFIG.GetValue("controller.buffer.update-pod-status").ToInt()
 		if err != nil {
@@ -343,13 +341,7 @@ func InitConfigure() {
 			ml = constants.DefaultMessageLayer
 			klog.Infof("can not get key controller.message-layer, use default value %v", ml)
 		}
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init edgecontroller config error")
-			os.Exit(1)
-		}
+
 		c = Configure{
 			UpdatePodStatusBuffer:             psb,
 			UpdateNodeStatusBuffer:            nsb,
@@ -392,7 +384,7 @@ func InitConfigure() {
 			UpdateNodeWorkers:                 unw,
 			MessageLayer:                      ml,
 		}
-		klog.Infof("init edgecontroller config successfully, config info %++v", c)
+		klog.Infof("init edgecontroller config successfully, config info:\n %++v", c)
 	})
 }
 

@@ -1,12 +1,11 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"sync"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 	"k8s.io/klog"
 )
 
@@ -44,7 +43,6 @@ type Configure struct {
 
 func InitConfigure() {
 	once.Do(func() {
-		var errs []error
 
 		km, err := config.CONFIG.GetValue("devicecontroller.kube.master").ToString()
 		if err != nil {
@@ -53,20 +51,24 @@ func InitConfigure() {
 		}
 		kc, err := config.CONFIG.GetValue("devicecontroller.kube.kubeconfig").ToString()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get devicecontroller.kube.kubeconfig configuration key error %v", err))
+			kc = ""
+			klog.Infof("can not get key devicecontroller.kube.kubeconfig, use default value %v", kc)
 		}
 
 		kct, err := config.CONFIG.GetValue("devicecontroller.kube.content_type").ToString()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get devicecontroller.kube.content_type configuration key error %v", err))
+			kct = commonconstants.DefaultKubeContentType
+			klog.Infof("can not get key devicecontroller.kube.content_type, use default value %v", kct)
 		}
 		kqps, err := config.CONFIG.GetValue("devicecontroller.kube.qps").ToFloat64()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get devicecontroller.kube.qps configuration key error %v", err))
+			kqps = commonconstants.DefaultKubeQPS
+			klog.Infof("can not get key devicecontroller.kube.qps, use default value %v", kqps)
 		}
 		kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("get devicecontroller.kube.burst configuration key error %v", err))
+			kb = commonconstants.DefaultKubeBurst
+			klog.Infof("can not get key controller.kube.burst, use default value %v", kb)
 		}
 		smn, err := config.CONFIG.GetValue("devicecontroller.context.send-module").ToString()
 		if err != nil {
@@ -115,13 +117,6 @@ func InitConfigure() {
 			// Guaranteed forward compatibility @kadisi
 			ml = deviceconstants.DefaultMessageLayer
 			klog.Infof("can not get devicecontroller.message-layer key, use default value %v", ml)
-		}
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init devicecontroller config error")
-			os.Exit(1)
 		}
 		c = Configure{
 			KubeMaster:                km,
