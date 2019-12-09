@@ -92,7 +92,10 @@ jobs:
       name: "unit test cloud"
 
     - stage: "unit tests on arm64"
-      script: make cloud_test
+      script: make edge_test
+      arch: arm64
+      name: "unit test edge"
+    - script: make cloud_test
       arch: arm64
       name: "unit test cloud"
 

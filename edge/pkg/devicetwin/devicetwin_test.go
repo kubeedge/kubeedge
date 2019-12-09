@@ -76,6 +76,10 @@ func TestStart(t *testing.T) {
 	// fakeModule is mocked implementation of TestModule.
 	var fakeModule *beehive.MockModule
 
+	const delay = 10 * time.Millisecond
+	const maxRetries = 5
+	var retry int = 0
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -94,7 +98,8 @@ func TestStart(t *testing.T) {
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)
 	go dt.Start()
-	time.Sleep(1 * time.Millisecond)
+	time.Sleep(delay)
+	retry++
 	// Sending a message from devicetwin module to the created fake module(TestModule) to check context is initialized properly.
 	beehiveContext.Send(TestModule, test)
 	_, err := beehiveContext.Receive(TestModule)
@@ -129,17 +134,25 @@ func TestStart(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			moduleCheck := false
-			for _, module := range dt.DTModules {
-				if test.moduleName == module.Name {
-					moduleCheck = true
-					err := dt.DTContexts.HeartBeat(test.moduleName, "ping")
-					if err != nil {
-						t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
+			for retry < maxRetries {
+				for _, module := range dt.DTModules {
+					if test.moduleName == module.Name {
+						moduleCheck = true
+						err := dt.DTContexts.HeartBeat(test.moduleName, "ping")
+						if err != nil {
+							t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
+						}
+						break
 					}
+				}
+				if moduleCheck {
 					break
+				} else {
+					time.Sleep(delay)
+					retry++
 				}
 			}
-			if moduleCheck == false {
+			if retry >= maxRetries {
 				t.Errorf("Registration of module %v failed", test.moduleName)
 			}
 		})

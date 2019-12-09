@@ -38,6 +38,9 @@ func TestStartAction(t *testing.T) {
 	dtContextStateConnected.State = dtcommon.Connected
 	receiveChanActionPresent := make(chan interface{}, 1)
 
+	const delay = 10 * time.Millisecond
+	const maxRetries = 5
+
 	receiveChanActionPresent <- &dttype.DTMessage{
 		Action:   dtcommon.SendToCloud,
 		Identity: "identity",
@@ -77,15 +80,22 @@ func TestStartAction(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		retry := 0
 		t.Run(test.name, func(t *testing.T) {
 			cw := CommWorker{
 				Worker: test.Worker,
 			}
 			go cw.Start()
-			time.Sleep(1 * time.Millisecond)
 			if test.Worker.ReceiverChan == receiveChanActionPresent {
-				_, exist := test.Worker.DTContexts.ConfirmMap.Load("message")
-				if !exist {
+				for retry < maxRetries {
+					time.Sleep(delay)
+					retry++
+					_, exist := test.Worker.DTContexts.ConfirmMap.Load("message")
+					if exist {
+						break
+					}
+				}
+				if retry >= maxRetries {
 					t.Errorf("Start Failed to store message in ConfirmMap")
 				}
 			}
@@ -102,6 +112,9 @@ func TestStartHeartBeat(t *testing.T) {
 	heartChanPing := make(chan interface{}, 1)
 	heartChanStop <- "stop"
 	heartChanPing <- "ping"
+
+	const delay = 10 * time.Millisecond
+	const maxRetries = 5
 
 	tests := []struct {
 		name   string
@@ -126,18 +139,26 @@ func TestStartHeartBeat(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		retry := 0
 		t.Run(test.name, func(t *testing.T) {
 			cw := CommWorker{
 				Worker: test.Worker,
 				Group:  test.Group,
 			}
 			go cw.Start()
-			time.Sleep(1 * time.Millisecond)
 			if test.Worker.HeartBeatChan == heartChanPing {
-				_, exist := test.Worker.DTContexts.ModulesHealth.Load("group")
-				if !exist {
+				for retry < maxRetries {
+					time.Sleep(delay)
+					retry++
+					_, exist := test.Worker.DTContexts.ModulesHealth.Load("group")
+					if exist {
+						break
+					}
+				}
+				if retry >= maxRetries {
 					t.Errorf("Start Failed to add module in beehiveContext")
 				}
+
 			}
 		})
 	}
