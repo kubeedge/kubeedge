@@ -4,13 +4,30 @@
 + [安装 docker](https://docs.docker.com/install/)
 + [安装 kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 + [初始化 Kubernetes](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-+ 在完成 Kubernetes master 的初始化后， 我们需要暴露 Kubernetes apiserver 的 http 端口8080用于与 cloudcore/kubectl 交互。请按照以下步骤在 Kubernetes apiserver 中启用 http 端口。
++ KubeEdge支持以安全(https)的方式访问Kubernetes apiserver. 
+
+  在controller.yaml中输入kubeconfig文件的绝对路径.
+  ```yaml
+  controller:
+    kube:
+      ...
+      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+  ```
++ (Option) KubeEdge也支持以非安全(http)的方式访问Kubernetes apiserver，用于测试等场景.
+  请按照以下步骤在Kubernetes apiserver中开启非安全端口.
 
     ```shell
     vi /etc/kubernetes/manifests/kube-apiserver.yaml
     # Add the following flags in spec: containers: -command section
     - --insecure-port=8080
     - --insecure-bind-address=0.0.0.0
+    ```
+  在controller.yaml中输入master的地址.
+    ```yaml
+    controller:
+      kube:
+        ...
+        master: "http://127.0.0.1:8080" #注意如果同时设置master和kubeconfig，master将覆盖kubeconfig文件的所有内容
     ```
 
 ### 克隆KubeEdge

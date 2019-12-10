@@ -62,7 +62,17 @@ With the integration, the following can be enabled
 
 + [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-+ After initializing Kubernetes master, we need to expose insecure port 8080 for cloudcore/kubectl to work with http connection to Kubernetes apiserver.
++ KubeEdge supports https connection to Kubernetes apiserver. 
+
+  Enter the path to kubeconfig file in controller.yaml
+  ```yaml
+  controller:
+    kube:
+      ...
+      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
+  ```
+  
++ (Optional) KubeEdge also supports insecure http connection to Kubernetes apiserver for testing, debugging cases.
   Please follow below steps to enable http port in Kubernetes apiserver.
 
     ```shell
@@ -71,17 +81,13 @@ With the integration, the following can be enabled
     - --insecure-port=8080
     - --insecure-bind-address=0.0.0.0
     ```
-
-+ (**Optional**)KubeEdge also supports https connection to Kubernetes apiserver. Follow the steps in [Kubernetes Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) to create the kubeconfig file.
-
-  Enter the path to kubeconfig file in controller.yaml
-
-  ```yaml
-  controller:
-    kube:
-      ...
-      kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
-  ```
+   Enter the master address in controller.yaml
+     ```yaml
+     controller:
+       kube:
+         ...
+         master: "http://127.0.0.1:8080" #Note if master and kubeconfig are both set, master will override any value in kubeconfig.
+     ```
 
 ### Steps for EdgeSite
 
