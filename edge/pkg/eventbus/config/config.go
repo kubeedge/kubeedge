@@ -88,8 +88,6 @@ func InitConfigure() {
 			}
 			klog.Error("init eventbus config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init eventbus config successfully，config info %++v", c)
 		}
 		c = Configure{
 			ExternalMqttURL:  externalMqttURL,
@@ -100,6 +98,7 @@ func InitConfigure() {
 			Mode:             mode,
 			NodeID:           nodeID,
 		}
+		klog.Infof("init eventbus config successfully，config info %++v", c)
 	})
 
 }
