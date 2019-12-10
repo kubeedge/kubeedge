@@ -1,8 +1,8 @@
 # cloud.google.com/go v0.43.0
 cloud.google.com/go/compute/metadata
 # github.com/256dpi/gomqtt v0.10.4
-github.com/256dpi/gomqtt/packet
 github.com/256dpi/gomqtt/broker
+github.com/256dpi/gomqtt/packet
 github.com/256dpi/gomqtt/topic
 github.com/256dpi/gomqtt/transport
 github.com/256dpi/gomqtt/session

@@ -52,6 +52,8 @@ import (
 	"k8s.io/kubernetes/pkg/volume/validation"
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilfile "k8s.io/utils/path"
+
+	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 )
 
 const (
@@ -537,9 +539,9 @@ func (e *edged) removeOrphanedPodStatuses(pods []*v1.Pod) {
 
 // GetPodCgroupParent gets pod cgroup parent from container manager.
 func (e *edged) GetPodCgroupParent(pod *v1.Pod) string {
-	conf := getConfig()
 	ret := e.cgroupDriver
-	if conf.remoteRuntimeEndpoint == DockerShimEndpoint || conf.remoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+	if edgedconfig.Get().RemoteRuntimeEndpoint == DockerShimEndpoint ||
+		edgedconfig.Get().RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
 		//always have a ".slice" suffix
 		ret = ret + systemdSuffix
 	}

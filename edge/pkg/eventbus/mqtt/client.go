@@ -19,8 +19,6 @@ import (
 var (
 	// MQTTHub client
 	MQTTHub *Client
-	// NodeID stands for node id
-	NodeID string
 	// GroupID stands for group id
 	GroupID string
 	// ConnectedTopic to send connect event
