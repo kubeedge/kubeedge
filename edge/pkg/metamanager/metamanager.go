@@ -5,12 +5,12 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
@@ -29,6 +29,7 @@ func newMetaManager() *metaManager {
 // Register register metamanager
 func Register() {
 	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
+	metamanagerconfig.InitConfigure()
 	core.Register(newMetaManager())
 }
 
@@ -41,7 +42,6 @@ func (*metaManager) Group() string {
 }
 
 func (m *metaManager) Start() {
-	InitMetaManagerConfig()
 
 	go func() {
 		period := getSyncInterval()
@@ -63,9 +63,5 @@ func (m *metaManager) Start() {
 }
 
 func getSyncInterval() time.Duration {
-	syncInterval, _ := config.CONFIG.GetValue("meta.sync.podstatus.interval").ToInt()
-	if syncInterval < DefaultSyncInterval {
-		syncInterval = DefaultSyncInterval
-	}
-	return time.Duration(syncInterval) * time.Second
+	return time.Duration(metamanagerconfig.Get().SyncInterval) * time.Second
 }

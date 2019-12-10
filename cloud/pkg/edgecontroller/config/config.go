@@ -354,8 +354,6 @@ func InitConfigure() {
 			}
 			klog.Error("init edgecontroller config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init edgecontroller config successfully, config info %++v", c)
 		}
 		c = Configure{
 			UpdatePodStatusBuffer:             psb,
@@ -399,7 +397,7 @@ func InitConfigure() {
 			UpdateNodeWorkers:                 unw,
 			MessageLayer:                      ml,
 		}
-
+		klog.Infof("init edgecontroller config successfully, config info %++v", c)
 	})
 }
 

@@ -9,22 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
-)
-
-const (
-	// defaultDriverName is sqlite3
-	defaultDriverName = "sqlite3"
-	// defaultDbName is default
-	defaultDbName = "default"
-	// defaultDataSource is edge.db
-	defaultDataSource = "edge.db"
-)
-
-var (
-	driverName string
-	dbName     string
-	dataSource string
+	commonconfig "github.com/kubeedge/kubeedge/edge/pkg/common/config"
 )
 
 //DBAccess is Ormer object interface for all transaction processing and switching database
@@ -42,23 +27,14 @@ func RegisterModel(moduleName string, m interface{}) {
 
 // InitDBConfig Init DB info
 func InitDBConfig() {
-	driverName, _ = config.CONFIG.GetValue("database.driver").ToString()
-	dbName, _ = config.CONFIG.GetValue("database.name").ToString()
-	dataSource, _ = config.CONFIG.GetValue("database.source").ToString()
-	if driverName == "" {
-		driverName = defaultDriverName
-	}
-	if dbName == "" {
-		dbName = defaultDbName
-	}
-	if dataSource == "" {
-		dataSource = defaultDataSource
-	}
 
-	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
+	if err := orm.RegisterDriver(commonconfig.Get().DriverName, orm.DRSqlite); err != nil {
 		klog.Fatalf("Failed to register driver: %v", err)
 	}
-	if err := orm.RegisterDataBase(dbName, driverName, dataSource); err != nil {
+	if err := orm.RegisterDataBase(
+		commonconfig.Get().DBName,
+		commonconfig.Get().DriverName,
+		commonconfig.Get().DataSource); err != nil {
 		klog.Fatalf("Failed to register db: %v", err)
 	}
 }
@@ -67,16 +43,11 @@ func InitDBConfig() {
 func InitDBManager() {
 	InitDBConfig()
 	// sync database schema
-	orm.RunSyncdb(dbName, false, true)
+	orm.RunSyncdb(commonconfig.Get().DBName, false, true)
 
 	// create orm
 	DBAccess = orm.NewOrm()
-	DBAccess.Using(dbName)
-}
-
-// Cleanup cleans up resources
-func Cleanup() {
-	cleanDBFile(dataSource)
+	DBAccess.Using(commonconfig.Get().DBName)
 }
 
 // cleanDBFile removes db file
@@ -93,12 +64,9 @@ func cleanDBFile(fileName string) {
 }
 
 func isModuleEnabled(m string) bool {
-	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
-	if modules != nil {
-		for _, value := range modules.([]interface{}) {
-			if m == value.(string) {
-				return true
-			}
+	for _, value := range commonconfig.Get().Modules {
+		if m == value {
+			return true
 		}
 	}
 	return false

@@ -28,7 +28,7 @@ var groupMap = map[string]string{
 }
 
 func (eh *EdgeHub) initial() (err error) {
-	cloudHubClient, err := clients.GetClient(eh.config.Protocol, config.GetConfig())
+	cloudHubClient, err := clients.GetClient(config.Get().CtrConfig.Protocol, config.Get())
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 
 	syncKeep := func(message model.Message) {
 		tempChannel := eh.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(eh.config.HeartbeatPeriod)
+		sendTimer := time.NewTimer(config.Get().CtrConfig.HeartbeatPeriod)
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
@@ -197,7 +197,7 @@ func (eh *EdgeHub) keepalive() {
 			return
 		}
 
-		time.Sleep(eh.config.HeartbeatPeriod)
+		time.Sleep(config.Get().CtrConfig.HeartbeatPeriod)
 	}
 }
 
