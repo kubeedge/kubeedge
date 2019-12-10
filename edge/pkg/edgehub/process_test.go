@@ -275,6 +275,88 @@ func TestRouteToEdge(t *testing.T) {
 	}
 }
 
+//TestSendToCloud() tests whether the send to cloud functionality works properly
+func TestSendToCloud(t *testing.T) {
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
+	msg := model.NewMessage("").BuildHeader("test_id", "", 1)
+	msg.Header.Sync = true
+	tests := []struct {
+		name            string
+		hub             *EdgeHub
+		message         model.Message
+		expectedError   error
+		waitError       bool
+		mockError       error
+		HeartbeatPeriod time.Duration
+	}{
+		{
+			name: "send to cloud with proper input",
+			hub: &EdgeHub{
+				chClient:   mockAdapter,
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			HeartbeatPeriod: 6 * time.Second,
+			message:         *msg,
+			expectedError:   nil,
+			waitError:       false,
+			mockError:       nil,
+		},
+		{
+			name: "Wait Error in send to cloud",
+			hub: &EdgeHub{
+				chClient:   mockAdapter,
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			HeartbeatPeriod: 3 * time.Second,
+			message:         *msg,
+			expectedError:   nil,
+			waitError:       true,
+			mockError:       nil,
+		},
+		{
+			name: "Send Failure in send to cloud",
+			hub: &EdgeHub{
+				chClient:   mockAdapter,
+				syncKeeper: make(map[string]chan model.Message),
+			},
+			HeartbeatPeriod: 3 * time.Second,
+			message:         model.Message{},
+			expectedError:   fmt.Errorf("failed to send message, error: Connection Refused"),
+			waitError:       false,
+			mockError:       errors.New("Connection Refused"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
+			config.Get().CtrConfig.HeartbeatPeriod = tt.HeartbeatPeriod
+			if !tt.waitError && tt.expectedError == nil {
+				go tt.hub.sendToCloud(tt.message)
+				time.Sleep(1 * time.Second)
+				tempChannel := tt.hub.syncKeeper["test_id"]
+				tempChannel <- *model.NewMessage("test_id")
+				time.Sleep(1 * time.Second)
+				if _, exist := tt.hub.syncKeeper["test_id"]; exist {
+					t.Errorf("SendToCloud() error in receiving message")
+				}
+				return
+			}
+			err := tt.hub.sendToCloud(tt.message)
+			if !reflect.DeepEqual(err, tt.expectedError) {
+				t.Errorf("SendToCloud() error = %v, wantErr %v", err, tt.expectedError)
+			}
+			time.Sleep(tt.HeartbeatPeriod + 2*time.Second)
+			if _, exist := tt.hub.syncKeeper["test_id"]; exist {
+				t.Errorf("SendToCloud() error in waiting for timeout")
+			}
+		})
+	}
+}
+
 //TestRouteToCloud() tests the reception of the message from the beehive framework and forwarding of that message to cloud
 func TestRouteToCloud(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)

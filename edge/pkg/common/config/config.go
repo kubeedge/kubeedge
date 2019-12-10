@@ -60,16 +60,14 @@ func init() {
 			}
 			klog.Error("init common config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init common config successfully，config info %++v", c)
 		}
-
 		c = Configure{
 			DriverName: driverName,
 			DBName:     dbName,
 			DataSource: dataSource,
 			Modules:    modules,
 		}
+		klog.Infof("init common config successfully，config info %++v", c)
 	})
 }
 

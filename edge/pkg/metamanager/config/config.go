@@ -32,15 +32,7 @@ type Configure struct {
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init common config error")
-			os.Exit(1)
-		} else {
-			klog.Infof("init common config successfully，config info %++v", c)
-		}
+
 		groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
 		if err != nil || groupName == "" {
 			// Guaranteed forward compatibility @kadisi
@@ -67,21 +59,19 @@ func InitConfigure() {
 			syncInterval = defaultSyncInterval
 			klog.Infof("can not get meta.sync.podstatus.interval key, use default %v", syncInterval)
 		}
-
 		if len(errs) != 0 {
 			for _, e := range errs {
 				klog.Errorf("%v", e)
 			}
 			klog.Error("init common config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init common config successfully，config info %++v", c)
 		}
 		c = Configure{
 			SendModuleGroupName: groupName,
 			SendModuleName:      moduleName,
 			SyncInterval:        syncInterval,
 		}
+		klog.Infof("init common config successfully，config info %++v", c)
 	})
 }
 

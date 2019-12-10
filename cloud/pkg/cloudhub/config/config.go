@@ -109,8 +109,6 @@ func InitConfigure() {
 			}
 			klog.Error("init cloudhub config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init cloudhub config successfully，config info %++v", c)
 		}
 		c = Configure{
 			ProtocolWebsocket:  protocolWebsocket,
@@ -131,6 +129,7 @@ func InitConfigure() {
 		if !c.ProtocolWebsocket && !c.ProtocolQuic {
 			c.ProtocolWebsocket = true
 		}
+		klog.Infof("init cloudhub config successfully，config info %++v", c)
 	})
 }
 func Get() *Configure {

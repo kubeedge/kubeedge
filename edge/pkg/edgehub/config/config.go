@@ -164,8 +164,6 @@ func InitConfigure() {
 			}
 			klog.Error("init edgehub config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init edgehub config successfully，config info %++v", c)
 		}
 
 		c = Configure{
@@ -193,6 +191,7 @@ func InitConfigure() {
 				HandshakeTimeout: time.Duration(quicHandshakeTimeout) * time.Second,
 			},
 		}
+		klog.Infof("init edgehub config successfully，config info %++v", c)
 	})
 }
 

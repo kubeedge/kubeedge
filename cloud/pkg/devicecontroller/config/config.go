@@ -120,8 +120,6 @@ func InitConfigure() {
 			}
 			klog.Error("init devicecontroller config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init devicecontroller config successfully, config info %++v", c)
 		}
 		c = Configure{
 			KubeMaster:                km,
@@ -138,6 +136,7 @@ func InitConfigure() {
 			UpdateDeviceStatusWorkers: psw,
 			MessageLayer:              ml,
 		}
+		klog.Infof("init devicecontroller config successfully, config info %++v", c)
 	})
 }
 

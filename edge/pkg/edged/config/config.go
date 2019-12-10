@@ -129,10 +129,7 @@ func InitConfigure() {
 			}
 			klog.Error("init edged config error")
 			os.Exit(1)
-		} else {
-			klog.Infof("init edged config successfully，config info %++v", c)
 		}
-
 		c = Configure{
 			NodeName:                  config.CONFIG.GetConfigurationByKey("edged.hostname-override").(string),
 			NodeNamespace:             config.CONFIG.GetConfigurationByKey("edged.register-node-namespace").(string),
@@ -158,7 +155,7 @@ func InitConfigure() {
 				Duration: time.Duration(runtimeRequestTimeout) * time.Minute,
 			},
 		}
-
+		klog.Infof("init edged config successfully，config info %++v", c)
 	})
 }
 func Get() *Configure {
