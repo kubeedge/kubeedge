@@ -25,16 +25,12 @@ spec:
           mountPath: /etc/kubeedge/cloud
           subPath: kubeconfig.yaml
         command:
-        - /bin/sh
-        - -c
-        - |
-          cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
           apiVersion: v1
           kind: Config
           clusters:
           - name: kubeedge
             cluster:
-              certificate-authority-data: $(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt | base64 | awk '{printf $0}')
+              certificate-authority: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
           users:
           - name: kubeedge
             user:
@@ -48,7 +44,7 @@ spec:
           EOF
       containers:
       - name: cloudcore
-        image: kubeedge/cloudcore:v1.0.0
+        image: kubeedge/cloudcore:v1.1.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 10000
