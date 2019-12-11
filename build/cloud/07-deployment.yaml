@@ -25,6 +25,10 @@ spec:
           mountPath: /etc/kubeedge/cloud
           subPath: kubeconfig.yaml
         command:
+        - /bin/sh
+        - -c
+        - |
+          cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
           apiVersion: v1
           kind: Config
           clusters:
