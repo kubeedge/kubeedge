@@ -145,6 +145,9 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     sudo systemctl enable cloudcore
     ```
 
++ (**Optional**)Run `admission`, this feature is still being evaluated.
+    please read the docs in [install the admission webhook](../../build/admission/README.md)
+
 
 #### Deploy the edge node
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
@@ -152,7 +155,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 + Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
 
     ```shell
-        mkdir ~/cmd/yaml
+        mkdir -p ~/cmd/yaml
         cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
     ```
 
@@ -190,6 +193,17 @@ git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeed
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
 #### Run Edge
+
+##### Configuring MQTT mode
+
+The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
+1) internalMqttMode: internal mqtt broker is enabled.
+2) bothMqttMode: internal as well as external broker are enabled.
+3) externalMqttMode: only external broker is enabled.
+
+Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
+
+To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
 
 ##### Run as a binary
 + Build Edge
@@ -290,8 +304,6 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
             loadbalance:
                 strategy-name: RoundRobin
     ```
-    + If you have run mosquitto on your edge host, please set `mqtt.mode` to `2`. 
-    + To use KubeEdge in double mqtt or external mode (set `mqtt.mode` to 1), you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker. 
     + Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
     + Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files not exist, you need to copy them from cloud side. 
     + Check `edged.podsandbox-image`  
@@ -308,6 +320,10 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 + Run edgecore
 
     ```shell
+    # run mosquitto
+    mosquitto -d -p 1883
+    # or run emqx edge
+    # emqx start
 
     cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
     cd ~/cmd
