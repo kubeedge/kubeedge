@@ -17,42 +17,44 @@
 setuptype=$1
 
 kill_edgecore() {
-   sudo pkill edgecore
-    #kill the edgecore process if it exists.
-    sleep 5s
     if pgrep edgecore >/dev/null
     then
-        echo "Failed to kill edgecore process !!"
-        exit 1
-    else
-        echo "edgecore is successfully killed !!"
+        # edgecore process is found, kill the process.
+        sudo pkill edgecore
+        if [[ "$?" == "0" ]]; then
+            echo "edgecore is successfully killed !!"
+        else
+            echo "Failed to kill edgecore process !!"
+            exit 1
+        fi
     fi
 }
 
 kill_cloudcore() {
-    sudo pkill cloudcore
-    #kill the cloudcore process if it exists.
-    sleep 5s
     if pgrep cloudcore >/dev/null
     then
-        echo "Failed to kill the cloudcore !!"
-        exit 1
-    else
-        echo "cloudcore is successfully killed !!"
+        # cloudcore process is found, kill the process.
+        sudo pkill cloudcore
+        if [[ "$?" == "0" ]]; then
+            echo "cloudcore is successfully killed !!"
+        else
+            echo "Failed to kill cloudcore process !!"
+            exit 1
+        fi
     fi
 }
 
 kill_edgesite() {
-    exit 0
-    sudo pkill edgesite
-    #kill the edgecore process if it exists.
-    sleep 5s
     if pgrep edgesite >/dev/null
     then
-        echo "Failed to kill edgesite process !!"
-        exit 1
-    else
-        echo "edgesite is successfully killed !!"
+        # edgesite process is found, kill the process.
+        sudo pkill edgesite
+        if [[ "$?" == "0" ]]; then
+            echo "edgesite is successfully killed !!"
+        else
+            echo "Failed to kill edgesite process !!"
+            exit 1
+        fi
     fi
 }
 
