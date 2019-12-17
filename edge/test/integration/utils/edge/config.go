@@ -59,6 +59,8 @@ func loadConfigJSONFromPath() *Config {
 	if err != nil {
 		panic(err)
 	}
+	defer configFile.Close()
+
 	decoder := json.NewDecoder(configFile)
 	err = decoder.Decode(config)
 	if err != nil {
