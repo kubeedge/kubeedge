@@ -385,7 +385,7 @@ func newEdged() (*edged, error) {
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
-	statsProvider := edgeimages.NewStatsProvider()
+
 	containerGCPolicy := kubecontainer.ContainerGCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
@@ -509,6 +509,8 @@ func newEdged() (*edged, error) {
 	ed.containerRuntimeName = edgedconfig.RemoteContainerRuntime
 	ed.containerManager = containerManager
 	ed.runtimeService = runtimeService
+
+	statsProvider := edgeimages.NewStatsProvider(cadvisorInterface, imageService)
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
 		statsProvider,
