@@ -86,7 +86,8 @@ func (c *Config) Start() {
 
 	for _, schedule := range c.Scheduler.Schedules {
 		helper.ControllerWg.Add(1)
-		go schedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.ID)
+		newSchedule := schedule
+		go newSchedule.ExecuteSchedule(c.ActionManager.Actions, c.Converter.DataRead, c.Device.ID)
 	}
 	helper.ControllerWg.Wait()
 }
