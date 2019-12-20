@@ -88,6 +88,13 @@ This is a rough outline of what a contributor's workflow looks like:
 
 Pull requests are often called simply "PR".
 KubeEdge generally follows the standard [github pull request](https://help.github.com/articles/about-pull-requests/) process.
+To submit a proposed change, please develop the code/fix and add new test cases.
+After that, run these local verifications before submitting pull request to predict the pass or
+fail of continuous integration.
+
+* Run and pass `make verify`
+* Run and pass `make edge_test` or `make cloud_test`
+* Run and pass `make edge_integration_test`
 
 In addition to the above process, a bot will begin applying structured labels to your PR.
 
