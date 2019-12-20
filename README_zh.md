@@ -76,10 +76,10 @@ KubeEdge 由以下组件构成:
 
 ## 使用
 
-* [先决条件](./docs/getting-started/usage_zh.md#先决条件)
-* [运行KubeEdge](./docs/getting-started/usage_zh.md#运行KubeEdge)
-* [部署应用](./docs/getting-started/usage_zh.md#部署应用)
-* [运行测试](./docs/getting-started/usage_zh.md#运行测试)
+* [先决条件](./docs/setup/setup.md#prerequisites)
+* [运行KubeEdge](./docs/setup/setup.md)
+* [部署应用](./docs/setup/setup.md#deploy-application-on-cloud-side)
+* [运行测试](./docs/setup/setup.md#run-tests)
 
 ## 路线图
 
