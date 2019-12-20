@@ -112,18 +112,19 @@ func initActionModuleMap() {
 // SyncSqlite sync sqlite
 func SyncSqlite(context *dtcontext.DTContext) error {
 	klog.Info("Begin to sync sqlite ")
-	rows, queryErr := dtclient.QueryDeviceAll()
+	devices, queryErr := dtclient.QueryDeviceAll()
 	if queryErr != nil {
 		klog.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
 		return queryErr
 	}
-	if rows == nil {
+	if devices == nil {
 		klog.Info("Query sqlite nil while syncing sqlite")
 		return nil
 	}
-	for _, device := range *rows {
-		err := SyncDeviceFromSqlite(context, device.ID)
+	for _, device := range *devices {
+		err := SyncDeviceFromSqlite(context, &device)
 		if err != nil {
+			klog.Errorf("Sync device detail info from DB for device %s failed: %v", device.Name, err)
 			continue
 		}
 	}
@@ -132,28 +133,18 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 }
 
 //SyncDeviceFromSqlite sync device from sqlite
-func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
-	klog.Infof("Sync device detail info from DB of device %s", deviceID)
-	_, exist := context.GetDevice(deviceID)
+func SyncDeviceFromSqlite(context *dtcontext.DTContext, device *dtclient.Device) error {
+	klog.Infof("Sync device detail info from DB for device %s", device.ID)
+	_, exist := context.GetDevice(device.ID)
 	if !exist {
 		var deviceMutex sync.Mutex
-		context.DeviceMutex.Store(deviceID, &deviceMutex)
+		context.DeviceMutex.Store(device.ID, &deviceMutex)
 	}
 
-	defer context.Unlock(deviceID)
-	context.Lock(deviceID)
+	defer context.Unlock(device.ID)
+	context.Lock(device.ID)
 
-	devices, err := dtclient.QueryDevice("id", deviceID)
-	if err != nil {
-		klog.Errorf("query device failed: %v", err)
-		return err
-	}
-	if len(*devices) <= 0 {
-		return errors.New("Not found device from db")
-	}
-	device := (*devices)[0]
-
-	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
+	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", device.ID)
 	if err != nil {
 		klog.Errorf("query device attr failed: %v", err)
 		return err
@@ -163,7 +154,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		attributes = append(attributes, attr)
 	}
 
-	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", device.ID)
 	if err != nil {
 		klog.Errorf("query device twin failed: %v", err)
 		return err
@@ -173,8 +164,8 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		twins = append(twins, twin)
 	}
 
-	context.DeviceList.Store(deviceID, &dttype.Device{
-		ID:          deviceID,
+	context.DeviceList.Store(device.ID, &dttype.Device{
+		ID:          device.ID,
 		Name:        device.Name,
 		Description: device.Description,
 		State:       device.State,
