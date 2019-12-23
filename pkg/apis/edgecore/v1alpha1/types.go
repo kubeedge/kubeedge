@@ -16,7 +16,11 @@ limitations under the License.
 
 package v1alpha1
 
-import metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+)
 
 const (
 	LoadBalanceStrategNameRoundRobin LoadBalanceStrategName = "RoundRobin"
@@ -39,7 +43,7 @@ const (
 	// DataBaseAliasName is default
 	DataBaseAliasName = "default"
 	// DataBaseDataSource is edge.db
-	DataBaseDataSource = "/var/lib/kubeedge/edge.db"
+	DataBaseDataSource = "/var/lib/kubeedge/edgecore.db"
 )
 
 type LoadBalanceStrategName string
@@ -47,7 +51,7 @@ type ProtocolName string
 type MqttMode int
 
 type EdgeCoreConfig struct {
-	metaconfig.TypeMeta
+	metav1.TypeMeta
 	// Mqtt set mqtt config for edgecore
 	// +Required
 	Mqtt MqttConfig `json:"mqtt,omitempty"`

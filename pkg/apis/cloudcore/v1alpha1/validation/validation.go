@@ -40,7 +40,7 @@ func ValidateCloudCoreConfiguration(c *cloudconfig.CloudCoreConfig) field.ErrorL
 }
 
 // ValidateEdgeControllerConfiguration validates `e` and returns an errorList if it is invalid
-func ValidateEdgeControllerConfiguration(e cloudconfig.EdgeControllerConfig) field.ErrorList {
+func ValidateEdgeControllerConfiguration(e cloudconfig.EdgeController) field.ErrorList {
 	allErrs := field.ErrorList{}
 	switch {
 	case e.NodeUpdateFrequency <= 0:
@@ -53,7 +53,7 @@ func ValidateEdgeControllerConfiguration(e cloudconfig.EdgeControllerConfig) fie
 }
 
 // ValidateDeviceControllerConfiguration validates `d` and returns an errorList if it is invalid
-func ValidateDeviceControllerConfiguration(d cloudconfig.DeviceControllerConfig) field.ErrorList {
+func ValidateDeviceControllerConfiguration(d cloudconfig.DeviceController) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateControllerContext(d.ControllerContext)...)
 	return allErrs
@@ -172,7 +172,7 @@ func ValidateModulesuration(m metaconfig.Modules) field.ErrorList {
 }
 
 // ValidateControllerContext validates `c` and returns an errorList if it is invalid
-func ValidateControllerContext(c cloudconfig.ControllerContext) field.ErrorList {
+func ValidateControllerContext(c cloudconfig.EdgeControllerContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	return allErrs
 }
