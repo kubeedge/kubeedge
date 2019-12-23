@@ -8,16 +8,28 @@ KubeEdge is composed  of cloud and edge parts. It is built upon Kubernetes and p
 
 ## Prerequisites
 
-+ [Install docker on cloud and edge side](https://docs.docker.com/install/)
++ **Go dependency** and **Kubernetes compatibility** please refer to [compatibility-matrix](https://github.com/kubeedge/kubeedge#compatibility-matrix).
 
-    you can also run other runtime, such as [containerd](https://github.com/containerd/containerd)
+### Cloud side
 
-+ [Install kubeadm/kubectl on cloud side](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
++ [Install golang](https://golang.org/dl/)
 
-+ [Creating kubernetes cluster with kubeadm on cloud side](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
++ [Install docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
 
-+ **Go** The minimum required go version is 1.12. You can install this version by using [this website.](https://golang.org/dl/)
-+ [Install mosquitto on every edge side](https://mosquitto.org/download/)
++ [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
+
++ [Creating kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
+
+
+### Edge side
+
++ [Install golang](https://golang.org/dl/)
+
++ [Install docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
+
++ [Install mosquitto](https://mosquitto.org/download/)
+
+**Note:** Do not install **kubelet** and **kube-proxy** on edge side
 
 ## Run KubeEdge
 
