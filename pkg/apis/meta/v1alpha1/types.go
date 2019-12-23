@@ -28,8 +28,9 @@ const (
 
 // Available modules for EdgeCore
 const (
-	ModuleNameEventBus    ModuleName = "eventbus"
-	ModuleNameServiceBus  ModuleName = "servicebus"
+	ModuleNameEventBus   ModuleName = "eventbus"
+	ModuleNameServiceBus ModuleName = "servicebus"
+	// TODO @kadisi change websocket to edgehub
 	ModuleNameEdgeHub     ModuleName = "websocket"
 	ModuleNameMetaManager ModuleName = "metaManager"
 	ModuleNameEdged       ModuleName = "edged"
@@ -49,18 +50,3 @@ const (
 	GroupNameUser           GroupName = "user"
 	GroupNameMesh           GroupName = "mesh"
 )
-
-type Modules struct {
-	//Enabled defineds the enabled modules
-	Enabled []ModuleName `json:"enabled,omitempty"`
-}
-
-type TypeMeta struct {
-	// Kind is a string value representing the REST resource this object represents.
-	// +optional
-	Kind string `json:"kind,omitempty"`
-
-	// APIVersion defines the versioned schema of this representation of an object.
-	// +optional
-	APIVersion string `json:"apiVersion,omitempty"`
-}

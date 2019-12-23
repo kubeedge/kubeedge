@@ -19,6 +19,8 @@ package v1alpha1
 import (
 	"path"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
@@ -27,7 +29,7 @@ import (
 // NewDefaultEdgeSideConfig return a default EdgeSideConfig object
 func NewDefaultEdgeSideConfig() *EdgeSideConfig {
 	return &EdgeSideConfig{
-		TypeMeta: metaconfig.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
@@ -87,9 +89,9 @@ func newDefaultMqttConfig() edgecoreconfig.MqttConfig {
 	}
 }
 
-// newDefaultControllerContext return a default ControllerContext object
-func newDefaultControllerContext() cloudcoreconfig.ControllerContext {
-	return cloudcoreconfig.ControllerContext{
+// newDefaultControllerContext return a default EdgeControllerContext object
+func newDefaultControllerContext() cloudcoreconfig.EdgeControllerContext {
+	return cloudcoreconfig.EdgeControllerContext{
 		SendModule:     "metaManager",
 		ReceiveModule:  "edgecontroller",
 		ResponseModule: "metaManager",
@@ -120,8 +122,8 @@ func newDefaultMetamanager() edgecoreconfig.MetaManager {
 // newDefaultDataBase return a default DataBase object
 func newDefaultDataBase() edgecoreconfig.DataBase {
 	return edgecoreconfig.DataBase{
-		DriverName: edgecoreconfig.DataBaseDriverName,
-		AliasName:  edgecoreconfig.DataBaseAliasName,
-		DataSource: edgecoreconfig.DataBaseDataSource,
+		DriverName: DataBaseDriverName,
+		AliasName:  DataBaseAliasName,
+		DataSource: DataBaseDataSource,
 	}
 }

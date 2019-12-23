@@ -19,6 +19,8 @@ package v1alpha1
 import (
 	"path"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
@@ -26,7 +28,7 @@ import (
 // NewDefaultEdgeCoreConfig return a default EdgeCoreConfig object
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	return &EdgeCoreConfig{
-		TypeMeta: metaconfig.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
@@ -57,9 +59,9 @@ func newDefaultEdgeHubConfig() EdgeHubConfig {
 	return EdgeHubConfig{
 		WebSocket:         newDefaultWebSocketConfig(),
 		Quic:              newDefaultQuicConfig(),
-		TLSCaFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
-		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
+		TLSCaFile:         constants.DefaultCAFile,
+		TLSCertFile:       constants.DefaultCertFile,
+		TLSPrivateKeyFile: constants.DefaultKeyFile,
 		Protocol:          ProtocolNameWebSocket,
 		Heartbeat:         15,
 	}

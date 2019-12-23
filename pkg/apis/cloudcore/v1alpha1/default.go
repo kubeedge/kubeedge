@@ -19,6 +19,9 @@ package v1alpha1
 import (
 	"path"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
@@ -26,95 +29,98 @@ import (
 // NewDefaultCloudCoreConfig return a default CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 	return &CloudCoreConfig{
-		TypeMeta: metaconfig.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
-		Kube:             newDefaultKubeConfig(),
-		EdgeController:   newDefaultEdgeControllerConfig(),
-		DeviceController: newDefaultDeviceControllerConfig(),
-		Cloudhub:         newDefaultCloudHubConfig(),
-		Modules:          newDefaultModules(),
-	}
-}
-
-// newDefaultEdgeControllerConfig return a default EdgeControllerConfig object
-func newDefaultEdgeControllerConfig() EdgeControllerConfig {
-	return EdgeControllerConfig{
-		NodeUpdateFrequency: 10,
-		ControllerContext: ControllerContext{
-			SendModule:     metaconfig.ModuleNameCloudHub,
-			ReceiveModule:  metaconfig.ModuleNameEdgeController,
-			ResponseModule: metaconfig.ModuleNameCloudHub,
+		KubeAPIConfig: KubeAPIConfig{
+			Master:      "",
+			ContentType: constants.DefaultKubeContentType,
+			QPS:         constants.DefaultKubeQPS,
+			Burst:       constants.DefaultKubeBurst,
+			KubeConfig:  constants.DefaultKubeConfig,
 		},
-	}
-}
-
-// newDefaultDeviceControllerConfig return a default DeviceControllerConfig object
-func newDefaultDeviceControllerConfig() DeviceControllerConfig {
-	return DeviceControllerConfig{
-		ControllerContext: ControllerContext{
-			SendModule:     metaconfig.ModuleNameCloudHub,
-			ReceiveModule:  metaconfig.ModuleNameDeviceController,
-			ResponseModule: metaconfig.ModuleNameCloudHub,
-		},
-	}
-}
-
-// newDefaultCloudHubConfig return a default CloudHubConfig object
-func newDefaultCloudHubConfig() CloudHubConfig {
-	return CloudHubConfig{
-		WebSocket:         newDefaultCloudHubWebSocket(),
-		Quic:              newDefaultCloudHubQuic(),
-		UnixSocket:        newDefaultCloudHubUnixSocket(),
-		TLSCAFile:         path.Join(constants.DefaultCADir, "rootCA.crt"),
-		TLSCertFile:       path.Join(constants.DefaultCertDir, "edge.crt"),
-		TLSPrivateKeyFile: path.Join(constants.DefaultCertDir, "edge.key"),
-		KeepaliveInterval: 30,
-		WriteTimeout:      30,
-		NodeLimit:         10,
-	}
-}
-
-func newDefaultCloudHubWebSocket() CloudHubWebSocket {
-	return CloudHubWebSocket{
-		EnableWebsocket: true,
-		WebsocketPort:   10000,
-		Address:         "0.0.0.0",
-	}
-}
-
-func newDefaultCloudHubQuic() CloudHubQuic {
-	return CloudHubQuic{
-		EnableQuic:         false,
-		QuicPort:           10001,
-		MaxIncomingStreams: 10000,
-		Address:            "0.0.0.0",
-	}
-}
-
-func newDefaultCloudHubUnixSocket() CloudHubUnixSocket {
-	return CloudHubUnixSocket{
-		EnableUnixSocket:  true,
-		UnixSocketAddress: "unix:///var/lib/kubeedge/kubeedge.sock",
-	}
-}
-
-// newDefaultKubeConfig return a default KubeConfig object
-func newDefaultKubeConfig() KubeConfig {
-	return KubeConfig{
-		Master:     "",
-		KubeConfig: "/root/.kube/config",
-	}
-}
-
-// newDefaultModules return a default Modules object
-func newDefaultModules() metaconfig.Modules {
-	return metaconfig.Modules{
-		Enabled: []metaconfig.ModuleName{
-			metaconfig.ModuleNameDeviceController,
-			metaconfig.ModuleNameEdgeController,
-			metaconfig.ModuleNameCloudHub,
+		Modules: CloudCoreModules{
+			CloudHub: CloudHub{
+				Enable:            true,
+				KeepaliveInterval: 30,
+				NodeLimit:         10,
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				WriteTimeout:      30,
+				Quic: CloudHubQuic{
+					Enable:             false,
+					Address:            "0.0.0.0",
+					Port:               10001,
+					MaxIncomingStreams: 10000,
+				},
+				UnixSocket: CloudHubUnixSocket{
+					Enable:  true,
+					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
+				},
+				WebSocket: CloudHubWebSocket{
+					Enable:  true,
+					Port:    10000,
+					Address: "0.0.0.0",
+				},
+			},
+			EdgeController: EdgeController{
+				Enable:              true,
+				NodeUpdateFrequency: 10,
+				Buffer: EdgeControllerBuffer{
+					UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
+					UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
+					QueryConfigmap:             constants.DefaultQueryConfigMapBuffer,
+					QuerySecret:                constants.DefaultQuerySecretBuffer,
+					QueryService:               constants.DefaultQueryServiceBuffer,
+					QueryEndpoints:             constants.DefaultQueryEndpointsBuffer,
+					PodEvent:                   constants.DefaultPodEventBuffer,
+					ConfigmapEvent:             constants.DefaultConfigMapEventBuffer,
+					SecretEvent:                constants.DefaultSecretEventBuffer,
+					ServiceEvent:               constants.DefaultServiceEventBuffer,
+					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
+					QueryPersistentvolume:      constants.DefaultQueryPersistentVolumeBuffer,
+					QueryPersistentvolumeclaim: constants.DefaultQueryPersistentVolumeClaimBuffer,
+					QueryVolumeattachment:      constants.DefaultQueryVolumeAttachmentBuffer,
+					QueryNode:                  constants.DefaultQueryNodeBuffer,
+					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
+				},
+				Context: EdgeControllerContext{
+					SendModule:     metaconfig.ModuleNameCloudHub,
+					ReceiveModule:  metaconfig.ModuleNameEdgeController,
+					ResponseModule: metaconfig.ModuleNameCloudHub,
+				},
+				Load: EdgeControllerLoad{
+					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
+					UpdateNodeStatusWorkers:           constants.DefaultUpdateNodeStatusWorkers,
+					QueryConfigmapWorkers:             constants.DefaultQueryConfigMapWorkers,
+					QuerySecretWorkers:                constants.DefaultQuerySecretWorkers,
+					QueryServiceWorkers:               constants.DefaultQueryServiceWorkers,
+					QueryEndpointsWorkers:             constants.DefaultQueryEndpointsWorkers,
+					QueryPersistentvolumeWorkers:      constants.DefaultQueryPersistentVolumeWorkers,
+					QueryPersistentvolumeclaimWorkers: constants.DefaultQueryPersistentVolumeClaimWorkers,
+					QueryVolumeattachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
+					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
+					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
+				},
+			},
+			DeviceController: DeviceController{
+				Enable: true,
+				Context: DeviceControllerContext{
+					SendModule:     metaconfig.ModuleNameCloudHub,
+					ReceiveModule:  metaconfig.ModuleNameDeviceController,
+					ResponseModule: metaconfig.ModuleNameCloudHub,
+				},
+				Buffer: DeviceControllerBuffer{
+					UpdateDeviceStatus: deviceconstants.DefaultUpdateDeviceStatusBuffer,
+					DeviceEvent:        deviceconstants.DefaultDeviceEventBuffer,
+					DeviceModelEvent:   deviceconstants.DefaultDeviceModelEventBuffer,
+				},
+				Load: DeviceControllerLoad{
+					UpdateDeviceStatusWorkers: deviceconstants.DefaultUpdateDeviceStatusWorkers,
+				},
+			},
 		},
 	}
 }

@@ -8,13 +8,15 @@ import (
 
 const (
 	DefaultConfigDir = "/etc/kubeedge/config/"
-	DefaultCADir     = "/etc/kubeedge/ca/"
-	DefaultCertDir   = "/etc/kubeedge/certs/"
+	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
+	DefaultCertFile  = "/etc/kubeedge/certs/edge.crt"
+	DefaultKeyFile   = "/etc/kubeedge/certs/edge.key"
 )
 
 // Config
 const (
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
+	DefaultKubeConfig              = "/root/.kube/config"
 	DefaultKubeNamespace           = v1.NamespaceAll
 	DefaultKubeQPS                 = 100.0
 	DefaultKubeBurst               = 200

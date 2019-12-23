@@ -20,18 +20,18 @@ import (
 	"io/ioutil"
 
 	"k8s.io/klog"
-	kyaml "sigs.k8s.io/yaml"
+	"sigs.k8s.io/yaml"
 )
 
-func (c *CloudCoreConfig) Parse(fname string) error {
-	data, err := ioutil.ReadFile(fname)
+func (c *CloudCoreConfig) Parse(filename string) error {
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		klog.Errorf("ReadConfig file %s error %v", fname, err)
+		klog.Errorf("Failed to read configfile %s: %v", filename, err)
 		return err
 	}
-	err = kyaml.Unmarshal(data, c)
+	err = yaml.Unmarshal(data, c)
 	if err != nil {
-		klog.Errorf("Unmarshal file %s data error %v", fname, err)
+		klog.Errorf("Failed to unmarshal configfile %s: %v", filename, err)
 		return err
 	}
 	return nil

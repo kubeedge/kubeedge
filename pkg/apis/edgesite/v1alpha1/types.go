@@ -17,22 +17,33 @@ limitations under the License.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
 
+const (
+	// DataBaseDriverName is sqlite3
+	DataBaseDriverName = "sqlite3"
+	// DataBaseAliasName is default
+	DataBaseAliasName = "default"
+	// DataBaseDataSource is edge.db
+	DataBaseDataSource = "/var/lib/kubeedge/edgesite.db"
+)
+
 type EdgeSideConfig struct {
-	metaconfig.TypeMeta
+	metav1.TypeMeta
 	// Mqtt set mqtt config for edgesite, shared with edgecore mqttconfig
 	// +Required
 	Mqtt edgecoreconfig.MqttConfig `json:"mqtt,omitempty"`
 	// Kube set kubernetes cluster info which will be connect, shared with cloudcore kubeconfig
 	// +Required
 	Kube cloudcoreconfig.KubeConfig `json:"kube,omitempty"`
-	// ControllerContext set controller context ,shared with cloudcore controller context
+	// EdgeControllerContext set controller context ,shared with cloudcore controller context
 	// +Required
-	ControllerContext cloudcoreconfig.ControllerContext `json:"controllerContext"`
+	ControllerContext cloudcoreconfig.EdgeControllerContext `json:"controllerContext"`
 	// Edged set edged module config,shared with edgecore edged config
 	// +Required
 	Edged edgecoreconfig.EdgedConfig `json:"edged,omitempty"`
