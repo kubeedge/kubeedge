@@ -271,7 +271,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 		return
 	}
 
-	switch message.GetSource() {
+	msgSource := message.GetSource()
+	switch msgSource {
 	//case core.EdgedModuleName:
 	case modules.EdgedModuleName:
 		sendToCloud(&message)
@@ -289,6 +290,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 		beehiveContext.Send(EdgeFunctionModel, message)
 	case EdgeFunctionModel:
 		sendToCloud(&message)
+	default:
+		klog.Errorf("unsupport message source, %s", msgSource)
 	}
 }
 
