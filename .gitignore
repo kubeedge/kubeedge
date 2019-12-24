@@ -1,13 +1,14 @@
 .DS_Store
 /_python_build
+*/_build/
+venv/*
 *.pyc
 __pycache__
 *.swp
-.idea/**
+.idea/*
 .gradle
-.idea
 
-cloud/cloudcore.log   
+cloud/cloudcore.log
 cloud/cloudcore
 cloud/admission
 edge/edgecore
