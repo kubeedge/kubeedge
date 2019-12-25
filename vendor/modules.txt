@@ -361,6 +361,8 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mindprince/gonvml
 # github.com/mistifyio/go-zfs v2.1.1+incompatible
 github.com/mistifyio/go-zfs
+# github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
+github.com/mitchellh/go-ps
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1

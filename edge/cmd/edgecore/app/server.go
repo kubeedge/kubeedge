@@ -53,7 +53,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// Check running environment before run edge core
 			if err := environmentCheck(); err != nil {
-				klog.Errorf("%v", err)
+				klog.Errorf("Failed to check the running environment: %v", err)
 				os.Exit(1)
 			}
 
@@ -87,14 +87,12 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 // findProcess find a running process by name
 func findProcess(name string) (bool, error) {
-
 	processes, err := ps.Processes()
 	if err != nil {
 		return false, err
 	}
 
 	for _, process := range processes {
-
 		if process.Executable() == name {
 			return true, nil
 		}
@@ -106,15 +104,14 @@ func findProcess(name string) (bool, error) {
 // environmentCheck check the environment before edgecore start
 // if Check failed,  return errors
 func environmentCheck() error {
-
-	//if kubelet is running, return error
+	// if kubelet is running, return error
 	if find, err := findProcess("kubelet"); err != nil {
 		return err
 	} else if find == true {
 		return errors.New("Kubelet should not running on edge node")
 	}
 
-	//if kube-proxy is running, return error
+	// if kube-proxy is running, return error
 	if find, err := findProcess("kube-proxy"); err != nil {
 		return err
 	} else if find == true {
