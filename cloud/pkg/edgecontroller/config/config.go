@@ -62,9 +62,9 @@ type Configure struct {
 	KubeConfig string
 	// KubeContentType is the content type communicate with edge master(default is "application/vnd.kubernetes.protobuf")
 	KubeContentType string
-	// KubeQPS is the QPS communicate with edge master(default is 1024)
+	// KubeQPS is the QPS communicate with edge master(default is 100)
 	KubeQPS float32
-	// KubeBurst default is 10
+	// KubeBurst default is 200
 	KubeBurst int
 	// KubeUpdateNodeFrequency is the time duration for update node status(default is 20s)
 	KubeUpdateNodeFrequency time.Duration
