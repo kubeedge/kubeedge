@@ -261,7 +261,7 @@ func InitConfigure() {
 		kb, err := config.CONFIG.GetValue("controller.kube.burst").ToInt()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			kb = constants.DefaultKubeQPS
+			kb = constants.DefaultKubeBurst
 			klog.Infof("can not get key controller.kube.burst, use default value %v", kb)
 		}
 		kuf, err := config.CONFIG.GetValue("controller.kube.node_update_frequency").ToInt64()
