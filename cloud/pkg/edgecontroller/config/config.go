@@ -69,8 +69,6 @@ type Configure struct {
 	// KubeUpdateNodeFrequency is the time duration for update node status(default is 20s)
 	KubeUpdateNodeFrequency time.Duration
 
-	// KubeNodeID for the current node
-	KubeNodeID string
 	// KubeNodeName for the current node
 	KubeNodeName string
 	//EdgeSiteEnabled is used to enable or disable EdgeSite feature. Default is disabled
@@ -221,12 +219,6 @@ func InitConfigure() {
 			resn = constants.DefaultContextResponseModuleName
 			klog.Infof("can not get controller.context.response-module key, use default value %v", resn)
 		}
-		kubenodeID, err := config.CONFIG.GetValue("controller.kube.node-id").ToString()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			kubenodeID = ""
-			klog.Infof("can not get controller.kube.node-id key, use default value %v", kubenodeID)
-		}
 		nodeName, err := config.CONFIG.GetValue("controller.kube.node-name").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
@@ -375,7 +367,6 @@ func InitConfigure() {
 			ContextSendModule:                 smn,
 			ContextReceiveModule:              rmn,
 			ContextResponseModule:             resn,
-			KubeNodeID:                        kubenodeID,
 			KubeNodeName:                      nodeName,
 			EdgeSiteEnabled:                   es,
 			KubeMaster:                        km,
