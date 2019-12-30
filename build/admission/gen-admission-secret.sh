@@ -42,6 +42,7 @@ openssl x509 -req -in  ${CERTDIR}/server.csr -CA  ${CERTDIR}/ca.crt -CAkey  ${CE
 -CAcreateserial -out  ${CERTDIR}/server.crt \
 -extensions v3_req -extfile  ${CERTDIR}/csr.conf
 
+# `ENABLE_CREATE_SECRET` should always be set to `true` unless it has been already created.
 if [[ "${ENABLE_CREATE_SECRET}" = true ]]; then
     kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}
 
@@ -50,6 +51,8 @@ if [[ "${ENABLE_CREATE_SECRET}" = true ]]; then
         --from-file=tls.key=${CERTDIR}/server.key \
         --from-file=tls.crt=${CERTDIR}/server.crt \
         --from-file=ca.crt=${CERTDIR}/ca.crt \
-        --dry-run -o yaml |
-    kubectl -n ${NAMESPACE} apply -f -
+	-n ${NAMESPACE}
 fi
+
+# create other objects needed for admission
+for resource in $(ls *.yaml); do kubectl create -f $resource; done
