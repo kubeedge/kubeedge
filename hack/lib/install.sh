@@ -37,6 +37,10 @@ function check_kind {
       echo "kind installed failed, exiting."
       exit 1
     fi
+
+    # avoid modifing go.sum and go.mod when installing the kind
+    git checkout -- go.mod go.sum
+
     export PATH=$PATH:$GOPATH/bin
   else
     echo -n "found kind, version: " && kind version
