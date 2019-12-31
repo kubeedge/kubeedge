@@ -63,18 +63,20 @@ var (
 
 type csiMountMgr struct {
 	csiClientGetter
-	k8s            kubernetes.Interface
-	plugin         *csiPlugin
-	driverName     csiDriverName
-	driverMode     driverMode
-	volumeID       string
-	specVolumeID   string
-	readOnly       bool
-	spec           *volume.Spec
-	pod            *api.Pod
-	podUID         types.UID
-	options        volume.VolumeOptions
-	publishContext map[string]string
+	k8s             kubernetes.Interface
+	plugin          *csiPlugin
+	driverName      csiDriverName
+	driverMode      driverMode
+	volumeID        string
+	specVolumeID    string
+	readOnly        bool
+	supportsSELinux bool
+	spec            *volume.Spec
+	pod             *api.Pod
+	podUID          types.UID
+	options         volume.VolumeOptions
+	publishContext  map[string]string
+	kubeVolHost     volume.KubeletVolumeHost
 	volume.MetricsProvider
 }
 
@@ -253,6 +255,11 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 		return err
 	}
 
+	c.supportsSELinux, err = c.kubeVolHost.GetHostUtil().GetSELinuxSupport(dir)
+	if err != nil {
+		klog.V(2).Info(log("error checking for SELinux support: %s", err))
+	}
+
 	// apply volume ownership
 	// The following logic is derived from https://github.com/kubernetes/kubernetes/issues/66323
 	// if fstype is "", then skip fsgroup (could be indication of non-block filesystem)
@@ -318,14 +325,14 @@ func (c *csiMountMgr) podAttributes() (map[string]string, error) {
 }
 
 func (c *csiMountMgr) GetAttributes() volume.Attributes {
-	mounter := c.plugin.host.GetMounter(c.plugin.GetPluginName())
 	path := c.GetPath()
-	supportSelinux, err := mounter.GetSELinuxSupport(path)
+	supportSelinux, err := c.kubeVolHost.GetHostUtil().GetSELinuxSupport(path)
 	if err != nil {
 		klog.V(2).Info(log("error checking for SELinux support: %s", err))
 		// Best guess
 		supportSelinux = false
 	}
+
 	return volume.Attributes{
 		ReadOnly:        c.readOnly,
 		Managed:         !c.readOnly,

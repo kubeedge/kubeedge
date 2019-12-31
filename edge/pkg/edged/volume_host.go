@@ -35,9 +35,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 	recordtools "k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/util/subpath"
+	utilexec "k8s.io/utils/exec"
+	"k8s.io/utils/mount"
 )
 
 // NewInitializedVolumePluginMgr returns a new instance of volume.VolumePluginMgr
@@ -130,7 +131,7 @@ func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*ap
 		return evh.edge.metaClient.ConfigMaps(namespace).Get(name)
 	}
 }
-func (evh *edgedVolumeHost) GetExec(pluginName string) mount.Exec          { return nil }
+func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface  { return nil }
 func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                    { return nil, nil }
 func (evh *edgedVolumeHost) GetNodeAllocatable() (api.ResourceList, error) { return nil, nil }
 func (evh *edgedVolumeHost) GetNodeLabels() (map[string]string, error)     { return nil, nil }

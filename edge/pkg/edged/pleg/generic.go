@@ -99,10 +99,20 @@ func (gl *GenericLifecycle) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kub
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
 		apiPodStatus.HostIP = hostIP
-		if pod.Spec.HostNetwork && podStatus.IP == "" {
+
+		apiPodStatus.PodIPs = make([]v1.PodIP, 0, len(podStatus.IPs))
+		for _, ip := range podStatus.IPs {
+			apiPodStatus.PodIPs = append(apiPodStatus.PodIPs, v1.PodIP{
+				IP: ip,
+			})
+		}
+
+		if len(apiPodStatus.PodIPs) > 0 {
+			apiPodStatus.PodIP = apiPodStatus.PodIPs[0].IP
+		}
+
+		if pod.Spec.HostNetwork && apiPodStatus.PodIP == "" {
 			apiPodStatus.PodIP = hostIP
-		} else {
-			apiPodStatus.PodIP = podStatus.IP
 		}
 	}
 	// set status for Pods created on versions of kube older than 1.6

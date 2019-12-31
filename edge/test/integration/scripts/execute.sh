@@ -24,6 +24,9 @@ if [ ! -d "/var/lib/edged" ]; then
   sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
 fi
 
+go get github.com/onsi/ginkgo/ginkgo
+sudo cp $GOPATH/bin/ginkgo /usr/bin/
+
 #run the edgecore bin to run the integration
 go build cmd/edgecore/edgecore.go
 #dynamically append testManager Module before starting integration test.
