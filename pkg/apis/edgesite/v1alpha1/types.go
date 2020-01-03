@@ -46,7 +46,7 @@ type EdgeSideConfig struct {
 	ControllerContext cloudcoreconfig.EdgeControllerContext `json:"controllerContext"`
 	// Edged set edged module config,shared with edgecore edged config
 	// +Required
-	Edged edgecoreconfig.EdgedConfig `json:"edged,omitempty"`
+	Edged edgecoreconfig.Edged `json:"edged,omitempty"`
 	// Modules set which modules are enabled
 	// +Required
 	Modules metaconfig.Modules `json:"modules,omitempty"`

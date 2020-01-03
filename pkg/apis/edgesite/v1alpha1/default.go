@@ -43,9 +43,9 @@ func NewDefaultEdgeSideConfig() *EdgeSideConfig {
 	}
 }
 
-// newDefaultEdgedConfig return a default EdgedConfig object
-func newDefaultEdgedConfig() edgecoreconfig.EdgedConfig {
-	return edgecoreconfig.EdgedConfig{
+// newDefaultEdgedConfig return a default Edged object
+func newDefaultEdgedConfig() edgecoreconfig.Edged {
+	return edgecoreconfig.Edged{
 		HostnameOverride:            "edge-node",
 		InterfaceName:               "eth0",
 		EdgedMemoryCapacity:         7852396000,
@@ -62,7 +62,7 @@ func newDefaultEdgedConfig() edgecoreconfig.EdgedConfig {
 		RuntimeRequestTimeout:       2,
 		PodSandboxImage:             "kubeedge/pause:3.1",
 		ImagePullProgressDeadline:   60,
-		CgroupDriver:                "cgroupfs",
+		CGroupDriver:                "cgroupfs",
 		NodeIP:                      "127.0.0.1",
 		ClusterDNS:                  "8.8.8.8",
 		ClusterDomain:               "",

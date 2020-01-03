@@ -29,7 +29,7 @@ type CloudCoreConfig struct {
 	KubeAPIConfig KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
 	// Modules set cloudcore modules config
 	// +Required
-	Modules CloudCoreModules `json:"modules,omitempty"`
+	Modules Modules `json:"modules,omitempty"`
 }
 
 type KubeAPIConfig struct {
@@ -52,7 +52,7 @@ type KubeAPIConfig struct {
 	KubeConfig string `json:"kubeConfig,omitempty"`
 }
 
-type CloudCoreModules struct {
+type Modules struct {
 	// CloudHub set cloudhub module config
 	CloudHub CloudHub `json:"cloudhub"`
 	// EdgeController set edgecontroller module config

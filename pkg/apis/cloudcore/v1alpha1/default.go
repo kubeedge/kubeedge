@@ -40,7 +40,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			Burst:       constants.DefaultKubeBurst,
 			KubeConfig:  constants.DefaultKubeConfig,
 		},
-		Modules: CloudCoreModules{
+		Modules: Modules{
 			CloudHub: CloudHub{
 				Enable:            true,
 				KeepaliveInterval: 30,
