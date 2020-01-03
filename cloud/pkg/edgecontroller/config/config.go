@@ -96,9 +96,6 @@ type Configure struct {
 	QueryNodeWorkers int
 	// UpdateNodeWorkers is the count of goroutines of update node
 	UpdateNodeWorkers int
-
-	// MessageLayer used, context or ssmq, default is context
-	MessageLayer string
 }
 
 func InitConfigure() {
@@ -335,11 +332,6 @@ func InitConfigure() {
 			unw = constants.DefaultUpdateNodeWorkers
 			klog.Infof("can not get key controller.load.update-node-workers, use default value %v", unw)
 		}
-		ml, err := config.CONFIG.GetValue("controller.message-layer").ToString()
-		if err != nil {
-			ml = constants.DefaultMessageLayer
-			klog.Infof("can not get key controller.message-layer, use default value %v", ml)
-		}
 		if len(errs) != 0 {
 			for _, e := range errs {
 				klog.Errorf("%v", e)
@@ -386,7 +378,6 @@ func InitConfigure() {
 			QueryVolumeAttachmentWorkers:      qvaw,
 			QueryNodeWorkers:                  qnw,
 			UpdateNodeWorkers:                 unw,
-			MessageLayer:                      ml,
 		}
 		klog.Infof("init edgecontroller config successfully, config info %++v", c)
 	})

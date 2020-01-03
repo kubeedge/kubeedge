@@ -540,7 +540,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	ml, err := messagelayer.NewMessageLayer()
+	ml, err := messagelayer.NewContextMessageLayer()
 	if err != nil {
 		klog.Warningf("create message layer failed with error: %s", err)
 		return nil, err
