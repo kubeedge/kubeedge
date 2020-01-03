@@ -6,6 +6,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
+// MessageLayer define all functions that message layer must implement
+type MessageLayer interface {
+	Send(message model.Message) error
+	Receive() (model.Message, error)
+	Response(message model.Message) error
+}
+
 // ContextMessageLayer build on context
 type ContextMessageLayer struct {
 	SendModuleName     string
@@ -35,7 +42,7 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 }
 
 // NewContextMessageLayer create a ContextMessageLayer
-func NewContextMessageLayer() (*ContextMessageLayer, error) {
+func NewContextMessageLayer() (MessageLayer, error) {
 	return &ContextMessageLayer{
 		SendModuleName:     config.Get().ContextSendModule,
 		ReceiveModuleName:  config.Get().ContextReceiveModule,

@@ -190,7 +190,7 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
 	config, err := utils.KubeConfig()
 	crdcli, err := utils.NewCRDClient(config)
-	ml, err := messagelayer.NewMessageLayer()
+	ml, err := messagelayer.NewContextMessageLayer()
 	if err != nil {
 		klog.Warningf("Create message layer failed with error: %s", err)
 	}
