@@ -38,8 +38,6 @@ type Configure struct {
 	KubeBurst int
 	// UpdateDeviceStatusWorkers is the count of goroutines of update device status
 	UpdateDeviceStatusWorkers int
-	// MessageLayer used, context or ssmq, default is context
-	MessageLayer string
 }
 
 func InitConfigure() {
@@ -108,12 +106,6 @@ func InitConfigure() {
 			psw = deviceconstants.DefaultUpdateDeviceStatusWorkers
 			klog.Infof("can not get devicecontroller.load.update-device-status-workers key, use default value %v", psw)
 		}
-		ml, err := config.CONFIG.GetValue("devicecontroller.message-layer").ToString()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			ml = deviceconstants.DefaultMessageLayer
-			klog.Infof("can not get devicecontroller.message-layer key, use default value %v", ml)
-		}
 		if len(errs) != 0 {
 			for _, e := range errs {
 				klog.Errorf("%v", e)
@@ -134,7 +126,6 @@ func InitConfigure() {
 			DeviceEventBuffer:         dbde,
 			DeviceModelEventBuffer:    dmeb,
 			UpdateDeviceStatusWorkers: psw,
-			MessageLayer:              ml,
 		}
 		klog.Infof("init devicecontroller config successfully, config info %++v", c)
 	})
