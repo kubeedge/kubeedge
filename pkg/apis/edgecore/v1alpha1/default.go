@@ -32,131 +32,86 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
-		Mqtt:        newDefaultMqttConfig(),
-		EdgeHub:     newDefaultEdgeHubConfig(),
-		Edged:       newDefaultEdgedConfig(),
-		Mesh:        newDefaultMeshConfig(),
-		Modules:     newDefaultModules(),
-		MetaManager: newDefaultMetamanager(),
-		DataBase:    newDefaultDataBase(),
-	}
-}
-
-// newDefaultMqttConfig return a default MqttConfig object
-func newDefaultMqttConfig() MqttConfig {
-	return MqttConfig{
-		Server:           "tcp://127.0.0.1:1883",
-		InternalServer:   "tcp://127.0.0.1:1884",
-		Mode:             MqttModeExternal,
-		QOS:              0,
-		Retain:           false,
-		SessionQueueSize: 100,
-	}
-}
-
-// newDefaultEdgeHubConfig return a default EdgeHubConfig object
-func newDefaultEdgeHubConfig() EdgeHubConfig {
-	return EdgeHubConfig{
-		WebSocket:         newDefaultWebSocketConfig(),
-		Quic:              newDefaultQuicConfig(),
-		TLSCaFile:         constants.DefaultCAFile,
-		TLSCertFile:       constants.DefaultCertFile,
-		TLSPrivateKeyFile: constants.DefaultKeyFile,
-		Protocol:          ProtocolNameWebSocket,
-		Heartbeat:         15,
-	}
-}
-
-// newDefaultWebSocketConfig return a default WebSocketConfig object
-func newDefaultWebSocketConfig() WebSocketConfig {
-	return WebSocketConfig{
-		Server:           "127.0.0.1:10000",
-		HandshakeTimeout: 30,
-		WriteDeadline:    15,
-		ReadDeadline:     15,
-	}
-}
-
-// newDefaultQuicConfig return a default QuicConfig object
-func newDefaultQuicConfig() QuicConfig {
-	return QuicConfig{
-		Server:           "127.0.0.1:10001",
-		HandshakeTimeout: 30,
-		WriteDeadline:    15,
-		ReadDeadline:     15,
-	}
-}
-
-// newDefaultEdgedConfig return a default EdgedConfig object
-func newDefaultEdgedConfig() EdgedConfig {
-	return EdgedConfig{
-		HostnameOverride:            "edge-node",
-		InterfaceName:               "eth0",
-		EdgedMemoryCapacity:         7852396000,
-		NodeStatusUpdateFrequency:   10,
-		DevicePluginEnabled:         false,
-		GPUPluginEnabled:            false,
-		ImageGCHighThreshold:        80,
-		ImageGCLowThreshold:         40,
-		MaximumDeadContainersPerPod: 1,
-		DockerAddress:               "unix:///var/run/docker.sock",
-		RuntimeType:                 "docker",
-		RemoteRuntimeEndpoint:       "unix:///var/run/dockershim.sock",
-		RemoteImageEndpoint:         "unix:///var/run/dockershim.sock",
-		RuntimeRequestTimeout:       2,
-		PodSandboxImage:             "kubeedge/pause:3.1",
-		ImagePullProgressDeadline:   60,
-		CgroupDriver:                "cgroupfs",
-		NodeIP:                      "127.0.0.1",
-		ClusterDNS:                  "8.8.8.8",
-		ClusterDomain:               "",
-	}
-}
-
-// newDefaultMeshConfig return a default MeshConfig object
-func newDefaultMeshConfig() MeshConfig {
-	return MeshConfig{
-		Loadbalance: newDefaultLoadbalanceConfig(),
-	}
-}
-
-// newDefaultLoadbalanceConfig return a default LoadbalanceConfig object
-func newDefaultLoadbalanceConfig() LoadbalanceConfig {
-	return LoadbalanceConfig{
-		StrategyName: LoadBalanceStrategNameRoundRobin,
-	}
-}
-
-// newDefaultModules return a default Modules object
-func newDefaultModules() metaconfig.Modules {
-	return metaconfig.Modules{
-		Enabled: []metaconfig.ModuleName{
-			metaconfig.ModuleNameEventBus,
-			metaconfig.ModuleNameServiceBus,
-			metaconfig.ModuleNameEdgeHub,
-			metaconfig.ModuleNameMetaManager,
-			metaconfig.ModuleNameEdged,
-			metaconfig.ModuleNameTwin,
-			metaconfig.ModuleNameDBTest,
-			metaconfig.ModuleNameEdgeMesh,
+		DataBase: DataBase{
+			DriverName: DataBaseDriverName,
+			AliasName:  DataBaseAliasName,
+			DataSource: DataBaseDataSource,
 		},
-	}
-}
-
-// newDefaultMetamanager return a default Metamanager object
-func newDefaultMetamanager() MetaManager {
-	return MetaManager{
-		ContextSendGroup:  metaconfig.GroupNameHub,
-		ContextSendModule: metaconfig.ModuleNameEdgeHub,
-		EdgeSite:          false,
-	}
-}
-
-// newDefaultDataBase return a default DataBase object
-func newDefaultDataBase() DataBase {
-	return DataBase{
-		DriverName: DataBaseDriverName,
-		AliasName:  DataBaseAliasName,
-		DataSource: DataBaseDataSource,
+		Modules: EdgeCoreModules{
+			Edged: Edged{
+				Enable:                      true,
+				NodeStatusUpdateFrequency:   10,
+				DockerAddress:               "unix:///var/run/docker.sock",
+				RuntimeType:                 "docker",
+				NodeIP:                      "",
+				ClusterDNS:                  "",
+				ClusterDomain:               "",
+				EdgedMemoryCapacity:         7852396000,
+				RemoteRuntimeEndpoint:       "unix:///var/run/dockershim.sock",
+				RemoteImageEndpoint:         "unix:///var/run/dockershim.sock",
+				PodSandboxImage:             "kubeedge/pause:3.1",
+				ImagePullProgressDeadline:   60,
+				RuntimeRequestTimeout:       2,
+				HostnameOverride:            "edge-node",
+				RegisterNodeNamespace:       "default",
+				InterfaceName:               "eth0",
+				DevicePluginEnabled:         false,
+				GPUPluginEnabled:            false,
+				ImageGCHighThreshold:        80,
+				ImageGCLowThreshold:         40,
+				MaximumDeadContainersPerPod: 1,
+				CGroupDriver:                "cgroupfs",
+			},
+			EdgeHub: EdgeHub{
+				Enable:            true,
+				Heartbeat:         15,
+				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				Quic: EdgeHubQuic{
+					Enable:           false,
+					HandshakeTimeout: 30,
+					ReadDeadline:     15,
+					Server:           "127.0.0.1:10001",
+					WriteDeadline:    15,
+				},
+				WebSocket: EdgeHubWebSocket{
+					Enable:           true,
+					HandshakeTimeout: 30,
+					ReadDeadline:     15,
+					Server:           "127.0.0.1:10000",
+					WriteDeadline:    15,
+				},
+			},
+			EventBus: EventBus{
+				Enable:               true,
+				MqttQOS:              0,
+				MqttRetain:           false,
+				MqttSessionQueueSize: 100,
+				MqttServerExternal:   "tcp://127.0.0.1:1883",
+				MqttServerInternal:   "tcp://127.0.0.1:1884",
+				MqttMode:             MqttModeExternal,
+			},
+			MetaManager: MetaManager{
+				Enable:                true,
+				ContextSendGroup:      metaconfig.GroupNameHub,
+				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
+				PodStatusSyncInterval: 60,
+			},
+			ServiceBus: ServiceBus{
+				Enable: true,
+			},
+			DeviceTwin: DeviceTwin{
+				Enable: true,
+			},
+			DBTest: DBTest{
+				Enable: true,
+			},
+			EdgeMesh: EdgeMesh{
+				Enable:     true,
+				LBStrategy: LoadBalanceStrategNameRoundRobin,
+			},
+		},
 	}
 }

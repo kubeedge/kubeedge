@@ -24,50 +24,52 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 // ValidateCloudCoreConfiguration validates `c` and returns an errorList if it is invalid
 func ValidateCloudCoreConfiguration(c *cloudconfig.CloudCoreConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, ValidateKubeConfiguration(c.Kube)...)
-	allErrs = append(allErrs, ValidateEdgeControllerConfiguration(c.EdgeController)...)
-	allErrs = append(allErrs, ValidateDeviceControllerConfiguration(c.DeviceController)...)
-	allErrs = append(allErrs, ValidateCloudHubConfiguration(c.Cloudhub)...)
-	allErrs = append(allErrs, ValidateModulesuration(c.Modules)...)
+	allErrs = append(allErrs, ValidateKubeAPIConfig(c.KubeAPIConfig)...)
+	allErrs = append(allErrs, ValidateModuleCloudHub(c.Modules.CloudHub)...)
+	allErrs = append(allErrs, ValidateModuleEdgeController(c.Modules.EdgeController)...)
+	allErrs = append(allErrs, ValidateModuleDeviceController(c.Modules.DeviceController)...)
 	return allErrs
 }
 
-// ValidateEdgeControllerConfiguration validates `e` and returns an errorList if it is invalid
-func ValidateEdgeControllerConfiguration(e cloudconfig.EdgeController) field.ErrorList {
-	allErrs := field.ErrorList{}
-	switch {
-	case e.NodeUpdateFrequency <= 0:
-		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeUpdateFrequency"), e.NodeUpdateFrequency, "NodeUpdateFrequency need > 0"))
-		fallthrough
-	default:
-		allErrs = append(allErrs, ValidateControllerContext(e.ControllerContext)...)
+// ValidateModuleCloudHub validates `c` and returns an errorList if it is invalid
+func ValidateModuleCloudHub(c cloudconfig.CloudHub) field.ErrorList {
+	if !c.Enable {
+		return field.ErrorList{}
 	}
-	return allErrs
-}
 
-// ValidateDeviceControllerConfiguration validates `d` and returns an errorList if it is invalid
-func ValidateDeviceControllerConfiguration(d cloudconfig.DeviceController) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, ValidateControllerContext(d.ControllerContext)...)
-	return allErrs
-}
-
-// ValidateCloudHubConfiguration validates `c` and returns an errorList if it is invalid
-func ValidateCloudHubConfiguration(c cloudconfig.CloudHubConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, ValidateCloudHubWebSocket(c.WebSocket)...)
-	allErrs = append(allErrs, ValidateCloudHubQuic(c.Quic)...)
-	allErrs = append(allErrs, ValidateCloudHubUnixSocket(c.UnixSocket)...)
+	validWPort := utilvalidation.IsValidPortNum(int(c.WebSocket.Port))
+	validAddress := utilvalidation.IsValidIP(c.WebSocket.Address)
+	validQPort := utilvalidation.IsValidPortNum(int(c.Quic.Port))
+	validQAddress := utilvalidation.IsValidIP(c.Quic.Address)
 
 	switch {
+	case len(validWPort) > 0:
+		for _, m := range validWPort {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.WebSocket.Port, m))
+		}
+		fallthrough
+	case len(validAddress) > 0:
+		for _, m := range validAddress {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.WebSocket.Address, m))
+		}
+		fallthrough
+	case len(validQPort) > 0:
+		for _, m := range validQPort {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.Quic.Port, m))
+		}
+		fallthrough
+	case len(validQAddress) > 0:
+		for _, m := range validQAddress {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
+		}
+		fallthrough
 	case !utilvalidation.FileIsExist(c.TLSPrivateKeyFile):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
 		fallthrough
@@ -79,71 +81,46 @@ func ValidateCloudHubConfiguration(c cloudconfig.CloudHubConfig) field.ErrorList
 		fallthrough
 	default:
 	}
-	return allErrs
-}
-
-// ValidateCloudHubWebSocket validates `ws` and returns an errorList if it is invalid
-func ValidateCloudHubWebSocket(ws cloudconfig.CloudHubWebSocket) field.ErrorList {
-	allErrs := field.ErrorList{}
-	validWPort := utilvalidation.IsValidPortNum(int(ws.WebsocketPort))
-	validAddress := utilvalidation.IsValidIP(ws.Address)
-	switch {
-	case len(validWPort) > 0:
-		for _, m := range validWPort {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), ws.WebsocketPort, m))
-		}
-		fallthrough
-	case len(validAddress) > 0:
-		for _, m := range validAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), ws.Address, m))
-		}
-		fallthrough
-	default:
+	if !strings.HasPrefix(strings.ToLower(c.UnixSocket.Address), "unix://") {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
+			c.UnixSocket.Address, "unixSocketAddress must has prefix unix://"))
 	}
-	return allErrs
-}
-
-// ValidateCloudHubQuic validates `q` and returns an errorList if it is invalid
-func ValidateCloudHubQuic(q cloudconfig.CloudHubQuic) field.ErrorList {
-	allErrs := field.ErrorList{}
-	validQPort := utilvalidation.IsValidPortNum(int(q.QuicPort))
-	validAddress := utilvalidation.IsValidIP(q.Address)
-	switch {
-	case len(validQPort) > 0:
-		for _, m := range validQPort {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), q.QuicPort, m))
-		}
-		fallthrough
-	case len(validAddress) > 0:
-		for _, m := range validAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), q.Address, m))
-		}
-		fallthrough
-	default:
-	}
-	return allErrs
-}
-
-// ValidateCloudHubUnixSocket validates `us` and returns an errorList if it is invalid
-func ValidateCloudHubUnixSocket(us cloudconfig.CloudHubUnixSocket) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if !strings.HasPrefix(strings.ToLower(us.UnixSocketAddress), "unix://") {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("unixSocketAddress"),
-			us.UnixSocketAddress, "unixSocketAddress must has prefix unix://"))
-	}
-	s := strings.SplitN(us.UnixSocketAddress, "://", 2)
+	s := strings.SplitN(c.UnixSocket.Address, "://", 2)
 	if len(s) > 1 && !utilvalidation.FileIsExist(path.Dir(s[1])) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("unixSocketAddress"),
-			us.UnixSocketAddress,
-			fmt.Sprintf("unixSocketAddress %v dir %v not exist , need create it",
-				us.UnixSocketAddress, path.Dir(s[1]))))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
+			c.UnixSocket.Address, fmt.Sprintf("unixSocketAddress %v dir %v not exist , need create it",
+				c.UnixSocket.Address, path.Dir(s[1]))))
 	}
 	return allErrs
 }
 
-// ValidateKubeConfiguration validates `k` and returns an errorList if it is invalid
-func ValidateKubeConfiguration(k cloudconfig.KubeConfig) field.ErrorList {
+// ValidateModuleEdgeController validates `e` and returns an errorList if it is invalid
+func ValidateModuleEdgeController(e cloudconfig.EdgeController) field.ErrorList {
+	if !e.Enable {
+		return field.ErrorList{}
+	}
+	allErrs := field.ErrorList{}
+	switch {
+	case e.NodeUpdateFrequency <= 0:
+		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeUpdateFrequency"), e.NodeUpdateFrequency, "NodeUpdateFrequency need > 0"))
+		fallthrough
+	default:
+	}
+	return allErrs
+}
+
+// ValidateModuleDeviceController validates `d` and returns an errorList if it is invalid
+func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorList {
+	if !d.Enable {
+		return field.ErrorList{}
+	}
+
+	allErrs := field.ErrorList{}
+	return allErrs
+}
+
+// ValidateKubeAPIConfig validates `k` and returns an errorList if it is invalid
+func ValidateKubeAPIConfig(k cloudconfig.KubeAPIConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	switch {
 	case !path.IsAbs(k.KubeConfig):
@@ -155,24 +132,5 @@ func ValidateKubeConfiguration(k cloudconfig.KubeConfig) field.ErrorList {
 	default:
 
 	}
-	return allErrs
-}
-
-// ValidateModulesuration validates `m` and returns an errorList if it is invalid
-func ValidateModulesuration(m metaconfig.Modules) field.ErrorList {
-	allErrs := field.ErrorList{}
-	switch {
-	case len(m.Enabled) == 0:
-		allErrs = append(allErrs, field.Invalid(field.NewPath("Enabled"), m.Enabled, "Enabled Modules should be set"))
-		fallthrough
-	default:
-
-	}
-	return allErrs
-}
-
-// ValidateControllerContext validates `c` and returns an errorList if it is invalid
-func ValidateControllerContext(c cloudconfig.EdgeControllerContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	return allErrs
 }
