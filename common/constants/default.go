@@ -13,6 +13,27 @@ const (
 	DefaultKeyFile   = "/etc/kubeedge/certs/edge.key"
 )
 
+const (
+	DefaultDockerAddress               = "unix:///var/run/docker.sock"
+	DefaultRuntimeType                 = "docker"
+	DefaultEdgedMemoryCapacity         = 7852396000
+	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
+	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
+	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
+	DefaultNodeStatusUpdateFrequency   = 10
+	DefaultImagePullProgressDeadline   = 60
+	DefaultRuntimeRequestTimeout       = 2
+	DefaultImageGCHighThreshold        = 80
+	DefaultImageGCLowThreshold         = 40
+	DefaultMaximumDeadContainersPerPod = 1
+	DefaultHostnameOverride            = "edge-node"
+	DefaultRegisterNodeNamespace       = "default"
+	DefaultInterfaceName               = "eth0"
+)
+const (
+	DefaultPodStatusSyncInterval = 60
+)
+
 // Config
 const (
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
@@ -84,4 +105,11 @@ const (
 	CSISyncMsgRespTimeout                     = 1 * time.Minute
 
 	CurrentSupportK8sVersion = "v1.15.3"
+)
+
+const (
+	DefaultUpdateDeviceStatusBuffer  = 1024
+	DefaultDeviceEventBuffer         = 1
+	DefaultDeviceModelEventBuffer    = 1
+	DefaultUpdateDeviceStatusWorkers = 1
 )

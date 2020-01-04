@@ -21,7 +21,6 @@ import (
 
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
 
 const (
@@ -33,27 +32,38 @@ const (
 	DataBaseDataSource = "/var/lib/kubeedge/edgesite.db"
 )
 
-type EdgeSideConfig struct {
+// EdgeSiteConfig indicates the edgesite config which read from edgesite config file
+type EdgeSiteConfig struct {
 	metav1.TypeMeta
-	// Mqtt set mqtt config for edgesite, shared with edgecore mqttconfig
+	// DataBase indicates database info
 	// +Required
-	Mqtt edgecoreconfig.MqttConfig `json:"mqtt,omitempty"`
-	// Kube set kubernetes cluster info which will be connect, shared with cloudcore kubeconfig
+	DataBase *edgecoreconfig.DataBase `json:"database,omitempty"`
+	// EdgeSiteDetail indicates edgesite info
 	// +Required
-	Kube cloudcoreconfig.KubeConfig `json:"kube,omitempty"`
-	// EdgeControllerContext set controller context ,shared with cloudcore controller context
+	EdgeSite *EdgeSiteDetail `json:"edgeSite,omitempty"`
+	// KubeAPIConfig indicates the kubernetes cluster info which cloudcore will connected
 	// +Required
-	ControllerContext cloudcoreconfig.EdgeControllerContext `json:"controllerContext"`
-	// Edged set edged module config,shared with edgecore edged config
+	KubeAPIConfig *cloudcoreconfig.KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
+	// Modules indicates cloudcore modules config
 	// +Required
-	Edged edgecoreconfig.Edged `json:"edged,omitempty"`
-	// Modules set which modules are enabled
+	Modules *Modules `json:"modules,omitempty"`
+}
+
+// EdgeSiteDetail indicates the edgesite detail info
+type EdgeSiteDetail struct {
+	// NodeName indicates node name
+	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	NodeName string `json:"nodeName"`
+}
+
+// Modules indicates the modules which edgesite will be used
+type Modules struct {
+	// EdgeController indicates edgecontroller module config
+	EdgeController *cloudcoreconfig.EdgeController `json:"edgecontroller,omitempty"`
+	// Edged indicates edged module config
 	// +Required
-	Modules metaconfig.Modules `json:"modules,omitempty"`
+	Edged *edgecoreconfig.Edged `json:"edged,omitempty"`
+	// MetaManager indicates meta module config
 	// +Required
-	// set meta module config ,shared with edgecore Metamanager config
-	MetaManager edgecoreconfig.MetaManager `json:"metaManager,omitempty"`
-	// DataBase set DataBase config
-	// +Required
-	DataBase edgecoreconfig.DataBase `json:"database,omitempty"`
+	MetaManager *edgecoreconfig.MetaManager `json:"metamanager,omitempty"`
 }
