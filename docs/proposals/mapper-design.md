@@ -35,7 +35,7 @@ Mapper is an application that is used to connect and and control devices. Follow
 Mapper can be specific to a protocol where standards are defined i.e Bluetooth, Zigbee, etc or specific to a device if it a custom protocol.
 
 ## Motivation
-All devices can be connected and controller by drivers provided by drivers provided by their vendor.
+All devices can be connected and controlled by drivers provided by their vendor.
 But the message from the device need to be translated into a format understood by KubeEdge.
 Also there should be a way to control the devices from the platform. Mapper is the application that interfaces between KubeEdge and devices.
 There should be a standard design for mappers supported by KubeEdge for keeping them generic and easy to use. 
