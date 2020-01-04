@@ -25,58 +25,58 @@ import (
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
 
-// NewDefaultEdgeCoreConfig return a default EdgeCoreConfig object
+// NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
-		DataBase: DataBase{
+		DataBase: &DataBase{
 			DriverName: DataBaseDriverName,
 			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
 		},
-		Modules: EdgeCoreModules{
-			Edged: Edged{
+		Modules: &Modules{
+			Edged: &Edged{
 				Enable:                      true,
-				NodeStatusUpdateFrequency:   10,
-				DockerAddress:               "unix:///var/run/docker.sock",
-				RuntimeType:                 "docker",
+				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
+				DockerAddress:               constants.DefaultDockerAddress,
+				RuntimeType:                 constants.DefaultRuntimeType,
 				NodeIP:                      "",
 				ClusterDNS:                  "",
 				ClusterDomain:               "",
-				EdgedMemoryCapacity:         7852396000,
-				RemoteRuntimeEndpoint:       "unix:///var/run/dockershim.sock",
-				RemoteImageEndpoint:         "unix:///var/run/dockershim.sock",
-				PodSandboxImage:             "kubeedge/pause:3.1",
-				ImagePullProgressDeadline:   60,
-				RuntimeRequestTimeout:       2,
-				HostnameOverride:            "edge-node",
-				RegisterNodeNamespace:       "default",
-				InterfaceName:               "eth0",
+				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
+				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
+				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
+				PodSandboxImage:             constants.DefaultPodSandboxImage,
+				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
+				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
+				HostnameOverride:            constants.DefaultHostnameOverride,
+				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
+				InterfaceName:               constants.DefaultInterfaceName,
 				DevicePluginEnabled:         false,
 				GPUPluginEnabled:            false,
-				ImageGCHighThreshold:        80,
-				ImageGCLowThreshold:         40,
-				MaximumDeadContainersPerPod: 1,
-				CGroupDriver:                "cgroupfs",
+				ImageGCHighThreshold:        constants.DefaultImageGCHighThreshold,
+				ImageGCLowThreshold:         constants.DefaultImageGCLowThreshold,
+				MaximumDeadContainersPerPod: constants.DefaultMaximumDeadContainersPerPod,
+				CGroupDriver:                CGroupDriverCGroupFS,
 			},
-			EdgeHub: EdgeHub{
+			EdgeHub: &EdgeHub{
 				Enable:            true,
 				Heartbeat:         15,
 				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
 				TLSCAFile:         constants.DefaultCAFile,
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
-				Quic: EdgeHubQuic{
+				Quic: &EdgeHubQUIC{
 					Enable:           false,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
 					Server:           "127.0.0.1:10001",
 					WriteDeadline:    15,
 				},
-				WebSocket: EdgeHubWebSocket{
+				WebSocket: &EdgeHubWebSocket{
 					Enable:           true,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
@@ -84,7 +84,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					WriteDeadline:    15,
 				},
 			},
-			EventBus: EventBus{
+			EventBus: &EventBus{
 				Enable:               true,
 				MqttQOS:              0,
 				MqttRetain:           false,
@@ -93,24 +93,78 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				MqttServerInternal:   "tcp://127.0.0.1:1884",
 				MqttMode:             MqttModeExternal,
 			},
-			MetaManager: MetaManager{
+			MetaManager: &MetaManager{
 				Enable:                true,
 				ContextSendGroup:      metaconfig.GroupNameHub,
 				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
-				PodStatusSyncInterval: 60,
+				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
 			},
-			ServiceBus: ServiceBus{
+			ServiceBus: &ServiceBus{
 				Enable: true,
 			},
-			DeviceTwin: DeviceTwin{
+			DeviceTwin: &DeviceTwin{
 				Enable: true,
 			},
-			DBTest: DBTest{
-				Enable: true,
+			DBTest: &DBTest{
+				Enable: false,
 			},
-			EdgeMesh: EdgeMesh{
+			EdgeMesh: &EdgeMesh{
 				Enable:     true,
 				LBStrategy: LoadBalanceStrategNameRoundRobin,
+			},
+		},
+	}
+}
+
+// NewMinEdgeCoreConfig returns a common EdgeCoreConfig object
+func NewMinEdgeCoreConfig() *EdgeCoreConfig {
+	return &EdgeCoreConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       Kind,
+			APIVersion: path.Join(GroupName, APIVersion),
+		},
+		DataBase: &DataBase{
+			DriverName: DataBaseDriverName,
+			AliasName:  DataBaseAliasName,
+			DataSource: DataBaseDataSource,
+		},
+		Modules: &Modules{
+			Edged: &Edged{
+				DockerAddress:         constants.DefaultDockerAddress,
+				RuntimeType:           constants.DefaultRuntimeType,
+				NodeIP:                "",
+				ClusterDNS:            "",
+				ClusterDomain:         "",
+				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
+				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
+				PodSandboxImage:       constants.DefaultPodSandboxImage,
+				HostnameOverride:      constants.DefaultHostnameOverride,
+				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
+				InterfaceName:         constants.DefaultInterfaceName,
+				DevicePluginEnabled:   false,
+				GPUPluginEnabled:      false,
+				CGroupDriver:          CGroupDriverCGroupFS,
+			},
+			EdgeHub: &EdgeHub{
+				Heartbeat:         15,
+				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				WebSocket: &EdgeHubWebSocket{
+					Enable:           true,
+					HandshakeTimeout: 30,
+					ReadDeadline:     15,
+					Server:           "127.0.0.1:10000",
+					WriteDeadline:    15,
+				},
+			},
+			EventBus: &EventBus{
+				MqttQOS:            0,
+				MqttRetain:         false,
+				MqttServerExternal: "tcp://127.0.0.1:1883",
+				MqttServerInternal: "tcp://127.0.0.1:1884",
+				MqttMode:           MqttModeExternal,
 			},
 		},
 	}

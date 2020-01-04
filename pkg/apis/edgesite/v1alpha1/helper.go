@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func (c *EdgeSideConfig) Parse(filename string) error {
+func (c *EdgeSiteConfig) Parse(filename string) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		klog.Errorf("Failed to read configfile %s: %v", filename, err)

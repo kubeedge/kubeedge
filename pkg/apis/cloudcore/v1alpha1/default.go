@@ -21,27 +21,26 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 )
 
-// NewDefaultCloudCoreConfig return a default CloudCoreConfig object
+// NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 	return &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
-		KubeAPIConfig: KubeAPIConfig{
+		KubeAPIConfig: &KubeAPIConfig{
 			Master:      "",
 			ContentType: constants.DefaultKubeContentType,
 			QPS:         constants.DefaultKubeQPS,
 			Burst:       constants.DefaultKubeBurst,
 			KubeConfig:  constants.DefaultKubeConfig,
 		},
-		Modules: Modules{
-			CloudHub: CloudHub{
+		Modules: &Modules{
+			CloudHub: &CloudHub{
 				Enable:            true,
 				KeepaliveInterval: 30,
 				NodeLimit:         10,
@@ -49,26 +48,26 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				WriteTimeout:      30,
-				Quic: CloudHubQuic{
+				Quic: &CloudHubQUIC{
 					Enable:             false,
 					Address:            "0.0.0.0",
 					Port:               10001,
 					MaxIncomingStreams: 10000,
 				},
-				UnixSocket: CloudHubUnixSocket{
+				UnixSocket: &CloudHubUnixSocket{
 					Enable:  true,
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
 				},
-				WebSocket: CloudHubWebSocket{
+				WebSocket: &CloudHubWebSocket{
 					Enable:  true,
 					Port:    10000,
 					Address: "0.0.0.0",
 				},
 			},
-			EdgeController: EdgeController{
+			EdgeController: &EdgeController{
 				Enable:              true,
 				NodeUpdateFrequency: 10,
-				Buffer: EdgeControllerBuffer{
+				Buffer: &EdgeControllerBuffer{
 					UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
 					UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
 					QueryConfigmap:             constants.DefaultQueryConfigMapBuffer,
@@ -86,12 +85,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 				},
-				Context: EdgeControllerContext{
+				Context: &EdgeControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameEdgeController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
 				},
-				Load: EdgeControllerLoad{
+				Load: &EdgeControllerLoad{
 					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
 					UpdateNodeStatusWorkers:           constants.DefaultUpdateNodeStatusWorkers,
 					QueryConfigmapWorkers:             constants.DefaultQueryConfigMapWorkers,
@@ -105,20 +104,51 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 				},
 			},
-			DeviceController: DeviceController{
+			DeviceController: &DeviceController{
 				Enable: true,
-				Context: DeviceControllerContext{
+				Context: &DeviceControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameDeviceController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
 				},
-				Buffer: DeviceControllerBuffer{
-					UpdateDeviceStatus: deviceconstants.DefaultUpdateDeviceStatusBuffer,
-					DeviceEvent:        deviceconstants.DefaultDeviceEventBuffer,
-					DeviceModelEvent:   deviceconstants.DefaultDeviceModelEventBuffer,
+				Buffer: &DeviceControllerBuffer{
+					UpdateDeviceStatus: constants.DefaultUpdateDeviceStatusBuffer,
+					DeviceEvent:        constants.DefaultDeviceEventBuffer,
+					DeviceModelEvent:   constants.DefaultDeviceModelEventBuffer,
 				},
-				Load: DeviceControllerLoad{
-					UpdateDeviceStatusWorkers: deviceconstants.DefaultUpdateDeviceStatusWorkers,
+				Load: &DeviceControllerLoad{
+					UpdateDeviceStatusWorkers: constants.DefaultUpdateDeviceStatusWorkers,
+				},
+			},
+		},
+	}
+}
+
+// NewMinCloudCoreConfig returns a min CloudCoreConfig object
+func NewMinCloudCoreConfig() *CloudCoreConfig {
+	return &CloudCoreConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       Kind,
+			APIVersion: path.Join(GroupName, APIVersion),
+		},
+		KubeAPIConfig: &KubeAPIConfig{
+			Master:     "",
+			KubeConfig: constants.DefaultKubeConfig,
+		},
+		Modules: &Modules{
+			CloudHub: &CloudHub{
+				NodeLimit:         10,
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				UnixSocket: &CloudHubUnixSocket{
+					Enable:  true,
+					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
+				},
+				WebSocket: &CloudHubWebSocket{
+					Enable:  true,
+					Port:    10000,
+					Address: "0.0.0.0",
 				},
 			},
 		},

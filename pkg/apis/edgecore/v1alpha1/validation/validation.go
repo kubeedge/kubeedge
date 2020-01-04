@@ -31,15 +31,15 @@ import (
 // ValidateEdgeCoreConfiguration validates `c` and returns an errorList if it is invalid
 func ValidateEdgeCoreConfiguration(c *edgecoreconfig.EdgeCoreConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, ValidateDataBase(c.DataBase)...)
-	allErrs = append(allErrs, ValidateModuleEdged(c.Modules.Edged)...)
-	allErrs = append(allErrs, ValidateModuleEdgeHub(c.Modules.EdgeHub)...)
-	allErrs = append(allErrs, ValidateModuleEventBus(c.Modules.EventBus)...)
-	allErrs = append(allErrs, ValidateModuleMetaManager(c.Modules.MetaManager)...)
-	allErrs = append(allErrs, ValidateModuleServiceBus(c.Modules.ServiceBus)...)
-	allErrs = append(allErrs, ValidateModuleDeviceTwin(c.Modules.DeviceTwin)...)
-	allErrs = append(allErrs, ValidateModuleDBTest(c.Modules.DBTest)...)
-	allErrs = append(allErrs, ValidateModuleEdgeMesh(c.Modules.EdgeMesh)...)
+	allErrs = append(allErrs, ValidateDataBase(*c.DataBase)...)
+	allErrs = append(allErrs, ValidateModuleEdged(*c.Modules.Edged)...)
+	allErrs = append(allErrs, ValidateModuleEdgeHub(*c.Modules.EdgeHub)...)
+	allErrs = append(allErrs, ValidateModuleEventBus(*c.Modules.EventBus)...)
+	allErrs = append(allErrs, ValidateModuleMetaManager(*c.Modules.MetaManager)...)
+	allErrs = append(allErrs, ValidateModuleServiceBus(*c.Modules.ServiceBus)...)
+	allErrs = append(allErrs, ValidateModuleDeviceTwin(*c.Modules.DeviceTwin)...)
+	allErrs = append(allErrs, ValidateModuleDBTest(*c.Modules.DBTest)...)
+	allErrs = append(allErrs, ValidateModuleEdgeMesh(*c.Modules.EdgeMesh)...)
 	return allErrs
 }
 
@@ -67,7 +67,7 @@ func ValidateModuleEdged(e edgecoreconfig.Edged) field.ErrorList {
 			"Need sed NodeIP"))
 	}
 	switch e.CGroupDriver {
-	case "cgroupfs", "systemd":
+	case edgecoreconfig.CGroupDriverCGroupFS, edgecoreconfig.CGroupDriverSystemd:
 	default:
 		allErrs = append(allErrs, field.Invalid(field.NewPath("CGroupDriver"), e.CGroupDriver,
 			"CGroupDriver value error"))
