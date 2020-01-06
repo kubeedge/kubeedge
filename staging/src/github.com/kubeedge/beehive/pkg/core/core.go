@@ -43,9 +43,9 @@ func GracefulShutdown() {
 	}
 }
 
-//Run starts the modules and in the end does module cleanup
+// Run starts the modules and in the end does module cleanup
 func Run() {
-	//Address the module registration and start the core
+	// Address the module registration and start the core
 	StartModules()
 	// monitor system signal and shutdown gracefully
 	GracefulShutdown()
