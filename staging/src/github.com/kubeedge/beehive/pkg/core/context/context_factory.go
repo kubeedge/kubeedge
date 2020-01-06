@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//define channel type
+// define channel type
 const (
 	MsgCtxTypeChannel = "channel"
 )
