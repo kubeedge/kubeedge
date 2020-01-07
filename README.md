@@ -55,11 +55,11 @@ KubeEdge is composed of the following components:
 
 ### Kubernetes compatibility
 
-|                     | Kubernetes 1.10 | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 |
-|---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------| --------------- |
-| KubeEdge 1.0        | ✓               | ✓               | ✓              | ✓               | ✓              | ✓               | -               |
-| KubeEdge 1.1        | +               | ✓               | ✓               | ✓               | ✓               | ✓              | ✓               |
-| KubeEdge HEAD       | +               | ✓               | ✓               | ✓               | ✓               | ✓              | ✓               |
+|                     | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 |
+|---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓               | ✓              | ✓               | ✓              | ✓               | -               | -               |
+| KubeEdge 1.1        | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge HEAD       | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 
 Key:
 * `✓` KubeEdge and the Kubernetes version are exactly compatible.
@@ -72,7 +72,7 @@ Key:
 |---------------------|----------------|-----------------|-----------------|-----------------|
 | KubeEdge 1.0        | ✓              | ✓              | ✓               | ✗               |
 | KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               |
-| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✓               |
 
 ## To start developing KubeEdge
 
