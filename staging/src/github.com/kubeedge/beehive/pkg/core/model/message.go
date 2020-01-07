@@ -6,7 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-//Constants for database operations and resource type settings
+// Constants for database operations and resource type settings
 const (
 	InsertOperation        = "insert"
 	DeleteOperation        = "delete"
@@ -31,7 +31,7 @@ type Message struct {
 	Content interface{}   `json:"content"`
 }
 
-//MessageRoute contains structure of message
+// MessageRoute contains structure of message
 type MessageRoute struct {
 	// where the message come from
 	Source string `json:"source,omitempty"`
@@ -44,7 +44,7 @@ type MessageRoute struct {
 	Resource string `json:"resource,omitempty"`
 }
 
-//MessageHeader defines message header details
+// MessageHeader defines message header details
 type MessageHeader struct {
 	// the message uuid
 	ID string `json:"msg_id"`
@@ -53,28 +53,38 @@ type MessageHeader struct {
 	ParentID string `json:"parent_msg_id,omitempty"`
 	// the time of creating
 	Timestamp int64 `json:"timestamp"`
+	// specific resource version for the message, if any.
+	// it's currently backed by resource version of the k8s object saved in the Content field.
+	// kubeedge leverages the concept of message resource version to achieve reliable transmission.
+	ResourceVersion string `json:"resourceversion,omitempty"`
 	// the flag will be set in sendsync
 	Sync bool `json:"sync,omitempty"`
 }
 
-//BuildRouter sets route and resource operation in message
+// BuildRouter sets route and resource operation in message
 func (msg *Message) BuildRouter(source, group, res, opr string) *Message {
 	msg.SetRoute(source, group)
 	msg.SetResourceOperation(res, opr)
 	return msg
 }
 
-//SetResourceOperation sets router resource and operation in message
+// SetResourceOperation sets router resource and operation in message
 func (msg *Message) SetResourceOperation(res, opr string) *Message {
 	msg.Router.Resource = res
 	msg.Router.Operation = opr
 	return msg
 }
 
-//SetRoute sets router source and group in message
+// SetRoute sets router source and group in message
 func (msg *Message) SetRoute(source, group string) *Message {
 	msg.Router.Source = source
 	msg.Router.Group = group
+	return msg
+}
+
+// SetResourceVersion sets resource version in message header
+func (msg *Message) SetResourceVersion(resourceVersion string) *Message {
+	msg.Header.ResourceVersion = resourceVersion
 	return msg
 }
 
@@ -83,27 +93,27 @@ func (msg *Message) IsSync() bool {
 	return msg.Header.Sync
 }
 
-//GetResource returns message route resource
+// GetResource returns message route resource
 func (msg *Message) GetResource() string {
 	return msg.Router.Resource
 }
 
-//GetOperation returns message route operation string
+// GetOperation returns message route operation string
 func (msg *Message) GetOperation() string {
 	return msg.Router.Operation
 }
 
-//GetSource returns message route source string
+// GetSource returns message route source string
 func (msg *Message) GetSource() string {
 	return msg.Router.Source
 }
 
-//GetGroup returns message route group
+// GetGroup returns message route group
 func (msg *Message) GetGroup() string {
 	return msg.Router.Group
 }
 
-//GetID returns message ID
+// GetID returns message ID
 func (msg *Message) GetID() string {
 	return msg.Header.ID
 }
@@ -121,6 +131,11 @@ func (msg *Message) GetTimestamp() int64 {
 //GetContent returns message content
 func (msg *Message) GetContent() interface{} {
 	return msg.Content
+}
+
+//GetResourceVersion returns message resource version
+func (msg *Message) GetResourceVersion() string {
+	return msg.Header.ResourceVersion
 }
 
 //UpdateID returns message object updating its ID
