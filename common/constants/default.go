@@ -11,7 +11,7 @@ const (
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
 	DefaultKubeNamespace           = v1.NamespaceAll
 	DefaultKubeQPS                 = 100.0
-	DefaultKubeBurst               = 10
+	DefaultKubeBurst               = 200
 	DefaultKubeUpdateNodeFrequency = 20
 
 	DefaultUpdatePodStatusWorkers            = 1
