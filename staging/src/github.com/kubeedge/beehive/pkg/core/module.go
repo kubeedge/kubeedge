@@ -89,7 +89,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 
 		newModules, deletedModules := calculateModuleChanges(currentModules)
 		klog.Infof("Current module list: %+v, disabledmodule: %+v addmodule: %+v  deletedmodule: %+v", currentModules, disabledModules, newModules, deletedModules)
-		//Remove disabled modules
+		// Remove disabled modules
 		for _, m := range deletedModules {
 			module, exist := modules[m]
 			if !exist {
@@ -101,7 +101,7 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 			disabledModules[m] = module
 			klog.Infof("Module %s is disabled", m)
 		}
-		//Enable new modules
+		// Enable new modules
 		for _, m := range newModules {
 			module := disabledModules[m]
 			if module == nil {
@@ -109,9 +109,9 @@ func (cb moduleChangeCallback) Callback(k string, v interface{}) {
 				break
 			}
 			Register(module)
-			//Init the module
+			// Init the module
 			beehiveContext.AddModule(module.Name())
-			//Assemble typeChannels for sendToGroup
+			// Assemble typeChannels for sendToGroup
 			beehiveContext.AddModuleGroup(module.Name(), module.Group())
 			go module.Start()
 			delete(disabledModules, m)
