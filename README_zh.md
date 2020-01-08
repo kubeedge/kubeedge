@@ -55,11 +55,11 @@ KubeEdge 由以下组件构成:
 
 ### Kubernetes 版本兼容
 
-|                     | Kubernetes 1.10 | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 |
+|                     | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 |
 |---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.0        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | -               |
-| KubeEdge 1.1        | +               | ✓               | ✓               | ✓              | ✓               | ✓               | ✓               |
-| KubeEdge HEAD       | +               | ✓               | ✓               | ✓              | ✓               | ✓               | ✓               |
+| KubeEdge 1.0        | ✓               | ✓              | ✓               | ✓              | ✓               | -               | -               |
+| KubeEdge 1.1        | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge HEAD       | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 
 说明:
 * `✓` KubeEdge和Kubernetes的版本是完全兼容的
@@ -72,7 +72,7 @@ KubeEdge 由以下组件构成:
 |---------------------|----------------|-----------------|-----------------|-----------------|
 | KubeEdge 1.0        | ✓              | ✓              | ✓               | ✗               |
 | KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               |
-| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✓              |
 
 ## 使用
 
