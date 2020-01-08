@@ -21,17 +21,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"k8s.io/api/core/v1"
+	"k8s.io/klog"
+	"k8s.io/utils/mount"
+	utilstrings "k8s.io/utils/strings"
+
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/klog"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	volumeutil "k8s.io/kubernetes/pkg/volume/util"
-	"k8s.io/kubernetes/pkg/volume/util/quota"
-	utilstrings "k8s.io/utils/strings"
+	"k8s.io/kubernetes/pkg/volume/util/fsquota"
 )
 
 // TODO: in the near future, this will be changed to be more restrictive
@@ -87,10 +88,6 @@ func (plugin *emptyDirPlugin) CanSupport(spec *volume.Spec) bool {
 	if spec.Volume != nil && spec.Volume.EmptyDir != nil {
 		return true
 	}
-	return false
-}
-
-func (plugin *emptyDirPlugin) IsMigratedToCSI() bool {
 	return false
 }
 
@@ -241,12 +238,12 @@ func (ed *emptyDir) SetUpAt(dir string, mounterArgs volume.MounterArgs) error {
 		if mounterArgs.DesiredSize != nil {
 			// Deliberately shadow the outer use of err as noted
 			// above.
-			hasQuotas, err := quota.SupportsQuotas(ed.mounter, dir)
+			hasQuotas, err := fsquota.SupportsQuotas(ed.mounter, dir)
 			if err != nil {
 				klog.V(3).Infof("Unable to check for quota support on %s: %s", dir, err.Error())
 			} else if hasQuotas {
 				klog.V(4).Infof("emptydir trying to assign quota %v on %s", mounterArgs.DesiredSize, dir)
-				err := quota.AssignQuota(ed.mounter, dir, mounterArgs.PodUID, mounterArgs.DesiredSize)
+				err := fsquota.AssignQuota(ed.mounter, dir, ed.pod.UID, mounterArgs.DesiredSize)
 				if err != nil {
 					klog.V(3).Infof("Set quota on %s failed %s", dir, err.Error())
 				}
@@ -416,7 +413,7 @@ func (ed *emptyDir) TearDownAt(dir string) error {
 
 func (ed *emptyDir) teardownDefault(dir string) error {
 	// Remove any quota
-	err := quota.ClearQuota(ed.mounter, dir)
+	err := fsquota.ClearQuota(ed.mounter, dir)
 	if err != nil {
 		klog.Warningf("Warning: Failed to clear quota on %s: %v", dir, err)
 	}

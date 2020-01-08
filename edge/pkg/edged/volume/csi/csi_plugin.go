@@ -113,23 +113,15 @@ var PluginHandler = &RegistrationHandler{}
 
 // ValidatePlugin is called by kubelet's plugin watcher upon detection
 // of a new registration socket opened by CSI Driver registrar side car.
-func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string, versions []string, foundInDeprecatedDir bool) error {
-	klog.Infof(log("Trying to validate a new CSI Driver with name: %s endpoint: %s versions: %s, foundInDeprecatedDir: %v",
-		pluginName, endpoint, strings.Join(versions, ","), foundInDeprecatedDir))
-
-	if foundInDeprecatedDir {
-		// CSI 0.x drivers used /var/lib/kubelet/plugins as the socket dir.
-		// This was deprecated as the socket dir for kubelet drivers, in lieu of a dedicated dir /var/lib/kubelet/plugins_registry
-		// The deprecated dir will only be allowed for a whitelisted set of old versions.
-		// CSI 1.x drivers should use the /var/lib/kubelet/plugins_registry
-		if !isDeprecatedSocketDirAllowed(versions) {
-			err := fmt.Errorf("socket for CSI driver %q versions %v was found in a deprecated dir. Drivers implementing CSI 1.x+ must use the new dir", pluginName, versions)
-			klog.Error(err)
-			return err
-		}
-	}
+func (h *RegistrationHandler) ValidatePlugin(pluginName string, endpoint string, versions []string) error {
+	klog.Infof(log("Trying to validate a new CSI Driver with name: %s endpoint: %s versions: %s",
+		pluginName, endpoint, strings.Join(versions, ",")))
 
 	_, err := h.validateVersions("ValidatePlugin", pluginName, endpoint, versions)
+	if err != nil {
+		return fmt.Errorf("validation failed for CSI Driver %s at endpoint %s: %v", pluginName, endpoint, err)
+	}
+
 	return err
 }
 
@@ -398,6 +390,11 @@ func (p *csiPlugin) NewMounter(
 		return nil, errors.New("failed to get a Kubernetes client")
 	}
 
+	kvh, ok := p.host.(volume.KubeletVolumeHost)
+	if !ok {
+		return nil, errors.New(log("cast from VolumeHost to KubeletVolumeHost failed"))
+	}
+
 	mounter := &csiMountMgr{
 		plugin:       p,
 		k8s:          k8s,
@@ -409,6 +406,7 @@ func (p *csiPlugin) NewMounter(
 		volumeID:     volumeHandle,
 		specVolumeID: spec.Name(),
 		readOnly:     readOnly,
+		kubeVolHost:  kvh,
 	}
 	mounter.csiClientGetter.driverName = csiDriverName(driverName)
 
@@ -452,10 +450,16 @@ func (p *csiPlugin) NewMounter(
 func (p *csiPlugin) NewUnmounter(specName string, podUID types.UID) (volume.Unmounter, error) {
 	klog.V(4).Infof(log("setting up unmounter for [name=%v, podUID=%v]", specName, podUID))
 
+	kvh, ok := p.host.(volume.KubeletVolumeHost)
+	if !ok {
+		return nil, errors.New(log("cast from VolumeHost to KubeletVolumeHost failed"))
+	}
+
 	unmounter := &csiMountMgr{
 		plugin:       p,
 		podUID:       podUID,
 		specVolumeID: specName,
+		kubeVolHost:  kvh,
 	}
 
 	// load volume info from file

@@ -50,9 +50,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/klog"
+	pluginwatcherapi "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
-	pluginwatcherapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -72,7 +73,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
 	schedulercache "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
 	"k8s.io/kubernetes/pkg/volume/downwardapi"
@@ -80,6 +80,9 @@ import (
 	"k8s.io/kubernetes/pkg/volume/hostpath"
 	"k8s.io/kubernetes/pkg/volume/projected"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
+	"k8s.io/kubernetes/pkg/volume/util/hostutil"
+	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
+	"k8s.io/utils/mount"
 
 	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -193,6 +196,7 @@ type edged struct {
 	kubeClient         clientset.Interface
 	probeManager       prober.Manager
 	livenessManager    proberesults.Manager
+	startupManager     proberesults.Manager
 	server             *server.Server
 	podAdditionQueue   *workqueue.Type
 	podAdditionBackoff *flowcontrol.Backoff
@@ -203,6 +207,7 @@ type edged struct {
 	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
+	hostUtil           hostutil.HostUtils
 	volumeManager      volumemanager.VolumeManager
 	rootDirectory      string
 	gpuPluginEnabled   bool
@@ -248,15 +253,12 @@ func (e *edged) Group() string {
 }
 
 func (e *edged) Start() {
-	e.metaClient = client.New()
-	// use self defined client to replace fake kube client
-	e.kubeClient = fakekube.NewSimpleClientset(e.metaClient)
-
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
 		klog.Errorf("initialize module error: %v", err)
 		os.Exit(1)
 	}
+	e.hostUtil = hostutil.NewHostUtil()
 
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
@@ -267,15 +269,17 @@ func (e *edged) Start() {
 		e.volumePluginMgr,
 		e.containerRuntime,
 		e.mounter,
+		e.hostUtil,
 		e.getPodsDir(),
 		record.NewEventRecorder(),
 		false,
 		false,
+		volumepathhandler.NewBlockVolumePathHandler(),
 	)
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
-	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, containers.NewContainerRunner(), kubecontainer.NewRefManager(), record.NewEventRecorder())
+	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, containers.NewContainerRunner(), kubecontainer.NewRefManager(), record.NewEventRecorder())
 	e.pleg = edgepleg.NewGenericLifecycleRemote(e.containerRuntime, e.probeManager, plegChannelCapacity, plegRelistPeriod, e.podManager, e.statusManager, e.podCache, clock.RealClock{}, e.interfaceName)
 	e.statusManager.Start()
 	e.pleg.Start()
@@ -294,7 +298,6 @@ func (e *edged) Start() {
 
 	e.pluginManager = pluginmanager.NewPluginManager(
 		e.getPluginsRegistrationDir(), /* sockDir */
-		e.getPluginsDir(),             /* deprecatedSockDir */
 		nil,
 	)
 
@@ -347,6 +350,8 @@ func newEdged() (*edged, error) {
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
 
+	metaClient := client.New()
+
 	ed := &edged{
 		nodeName:                  edgedconfig.Get().NodeName,
 		interfaceName:             edgedconfig.Get().InterfaceName,
@@ -359,7 +364,8 @@ func newEdged() (*edged, error) {
 		podAdditionBackoff:        backoff,
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
-		kubeClient:                nil,
+		metaClient:                metaClient,
+		kubeClient:                fakekube.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: edgedconfig.Get().NodeStatusUpdateInterval,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
@@ -379,6 +385,8 @@ func newEdged() (*edged, error) {
 	}
 
 	ed.livenessManager = proberesults.NewManager()
+	ed.startupManager = proberesults.NewManager()
+
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",
 		Name:      string(ed.nodeName),
@@ -466,6 +474,7 @@ func newEdged() (*edged, error) {
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
 		ed.livenessManager,
+		ed.startupManager,
 		"",
 		containerRefManager,
 		&machineInfo,
@@ -493,11 +502,12 @@ func newEdged() (*edged, error) {
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		cadvisorInterface,
 		cm.NodeConfig{
-			CgroupDriver:       edgedconfig.Get().CgroupDriver,
-			SystemCgroupsName:  edgedconfig.Get().CgroupDriver,
-			KubeletCgroupsName: edgedconfig.Get().CgroupDriver,
-			ContainerRuntime:   edgedconfig.Get().RuntimeType,
-			KubeletRootDir:     DefaultRootDir,
+			CgroupDriver:                 edgedconfig.Get().CgroupDriver,
+			SystemCgroupsName:            edgedconfig.Get().CgroupDriver,
+			KubeletCgroupsName:           edgedconfig.Get().CgroupDriver,
+			ContainerRuntime:             edgedconfig.Get().RuntimeType,
+			KubeletRootDir:               DefaultRootDir,
+			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
 		},
 		false,
 		edgedconfig.Get().DevicePluginEnabled,
