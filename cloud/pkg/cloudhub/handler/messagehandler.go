@@ -71,7 +71,10 @@ func InitHandler(config *hubconfig.Configure, eventq *channelq.ChannelMessageQue
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
-		CloudhubHandler.Handlers = []HandleFunc{CloudhubHandler.KeepaliveCheckLoop, CloudhubHandler.MessageWriteLoop}
+		CloudhubHandler.Handlers = []HandleFunc{
+			CloudhubHandler.KeepaliveCheckLoop,
+			CloudhubHandler.MessageWriteLoop,
+		}
 
 		CloudhubHandler.initServerEntries()
 	})
