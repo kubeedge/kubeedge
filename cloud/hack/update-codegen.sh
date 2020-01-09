@@ -20,7 +20,7 @@ set -o pipefail
 
 SCRIPT_ROOT=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/../.. && pwd)
 
-${SCRIPT_ROOT}/vendor/k8s.io/code-generator/generate-groups.sh "deepcopy" \
+${SCRIPT_ROOT}/cloud/hack/generate-groups.sh "deepcopy,client,informer,lister" \
 github.com/kubeedge/kubeedge/cloud/pkg/client github.com/kubeedge/kubeedge/cloud/pkg/apis \
-"devices:v1alpha1" \
+"devices:v1alpha1 reliablesyncs:v1alpha1" \
 --go-header-file ${SCRIPT_ROOT}/cloud/hack/boilerplate/boilerplate.txt
