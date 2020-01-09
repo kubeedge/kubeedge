@@ -22,10 +22,10 @@ install: true
 
 jobs:
   include:
-    - stage: "Verify vendor, gofmt, golint, govet"
-      name: "Verify vendor, gofmt, golint, govet"
+    - stage: "Verify vendor, codegen, gofmt, golint, govet"
+      name: "Verify vendor, codegen, gofmt, golint, govet"
       before_script:
-        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.20.0
+        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.22.2
         - export GO111MODULE=on
       script:
         - make verify
