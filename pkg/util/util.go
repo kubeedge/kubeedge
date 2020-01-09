@@ -28,8 +28,9 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 //AddressFamily is uint type var to describe family ips
@@ -63,6 +64,32 @@ var (
 	v4File = RouteFile{name: ipv4RouteFile, parse: GetIPv4DefaultRoutes}
 	v6File = RouteFile{name: ipv6RouteFile, parse: GetIPv6DefaultRoutes}
 )
+
+func GetLocalIP(hostName string) (string, error) {
+	var ipAddr net.IP
+	var err error
+	addrs, _ := net.LookupIP(hostName)
+	for _, addr := range addrs {
+		if err := ValidateNodeIP(addr); err == nil {
+			if addr.To4() != nil {
+				ipAddr = addr
+				break
+			}
+			if addr.To16() != nil && ipAddr == nil {
+				ipAddr = addr
+			}
+		}
+	}
+	if ipAddr == nil {
+		ipAddr, err = ChooseHostInterface()
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return ipAddr.String(), nil
+}
 
 func (rf RouteFile) extract() ([]Route, error) {
 	file, err := os.Open(rf.name)
