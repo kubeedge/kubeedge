@@ -29,24 +29,10 @@ func ValidateEdgeSiteConfiguration(c *siteconfig.EdgeSiteConfig) field.ErrorList
 
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, edgevalidation.ValidateDataBase(*c.DataBase)...)
-	allErrs = append(allErrs, ValidateEdgeSiteDetail(*c.EdgeSite)...)
 	allErrs = append(allErrs, cloudvalidation.ValidateKubeAPIConfig(*c.KubeAPIConfig)...)
 
 	allErrs = append(allErrs, cloudvalidation.ValidateModuleEdgeController(*c.Modules.EdgeController)...)
 	allErrs = append(allErrs, edgevalidation.ValidateModuleEdged(*c.Modules.Edged)...)
 	allErrs = append(allErrs, edgevalidation.ValidateModuleMetaManager(*c.Modules.MetaManager)...)
-	return allErrs
-}
-
-// ValidateEdgeSiteDetail validates `e` and returns an errorList if it is invalid
-func ValidateEdgeSiteDetail(e siteconfig.EdgeSiteDetail) field.ErrorList {
-	allErrs := field.ErrorList{}
-	switch {
-	case len(e.NodeName) == 0:
-		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeName"), e.NodeName,
-			"nodeName not set"))
-		fallthrough
-	default:
-	}
 	return allErrs
 }

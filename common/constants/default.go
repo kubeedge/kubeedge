@@ -26,7 +26,7 @@ const (
 	DefaultImageGCHighThreshold        = 80
 	DefaultImageGCLowThreshold         = 40
 	DefaultMaximumDeadContainersPerPod = 1
-	DefaultHostnameOverride            = "edge-node"
+	DefaultHostnameOverride            = "default-edge-node"
 	DefaultRegisterNodeNamespace       = "default"
 	DefaultInterfaceName               = "eth0"
 )

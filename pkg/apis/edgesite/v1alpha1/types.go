@@ -38,22 +38,12 @@ type EdgeSiteConfig struct {
 	// DataBase indicates database info
 	// +Required
 	DataBase *edgecoreconfig.DataBase `json:"database,omitempty"`
-	// EdgeSiteDetail indicates edgesite info
-	// +Required
-	EdgeSite *EdgeSiteDetail `json:"edgeSite,omitempty"`
 	// KubeAPIConfig indicates the kubernetes cluster info which cloudcore will connected
 	// +Required
 	KubeAPIConfig *cloudcoreconfig.KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
 	// Modules indicates cloudcore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
-}
-
-// EdgeSiteDetail indicates the edgesite detail info
-type EdgeSiteDetail struct {
-	// NodeName indicates node name
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
-	NodeName string `json:"nodeName"`
 }
 
 // Modules indicates the modules which edgesite will be used

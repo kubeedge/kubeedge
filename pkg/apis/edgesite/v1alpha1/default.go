@@ -17,19 +17,25 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"os"
 	"path"
-
-	"github.com/kubeedge/kubeedge/common/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // NewDefaultEdgeSiteConfig returns a full EdgeSiteConfig object
 func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		hostnameOverride = constants.DefaultHostnameOverride
+	}
+	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -39,9 +45,6 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 			DriverName: DataBaseDriverName,
 			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
-		},
-		EdgeSite: &EdgeSiteDetail{
-			NodeName: "",
 		},
 		KubeAPIConfig: &cloudcoreconfig.KubeAPIConfig{
 			Master:      "",
@@ -66,9 +69,9 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					SecretEvent:                constants.DefaultSecretEventBuffer,
 					ServiceEvent:               constants.DefaultServiceEventBuffer,
 					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
-					QueryPersistentvolume:      constants.DefaultQueryPersistentVolumeBuffer,
-					QueryPersistentvolumeclaim: constants.DefaultQueryPersistentVolumeClaimBuffer,
-					QueryVolumeattachment:      constants.DefaultQueryVolumeAttachmentBuffer,
+					QueryPersistentVolume:      constants.DefaultQueryPersistentVolumeBuffer,
+					QueryPersistentVolumeClaim: constants.DefaultQueryPersistentVolumeClaimBuffer,
+					QueryVolumeAttachment:      constants.DefaultQueryVolumeAttachmentBuffer,
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 				},
@@ -84,9 +87,9 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QuerySecretWorkers:                constants.DefaultQuerySecretWorkers,
 					QueryServiceWorkers:               constants.DefaultQueryServiceWorkers,
 					QueryEndpointsWorkers:             constants.DefaultQueryEndpointsWorkers,
-					QueryPersistentvolumeWorkers:      constants.DefaultQueryPersistentVolumeWorkers,
-					QueryPersistentvolumeclaimWorkers: constants.DefaultQueryPersistentVolumeClaimWorkers,
-					QueryVolumeattachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
+					QueryPersistentVolumeWorkers:      constants.DefaultQueryPersistentVolumeWorkers,
+					QueryPersistentVolumeClaimWorkers: constants.DefaultQueryPersistentVolumeClaimWorkers,
+					QueryVolumeAttachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 				},
@@ -96,7 +99,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
 				DockerAddress:               constants.DefaultDockerAddress,
 				RuntimeType:                 constants.DefaultRuntimeType,
-				NodeIP:                      "",
+				NodeIP:                      localIP,
 				ClusterDNS:                  "",
 				ClusterDomain:               "",
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
@@ -105,7 +108,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				PodSandboxImage:             constants.DefaultPodSandboxImage,
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
-				HostnameOverride:            constants.DefaultHostnameOverride,
+				HostnameOverride:            hostnameOverride,
 				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
 				InterfaceName:               constants.DefaultInterfaceName,
 				DevicePluginEnabled:         false,
@@ -127,6 +130,11 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 
 // NewMinEdgeSiteConfig returns a common EdgeSiteConfig object
 func NewMinEdgeSiteConfig() *EdgeSiteConfig {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		hostnameOverride = constants.DefaultHostnameOverride
+	}
+	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -137,9 +145,6 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
 		},
-		EdgeSite: &EdgeSiteDetail{
-			NodeName: "",
-		},
 		KubeAPIConfig: &cloudcoreconfig.KubeAPIConfig{
 			Master:     "",
 			KubeConfig: constants.DefaultKubeConfig,
@@ -148,14 +153,13 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 			Edged: &edgecoreconfig.Edged{
 				DockerAddress:         constants.DefaultDockerAddress,
 				RuntimeType:           constants.DefaultRuntimeType,
-				NodeIP:                "",
+				NodeIP:                localIP,
 				ClusterDNS:            "",
 				ClusterDomain:         "",
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
 				PodSandboxImage:       constants.DefaultPodSandboxImage,
-				HostnameOverride:      constants.DefaultHostnameOverride,
-				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
+				HostnameOverride:      hostnameOverride,
 				InterfaceName:         constants.DefaultInterfaceName,
 				DevicePluginEnabled:   false,
 				GPUPluginEnabled:      false,

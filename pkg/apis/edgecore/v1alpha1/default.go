@@ -17,16 +17,24 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"os"
 	"path"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		hostnameOverride = constants.DefaultHostnameOverride
+	}
+	localIP, _ := util.GetLocalIP(hostnameOverride)
+
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -41,18 +49,18 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			Edged: &Edged{
 				Enable:                      true,
 				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
-				DockerAddress:               constants.DefaultDockerAddress,
 				RuntimeType:                 constants.DefaultRuntimeType,
-				NodeIP:                      "",
+				DockerAddress:               constants.DefaultDockerAddress,
+				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
+				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
+				NodeIP:                      localIP,
 				ClusterDNS:                  "",
 				ClusterDomain:               "",
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
-				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
-				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
 				PodSandboxImage:             constants.DefaultPodSandboxImage,
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
-				HostnameOverride:            constants.DefaultHostnameOverride,
+				HostnameOverride:            hostnameOverride,
 				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
 				InterfaceName:               constants.DefaultInterfaceName,
 				DevicePluginEnabled:         false,
@@ -100,7 +108,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
 			},
 			ServiceBus: &ServiceBus{
-				Enable: true,
+				Enable: false,
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable: true,
@@ -118,6 +126,11 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 
 // NewMinEdgeCoreConfig returns a common EdgeCoreConfig object
 func NewMinEdgeCoreConfig() *EdgeCoreConfig {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		hostnameOverride = constants.DefaultHostnameOverride
+	}
+	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -130,16 +143,15 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				DockerAddress:         constants.DefaultDockerAddress,
 				RuntimeType:           constants.DefaultRuntimeType,
-				NodeIP:                "",
-				ClusterDNS:            "",
-				ClusterDomain:         "",
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
+				DockerAddress:         constants.DefaultDockerAddress,
+				NodeIP:                localIP,
+				ClusterDNS:            "",
+				ClusterDomain:         "",
 				PodSandboxImage:       constants.DefaultPodSandboxImage,
-				HostnameOverride:      constants.DefaultHostnameOverride,
-				RegisterNodeNamespace: constants.DefaultRegisterNodeNamespace,
+				HostnameOverride:      hostnameOverride,
 				InterfaceName:         constants.DefaultInterfaceName,
 				DevicePluginEnabled:   false,
 				GPUPluginEnabled:      false,
@@ -147,7 +159,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,
-				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
 				TLSCAFile:         constants.DefaultCAFile,
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,

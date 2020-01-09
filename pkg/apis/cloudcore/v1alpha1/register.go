@@ -19,5 +19,5 @@ package v1alpha1
 const (
 	GroupName  = "cloudcore.config.kubeedge.io"
 	APIVersion = "v1alpha1"
-	Kind       = "cloudcore"
+	Kind       = "CloudCore"
 )

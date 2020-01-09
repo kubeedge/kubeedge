@@ -19,5 +19,5 @@ package v1alpha1
 const (
 	GroupName  = "edgecore.config.kubeedge.io"
 	APIVersion = "v1alpha1"
-	Kind       = "edgecore"
+	Kind       = "EdgeCore"
 )

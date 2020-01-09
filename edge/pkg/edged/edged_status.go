@@ -25,7 +25,6 @@ package edged
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"regexp"
 	"runtime"
@@ -41,7 +40,7 @@ import (
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 //GPUInfoQueryTool sets information monitoring tool location for GPU
@@ -294,34 +293,11 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 }
 
 func (e *edged) getIP() (string, error) {
-	var ipAddr net.IP
-	var err error
 	hostName, _ := os.Hostname()
 	if hostName == "" {
 		hostName = e.nodeName
 	}
-	addrs, _ := net.LookupIP(hostName)
-	for _, addr := range addrs {
-		if err := util.ValidateNodeIP(addr); err == nil {
-			if addr.To4() != nil {
-				ipAddr = addr
-				break
-			}
-			if addr.To16() != nil && ipAddr == nil {
-				ipAddr = addr
-			}
-		}
-	}
-
-	if ipAddr == nil {
-		ipAddr, err = util.ChooseHostInterface()
-	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return ipAddr.String(), nil
+	return util.GetLocalIP(hostName)
 }
 
 func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {

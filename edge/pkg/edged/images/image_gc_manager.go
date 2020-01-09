@@ -6,7 +6,7 @@ import (
 	statsapi "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 type imageGCManager struct {
