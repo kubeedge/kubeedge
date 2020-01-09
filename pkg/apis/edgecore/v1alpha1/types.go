@@ -88,14 +88,11 @@ type Modules struct {
 	// +Required
 	MetaManager *MetaManager `json:"metamanager,omitempty"`
 	// ServiceBus indicates module config
-	// +Required
 	ServiceBus *ServiceBus `json:"servicebus,omitempty"`
 	// DeviceTwin indicates module config
-	// +Required
-	DeviceTwin *DeviceTwin `json:"servicebus,omitempty"`
+	DeviceTwin *DeviceTwin `json:"devicetwin,omitempty"`
 	// DBTest indicates module config
-	// +Required
-	DBTest *DBTest `json:"dbtest,omitempty"`
+	DBTest *DBTest `json:"dbtest"`
 	// Mesh indicates mesh module config
 	// +Required
 	EdgeMesh *EdgeMesh `json:"edgemesh,omitempty"`
@@ -110,15 +107,20 @@ type Edged struct {
 	// NodeStatusUpdateFrequency indicates node status update frequency (second)
 	// default 10
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
-	// DockerAddress indicates docker server address
-	// default unix:///var/run/docker.sock
-	DockerAddress string `json:"dockerAddress,omitempty"`
 	// RuntimeType indicates cri runtime ,support: docker, remote
 	// default docker
 	RuntimeType string `json:"runtimeType,omitempty"`
+	// DockerAddress indicates docker server address
+	// default unix:///var/run/docker.sock
+	DockerAddress string `json:"dockerAddress,omitempty"`
+	// RemoteRuntimeEndpoint indicates remote runtime endpoint
+	// default unix:///var/run/dockershim.sock
+	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
+	// RemoteImageEndpoint indicates remote image endpoint
+	// default unix:///var/run/dockershim.sock
+	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// NodeIP indicates current node ip
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
-	// +Required
+	// default get local host ip
 	NodeIP string `json:"nodeIP"`
 	// ClusterDNS indicates cluster dns
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
@@ -130,12 +132,6 @@ type Edged struct {
 	// EdgedMemoryCapacity indicates memory capacity (byte)
 	// default 7852396000
 	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
-	// RemoteRuntimeEndpoint indicates remote runtime endpoint
-	// default unix:///var/run/dockershim.sock
-	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
-	// RemoteImageEndpoint indicates remote image endpoint
-	// default unix:///var/run/dockershim.sock
-	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
 	// +Required
 	// kubeedge/pause:3.1 for x86 arch
@@ -150,7 +146,7 @@ type Edged struct {
 	// default 2
 	RuntimeRequestTimeout int32 `json:"runtimeRequestTimeout,omitempty"`
 	// HostnameOverride indicates hostname
-	// default edge-node
+	// default os.Hostname()
 	HostnameOverride string `json:"hostnameOverride,omitempty"`
 	//RegisterNodeNamespace indicates register node namespace
 	// default default
@@ -192,7 +188,6 @@ type EdgeHub struct {
 	// ProjectID indicates project id
 	// default e632aba927ea4ac2b575ec1603d56f10
 	ProjectID string `json:"projectID,omitempty"`
-	// ProjectId indicates project id
 	// TLSCAFile set ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSCAFile string `json:"tlsCaFile,omitempty"`
@@ -203,10 +198,11 @@ type EdgeHub struct {
 	// default /etc/kubeedge/certs/edge.key
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// Quic indicates quic config for edgehub module
+	// Optional if websocket is configured
 	Quic *EdgeHubQUIC `json:"quic,omitempty"`
 	// WebSocket indicates websocket config for edgehub module
-	// +Required
-	WebSocket *EdgeHubWebSocket `json:"webSocket,omitempty"`
+	// Optional if quic  is configured
+	WebSocket *EdgeHubWebSocket `json:"websocket,omitempty"`
 }
 
 // EdgeHubQUIC indicates the quic client config

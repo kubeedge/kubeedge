@@ -81,6 +81,7 @@ func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
+	// TODO @kadisi, need consider to support hostname or domain name
 	quicIP := strings.SplitN(h.Quic.Server, ":", 1)[0]
 	wsIP := strings.SplitN(h.WebSocket.Server, ":", 1)[0]
 	validQAddress := utilvalidation.IsValidIP(quicIP)

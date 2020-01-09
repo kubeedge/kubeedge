@@ -188,15 +188,15 @@ type EdgeControllerBuffer struct {
 	// EndpointsEvent indicates the buffer of endpoint event
 	// default 1
 	EndpointsEvent int32 `json:"endpointsEvent,omitempty"`
-	// QueryPersistentvolume indicates the buffer of query persistent volume
+	// QueryPersistentVolume indicates the buffer of query persistent volume
 	// default 1024
-	QueryPersistentvolume int32 `json:"queryPersistentvolume,omitempty"`
-	// QueryPersistentvolumeclaim indicates the buffer of query persistent volume claim
+	QueryPersistentVolume int32 `json:"queryPersistentvolume,omitempty"`
+	// QueryPersistentVolumeClaim indicates the buffer of query persistent volume claim
 	// default 1024
-	QueryPersistentvolumeclaim int32 `json:"queryPersistentvolumeclaim,omitempty"`
-	// QueryVolumeattachment indicates the buffer of query volume attachment
+	QueryPersistentVolumeClaim int32 `json:"queryPersistentvolumeclaim,omitempty"`
+	// QueryVolumeAttachment indicates the buffer of query volume attachment
 	// default 1024
-	QueryVolumeattachment int32 `json:"queryVolumeattachment,omitempty"`
+	QueryVolumeAttachment int32 `json:"queryVolumeattachment,omitempty"`
 	// QueryNode indicates the buffer of query node
 	// default 1024
 	QueryNode int32 `json:"queryNode,omitempty"`
@@ -235,15 +235,15 @@ type EdgeControllerLoad struct {
 	// QueryEndpointsWorkers indicates the load of query endpointer workers
 	// default 4
 	QueryEndpointsWorkers int32 `json:"queryEndpointsWorkers,omitempty"`
-	// QueryPersistentvolumeWorkers indicates the load of query persistent volume workers
+	// QueryPersistentVolumeWorkers indicates the load of query persistent volume workers
 	// default 4
-	QueryPersistentvolumeWorkers int32 `json:"queryPersistentvolumeWorkers,omitempty"`
-	// QueryPersistentvolumeclaimWorkers indicates the load of query persistent volume claim workers
+	QueryPersistentVolumeWorkers int32 `json:"queryPersistentVolumeWorkers,omitempty"`
+	// QueryPersistentVolumeClaimWorkers indicates the load of query persistent volume claim workers
 	// default 4
-	QueryPersistentvolumeclaimWorkers int32 `json:"queryPersistentvolumeclaimWorkers,omitempty"`
-	// QueryVolumeattachmentWorkers indicates the load of query volume attachment workers
+	QueryPersistentVolumeClaimWorkers int32 `json:"queryPersistentColumeClaimWorkers,omitempty"`
+	// QueryVolumeAttachmentWorkers indicates the load of query volume attachment workers
 	// default 4
-	QueryVolumeattachmentWorkers int32 `json:"queryVolumeattachmentWorkers,omitempty"`
+	QueryVolumeAttachmentWorkers int32 `json:"queryVolumeAttachmentWorkers,omitempty"`
 	// QueryNodeWorkers indicates the load of query node workers
 	// default 4
 	QueryNodeWorkers int32 `json:"queryNodeWorkers,omitempty"`

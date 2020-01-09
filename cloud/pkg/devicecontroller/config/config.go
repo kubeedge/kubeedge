@@ -5,10 +5,11 @@ import (
 	"os"
 	"sync"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"k8s.io/klog"
 )
 
 var c Configure
