@@ -813,20 +813,14 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	config, err := utils.KubeConfig()
-	if err != nil {
-		klog.Warningf("Get kubeConfig error: %v", err)
-		return nil, err
-	}
-
-	crdcli, err := utils.NewCRDClient(config)
-	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
+	devicecli, err := utils.NewDeviceClient()
+	deviceManager, err := manager.NewDeviceManager(devicecli, v1.NamespaceAll)
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
-	deviceModelManager, err := manager.NewDeviceModelManager(crdcli, v1.NamespaceAll)
+	deviceModelManager, err := manager.NewDeviceModelManager(devicecli, v1.NamespaceAll)
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err

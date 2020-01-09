@@ -20,12 +20,12 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"k8s.io/client-go/rest"
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	deviceClientSet "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
@@ -47,7 +47,7 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	crdClient    *rest.RESTClient
+	deviceClient deviceClientSet.Interface
 	messageLayer messagelayer.MessageLayer
 	// message channel
 	deviceStatusChan chan model.Message
@@ -152,13 +152,8 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			cacheDevice.Status = deviceStatus.Status
 			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
 
-			body, err := json.Marshal(deviceStatus)
+			_, err = uc.deviceClient.DevicesV1alpha1().Devices(cacheDevice.Namespace).UpdateStatus(cacheDevice)
 			if err != nil {
-				klog.Errorf("Failed to marshal device status %v", deviceStatus)
-				continue
-			}
-			result := uc.crdClient.Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do()
-			if result.Error() != nil {
 				klog.Errorf("Failed to patch device status %v of device %v in namespace %v", deviceStatus, deviceID, cacheDevice.Namespace)
 				continue
 			}
@@ -188,14 +183,13 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 
 // NewUpstreamController create UpstreamController from config
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
-	config, err := utils.KubeConfig()
-	crdcli, err := utils.NewCRDClient(config)
+	devicecli, err := utils.NewDeviceClient()
 	ml, err := messagelayer.NewContextMessageLayer()
 	if err != nil {
 		klog.Warningf("Create message layer failed with error: %s", err)
 	}
 	uc := &UpstreamController{
-		crdClient:    crdcli,
+		deviceClient: devicecli,
 		messageLayer: ml,
 		dc:           dc,
 	}
