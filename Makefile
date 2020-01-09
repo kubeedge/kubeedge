@@ -139,6 +139,7 @@ edgesiteimage:
 verify:
 	bash hack/verify-golang.sh
 	bash hack/verify-vendor.sh
+	bash cloud/hack/verify-codegen.sh
 
 .PHONY: bluetoothdevice
 bluetoothdevice:
