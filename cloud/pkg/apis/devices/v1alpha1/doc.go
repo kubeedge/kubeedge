@@ -14,5 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// +k8s:deepcopy-gen=package
+// +k8s:deepcopy-gen=package,register
+
+// Package v1alpha1 is the v1alpha1 version of the API.
+// +groupName=devices.kubeedge.io
 package v1alpha1
