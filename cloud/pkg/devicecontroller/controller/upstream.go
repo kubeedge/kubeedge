@@ -38,13 +38,6 @@ type DeviceStatus struct {
 	Status v1alpha1.DeviceStatus `json:"status"`
 }
 
-const (
-	// MergePatchType is patch type
-	MergePatchType = "application/merge-patch+json"
-	// ResourceTypeDevices is plural of device resource in apiserver
-	ResourceTypeDevices = "devices"
-)
-
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
 	deviceClient deviceClientSet.Interface
@@ -154,7 +147,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 
 			_, err = uc.deviceClient.DevicesV1alpha1().Devices(cacheDevice.Namespace).UpdateStatus(cacheDevice)
 			if err != nil {
-				klog.Errorf("Failed to patch device status %v of device %v in namespace %v", deviceStatus, deviceID, cacheDevice.Namespace)
+				klog.Errorf("Failed to update device status %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
 				continue
 			}
 			klog.Infof("Message: %s process successfully", msg.GetID())
