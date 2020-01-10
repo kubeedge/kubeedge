@@ -146,9 +146,9 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
 
 			_, err = uc.deviceClient.DevicesV1alpha1().Devices(cacheDevice.Namespace).UpdateStatus(cacheDevice)
+			klog.Errorf("oooooooooooooooooooo: %v", cacheDevice)
 			if err != nil {
 				klog.Errorf("Failed to update device status %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
-				klog.Errorf("oooooooooooooooooooo: %v", cacheDevice)
 				continue
 			}
 			klog.Infof("Message: %s process successfully", msg.GetID())
