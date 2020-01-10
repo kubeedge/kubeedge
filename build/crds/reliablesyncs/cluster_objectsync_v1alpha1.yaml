@@ -43,3 +43,5 @@ spec:
                             used as a template to create the device instance.'
               type: string
   version: v1alpha1
+  subresources:
+    status: {}
