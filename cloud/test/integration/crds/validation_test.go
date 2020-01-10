@@ -17,32 +17,27 @@ limitations under the License.
 package crds
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	deviceClientSet "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	deviceutils "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 	"github.com/kubeedge/kubeedge/cloud/test/integration/fixtures"
 )
 
-func buildCrdClient(t *testing.T) *rest.RESTClient {
-	kubeConfigPath := os.Getenv("KUBE_CONFIG")
-	kubeAPIServerURL := os.Getenv("KUBE_APISERVER_URL")
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(kubeAPIServerURL, kubeConfigPath)
+func buildDeviceClient(t *testing.T) deviceClientSet.Interface {
+	config := config.Get()
+	config.KubeConfig = os.Getenv("KUBE_CONFIG")
+	config.KubeMaster = os.Getenv("KUBE_APISERVER_URL")
+
+	deviceClient, err := deviceutils.NewDeviceClient()
 	if err != nil {
 		t.Fatalf("Failed to build device CRD client, error is %v", err)
 		return nil
 	}
-	crdClient, err := deviceutils.NewCRDClient(kubeConfig)
-	if err != nil {
-		t.Fatalf("Failed to build device CRD client, error is %v", err)
-		return nil
-	}
-	return crdClient
+	return deviceClient
 }
 
 func TestValidDeviceModel(t *testing.T) {
@@ -70,18 +65,15 @@ func TestValidDeviceModel(t *testing.T) {
 		},
 	}
 
-	crdClient := buildCrdClient(t)
+	deviceClient := buildDeviceClient(t)
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			deviceModel := tc.deviceModelFn()
-			respBytes, err := json.Marshal(deviceModel)
+
+			_, err := deviceClient.DevicesV1alpha1().DeviceModels(deviceModel.Namespace).Create(deviceModel)
 			if err != nil {
-				t.Fatalf("%s : json marshal error : %v", name, err)
-			}
-			result := crdClient.Post().Name(deviceModel.Name).Namespace(deviceModel.Namespace).Resource(fixtures.ResourceDeviceModel).Body(respBytes).Do()
-			if result.Error() != nil {
-				t.Fatalf("%s: expected nil err , got %v", name, result.Error())
+				t.Fatalf("%s: expected nil err , got %v", name, err)
 			}
 		})
 	}
@@ -162,18 +154,14 @@ func TestInvalidDeviceModel(t *testing.T) {
 		},
 	}
 
-	crdClient := buildCrdClient(t)
+	deviceClient := buildDeviceClient(t)
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			deviceModel := tc.deviceModelFn()
-			deviceModelJSON, err := json.Marshal(deviceModel)
-			if err != nil {
-				t.Fatalf("%s : error while marshalling device model : %v", name, err)
-			}
-			result := crdClient.Post().Name(deviceModel.Name).Namespace(deviceModel.Namespace).Resource(fixtures.ResourceDeviceModel).
-				Body(deviceModelJSON).Do()
-			if result.Error() == nil {
+
+			_, err := deviceClient.DevicesV1alpha1().DeviceModels(deviceModel.Namespace).Create(deviceModel)
+			if err == nil {
 				t.Fatalf("%s: expected error", name)
 			}
 		})
@@ -205,18 +193,15 @@ func TestValidDevice(t *testing.T) {
 		},
 	}
 
-	crdClient := buildCrdClient(t)
+	deviceClient := buildDeviceClient(t)
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			device := tc.deviceInstanceFn()
-			deviceJSON, err := json.Marshal(device)
+
+			_, err := deviceClient.DevicesV1alpha1().Devices(device.Namespace).Create(&device)
 			if err != nil {
-				t.Fatalf("%s : error while marshalling device : %v", name, err)
-			}
-			result := crdClient.Post().Name(device.Name).Namespace(device.Namespace).Resource(fixtures.ResourceDevice).Body(deviceJSON).Do()
-			if result.Error() != nil {
-				t.Fatalf("%s expected nil err , got %v", name, result.Error())
+				t.Fatalf("%s expected nil err , got %v", name, err)
 			}
 		})
 	}
@@ -325,17 +310,14 @@ func TestInvalidDevice(t *testing.T) {
 		},
 	}
 
-	crdClient := buildCrdClient(t)
+	deviceClient := buildDeviceClient(t)
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			device := tc.deviceInstanceFn()
-			deviceJSON, err := json.Marshal(device)
-			if err != nil {
-				t.Fatalf("%s : error while marshalling device : %v", name, err)
-			}
-			result := crdClient.Post().Name(device.Name).Namespace(device.Namespace).Resource(fixtures.ResourceDevice).Body(deviceJSON).Do()
-			if result.Error() == nil {
+
+			_, err := deviceClient.DevicesV1alpha1().Devices(device.Namespace).Create(&device)
+			if err == nil {
 				t.Fatalf("%s : expected error", name)
 			}
 		})
