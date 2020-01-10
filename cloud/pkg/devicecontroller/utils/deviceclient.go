@@ -13,5 +13,6 @@ func NewDeviceClient() (deviceClientSet.Interface, error) {
 		klog.Warningf("Get kube config failed with error: %s", err)
 		return nil, err
 	}
+	kubeConfig.ContentConfig.ContentType = "application/json"
 	return deviceClientSet.NewForConfig(kubeConfig)
 }
