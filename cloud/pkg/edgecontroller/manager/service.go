@@ -23,7 +23,7 @@ func (sm *ServiceManager) Events() chan watch.Event {
 // NewServiceManager create ServiceManager by kube clientset and namespace
 func NewServiceManager(kubeClient *kubernetes.Clientset, namespace string) (*ServiceManager, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "services", namespace, fields.Everything())
-	events := make(chan watch.Event, config.Get().ServiceEventBuffer)
+	events := make(chan watch.Event, config.Get().Buffer.ServiceEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1.Service{}, 0)
 	si.AddEventHandler(rh)

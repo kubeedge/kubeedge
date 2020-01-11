@@ -23,7 +23,7 @@ func (sm *SecretManager) Events() chan watch.Event {
 // NewSecretManager create SecretManager by kube clientset and namespace
 func NewSecretManager(kubeClient *kubernetes.Clientset, namespace string) (*SecretManager, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "secrets", namespace, fields.Everything())
-	events := make(chan watch.Event, config.Get().SecretEventBuffer)
+	events := make(chan watch.Event, config.Get().Buffer.SecretEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1.Secret{}, 0)
 	si.AddEventHandler(rh)
