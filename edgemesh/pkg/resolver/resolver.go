@@ -10,7 +10,7 @@ import (
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"k8s.io/klog"
 
-	mconfig "github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 )
 
 type Resolver interface {
@@ -60,7 +60,7 @@ func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, inv
 				i.SourceServiceID = ""
 				i.Protocol = "rest"
 				i.Args = req
-				i.Strategy = mconfig.CONFIG.GetConfigurationByKey("mesh.loadbalance.strategy-name").(string)
+				i.Strategy = config.Get().StrategyName
 				i.Reply = &http.Response{}
 				invCallback("http", *i)
 			}

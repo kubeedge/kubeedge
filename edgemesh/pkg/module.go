@@ -6,6 +6,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
@@ -17,6 +18,7 @@ type EdgeMesh struct {
 
 // Register register edgemesh
 func Register() {
+	meshconfig.InitConfigure()
 	core.Register(&EdgeMesh{})
 }
 
