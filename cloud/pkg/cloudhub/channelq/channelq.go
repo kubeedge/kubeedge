@@ -89,7 +89,7 @@ func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveM
 }
 
 func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel.Message) {
-	if msg.GetResourceVersion() == "" {
+	if msg.GetResourceVersion() == "" && !isDeleteMessage(msg) {
 		return
 	}
 

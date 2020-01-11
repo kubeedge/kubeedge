@@ -16,6 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
@@ -91,4 +92,5 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub, c.KubeAPIConfig)
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
+	synccontroller.Register(c.KubeAPIConfig)
 }
