@@ -90,5 +90,5 @@ kubernetes controller which manages devices so that the device metadata/status d
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
-	devicecontroller.Register()
+	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
 }

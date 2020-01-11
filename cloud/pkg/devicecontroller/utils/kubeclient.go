@@ -21,13 +21,13 @@ func KubeClient() (*kubernetes.Clientset, error) {
 
 // KubeConfig from flags
 func KubeConfig() (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Get().KubeMaster, config.Get().KubeConfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Get().KubeAPIConfig.Master, config.Get().KubeAPIConfig.KubeConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeConfig.QPS = config.Get().KubeQPS
-	kubeConfig.Burst = config.Get().KubeBurst
-	kubeConfig.ContentType = config.Get().KubeContentType
+	kubeConfig.QPS = float32(config.Get().KubeAPIConfig.QPS)
+	kubeConfig.Burst = int(config.Get().KubeAPIConfig.Burst)
+	kubeConfig.ContentType = config.Get().KubeAPIConfig.ContentType
 
 	return kubeConfig, err
 }

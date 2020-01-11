@@ -10,6 +10,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
+	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
 // DeviceController use beehive context message layer
@@ -20,8 +21,8 @@ func newDeviceController() *DeviceController {
 	return &DeviceController{}
 }
 
-func Register() {
-	config.InitConfigure()
+func Register(c *v1alpha1.DeviceController, k *v1alpha1.KubeAPIConfig) {
+	config.InitConfigure(c, k)
 	core.Register(newDeviceController())
 }
 
