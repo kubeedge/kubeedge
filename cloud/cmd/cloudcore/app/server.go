@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -15,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -35,9 +38,26 @@ kubernetes controller which manages devices so that the device metadata/status d
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultCloudCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateCloudCoreConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-			registerModules()
+
+			registerModules(c)
 			// start all modules
 			core.Run()
 		},
@@ -67,8 +87,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 }
 
 // registerModules register all the modules started in cloudcore
-func registerModules() {
-	cloudhub.Register()
+func registerModules(c *v1alpha1.CloudCoreConfig) {
+	cloudhub.Register(c.Modules.CloudHub)
 	edgecontroller.Register()
 	devicecontroller.Register()
 }
