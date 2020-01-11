@@ -9,6 +9,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
+	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
 // EdgeController use beehive context message layer
@@ -19,8 +20,8 @@ func newEdgeController() *EdgeController {
 	return &EdgeController{}
 }
 
-func Register() {
-	config.InitConfigure()
+func Register(c *v1alpha1.EdgeController, k *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
+	config.InitConfigure(c, k, nodeName, edgesite)
 	core.Register(newEdgeController())
 }
 

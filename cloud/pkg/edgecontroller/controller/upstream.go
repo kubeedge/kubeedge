@@ -94,51 +94,51 @@ type UpstreamController struct {
 func (uc *UpstreamController) Start() error {
 	klog.Info("start upstream controller")
 
-	uc.nodeStatusChan = make(chan model.Message, config.Get().UpdateNodeStatusBuffer)
-	uc.podStatusChan = make(chan model.Message, config.Get().UpdatePodStatusBuffer)
-	uc.configMapChan = make(chan model.Message, config.Get().QueryConfigMapBuffer)
-	uc.secretChan = make(chan model.Message, config.Get().QuerySecretBuffer)
-	uc.serviceChan = make(chan model.Message, config.Get().QueryServiceBuffer)
-	uc.endpointsChan = make(chan model.Message, config.Get().QueryEndpointsBuffer)
-	uc.persistentVolumeChan = make(chan model.Message, config.Get().QueryPersistentVolumeBuffer)
-	uc.persistentVolumeClaimChan = make(chan model.Message, config.Get().QueryPersistentVolumeClaimBuffer)
-	uc.volumeAttachmentChan = make(chan model.Message, config.Get().QueryVolumeAttachmentBuffer)
-	uc.queryNodeChan = make(chan model.Message, config.Get().QueryNodeBuffer)
-	uc.updateNodeChan = make(chan model.Message, config.Get().UpdateNodeBuffer)
+	uc.nodeStatusChan = make(chan model.Message, config.Get().Buffer.UpdateNodeStatus)
+	uc.podStatusChan = make(chan model.Message, config.Get().Buffer.UpdatePodStatus)
+	uc.configMapChan = make(chan model.Message, config.Get().Buffer.QueryConfigmap)
+	uc.secretChan = make(chan model.Message, config.Get().Buffer.QuerySecret)
+	uc.serviceChan = make(chan model.Message, config.Get().Buffer.QueryService)
+	uc.endpointsChan = make(chan model.Message, config.Get().Buffer.QueryEndpoints)
+	uc.persistentVolumeChan = make(chan model.Message, config.Get().Buffer.QueryPersistentVolume)
+	uc.persistentVolumeClaimChan = make(chan model.Message, config.Get().Buffer.QueryPersistentVolumeClaim)
+	uc.volumeAttachmentChan = make(chan model.Message, config.Get().Buffer.QueryVolumeAttachment)
+	uc.queryNodeChan = make(chan model.Message, config.Get().Buffer.QueryNode)
+	uc.updateNodeChan = make(chan model.Message, config.Get().Buffer.UpdateNode)
 
 	go uc.dispatchMessage()
 
-	for i := 0; i < config.Get().UpdateNodeStatusWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.UpdateNodeStatusWorkers); i++ {
 		go uc.updateNodeStatus()
 	}
-	for i := 0; i < config.Get().UpdatePodStatusWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.UpdatePodStatusWorkers); i++ {
 		go uc.updatePodStatus()
 	}
-	for i := 0; i < config.Get().QueryConfigMapWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryConfigmapWorkers); i++ {
 		go uc.queryConfigMap()
 	}
-	for i := 0; i < config.Get().QuerySecretWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QuerySecretWorkers); i++ {
 		go uc.querySecret()
 	}
-	for i := 0; i < config.Get().QueryServiceWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryServiceWorkers); i++ {
 		go uc.queryService()
 	}
-	for i := 0; i < config.Get().QueryEndpointsWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryEndpointsWorkers); i++ {
 		go uc.queryEndpoints()
 	}
-	for i := 0; i < config.Get().QueryPersistentVolumeWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
 	}
-	for i := 0; i < config.Get().QueryPersistentVolumeClaimWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryPersistentVolumeClaimWorkers); i++ {
 		go uc.queryPersistentVolumeClaim()
 	}
-	for i := 0; i < config.Get().QueryVolumeAttachmentWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryVolumeAttachmentWorkers); i++ {
 		go uc.queryVolumeAttachment()
 	}
-	for i := 0; i < config.Get().QueryNodeWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.QueryNodeWorkers); i++ {
 		go uc.queryNode()
 	}
-	for i := 0; i < config.Get().UpdateNodeWorkers; i++ {
+	for i := 0; i < int(config.Get().Load.UpdateNodeWorkers); i++ {
 		go uc.updateNode()
 	}
 	return nil
@@ -363,13 +363,13 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				// TODO: comment below for test failure. Needs to decide whether to keep post troubleshoot
 				// In case the status stored at metadata service is outdated, update the heartbeat automatically
-				if !config.Get().EdgeSiteEnabled {
+				if !config.Get().EdgeSiteEnable {
 					for i := range nodeStatusRequest.Status.Conditions {
-						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > config.Get().KubeUpdateNodeFrequency {
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Get().NodeUpdateFrequency)*time.Second {
 							nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
 						}
 
-						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > config.Get().KubeUpdateNodeFrequency {
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Get().NodeUpdateFrequency)*time.Second {
 							nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
 						}
 					}
