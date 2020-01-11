@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -67,4 +68,5 @@ func registerModules() {
 	cloudhub.Register()
 	edgecontroller.Register()
 	devicecontroller.Register()
+	synccontroller.Register()
 }
