@@ -15,14 +15,14 @@ import (
 )
 
 // StartCloudHub starts the cloud hub service
-func StartCloudHub(protocolType string, config *hubconfig.Configure, messageq *channelq.ChannelMessageQueue) {
+func StartCloudHub(protocolType string, c *hubconfig.Configure, messageq *channelq.ChannelMessageQueue) {
 	// init certificate
 	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(config.Ca)
+	ok := pool.AppendCertsFromPEM(c.Ca)
 	if !ok {
 		panic(fmt.Errorf("fail to load ca content"))
 	}
-	cert, err := tls.X509KeyPair(config.Cert, config.Key)
+	cert, err := tls.X509KeyPair(c.Cert, c.Key)
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +34,7 @@ func StartCloudHub(protocolType string, config *hubconfig.Configure, messageq *c
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 	}
 
-	handler.InitHandler(config, messageq)
+	handler.InitHandler(c, messageq)
 
 	svc := server.Server{
 		Type:       protocolType,
@@ -45,11 +45,11 @@ func StartCloudHub(protocolType string, config *hubconfig.Configure, messageq *c
 
 	switch protocolType {
 	case api.ProtocolTypeWS:
-		svc.Addr = fmt.Sprintf("%s:%d", config.Address, config.Port)
+		svc.Addr = fmt.Sprintf("%s:%d", c.WebSocket.Address, c.WebSocket.Port)
 		svc.ExOpts = api.WSServerOption{Path: "/"}
 	case api.ProtocolTypeQuic:
-		svc.Addr = fmt.Sprintf("%s:%d", config.Address, config.QuicPort)
-		svc.ExOpts = api.QuicServerOption{MaxIncomingStreams: config.MaxIncomingStreams}
+		svc.Addr = fmt.Sprintf("%s:%d", c.Quic.Address, c.Quic.Port)
+		svc.ExOpts = api.QuicServerOption{MaxIncomingStreams: int(c.Quic.MaxIncomingStreams)}
 	default:
 		panic(fmt.Errorf("invalid protocol, should be websocket or quic"))
 	}
