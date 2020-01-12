@@ -33,6 +33,7 @@ func (a *cloudHub) Group() string {
 	return "cloudhub"
 }
 
+// Enable indicates whether enable this module
 func (a *cloudHub) Enable() bool {
 	return a.enable
 }

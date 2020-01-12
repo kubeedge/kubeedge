@@ -15,15 +15,18 @@ import (
 
 // DeviceController use beehive context message layer
 type DeviceController struct {
+	enable bool
 }
 
-func newDeviceController() *DeviceController {
-	return &DeviceController{}
+func newDeviceController(enable bool) *DeviceController {
+	return &DeviceController{
+		enable: enable,
+	}
 }
 
 func Register(c *v1alpha1.DeviceController, k *v1alpha1.KubeAPIConfig) {
 	config.InitConfigure(c, k)
-	core.Register(newDeviceController())
+	core.Register(newDeviceController(c.Enable))
 }
 
 // Name of controller
@@ -34,6 +37,11 @@ func (dctl *DeviceController) Name() string {
 // Group of controller
 func (dctl *DeviceController) Group() string {
 	return constants.DeviceControllerModuleGroup
+}
+
+// Enable indicates whether enable this module
+func (dctl *DeviceController) Enable() bool {
+	return dctl.enable
 }
 
 // Start controller
