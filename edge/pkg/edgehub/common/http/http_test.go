@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common"
 )
 
 const (
@@ -41,7 +41,7 @@ func TestNewHttpClient(t *testing.T) {
 
 //TestNewHTTPSclient() tests the creation of a new HTTPS client with proper values
 func TestNewHTTPSclient(t *testing.T) {
-	err := util.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
+	err := common.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
 	if err != nil {
 		t.Errorf("Error in generating fake certificates: %v", err)
 		return

@@ -27,7 +27,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -36,7 +36,7 @@ import (
 
 //init() starts the test server and generates test certificates for testing
 func init() {
-	err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
+	err := common.GenerateTestCertificate("/tmp/", "edge", "edge")
 	if err != nil {
 		panic("Error in creating fake certificates")
 	}
