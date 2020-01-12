@@ -24,7 +24,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	cloudconn "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -250,13 +250,13 @@ func TestDealLifeCycle(t *testing.T) {
 		{
 			name:    "dealLifeCycleTest-CloudConnected",
 			context: dtContext,
-			msg:     &model.Message{Content: cloudconn.CloudConnected},
+			msg:     &model.Message{Content: constants.CloudConnected},
 			wantErr: nil,
 		},
 		{
 			name:    "dealLifeCycleTest-CloudNotConnected",
 			context: dtContext,
-			msg:     &model.Message{Content: cloudconn.CloudDisconnected},
+			msg:     &model.Message{Content: constants.CloudDisconnected},
 			wantErr: nil,
 		},
 	}

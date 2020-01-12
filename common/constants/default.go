@@ -113,3 +113,8 @@ const (
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
 )
+
+const (
+	CloudConnected    = "cloud_connected"
+	CloudDisconnected = "cloud_disconnected"
+)

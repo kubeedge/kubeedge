@@ -10,7 +10,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -94,7 +94,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 		return nil, errors.New("msg not Message type")
 	}
 	connectedInfo, _ := (message.Content.(string))
-	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
+	if strings.Compare(connectedInfo, constants.CloudConnected) == 0 {
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 			_, err := detailRequest(context, msg)
 			if err != nil {
@@ -103,7 +103,7 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 			}
 		}
 		context.State = dtcommon.Connected
-	} else if strings.Compare(connectedInfo, connect.CloudDisconnected) == 0 {
+	} else if strings.Compare(connectedInfo, constants.CloudDisconnected) == 0 {
 		context.State = dtcommon.Disconnected
 	}
 	return nil, nil

@@ -13,7 +13,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
@@ -444,9 +443,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 func (m *metaManager) processNodeConnection(message model.Message) {
 	content, _ := message.GetContent().(string)
 	klog.Infof("node connection event occur: %s", content)
-	if content == connect.CloudConnected {
+	if content == constants.CloudConnected {
 		metaManagerConfig.Connected = true
-	} else if content == connect.CloudDisconnected {
+	} else if content == constants.CloudDisconnected {
 		metaManagerConfig.Connected = false
 	}
 }

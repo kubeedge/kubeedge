@@ -8,7 +8,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -203,9 +203,9 @@ func (eh *EdgeHub) keepalive() {
 
 func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	// var info model.Message
-	content := connect.CloudConnected
+	content := constants.CloudConnected
 	if !isConnected {
-		content = connect.CloudDisconnected
+		content = constants.CloudDisconnected
 	}
 
 	for _, group := range groupMap {
