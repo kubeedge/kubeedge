@@ -13,7 +13,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/modules/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy/poll"
 	vdev "github.com/kubeedge/kubeedge/edgemesh/pkg/proxy/virtualdevice"
 	v1 "k8s.io/api/core/v1"

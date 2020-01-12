@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/edge/pkg/modules/metamanager/client"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 )
