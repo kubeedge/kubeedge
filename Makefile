@@ -42,9 +42,24 @@ cloud_test:
 	$(MAKE) -C cloud test
 
 # lint
+.PHONY: lint
+lint:edge_lint cloud_lint bluetoothdevice_lint keadm_lint
+
 .PHONY: edge_lint
 edge_lint:
 	cd edge && $(MAKE) lint
+
+.PHONY: cloud_lint
+cloud_lint:
+	cd cloud && $(MAKE) lint
+
+.PHONY: bluetoothdevice_lint
+bluetoothdevice_lint:
+	make -C mappers/bluetooth_mapper lint
+
+.PHONY: keadm_lint
+keadm_lint:
+	make -C keadm lint
 
 .PHONY: edge_integration_test
 edge_integration_test:
@@ -78,10 +93,6 @@ edgesite_cross_build_v7:
 edgesite_cross_build_v8:
 	$(MAKE) -C edgesite armv8
 
-.PHONY: cloud_lint
-cloud_lint:
-	cd cloud && $(MAKE) lint
-
 .PHONY: e2e_test
 e2e_test:
 #	bash tests/e2e/scripts/execute.sh device_crd
@@ -92,13 +103,8 @@ e2e_test:
 performance_test:
 	bash tests/performance/scripts/jenkins.sh
 
-.PHONY: keadm_lint
-keadm_lint:
-	make -C keadm lint
-
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
-
 IMAGE_TAG ?= $(shell git describe --tags)
 
 .PHONY: cloudimage
@@ -148,7 +154,3 @@ bluetoothdevice:
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:
 	make -C mappers/bluetooth_mapper bluetooth_mapper_image
-
-.PHONY: bluetoothdevice_lint
-bluetoothdevice_lint:
-	make -C mappers/bluetooth_mapper lint

@@ -29,11 +29,7 @@ jobs:
         - export GO111MODULE=on
       script:
         - make verify
-        - make cloud_lint
-        - make bluetoothdevice_lint
-        - make keadm_lint
-        - make edge_lint
-
+        - make lint
 
     - stage: "Test on amd64"
       name: "build, smallbuild, crossbuild"
