@@ -48,7 +48,7 @@ func (c *CloudCoreOptions) Validate() []error {
 	var errs []error
 	if !validation.FileIsExist(c.ConfigFile) {
 		errs = append(errs, field.Required(field.NewPath("config"),
-			fmt.Sprintf("config file %v not exist", c.ConfigFile)))
+			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", c.ConfigFile)))
 	}
 	return errs
 }
