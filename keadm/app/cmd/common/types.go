@@ -111,7 +111,7 @@ type NodeDefinition struct {
 	MetaData   NodeMetaDataSt
 }
 
-//ControllerKubeConfig has all the below fields; (data taken from "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config/kube.go")
+//ControllerKubeConfig has all the below fields; (data taken from "github.com/kubeedge/kubeedge/cloud/pkg/modules/edgecontroller/config/kube.go")
 type ControllerKubeConfig struct {
 	//Master is the url of edge master(kube api server)
 	Master string `yaml:"master"`

@@ -25,7 +25,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	deviceutils "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
+	deviceutils "github.com/kubeedge/kubeedge/cloud/pkg/modules/devicecontroller/utils"
 	"github.com/kubeedge/kubeedge/cloud/test/integration/fixtures"
 )
 

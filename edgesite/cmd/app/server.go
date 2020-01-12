@@ -10,7 +10,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/modules/edgecontroller"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"

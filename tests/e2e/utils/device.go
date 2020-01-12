@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
+	"github.com/kubeedge/kubeedge/cloud/pkg/modules/devicecontroller/types"
 )
 
 func NewLedDeviceModel() v1alpha1.DeviceModel {

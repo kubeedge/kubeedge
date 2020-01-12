@@ -11,9 +11,9 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/modules/cloudhub"
+	"github.com/kubeedge/kubeedge/cloud/pkg/modules/devicecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/modules/edgecontroller"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
