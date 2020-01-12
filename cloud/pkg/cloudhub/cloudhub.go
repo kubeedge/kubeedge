@@ -11,15 +11,18 @@ import (
 )
 
 type cloudHub struct {
+	enable bool
 }
 
-func newCloudHub() *cloudHub {
-	return &cloudHub{}
+func newCloudHub(enable bool) *cloudHub {
+	return &cloudHub{
+		enable: enable,
+	}
 }
 
 func Register(hub *v1alpha1.CloudHub) {
 	hubconfig.InitConfigure(hub)
-	core.Register(newCloudHub())
+	core.Register(newCloudHub(hub.Enable))
 }
 
 func (a *cloudHub) Name() string {
@@ -30,6 +33,9 @@ func (a *cloudHub) Group() string {
 	return "cloudhub"
 }
 
+func (a *cloudHub) Enable() bool {
+	return a.enable
+}
 func (a *cloudHub) Start() {
 	messageq := channelq.NewChannelMessageQueue()
 

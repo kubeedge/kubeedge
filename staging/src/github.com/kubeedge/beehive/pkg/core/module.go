@@ -18,6 +18,7 @@ type Module interface {
 	Name() string
 	Group() string
 	Start()
+	Enable() bool
 }
 
 var (
@@ -36,26 +37,13 @@ func init() {
 
 // Register register module
 func Register(m Module) {
-	if IsModuleEnabled(m.Name()) {
+	if m.Enable() {
 		modules[m.Name()] = m
-		klog.Infof("Module %v registered", m.Name())
+		klog.Infof("Module %v registered successfully", m.Name())
 	} else {
 		disabledModules[m.Name()] = m
-		klog.Warningf("Module %v is not register, please check modules.yaml", m.Name())
+		klog.Warningf("Module %v is disabled, do not register", m.Name())
 	}
-}
-
-// IsModuleEnabled indicates whether module is enabled
-func IsModuleEnabled(m string) bool {
-	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
-	if modules != nil {
-		for _, value := range modules.([]interface{}) {
-			if m == value.(string) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 type moduleChangeCallback struct{}
