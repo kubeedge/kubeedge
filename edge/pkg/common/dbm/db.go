@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog"
 
+	"github.com/kubeedge/beehive/pkg/core"
 	commonconfig "github.com/kubeedge/kubeedge/edge/pkg/common/config"
 )
 
@@ -17,7 +18,7 @@ var DBAccess orm.Ormer
 
 //RegisterModel registers the defined model in the orm if model is enabled
 func RegisterModel(moduleName string, m interface{}) {
-	if isModuleEnabled(moduleName) {
+	if core.IsModuleEnabled(moduleName) {
 		orm.RegisterModel(m)
 		klog.Infof("DB meta for module %s has been registered", moduleName)
 	} else {
@@ -61,15 +62,6 @@ func cleanDBFile(fileName string) {
 			klog.Errorf("Failed to remove DB file %s: %v", fileName, err)
 		}
 	}
-}
-
-func isModuleEnabled(m string) bool {
-	for _, value := range commonconfig.Get().Modules {
-		if m == value {
-			return true
-		}
-	}
-	return false
 }
 
 // IsNonUniqueNameError tests if the error returned by sqlite is unique.
