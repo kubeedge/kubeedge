@@ -13,7 +13,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
@@ -40,7 +39,7 @@ func feedbackError(err error, info string, request model.Message) {
 		errInfo = fmt.Sprintf(info+": %v", err)
 	}
 	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
-	if request.GetSource() == modules.EdgedModuleName {
+	if request.GetSource() == constants.EdgedModuleName {
 		sendToEdged(errResponse, request.IsSync())
 	} else {
 		sendToCloud(errResponse)
@@ -51,7 +50,7 @@ func sendToEdged(message *model.Message, sync bool) {
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
-		beehiveContext.Send(modules.EdgedModuleName, *message)
+		beehiveContext.Send(constants.EdgedModuleName, *message)
 	}
 }
 
@@ -59,7 +58,7 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
-		beehiveContext.Send(modules.EdgeMeshModuleName, *message)
+		beehiveContext.Send(constants.EdgeMeshModuleName, *message)
 	}
 }
 
@@ -272,7 +271,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 	msgSource := message.GetSource()
 	switch msgSource {
 	//case core.EdgedModuleName:
-	case modules.EdgedModuleName:
+	case constants.EdgedModuleName:
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
@@ -563,7 +562,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 
 func (m *metaManager) processVolume(message model.Message) {
 	klog.Info("process volume started")
-	back, err := beehiveContext.SendSync(modules.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
+	back, err := beehiveContext.SendSync(constants.EdgedModuleName, message, constants.CSISyncMsgRespTimeout)
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {
 		klog.Errorf("process volume send to edged failed: %v", err)

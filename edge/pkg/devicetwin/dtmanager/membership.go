@@ -10,7 +10,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -244,7 +244,7 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 			context.Send("",
 				dtcommon.SendToEdge,
 				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+				context.BuildModelMessage(constants.BusGroup, "", topic, "publish", result))
 		}
 		if delta {
 			context.Unlock(device.ID)
@@ -298,7 +298,7 @@ func Removed(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage
 			context.Send("",
 				dtcommon.SendToEdge,
 				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+				context.BuildModelMessage(constants.BusGroup, "", topic, "publish", result))
 		}
 
 		klog.Infof("Remove device %s successful", device.ID)
@@ -348,7 +348,7 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 	context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", result))
 
 	return nil
 

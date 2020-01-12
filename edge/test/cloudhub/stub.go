@@ -14,7 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 func init() {
@@ -41,7 +41,7 @@ func (*stubCloudHub) Name() string {
 
 func (*stubCloudHub) Group() string {
 	//return core.MetaGroup
-	return modules.MetaGroup
+	return constants.MetaGroup
 }
 
 func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {

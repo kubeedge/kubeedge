@@ -24,7 +24,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
+	testconstants "github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
 )
 
@@ -99,11 +100,11 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		}
 
 		// Build Add message
-		pod.Status = constants.PodRunning
+		pod.Status = testconstants.PodRunning
 		respMessage := model.NewMessage("")
 		resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
 		respMessage.Content = pod
-		respMessage.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
+		respMessage.BuildRouter(testconstants.HandlerStub, testconstants.GroupResource, resource, model.UpdateOperation)
 
 		hs.SendToCloud(respMessage)
 

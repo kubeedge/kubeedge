@@ -9,7 +9,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -110,7 +110,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", payload))
 
 	msgResource := "device/" + device.ID + "/state"
 	context.Send(deviceID,
@@ -178,7 +178,7 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
 			context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+				context.BuildModelMessage(constants.BusGroup, "", topic, "publish", payload))
 		}
 	}
 

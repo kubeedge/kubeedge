@@ -29,7 +29,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //Server serve as an internal mqtt broker.
@@ -106,15 +106,15 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
-		target = modules.TwinGroup
+		target = constants.TwinGroup
 	} else {
-		target = modules.HubGroup
+		target = constants.HubGroup
 		if msg.Topic == "SYS/dis/upload_records" {
 			resource = "SYS/dis/upload_records"
 		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+	message := model.NewMessage("").BuildRouter(constants.BusGroup, "user",
 		resource, "response").FillBody(string(msg.Payload))
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *message)

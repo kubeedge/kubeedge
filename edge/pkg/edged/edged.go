@@ -89,7 +89,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
@@ -245,11 +244,11 @@ func Register() {
 }
 
 func (e *edged) Name() string {
-	return modules.EdgedModuleName
+	return constants.EdgedModuleName
 }
 
 func (e *edged) Group() string {
-	return modules.EdgedGroup
+	return constants.EdgedGroup
 }
 
 func (e *edged) Start() {

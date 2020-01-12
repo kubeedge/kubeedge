@@ -9,7 +9,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
@@ -20,10 +19,10 @@ const (
 )
 
 var groupMap = map[string]string{
-	"resource": modules.MetaGroup,
-	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+	"resource": constants.MetaGroup,
+	"twin":     constants.TwinGroup,
+	"func":     constants.MetaGroup,
+	"user":     constants.BusGroup,
 }
 
 func (eh *EdgeHub) initial() (err error) {

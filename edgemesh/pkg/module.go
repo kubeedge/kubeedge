@@ -5,7 +5,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
@@ -29,7 +29,7 @@ func (em *EdgeMesh) Name() string {
 
 //Group returns EdgeMesh group
 func (em *EdgeMesh) Group() string {
-	return modules.MeshGroup
+	return constants.MeshGroup
 }
 
 //Start sets context and starts the controller

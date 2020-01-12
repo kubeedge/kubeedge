@@ -17,10 +17,10 @@ limitations under the License.
 package controllerstub
 
 import (
+	"github.com/kubeedge/kubeedge/common/constants"
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // NewDownstreamController creates a downstream controller
@@ -51,7 +51,7 @@ func (dc *DownstreamController) SyncPods() {
 			return
 		case msg := <-dc.podManager.GetEvent():
 			klog.Infof("Send message to cloudhub: %v", *msg)
-			beehiveContext.Send(constants.CloudHub, *msg)
+			beehiveContext.Send(constants.CloudHubModuleName, *msg)
 			klog.Info("Finish send message to cloudhub")
 		}
 	}

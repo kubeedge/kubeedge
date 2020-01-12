@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
@@ -51,7 +51,7 @@ func (c *persistentvolumeclaims) Delete(name string) error {
 
 func (c *persistentvolumeclaims) Get(name string, options metav1.GetOptions) (*api.PersistentVolumeClaim, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolumeclaim", name)
-	pvcMsg := BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	pvcMsg := BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvcMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get persistentvolumeclaim from metaManager failed, err: %v", err)

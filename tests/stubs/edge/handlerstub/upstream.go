@@ -23,7 +23,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
+	testconstants "github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // NewUpstreamController creates a upstream controller
@@ -62,7 +63,7 @@ func (dc *UpstreamController) SyncPods() {
 			msg := model.NewMessage("")
 			resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
 			msg.Content = pod
-			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
+			msg.BuildRouter(testconstants.HandlerStub, testconstants.GroupResource, resource, model.UpdateOperation)
 
 			klog.V(4).Infof("Begin to sync message: %v", *msg)
 			beehiveContext.SendToGroup(constants.HubGroup, *msg)

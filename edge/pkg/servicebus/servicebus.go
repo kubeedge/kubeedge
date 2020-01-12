@@ -13,7 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 )
 
@@ -40,7 +40,7 @@ func (*servicebus) Name() string {
 }
 
 func (*servicebus) Group() string {
-	return modules.BusGroup
+	return constants.BusGroup
 }
 
 func (sb *servicebus) Start() {
@@ -78,7 +78,7 @@ func (sb *servicebus) Start() {
 				klog.Warningf(m)
 				code := http.StatusBadRequest
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					beehiveContext.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(constants.HubGroup, response)
 				}
 				return
 			}
@@ -88,7 +88,7 @@ func (sb *servicebus) Start() {
 				m := "error to marshal request msg content"
 				code := http.StatusBadRequest
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					beehiveContext.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(constants.HubGroup, response)
 				}
 				return
 			}
@@ -98,7 +98,7 @@ func (sb *servicebus) Start() {
 				code := http.StatusBadRequest
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					beehiveContext.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(constants.HubGroup, response)
 				}
 				return
 			}
@@ -110,7 +110,7 @@ func (sb *servicebus) Start() {
 				code := http.StatusNotFound
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					beehiveContext.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(constants.HubGroup, response)
 				}
 				return
 			}
@@ -124,7 +124,7 @@ func (sb *servicebus) Start() {
 				code := http.StatusInternalServerError
 				klog.Errorf(m, err)
 				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-					beehiveContext.SendToGroup(modules.HubGroup, response)
+					beehiveContext.SendToGroup(constants.HubGroup, response)
 				}
 				return
 			}
@@ -132,8 +132,8 @@ func (sb *servicebus) Start() {
 			response := util.HTTPResponse{Header: resp.Header, StatusCode: resp.StatusCode, Body: resBody}
 			responseMsg := model.NewMessage(msg.GetID())
 			responseMsg.Content = response
-			responseMsg.SetRoute("servicebus", modules.UserGroup)
-			beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
+			responseMsg.SetRoute("servicebus", constants.UserGroup)
+			beehiveContext.SendToGroup(constants.HubGroup, *responseMsg)
 		}()
 	}
 }
@@ -144,6 +144,6 @@ func buildErrorResponse(parentID string, content string, statusCode int) (model.
 	h.Add("Server", "kubeedge-edgecore")
 	c := util.HTTPResponse{Header: h, StatusCode: statusCode, Body: []byte(content)}
 	responseMsg.Content = c
-	responseMsg.SetRoute("servicebus", modules.UserGroup)
+	responseMsg.SetRoute("servicebus", constants.UserGroup)
 	return *responseMsg, nil
 }

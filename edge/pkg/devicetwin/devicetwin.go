@@ -4,7 +4,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -39,7 +39,7 @@ func (dt *DeviceTwin) Name() string {
 
 //Group get group of the module
 func (dt *DeviceTwin) Group() string {
-	return modules.TwinGroup
+	return constants.TwinGroup
 }
 
 //Start run the module

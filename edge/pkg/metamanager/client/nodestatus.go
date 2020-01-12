@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-
+	"github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 //NodeStatusGetter is interface to get node status
@@ -40,7 +39,7 @@ func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusR
 
 func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
-	nodeStatusMsg := BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)
+	nodeStatusMsg := BuildMsg(constants.MetaGroup, "", constants.EdgedModuleName, resource, model.UpdateOperation, ns)
 	_, err := c.send.SendSync(nodeStatusMsg)
 	if err != nil {
 		return fmt.Errorf("update nodeStatus failed, err: %v", err)

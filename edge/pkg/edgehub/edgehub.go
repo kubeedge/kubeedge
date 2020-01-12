@@ -9,7 +9,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
@@ -47,7 +47,7 @@ func (eh *EdgeHub) Name() string {
 
 //Group returns EdgeHub group
 func (eh *EdgeHub) Group() string {
-	return modules.HubGroup
+	return constants.HubGroup
 }
 
 //Start sets context and starts the controller

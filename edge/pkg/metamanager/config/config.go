@@ -7,7 +7,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -36,7 +36,7 @@ func InitConfigure() {
 		groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
 		if err != nil || groupName == "" {
 			// Guaranteed forward compatibility @kadisi
-			groupName = modules.HubGroup
+			groupName = constants.HubGroup
 			klog.Infof("can not get metamanager.context-send-group key , use default %v", groupName)
 		}
 

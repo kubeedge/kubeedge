@@ -9,7 +9,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
@@ -36,7 +36,7 @@ func (*eventbus) Name() string {
 }
 
 func (*eventbus) Group() string {
-	return modules.BusGroup
+	return constants.BusGroup
 }
 
 func (eb *eventbus) Start() {

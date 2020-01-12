@@ -20,7 +20,8 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
+	testconstants "github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // Init module
@@ -35,7 +36,7 @@ type HandlerStub struct {
 
 // Return module name
 func (*HandlerStub) Name() string {
-	return constants.HandlerStub
+	return testconstants.HandlerStub
 }
 
 // Return module group

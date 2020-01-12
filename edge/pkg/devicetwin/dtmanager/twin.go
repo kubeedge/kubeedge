@@ -11,7 +11,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -254,7 +254,7 @@ func dealUpdateResult(context *dtcontext.DTContext, deviceID string, eventID str
 	return context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", result))
 }
 
 // dealDelta  send delta
@@ -264,7 +264,7 @@ func dealDelta(context *dtcontext.DTContext, deviceID string, payload []byte) er
 	return context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", payload))
 }
 
 // dealSyncResult build and send sync result, is delta update
@@ -288,7 +288,7 @@ func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dtt
 	return context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", payload))
 }
 
 // DealGetTwin deal get twin event
@@ -343,7 +343,7 @@ func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) 
 	return context.Send("",
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", msg))
+		context.BuildModelMessage(constants.BusGroup, "", topic, "publish", msg))
 }
 
 //dealtype 0:update ,2:cloud_update,1:detail result,3:deleted

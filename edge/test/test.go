@@ -14,7 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
@@ -42,7 +42,7 @@ func (tm *testManager) Name() string {
 
 func (tm *testManager) Group() string {
 	//return core.MetaGroup
-	return modules.MetaGroup
+	return constants.MetaGroup
 }
 
 //Function to get the pods from Edged

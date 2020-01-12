@@ -8,8 +8,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
@@ -38,7 +38,7 @@ func (*metaManager) Name() string {
 }
 
 func (*metaManager) Group() string {
-	return modules.MetaGroup
+	return constants.MetaGroup
 }
 
 func (m *metaManager) Start() {

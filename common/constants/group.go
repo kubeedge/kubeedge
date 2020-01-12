@@ -1,4 +1,4 @@
-package modules
+package constants
 
 const (
 	// BusGroup group

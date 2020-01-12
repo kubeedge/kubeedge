@@ -17,17 +17,11 @@ limitations under the License.
 package constants
 
 const (
-
-	// Modules
-	CloudHub       = "cloudhub"
-	EdgeHub        = "edgehub"
 	ControllerStub = "controllerstub"
 	HandlerStub    = "handlerstub"
 
 	// Group
 	ControllerGroup = "controller"
-	HubGroup        = "hub"
-	MetaGroup       = "meta"
 
 	ResourceSliceLength       = 5
 	ResourceSliceLengthQuery  = 4

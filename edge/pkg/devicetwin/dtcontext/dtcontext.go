@@ -10,7 +10,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/common/constants"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -152,7 +152,7 @@ func (dtc *DTContext) Send(identity string, action string, module string, msg *m
 //BuildModelMessage build mode messages
 func (dtc *DTContext) BuildModelMessage(group string, parentID string, resource string, operation string, content interface{}) *model.Message {
 	msg := model.NewMessage(parentID)
-	msg.BuildRouter(modules.TwinGroup, group, resource, operation)
+	msg.BuildRouter(constants.TwinGroup, group, resource, operation)
 	msg.Content = content
 	return msg
 }
