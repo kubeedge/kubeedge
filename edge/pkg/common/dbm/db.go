@@ -1,7 +1,6 @@
 package dbm
 
 import (
-	"os"
 	"strings"
 
 	"github.com/astaxie/beego/orm"
@@ -26,8 +25,8 @@ func RegisterModel(moduleName string, m interface{}) {
 	}
 }
 
-// InitDBConfig Init DB info
-func InitDBConfig() {
+// initDBConfig Init DB info
+func initDBConfig() {
 
 	if err := orm.RegisterDriver(commonconfig.Get().DriverName, orm.DRSqlite); err != nil {
 		klog.Fatalf("Failed to register driver: %v", err)
@@ -42,26 +41,13 @@ func InitDBConfig() {
 
 //InitDBManager initialises the database by syncing the database schema and creating orm
 func InitDBManager() {
-	InitDBConfig()
+	initDBConfig()
 	// sync database schema
 	orm.RunSyncdb(commonconfig.Get().DBName, false, true)
 
 	// create orm
 	DBAccess = orm.NewOrm()
 	DBAccess.Using(commonconfig.Get().DBName)
-}
-
-// cleanDBFile removes db file
-func cleanDBFile(fileName string) {
-	// Remove db file
-	err := os.Remove(fileName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			klog.Infof("DB file %s is not existing", fileName)
-		} else {
-			klog.Errorf("Failed to remove DB file %s: %v", fileName, err)
-		}
-	}
 }
 
 // IsNonUniqueNameError tests if the error returned by sqlite is unique.
