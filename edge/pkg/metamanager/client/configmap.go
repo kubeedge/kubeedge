@@ -7,7 +7,6 @@ import (
 	api "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
@@ -53,7 +52,7 @@ func (c *configMaps) Delete(name string) error {
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
-	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	configMapMsg := BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(configMapMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get configmap from metaManager failed, err: %v", err)

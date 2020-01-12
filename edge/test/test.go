@@ -14,8 +14,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 const (
@@ -119,7 +119,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		if p.Namespace != "" {
 			ns = p.Namespace
 		}
-		msgReq := message.BuildMsg("resource", string(p.UID), "edgecontroller", ns+"/pod/"+string(p.Name), operation, p)
+		msgReq := client.BuildMsg("resource", string(p.UID), "edgecontroller", ns+"/pod/"+string(p.Name), operation, p)
 		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
@@ -150,7 +150,7 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 		case "PUT":
 			operation = model.UpdateOperation
 		}
-		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
+		msgReq := client.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
 		beehiveContext.Send("twin", *msgReq)
 		klog.Infof("send message to twingrp is %+v\n", msgReq)
 	}
@@ -180,7 +180,7 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 			operation = model.UpdateOperation
 		}
 
-		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/secret/"+string(p.UID), operation, p)
+		msgReq := client.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/secret/"+string(p.UID), operation, p)
 		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
@@ -210,7 +210,7 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 			operation = model.UpdateOperation
 		}
 
-		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/configmap/"+string(p.UID), operation, p)
+		msgReq := client.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/configmap/"+string(p.UID), operation, p)
 		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}

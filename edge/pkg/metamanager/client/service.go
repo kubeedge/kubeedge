@@ -8,7 +8,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 )
@@ -53,7 +52,7 @@ func (s *services) Delete(name string) error {
 
 func (s *services) GetPods(name string) ([]v1.Pod, error) {
 	resource := fmt.Sprintf("%s/%s/%s", s.namespace, model.ResourceTypePodlist, name)
-	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	msg := BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	respMsg, err := s.send.SendSync(msg)
 	if err != nil {
 		return nil, fmt.Errorf("get service podlist from metaManager failed, err: %v", err)
@@ -105,7 +104,7 @@ func handlerServicePodListFromMetaManager(content []byte) ([]v1.Pod, error) {
 
 func (s *services) Get(name string) (*v1.Service, error) {
 	resource := fmt.Sprintf("%s/%s/%s", s.namespace, constants.ResourceTypeService, name)
-	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	msg := BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	respMsg, err := s.send.SendSync(msg)
 	if err != nil {
 		return nil, fmt.Errorf("get service from metaManager failed, err: %v", err)

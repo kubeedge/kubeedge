@@ -6,7 +6,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -40,7 +39,7 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 }
 
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
-	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
+	podStatusMsg := BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
 	_, err := c.send.SendSync(podStatusMsg)
 	if err != nil {
 		return fmt.Errorf("update podstatus failed, err: %v", err)

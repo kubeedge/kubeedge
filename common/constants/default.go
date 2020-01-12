@@ -118,3 +118,10 @@ const (
 	CloudConnected    = "cloud_connected"
 	CloudDisconnected = "cloud_disconnected"
 )
+
+//constant defining node connection types
+const (
+	ResourceTypeNodeConnection = "node/connection"
+	OperationNodeConnection    = "publish"
+	SourceNodeConnection       = "edgehub"
+)

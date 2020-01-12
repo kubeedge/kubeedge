@@ -7,7 +7,6 @@ import (
 	api "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
@@ -52,7 +51,7 @@ func (c *secrets) Delete(name string) error {
 func (c *secrets) Get(name string) (*api.Secret, error) {
 
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
-	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	secretMsg := BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(secretMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get secret from metaManager failed, err: %v", err)

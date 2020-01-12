@@ -9,7 +9,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -209,8 +208,8 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	}
 
 	for _, group := range groupMap {
-		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
-			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
+		message := model.NewMessage("").BuildRouter(constants.SourceNodeConnection, group,
+			constants.ResourceTypeNodeConnection, constants.OperationNodeConnection).FillBody(content)
 		beehiveContext.SendToGroup(group, *message)
 	}
 }

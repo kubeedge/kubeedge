@@ -1,14 +1,7 @@
-package message
+package client
 
 import (
 	"github.com/kubeedge/beehive/pkg/core/model"
-)
-
-//constant defining node connection types
-const (
-	ResourceTypeNodeConnection = "node/connection"
-	OperationNodeConnection    = "publish"
-	SourceNodeConnection       = "edgehub"
 )
 
 //BuildMsg returns message object with router and content details

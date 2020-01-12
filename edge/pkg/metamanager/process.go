@@ -13,7 +13,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -588,7 +587,7 @@ func (m *metaManager) process(message model.Message) {
 		m.processQuery(message)
 	case model.ResponseOperation:
 		m.processResponse(message)
-	case messagepkg.OperationNodeConnection:
+	case constants.OperationNodeConnection:
 		m.processNodeConnection(message)
 	case OperationMetaSync:
 		m.processSync(message)

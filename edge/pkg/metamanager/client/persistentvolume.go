@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
@@ -52,7 +51,7 @@ func (c *persistentvolumes) Delete(name string) error {
 
 func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.PersistentVolume, error) {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolume", name)
-	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
+	pvMsg := BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvMsg)
 	if err != nil {
 		return nil, fmt.Errorf("get persistentvolume from metaManager failed, err: %v", err)
