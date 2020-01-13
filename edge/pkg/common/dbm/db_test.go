@@ -29,33 +29,6 @@ type TestDevice struct {
 	LastOnline  string `orm:"column(last_online); null; type(text)"`
 }
 
-// TestRegisterModel is function to test RegisterModel().
-func TestRegisterModel(t *testing.T) {
-	tests := []struct {
-		name           string
-		moduleName     string
-		modelStructure interface{}
-	}{
-		{
-			//Failure Case
-			name:           "TestRegisterModel-UnregisteredModule",
-			moduleName:     "testmodule",
-			modelStructure: "",
-		},
-		{
-			//Success Case
-			name:           "TestRegisterModel-RegisteredModule",
-			moduleName:     "twin",
-			modelStructure: new(TestDevice),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			RegisterModel(test.moduleName, test.modelStructure)
-		})
-	}
-}
-
 // TestIsNonUniqueNameError is function to test IsNonUniqueNameError().
 func TestIsNonUniqueNameError(t *testing.T) {
 	tests := []struct {

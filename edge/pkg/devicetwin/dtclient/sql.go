@@ -1,9 +1,10 @@
 package dtclient
 
 import (
+	"github.com/astaxie/beego/orm"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/beehive/pkg/core"
 )
 
 const (
@@ -17,8 +18,13 @@ const (
 
 //InitDBTable create table
 func InitDBTable() {
-	klog.Info("Begin to register twin model")
-	dbm.RegisterModel("twin", new(Device))
-	dbm.RegisterModel("twin", new(DeviceAttr))
-	dbm.RegisterModel("twin", new(DeviceTwin))
+	klog.Info("Begin to register twin db model")
+
+	if !core.IsModuleEnabled("twin") {
+		klog.Info("DB meta for twin module has not been registered,so can not init db table")
+		return
+	}
+	orm.RegisterModel(new(Device))
+	orm.RegisterModel(new(DeviceAttr))
+	orm.RegisterModel(new(DeviceTwin))
 }

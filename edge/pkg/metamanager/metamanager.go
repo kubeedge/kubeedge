@@ -3,12 +3,13 @@ package metamanager
 import (
 	"time"
 
+	"github.com/astaxie/beego/orm"
+
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -28,9 +29,19 @@ func newMetaManager() *metaManager {
 
 // Register register metamanager
 func Register() {
-	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
 	metamanagerconfig.InitConfigure()
+	InitDBTable()
 	core.Register(newMetaManager())
+}
+
+//InitDBTable create table
+func InitDBTable() {
+	klog.Infof("Begin to register %v db model", MetaManagerModuleName)
+	if !core.IsModuleEnabled(MetaManagerModuleName) {
+		klog.Infof("DB meta for %v module has not been registered,so can not init db table", MetaManagerModuleName)
+		return
+	}
+	orm.RegisterModel(new(dao.Meta))
 }
 
 func (*metaManager) Name() string {
