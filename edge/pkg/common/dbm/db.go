@@ -1,7 +1,6 @@
 package dbm
 
 import (
-	"os"
 	"strings"
 
 	"github.com/astaxie/beego/orm"
@@ -48,19 +47,6 @@ func InitDBManager() {
 	// create orm
 	DBAccess = orm.NewOrm()
 	DBAccess.Using(commonconfig.Get().DBName)
-}
-
-// cleanDBFile removes db file
-func cleanDBFile(fileName string) {
-	// Remove db file
-	err := os.Remove(fileName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			klog.Infof("DB file %s is not existing", fileName)
-		} else {
-			klog.Errorf("Failed to remove DB file %s: %v", fileName, err)
-		}
-	}
 }
 
 func isModuleEnabled(m string) bool {
