@@ -14,6 +14,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/handler"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
@@ -263,6 +264,7 @@ func (dc *DownstreamController) syncEdgeNodes() {
 				}
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
+				handler.ChannelWatchNode <- node.ObjectMeta.Name
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
