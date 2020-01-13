@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
@@ -44,16 +43,6 @@ func init() {
 			klog.Infof("can not get database.source key, use default %v", dataSource)
 		}
 
-		modulesList := config.CONFIG.GetConfigurationByKey("modules.enabled")
-		if modulesList == nil {
-			errs = append(errs, fmt.Errorf("get modules.enabled key error"))
-			return
-		}
-		modules := []string{}
-		for _, value := range modulesList.([]interface{}) {
-			modules = append(modules, value.(string))
-		}
-
 		if len(errs) != 0 {
 			for _, e := range errs {
 				klog.Errorf("%v", e)
@@ -65,14 +54,12 @@ func init() {
 			DriverName: driverName,
 			DBName:     dbName,
 			DataSource: dataSource,
-			Modules:    modules,
 		}
 		klog.Infof("init common config successfully，config info %++v", c)
 	})
 }
 
 type Configure struct {
-	Modules    []string
 	DriverName string
 	DBName     string
 	DataSource string
