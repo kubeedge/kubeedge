@@ -32,7 +32,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )

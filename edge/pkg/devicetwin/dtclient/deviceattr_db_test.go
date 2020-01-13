@@ -23,7 +23,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/dbm"
 )
 
 // TestSaveDeviceAttr is function to test SaveDeviceAttr

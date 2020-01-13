@@ -3,7 +3,7 @@ package dtclient
 import (
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/dbm"
 )
 
 //DeviceTwin the struct of device twin

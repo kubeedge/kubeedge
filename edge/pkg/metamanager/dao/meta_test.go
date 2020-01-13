@@ -25,7 +25,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/dbm"
 )
 
 // errFailedDBOperation is common DB operation fail error

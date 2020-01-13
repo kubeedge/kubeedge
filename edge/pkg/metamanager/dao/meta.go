@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/dbm"
 )
 
 //constant metatable name reference
