@@ -820,6 +820,10 @@ func NewDownstreamController() (*DownstreamController, error) {
 	}
 
 	crdcli, err := utils.NewCRDClient(config)
+	if err != nil {
+		klog.Warningf("Failed to create crd client: %s", err)
+		return nil, err
+	}
 	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
@@ -832,20 +836,12 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	cm := manager.NewConfigMapManager()
-
-	ml, err := messagelayer.NewContextMessageLayer()
-	if err != nil {
-		klog.Warningf("Create message layer failed with error: %s", err)
-		return nil, err
-	}
-
 	dc := &DownstreamController{
 		kubeClient:         cli,
 		deviceManager:      deviceManager,
 		deviceModelManager: deviceModelManager,
-		messageLayer:       ml,
-		configMapManager:   cm,
+		messageLayer:       messagelayer.NewContextMessageLayer(),
+		configMapManager:   manager.NewConfigMapManager(),
 	}
 	return dc, nil
 }
