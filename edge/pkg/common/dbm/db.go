@@ -8,22 +8,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/core"
 	commonconfig "github.com/kubeedge/kubeedge/edge/pkg/common/config"
 )
 
 //DBAccess is Ormer object interface for all transaction processing and switching database
 var DBAccess orm.Ormer
-
-//RegisterModel registers the defined model in the orm if model is enabled
-func RegisterModel(moduleName string, m interface{}) {
-	if core.IsModuleEnabled(moduleName) {
-		orm.RegisterModel(m)
-		klog.Infof("DB meta for module %s has been registered", moduleName)
-	} else {
-		klog.Infof("DB meta for module %s has not been registered because this module is not enabled", moduleName)
-	}
-}
 
 // InitDBConfig Init DB info
 func InitDBConfig() {
