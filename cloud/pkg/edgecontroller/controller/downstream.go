@@ -540,12 +540,6 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
-	ml, err := messagelayer.NewContextMessageLayer()
-	if err != nil {
-		klog.Warningf("create message layer failed with error: %s", err)
-		return nil, err
-	}
-
 	dc := &DownstreamController{
 		kubeClient:       cli,
 		podManager:       podManager,
@@ -554,7 +548,7 @@ func NewDownstreamController() (*DownstreamController, error) {
 		nodeManager:      nodesManager,
 		serviceManager:   serviceManager,
 		endpointsManager: endpointsManager,
-		messageLayer:     ml,
+		messageLayer:     messagelayer.NewContextMessageLayer(),
 		lc:               lc,
 	}
 	if err := dc.initLocating(); err != nil {
