@@ -1,8 +1,6 @@
 package dbm
 
 import (
-	"strings"
-
 	"github.com/astaxie/beego/orm"
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
@@ -37,14 +35,4 @@ func InitDBManager() {
 	// create orm
 	DBAccess = orm.NewOrm()
 	DBAccess.Using(commonconfig.Get().DBName)
-}
-
-// IsNonUniqueNameError tests if the error returned by sqlite is unique.
-// It will check various sqlite versions.
-func IsNonUniqueNameError(err error) bool {
-	str := err.Error()
-	if strings.HasSuffix(str, "are not unique") || strings.Contains(str, "UNIQUE constraint failed") || strings.HasSuffix(str, "constraint failed") {
-		return true
-	}
-	return false
 }

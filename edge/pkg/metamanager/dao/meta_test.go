@@ -447,3 +447,41 @@ func TestQueryAllMeta(t *testing.T) {
 		})
 	}
 }
+
+// TestIsNonUniqueNameError is function to test IsNonUniqueNameError().
+func TestIsNonUniqueNameError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		wantBool bool
+	}{
+		{
+			name:     "Suffix-are not unique",
+			err:      errors.New("The fields are not unique"),
+			wantBool: true,
+		},
+		{
+			name:     "Contains-UNIQUE constraint failed",
+			err:      errors.New("Failed-UNIQUE constraint failed"),
+			wantBool: true,
+		},
+		{
+			name:     "Contains-constraint failed",
+			err:      errors.New("The input constraint failed"),
+			wantBool: true,
+		},
+		{
+			name:     "OtherError",
+			err:      errors.New("Failed"),
+			wantBool: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotBool := IsNonUniqueNameError(test.err)
+			if gotBool != test.wantBool {
+				t.Errorf("IsNonUniqueError() failed, Got = %v, Want = %v", gotBool, test.wantBool)
+			}
+		})
+	}
+}
