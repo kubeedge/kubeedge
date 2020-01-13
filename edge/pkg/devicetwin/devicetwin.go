@@ -34,7 +34,7 @@ func Register() {
 
 //Name get name of the module
 func (dt *DeviceTwin) Name() string {
-	return "twin"
+	return constants.DeviceTwinModuleName
 }
 
 //Group get group of the module

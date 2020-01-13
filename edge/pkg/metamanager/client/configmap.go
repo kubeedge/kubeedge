@@ -8,7 +8,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.
@@ -69,7 +68,7 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleConfigMapFromMetaDB(content)
 	}
 	return handleConfigMapFromMetaManager(content)

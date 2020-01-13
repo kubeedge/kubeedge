@@ -3,20 +3,15 @@ package metamanager
 import (
 	"time"
 
+	"github.com/astaxie/beego/orm"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-)
-
-//constant metamanager module name
-const (
-	MetaManagerModuleName = "metaManager"
 )
 
 type metaManager struct {
@@ -28,13 +23,22 @@ func newMetaManager() *metaManager {
 
 // Register register metamanager
 func Register() {
-	dbm.RegisterModel(MetaManagerModuleName, new(dao.Meta))
+	InitDBTable()
 	metamanagerconfig.InitConfigure()
 	core.Register(newMetaManager())
 }
 
+//InitDBTable create table
+func InitDBTable() {
+	if !core.IsModuleEnabled(constants.MetaManagerModuleName) {
+		klog.Infof("module %s has not been registered, so can not init db table", constants.MetaManagerModuleName)
+		return
+	}
+	orm.RegisterModel(new(dao.Meta))
+}
+
 func (*metaManager) Name() string {
-	return MetaManagerModuleName
+	return constants.MetaManagerModuleName
 }
 
 func (*metaManager) Group() string {
@@ -53,8 +57,8 @@ func (m *metaManager) Start() {
 				return
 			case <-timer.C:
 				timer.Reset(period)
-				msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
-				beehiveContext.Send(MetaManagerModuleName, *msg)
+				msg := model.NewMessage("").BuildRouter(constants.MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
+				beehiveContext.Send(constants.MetaManagerModuleName, *msg)
 			}
 		}
 	}()

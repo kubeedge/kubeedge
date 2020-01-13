@@ -8,4 +8,8 @@ const (
 
 	// EdgeMeshModuleName name
 	EdgeMeshModuleName = "edgemesh"
+
+	DeviceTwinModuleName = "twin"
+
+	MetaManagerModuleName = "metaManager"
 )

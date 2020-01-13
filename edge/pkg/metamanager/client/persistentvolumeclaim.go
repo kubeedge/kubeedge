@@ -9,7 +9,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // PersistentVolumeClaimsGetter is interface to get client PersistentVolumeClaims
@@ -68,7 +67,7 @@ func (c *persistentvolumeclaims) Get(name string, options metav1.GetOptions) (*a
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handlePersistentVolumeClaimFromMetaDB(content)
 	}
 	return handlePersistentVolumeClaimFromMetaManager(content)

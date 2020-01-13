@@ -9,7 +9,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // VolumeAttachmentsGetter is interface to get client VolumeAttachments
@@ -80,7 +79,7 @@ func (c *volumeattachments) Get(name string, options metav1.GetOptions) (*api.Vo
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleVolumeAttachmentFromMetaDB(content)
 	}
 	return handleVolumeAttachmentFromMetaManager(content)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 //NodesGetter to get node interface
@@ -73,7 +72,7 @@ func (c *nodes) Get(name string) (*api.Node, error) {
 		}
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == constants.MetaManagerModuleName {
 		return handleNodeFromMetaDB(content)
 	}
 	return handleNodeFromMetaManager(content)

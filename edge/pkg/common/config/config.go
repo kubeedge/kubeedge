@@ -21,7 +21,7 @@ const (
 var c Configure
 var once sync.Once
 
-func init() {
+func InitConfigure() {
 	once.Do(func() {
 		var errs []error
 		driverName, err := config.CONFIG.GetValue("database.driver").ToString()
