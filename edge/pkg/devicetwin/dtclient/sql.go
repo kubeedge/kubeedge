@@ -5,6 +5,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -16,12 +17,12 @@ const (
 	DeviceTwinTableName = "device_twin"
 )
 
-//InitDBTable create table
+// InitDBTable create table
 func InitDBTable() {
 	klog.Info("Begin to register twin db model")
 
-	if !core.IsModuleEnabled("twin") {
-		klog.Info("DB meta for twin module has not been registered,so can not init db table")
+	if !core.IsModuleEnabled(constants.DeviceTwinModuleName) {
+		klog.Infof("Module %s is disabled, DB meta for it will not be registered", constants.DeviceTwinModuleName)
 		return
 	}
 	orm.RegisterModel(new(Device))

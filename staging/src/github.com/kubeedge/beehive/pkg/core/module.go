@@ -45,7 +45,7 @@ func Register(m Module) {
 	}
 }
 
-// IsModuleEnabled indicates whether m is enable, if enabled return true
+// IsModuleEnabled indicates whether module is enabled
 func IsModuleEnabled(m string) bool {
 	modules := config.CONFIG.GetConfigurationByKey("modules.enabled")
 	if modules != nil {

@@ -34,11 +34,11 @@ func Register() {
 	core.Register(newMetaManager())
 }
 
-//InitDBTable create table
+// InitDBTable create table
 func InitDBTable() {
 	klog.Infof("Begin to register %v db model", MetaManagerModuleName)
 	if !core.IsModuleEnabled(MetaManagerModuleName) {
-		klog.Infof("DB meta for %v module has not been registered,so can not init db table", MetaManagerModuleName)
+		klog.Infof("Module %s is disabled, DB meta for it will not be registered", MetaManagerModuleName)
 		return
 	}
 	orm.RegisterModel(new(dao.Meta))
