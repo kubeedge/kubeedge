@@ -7,14 +7,14 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//ModuleContext is interface for context module management
+// ModuleContext is interface for context module management
 type ModuleContext interface {
 	AddModule(module string)
 	AddModuleGroup(module, group string)
 	Cleanup(module string)
 }
 
-//MessageContext is interface for message syncing
+// MessageContext is interface for message syncing
 type MessageContext interface {
 	// async mode
 	Send(module string, message model.Message)

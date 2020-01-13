@@ -26,6 +26,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
 )
 
 const (
@@ -49,8 +50,11 @@ func NewContainerLifecycleManager(kubeletRootDir string) (ContainerLifecycleMana
 		PolicyNone,
 		reconcilePeriod,
 		nil,
+		nil,
+		cpuset.NewCPUSet(),
 		result,
 		kubeletRootDir,
+		nil,
 	)
 	if err != nil {
 		klog.Errorf("failed to initialize cpu manager: %v", err)

@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//constants for channel context
+// constants for channel context
 const (
 	ChannelSizeDefault = 1024
 
@@ -366,13 +366,13 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 	ctx.typeChannels[group][module] = moduleCh
 }
 
-//AddModule adds module into module context
+// AddModule adds module into module context
 func (ctx *ChannelContext) AddModule(module string) {
 	channel := ctx.newChannel()
 	ctx.addChannel(module, channel)
 }
 
-//AddModuleGroup adds modules into module context group
+// AddModuleGroup adds modules into module context group
 func (ctx *ChannelContext) AddModuleGroup(module, group string) {
 	if channel := ctx.getChannel(module); channel != nil {
 		ctx.addTypeChannel(module, group, channel)

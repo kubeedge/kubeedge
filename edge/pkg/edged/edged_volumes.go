@@ -31,11 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/container"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/removeall"
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
 	utilio "k8s.io/utils/io"
+	"k8s.io/utils/mount"
 )
 
 // newVolumeMounterFromPlugins attempts to find a plugin by volume spec, pod

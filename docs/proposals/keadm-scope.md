@@ -51,7 +51,7 @@ For edge, commands shall be:
 
 ## Design of the commands
 
-**NOTE**: All the below steps are executed as root user, to execute as sudo user ,Please add sudo infront of all the commands
+**NOTE**: All the below steps are executed as root user, to execute as sudo user. Please add `sudo` infront of all the commands.
 
 ### kubeedge --help or kubeedge
 

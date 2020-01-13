@@ -1,6 +1,6 @@
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/apache/servicecomb-kie v0.0.0-20190905142319-5ee098c8886f/go.mod h1:UbinHy4mdkrTqM71CmmDtc/xGyq46mud04OgprdETkM=
+github.com/apache/servicecomb-kie v0.0.0-20190905062319-5ee098c8886f/go.mod h1:UbinHy4mdkrTqM71CmmDtc/xGyq46mud04OgprdETkM=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/cenkalti/backoff v2.0.0+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -23,6 +23,8 @@ github.com/go-chassis/go-restful-swagger20 v1.0.1/go.mod h1:s+06mcAnGsVYQ2sqM4ZP
 github.com/go-chassis/paas-lager v1.0.1/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
 github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2 h1:iORWPbIQ81tJPKWs9TNvcjCQnqvyTlL41F9ILgiTcyM=
 github.com/go-chassis/paas-lager v1.0.2-0.20190328010332-cf506050ddb2/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
+github.com/go-chassis/paas-lager v1.1.1 h1:/6wqawUGjPCpd57A/tzJzgC4MnEhNuigbayQS+2VWPQ=
+github.com/go-chassis/paas-lager v1.1.1/go.mod h1:tILYbn3+0jjCxhY6/ue9L8eRq+VJ60U6VYIdugqchB4=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7sIas=

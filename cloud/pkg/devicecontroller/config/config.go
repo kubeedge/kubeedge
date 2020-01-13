@@ -5,9 +5,11 @@ import (
 	"os"
 	"sync"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/common/config"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	"k8s.io/klog"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 var c Configure
@@ -38,8 +40,6 @@ type Configure struct {
 	KubeBurst int
 	// UpdateDeviceStatusWorkers is the count of goroutines of update device status
 	UpdateDeviceStatusWorkers int
-	// MessageLayer used, context or ssmq, default is context
-	MessageLayer string
 }
 
 func InitConfigure() {
@@ -87,32 +87,26 @@ func InitConfigure() {
 		uds, err := config.CONFIG.GetValue("devicecontroller.buffer.update-device-status").ToInt()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			uds = deviceconstants.DefaultUpdateDeviceStatusBuffer
+			uds = constants.DefaultUpdateDeviceStatusBuffer
 			klog.Infof("can not get devicecontroller.buffer.update-device-status key, use default value %v", uds)
 		}
 		dbde, err := config.CONFIG.GetValue("devicecontroller.buffer.device-event").ToInt()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			dbde = deviceconstants.DefaultDeviceEventBuffer
+			dbde = constants.DefaultDeviceEventBuffer
 			klog.Infof("can not get devicecontroller.buffer.device-event key, use default value %v", dbde)
 		}
 		dmeb, err := config.CONFIG.GetValue("devicecontroller.buffer.device-model-event").ToInt()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			dmeb = deviceconstants.DefaultDeviceModelEventBuffer
+			dmeb = constants.DefaultDeviceModelEventBuffer
 			klog.Infof("can not get devicecontroller.buffer.device-model-event key, use default value %v", dmeb)
 		}
 		psw, err := config.CONFIG.GetValue("devicecontroller.load.update-device-status-workers").ToInt()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
-			psw = deviceconstants.DefaultUpdateDeviceStatusWorkers
+			psw = constants.DefaultUpdateDeviceStatusWorkers
 			klog.Infof("can not get devicecontroller.load.update-device-status-workers key, use default value %v", psw)
-		}
-		ml, err := config.CONFIG.GetValue("devicecontroller.message-layer").ToString()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			ml = deviceconstants.DefaultMessageLayer
-			klog.Infof("can not get devicecontroller.message-layer key, use default value %v", ml)
 		}
 		if len(errs) != 0 {
 			for _, e := range errs {
@@ -134,7 +128,6 @@ func InitConfigure() {
 			DeviceEventBuffer:         dbde,
 			DeviceModelEventBuffer:    dmeb,
 			UpdateDeviceStatusWorkers: psw,
-			MessageLayer:              ml,
 		}
 		klog.Infof("init devicecontroller config successfully, config info %++v", c)
 	})
