@@ -113,3 +113,8 @@ const (
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
 )
+
+const (
+	// TODO put all modulename and group name together @kadisi
+	DeviceTwinModuleName = "twin"
+)
