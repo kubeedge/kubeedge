@@ -39,6 +39,7 @@ const (
 
 // VolumeRegExp is used to validate the volume resource
 var VolumeRegExp = regexp.MustCompile(VolumePattern)
+var ChannelWatchNode chan string
 
 // MessageHandle processes messages between cloud and edge
 type MessageHandle struct {
@@ -75,9 +76,34 @@ func InitHandler(config *hubconfig.Configure, eventq *channelq.ChannelMessageQue
 			CloudhubHandler.KeepaliveCheckLoop,
 			CloudhubHandler.MessageWriteLoop,
 		}
-
+                
+                CloudhubHandler.collectResourceAfterNodeDeleted()
 		CloudhubHandler.initServerEntries()
 	})
+}
+
+// start a goroutine to receive the node deleted signal from edgecontroller
+func (mh *MessageHandle) collectResourceAfterNodeDeleted () {
+	ChannelWatchNode = make(chan string, 1)
+	go mh.watchNodeDeleted()
+}
+
+// a function to handle the event about resource collection when watch a node deleted
+func (mh *MessageHandle)  watchNodeDeleted()  {
+	var nodeID string
+	for {
+		nodeID = <- ChannelWatchNode
+		klog.Infoln("node deleted: ", nodeID)
+		his, ok := mh.nodeConns.Load(nodeID)
+		if ok {
+			hi := his.(hubio.CloudHubIO)
+			info := &model.HubInfo{ProjectID: "tmpproject", NodeID: nodeID}
+			mh.CancelNode(hi, info, nodeStop)
+		} else {
+			klog.Errorf("cannot get nodeID %s from nodeconns. maybe the node is not connected", nodeID)
+		}
+
+	}
 }
 
 // initServerEntries register handler func
