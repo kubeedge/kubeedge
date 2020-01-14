@@ -128,7 +128,7 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 		EventType: "group_membership_event",
 		EventID:   "123",
 		Operation: "detail",
-		GroupID:   context.NodeID,
+		GroupID:   context.NodeName,
 		TimeStamp: time.Now().UnixNano() / 1000000}
 	getDetailJSON, marshalErr := json.Marshal(getDetail)
 	if marshalErr != nil {
