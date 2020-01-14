@@ -51,10 +51,14 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			// Check running environment before run edge core
-			if err := environmentCheck(); err != nil {
-				klog.Errorf("Failed to check the running environment: %v", err)
-				os.Exit(1)
+			// Check the running environment by default
+			checkEnv := os.Getenv("CHECK_EDGECORE_ENVIRONMENT")
+			if checkEnv != "false" {
+				// Check running environment before run edge core
+				if err := environmentCheck(); err != nil {
+					klog.Errorf("Failed to check the running environment: %v", err)
+					os.Exit(1)
+				}
 			}
 
 			registerModules()
@@ -108,14 +112,14 @@ func environmentCheck() error {
 	if find, err := findProcess("kubelet"); err != nil {
 		return err
 	} else if find == true {
-		return errors.New("Kubelet should not running on edge node")
+		return errors.New("Kubelet should not running on edge node when running edgecore")
 	}
 
 	// if kube-proxy is running, return error
 	if find, err := findProcess("kube-proxy"); err != nil {
 		return err
 	} else if find == true {
-		return errors.New("Kube-proxy should not running on edge node")
+		return errors.New("Kube-proxy should not running on edge node when running edgecore")
 	}
 
 	return nil
