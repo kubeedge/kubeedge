@@ -232,7 +232,7 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 			klog.Infof("Add device attr during first adding device %s", device.ID)
 			DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType)
 		}
-		topic := dtcommon.MemETPrefix + context.NodeID + dtcommon.MemETUpdateSuffix
+		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
 		baseMessage := dttype.BuildBaseMessage()
 		addedDevices := make([]dttype.Device, 0)
 		addedDevices = append(addedDevices, device)
@@ -286,7 +286,7 @@ func Removed(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage
 		if delta {
 			context.Unlock(device.ID)
 		}
-		topic := dtcommon.MemETPrefix + context.NodeID + dtcommon.MemETUpdateSuffix
+		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
 		baseMessage := dttype.BuildBaseMessage()
 		removeDevices := make([]dttype.Device, 0)
 		removeDevices = append(removeDevices, device)
@@ -342,7 +342,7 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 		}
 
 	}
-	topic := dtcommon.MemETPrefix + context.NodeID + dtcommon.MemETGetResultSuffix
+	topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETGetResultSuffix
 	klog.Infof("Deal getting membership successful and send the result")
 
 	context.Send("",
