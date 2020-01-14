@@ -263,6 +263,7 @@ func (dc *DownstreamController) syncEdgeNodes() {
 					}
 				}
 			case watch.Deleted:
+				klog.Infof("watch node [%s] deleted", node.ObjectMeta.Name)
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 				handler.ChannelWatchNode <- node.ObjectMeta.Name
 			default:
