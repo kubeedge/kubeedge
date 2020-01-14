@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -24,6 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/test"
 	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -51,6 +53,22 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultEdgeCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateEdgeCoreConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
@@ -64,7 +82,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				}
 			}
 
-			registerModules()
+			registerModules(c)
 			// start all modules
 			core.Run()
 		},
@@ -130,8 +148,8 @@ func environmentCheck() error {
 }
 
 // registerModules register all the modules started in edgecore
-func registerModules() {
-	devicetwin.Register()
+func registerModules(c *v1alpha1.EdgeCoreConfig) {
+	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register()
 	edgehub.Register()
 	eventbus.Register()
