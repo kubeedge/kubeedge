@@ -24,7 +24,7 @@ var (
 //DTContext context for devicetwin
 type DTContext struct {
 	GroupID        string
-	NodeID         string
+	NodeName       string
 	CommChan       map[string]chan interface{}
 	ConfirmChan    chan interface{}
 	ConfirmMap     *sync.Map
@@ -41,7 +41,7 @@ type DTContext struct {
 func InitDTContext() (*DTContext, error) {
 	return &DTContext{
 		GroupID:       "",
-		NodeID:        deviceconfig.Get().NodeID,
+		NodeName:      deviceconfig.Get().NodeName,
 		CommChan:      make(map[string]chan interface{}),
 		ConfirmChan:   make(chan interface{}, 1000),
 		ConfirmMap:    &sync.Map{},

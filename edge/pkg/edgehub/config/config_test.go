@@ -76,7 +76,7 @@ type controllerConfigYaml struct {
 	RefreshInterval string `yaml:"refresh-ak-sk-interval,omitempty"`
 	CloudhubURL     string `yaml:"cloud-hub-url"`
 	ProjectID       string `yaml:"project-id,omitempty"`
-	NodeID          string `yaml:"node-id,omitempty"`
+	NodeName          string `yaml:"node-id,omitempty"`
 }
 
 //edgeHubConfigYaml is a structure which is used to load the websocket and controller config to generate the test YAML file
@@ -142,7 +142,7 @@ func TestGetConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						ProjectID:       defaultProjectID,
-						NodeID:          "edge-node",
+						NodeName:          "edge-node",
 					},
 				},
 			},
@@ -168,7 +168,7 @@ func TestGetConfig(t *testing.T) {
 					Protocol:        "websocket",
 					HeartbeatPeriod: 150 * time.Second,
 					ProjectID:       defaultProjectID,
-					NodeID:          "edge-node",
+					NodeName:          "edge-node",
 				},
 			}},
 
@@ -190,7 +190,7 @@ func TestGetConfig(t *testing.T) {
 					controllerConfigYaml{
 						Protocol:  "websocket",
 						ProjectID: defaultProjectID,
-						NodeID:    "edge-node",
+						NodeName:    "edge-node",
 					},
 				},
 			},
@@ -216,7 +216,7 @@ func TestGetConfig(t *testing.T) {
 					Protocol:        "websocket",
 					HeartbeatPeriod: 15 * time.Second,
 					ProjectID:       defaultProjectID,
-					NodeID:          "edge-node",
+					NodeName:          "edge-node",
 				},
 			}},
 	}
@@ -373,7 +373,7 @@ func Test_getControllerConfig(t *testing.T) {
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
 						ProjectID:       defaultProjectID,
-						NodeID:          "edge-node",
+						NodeName:          "edge-node",
 					},
 				},
 			},
@@ -388,7 +388,7 @@ func Test_getControllerConfig(t *testing.T) {
 					controllerConfigYaml{
 						Protocol:  "websocket",
 						ProjectID: defaultProjectID,
-						NodeID:    "edge-node",
+						NodeName:    "edge-node",
 					},
 				},
 			},
@@ -404,7 +404,7 @@ func Test_getControllerConfig(t *testing.T) {
 						Protocol:        "websocket",
 						HeartbeatPeroid: "150",
 						RefreshInterval: "15",
-						NodeID:          "edge-node",
+						NodeName:          "edge-node",
 					},
 				},
 			},

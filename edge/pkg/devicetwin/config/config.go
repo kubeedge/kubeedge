@@ -14,14 +14,14 @@ var c Configure
 var once sync.Once
 
 type Configure struct {
-	NodeID string
+	NodeName string
 }
 
 func InitConfigure() {
 	once.Do(func() {
 		var errs []error
 
-		nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
+		nodeName, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v", err))
 		}
@@ -34,7 +34,7 @@ func InitConfigure() {
 			os.Exit(1)
 		}
 		c = Configure{
-			NodeID: nodeID,
+			NodeName: nodeName,
 		}
 		klog.Infof("init devicetwin config successfully，config info %++v", c)
 	})
