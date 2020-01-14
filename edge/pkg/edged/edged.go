@@ -106,6 +106,7 @@ import (
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -230,12 +231,13 @@ type edged struct {
 	pluginManager pluginmanager.PluginManager
 
 	recorder recordtools.EventRecorder
+	enable   bool
 }
 
 // Register register edged
-func Register() {
-	edgedconfig.InitConfigure()
-	edged, err := newEdged()
+func Register(e *v1alpha1.Edged) {
+	edgedconfig.InitConfigure(e)
+	edged, err := newEdged(e.Enable)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -251,7 +253,9 @@ func (e *edged) Name() string {
 func (e *edged) Group() string {
 	return modules.EdgedGroup
 }
-
+func (e *edged) Enable() bool {
+	return e.enable
+}
 func (e *edged) Start() {
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
@@ -338,13 +342,13 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 }
 
 //newEdged creates new edged object and initialises it
-func newEdged() (*edged, error) {
+func newEdged(enable bool) (*edged, error) {
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
 	podManager := podmanager.NewPodManager()
 	policy := images.ImageGCPolicy{
-		HighThresholdPercent: edgedconfig.Get().ImageGCHighThreshold,
-		LowThresholdPercent:  edgedconfig.Get().ImageGCLowThreshold,
+		HighThresholdPercent: int(edgedconfig.Get().ImageGCHighThreshold),
+		LowThresholdPercent:  int(edgedconfig.Get().ImageGCLowThreshold),
 		MinAge:               minAge,
 	}
 	// build new object to match interface
@@ -353,11 +357,11 @@ func newEdged() (*edged, error) {
 	metaClient := client.New()
 
 	ed := &edged{
-		nodeName:                  edgedconfig.Get().NodeName,
+		nodeName:                  edgedconfig.Get().HostnameOverride,
 		interfaceName:             edgedconfig.Get().InterfaceName,
-		namespace:                 edgedconfig.Get().NodeNamespace,
+		namespace:                 edgedconfig.Get().RegisterNodeNamespace,
 		gpuPluginEnabled:          edgedconfig.Get().GPUPluginEnabled,
-		cgroupDriver:              edgedconfig.Get().CgroupDriver,
+		cgroupDriver:              edgedconfig.Get().CGroupDriver,
 		podManager:                podManager,
 		podAdditionQueue:          workqueue.New(),
 		podCache:                  kubecontainer.NewCache(),
@@ -366,7 +370,7 @@ func newEdged() (*edged, error) {
 		podDeletionBackoff:        backoff,
 		metaClient:                metaClient,
 		kubeClient:                fakekube.NewSimpleClientset(metaClient),
-		nodeStatusUpdateFrequency: edgedconfig.Get().NodeStatusUpdateInterval,
+		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Get().NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
 		version:                   fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get()),
@@ -376,6 +380,7 @@ func newEdged() (*edged, error) {
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(edgedconfig.Get().NodeIP),
 		recorder:                  recorder,
+		enable:                    enable,
 	}
 
 	err := ed.makePodDir()
@@ -397,7 +402,7 @@ func newEdged() (*edged, error) {
 	containerGCPolicy := kubecontainer.ContainerGCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
-		MaxPerPodContainer: edgedconfig.Get().MaxPerPodContainerCount,
+		MaxPerPodContainer: int(edgedconfig.Get().MaximumDeadContainersPerPod),
 	}
 
 	//create and start the docker shim running as a grpc server
@@ -459,7 +464,9 @@ func newEdged() (*edged, error) {
 	runtimeService, imageService, err := getRuntimeAndImageServices(
 		edgedconfig.Get().RemoteRuntimeEndpoint,
 		edgedconfig.Get().RemoteRuntimeEndpoint,
-		edgedconfig.Get().RuntimeRequestTimeout)
+		metav1.Duration{
+			Duration: time.Duration(edgedconfig.Get().RuntimeRequestTimeout) * time.Minute,
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +477,7 @@ func newEdged() (*edged, error) {
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
 
 	var machineInfo cadvisorapi.MachineInfo
-	machineInfo.MemoryCapacity = uint64(edgedconfig.Get().MemoryCapacity)
+	machineInfo.MemoryCapacity = uint64(edgedconfig.Get().EdgedMemoryCapacity)
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
 		ed.livenessManager,
@@ -502,9 +509,9 @@ func newEdged() (*edged, error) {
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		cadvisorInterface,
 		cm.NodeConfig{
-			CgroupDriver:                 edgedconfig.Get().CgroupDriver,
-			SystemCgroupsName:            edgedconfig.Get().CgroupDriver,
-			KubeletCgroupsName:           edgedconfig.Get().CgroupDriver,
+			CgroupDriver:                 edgedconfig.Get().CGroupDriver,
+			SystemCgroupsName:            edgedconfig.Get().CGroupDriver,
+			KubeletCgroupsName:           edgedconfig.Get().CGroupDriver,
 			ContainerRuntime:             edgedconfig.Get().RuntimeType,
 			KubeletRootDir:               DefaultRootDir,
 			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
