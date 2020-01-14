@@ -1,39 +1,26 @@
 package config
 
 import (
-	"os"
 	"sync"
 
-	"k8s.io/klog"
-
-	"github.com/kubeedge/beehive/pkg/common/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 var c Configure
 var once sync.Once
 
 type Configure struct {
-	StrategyName string
+	v1alpha1.EdgeMesh
 }
 
-func InitConfigure() {
+func InitConfigure(e *v1alpha1.EdgeMesh) {
 	once.Do(func() {
-		var errs []error
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init edgemesh config error, exit")
-			os.Exit(1)
-		}
-		strategyName := config.CONFIG.GetConfigurationByKey("mesh.loadbalance.strategy-name").(string)
 		c = Configure{
-			StrategyName: strategyName,
+			EdgeMesh: *e,
 		}
-		klog.Infof("init edgemesh config successfully，config info %++v", c)
 	})
-
 }
+
 func Get() *Configure {
 	return &c
 }
