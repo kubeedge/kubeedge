@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"strings"
+
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
@@ -23,10 +25,20 @@ type Meta struct {
 func SaveMeta(meta *Meta) error {
 	num, err := dbm.DBAccess.Insert(meta)
 	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
-	if err == nil || dbm.IsNonUniqueNameError(err) {
+	if err == nil || IsNonUniqueNameError(err) {
 		return nil
 	}
 	return err
+}
+
+// IsNonUniqueNameError tests if the error returned by sqlite is unique.
+// It will check various sqlite versions.
+func IsNonUniqueNameError(err error) bool {
+	str := err.Error()
+	if strings.HasSuffix(str, "are not unique") || strings.Contains(str, "UNIQUE constraint failed") || strings.HasSuffix(str, "constraint failed") {
+		return true
+	}
+	return false
 }
 
 // DeleteMetaByKey delete meta by key
