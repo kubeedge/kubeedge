@@ -2,8 +2,8 @@ package clients
 
 import (
 	"errors"
-
-	"k8s.io/klog"
+	"fmt"
+	"time"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/quicclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients/wsclient"
@@ -20,36 +20,36 @@ const (
 var ErrorWrongClientType = errors.New("wrong Client Type")
 
 //GetClient returns an Adapter object with new web socket
-func GetClient(clientType string, config *config.Configure) (Adapter, error) {
-
-	switch clientType {
-	case ClientTypeWebSocket:
+func GetClient() (Adapter, error) {
+	config := config.Get()
+	switch {
+	case config.WebSocket.Enable:
 		websocketConf := wsclient.WebSocketConfig{
-			URL:              config.WSConfig.URL,
-			CertFilePath:     config.WSConfig.CertFilePath,
-			KeyFilePath:      config.WSConfig.KeyFilePath,
-			HandshakeTimeout: config.WSConfig.HandshakeTimeout,
-			ReadDeadline:     config.WSConfig.ReadDeadline,
-			WriteDeadline:    config.WSConfig.WriteDeadline,
-			ProjectID:        config.CtrConfig.ProjectID,
-			NodeID:           config.CtrConfig.NodeID,
+			URL:              config.WebSocketURL,
+			CertFilePath:     config.TLSCertFile,
+			KeyFilePath:      config.TLSPrivateKeyFile,
+			HandshakeTimeout: time.Duration(config.WebSocket.HandshakeTimeout) * time.Second,
+			ReadDeadline:     time.Duration(config.WebSocket.ReadDeadline) * time.Second,
+			WriteDeadline:    time.Duration(config.WebSocket.WriteDeadline) * time.Second,
+			ProjectID:        config.ProjectID,
+			NodeID:           config.NodeName,
 		}
 		return wsclient.NewWebSocketClient(&websocketConf), nil
-	case ClientTypeQuic:
+	case config.Quic.Enable:
 		quicConfig := quicclient.QuicConfig{
-			Addr:             config.QcConfig.URL,
-			CaFilePath:       config.QcConfig.CaFilePath,
-			CertFilePath:     config.QcConfig.CertFilePath,
-			KeyFilePath:      config.QcConfig.KeyFilePath,
-			HandshakeTimeout: config.QcConfig.HandshakeTimeout,
-			ReadDeadline:     config.QcConfig.ReadDeadline,
-			WriteDeadline:    config.QcConfig.WriteDeadline,
-			ProjectID:        config.CtrConfig.ProjectID,
-			NodeID:           config.CtrConfig.NodeID,
+			Addr:             config.Quic.Server,
+			CaFilePath:       config.TLSCAFile,
+			CertFilePath:     config.TLSCertFile,
+			KeyFilePath:      config.TLSPrivateKeyFile,
+			HandshakeTimeout: time.Duration(config.Quic.HandshakeTimeout) * time.Second,
+			ReadDeadline:     time.Duration(config.Quic.ReadDeadline) * time.Second,
+			WriteDeadline:    time.Duration(config.Quic.WriteDeadline) * time.Second,
+			ProjectID:        config.ProjectID,
+			NodeID:           config.NodeName,
 		}
 		return quicclient.NewQuicClient(&quicConfig), nil
 	default:
-		klog.Errorf("Client type: %s is not supported", clientType)
+		return nil, fmt.Errorf("Websocket and Quic are both disabled")
 	}
 
 	return nil, ErrorWrongClientType

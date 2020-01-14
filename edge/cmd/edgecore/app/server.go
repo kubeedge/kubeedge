@@ -151,7 +151,7 @@ func environmentCheck() error {
 func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	devicetwin.Register()
 	edged.Register(c.Modules.Edged)
-	edgehub.Register(c.Modules.EdgeHub)
+	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	eventbus.Register()
 	edgemesh.Register()
 	metamanager.Register()

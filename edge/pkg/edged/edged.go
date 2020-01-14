@@ -253,6 +253,8 @@ func (e *edged) Name() string {
 func (e *edged) Group() string {
 	return modules.EdgedGroup
 }
+
+//Enable indicates whether this module is enabled
 func (e *edged) Enable() bool {
 	return e.enable
 }

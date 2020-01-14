@@ -26,19 +26,21 @@ type EdgeHub struct {
 	reconnectChan chan struct{}
 	syncKeeper    map[string]chan model.Message
 	keeperLock    sync.RWMutex
+	enable        bool
 }
 
-func newEdgeHub() *EdgeHub {
+func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),
 		syncKeeper:    make(map[string]chan model.Message),
+		enable:        enable,
 	}
 }
 
 // Register register edgehub
-func Register(h *v1alpha1.EdgeHub) {
-	config.InitConfigure()
-	core.Register(newEdgeHub())
+func Register(h *v1alpha1.EdgeHub, nodeName string) {
+	config.InitConfigure(h, nodeName)
+	core.Register(newEdgeHub(h.Enable))
 }
 
 //Name returns the name of EdgeHub module
@@ -49,6 +51,11 @@ func (eh *EdgeHub) Name() string {
 //Group returns EdgeHub group
 func (eh *EdgeHub) Group() string {
 	return modules.HubGroup
+}
+
+//Enable indicates whether this module is enabled
+func (eh *EdgeHub) Enable() bool {
+	return eh.enable
 }
 
 //Start sets context and starts the controller
@@ -88,7 +95,7 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(config.Get().CtrConfig.HeartbeatPeriod * 2)
+		time.Sleep(time.Duration(config.Get().Heartbeat) * time.Second * 2)
 
 		// clean channel
 	clean:
