@@ -106,6 +106,7 @@ function create_node {
 function start_edgecore {
   echo "start edgecore..."
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
+  export CHECK_EDGECORE_ENVIRONMENT="false"
   cd ${KUBEEDGE_ROOT}/_output/bin/edge && nohup ./edgecore > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
