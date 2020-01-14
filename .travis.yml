@@ -1,5 +1,8 @@
 language: go
 
+git:
+  depth: false
+
 sudo: required
 
 dist: trusty
