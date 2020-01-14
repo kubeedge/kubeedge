@@ -291,7 +291,7 @@ func TestSendToCloud(t *testing.T) {
 		expectedError   error
 		waitError       bool
 		mockError       error
-		HeartbeatPeriod time.Duration
+		HeartbeatPeriod int32
 	}{
 		{
 			name: "send to cloud with proper input",
@@ -299,7 +299,7 @@ func TestSendToCloud(t *testing.T) {
 				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			HeartbeatPeriod: 6 * time.Second,
+			HeartbeatPeriod: 6,
 			message:         *msg,
 			expectedError:   nil,
 			waitError:       false,
@@ -311,7 +311,7 @@ func TestSendToCloud(t *testing.T) {
 				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			HeartbeatPeriod: 3 * time.Second,
+			HeartbeatPeriod: 3,
 			message:         *msg,
 			expectedError:   nil,
 			waitError:       true,
@@ -323,7 +323,7 @@ func TestSendToCloud(t *testing.T) {
 				chClient:   mockAdapter,
 				syncKeeper: make(map[string]chan model.Message),
 			},
-			HeartbeatPeriod: 3 * time.Second,
+			HeartbeatPeriod: 3,
 			message:         model.Message{},
 			expectedError:   fmt.Errorf("failed to send message, error: Connection Refused"),
 			waitError:       false,
@@ -333,7 +333,7 @@ func TestSendToCloud(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
-			config.Get().CtrConfig.HeartbeatPeriod = tt.HeartbeatPeriod
+			config.Get().Heartbeat = tt.HeartbeatPeriod
 			if !tt.waitError && tt.expectedError == nil {
 				go tt.hub.sendToCloud(tt.message)
 				time.Sleep(1 * time.Second)
@@ -413,10 +413,9 @@ func TestKeepalive(t *testing.T) {
 		},
 	}
 	edgeHubConfig := config.Get()
-	edgeHubConfig.WSConfig = config.WebSocketConfig{
-		CertFilePath: CertFile,
-		KeyFilePath:  KeyFile,
-	}
+	edgeHubConfig.TLSCertFile = CertFile
+	edgeHubConfig.TLSPrivateKeyFile = KeyFile
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
