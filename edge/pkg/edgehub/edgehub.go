@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 //define edgehub module name
@@ -35,7 +36,7 @@ func newEdgeHub() *EdgeHub {
 }
 
 // Register register edgehub
-func Register() {
+func Register(h *v1alpha1.EdgeHub) {
 	config.InitConfigure()
 	core.Register(newEdgeHub())
 }
