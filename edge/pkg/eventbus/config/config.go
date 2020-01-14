@@ -1,13 +1,9 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"sync"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
-
-	"k8s.io/klog"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 const (
@@ -28,79 +24,17 @@ var c Configure
 var once sync.Once
 
 type Configure struct {
-	ExternalMqttURL  string
-	InternalMqttURL  string
-	QOS              int
-	Retain           bool
-	SessionQueueSize int
-	Mode             int
-	NodeID           string
+	v1alpha1.EventBus
+	NodeName string
 }
 
-func InitConfigure() {
+func InitConfigure(e *v1alpha1.EventBus, nodeName string) {
 	once.Do(func() {
-		var errs []error
-		internalMqttURL, err := config.CONFIG.GetValue("mqtt.internal-server").ToString()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			internalMqttURL = defaultInternalMqttURL
-			klog.Infof("can not get mqtt.internal-server key, use default %v", internalMqttURL)
-		}
-
-		qos, err := config.CONFIG.GetValue("mqtt.qos").ToInt()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			qos = defaultQos
-			klog.Infof("can not get mqtt.qos key, use default %v", qos)
-		}
-		retain, err := config.CONFIG.GetValue("mqtt.retain").ToBool()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			retain = defaultRetain
-			klog.Infof("can not get mqtt.retain key, use default %v", retain)
-		}
-		sessionQueueSize, err := config.CONFIG.GetValue("mqtt.session-queue-size").ToInt()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			sessionQueueSize = defaultSessionQueueSize
-			klog.Infof("can not get mqtt.session-queue-size key, use default %v", sessionQueueSize)
-		}
-
-		mode, err := config.CONFIG.GetValue("mqtt.mode").ToInt()
-		if err != nil || mode > ExternalMqttMode || mode < InternalMqttMode {
-			// Guaranteed forward compatibility @kadisi
-			mode = InternalMqttMode
-			klog.Infof("can not get mqtt.mode key, use default %v", mode)
-		}
-		externalMqttURL, err := config.CONFIG.GetValue("mqtt.server").ToString()
-		if err != nil {
-			// Guaranteed forward compatibility @kadisi
-			externalMqttURL = defaultExternalMqttURL
-			klog.Infof("can not get mqtt.server key, use default %v", externalMqttURL)
-		}
-		nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-		if err != nil {
-			errs = append(errs, fmt.Errorf("get edgehub.controller.node-id key error %v", err))
-		}
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init eventbus config error")
-			os.Exit(1)
-		}
 		c = Configure{
-			ExternalMqttURL:  externalMqttURL,
-			InternalMqttURL:  internalMqttURL,
-			QOS:              qos,
-			Retain:           retain,
-			SessionQueueSize: sessionQueueSize,
-			Mode:             mode,
-			NodeID:           nodeID,
+			EventBus: *e,
+			NodeName: nodeName,
 		}
-		klog.Infof("init eventbus config successfully，config info %++v", c)
 	})
-
 }
 func Get() *Configure {
 	return &c
