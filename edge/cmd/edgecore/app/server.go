@@ -155,7 +155,7 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	edgemesh.Register(c.Modules.EdgeMesh)
 	metamanager.Register(c.Modules.MetaManager)
-	servicebus.Register()
+	servicebus.Register(c.Modules.ServiceBus)
 	test.Register()
 	dbm.InitDBManager()
 }
