@@ -38,8 +38,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -340,46 +345,28 @@ func (e *edged) getNodePhase() v1.NodePhase {
 	return v1.NodeRunning
 }
 
-func (e *edged) registerNode() {
-	step := 100 * time.Millisecond
-
-	for {
-		time.Sleep(step)
-		step = step * 2
-		if step >= 7*time.Second {
-			step = 7 * time.Second
-		}
-
-		node, err := e.initialNode()
-		if err != nil {
-			klog.Errorf("Unable to construct v1.Node object for edge: %v", err)
-			continue
-		}
-
-		e.setInitNode(node)
-
-		nodeStatus, err := e.getNodeStatusRequest(node)
-		if err != nil {
-			klog.Errorf("Unable to construct api.NodeStatusRequest object for edge: %v", err)
-			continue
-		}
-
-		klog.Infof("Attempting to register node %s", e.nodeName)
-		registered := e.tryRegisterToMeta(nodeStatus)
-		if registered {
-			klog.Infof("Successfully registered node %s", e.nodeName)
-			e.registrationCompleted = true
-			return
-		}
-	}
-}
-
-func (e *edged) tryRegisterToMeta(node *edgeapi.NodeStatusRequest) bool {
-	err := e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *node)
+func (e *edged) registerNode() error {
+	node, err := e.initialNode()
 	if err != nil {
-		klog.Errorf("register node failed, error: %v", err)
+		klog.Errorf("Unable to construct v1.Node object for edge: %v", err)
+		return err
 	}
-	return true
+
+	e.setInitNode(node)
+
+	klog.Infof("Attempting to register node %s", e.nodeName)
+
+	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
+	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
+	res, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	if err != nil || res.Content != "OK" {
+		klog.Errorf("register node failed, error: %v", err)
+		return err
+	} else {
+		klog.Infof("Successfully registered node %s", e.nodeName)
+		e.registrationCompleted = true
+	}
+	return nil
 }
 
 func (e *edged) updateNodeStatus() error {
@@ -398,10 +385,12 @@ func (e *edged) updateNodeStatus() error {
 
 func (e *edged) syncNodeStatus() {
 	if !e.registrationCompleted {
-		// This will exit immediately if it doesn't need to do anything.
-		e.registerNode()
-	}
-	if err := e.updateNodeStatus(); err != nil {
-		klog.Errorf("Unable to update node status: %v", err)
+		if err := e.registerNode(); err != nil {
+			klog.Errorf("Register node failed: %v", err)
+		}
+	} else {
+		if err := e.updateNodeStatus(); err != nil {
+			klog.Errorf("Unable to update node status: %v", err)
+		}
 	}
 }

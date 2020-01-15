@@ -308,6 +308,20 @@ func (uc *UpstreamController) updatePodStatus() {
 	}
 }
 
+// createNode create new edge node to kubernetes
+func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
+	node.Name = name
+
+	//add default labels
+	if node.Labels == nil {
+		node.Labels = make(map[string]string)
+	}
+	node.Labels["name"] = name
+	node.Labels["node-role.kubernetes.io/edge"] = ""
+
+	return uc.kubeClient.CoreV1().Nodes().Create(node)
+}
+
 func (uc *UpstreamController) updateNodeStatus() {
 	for {
 		select {
@@ -316,7 +330,6 @@ func (uc *UpstreamController) updateNodeStatus() {
 			return
 		case msg := <-uc.nodeStatusChan:
 			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
-			nodeStatusRequest := &edgeapi.NodeStatusRequest{}
 
 			var data []byte
 			switch msg.Content.(type) {
@@ -331,12 +344,6 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 			}
 
-			err := json.Unmarshal(data, nodeStatusRequest)
-			if err != nil {
-				klog.Warningf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
-				continue
-			}
-
 			namespace, err := messagelayer.GetNamespace(msg)
 			if err != nil {
 				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
@@ -349,7 +356,44 @@ func (uc *UpstreamController) updateNodeStatus() {
 			}
 
 			switch msg.GetOperation() {
+			case model.InsertOperation:
+				_, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
+				if err == nil {
+					klog.Infof("node: %s already existed, do nothing", name)
+					uc.nodeMsgResponse(name, namespace, "OK", msg)
+					continue
+				}
+
+				if !errors.IsNotFound(err) {
+					klog.Errorf("get node %s info error: %v , register node failed", name, err)
+					uc.nodeMsgResponse(name, namespace, "", msg)
+					continue
+				}
+
+				node := &v1.Node{}
+				err = json.Unmarshal(data, node)
+				if err != nil {
+					klog.Errorf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+					uc.nodeMsgResponse(name, namespace, "", msg)
+					continue
+				}
+
+				if _, err = uc.createNode(name, node); err != nil {
+					klog.Errorf("create node %s error: %v , register node failed", name, err)
+					uc.nodeMsgResponse(name, namespace, "", msg)
+					continue
+				}
+
+				uc.nodeMsgResponse(name, namespace, "OK", msg)
+
 			case model.UpdateOperation:
+				nodeStatusRequest := &edgeapi.NodeStatusRequest{}
+				err := json.Unmarshal(data, nodeStatusRequest)
+				if err != nil {
+					klog.Warningf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+					continue
+				}
+
 				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
 					klog.Warningf("message: %s process failure, node %s not found", msg.GetID(), name)
@@ -1083,6 +1127,31 @@ func (uc *UpstreamController) normalizePodStatus(pod *v1.Pod, status *v1.PodStat
 	// Sort the container statuses, so that the order won't affect the result of comparison
 	SortInitContainerStatuses(pod, status.InitContainerStatuses)
 	return status
+}
+
+// nodeMsgResponse response message of ResourceTypeNode
+func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content string, msg model.Message) {
+	resMsg := model.NewMessage(msg.GetID())
+	resMsg.Content = content
+	nodeID, err := messagelayer.GetNodeID(msg)
+	if err != nil {
+		klog.Warningf("Response message: %s failed, get node: %s id failed with error: %s", msg.GetID(), nodeName, err)
+		return
+	}
+
+	resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeNode, nodeName)
+	if err != nil {
+		klog.Warningf("Response message: %s failed, build message resource failed with error: %s", msg.GetID(), err)
+		return
+	}
+
+	resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+	if err = uc.messageLayer.Response(*resMsg); err != nil {
+		klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
+		return
+	}
+
+	return
 }
 
 // NewUpstreamController create UpstreamController from config
