@@ -362,10 +362,11 @@ func (e *edged) registerNode() error {
 	if err != nil || res.Content != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
 		return err
-	} else {
-		klog.Infof("Successfully registered node %s", e.nodeName)
-		e.registrationCompleted = true
 	}
+
+	klog.Infof("Successfully registered node %s", e.nodeName)
+	e.registrationCompleted = true
+
 	return nil
 }
 

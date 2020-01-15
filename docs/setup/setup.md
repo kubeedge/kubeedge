@@ -160,43 +160,9 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 + (**Optional**)Run `admission`, this feature is still being evaluated.
     please read the docs in [install the admission webhook](../../build/admission/README.md)
 
-
-#### Deploy the edge node
-We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
-
-+ Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
-
-    ```shell
-        mkdir -p ~/cmd/yaml
-        cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
-    ```
-
-+ Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
-+ Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
-
-    ```script
-    {
-      "kind": "Node",
-      "apiVersion": "v1",
-      "metadata": {
-        "name": "edge-node",
-        "labels": {
-          "name": "edge-node",
-          "node-role.kubernetes.io/edge": ""
-        }
-      }
-    }
-    ```
-    **Note: you need to remember `metadata.name` , because edgecore need it**.
-+ If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
-+ Deploy edge node (**you must run on cloud side**)
-
-    ```shell
-    kubectl apply -f ~/cmd/yaml/node.json
-    ```
-+ Transfer certificate files to the edge node, because `edgecore` use these certificate files to connection `cloudcore` 
-
 ### Setup edge side
+
++ Transfer certificate files from cloud side to edge node, because `edgecore` use these certificate files to connection `cloudcore` 
 
 #### Clone KubeEdge
 
