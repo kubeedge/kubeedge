@@ -3,6 +3,8 @@ package metamanager
 import (
 	"time"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+
 	"github.com/astaxie/beego/orm"
 
 	"k8s.io/klog"
@@ -30,8 +32,9 @@ func newMetaManager(enable bool) *metaManager {
 }
 
 // Register register metamanager
-func Register(m *v1alpha1.MetaManager) {
+func Register(m *v1alpha1.MetaManager, db *v1alpha1.DataBase) {
 	metamanagerconfig.InitConfigure(m)
+	dbm.InitDBConfig(db.DriverName, db.AliasName, db.DataSource)
 	meta := newMetaManager(m.Enable)
 	initDBTable(meta)
 	core.Register(meta)
