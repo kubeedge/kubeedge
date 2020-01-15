@@ -92,7 +92,7 @@ type Modules struct {
 	// DeviceTwin indicates module config
 	DeviceTwin *DeviceTwin `json:"devicetwin,omitempty"`
 	// DBTest indicates module config
-	DBTest *DBTest `json:"dbtest"`
+	DBTest *DBTest `json:"dbtest,omitempty"`
 	// Mesh indicates mesh module config
 	// +Required
 	EdgeMesh *EdgeMesh `json:"edgemesh,omitempty"`
