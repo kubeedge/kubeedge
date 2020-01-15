@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -16,6 +18,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -36,10 +39,26 @@ runs on edge nodes and manages containerized applications.`,
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultEdgeSiteConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			c, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateEdgeSiteConfiguration(c); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			registerModules()
+			registerModules(c)
 			// start all modules
 			core.Run()
 		},
@@ -68,7 +87,7 @@ runs on edge nodes and manages containerized applications.`,
 }
 
 // registerModules register all the modules started in edgesite
-func registerModules() {
+func registerModules(c *v1alpha1.EdgeSiteConfig) {
 	edged.Register()
 	edgecontroller.Register()
 	metamanager.Register()
