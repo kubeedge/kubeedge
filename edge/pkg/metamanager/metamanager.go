@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 //constant metamanager module name
@@ -21,24 +22,26 @@ const (
 )
 
 type metaManager struct {
+	enable bool
 }
 
-func newMetaManager() *metaManager {
-	return &metaManager{}
+func newMetaManager(enable bool) *metaManager {
+	return &metaManager{enable: enable}
 }
 
 // Register register metamanager
-func Register() {
-	metamanagerconfig.InitConfigure()
-	InitDBTable()
-	core.Register(newMetaManager())
+func Register(m *v1alpha1.MetaManager) {
+	metamanagerconfig.InitConfigure(m)
+	meta := newMetaManager(m.Enable)
+	initDBTable(meta)
+	core.Register(meta)
 }
 
-// InitDBTable create table
-func InitDBTable() {
-	klog.Infof("Begin to register %v db model", MetaManagerModuleName)
-	if !core.IsModuleEnabled(MetaManagerModuleName) {
-		klog.Infof("Module %s is disabled, DB meta for it will not be registered", MetaManagerModuleName)
+// initDBTable create table
+func initDBTable(m core.Module) {
+	klog.Infof("Begin to register %v db model", m.Name())
+	if !m.Enable() {
+		klog.Infof("Module %s is disabled, DB meta for it will not be registered", m.Name())
 		return
 	}
 	orm.RegisterModel(new(dao.Meta))
@@ -50,6 +53,10 @@ func (*metaManager) Name() string {
 
 func (*metaManager) Group() string {
 	return modules.MetaGroup
+}
+
+func (m *metaManager) Enable() bool {
+	return m.enable
 }
 
 func (m *metaManager) Start() {
@@ -74,5 +81,5 @@ func (m *metaManager) Start() {
 }
 
 func getSyncInterval() time.Duration {
-	return time.Duration(metamanagerconfig.Get().SyncInterval) * time.Second
+	return time.Duration(metamanagerconfig.Get().PodStatusSyncInterval) * time.Second
 }
