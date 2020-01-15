@@ -14,10 +14,10 @@ type Configure struct {
 	NodeName string
 }
 
-func InitConfigure(d *v1alpha1.DeviceTwin, nodeName string) {
+func InitConfigure(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
 	once.Do(func() {
 		c = Configure{
-			DeviceTwin: *d,
+			DeviceTwin: *deviceTwin,
 			NodeName:   nodeName,
 		}
 	})

@@ -38,9 +38,9 @@ func newEdgeHub(enable bool) *EdgeHub {
 }
 
 // Register register edgehub
-func Register(h *v1alpha1.EdgeHub, nodeName string) {
-	config.InitConfigure(h, nodeName)
-	core.Register(newEdgeHub(h.Enable))
+func Register(eh *v1alpha1.EdgeHub, nodeName string) {
+	config.InitConfigure(eh, nodeName)
+	core.Register(newEdgeHub(eh.Enable))
 }
 
 //Name returns the name of EdgeHub module

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+// TODO will deleted this file @kadisi
+
 setuptype=$1
 nodename=$2
 MASTER_IP=$3

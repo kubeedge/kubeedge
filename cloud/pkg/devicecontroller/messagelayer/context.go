@@ -15,7 +15,6 @@ type MessageLayer interface {
 
 // ContextMessageLayer build on context
 type ContextMessageLayer struct {
-	// TODO change string type to ModuleName type @kadisi
 	SendModuleName     string
 	ReceiveModuleName  string
 	ResponseModuleName string

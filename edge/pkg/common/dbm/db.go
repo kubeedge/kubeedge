@@ -27,10 +27,13 @@ func InitDBConfig(driverName, dbName, dataSource string) {
 			klog.Fatalf("Failed to register db: %v", err)
 		}
 		// sync database schema
-		orm.RunSyncdb(dbName, false, true)
-
+		if err := orm.RunSyncdb(dbName, false, true); err != nil {
+			klog.Errorf("run sync db error %v", err)
+		}
 		// create orm
 		DBAccess = orm.NewOrm()
-		DBAccess.Using(dbName)
+		if err := DBAccess.Using(dbName); err != nil {
+			klog.Errorf("Using db access error %v", err)
+		}
 	})
 }

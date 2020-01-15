@@ -43,13 +43,13 @@ kubernetes controller which manages devices so that the device metadata/status d
 				os.Exit(1)
 			}
 
-			c, err := opts.Config()
+			config, err := opts.Config()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
 
-			if errs := validation.ValidateCloudCoreConfiguration(c); len(errs) > 0 {
+			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
 				fmt.Fprintf(os.Stderr, "%v\n", errs)
 				os.Exit(1)
 			}
@@ -57,7 +57,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			registerModules(c)
+			registerModules(config)
 			// start all modules
 			core.Run()
 		},

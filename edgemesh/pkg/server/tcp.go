@@ -11,7 +11,6 @@ import (
 	"github.com/go-chassis/go-chassis/core/invocation"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/resolver"
 )
 
@@ -23,7 +22,8 @@ func StartTCP() {
 	}
 
 	serverIP := server.String()
-	port := config.GetString("port", "8080")
+	// TODO Set as configurable @kadisi
+	port := "8080"
 	klog.Infof("start listening at %s:%s", serverIP, port)
 	listener, err := net.Listen("tcp", serverIP+":"+port)
 	if err != nil {

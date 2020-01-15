@@ -44,18 +44,18 @@ func (o *CloudCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	return
 }
 
-func (c *CloudCoreOptions) Validate() []error {
+func (o *CloudCoreOptions) Validate() []error {
 	var errs []error
-	if !validation.FileIsExist(c.ConfigFile) {
+	if !validation.FileIsExist(o.ConfigFile) {
 		errs = append(errs, field.Required(field.NewPath("config"),
-			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", c.ConfigFile)))
+			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
 	}
 	return errs
 }
 
-func (c *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
+func (o *CloudCoreOptions) Config() (*config.CloudCoreConfig, error) {
 	cfg := config.NewDefaultCloudCoreConfig()
-	if err := cfg.Parse(c.ConfigFile); err != nil {
+	if err := cfg.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}
 	return cfg, nil

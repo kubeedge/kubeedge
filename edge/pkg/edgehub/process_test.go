@@ -242,7 +242,7 @@ func TestRouteToEdge(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	hub := newEdgeHub()
+	hub := newEdgeHub(true)
 	hub.chClient = mockAdapter
 
 	tests := []struct {
@@ -349,7 +349,7 @@ func TestSendToCloud(t *testing.T) {
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("SendToCloud() error = %v, wantErr %v", err, tt.expectedError)
 			}
-			time.Sleep(tt.HeartbeatPeriod + 2*time.Second)
+			time.Sleep(time.Duration(tt.HeartbeatPeriod+2) * time.Second)
 			if _, exist := tt.hub.syncKeeper["test_id"]; exist {
 				t.Errorf("SendToCloud() error in waiting for timeout")
 			}
@@ -363,7 +363,7 @@ func TestRouteToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	hub := newEdgeHub()
+	hub := newEdgeHub(true)
 	hub.chClient = mockAdapter
 
 	tests := []struct {

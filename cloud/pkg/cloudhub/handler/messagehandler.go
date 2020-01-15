@@ -61,13 +61,13 @@ var once sync.Once
 var CloudhubHandler *MessageHandle
 
 // InitHandler create a handler for websocket and quic servers
-func InitHandler(c *hubconfig.Configure, eventq *channelq.ChannelMessageQueue) {
+func InitHandler(eventq *channelq.ChannelMessageQueue) {
 	once.Do(func() {
 		CloudhubHandler = &MessageHandle{
-			KeepaliveInterval: int(c.KeepaliveInterval),
-			WriteTimeout:      int(c.WriteTimeout),
+			KeepaliveInterval: int(hubconfig.Get().KeepaliveInterval),
+			WriteTimeout:      int(hubconfig.Get().WriteTimeout),
 			MessageQueue:      eventq,
-			NodeLimit:         int(c.NodeLimit),
+			NodeLimit:         int(hubconfig.Get().NodeLimit),
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})

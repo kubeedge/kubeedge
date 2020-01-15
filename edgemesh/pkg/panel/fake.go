@@ -27,6 +27,8 @@ func (fp *FakePanel) GetEgressRule() []control.EgressConfig {
 	return []control.EgressConfig{}
 }
 
+// TODO Remove the init method, because it will cause invalid logs to be printed when the program is running @kadisi
+// init install Plugin
 func init() {
 	control.InstallPlugin("fake", func(options control.Options) control.Panel {
 		return &FakePanel{}

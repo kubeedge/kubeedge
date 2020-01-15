@@ -17,11 +17,11 @@ const (
 )
 
 // InitDBTable create table
-func InitDBTable(m core.Module) {
-	klog.Infof("Begin to register %v db model", m.Name())
+func InitDBTable(module core.Module) {
+	klog.Infof("Begin to register %v db model", module.Name())
 
-	if !m.Enable() {
-		klog.Infof("Module %s is disabled, DB meta for it will not be registered", m.Name())
+	if !module.Enable() {
+		klog.Infof("Module %s is disabled, DB meta for it will not be registered", module.Name())
 		return
 	}
 	orm.RegisterModel(new(Device))

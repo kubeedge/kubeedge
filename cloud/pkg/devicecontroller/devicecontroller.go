@@ -24,28 +24,28 @@ func newDeviceController(enable bool) *DeviceController {
 	}
 }
 
-func Register(c *v1alpha1.DeviceController, k *v1alpha1.KubeAPIConfig) {
-	config.InitConfigure(c, k)
-	core.Register(newDeviceController(c.Enable))
+func Register(dc *v1alpha1.DeviceController, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
+	config.InitConfigure(dc, kubeAPIConfig)
+	core.Register(newDeviceController(dc.Enable))
 }
 
 // Name of controller
-func (dctl *DeviceController) Name() string {
+func (dc *DeviceController) Name() string {
 	return constants.DeviceControllerModuleName
 }
 
 // Group of controller
-func (dctl *DeviceController) Group() string {
+func (dc *DeviceController) Group() string {
 	return constants.DeviceControllerModuleGroup
 }
 
 // Enable indicates whether enable this module
-func (dctl *DeviceController) Enable() bool {
-	return dctl.enable
+func (dc *DeviceController) Enable() bool {
+	return dc.enable
 }
 
 // Start controller
-func (dctl *DeviceController) Start() {
+func (dc *DeviceController) Start() {
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Errorf("New downstream controller failed with error: %s", err)

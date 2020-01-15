@@ -23,29 +23,29 @@ func newEdgeController(enable bool) *EdgeController {
 	}
 }
 
-func Register(c *v1alpha1.EdgeController, k *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
+func Register(ec *v1alpha1.EdgeController, kubeAPIConfig *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
 	// TODO move module config into EdgeController struct @kadisi
-	config.InitConfigure(c, k, nodeName, edgesite)
-	core.Register(newEdgeController(c.Enable))
+	config.InitConfigure(ec, kubeAPIConfig, nodeName, edgesite)
+	core.Register(newEdgeController(ec.Enable))
 }
 
 // Name of controller
-func (ctl *EdgeController) Name() string {
+func (ec *EdgeController) Name() string {
 	return constants.EdgeControllerModuleName
 }
 
 // Group of controller
-func (ctl *EdgeController) Group() string {
+func (ec *EdgeController) Group() string {
 	return constants.EdgeControllerModuleName
 }
 
 // Enable indicates whether enable this module
-func (ctl *EdgeController) Enable() bool {
-	return ctl.enable
+func (ec *EdgeController) Enable() bool {
+	return ec.enable
 }
 
 // Start controller
-func (ctl *EdgeController) Start() {
+func (ec *EdgeController) Start() {
 	upstream, err := controller.NewUpstreamController()
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)

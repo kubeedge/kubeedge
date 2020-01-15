@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	core.Register(&stubCloudHub{})
+	core.Register(&stubCloudHub{enable: true})
 }
 
 type Attributes struct {
@@ -33,6 +33,7 @@ type record struct {
 
 type stubCloudHub struct {
 	wsConn *websocket.Conn
+	enable bool
 }
 
 func (*stubCloudHub) Name() string {
@@ -42,6 +43,10 @@ func (*stubCloudHub) Name() string {
 func (*stubCloudHub) Group() string {
 	//return core.MetaGroup
 	return modules.MetaGroup
+}
+
+func (tm *stubCloudHub) Enable() bool {
+	return tm.enable
 }
 
 func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {

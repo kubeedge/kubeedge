@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,9 +14,6 @@ const (
 	ClientTypeWebSocket = "websocket"
 	ClientTypeQuic      = "quic"
 )
-
-// ErrorWrongClientType is Wrong Client Type Error
-var ErrorWrongClientType = errors.New("wrong Client Type")
 
 //GetClient returns an Adapter object with new web socket
 func GetClient() (Adapter, error) {
@@ -48,9 +44,7 @@ func GetClient() (Adapter, error) {
 			NodeID:           config.NodeName,
 		}
 		return quicclient.NewQuicClient(&quicConfig), nil
-	default:
-		return nil, fmt.Errorf("Websocket and Quic are both disabled")
 	}
 
-	return nil, ErrorWrongClientType
+	return nil, fmt.Errorf("Websocket and Quic are both disabled")
 }

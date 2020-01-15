@@ -15,6 +15,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
@@ -57,13 +58,13 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				os.Exit(1)
 			}
 
-			c, err := opts.Config()
+			config, err := opts.Config()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
 
-			if errs := validation.ValidateEdgeCoreConfiguration(c); len(errs) > 0 {
+			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
 				fmt.Fprintf(os.Stderr, "%v\n", errs)
 				os.Exit(1)
 			}
@@ -81,7 +82,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				}
 			}
 
-			registerModules(c)
+			registerModules(config)
 			// start all modules
 			core.Run()
 		},
@@ -148,12 +149,14 @@ func environmentCheck() error {
 
 // registerModules register all the modules started in edgecore
 func registerModules(c *v1alpha1.EdgeCoreConfig) {
-	devicetwin.Register(c.Modules.DeviceTwin, c.DataBase, c.Modules.Edged.HostnameOverride)
+	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	edgemesh.Register(c.Modules.EdgeMesh)
-	metamanager.Register(c.Modules.MetaManager, c.DataBase)
+	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
 	test.Register(c.Modules.DBTest)
+	// Nodte: Need to put it to the end, and wait for all models to register before executing
+	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 }

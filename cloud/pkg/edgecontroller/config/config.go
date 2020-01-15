@@ -16,11 +16,11 @@ type Configure struct {
 	EdgeSiteEnable bool
 }
 
-func InitConfigure(controller *v1alpha1.EdgeController, k *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
+func InitConfigure(ec *v1alpha1.EdgeController, kubeAPIConfig *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
 	once.Do(func() {
 		c = Configure{
-			EdgeController: *controller,
-			KubeAPIConfig:  *k,
+			EdgeController: *ec,
+			KubeAPIConfig:  *kubeAPIConfig,
 			NodeName:       nodeName,
 			EdgeSiteEnable: edgesite,
 		}
