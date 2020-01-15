@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edgesite/cmd/app/flags"
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -31,6 +32,7 @@ It is also responsible for storing/retrieving metadata to/from a lightweight dat
 runs on edge nodes and manages containerized applications.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()
+			flags.PrintMinConfigAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
 			// To help debugging, immediately log version
@@ -44,6 +46,7 @@ runs on edge nodes and manages containerized applications.`,
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
 	verflag.AddFlags(namedFs.FlagSet("global"))
+	flags.AddFlags(namedFs.FlagSet("global"))
 	globalflag.AddGlobalFlags(namedFs.FlagSet("global"), cmd.Name())
 	for _, f := range namedFs.FlagSets {
 		fs.AddFlagSet(f)
