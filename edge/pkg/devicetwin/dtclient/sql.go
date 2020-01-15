@@ -18,7 +18,7 @@ const (
 
 // InitDBTable create table
 func InitDBTable(m core.Module) {
-	klog.Info("Begin to register twin db model")
+	klog.Infof("Begin to register %v db model", m.Name())
 
 	if !m.Enable() {
 		klog.Infof("Module %s is disabled, DB meta for it will not be registered", m.Name())
