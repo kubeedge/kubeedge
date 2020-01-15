@@ -44,6 +44,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
@@ -353,6 +354,13 @@ func (e *edged) registerNode() error {
 	}
 
 	e.setInitNode(node)
+
+	if config.Get().RegisterNode == false {
+		//when register-node set to false, do not auto register node
+		klog.Infof("register-node is set to false")
+		e.registrationCompleted = true
+		return nil
+	}
 
 	klog.Infof("Attempting to register node %s", e.nodeName)
 

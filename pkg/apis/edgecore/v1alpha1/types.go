@@ -148,6 +148,9 @@ type Edged struct {
 	// HostnameOverride indicates hostname
 	// default os.Hostname()
 	HostnameOverride string `json:"hostnameOverride,omitempty"`
+	// RegisterNode enables automatic registration
+	// default true
+	RegisterNode bool `json:"registerNode,omitempty"`
 	//RegisterNodeNamespace indicates register node namespace
 	// default default
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`

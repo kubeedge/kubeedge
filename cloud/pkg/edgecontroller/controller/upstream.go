@@ -359,7 +359,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 			case model.InsertOperation:
 				_, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
 				if err == nil {
-					klog.Infof("node: %s already existed, do nothing", name)
+					klog.Infof("node: %s already exists, do nothing", name)
 					uc.nodeMsgResponse(name, namespace, "OK", msg)
 					continue
 				}

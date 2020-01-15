@@ -159,6 +159,9 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
 
 + (**Optional**)Run `admission`, this feature is still being evaluated.
     please read the docs in [install the admission webhook](../../build/admission/README.md)
+    
+#### Deploy the edge node
+Edge node can be registered automatically. But if you want to deploy edge node manually, [here](./deploy-edge-node.md) is an example.
 
 ### Setup edge side
 
