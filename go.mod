@@ -44,8 +44,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/mesos/mesos-go v0.0.10 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
-	github.com/onsi/ginkgo v1.10.1
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/ginkgo v1.11.0
+	github.com/onsi/gomega v1.8.1
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
