@@ -141,7 +141,7 @@ build_edgecore
 
 kind_up_cluster
 
-export KUBECONFIG="$(kind get kubeconfig-path ${CLUSTER_CONTEXT})"
+export KUBECONFIG=$HOME/.kube/config
 
 check_control_plane_ready
 
@@ -166,7 +166,7 @@ echo "Logs:
 To start using your kubeedge, you can run:
 
   export PATH=$PATH:$GOPATH/bin
-  export KUBECONFIG="$(kind get kubeconfig-path --name="test")"
+  export KUBECONFIG=$HOME/.kube/config
   kubectl get nodes
 "
 
