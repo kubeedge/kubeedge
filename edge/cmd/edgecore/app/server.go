@@ -156,6 +156,6 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	edgemesh.Register(c.Modules.EdgeMesh)
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
-	test.Register()
+	test.Register(c.Modules.DBTest)
 	dbm.InitDBManager()
 }

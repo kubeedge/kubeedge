@@ -16,6 +16,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 const (
@@ -24,16 +25,14 @@ const (
 	EdgedPodHandler = "/pods"
 )
 
-func Register() {
-	core.Register(&testManager{})
+// TODO move this files into /edge/pkg/dbtest @kadisi
+func Register(t *v1alpha1.DBTest) {
+	core.Register(&testManager{enable: t.Enable})
 }
 
 type testManager struct {
 	moduleWait *sync.WaitGroup
-}
-
-type meta struct {
-	UID string `json:"uid"`
+	enable     bool
 }
 
 func (tm *testManager) Name() string {
@@ -43,6 +42,10 @@ func (tm *testManager) Name() string {
 func (tm *testManager) Group() string {
 	//return core.MetaGroup
 	return modules.MetaGroup
+}
+
+func (tm *testManager) Enable() bool {
+	return tm.enable
 }
 
 //Function to get the pods from Edged
