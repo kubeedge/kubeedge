@@ -10,11 +10,11 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/flags"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -31,8 +31,8 @@ edge nodes and pods metadata so that the data can be targeted to a specific edge
 kubernetes controller which manages devices so that the device metadata/status date can be synced between edge and cloud.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()
-			flags.PrintMinConfigAndExitIfRequested()
-			flags.PrintDefaultConfigAndExitIfRequested()
+			flag.PrintMinConfigAndExitIfRequested(v1alpha1.NewMinCloudCoreConfig())
+			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultCloudCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
 			// To help debugging, immediately log version
@@ -45,7 +45,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
 	verflag.AddFlags(namedFs.FlagSet("global"))
-	flags.AddFlags(namedFs.FlagSet("global"))
+	flag.AddFlags(namedFs.FlagSet("global"))
 	globalflag.AddGlobalFlags(namedFs.FlagSet("global"), cmd.Name())
 	for _, f := range namedFs.FlagSets {
 		fs.AddFlagSet(f)
