@@ -15,6 +15,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 const (
@@ -24,15 +25,16 @@ const (
 
 // servicebus struct
 type servicebus struct {
+	enable bool
 }
 
-func newServicebus() *servicebus {
+func newServicebus(enable bool) *servicebus {
 	return &servicebus{}
 }
 
 // Register register servicebus
-func Register() {
-	core.Register(newServicebus())
+func Register(s *v1alpha1.ServiceBus) {
+	core.Register(newServicebus(s.Enable))
 }
 
 func (*servicebus) Name() string {
@@ -41,6 +43,10 @@ func (*servicebus) Name() string {
 
 func (*servicebus) Group() string {
 	return modules.BusGroup
+}
+
+func (s *servicebus) Enable() bool {
+	return s.enable
 }
 
 func (sb *servicebus) Start() {
