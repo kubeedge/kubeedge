@@ -324,12 +324,12 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	t := time.Now()
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
 		// handle error
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 

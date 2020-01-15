@@ -258,6 +258,7 @@ func (e *edged) Group() string {
 func (e *edged) Enable() bool {
 	return e.enable
 }
+
 func (e *edged) Start() {
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {

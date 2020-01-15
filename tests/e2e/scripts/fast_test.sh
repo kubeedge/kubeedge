@@ -31,9 +31,9 @@ cat >config.json<<END
 {
         "image_url": ["nginx", "hello-world"],
         "k8smasterforkubeedge":"http://$MASTER_IP:12418",
-         "dockerhubusername":"user",
-         "dockerhubpassword":"password",
-         "mqttendpoint":"tcp://127.0.0.1:1884"
+        "dockerhubusername":"user",
+        "dockerhubpassword":"password",
+        "mqttendpoint":"tcp://127.0.0.1:1884"
 }
 END
 

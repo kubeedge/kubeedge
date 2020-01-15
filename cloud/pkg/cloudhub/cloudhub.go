@@ -7,7 +7,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
-	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 type cloudHub struct {
@@ -37,22 +36,14 @@ func (a *cloudHub) Group() string {
 func (a *cloudHub) Enable() bool {
 	return a.enable
 }
+
 func (a *cloudHub) Start() {
 	messageq := channelq.NewChannelMessageQueue()
 
 	// start dispatch message from the cloud to edge node
 	go messageq.DispatchMessage()
 
-	// start the cloudhub server
-	if hubconfig.Get().WebSocket.Enable {
-		// TODO delete second param  @kadisi
-		go servers.StartCloudHub(api.ProtocolTypeWS, hubconfig.Get(), messageq)
-	}
-
-	if hubconfig.Get().Quic.Enable {
-		// TODO delete second param  @kadisi
-		go servers.StartCloudHub(api.ProtocolTypeQuic, hubconfig.Get(), messageq)
-	}
+	servers.StartCloudHub(messageq)
 
 	if hubconfig.Get().UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.

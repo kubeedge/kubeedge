@@ -18,11 +18,17 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
+	cloudcore "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
+	edgecore "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	edgesite "github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
 
@@ -96,10 +102,14 @@ func StartEdgeSite() error {
 }
 
 func DeploySetup(ctx *TestContext, nodeName, setupType string) error {
-	//Do the neccessary config changes in Cloud and Edge nodes
-	cmd := exec.Command("bash", "-x", "scripts/setup.sh", setupType, nodeName, ctx.Cfg.K8SMasterForKubeEdge)
-	if err := PrintCombinedOutput(cmd); err != nil {
-		return err
+	// TODO  will delete scripts/setup.sh file @kadisi
+	// TODO change as constants or delete this function @kadisi
+	switch setupType {
+	case "deployment":
+		createCloudCoreConfigFile(ctx.Cfg.K8SMasterForKubeEdge)
+		createEdgeCoreConfigFile(nodeName)
+	case "edgesite":
+		createEdgeSiteConfigFile(ctx.Cfg.K8SMasterForKubeEdge, nodeName)
 	}
 	//Expect(err).Should(BeNil())
 	time.Sleep(1 * time.Second)
@@ -114,4 +124,63 @@ func CleanUp(setupType string) error {
 	}
 	time.Sleep(2 * time.Second)
 	return nil
+}
+
+func createCloudCoreConfigFile(kubeMaster string) {
+	c := cloudcore.NewDefaultCloudCoreConfig()
+	c.KubeAPIConfig.KubeConfig = ""
+	c.KubeAPIConfig.Master = kubeMaster
+	// TODO change ca file path @kadisi
+	c.Modules.CloudHub.TLSCAFile = "/tmp/cloudcore/rootCA.crt"
+	c.Modules.CloudHub.TLSCertFile = "/tmp/cloudcore/kubeedge.crt"
+	c.Modules.CloudHub.TLSPrivateKeyFile = "/tmp/cloudcore/kubeedge.key"
+
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		fmt.Printf("Marshal cloudcore config to yaml error %v\n", err)
+		os.Exit(1)
+	}
+	if err := ioutil.WriteFile(constants.CloudCoreConfigFile, data, os.ModePerm); err != nil {
+		fmt.Printf("Create cloudcore config file %v error %v\n", constants.CloudCoreConfigFile, err)
+		os.Exit(1)
+	}
+}
+
+func createEdgeCoreConfigFile(nodeName string) {
+	c := edgecore.NewDefaultEdgeCoreConfig()
+	// TODO change ca file path @kadisi
+	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
+	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
+	c.Modules.EdgeHub.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
+	c.Modules.Edged.HostnameOverride = nodeName
+	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
+
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		fmt.Printf("Marshal edgecore config to yaml error %v\n", err)
+		os.Exit(1)
+	}
+	if err := ioutil.WriteFile(constants.EdgeCoreConfigFile, data, os.ModePerm); err != nil {
+		fmt.Printf("Create edgecore config file %v error %v\n", constants.EdgeCoreConfigFile, err)
+		os.Exit(1)
+	}
+}
+
+func createEdgeSiteConfigFile(kubeMaster, nodeName string) {
+	c := edgesite.NewDefaultEdgeSiteConfig()
+	// TODO change ca file path @kadisi
+	c.Modules.Edged.HostnameOverride = nodeName
+	c.KubeAPIConfig.Master = kubeMaster
+	c.KubeAPIConfig.KubeConfig = ""
+	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
+
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		fmt.Printf("Marshal edgesite config to yaml error %v\n", err)
+		os.Exit(1)
+	}
+	if err := ioutil.WriteFile(constants.EdgeSiteConfigFile, data, os.ModePerm); err != nil {
+		fmt.Printf("Create edgesite config file %v error %v\n", constants.EdgeSiteConfigFile, err)
+		os.Exit(1)
+	}
 }

@@ -28,10 +28,10 @@ type Configure struct {
 	NodeName string
 }
 
-func InitConfigure(e *v1alpha1.EventBus, nodeName string) {
+func InitConfigure(eventbus *v1alpha1.EventBus, nodeName string) {
 	once.Do(func() {
 		c = Configure{
-			EventBus: *e,
+			EventBus: *eventbus,
 			NodeName: nodeName,
 		}
 	})

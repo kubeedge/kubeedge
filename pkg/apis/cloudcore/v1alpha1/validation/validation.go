@@ -126,7 +126,7 @@ func ValidateKubeAPIConfig(k cloudconfig.KubeAPIConfig) field.ErrorList {
 	case !path.IsAbs(k.KubeConfig):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig need abs path"))
 		fallthrough
-	case !utilvalidation.FileIsExist(k.KubeConfig):
+	case k.KubeConfig != "" && !utilvalidation.FileIsExist(k.KubeConfig):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig not exist"))
 		fallthrough
 	default:

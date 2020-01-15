@@ -28,11 +28,11 @@ type Configure struct {
 	NodeName     string
 }
 
-func InitConfigure(h *v1alpha1.EdgeHub, nodeName string) {
+func InitConfigure(eh *v1alpha1.EdgeHub, nodeName string) {
 	once.Do(func() {
 		c = Configure{
-			EdgeHub:      *h,
-			WebSocketURL: strings.Join([]string{"wss:/", h.WebSocket.Server, h.ProjectID, nodeName, "events"}, "/"),
+			EdgeHub:      *eh,
+			WebSocketURL: strings.Join([]string{"wss:/", eh.WebSocket.Server, eh.ProjectID, nodeName, "events"}, "/"),
 			NodeName:     nodeName,
 		}
 	})

@@ -3,10 +3,7 @@ package metamanager
 import (
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-
 	"github.com/astaxie/beego/orm"
-
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -32,19 +29,18 @@ func newMetaManager(enable bool) *metaManager {
 }
 
 // Register register metamanager
-func Register(m *v1alpha1.MetaManager, db *v1alpha1.DataBase) {
-	metamanagerconfig.InitConfigure(m)
-	dbm.InitDBConfig(db.DriverName, db.AliasName, db.DataSource)
-	meta := newMetaManager(m.Enable)
+func Register(metaManager *v1alpha1.MetaManager) {
+	metamanagerconfig.InitConfigure(metaManager)
+	meta := newMetaManager(metaManager.Enable)
 	initDBTable(meta)
 	core.Register(meta)
 }
 
 // initDBTable create table
-func initDBTable(m core.Module) {
-	klog.Infof("Begin to register %v db model", m.Name())
-	if !m.Enable() {
-		klog.Infof("Module %s is disabled, DB meta for it will not be registered", m.Name())
+func initDBTable(module core.Module) {
+	klog.Infof("Begin to register %v db model", module.Name())
+	if !module.Enable() {
+		klog.Infof("Module %s is disabled, DB meta for it will not be registered", module.Name())
 		return
 	}
 	orm.RegisterModel(new(dao.Meta))

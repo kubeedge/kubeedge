@@ -17,9 +17,9 @@ limitations under the License.
 package options
 
 import (
+	"fmt"
 	"path"
 
-	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	cliflag "k8s.io/component-base/cli/flag"
 
@@ -44,18 +44,18 @@ func (o *EdgeCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
 	return
 }
 
-func (c *EdgeCoreOptions) Validate() []error {
+func (o *EdgeCoreOptions) Validate() []error {
 	var errs []error
-	if !validation.FileIsExist(c.ConfigFile) {
+	if !validation.FileIsExist(o.ConfigFile) {
 		errs = append(errs, field.Required(field.NewPath("config"),
-			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", c.ConfigFile)))
+			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
 	}
 	return errs
 }
 
-func (c *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
+func (o *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
-	if err := cfg.Parse(c.ConfigFile); err != nil {
+	if err := cfg.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}
 	return cfg, nil

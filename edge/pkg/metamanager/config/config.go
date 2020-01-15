@@ -13,6 +13,7 @@ const (
 var c Configure
 var once sync.Once
 
+// Connected stands for whether it is connected
 // TODO need consider to add lock @kadisi
 var Connected = false
 

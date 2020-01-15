@@ -43,13 +43,13 @@ runs on edge nodes and manages containerized applications.`,
 				os.Exit(1)
 			}
 
-			c, err := opts.Config()
+			config, err := opts.Config()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
 
-			if errs := validation.ValidateEdgeSiteConfiguration(c); len(errs) > 0 {
+			if errs := validation.ValidateEdgeSiteConfiguration(config); len(errs) > 0 {
 				fmt.Fprintf(os.Stderr, "%v\n", errs)
 				os.Exit(1)
 			}
@@ -57,7 +57,7 @@ runs on edge nodes and manages containerized applications.`,
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			registerModules(c)
+			registerModules(config)
 			// start all modules
 			core.Run()
 		},
@@ -89,5 +89,5 @@ runs on edge nodes and manages containerized applications.`,
 func registerModules(c *v1alpha1.EdgeSiteConfig) {
 	edged.Register(c.Modules.Edged)
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, c.Modules.Edged.HostnameOverride, true)
-	metamanager.Register(c.Modules.MetaManager, c.DataBase)
+	metamanager.Register(c.Modules.MetaManager)
 }

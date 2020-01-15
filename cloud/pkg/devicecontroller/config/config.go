@@ -14,11 +14,11 @@ type Configure struct {
 	KubeAPIConfig v1alpha1.KubeAPIConfig
 }
 
-func InitConfigure(controller *v1alpha1.DeviceController, k *v1alpha1.KubeAPIConfig) {
+func InitConfigure(dc *v1alpha1.DeviceController, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
 		c = Configure{
-			DeviceController: *controller,
-			KubeAPIConfig:    *k,
+			DeviceController: *dc,
+			KubeAPIConfig:    *kubeAPIConfig,
 		}
 	})
 }

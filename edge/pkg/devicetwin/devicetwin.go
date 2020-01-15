@@ -1,7 +1,6 @@
 package devicetwin
 
 import (
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -31,10 +30,9 @@ func newDeviceTwin(enable bool) *DeviceTwin {
 }
 
 // Register register devicetwin
-func Register(d *v1alpha1.DeviceTwin, db *v1alpha1.DataBase, nodeName string) {
-	deviceconfig.InitConfigure(d, nodeName)
-	dbm.InitDBConfig(db.DriverName, db.AliasName, db.DataSource)
-	dt := newDeviceTwin(d.Enable)
+func Register(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
+	deviceconfig.InitConfigure(deviceTwin, nodeName)
+	dt := newDeviceTwin(deviceTwin.Enable)
 	dtclient.InitDBTable(dt)
 	core.Register(dt)
 }

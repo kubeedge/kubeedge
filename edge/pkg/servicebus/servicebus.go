@@ -29,7 +29,9 @@ type servicebus struct {
 }
 
 func newServicebus(enable bool) *servicebus {
-	return &servicebus{}
+	return &servicebus{
+		enable: enable,
+	}
 }
 
 // Register register servicebus
@@ -45,8 +47,8 @@ func (*servicebus) Group() string {
 	return modules.BusGroup
 }
 
-func (s *servicebus) Enable() bool {
-	return s.enable
+func (sb *servicebus) Enable() bool {
+	return sb.enable
 }
 
 func (sb *servicebus) Start() {

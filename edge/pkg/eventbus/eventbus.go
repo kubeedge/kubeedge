@@ -30,9 +30,9 @@ func newEventbus(enable bool) *eventbus {
 }
 
 // Register register eventbus
-func Register(e *v1alpha1.EventBus, nodeName string) {
-	eventconfig.InitConfigure(e, nodeName)
-	core.Register(newEventbus(e.Enable))
+func Register(eventbus *v1alpha1.EventBus, nodeName string) {
+	eventconfig.InitConfigure(eventbus, nodeName)
+	core.Register(newEventbus(eventbus.Enable))
 }
 
 func (*eventbus) Name() string {
@@ -44,13 +44,13 @@ func (*eventbus) Group() string {
 }
 
 // Enable indicates whether this module is enabled
-func (e *eventbus) Enable() bool {
-	return e.enable
+func (eb *eventbus) Enable() bool {
+	return eb.enable
 }
 
 func (eb *eventbus) Start() {
 
-	if eventconfig.Get().MqttMode >= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode >= v1alpha1.MqttModeBoth {
 
 		hub := &mqttBus.Client{
 			MQTTUrl: eventconfig.Get().MqttServerExternal,
@@ -60,7 +60,7 @@ func (eb *eventbus) Start() {
 		hub.InitPubClient()
 	}
 
-	if eventconfig.Get().MqttMode <= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode <= v1alpha1.MqttModeBoth {
 		// launch an internal mqtt server only
 		mqttServer = mqttBus.NewMqttServer(
 			int(eventconfig.Get().MqttSessionQueueSize),
@@ -70,9 +70,10 @@ func (eb *eventbus) Start() {
 		mqttServer.InitInternalTopics()
 		err := mqttServer.Run()
 		if err != nil {
-			klog.Errorf("Launch mqtt broker failed, %s", err.Error())
+			klog.Errorf("Launch internel mqtt broker failed, %s", err.Error())
 			os.Exit(1)
 		}
+		klog.Infof("Launch internel mqtt broker successfully")
 	}
 
 	eb.pubCloudMsgToEdge()
