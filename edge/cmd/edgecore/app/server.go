@@ -13,6 +13,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/flags"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
@@ -46,6 +47,7 @@ to/from a lightweight database (SQLite).ServiceBus is a HTTP client to interact 
 offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge. `,
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()
+			flags.PrintMinConfigAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
 			// To help debugging, immediately log version
@@ -68,6 +70,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	}
 	fs := cmd.Flags()
 	namedFs := opts.Flags()
+	flags.AddFlags(namedFs.FlagSet("global"))
 	verflag.AddFlags(namedFs.FlagSet("global"))
 	globalflag.AddGlobalFlags(namedFs.FlagSet("global"), cmd.Name())
 	for _, f := range namedFs.FlagSets {
