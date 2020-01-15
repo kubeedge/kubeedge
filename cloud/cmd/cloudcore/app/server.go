@@ -32,6 +32,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()
 			flags.PrintMinConfigAndExitIfRequested()
+			flags.PrintDefaultConfigAndExitIfRequested()
 			flag.PrintFlags(cmd.Flags())
 
 			// To help debugging, immediately log version
