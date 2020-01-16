@@ -84,6 +84,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryVolumeAttachment:      constants.DefaultQueryVolumeAttachmentBuffer,
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
+					DeletePod:                  constants.DefaultDeletePodBuffer,
 				},
 				Context: &EdgeControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
@@ -102,6 +103,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryVolumeAttachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
+					DeletePodWorkers:                  constants.DefaultDeletePodBuffer,
 				},
 			},
 			DeviceController: &DeviceController{

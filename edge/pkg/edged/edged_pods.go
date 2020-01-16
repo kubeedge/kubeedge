@@ -67,6 +67,8 @@ import (
 	"k8s.io/kubernetes/pkg/volume/validation"
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 	utilfile "k8s.io/utils/path"
+
+	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 )
 
 const (
@@ -1349,6 +1351,5 @@ func (e *edged) PodResourcesAreReclaimed(pod *v1.Pod, status v1.PodStatus) bool 
 			return false
 		}
 	}
-
 	return true
 }
