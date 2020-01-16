@@ -38,4 +38,4 @@ armv8: verify
 .PHONY: small_build
 small_build: verify
 	go build -ldflags="-w -s -extldflags -static" cmd/edgesite.go
-	upx-ucl --best edge_site
+	upx-ucl --best edgesite
