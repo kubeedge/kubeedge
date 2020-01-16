@@ -10,6 +10,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/status"
+	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
@@ -24,6 +25,7 @@ type manager struct {
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
 	metaClient        client.CoreInterface
+	podDeletionSafety status.PodDeletionSafetyProvider
 }
 
 //NewManager creates and returns a new manager object
@@ -34,7 +36,15 @@ func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, p
 		metaClient:        metaClient,
 		podManager:        podManager,
 		apiStatusVersions: make(map[types.UID]*v1.PodStatus),
+		podDeletionSafety: podDeletionSafety,
 	}
+}
+
+func (m *manager) canBeDeleted(pod *v1.Pod, status v1.PodStatus) bool {
+	if pod.DeletionTimestamp == nil {
+		return false
+	}
+	return m.podDeletionSafety.PodResourcesAreReclaimed(pod, status)
 }
 
 const syncPeriod = 10 * time.Second
@@ -56,6 +66,15 @@ func (m *manager) updatePodStatus() {
 		uid := pod.UID
 		podStatus, ok := m.GetPodStatus(uid)
 		if !ok {
+			// We don't handle graceful deletion of mirror pods.
+			if m.canBeDeleted(pod, podStatus) {
+				err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name)
+				if err != nil {
+					klog.Warningf("Failed to delete status for pod %q: %v", format.Pod(pod), err)
+				} else {
+					klog.Errorf("Successfully sent delete event to cloud for pod: %s", format.Pod(pod))
+				}
+			}
 			continue
 		}
 		latestStatus, ok := m.apiStatusVersions[uid]
