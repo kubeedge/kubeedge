@@ -141,8 +141,6 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
 		DataBase: &edgecoreconfig.DataBase{
-			DriverName: DataBaseDriverName,
-			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
 		},
 		KubeAPIConfig: &cloudcoreconfig.KubeAPIConfig{
@@ -158,6 +156,7 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 				ClusterDomain:         "",
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
+				//TODO (@kuramal) Automatically set PodSandboxImage according to the architecture.(x86,amd64,arm or arm64)
 				PodSandboxImage:       constants.DefaultPodSandboxImage,
 				HostnameOverride:      hostnameOverride,
 				InterfaceName:         constants.DefaultInterfaceName,
