@@ -137,8 +137,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			APIVersion: path.Join(GroupName, APIVersion),
 		},
 		DataBase: &DataBase{
-			DriverName: DataBaseDriverName,
-			AliasName:  DataBaseAliasName,
 			DataSource: DataBaseDataSource,
 		},
 		Modules: &Modules{
