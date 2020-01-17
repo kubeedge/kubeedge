@@ -92,12 +92,9 @@ make
 ```
 
 ## Usage
-
-* [One click KubeEdge Installer to install both Cloud and Edge nodes](./docs/setup/installer_setup.md)
-* [Run KubeEdge from release package](./docs/getting-started/release_package.md)
-* [Run KubeEdge from source](./docs/setup/setup.md)
-* [Deploy Application](./docs/setup/setup.md#deploy-application-on-cloud-side)
-* [Run Tests](./docs/setup/setup.md#run-tests)
+* [Install KubeEdge](./docs/setup/kubeedge_install.md)
+* [Configure KubeEdge](./docs/setup/kubeedge_configure.md)
+* [Deploy Application and Run Tests](./docs/setup/kubeedge_precheck.md)
 
 ## Roadmap
 
