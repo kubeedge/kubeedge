@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"sync"
 
 	"k8s.io/klog"
@@ -31,8 +30,6 @@ type Configure struct {
 
 func InitConfigure() {
 	once.Do(func() {
-		var errs []error
-
 		groupName, err := config.CONFIG.GetValue("metamanager.context-send-group").ToString()
 		if err != nil || groupName == "" {
 			// Guaranteed forward compatibility @kadisi
@@ -59,13 +56,7 @@ func InitConfigure() {
 			syncInterval = defaultSyncInterval
 			klog.Infof("can not get meta.sync.podstatus.interval key, use default %v", syncInterval)
 		}
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init common config error")
-			os.Exit(1)
-		}
+
 		c = Configure{
 			SendModuleGroupName: groupName,
 			SendModuleName:      moduleName,
