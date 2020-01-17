@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"sync"
 
 	"k8s.io/klog"
@@ -23,7 +22,6 @@ var once sync.Once
 
 func init() {
 	once.Do(func() {
-		var errs []error
 		driverName, err := config.CONFIG.GetValue("database.driver").ToString()
 		if err != nil {
 			// Guaranteed forward compatibility @kadisi
@@ -43,13 +41,6 @@ func init() {
 			klog.Infof("can not get database.source key, use default %v", dataSource)
 		}
 
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init common config error")
-			os.Exit(1)
-		}
 		c = Configure{
 			DriverName: driverName,
 			DBName:     dbName,
