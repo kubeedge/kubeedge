@@ -1,13 +1,17 @@
 GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
+EDGE_SITE_BINARY=edgesite
+BINDIR=/usr/local/bin
 # make edge_site
 .PHONY: default edge_site
+
+default: edge_site
+
 edge_site: verify
-	go build ${GO_LDFLAGS} cmd/edgesite.go
+	go build ${GO_LDFLAGS} -o ${EDGE_SITE_BINARY} cmd/edgesite.go
 
 .PHONY: verify
 verify:
 	bash ../hack/verify-golang.sh
-
 
 .PHONY: cross_build
 cross_build: verify
@@ -42,3 +46,15 @@ small_build: verify
 	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
 	# Pls use --help for more information
 	upx-ucl -9 edgesite
+
+.PHONY: install
+install: default
+	install ${EDGE_SITE_BINARY} ${BINDIR}
+
+.PHONY: uninstall
+uninstall:
+	rm -f ${BINDIR}/${EDGE_SITE_BINARY}
+
+.PHONY: clean
+clean:
+	rm -f ${EDGE_SITE_BINARY}

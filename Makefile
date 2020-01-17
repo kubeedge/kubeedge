@@ -158,3 +158,21 @@ bluetoothdevice:
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:
 	make -C mappers/bluetooth_mapper bluetooth_mapper_image
+
+install:
+	cd cloud && $(MAKE) install
+	cd edge && $(MAKE) install
+	cd keadm && $(MAKE) install
+	cd edgesite && $(MAKE) install
+
+uninstall:
+	cd cloud && $(MAKE) uninstall
+	cd edge && $(MAKE) uninstall
+	cd keadm && $(MAKE) uninstall
+	cd edgesite && $(MAKE) uninstall
+
+clean:
+	cd cloud && $(MAKE) clean
+	cd edge && $(MAKE) clean
+	cd keadm && $(MAKE) clean
+	cd edgesite && $(MAKE) clean

@@ -2,16 +2,23 @@
 
 # get ldflags 
 GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
-
+CLOUD_CORE_BINARY=cloudcore
+ADMISSION_BINARY=admission
+BINDIR=/usr/local/bin
 .PHONY: default cloudcore admission
 
 default: cloudcore admission
 
-cloudcore: verify
-	go build ${GO_LDFLAGS} cmd/cloudcore/cloudcore.go
+cloudcore: verify clean
+	go build ${GO_LDFLAGS} -o ${CLOUD_CORE_BINARY} cmd/cloudcore/cloudcore.go
 
-admission: verify
-	go build ${GO_LDFLAGS} cmd/admission/admission.go
+admission: verify clean
+	go build ${GO_LDFLAGS} -o ${ADMISSION_BINARY} cmd/admission/admission.go
+
+.PHONY: clean
+clean:
+	rm -f ${CLOUD_CORE_BINARY}
+	rm -f ${ADMISSION_BINARY}
 
 .PHONY: lint
 lint:
@@ -58,3 +65,12 @@ test-integration:
 generate-code:
 	./hack/update-codegen.sh
 
+.PHONY: install
+install: default
+	install ${CLOUD_CORE_BINARY} ${BINDIR}
+	install ${ADMISSION_BINARY} ${BINDIR}
+
+.PHONY: uninstall
+uninstall:
+	rm -f ${BINDIR}/${CLOUD_CORE_BINARY}
+	rm -f ${BINDIR}/${ADMISSION_BINARY}

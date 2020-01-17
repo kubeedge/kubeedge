@@ -1,9 +1,15 @@
 
 GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
+EDGE_CORE_BINARY=edgecore
+BINDIR=/usr/local/bin
+
 # make edgecore
 .PHONY: default edgecore
-edgecore: verify
-	go build ${GO_LDFLAGS}  cmd/edgecore/edgecore.go
+
+default: edgecore
+
+edgecore: verify clean
+	go build ${GO_LDFLAGS} -o ${EDGE_CORE_BINARY}  cmd/edgecore/edgecore.go
 
 .PHONY: verify 
 verify:
@@ -30,10 +36,6 @@ lint:
 .PHONY: integration_test
 integration_test: edgecore
 	bash test/integration/scripts/execute.sh
-
-.PHONY: clean
-clean:
-	bash -x hack/clean.sh
 
 .PHONY: cross_build
 cross_build: verify
@@ -68,3 +70,16 @@ small_build: verify
 	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
 	# Pls use --help for more information
 	upx-ucl -9 edgecore
+
+.PHONY: install
+install: default
+	install ${EDGE_CORE_BINARY} ${BINDIR}
+
+.PHONY: uninstall
+uninstall:
+	rm -f ${BINDIR}/${EDGE_CORE_BINARY}
+
+.PHONY: clean
+clean:
+	rm -f ${EDGE_CORE_BINARY}
+
