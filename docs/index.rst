@@ -27,7 +27,6 @@ application orchestration capabilities to hosts at Edge.
    getting-started/roadmap.md
    getting-started/support.md
    getting-started/community-membership
-   getting-started/release_package
    getting-started/reporting_bugs
 
 .. toctree::
@@ -74,8 +73,10 @@ application orchestration capabilities to hosts at Edge.
 
    setup/requirements
    setup/setup
-   One Click Installer <setup/installer_setup>
-   setup/cross-compilation
+   setup/kubeedge_install
+   setup/kubeedge_configure
+   setup/kubeedge_precheck
+   setup/kubeedge_run
    setup/memfootprint-test-setup
    Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>
 

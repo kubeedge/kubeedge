@@ -20,14 +20,14 @@ There are currently two ways to get keadm
 
 + Building from source
 
-  1. Download the source code
-
-  ```
-    git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
-    cd $GOPATH/src/github.com/kubeedge/kubeedge/keadm
-    make
-  ```
-  2. Binary `keadm` is available in current path
+  1. Download the source code.
+  
+      ```
+      git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/ kubeedge/kubeedge
+      cd $GOPATH/src/github.com/kubeedge/kubeedge/keadm
+      make
+      ```
+  2. Binary `keadm` is available in current path.
 
 
 ## Setup Cloud Side (KubeEdge Master Node)
@@ -43,7 +43,7 @@ keadm by default can install Docker, Kubernetes and KubeEdge. It also provide fl
     The optional flags with this command are mentioned below
 
     ```
-    $ keadm init --help
+    keadm init --help
 
     keadm init command bootstraps KubeEdge's cloud component. It checks if the pre-requisites are installed already, If not installed, this command will help in download, install and execute on the host.
 
@@ -128,7 +128,7 @@ For this command --cloudcoreip flag is a Mandatory flag
 **IMPORTANT NOTE:** The KubeEdge version used in cloud and edge side should be same.
 
 Sample execution output:
-```
+```shell
 # ./keadm join --cloudcoreip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
 Same version of docker already installed in this host
 Host has mosquit+ already installed and running. Hence skipping the installation steps !!!
@@ -208,13 +208,13 @@ Please refer [Docker GPG error fix](<https://forums.docker.com/t/gpg-key-for-doc
  
     browse to the 
 
-    ```
+    ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
     ```
 
     and apply the below
 
-    ```
+    ```shell
       kubectl create -f devices_v1alpha1_devicemodel.yaml
       kubectl create -f devices_v1alpha1_device.yaml
     ```

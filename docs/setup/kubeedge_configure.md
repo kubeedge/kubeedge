@@ -27,7 +27,7 @@ Set cloudcore config file
 
 Verify the configurations before running `cloudcore`
     
-```
+```yaml
 controller:
     kube:
         master:     # kube-apiserver address (such as:http://localhost:8080)
@@ -68,19 +68,27 @@ Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` e
 
 #### Modification in controller.yaml
 
-In the controller.yaml, the below settings needs to be modified:
+In the controller.yaml, modify the below settings.
 
 1. `controller.kube.master` : This would be kube-apiserver address. It might be 
 
     ```
-    https://your_hostname:6443 or http://your_hostname:8080
+    https://<your_hostname>:6443
     ```
-    based on your kubernetes configuration.
+    or
+    ```
+    http://<your_hostname>:8080
+    ```
+    based on your kubernetes configuration. `your_hostname` should be replaced with the IP Address of your hostname.
 
 2. `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` : This would be the path to your kubeconfig file. It might be either
 
     ```
-    /root/.kube/config or /home/your_username/.kube/config
+    /root/.kube/config
+    ```
+    or
+    ```
+    /home/<your_username>/.kube/config
     ```
     depending on where you have setup your kubernetes by performing the below step:
 
@@ -92,7 +100,7 @@ In the controller.yaml, the below settings needs to be modified:
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
     ```
 
-### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side KubeEdge Master Node)
+### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master Node)
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
@@ -122,11 +130,11 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 
 1. metadata.name : This is the name of your edge node device. (Referring the edge node configuration would make it more clear). 
  
-    **Note: you need to remember `metadata.name` , because edgecore need it**.
+    **Note: you need to remember `metadata.name` , because edgecore needs it**.
 
 2. metadata.labels: Labels are the name by which you can remember a set of nodes.
 
-    + Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
+    + Make sure role is set to `edge` for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `labels` tag of `metadata`.
     + Please ensure to add the label `node-role.kubernetes.io/edge` to the `build/node.json` file.
     
     + If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
@@ -137,20 +145,21 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
         kubectl get nodes --show-labels
         ```
 
-#### Deploy edge node (**you must run on cloud side**)
+#### Deploy edge node (Run on cloud side)
 
-    ```shell
+```shell
     kubectl apply -f ~/cmd/yaml/node.json
-    ```
+```
+
 #### Transfer certificate file from the cloud side to edge side
 
-Transfer certificate files to the edge node, because `edgecore` use these certificate files to connection `cloudcore` 
+Transfer certificate files to the edge node, because `edgecore` uses these certificate files to connect to `cloudcore`
 
 This can be done by utilising scp
 
 ```
 cd /etc/kubeedge/
-scp -r certs.tgz username@ipaddress_Edge_Node:/etc/kubeedge
+scp -r certs.tgz username@destination:/etc/kubeedge
 ```
 Here, we are copying the certs.tgz from the cloud side to the edge node in the /etc/kubeedge directory. You may copy in any directory and then move the certs to /etc/kubeedge folder.
 
@@ -169,7 +178,7 @@ Here, we are copying the certs.tgz from the cloud side to the edge node in the /
 
 Verify the configurations before running `edgecore`
 
-```
+```yaml
     mqtt:
         server: tcp://127.0.0.1:1883 # external mqtt broker url.
         internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
@@ -233,63 +242,71 @@ Verify the configurations before running `edgecore`
 
 1. Update the IP address of the master in the `edgehub.websocket.url` field. You need set cloudcore ip address.
 
-    ```
+    ```yaml
     url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
     ```
     to 
 
-    ```
-    url: wss://X.X.X.X:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
+    ```yaml
+    url: wss://<X.X.X.X>:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events
     ```
     where X.X.X.X is your cloudcore IP Address.
 
 2. Update the IP address of the master in the `edgehub.quic.url` field. You need set cloudcore ip address.
 
-    ```
+    ```yaml
     quic:
         url: 127.0.0.1:10001
     ```
     to 
-    ```
+    ```yaml
     quic:
-        url: X.X.X.X:10001
+        url:<X.X.X.X>:10001
     ```
-3. Check `edged.podsandbox-image` : This is very important and must be set correct. If you are wondering what's your architecture either 32-bit or 64-bit run 
+3. Check `edged.podsandbox-image` : This is very important and must be set correctly.
+
+   To check the architecture of your machine run the following
+
     ```
     getconf LONG_BIT
     ```
+
     + `kubeedge/pause-arm:3.1` for arm arch
     + `kubeedge/pause-arm64:3.1` for arm64 arch
     + `kubeedge/pause:3.1` for x86 arch
 4. Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
     
-5. Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files not exist, you need to copy them from the cloud side. 
+5. Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files do not exist, you need to copy them from the cloud side.
    
 6. Most importantly, Replace `edge-node` with edge node name in edge.yaml for the below fields :
     + `websocket:URL`
 
-        ```
+        ```yaml
         url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events 
         ```
     + `controller:node-id`
-        ```
+        ```yaml
         controller:
         node-id: edge-node
         ```
     + `edged:hostname-override`
-        ```
+        ```yaml
         edged:
         register-node-namespace: default
         hostname-override: edge-node
         ```
 7.  Configure the desired container runtime to be used as either docker or remote (for all CRI based runtimes including containerd). If this parameter is not specified docker runtime will be used by default
+    ```yaml
+    runtime-type: docker
     ```
-    runtime-type:docker or runtime-type:remote
+    or
+    ```yaml
+    runtime-type: remote
     ```
 8. If your runtime-type is remote, specify the following parameters for remote/CRI based runtimes
-    ```
-    remote-runtime-endpoint:/var/run/containerd/containerd.sock`
-    remote-image-endpoint:/var/run/containerd/containerd.sock`
+    ```yaml
+    remote-runtime-endpoint: /var/run/containerd/containerd.sock`
+    remote-image-endpoint: /var/run/containerd/containerd.sock`
     runtime-request-timeout: 2`
     podsandbox-image: k8s.gcr.io/pause`
     kubelet-root-dir: /var/run/kubelet/`

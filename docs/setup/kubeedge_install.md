@@ -9,10 +9,10 @@ In this section, we would cover the below topics
 5. [Run KubeEdge](#Run-KubeEdge)
 6. [KubeEdge Pre-Check](#KubeEdge-Pre-Check)
 ## Abstract
-KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup kubeedge, we need to setup kubernetes cluster, cloud side and edge side.
+KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster, cloud side and edge side.
 
-+ on cloud side, we need to install docker, kubernetes cluster and cloudcore.
-+ on edge side, we need to install docker, mqtt and edgecore.
++ on `cloud side`, we need to install Docker, Kubernetes cluster and cloudcore.
++ on `edge side`, we need to install Docker, mqtt and edgecore.
 
 ## Prerequisites
 
@@ -22,18 +22,18 @@ KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and pr
 
 + [Install golang](https://golang.org/dl/)
 
-+ [Install docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
++ [Install Docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
 
 + [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 
-+ [Creating kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
++ [Creating Kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
 If you are creating Kubernetes cluster for just testing KubeEdge, maybe start with Flannel.
 
 Check Kubernetes Master Status: It should be ready.
 
 ```
-$ kubectl get nodes
+kubectl get nodes
 NAME               STATUS   ROLES    AGE    VERSION
 kubeedge-master   Ready    master   4d3h   v1.16.1
 ```
@@ -46,7 +46,7 @@ kubeedge-master   Ready    master   4d3h   v1.16.1
 
 + [Install golang](https://golang.org/dl/)
 
-+ [Install docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
++ [Install Docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
 
 + [Install mosquitto](https://mosquitto.org/download/)
 

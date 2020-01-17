@@ -2,34 +2,38 @@
 
 ## Cloudcore on Cloud side
 
-    If you have copied the cloudcore binary in a folder and the configuration (conf) are stored in the same folder 
+If you have copied the cloudcore binary in a folder and the configuration (conf) are stored in the same folder
 
-    ```
-    cd ~/folder/
-    nohup ./cloudcore &
-    ```
+```shell
+ cd ~/folder/
+ nohup ./cloudcore &
+```
 
-    or 
+or
 
-    If you have setup using the systemctl
+If you have setup using the systemctl
 
-    ```
-    sudo systemctl start cloudcore
-    ```
+```shell
+ sudo systemctl start cloudcore
+```
 
 ## Run Edgecore on Edge side
 
-    ```
-    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
-    cd ~/cmd
-    ./edgecore
-     or
-    nohup ./edgecore > edgecore.log 2>&1 &
-    ```
+```shell
+ cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
+ cd ~/cmd
+ ./edgecore
+ ```
+ or
 
-    If you have setup using the systemctl
-    ```
-    sudo systemctl start edgecore
-    ```
+ ```shell
+ nohup ./edgecore > edgecore.log 2>&1 &
+ ```
 
-    **Note:** Please run edgecore using the users who have root permission.
+ If you have setup using the systemctl
+
+```
+ sudo systemctl start edgecore
+```
+
+**Note:** Please run edgecore using the users who have root permission.

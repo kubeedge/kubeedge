@@ -29,21 +29,21 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
    + Firstly, make sure gcc is already installed on your host. You can verify it via:
 
      ```shell
-        gcc --version
-        ```
+     gcc --version
+     ```
 
    + Build cloudcore 
 
-        ```shell
-        cd $GOPATH/src/github.com/kubeedge/kubeedge/
-        make all WHAT=cloudcore
-        ```
+     ```shell
+     cd $GOPATH/src/github.com/kubeedge/kubeedge/
+     make all WHAT=cloudcore
+     ```
 
     **Note:** If you don't want to compile, you may perform the below step
 
     + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)   
     
-        Download KubeEdge-$VERSION-$OS-$ARCH.tar.gz. from above link. It would contain Cloudcore and the configuration files.
+      Download `KubeEdge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Cloudcore and the configuration files.
 
 4. Create device model and device CRDs.
 
@@ -76,17 +76,17 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
    + Copy cloudcore binary and config file 
 
-        ```shell
-        cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
-        # run cloudcore controller
-        # `conf/` should be in the same directory as the cloned KubeEdge repository
-        # verify the configurations before running cloud(cloudcore)
-        mkdir -p ~/cmd/conf
-        cp cloudcore ~/cmd/
-        cp -rf conf/* ~/cmd/conf/
-        ```
+     ```shell
+     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
+     # run cloudcore controller
+     # `conf/` should be in the same directory as the cloned KubeEdge repository
+     # verify the configurations before running cloud(cloudcore)
+     mkdir -p ~/cmd/conf
+     cp cloudcore ~/cmd/
+     cp -rf conf/* ~/cmd/conf/
+     ```
     
-        **Note** `~/cmd/` dir is an example, in the following examples we continue to use `~/cmd/` as the binary startup directory. You can move `cloudcore` or `edgecore` binary to anywhere, but you need to create `conf` dir in the same directory as binary.
+        **Note:**  `~/cmd/` dir is an example, in the following examples we continue to  use `~/cmd/` as the binary startup directory. You can move `cloudcore` or  `edgecore` binary to anywhere, but you need to create `conf` dir in the same  directory as binary.
 
 + (**Optional**) Run `admission`, this feature is still being evaluated.
     please read the docs in [install the admission webhook](../../build/admission/README.md)
