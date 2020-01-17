@@ -97,7 +97,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
-	edgepleg "github.com/kubeedge/kubeedge/edge/pkg/edged/pleg"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
@@ -281,7 +280,7 @@ func (e *edged) Start() {
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
 	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, containers.NewContainerRunner(), kubecontainer.NewRefManager(), record.NewEventRecorder())
-	e.pleg = edgepleg.NewGenericLifecycleRemote(e.containerRuntime, e.probeManager, plegChannelCapacity, plegRelistPeriod, e.podManager, e.statusManager, e.podCache, clock.RealClock{}, e.interfaceName)
+	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
 	e.statusManager.Start()
 	e.pleg.Start()
 
@@ -613,6 +612,10 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 			}
 		case plegEvent := <-plegCh:
 			if pod, ok := e.podManager.GetPodByUID(plegEvent.ID); ok {
+				if err := e.updatePodStatus(pod); err != nil {
+					klog.Errorf("update pod %s status error", pod.Name)
+					break
+				}
 				if plegEvent.Type == pleg.ContainerDied {
 					if pod.Spec.RestartPolicy == v1.RestartPolicyNever {
 						break
@@ -1215,7 +1218,7 @@ func (e *edged) HandlePodCleanups() error {
 		return nil
 	}
 	pods := e.podManager.GetPods()
-	containerRunningPods, err := e.containerRuntime.GetPods(true)
+	containerRunningPods, err := e.containerRuntime.GetPods(false)
 	if err != nil {
 		return err
 	}
