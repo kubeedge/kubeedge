@@ -97,7 +97,6 @@ edgesite_cross_build_v8:
 edgesite_small_build:
 	$(MAKE) -C edgesite small_build
 
-
 .PHONY: e2e_test
 e2e_test:
 #	bash tests/e2e/scripts/execute.sh device_crd
