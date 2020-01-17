@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"sync"
 	"time"
 
@@ -60,7 +59,6 @@ type Configure struct {
 
 func InitConfigure() {
 	once.Do(func() {
-		var errs []error
 		nodeStatusUpdateInterval := config.CONFIG.GetConfigurationByKey("edged.node-status-update-frequency").(int)
 		dockerAddress, ok := config.CONFIG.GetConfigurationByKey("edged.docker-address").(string)
 		if !ok {
@@ -123,13 +121,6 @@ func InitConfigure() {
 			runtimeRequestTimeout = 2
 		}
 
-		if len(errs) != 0 {
-			for _, e := range errs {
-				klog.Errorf("%v", e)
-			}
-			klog.Error("init edged config error")
-			os.Exit(1)
-		}
 		c = Configure{
 			NodeName:                  config.CONFIG.GetConfigurationByKey("edged.hostname-override").(string),
 			NodeNamespace:             config.CONFIG.GetConfigurationByKey("edged.register-node-namespace").(string),
