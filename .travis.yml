@@ -5,7 +5,7 @@ git:
 
 sudo: required
 
-dist: trusty
+dist: xenial
 
 services:
   - docker
@@ -37,6 +37,7 @@ jobs:
     - stage: "Test on amd64"
       name: "build, smallbuild, crossbuild"
       arch: amd64
+      dist: trusty
       before_script:
         - sudo apt-get install upx-ucl -y
         - sudo apt-get install gcc-arm-linux-gnueabi -y
@@ -78,6 +79,7 @@ jobs:
     - stage: "Test on arm64"
       name: "build, smallbuild"
       arch: arm64
+      dist: trusty
       before_script:
         - export GOFLAGS=-mod=vendor
         - sudo apt-get install upx-ucl -y
