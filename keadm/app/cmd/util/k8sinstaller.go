@@ -55,10 +55,7 @@ func (ks *K8SInstTool) InstallTools() error {
 		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
 		fallthrough
 	case types.NewInstallRequired:
-		err := ks.InstallK8S()
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("Kubernetes %s is not installed! Kindly install Kubernetes", component)
 	default:
 		return fmt.Errorf("Error in getting the %s version from host", component)
 	}

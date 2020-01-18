@@ -29,21 +29,16 @@ import (
 var (
 	cloudInitLongDescription = `
 "keadm init" command bootstraps KubeEdge's master node (on the cloud) component.
-It checks if the pre-requisites are installed already,
-If not installed, this command will help in download,
-install and execute on the host.
+It checks if the pre-requisites are installed already.
 `
 	cloudInitExample = `
 keadm init
 
-- This command will download and install the default version of pre-requisites and KubeEdge
+- This command will download and install the default version of KubeEdge
 
-keadm init --kubeedge-version=0.2.1 --kubernetes-version=1.14.1 --docker-version=18.06.3 --kube-config=/root/.kube/config
+keadm init --kubeedge-version=0.2.1 --kube-config=/root/.kube/config
 
-  - In case, any flag is used in a format like "--docker-version" or "--docker-version=" (without a value)
-    then default versions shown in help will be chosen. 
-    The versions for "--docker-version", "--kubernetes-version" and "--kubeedge-version" flags should be in the
-    format "18.06.3", "1.14.0" and "0.2.1" respectively
+  - The versions for "--kubeedge-version" flags should be in the format "0.2.1".
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
 )
@@ -58,7 +53,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "init",
-		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
+		Short:   "Bootstraps cloud component. Checks if the pre-requisites are installed.",
 		Long:    cloudInitLongDescription,
 		Example: cloudInitExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,10 +88,6 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = initOpts.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&initOpts.DockerVersion, types.DockerVersion, initOpts.DockerVersion,
-		"Use this key to download and use the required Docker version")
-	cmd.Flags().Lookup(types.DockerVersion).NoOptDefVal = initOpts.DockerVersion
-
 	cmd.Flags().StringVar(&initOpts.KubernetesVersion, types.KubernetesVersion, initOpts.KubernetesVersion,
 		"Use this key to download and use the required Kubernetes version")
 	cmd.Flags().Lookup(types.KubernetesVersion).NoOptDefVal = initOpts.KubernetesVersion
@@ -115,7 +106,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) {
-	var kubeVer, dockerVer, k8sVer string
+	var kubeVer, k8sVer string
 	var k8sImageRepo, k8sPNCidr string
 
 	flgData, ok := flagData[types.KubeEdgeVersion]
@@ -139,14 +130,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		k8sPNCidr = initOptions.K8SPodNetworkCidr
 	}
 	toolList["Cloud"] = &util.KubeCloudInstTool{Common: util.Common{ToolVersion: kubeVer, KubeConfig: initOptions.KubeConfig}, K8SImageRepository: k8sImageRepo, K8SPodNetworkCidr: k8sPNCidr}
-
-	flgData, ok = flagData[types.DockerVersion]
-	if ok {
-		dockerVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	} else {
-		dockerVer = initOptions.DockerVersion
-	}
-	toolList["Docker"] = &util.DockerInstTool{Common: util.Common{ToolVersion: dockerVer}, DefaultToolVer: flgData.DefVal.(string)}
 
 	flgData, ok = flagData[types.KubernetesVersion]
 	if ok {
