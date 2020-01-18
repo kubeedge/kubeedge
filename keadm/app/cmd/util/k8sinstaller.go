@@ -59,7 +59,6 @@ func (ks *K8SInstTool) InstallTools() error {
 	default:
 		return fmt.Errorf("Error in getting the %s version from host", component)
 	}
-	return nil
 }
 
 //TearDown shoud uninstall K8S, but it is not required either for cloud or edge node.
