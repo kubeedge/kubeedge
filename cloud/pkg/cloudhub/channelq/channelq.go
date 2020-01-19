@@ -12,16 +12,20 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/common/constants"
+	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // ChannelMessageQueue is the channel implementation of MessageQueue
 type ChannelMessageQueue struct {
 	queuePool sync.Map
 	storePool sync.Map
+
+	listQueuePool sync.Map
+	listStorePool sync.Map
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
@@ -45,31 +49,77 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Info("receive not Message format message")
 			continue
 		}
-		nodeID, err := GetNodeID(msg)
+		nodeID, err := GetNodeID(&msg)
 		if nodeID == "" || err != nil {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
 
-		source, err := GetSource(msg)
-
-		if source == "" || err != nil {
-			klog.Warning("source is not found in the message")
-			continue
+		if isListResource(msg.GetResource()) {
+			q.addListMessageToQueue(nodeID, &msg)
+		} else {
+			q.addMessageToQueue(nodeID, &msg)
 		}
-
-		nodeQueue, err := q.GetNodeQueue(nodeID)
-		nodeStore, err := q.GetNodeStore(nodeID)
-
-		if err != nil {
-			klog.Infof("fail to get dispatch Node Queue for Node: %s, Source : %s", nodeID, source)
-			continue
-		}
-
-		key, _ := getMsgKey(&msg)
-		nodeQueue.Add(key)
-		nodeStore.Add(&msg)
 	}
+}
+
+func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveModel.Message) {
+	nodeListQueue, err := q.GetNodeListQueue(nodeID)
+	if err != nil {
+		klog.Errorf("fail to get nodeListQueue for Node: %s", nodeID)
+		return
+	}
+
+	nodeListStore, err := q.GetNodeListStore(nodeID)
+	if err != nil {
+		klog.Errorf("fail to get nodeListStore for Node: %s", nodeID)
+		return
+	}
+	nodeListQueue.Add(msg.Header.ID)
+	nodeListStore.Add(msg)
+}
+
+func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel.Message) {
+	if msg.GetResourceVersion() == "" {
+		return
+	}
+
+	nodeQueue, err := q.GetNodeQueue(nodeID)
+	if err != nil {
+		klog.Errorf("fail to get nodeQueue for Node: %s", nodeID)
+		return
+	}
+
+	nodeStore, err := q.GetNodeStore(nodeID)
+	if err != nil {
+		klog.Errorf("fail to get nodeStore for Node: %s", nodeID)
+		return
+	}
+
+	messageKey, err := getMsgKey(msg)
+	if err != nil {
+		klog.Errorf("fail to get message key for message: %s", msg.Header.ID)
+		return
+	}
+
+	item, exist, _ := nodeStore.GetByKey(messageKey)
+
+	// If the message doesn't exist in the store, then compare it with
+	// the version stored in the database
+	if !exist {
+
+	}
+
+	// Check if message is older than already in store, if it is, discard it directly
+	if exist {
+		msgInStore := item.(*beehiveModel.Message)
+		if msg.GetResourceVersion() <= msgInStore.GetResourceVersion() {
+			return
+		}
+	}
+
+	nodeQueue.Add(messageKey)
+	nodeStore.Add(msg)
 }
 
 func getMsgKey(obj interface{}) (string, error) {
@@ -81,17 +131,23 @@ func getMsgKey(obj interface{}) (string, error) {
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
 		return resourceType + "/" + resourceNamespace + "/" + resourceName, nil
 	}
-	if msg.GetGroup() == deviceconst.GroupTwin {
-		sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-		resourceType := sli[len(sli)-2]
-		resourceName := sli[len(sli)-1]
-		return resourceType + "/" + resourceName, nil
+
+	return "", fmt.Errorf("Failed to get message key")
+}
+
+func isListResource(resourceType string) bool {
+	if resourceType == beehiveModel.ResourceTypePodlist ||
+		resourceType == common.ResourceTypeServiceList ||
+		resourceType == common.ResourceTypeEndpointsList ||
+		resourceType == "membership" ||
+		strings.Contains(resourceType, deviceconstants.ResourceTypeTwinEdgeUpdated) {
+		return true
 	}
-	return "", fmt.Errorf("")
+	return false
 }
 
 // getNodeID from "beehive/pkg/core/model".Message.Router.Resource
-func GetNodeID(msg beehiveModel.Message) (string, error) {
+func GetNodeID(msg *beehiveModel.Message) (string, error) {
 	resource := msg.Router.Resource
 	tokens := strings.Split(resource, constants.ResourceSep)
 	numOfTokens := len(tokens)
@@ -101,46 +157,51 @@ func GetNodeID(msg beehiveModel.Message) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("No nodeId in Message.Router.Resource: %s", resource)
-}
-
-// getSource from "beehive/pkg/core/model".Message.Router.Source
-func GetSource(msg beehiveModel.Message) (string, error) {
-	source := msg.Router.Source
-	return source, nil
+	return "", fmt.Errorf("No nodeID in Message.Router.Resource: %s", resource)
 }
 
 // Connect allocates rChannel for given project and group
-func (q *ChannelMessageQueue) Connect(info *model.HubInfo) error {
+func (q *ChannelMessageQueue) Connect(info *model.HubInfo) {
 	_, queueExist := q.queuePool.Load(info.NodeID)
 	_, storeExit := q.storePool.Load(info.NodeID)
 
-	if queueExist && storeExit {
-		return fmt.Errorf("edge node %s is already connected", info.NodeID)
+	_, listQueueExist := q.listQueuePool.Load(info.NodeID)
+	_, listStoreExit := q.listStorePool.Load(info.NodeID)
+
+	if queueExist && storeExit && listQueueExist && listStoreExit {
+		klog.Infof("edge node %s is already connected", info.NodeID)
+		return
 	}
 
-	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), info.NodeID)
-	store := cache.NewStore(getMsgKey)
-
-	_, ok := q.queuePool.LoadOrStore(info.NodeID, queue)
-	_, ok = q.storePool.LoadOrStore(info.NodeID, store)
-
-	if ok {
-		// rchannel is already allocated
-		return fmt.Errorf("edge node %s is already connected", info.NodeID)
+	if !queueExist {
+		nodeQueue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), info.NodeID)
+		q.queuePool.Store(info.NodeID, nodeQueue)
 	}
-
-	return nil
+	if !storeExit {
+		nodeStore := cache.NewStore(getMsgKey)
+		q.storePool.Store(info.NodeID, nodeStore)
+	}
+	if !listQueueExist {
+		nodeListQueue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), info.NodeID)
+		q.listQueuePool.Store(info.NodeID, nodeListQueue)
+	}
+	if !listStoreExit {
+		nodeListStore := cache.NewStore(getMsgKey)
+		q.listStorePool.Store(info.NodeID, nodeListStore)
+	}
 }
 
 // Close closes queues for given node
-func (q *ChannelMessageQueue) Close(info *model.HubInfo) error {
+func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	_, queueExist := q.queuePool.Load(info.NodeID)
 	_, storeExist := q.storePool.Load(info.NodeID)
 
-	if !queueExist && !storeExist {
+	_, listQueueExist := q.listQueuePool.Load(info.NodeID)
+	_, listStoreExit := q.listStorePool.Load(info.NodeID)
+
+	if !queueExist && !storeExist && !listQueueExist && !listStoreExit {
 		klog.Warningf("rChannel for edge node %s is already removed", info.NodeID)
-		return nil
+		return
 	}
 
 	if queueExist {
@@ -149,8 +210,12 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) error {
 	if storeExist {
 		q.storePool.Delete(info.NodeID)
 	}
-
-	return nil
+	if listQueueExist {
+		q.listQueuePool.Delete(info.NodeID)
+	}
+	if listStoreExit {
+		q.listStorePool.Delete(info.NodeID)
+	}
 }
 
 // Publish sends message via the rchannel to Edge Controller
@@ -167,8 +232,17 @@ func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 func (q *ChannelMessageQueue) GetNodeQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
 	queue, ok := q.queuePool.Load(nodeID)
 	if !ok {
-		klog.Errorf("nodeQueue for edge node %s is removed", nodeID)
 		return nil, fmt.Errorf("nodeQueue for edge node %s not found", nodeID)
+	}
+
+	nodeQueue := queue.(workqueue.RateLimitingInterface)
+	return nodeQueue, nil
+}
+
+func (q *ChannelMessageQueue) GetNodeListQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
+	queue, ok := q.listQueuePool.Load(nodeID)
+	if !ok {
+		return nil, fmt.Errorf("nodeListQueue for edge node %s not found", nodeID)
 	}
 
 	nodeQueue := queue.(workqueue.RateLimitingInterface)
@@ -179,8 +253,18 @@ func (q *ChannelMessageQueue) GetNodeStore(nodeID string) (cache.Store, error) {
 	store, ok := q.storePool.Load(nodeID)
 
 	if !ok {
-		klog.Errorf("nodeStore for edge node %s is removed", nodeID)
 		return nil, fmt.Errorf("nodeStore for edge node %s not found", nodeID)
+	}
+
+	nodeStore := store.(cache.Store)
+	return nodeStore, nil
+}
+
+func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, error) {
+	store, ok := q.listStorePool.Load(nodeID)
+
+	if !ok {
+		return nil, fmt.Errorf("nodeListStore for edge node %s not found", nodeID)
 	}
 
 	nodeStore := store.(cache.Store)

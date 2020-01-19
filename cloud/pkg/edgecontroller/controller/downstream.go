@@ -58,6 +58,7 @@ func (dc *DownstreamController) syncPod() {
 				continue
 			}
 			msg := model.NewMessage("")
+			msg.SetResourceVersion(pod.ResourceVersion)
 			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
 			if err != nil {
 				klog.Warningf("built message resource failed with error: %s", err)
@@ -116,6 +117,7 @@ func (dc *DownstreamController) syncConfigMap() {
 			klog.Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
+				msg.SetResourceVersion(configMap.ResourceVersion)
 				resource, err := messagelayer.BuildResource(n, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
@@ -166,6 +168,7 @@ func (dc *DownstreamController) syncSecret() {
 			klog.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
+				msg.SetResourceVersion(secret.ResourceVersion)
 				resource, err := messagelayer.BuildResource(n, secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
@@ -308,6 +311,7 @@ func (dc *DownstreamController) syncService() {
 					return true
 				}
 				msg := model.NewMessage("")
+				msg.SetResourceVersion(svc.ResourceVersion)
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
 					klog.Warningf("Built message resource failed with error: %v", err)
@@ -386,6 +390,7 @@ func (dc *DownstreamController) syncEndpoints() {
 						return true
 					}
 					msg := model.NewMessage("")
+					msg.SetResourceVersion(eps.ResourceVersion)
 					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
 					if err != nil {
 						klog.Warningf("Built message resource failed with error: %s", err)
