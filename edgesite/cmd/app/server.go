@@ -13,6 +13,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
@@ -90,4 +91,6 @@ func registerModules(c *v1alpha1.EdgeSiteConfig) {
 	edged.Register(c.Modules.Edged)
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, c.Modules.Edged.HostnameOverride, true)
 	metamanager.Register(c.Modules.MetaManager)
+	// Nodte: Need to put it to the end, and wait for all models to register before executing
+	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 }

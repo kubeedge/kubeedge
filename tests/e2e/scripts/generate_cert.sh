@@ -55,6 +55,8 @@ sudo mkdir -p $GOPATH/src/github.com/kubeedge/kubeedge/cloud/tmp
 #Copy the generated certs to respective paths
 mkdir -p /tmp/edgecore
 mkdir -p /tmp/cloudcore
+mkdir -p /tmp/edgesite
+
 sudo cp -r rootCA.crt rootCA.key kubeedge.crt kubeedge.key /tmp/edgecore
 sudo cp -r rootCA.crt rootCA.key kubeedge.crt kubeedge.key /tmp/cloudcore
 

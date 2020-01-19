@@ -123,7 +123,7 @@ func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorL
 func ValidateKubeAPIConfig(k cloudconfig.KubeAPIConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	switch {
-	case !path.IsAbs(k.KubeConfig):
+	case k.KubeConfig != "" && !path.IsAbs(k.KubeConfig):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig need abs path"))
 		fallthrough
 	case k.KubeConfig != "" && !utilvalidation.FileIsExist(k.KubeConfig):

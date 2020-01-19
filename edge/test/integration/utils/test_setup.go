@@ -14,21 +14,24 @@ import (
 )
 
 const (
-	EdgeCoreConfigFile = "/tmp/edgecore.yaml"
-	RunEdgecore        = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
-	CheckEdgecore      = "sudo pgrep edgecore"
-	CatEdgecoreLog     = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; cat edgecore.log"
+	EdgeCoreConfigFile    = "/tmp/edgecore.yaml"
+	CatEdgeCoreConfigFile = "cat /tmp/edgecore.yaml"
+	RunEdgecore           = "sudo pkill -9 edgecore; cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
+	CheckEdgecore         = "sudo pgrep edgecore"
+	CatEdgecoreLog        = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; cat edgecore.log"
+	DBFile                = "/tmp/edgecore/edgecore.db"
 )
 
-func CreateEdgeCoreConfigFile() error {
+func CreateEdgeCoreConfigFile(nodeName string) error {
 	c := edgecore.NewDefaultEdgeCoreConfig()
+	c.Modules.Edged.HostnameOverride = nodeName
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
 	c.Modules.EdgeHub.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
 	c.Modules.EventBus.Enable = true
 	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
 	c.Modules.DBTest.Enable = true
-	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
+	c.DataBase.DataSource = DBFile
 
 	data, err := yaml.Marshal(c)
 	if err != nil {
@@ -51,13 +54,17 @@ func StartEdgeCore() error {
 	//Expect(err).Should(BeNil())
 	time.Sleep(5 * time.Second)
 
-	catcmd := exec.Command("sh", "-c", CatEdgecoreLog)
-	fmt.Printf("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
-	bytes, _ := catcmd.CombinedOutput()
-	fmt.Printf("edgecore log:\n %v", string(bytes))
+	catConfigcmd := exec.Command("sh", "-c", CatEdgeCoreConfigFile)
+	fmt.Printf("===========> Executing: %s\n", strings.Join(catConfigcmd.Args, " "))
+	cbytes, _ := catConfigcmd.CombinedOutput()
+	fmt.Printf("config content:\n %v", string(cbytes))
 
 	checkcmd := exec.Command("sh", "-c", CheckEdgecore)
 	if err := PrintCombinedOutput(checkcmd); err != nil {
+		catcmd := exec.Command("sh", "-c", CatEdgecoreLog)
+		fmt.Printf("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
+		bytes, _ := catcmd.CombinedOutput()
+		fmt.Printf("edgecore log:\n %v", string(bytes))
 		fmt.Printf("edgecore started error %v\n", err)
 		os.Exit(1)
 	}
