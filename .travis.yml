@@ -49,7 +49,7 @@ jobs:
         - make edge_cross_build_v7
         - make edgesite_cross_build
         - make edgesite_cross_build_v7
-        - make edgestite_small_build
+        - make edgesite_small_build
     - name: "unit test, integration test edge"
       arch: amd64
       before_script:
