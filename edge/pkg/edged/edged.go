@@ -562,7 +562,7 @@ func (e *edged) StartGarbageCollection() {
 	go utilwait.Until(func() {
 		err := e.imageGCManager.GarbageCollect()
 		if err != nil {
-			klog.Errorf("Image garbage collection failed")
+			klog.Errorf("Image garbage collection failed: %v", err)
 		}
 	}, ImageGCPeriod, utilwait.NeverStop)
 
@@ -847,7 +847,7 @@ func (e *edged) syncPod() {
 		}
 		result, err := beehiveContext.Receive(e.Name())
 		if err != nil {
-			klog.Errorf("failed to get pod")
+			klog.Errorf("failed to get pod: %v", err)
 			continue
 		}
 
@@ -924,7 +924,7 @@ func (e *edged) syncPod() {
 				beehiveContext.SendResp(*resp)
 			}
 		default:
-			klog.Errorf("resType is not pod or configmap or secret: esType is %s", resType)
+			klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
 			continue
 		}
 	}
