@@ -271,7 +271,7 @@ type EventBus struct {
 	// 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only
 	// +Required
 	// default: 2
-	MqttMode MqttMode `json:"mqttMode,omitempty"`
+	MqttMode MqttMode `json:"mqttMode"`
 }
 
 // MetaManager indicates the metamanager module config

@@ -42,9 +42,15 @@ func GenerateCerts() error {
 }
 
 func StartCloudCore() error {
+	catConfigCmd := exec.Command("sh", "-c", constants.CatCloudCoreConfigFile)
+	Infof("===========> Executing: %s\n", strings.Join(catConfigCmd.Args, " "))
+	bytes, _ := catConfigCmd.CombinedOutput()
+	Infof("cloudcore, config:\n %v", string(bytes))
+
 	//Run ./cloudcore binary
 	cmd := exec.Command("sh", "-c", constants.RunCloudcore)
 	if err := PrintCombinedOutput(cmd); err != nil {
+		Errorf("start cloudcore error %v", err)
 		return err
 	}
 	//Expect(err).Should(BeNil())
@@ -54,17 +60,24 @@ func StartCloudCore() error {
 	if err := PrintCombinedOutput(checkcmd); err != nil {
 		catcmd := exec.Command("sh", "-c", constants.CatCloudcoreLog)
 		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
-		bytes, _ := catcmd.CombinedOutput()
-		Errorf("Failed to run cloudcore, error log:\n %v", string(bytes))
+		lbytes, _ := catcmd.CombinedOutput()
+		Errorf("cloudcore, log:\n %v", string(lbytes))
+		Errorf("cloudcore start error %v", err)
 		os.Exit(1)
 	}
 	return nil
 }
 
 func StartEdgeCore() error {
+	catConfig := exec.Command("sh", "-c", constants.CatEdgeCoreConfigFile)
+	Infof("===========> Executing: %s\n", strings.Join(catConfig.Args, " "))
+	cbytes, _ := catConfig.CombinedOutput()
+	Infof("edgecore config :\n %v", string(cbytes))
+
 	//Run ./edgecore after node registration
 	cmd := exec.Command("sh", "-c", constants.RunEdgecore)
 	if err := PrintCombinedOutput(cmd); err != nil {
+		Errorf("start edgecore error %v", err)
 		return err
 	}
 	//Expect(err).Should(BeNil())
@@ -75,16 +88,23 @@ func StartEdgeCore() error {
 		catcmd := exec.Command("sh", "-c", constants.CatEdgecoreLog)
 		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
 		bytes, _ := catcmd.CombinedOutput()
-		Errorf("Failed to run edgecore, error log:\n %v", string(bytes))
+		Errorf("edgecore log:\n %v", string(bytes))
+		Errorf("edgecore start error %v", err)
 		os.Exit(1)
 	}
 	return nil
 }
 
 func StartEdgeSite() error {
+	catConfig := exec.Command("sh", "-c", constants.CatEdgeSiteConfigFile)
+	Infof("===========> Executing: %s\n", strings.Join(catConfig.Args, " "))
+	cbytes, _ := catConfig.CombinedOutput()
+	Infof("edgesite config:\n%v", string(cbytes))
+
 	//Run ./edgecore after node registration
 	cmd := exec.Command("sh", "-c", constants.RunEdgeSite)
 	if err := PrintCombinedOutput(cmd); err != nil {
+		Infof("start edgesite error %v", err)
 		return err
 	}
 	//Expect(err).Should(BeNil())
@@ -95,7 +115,8 @@ func StartEdgeSite() error {
 		catcmd := exec.Command("sh", "-c", constants.CatEdgeSiteLog)
 		Infof("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
 		bytes, _ := catcmd.CombinedOutput()
-		Errorf("Failed to run edgesite, error log:\n %v", string(bytes))
+		Errorf("edgesite log:\n %v", string(bytes))
+		Errorf("edgesite start error %v", err)
 		os.Exit(1)
 	}
 	return nil
@@ -172,7 +193,7 @@ func createEdgeSiteConfigFile(kubeMaster, nodeName string) {
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.KubeAPIConfig.Master = kubeMaster
 	c.KubeAPIConfig.KubeConfig = ""
-	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
+	c.DataBase.DataSource = "/tmp/edgesite/edgesite.db"
 
 	data, err := yaml.Marshal(c)
 	if err != nil {

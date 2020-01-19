@@ -58,6 +58,7 @@ func (eb *eventbus) Start() {
 		mqttBus.MQTTHub = hub
 		hub.InitSubClient()
 		hub.InitPubClient()
+		klog.Infof("Init Sub And Pub Client for externel mqtt broker %v successfully", eventconfig.Get().MqttServerExternal)
 	}
 
 	if eventconfig.Get().MqttMode <= v1alpha1.MqttModeBoth {
@@ -73,7 +74,7 @@ func (eb *eventbus) Start() {
 			klog.Errorf("Launch internel mqtt broker failed, %s", err.Error())
 			os.Exit(1)
 		}
-		klog.Infof("Launch internel mqtt broker successfully")
+		klog.Infof("Launch internel mqtt broker %v successfully", eventconfig.Get().MqttServerInternal)
 	}
 
 	eb.pubCloudMsgToEdge()
@@ -142,19 +143,19 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 }
 
 func (eb *eventbus) publish(topic string, payload []byte) {
-	if eventconfig.Get().MqttMode >= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode >= v1alpha1.MqttModeBoth {
 		// pub msg to external mqtt broker.
 		pubMQTT(topic, payload)
 	}
 
-	if eventconfig.Get().MqttMode <= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode <= v1alpha1.MqttModeBoth {
 		// pub msg to internal mqtt broker.
 		mqttServer.Publish(topic, payload)
 	}
 }
 
 func (eb *eventbus) subscribe(topic string) {
-	if eventconfig.Get().MqttMode >= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode >= v1alpha1.MqttModeBoth {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
@@ -162,7 +163,7 @@ func (eb *eventbus) subscribe(topic string) {
 		}
 	}
 
-	if eventconfig.Get().MqttMode <= eventconfig.BothMqttMode {
+	if eventconfig.Get().MqttMode <= v1alpha1.MqttModeBoth {
 		// set topic to internal mqtt broker.
 		mqttServer.SetTopic(topic)
 	}

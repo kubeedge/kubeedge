@@ -52,7 +52,7 @@ type KubeAPIConfig struct {
 	// Kubeconfig indicates the path to kubeconfig file with authorization and master location information.
 	// default "/root/.kube/config"
 	// +Required
-	KubeConfig string `json:"kubeConfig,omitempty"`
+	KubeConfig string `json:"kubeConfig"`
 }
 
 // Modules indicates the modules of cloudcore will be use
