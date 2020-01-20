@@ -1,6 +1,6 @@
 # KubeEdge Configuration
 
-KubeEdge requires configuration on both [Cloud side (KubeEdge Master Node)](#Configuration-Cloud-side-(KubeEdge-Master-Node)) and [Edge side (KubeEdge Worker Node)](#Configuration-Edge-side-(KubeEdge-Worker-Node))
+KubeEdge requires configuration on both [Cloud side (KubeEdge Master Node)](#configuration-cloud-side-(kubeedge-master-node)) and [Edge side (KubeEdge Worker Node)](#configuration-edge-side-(kubeedge-worker-node))
 
 ## Configuration Cloud side (KubeEdge Master Node)
 
@@ -151,13 +151,43 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     kubectl apply -f ~/cmd/yaml/node.json
 ```
 
+#### Check if the certificates are created (Run on cloud side)
+
+RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
+
+Ideally, when you setup KubeEdge on the cloud side, certificates would have been generated. Check `/etc/kubeedge`. 
+
+If not, perform the following below steps
+
+```shell
+$GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
+```
+
+or 
+
+```shell
+wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/tools/certgen.sh
+# make script executable
+chmod +x certgen.sh
+bash -x ./certgen.sh genCertAndKey edge
+```
+The cert/key will be generated in the /etc/kubeedge/ca and /etc/kubeedge/certs respectively, so this command should be run with root or users who have access to those directories. 
+We need to copy these files to the corresponding edge side server directory.
+
+We can create the `certs.tgz` by 
+
+```shell
+cd /etc/kubeedge
+tar -cvzf certs.tgz certs/
+```
+
 #### Transfer certificate file from the cloud side to edge side
 
 Transfer certificate files to the edge node, because `edgecore` uses these certificate files to connect to `cloudcore`
 
 This can be done by utilising scp
 
-```
+```shell
 cd /etc/kubeedge/
 scp -r certs.tgz username@destination:/etc/kubeedge
 ```
@@ -165,11 +195,26 @@ Here, we are copying the certs.tgz from the cloud side to the edge node in the /
 
 ## Configuration Edge side (KubeEdge Worker Node)
 
+### Manually copy certs.tgz from cloud host to edge host(s)
+
+On edge host
+
+```shell
+mkdir -p /etc/kubeedge
+```
+
+On edge host untar the certs.tgz file
+
+```shell
+cd /etc/kubeedge
+tar -xvzf certs.tgz
+```
+
 ### Set edgecore config file
 
 
 ```shell
-  mkdir ~/cmd/conf
+  mkdir -p ~/cmd/conf
   cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/* ~/cmd/conf
   vim ~/cmd/conf/edge.yaml
 ```
@@ -274,6 +319,7 @@ Verify the configurations before running `edgecore`
     + `kubeedge/pause-arm:3.1` for arm arch
     + `kubeedge/pause-arm64:3.1` for arm64 arch
     + `kubeedge/pause:3.1` for x86 arch
+
 4. Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
     
 5. Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files do not exist, you need to copy them from the cloud side.
@@ -305,11 +351,11 @@ Verify the configurations before running `edgecore`
     ```
 8. If your runtime-type is remote, specify the following parameters for remote/CRI based runtimes
     ```yaml
-    remote-runtime-endpoint: /var/run/containerd/containerd.sock`
-    remote-image-endpoint: /var/run/containerd/containerd.sock`
-    runtime-request-timeout: 2`
-    podsandbox-image: k8s.gcr.io/pause`
-    kubelet-root-dir: /var/run/kubelet/`
+    remote-runtime-endpoint: /var/run/containerd/containerd.sock
+    remote-image-endpoint: /var/run/containerd/containerd.sock
+    runtime-request-timeout: 2
+    podsandbox-image: k8s.gcr.io/pause
+    kubelet-root-dir: /var/run/kubelet/
     ```
 
 #### Configuring MQTT mode
