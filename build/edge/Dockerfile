@@ -25,6 +25,5 @@ ENV database.source /var/lib/kubeedge/edge.db
 VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
 
 COPY --from=builder /usr/local/bin/edgecore /usr/local/bin/edgecore
-COPY --from=builder /go/src/github.com/kubeedge/kubeedge/edge/conf /etc/kubeedge/edge/conf
 
 ENTRYPOINT ["edgecore"]

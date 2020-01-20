@@ -23,6 +23,5 @@ ENV database.source /var/lib/kubeedge/edge.db
 VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
 
 COPY --from=builder /usr/local/bin/edgesite /usr/local/bin/edgesite
-COPY --from=builder /go/src/github.com/kubeedge/kubeedge/edgesite/conf /etc/kubeedge/edgesite/conf
 
 ENTRYPOINT ["edgesite"]
