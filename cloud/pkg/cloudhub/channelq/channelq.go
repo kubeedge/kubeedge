@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
@@ -17,8 +18,7 @@ import (
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/common/constants"
-	common "github.com/kubeedge/kubeedge/common/constants"
+	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // ChannelMessageQueue is the channel implementation of MessageQueue
@@ -61,7 +61,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			continue
 		}
 
-		if isListResource(msg.GetResource()) {
+		if isListResource(&msg) {
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
 			q.addMessageToQueue(nodeID, &msg)
@@ -81,8 +81,11 @@ func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveM
 		klog.Errorf("fail to get nodeListStore for Node: %s", nodeID)
 		return
 	}
-	nodeListQueue.Add(msg.Header.ID)
+
+	messageKey, _ := getListMsgKey(msg)
+
 	nodeListStore.Add(msg)
+	nodeListQueue.Add(messageKey)
 }
 
 func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel.Message) {
@@ -110,32 +113,35 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 
 	item, exist, _ := nodeStore.GetByKey(messageKey)
 
-	// If the message doesn't exist in the store, then compare it with
-	// the version stored in the database
-	if !exist {
-		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
-		resourceUID, err := GetMessageUID(msg)
-		if err != nil {
-			klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
-			return
+	if !isDeleteMessage(msg) {
+		// If the message doesn't exist in the store, then compare it with
+		// the version stored in the database
+		if !exist {
+			resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
+			resourceUID, err := GetMessageUID(*msg)
+			if err != nil {
+				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
+				return
+			}
+
+			objectSync, err := q.ObjectSyncController.ObjectSyncLister.ObjectSyncs(resourceNamespace).Get(strings.Join([]string{nodeID, resourceUID}, "-"))
+			if err == nil && msg.GetResourceVersion() <= objectSync.ResourceVersion {
+				return
+			}
 		}
 
-		objectSync, err := q.ObjectSyncController.ObjectSyncLister.ObjectSyncs(resourceNamespace).Get(strings.Join([]string{nodeID, resourceUID}, "/"))
-		if err == nil && msg.GetResourceVersion() <= objectSync.ResourceVersion {
-			return
+		// Check if message is older than already in store, if it is, discard it directly
+		if exist {
+			msgInStore := item.(*beehiveModel.Message)
+			if msg.GetResourceVersion() <= msgInStore.GetResourceVersion() ||
+				isDeleteMessage(msgInStore) {
+				return
+			}
 		}
 	}
 
-	// Check if message is older than already in store, if it is, discard it directly
-	if exist {
-		msgInStore := item.(*beehiveModel.Message)
-		if msg.GetResourceVersion() <= msgInStore.GetResourceVersion() {
-			return
-		}
-	}
-
-	nodeQueue.Add(messageKey)
 	nodeStore.Add(msg)
+	nodeQueue.Add(messageKey)
 }
 
 func getMsgKey(obj interface{}) (string, error) {
@@ -151,13 +157,46 @@ func getMsgKey(obj interface{}) (string, error) {
 	return "", fmt.Errorf("Failed to get message key")
 }
 
-func isListResource(resourceType string) bool {
-	if resourceType == beehiveModel.ResourceTypePodlist ||
-		resourceType == common.ResourceTypeServiceList ||
-		resourceType == common.ResourceTypeEndpointsList ||
-		resourceType == beehiveModel.ResourceTypeNode ||
-		resourceType == "membership" ||
-		strings.Contains(resourceType, deviceconstants.ResourceTypeTwinEdgeUpdated) {
+func getListMsgKey(obj interface{}) (string, error) {
+	msg := obj.(*beehiveModel.Message)
+
+	return msg.Header.ID, nil
+}
+
+func isListResource(msg *beehiveModel.Message) bool {
+	msgResource := msg.GetResource()
+	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
+		strings.Contains(msgResource, commonconst.ResourceTypeServiceList) ||
+		strings.Contains(msgResource, commonconst.ResourceTypeEndpointsList) ||
+		strings.Contains(msgResource, "membership") ||
+		strings.Contains(msgResource, deviceconstants.ResourceTypeTwinEdgeUpdated) {
+		return true
+	}
+
+	if msg.GetOperation() == beehiveModel.ResponseOperation {
+		content, ok := msg.Content.(string)
+		if ok && content == "OK" {
+			return true
+		}
+	}
+
+	if msg.GetSource() == edgeconst.EdgeControllerModuleName {
+		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+		if resourceType == beehiveModel.ResourceTypeNode {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isDeleteMessage(msg *beehiveModel.Message) bool {
+	deletionTimestamp, err := GetMessageDeletionTimestamp(msg)
+	if err != nil {
+		klog.Errorf("fail to get message DeletionTimestamp for message: %s", msg.Header.ID)
+		return false
+	}
+	if msg.GetOperation() == beehiveModel.DeleteOperation || deletionTimestamp != nil {
 		return true
 	}
 	return false
@@ -166,7 +205,7 @@ func isListResource(resourceType string) bool {
 // getNodeID from "beehive/pkg/core/model".Message.Router.Resource
 func GetNodeID(msg *beehiveModel.Message) (string, error) {
 	resource := msg.Router.Resource
-	tokens := strings.Split(resource, constants.ResourceSep)
+	tokens := strings.Split(resource, commonconst.ResourceSep)
 	numOfTokens := len(tokens)
 	for i, token := range tokens {
 		if token == model.ResNode && i+1 < numOfTokens && tokens[i+1] != "" {
@@ -203,7 +242,7 @@ func (q *ChannelMessageQueue) Connect(info *model.HubInfo) {
 		q.listQueuePool.Store(info.NodeID, nodeListQueue)
 	}
 	if !listStoreExit {
-		nodeListStore := cache.NewStore(getMsgKey)
+		nodeListStore := cache.NewStore(getListMsgKey)
 		q.listStorePool.Store(info.NodeID, nodeListStore)
 	}
 }
@@ -288,11 +327,20 @@ func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, erro
 	return nodeStore, nil
 }
 
-func GetMessageUID(msg *beehiveModel.Message) (string, error) {
+func GetMessageUID(msg beehiveModel.Message) (string, error) {
 	accessor, err := meta.Accessor(msg.Content)
 	if err != nil {
 		return "", err
 	}
 
 	return string(accessor.GetUID()), nil
+}
+
+func GetMessageDeletionTimestamp(msg *beehiveModel.Message) (*metav1.Time, error) {
+	accessor, err := meta.Accessor(msg.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessor.GetDeletionTimestamp(), nil
 }
