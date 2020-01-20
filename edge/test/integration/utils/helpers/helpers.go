@@ -24,8 +24,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -35,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
@@ -130,14 +129,7 @@ func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue
 //Function to access the edgecore DB and return the device state.
 func GetDeviceStateFromDB(deviceID string) string {
 	var device Device
-
-	pwd, err := os.Getwd()
-	if err != nil {
-		common.Fatalf("Failed to get PWD: %v", err)
-		os.Exit(1)
-	}
-	destpath := filepath.Join(pwd, "../../edge.db")
-	db, err := sql.Open("sqlite3", destpath)
+	db, err := sql.Open("sqlite3", utils.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
@@ -161,13 +153,7 @@ func GetDeviceStateFromDB(deviceID string) string {
 
 func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	var twinAttribute TwinAttribute
-	pwd, err := os.Getwd()
-	if err != nil {
-		common.Fatalf("Failed to get PWD: %v", err)
-		os.Exit(1)
-	}
-	destpath := filepath.Join(pwd, "../../edge.db")
-	db, err := sql.Open("sqlite3", destpath)
+	db, err := sql.Open("sqlite3", utils.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
@@ -203,13 +189,7 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 func GetDeviceAttributesFromDB(deviceID string, Name string) Attribute {
 	var attribute Attribute
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		common.Fatalf("Failed to get PWD: %v", err)
-		os.Exit(1)
-	}
-	destPath := filepath.Join(pwd, "../../edge.db")
-	db, err := sql.Open("sqlite3", destPath)
+	db, err := sql.Open("sqlite3", utils.DBFile)
 	if err != nil {
 		common.Fatalf("Open Sqlite DB failed : %v", err)
 	}
@@ -324,12 +304,12 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 	t := time.Now()
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	if err != nil {
 		// handle error
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
+	common.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	return true
 }
 

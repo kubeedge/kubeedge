@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -81,12 +80,6 @@ func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	// TODO @kadisi, need consider to support hostname or domain name
-	quicIP := strings.SplitN(h.Quic.Server, ":", 1)[0]
-	wsIP := strings.SplitN(h.WebSocket.Server, ":", 1)[0]
-	validQAddress := utilvalidation.IsValidIP(quicIP)
-	validWSAddress := utilvalidation.IsValidIP(wsIP)
-
 	switch {
 	case !utilvalidation.FileIsExist(h.TLSPrivateKeyFile):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"),
@@ -99,16 +92,6 @@ func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
 	case !utilvalidation.FileIsExist(h.TLSCAFile):
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"),
 			h.TLSCAFile, "TLSCAFile not exist"))
-		fallthrough
-	case len(validQAddress) > 0:
-		for _, m := range validQAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("quic.server"), h.Quic.Server, m))
-		}
-		fallthrough
-	case len(validWSAddress) > 0:
-		for _, m := range validWSAddress {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("websocket.server"), h.WebSocket.Server, m))
-		}
 		fallthrough
 	case h.WebSocket.Enable == h.Quic.Enable:
 		allErrs = append(allErrs, field.Invalid(field.NewPath("enable"),

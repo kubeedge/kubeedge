@@ -66,7 +66,7 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 }
 
 func sendToCloud(message *model.Message) {
-	beehiveContext.SendToGroup(metaManagerConfig.Get().SendModuleGroupName, *message)
+	beehiveContext.SendToGroup(string(metaManagerConfig.Get().ContextSendGroup), *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -400,7 +400,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		originalID := message.GetID()
 		message.UpdateID()
 		resp, err := beehiveContext.SendSync(
-			metaManagerConfig.Get().SendModuleName,
+			string(metaManagerConfig.Get().ContextSendModule),
 			message,
 			60*time.Second) // TODO: configurable
 		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)

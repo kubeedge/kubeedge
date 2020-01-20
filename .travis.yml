@@ -33,7 +33,7 @@ jobs:
       script:
         - make verify
         - make lint
-
+        
     - stage: "Test on amd64"
       name: "build, smallbuild, crossbuild"
       arch: amd64
@@ -75,7 +75,6 @@ jobs:
         - make edgeimage ARCH="amd64"
         - make edgesiteimage ARCH="amd64"
         - make bluetoothdevice_image
-
 
     - stage: "Test on arm64"
       name: "build, smallbuild"

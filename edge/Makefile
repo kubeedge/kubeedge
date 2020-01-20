@@ -28,7 +28,7 @@ lint:
 	go vet ./...
 
 .PHONY: integration_test
-integration_test:
+integration_test: edgecore
 	bash test/integration/scripts/execute.sh
 
 .PHONY: clean

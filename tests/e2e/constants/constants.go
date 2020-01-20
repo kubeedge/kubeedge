@@ -1,9 +1,17 @@
 package constants
 
 const (
-	RunCloudcore = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud/; sudo nohup ./cloudcore > cloudcore.log 2>&1 &"
-	RunEdgecore  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edgecore > edgecore.log 2>&1 &"
-	RunEdgeSite  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edgesite/; sudo nohup ./edgesite > edgesite.log 2>&1 &"
+	CloudCoreConfigFile = "/tmp/cloudcore.yaml"
+	EdgeCoreConfigFile  = "/tmp/edgecore.yaml"
+	EdgeSiteConfigFile  = "/tmp/edgesite.yaml"
+
+	CatCloudCoreConfigFile = "cat " + CloudCoreConfigFile
+	CatEdgeCoreConfigFile  = "cat " + EdgeCoreConfigFile
+	CatEdgeSiteConfigFile  = "cat " + EdgeSiteConfigFile
+
+	RunCloudcore = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/cloud/; sudo nohup ./cloudcore --config=" + CloudCoreConfigFile + " > cloudcore.log 2>&1 &"
+	RunEdgecore  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
+	RunEdgeSite  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edgesite/; sudo nohup ./edgesite --config=" + EdgeSiteConfigFile + " > edgesite.log 2>&1 &"
 
 	CheckCloudcore = "sudo pgrep cloudcore"
 	CheckEdgecore  = "sudo pgrep edgecore"

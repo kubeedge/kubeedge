@@ -18,6 +18,7 @@ const (
 	EdgeRegistry = "edge"
 )
 
+// TODO Remove the init method, because it will cause invalid logs to be printed when the program is running @kadisi
 // init initialize the plugin of edge meta registry
 func init() { registry.InstallServiceDiscovery(EdgeRegistry, NewServiceDiscovery) }
 
