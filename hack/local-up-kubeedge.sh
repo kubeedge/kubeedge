@@ -18,7 +18,6 @@ KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
 
-
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
 fi
@@ -71,7 +70,7 @@ function build_cloudcore {
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
   mkdir -p ${KUBEEDGE_ROOT}/_output/bin/cloud
   mv ${KUBEEDGE_ROOT}/cloud/cloudcore ${KUBEEDGE_ROOT}/_output/bin/cloud
-  cp -r ${KUBEEDGE_ROOT}/cloud/conf ${KUBEEDGE_ROOT}/_output/bin/cloud
+  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/cloud/conf
 }
 
 function build_edgecore {
@@ -79,7 +78,7 @@ function build_edgecore {
   make -C "${KUBEEDGE_ROOT}" WHAT="edgecore"
   mkdir -p ${KUBEEDGE_ROOT}/_output/bin/edge
   mv ${KUBEEDGE_ROOT}/edge/edgecore ${KUBEEDGE_ROOT}/_output/bin/edge
-  cp -r ${KUBEEDGE_ROOT}/edge/conf ${KUBEEDGE_ROOT}/_output/bin/edge
+  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/edge/conf
 }
 
 function generate_certs {
@@ -89,12 +88,14 @@ function generate_certs {
 }
 
 function start_cloudcore {
-  echo "start cloudcore..."
-  sed -i "s|kubeconfig: .*|kubeconfig: ${KUBECONFIG}|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
-  sed -i "s|master: .*|master: \"\"|g" ${KUBEEDGE_ROOT}/_output/bin/cloud/conf/controller.yaml
+  CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/bin/cloud/conf/cloud.yaml
+  CLOUD_BIN=${KUBEEDGE_ROOT}/_output/bin/cloud/cloudcore
+  ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
+  sed -i "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" ${CLOUD_CONFIGFILE}
 
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
-  cd ${KUBEEDGE_ROOT}/_output/bin/cloud && nohup ./cloudcore > "${CLOUDCORE_LOG}" 2>&1 &
+  echo "start cloudcore..."
+  nohup ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
 }
 
@@ -104,10 +105,15 @@ function create_node {
 }
 
 function start_edgecore {
-  echo "start edgecore..."
+  EDGE_CONFIGFILE=${KUBEEDGE_ROOT}/_output/bin/edge/conf/edge.yaml
+  EDGE_BIN=${KUBEEDGE_ROOT}/_output/bin/edge/edgecore
+  ${EDGE_BIN} --minconfig >  ${EDGE_CONFIGFILE}
+  sed -i "s|hostnameOverride: .*|hostnameOverride: edge-node|g" ${EDGE_CONFIGFILE}
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
+
   export CHECK_EDGECORE_ENVIRONMENT="false"
-  cd ${KUBEEDGE_ROOT}/_output/bin/edge && nohup ./edgecore > "${EDGECORE_LOG}" 2>&1 &
+  echo "start edgecore..."
+  nohup ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
