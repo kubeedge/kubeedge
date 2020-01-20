@@ -17,19 +17,46 @@ limitations under the License.
 package options
 
 import (
+	"fmt"
+	"path"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	cliflag "k8s.io/component-base/cli/flag"
+
+	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
-// TODO set edgecore config
 type EdgeCoreOptions struct {
+	ConfigFile string
 }
 
 func NewEdgeCoreOptions() *EdgeCoreOptions {
-	return &EdgeCoreOptions{}
+	return &EdgeCoreOptions{
+		ConfigFile: path.Join(constants.DefaultConfigDir, "edgecore.yaml"),
+	}
 }
 
 func (o *EdgeCoreOptions) Flags() (fss cliflag.NamedFlagSets) {
-	// TODO set EdgeCoreOptions field
-	//fs := fss.FlagSet("general")
+	fs := fss.FlagSet("global")
+	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
 	return
+}
+
+func (o *EdgeCoreOptions) Validate() []error {
+	var errs []error
+	if !validation.FileIsExist(o.ConfigFile) {
+		errs = append(errs, field.Required(field.NewPath("config"),
+			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
+	}
+	return errs
+}
+
+func (o *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	if err := cfg.Parse(o.ConfigFile); err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }

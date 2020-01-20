@@ -73,7 +73,8 @@ func TestEdgecoreEventBus(t *testing.T) {
 
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
-
+		//Expect(utils.CreateEdgeCoreConfigFile()).Should(BeNil())
+		//Expect(utils.StartEdgeCore()).Should(BeNil())
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")

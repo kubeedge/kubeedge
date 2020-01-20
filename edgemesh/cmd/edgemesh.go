@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg"
+
 	"github.com/spf13/pflag"
 	"k8s.io/klog"
 
@@ -15,7 +15,8 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	pkg.Register()
+	// TODO need parse edgemesh config file before Register @kadisi
+	//pkg.Register()
 
 	//Start server
 	server.StartTCP()

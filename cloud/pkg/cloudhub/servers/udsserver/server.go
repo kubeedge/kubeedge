@@ -10,13 +10,12 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	hubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // StartServer serves
-func StartServer(config *hubconfig.Configure) {
-	uds := NewUnixDomainSocket(config.UDSAddress)
+func StartServer(address string) {
+	uds := NewUnixDomainSocket(address)
 	uds.SetContextHandler(func(context string) string {
 		// receive message from client
 		klog.Infof("uds server receives context: %s", context)

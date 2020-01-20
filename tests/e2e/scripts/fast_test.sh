@@ -31,9 +31,9 @@ cat >config.json<<END
 {
         "image_url": ["nginx", "hello-world"],
         "k8smasterforkubeedge":"http://$MASTER_IP:12418",
-         "dockerhubusername":"user",
-         "dockerhubpassword":"password",
-         "mqttendpoint":"tcp://127.0.0.1:1884"
+        "dockerhubusername":"user",
+        "dockerhubpassword":"password",
+        "mqttendpoint":"tcp://127.0.0.1:1884"
 }
 END
 
@@ -41,7 +41,8 @@ if [ $# -eq 0 ]
   then
     #run testcase
     ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
-    ./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+    # @kadisi
+    #./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
 else
 if compilemodule=="bluetooth"
 then

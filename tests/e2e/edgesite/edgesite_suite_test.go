@@ -35,7 +35,7 @@ var (
 )
 
 //Function to run the Ginkgo Test
-func TestEdgecoreAppDeployment(t *testing.T) {
+func TestEdgeSiteAppDeployment(t *testing.T) {
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 		utils.Infof("Before Suite Execution")

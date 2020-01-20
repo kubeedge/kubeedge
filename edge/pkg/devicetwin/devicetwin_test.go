@@ -78,7 +78,7 @@ func TestStart(t *testing.T) {
 
 	const delay = 10 * time.Millisecond
 	const maxRetries = 5
-	var retry int = 0
+	retry := 0
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -88,10 +88,12 @@ func TestStart(t *testing.T) {
 	fakeModule = beehive.NewMockModule(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
+	fakeModule.EXPECT().Enable().Return(true).Times(1)
+	fakeModule.EXPECT().Name().Return(TestModule).MaxTimes(5)
+
 	core.Register(fakeModule)
 	beehiveContext.AddModule(TestModule)
-	dt := newDeviceTwin()
+	dt := newDeviceTwin(true)
 	core.Register(dt)
 	beehiveContext.AddModule(dt.Name())
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
@@ -103,12 +105,10 @@ func TestStart(t *testing.T) {
 	// Sending a message from devicetwin module to the created fake module(TestModule) to check context is initialized properly.
 	beehiveContext.Send(TestModule, test)
 	_, err := beehiveContext.Receive(TestModule)
-	t.Run("MessagePingTest", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("Error while receiving message: %v", err)
-			return
-		}
-	})
+	if err != nil {
+		t.Errorf("Error while receiving message: %v", err)
+		return
+	}
 	//Checking whether Mem,Twin,Device and Comm modules are registered and started successfully.
 	tests := []struct {
 		name       string

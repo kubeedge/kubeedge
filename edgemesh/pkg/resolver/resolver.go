@@ -60,7 +60,7 @@ func (resolver *MyResolver) Resolve(data chan []byte, stop chan interface{}, inv
 				i.SourceServiceID = ""
 				i.Protocol = "rest"
 				i.Args = req
-				i.Strategy = config.Get().StrategyName
+				i.Strategy = config.Get().LBStrategy
 				i.Reply = &http.Response{}
 				invCallback("http", *i)
 			}

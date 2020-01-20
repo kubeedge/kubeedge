@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -16,6 +18,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -36,10 +39,26 @@ runs on edge nodes and manages containerized applications.`,
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultEdgeSiteConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			if errs := opts.Validate(); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				os.Exit(1)
+			}
+
+			config, err := opts.Config()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+
+			if errs := validation.ValidateEdgeSiteConfiguration(config); len(errs) > 0 {
+				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				os.Exit(1)
+			}
+
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 
-			registerModules()
+			registerModules(config)
 			// start all modules
 			core.Run()
 		},
@@ -68,9 +87,10 @@ runs on edge nodes and manages containerized applications.`,
 }
 
 // registerModules register all the modules started in edgesite
-func registerModules() {
-	edged.Register()
-	edgecontroller.Register()
-	metamanager.Register()
-	dbm.InitDBManager()
+func registerModules(c *v1alpha1.EdgeSiteConfig) {
+	edged.Register(c.Modules.Edged)
+	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, c.Modules.Edged.HostnameOverride, true)
+	metamanager.Register(c.Modules.MetaManager)
+	// Nodte: Need to put it to the end, and wait for all models to register before executing
+	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 }
