@@ -403,12 +403,14 @@ func (uc *UpstreamController) updateNodeStatus() {
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
 
 				getNode.Status = nodeStatusRequest.Status
-				if _, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(getNode); err != nil {
+				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(getNode)
+				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
 				}
 
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(node.ResourceVersion)
 				resMsg.Content = "OK"
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -467,6 +469,7 @@ func (uc *UpstreamController) queryConfigMap() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(configMap.ResourceVersion)
 				resMsg.Content = configMap
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -522,6 +525,7 @@ func (uc *UpstreamController) querySecret() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(secret.ResourceVersion)
 				resMsg.Content = secret
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -579,6 +583,7 @@ func (uc *UpstreamController) queryService() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(svc.ResourceVersion)
 				resMsg.Content = svc
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -633,6 +638,7 @@ func (uc *UpstreamController) queryEndpoints() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(eps.ResourceVersion)
 				resMsg.Content = eps
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -690,6 +696,7 @@ func (uc *UpstreamController) queryPersistentVolume() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(pv.ResourceVersion)
 				resMsg.Content = pv
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -747,6 +754,7 @@ func (uc *UpstreamController) queryPersistentVolumeClaim() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(pvc.ResourceVersion)
 				resMsg.Content = pvc
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -804,6 +812,7 @@ func (uc *UpstreamController) queryVolumeAttachment() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(va.ResourceVersion)
 				resMsg.Content = va
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -889,13 +898,14 @@ func (uc *UpstreamController) updateNode() {
 				for k, v := range noderequest.Annotations {
 					getNode.Annotations[k] = v
 				}
-
-				if _, err := uc.kubeClient.CoreV1().Nodes().Update(getNode); err != nil {
+				node, err := uc.kubeClient.CoreV1().Nodes().Update(getNode)
+				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
 				}
 
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(node.ResourceVersion)
 				resMsg.Content = "OK"
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
@@ -953,6 +963,7 @@ func (uc *UpstreamController) queryNode() {
 					continue
 				}
 				resMsg := model.NewMessage(msg.GetID())
+				resMsg.SetResourceVersion(node.ResourceVersion)
 				resMsg.Content = node
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
