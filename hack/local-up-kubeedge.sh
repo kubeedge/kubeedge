@@ -64,6 +64,12 @@ function create_device_crd {
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1alpha1_devicemodel.yaml
 }
 
+function create_objectsync_crd {
+  echo "creating the objectsync crd..."
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
+}
+
 function build_cloudcore {
   # TODO: make the binary to _output dir
   echo "building the cloudcore..."
@@ -155,6 +161,7 @@ check_control_plane_ready
 kubectl delete daemonset kindnet -nkube-system
 
 create_device_crd
+create_objectsync_crd
 generate_certs
 start_cloudcore
 create_node
