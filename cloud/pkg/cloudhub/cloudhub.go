@@ -1,7 +1,17 @@
 package cloudhub
 
 import (
+	"os"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
+	crdinformerfactory "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
@@ -19,8 +29,8 @@ func newCloudHub(enable bool) *cloudHub {
 	}
 }
 
-func Register(hub *v1alpha1.CloudHub) {
-	hubconfig.InitConfigure(hub)
+func Register(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
+	hubconfig.InitConfigure(hub, kubeAPIConfig)
 	core.Register(newCloudHub(hub.Enable))
 }
 
@@ -38,7 +48,17 @@ func (a *cloudHub) Enable() bool {
 }
 
 func (a *cloudHub) Start() {
-	messageq := channelq.NewChannelMessageQueue()
+	objectSyncController := newObjectSyncController()
+
+	if !cache.WaitForCacheSync(beehiveContext.Done(),
+		objectSyncController.ClusterObjectSyncSynced,
+		objectSyncController.ObjectSyncSynced,
+	) {
+		klog.Errorf("unable to sync caches for objectSyncController")
+		os.Exit(1)
+	}
+
+	messageq := channelq.NewChannelMessageQueue(objectSyncController)
 
 	// start dispatch message from the cloud to edge node
 	go messageq.DispatchMessage()
@@ -50,4 +70,50 @@ func (a *cloudHub) Start() {
 		// It is not used to communicate between cloud and edge.
 		go udsserver.StartServer(hubconfig.Get().UnixSocket.Address)
 	}
+}
+
+func newObjectSyncController() *hubconfig.ObjectSyncController {
+	config, err := buildConfig()
+	if err != nil {
+		klog.Errorf("Failed to build config, err: %v", err)
+		os.Exit(1)
+	}
+
+	crdClient := versioned.NewForConfigOrDie(config)
+	crdFactory := crdinformerfactory.NewSharedInformerFactory(crdClient, 0)
+
+	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
+
+	sc := &hubconfig.ObjectSyncController{
+		CrdClient: crdClient,
+
+		ClusterObjectSyncInformer: clusterObjectSyncInformer,
+		ObjectSyncInformer:        objectSyncInformer,
+
+		ClusterObjectSyncSynced: clusterObjectSyncInformer.Informer().HasSynced,
+		ObjectSyncSynced:        objectSyncInformer.Informer().HasSynced,
+
+		ClusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
+		ObjectSyncLister:        objectSyncInformer.Lister(),
+	}
+
+	go sc.ClusterObjectSyncInformer.Informer().Run(beehiveContext.Done())
+	go sc.ObjectSyncInformer.Informer().Run(beehiveContext.Done())
+
+	return sc
+}
+
+// build Config from flags
+func buildConfig() (conf *rest.Config, err error) {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(hubconfig.Get().KubeAPIConfig.Master,
+		hubconfig.Get().KubeAPIConfig.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	kubeConfig.QPS = float32(hubconfig.Get().KubeAPIConfig.QPS)
+	kubeConfig.Burst = int(hubconfig.Get().KubeAPIConfig.Burst)
+	kubeConfig.ContentType = hubconfig.Get().KubeAPIConfig.ContentType
+
+	return kubeConfig, nil
 }

@@ -3,13 +3,16 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -20,6 +23,7 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -421,7 +425,7 @@ LOOP:
 		select {
 		case <-mh.MessageAckChannel[msg.GetID()]:
 			delete(mh.MessageAckChannel, msg.GetID())
-			mh.saveSuccessPoint(msg)
+			mh.saveSuccessPoint(msg, info)
 			break LOOP
 		case <-ticker.C:
 			if retry == 4 {
@@ -443,13 +447,41 @@ func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *bee
 	}
 }
 
-func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message) {
-	klog.Infof("saveSuccessPoint processing")
+func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo) {
 	if msg.GetGroup() == edgeconst.GroupResource {
+		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
+		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
+		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+		resourceUID, err := channelq.GetMessageUID(msg)
+		if err != nil {
+			return
+		}
 
+		objectSyncName := strings.Join([]string{info.NodeID, resourceUID}, "/")
+		objectSync, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(objectSyncName, v1.GetOptions{})
+		if err == nil {
+			objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
+			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(objectSync)
+		} else if err != nil && apierrors.IsNotFound(err) {
+			objectSync := &v1alpha1.ObjectSync{
+				ObjectMeta: v1.ObjectMeta{
+					Name: objectSyncName,
+				},
+				Spec: v1alpha1.ObjectSyncSpec{
+					ObjectAPIVersion: "",
+					ObjectKind:       resourceType,
+					ObjectName:       resourceName,
+				},
+				Status: v1alpha1.ObjectSyncStatus{
+					ObjectResourceVersion: msg.GetResourceVersion(),
+				},
+			}
+			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(objectSync)
+		}
 	}
 
+	// TODO: save device info
 	if msg.GetGroup() == deviceconst.GroupTwin {
-
 	}
+	klog.Infof("saveSuccessPoint successfully for message: %s", msg.GetResource())
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
@@ -12,6 +13,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
@@ -26,11 +28,15 @@ type ChannelMessageQueue struct {
 
 	listQueuePool sync.Map
 	listStorePool sync.Map
+
+	ObjectSyncController *hubconfig.ObjectSyncController
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue() *ChannelMessageQueue {
-	return &ChannelMessageQueue{}
+func NewChannelMessageQueue(objectSyncController *hubconfig.ObjectSyncController) *ChannelMessageQueue {
+	return &ChannelMessageQueue{
+		ObjectSyncController: objectSyncController,
+	}
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
@@ -107,7 +113,17 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 	// If the message doesn't exist in the store, then compare it with
 	// the version stored in the database
 	if !exist {
+		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
+		resourceUID, err := GetMessageUID(msg)
+		if err != nil {
+			klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
+			return
+		}
 
+		objectSync, err := q.ObjectSyncController.ObjectSyncLister.ObjectSyncs(resourceNamespace).Get(strings.Join([]string{nodeID, resourceUID}, "/"))
+		if err == nil && msg.GetResourceVersion() <= objectSync.ResourceVersion {
+			return
+		}
 	}
 
 	// Check if message is older than already in store, if it is, discard it directly
@@ -129,7 +145,7 @@ func getMsgKey(obj interface{}) (string, error) {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
-		return resourceType + "/" + resourceNamespace + "/" + resourceName, nil
+		return strings.Join([]string{resourceType, resourceNamespace, resourceName}, "/"), nil
 	}
 
 	return "", fmt.Errorf("Failed to get message key")
@@ -139,6 +155,7 @@ func isListResource(resourceType string) bool {
 	if resourceType == beehiveModel.ResourceTypePodlist ||
 		resourceType == common.ResourceTypeServiceList ||
 		resourceType == common.ResourceTypeEndpointsList ||
+		resourceType == beehiveModel.ResourceTypeNode ||
 		resourceType == "membership" ||
 		strings.Contains(resourceType, deviceconstants.ResourceTypeTwinEdgeUpdated) {
 		return true
@@ -269,4 +286,13 @@ func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, erro
 
 	nodeStore := store.(cache.Store)
 	return nodeStore, nil
+}
+
+func GetMessageUID(msg *beehiveModel.Message) (string, error) {
+	accessor, err := meta.Accessor(msg.Content)
+	if err != nil {
+		return "", err
+	}
+
+	return string(accessor.GetUID()), nil
 }
