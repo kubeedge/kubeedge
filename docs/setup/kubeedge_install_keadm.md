@@ -192,8 +192,7 @@ Flags:
 
 ## Errata
 
-1. If GPG key for docker repo fail to fetch from key server.
-Please refer [Docker GPG error fix](<https://forums.docker.com/t/gpg-key-for-docker-repo-fail-to-fetch-from-key-server/24253>)
+1. If GPG key for docker repo fail to fetch from key server. Please refer [Docker GPG error fix](<https://forums.docker.com/t/gpg-key-for-docker-repo-fail-to-fetch-from-key-server/24253>)
 
 2. After kubeadm init, if you face any errors regarding swap memory and preflight checks please refer  [Kubernetes preflight error fix](<https://github.com/kubernetes/kubeadm/issues/610>)
 

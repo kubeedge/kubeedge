@@ -3,11 +3,11 @@
 In this section, we would cover the below topics
 
 1. [Abstract](#Abstract)
-2. [Pre-requisties](#Prerequisties)
-3. [Setup KubeEdge](#Setup-KubeEdge)
-4. [Configure KubeEdge](#Configure-KubeEdge)
-5. [Run KubeEdge](#Run-KubeEdge)
-6. [KubeEdge Pre-Check](#KubeEdge-Pre-Check)
+2. [Pre-requisties](#prerequisties)
+3. [Setup KubeEdge](#setup-kubeEdge)
+4. [Configure KubeEdge](#configure-kubeEdge)
+5. [Run KubeEdge](#run-kubeedge)
+6. [KubeEdge Pre-Check](#kubeedge-pre-check)
 ## Abstract
 KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster, cloud side and edge side.
 
