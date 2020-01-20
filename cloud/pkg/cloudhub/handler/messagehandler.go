@@ -3,20 +3,20 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubio "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/io"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
@@ -393,6 +393,7 @@ func (mh *MessageHandle) handleMessage(nodeQueue workqueue.RateLimitingInterface
 	}
 	klog.V(4).Infof("event to send for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 
+	copyMsg := deepcopy(msg)
 	trimMessage(msg)
 	err := hi.SetWriteDeadline(time.Now().Add(time.Duration(mh.WriteTimeout) * time.Second))
 	if err != nil {
@@ -402,14 +403,16 @@ func (mh *MessageHandle) handleMessage(nodeQueue workqueue.RateLimitingInterface
 	}
 	if msgType == "listMessage" {
 		mh.send(hi, info, msg)
+		// delete successfully sent events from the queue/store
+		nodeStore.Delete(msg)
 	} else {
-		mh.sendMsg(hi, info, msg)
+		mh.sendMsg(hi, info, msg, copyMsg, nodeStore)
 	}
 
 	nodeQueue.Done(key)
 }
 
-func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg *beehiveModel.Message) {
+func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, copyMsg *beehiveModel.Message, nodeStore cache.Store) {
 	mh.MessageAckChannel[msg.GetID()] = make(chan struct{})
 
 	// initialize timer and retry count for sending message
@@ -425,7 +428,7 @@ LOOP:
 		select {
 		case <-mh.MessageAckChannel[msg.GetID()]:
 			delete(mh.MessageAckChannel, msg.GetID())
-			mh.saveSuccessPoint(msg, info)
+			mh.saveSuccessPoint(copyMsg, info, nodeStore)
 			break LOOP
 		case <-ticker.C:
 			if retry == 4 {
@@ -447,24 +450,35 @@ func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *bee
 	}
 }
 
-func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo) {
+func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo, nodeStore cache.Store) {
 	if msg.GetGroup() == edgeconst.GroupResource {
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
-		resourceUID, err := channelq.GetMessageUID(msg)
+		resourceUID, err := channelq.GetMessageUID(*msg)
 		if err != nil {
 			return
 		}
 
-		objectSyncName := strings.Join([]string{info.NodeID, resourceUID}, "/")
-		objectSync, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(objectSyncName, v1.GetOptions{})
+		objectSyncName := strings.Join([]string{info.NodeID, resourceUID}, "-")
+
+		if msg.GetOperation() == beehiveModel.DeleteOperation {
+			nodeStore.Delete(msg)
+			mh.deleteSuccessPoint(resourceNamespace, objectSyncName)
+			return
+		}
+
+		objectSync, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(objectSyncName, metav1.GetOptions{})
 		if err == nil {
 			objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(objectSync)
+			_, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(objectSync)
+			if err != nil {
+				klog.Errorf("Failed to update objectSync: %v, resourceType: %s, resourceNamespace: %s, resourceName: %s",
+					err, resourceType, resourceNamespace, resourceName)
+			}
 		} else if err != nil && apierrors.IsNotFound(err) {
 			objectSync := &v1alpha1.ObjectSync{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: objectSyncName,
 				},
 				Spec: v1alpha1.ObjectSyncSpec{
@@ -472,11 +486,19 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					ObjectKind:       resourceType,
 					ObjectName:       resourceName,
 				},
-				Status: v1alpha1.ObjectSyncStatus{
-					ObjectResourceVersion: msg.GetResourceVersion(),
-				},
 			}
-			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(objectSync)
+			_, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(objectSync)
+			if err != nil {
+				klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
+				return
+			}
+
+			objectSyncStatus, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(objectSyncName, metav1.GetOptions{})
+			if err != nil {
+				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
+			}
+			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
+			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(objectSyncStatus)
 		}
 	}
 
@@ -484,4 +506,19 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 	if msg.GetGroup() == deviceconst.GroupTwin {
 	}
 	klog.Infof("saveSuccessPoint successfully for message: %s", msg.GetResource())
+}
+
+func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
+	mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(objectSyncName, metav1.NewDeleteOptions(0))
+}
+
+func deepcopy(msg *beehiveModel.Message) *beehiveModel.Message {
+	if msg == nil {
+		return nil
+	}
+	out := new(beehiveModel.Message)
+	out.Header = msg.Header
+	out.Router = msg.Router
+	out.Content = msg.Content
+	return out
 }

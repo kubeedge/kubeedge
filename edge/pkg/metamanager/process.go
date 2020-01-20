@@ -438,6 +438,9 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		} else {
 			sendToEdged(&resp, message.IsSync())
 		}
+
+		respToCloud := message.NewRespByMessage(&resp, OK)
+		sendToCloud(respToCloud)
 	}()
 }
 
