@@ -62,6 +62,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
 				HostnameOverride:            hostnameOverride,
 				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
+				RegisterNode:                true,
 				InterfaceName:               constants.DefaultInterfaceName,
 				DevicePluginEnabled:         false,
 				GPUPluginEnabled:            false,
