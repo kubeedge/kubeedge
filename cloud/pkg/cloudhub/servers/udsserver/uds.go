@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"k8s.io/klog"
@@ -59,6 +60,16 @@ func (us *UnixDomainSocket) StartServer() error {
 		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) { //nolint: vetshadow
 			klog.Errorf("failed to remove addr: %v", err)
 			return err
+		}
+	}
+
+	dir, err := filepath.Abs(filepath.Dir(addr))
+	if err != nil {
+		klog.Errorf("invalid dir of addr found: %v", err)
+	}
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.Mkdir(dir, 0755); err != nil {
+			klog.Errorf("failed to create addr dir: %v", err)
 		}
 	}
 
