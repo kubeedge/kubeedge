@@ -43,7 +43,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
     + Download KubeEdge (latest or stable version) from [Releases](https://github.com/kubeedge/kubeedge/releases)   
     
-      Download `KubeEdge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Cloudcore and the configuration files.
+      Download `kubeedge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Cloudcore and the configuration files.
 
 4. Create device model and device CRDs.
 
@@ -135,7 +135,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
     + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)   
     
-        Download `KubeEdge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Edgecore and the configuration files.
+        Download `kubeedge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Edgecore and the configuration files.
 
 3. Copy edgecore binary/ Setup as a systemctl
 
