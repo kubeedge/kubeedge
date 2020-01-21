@@ -3,20 +3,20 @@
 In this section, we would cover the below topics
 
 1. [Abstract](#Abstract)
-2. [Pre-requisties](#prerequisties)
+2. [Pre-Requisite](#prerequisite)
 3. [Setup KubeEdge](#setup-kubeEdge)
 4. [Configure KubeEdge](#configure-kubeEdge)
 5. [Run KubeEdge](#run-kubeedge)
 6. [KubeEdge Pre-Check](#kubeedge-pre-check)
 ## Abstract
-KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster, cloud side and edge side.
+KubeEdge is composed of cloud and edge sides. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster, cloud side and edge side.
 
 + on `cloud side`, we need to install Docker, Kubernetes cluster and cloudcore.
-+ on `edge side`, we need to install Docker, mqtt and edgecore.
++ on `edge side`, we need to install Docker, MQTT and edgecore.
 
-## Prerequisites
+## Pre-Requisite
 
-+ **Go dependency** and **Kubernetes compatibility** please refer to [compatibility-matrix](https://github.com/kubeedge/kubeedge#compatibility-matrix). Please refer this to understand what version of Docker, Kubernetes, Golang can be installed.
++ Please refer [compatibility-matrix](https://github.com/kubeedge/kubeedge#compatibility-matrix) to understand **Go dependency** and **Kubernetes compatibility** and determine what version of Docker, Kubernetes, Golang can be installed.
 
 ### Cloud side (KubeEdge Master Node)
 
@@ -24,23 +24,25 @@ KubeEdge is composed of cloud and edge parts. It is built upon Kubernetes and pr
 
 + [Install Docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
 
-+ [Install kubeadm/kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
++ [Install kubeadm/ kubectl](https://kubernetes.io/docs/setup/independent/install-kubeadm/)
 
 + [Creating Kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
 If you are creating Kubernetes cluster for just testing KubeEdge, maybe start with Flannel.
 
-Check Kubernetes Master Status: It should be ready.
+Check Kubernetes Master Status: It should be `ready`.
 
 ```
 kubectl get nodes
+
 NAME               STATUS   ROLES    AGE    VERSION
 kubeedge-master   Ready    master   4d3h   v1.16.1
 ```
 
 **Note:** If you choose to decide installing KubeEdge using KubeEdge Installer keadm, do pass the flag 
+
 ```
---pod-network-cidr
+keadm init --pod-network-cidr
 ```
 ### Edge side (KubeEdge Worker Node)
 

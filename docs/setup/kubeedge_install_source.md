@@ -1,12 +1,12 @@
 # Setup from Source Code
 
-This guide would provide steps which can be utilised to install KubeEdge Cloud and Edge side. At this point, we assume that you would have installed the Pre-Requisites for Cloud and Edge.
+This guide provide steps which can be utilised to install KubeEdge Cloud and Edge side. At this point, we assume that you would have installed the [Pre-Requisite](kubeedge_install.md#prerequisite) for Cloud and Edge.
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
 1. Clone KubeEdge
 
-    + Before this it might be a good idea to setup [$GOPATH ](https://github.com/golang/go/wiki/SettingGOPATH)
+    + Setup [$GOPATH ](https://github.com/golang/go/wiki/SettingGOPATH) to clone the KubeEdge repository in the `$GOPATH`.
 
         ```shell
         git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
@@ -15,18 +15,18 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
 2. Generate Certificates
 
-   RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
+   RootCA certificate and a cert/ key pair is required to have a setup for KubeEdge. Same cert/ key pair can be used in both cloud and edge.
 
     ```bash
     $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey edge
     ```
 
-    The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively, so this command should be run with root or users who have access to those directories. We need to copy these files to the corresponding edge side server directory.
+    The cert/ key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively, so this command should be run with root or users who have access to those directories. Copy these files to the corresponding edge side server directory.
 
 3. Compile Cloudcore
 
 
-   + Firstly, make sure gcc is already installed on your host. You can verify it via:
+   + Firstly, make sure `gcc` is already installed on your host. You can verify it via:
 
      ```shell
      gcc --version
@@ -41,7 +41,7 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
     **Note:** If you don't want to compile, you may perform the below step
 
-    + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)   
+    + Download KubeEdge (latest or stable version) from [Releases](https://github.com/kubeedge/kubeedge/releases)   
     
       Download `KubeEdge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Cloudcore and the configuration files.
 
@@ -49,12 +49,13 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
+
     kubectl create -f devices_v1alpha1_devicemodel.yaml
     kubectl create -f devices_v1alpha1_device.yaml
     ```
 5. Copy cloudcore binary/ Setup as a systemctl
 
-    At this point, cloudcore can be copied to a new directory or can be setup as a systemctl service. We also need to edit the configuration files to setup how cloudcore would run.
+    At this point, cloudcore can be copied to a new directory or can be setup as a systemctl service. Edit the configuration files to setup how cloudcore would run.
 
    + Run cloudcore with systemd
 
@@ -62,6 +63,7 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
         ```shell
         sudo ln build/tools/cloudcore.service /etc/systemd/system/cloudcore.service
+        
         sudo systemctl daemon-reload
         sudo systemctl start cloudcore
         ```
@@ -95,7 +97,7 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
 1. Clone KubeEdge
 
-    + Before this it might be a good idea to setup [$GOPATH ](https://github.com/golang/go/wiki/SettingGOPATH)
+    + Setup [$GOPATH ](https://github.com/golang/go/wiki/SettingGOPATH) to clone the KubeEdge repository in the `$GOPATH`.
 
         ```shell
         git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
@@ -133,7 +135,7 @@ This guide would provide steps which can be utilised to install KubeEdge Cloud a
 
     + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)   
     
-        Download KubeEdge-version-linux-$platform.tar.gz from above link. It would contain Edgecore and the configuration files.
+        Download `KubeEdge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Edgecore and the configuration files.
 
 3. Copy edgecore binary/ Setup as a systemctl
 
