@@ -28,7 +28,7 @@ deployment.apps/nginx-deployment created
 
 Then you can use below command to check if the application is normally running.
 
-Check the pod is up and is running state
+Check the pod is up and is `running` state
 
 ```
 kubectl get pods

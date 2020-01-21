@@ -136,5 +136,5 @@ details on submitting patches and the contribution workflow.
 
 KubeEdge is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
 
-[set up]: docs/setup/setup.md
+[set up]: docs/setup/kubeedge_install.md
 [Go environment]: https://golang.org/doc/install
