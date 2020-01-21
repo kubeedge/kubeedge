@@ -293,8 +293,8 @@ type MetaManager struct {
 // ServiceBus indicates the servicebus module config
 type ServiceBus struct {
 	// Enable indicates whether servicebus is enabled, if set to false (for debugging etc.), skip checking other servicebus configs.
-	// default true
-	Enable bool `json:"enable,omitempty"`
+	// default false
+	Enable bool `json:"enable"`
 }
 
 // DeviceTwin indicates the servicebus module config
