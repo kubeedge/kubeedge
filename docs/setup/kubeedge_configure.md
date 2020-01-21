@@ -1,6 +1,6 @@
 # KubeEdge Configuration
 
-KubeEdge requires configuration on both [Cloud side (KubeEdge Master Node)](#configuration-cloud-side-(kubeedge-master-node)) and [Edge side (KubeEdge Worker Node)](#configuration-edge-side-(kubeedge-worker-node))
+KubeEdge requires configuration on both [Cloud side (KubeEdge Master Node)](#configuration-cloud-side-kubeedge-master-node) and [Edge side (KubeEdge Worker Node)](#configuration-edge-side-kubeedge-worker-node)
 
 ## Configuration Cloud side (KubeEdge Master Node)
 

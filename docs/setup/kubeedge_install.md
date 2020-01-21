@@ -3,7 +3,7 @@
 In this section, we would cover the below topics
 
 1. [Abstract](#Abstract)
-2. [Pre-Requisite](#prerequisite)
+2. [Pre-Requisite](#pre-requisite)
 3. [Setup KubeEdge](#setup-kubeEdge)
 4. [Configure KubeEdge](#configure-kubeEdge)
 5. [Run KubeEdge](#run-kubeedge)
