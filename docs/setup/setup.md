@@ -74,64 +74,53 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     kubectl create -f devices_v1alpha1_device.yaml
     ```
 
-+ Copy cloudcore binary and config file 
++ Copy cloudcore binary
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
-    # run edge controller
-    # `conf/` should be in the same directory as the cloned KubeEdge repository
-    # verify the configurations before running cloud(cloudcore)
-    mkdir -p ~/cmd/conf
+    mkdir -p ~/cmd
     cp cloudcore ~/cmd/
-    cp -rf conf/* ~/cmd/conf/
     ```
-    **Note** `~/cmd/` dir is an example, in the following examples we continue to use `~/cmd/` as the binary startup directory. You can move `cloudcore` or `edgecore` binary to anywhere, but you need to create `conf` dir in the same directory as binary.
+    **Note** `~/cmd/` dir is an example, in the following examples we continue to use `~/cmd/` as the binary startup directory. You can move `cloudcore` or `edgecore` binary to anywhere.
     
-+ Set cloudcore config file
++ Create and set cloudcore config file
 
     ```shell
-    cd ~/cmd/conf
-    vim controller.yaml
+    # the default configration file path is '/etc/kubeedge/config/cloudcore.yaml'
+    # also you can specify it anywhere with '--config'
+    mkdir -p /etc/kubeedge/config/ 
+  
+    # create a minimal configuration with command `~/cmd/cloudcore --minconfig`
+    # or a full configuration with command `~/cmd/cloudcore --defaultconfig`
+    ~/cmd/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml 
+    vim /etc/kubeedge/config/cloudcore.yaml 
+  
     ```
 
     verify the configurations before running `cloudcore`
     
     ```
-    controller:
-      kube:
-        master:     # kube-apiserver address (such as:http://localhost:8080)
-        namespace: ""
-        content_type: "application/vnd.kubernetes.protobuf"
-        qps: 5
-        burst: 10
-        node_update_frequency: 10
-        kubeconfig: "/root/.kube/config"   #Enter absolute path to kubeconfig file to enable https connection to k8s apiserver, if master and kubeconfig are both set, master will override any value in kubeconfig.
-    cloudhub:
-      protocol_websocket: true # enable websocket protocol
-      port: 10000 # open port for websocket server
-      protocol_quic: true # enable quic protocol
-      quic_port: 10001 # open prot for quic server
-      max_incomingstreams: 10000 # the max incoming stream for quic server
-      enable_uds: true # enable unix domain socket protocol
-      uds_address: unix:///var/lib/kubeedge/kubeedge.sock # unix domain socket address
-      address: 0.0.0.0
-      ca: /etc/kubeedge/ca/rootCA.crt
-      cert: /etc/kubeedge/certs/edge.crt
-      key: /etc/kubeedge/certs/edge.key
-      keepalive-interval: 30
-      write-timeout: 30
-      node-limit: 10
-    devicecontroller:
-      kube:
-        master:        # kube-apiserver address (such as:http://localhost:8080)
-        namespace: ""
-        content_type: "application/vnd.kubernetes.protobuf"
-        qps: 5
-        burst: 10
-        kubeconfig: "/root/.kube/config" #Enter absolute path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha1
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: /root/.kube/config #Enter absolute path to kubeconfig file to enable https connection to k8s apiserver,if master and kubeconfig are both set, master will override any value in kubeconfig.
+      master: "" # kube-apiserver address (such as:http://localhost:8080)
+    modules:
+      cloudhub:
+        nodeLimit: 10
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock # unix domain socket address
+          enable: true # enable unix domain socket protocol
+        websocket:
+          address: 0.0.0.0
+          enable: true # enable websocket protocol
+          port: 10000 # open port for websocket server
     ```
-    cloudcore default supports https connection to Kubernetes apiserver, so you need to check whether the path for `controller.kube.kubeconfig` and `devicecontroller.kube.kubeconfig` exist, but if `master` and `kubeconfig` are both set, `master` will override any value in kubeconfig.
-    Check whether the cert files for `cloudhub.ca`, `cloudhub.cert`,`cloudhub.key` exist.
+    cloudcore use https connection to Kubernetes apiserver as default, so you should make sure the `kubeAPIConfig.kubeConfig` exist, but if `master` and `kubeConfig` are both set, `master` will override any value in kubeconfig.
+    Check whether the cert files for `modules.cloudhub.tlsCAFile`, `modules.cloudhub.tlsCertFile`,`modules.cloudhub.tlsPrivateKeyFile` exists.
 
 + Run cloudcore
 
@@ -182,8 +171,6 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 2) bothMqttMode: internal as well as external broker are enabled.
 3) externalMqttMode: only external broker is enabled.
 
-Use mode field in [edge.yaml](https://github.com/kubeedge/kubeedge/blob/master/edge/conf/edge.yaml#L4) to select the desired mode.
-
 To use KubeEdge in double mqtt or external mode, you need to make sure that [mosquitto](https://mosquitto.org/) or [emqx edge](https://www.emqx.io/downloads/edge) is installed on the edge node as an MQTT Broker.
 
 ##### Run as a binary
@@ -213,90 +200,75 @@ To use KubeEdge in double mqtt or external mode, you need to make sure that [mos
     **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage,
     lower performance, whole code of program being loaded instead of it being on-demand, not allowing sharing of memory which may cause the code to be loaded to memory
     more than once etc. are applicable here as well.
-
-+ Set edgecore config file
+    
++ Copy edgecore binary
 
     ```shell
-    mkdir ~/cmd/conf
-    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/* ~/cmd/conf
-    vim ~/cmd/conf/edge.yaml
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+    mkdir -p ~/cmd
+    cp edgecore ~/cmd/
     ```
+    **Note:** `~/cmd/` dir is also an example as well as `cloudcore`
+    
++ Create and set edgecore config file
 
-    **Note:** `~/cmd/` dir is also an example as well as `cloudcore`, `conf/` should be in the same directory as edgecore binary,
-
+    ```shell
+    # the default configration file path is '/etc/kubeedge/config/edgecore.yaml'
+    # also you can specify it anywhere with '--config'
+    mkdir -p /etc/kubeedge/config/ 
+    
+    # create a minimal configuration with command `~/cmd/edgecore --minconfig`
+    # or a full configuration with command `~/cmd/edgecore --defaultconfig`
+    ~/cmd/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml 
+    vim /etc/kubeedge/config/edgecore.yaml 
+    ```
     verify the configurations before running `edgecore`
 
     ```
-    mqtt:
-        server: tcp://127.0.0.1:1883 # external mqtt broker url.
-        internal-server: tcp://127.0.0.1:1884 # internal mqtt broker url.
-        mode: 0 # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker
-    enable only.
-        qos: 0 # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
-        retain: false # if the flag set true, server will store the message and can be delivered to future subscribers.
-        session-queue-size: 100 # A size of how many sessions will be handled. default to 100.
-    
-    edgehub:
+    apiVersion: edgecore.config.kubeedge.io/v1alpha1
+    database:
+      dataSource: /var/lib/kubeedge/edgecore.db
+    kind: EdgeCore
+    modules:
+      edged:
+        cgroupDriver: cgroupfs
+        clusterDNS: ""
+        clusterDomain: ""
+        devicePluginEnabled: false
+        dockerAddress: unix:///var/run/docker.sock
+        gpuPluginEnabled: false
+        hostnameOverride: $your_hostname
+        interfaceName: eth0
+        nodeIP: $your_ip_address
+        podSandboxImage: kubeedge/pause:3.1  # kubeedge/pause:3.1 for x86 arch , kubeedge/pause-arm:3.1 for arm arch, kubeedge/pause-arm64 for arm64 arch
+        remoteImageEndpoint: unix:///var/run/dockershim.sock
+        remoteRuntimeEndpoint: unix:///var/run/dockershim.sock
+        runtimeType: docker
+      edgehub:
+        heartbeat: 15  # second
+        tlsCaFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
         websocket:
-            url: wss://0.0.0.0:10000/e632aba927ea4ac2b575ec1603d56f10/edge-node/events 
-            certfile: /etc/kubeedge/certs/edge.crt
-            keyfile: /etc/kubeedge/certs/edge.key
-            handshake-timeout: 30 #second
-            write-deadline: 15 # second
-            read-deadline: 15 # second
-        quic:
-            url: 127.0.0.1:10001
-            cafile: /etc/kubeedge/ca/rootCA.crt
-            certfile: /etc/kubeedge/certs/edge.crt
-            keyfile: /etc/kubeedge/certs/edge.key
-            handshake-timeout: 30 #second
-            write-deadline: 15 # second
-            read-deadline: 15 # second
-        controller:
-            protocol: websocket # websocket, quic
-            heartbeat: 15  # second
-            project-id: e632aba927ea4ac2b575ec1603d56f10
-            node-id: edge-node
-    
-    edged:
-        register-node-namespace: default
-        hostname-override: edge-node
-        interface-name: eth0
-        edged-memory-capacity-bytes: 7852396000
-        node-status-update-frequency: 10 # second
-        device-plugin-enabled: false
-        gpu-plugin-enabled: false
-        image-gc-high-threshold: 80 # percent
-        image-gc-low-threshold: 40 # percent
-        maximum-dead-containers-per-container: 1
-        docker-address: unix:///var/run/docker.sock
-        runtime-type: docker
-        remote-runtime-endpoint: unix:///var/run/dockershim.sock
-        remote-image-endpoint: unix:///var/run/dockershim.sock
-        runtime-request-timeout: 2
-        podsandbox-image: kubeedge/pause:3.1 # kubeedge/pause:3.1 for x86 arch , kubeedge/pause-arm:3.1 for arm arch, kubeedge/pause-arm64 for arm64 arch
-        image-pull-progress-deadline: 60 # second
-        cgroup-driver: cgroupfs
-        node-ip: ""
-        cluster-dns: ""
-        cluster-domain: ""
-        
-        mesh:
-            loadbalance:
-                strategy-name: RoundRobin
+          enable: true
+          handshakeTimeout: 30  # second
+          readDeadline: 15  # second
+          server: 127.0.0.1:10000  # cloudcore address
+          writeDeadline: 15  # second
+      eventbus:
+        mqttMode: 2  # 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker
+        mqttQOS: 0  # 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+        mqttRetain: false  # if the flag set true, server will store the message and can be delivered to future subscribers.
+        mqttServerExternal: tcp://127.0.0.1:1883  # external mqtt broker url.
+        mqttServerInternal: tcp://127.0.0.1:1884  # internal mqtt broker url.
     ```
-    + Check whether the cert files for `edgehub.websocket.certfile` and `edgehub.websocket.keyfile`  exist.
-    + Check whether the cert files for `edgehub.quic.certfile` ,`edgehub.quic.keyfile` and `edgehub.quic.cafile` exist. If those files not exist, you need to copy them from cloud side. 
-    + Check `edged.podsandbox-image`  
+    + Check `modules.edged.podSandboxImage`  
         + `kubeedge/pause-arm:3.1` for arm arch
         + `kubeedge/pause-arm64:3.1` for arm64 arch
         + `kubeedge/pause:3.1` for x86 arch
-    + Update the IP address of the master in the `edgehub.websocket.url` field. You need set cloudcore ip address.
-    + If you use quic protocol, please update the IP address of the master in the `edgehub.quic.url` field. You need set cloudcore ip address.
-    + replace `edge-node` with edge node name in edge.yaml for the below fields :
-        + `websocket:URL`
-        + `controller:node-id`
-        + `edged:hostname-override`
+    + Check whether the cert files for `modules.edgehub.tlsCaFile` and `modules.edgehub.tlsCertFile` and `modules.edgehub.tlsPrivateKeyFile` exists.
+    If those files not exist, you need to copy them from cloud side. 
+    + Check `modules.edgehub.websocket.server`. It should be your cloudcore ip address.
 
 + Run edgecore
 
@@ -306,7 +278,6 @@ To use KubeEdge in double mqtt or external mode, you need to make sure that [mos
     # or run emqx edge
     # emqx start
 
-    cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
     cd ~/cmd
     ./edgecore
     # or
