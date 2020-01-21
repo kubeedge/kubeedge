@@ -13,7 +13,7 @@ NAME         STATUS     ROLES    AGE     VERSION
 testing123   Ready      <none>   6s      0.3.0-beta.0
 ```
 
-Please make sure the status of edge node you created is **ready**.
+Please make sure the `status` of edge node you created is **ready**.
 
 ## Deploy Application on cloud side
 
@@ -36,7 +36,8 @@ NAME                               READY   STATUS    RESTARTS   AGE
 nginx-deployment-d86dfb797-scfzz   1/1     Running   0          44s
 ```
 
-Check the deployment is up and is running state
+Check the deployment is up and is in `running` state
+
 ```
 kubectl get deployments
 
