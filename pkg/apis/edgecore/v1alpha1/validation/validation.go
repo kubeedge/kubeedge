@@ -80,24 +80,21 @@ func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	switch {
-	case !utilvalidation.FileIsExist(h.TLSPrivateKeyFile):
+	if !utilvalidation.FileIsExist(h.TLSPrivateKeyFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"),
 			h.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
-		fallthrough
-	case !utilvalidation.FileIsExist(h.TLSCertFile):
+	}
+	if !utilvalidation.FileIsExist(h.TLSCertFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"),
 			h.TLSCertFile, "TLSCertFile not exist"))
-		fallthrough
-	case !utilvalidation.FileIsExist(h.TLSCAFile):
+	}
+	if !utilvalidation.FileIsExist(h.TLSCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"),
 			h.TLSCAFile, "TLSCAFile not exist"))
-		fallthrough
-	case h.WebSocket.Enable == h.Quic.Enable:
+	}
+	if h.WebSocket.Enable == h.Quic.Enable {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("enable"),
 			h.Quic.Enable, "websocket.enable and quic.enable cannot be true and false at the same time"))
-		fallthrough
-	default:
 	}
 
 	return allErrs
@@ -109,14 +106,10 @@ func ValidateModuleEventBus(m edgecoreconfig.EventBus) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	switch {
-	case m.MqttMode > edgecoreconfig.MqttModeExternal || m.MqttMode < edgecoreconfig.MqttModeInternal:
+	if m.MqttMode > edgecoreconfig.MqttModeExternal || m.MqttMode < edgecoreconfig.MqttModeInternal {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("Mode"), m.MqttMode,
 			fmt.Sprintf("Mode need in [%v,%v] range", edgecoreconfig.MqttModeInternal,
 				edgecoreconfig.MqttModeExternal)))
-		fallthrough
-	default:
-
 	}
 	return allErrs
 }
