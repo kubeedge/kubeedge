@@ -49,37 +49,34 @@ func ValidateModuleCloudHub(c cloudconfig.CloudHub) field.ErrorList {
 	validQPort := utilvalidation.IsValidPortNum(int(c.Quic.Port))
 	validQAddress := utilvalidation.IsValidIP(c.Quic.Address)
 
-	switch {
-	case len(validWPort) > 0:
+	if len(validWPort) > 0 {
 		for _, m := range validWPort {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.WebSocket.Port, m))
 		}
-		fallthrough
-	case len(validAddress) > 0:
+	}
+	if len(validAddress) > 0 {
 		for _, m := range validAddress {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.WebSocket.Address, m))
 		}
-		fallthrough
-	case len(validQPort) > 0:
+	}
+	if len(validQPort) > 0 {
 		for _, m := range validQPort {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.Quic.Port, m))
 		}
-		fallthrough
-	case len(validQAddress) > 0:
+	}
+	if len(validQAddress) > 0 {
 		for _, m := range validQAddress {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
 		}
-		fallthrough
-	case !utilvalidation.FileIsExist(c.TLSPrivateKeyFile):
+	}
+	if !utilvalidation.FileIsExist(c.TLSPrivateKeyFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
-		fallthrough
-	case !utilvalidation.FileIsExist(c.TLSCertFile):
+	}
+	if !utilvalidation.FileIsExist(c.TLSCertFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"), c.TLSCertFile, "TLSCertFile not exist"))
-		fallthrough
-	case !utilvalidation.FileIsExist(c.TLSCAFile):
+	}
+	if !utilvalidation.FileIsExist(c.TLSCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"), c.TLSCAFile, "TLSCAFile not exist"))
-		fallthrough
-	default:
 	}
 	if !strings.HasPrefix(strings.ToLower(c.UnixSocket.Address), "unix://") {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
@@ -100,11 +97,8 @@ func ValidateModuleEdgeController(e cloudconfig.EdgeController) field.ErrorList 
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	switch {
-	case e.NodeUpdateFrequency <= 0:
+	if e.NodeUpdateFrequency <= 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeUpdateFrequency"), e.NodeUpdateFrequency, "NodeUpdateFrequency need > 0"))
-		fallthrough
-	default:
 	}
 	return allErrs
 }
@@ -122,15 +116,11 @@ func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorL
 // ValidateKubeAPIConfig validates `k` and returns an errorList if it is invalid
 func ValidateKubeAPIConfig(k cloudconfig.KubeAPIConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	switch {
-	case k.KubeConfig != "" && !path.IsAbs(k.KubeConfig):
+	if k.KubeConfig != "" && !path.IsAbs(k.KubeConfig) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig need abs path"))
-		fallthrough
-	case k.KubeConfig != "" && !utilvalidation.FileIsExist(k.KubeConfig):
+	}
+	if k.KubeConfig != "" && !utilvalidation.FileIsExist(k.KubeConfig) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig not exist"))
-		fallthrough
-	default:
-
 	}
 	return allErrs
 }
