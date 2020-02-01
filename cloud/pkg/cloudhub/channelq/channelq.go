@@ -288,7 +288,10 @@ func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 func (q *ChannelMessageQueue) GetNodeQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
 	queue, ok := q.queuePool.Load(nodeID)
 	if !ok {
-		return nil, fmt.Errorf("nodeQueue for edge node %s not found", nodeID)
+		klog.Warningf("nodeQueue for edge node %s not found and created now", nodeID)
+		nodeQueue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), nodeID)
+		q.queuePool.Store(nodeID, nodeQueue)
+		return nodeQueue, nil
 	}
 
 	nodeQueue := queue.(workqueue.RateLimitingInterface)
@@ -298,18 +301,23 @@ func (q *ChannelMessageQueue) GetNodeQueue(nodeID string) (workqueue.RateLimitin
 func (q *ChannelMessageQueue) GetNodeListQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
 	queue, ok := q.listQueuePool.Load(nodeID)
 	if !ok {
-		return nil, fmt.Errorf("nodeListQueue for edge node %s not found", nodeID)
+		klog.Warningf("nodeListQueue for edge node %s not found and created now", nodeID)
+		nodeListQueue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), nodeID)
+		q.listQueuePool.Store(nodeID, nodeListQueue)
+		return nodeListQueue, nil
 	}
 
-	nodeQueue := queue.(workqueue.RateLimitingInterface)
-	return nodeQueue, nil
+	nodeListQueue := queue.(workqueue.RateLimitingInterface)
+	return nodeListQueue, nil
 }
 
 func (q *ChannelMessageQueue) GetNodeStore(nodeID string) (cache.Store, error) {
 	store, ok := q.storePool.Load(nodeID)
-
 	if !ok {
-		return nil, fmt.Errorf("nodeStore for edge node %s not found", nodeID)
+		klog.Warningf("nodeStore for edge node %s not found and created now", nodeID)
+		nodeStore := cache.NewStore(getMsgKey)
+		q.storePool.Store(nodeID, nodeStore)
+		return nodeStore, nil
 	}
 
 	nodeStore := store.(cache.Store)
@@ -318,13 +326,15 @@ func (q *ChannelMessageQueue) GetNodeStore(nodeID string) (cache.Store, error) {
 
 func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, error) {
 	store, ok := q.listStorePool.Load(nodeID)
-
 	if !ok {
-		return nil, fmt.Errorf("nodeListStore for edge node %s not found", nodeID)
+		klog.Warningf("nodeListStore for edge node %s not found and created now", nodeID)
+		nodeListStore := cache.NewStore(getListMsgKey)
+		q.listStorePool.Store(nodeID, nodeListStore)
+		return nodeListStore, nil
 	}
 
-	nodeStore := store.(cache.Store)
-	return nodeStore, nil
+	nodeListStore := store.(cache.Store)
+	return nodeListStore, nil
 }
 
 func GetMessageUID(msg beehiveModel.Message) (string, error) {
