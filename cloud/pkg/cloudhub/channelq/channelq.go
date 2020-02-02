@@ -40,8 +40,8 @@ func NewChannelMessageQueue(objectSyncController *hubconfig.ObjectSyncController
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
-// node id from it, gets the channel associated with the node
-// and pushes the event on the channel
+// node id from it, gets the message associated with the node
+// and pushes the message to the queue
 func (q *ChannelMessageQueue) DispatchMessage() {
 	for {
 		select {
@@ -202,7 +202,7 @@ func isDeleteMessage(msg *beehiveModel.Message) bool {
 	return false
 }
 
-// getNodeID from "beehive/pkg/core/model".Message.Router.Resource
+// GetNodeID from "beehive/pkg/core/model".Message.Router.Resource
 func GetNodeID(msg *beehiveModel.Message) (string, error) {
 	resource := msg.Router.Resource
 	tokens := strings.Split(resource, commonconst.ResourceSep)
@@ -216,7 +216,7 @@ func GetNodeID(msg *beehiveModel.Message) (string, error) {
 	return "", fmt.Errorf("No nodeID in Message.Router.Resource: %s", resource)
 }
 
-// Connect allocates rChannel for given project and group
+// Connect allocates the queues and stores for given node
 func (q *ChannelMessageQueue) Connect(info *model.HubInfo) {
 	_, queueExist := q.queuePool.Load(info.NodeID)
 	_, storeExit := q.storePool.Load(info.NodeID)
@@ -247,7 +247,7 @@ func (q *ChannelMessageQueue) Connect(info *model.HubInfo) {
 	}
 }
 
-// Close closes queues for given node
+// Close closes queues and stores for given node
 func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	_, queueExist := q.queuePool.Load(info.NodeID)
 	_, storeExist := q.storePool.Load(info.NodeID)
@@ -274,7 +274,7 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	}
 }
 
-// Publish sends message via the rchannel to Edge Controller
+// Publish sends message via the rchannel to Controllers
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
 	case model.ResTwin:
@@ -285,6 +285,7 @@ func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	return nil
 }
 
+// GetNodeQueue returns the queue for given node
 func (q *ChannelMessageQueue) GetNodeQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
 	queue, ok := q.queuePool.Load(nodeID)
 	if !ok {
@@ -298,6 +299,7 @@ func (q *ChannelMessageQueue) GetNodeQueue(nodeID string) (workqueue.RateLimitin
 	return nodeQueue, nil
 }
 
+// GetNodeListQueue returns the listQueue for given node
 func (q *ChannelMessageQueue) GetNodeListQueue(nodeID string) (workqueue.RateLimitingInterface, error) {
 	queue, ok := q.listQueuePool.Load(nodeID)
 	if !ok {
@@ -311,6 +313,7 @@ func (q *ChannelMessageQueue) GetNodeListQueue(nodeID string) (workqueue.RateLim
 	return nodeListQueue, nil
 }
 
+// GetNodeStore returns the store for given node
 func (q *ChannelMessageQueue) GetNodeStore(nodeID string) (cache.Store, error) {
 	store, ok := q.storePool.Load(nodeID)
 	if !ok {
@@ -324,6 +327,7 @@ func (q *ChannelMessageQueue) GetNodeStore(nodeID string) (cache.Store, error) {
 	return nodeStore, nil
 }
 
+// GetNodeListStore returns the listStore for given node
 func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, error) {
 	store, ok := q.listStorePool.Load(nodeID)
 	if !ok {
@@ -337,6 +341,7 @@ func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) (cache.Store, erro
 	return nodeListStore, nil
 }
 
+// GetMessageUID returns the UID of the object in message
 func GetMessageUID(msg beehiveModel.Message) (string, error) {
 	accessor, err := meta.Accessor(msg.Content)
 	if err != nil {
@@ -346,6 +351,7 @@ func GetMessageUID(msg beehiveModel.Message) (string, error) {
 	return string(accessor.GetUID()), nil
 }
 
+// GetMessageDeletionTimestamp returns the deletionTimestamp of the object in message
 func GetMessageDeletionTimestamp(msg *beehiveModel.Message) (*metav1.Time, error) {
 	accessor, err := meta.Accessor(msg.Content)
 	if err != nil {
