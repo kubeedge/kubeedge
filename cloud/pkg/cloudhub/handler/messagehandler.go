@@ -60,7 +60,7 @@ type MessageHandle struct {
 	Handlers          []HandleFunc
 	NodeLimit         int
 	KeepaliveChannel  map[string]chan struct{}
-	MessageAckChannel map[string]chan struct{}
+	MessageAcks       sync.Map
 }
 
 type HandleFunc func(hi hubio.CloudHubIO, info *model.HubInfo, exitServe chan ExitCode, stopSendMsg chan struct{})
@@ -81,7 +81,6 @@ func InitHandler(eventq *channelq.ChannelMessageQueue) {
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
-		CloudhubHandler.MessageAckChannel = make(map[string]chan struct{})
 		CloudhubHandler.Handlers = []HandleFunc{
 			CloudhubHandler.KeepaliveCheckLoop,
 			CloudhubHandler.MessageWriteLoop,
@@ -121,8 +120,8 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 
 	// handle the ack message from edge
 	if container.Message.Router.Operation == beehiveModel.ResponseOperation {
-		if ackChan, ok := mh.MessageAckChannel[container.Message.Header.ParentID]; ok {
-			close(ackChan)
+		if ackChan, ok := mh.MessageAcks.Load(container.Message.Header.ParentID); ok {
+			close(ackChan.(chan struct{}))
 		}
 		return
 	}
@@ -413,7 +412,8 @@ func (mh *MessageHandle) handleMessage(nodeQueue workqueue.RateLimitingInterface
 }
 
 func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, copyMsg *beehiveModel.Message, nodeStore cache.Store) {
-	mh.MessageAckChannel[msg.GetID()] = make(chan struct{})
+	ackChan := make(chan struct{})
+	mh.MessageAcks.Store(msg.GetID(), ackChan)
 
 	// initialize timer and retry count for sending message
 	var (
@@ -426,8 +426,8 @@ func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, 
 LOOP:
 	for {
 		select {
-		case <-mh.MessageAckChannel[msg.GetID()]:
-			delete(mh.MessageAckChannel, msg.GetID())
+		case <-ackChan:
+			mh.MessageAcks.Delete(msg.GetID())
 			mh.saveSuccessPoint(copyMsg, info, nodeStore)
 			break LOOP
 		case <-ticker.C:
