@@ -40,7 +40,7 @@ sudo rm -rf $PWD/device/device.test
 bash -x $PWD/scripts/compile.sh $1
 export MQTT_SERVER=127.0.0.1
 :> /tmp/testcase.log
-bash -x ${PWD}/scripts/fast_test $1
+bash -x ${PWD}/scripts/fast_test.sh $1
 #stop the edgecore after the test completion
 sudo pkill edgecore
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'

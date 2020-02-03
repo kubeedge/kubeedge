@@ -59,7 +59,7 @@ It("TC_TEST_EBUS_7: change the device status to unknown from eventbus", func() {
 ## Configurations
 ##### Modify the test configurations accordingly in the below mentioned file
 ```bash
-PATH: $GOPATH/src/github.com/kubeedge/kubeedge/test/integration/scripts/fast_test
+PATH: $GOPATH/src/github.com/kubeedge/kubeedge/edge/test/integration/scripts/fast_test.sh
 cat >config.json<<END
 {
         "mqttEndpoint":"tcp://$MQTT_SERVER:1884",
@@ -80,32 +80,32 @@ image_url: Specify the docker Image Name/Image URL's for application deployments
 
 **Run all test suites:**
 ```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
     
     1. bash -x test/integration/scripts/compile.sh
-    2. bash test/integration/scripts/fast_test
+    2. bash test/integration/scripts/fast_test.sh
     
     Above 2 commands will ensure you run all the tests.
 ```
 
 **Run Individual Test Suite:**
 ```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
     
     Ex:
     1. bash -x test/integration/scripts/compile.sh <device>
-    2. bash test/integration/scripts/fast_test <device>    
+    2. bash test/integration/scripts/fast_test.sh <device>    
     #or     
     1. bash -x test/integration/scripts/compile.sh <appdeployment>
-    2. bash test/integration/scripts/fast_test <appdeployment>           
+    2. bash test/integration/scripts/fast_test.sh <appdeployment>           
 ```
 
 **Run Failed Test:**
 ```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
     
     Ex:   
-    bash test/integration/scripts/fast_test <device> -ginkgo.focus="Failed test case ID/Name"   
+    bash test/integration/scripts/fast_test.sh <device> -ginkgo.focus="Failed test case ID/Name"   
 ```
 ## Test Logs
 ##### Integration test logs
