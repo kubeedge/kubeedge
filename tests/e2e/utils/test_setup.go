@@ -123,7 +123,6 @@ func StartEdgeSite() error {
 }
 
 func DeploySetup(ctx *TestContext, nodeName, setupType string) error {
-	// TODO  will delete scripts/setup.sh file @kadisi
 	// TODO change as constants or delete this function @kadisi
 	switch setupType {
 	case "deployment":
