@@ -279,7 +279,6 @@ func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 				{
 					Name:  "nginx",
 					Image: imgUrl,
-					Ports: []v1.ContainerPort{{HostPort: 80, ContainerPort: 80}},
 				},
 			},
 			NodeSelector: map[string]string{"disktype": nodeselector},
