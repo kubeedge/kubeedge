@@ -44,6 +44,18 @@ sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
 # Specify the module name to compile in below command
 bash -x ${E2E_DIR}/scripts/compile.sh $1
 
+kind create cluster --name test
+
+kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
+
+kubectl create -f ${curpath}/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml
+kubectl create -f ${curpath}/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
+kubectl create -f ${curpath}/build/crds/devices/devices_v1alpha1_device.yaml
+kubectl create -f ${curpath}/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+
+# edge side don't support kind cni now, delete kind cni plugin for workaround
+kubectl delete daemonset kindnet -nkube-system
+
 :> /tmp/testcase.log
 
 bash -x ${E2E_DIR}/scripts/fast_test.sh $1
