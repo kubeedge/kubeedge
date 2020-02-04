@@ -1,36 +1,70 @@
 # make all builds both cloud and edge binaries
+
+COMPONENTS=cloudcore \
+            admission \
+            edgecore \
+            edgesite \
+            keadm
+
+.EXPORT_ALL_VARIABLES:
+OUT_DIR ?= _output
+
+define ALL_HELP_INFO
+# Build code.
+#
+# Args:
+#   WHAT: Component names to build.  
+#		the build will produce executable files under $(OUT_DIR)
+#     If not specified, "everything" will be built.
+#
+# Example:
+#   make
+#   make all
+#   make all HELP=y
+#   make all WHAT=cloudcore
+#   make all WHAT=admission
+#   make all WHAT=edgecore
+#   make all WHAT=edgesite
+#   make all WHAT=keadm
+endef
+
 .PHONY: all
-ifeq ($(WHAT),)
+ifeq ($(HELP),y)
 all:
-	cd cloud && $(MAKE)
-	cd edge && $(MAKE)
-	cd keadm && $(MAKE)
-	cd edgesite && $(MAKE)
-else ifeq ($(WHAT),cloudcore)
-# make all WHAT=cloudcore
-all:
-	cd cloud && $(MAKE) cloudcore
-else ifeq ($(WHAT),admission)
-# make all WHAT=admission
-all:
-	cd cloud && $(MAKE) admission
-else ifeq ($(WHAT),edgecore)
-all:
-# make all WHAT=edgecore
-	cd edge && $(MAKE)
-else ifeq ($(WHAT),edgesite)
-all:
-# make all WHAT=edgesite
-	$(MAKE) -C edgesite
-else ifeq ($(WHAT),keadm)
-all:
-# make all WHAT=keadm
-	cd keadm && $(MAKE)
+	@echo "$$ALL_HELP_INFO"
 else
-# invalid entry
-all:
-	@echo $S"invalid option please choose to build either cloudcore, admission, edgecore, keadm, edgesite or all together"
+all: verify-golang
+	hack/make-rules/build.sh $(WHAT)
 endif
+
+
+define VERIFY_HELP_INFO
+# verify golang,vendor and codegen
+#
+# Example:
+# make verify 
+endef
+.PHONY: verify
+ifeq ($(HELP),y)
+verify:
+	@echo "$$VERIFY_HELP_INFO"
+else
+verify:verify-golang verify-vendor verify-codegen 
+endif
+
+.PHONY: verify-golang
+verify-golang: 
+	bash hack/verify-golang.sh
+
+.PHONY: verify-vendor
+verify-vendor: 
+	bash hack/verify-vendor.sh
+.PHONY: verify-codegen
+verify-codegen: 
+	bash cloud/hack/verify-codegen.sh
+
+
+####################################
 
 # unit tests
 .PHONY: edge_test
@@ -145,11 +179,6 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-.PHONY: verify
-verify:
-	bash hack/verify-golang.sh
-	bash hack/verify-vendor.sh
-	bash cloud/hack/verify-codegen.sh
 
 .PHONY: bluetoothdevice
 bluetoothdevice:
