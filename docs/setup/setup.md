@@ -66,12 +66,21 @@ The cert/key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cert
     cd $GOPATH/src/github.com/kubeedge/kubeedge/
     make all WHAT=cloudcore
     ```
-+ Create device model and device CRDs.
+  
++ Create DeviceModel and Device CRDs.
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
     kubectl create -f devices_v1alpha1_devicemodel.yaml
     kubectl create -f devices_v1alpha1_device.yaml
+    ```
+  
++ Create ClusterObjectSync and ObjectSync CRDs which used in reliable message delivery.
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/reliablesyncs
+    kubectl create -f cluster_objectsync_v1alpha1.yaml
+    kubectl create -f objectsync_v1alpha1.yaml
     ```
 
 + Copy cloudcore binary
