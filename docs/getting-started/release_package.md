@@ -63,23 +63,28 @@
       + cloudhub.cert
       + cloudhub.key
   
-  + Create device model and device CRDs.
+  + Create DeviceModel and Device CRDs.
  
   ```shell
       wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/devices/devices_v1alpha1_devicemodel.yaml
-      # make script executable
-      chmod +x devices_v1alpha1_devicemodel.yaml
       kubectl create -f devices_v1alpha1_devicemodel.yaml
       wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/devices/devices_v1alpha1_device.yaml
-       # make script executable
-      chmod +x devices_v1alpha1_device.yaml
       kubectl create -f devices_v1alpha1_device.yaml
      ```    
+  
+  + Create ClusterObjectSync and ObjectSync CRDs which used in reliable message delivery.
+  ```shell
+        wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml
+        kubectl create -f cluster_objectsync_v1alpha1.yaml
+        wget -L https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
+        kubectl create -f objectsync_v1alpha1.yaml
+     ```
+  
   + Run cloud
   
   ```shell
       cd /etc/kubeedge/cloud
-      # run edge controller
+      # run cloudcore
       # `conf/` should be in the same directory where cloudcore resides
       # verify the configurations before running cloud(cloudcore)
       ./cloudcore
