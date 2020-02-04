@@ -47,6 +47,7 @@ type Config struct {
 	DockerHubUserName              string            `json:"dockerhubusername"`
 	DockerHubPassword              string            `json:"dockerhubpassword"`
 	MqttEndpoint                   string            `json:"mqttendpoint"`
+	KubeConfigPath                 string            `json:"kubeconfigpath"`
 }
 
 //config struct

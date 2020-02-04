@@ -93,7 +93,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 			Expect(err).To(BeNil())
 			Expect(len(podlist.Items)).Should(Equal(replica))
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 		})
 
 	})

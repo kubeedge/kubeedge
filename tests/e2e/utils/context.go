@@ -16,6 +16,7 @@ limitations under the License.
 package utils
 
 import (
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -41,7 +42,12 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	var body io.Reader
 	var resp *http.Response
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	req, err := http.NewRequest(method, reqApi, body)
 	if err != nil {
 		// handle error
