@@ -11,7 +11,7 @@ RUN apk --no-cache update && \
 apk --no-cache upgrade && \
 apk --no-cache add build-base linux-headers sqlite-dev && \
 CGO_ENABLED=1 go build -v -o /usr/local/bin/edgesite -ldflags="-w -s -extldflags -static" \
-github.com/kubeedge/kubeedge/edgesite/cmd
+github.com/kubeedge/kubeedge/edgesite/cmd/edgesite
 
 FROM ${RUN_FROM}
 
