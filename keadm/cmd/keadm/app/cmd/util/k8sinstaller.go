@@ -19,7 +19,7 @@ package util
 import (
 	"fmt"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //K8SInstTool embedes Common struct and contains the default K8S version and

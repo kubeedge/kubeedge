@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //KubeCloudInstTool embedes Common struct

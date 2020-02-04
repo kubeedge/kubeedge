@@ -30,7 +30,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information
