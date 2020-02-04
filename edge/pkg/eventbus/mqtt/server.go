@@ -103,6 +103,10 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
+	if strings.HasPrefix(msg.Topic, "$hw/events/reseller") {
+		handleEdgeGateway(msg.Topic, msg.Payload)
+		return
+	}
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {

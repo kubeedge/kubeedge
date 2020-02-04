@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
 const UploadTopic = "SYS/dis/upload_records"
@@ -50,6 +52,11 @@ var (
 		"$hw/events/device/+/twin/+",
 		"$hw/events/node/+/membership/get",
 		UploadTopic,
+		// support for edgegateway
+		"$hw/events/reseller/sync/gateway",
+		"$hw/events/reseller/sync/virtualservice",
+		"$hw/events/reseller/sync/service",
+		"$hw/events/reseller/sync/podlist",
 	}
 )
 
@@ -95,6 +102,10 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
 	// for topic, no need to base64 topic
+	if strings.HasPrefix(message.Topic(), "$hw/events/reseller") {
+		handleEdgeGateway(message.Topic(), message.Payload())
+		return
+	}
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
 	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
@@ -143,4 +154,49 @@ func (mq *Client) InitPubClient() {
 	mq.PubCli = MQTT.NewClient(pubOpts)
 	util.LoopConnect(pubID, mq.PubCli)
 	klog.Info("finish hub-client pub")
+}
+
+func handleEdgeGateway(topic string, payload []byte) {
+	var gateway *[]string
+	var sendTopic string
+	klog.Infof("received edgegateway request from topic: %s", topic)
+	switch topic {
+	case "$hw/events/reseller/sync/gateway":
+		gateway = handleEdgeGatewayRequest("gateway")
+		sendTopic = "$hw/events/gateways/insert"
+	case "$hw/events/reseller/sync/virtualservice":
+		gateway = handleEdgeGatewayRequest("virtualservice")
+		sendTopic = "$hw/events/virtualservices/insert"
+	case "$hw/events/reseller/sync/service":
+		gateway = handleEdgeGatewayRequest("service")
+		sendTopic = "$hw/events/services/insert"
+	case "$hw/events/reseller/sync/podlist":
+		gateway = handleEdgeGatewayRequest("podlist")
+		sendTopic = "$hw/events/podlist/insert"
+	default:
+		klog.Errorf("edgegateway topic: %s not support", topic)
+		return
+	}
+	if gateway == nil || len(*gateway) == 0 {
+		klog.Errorf("edgegateway topic: %s get nil", topic)
+		return
+	}
+	payload, err := json.Marshal(gateway)
+	if err != nil {
+		klog.Errorf("marshal edgegateway msg failed, err: %v", err)
+		return
+	}
+	msg := model.NewMessage("").BuildRouter("gateway", modules.BusGroup, sendTopic, "publish").FillBody(payload)
+	beehiveContext.Send(modules.EdgeEventBusModuleName, *msg)
+	klog.Infof("send edgegateway request from topic: %s success", topic)
+}
+
+func handleEdgeGatewayRequest(gatewayType string) *[]string {
+	gatewayDBList, err := dao.QueryMeta("type", gatewayType)
+	if err != nil {
+		klog.Errorf("get gatewayList from db failed. error:%s", err.Error())
+		return nil
+	}
+
+	return gatewayDBList
 }
