@@ -19,14 +19,13 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
-
 set -o errexit
 set -o nounset
 set -o pipefail
 
-KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
+readonly KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
 
-edge::version::get_version_info() {
+kubeedge::version::get_version_info() {
 
   GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null)
 
@@ -87,8 +86,8 @@ edge::version::get_version_info() {
 }
 
 # Get the value that needs to be passed to the -ldflags parameter of go build
-edge::version::ldflags() {
-  edge::version::get_version_info
+kubeedge::version::ldflags() {
+  kubeedge::version::get_version_info
 
   local -a ldflags
   function add_ldflag() {
@@ -119,5 +118,121 @@ edge::version::ldflags() {
   echo "${ldflags[*]-}"
 }
 
-edge::version::ldflags
 
+# kubeedge::binaries_from_targets take a list of build targets and return the
+# full go package to be built
+kubeedge::golang::binaries_from_targets() {
+  local target
+  for target in "$@"; do
+    echo "${KUBEEDGE_GO_PACKAGE}/${target}"
+  done
+}
+
+kubeedge::check::env() {
+  local -a errors 
+	
+  if [ -z $GOPATH ]; then
+    errors+="GOPATH environment value not set"
+  fi
+
+  # check other env 
+
+  # check lenth of errors
+  if [[ ${#errors[@]} -ne 0 ]] ; then
+    local error
+    for error in ${errors[@]}; do
+      echo "Error: "$error
+    done
+    exit 1
+  fi
+}
+
+
+ALL_BINARIES_AND_TARGETS=(
+  cloudcore:cloud/cmd/cloudcore
+  admission:cloud/cmd/admission
+  keadm:keadm/cmd/keadm
+  edgecore:edge/cmd/edgecore
+  edgesite:edgesite/cmd/edgesite
+)
+
+kubeedge::golang::get_target_by_binary() {
+  local key=$1
+  for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
+    local binary="${bt%%:*}"
+    if [ "${binary}" == "${key}" ]; then
+      local target="${bt##*:}"
+      echo "$target"
+      return
+    fi
+  done
+  echo "can not find binary: $key"
+  exit 1
+}
+
+kubeedge::golang::get_all_targets() {
+  local -a targets
+  for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
+    targets+=("${bt##*:}")
+  done
+  echo ${targets[@]}
+}
+
+kubeedge::golang::get_all_binares() {
+  local -a binares 
+  for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
+    binares+=("${bt%%:*}")
+  done
+  echo ${binares[@]}
+}
+
+
+IFS=" " read -ra KUBEEDGE_ALL_TARGETS <<< "$(kubeedge::golang::get_all_targets)"
+IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binares)"
+
+kubeedge::golang::build_binaries() {
+  echo "building binares $@"
+  kubeedge::check::env
+	
+  local -a targets=()
+  local binArg
+  for binArg in "$@"; do
+    targets+=("$(kubeedge::golang::get_target_by_binary $binArg)")
+  done
+  
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    targets=("${KUBEEDGE_ALL_TARGETS[@]}")
+  fi
+    
+  local -a binaries
+  while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
+
+  local ldflags
+  read -r ldflags <<< "$(kubeedge::version::ldflags)"
+
+  for bin in ${binaries[@]}; do
+    go install -ldflags "$ldflags" $bin
+  done
+
+} 
+
+kubeedge::golang::place_bins() {
+  echo "Placing binaries $@"	
+
+  local -a binaries=()
+  local binArg
+  for binArg in "$@"; do
+    binaries+=("${binArg}")
+  done
+  
+  if [[ ${#binaries[@]} -eq 0 ]]; then
+    binaries=("${KUBEEDGE_ALL_BINARIES[@]}")
+  fi
+
+  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
+
+  local name
+  for name in ${binaries[@]}; do
+    mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
+  done
+}
