@@ -27,7 +27,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //Constants used by installers
