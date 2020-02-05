@@ -6,7 +6,7 @@ BINARIES=cloudcore \
 	edgesite \
 	keadm
 
-COMPONENTS=cloud\
+COMPONENTS=cloud \
 	edge
 
 .EXPORT_ALL_VARIABLES:
@@ -26,13 +26,12 @@ define ALL_HELP_INFO
 #   make all HELP=y
 #   make all WHAT=cloudcore
 endef
-
 .PHONY: all
 ifeq ($(HELP),y)
-all:
+all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: verify-golang
+all: verify-golang clean
 	hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -62,8 +61,6 @@ verify-vendor:
 verify-codegen: 
 	bash cloud/hack/verify-codegen.sh
 
-
-
 define TEST_HELP_INFO
 # run golang test case.
 #
@@ -76,7 +73,6 @@ define TEST_HELP_INFO
 #   make test HELP=y
 #   make test WHAT=cloud
 endef
-
 .PHONY: test 
 ifeq ($(HELP),y)
 test:
@@ -90,8 +86,6 @@ LINTS=cloud \
 	edge \
 	keadm \
 	bluetoothdevice
-
-
 define LINT_HELP_INFO
 # run golang lint check.
 #
@@ -104,7 +98,6 @@ define LINT_HELP_INFO
 #   make lint HELP=y
 #   make lint WHAT=cloud
 endef
-
 .PHONY: lint 
 ifeq ($(HELP),y)
 lint:
@@ -139,7 +132,7 @@ integrationtest:
 endif
 
 CROSSBUILD_COMPONENTS=edgecore\
-						edgesite
+	edgesite
 GOARM_VALUES=GOARM7 \
 	GOARM8
 
@@ -150,32 +143,30 @@ define CROSSBUILD_HELP_INFO
 #   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS) 
 #         If not specified, "everything" will be cross build.
 #
-#	GOARM: go arm value, now support:$(GOARM_VALUES)
-#			If not specified ,default use GOARM=GOARM8 
+# GOARM: go arm value, now support:$(GOARM_VALUES)
+#        If not specified ,default use GOARM=GOARM8 
 #
 #
 # Example:
 #   make crossbuild 
 #   make crossbuild HELP=y
-#	make crossbuild WHAT=edgecore
-#	make crossbuild WHAT=edgecore GOARM=GOARM7
+#   make crossbuild WHAT=edgecore
+#   make crossbuild WHAT=edgecore GOARM=GOARM7
 #
 endef
-
 .PHONY: crossbuild 
 ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: 
+crossbuild: clean 
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
 endif
 
 
 
-SMALLBUILD_COMPONENTS=edgecore\
-						edgesite
-
+SMALLBUILD_COMPONENTS=edgecore \
+	edgesite
 define SMALLBUILD_HELP_INFO
 # small build components.
 #
@@ -187,17 +178,16 @@ define SMALLBUILD_HELP_INFO
 # Example:
 #   make smallbuild 
 #   make smallbuild HELP=y
-#	make smallbuild WHAT=edgecore
-#	make smallbuild WHAT=edgesite
+#   make smallbuild WHAT=edgecore
+#   make smallbuild WHAT=edgesite
 #
 endef
-
 .PHONY: smallbuild 
 ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
 else
-smallbuild: 
+smallbuild: clean
 	hack/make-rules/smallbuild.sh $(WHAT)
 endif
 
@@ -210,7 +200,6 @@ define E2E_HELP_INFO
 #   make e2e HELP=y
 #
 endef
-
 .PHONY: e2e 
 ifeq ($(HELP),y)
 e2e:
@@ -222,8 +211,22 @@ e2e:
 	bash tests/e2e/scripts/execute.sh
 endif
 
-
-####################################
+define CLEAN_HELP_INFO
+# Clean up the output of make.
+#
+# Example:
+#   make clean 
+#   make clean HELP=y
+#
+endef
+.PHONY: clean 
+ifeq ($(HELP),y)
+clean:
+	@echo "$$CLEAN_HELP_INFO"
+else
+clean: 
+	hack/make-rules/clean.sh
+endif
 
 
 QEMU_ARCH ?= x86_64
@@ -264,11 +267,10 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-
 .PHONY: bluetoothdevice
-bluetoothdevice:
-	make -C mappers/bluetooth_mapper
+bluetoothdevice: clean
+	hack/make-rules/bluetoothdevice.sh
 
 .PHONY: bluetoothdevice_image
-bluetoothdevice_image:
-	make -C mappers/bluetooth_mapper bluetooth_mapper_image
+bluetoothdevice_image:bluetoothdevice
+	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/

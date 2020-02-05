@@ -47,11 +47,9 @@ jobs:
       script:
         - make
         - make bluetoothdevice
-        - make edge_small_build
+        - make smallbuild 
         - make crossbuild
         - make crossbuild GOARM=GOARM7
-        - make crossbuild GOARM=GOARM8
-        - make edgesite_small_build
     - name: "unit test, integration test edge"
       arch: amd64
       before_script:
@@ -91,7 +89,7 @@ jobs:
       script:
         - make
         - make bluetoothdevice
-        - make edge_small_build
+        - make smallbuild
     - name: "unit test"
       arch: arm64
       before_script:

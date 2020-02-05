@@ -20,15 +20,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# The root of the kubeedge
-KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+kubeedge::mapper::build_bluetoothdevice() {
+  blutooth_binary=${KUBEEDGE_GO_PACKAGE}/mappers/bluetooth_mapper
+  name=bluetooth_mapper
 
-KUBEEDGE_OUTPUT_SUBPATH="${KUBEEDGE_OUTPUT_SUBPATH:-_output/local}"
-KUBEEDGE_OUTPUT="${KUBEEDGE_ROOT}/${KUBEEDGE_OUTPUT_SUBPATH}"
-KUBEEDGE_OUTPUT_BINPATH="${KUBEEDGE_OUTPUT}/bin"
-
-readonly KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
-
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
-source "${KUBEEDGE_ROOT}/hack/lib/lint.sh"
-source "${KUBEEDGE_ROOT}/hack/lib/mapper.sh"
+  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
+  set -x
+  go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} $blutooth_binary
+  set +x
+}
