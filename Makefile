@@ -121,7 +121,7 @@ define INTEGRATION_TEST_HELP_INFO
 #
 # Args:
 #   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS) 
-#         If not specified, "everything" will be lint check.
+#         If not specified, "everything" will be integration check.
 #
 # Example:
 #   make integrationtest 
@@ -148,7 +148,7 @@ define CROSSBUILD_HELP_INFO
 #
 # Args:
 #   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS) 
-#         If not specified, "everything" will be lint check.
+#         If not specified, "everything" will be cross build.
 #
 #	GOARM: go arm value, now support:$(GOARM_VALUES)
 #			If not specified ,default use GOARM=GOARM8 
@@ -169,6 +169,36 @@ crossbuild:
 else
 crossbuild: 
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+endif
+
+
+
+SMALLBUILD_COMPONENTS=edgecore\
+						edgesite
+
+define SMALLBUILD_HELP_INFO
+# small build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS) 
+#         If not specified, "everything" will be small build.
+#
+#
+# Example:
+#   make smallbuild 
+#   make smallbuild HELP=y
+#	make smallbuild WHAT=edgecore
+#	make smallbuild WHAT=edgesite
+#
+endef
+
+.PHONY: smallbuild 
+ifeq ($(HELP),y)
+smallbuild:
+	@echo "$$SMALLBUILD_HELP_INFO"
+else
+smallbuild: 
+	hack/make-rules/smallbuild.sh $(WHAT)
 endif
 
 
