@@ -1,14 +1,3 @@
-GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
-# make edge_site
-.PHONY: default edge_site
-edge_site: verify
-	go build ${GO_LDFLAGS} cmd/edgesite/edgesite.go
-
-.PHONY: verify
-verify:
-	bash ../hack/verify-golang.sh
-
-
 .PHONY: cross_build
 cross_build: verify
 	export GOARCH=arm64 \

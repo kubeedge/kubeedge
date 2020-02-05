@@ -59,8 +59,7 @@ jobs:
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=vendor
       script:
-        - make edge_test
-        - make cloud_test
+        - make test
         - make edge_integration_test
     - name: "e2e test"
       arch: amd64
@@ -99,8 +98,7 @@ jobs:
       before_script:
         - export GOFLAGS=-mod=vendor
       script:
-        - make edge_test
-        - make cloud_test
+        - make test
     - name: "build docker images on arm64"
       arch: arm64
       script:

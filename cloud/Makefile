@@ -1,26 +1,15 @@
 # make cloud part
 
-# get ldflags 
-GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 
-.PHONY: default cloudcore admission
+.PHONY: 
 
-default: cloudcore admission
+default: 
 
-cloudcore: verify
-	go build ${GO_LDFLAGS} cmd/cloudcore/cloudcore.go
-
-admission: verify
-	go build ${GO_LDFLAGS} cmd/admission/admission.go
 
 .PHONY: lint
 lint:
 	golangci-lint run --skip-dirs 'pkg/client' --disable-all -E gofmt -E golint --deadline '10m' ./...
 	go vet ./...
-
-.PHONY: verify 
-verify:
-	bash ../hack/verify-golang.sh
 
 # Build and run tests.
 #

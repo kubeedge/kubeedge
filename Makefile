@@ -1,10 +1,13 @@
 # make all builds both cloud and edge binaries
 
-COMPONENTS=cloudcore \
+BINARIES=cloudcore \
             admission \
             edgecore \
             edgesite \
             keadm
+
+COMPONENTS=cloud\
+			edge
 
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output
@@ -13,19 +16,15 @@ define ALL_HELP_INFO
 # Build code.
 #
 # Args:
-#   WHAT: Component names to build.  
-#		the build will produce executable files under $(OUT_DIR)
-#     If not specified, "everything" will be built.
+#   WHAT: binary names to build. support: $(BINARIES) 
+#         the build will produce executable files under $(OUT_DIR)
+#         If not specified, "everything" will be built.
 #
 # Example:
 #   make
 #   make all
 #   make all HELP=y
 #   make all WHAT=cloudcore
-#   make all WHAT=admission
-#   make all WHAT=edgecore
-#   make all WHAT=edgesite
-#   make all WHAT=keadm
 endef
 
 .PHONY: all
@@ -64,6 +63,31 @@ verify-codegen:
 	bash cloud/hack/verify-codegen.sh
 
 
+
+define TEST_HELP_INFO
+# run golang test case.
+#
+# Args:
+#   WHAT: Component names to be testd. support: $(COMPONENTS) 
+#         If not specified, "everything" will be tested.
+#
+# Example:
+#   make test 
+#   make test HELP=y
+#   make test WHAT=cloud
+endef
+
+.PHONY: test 
+ifeq ($(HELP),y)
+test:
+	@echo "$$TEST_HELP_INFO"
+else
+test: 
+	hack/make-rules/test.sh $(WHAT)
+endif
+
+
+
 ####################################
 
 # unit tests
@@ -74,6 +98,8 @@ edge_test:
 .PHONY: cloud_test
 cloud_test:
 	$(MAKE) -C cloud test
+
+
 
 # lint
 .PHONY: lint

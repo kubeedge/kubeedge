@@ -236,3 +236,74 @@ kubeedge::golang::place_bins() {
     mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
   done
 }
+
+kubeedge::golang::get_cloud_test_dirs() {
+  (
+    local findDirs
+    local -a dirArray
+    cd ${KUBEEDGE_ROOT}
+    findDirs=$(find -L ./cloud -not \( \
+        \( \
+          -path './cloud/test/integration/*' \
+        \) -prune \
+      \) -name '*_test.go' -print0 | xargs -0n1 dirname | LC_ALL=C sort -u)
+    dirArray=(${findDirs// /})
+    echo "${dirArray[@]}"
+  )
+}
+
+kubeedge::golang::get_edge_test_dirs() {
+  (
+    local findDirs
+    local -a dirArray=()
+    cd ${KUBEEDGE_ROOT}
+	findDirs=$(find "./edge/pkg" -name "*_test.go"| xargs -I{} dirname {} | uniq)
+    dirArray=(${findDirs// /})
+    echo "${dirArray[@]}"
+  )
+}
+
+read -ra KUBEEDGE_CLOUD_TESTCASES <<< "$(kubeedge::golang::get_cloud_test_dirs)"
+read -ra KUBEEDGE_EDGE_TESTCASES <<< "$(kubeedge::golang::get_edge_test_dirs)"
+
+readonly KUBEEDGE_ALL_TESTCASES=(
+  ${KUBEEDGE_CLOUD_TESTCASES[@]}
+  ${KUBEEDGE_EDGE_TESTCASES[@]}
+)
+
+ALL_COMPONENTS_AND_GETTESTDIRS_FUNCTIONS=(
+  cloud::::kubeedge::golang::get_cloud_test_dirs
+  edge::::kubeedge::golang::get_edge_test_dirs
+)
+
+kubeedge::golang::get_testdirs_by_component() {
+  local key=$1
+  for ct in "${ALL_COMPONENTS_AND_GETTESTDIRS_FUNCTIONS[@]}" ; do
+    local component="${ct%%::::*}"
+    if [ "${component}" == "${key}" ]; then
+      local testcases="${ct##*::::}"
+      echo $(eval $testcases)
+      return
+    fi
+  done
+  echo "can not find component: $key"
+  exit 1
+}
+
+kubeedge::golang::run_test() {
+  echo "running tests cases $@"
+
+  cd ${KUBEEDGE_ROOT}
+
+  local -a testdirs=()
+  local binArg
+  for binArg in "$@"; do
+    testdirs+=("$(kubeedge::golang::get_testdirs_by_component $binArg)")
+  done
+
+  if [[ ${#testdirs[@]} -eq 0 ]]; then
+    testdirs+=("${KUBEEDGE_ALL_TESTCASES[@]}")
+  fi
+
+  go test ${testdirs[@]}
+}

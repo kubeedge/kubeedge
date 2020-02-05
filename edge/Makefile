@@ -1,14 +1,4 @@
 
-GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
-# make edgecore
-.PHONY: default edgecore
-edgecore: verify
-	go build ${GO_LDFLAGS}  cmd/edgecore/edgecore.go
-
-.PHONY: verify 
-verify:
-	bash ../hack/verify-golang.sh
-
 # unit tests
 .PHONY: test
 ifeq ($(WHAT),)
