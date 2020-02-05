@@ -3,7 +3,7 @@ GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 # make keadm
 .PHONY: default keadm
 keadm: verify 
-	go build $(GO_LDFLAGS) -o keadm keadm.go
+	go build $(GO_LDFLAGS) -o keadm cmd/keadm/keadm.go
 
 .PHONY: verify
 verify:

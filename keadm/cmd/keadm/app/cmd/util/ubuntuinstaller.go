@@ -22,7 +22,7 @@ import (
 	"os/exec"
 	"strings"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 const downloadRetryTimes int = 3
@@ -37,10 +37,10 @@ const (
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type UbuntuOS struct {
-	DockerVersion     string
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	DockerVersion      string
+	KubernetesVersion  string
+	KubeEdgeVersion    string
+	IsEdgeNode         bool //True - Edgenode False - Cloudnode
 	K8SImageRepository string
 	K8SPodNetworkCidr  string
 }

@@ -22,8 +22,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/app/cmd/util"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 var (

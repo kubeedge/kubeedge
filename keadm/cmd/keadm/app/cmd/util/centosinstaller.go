@@ -20,17 +20,17 @@ import (
 	"fmt"
 	"os/exec"
 
-	types "github.com/kubeedge/kubeedge/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //CentOS struct objects shall have information of the tools version to be installed
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type CentOS struct {
-	DockerVersion     string
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	DockerVersion      string
+	KubernetesVersion  string
+	KubeEdgeVersion    string
+	IsEdgeNode         bool //True - Edgenode False - Cloudnode
 	K8SImageRepository string
 	K8SPodNetworkCidr  string
 }

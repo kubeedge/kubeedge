@@ -21,8 +21,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cloud "github.com/kubeedge/kubeedge/keadm/app/cmd/cloud"
-	edge "github.com/kubeedge/kubeedge/keadm/app/cmd/edge"
+	cloud "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/cloud"
+	edge "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
 )
 
 var (
