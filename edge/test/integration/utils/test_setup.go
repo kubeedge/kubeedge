@@ -16,9 +16,9 @@ import (
 const (
 	EdgeCoreConfigFile    = "/tmp/edgecore.yaml"
 	CatEdgeCoreConfigFile = "cat /tmp/edgecore.yaml"
-	RunEdgecore           = "sudo pkill -9 edgecore; cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
+	RunEdgecore           = "sudo pkill -9 edgecore; cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
 	CheckEdgecore         = "sudo pgrep edgecore"
-	CatEdgecoreLog        = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/edge/; cat edgecore.log"
+	CatEdgecoreLog        = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; cat edgecore.log"
 	DBFile                = "/tmp/edgecore/edgecore.db"
 )
 

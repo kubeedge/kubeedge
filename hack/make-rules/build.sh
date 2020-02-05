@@ -24,4 +24,3 @@ KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
 kubeedge::golang::build_binaries "$@"
-kubeedge::golang::place_bins "$@"

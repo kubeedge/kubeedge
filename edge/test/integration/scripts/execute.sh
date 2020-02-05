@@ -14,11 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workdir=`pwd`
-cd $workdir
-
 curpath=$PWD
 echo $PWD
+
 VAR_EDGED_DIR="/var/lib/kubeedge"
 if [ ! -d ${VAR_EDGED_DIR} ]; then
   sudo mkdir -p ${VAR_EDGED_DIR} && sudo chown $USER:$USER ${VAR_EDGED_DIR}
@@ -31,7 +29,8 @@ sudo pkill edgecore
 #kill the edgecore process if it exists, wait 2s delay before start the edgecore process.
 sleep 2s
 
-PWD=${curpath}/test/integration
+PWD=${curpath}/edge/test/integration
+
 # create cert files
 $PWD/scripts/generate_cert.sh
 sudo rm -rf $PWD/appdeployment/appdeployment.test
