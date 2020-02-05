@@ -18,6 +18,7 @@ package utils
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -77,7 +78,13 @@ func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 		return err
 	}
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
 	t := time.Now()
 	nodebody, err := json.Marshal(body)
 	if err != nil {

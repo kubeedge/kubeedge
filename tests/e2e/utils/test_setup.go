@@ -126,7 +126,7 @@ func DeploySetup(ctx *TestContext, nodeName, setupType string) error {
 	// TODO change as constants or delete this function @kadisi
 	switch setupType {
 	case "deployment":
-		createCloudCoreConfigFile(ctx.Cfg.K8SMasterForKubeEdge)
+		createCloudCoreConfigFile(ctx.Cfg.KubeConfigPath)
 		createEdgeCoreConfigFile(nodeName)
 	case "edgesite":
 		createEdgeSiteConfigFile(ctx.Cfg.K8SMasterForKubeEdge, nodeName)
@@ -146,10 +146,10 @@ func CleanUp(setupType string) error {
 	return nil
 }
 
-func createCloudCoreConfigFile(kubeMaster string) {
+func createCloudCoreConfigFile(kubeConfigPath string) {
 	c := cloudcore.NewDefaultCloudCoreConfig()
-	c.KubeAPIConfig.KubeConfig = ""
-	c.KubeAPIConfig.Master = kubeMaster
+	c.KubeAPIConfig.KubeConfig = kubeConfigPath
+	c.KubeAPIConfig.Master = ""
 	// TODO change ca file path @kadisi
 	c.Modules.CloudHub.TLSCAFile = "/tmp/cloudcore/rootCA.crt"
 	c.Modules.CloudHub.TLSCertFile = "/tmp/cloudcore/kubeedge.crt"

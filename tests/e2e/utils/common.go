@@ -320,7 +320,12 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	switch operation {
 	case "POST":
 		body := newPodObj(UID, ImageUrl, nodeselector)
@@ -356,7 +361,13 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	var body io.Reader
 
 	defer ginkgo.GinkgoRecover()
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
 	switch operation {
 	case "POST":
 		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageUrl, nodeselector, configmapname, replica)

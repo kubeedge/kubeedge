@@ -64,7 +64,13 @@ jobs:
       arch: amd64
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
+        - go get sigs.k8s.io/kind@v0.7.0
         - export GOFLAGS=-mod=vendor
+        - sudo apt-get update && sudo apt-get install -y apt-transport-https
+        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+        - sudo apt-get update
+        - sudo apt-get install -y kubectl
       script:
         - make e2e_test
     - name: "build docker images on amd64"
