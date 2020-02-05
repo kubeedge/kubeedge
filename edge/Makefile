@@ -1,9 +1,5 @@
 
 
-.PHONY: integration_test
-integration_test: edgecore
-	bash test/integration/scripts/execute.sh
-
 .PHONY: clean
 clean:
 	bash -x hack/clean.sh

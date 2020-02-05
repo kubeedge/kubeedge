@@ -115,11 +115,30 @@ lint:
 endif
 
 
-####################################
+INTEGRATION_TEST_COMPONENTS=edge
+define INTEGRATION_TEST_HELP_INFO
+# run integration test.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS) 
+#         If not specified, "everything" will be lint check.
+#
+# Example:
+#   make integrationtest 
+#   make integrationtest HELP=y
+endef
 
-.PHONY: edge_integration_test
-edge_integration_test:
-	cd edge && $(MAKE) integration_test
+.PHONY: integrationtest 
+ifeq ($(HELP),y)
+integrationtest:
+	@echo "$$INTEGRATION_TEST_HELP_INFO"
+else
+WHAT=edgecore
+integrationtest: all
+	edge/test/integration/scripts/execute.sh
+endif
+
+####################################
 
 .PHONY: edge_cross_build
 edge_cross_build:
