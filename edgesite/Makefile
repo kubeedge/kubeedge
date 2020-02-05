@@ -1,28 +1,3 @@
-.PHONY: cross_build
-cross_build: verify
-	export GOARCH=arm64 \
-        export GOOS="linux" \
-        export CGO_ENABLED=1 \
-        export CC=aarch64-linux-gnu-gcc; \
-        go build cmd/edgesite/edgesite.go
-
-.PHONY: armv7
-armv7: verify
-	export GOARCH=arm \
-        export GOOS="linux" \
-        export GOARM=7 \
-        export CGO_ENABLED=1 \
-        export CC=arm-linux-gnueabi-gcc; \
-        go build cmd/edgesite/edgesite.go
-
-.PHONY: armv8
-armv8: verify
-	export GOARCH=arm64 \
-        export GOOS="linux" \
-        export CGO_ENABLED=1 \
-        export CC=aarch64-linux-gnu-gcc; \
-        go build cmd/edgesite/edgesite.go
-
 .PHONY: small_build
 small_build: verify
 	go build -ldflags="-w -s -extldflags -static" cmd/edgesite/edgesite.go

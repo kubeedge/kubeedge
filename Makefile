@@ -1,13 +1,13 @@
 # make all builds both cloud and edge binaries
 
 BINARIES=cloudcore \
-            admission \
-            edgecore \
-            edgesite \
-            keadm
+	admission \
+	edgecore \
+	edgesite \
+	keadm
 
 COMPONENTS=cloud\
-			edge
+	edge
 
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output
@@ -86,10 +86,10 @@ test:
 	hack/make-rules/test.sh $(WHAT)
 endif
 
-LINTS=cloud\
-		edge\
-		keadm\
-		bluetoothdevice
+LINTS=cloud \
+	edge \
+	keadm \
+	bluetoothdevice
 
 
 define LINT_HELP_INFO
@@ -133,40 +133,51 @@ ifeq ($(HELP),y)
 integrationtest:
 	@echo "$$INTEGRATION_TEST_HELP_INFO"
 else
-WHAT=edgecore
-integrationtest: all
+integrationtest: 
+	hack/make-rules/build.sh edgecore 
 	edge/test/integration/scripts/execute.sh
 endif
 
+CROSSBUILD_COMPONENTS=edgecore\
+						edgesite
+GOARM_VALUES=GOARM7 \
+	GOARM8
+
+define CROSSBUILD_HELP_INFO
+# cross build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS) 
+#         If not specified, "everything" will be lint check.
+#
+#	GOARM: go arm value, now support:$(GOARM_VALUES)
+#			If not specified ,default use GOARM=GOARM8 
+#
+#
+# Example:
+#   make crossbuild 
+#   make crossbuild HELP=y
+#	make crossbuild WHAT=edgecore
+#	make crossbuild WHAT=edgecore GOARM=GOARM7
+#
+endef
+
+.PHONY: crossbuild 
+ifeq ($(HELP),y)
+crossbuild:
+	@echo "$$CROSSBUILD_HELP_INFO"
+else
+crossbuild: 
+	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+endif
+
+
 ####################################
 
-.PHONY: edge_cross_build
-edge_cross_build:
-	cd edge && $(MAKE) cross_build
-
-.PHONY: edge_cross_build_v7
-edge_cross_build_v7:
-	$(MAKE) -C edge armv7
-
-.PHONY: edge_cross_build_v8
-edge_cross_build_v8:
-	$(MAKE) -C edge armv8
-
-.PHONY: edgesite_cross_build
-edgesite_cross_build:
-	$(MAKE) -C edgesite cross_build
 
 .PHONY: edge_small_build
 edge_small_build:
 	cd edge && $(MAKE) small_build
-
-.PHONY: edgesite_cross_build_v7
-edgesite_cross_build_v7:
-	$(MAKE) -C edgesite armv7
-
-.PHONY: edgesite_cross_build_v8
-edgesite_cross_build_v8:
-	$(MAKE) -C edgesite armv8
 
 .PHONY: edgesite_small_build
 edgesite_small_build:

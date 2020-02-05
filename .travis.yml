@@ -48,10 +48,9 @@ jobs:
         - make
         - make bluetoothdevice
         - make edge_small_build
-        - make edge_cross_build
-        - make edge_cross_build_v7
-        - make edgesite_cross_build
-        - make edgesite_cross_build_v7
+        - make crossbuild
+        - make crossbuild GOARM=GOARM7
+        - make crossbuild GOARM=GOARM8
         - make edgesite_small_build
     - name: "unit test, integration test edge"
       arch: amd64
