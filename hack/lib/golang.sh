@@ -216,6 +216,28 @@ kubeedge::golang::build_binaries() {
 
 } 
 
+kubeedge::golang::place_bins() {
+  echo "Placing binaries $@"	
+
+  local -a binaries=()
+  local binArg
+  for binArg in "$@"; do
+    binaries+=("${binArg}")
+  done
+  
+  if [[ ${#binaries[@]} -eq 0 ]]; then
+    binaries=("${KUBEEDGE_ALL_BINARIES[@]}")
+  fi
+
+  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
+
+  local name
+  for name in ${binaries[@]}; do
+    mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
+  done
+}
+
+
 KUBEEDGE_ALL_CROSS_BINARIES=(
 edgecore
 edgesite
@@ -298,30 +320,63 @@ kubeedge::golang::cross_build_place_binaries() {
 
   for name in ${binariesArray[@]}; do 
     mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
-    echo "name:"$name
   done
 }
 
-kubeedge::golang::place_bins() {
-  echo "Placing binaries $@"	
+KUBEEDGE_ALL_SMALL_BINARIES=(
+edgecore
+edgesite
+)
 
-  local -a binaries=()
-  local binArg
-  for binArg in "$@"; do
-    binaries+=("${binArg}")
+kubeedge::golang::is_small_build_binary() {
+  local key=$1
+  for bin in "${KUBEEDGE_ALL_SMALL_BINARIES[@]}" ; do
+    if [ "${bin}" == "${key}" ]; then
+      echo ${YES} 
+      return
+    fi
   done
-  
-  if [[ ${#binaries[@]} -eq 0 ]]; then
-    binaries=("${KUBEEDGE_ALL_BINARIES[@]}")
+  echo ${NO} 
+}
+
+kubeedge::golang::small_build_place_binaries() {
+  kubeedge::check::env
+  local -a targets=()
+  local -a binariesArray=()
+
+  for arg in "$@"; do
+    if [ "$(kubeedge::golang::is_small_build_binary ${arg})" == "${NO}" ]; then
+      echo "${arg} does not support small build"
+      exit 1
+    fi
+    targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
+    binariesArray+=("$arg")
+  done
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    for bin in ${KUBEEDGE_ALL_SMALL_BINARIES[@]}; do
+        targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
+        binariesArray+=("$bin")
+    done
   fi
+  
+  local -a binaries
+  while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
 
-  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
+  local ldflags
+  read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
-  local name
-  for name in ${binaries[@]}; do
+  for bin in ${binaries[@]}; do
+    echo "small buildding $bin"
+    go install -ldflags "-w -s -extldflags -static $ldflags" $bin
+  done
+
+  for name in ${binariesArray[@]}; do 
+    upx-ucl -9 ${GOPATH}/bin/edgecore
     mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
   done
 }
+
 
 kubeedge::golang::get_cloud_test_dirs() {
   (
