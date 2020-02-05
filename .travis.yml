@@ -60,7 +60,7 @@ jobs:
         - export GOFLAGS=-mod=vendor
       script:
         - make test
-        - make edge_integration_test
+        - make integrationtest
     - name: "e2e test"
       arch: amd64
       before_script:
