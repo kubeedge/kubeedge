@@ -14,22 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package main
 
 import (
-	"flag"
+	"fmt"
 	"os"
 
-	"github.com/spf13/pflag"
-
-	"github.com/kubeedge/kubeedge/keadm/app/cmd"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
 )
 
-//Run executes the keadm command
-func Run() error {
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Set("logtostderr", "true")
-
-	cmd := cmd.NewKubeedgeCommand(os.Stdin, os.Stdout, os.Stderr)
-	return cmd.Execute()
+func main() {
+	if err := app.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
