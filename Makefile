@@ -202,26 +202,29 @@ smallbuild:
 endif
 
 
-####################################
+define E2E_HELP_INFO
+# e2e test.
+#
+# Example:
+#   make e2e 
+#   make e2e HELP=y
+#
+endef
 
-
-.PHONY: edge_small_build
-edge_small_build:
-	cd edge && $(MAKE) small_build
-
-.PHONY: edgesite_small_build
-edgesite_small_build:
-	$(MAKE) -C edgesite small_build
-
-.PHONY: e2e_test
-e2e_test:
+.PHONY: e2e 
+ifeq ($(HELP),y)
+e2e:
+	@echo "$$E2E_HELP_INFO"
+else
+e2e: 
 #	bash tests/e2e/scripts/execute.sh device_crd
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
 	bash tests/e2e/scripts/execute.sh
+endif
 
-.PHONY: performance_test
-performance_test:
-	bash tests/performance/scripts/jenkins.sh
+
+####################################
+
 
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
