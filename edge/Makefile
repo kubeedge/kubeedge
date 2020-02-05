@@ -1,21 +1,4 @@
 
-# unit tests
-.PHONY: test
-ifeq ($(WHAT),)
-       TEST_DIR="./pkg/"
-else
-       TEST_DIR=${WHAT}	
-endif
-
-export GOARCHAIUS_CONFIG_PATH=$(CURDIR)
-test:
-	find ${TEST_DIR} -name "*_test.go"| xargs -I{} dirname {} | uniq | xargs -I{} go test ${T} {}
-
-# lint
-.PHONY: lint
-lint:
-	golangci-lint run --disable-all -E gofmt -E golint -E misspell --deadline '10m' ./...
-	go vet ./...
 
 .PHONY: integration_test
 integration_test: edgecore

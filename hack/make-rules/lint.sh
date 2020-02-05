@@ -20,12 +20,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# The root of the build/dist directory
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
-KUBEEDGE_OUTPUT_SUBPATH="${KUBEEDGE_OUTPUT_SUBPATH:-_output/local}"
-KUBEEDGE_OUTPUT="${KUBEEDGE_ROOT}/${KUBEEDGE_OUTPUT_SUBPATH}"
-KUBEEDGE_OUTPUT_BINPATH="${KUBEEDGE_OUTPUT}/bin"
-
-source "${KUBEEDGE_ROOT}/hack/lib/golang.sh"
-source "${KUBEEDGE_ROOT}/hack/lib/lint.sh"
+kubeedge::lint::check "$@"
