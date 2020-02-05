@@ -86,40 +86,36 @@ test:
 	hack/make-rules/test.sh $(WHAT)
 endif
 
+LINTS=cloud\
+		edge\
+		keadm\
+		bluetoothdevice
+
+
+define LINT_HELP_INFO
+# run golang lint check.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(LINTS) 
+#         If not specified, "everything" will be lint check.
+#
+# Example:
+#   make lint 
+#   make lint HELP=y
+#   make lint WHAT=cloud
+endef
+
+.PHONY: lint 
+ifeq ($(HELP),y)
+lint:
+	@echo "$$LINT_HELP_INFO"
+else
+lint: 
+	hack/make-rules/lint.sh $(WHAT)
+endif
 
 
 ####################################
-
-# unit tests
-.PHONY: edge_test
-edge_test:
-	cd edge && $(MAKE) test
-
-.PHONY: cloud_test
-cloud_test:
-	$(MAKE) -C cloud test
-
-
-
-# lint
-.PHONY: lint
-lint:edge_lint cloud_lint bluetoothdevice_lint keadm_lint
-
-.PHONY: edge_lint
-edge_lint:
-	cd edge && $(MAKE) lint
-
-.PHONY: cloud_lint
-cloud_lint:
-	cd cloud && $(MAKE) lint
-
-.PHONY: bluetoothdevice_lint
-bluetoothdevice_lint:
-	make -C mappers/bluetooth_mapper lint
-
-.PHONY: keadm_lint
-keadm_lint:
-	make -C keadm lint
 
 .PHONY: edge_integration_test
 edge_integration_test:

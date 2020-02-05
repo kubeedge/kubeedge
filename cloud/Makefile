@@ -6,27 +6,6 @@
 default: 
 
 
-.PHONY: lint
-lint:
-	golangci-lint run --skip-dirs 'pkg/client' --disable-all -E gofmt -E golint --deadline '10m' ./...
-	go vet ./...
-
-# Build and run tests.
-#
-# Args:
-#   WHAT: Directory names to test.  All *_test.go files under these
-#     directories will be run.  If not specified, "everything" will be tested.
-#   KUBE_TEST_ARGS: Test case name to test.
-#   GOFLAGS: go flags to be passed like verbose mode etc.
-# Example:
-#   make test
-#   make test GOFLAGS=-v
-#   make test WHAT=pkg/controller/manager/ GOFLAGS=-v
-#   make test GOFLAGS="-v" KUBE_TEST_ARGS="-run ^TestEventToMessage"
-.PHONY: test
-test:
-	hack/test.sh $(WHAT)
-
 # Build and run integration tests.
 #
 # Args:

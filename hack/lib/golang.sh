@@ -161,8 +161,7 @@ kubeedge::golang::get_target_by_binary() {
   for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
     local binary="${bt%%:*}"
     if [ "${binary}" == "${key}" ]; then
-      local target="${bt##*:}"
-      echo "$target"
+      echo "${bt##*:}"
       return
     fi
   done
