@@ -19,11 +19,14 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
+#set -x
 set -o errexit
 set -o nounset
 set -o pipefail
 
 readonly KUBEEDGE_GO_PACKAGE="github.com/kubeedge/kubeedge"
+YES="y"
+NO="n"
 
 kubeedge::version::get_version_info() {
 
@@ -129,7 +132,7 @@ kubeedge::golang::binaries_from_targets() {
 }
 
 kubeedge::check::env() {
-  local -a errors 
+  errors=()
 	
   if [ -z $GOPATH ]; then
     errors+="GOPATH environment value not set"
@@ -146,7 +149,6 @@ kubeedge::check::env() {
     exit 1
   fi
 }
-
 
 ALL_BINARIES_AND_TARGETS=(
   cloudcore:cloud/cmd/cloudcore
@@ -185,12 +187,10 @@ kubeedge::golang::get_all_binares() {
   echo ${binares[@]}
 }
 
-
 IFS=" " read -ra KUBEEDGE_ALL_TARGETS <<< "$(kubeedge::golang::get_all_targets)"
 IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binares)"
 
 kubeedge::golang::build_binaries() {
-  echo "building binares $@"
   kubeedge::check::env
 	
   local -a targets=()
@@ -210,10 +210,97 @@ kubeedge::golang::build_binaries() {
   read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
   for bin in ${binaries[@]}; do
+    echo "buildding $bin"
     go install -ldflags "$ldflags" $bin
   done
 
 } 
+
+KUBEEDGE_ALL_CROSS_BINARIES=(
+edgecore
+edgesite
+)
+
+kubeedge::golang::is_cross_build_binary() {
+  local key=$1
+  for bin in "${KUBEEDGE_ALL_CROSS_BINARIES[@]}" ; do
+    if [ "${bin}" == "${key}" ]; then
+      echo ${YES} 
+      return
+    fi
+  done
+  echo ${NO} 
+}
+
+KUBEEDGE_ALL_CROSS_GOARMS=(
+8
+7
+)
+
+kubeedge::golang::is_supported_goarm() {
+  local key=$1
+  for value in ${KUBEEDGE_ALL_CROSS_GOARMS[@]} ; do
+    if [ "${value}" == "${key}" ]; then
+      echo ${YES} 
+      return
+    fi
+  done
+  echo ${NO} 
+}
+
+kubeedge::golang::cross_build_place_binaries() {
+  kubeedge::check::env
+  
+  local -a targets=()
+  local -a binariesArray=()
+  local goarm=${goarm:-${KUBEEDGE_ALL_CROSS_GOARMS[0]}}
+
+  for arg in "$@"; do
+      if [[ "${arg}" == GOARM* ]]; then
+        # Assume arguments starting with a dash are flags to pass to go.
+        goarm="${arg##*GOARM}"
+      else
+        if [ "$(kubeedge::golang::is_cross_build_binary ${arg})" == "${NO}" ]; then
+          echo "${arg} does not support cross build"
+          exit 1
+        fi
+        targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
+        binariesArray+=("$arg")
+      fi
+  done
+
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    for bin in ${KUBEEDGE_ALL_CROSS_BINARIES[@]}; do
+        targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
+        binariesArray+=("$bin")
+    done
+  fi
+  
+  if [ "$(kubeedge::golang::is_supported_goarm ${goarm})" == "${NO}" ]; then
+    echo "GOARM${goarm} does not support cross build"
+    exit 1 
+  fi
+
+  local -a binaries
+  while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
+
+  local ldflags
+  read -r ldflags <<< "$(kubeedge::version::ldflags)"
+
+  for bin in ${binaries[@]}; do
+    echo "cross buildding $bin"
+    if [ "${goarm}" == "8" ]; then
+      GOARCH=arm64 GOOS="linux" CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc; go install -ldflags "$ldflags" $bin
+    elif [ "${goarm}" == "7" ]; then
+      GOARCH=arm GOOS="linux" GOARM=6 CGO_ENABLED=1 CC=arm-linux-gnueabi-gcc; go install -ldflags "$ldflags" $bin
+    fi
+  done
+
+  for name in ${binariesArray[@]}; do 
+    mv -f "${GOPATH}/bin/${name}" ${KUBEEDGE_OUTPUT_BINPATH} 
+    echo "name:"$name
+  done
+}
 
 kubeedge::golang::place_bins() {
   echo "Placing binaries $@"	
