@@ -43,7 +43,7 @@ func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, 
 			break
 		}
 	}
-	utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 
 	return podlist
 }
@@ -57,6 +57,6 @@ func CreatePodTest(nodeName, nodeSelector string, ctx *utils.TestContext) metav1
 	label := nodeName
 	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 	Expect(err).To(BeNil())
-	utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 	return podlist
 }

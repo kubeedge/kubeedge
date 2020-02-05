@@ -145,7 +145,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+appHandler, nodeName)
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 			Eventually(func() bool {
 				return readWrittenData
 			}, "120s", "0.5s").ShouldNot(Equal(false), "Message is not recieved in expected time !!")

@@ -178,8 +178,8 @@ func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
 }
 
 // NewKubeClient creates kube client from config
-func NewKubeClient(apiserver string) *kubernetes.Clientset {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(apiserver, "")
+func NewKubeClient(kubeConfigPath string) *kubernetes.Clientset {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		Fatalf("Get kube config failed with error: %v", err)
 		return nil
@@ -196,9 +196,9 @@ func NewKubeClient(apiserver string) *kubernetes.Clientset {
 }
 
 // WaitforPodsRunning waits util all pods are in running status or timeout
-func WaitforPodsRunning(apiserver string, podlist v1.PodList, timout time.Duration) {
+func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.Duration) {
 	// new kube client
-	kubeClient := NewKubeClient(apiserver)
+	kubeClient := NewKubeClient(kubeConfigPath)
 	// define signal
 	signal := make(chan struct{})
 	// define list watcher
