@@ -17,7 +17,7 @@ export GOOS="linux"
 export GOARM=6 #Pls give the appropriate arm version of your device 
 export CGO_ENABLED=1
 export CC=arm-linux-gnueabi-gcc
-make all WHAT=edge
+make edgecore
 ```
 
 If you are compiling KubeEdge edgecore for Raspberry Pi and check the [Makefile](https://github.com/kubeedge/kubeedge/blob/master/edge/Makefile) for the edge.
