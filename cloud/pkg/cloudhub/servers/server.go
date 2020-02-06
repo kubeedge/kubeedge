@@ -18,11 +18,11 @@ import (
 func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
 	handler.InitHandler(messageq)
 	// start websocket server
-	if hubconfig.Get().WebSocket.Enable {
+	if hubconfig.Config.WebSocket.Enable {
 		go startWebsocketServer()
 	}
 	// start quic server
-	if hubconfig.Get().Quic.Enable {
+	if hubconfig.Config.Quic.Enable {
 		go startQuicServer()
 	}
 }
@@ -48,13 +48,13 @@ func createTLSConfig(ca, cert, key []byte) tls.Config {
 }
 
 func startWebsocketServer() {
-	tlsConfig := createTLSConfig(hubconfig.Get().Ca, hubconfig.Get().Cert, hubconfig.Get().Key)
+	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
 		Type:       api.ProtocolTypeWS,
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Get().WebSocket.Address, hubconfig.Get().WebSocket.Port),
+		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
 		ExOpts:     api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeWS)
@@ -62,14 +62,14 @@ func startWebsocketServer() {
 }
 
 func startQuicServer() {
-	tlsConfig := createTLSConfig(hubconfig.Get().Ca, hubconfig.Get().Cert, hubconfig.Get().Key)
+	tlsConfig := createTLSConfig(hubconfig.Config.Ca, hubconfig.Config.Cert, hubconfig.Config.Key)
 	svc := server.Server{
 		Type:       api.ProtocolTypeQuic,
 		TLSConfig:  &tlsConfig,
 		AutoRoute:  true,
 		ConnNotify: handler.CloudhubHandler.OnRegister,
-		Addr:       fmt.Sprintf("%s:%d", hubconfig.Get().Quic.Address, hubconfig.Get().Quic.Port),
-		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Get().Quic.MaxIncomingStreams)},
+		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.Quic.Address, hubconfig.Config.Quic.Port),
+		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
 	}
 
 	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeQuic)

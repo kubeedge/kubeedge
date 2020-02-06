@@ -13,7 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -38,7 +38,7 @@ func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig
 		if err != nil {
 			klog.Fatalf("read key file %v error %v", hub.TLSPrivateKeyFile, err)
 		}
-		c = Configure{
+		Config = Configure{
 			CloudHub:      *hub,
 			KubeAPIConfig: kubeAPIConfig,
 			Ca:            ca,
@@ -46,10 +46,6 @@ func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig
 			Key:           key,
 		}
 	})
-}
-
-func Get() *Configure {
-	return &c
 }
 
 // ObjectSyncController use beehive context message layer
