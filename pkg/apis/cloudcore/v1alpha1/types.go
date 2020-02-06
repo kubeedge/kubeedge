@@ -63,6 +63,8 @@ type Modules struct {
 	EdgeController *EdgeController `json:"edgecontroller,omitempty"`
 	// DeviceController indicates devicecontroller module config
 	DeviceController *DeviceController `json:"devicecontroller,omitempty"`
+	// SyncController indicates synccontroller module config
+	SyncController *SyncController `json:"devicecontroller,omitempty"`
 }
 
 // CloudHub indicates the config of cloudhub module.
@@ -293,4 +295,11 @@ type DeviceControllerLoad struct {
 	// UpdateDeviceStatusWorkers indicates the load of update device status workers
 	// default 1
 	UpdateDeviceStatusWorkers int32 `json:"updateDeviceStatusWorkers,omitempty"`
+}
+
+// SyncController indicates the sync controller
+type SyncController struct {
+	// Enable indicates whether devicecontroller is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// default true
+	Enable bool `json:"enable,omitempty"`
 }

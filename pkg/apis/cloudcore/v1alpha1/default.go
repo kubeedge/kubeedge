@@ -120,6 +120,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateDeviceStatusWorkers: constants.DefaultUpdateDeviceStatusWorkers,
 				},
 			},
+			SyncController: &SyncController{
+				Enable: true,
+			},
 		},
 	}
 }
