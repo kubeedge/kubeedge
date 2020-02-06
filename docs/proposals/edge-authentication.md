@@ -1,10 +1,9 @@
 ---
 title: Edge Authentication Design
-status: implementable
 authors:
-    - "@ls889"
-	- "@GsssC"
-    - "@XJangel"
+  - "@ls889"
+  - "@GsssC"
+  - "@XJangel"
 approvers:
   - "@kevin-wangzefeng"
   - "@fisherxu"
@@ -12,6 +11,7 @@ approvers:
 
 creation-date: 2020-02-06
 last-updated: 2020-02-06
+status: alpha
 
 ---
 
