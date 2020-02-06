@@ -197,6 +197,21 @@ func NewKubeClient(kubeConfigPath string) *kubernetes.Clientset {
 
 // WaitforPodsRunning waits util all pods are in running status or timeout
 func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.Duration) {
+	if len(podlist.Items) == 0 {
+		Fatalf("podlist should not be empty")
+	}
+
+	podRunningCount := 0
+	for _, pod := range podlist.Items {
+		if pod.Status.Phase == v1.PodRunning {
+			podRunningCount++
+		}
+	}
+	if podRunningCount == len(podlist.Items) {
+		Infof("All pods come into running status")
+		return
+	}
+
 	// new kube client
 	kubeClient := NewKubeClient(kubeConfigPath)
 	// define signal

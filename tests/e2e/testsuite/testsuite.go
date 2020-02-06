@@ -35,6 +35,9 @@ func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, 
 	Expect(IsAppDeployed).Should(BeTrue())
 	err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+constants.DeploymentHandler)
 	Expect(err).To(BeNil())
+
+	time.Sleep(time.Second * 1)
+
 	for _, deployment := range deploymentList.Items {
 		if deployment.Name == deplName {
 			label := nodeName
@@ -55,6 +58,9 @@ func CreatePodTest(nodeName, nodeSelector string, ctx *utils.TestContext) metav1
 	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
 	Expect(IsAppDeployed).Should(BeTrue())
 	label := nodeName
+
+	time.Sleep(time.Second * 1)
+
 	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 	Expect(err).To(BeNil())
 	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
