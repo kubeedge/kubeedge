@@ -34,7 +34,7 @@ export CHECK_EDGECORE_ENVIRONMENT="false"
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
 {
-        "image_url": ["nginx", "hello-world"],
+        "image_url": ["nginx", "nginx"],
         "k8smasterforkubeedge":"https://$MASTER_IP:6443",
         "dockerhubusername":"user",
         "dockerhubpassword":"password",
