@@ -1,3 +1,22 @@
+---
+title: Edge Authentication Design
+status: implementable
+authors:
+    - "@ls889"
+	- "@GsssC"
+    - "@XJangel"
+approvers:
+  - "@kevin-wangzefeng"
+  - "@fisherxu"
+  - "@kadisi"
+
+creation-date: 2020-02-06
+last-updated: 2020-02-06
+
+---
+
+# Edge Authentication Design
+
 ## motivation
 
 The current connection between EdgeCore and CloudCore, that is, the authentication and authorization of the edge node to the cloud requires manual replication of the certificate, which has poor scalability and flexibility. And this root certificate is not within the K8S native authentication and authorization system and requires additional maintenance.
@@ -8,7 +27,7 @@ To implement that edge nodes automatically apply for a certificate when joining 
 
 ## design detail
 
-![token.png](https://s2.ax1x.com/2020/02/06/16pong.png)
+![token.png](../images/edgeAuthentication/edge_authentication.jpg)
 
 Update the tool keadm to simplify the complexity of joining edge nodes to the cluster.
 
