@@ -223,13 +223,14 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 	}
 }
 
-func buildObjectSyncName(nodeName, UID string) string {
-	return nodeName + "-" + UID
+// BuildObjectSyncName builds the name of objectSync/clusterObjectSync
+func BuildObjectSyncName(nodeName, UID string) string {
+	return nodeName + "." + UID
 }
 
 func getNodeName(syncName string) string {
-	tmps := strings.Split(syncName, "-")
-	return strings.Join(tmps[:len(tmps)-5], "-")
+	tmps := strings.Split(syncName, ".")
+	return strings.Join(tmps[:len(tmps)-1], ".")
 }
 
 func isFromEdgeNode(nodes []*v1.Node, nodeName string) bool {

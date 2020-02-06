@@ -24,6 +24,7 @@ import (
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
@@ -460,7 +461,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 			return
 		}
 
-		objectSyncName := strings.Join([]string{info.NodeID, resourceUID}, "-")
+		objectSyncName := synccontroller.BuildObjectSyncName(info.NodeID, resourceUID)
 
 		if msg.GetOperation() == beehiveModel.DeleteOperation {
 			nodeStore.Delete(msg)
