@@ -127,11 +127,7 @@ func recordHandler(que []dnsQuestion, req []byte) (rsp []byte, err error) {
 	var ip string
 	for _, q := range que {
 		domainName := string(q.name)
-		exist, ip, _ = lookupFromMetaManager(domainName)
-		if err != nil {
-			rsp = nil
-			return
-		}
+		exist, ip = lookupFromMetaManager(domainName)
 		if !exist {
 			//if this service don't belongs to this cluster
 			go getfromRealDNS(req, q.from)
@@ -143,7 +139,7 @@ func recordHandler(que []dnsQuestion, req []byte) (rsp []byte, err error) {
 		fakeIP = net.ParseIP(ip).To4()
 	}
 
-	pre, err := modifyRspPrefix(que, fakeIP)
+	pre := modifyRspPrefix(que, fakeIP)
 	rsp = append(rsp, pre...)
 	for _, q := range que {
 		// head of each que is the same
@@ -260,7 +256,7 @@ func (q *dnsQuestion) getQName(req []byte, offset uint16) uint16 {
 }
 
 // lookupFromMetaManager implement confirm the service exists
-func lookupFromMetaManager(serviceUrl string) (exist bool, ip string, err error) {
+func lookupFromMetaManager(serviceUrl string) (exist bool, ip string) {
 	name, namespace := common.SplitServiceKey(serviceUrl)
 	s, _ := metaClient.Services(namespace).Get(name)
 	if s != nil {
@@ -271,10 +267,10 @@ func lookupFromMetaManager(serviceUrl string) (exist bool, ip string, err error)
 			ip = proxy.GetServiceServer(svcName)
 		}
 		klog.Infof("Service %s is found in this cluster. namespace : %s, name: %s", serviceUrl, namespace, name)
-		return true, ip, nil
+		return true, ip
 	}
 	klog.Infof("Service %s is not found in this cluster", serviceUrl)
-	return false, "", nil
+	return false, ""
 }
 
 // getfromRealDNS returns the dns response from the real DNS server
@@ -354,7 +350,7 @@ func parseNameServer() ([]net.IP, error) {
 }
 
 // modifyRspPrefix use req' head generate a rsp head
-func modifyRspPrefix(que []dnsQuestion, fakeip []byte) (pre []byte, err error) {
+func modifyRspPrefix(que []dnsQuestion, fakeip []byte) (pre []byte) {
 	ansNum := len(que)
 	if ansNum == 0 {
 		return
@@ -380,7 +376,6 @@ func modifyRspPrefix(que []dnsQuestion, fakeip []byte) (pre []byte, err error) {
 		pre = append(pre, q.queByte...)
 	}
 
-	err = nil
 	return
 }
 
