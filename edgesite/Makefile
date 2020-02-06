@@ -2,7 +2,7 @@ GO_LDFLAGS=-ldflags '$(shell ../hack/lib/version.sh)'
 # make edge_site
 .PHONY: default edge_site
 edge_site: verify
-	go build ${GO_LDFLAGS} cmd/edgesite.go
+	go build ${GO_LDFLAGS} cmd/edgesite/edgesite.go
 
 .PHONY: verify
 verify:
@@ -16,7 +16,7 @@ cross_build: verify
         export GOARM=6 \
         export CGO_ENABLED=1 \
         export CC=arm-linux-gnueabi-gcc; \
-        go build cmd/edgesite.go
+        go build cmd/edgesite/edgesite.go
 
 .PHONY: armv7
 armv7: verify
@@ -25,7 +25,7 @@ armv7: verify
         export GOARM=7 \
         export CGO_ENABLED=1 \
         export CC=arm-linux-gnueabi-gcc; \
-        go build cmd/edgesite.go
+        go build cmd/edgesite/edgesite.go
 
 .PHONY: armv8
 armv8: verify
@@ -33,11 +33,11 @@ armv8: verify
         export GOOS="linux" \
         export CGO_ENABLED=1 \
         export CC=aarch64-linux-gnu-gcc; \
-        go build cmd/edgesite.go
+        go build cmd/edgesite/edgesite.go
 
 .PHONY: small_build
 small_build: verify
-	go build -ldflags="-w -s -extldflags -static" cmd/edgesite.go
+	go build -ldflags="-w -s -extldflags -static" cmd/edgesite/edgesite.go
 	# There are options in upx-ucl like --best, which has best compression,
 	# but also has a drawback of taking too long for big files, we are using -9 since it takes less time
 	# Pls use --help for more information

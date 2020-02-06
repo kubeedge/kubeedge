@@ -16,7 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/edgesite/cmd/app/options"
+	"github.com/kubeedge/kubeedge/edgesite/cmd/edgesite/app/options"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
