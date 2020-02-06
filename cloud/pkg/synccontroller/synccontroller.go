@@ -29,11 +29,13 @@ import (
 	synclister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	cloudcorev1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
+	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
 // SyncController use beehive context message layer
 type SyncController struct {
+	enable bool
+
 	// informer
 	podInformer               coreinformers.PodInformer
 	configMapInformer         coreinformers.ConfigMapInformer
@@ -68,7 +70,7 @@ type SyncController struct {
 	objectSyncLister        synclister.ObjectSyncLister
 }
 
-func newSyncController() *SyncController {
+func newSyncController(enable bool) *SyncController {
 	config, err := buildConfig()
 	if err != nil {
 		klog.Errorf("Failed to build config, err: %v", err)
@@ -91,6 +93,8 @@ func newSyncController() *SyncController {
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 
 	sctl := &SyncController{
+		enable: enable,
+
 		podInformer:               podInformer,
 		configMapInformer:         configMapInformer,
 		secretInformer:            secretInformer,
@@ -124,9 +128,9 @@ func newSyncController() *SyncController {
 	return sctl
 }
 
-func Register(kubeAPIConfig *cloudcorev1alpha1.KubeAPIConfig) {
-	config.InitConfigure(kubeAPIConfig)
-	core.Register(newSyncController())
+func Register(ec *configv1alpha1.SyncController, kubeAPIConfig *configv1alpha1.KubeAPIConfig) {
+	config.InitConfigure(ec, kubeAPIConfig)
+	core.Register(newSyncController(ec.Enable))
 }
 
 // Name of controller
@@ -141,7 +145,7 @@ func (sctl *SyncController) Group() string {
 
 // Group of controller
 func (sctl *SyncController) Enable() bool {
-	return true
+	return sctl.enable
 }
 
 // Start controller

@@ -34,6 +34,7 @@ func ValidateCloudCoreConfiguration(c *cloudconfig.CloudCoreConfig) field.ErrorL
 	allErrs = append(allErrs, ValidateModuleCloudHub(*c.Modules.CloudHub)...)
 	allErrs = append(allErrs, ValidateModuleEdgeController(*c.Modules.EdgeController)...)
 	allErrs = append(allErrs, ValidateModuleDeviceController(*c.Modules.DeviceController)...)
+	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	return allErrs
 }
 
@@ -105,6 +106,16 @@ func ValidateModuleEdgeController(e cloudconfig.EdgeController) field.ErrorList 
 
 // ValidateModuleDeviceController validates `d` and returns an errorList if it is invalid
 func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorList {
+	if !d.Enable {
+		return field.ErrorList{}
+	}
+
+	allErrs := field.ErrorList{}
+	return allErrs
+}
+
+// ValidateModuleSyncController validates `d` and returns an errorList if it is invalid
+func ValidateModuleSyncController(d cloudconfig.SyncController) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
