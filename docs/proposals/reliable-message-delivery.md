@@ -10,23 +10,23 @@ approvers:
   - "@kadisi"
 creation-date: 2019-12-23
 last-updated: 2019-12-23
-status: alpha
+status: Implememted
 ---
 
 # Reliable message delivery
 
 ## Motivation
 
-There is no reliable mechanism to exchange messages between the cloud and the edge nodes. The current 
-approach uses a fire-and-forget approach where messages are sent to edge nodes. And there is
-no way to confirm if those messages were actually received by the edge node. 
-Unstable networks between cloud and edge can result in frequent disconnection of edge nodes and 
-this can result in loss of messages sent to edge nodes which can’t be temporarily reached. 
-This proposal addresses this problem thus ensuring reliable message delivery.
+At present, the message delivery mechanism with ACK is not completed. Unstable networks 
+between cloud and edge can result in frequent disconnection of edge nodes.
+If cloudcore or edgecore being restarted or offline for a while, and this can result in 
+loss of messages sent to edge nodes which can’t be temporarily reached. Without new event successfully 
+delivered to the edge, this will cause inconsistency between cloud and edge. 
+This proposal addresses this problem thus improve the reliable message delivery.
 
 ### Goals
 
-- Provide a reliable message delivery mechanism between cloud and edge.
+- Improve the reliable message delivery mechanism between cloud and edge.
 
 ### Non-goals
 - To provide HA / failover mechanism for cloudhub.
@@ -118,8 +118,8 @@ duplicate events will be merged to improve the transmission efficiency.
 
 ```go
 key,_:=getMsgKey(&message)
-nodeQueue.Add(message)
 nodeStore.Add(message)
+nodeQueue.Add(message)
 ````
 
 - Get the message from the queue:
@@ -141,7 +141,7 @@ We will construct the following ACK message format:
 
 ```go
 AckMessage.ParentID = receivedMessage.ID
-AckMessage.Operation = "ack"
+AckMessage.Operation = "response"
 ```
 
 ### ReliableSync CRD
