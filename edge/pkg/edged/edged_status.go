@@ -358,7 +358,7 @@ func (e *edged) registerNode() error {
 
 	e.setInitNode(node)
 
-	if config.Get().RegisterNode == false {
+	if config.Config.RegisterNode == false {
 		//when register-node set to false, do not auto register node
 		klog.Infof("register-node is set to false")
 		e.registrationCompleted = true
