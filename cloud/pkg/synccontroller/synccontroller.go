@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -244,13 +244,13 @@ func isFromEdgeNode(nodes []*v1.Node, nodeName string) bool {
 
 // build Config from flags
 func buildConfig() (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Get().KubeAPIConfig.Master,
-		config.Get().KubeAPIConfig.KubeConfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Config.KubeAPIConfig.Master,
+		config.Config.KubeAPIConfig.KubeConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeConfig.QPS = float32(config.Get().KubeAPIConfig.QPS)
-	kubeConfig.Burst = int(config.Get().KubeAPIConfig.Burst)
+	kubeConfig.QPS = float32(config.Config.KubeAPIConfig.QPS)
+	kubeConfig.Burst = int(config.Config.KubeAPIConfig.Burst)
 	kubeConfig.ContentType = "application/json"
 
 	return kubeConfig, nil
