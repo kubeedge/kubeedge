@@ -1,6 +1,6 @@
-# Cross Compiling KubeEdge
+# Cross Compiling KubeEdge 
 
-## For ARM Architecture from x86 Architecture
+## For ARM Architecture from x86 Architecture 
 
 Clone KubeEdge
 
