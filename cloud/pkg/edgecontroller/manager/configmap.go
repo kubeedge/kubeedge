@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -23,7 +23,7 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 // NewConfigMapManager create ConfigMapManager by kube clientset and namespace
 func NewConfigMapManager(kubeClient *kubernetes.Clientset, namespace string) (*ConfigMapManager, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "configmaps", namespace, fields.Everything())
-	events := make(chan watch.Event, config.Get().Buffer.ConfigmapEvent)
+	events := make(chan watch.Event, config.Config.Buffer.ConfigmapEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si := cache.NewSharedInformer(lw, &v1.ConfigMap{}, 0)
 	si.AddEventHandler(rh)
