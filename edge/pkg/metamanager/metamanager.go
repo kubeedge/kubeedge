@@ -80,5 +80,5 @@ func (m *metaManager) Start() {
 }
 
 func getSyncInterval() time.Duration {
-	return time.Duration(metamanagerconfig.Get().PodStatusSyncInterval) * time.Second
+	return time.Duration(metamanagerconfig.Config.PodStatusSyncInterval) * time.Second
 }
