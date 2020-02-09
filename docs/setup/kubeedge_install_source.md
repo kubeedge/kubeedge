@@ -2,7 +2,7 @@
 
 This guide provide steps which can be utilised to install KubeEdge Cloud and Edge side. At this point, we assume that you would have installed the [Pre-Requisite](kubeedge_install.md#prerequisite) for Cloud and Edge.
 
-## Setup Cloud Side (KubeEdge Master Node)
+## Setup Cloud Side (KubeEdge Master)
 
 1. Clone KubeEdge
 
@@ -25,14 +25,13 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
 3. Compile Cloudcore
 
-
-   + Firstly, make sure `gcc` is already installed on your host. You can verify it via:
+   + Make sure a C compiler is installed on your host. The installation is tested with `gcc` and `clang`.
 
      ```shell
      gcc --version
      ```
 
-   + Build cloudcore 
+   + Build cloudcore
 
      ```shell
      cd $GOPATH/src/github.com/kubeedge/kubeedge/
@@ -41,11 +40,11 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
     **Note:** If you don't want to compile, you may perform the below step
 
-    + Download KubeEdge (latest or stable version) from [Releases](https://github.com/kubeedge/kubeedge/releases)   
-    
-      Download `kubeedge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Cloudcore and the configuration files.
+    + Download KubeEdge (latest or stable version) from [Releases](https://github.com/kubeedge/kubeedge/releases)
 
-4. Create device model and device CRDs.
+      Download `kubeedge-$VERSION-$OS-$ARCH.tar.gz` from above link. It contains Cloudcore and the configuration files.
+
+4. Create DeviceModel and Device CRDs.
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
@@ -53,7 +52,16 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
     kubectl create -f devices_v1alpha1_devicemodel.yaml
     kubectl create -f devices_v1alpha1_device.yaml
     ```
-5. Copy cloudcore binary/ Setup as a systemctl
+
+5. Create ClusterObjectSync and ObjectSync CRDs which used in reliable message delivery.
+
+    ```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/reliablesyncs
+    kubectl create -f cluster_objectsync_v1alpha1.yaml
+    kubectl create -f objectsync_v1alpha1.yaml
+    ```
+
+6. Copy cloudcore binary/ Setup as a systemctl
 
     At this point, cloudcore can be copied to a new directory or can be setup as a systemctl service. Edit the configuration files to setup how cloudcore would run.
 
@@ -63,11 +71,11 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
         ```shell
         sudo ln build/tools/cloudcore.service /etc/systemd/system/cloudcore.service
-        
+
         sudo systemctl daemon-reload
         sudo systemctl start cloudcore
         ```
-    
+
         **Note:** Please fix __ExecStart__ path in cloudcore.service. Do __NOT__ use relative path, use absoulte path instead.
 
         If you also want also an autostart, you have to execute this, too:
@@ -76,7 +84,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
         sudo systemctl enable cloudcore
         ```
 
-   + Copy cloudcore binary and config file 
+   + Copy cloudcore binary and config file
 
      ```shell
      cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
@@ -87,7 +95,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
      cp cloudcore ~/cmd/
      cp -rf conf/* ~/cmd/conf/
      ```
-    
+
         **Note:**  `~/cmd/` dir is an example, in the following examples we continue to  use `~/cmd/` as the binary startup directory. You can move `cloudcore` or  `edgecore` binary to anywhere, but you need to create `conf` dir in the same  directory as binary.
 
 + (**Optional**) Run `admission`, this feature is still being evaluated.
@@ -133,21 +141,22 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
     **Note:** If you don't want to compile, you may perform the next step
 
-    + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)   
-    
+    + Download KubeEdge from [Releases](https://github.com/kubeedge/kubeedge/releases)
+
         Download `kubeedge-$VERSION-$OS-$ARCH.tar.gz` from above link. It would contain Edgecore and the configuration files.
 
 3. Copy edgecore binary/ Setup as a systemctl
 
- + Run edgecore with systemd
++ Run edgecore with systemd
 
-    It is also possible to start the edgecore with systemd. If you want, you could use the example systemd-unit-file. 
+    It is also possible to start the edgecore with systemd. If you want, you could use the example systemd-unit-file.
 
     ```shell
     sudo ln build/tools/edgecore.service /etc/systemd/system/edgecore.service
     sudo systemctl daemon-reload
     sudo systemctl start edgecore
     ```
+
     **Note:** Please fix __ExecStart__ path in edgecore.service. Do __NOT__ use relative path, use absoulte path instead.
 
     If you also want also an autostart, you have to execute this, too:
@@ -156,10 +165,9 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
     sudo systemctl enable edgecore
     ```
 
- + Copy edgecore file and sample config in a new directory
++ Copy edgecore file and sample config in a new directory
 
-    ```
+    ```shell
     cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
     cd ~/cmd
     ```
-
