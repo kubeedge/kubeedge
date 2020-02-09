@@ -20,7 +20,7 @@ const (
 	ExternalMqttMode        // 2: launch an external mqtt broker.
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -30,12 +30,9 @@ type Configure struct {
 
 func InitConfigure(eventbus *v1alpha1.EventBus, nodeName string) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			EventBus: *eventbus,
 			NodeName: nodeName,
 		}
 	})
-}
-func Get() *Configure {
-	return &c
 }
