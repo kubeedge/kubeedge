@@ -94,51 +94,51 @@ type UpstreamController struct {
 func (uc *UpstreamController) Start() error {
 	klog.Info("start upstream controller")
 
-	uc.nodeStatusChan = make(chan model.Message, config.Get().Buffer.UpdateNodeStatus)
-	uc.podStatusChan = make(chan model.Message, config.Get().Buffer.UpdatePodStatus)
-	uc.configMapChan = make(chan model.Message, config.Get().Buffer.QueryConfigmap)
-	uc.secretChan = make(chan model.Message, config.Get().Buffer.QuerySecret)
-	uc.serviceChan = make(chan model.Message, config.Get().Buffer.QueryService)
-	uc.endpointsChan = make(chan model.Message, config.Get().Buffer.QueryEndpoints)
-	uc.persistentVolumeChan = make(chan model.Message, config.Get().Buffer.QueryPersistentVolume)
-	uc.persistentVolumeClaimChan = make(chan model.Message, config.Get().Buffer.QueryPersistentVolumeClaim)
-	uc.volumeAttachmentChan = make(chan model.Message, config.Get().Buffer.QueryVolumeAttachment)
-	uc.queryNodeChan = make(chan model.Message, config.Get().Buffer.QueryNode)
-	uc.updateNodeChan = make(chan model.Message, config.Get().Buffer.UpdateNode)
+	uc.nodeStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
+	uc.podStatusChan = make(chan model.Message, config.Config.Buffer.UpdatePodStatus)
+	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigmap)
+	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
+	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
+	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
+	uc.persistentVolumeChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolume)
+	uc.persistentVolumeClaimChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolumeClaim)
+	uc.volumeAttachmentChan = make(chan model.Message, config.Config.Buffer.QueryVolumeAttachment)
+	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
+	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
 
 	go uc.dispatchMessage()
 
-	for i := 0; i < int(config.Get().Load.UpdateNodeStatusWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.UpdateNodeStatusWorkers); i++ {
 		go uc.updateNodeStatus()
 	}
-	for i := 0; i < int(config.Get().Load.UpdatePodStatusWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.UpdatePodStatusWorkers); i++ {
 		go uc.updatePodStatus()
 	}
-	for i := 0; i < int(config.Get().Load.QueryConfigmapWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryConfigmapWorkers); i++ {
 		go uc.queryConfigMap()
 	}
-	for i := 0; i < int(config.Get().Load.QuerySecretWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QuerySecretWorkers); i++ {
 		go uc.querySecret()
 	}
-	for i := 0; i < int(config.Get().Load.QueryServiceWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryServiceWorkers); i++ {
 		go uc.queryService()
 	}
-	for i := 0; i < int(config.Get().Load.QueryEndpointsWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryEndpointsWorkers); i++ {
 		go uc.queryEndpoints()
 	}
-	for i := 0; i < int(config.Get().Load.QueryPersistentVolumeWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
 	}
-	for i := 0; i < int(config.Get().Load.QueryPersistentVolumeClaimWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeClaimWorkers); i++ {
 		go uc.queryPersistentVolumeClaim()
 	}
-	for i := 0; i < int(config.Get().Load.QueryVolumeAttachmentWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryVolumeAttachmentWorkers); i++ {
 		go uc.queryVolumeAttachment()
 	}
-	for i := 0; i < int(config.Get().Load.QueryNodeWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryNodeWorkers); i++ {
 		go uc.queryNode()
 	}
-	for i := 0; i < int(config.Get().Load.UpdateNodeWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.UpdateNodeWorkers); i++ {
 		go uc.updateNode()
 	}
 	return nil
@@ -407,13 +407,13 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				// TODO: comment below for test failure. Needs to decide whether to keep post troubleshoot
 				// In case the status stored at metadata service is outdated, update the heartbeat automatically
-				if !config.Get().EdgeSiteEnable {
+				if !config.Config.EdgeSiteEnable {
 					for i := range nodeStatusRequest.Status.Conditions {
-						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Get().NodeUpdateFrequency)*time.Second {
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
 							nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
 						}
 
-						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Get().NodeUpdateFrequency)*time.Second {
+						if time.Now().Sub(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
 							nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
 						}
 					}
