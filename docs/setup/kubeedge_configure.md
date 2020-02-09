@@ -9,11 +9,9 @@ Setting up cloud side requires two steps
 1. Modification of the configuration files
 2. Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master).
 
-### Modification of the configuration files
+### Modification of the configuration file
 
-Cloudcore requires one configuration file.
-
-1. cloudcore.yaml
+Cloudcore requires changes in `cloudcore.yaml` configuration file.
 
 Create and set cloudcore config file
 
@@ -21,15 +19,23 @@ Create and set cloudcore config file
     # the default configration file path is '/etc/kubeedge/config/cloudcore.yaml'
     # also you can specify it anywhere with '--config'
     mkdir -p /etc/kubeedge/config/
-  
+```
+
+```shell
     # create a minimal configuration with command `~/cmd/cloudcore --minconfig`
     ~/cmd/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml
+```
 
-    or
+or
 
+```shell
     # or a full configuration with command `~/cmd/cloudcore --defaultconfig`
     ~/cmd/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
+```
 
+Edit the configuration file
+
+```shell
     vim /etc/kubeedge/config/cloudcore.yaml
 ```
 
@@ -138,7 +144,7 @@ In the cloudcore.yaml, modify the below settings.
 
 2. Check whether the cert files for `modules.cloudhub.tlsCAFile`, `modules.cloudhub.tlsCertFile`,`modules.cloudhub.tlsPrivateKeyFile` exists.
 
-### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master Node)
+### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master)
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
@@ -165,10 +171,10 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
     }
     ```
 
-If you want to add an edge node to an existing kubernetes cluster you should a taint to this node. An example is given in this Node.yaml file:
+ If you want to add an edge node to an existing kubernetes cluster you should a taint to this node. An example is given in this Node.yaml file:
 
-```yaml
-{
+ ```yaml
+ {
     kind: Node
     apiVersion: v1
     metadata: {
@@ -183,8 +189,8 @@ If you want to add an edge node to an existing kubernetes cluster you should a t
         key: node.kubeedge.io
         value: edge
     }
-}
-```
+ }
+ ```
 
 #### Modification in node.json
 
@@ -274,17 +280,32 @@ tar -xvzf certs.tgz
 
 ### Create and set edgecore config file
 
+Create the `/etc/kubeedge/config` folder
+
 ```shell
 
     # the default configration file path is '/etc/kubeedge/config/edgecore.yaml'
     # also you can specify it anywhere with '--config'
     mkdir -p /etc/kubeedge/config/
+```
 
-    # create a minimal configuration with command `~/cmd/edgecore --minconfig`
-    # or a full configuration with command `~/cmd/edgecore --defaultconfig`
+Either create a minimal configuration with command `~/cmd/edgecore --minconfig`
+
+```shell
     ~/cmd/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml
+```
+
+or a full configuration with command `~/cmd/edgecore --defaultconfig`
+
+```shell
+~/cmd/edgecore --defaultconfig > /etc/kubeedge/config/edgecore.yaml
+```
+
+Edit the configuration file
+
+```shell
     vim /etc/kubeedge/config/edgecore.yaml
-    ```
+```
 
 Verify the configurations before running `edgecore`
 
@@ -389,13 +410,13 @@ modules:
 4. Configure the desired container runtime to be used as either docker or remote (for all CRI based runtimes including containerd). If this parameter is not specified docker runtime will be used by default
 
     ```yaml
-    runtime-type: docker
+    runtimeType: docker
     ```
 
     or
 
     ```yaml
-    runtime-type: remote
+    runtimeType: remote
     ```
 
 5. If your runtime-type is remote, specify the following parameters for remote/CRI based runtimes
