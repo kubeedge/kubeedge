@@ -31,6 +31,19 @@ application orchestration capabilities to hosts at Edge.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Setup
+
+   setup/requirements
+   setup/setup
+   setup/kubeedge_install
+   setup/kubeedge_configure
+   setup/kubeedge_precheck
+   setup/kubeedge_run
+   setup/memfootprint-test-setup
+   Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>
+
+.. toctree::
+   :maxdepth: 2
    :caption: General Concepts
 
    modules/kubeedge.md
@@ -66,20 +79,6 @@ application orchestration capabilities to hosts at Edge.
 
    mappers/bluetooth_mapper
    mappers/modbus_mapper
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Setup
-
-   setup/requirements
-   setup/setup
-   setup/kubeedge_install
-   setup/kubeedge_configure
-   setup/kubeedge_precheck
-   setup/kubeedge_run
-   setup/memfootprint-test-setup
-   Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>
-
 
 .. toctree::
    :maxdepth: 2

@@ -24,6 +24,7 @@ If you have setup using the systemctl
  cd ~/cmd
  ./edgecore
  ```
+
  or
 
  ```shell
@@ -32,7 +33,7 @@ If you have setup using the systemctl
 
  If you have setup using the systemctl
 
-```
+```shell
  sudo systemctl start edgecore
 ```
 

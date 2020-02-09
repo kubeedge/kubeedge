@@ -12,23 +12,29 @@ It also explains the functionality of the proposed commands.
 
 There are currently two ways to get keadm
 
-+ Download from [KubeEdge Release](<https://github.com/kubeedge/kubeedge/releases>)
+- Download from [KubeEdge Release](<https://github.com/kubeedge/kubeedge/releases>)
 
   1. Go to [KubeEdge Release](<https://github.com/kubeedge/kubeedge/releases>) page and download `keadm-$VERSION-$OS-$ARCH.tar.gz.`.
   2. Untar it at desired location, by executing `tar -xvzf keadm-$VERSION-$OS-$ARCH.tar.gz`.
   3. kubeedge folder is created after execution the command.
 
-+ Building from source
+- Building from source
 
   1. Download the source code.
   
-      ```
+      ```shell
       git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/ kubeedge/kubeedge
       cd $GOPATH/src/github.com/kubeedge/kubeedge/keadm
       make
       ```
-  2. Binary `keadm` is available in current path.
 
+      or
+
+      ```shell
+      go get github.com/kubeedge/kubeedge/keadm/cmd/keadm
+      ```
+
+  2. Binary `keadm` is available in current path. If you are using `go` get the binary is available in `$GOPATH/bin/`
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
@@ -37,15 +43,15 @@ Port 8080, 6443 and 10000 in your cloud component needs to be accessible for you
 
 keadm by default can install Docker, Kubernetes and KubeEdge. It also provide flag by which specific versions can be set.
 
-1. Execute `keadm init`
+1. Execute `keadm init` : keadm needs super user rights (or root rights) to run successfully.
 
     Command flags
     The optional flags with this command are mentioned below
 
-    ```
+    ```shell
     keadm init --help
 
-    keadm init command bootstraps KubeEdge's cloud component. It checks if the pre-requisites are installed already, If not installed, this command will help in download, install and execute on the host.
+    keadm init command bootstraps KubeEdge cloud component. It checks if the pre-requisites are installed already, If not installed, this command will help in download, install and execute on the host.
 
     Usage:
       keadm init [flags]
@@ -65,7 +71,7 @@ keadm by default can install Docker, Kubernetes and KubeEdge. It also provide fl
 
     Command format is
 
-    ```
+    ```shell
     keadm init --docker-version=<expected version> --kubernetes-version=<expected version>  --kubeedge-version=<expected version>
     ```
 
@@ -75,13 +81,12 @@ keadm by default can install Docker, Kubernetes and KubeEdge. It also provide fl
   **NOTE:**
 On the console output, observe the below line
 
-```
+```shell
 kubeadm join **192.168.20.134**:6443 --token 2lze16.l06eeqzgdz8sfcvh \
          --discovery-token-ca-cert-hash sha256:1e5c808e1022937474ba264bb54fea42b05eddb9fde2d35c9cad5b83cf5ef9ac  
 ```
 
-After Kubeedge init ,please note the **cloudIP** as highlighted above generated from console output and port is **8080**.
-
+After Kubeedge init, please note the **cloudIP** as highlighted above generated from console output and port is **8080**.
 
 ## Setup Edge Side (KubeEdge Worker Node)
 
@@ -93,9 +98,9 @@ Execute `keadm join <flags>`
 
   The optional flags with this command are shown in below shell
 
-  ```
+  ```shell
   $ keadm join --help
- 
+
   "keadm join" command bootstraps KubeEdge's edge component. It checks if the pre-requisites are installed already, If not installed, this command will help in download, to install the prerequisites. It will help the edge node to connect to the cloud.
   
   Usage:
@@ -114,20 +119,20 @@ For this command --cloudcoreip flag is a Mandatory flag
 
  Examples:
 
-  ```
+  ```shell
     keadm join --cloudcoreip=<ip address> --edgenodeid=<unique string as edge identifier>
   ```
 
- ```
-  keadm join --cloudcoreip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=0.2.1 --k8sserverip=50.60.70.80:8080
+ ```shell
+  keadm join --cloudcoreip=10.20.30.40 --edgenodeid=testing123 --kubeedge-version=1.1.1 --k8sserverip=50.60.70.80:8080
  ```
 
  In case, any option is used in a format like as shown for "--docker-version" or "--docker-version=", without a value then default values will be used. Also options like "--docker-version", and "--kubeedge-version", version should be in format like "18.06.3" and "0.2.1".
 
-
 **IMPORTANT NOTE:** The KubeEdge version used in cloud and edge side should be same.
 
 Sample execution output:
+
 ```shell
 # ./keadm join --cloudcoreip=192.168.20.50 --edgenodeid=testing123 --k8sserverip=192.168.20.50:8080
 Same version of docker already installed in this host
@@ -156,7 +161,6 @@ KubeEdge edge core is running, For logs visit /etc/kubeedge/kubeedge/edge/
 
 **Note**:Cloud IP refers to IP generated ,from the step 1 as highlighted
 
-
 ## Reset KubeEdge Master and Worker nodes
 
 Referring to `KubeEdge Installer Doc`, the command to stop KubeEdge cloud (edge controller). It doesn't uninstall/remove any of the pre-requisites.
@@ -165,7 +169,7 @@ Execute `keadm reset`
 
 Command flags
 
-```
+```shell
 keadm reset --help
 
 keadm reset command can be executed in both cloud and edge node
@@ -200,12 +204,12 @@ Flags:
 
     If you are getting the below error in Cloudcore.log
 
-    ```
+    ```shell
     E1231 04:37:27.397431   19607 reflector.go:125] github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager/device.go:40: Failed to list *v1alpha1.Device: the server could not find the requested resource (get devices.devices.kubeedge.io)
     E1231 04:37:27.398273   19607 reflector.go:125] github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager/devicemodel.go:40: Failed to list *v1alpha1.DeviceModel: the server could not find the requested resource (get devicemodels.devices.kubeedge.io)
     ```
- 
-    browse to the 
+
+    browse to the
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices
@@ -217,3 +221,10 @@ Flags:
       kubectl create -f devices_v1alpha1_devicemodel.yaml
       kubectl create -f devices_v1alpha1_device.yaml
     ```
+
+    or
+
+  ```shell
+  kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_device.yaml
+  kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+```

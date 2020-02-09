@@ -6,11 +6,18 @@ After the Cloud and Edge parts have started, you can use below command to check 
 
 On cloud host run,
 
-```
+```shell
 kubectl get nodes
+````
+
+or
+
+```shell
+kubectl get nodes -l node-role.kubernetes.io/edge=
+
 
 NAME         STATUS     ROLES    AGE     VERSION
-testing123   Ready      <none>   6s      0.3.0-beta.0
+testing123   Ready      none   6s      0.3.0-beta.0
 ```
 
 Please make sure the `status` of edge node you created is **ready**.
@@ -30,7 +37,7 @@ Then you can use below command to check if the application is normally running.
 
 Check the pod is up and is `running` state
 
-```
+```shell
 kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-deployment-d86dfb797-scfzz   1/1     Running   0          44s
@@ -38,7 +45,7 @@ nginx-deployment-d86dfb797-scfzz   1/1     Running   0          44s
 
 Check the deployment is up and is in `running` state
 
-```
+```shell
 kubectl get deployments
 
 NAME               READY   UP-TO-DATE   AVAILABLE   AGE
@@ -49,7 +56,7 @@ nginx-deployment   1/1     1            1           63s
 
 If the container runtime configured to manage containers is containerd , then the following commands can be used to inspect container status and list images.
 
-```
+```shell
 sudo ctr --namespace k8s.io containers ls
 sudo ctr --namespace k8s.io images ls
 sudo crictl exec -ti <containerid> /bin/bash
