@@ -18,28 +18,28 @@ Create and set cloudcore config file
 Create the `/etc/kubeedge/config` folder
 
 ```shell
-    # the default configuration file path is '/etc/kubeedge/config/cloudcore.yaml'
-    # also you can specify it anywhere with '--config'
-    mkdir -p /etc/kubeedge/config/
+# the default configuration file path is '/etc/kubeedge/config/cloudcore.yaml'
+# also you can specify it anywhere with '--config'
+mkdir -p /etc/kubeedge/config/
 ```
 
 Either create a minimal configuration with command `~/cmd/cloudcore --minconfig`
 
 ```shell
 
-    ~/cmd/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml
+~/cmd/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml
 ```
 
 or a full configuration with command `~/cmd/cloudcore --defaultconfig`
 
 ```shell
-    ~/cmd/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
+~/cmd/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
 ```
 
 Edit the configuration file
 
 ```shell
-    vim /etc/kubeedge/config/cloudcore.yaml
+vim /etc/kubeedge/config/cloudcore.yaml
 ```
 
 Verify the configurations before running `cloudcore`
@@ -154,8 +154,8 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 + Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
 
     ```shell
-        mkdir -p ~/cmd/yaml
-        cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
+    mkdir -p ~/cmd/yaml
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/cmd/yaml
     ```
 
     Node.json
@@ -217,7 +217,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
 #### Deploy edge node (Run on cloud side)
 
 ```shell
-    kubectl apply -f ~/cmd/yaml/node.json
+kubectl apply -f ~/cmd/yaml/node.json
 ```
 
 #### Check if the certificates are created (Run on cloud side)
