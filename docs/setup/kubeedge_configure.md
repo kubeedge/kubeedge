@@ -15,21 +15,24 @@ Cloudcore requires changes in `cloudcore.yaml` configuration file.
 
 Create and set cloudcore config file
 
+Create the `/etc/kubeedge/config` folder
+
 ```shell
-    # the default configration file path is '/etc/kubeedge/config/cloudcore.yaml'
+    # the default configuration file path is '/etc/kubeedge/config/cloudcore.yaml'
     # also you can specify it anywhere with '--config'
     mkdir -p /etc/kubeedge/config/
 ```
 
+Either create a minimal configuration with command `~/cmd/cloudcore --minconfig`
+
 ```shell
-    # create a minimal configuration with command `~/cmd/cloudcore --minconfig`
+
     ~/cmd/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml
 ```
 
-or
+or a full configuration with command `~/cmd/cloudcore --defaultconfig`
 
 ```shell
-    # or a full configuration with command `~/cmd/cloudcore --defaultconfig`
     ~/cmd/cloudcore --defaultconfig > /etc/kubeedge/config/cloudcore.yaml
 ```
 

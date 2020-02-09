@@ -89,14 +89,12 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
      ```shell
      cd $GOPATH/src/github.com/kubeedge/kubeedge/cloud
      # run cloudcore controller
-     # `conf/` should be in the same directory as the cloned KubeEdge repository
      # verify the configurations before running cloud(cloudcore)
-     mkdir -p ~/cmd/conf
+     mkdir ~/cmd/
      cp cloudcore ~/cmd/
-     cp -rf conf/* ~/cmd/conf/
      ```
 
-        **Note:**  `~/cmd/` dir is an example, in the following examples we continue to  use `~/cmd/` as the binary startup directory. You can move `cloudcore` or  `edgecore` binary to anywhere, but you need to create `conf` dir in the same  directory as binary.
+        **Note:**  `~/cmd/` dir is an example, in the following examples we continue to  use `~/cmd/` as the binary startup directory. You can move `cloudcore` or  `edgecore` binary to anywhere.
 
 + (**Optional**) Run `admission`, this feature is still being evaluated.
     please read the docs in [install the admission webhook](../../build/admission/README.md)
@@ -109,7 +107,6 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
 
         ```shell
         git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
-        cd $GOPATH/src/github.com/kubeedge/kubeedge
         ```
 
 2. Compile Edgecore
@@ -165,7 +162,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
     sudo systemctl enable edgecore
     ```
 
-+ Copy edgecore file and sample config in a new directory
++ Copy edgecore file in a new directory
 
     ```shell
     cp $GOPATH/src/github.com/kubeedge/kubeedge/edge/edgecore ~/cmd/
