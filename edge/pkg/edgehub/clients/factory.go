@@ -17,7 +17,7 @@ const (
 
 //GetClient returns an Adapter object with new web socket
 func GetClient() (Adapter, error) {
-	config := config.Get()
+	config := config.Config
 	switch {
 	case config.WebSocket.Enable:
 		websocketConf := wsclient.WebSocketConfig{
