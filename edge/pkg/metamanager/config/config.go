@@ -10,7 +10,7 @@ const (
 	defaultSyncInterval = 60
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 // Connected stands for whether it is connected
@@ -23,12 +23,8 @@ type Configure struct {
 
 func InitConfigure(m *v1alpha1.MetaManager) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			MetaManager: *m,
 		}
 	})
-}
-
-func Get() *Configure {
-	return &c
 }

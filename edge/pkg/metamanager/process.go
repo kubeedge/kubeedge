@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/common/util"
@@ -66,7 +66,7 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 }
 
 func sendToCloud(message *model.Message) {
-	beehiveContext.SendToGroup(string(metaManagerConfig.Get().ContextSendGroup), *message)
+	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -400,7 +400,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		originalID := message.GetID()
 		message.UpdateID()
 		resp, err := beehiveContext.SendSync(
-			string(metaManagerConfig.Get().ContextSendModule),
+			string(metaManagerConfig.Config.ContextSendModule),
 			message,
 			60*time.Second) // TODO: configurable
 		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
