@@ -26,7 +26,7 @@ const (
 	ImagePullProgressDeadlineDefault = 60
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -35,11 +35,8 @@ type Configure struct {
 
 func InitConfigure(e *v1alpha1.Edged) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			Edged: *e,
 		}
 	})
-}
-func Get() *Configure {
-	return &c
 }
