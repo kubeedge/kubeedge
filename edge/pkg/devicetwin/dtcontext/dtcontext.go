@@ -41,7 +41,7 @@ type DTContext struct {
 func InitDTContext() (*DTContext, error) {
 	return &DTContext{
 		GroupID:       "",
-		NodeName:      deviceconfig.Get().NodeName,
+		NodeName:      deviceconfig.Config.NodeName,
 		CommChan:      make(map[string]chan interface{}),
 		ConfirmChan:   make(chan interface{}, 1000),
 		ConfirmMap:    &sync.Map{},
