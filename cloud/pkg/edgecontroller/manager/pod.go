@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -88,8 +88,8 @@ func NewPodManager(kubeClient *kubernetes.Clientset, namespace, nodeName string)
 		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
 		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, selector)
 	}
-	realEvents := make(chan watch.Event, config.Get().Buffer.PodEvent)
-	mergedEvents := make(chan watch.Event, config.Get().Buffer.PodEvent)
+	realEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
+	mergedEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents)
 	si := cache.NewSharedInformer(lw, &v1.Pod{}, 0)
 	si.AddEventHandler(rh)
