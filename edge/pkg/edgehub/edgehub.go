@@ -95,7 +95,7 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(time.Duration(config.Get().Heartbeat) * time.Second * 2)
+		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second * 2)
 
 		// clean channel
 	clean:
