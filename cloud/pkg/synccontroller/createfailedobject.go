@@ -25,6 +25,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 	allPods, err := sctl.podLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the pods: %v", err)
+		return
 	}
 
 	set := labels.Set{edgemgr.NodeRoleKey: edgemgr.NodeRoleValue}
@@ -32,6 +33,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 	allEdgeNodes, err := sctl.nodeLister.List(selector)
 	if err != nil {
 		klog.Errorf("Filed to list all the edge nodes: %v", err)
+		return
 	}
 
 	for _, pod := range allPods {
@@ -83,6 +85,7 @@ func (sctl *SyncController) manageCreateFailedDevice() {
 	allDevices, err := sctl.deviceLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the devices: %v", err)
+		return
 	}
 
 	for _, device := range allDevices {
