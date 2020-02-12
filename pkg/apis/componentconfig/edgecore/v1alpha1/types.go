@@ -23,7 +23,10 @@ import (
 )
 
 const (
-	LoadBalanceStrategNameRoundRobin string = "RoundRobin"
+	EdgeMeshDefaultLoadBalanceStrategy = "RoundRobin"
+	EdgeMeshDefaultInterface           = "docker0"
+	EdgeMeshDefaultSubNet              = "9.251.0.0/16"
+	EdgeMeshDefaultListenPort          = 40001
 )
 
 const (
@@ -337,4 +340,10 @@ type EdgeMesh struct {
 	Enable bool `json:"enable,omitempty"`
 	// lbStrategy indicates loadbalance stragety name
 	LBStrategy string `json:"lbStrategy,omitempty"`
+	// ListenInterface indicates the listen interface of edgemesh
+	ListenInterface string `json:"listenInterface,omitempty"`
+	// SubNet indicates the subnet of edgemesh
+	SubNet string `json:"subNet,omitempty"`
+	// ListenPort indicates the listen port of edgemesh
+	ListenPort int `json:"listenPort,omitempty"`
 }

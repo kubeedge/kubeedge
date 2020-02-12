@@ -1,204 +1,129 @@
 # Edgemesh test env config guide
-## Docker support (recommended)
-* Refer to the [Usage](./../setup/installer_setup.md) to prepare the kubeedge environment. 
-* Then follow the [EdgeMesh guide](#Edgemesh-end-to-end-test-guide) to deploy Service
+## Docker support
+* Refer to [Usage](./../setup/installer_setup.md) to prepare KubeEdge environment, make sure "docker0" exists
+* Then follow [EdgeMesh guide](#EdgeMesh test guide) to deploy Service
 
-## Containerd Support
-* Refer to the [Usage](./../setup/installer_setup.md) to prepare the kubeedge environment. 
-* Following steps must be taken for the container network configuration if choose containerd as the container engine. 
-> Note: CNI plugin installation and port mapping configuration only needed for containerd
-
-### step1. Install CNI plugin
-+ get cni plugin source code of version (0.2.0) from the github.com. Compile and install.
-> It is recommended to use version 0.2.0, which have tested to ensure stability and availability.
-> make sure to run on the Go development environment.
-```bash
-# download the cni-plugin-0.2.0
-$ wget https://github.com/containernetworking/plugins/archive/v0.2.0.tar.gz
-# Extract the tarball
-$ tar -zxvf v0.2.0.tar.gz
-# Compile the source code
-$ cd ./plugins-0.2.0
-$ ./build
-# install the plugin after './build'
-$ mkdir -p /opt/cni/bin
-$ cp ./bin/* /opt/cni/bin/
-```
-+ configure cni plugin
- 
-```bash
-$ mkdir -p /etc/cni/net.d/
-```
-   > * please Make sure docker0 does not exist !!
-   > * field "bridge" must be "docker0"
-   > * field "isGateway" must be true 
-   
-```bash
-$ cat >/etc/cni/net.d/10-mynet.conf <<EOF
-{
-	"cniVersion": "0.2.0",
-	"name": "mynet",
-	"type": "bridge",
-	"bridge": "docker0",
-	"isGateway": true,
-	"ipMasq": true,
-	"ipam": {
-		"type": "host-local",
-		"subnet": "10.22.0.0/16",
-		"routes": [
-			{ "dst": "0.0.0.0/0" }
-		]
-	}
-}
-EOF
-```
-
-### step2 Configure port mapping manually on node on which server is running
-> can see the examples in the next section. 
-* Ⅰ. execute iptables command as follows 
-```bash
-$ iptables -t nat -N PORT-MAP
-$ iptables -t nat -A PORT-MAP -i docker0 -j RETURN
-$ iptables -t nat -A PREROUTING -p tcp -m addrtype --dst-type LOCAL -j PORT-MAP
-$ iptables -t nat -A OUTPUT ! -d 127.0.0.0/8 -p tcp -m addrtype --dst-type LOCAL -j PORT-MAP
-$ iptables -P FORWARD ACCEPT
-```
-* Ⅱ. execute iptables command as follows 
-   > * **portIN** is the service map at the host
-   > * **containerIP** is the IP in the container. Can be find out on master by **kubectl get pod -o wide**
-   > * **portOUT** is the port that monitored In-container 
-```bash
-$ iptables -t nat -A PORT-MAP ! -i docker0 -p tcp -m tcp --dport portIN -j DNAT --to-destination containerIP:portOUT
-``` 
-> + by the way, If you redeployed the service,you can use the command as follows to delete the rule, and perform the second step again.
-   ```bash
-    $ iptables -t nat -D PORT-MAP 2
-  ```
- 
-
-## Example for Edgemesh test env
+## Usage of EdgeMesh
 ![edgemesh test env example](../images/edgemesh/edgemesh-test-env-example.png)
 
-## Edgemesh end to end test guide
+## EdgeMesh test guide
 ### Model
 ![model](../images/edgemesh/model.jpg)
-1. a headless service(a service with selector but ClusterIP is None)
+1. a headless service (a service with selector but ClusterIP is None)
 2. one or more pods' labels match the headless service's selector
-3. so when request a server: ```<service_name>.<service_namespace>.svc.<cluster>:<port>```:
+3. to request a server, use: ```<service_name>.<service_namespace>.svc.<cluster>:<port>```:
     1. get the service's name and namespace from domain name
-    2. query the backend pods from metaManager by service's namespace and name
-    3. load balance return the real backend container's hostIP and hostPort
+    2. query all the backend pods from MetaManager by service's namespace and name
+    3. LoadBalance returns the real backend containers' hostIP and hostPort
 
 ### Flow from client to server
 ![flow](../images/edgemesh/endtoend-test-flow.jpg)
-1. client request to server's domain name
-2. DNS request hijacked to edgemesh by iptables, return a fake ip
-3. request hijacked to edgemesh by iptables
-4. edgemesh resolve request, get domain name, protocol, request and so on
-5. edgemesh load balance:
-    1. get the service name and namespace from the domain name
-    2. query backend pod of the service from metaManager
+1. client requests to server by server's domain name
+2. DNS being hijacked to EdgeMesh by iptables rules, then a fake ip returned
+3. request hijacked to EdgeMesh by iptables rules
+4. EdgeMesh resolves request, gets domain name, protocol, request and so on
+5. EdgeMesh load balances:
+    1. get the service's name and namespace from the domain name
+    2. query backend pods of the service from MetaManager
     3. choose a backend based on strategy
-6. edgemesh transport request to server wait server response and then response to client
+6. EdgeMesh transports request to server, wait for server's response and then sends response back to client
 
-### How to test end to end
-- create a headless service(**no need specify port**):
+### How to test EdgeMesh
+Assume we have two edge nodes in ready state, we call them edge node "a" and "b"
+```bash
+$ kubectl get deployments
+NAME          STATUS     ROLES    AGE   VERSION
+edge-node-a   Ready      edge     25m   v1.15.3-kubeedge-v1.1.0-beta.0.358+0b7ac7172442b5-dirty
+edge-node-b   Ready      edge     25m   v1.15.3-kubeedge-v1.1.0-beta.0.358+0b7ac7172442b5-dirty
+master        NotReady   master   8d    v1.15.0
+```
+Deploy a sample pod from Cloud VM (you may already did it)
+
+**https://github.com/kubeedge/kubeedge/blob/master/build/deployment.yaml**
+
+Copy the deployment.yaml from the above link in cloud host, and run
+
+```bash
+$ kubectl create -f deployment.yaml
+deployment.apps/nginx-deployment created
+``` 
+Check the pod is up and is running state, as we could see the pod is running on edge node b
+
+```bash
+$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE   IP           NODE          NOMINATED NODE   READINESS GATES
+nginx-deployment-54bf9847f8-sxk94   1/1     Running   0          14m   172.17.0.2   edge-node-b   <none>           <none>
+```
+
+Check the deployment is up and is running state
+```bash
+$ kubectl get deployments
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   1/1     1            1           63s
+```
+
+Now create a service for the sample deployment
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: edgemesh-example-service
+  name: nginx-svc
   namespace: default
 spec:
   clusterIP: None
   selector:
-    app: whatapp
+    app: nginx
+  ports:
+    - name: http-0
+      port: 12345
+      protocol: TCP
+      targetPort: 80
 ```
-- create server deployment:
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: server
-  labels:
-    app: whatapp
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: whatapp
-  template:
-    metadata:
-      labels:
-        app: whatapp
-    spec:
-      nodeSelector:
-        name: edge-node
-      containers:
-      - name: whatapp
-        image: docker.io/cloudnativelabs/whats-my-ip:latest
-        ports:
-        - containerPort: 8080
-          hostPort: 8080
-```
-- create client deployment:
-**replace the image please**
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: client
-  labels:
-    app: client
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: client
-  template:
-    metadata:
-      labels:
-        app: client
-    spec:
-      nodeSelector:
-        name: edge-node
-      containers:
-      - name: client
-        image: ${your client image for test}
-      initContainers:
-      - args:
-        - -p
-        - "8080"
-        - -i
-        - "192.168.1.2/24,156.43.2.1/26"
-        - -t
-        - "12345,5432,8080"
-        - -c
-        - "9292"
-        name: init1
-        image: docker.io/kubeedge/edgemesh_init:v1.0.0
-        securityContext:
-          privileged: true
-```
-**note: -t: whitelist, only port in whitelist can go out from client to edgemesh then to server**
-- client request server: exec into client container and then run command: 
+>* For L4/L7 proxy, specify what protocol a port would use by the port's "name". First HTTP port should be named "http-0" and the second one should be called "http-1", etc.
+>* Currently we only support HTTP1.x, more protocols like HTTPS and gRPC coming later
+
+Check the service and endpoints
 ```bash
-curl http://edgemesh-example-service.default.svc.cluster:8080
+$ kubectl get service
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)     AGE
+nginx-svc    ClusterIP   None         <none>        12345/TCP   77m
 ```
- will get the response from server like: ```HOSTNAME:server-5c5868b79f-j4td7 IP:10.22.0.14```
-> * **there is two ways to exec the 'curl' command to access your service**
-> * 1st: use 'ctr' command attach in the container and make sure there is 'curl' command in the container
-    
 ```bash
-$ ctr -n k8s.io c ls
-$ ctr -n k8s.io t exec --exec-id 123 <containerID> sh
-# if you get error: curl: (6) Could not resolve host: edgemesh-example-service.default.svc.cluster; Unknown error
-# please check the /etc/resolv.conf has a right config like: nameserver 8.8.8.8
-``` 
-> * 2nd: switch the network namespace.(Recommended Use)  
+$ kubectl get endpoints
+NAME         ENDPOINTS            AGE
+nginx-svc    172.17.0.2:80        81m
+```
+
+To request a server, use url like this: ```<service_name>.<service_namespace>.svc.<cluster>:<port>```
+
+In our case, from edge node a or b, run the command:
 ```bash
-# first step get the id,this command will return a id start with 'cni-xx'. and make sure the 'xx' is related to the pod which you can get from 'kubectl describe <podName>' 
-$ ip netns
-# and the use this id to switch the net namespace. And the you can exec curl to access the service
-$ ip netns exec <id> bash
-``` 
+$ curl http://nginx-svc.default.svc.cluster.local:12345
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+>* EdgeMesh supports both Host Networking and Container Networking
+>* If you ever used EdgeMesh of old version, check your iptables rules. It might affect your test result.  

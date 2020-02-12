@@ -97,6 +97,14 @@ func requireRemoteQuery(resType string) bool {
 		resType == model.ResourceTypeNode
 }
 
+// if resource type is EdgeMesh related
+func isEdgeMeshResource(resType string) bool {
+	return resType == constants.ResourceTypeService ||
+		resType == constants.ResourceTypeServiceList ||
+		resType == constants.ResourceTypeEndpoints ||
+		resType == model.ResourceTypePodlist
+}
+
 func isConnected() bool {
 	return metaManagerConfig.Connected
 }
@@ -117,7 +125,6 @@ func resourceUnchanged(resType string, resKey string, content []byte) bool {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
-
 	var err error
 	var content []byte
 	switch message.GetContent().(type) {
@@ -132,19 +139,53 @@ func (m *metaManager) processInsert(message model.Message) {
 		}
 	}
 	resKey, resType, _ := parseResource(message.GetResource())
+	switch resType {
+	case constants.ResourceTypeServiceList:
+		var svcList []v1.Service
+		err = json.Unmarshal(content, &svcList)
+		if err != nil {
+			klog.Errorf("Unmarshal insert message content failed, %s", msgDebugInfo(&message))
+			feedbackError(err, "Error to unmarshal", message)
+			return
+		}
+		for _, svc := range svcList {
+			data, err := json.Marshal(svc)
+			if err != nil {
+				klog.Errorf("Marshal service content failed, %v", svc)
+				continue
+			}
+			meta := &dao.Meta{
+				Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
+				Type:  constants.ResourceTypeService,
+				Value: string(data)}
+			err = dao.SaveMeta(meta)
+			if err != nil {
+				klog.Errorf("Save meta %s failed, svc: %v, err: %v", string(data), svc, err)
+				feedbackError(err, "Error to save meta to DB", message)
+				return
+			}
+		}
+	default:
+		meta := &dao.Meta{
+			Key:   resKey,
+			Type:  resType,
+			Value: string(content)}
+		err = dao.SaveMeta(meta)
+		if err != nil {
+			klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+			feedbackError(err, "Error to save meta to DB", message)
+			return
+		}
+	}
 
-	meta := &dao.Meta{
-		Key:   resKey,
-		Type:  resType,
-		Value: string(content)}
-	err = dao.SaveMeta(meta)
-	if err != nil {
-		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-		feedbackError(err, "Error to save meta to DB", message)
+	if resType == constants.ResourceTypeListener {
+		// Notify edgemesh only
+		resp := message.NewRespByMessage(&message, nil)
+		sendToEdgeMesh(resp, true)
 		return
 	}
 
-	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+	if isEdgeMeshResource(resType) {
 		// Notify edgemesh
 		sendToEdgeMesh(&message, false)
 	} else {
@@ -279,7 +320,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
 	case CloudControlerModel:
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
+		if isEdgeMeshResource(resType) {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
 			sendToEdged(&message, message.IsSync())
@@ -296,7 +337,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 }
 
 func (m *metaManager) processResponse(message model.Message) {
-
 	var err error
 	var content []byte
 	switch message.GetContent().(type) {
@@ -323,7 +363,7 @@ func (m *metaManager) processResponse(message model.Message) {
 		return
 	}
 
-	// Notify edged or edgemesh if the data if coming from cloud
+	// Notify edged or edgemesh if the data is coming from cloud
 	if message.GetSource() == CloudControlerModel {
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 			sendToEdgeMesh(&message, message.IsSync())
@@ -350,6 +390,12 @@ func (m *metaManager) processDelete(message model.Message) {
 		sendToEdgeMesh(&message, false)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
+		return
+	}
+	if resType == constants.ResourceTypeListener {
+		// Notify edgemesh only
+		resp := message.NewRespByMessage(&message, OK)
+		sendToEdgeMesh(resp, true)
 		return
 	}
 	// Notify edged
@@ -386,7 +432,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == model.ResourceTypePodlist {
+		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == constants.ResourceTypeListener {
 			sendToEdgeMesh(resp, message.IsSync())
 		} else {
 			sendToEdged(resp, message.IsSync())
