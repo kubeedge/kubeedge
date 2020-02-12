@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -25,6 +25,7 @@ type ServiceInterface interface {
 	Delete(name string) error
 	Get(name string) (*v1.Service, error)
 	GetPods(name string) ([]v1.Pod, error)
+	ListAll() ([]v1.Service, error)
 }
 
 type services struct {
@@ -70,12 +71,12 @@ func (s *services) GetPods(name string) ([]v1.Pod, error) {
 	}
 
 	if respMsg.GetOperation() == model.ResponseOperation {
-		return handlerServicePodListFromMetaDB(content)
+		return handleServicePodListFromMetaDB(content)
 	}
-	return handlerServicePodListFromMetaManager(content)
+	return handleServicePodListFromMetaManager(content)
 }
 
-func handlerServicePodListFromMetaDB(content []byte) ([]v1.Pod, error) {
+func handleServicePodListFromMetaDB(content []byte) ([]v1.Pod, error) {
 	var lists []string
 	err := json.Unmarshal([]byte(content), &lists)
 	if err != nil {
@@ -83,7 +84,7 @@ func handlerServicePodListFromMetaDB(content []byte) ([]v1.Pod, error) {
 	}
 
 	if len(lists) != 1 {
-		return nil, fmt.Errorf("Service length from meta db is %d", len(lists))
+		return nil, fmt.Errorf("service length from meta db is %d", len(lists))
 	}
 
 	var ps []v1.Pod
@@ -94,7 +95,7 @@ func handlerServicePodListFromMetaDB(content []byte) ([]v1.Pod, error) {
 	return ps, nil
 }
 
-func handlerServicePodListFromMetaManager(content []byte) ([]v1.Pod, error) {
+func handleServicePodListFromMetaManager(content []byte) ([]v1.Pod, error) {
 	var ps []v1.Pod
 	err := json.Unmarshal(content, &ps)
 	if err != nil {
@@ -122,12 +123,12 @@ func (s *services) Get(name string) (*v1.Service, error) {
 	}
 
 	if respMsg.GetOperation() == model.ResponseOperation {
-		return handlerServiceFromMetaDB(content)
+		return handleServiceFromMetaDB(content)
 	}
 	return handleServiceFromMetaManager(content)
 }
 
-func handlerServiceFromMetaDB(content []byte) (*v1.Service, error) {
+func handleServiceFromMetaDB(content []byte) (*v1.Service, error) {
 	var lists []string
 	err := json.Unmarshal([]byte(content), &lists)
 	if err != nil {
@@ -135,7 +136,7 @@ func handlerServiceFromMetaDB(content []byte) (*v1.Service, error) {
 	}
 
 	if len(lists) != 1 {
-		return nil, fmt.Errorf("Service length from meta db is %d", len(lists))
+		return nil, fmt.Errorf("service length from meta db is %d", len(lists))
 	}
 
 	var s v1.Service
@@ -153,4 +154,56 @@ func handleServiceFromMetaManager(content []byte) (*v1.Service, error) {
 		return nil, fmt.Errorf("unmarshal message to Service failed, err: %v", err)
 	}
 	return &s, nil
+}
+
+func (s *services) ListAll() ([]v1.Service, error) {
+	resource := fmt.Sprintf("%s/%s", s.namespace, constants.ResourceTypeService)
+	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	respMsg, err := s.send.SendSync(msg)
+	if err != nil {
+		return nil, fmt.Errorf("get service list from metaManager failed, err: %v", err)
+	}
+	var content []byte
+	switch respMsg.Content.(type) {
+	case []byte:
+		content = respMsg.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(respMsg.Content)
+		if err != nil {
+			return nil, fmt.Errorf("marshal message to service list failed, err: %v", err)
+		}
+	}
+
+	if respMsg.GetOperation() == model.ResponseOperation {
+		return handleServiceListFromMetaDB(content)
+	}
+	return handleServiceListFromMetaManager(content)
+}
+
+func handleServiceListFromMetaDB(content []byte) ([]v1.Service, error) {
+	var lists []string
+	err := json.Unmarshal([]byte(content), &lists)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to service list from edge db failed, err: %v", err)
+	}
+
+	var serviceList []v1.Service
+	for i := range lists {
+		var s v1.Service
+		err = json.Unmarshal([]byte(lists[i]), &s)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshal message to service from edge db failed, err: %v", err)
+		}
+		serviceList = append(serviceList, s)
+	}
+	return serviceList, nil
+}
+
+func handleServiceListFromMetaManager(content []byte) ([]v1.Service, error) {
+	var serviceList []v1.Service
+	err := json.Unmarshal(content, &serviceList)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to service list failed, err: %v", err)
+	}
+	return serviceList, nil
 }
