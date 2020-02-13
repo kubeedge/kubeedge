@@ -224,7 +224,15 @@ Flags:
 
     or
 
-  ```shell
-  kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_device.yaml
-  kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_devicemodel.yaml
-```
+    ```shell
+     kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_device.yaml
+     kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+    ```
+
+  Also, create ClusterObjectSync and ObjectSync CRDs which are used in reliable message delivery.
+
+    ```shell
+     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/reliablesyncs
+     kubectl create -f cluster_objectsync_v1alpha1.yaml
+     kubectl create -f objectsync_v1alpha1.yaml
+    ```

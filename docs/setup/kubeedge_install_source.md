@@ -53,7 +53,7 @@ This guide provide steps which can be utilised to install KubeEdge Cloud and Edg
     kubectl create -f devices_v1alpha1_device.yaml
     ```
 
-5. Create ClusterObjectSync and ObjectSync CRDs which used in reliable message delivery.
+5. Create ClusterObjectSync and ObjectSync CRDs which are used in reliable message delivery.
 
     ```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/reliablesyncs

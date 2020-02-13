@@ -14,10 +14,6 @@ or
 
 ```shell
 kubectl get nodes -l node-role.kubernetes.io/edge=
-
-
-NAME         STATUS     ROLES    AGE     VERSION
-testing123   Ready      none   6s      0.3.0-beta.0
 ```
 
 Please make sure the `status` of edge node you created is **ready**.
