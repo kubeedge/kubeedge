@@ -27,15 +27,20 @@ package edged
 import (
 	"fmt"
 	"net"
+	"os"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	storagelisters "k8s.io/client-go/listers/storage/v1beta1"
 	"k8s.io/client-go/tools/cache"
 	recordtools "k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/volume"
+	"k8s.io/kubernetes/pkg/volume/util/hostutil"
 	"k8s.io/kubernetes/pkg/volume/util/subpath"
 	utilexec "k8s.io/utils/exec"
 	"k8s.io/utils/mount"
@@ -44,19 +49,18 @@ import (
 // NewInitializedVolumePluginMgr returns a new instance of volume.VolumePluginMgr
 func NewInitializedVolumePluginMgr(
 	edge *edged,
-	plugins []volume.VolumePlugin) (*volume.VolumePluginMgr, error) {
+	plugins []volume.VolumePlugin) *volume.VolumePluginMgr {
 	evh := &edgedVolumeHost{
 		edge:            edge,
 		volumePluginMgr: volume.VolumePluginMgr{},
 	}
 
 	if err := evh.volumePluginMgr.InitPlugins(plugins, nil, evh); err != nil {
-		return nil, fmt.Errorf(
-			"Could not initialize volume plugins for KubeletVolumePluginMgr: %v",
-			err)
+		klog.Errorf("Could not initialize volume plugins for KubeletVolumePluginMgr: %v", err)
+		os.Exit(1)
 	}
 
-	return &evh.volumePluginMgr, nil
+	return &evh.volumePluginMgr
 }
 
 // Compile-time check to ensure kubeletVolumeHost implements the VolumeHost interface
@@ -167,4 +171,30 @@ func (evh *edgedVolumeHost) GetServiceAccountTokenFunc() func(namespace, name st
 func (evh *edgedVolumeHost) GetSubpather() subpath.Interface {
 	// No volume plugin needs Subpaths
 	return subpath.New(evh.edge.mounter)
+}
+
+func (evh *edgedVolumeHost) GetHostUtil() hostutil.HostUtils {
+	return evh.edge.hostUtil
+}
+
+// TODO: Evaluate the funcs releated to csi
+func (evh *edgedVolumeHost) SetKubeletError(err error) {
+}
+
+func (evh *edgedVolumeHost) GetInformerFactory() informers.SharedInformerFactory {
+	const resyncPeriod = 0
+	return informers.NewSharedInformerFactory(evh.edge.kubeClient, resyncPeriod)
+}
+
+func (evh *edgedVolumeHost) CSIDriverLister() storagelisters.CSIDriverLister {
+	return nil
+}
+
+func (evh *edgedVolumeHost) CSIDriversSynced() cache.InformerSynced {
+	return nil
+}
+
+// WaitForCacheSync is a helper function that waits for cache sync for CSIDriverLister
+func (evh *edgedVolumeHost) WaitForCacheSync() error {
+	return nil
 }
