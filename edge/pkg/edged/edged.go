@@ -260,6 +260,8 @@ func (e *edged) Enable() bool {
 }
 
 func (e *edged) Start() {
+	e.volumePluginMgr = NewInitializedVolumePluginMgr(e, ProbeVolumePlugins(""))
+
 	e.statusManager = status.NewManager(e.kubeClient, e.podManager, utilpod.NewPodDeleteSafety(), e.metaClient)
 	if err := e.initializeModules(); err != nil {
 		klog.Errorf("initialize module error: %v", err)
@@ -551,10 +553,6 @@ func newEdged(enable bool) (*edged, error) {
 	}
 	ed.containerGCManager = containerGCManager
 	ed.server = server.NewServer(ed.podManager)
-	ed.volumePluginMgr, err = NewInitializedVolumePluginMgr(ed, ProbeVolumePlugins(""))
-	if err != nil {
-		return nil, fmt.Errorf("init VolumePluginMgr failed with error %s", err.Error())
-	}
 
 	return ed, nil
 }
