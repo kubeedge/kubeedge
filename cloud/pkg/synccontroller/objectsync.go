@@ -42,6 +42,7 @@ func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypeConfigmap,
 		configmap.ResourceVersion, sync.Status.ObjectResourceVersion, configmap)
 }
+
 func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 	secret, err := sctl.secretLister.Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
 
@@ -113,7 +114,7 @@ func sendEvents(err error, nodeName, namespace, objectName, resourceType string,
 	if CompareResourceVersion(objectResourceVersion, syncResourceVersion) > 0 {
 		// trigger the update event
 		klog.Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, syncResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, namespace, model.ResourceTypePod, objectName, model.UpdateOperation, obj)
+		msg := buildEdgeControllerMessage(nodeName, namespace, resourceType, objectName, model.UpdateOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}
 }
