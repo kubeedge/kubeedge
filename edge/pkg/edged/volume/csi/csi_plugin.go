@@ -246,14 +246,15 @@ func (p *csiPlugin) Init(host volume.VolumeHost) error {
 	// Initializing the label management channels
 	nim = nodeinfomanager.NewNodeInfoManager(host.GetNodeName(), host, migratedPlugins)
 
-	if utilfeature.DefaultFeatureGate.Enabled(features.CSINodeInfo) &&
+	// TODO: Evaluate the feature releated to csi
+	/*if utilfeature.DefaultFeatureGate.Enabled(features.CSINodeInfo) &&
 		utilfeature.DefaultFeatureGate.Enabled(features.CSIMigration) {
 		// This function prevents Kubelet from posting Ready status until CSINodeInfo
 		// is both installed and initialized
 		if err := initializeCSINode(host); err != nil {
 			return fmt.Errorf("failed to initialize CSINodeInfo: %v", err)
 		}
-	}
+	}*/
 
 	return nil
 }
