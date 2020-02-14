@@ -51,11 +51,9 @@ func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, 
 	return podlist
 }
 
-func CreatePodTest(nodeName, nodeSelector string, ctx *utils.TestContext) metav1.PodList {
+func CreatePodTest(nodeName, podName string, ctx *utils.TestContext, pod *metav1.Pod) metav1.PodList {
 	var podlist metav1.PodList
-	//Generate the random string and assign as a UID
-	UID := "pod-app-" + utils.GetRandomString(5)
-	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, UID, ctx.Cfg.AppImageUrl[0], nodeSelector)
+	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podName, pod)
 	Expect(IsAppDeployed).Should(BeTrue())
 	label := nodeName
 
