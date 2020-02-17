@@ -11,11 +11,10 @@ verify:
 
 .PHONY: cross_build
 cross_build: verify
-	export GOARCH=arm \
+	export GOARCH=arm64 \
         export GOOS="linux" \
-        export GOARM=6 \
         export CGO_ENABLED=1 \
-        export CC=arm-linux-gnueabi-gcc; \
+        export CC=aarch64-linux-gnu-gcc; \
         go build cmd/edgesite/edgesite.go
 
 .PHONY: armv7
