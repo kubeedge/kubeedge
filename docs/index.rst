@@ -40,7 +40,9 @@ application orchestration capabilities to hosts at Edge.
    setup/kubeedge_precheck
    setup/kubeedge_run
    setup/memfootprint-test-setup
+   setup/cross-compilation
    Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>
+
 
 .. toctree::
    :maxdepth: 2

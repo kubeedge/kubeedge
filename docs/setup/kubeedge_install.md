@@ -11,7 +11,7 @@ In this section, we would cover the below topics
 
 ## Abstract
 
-KubeEdge is composed of cloud and edge sides. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster, cloud side and edge side.
+KubeEdge is composed of cloud and edge sides. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. So if we want to setup KubeEdge, we need to setup Kubernetes cluster (exisiting cluster can be used), cloud side and edge side.
 
 + on `cloud side`, we need to install Docker, Kubernetes cluster and cloudcore.
 + on `edge side`, we need to install Docker, MQTT (We can also use internal MQTT broker) and edgecore.
@@ -53,7 +53,7 @@ keadm init --pod-network-cidr
 
 + [Install Docker](https://docs.docker.com/install/), or other runtime, such as [containerd](https://github.com/containerd/containerd)
 
-+ [Install mosquitto](https://mosquitto.org/download/)
++ [Install mosquitto](https://mosquitto.org/download/) : If you are just trying KubeEdge, this step can be skipped.
 
 **Note:** Do not install **kubelet** and **kube-proxy** on edge side
 

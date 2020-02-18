@@ -7,7 +7,7 @@ KubeEdge requires configuration on both [Cloud side (KubeEdge Master)](#configur
 Setting up cloud side requires two steps
 
 1. Modification of the configuration files
-2. Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master).
+2. Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master). Node Registration can be completed by a automatic or manual method.
 
 ### Modification of the configuration file
 
@@ -149,6 +149,23 @@ In the cloudcore.yaml, modify the below settings.
 
 ### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master)
 
+Node registration can be completed in two ways:
+
+1. Automatic Registration
+2. Manual Registration
+
+#### Node Auto Registration
+
+Edge node can be registered automatically if the `modules.edged.registerNode` is true.
+
+```yaml
+modules:
+  edged:
+    registerNode: true
+```
+
+#### Node Manual Registration
+
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
 + Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
@@ -195,7 +212,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
  }
  ```
 
-#### Modification in node.json
+##### Modification in node.json
 
 1. metadata.name : This is the name of your edge node device. (Referring the edge node configuration would make it more clear).
 
@@ -214,7 +231,7 @@ We have provided a sample node.json to add a node in kubernetes. Please make sur
         kubectl get nodes --show-labels
         ```
 
-#### Deploy edge node (Run on cloud side)
+##### Deploy edge node (Run on cloud side)
 
 ```shell
 kubectl apply -f ~/cmd/yaml/node.json
