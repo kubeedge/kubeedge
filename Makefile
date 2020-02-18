@@ -1,111 +1,233 @@
 # make all builds both cloud and edge binaries
+
+BINARIES=cloudcore \
+	admission \
+	edgecore \
+	edgesite \
+	keadm
+
+COMPONENTS=cloud \
+	edge
+
+.EXPORT_ALL_VARIABLES:
+OUT_DIR ?= _output
+
+define ALL_HELP_INFO
+# Build code.
+#
+# Args:
+#   WHAT: binary names to build. support: $(BINARIES) 
+#         the build will produce executable files under $(OUT_DIR)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make
+#   make all
+#   make all HELP=y
+#   make all WHAT=cloudcore
+endef
 .PHONY: all
-ifeq ($(WHAT),)
-all:
-	cd cloud && $(MAKE)
-	cd edge && $(MAKE)
-	cd keadm && $(MAKE)
-	cd edgesite && $(MAKE)
-else ifeq ($(WHAT),cloudcore)
-# make all WHAT=cloudcore
-all:
-	cd cloud && $(MAKE) cloudcore
-else ifeq ($(WHAT),admission)
-# make all WHAT=admission
-all:
-	cd cloud && $(MAKE) admission
-else ifeq ($(WHAT),edgecore)
-all:
-# make all WHAT=edgecore
-	cd edge && $(MAKE)
-else ifeq ($(WHAT),edgesite)
-all:
-# make all WHAT=edgesite
-	$(MAKE) -C edgesite
-else ifeq ($(WHAT),keadm)
-all:
-# make all WHAT=keadm
-	cd keadm && $(MAKE)
+ifeq ($(HELP),y)
+all: clean
+	@echo "$$ALL_HELP_INFO"
 else
-# invalid entry
-all:
-	@echo $S"invalid option please choose to build either cloudcore, admission, edgecore, keadm, edgesite or all together"
+all: verify-golang clean
+	hack/make-rules/build.sh $(WHAT)
 endif
 
-# unit tests
-.PHONY: edge_test
-edge_test:
-	cd edge && $(MAKE) test
 
-.PHONY: cloud_test
-cloud_test:
-	$(MAKE) -C cloud test
+define VERIFY_HELP_INFO
+# verify golang,vendor and codegen
+#
+# Example:
+# make verify 
+endef
+.PHONY: verify
+ifeq ($(HELP),y)
+verify:
+	@echo "$$VERIFY_HELP_INFO"
+else
+verify:verify-golang verify-vendor verify-codegen 
+endif
 
-# lint
-.PHONY: lint
-lint:edge_lint cloud_lint bluetoothdevice_lint keadm_lint
+.PHONY: verify-golang
+verify-golang: 
+	bash hack/verify-golang.sh
 
-.PHONY: edge_lint
-edge_lint:
-	cd edge && $(MAKE) lint
+.PHONY: verify-vendor
+verify-vendor: 
+	bash hack/verify-vendor.sh
+.PHONY: verify-codegen
+verify-codegen: 
+	bash cloud/hack/verify-codegen.sh
 
-.PHONY: cloud_lint
-cloud_lint:
-	cd cloud && $(MAKE) lint
+define TEST_HELP_INFO
+# run golang test case.
+#
+# Args:
+#   WHAT: Component names to be testd. support: $(COMPONENTS) 
+#         If not specified, "everything" will be tested.
+#
+# Example:
+#   make test 
+#   make test HELP=y
+#   make test WHAT=cloud
+endef
+.PHONY: test 
+ifeq ($(HELP),y)
+test:
+	@echo "$$TEST_HELP_INFO"
+else
+test: 
+	hack/make-rules/test.sh $(WHAT)
+endif
 
-.PHONY: bluetoothdevice_lint
-bluetoothdevice_lint:
-	make -C mappers/bluetooth_mapper lint
+LINTS=cloud \
+	edge \
+	keadm \
+	bluetoothdevice
+define LINT_HELP_INFO
+# run golang lint check.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(LINTS) 
+#         If not specified, "everything" will be lint check.
+#
+# Example:
+#   make lint 
+#   make lint HELP=y
+#   make lint WHAT=cloud
+endef
+.PHONY: lint 
+ifeq ($(HELP),y)
+lint:
+	@echo "$$LINT_HELP_INFO"
+else
+lint: 
+	hack/make-rules/lint.sh $(WHAT)
+endif
 
-.PHONY: keadm_lint
-keadm_lint:
-	make -C keadm lint
 
-.PHONY: edge_integration_test
-edge_integration_test:
-	cd edge && $(MAKE) integration_test
+INTEGRATION_TEST_COMPONENTS=edge
+define INTEGRATION_TEST_HELP_INFO
+# run integration test.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS) 
+#         If not specified, "everything" will be integration check.
+#
+# Example:
+#   make integrationtest 
+#   make integrationtest HELP=y
+endef
 
-.PHONY: edge_cross_build
-edge_cross_build:
-	cd edge && $(MAKE) cross_build
+.PHONY: integrationtest 
+ifeq ($(HELP),y)
+integrationtest:
+	@echo "$$INTEGRATION_TEST_HELP_INFO"
+else
+integrationtest: 
+	hack/make-rules/build.sh edgecore 
+	edge/test/integration/scripts/execute.sh
+endif
 
-.PHONY: edge_cross_build_v7
-edge_cross_build_v7:
-	$(MAKE) -C edge armv7
+CROSSBUILD_COMPONENTS=edgecore\
+	edgesite
+GOARM_VALUES=GOARM7 \
+	GOARM8
 
-.PHONY: edge_cross_build_v8
-edge_cross_build_v8:
-	$(MAKE) -C edge armv8
+define CROSSBUILD_HELP_INFO
+# cross build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS) 
+#         If not specified, "everything" will be cross build.
+#
+# GOARM: go arm value, now support:$(GOARM_VALUES)
+#        If not specified ,default use GOARM=GOARM8 
+#
+#
+# Example:
+#   make crossbuild 
+#   make crossbuild HELP=y
+#   make crossbuild WHAT=edgecore
+#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#
+endef
+.PHONY: crossbuild 
+ifeq ($(HELP),y)
+crossbuild:
+	@echo "$$CROSSBUILD_HELP_INFO"
+else
+crossbuild: clean 
+	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+endif
 
-.PHONY: edgesite_cross_build
-edgesite_cross_build:
-	$(MAKE) -C edgesite cross_build
 
-.PHONY: edge_small_build
-edge_small_build:
-	cd edge && $(MAKE) small_build
 
-.PHONY: edgesite_cross_build_v7
-edgesite_cross_build_v7:
-	$(MAKE) -C edgesite armv7
+SMALLBUILD_COMPONENTS=edgecore \
+	edgesite
+define SMALLBUILD_HELP_INFO
+# small build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS) 
+#         If not specified, "everything" will be small build.
+#
+#
+# Example:
+#   make smallbuild 
+#   make smallbuild HELP=y
+#   make smallbuild WHAT=edgecore
+#   make smallbuild WHAT=edgesite
+#
+endef
+.PHONY: smallbuild 
+ifeq ($(HELP),y)
+smallbuild:
+	@echo "$$SMALLBUILD_HELP_INFO"
+else
+smallbuild: clean
+	hack/make-rules/smallbuild.sh $(WHAT)
+endif
 
-.PHONY: edgesite_cross_build_v8
-edgesite_cross_build_v8:
-	$(MAKE) -C edgesite armv8
 
-.PHONY: edgesite_small_build
-edgesite_small_build:
-	$(MAKE) -C edgesite small_build
-
-.PHONY: e2e_test
-e2e_test:
+define E2E_HELP_INFO
+# e2e test.
+#
+# Example:
+#   make e2e 
+#   make e2e HELP=y
+#
+endef
+.PHONY: e2e 
+ifeq ($(HELP),y)
+e2e:
+	@echo "$$E2E_HELP_INFO"
+else
+e2e: 
 #	bash tests/e2e/scripts/execute.sh device_crd
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
 	bash tests/e2e/scripts/execute.sh
+endif
 
-.PHONY: performance_test
-performance_test:
-	bash tests/performance/scripts/jenkins.sh
+define CLEAN_HELP_INFO
+# Clean up the output of make.
+#
+# Example:
+#   make clean 
+#   make clean HELP=y
+#
+endef
+.PHONY: clean 
+ifeq ($(HELP),y)
+clean:
+	@echo "$$CLEAN_HELP_INFO"
+else
+clean: 
+	hack/make-rules/clean.sh
+endif
+
 
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
@@ -145,16 +267,10 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-.PHONY: verify
-verify:
-	bash hack/verify-golang.sh
-	bash hack/verify-vendor.sh
-	bash cloud/hack/verify-codegen.sh
-
 .PHONY: bluetoothdevice
-bluetoothdevice:
-	make -C mappers/bluetooth_mapper
+bluetoothdevice: clean
+	hack/make-rules/bluetoothdevice.sh
 
 .PHONY: bluetoothdevice_image
-bluetoothdevice_image:
-	make -C mappers/bluetooth_mapper bluetooth_mapper_image
+bluetoothdevice_image:bluetoothdevice
+	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
