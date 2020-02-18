@@ -18,8 +18,6 @@ package util
 
 import (
 	"fmt"
-
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //K8SInstTool embedes Common struct and contains the default K8S version and
@@ -27,41 +25,20 @@ import (
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
 	Common
-	IsEdgeNode     bool //True - Edgenode False - Cloudnode
-	DefaultToolVer string
 }
 
 //InstallTools sets the OS interface, checks if K8S installation is required or not.
 //If required then install the said version.
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
-	ks.SetK8SVersionAndIsNodeFlag(ks.ToolVersion, ks.IsEdgeNode)
 
-	component := "kubeadm"
-	if ks.IsEdgeNode == true {
-		component = "kubectl"
-	}
-	action, err := ks.IsK8SComponentInstalled(component, ks.DefaultToolVer)
+	err := ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return err
 	}
-	switch action {
-	case types.VersionNAInRepo:
-		return fmt.Errorf("Expected %s version is not available in OS repo", component)
-	case types.AlreadySameVersionExist:
-		fmt.Printf("Same version of %s already installed in this host", component)
-		return nil
-	case types.DefVerInstallRequired:
-		ks.SetK8SVersionAndIsNodeFlag(ks.DefaultToolVer, ks.IsEdgeNode)
-		fallthrough
-	case types.NewInstallRequired:
-		err := ks.InstallK8S()
-		if err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Error in getting the %s version from host", component)
-	}
+
+	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
+
 	return nil
 }
 
