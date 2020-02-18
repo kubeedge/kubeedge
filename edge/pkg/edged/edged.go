@@ -422,12 +422,12 @@ func newEdged(enable bool) (*edged, error) {
 		}
 
 		pluginConfigs := dockershim.NetworkPluginSettings{
-			HairpinMode:       kubeletinternalconfig.HairpinMode(HairpinMode),
-			NonMasqueradeCIDR: NonMasqueradeCIDR,
-			PluginName:        pluginName,
-			PluginBinDirs:     []string{pluginBinDir},
-			PluginConfDir:     pluginConfDir,
-			MTU:               mtu,
+			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
+			NonMasqueradeCIDR:  NonMasqueradeCIDR,
+			PluginName:         pluginName,
+			PluginBinDirString: pluginBinDir,
+			PluginConfDir:      pluginConfDir,
+			MTU:                mtu,
 		}
 
 		redirectContainerStream := redirectContainerStream
