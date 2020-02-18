@@ -547,8 +547,8 @@ func (e *edged) removeOrphanedPodStatuses(pods []*v1.Pod) {
 // GetPodCgroupParent gets pod cgroup parent from container manager.
 func (e *edged) GetPodCgroupParent(pod *v1.Pod) string {
 	ret := e.cgroupDriver
-	if edgedconfig.Get().RemoteRuntimeEndpoint == DockerShimEndpoint ||
-		edgedconfig.Get().RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
+		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
 		//always have a ".slice" suffix
 		ret = ret + systemdSuffix
 	}

@@ -75,10 +75,10 @@ var CloudhubHandler *MessageHandle
 func InitHandler(eventq *channelq.ChannelMessageQueue) {
 	once.Do(func() {
 		CloudhubHandler = &MessageHandle{
-			KeepaliveInterval: int(hubconfig.Get().KeepaliveInterval),
-			WriteTimeout:      int(hubconfig.Get().WriteTimeout),
+			KeepaliveInterval: int(hubconfig.Config.KeepaliveInterval),
+			WriteTimeout:      int(hubconfig.Config.WriteTimeout),
 			MessageQueue:      eventq,
-			NodeLimit:         int(hubconfig.Get().NodeLimit),
+			NodeLimit:         int(hubconfig.Config.NodeLimit),
 		}
 
 		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})

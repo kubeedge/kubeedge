@@ -299,7 +299,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 }
 
 func (e *edged) getIP() (string, error) {
-	if nodeIP := config.Get().NodeIP; nodeIP != "" {
+	if nodeIP := config.Config.NodeIP; nodeIP != "" {
 		return nodeIP, nil
 	}
 	hostName, _ := os.Hostname()
@@ -358,7 +358,7 @@ func (e *edged) registerNode() error {
 
 	e.setInitNode(node)
 
-	if config.Get().RegisterNode == false {
+	if config.Config.RegisterNode == false {
 		//when register-node set to false, do not auto register node
 		klog.Infof("register-node is set to false")
 		e.registrationCompleted = true

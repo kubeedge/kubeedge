@@ -473,10 +473,10 @@ func (dc *DownstreamController) initLocating() error {
 		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
 	}
 
-	if !config.Get().EdgeSiteEnable {
+	if !config.Config.EdgeSiteEnable {
 		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
 	} else {
-		selector := fields.OneTermEqualSelector("spec.nodeName", config.Get().NodeName).String()
+		selector := fields.OneTermEqualSelector("spec.nodeName", config.Config.NodeName).String()
 		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{FieldSelector: selector})
 	}
 	if err != nil {
@@ -502,11 +502,11 @@ func NewDownstreamController() (*DownstreamController, error) {
 	}
 
 	var nodeName = ""
-	if config.Get().EdgeSiteEnable {
-		if config.Get().NodeName == "" {
+	if config.Config.EdgeSiteEnable {
+		if config.Config.NodeName == "" {
 			return nil, fmt.Errorf("kubeEdge node name is not provided in edgesite controller configuration")
 		}
-		nodeName = config.Get().NodeName
+		nodeName = config.Config.NodeName
 	}
 
 	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, nodeName)
