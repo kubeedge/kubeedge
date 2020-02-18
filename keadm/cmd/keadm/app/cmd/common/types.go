@@ -22,23 +22,19 @@ import (
 
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
-	KubeEdgeVersion    string
-	KubernetesVersion  string
-	DockerVersion      string
-	KubeConfig         string
-	K8SImageRepository string
-	K8SPodNetworkCidr  string
+	KubeEdgeVersion string
+	KubeConfig      string
+	Master          string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitOptions
-	CertPath           string
-	CloudCoreIP        string
-	K8SAPIServerIPPort string
-	EdgeNodeID         string
-	InterfaceName      string
-	RuntimeType        string
+	CertPath      string
+	CloudCoreIP   string
+	EdgeNodeName  string
+	InterfaceName string
+	RuntimeType   string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -48,8 +44,7 @@ type InstallState uint8
 const (
 	NewInstallRequired InstallState = iota
 	AlreadySameVersionExist
-	DefVerInstallRequired
-	VersionNAInRepo
+	ExitError
 )
 
 //ModuleRunning is defined to know the running status of KubeEdge components
@@ -70,17 +65,9 @@ type ToolsInstaller interface {
 
 //OSTypeInstaller interface for methods to be executed over a specified OS distribution type
 type OSTypeInstaller interface {
-	IsToolVerInRepo(string, string) (bool, error)
-	IsDockerInstalled(string) (InstallState, error)
-	InstallDocker() error
 	InstallMQTT() error
-	IsK8SComponentInstalled(string, string) (InstallState, error)
-	InstallK8S() error
-	StartK8Scluster() error
+	IsK8SComponentInstalled(string, string) error
 	InstallKubeEdge() error
-	SetDockerVersion(string)
-	SetK8SVersionAndIsNodeFlag(version string, flag bool)
-	SetK8SImageRepoAndPodNetworkCidr(string, string)
 	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
