@@ -299,7 +299,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 }
 
 func (e *edged) getIP() (string, error) {
-	if nodeIP := config.Get().NodeIP; nodeIP != "" {
+	if nodeIP := config.Config.NodeIP; nodeIP != "" {
 		return nodeIP, nil
 	}
 	hostName, _ := os.Hostname()

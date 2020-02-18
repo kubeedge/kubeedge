@@ -31,7 +31,7 @@ func Start() {
 	control.Init(opts)
 	opt := registry.Options{}
 	registry.DefaultServiceDiscoveryService = edgeregistry.NewServiceDiscovery(opt)
-	myStrategy := meshconfig.Get().LBStrategy
+	myStrategy := meshconfig.Config.LBStrategy
 	loadbalancer.InstallStrategy(myStrategy, func() loadbalancer.Strategy {
 		switch myStrategy {
 		case "RoundRobin":
