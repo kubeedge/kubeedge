@@ -1,10 +1,12 @@
 approvers:
-  - Baoqiang-Zhang
   - fisherxu
   - kevin-wangzefeng
-  - qizha
+  - kadisi
+  - subpathdev
 reviewers:
-  - Baoqiang-Zhang
+  - chendave
   - fisherxu
+  - kadisi
   - kevin-wangzefeng
-  - sids-b
+  - rohitsardesai83
+  - subpathdev
