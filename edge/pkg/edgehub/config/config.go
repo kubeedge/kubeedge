@@ -19,7 +19,7 @@ const (
 	protocolQuic      = "quic"
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -30,14 +30,10 @@ type Configure struct {
 
 func InitConfigure(eh *v1alpha1.EdgeHub, nodeName string) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			EdgeHub:      *eh,
 			WebSocketURL: strings.Join([]string{"wss:/", eh.WebSocket.Server, eh.ProjectID, nodeName, "events"}, "/"),
 			NodeName:     nodeName,
 		}
 	})
-}
-
-func Get() *Configure {
-	return &c
 }

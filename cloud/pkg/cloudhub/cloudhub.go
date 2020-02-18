@@ -65,10 +65,10 @@ func (a *cloudHub) Start() {
 
 	servers.StartCloudHub(messageq)
 
-	if hubconfig.Get().UnixSocket.Enable {
+	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
 		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(hubconfig.Get().UnixSocket.Address)
+		go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
 	}
 }
 
@@ -106,13 +106,13 @@ func newObjectSyncController() *hubconfig.ObjectSyncController {
 
 // build Config from flags
 func buildConfig() (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(hubconfig.Get().KubeAPIConfig.Master,
-		hubconfig.Get().KubeAPIConfig.KubeConfig)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(hubconfig.Config.KubeAPIConfig.Master,
+		hubconfig.Config.KubeAPIConfig.KubeConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeConfig.QPS = float32(hubconfig.Get().KubeAPIConfig.QPS)
-	kubeConfig.Burst = int(hubconfig.Get().KubeAPIConfig.Burst)
+	kubeConfig.QPS = float32(hubconfig.Config.KubeAPIConfig.QPS)
+	kubeConfig.Burst = int(hubconfig.Config.KubeAPIConfig.Burst)
 	kubeConfig.ContentType = "application/json"
 
 	return kubeConfig, nil

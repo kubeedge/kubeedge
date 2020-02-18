@@ -133,7 +133,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 
 	syncKeep := func(message model.Message) {
 		tempChannel := eh.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(time.Duration(config.Get().Heartbeat) * time.Second)
+		sendTimer := time.NewTimer(time.Duration(config.Config.Heartbeat) * time.Second)
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
@@ -198,7 +198,7 @@ func (eh *EdgeHub) keepalive() {
 			return
 		}
 
-		time.Sleep(time.Duration(config.Get().Heartbeat) * time.Second)
+		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
 	}
 }
 

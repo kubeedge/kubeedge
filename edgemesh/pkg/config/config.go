@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -15,12 +15,8 @@ type Configure struct {
 
 func InitConfigure(e *v1alpha1.EdgeMesh) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			EdgeMesh: *e,
 		}
 	})
-}
-
-func Get() *Configure {
-	return &c
 }

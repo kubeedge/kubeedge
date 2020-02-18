@@ -40,8 +40,8 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 // NewContextMessageLayer create a ContextMessageLayer
 func NewContextMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
-		SendModuleName:     string(config.Get().Context.SendModule),
-		ReceiveModuleName:  string(config.Get().Context.ReceiveModule),
-		ResponseModuleName: string(config.Get().Context.ResponseModule),
+		SendModuleName:     string(config.Config.Context.SendModule),
+		ReceiveModuleName:  string(config.Config.Context.ReceiveModule),
+		ResponseModuleName: string(config.Config.Context.ResponseModule),
 	}
 }

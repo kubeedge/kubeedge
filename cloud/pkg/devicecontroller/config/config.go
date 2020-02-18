@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
-var c Configure
+var Config Configure
 var once sync.Once
 
 type Configure struct {
@@ -16,13 +16,9 @@ type Configure struct {
 
 func InitConfigure(dc *v1alpha1.DeviceController, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
-		c = Configure{
+		Config = Configure{
 			DeviceController: *dc,
 			KubeAPIConfig:    *kubeAPIConfig,
 		}
 	})
-}
-
-func Get() *Configure {
-	return &c
 }

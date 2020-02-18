@@ -333,7 +333,7 @@ func TestSendToCloud(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
-			config.Get().Heartbeat = tt.HeartbeatPeriod
+			config.Config.Heartbeat = tt.HeartbeatPeriod
 			if !tt.waitError && tt.expectedError == nil {
 				go tt.hub.sendToCloud(tt.message)
 				time.Sleep(1 * time.Second)
@@ -412,7 +412,7 @@ func TestKeepalive(t *testing.T) {
 			},
 		},
 	}
-	edgeHubConfig := config.Get()
+	edgeHubConfig := config.Config
 	edgeHubConfig.TLSCertFile = CertFile
 	edgeHubConfig.TLSPrivateKeyFile = KeyFile
 
