@@ -29,7 +29,10 @@ KubeEdge is composed  of cloud and edge parts. It is built upon Kubernetes and p
 
 + [Install mosquitto](https://mosquitto.org/download/)
 
-**Note:** Do not install **kubelet** and **kube-proxy** on edge side
+**Note:** 
++ Do not install **kubelet** and **kube-proxy** on edge side
++ If you use kubeadm to install kubernetes, the `Kubeadm init` command can not be followed by the "--experimental-upload-certs" or 
+"--upload-certs" flag
 
 ## Run KubeEdge
 
