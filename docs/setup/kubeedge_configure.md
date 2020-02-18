@@ -6,8 +6,8 @@ KubeEdge requires configuration on both [Cloud side (KubeEdge Master)](#configur
 
 Setting up cloud side requires two steps
 
-1. Modification of the configuration files
-2. Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master). Node Registration can be completed by a automatic or manual method.
+1. [Modification of the configuration files](#modification-of-the-configuration-file)
+2. [Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master)](#adding-the-edge-nodes-kubeedge-worker-node-on-the-cloud-side-kubeedge-master). Node Registration can be completed by a automatic or manual method.
 
 ### Modification of the configuration file
 
@@ -151,10 +151,10 @@ In the cloudcore.yaml, modify the below settings.
 
 Node registration can be completed in two ways:
 
-1. Automatic Registration
-2. Manual Registration
+1. Node - Automatic Registration
+2. Node - Manual Registration
 
-#### Node Auto Registration
+#### Node - Automatic Registration
 
 Edge node can be registered automatically if the `modules.edged.registerNode` is true.
 
@@ -164,7 +164,7 @@ modules:
     registerNode: true
 ```
 
-#### Node Manual Registration
+#### Node - Manual Registration
 
 We have provided a sample node.json to add a node in kubernetes. Please make sure edge-node is added in kubernetes. Run below steps to add edge-node.
 
