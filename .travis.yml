@@ -47,21 +47,17 @@ jobs:
       script:
         - make
         - make bluetoothdevice
-        - make edge_small_build
-        - make edge_cross_build
-        - make edge_cross_build_v7
-        - make edgesite_cross_build
-        - make edgesite_cross_build_v7
-        - make edgesite_small_build
+        - make smallbuild 
+        - make crossbuild
+        - make crossbuild GOARM=GOARM7
     - name: "unit test, integration test edge"
       arch: amd64
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=vendor
       script:
-        - make edge_test
-        - make cloud_test
-        - make edge_integration_test
+        - make test
+        - make integrationtest
     - name: "e2e test"
       arch: amd64
       before_script:
@@ -74,7 +70,7 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install -y kubectl
       script:
-        - make e2e_test
+        - make e2e
     - name: "build docker images on amd64"
       arch: amd64
       script:
@@ -93,14 +89,13 @@ jobs:
       script:
         - make
         - make bluetoothdevice
-        - make edge_small_build
+        - make smallbuild
     - name: "unit test"
       arch: arm64
       before_script:
         - export GOFLAGS=-mod=vendor
       script:
-        - make edge_test
-        - make cloud_test
+        - make test
     - name: "build docker images on arm64"
       arch: arm64
       script:
