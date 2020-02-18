@@ -558,8 +558,14 @@ func newEdged(enable bool) (*edged, error) {
 }
 
 func (e *edged) initializeModules() error {
-	node, _ := e.initialNode()
-	if err := e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(), e.statusManager, e.runtimeService); err != nil {
+	node, err := e.initialNode()
+	if err != nil {
+		klog.Errorf("Failed to initialNode %v", err)
+		return err
+	}
+
+	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(), e.statusManager, e.runtimeService)
+	if err != nil {
 		klog.Errorf("Failed to start device plugin manager %v", err)
 		return err
 	}
