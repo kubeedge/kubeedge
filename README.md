@@ -44,7 +44,7 @@ KubeEdge is composed of the following components:
 - [EventBus](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/eventbus.md): a MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
 - ServiceBus: a HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
 - [DeviceTwin](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/devicetwin.md): responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
-- [MetaManager](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/metamanager.md): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite). 
+- [MetaManager](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/metamanager.md): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
 
 
 ### Architecture
@@ -88,8 +88,8 @@ To build KubeEdge from source there is one option:
 mkdir -p $GOPATH/src/github.com/kubeedge
 cd $GOPATH/src/github.com/kubeedge
 git clone git@github.com:kubeedge/kubeedge.git
-# If you only want to compile quickly without using go mod, please set GO111MODULE=off (e.g. export GO111MODULE=off) 
-cd kubeedge 
+# If you only want to compile quickly without using go mod, please set GO111MODULE=off (e.g. export GO111MODULE=off)
+cd kubeedge
 make
 ```
 
@@ -112,10 +112,10 @@ Regular Community Meeting: Wednesday at 16:30 Beijing Time (biweekly).
 - [Meeting notes and agenda](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [Meeting recordings](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [Meeting link](https://zoom.us/j/4167237304)
-
+- [Meeting Calendar](https://calendar.google.com/calendar/embed?src=8rjk8o516vfte21qibvlae3lj4%40group.calendar.google.com) | [Subscribe](https://calendar.google.com/calendar?cid=OHJqazhvNTE2dmZ0ZTIxcWlidmxhZTNsajRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ)
 ## Documentation
 
-The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io). 
+The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io).
 Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at this [examples](https://github.com/kubeedge/examples) repository.
 
 ## Contact
@@ -124,7 +124,7 @@ Some sample applications and demos to illustrate possible use cases of KubeEdge 
 We don't have a troubleshooting guide yet.  When we do, uncomment the following and add the link.
 If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
 
---> 
+-->
 If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
