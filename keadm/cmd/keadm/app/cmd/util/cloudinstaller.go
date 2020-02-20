@@ -154,7 +154,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	fmt.Println(cmd.GetStdOutput())
 
 	if cu.ToolVersion >= "1.1.0" {
-		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath)
+		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
 	} else {
 		fmt.Println("KubeEdge cloudcore is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	}

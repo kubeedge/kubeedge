@@ -58,6 +58,9 @@ const (
 	KubeEdgeEdgeCoreNewYaml  = KubeEdgeNewConfigDir + "edgecore.yaml"
 
 	KubeEdgeLogPath = "/var/log/kubeedge/"
+	KubeEdgeCrdPath = KubeEdgePath + "crds"
+
+	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
 	InterfaceName = "eth0"
 )
