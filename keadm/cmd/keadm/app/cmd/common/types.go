@@ -30,11 +30,11 @@ type InitOptions struct {
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
 	InitOptions
-	CertPath      string
-	CloudCoreIP   string
-	EdgeNodeName  string
-	InterfaceName string
-	RuntimeType   string
+	CertPath        string
+	CloudCoreIPPort string
+	EdgeNodeName    string
+	InterfaceName   string
+	RuntimeType     string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
