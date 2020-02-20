@@ -360,7 +360,7 @@ kubectl get pods
 ### Run Edge Integration Tests
 
 ```shell
-make edge_integration_test
+make integrationtest
 ```
 
 ### Details and use cases of integration test framework
