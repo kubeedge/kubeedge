@@ -89,10 +89,6 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
 	}
 
-	if serverVersion.GitVersion == "" {
-		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
-	}
-
 	k8sMinorVersion, _ := strconv.Atoi(serverVersion.Minor)
 	if k8sMinorVersion >= types.DefaultK8SMinimumVersion {
 		return nil
@@ -182,7 +178,7 @@ SKIPDOWNLOADAND:
 	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
 	if u.KubeEdgeVersion >= "1.1.0" {
 		if componentType == types.CloudCore {
-			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/cloud/%s %s/",
+			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
 				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
 		}
 		if componentType == types.EdgeCore {
@@ -257,11 +253,7 @@ func (u *UbuntuOS) KillKubeEdgeBinary(proc string) error {
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.ExecuteCommand()
 
-	if u.KubeEdgeVersion >= "1.1.0" {
-		fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath)
-	} else {
-		fmt.Println("KubeEdge is stopped, For logs visit", KubeEdgePath+"kubeedge/edge/")
-	}
+	fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath+proc+".log")
 
 	return nil
 }

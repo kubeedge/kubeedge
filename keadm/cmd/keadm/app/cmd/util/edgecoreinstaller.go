@@ -41,9 +41,18 @@ type KubeEdgeInstTool struct {
 // and makes the required configuration changes and initiates edgecore.
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
+
+	edgeCoreRunning, err := ku.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if err != nil {
+		return err
+	}
+	if edgeCoreRunning {
+		return fmt.Errorf("EdgeCore is already running on this node, please run reset to clean up first")
+	}
+
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	err := ku.InstallKubeEdge(types.EdgeCore)
+	err = ku.InstallKubeEdge(types.EdgeCore)
 	if err != nil {
 		return err
 	}
@@ -123,6 +132,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 //TearDown method will remove the edge node from api-server and stop edgecore process
 func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetOSInterface(GetOSInterface())
+	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	//Kill edge core process
 	ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
