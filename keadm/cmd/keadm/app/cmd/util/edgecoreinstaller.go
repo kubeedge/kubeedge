@@ -19,18 +19,18 @@ package util
 import (
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/google/uuid"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 )
 
 // KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information
 // It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
-	//CertPath       string
+	CertPath      string
 	CloudCoreIP   string
 	EdgeNodeName  string
 	RuntimeType   string
@@ -68,18 +68,20 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			return fmt.Errorf("not able to create %s folder path", KubeEdgeNewConfigDir)
 		}
 
-		binExec := fmt.Sprintf("chmod +x %s/%s && %s --defaultconfig",
-			KubeEdgeUsrBinPath, KubeEdgeBinaryName, KubeEdgeBinaryName)
+		edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
 
-		cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-		cmd.ExecuteCommand()
-		config := cmd.GetStdOutput()
-		errout := cmd.GetStdErr()
-		if errout != "" {
-			return fmt.Errorf("%s", errout)
+		if ku.EdgeNodeName != "" {
+			edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
+		}
+		if ku.RuntimeType != "" {
+			edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
+		}
+		if ku.InterfaceName != "" {
+			edgeCoreConfig.Modules.Edged.InterfaceName = ku.InterfaceName
 		}
 
-		if err = types.Write2File(KubeEdgeCloudCoreNewYaml, config); err != nil {
+		if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
 			return err
 		}
 	} else {

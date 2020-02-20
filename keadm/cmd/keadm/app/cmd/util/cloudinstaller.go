@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 )
 
 //KubeCloudInstTool embedes Common struct
@@ -45,18 +46,16 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 			return fmt.Errorf("not able to create %s folder path", KubeEdgeNewConfigDir)
 		}
 
-		binExec := fmt.Sprintf("chmod +x %s/%s && %s --defaultconfig",
-			KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeCloudBinaryName)
-
-		cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
-		cmd.ExecuteCommand()
-		config := cmd.GetStdOutput()
-		errout := cmd.GetStdErr()
-		if errout != "" {
-			return fmt.Errorf("%s", errout)
+		cloudCoreConfig := v1alpha1.NewDefaultCloudCoreConfig()
+		if cu.KubeConfig != "" {
+			cloudCoreConfig.KubeAPIConfig.KubeConfig = cu.KubeConfig
 		}
 
-		if err = ioutil.WriteFile(KubeEdgeCloudCoreNewYaml, []byte(config), 0666); err != nil {
+		if cu.Master != "" {
+			cloudCoreConfig.KubeAPIConfig.Master = cu.Master
+		}
+
+		if err := types.Write2File(KubeEdgeCloudCoreNewYaml, cloudCoreConfig); err != nil {
 			return err
 		}
 	} else {
@@ -69,12 +68,12 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		//KubeEdgeCloudCoreYaml:= fmt.Sprintf("%s%s/edge/%s",KubeEdgePath)
 		//	KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
 		//Create controller.yaml
-		if err = common.WriteControllerYamlFile(KubeEdgeCloudCoreYaml, cu.KubeConfig); err != nil {
+		if err = types.WriteControllerYamlFile(KubeEdgeCloudCoreYaml, cu.KubeConfig); err != nil {
 			return err
 		}
 
 		//Create modules.yaml
-		if err = common.WriteCloudModulesYamlFile(KubeEdgeCloudCoreModulesYaml); err != nil {
+		if err = types.WriteCloudModulesYamlFile(KubeEdgeCloudCoreModulesYaml); err != nil {
 			return err
 		}
 	}
