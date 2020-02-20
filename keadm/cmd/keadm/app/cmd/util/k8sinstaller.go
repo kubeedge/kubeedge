@@ -40,7 +40,15 @@ type K8SInstTool struct {
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
 
-	err := ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
+	cloudCoreRunning, err := ks.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
+	if err != nil {
+		return err
+	}
+	if cloudCoreRunning {
+		return fmt.Errorf("CloudCore is already running on this node, please run reset to clean up first")
+	}
+
+	err = ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return err
 	}

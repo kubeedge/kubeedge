@@ -164,6 +164,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 //TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudInstTool) TearDown() error {
 	cu.SetOSInterface(GetOSInterface())
+	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
 	//Kill cloudcore process
 	cu.KillKubeEdgeBinary(KubeCloudBinaryName)
