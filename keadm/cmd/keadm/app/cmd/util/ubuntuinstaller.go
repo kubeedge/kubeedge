@@ -73,7 +73,7 @@ func (u *UbuntuOS) InstallMQTT() error {
 
 // IsK8SComponentInstalled checks if said K8S version is already installed in the host
 func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
-	config, err := buildConfig(kubeConfig, master)
+	config, err := BuildConfig(kubeConfig, master)
 	if err != nil {
 		return fmt.Errorf("Failed to build config, err: %v", err)
 	}
@@ -83,6 +83,7 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 		return fmt.Errorf("Failed to init discovery client, err: %v", err)
 	}
 
+	discoveryClient.RESTClient().Post()
 	serverVersion, err := discoveryClient.ServerVersion()
 	if err != nil {
 		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
@@ -180,9 +181,9 @@ SKIPDOWNLOADAND:
 	// Compatible with 1.0.0
 	var untarFileAndMoveEdgeCore, moveCloudCore string
 	if u.KubeEdgeVersion >= "1.1.0" {
-		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/.",
+		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/",
 			KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
-		moveCloudCore = fmt.Sprintf("cd %s && cp %s%s/cloud/cloudcore/%s %s/.",
+		moveCloudCore = fmt.Sprintf("cd %s && cp %s%s/cloud/cloudcore/%s %s/",
 			KubeEdgePath, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
 	} else {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s %s/.",
@@ -236,9 +237,9 @@ func (u *UbuntuOS) RunEdgeCore() error {
 	fmt.Println(cmd.GetStdOutput())
 
 	if u.KubeEdgeVersion >= "1.1.0" {
-		fmt.Println("KubeEdge edge core is running, For logs visit: ", KubeEdgeLogPath)
+		fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+KubeEdgeBinaryName+".log")
 	} else {
-		fmt.Println("KubeEdge edge core is running, For logs visit", KubeEdgePath, "kubeedge/edge/")
+		fmt.Println("KubeEdge edgecore is running, For logs visit", KubeEdgePath, "kubeedge/edge/")
 	}
 
 	return nil
@@ -251,7 +252,7 @@ func (u *UbuntuOS) KillKubeEdgeBinary(proc string) error {
 	cmd.ExecuteCommand()
 
 	if u.KubeEdgeVersion >= "1.1.0" {
-		fmt.Println("KubeEdge is stopped, For logs visit: ", KubeEdgeLogPath)
+		fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath)
 	} else {
 		fmt.Println("KubeEdge is stopped, For logs visit", KubeEdgePath+"kubeedge/edge/")
 	}
@@ -291,7 +292,7 @@ func runCommandWithShell(command string) (string, error) {
 }
 
 // build Config from flags
-func buildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
+func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)
 	if err != nil {
 		return nil, err
