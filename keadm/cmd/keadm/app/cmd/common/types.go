@@ -57,6 +57,15 @@ const (
 	KubeEdgeEdgeRunning
 )
 
+//ModuleRunning is defined to know the running status of KubeEdge components
+type ComponentType string
+
+//All Component type
+const (
+	CloudCore ComponentType = "cloudcore"
+	EdgeCore  ComponentType = "edgecore"
+)
+
 //ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
@@ -67,7 +76,7 @@ type ToolsInstaller interface {
 type OSTypeInstaller interface {
 	InstallMQTT() error
 	IsK8SComponentInstalled(string, string) error
-	InstallKubeEdge() error
+	InstallKubeEdge(ComponentType) error
 	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error

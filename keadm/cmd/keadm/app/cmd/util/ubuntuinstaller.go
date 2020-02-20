@@ -105,7 +105,7 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // InstallKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func (u *UbuntuOS) InstallKubeEdge() error {
+func (u *UbuntuOS) InstallKubeEdge(componentType types.ComponentType) error {
 	var (
 		dwnldURL string
 		cmd      *Command
@@ -179,31 +179,37 @@ func (u *UbuntuOS) InstallKubeEdge() error {
 
 SKIPDOWNLOADAND:
 	// Compatible with 1.0.0
-	var untarFileAndMoveEdgeCore, moveCloudCore string
+	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
 	if u.KubeEdgeVersion >= "1.1.0" {
-		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/",
-			KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
-		moveCloudCore = fmt.Sprintf("cd %s && cp %s%s/cloud/cloudcore/%s %s/",
-			KubeEdgePath, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+		if componentType == types.CloudCore {
+			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/cloud/%s %s/",
+				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+		}
+		if componentType == types.EdgeCore {
+			untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/",
+				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
+		}
 	} else {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s %s/.",
 			KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
-		moveCloudCore = fmt.Sprintf("cd %s && cp %skubeedge/cloud/%s %s/.",
+		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && cp %skubeedge/cloud/%s %s/.",
 			KubeEdgePath, KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
 	}
 
-	stdout, err := runCommandWithShell(untarFileAndMoveEdgeCore)
-	if err != nil {
-		return err
+	if componentType == types.CloudCore {
+		stdout, err := runCommandWithShell(untarFileAndMoveCloudCore)
+		if err != nil {
+			return err
+		}
+		fmt.Println(stdout)
 	}
-	fmt.Println(stdout)
-
-	stdout, err = runCommandWithShell(moveCloudCore)
-	if err != nil {
-		return err
+	if componentType == types.EdgeCore {
+		stdout, err := runCommandWithShell(untarFileAndMoveEdgeCore)
+		if err != nil {
+			return err
+		}
+		fmt.Println(stdout)
 	}
-	fmt.Println(stdout)
-
 	return nil
 }
 

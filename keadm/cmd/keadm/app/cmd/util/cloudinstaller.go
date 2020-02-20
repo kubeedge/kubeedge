@@ -24,7 +24,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	err := cu.InstallKubeEdge()
+	err := cu.InstallKubeEdge(types.CloudCore)
 	if err != nil {
 		return err
 	}

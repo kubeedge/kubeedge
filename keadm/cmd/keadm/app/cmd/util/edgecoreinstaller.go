@@ -43,7 +43,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	err := ku.InstallKubeEdge()
+	err := ku.InstallKubeEdge(types.EdgeCore)
 	if err != nil {
 		return err
 	}

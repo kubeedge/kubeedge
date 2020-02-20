@@ -19,6 +19,8 @@ package util
 import (
 	"fmt"
 	"os/exec"
+
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //CentOS struct objects shall have information of the tools version to be installed
@@ -96,7 +98,7 @@ func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) error {
 //InstallKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
-func (c *CentOS) InstallKubeEdge() error {
+func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
 	fmt.Println("InstallKubeEdge called")
 	return nil
 }
