@@ -29,11 +29,11 @@ const (
 	// Master sets the address of K8s master
 	Master = "master"
 
-	// CloudCoreIP sets the IP of KubeEdge cloud component
-	CloudCoreIP = "cloudcoreip"
+	// CloudCoreIPPort sets the IP and port of KubeEdge cloud component
+	CloudCoreIPPort = "cloudcore-ipport"
 
 	// KubeEdge Node unique idenfitcation string
-	EdgeNodeID = "edgenodeid"
+	EdgeNodeName = "edgenode-name"
 
 	// KubeEdge interface name string
 	InterfaceName = "interfacename"

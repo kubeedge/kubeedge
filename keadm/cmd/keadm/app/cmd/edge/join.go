@@ -88,12 +88,17 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.InterfaceName, types.InterfaceName, joinOptions.InterfaceName,
 		"KubeEdge Node interface name string, the default value is eth0")
 
-	cmd.Flags().StringVarP(&joinOptions.CloudCoreIP, types.CloudCoreIP, "e", joinOptions.CloudCoreIP,
-		"IP address of KubeEdge CloudCore")
-	cmd.MarkFlagRequired(types.CloudCoreIP)
+	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
+		"The certPath used by edgecore, the default value is /etc/kubeedge/certs")
+
+	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, types.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
+		"IP:Port address of KubeEdge CloudCore")
+	cmd.MarkFlagRequired(types.CloudCoreIPPort)
+
 	cmd.Flags().StringVarP(&joinOptions.RuntimeType, types.RuntimeType, "r", joinOptions.RuntimeType,
 		"Container runtime type")
-	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeID, "i", joinOptions.EdgeNodeName,
+
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
 }
 
@@ -101,6 +106,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 func newJoinOptions() *types.JoinOptions {
 	opts := &types.JoinOptions{}
 	opts.CertPath = types.DefaultCertPath
+	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 
 	return opts
 }
@@ -119,10 +125,11 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		Common: util.Common{
 			ToolVersion: kubeVer,
 		},
-		CloudCoreIP:   joinOptions.CloudCoreIP,
+		CloudCoreIP:   joinOptions.CloudCoreIPPort,
 		EdgeNodeName:  joinOptions.EdgeNodeName,
 		RuntimeType:   joinOptions.RuntimeType,
 		InterfaceName: joinOptions.InterfaceName,
+		CertPath:      joinOptions.CertPath,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
