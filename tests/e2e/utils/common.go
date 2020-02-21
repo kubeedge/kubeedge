@@ -267,7 +267,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configm
 	return &deployment
 }
 
-func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
+func NewPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 	pod := v1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -315,7 +315,7 @@ func VerifyDeleteDeployment(getDeploymentApi string) int {
 }
 
 // HandlePod to handle app deployment/delete using pod spec.
-func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodeselector string) bool {
+func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool {
 	var req *http.Request
 	var err error
 	var body io.Reader
@@ -328,7 +328,7 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 	}
 	switch operation {
 	case "POST":
-		body := newPodObj(UID, ImageUrl, nodeselector)
+		body := pod
 		respBytes, err := json.Marshal(body)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
