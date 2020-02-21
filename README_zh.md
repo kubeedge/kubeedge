@@ -87,11 +87,12 @@ KubeEdge 由以下组件构成:
 
 ## 社区例会
 
-社区会议通常周三（双周一次）北京时间上午11:00开始。
+社区会议通常周三（双周一次）北京时间下午16:30开始。
 
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [会议视频记录](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [会议链接](https://zoom.us/j/4167237304)
+- [会议日历](https://calendar.google.com/calendar/embed?src=8rjk8o516vfte21qibvlae3lj4%40group.calendar.google.com) | [订阅日历](https://calendar.google.com/calendar?cid=OHJqazhvNTE2dmZ0ZTIxcWlidmxhZTNsajRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ)
 
 ## 文档
 
