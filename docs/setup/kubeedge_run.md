@@ -1,5 +1,8 @@
 # Run KubeEdge
 
+**Note:** This step is only required if KubeEdge is installed using Source. If KubeEdge is installed using `keadm` ignore this step.
+***
+
 ## Cloudcore on Cloud side
 
 If you have copied the cloudcore binary in a folder and the configuration (conf) are stored in the same folder

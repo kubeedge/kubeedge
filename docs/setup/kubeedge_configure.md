@@ -7,7 +7,7 @@ KubeEdge requires configuration on both [Cloud side (KubeEdge Master)](#configur
 Setting up cloud side requires two steps
 
 1. [Modification of the configuration files](#modification-of-the-configuration-file)
-2. [Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master)](#adding-the-edge-nodes-kubeedge-worker-node-on-the-cloud-side-kubeedge-master). Node Registration can be completed by a automatic or manual method.
+2. Edge node will be auto registered by default. [Users can still choose to register manually](#adding-the-edge-nodes-kubeedge-worker-node-on-the-cloud-side-kubeedge-master).
 
 ### Modification of the configuration file
 
