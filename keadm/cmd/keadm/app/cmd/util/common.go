@@ -35,12 +35,6 @@ const (
 	UbuntuOSType = "ubuntu"
 	CentOSType   = "centos"
 
-	DefaultDownloadURL = "https://download.docker.com"
-	DockerPreqReqList  = "apt-transport-https ca-certificates curl gnupg-agent software-properties-common"
-
-	KubernetesDownloadURL = "https://apt.kubernetes.io/"
-	KubernetesGPGURL      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath        = "/usr/local/bin"
@@ -58,16 +52,15 @@ const (
 	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
 	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
 	KubeCloudBinaryName          = "cloudcore"
-	KubeCloudApiserverYamlPath   = "/etc/kubernetes/manifests/kube-apiserver.yaml"
-	KubeCloudReplaceIndex        = 25
-	KubeCloudReplaceString       = "    - --insecure-bind-address=0.0.0.0\n"
 
-	KubeAPIServerName          = "kube-apiserver"
-	KubeEdgeHTTPProto          = "http"
-	KubeEdgeHTTPSProto         = "https"
-	KubeEdgeHTTPPort           = "8080"
-	KubeEdgeHTTPSPort          = "6443"
-	KubeEdgeHTTPRequestTimeout = 30
+	KubeEdgeNewConfigDir     = KubeEdgePath + "config/"
+	KubeEdgeCloudCoreNewYaml = KubeEdgeNewConfigDir + "cloudcore.yaml"
+	KubeEdgeEdgeCoreNewYaml  = KubeEdgeNewConfigDir + "edgecore.yaml"
+
+	KubeEdgeLogPath = "/var/log/kubeedge/"
+	KubeEdgeCrdPath = KubeEdgePath + "crds"
+
+	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
 	InterfaceName = "eth0"
 )
@@ -91,6 +84,7 @@ type Common struct {
 	OSVersion   string
 	ToolVersion string
 	KubeConfig  string
+	Master      string
 }
 
 //SetOSInterface defines a method to set the implemtation of the OS interface
@@ -178,7 +172,6 @@ func GetOSVersion() string {
 
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
-
 	switch GetOSVersion() {
 	case UbuntuOSType:
 		return &UbuntuOS{}
@@ -189,7 +182,7 @@ func GetOSInterface() types.OSTypeInstaller {
 	}
 }
 
-// IsCloudCore identifies if the node is having cloudcore and kube-apiserver already running.
+// IsCloudCore identifies if the node is having cloudcore already running.
 // If so, then return true, else it can used as edge node and initialise it.
 func IsCloudCore() (types.ModuleRunning, error) {
 	osType := GetOSInterface()
@@ -197,12 +190,8 @@ func IsCloudCore() (types.ModuleRunning, error) {
 	if err != nil {
 		return types.NoneRunning, err
 	}
-	apiServerRunning, err := osType.IsKubeEdgeProcessRunning(KubeAPIServerName)
-	if err != nil {
-		return types.NoneRunning, err
-	}
-	//If any of cloudcore or K8S API server is running, then we believe the node is cloud node
-	if cloudCoreRunning || apiServerRunning {
+
+	if cloudCoreRunning {
 		return types.KubeEdgeCloudRunning, nil
 	}
 
