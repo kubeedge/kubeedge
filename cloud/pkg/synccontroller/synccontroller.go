@@ -218,7 +218,7 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 			sctl.manageEndpoint(sync)
 		// TODO: add device here
 		default:
-			klog.Errorf("Unsupported object kind： %v", sync.Spec.ObjectKind)
+			klog.Errorf("Unsupported object kind: %v", sync.Spec.ObjectKind)
 		}
 	}
 }
