@@ -87,8 +87,13 @@ KubeEdge 由以下组件构成:
 
 ## 社区例会
 
-社区会议通常周三（双周一次）北京时间下午16:30开始。
+例会时间：
+- 欧洲时间：**北京时间 周三 16:30-17:30** (每双周一次，从2020年2月19日开始)。
+([查询本地时间](https://www.thetimezoneconverter.com/?t=16%3A30&tz=GMT%2B8&))
+- 太平洋时间：**北京时间 周三 10:00-11:00** (每双周一次，从2020年2月26日开始)。
+([查询本地时间](https://www.thetimezoneconverter.com/?t=10%3A00&tz=GMT%2B8&))
 
+会议资源：
 - [会议纪要和议程](https://docs.google.com/document/d/1Sr5QS_Z04uPfRbA7PrXr3aPwCRpx7EtsyHq7mp6CnHs/edit)
 - [会议视频记录](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [会议链接](https://zoom.us/j/4167237304)
