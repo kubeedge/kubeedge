@@ -18,6 +18,7 @@ package validation
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -85,9 +86,11 @@ func ValidateModuleCloudHub(c cloudconfig.CloudHub) field.ErrorList {
 	}
 	s := strings.SplitN(c.UnixSocket.Address, "://", 2)
 	if len(s) > 1 && !utilvalidation.FileIsExist(path.Dir(s[1])) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
-			c.UnixSocket.Address, fmt.Sprintf("unixSocketAddress %v dir %v not exist , need create it",
-				c.UnixSocket.Address, path.Dir(s[1]))))
+		if err := os.MkdirAll(path.Dir(s[1]), os.ModePerm); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
+				c.UnixSocket.Address, fmt.Sprintf("create unixSocketAddress %v dir %v error: %v",
+					c.UnixSocket.Address, path.Dir(s[1]), err)))
+		}
 	}
 	return allErrs
 }

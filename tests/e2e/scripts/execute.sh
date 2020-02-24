@@ -19,14 +19,9 @@ cd $workdir
 
 curpath=$PWD
 echo $PWD
-VAR_KUBEEDGE_DIR="/var/lib/kubeedge/"
 
 go get github.com/onsi/ginkgo/ginkgo
 sudo cp $GOPATH/bin/ginkgo /usr/bin/
-
-if [ ! -d ${VAR_KUBEEDGE_DIR} ]; then
-  sudo mkdir -p ${VAR_KUBEEDGE_DIR} && sudo chown $USER:$USER ${VAR_KUBEEDGE_DIR}
-fi
 
 bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
 bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
