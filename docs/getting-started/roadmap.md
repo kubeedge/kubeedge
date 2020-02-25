@@ -4,18 +4,17 @@ This document defines a high level roadmap for KubeEdge development.
 
 The [milestones defined in GitHub](https://github.com/kubeedge/kubeedge/milestones) represent the most up-to-date plans.
 
-KubeEdge 1.1 is our current stable branch. The roadmap below outlines new features that will be added to KubeEdge.
+KubeEdge 1.2 is our current stable branch. The roadmap below outlines new features that will be added to KubeEdge.
 
-## 2019 Q4 Roadmap
+## 2020 Q1 Roadmap
+- Support for monitoring at the edge.
 - Support HA for cloudcore
 - Support exec&logs API for edge application
-- Support reliable message delivery from cloud to edge.
 - Add protobuf support for data exchange format between cloud and edge
 - Finish scalability test and publish report
 - Support managing clusters at edge from cloud (aka. EdgeSite)
 - Enhance performance and reliability of KubeEdge infrastructure.
 - Support ingress at edge.
-- Upgrade Kubernetes dependencies in vendor to v1.16.
 - Improve contributor experience by defining project governance policies, release process, membership rules etc.
 - Improve the performance and e2e tests with more metrics and scenarios.
 - Improve KubeEdge installation experience
@@ -30,5 +29,4 @@ KubeEdge 1.1 is our current stable branch. The roadmap below outlines new featur
 - Enable intelligent scheduling of applications to large scale Edge clusters.
 - Data management with support for ingestion of telemetry data and analytics at the edge.
 - Security at the edge.
-- Support for monitoring at the edge.
 - Evaluate gRPC for cloud to edge communication.
