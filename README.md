@@ -100,7 +100,7 @@ make
 
 ## Roadmap
 
-* [2019 Q4 Roadmap](./docs/getting-started/roadmap.md#2019-q4-roadmap)
+* [2020 Q1 Roadmap](./docs/getting-started/roadmap.md#2020-q1-roadmap)
 
 ## Meeting
 
