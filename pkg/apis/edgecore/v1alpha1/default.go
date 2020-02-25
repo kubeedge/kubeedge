@@ -70,6 +70,11 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ImageGCLowThreshold:         constants.DefaultImageGCLowThreshold,
 				MaximumDeadContainersPerPod: constants.DefaultMaximumDeadContainersPerPod,
 				CGroupDriver:                CGroupDriverCGroupFS,
+				NetworkPluginName:           "",
+				CNIConfDir:                  constants.DefaultCNIConfDir,
+				CNIBinDir:                   constants.DefaultCNIBinDir,
+				CNICacheDir:                 constants.DefaultCNICacheDir,
+				NetworkPluginMTU:            constants.DefaultNetworkPluginMTU,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,
