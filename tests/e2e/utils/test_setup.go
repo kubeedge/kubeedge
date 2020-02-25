@@ -174,6 +174,7 @@ func createEdgeCoreConfigFile(nodeName string) {
 	c.Modules.EdgeHub.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
+	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
 
 	data, err := yaml.Marshal(c)
 	if err != nil {
