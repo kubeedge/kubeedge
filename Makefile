@@ -31,7 +31,7 @@ ifeq ($(HELP),y)
 all: clean
 	@echo "$$ALL_HELP_INFO"
 else
-all: verify-golang clean
+all: verify-golang
 	hack/make-rules/build.sh $(WHAT)
 endif
 
