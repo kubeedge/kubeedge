@@ -351,6 +351,7 @@ modules:
     cgroupDriver: cgroupfs
     clusterDNS: ""
     clusterDomain: ""
+    concurrentConsumers: 5
     devicePluginEnabled: false
     dockerAddress: unix:///var/run/docker.sock
     edgedMemoryCapacity: 7852396000
