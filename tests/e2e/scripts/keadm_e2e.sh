@@ -35,8 +35,8 @@ kubectl delete daemonset kindnet -nkube-system
 
 export KUBECONFIG=$HOME/.kube/config
 sudo mkdir -p /var/lib/kubeedge
-sudo ${curpath}/_output/local/bin/keadm init --kube-config=$KUBECONFIG
-sudo CHECK_EDGECORE_ENVIRONMENT="false" ${curpath}/_output/local/bin/keadm join --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+sudo ${curpath}/keadm/keadm init --kube-config=$KUBECONFIG
+sudo CHECK_EDGECORE_ENVIRONMENT="false" ${curpath}/keadm/keadm join --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
 
 export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
