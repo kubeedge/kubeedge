@@ -146,14 +146,6 @@ const (
 	NonMasqueradeCIDR = "10.0.0.1/8"
 	//cgroupName used for check if the cgroup is mounted.(default "")
 	cgroupName = ""
-	// PluginName gives the plugin name.(default "",use noop plugin)
-	pluginName = ""
-	//PluginBinDir gives the dir of cni plugin executable file
-	pluginBinDir = "/opt/cni/bin"
-	// PluginConfDir gives the dir of cni plugin confguration file
-	pluginConfDir = "/etc/cni/net.d"
-	//MTU give the default maximum transmission unit of  net interface
-	mtu = 1500
 	// redirectContainerStream decide whether to redirect the container stream
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
@@ -422,12 +414,13 @@ func newEdged(enable bool) (*edged, error) {
 		}
 
 		pluginConfigs := dockershim.NetworkPluginSettings{
-			HairpinMode:       kubeletinternalconfig.HairpinMode(HairpinMode),
-			NonMasqueradeCIDR: NonMasqueradeCIDR,
-			PluginName:        pluginName,
-			PluginBinDirs:     []string{pluginBinDir},
-			PluginConfDir:     pluginConfDir,
-			MTU:               mtu,
+			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
+			NonMasqueradeCIDR:  NonMasqueradeCIDR,
+			PluginName:         edgedconfig.Get().NetworkPluginName,
+			PluginBinDirString: edgedconfig.Get().CNIBinDir,
+			PluginConfDir:      edgedconfig.Get().CNIConfDir,
+			PluginCacheDir:     edgedconfig.Get().CNICacheDir,
+			MTU:                int(edgedconfig.Get().NetworkPluginMTU),
 		}
 
 		redirectContainerStream := redirectContainerStream
