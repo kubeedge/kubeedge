@@ -103,6 +103,40 @@ e2e_test:
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
 	bash tests/e2e/scripts/execute.sh
 
+define KEADM_E2E_HELP_INFO
+# keadm e2e test.
+#
+# Example:
+#   make keadm_e2e
+#   make keadm_e2e HELP=y
+#
+endef
+.PHONY: keadm_e2e
+ifeq ($(HELP),y)
+keadm_e2e:
+	@echo "KEADM_E2E_HELP_INFO"
+else
+keadm_e2e:
+	bash tests/e2e/scripts/keadm_e2e.sh
+endif
+
+define CLEAN_HELP_INFO
+# Clean up the output of make.
+#
+# Example:
+#   make clean 
+#   make clean HELP=y
+#
+endef
+.PHONY: clean 
+ifeq ($(HELP),y)
+clean:
+	@echo "$$CLEAN_HELP_INFO"
+else
+clean: 
+	hack/make-rules/clean.sh
+endif
+
 .PHONY: performance_test
 performance_test:
 	bash tests/performance/scripts/jenkins.sh

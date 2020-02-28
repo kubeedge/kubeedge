@@ -37,14 +37,14 @@ For cloud node:
 keadm reset
 
 For edge node:
-keadm reset --k8sserverip 10.20.30.40:8080
+keadm reset
 `
 )
 
 // NewKubeEdgeReset represents the reset command
 func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 	IsEdgeNode := false
-	K8SAPIServerIPPort := ""
+
 	var cmd = &cobra.Command{
 		Use:     "reset",
 		Short:   "Teardowns KubeEdge (cloud & edge) component",
@@ -65,31 +65,24 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Tear down cloud node. It includes
-			// 1. Executing kubeadm reset
-			// 2. killing cloudcore process
+			// 1. killing cloudcore process
 
 			// Tear down edge node. It includes
-			// 1. Removing edge node from api-server
-			// 2. killing edgecore process
-			return TearDownKubeEdge(IsEdgeNode, K8SAPIServerIPPort)
+			// 1. killing edgecore process, but don't delete node from K8s
+			return TearDownKubeEdge(IsEdgeNode)
 		},
 	}
-
-	//This command requires to know the api-server address so that node can be removed from api-server
-	//possible 2 methods, 1. To get it from the flag option and 2. To read from edge.yaml. TODO: method 2
-	cmd.Flags().StringVarP(&K8SAPIServerIPPort, types.K8SAPIServerIPPort, "k", K8SAPIServerIPPort,
-		"IP:Port address of cloud components host/VM")
 
 	return cmd
 }
 
-//TearDownKubeEdge will bring down either cloud or edge components,
-//depending upon in which type of node it is executed
-func TearDownKubeEdge(isEdgeNode bool, server string) error {
+// TearDownKubeEdge will bring down either cloud or edge components,
+// depending upon in which type of node it is executed
+func TearDownKubeEdge(isEdgeNode bool) error {
 	var ke types.ToolsInstaller
 	ke = &util.KubeCloudInstTool{Common: util.Common{}}
 	if false != isEdgeNode {
-		ke = &util.KubeEdgeInstTool{Common: util.Common{}, K8SApiServerIP: server}
+		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
 
 	ke.TearDown()

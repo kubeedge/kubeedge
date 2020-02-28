@@ -35,21 +35,21 @@ var (
     | https://github.com/kubeedge/kubeedge/issues              |
     +----------------------------------------------------------+
 	
-    Create a two-machine cluster with one cloud node
-    (which controls the edge node cluster), and one edge node
+    Create a cluster with cloud node
+    (which controls the edge node cluster), and edge nodes
     (where native containerized application, in the form of
     pods and deployments run), connects to devices.
 
 `
 	keadmExample = `
     +----------------------------------------------------------+
-    | On the first machine:                                    |
+    | On the cloud machine:                                    |
     +----------------------------------------------------------+
     | master node (on the cloud)# sudo keadm init              |
     +----------------------------------------------------------+
 
     +----------------------------------------------------------+
-    | On the second machine:                                   |
+    | On the edge machine:                                   |
     +----------------------------------------------------------+
     | worker node (at the edge)# sudo keadm join <flags>       |
     +----------------------------------------------------------+
