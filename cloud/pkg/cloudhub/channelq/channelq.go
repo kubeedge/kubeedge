@@ -191,14 +191,17 @@ func isListResource(msg *beehiveModel.Message) bool {
 }
 
 func isDeleteMessage(msg *beehiveModel.Message) bool {
+	if msg.GetOperation() == beehiveModel.DeleteOperation {
+		return true
+	}
 	deletionTimestamp, err := GetMessageDeletionTimestamp(msg)
 	if err != nil {
 		klog.Errorf("fail to get message DeletionTimestamp for message: %s", msg.Header.ID)
 		return false
-	}
-	if msg.GetOperation() == beehiveModel.DeleteOperation || deletionTimestamp != nil {
+	} else if deletionTimestamp != nil {
 		return true
 	}
+
 	return false
 }
 

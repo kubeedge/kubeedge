@@ -3,8 +3,11 @@ package synccontroller
 import (
 	"strconv"
 
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -20,10 +23,19 @@ func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
-	if err != nil && apierrors.IsNotFound(err) {
-		sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypePod,
-			"", "", nil)
-		return
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			pod = &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage pod sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
 	}
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypePod,
 		pod.ResourceVersion, sync.Status.ObjectResourceVersion, pod)
@@ -34,10 +46,19 @@ func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
-	if err != nil && apierrors.IsNotFound(err) {
-		sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypeConfigmap,
-			"", "", nil)
-		return
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			configmap = &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage configMap sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
 	}
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypeConfigmap,
 		configmap.ResourceVersion, sync.Status.ObjectResourceVersion, configmap)
@@ -48,10 +69,19 @@ func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
-	if err != nil && apierrors.IsNotFound(err) {
-		sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypeSecret,
-			"", "", nil)
-		return
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			secret = &v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage secret sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
 	}
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, model.ResourceTypeSecret,
 		secret.ResourceVersion, sync.Status.ObjectResourceVersion, secret)
@@ -62,10 +92,19 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
-	if err != nil && apierrors.IsNotFound(err) {
-		sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, commonconst.ResourceTypeService,
-			"", "", nil)
-		return
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			service = &v1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage service sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
 	}
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, commonconst.ResourceTypeService,
 		service.ResourceVersion, sync.Status.ObjectResourceVersion, service)
@@ -76,10 +115,19 @@ func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
-	if err != nil && apierrors.IsNotFound(err) {
-		sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, commonconst.ResourceTypeEndpoints,
-			"", "", nil)
-		return
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			endpoint = &v1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage endpoint sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
 	}
 	sendEvents(err, nodeName, sync.Namespace, sync.Spec.ObjectName, commonconst.ResourceTypeEndpoints,
 		endpoint.ResourceVersion, sync.Status.ObjectResourceVersion, endpoint)
@@ -106,7 +154,7 @@ func sendEvents(err error, nodeName, namespace, objectName, resourceType string,
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event
 		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, objectName)
-		msg := buildEdgeControllerMessage(nodeName, namespace, resourceType, objectName, model.DeleteOperation, nil)
+		msg := buildEdgeControllerMessage(nodeName, namespace, resourceType, objectName, model.DeleteOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 		return
 	}
