@@ -48,6 +48,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 	if init == nil {
 		init = newInitOptions()
 	}
+
 	tools := make(map[string]types.ToolsInstaller, 0)
 	flagVals := make(map[string]types.FlagData, 0)
 
@@ -61,7 +62,10 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 				util.AddToolVals(f, flagVals)
 			}
 			cmd.Flags().VisitAll(checkFlags)
-			Add2ToolsList(tools, flagVals, init)
+			err := Add2ToolsList(tools, flagVals, init)
+			if err != nil {
+				return err
+			}
 			return Execute(tools)
 		},
 	}
@@ -74,7 +78,6 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 func newInitOptions() *types.InitOptions {
 	var opts *types.InitOptions
 	opts = &types.InitOptions{}
-	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 	opts.KubeConfig = types.DefaultKubeConfig
 	return opts
 }
@@ -92,7 +95,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) {
+func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
 	toolList["Kubernetes"] = &util.K8SInstTool{
 		Common: util.Common{
 			KubeConfig: initOptions.KubeConfig,
@@ -104,8 +107,13 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	} else {
-		kubeVer = initOptions.KubeEdgeVersion
+	}
+	if kubeVer == "" {
+		latestVersion, err := util.GetLatestVersion()
+		if err != nil {
+			return err
+		}
+		kubeVer = latestVersion[1:]
 	}
 	toolList["Cloud"] = &util.KubeCloudInstTool{
 		Common: util.Common{
@@ -114,6 +122,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			Master:      initOptions.Master,
 		},
 	}
+	return nil
 }
 
 //Execute the installation for each tool and start cloudcore
