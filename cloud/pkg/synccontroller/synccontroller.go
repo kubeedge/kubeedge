@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -231,6 +231,11 @@ func BuildObjectSyncName(nodeName, UID string) string {
 func getNodeName(syncName string) string {
 	tmps := strings.Split(syncName, ".")
 	return strings.Join(tmps[:len(tmps)-1], ".")
+}
+
+func getObjectUID(syncName string) string {
+	tmps := strings.Split(syncName, ".")
+	return tmps[len(tmps)-1]
 }
 
 func isFromEdgeNode(nodes []*v1.Node, nodeName string) bool {
