@@ -157,6 +157,9 @@ type Edged struct {
 	// InterfaceName indicates interface name
 	// default eth0
 	InterfaceName string `json:"interfaceName,omitempty"`
+	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
+	// default 5
+	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`
 	// DevicePluginEnabled indicates enable device plugin
 	// default false
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file

@@ -167,6 +167,7 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 			HostnameOverride:                  edgeID,
 			InterfaceName:                     iface,
 			NodeStatusUpdateFrequency:         10,
+			ConcurrentConsumers:               5,
 			DevicePluginEnabled:               false,
 			GPUPluginEnabled:                  false,
 			ImageGCHighThreshold:              80,
