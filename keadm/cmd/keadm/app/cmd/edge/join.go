@@ -65,7 +65,10 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 			}
 			cmd.Flags().VisitAll(checkFlags)
 
-			Add2ToolsList(tools, flagVals, joinOptions)
+			err := Add2ToolsList(tools, flagVals, joinOptions)
+			if err != nil {
+				return err
+			}
 			return Execute(tools)
 		},
 	}
@@ -101,20 +104,24 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 func newJoinOptions() *types.JoinOptions {
 	opts := &types.JoinOptions{}
 	opts.CertPath = types.DefaultCertPath
-	opts.KubeEdgeVersion = types.DefaultKubeEdgeVersion
 
 	return opts
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
-func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) {
+func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, joinOptions *types.JoinOptions) error {
 	var kubeVer string
 
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
-	} else {
-		kubeVer = joinOptions.KubeEdgeVersion
+	}
+	if kubeVer == "" {
+		latestVersion, err := util.GetLatestVersion()
+		if err != nil {
+			return err
+		}
+		kubeVer = latestVersion[1:]
 	}
 	toolList["KubeEdge"] = &util.KubeEdgeInstTool{
 		Common: util.Common{
@@ -128,6 +135,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
+	return nil
 }
 
 //Execute the instalation for each tool and start edgecore
