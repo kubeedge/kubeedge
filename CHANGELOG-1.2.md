@@ -1,4 +1,11 @@
 
+   * [v1.2.1](#v121)
+      * [Downloads for v1.2.1](#downloads-for-v121)
+         * [KubeEdge Binaries](#kubeedge-binaries)
+         * [Installer Binaries](#installer-binaries)
+         * [EdgeSite Binaries](#edgesite-binaries)
+      * [KubeEdge v1.2.1 Release Notes](#kubeedge-v121-release-notes)
+         * [Changelog since v1.2.0](#changelog-since-v120)
    * [v1.2.0](#v120)
       * [Downloads for v1.2.0](#downloads-for-v120)
          * [KubeEdge Binaries](#kubeedge-binaries)
@@ -8,6 +15,34 @@
          * [1.2 What's New](#12-whats-new)
          * [Known Issues](#known-issues)
          * [Other notable changes](#other-notable-changes)
+         
+# v1.2.1
+
+## Downloads for v1.2.1
+
+# KubeEdge v1.2.1 Release Notes
+
+Keadm is not responsible for installing K8s and Runtime now. Users need to install a K8s Master first or use an existing cluster. 
+Refer to the documentation: [Install KubeEdge with Keadm](./docs/setup/kubeedge_install_keadm.md)
+
+## Changelog since v1.2.0
+
+- Fix bug for creating controller-manager and schduler pod in edgenode. ([#1484](https://github.com/kubeedge/kubeedge/pull/1484), [@fisherxu](https://github.com/fisherxu))
+
+- Fix bug for creating pod failed with hostpath volume. ([#1485](https://github.com/kubeedge/kubeedge/pull/1485), [@fisherxu](https://github.com/fisherxu))
+
+- Fix cloudcore don't create `/var/lib/kubeedge` by default. ([#1505](https://github.com/kubeedge/kubeedge/pull/1505), [@zhuguihua](https://github.com/zhuguihua))
+
+- Fix device twin updated failed from cloud to edge. ([#1506](https://github.com/kubeedge/kubeedge/pull/1506), [@fisherxu](https://github.com/fisherxu))
+
+- Refactor keadm that don't own to install k8s and docker. ([#1508](https://github.com/kubeedge/kubeedge/pull/1508), [@fisherxu](https://github.com/fisherxu))
+
+- Remove hard code for network plugin settings. ([#1511](https://github.com/kubeedge/kubeedge/pull/1511), [@420691301](https://github.com/420691301))
+
+- Fix nil content of delete msg which created by syccontroller. ([#1512](https://github.com/kubeedge/kubeedge/pull/1512), [@420691301](https://github.com/420691301))
+
+- Fix writing mistake in synccontroller. ([#1510](https://github.com/kubeedge/kubeedge/pull/1510), [@latelee](https://github.com/latelee))
+
 
 # v1.2.0
 
