@@ -229,6 +229,7 @@ type EdgeDSt struct {
 	ImageEndpoint                     string `yaml:"remote-image-endpoint"`
 	RequestTimeout                    uint16 `yaml:"runtime-request-timeout"`
 	PodSandboxImage                   string `yaml:"podsandbox-image"`
+	ConcurrentConsumers               int    `yaml:"concurrent-consumers"`
 }
 type Mesh struct {
 	LB LoadBalance `yaml:"loadbalance"`

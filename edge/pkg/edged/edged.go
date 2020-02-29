@@ -113,7 +113,6 @@ import (
 const (
 	plegChannelCapacity = 1000
 	plegRelistPeriod    = time.Second * 1
-	concurrentConsumers = 5
 	backOffPeriod       = 10 * time.Second
 	// MaxContainerBackOff is the max backoff period, exported for the e2e test
 	MaxContainerBackOff = 300 * time.Second
@@ -177,6 +176,7 @@ type edged struct {
 	registrationCompleted     bool
 	containerManager          cm.ContainerManager
 	containerRuntimeName      string
+	concurrentConsumers       int
 	// container runtime
 	containerRuntime   kubecontainer.Runtime
 	podCache           kubecontainer.Cache
@@ -285,8 +285,8 @@ func (e *edged) Start() {
 	e.statusManager.Start()
 	e.pleg.Start()
 
-	e.podAddWorkerRun(concurrentConsumers)
-	e.podRemoveWorkerRun(concurrentConsumers)
+	e.podAddWorkerRun(e.concurrentConsumers)
+	e.podRemoveWorkerRun(e.concurrentConsumers)
 
 	housekeepingTicker := time.NewTicker(housekeepingPeriod)
 	syncWorkQueueCh := time.NewTicker(syncWorkQueuePeriod)
@@ -359,6 +359,7 @@ func newEdged(enable bool) (*edged, error) {
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
+		concurrentConsumers:       edgedconfig.Config.ConcurrentConsumers,
 		podManager:                podManager,
 		podAdditionQueue:          workqueue.New(),
 		podCache:                  kubecontainer.NewCache(),

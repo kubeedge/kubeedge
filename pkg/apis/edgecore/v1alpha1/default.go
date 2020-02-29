@@ -56,6 +56,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				NodeIP:                      localIP,
 				ClusterDNS:                  "",
 				ClusterDomain:               "",
+				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
 				PodSandboxImage:             constants.DefaultPodSandboxImage,
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
