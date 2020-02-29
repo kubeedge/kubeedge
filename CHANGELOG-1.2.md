@@ -20,6 +20,24 @@
 
 ## Downloads for v1.2.1
 
+### KubeEdge Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [kubeedge-v1.2.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/kubeedge-v1.2.1-linux-amd64.tar.gz) | 77.9 MB | `5d93e3d67d7c19389721c378371a4ca323ca8b4dfc561ef17919871426a09af5a2bb2a3a92f1dbb61c7da0a1987f023e0139b80043943a67ba935820ab76bbc8` |
+| [kubeedge-v1.2.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/kubeedge-v1.2.1-linux-arm.tar.gz) | 72.3 MB | `f6ba3a98a05fef86348c2a7a6a2a404856b3d5265b183d3f151c7500d157acd7cd7c0e57c5ecadd83649d0b2c78994af1ae23c0f1282e405131d790663236189` |
+
+### Installer Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [keadm-v1.2.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/keadm-v1.2.1-linux-amd64.tar.gz) | 14.8 MB | `123fba7626a81ece2225aaff5897901f8fdaa2e1da50c9d7a39ab65cb069652ff94de9a39df5e6e67c7928e383210091c5d40248dd53cac8983de98ecab71acb` |
+
+### EdgeSite Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [edgesite-v1.2.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/edgesite-v1.2.1-linux-amd64.tar.gz) | 28.1 MB | `108d9d86304c40561430ccf058456088ae85fe1223f384e612f34493826f48a3d38588342567ac1a39c14aad698702bdb57e2f5d50533a715cc3ab65a362d397` |
+| [edgesite-v1.2.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/edgesite-v1.2.1-linux-arm.tar.gz) | 25.7 MB | `e20f9384c8d7eed7ca946928adb0723b512d5dba5db48f6ed3ea96430a7471a7f90bbc58a3282788596220f516d290827f4b0c4c0bcb210bcfc911cb15142098` |
+
+
 # KubeEdge v1.2.1 Release Notes
 
 Keadm is not responsible for installing K8s and Runtime now. Users need to install a K8s Master first or use an existing cluster. 
