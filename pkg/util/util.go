@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -513,4 +514,30 @@ func ReadDirNoStat(dirname string) ([]string, error) {
 	defer f.Close()
 
 	return f.Readdirnames(-1)
+}
+
+func PrintByLine(w io.Writer, msg interface{}) {
+	if w == os.Stderr {
+		fmt.Fprintf(os.Stderr, "error: ")
+	}
+	t := reflect.TypeOf(msg)
+	switch t.Kind() {
+	case reflect.Slice, reflect.Array:
+		fmt.Fprintf(w, "[\n")
+		v := reflect.ValueOf(msg)
+		for i := 0; i < v.Len(); i++ {
+			fmt.Fprintf(w, "  %v\n", v.Index(i))
+		}
+		fmt.Fprintf(w, "]\n")
+	case reflect.Map:
+		fmt.Fprintf(w, "[\n")
+		v := reflect.ValueOf(msg)
+		iter := v.MapRange()
+		for iter.Next() {
+			fmt.Fprintf(w, "  %v: %v\n", iter.Key(), iter.Value())
+		}
+		fmt.Fprintf(w, "]\n")
+	default:
+		fmt.Fprintf(w, "%v\n", msg)
+	}
 }
