@@ -63,6 +63,7 @@ import (
 	kubedns "k8s.io/kubernetes/pkg/kubelet/network/dns"
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
 	"k8s.io/kubernetes/pkg/kubelet/pluginmanager"
+	klconfigmap "k8s.io/kubernetes/pkg/kubelet/configmap"
 	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
@@ -224,6 +225,8 @@ type edged struct {
 
 	recorder recordtools.EventRecorder
 	enable   bool
+
+	configMapManager klconfigmap.Manager
 }
 
 // Register register edged
@@ -260,6 +263,8 @@ func (e *edged) Start() {
 		os.Exit(1)
 	}
 	e.hostUtil = hostutil.NewHostUtil()
+
+	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
 
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
