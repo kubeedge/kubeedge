@@ -3,11 +3,11 @@ package app
 import (
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"os"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -54,18 +54,18 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
+				util.PrintByLine(os.Stderr, errs)
 				os.Exit(1)
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
+				util.PrintByLine(os.Stderr, err)
 				os.Exit(1)
 			}
 
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", errs)
+				util.PrintByLine(os.Stderr, errs)
 				os.Exit(1)
 			}
 
