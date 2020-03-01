@@ -23,3 +23,7 @@ func (c *FakeCoreV1) PersistentVolumes() corev1.PersistentVolumeInterface {
 func (c *FakeCoreV1) PersistentVolumeClaims(namespace string) corev1.PersistentVolumeClaimInterface {
 	return &FakePersistentVolumeClaims{fakecorev1.FakePersistentVolumeClaims{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
 }
+
+func (c *FakeCoreV1) ConfigMaps(namespace string) corev1.ConfigMapInterface  {
+	return &FakeConfigMap{fakecorev1.FakeConfigMaps{Fake: &c.FakeCoreV1}, namespace, c.MetaClient}
+}
