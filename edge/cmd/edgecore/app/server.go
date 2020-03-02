@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/util"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -26,6 +25,7 @@ import (
 	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"

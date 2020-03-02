@@ -17,10 +17,10 @@ limitations under the License.
 package main
 
 import (
-	"github.com/kubeedge/kubeedge/pkg/util"
 	"os"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 func main() {

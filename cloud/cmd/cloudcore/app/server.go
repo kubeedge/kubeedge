@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/util"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -19,6 +18,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
