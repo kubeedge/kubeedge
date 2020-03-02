@@ -11,16 +11,65 @@ import (
 )
 
 func TestPrintByLine(t *testing.T) {
+	err1 := errors.New("This is error 1. ")
+	err2 := errors.New("This is error 2. ")
+	err3 := errors.New("This is error 3. ")
+
+	// case 1: slice stderr
+	const sliceHead = "error: [\n"
+	var sliceLine1 = fmt.Sprintf("  %s\n", err1)
+	var sliceLine2 = fmt.Sprintf("  %s\n", err2)
+	var sliceLine3 = fmt.Sprintf("  %s\n", err3)
+	const sliceTail = "]\n"
+
+	slice := []error{err1, err2, err3}
+	outSlice := helpGenStderrString(func() {
+		PrintByLine(os.Stderr, slice)
+	})
+
+	if strings.Index(outSlice, sliceHead) != 0 ||
+		strings.Index(outSlice, sliceLine1) != len(sliceHead) ||
+		strings.Index(outSlice, sliceLine2) != len(sliceHead+sliceLine1) ||
+		strings.Index(outSlice, sliceLine3) != len(sliceHead+sliceLine1+sliceLine2) ||
+		strings.Index(outSlice, sliceTail) != len(sliceHead+sliceLine1+sliceLine2+sliceLine3) {
+		t.Error("The func format the slice errors unexpected.")
+		return
+	}
+
+	// case 2: map stdout
+	m := map[int]error{1: err1, 2: err2}
+	outMap := helpGenStdoutString(func() {
+		PrintByLine(os.Stdout, m)
+	})
+	mapHead := "[\n"
+	var mapMiddle []string
+	for k, v := range m {
+		mapMiddle = append(mapMiddle, fmt.Sprintf("  %v: %v\n", k, v))
+	}
+	mapTail := "]\n"
+	if strings.Index(outMap, mapHead) != 0 ||
+		strings.Index(outMap, mapTail) != len(mapHead+mapMiddle[0]+mapMiddle[1]) ||
+		(strings.Index(outMap, mapMiddle[0]) != len(mapHead) && strings.Index(outMap, mapMiddle[0]) != len(mapHead+mapMiddle[1])) {
+		t.Error("The func format the map errors unexpected.")
+		return
+	}
+
+	// case 3: error stderr
+	outError := helpGenStderrString(func() {
+		PrintByLine(os.Stderr, err1)
+	})
+	if outError != fmt.Sprintf("error: %v\n", err1) {
+		t.Error("The func format the single error unexpected.")
+		return
+	}
+}
+
+func helpGenStderrString(f func()) string {
 	old := os.Stderr
 	r, w, _ := os.Pipe()
 	os.Stderr = w
 
-	errs := []error{
-		errors.New("This is error 1. "),
-		errors.New("This is error 2. "),
-		errors.New("This is error 3. "),
-	}
-	PrintByLine(os.Stderr, errs)
+	f()
 
 	outC := make(chan string)
 	go func() {
@@ -33,40 +82,26 @@ func TestPrintByLine(t *testing.T) {
 	os.Stderr = old
 	out := <-outC
 
-	// The stderr should have "error: [\n" firstly, then repeat "  {each item}\n" for three times, and "]\n" in the end.
-	const head = "error: [\n"
-	var errLine1 = fmt.Sprintf("  %s\n", errs[0])
-	var errLine2 = fmt.Sprintf("  %s\n", errs[1])
-	var errLine3 = fmt.Sprintf("  %s\n", errs[2])
-	const tail = "]\n"
+	return out
+}
 
-	indexHead := strings.Index(out, head)
-	if indexHead != 0 {
-		t.Error("The func format the msg unexpected.")
-		return
-	}
+func helpGenStdoutString(f func()) string {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
 
-	indexErr1 := strings.Index(out, errLine1)
-	if indexErr1 != len(head) {
-		t.Error("The func format the msg unexpected.")
-		return
-	}
+	f()
 
-	indexErr2 := strings.Index(out, errLine2)
-	if indexErr2 != len(head)+len(errLine1) {
-		t.Error("The func format the msg unexpected.")
-		return
-	}
+	outC := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		outC <- buf.String()
+	}()
 
-	indexErr3 := strings.Index(out, errLine3)
-	if indexErr3 != len(head)+len(errLine1)+len(errLine2) {
-		t.Error("The func format the msg unexpected.")
-		return
-	}
+	w.Close()
+	os.Stdout = old
+	out := <-outC
 
-	indexTail := strings.Index(out, tail)
-	if indexTail != len(head)+len(errLine1)+len(errLine2)+len(errLine3) {
-		t.Error("The func format the msg unexpected.")
-		return
-	}
+	return out
 }
