@@ -3,10 +3,12 @@
 Keadm is used to install the cloud and edge components of kubeedge. It is not responsible for installing K8s and runtime, 
 so users must install a k8s master on cloud and runtime on edge first. Or use an existing cluster.
 
+Please refer [compatibility-matrix](https://github.com/kubeedge/kubeedge#compatibility-matrix) to get **Kubernetes compatibility** and determine what version of Kubernetes would be installed.
+
 Kubeedge interacts with the standard K8s API, so the K8s cluster can be installed with any tools, such as:
-+ [Creating kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
-+ [Creating kubernetes cluster with minikube](<https://kubernetes.io/docs/setup/learning-environment/minikube/>)
-+ [Creating kubernetes cluster with kind](<https://kubernetes.io/docs/setup/learning-environment/kind/>)
+- [Creating kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
+- [Creating kubernetes cluster with minikube](<https://kubernetes.io/docs/setup/learning-environment/minikube/>)
+- [Creating kubernetes cluster with kind](<https://kubernetes.io/docs/setup/learning-environment/kind/>)
 
 ## Limitation
 
