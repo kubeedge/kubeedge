@@ -1,4 +1,4 @@
-# Install KubeEdge
+# Start Develop KubeEdge
 
 In this section, we would cover the below topics
 
@@ -41,12 +41,6 @@ NAME               STATUS   ROLES    AGE    VERSION
 kubeedge-master   Ready    master   4d3h   v1.16.1
 ```
 
-**Note:** If you choose to decide installing KubeEdge using KubeEdge Installer keadm, do pass the flag
-
-```shell
-keadm init --pod-network-cidr
-```
-
 ### Edge side (KubeEdge Worker Node)
 
 + [Install golang](https://golang.org/dl/) (If you want to compile KubeEdge)
@@ -57,14 +51,9 @@ keadm init --pod-network-cidr
 
 **Note:** Do not install **kubelet** and **kube-proxy** on edge side
 
-## Setup KubeEdge
+## Setup KubeEdge From SourceCode
 
-Currently there are four different ways of installing KubeEdge
-
-1. From [Source](kubeedge_install_source.md)
-2. From [KubeEdge Installer keadm](kubeedge_install_keadm.md)
-3. From Binary
-4. From Container
+Setup From [Source](kubeedge_install_source.md).
 
 ## Configure KubeEdge
 
