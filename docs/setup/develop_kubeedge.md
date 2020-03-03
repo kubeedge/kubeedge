@@ -1,4 +1,4 @@
-# Start Develop KubeEdge
+# Start Developing KubeEdge
 
 In this section, we would cover the below topics
 
