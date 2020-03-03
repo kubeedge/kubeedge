@@ -76,10 +76,19 @@ Key:
 | KubeEdge 1.2            | ✗              | ✗               | ✓               | ✓               |
 | KubeEdge HEAD (master)  | ✗              | ✗               | ✓               | ✓               |
 
-## Usage
-* [Install KubeEdge](./docs/setup/kubeedge_install.md)
-* [Configure KubeEdge](./docs/setup/kubeedge_configure.md)
-* [Deploy Application and Run Tests](./docs/setup/kubeedge_precheck.md)
+## Guides
+
+### User Guide
+
+See our documentation on [kubeedge.io](https://kubeedge.io).
+
+Quick Start - Install KubeEdge with [keadm](./docs/setup/kubeedge_install_keadm.md).
+
+Try some examples of KubeEdge on [examples](https://github.com/kubeedge/examples).
+
+### Developer Guide
+
+Take a look at our [development guide], If you are interested in building and contributing KubeEdge.
 
 ## Roadmap
 
@@ -98,11 +107,6 @@ Resources:
 - [Meeting recordings](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [Meeting link](https://zoom.us/j/4167237304)
 - [Meeting Calendar](https://calendar.google.com/calendar/embed?src=8rjk8o516vfte21qibvlae3lj4%40group.calendar.google.com) | [Subscribe](https://calendar.google.com/calendar?cid=OHJqazhvNTE2dmZ0ZTIxcWlidmxhZTNsajRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ)
-
-## Documentation
-
-The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io).
-Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at this [examples](https://github.com/kubeedge/examples) repository.
 
 ## Contact
 
@@ -126,3 +130,6 @@ details on submitting patches and the contribution workflow.
 ## License
 
 KubeEdge is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+
+
+[development guide]: ./docs/setup/develop_kubeedge.md

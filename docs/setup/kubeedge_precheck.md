@@ -63,13 +63,13 @@ sudo crictl exec -ti <containerid> /bin/bash
 ### Run Edge Unit Tests
 
  ```shell
- make edge_test
+ make test
  ```
 
  To run unit tests of a package individually.
 
  ```shell
- export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge/edge
+ export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge
  cd <path to package to be tested>
  go test -v
  ```
@@ -78,6 +78,12 @@ sudo crictl exec -ti <containerid> /bin/bash
 
 ```shell
 make integrationtest
+```
+
+### Run E2E Tests
+
+```shell
+make e2e
 ```
 
 ### Details and use cases of integration test framework
