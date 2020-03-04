@@ -33,7 +33,7 @@ The goal of the community is to develop a cloud native edge computing platform b
 # Getting started
 
 - Fork the repository on GitHub
-- Read the [setup](../setup/setup.md) for build instructions.
+- Read the [developer guide](../setup/develop_kubeedge.md) for build instructions.
 
 
 # Your First Contribution

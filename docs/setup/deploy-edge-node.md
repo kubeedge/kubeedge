@@ -1,24 +1,27 @@
 # Deploy Edge Node Manually
 
-Edge node can be registered automatically. But if you want to deploy edge node manually, here is an example.
++ Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
 
-+ Generate node's configuration file
+    ```shell
+    mkdir -p ~/kubeedge/yaml
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/kubeedge/yaml
+    ```
 
-```script
-cat>./node.json<<EOF
-{
-  "kind": "Node",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": $nodename,
-    "labels": {
-      "name": "$nodename",
-      "node-role.kubernetes.io/edge": ""
+    Node.json
+
+    ```script
+    {
+      "kind": "Node",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "edge-node",
+        "labels": {
+          "name": "edge-node",
+          "node-role.kubernetes.io/edge": ""
+        }
+      }
     }
-  }
-}
-EOF
-```
+    ```
 
 **Note:** 
 1. the `metadata.name` must keep in line with edgecore's config `modules.edged.hostnameOverride`.
@@ -29,6 +32,6 @@ If role is not set for the node, the pods, configmaps and secrets created/update
 + Deploy edge node (**you must run the command on cloud side**)
 
 ```shell
-kubectl apply -f ./node.json
+kubectl apply -f ~/kubeedge/yaml/node.json
 ```
 
