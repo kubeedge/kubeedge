@@ -54,6 +54,7 @@ import (
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	klconfigmap "k8s.io/kubernetes/pkg/kubelet/configmap"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -224,6 +225,8 @@ type edged struct {
 
 	recorder recordtools.EventRecorder
 	enable   bool
+
+	configMapManager klconfigmap.Manager
 }
 
 // Register register edged
@@ -260,6 +263,8 @@ func (e *edged) Start() {
 		os.Exit(1)
 	}
 	e.hostUtil = hostutil.NewHostUtil()
+
+	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
 
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
