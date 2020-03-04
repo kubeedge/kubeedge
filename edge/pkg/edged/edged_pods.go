@@ -624,7 +624,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 
 	var result []kubecontainer.EnvVar
 
-	err := errors.New("this is a error")
+	var err error
 
 	// Determine the final values of variables:
 	//
@@ -640,6 +640,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 		tmpEnv      = make(map[string]string)
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
+
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
 		if runtimeVal != "" {
