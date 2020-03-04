@@ -29,7 +29,6 @@ package edged
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
