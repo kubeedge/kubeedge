@@ -29,10 +29,9 @@ package edged
 
 import (
 	"bytes"
-	originerr "errors"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net"
 	"os"
 	"path"
@@ -42,6 +41,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -624,12 +624,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 
 	var result []kubecontainer.EnvVar
 
-	var (
-		configMaps = make(map[string]*v1.ConfigMap)
-		tmpEnv     = make(map[string]string)
-	)
-
-	err := originerr.New("this is a error")
+	err := errors.New("this is a error")
 
 	// Determine the final values of variables:
 	//
@@ -641,6 +636,8 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 	// 2.  Create the container's environment in the order variables are declared
 	// 3.  Add remaining service environment vars
 	var (
+		configMaps  = make(map[string]*v1.ConfigMap)
+		tmpEnv      = make(map[string]string)
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
 	for _, envVar := range container.Env {
@@ -666,13 +663,9 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 					if e.kubeClient == nil {
 						return result, fmt.Errorf("Couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
 					}
-
-
-					//configMap, err = e.metaClient.ConfigMaps(pod.Namespace).Get(name)
 					configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
-
 					if err != nil {
-						if errors.IsNotFound(err) && optional {
+						if apierrors.IsNotFound(err) && optional {
 							// ignore error when marked optional
 							continue
 						}
