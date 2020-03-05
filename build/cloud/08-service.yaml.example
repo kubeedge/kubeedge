@@ -13,3 +13,4 @@ spec:
   selector:
     k8s-app: kubeedge
     kubeedge: cloudcore
+  type: NodePort
