@@ -35,10 +35,9 @@ spec:
             memory: 512Mi
         volumeMounts:
         - name: conf
-          mountPath: /etc/kubeedge/config/cloudcore.yaml
-          subPath: cloudcore.yaml
+          mountPath: /etc/kubeedge/config
         - name: certs
-          mountPath: /etc/kubeedge/certs
+          mountPath: /etc/kubeedge
       restartPolicy: Always
       serviceAccount: cloudcore
       serviceAccountName: cloudcore
@@ -49,3 +48,10 @@ spec:
       - name: certs
         secret:
           secretName: cloudcore
+          items:
+          - key: edge.crt
+            path: certs/edge.crt
+          - key: edge.key
+            path: certs/edge.key
+          - key: rootCA.crt
+            path: ca/rootCA.crt
