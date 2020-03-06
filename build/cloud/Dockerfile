@@ -8,10 +8,6 @@ github.com/kubeedge/kubeedge/cloud/cmd/cloudcore
 
 FROM alpine:3.9
 
-ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/cloud
-
-VOLUME ["/etc/kubeedge/certs", "/etc/kubeedge/cloud/conf"]
-
 COPY --from=builder /usr/local/bin/cloudcore /usr/local/bin/cloudcore
 
 ENTRYPOINT ["cloudcore"]

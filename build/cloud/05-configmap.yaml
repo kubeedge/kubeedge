@@ -16,7 +16,7 @@ data:
     modules:
       cloudhub:
         nodeLimit: 10
-        tlsCAFile: /etc/kubeedge/certs/rootCA.crt
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
         tlsCertFile: /etc/kubeedge/certs/edge.crt
         tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
         unixsocket:
