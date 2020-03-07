@@ -211,13 +211,13 @@ func CompareResourceVersion(rva, rvb string) int {
 		if err != nil {
 			klog.Warningf("parsing ResourceVersion a failed with: %s", err)
 		}
- 	}
+	}
 	if len(rvb) > 0 {
 		b, err = strconv.ParseUint(rvb, 10, 64)
 		if err != nil {
 			klog.Warningf("parsing ResourceVersion b failed with: %s", err)
 		}
- 	}
+	}
 
 	if a > b {
 		return 1
