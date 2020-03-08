@@ -29,6 +29,11 @@ const (
 	DefaultHostnameOverride            = "default-edge-node"
 	DefaultRegisterNodeNamespace       = "default"
 	DefaultInterfaceName               = "eth0"
+	DefaultCNIConfDir                  = "/etc/cni/net.d"
+	DefaultCNIBinDir                   = "/opt/cni/bin"
+	DefaultCNICacheDir                 = "/var/lib/cni/cache"
+	DefaultNetworkPluginMTU            = 1500
+	DefaultConcurrentConsumers         = 5
 )
 const (
 	DefaultPodStatusSyncInterval = 60

@@ -274,21 +274,6 @@ func (u *UbuntuOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return false, nil
 }
 
-// runCommandWithShell executes the given command with "sh -c".
-// It returns an error if the command outputs anything on the stderr.
-func runCommandWithShell(command string) (string, error) {
-	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
-	err := cmd.ExecuteCmdShowOutput()
-	if err != nil {
-		return "", err
-	}
-	errout := cmd.GetStdErr()
-	if errout != "" {
-		return "", fmt.Errorf("%s", errout)
-	}
-	return cmd.GetStdOutput(), nil
-}
-
 // build Config from flags
 func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)

@@ -40,6 +40,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -619,6 +620,11 @@ func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 
 // Make the environment variables for a pod in the given namespace.
 func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string, podIPs []string) ([]kubecontainer.EnvVar, error) {
+
+	var result []kubecontainer.EnvVar
+
+	var err error
+
 	// Determine the final values of variables:
 	//
 	// 1.  Determine the final value of each variable:
@@ -629,27 +635,55 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 	// 2.  Create the container's environment in the order variables are declared
 	// 3.  Add remaining service environment vars
 	var (
-		result      []kubecontainer.EnvVar
+		configMaps  = make(map[string]*v1.ConfigMap)
 		tmpEnv      = make(map[string]string)
 		mappingFunc = expansion.MappingFuncFor(tmpEnv)
 	)
+
 	for _, envVar := range container.Env {
 		runtimeVal := envVar.Value
 		if runtimeVal != "" {
 			// Step 1a: expand variable references
 			runtimeVal = expansion.Expand(runtimeVal, mappingFunc)
-			tmpEnv[envVar.Name] = runtimeVal
 		} else if envVar.ValueFrom != nil {
 			// Step 1b: resolve alternate env var sources
 			switch {
 			case envVar.ValueFrom.FieldRef != nil:
-				runtimeVal, err := e.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod, podIP, podIPs)
+				runtimeVal, err = e.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod, podIP, podIPs)
 				if err != nil {
 					return result, err
 				}
-				tmpEnv[envVar.Name] = runtimeVal
+			case envVar.ValueFrom.ConfigMapKeyRef != nil:
+				cm := envVar.ValueFrom.ConfigMapKeyRef
+				name := cm.Name
+				key := cm.Key
+				optional := cm.Optional != nil && *cm.Optional
+				configMap, ok := configMaps[name]
+				if !ok {
+					if e.kubeClient == nil {
+						return result, fmt.Errorf("Couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
+					}
+					configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)
+					if err != nil {
+						if apierrors.IsNotFound(err) && optional {
+							// ignore error when marked optional
+							continue
+						}
+						return result, err
+					}
+					configMaps[name] = configMap
+				}
+				runtimeVal, ok = configMap.Data[key]
+				if !ok {
+					if optional {
+						continue
+					}
+					return result, fmt.Errorf("Couldn't find key %v in ConfigMap %v/%v", key, pod.Namespace, name)
+				}
 			}
 		}
+
+		tmpEnv[envVar.Name] = runtimeVal
 	}
 
 	// Append the env vars

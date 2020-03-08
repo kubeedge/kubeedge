@@ -539,7 +539,13 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
 	switch operation {
 	case "POST":
 		body := newDeviceModelObject(protocolType, false)
@@ -583,7 +589,12 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	switch operation {
 	case "POST":
 		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
