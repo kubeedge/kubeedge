@@ -1,107 +1,88 @@
 package util
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
-	"os"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"strings"
 	"testing"
 )
 
-func TestPrintByLine(t *testing.T) {
-	err1 := errors.New("This is error 1. ")
-	err2 := errors.New("This is error 2. ")
-	err3 := errors.New("This is error 3. ")
+func TestSpliceErrors(t *testing.T) {
+	err1 := errors.New("this is error 1")
+	err2 := errors.New("this is error 2")
+	err3 := errors.New("this is error 3")
 
-	// case 1: slice stderr
-	const sliceHead = "error: [\n"
-	var sliceLine1 = fmt.Sprintf("  %s\n", err1)
-	var sliceLine2 = fmt.Sprintf("  %s\n", err2)
-	var sliceLine3 = fmt.Sprintf("  %s\n", err3)
-	const sliceTail = "]\n"
+	const head = "[\n"
+	var line1 = fmt.Sprintf("  %s\n", err1)
+	var line2 = fmt.Sprintf("  %s\n", err2)
+	var line3 = fmt.Sprintf("  %s\n", err3)
+	const tail = "]\n"
 
-	slice := []error{err1, err2, err3}
-	outSlice := helpGenStderrString(func() {
-		PrintByLine(os.Stderr, slice)
-	})
+	errList := field.ErrorList{}
+	errList = append(errList,
+		field.InternalError(field.NewPath("test path 1"), err1),
+		field.InternalError(field.NewPath("test path 2"), err2),
+		field.InternalError(field.NewPath("test path 3"), err3),
+	)
 
-	if strings.Index(outSlice, sliceHead) != 0 ||
-		strings.Index(outSlice, sliceLine1) != len(sliceHead) ||
-		strings.Index(outSlice, sliceLine2) != len(sliceHead+sliceLine1) ||
-		strings.Index(outSlice, sliceLine3) != len(sliceHead+sliceLine1+sliceLine2) ||
-		strings.Index(outSlice, sliceTail) != len(sliceHead+sliceLine1+sliceLine2+sliceLine3) {
-		t.Error("The func format the slice errors unexpected.")
+	// case 1: none error
+	if SpliceErrors("") != "" ||
+		SpliceErrors("test text") != "" ||
+		SpliceErrors([]int{1}) != "" ||
+		SpliceErrors([]int{1, 2, 3}) != "" {
+		t.Error("the func format the none error unexpected")
 		return
 	}
 
-	// case 2: map stdout
-	m := map[int]error{1: err1, 2: err2}
-	outMap := helpGenStdoutString(func() {
-		PrintByLine(os.Stdout, m)
-	})
-	mapHead := "[\n"
-	var mapMiddle []string
-	for k, v := range m {
-		mapMiddle = append(mapMiddle, fmt.Sprintf("  %v: %v\n", k, v))
-	}
-	mapTail := "]\n"
-	if strings.Index(outMap, mapHead) != 0 ||
-		strings.Index(outMap, mapTail) != len(mapHead+mapMiddle[0]+mapMiddle[1]) ||
-		(strings.Index(outMap, mapMiddle[0]) != len(mapHead) && strings.Index(outMap, mapMiddle[0]) != len(mapHead+mapMiddle[1])) {
-		t.Error("The func format the map errors unexpected.")
+	// case 2: single error
+	singleOutput := SpliceErrors(err1)
+	if singleOutput != err1.Error() {
+		t.Error("the func format the single error unexpected")
 		return
 	}
 
-	// case 3: error stderr
-	outError := helpGenStderrString(func() {
-		PrintByLine(os.Stderr, err1)
-	})
-	if outError != fmt.Sprintf("error: %v\n", err1) {
-		t.Error("The func format the single error unexpected.")
+	// case 3-1: single element error slice
+	sliceOutput := SpliceErrors([]error{err1})
+	if sliceOutput != err1.Error() {
+		t.Error("the func format the single element error slice unexpected")
 		return
 	}
-}
 
-func helpGenStderrString(f func()) string {
-	old := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	// case 3-2: multiple elements error slice
+	sliceOutput = SpliceErrors([]error{err1, err2, err3})
+	if strings.Index(sliceOutput, head) != 0 ||
+		strings.Index(sliceOutput, line1) != len(head) ||
+		strings.Index(sliceOutput, line2) != len(head+line1) ||
+		strings.Index(sliceOutput, line3) != len(head+line1+line2) ||
+		strings.Index(sliceOutput, tail) != len(head+line1+line2+line3) {
+		t.Error("the func format the multiple elements error slice unexpected")
+		return
+	}
 
-	f()
+	// case 4: single complex error
+	if SpliceErrors(errList[0]) != errList[0].Error() {
+		t.Error("the func format the single complex error unexpected")
+		return
+	}
 
-	outC := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		outC <- buf.String()
-	}()
+	// case 5-1: single element complex error slice
+	if SpliceErrors(field.ErrorList{errList[0]}) != errList[0].Error() {
+		t.Error("the func format the single element complex error slice unexpected")
+		return
+	}
 
-	w.Close()
-	os.Stderr = old
-	out := <-outC
-
-	return out
-}
-
-func helpGenStdoutString(f func()) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	f()
-
-	outC := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		outC <- buf.String()
-	}()
-
-	w.Close()
-	os.Stdout = old
-	out := <-outC
-
-	return out
+	// case 5-2: multiple element complex error slice
+	cpx1 := fmt.Sprintf("  %s\n", errList[0].Error())
+	cpx2 := fmt.Sprintf("  %s\n", errList[1].Error())
+	cpx3 := fmt.Sprintf("  %s\n", errList[2].Error())
+	complexOutput := SpliceErrors(errList)
+	if strings.Index(complexOutput, head) != 0 ||
+		strings.Index(complexOutput, cpx1) != len(head) ||
+		strings.Index(complexOutput, cpx2) != len(head+cpx1) ||
+		strings.Index(complexOutput, cpx3) != len(head+cpx1+cpx2) ||
+		strings.Index(complexOutput, tail) != len(head+cpx1+cpx2+cpx3) {
+		t.Error("the func format the multiple element complex error slice unexpected")
+		return
+	}
 }
