@@ -203,15 +203,24 @@ func GetObjectResourceVersion(obj interface{}) string {
 // ints, so we can easily compare them.
 // If rva>rvb, return 1; rva=rvb, return 0; rva<rvb, return -1
 func CompareResourceVersion(rva, rvb string) int {
-	a, err := strconv.ParseUint(rva, 10, 64)
-	if err != nil {
-		// coder error
-		panic(err)
+	var err error
+	a := uint64(0)
+	b := uint64(0)
+	if rva != "" {
+		a, err = strconv.ParseUint(rva, 10, 64)
+		if err != nil {
+			// coder error
+			panic(err)
+		}
 	}
-	b, err := strconv.ParseUint(rvb, 10, 64)
-	if err != nil {
-		// coder error
-		panic(err)
+
+	if rvb != "" {
+		b, err = strconv.ParseUint(rvb, 10, 64)
+		if err != nil {
+			// coder error
+			panic(err)
+		}
+
 	}
 
 	if a > b {
