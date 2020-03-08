@@ -159,7 +159,14 @@ func sendEvents(err error, nodeName, namespace, objectName, resourceType string,
 		return
 	}
 
-	if CompareResourceVersion(objectResourceVersion, syncResourceVersion) > 0 {
+	k8sRV, k8sErr := strconv.ParseUint(objectResourceVersion, 10, 64)
+	edgeRV, edgeErr := strconv.ParseUint(syncResourceVersion, 10, 64)
+
+	if k8sErr != nil || edgeErr != nil {
+		panic(err)
+	}
+
+	if k8sRV > edgeRV {
 		// trigger the update event
 		klog.Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, syncResourceVersion)
 		msg := buildEdgeControllerMessage(nodeName, namespace, resourceType, objectName, model.UpdateOperation, obj)
@@ -177,53 +184,25 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 	msg.BuildRouter(edgectrconst.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
 	msg.Content = obj
 
-	resourceVersion := GetObjectResourceVersion(obj)
+	resourceVersion := getObjectResourceVersion(obj)
 	msg.SetResourceVersion(resourceVersion)
 
 	return msg
 }
 
-// GetMessageUID returns the resourceVersion of the object in message
-func GetObjectResourceVersion(obj interface{}) string {
+// getObjectResourceVersion returns the resourceVersion of the object in message
+// k8s derives value from etcd modifiedIndex which is represented as uint64 internally.
+func getObjectResourceVersion(obj interface{}) string {
 	if obj == nil {
 		klog.Error("object is nil")
-		return ""
+		return "0"
 	}
 
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		klog.Errorf("Failed to get resourceVersion of the object: %v", obj)
-		return ""
+		return "0"
 	}
 
 	return accessor.GetResourceVersion()
-}
-
-// CompareResourceVersion compares resourceversions, resource versions are actually
-// ints, so we can easily compare them.
-// If rva>rvb, return 1; rva=rvb, return 0; rva<rvb, return -1
-func CompareResourceVersion(rva, rvb string) int {
-	var a, b uint64
-	var err error
-
-	if len(rva) > 0 {
-		a, err = strconv.ParseUint(rva, 10, 64)
-		if err != nil {
-			klog.Warningf("parsing ResourceVersion a failed with: %s", err)
-		}
-	}
-	if len(rvb) > 0 {
-		b, err = strconv.ParseUint(rvb, 10, 64)
-		if err != nil {
-			klog.Warningf("parsing ResourceVersion b failed with: %s", err)
-		}
-	}
-
-	if a > b {
-		return 1
-	}
-	if a == b {
-		return 0
-	}
-	return -1
 }
