@@ -26,6 +26,7 @@ import (
 	"sync"
 
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/util/json"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
@@ -63,7 +64,13 @@ const (
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
 	InterfaceName = "eth0"
+
+	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
 )
+
+type latestReleaseVersion struct {
+	TagName string `json:"tag_name"`
+}
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
 func AddToolVals(f *pflag.Flag, flagData map[string]types.FlagData) {
@@ -205,4 +212,38 @@ func IsCloudCore() (types.ModuleRunning, error) {
 	}
 
 	return types.NoneRunning, nil
+}
+
+// GetLatestVersion return the latest non-prerelease, non-draft version of kubeedge in releases
+func GetLatestVersion() (string, error) {
+	//Download the tar from repo
+	versionURL := "curl -k " + latestReleaseVersionURL
+	cmd := exec.Command("sh", "-c", versionURL)
+	latestReleaseData, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	latestRelease := &latestReleaseVersion{}
+	err = json.Unmarshal(latestReleaseData, latestRelease)
+	if err != nil {
+		return "", err
+	}
+
+	return latestRelease.TagName, nil
+}
+
+// runCommandWithShell executes the given command with "sh -c".
+// It returns an error if the command outputs anything on the stderr.
+func runCommandWithShell(command string) (string, error) {
+	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
+	err := cmd.ExecuteCmdShowOutput()
+	if err != nil {
+		return "", err
+	}
+	errout := cmd.GetStdErr()
+	if errout != "" {
+		return "", fmt.Errorf("%s", errout)
+	}
+	return cmd.GetStdOutput(), nil
 }

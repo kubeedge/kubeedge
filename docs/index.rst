@@ -33,12 +33,8 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 2
    :caption: Setup
 
-   setup/requirements
-   setup/setup
-   setup/kubeedge_install
-   setup/kubeedge_configure
-   setup/kubeedge_precheck
-   setup/kubeedge_run
+   setup/kubeedge_install_keadm
+   setup/develop_kubeedge
    setup/memfootprint-test-setup
    setup/cross-compilation
    Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>

@@ -54,6 +54,7 @@ import (
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	klconfigmap "k8s.io/kubernetes/pkg/kubelet/configmap"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -113,7 +114,6 @@ import (
 const (
 	plegChannelCapacity = 1000
 	plegRelistPeriod    = time.Second * 1
-	concurrentConsumers = 5
 	backOffPeriod       = 10 * time.Second
 	// MaxContainerBackOff is the max backoff period, exported for the e2e test
 	MaxContainerBackOff = 300 * time.Second
@@ -146,14 +146,6 @@ const (
 	NonMasqueradeCIDR = "10.0.0.1/8"
 	//cgroupName used for check if the cgroup is mounted.(default "")
 	cgroupName = ""
-	// PluginName gives the plugin name.(default "",use noop plugin)
-	pluginName = ""
-	//PluginBinDir gives the dir of cni plugin executable file
-	pluginBinDir = "/opt/cni/bin"
-	// PluginConfDir gives the dir of cni plugin confguration file
-	pluginConfDir = "/etc/cni/net.d"
-	//MTU give the default maximum transmission unit of  net interface
-	mtu = 1500
 	// redirectContainerStream decide whether to redirect the container stream
 	redirectContainerStream = false
 	// ResolvConfDefault gives the default dns resolv configration file
@@ -185,6 +177,7 @@ type edged struct {
 	registrationCompleted     bool
 	containerManager          cm.ContainerManager
 	containerRuntimeName      string
+	concurrentConsumers       int
 	// container runtime
 	containerRuntime   kubecontainer.Runtime
 	podCache           kubecontainer.Cache
@@ -232,6 +225,8 @@ type edged struct {
 
 	recorder recordtools.EventRecorder
 	enable   bool
+
+	configMapManager klconfigmap.Manager
 }
 
 // Register register edged
@@ -269,6 +264,8 @@ func (e *edged) Start() {
 	}
 	e.hostUtil = hostutil.NewHostUtil()
 
+	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
+
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
 		types.NodeName(e.nodeName),
@@ -293,8 +290,8 @@ func (e *edged) Start() {
 	e.statusManager.Start()
 	e.pleg.Start()
 
-	e.podAddWorkerRun(concurrentConsumers)
-	e.podRemoveWorkerRun(concurrentConsumers)
+	e.podAddWorkerRun(e.concurrentConsumers)
+	e.podRemoveWorkerRun(e.concurrentConsumers)
 
 	housekeepingTicker := time.NewTicker(housekeepingPeriod)
 	syncWorkQueueCh := time.NewTicker(syncWorkQueuePeriod)
@@ -367,6 +364,7 @@ func newEdged(enable bool) (*edged, error) {
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
+		concurrentConsumers:       edgedconfig.Config.ConcurrentConsumers,
 		podManager:                podManager,
 		podAdditionQueue:          workqueue.New(),
 		podCache:                  kubecontainer.NewCache(),
@@ -424,10 +422,11 @@ func newEdged(enable bool) (*edged, error) {
 		pluginConfigs := dockershim.NetworkPluginSettings{
 			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
 			NonMasqueradeCIDR:  NonMasqueradeCIDR,
-			PluginName:         pluginName,
-			PluginBinDirString: pluginBinDir,
-			PluginConfDir:      pluginConfDir,
-			MTU:                mtu,
+			PluginName:         edgedconfig.Config.NetworkPluginName,
+			PluginBinDirString: edgedconfig.Config.CNIBinDir,
+			PluginConfDir:      edgedconfig.Config.CNIConfDir,
+			PluginCacheDir:     edgedconfig.Config.CNICacheDir,
+			MTU:                int(edgedconfig.Config.NetworkPluginMTU),
 		}
 
 		redirectContainerStream := redirectContainerStream

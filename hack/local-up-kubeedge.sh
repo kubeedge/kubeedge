@@ -71,20 +71,13 @@ function create_objectsync_crd {
 }
 
 function build_cloudcore {
-  # TODO: make the binary to _output dir
   echo "building the cloudcore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
-  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/cloud
-  mv ${KUBEEDGE_ROOT}/cloud/cloudcore ${KUBEEDGE_ROOT}/_output/bin/cloud
-  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/cloud/conf
 }
 
 function build_edgecore {
   echo "building the edgecore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="edgecore"
-  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/edge
-  mv ${KUBEEDGE_ROOT}/edge/edgecore ${KUBEEDGE_ROOT}/_output/bin/edge
-  mkdir -p ${KUBEEDGE_ROOT}/_output/bin/edge/conf
 }
 
 function generate_certs {
@@ -94,8 +87,8 @@ function generate_certs {
 }
 
 function start_cloudcore {
-  CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/bin/cloud/conf/cloud.yaml
-  CLOUD_BIN=${KUBEEDGE_ROOT}/_output/bin/cloud/cloudcore
+  CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
+  CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
   sed -i "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" ${CLOUD_CONFIGFILE}
 
@@ -105,14 +98,9 @@ function start_cloudcore {
   CLOUDCORE_PID=$!
 }
 
-function create_node {
-  echo "create edge node..."
-  kubectl apply -f ${KUBEEDGE_ROOT}/build/node.json
-}
-
 function start_edgecore {
-  EDGE_CONFIGFILE=${KUBEEDGE_ROOT}/_output/bin/edge/conf/edge.yaml
-  EDGE_BIN=${KUBEEDGE_ROOT}/_output/bin/edge/edgecore
+  EDGE_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/edgecore.yaml
+  EDGE_BIN=${KUBEEDGE_ROOT}/_output/local/bin/edgecore
   ${EDGE_BIN} --minconfig >  ${EDGE_CONFIGFILE}
   sed -i "s|hostnameOverride: .*|hostnameOverride: edge-node|g" ${EDGE_CONFIGFILE}
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
@@ -164,7 +152,6 @@ create_device_crd
 create_objectsync_crd
 generate_certs
 start_cloudcore
-create_node
 start_edgecore
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then

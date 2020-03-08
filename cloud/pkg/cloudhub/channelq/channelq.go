@@ -15,7 +15,6 @@ import (
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
-	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -170,7 +169,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 		strings.Contains(msgResource, commonconst.ResourceTypeServiceList) ||
 		strings.Contains(msgResource, commonconst.ResourceTypeEndpointsList) ||
 		strings.Contains(msgResource, "membership") ||
-		strings.Contains(msgResource, deviceconstants.ResourceTypeTwinEdgeUpdated) {
+		strings.Contains(msgResource, "twin/cloud_updated") {
 		return true
 	}
 
@@ -192,14 +191,17 @@ func isListResource(msg *beehiveModel.Message) bool {
 }
 
 func isDeleteMessage(msg *beehiveModel.Message) bool {
+	if msg.GetOperation() == beehiveModel.DeleteOperation {
+		return true
+	}
 	deletionTimestamp, err := GetMessageDeletionTimestamp(msg)
 	if err != nil {
 		klog.Errorf("fail to get message DeletionTimestamp for message: %s", msg.Header.ID)
 		return false
-	}
-	if msg.GetOperation() == beehiveModel.DeleteOperation || deletionTimestamp != nil {
+	} else if deletionTimestamp != nil {
 		return true
 	}
+
 	return false
 }
 

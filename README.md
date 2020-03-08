@@ -76,31 +76,23 @@ Key:
 | KubeEdge 1.2            | ✗              | ✗               | ✓               | ✓               |
 | KubeEdge HEAD (master)  | ✗              | ✗               | ✓               | ✓               |
 
-## To start developing KubeEdge
+## Guides
 
-The [set up] hosts all information about building KubeEdge from source, how to setup. etc.
+### User Guide
 
-To build KubeEdge from source there is one option:
+See our documentation on [kubeedge.io](https://kubeedge.io).
 
-##### You have a working [Go environment].
+Quick Start - Install KubeEdge with [keadm](./docs/setup/kubeedge_install_keadm.md).
 
-```
-mkdir -p $GOPATH/src/github.com/kubeedge
-cd $GOPATH/src/github.com/kubeedge
-git clone git@github.com:kubeedge/kubeedge.git
-# If you only want to compile quickly without using go mod, please set GO111MODULE=off (e.g. export GO111MODULE=off)
-cd kubeedge
-make
-```
+Try some examples of KubeEdge on [examples](https://github.com/kubeedge/examples).
 
-## Usage
-* [Install KubeEdge](./docs/setup/kubeedge_install.md)
-* [Configure KubeEdge](./docs/setup/kubeedge_configure.md)
-* [Deploy Application and Run Tests](./docs/setup/kubeedge_precheck.md)
+### Developer Guide
+
+Take a look at our [development guide], If you are interested in building and contributing KubeEdge.
 
 ## Roadmap
 
-* [2019 Q4 Roadmap](./docs/getting-started/roadmap.md#2019-q4-roadmap)
+* [2020 Q1 Roadmap](./docs/getting-started/roadmap.md#2020-q1-roadmap)
 
 ## Meeting
 
@@ -115,11 +107,6 @@ Resources:
 - [Meeting recordings](https://www.youtube.com/playlist?list=PLQtlO1kVWGXkRGkjSrLGEPJODoPb8s5FM)
 - [Meeting link](https://zoom.us/j/4167237304)
 - [Meeting Calendar](https://calendar.google.com/calendar/embed?src=8rjk8o516vfte21qibvlae3lj4%40group.calendar.google.com) | [Subscribe](https://calendar.google.com/calendar?cid=OHJqazhvNTE2dmZ0ZTIxcWlidmxhZTNsajRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ)
-
-## Documentation
-
-The detailed documentation for KubeEdge and its modules can be found at [https://docs.kubeedge.io](https://docs.kubeedge.io).
-Some sample applications and demos to illustrate possible use cases of KubeEdge platform can be found at this [examples](https://github.com/kubeedge/examples) repository.
 
 ## Contact
 
@@ -144,5 +131,5 @@ details on submitting patches and the contribution workflow.
 
 KubeEdge is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
 
-[set up]: docs/setup/kubeedge_install.md
-[Go environment]: https://golang.org/doc/install
+
+[development guide]: ./docs/setup/develop_kubeedge.md
