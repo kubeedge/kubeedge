@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apiserver/pkg/util/term"
@@ -40,19 +39,16 @@ runs on edge nodes and manages containerized applications.`,
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				util.PrintByLine(os.Stderr, errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				util.PrintByLine(os.Stderr, err)
-				os.Exit(1)
+				klog.Fatal(err)
 			}
 
 			if errs := validation.ValidateEdgeSiteConfiguration(config); len(errs) > 0 {
-				util.PrintByLine(os.Stderr, errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			// To help debugging, immediately log version

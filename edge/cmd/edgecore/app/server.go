@@ -54,19 +54,16 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				util.PrintByLine(os.Stderr, errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				util.PrintByLine(os.Stderr, err)
-				os.Exit(1)
+				klog.Fatal(err)
 			}
 
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				util.PrintByLine(os.Stderr, errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			// To help debugging, immediately log version
@@ -77,8 +74,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Errorf("Failed to check the running environment: %v", err)
-					os.Exit(1)
+					klog.Fatal(fmt.Errorf("Failed to check the running environment: %v", err))
 				}
 			}
 

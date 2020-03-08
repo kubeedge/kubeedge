@@ -516,28 +516,36 @@ func ReadDirNoStat(dirname string) ([]string, error) {
 	return f.Readdirnames(-1)
 }
 
-func PrintByLine(w io.Writer, errors interface{}) {
-	if w == os.Stderr {
-		fmt.Fprintf(os.Stderr, "error: ")
-	}
+func SpliceErrors(errors interface{}) string {
 	t := reflect.TypeOf(errors)
+	var errStrings []string
 	switch t.Kind() {
 	case reflect.Slice, reflect.Array:
-		fmt.Fprintf(w, "[\n")
 		v := reflect.ValueOf(errors)
 		for i := 0; i < v.Len(); i++ {
-			fmt.Fprintf(w, "  %v\n", v.Index(i))
+			if err, ok := v.Index(i).Interface().(error); ok {
+				errStrings = append(errStrings, err.Error())
+			}
 		}
-		fmt.Fprintf(w, "]\n")
-	case reflect.Map:
-		fmt.Fprintf(w, "[\n")
-		v := reflect.ValueOf(errors)
-		iter := v.MapRange()
-		for iter.Next() {
-			fmt.Fprintf(w, "  %v: %v\n", iter.Key(), iter.Value())
-		}
-		fmt.Fprintf(w, "]\n")
 	default:
-		fmt.Fprintf(w, "%v\n", errors)
+		if err, ok := reflect.ValueOf(errors).Interface().(error); ok {
+			errStrings = append(errStrings, err.Error())
+		}
 	}
+
+	if len(errStrings) == 0 {
+		return ""
+	}
+
+	if len(errStrings) == 1 {
+		return errStrings[0]
+	}
+
+	var stb strings.Builder
+	stb.WriteString("[\n")
+	for _, errString := range errStrings {
+		stb.WriteString(fmt.Sprintf("  %s\n", errString))
+	}
+	stb.WriteString("]\n")
+	return stb.String()
 }
