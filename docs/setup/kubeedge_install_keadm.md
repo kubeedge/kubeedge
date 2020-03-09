@@ -29,7 +29,7 @@ There are currently two ways to get keadm
   1. Download the source code.
   
       ```shell
-      git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/ kubeedge/kubeedge
+      git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
       cd $GOPATH/src/github.com/kubeedge/kubeedge
       make all WHAT=keadm
       ```
