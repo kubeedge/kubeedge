@@ -62,8 +62,8 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				klog.Fatal(err)
 			}
 
-			if errs := validation.ValidateEdgeCoreConfiguration(config).ToAggregate().Errors(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
+				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			// To help debugging, immediately log version

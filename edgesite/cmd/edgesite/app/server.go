@@ -47,8 +47,8 @@ runs on edge nodes and manages containerized applications.`,
 				klog.Fatal(err)
 			}
 
-			if errs := validation.ValidateEdgeSiteConfiguration(config).ToAggregate().Errors(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+			if errs := validation.ValidateEdgeSiteConfiguration(config); len(errs) > 0 {
+				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			// To help debugging, immediately log version
