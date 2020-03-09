@@ -47,8 +47,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 				klog.Fatal(err)
 			}
 
-			if errs := validation.ValidateCloudCoreConfiguration(config).ToAggregate().Errors(); len(errs) > 0 {
-				klog.Fatal(util.SpliceErrors(errs))
+			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
+				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			// To help debugging, immediately log version
