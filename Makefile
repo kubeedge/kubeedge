@@ -249,18 +249,19 @@ endif
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
 IMAGE_TAG ?= $(shell git describe --tags)
+GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
 
 .PHONY: cloudimage
 cloudimage:
-	docker build -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
 .PHONY: admissionimage
 admissionimage:
-	docker build -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
 
 .PHONY: csidriverimage
 csidriverimage:
-	docker build -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
 
 .PHONY: edgeimage
 edgeimage:
@@ -269,7 +270,8 @@ edgeimage:
 	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
 	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.10 \
+	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
@@ -280,7 +282,8 @@ edgesiteimage:
 	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
 	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
 	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.10 \
+	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
