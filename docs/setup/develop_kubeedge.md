@@ -18,7 +18,17 @@ KubeEdge is composed of cloud and edge sides. It is built upon Kubernetes and pr
 
 ## Pre-Requisite
 
-+ Please refer [compatibility-matrix](https://github.com/kubeedge/kubeedge#compatibility-matrix) to understand **Go dependency** and **Kubernetes compatibility** and determine what version of Docker, Kubernetes, Golang can be installed.
++ Please refer [Kubernetes-compatibility](https://github.com/kubeedge/kubeedge#kubernetes-compatibility) to understand **Kubernetes compatibility** and determine what version of Docker, Kubernetes can be installed.
++ Please refer Golang dependency below to understand what version of Golang can be installed.
+
+### Golang dependency
+
+|                         | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     |
+|-------------------------|----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0            | ✓              | ✓               | ✓               | ✗               |
+| KubeEdge 1.1            | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge 1.2            | ✗              | ✗               | ✓               | ✓               |
+| KubeEdge HEAD (master)  | ✗              | ✗               | ✓               | ✓               |
 
 ### Cloud side (KubeEdge Master)
 
