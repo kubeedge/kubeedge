@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -516,35 +515,14 @@ func ReadDirNoStat(dirname string) ([]string, error) {
 	return f.Readdirnames(-1)
 }
 
-func SpliceErrors(errors interface{}) string {
-	t := reflect.TypeOf(errors)
-	var errStrings []string
-	switch t.Kind() {
-	case reflect.Slice, reflect.Array:
-		v := reflect.ValueOf(errors)
-		for i := 0; i < v.Len(); i++ {
-			if err, ok := v.Index(i).Interface().(error); ok {
-				errStrings = append(errStrings, err.Error())
-			}
-		}
-	default:
-		if err, ok := reflect.ValueOf(errors).Interface().(error); ok {
-			errStrings = append(errStrings, err.Error())
-		}
-	}
-
-	if len(errStrings) == 0 {
+func SpliceErrors(errors []error) string {
+	if len(errors) == 0 {
 		return ""
 	}
-
-	if len(errStrings) == 1 {
-		return errStrings[0]
-	}
-
 	var stb strings.Builder
 	stb.WriteString("[\n")
-	for _, errString := range errStrings {
-		stb.WriteString(fmt.Sprintf("  %s\n", errString))
+	for _, err := range errors {
+		stb.WriteString(fmt.Sprintf("  %s\n", err.Error()))
 	}
 	stb.WriteString("]\n")
 	return stb.String()
