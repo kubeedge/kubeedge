@@ -1,6 +1,6 @@
 # Deploy Edge Node Manually
 
-+ Copy the `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` file and change `metadata.name` to the name of the edge node
++ Copy `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` to your working directory and change `metadata.name` to the name of edge node
 
     ```shell
     mkdir -p ~/kubeedge/yaml
@@ -34,4 +34,3 @@ If role is not set for the node, the pods, configmaps and secrets created/update
 ```shell
 kubectl apply -f ~/kubeedge/yaml/node.json
 ```
-
