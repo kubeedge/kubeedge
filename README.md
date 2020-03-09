@@ -8,29 +8,30 @@
 
 <img src="./docs/images/KubeEdge_logo.png">
 
-KubeEdge is an open source system extending native containerized application orchestration and device management to hosts at the Edge. It is built upon Kubernetes and provides core infrastructure support for networking, application deployment and metadata synchronization between cloud and edge. It also supports **MQTT** and allows developers to author custom logic and enable resource constrained device communication at the Edge. KubeEdge consists of a cloud part and an edge part.
+KubeEdge is built upon Kubernetes and extends native containerized application orchestration and device management to hosts at the Edge.
+It consists of cloud part and edge part, provides core infrastructure support for networking, application deployment and metadata synchronization 
+between cloud and edge. It also supports **MQTT** which enables edge devices to access through edge nodes.
+
+With KubeEdge it is easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge. 
+With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced.
+With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.
 
 ## Advantages
 
-#### Edge Computing
+- **Kubernetes-native support**: Using kubernetes api to manage edge applications and edge devices in the cloud with fully compatible kubernetes api.
+- **Cloud-Edge Reliable Collaboration**: Ensure reliable messages delivery without loss over unstable cloud-edge network.
+- **Edge Autonomy**: Ensure edge nodes run autonomously and the applications in edge run normally, when the cloud-edge network is unstable or edge is offline and restarted, 
+- **Edge Devices Management**: Managing edge devices through Kubernetes native APIs implemented by CRD.
+- **Extremely Lightweight Edge Agent**: Extremely lightweight Edge Agent(EdgeCore) to run on resource constrained edge.
 
-With business logic running at the Edge, much larger volumes of data can be secured & processed locally where the data is produced. Edge nodes can run autonomously which effectively reduces the network bandwidth requirements and consumptions between Edge and Cloud. With data processed at the Edge, the responsiveness is increased dramatically and data privacy is protected.
 
-#### Simplified development
+## How It Works
 
-Developers can write regular http or mqtt based applications, containerize them, and run them anywhere - either at the Edge or in the Cloud - whichever is more appropriate.
+KubeEdge consists of cloud part and edge part:
 
-#### Kubernetes-native support
+### Architecture
 
-With KubeEdge, users can orchestrate apps, manage devices and monitor app and device status on Edge nodes just like a traditional Kubernetes cluster in the Cloud. Locations of edge nodes are transparent to customers.
-
-#### Abundant applications
-
-It is easy to get and deploy existing complicated machine learning, image recognition, event processing and other high level applications to the Edge.
-
-## Introduction
-
-KubeEdge is composed of the following components:
+<img src="./docs/images/kubeedge_arch.png">
 
 ### Cloud Part
 - [CloudHub](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/cloud/cloudhub.md): a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
@@ -45,11 +46,6 @@ KubeEdge is composed of the following components:
 - ServiceBus: a HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
 - [DeviceTwin](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/devicetwin.md): responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - [MetaManager](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/edge/metamanager.md): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
-
-
-### Architecture
-
-<img src="./docs/images/kubeedge_arch.png">
 
 ## Kubernetes compatibility
 
