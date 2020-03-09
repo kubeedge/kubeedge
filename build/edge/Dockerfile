@@ -24,8 +24,6 @@ COPY --from=builder /usr/bin/qemu* /usr/bin/
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/edge
 ENV database.source /var/lib/kubeedge/edge.db
 
-# VOLUME ["/etc/kubeedge/certs", "/var/lib/edged", "/var/lib/kubeedge", "/var/run/docker.sock"]
-
 COPY --from=builder /usr/local/bin/edgecore /usr/local/bin/edgecore
 
 ENTRYPOINT ["edgecore"]
