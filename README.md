@@ -5,8 +5,7 @@
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
 [![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
-
-<img src="./docs/images/KubeEdge_logo.png">
+<img src="./docs/images/kubeedge-logo-only.png">
 
 KubeEdge is built upon Kubernetes and extends native containerized application orchestration and device management to hosts at the Edge.
 It consists of cloud part and edge part, provides core infrastructure support for networking, application deployment and metadata synchronization 
@@ -18,20 +17,22 @@ With data processed at the Edge, the responsiveness is increased dramatically an
 
 ## Advantages
 
-- **Kubernetes-native support**: Using kubernetes api to manage edge applications and edge devices in the cloud with fully compatible kubernetes api.
+- **Kubernetes-native support**: Managing edge applications and edge devices in the cloud with fully compatible Kubernetes APIs.
 - **Cloud-Edge Reliable Collaboration**: Ensure reliable messages delivery without loss over unstable cloud-edge network.
-- **Edge Autonomy**: Ensure edge nodes run autonomously and the applications in edge run normally, when the cloud-edge network is unstable or edge is offline and restarted, 
+- **Edge Autonomy**: Ensure edge nodes run autonomously and the applications in edge run normally, when the cloud-edge network is unstable or edge is offline and restarted.
 - **Edge Devices Management**: Managing edge devices through Kubernetes native APIs implemented by CRD.
 - **Extremely Lightweight Edge Agent**: Extremely lightweight Edge Agent(EdgeCore) to run on resource constrained edge.
 
 
 ## How It Works
 
-KubeEdge consists of cloud part and edge part:
+KubeEdge consists of cloud part and edge part.
 
 ### Architecture
 
-<img src="./docs/images/kubeedge_arch.png">
+<div  align="center">
+<img src="./docs/images/kubeedge_arch.png" width = "85%" align="center">
+</div>
 
 ### Cloud Part
 - [CloudHub](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/cloud/cloudhub.md): a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
@@ -67,7 +68,7 @@ Key:
 
 See our documentation on [kubeedge.io](https://kubeedge.io).
 
-Quick Start - Install KubeEdge with [keadm](./docs/setup/kubeedge_install_keadm.md).
+**Quick Start** - Install KubeEdge with [keadm](./docs/setup/kubeedge_install_keadm.md).
 
 Try some examples of KubeEdge on [examples](https://github.com/kubeedge/examples).
 
