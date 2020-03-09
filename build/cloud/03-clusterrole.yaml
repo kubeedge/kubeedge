@@ -6,47 +6,15 @@ metadata:
     k8s-app: kubeedge
     kubeedge: cloudcore
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - nodes/status
-  - configmaps
-  - pods
-  - pods/status
-  - secrets
-  - endpoints
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - "devices.kubeedge.io"
-  resources:
-  - devices
-  - devicemodels
-  verbs:
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - delete
-- apiGroups:
-  - "devices.kubeedge.io"
-  resources:
-  - devices
-  - devicemodels
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-  
+- apiGroups: [""]
+  resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services"]
+  verbs: ["get", "list", "watch", "create", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["delete"]
+- apiGroups: ["devices.kubeedge.io"]
+  resources: ["devices", "devicemodels", "devices/status", "devicemodels/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["reliablesyncs.kubeedge.io"]
+  resources: ["objectsyncs", "clusterobjectsyncs", "objectsyncs/status", "clusterobjectsyncs/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
