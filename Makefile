@@ -265,7 +265,7 @@ edgeimage:
 	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
 	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
@@ -277,7 +277,7 @@ edgesiteimage:
 	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
 	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
 	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
