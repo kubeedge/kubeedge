@@ -78,6 +78,7 @@ jobs:
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
+        - go mod vendor
         - export GOFLAGS=-mod=vendor
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
