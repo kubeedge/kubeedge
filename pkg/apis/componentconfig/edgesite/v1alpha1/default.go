@@ -23,9 +23,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
-	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 

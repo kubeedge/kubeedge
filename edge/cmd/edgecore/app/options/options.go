@@ -24,7 +24,7 @@ import (
 	cliflag "k8s.io/component-base/cli/flag"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
