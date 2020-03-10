@@ -2,10 +2,8 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -19,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -40,19 +39,16 @@ kubernetes controller which manages devices so that the device metadata/status d
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
+				klog.Fatal(err)
 			}
 
 			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			// To help debugging, immediately log version
