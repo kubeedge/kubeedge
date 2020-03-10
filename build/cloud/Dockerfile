@@ -1,4 +1,4 @@
-FROM golang:1.13.8-alpine3.10 AS builder
+FROM golang:1.14-alpine3.11 AS builder
 
 ARG GO_LDFLAGS
 
@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 go build -v -o /usr/local/bin/cloudcore -ldflags "$GO_LDFLAGS 
 github.com/kubeedge/kubeedge/cloud/cmd/cloudcore
 
 
-FROM alpine:3.9
+FROM alpine:3.11
 
 COPY --from=builder /usr/local/bin/cloudcore /usr/local/bin/cloudcore
 
