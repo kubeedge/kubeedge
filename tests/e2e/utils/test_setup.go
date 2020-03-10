@@ -26,9 +26,9 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	cloudcore "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
-	edgecore "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
-	edgesite "github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
+	cloudcore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	edgecore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	edgesite "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgesite/v1alpha1"
 	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 )
 
