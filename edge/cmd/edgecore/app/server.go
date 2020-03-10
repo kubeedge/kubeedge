@@ -7,7 +7,6 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
@@ -26,6 +25,7 @@ import (
 	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
@@ -54,19 +54,16 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			flag.PrintFlags(cmd.Flags())
 
 			if errs := opts.Validate(); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", utilerrors.NewAggregate(errs))
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs))
 			}
 
 			config, err := opts.Config()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
+				klog.Fatal(err)
 			}
 
 			if errs := validation.ValidateEdgeCoreConfiguration(config); len(errs) > 0 {
-				fmt.Fprintf(os.Stderr, "%v\n", errs)
-				os.Exit(1)
+				klog.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
 			// To help debugging, immediately log version
@@ -77,8 +74,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
-					klog.Errorf("Failed to check the running environment: %v", err)
-					os.Exit(1)
+					klog.Fatal(fmt.Errorf("Failed to check the running environment: %v", err))
 				}
 			}
 

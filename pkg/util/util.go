@@ -514,3 +514,16 @@ func ReadDirNoStat(dirname string) ([]string, error) {
 
 	return f.Readdirnames(-1)
 }
+
+func SpliceErrors(errors []error) string {
+	if len(errors) == 0 {
+		return ""
+	}
+	var stb strings.Builder
+	stb.WriteString("[\n")
+	for _, err := range errors {
+		stb.WriteString(fmt.Sprintf("  %s\n", err.Error()))
+	}
+	stb.WriteString("]\n")
+	return stb.String()
+}
