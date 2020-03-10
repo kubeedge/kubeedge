@@ -196,6 +196,7 @@ github.com/ghodss/yaml
 # github.com/go-chassis/foundation v0.0.0-20190621030543-c3b63f787f4c
 github.com/go-chassis/foundation/security
 # github.com/go-chassis/go-archaius v0.20.0
+## explicit
 github.com/go-chassis/go-archaius
 github.com/go-chassis/go-archaius/core
 github.com/go-chassis/go-archaius/core/cast

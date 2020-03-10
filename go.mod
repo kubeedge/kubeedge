@@ -47,13 +47,13 @@ require (
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/mesos/mesos-go v0.0.10 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
-	github.com/onsi/ginkgo v1.11.0
+	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pborman/uuid v1.2.0
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.0
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/satori/go.uuid v1.2.0
@@ -63,9 +63,10 @@ require (
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
+	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1 // indirect
 	google.golang.org/grpc v1.23.1
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.17.1
 	k8s.io/apiextensions-apiserver v0.17.1
 	k8s.io/apimachinery v0.17.1
@@ -81,7 +82,6 @@ require (
 	k8s.io/kubelet v0.17.1
 	k8s.io/kubernetes v1.17.1
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
-	sigs.k8s.io/kind v0.7.0 // indirect
 	sigs.k8s.io/yaml v1.1.0
 )
 
