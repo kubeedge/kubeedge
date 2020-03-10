@@ -81,6 +81,7 @@ require (
 	k8s.io/kubelet v0.17.1
 	k8s.io/kubernetes v1.17.1
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
+	sigs.k8s.io/kind v0.7.0 // indirect
 	sigs.k8s.io/yaml v1.1.0
 )
 
