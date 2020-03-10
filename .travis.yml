@@ -11,7 +11,7 @@ services:
   - docker
 
 go:
-  - 1.13
+  - 1.14
 
 before_install:
   - |
@@ -28,7 +28,7 @@ jobs:
     - stage: "Verify vendor, codegen, gofmt, golint, govet"
       name: "Verify vendor, codegen, gofmt, golint, govet"
       before_script:
-        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.22.2
+        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.23.7
         - export GO111MODULE=on
         - sudo apt-get install jq -y
       script:
