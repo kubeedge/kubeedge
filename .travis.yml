@@ -5,7 +5,7 @@ git:
 
 sudo: required
 
-dist: cosmic
+dist: bionic
 
 services:
   - docker
