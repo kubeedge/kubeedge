@@ -18,18 +18,15 @@ package util
 
 import (
 	"fmt"
-	"os/exec"
-
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //CentOS struct objects shall have information of the tools version to be installed
-//on Hosts having Ubuntu OS.
+//on Hosts having CentOS OS.
 //It implements OSTypeInstaller interface
 type CentOS struct {
-	KubernetesVersion string
-	KubeEdgeVersion   string
-	IsEdgeNode        bool //True - Edgenode False - Cloudnode
+	KubeEdgeVersion string
+	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
@@ -40,81 +37,72 @@ func (c *CentOS) SetKubeEdgeVersion(version string) {
 //InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 //Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (c *CentOS) InstallMQTT() error {
-	//yum -y install epel-release
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "yum -y install epel-release")}
-	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	// check MQTT
+	mqttRunning := fmt.Sprintf("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	result, err := runCommandWithStdout(mqttRunning)
+	if err != nil {
+		return err
 	}
-	fmt.Println(stdout)
+	if result != "" {
+		fmt.Println("Host has", result, "already installed and running. Hence skipping the installation steps !!!")
+		return nil
+	}
 
-	//yum -y install mosquitto
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "yum -y install mosquitto")}
-	err = cmd.ExecuteCmdShowOutput()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", errout)
+	// install MQTT
+	for _, command := range []string{
+		"yum -y install epel-release",
+		"yum -y install mosquitto",
+		"systemctl start mosquitto",
+		"systemctl enable mosquitto",
+	} {
+		if _, err := runCommandWithShell(command); err != nil {
+			return err
+		}
 	}
-	fmt.Println(stdout)
-
-	//systemctl start mosquitto
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "systemctl start mosquitto")}
-	cmd.ExecuteCommand()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
-	if errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(stdout)
-
-	//systemctl enable mosquitto
-	cmd = &Command{Cmd: exec.Command("sh", "-c", "systemctl enable mosquitto")}
-	cmd.ExecuteCommand()
-	stdout = cmd.GetStdOutput()
-	errout = cmd.GetStdErr()
-	if errout != "" {
-		return fmt.Errorf("%s", errout)
-	}
-	fmt.Println(stdout)
+	fmt.Println("install MQTT service successfully.")
 
 	return nil
 }
 
 //IsK8SComponentInstalled checks if said K8S version is already installed in the host
-func (c *CentOS) IsK8SComponentInstalled(component, defVersion string) error {
-	// 	[root@localhost ~]# yum list installed | grep kubeadm | awk '{print $2}' | cut -d'-' -f 1
-	// 1.14.1
-	// [root@localhost ~]#
-	// [root@localhost ~]# yum list installed | grep kubeadm
-	// kubeadm.x86_64                          1.14.1-0                       @kubernetes
-	// [root@localhost ~]#
-
-	return nil
+func (c *CentOS) IsK8SComponentInstalled(kubeConfig, master string) error {
+	return isK8SComponentInstalled(kubeConfig, master)
 }
 
 //InstallKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
 func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
-	fmt.Println("InstallKubeEdge called")
-	return nil
+
+	arch := "amd64"
+	result, err := runCommandWithStdout("arch")
+	if err != nil {
+		return err
+	}
+
+	// TODO: may support more case
+	switch result {
+	case "x86_64":
+		arch = "amd64"
+	default:
+		return fmt.Errorf("can't support this architecture of CentOS: %s", result)
+	}
+
+	return installKubeEdge(componentType, arch, c.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edgecore with logs being captured
 func (c *CentOS) RunEdgeCore() error {
-	return nil
+	return runEdgeCore(c.KubeEdgeVersion)
 }
 
 //KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
 func (c *CentOS) KillKubeEdgeBinary(proc string) error {
-	return nil
+	return killKubeEdgeBinary(proc)
 }
 
 //IsKubeEdgeProcessRunning checks if the given process is running or not
 func (c *CentOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
-	return false, nil
+	return isKubeEdgeProcessRunning(proc)
 }

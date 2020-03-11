@@ -132,22 +132,24 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
-	var binExec string
-	if cu.ToolVersion >= "1.1.0" {
-		binExec = fmt.Sprintf("chmod +x %s/%s && %s > %s/%s.log 2>&1 &",
-			KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
-	} else {
-		binExec = fmt.Sprintf("chmod +x %s/%s && %s > %skubeedge/cloud/%s.log 2>&1 &",
-			KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	// add +x for cloudcore
+	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeCloudBinaryName)
+	if _, err := runCommandWithShell(command); err != nil {
+		return err
 	}
 
-	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	// start cloudcore
+	if cu.ToolVersion >= "1.1.0" {
+		command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	} else {
+		command = fmt.Sprintf("%s > %skubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
+	}
+	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	err = cmd.ExecuteCmdShowOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
+	cmd.ExecuteCommand()
+	if errout := cmd.GetStdErr(); errout != "" {
 		return fmt.Errorf("%s", errout)
 	}
 	fmt.Println(cmd.GetStdOutput())

@@ -82,11 +82,19 @@ func installCRDs(kubeConfig, master string) error {
 	}
 	for _, crdFile := range []string{"devices/devices_v1alpha1_device.yaml",
 		"devices/devices_v1alpha1_devicemodel.yaml"} {
-		//Download the tar from repo
-		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", KubeEdgeCRDDownloadURL, crdFile)
-		_, err := runCommandWithShell(dwnldURL)
+		//check it first, do not download when it exists
+		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
 		if err != nil {
-			return err
+			if os.IsNotExist(err) {
+				//Download the tar from repo
+				dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", KubeEdgeCRDDownloadURL, crdFile)
+				_, err := runCommandWithShell(dwnldURL)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		}
 
 		// not found err, create crd from crd file
@@ -104,11 +112,19 @@ func installCRDs(kubeConfig, master string) error {
 	}
 	for _, crdFile := range []string{"reliablesyncs/cluster_objectsync_v1alpha1.yaml",
 		"reliablesyncs/objectsync_v1alpha1.yaml"} {
-		//Download the tar from repo
-		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", KubeEdgeCRDDownloadURL, crdFile)
-		_, err := runCommandWithShell(dwnldURL)
+		//check it first, do not download when it exists
+		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
 		if err != nil {
-			return err
+			if os.IsNotExist(err) {
+				//Download the tar from repo
+				dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", KubeEdgeCRDDownloadURL, crdFile)
+				_, err := runCommandWithShell(dwnldURL)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		}
 
 		// not found err, create crd from crd file
