@@ -19,13 +19,13 @@ package validation
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	cloudvalidation "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1/validation"
-	edgevalidation "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1/validation"
-	siteconfig "github.com/kubeedge/kubeedge/pkg/apis/edgesite/v1alpha1"
+	cloudvalidation "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
+	edgevalidation "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	edgesiteconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgesite/v1alpha1"
 )
 
 // ValidateEdgeSiteConfiguration validates `c` and returns an errorList if it is invalid
-func ValidateEdgeSiteConfiguration(c *siteconfig.EdgeSiteConfig) field.ErrorList {
+func ValidateEdgeSiteConfiguration(c *edgesiteconfig.EdgeSiteConfig) field.ErrorList {
 
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, edgevalidation.ValidateDataBase(*c.DataBase)...)

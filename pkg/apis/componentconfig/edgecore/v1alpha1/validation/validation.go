@@ -23,12 +23,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 // ValidateEdgeCoreConfiguration validates `c` and returns an errorList if it is invalid
-func ValidateEdgeCoreConfiguration(c *edgecoreconfig.EdgeCoreConfig) field.ErrorList {
+func ValidateEdgeCoreConfiguration(c *v1alpha1.EdgeCoreConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateDataBase(*c.DataBase)...)
 	allErrs = append(allErrs, ValidateModuleEdged(*c.Modules.Edged)...)
@@ -43,7 +43,7 @@ func ValidateEdgeCoreConfiguration(c *edgecoreconfig.EdgeCoreConfig) field.Error
 }
 
 // ValidateDataBase validates `db` and returns an errorList if it is invalid
-func ValidateDataBase(db edgecoreconfig.DataBase) field.ErrorList {
+func ValidateDataBase(db v1alpha1.DataBase) field.ErrorList {
 	allErrs := field.ErrorList{}
 	sourceDir := path.Dir(db.DataSource)
 	if !utilvalidation.FileIsExist(sourceDir) {
@@ -56,7 +56,7 @@ func ValidateDataBase(db edgecoreconfig.DataBase) field.ErrorList {
 }
 
 // ValidateModuleEdged validates `e` and returns an errorList if it is invalid
-func ValidateModuleEdged(e edgecoreconfig.Edged) field.ErrorList {
+func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 	if !e.Enable {
 		return field.ErrorList{}
 	}
@@ -66,7 +66,7 @@ func ValidateModuleEdged(e edgecoreconfig.Edged) field.ErrorList {
 			"Need sed NodeIP"))
 	}
 	switch e.CGroupDriver {
-	case edgecoreconfig.CGroupDriverCGroupFS, edgecoreconfig.CGroupDriverSystemd:
+	case v1alpha1.CGroupDriverCGroupFS, v1alpha1.CGroupDriverSystemd:
 	default:
 		allErrs = append(allErrs, field.Invalid(field.NewPath("CGroupDriver"), e.CGroupDriver,
 			"CGroupDriver value error"))
@@ -75,7 +75,7 @@ func ValidateModuleEdged(e edgecoreconfig.Edged) field.ErrorList {
 }
 
 // ValidateModuleEdgeHub validates `h` and returns an errorList if it is invalid
-func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
+func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 	if !h.Enable {
 		return field.ErrorList{}
 	}
@@ -101,21 +101,21 @@ func ValidateModuleEdgeHub(h edgecoreconfig.EdgeHub) field.ErrorList {
 }
 
 // ValidateModuleEventBus validates `m` and returns an errorList if it is invalid
-func ValidateModuleEventBus(m edgecoreconfig.EventBus) field.ErrorList {
+func ValidateModuleEventBus(m v1alpha1.EventBus) field.ErrorList {
 	if !m.Enable {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	if m.MqttMode > edgecoreconfig.MqttModeExternal || m.MqttMode < edgecoreconfig.MqttModeInternal {
+	if m.MqttMode > v1alpha1.MqttModeExternal || m.MqttMode < v1alpha1.MqttModeInternal {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("Mode"), m.MqttMode,
-			fmt.Sprintf("Mode need in [%v,%v] range", edgecoreconfig.MqttModeInternal,
-				edgecoreconfig.MqttModeExternal)))
+			fmt.Sprintf("Mode need in [%v,%v] range", v1alpha1.MqttModeInternal,
+				v1alpha1.MqttModeExternal)))
 	}
 	return allErrs
 }
 
 // ValidateModuleMetaManager validates `m` and returns an errorList if it is invalid
-func ValidateModuleMetaManager(m edgecoreconfig.MetaManager) field.ErrorList {
+func ValidateModuleMetaManager(m v1alpha1.MetaManager) field.ErrorList {
 	if !m.Enable {
 		return field.ErrorList{}
 	}
@@ -124,7 +124,7 @@ func ValidateModuleMetaManager(m edgecoreconfig.MetaManager) field.ErrorList {
 }
 
 // ValidateModuleServiceBus validates `s` and returns an errorList if it is invalid
-func ValidateModuleServiceBus(s edgecoreconfig.ServiceBus) field.ErrorList {
+func ValidateModuleServiceBus(s v1alpha1.ServiceBus) field.ErrorList {
 	if !s.Enable {
 		return field.ErrorList{}
 	}
@@ -133,7 +133,7 @@ func ValidateModuleServiceBus(s edgecoreconfig.ServiceBus) field.ErrorList {
 }
 
 // ValidateModuleDeviceTwin validates `d` and returns an errorList if it is invalid
-func ValidateModuleDeviceTwin(d edgecoreconfig.DeviceTwin) field.ErrorList {
+func ValidateModuleDeviceTwin(d v1alpha1.DeviceTwin) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
@@ -142,7 +142,7 @@ func ValidateModuleDeviceTwin(d edgecoreconfig.DeviceTwin) field.ErrorList {
 }
 
 // ValidateModuleDBTest validates `d` and returns an errorList if it is invalid
-func ValidateModuleDBTest(d edgecoreconfig.DBTest) field.ErrorList {
+func ValidateModuleDBTest(d v1alpha1.DBTest) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
@@ -151,7 +151,7 @@ func ValidateModuleDBTest(d edgecoreconfig.DBTest) field.ErrorList {
 }
 
 // ValidateModuleEdgeMesh validates `m` and returns an errorList if it is invalid
-func ValidateModuleEdgeMesh(m edgecoreconfig.EdgeMesh) field.ErrorList {
+func ValidateModuleEdgeMesh(m v1alpha1.EdgeMesh) field.ErrorList {
 	if !m.Enable {
 		return field.ErrorList{}
 	}

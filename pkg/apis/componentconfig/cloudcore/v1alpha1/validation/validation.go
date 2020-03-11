@@ -24,12 +24,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 // ValidateCloudCoreConfiguration validates `c` and returns an errorList if it is invalid
-func ValidateCloudCoreConfiguration(c *cloudconfig.CloudCoreConfig) field.ErrorList {
+func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateKubeAPIConfig(*c.KubeAPIConfig)...)
 	allErrs = append(allErrs, ValidateModuleCloudHub(*c.Modules.CloudHub)...)
@@ -40,7 +40,7 @@ func ValidateCloudCoreConfiguration(c *cloudconfig.CloudCoreConfig) field.ErrorL
 }
 
 // ValidateModuleCloudHub validates `c` and returns an errorList if it is invalid
-func ValidateModuleCloudHub(c cloudconfig.CloudHub) field.ErrorList {
+func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	if !c.Enable {
 		return field.ErrorList{}
 	}
@@ -96,7 +96,7 @@ func ValidateModuleCloudHub(c cloudconfig.CloudHub) field.ErrorList {
 }
 
 // ValidateModuleEdgeController validates `e` and returns an errorList if it is invalid
-func ValidateModuleEdgeController(e cloudconfig.EdgeController) field.ErrorList {
+func ValidateModuleEdgeController(e v1alpha1.EdgeController) field.ErrorList {
 	if !e.Enable {
 		return field.ErrorList{}
 	}
@@ -108,7 +108,7 @@ func ValidateModuleEdgeController(e cloudconfig.EdgeController) field.ErrorList 
 }
 
 // ValidateModuleDeviceController validates `d` and returns an errorList if it is invalid
-func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorList {
+func ValidateModuleDeviceController(d v1alpha1.DeviceController) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
@@ -118,7 +118,7 @@ func ValidateModuleDeviceController(d cloudconfig.DeviceController) field.ErrorL
 }
 
 // ValidateModuleSyncController validates `d` and returns an errorList if it is invalid
-func ValidateModuleSyncController(d cloudconfig.SyncController) field.ErrorList {
+func ValidateModuleSyncController(d v1alpha1.SyncController) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}
@@ -128,7 +128,7 @@ func ValidateModuleSyncController(d cloudconfig.SyncController) field.ErrorList 
 }
 
 // ValidateKubeAPIConfig validates `k` and returns an errorList if it is invalid
-func ValidateKubeAPIConfig(k cloudconfig.KubeAPIConfig) field.ErrorList {
+func ValidateKubeAPIConfig(k v1alpha1.KubeAPIConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if k.KubeConfig != "" && !path.IsAbs(k.KubeConfig) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig need abs path"))
