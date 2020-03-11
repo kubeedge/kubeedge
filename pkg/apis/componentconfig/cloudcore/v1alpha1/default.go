@@ -22,7 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
+	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object

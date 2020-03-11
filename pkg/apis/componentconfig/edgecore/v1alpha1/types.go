@@ -17,8 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/meta/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
 const (

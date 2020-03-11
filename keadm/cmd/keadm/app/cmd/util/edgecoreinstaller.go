@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 // KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information

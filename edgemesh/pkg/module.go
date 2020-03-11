@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
-	"github.com/kubeedge/kubeedge/pkg/apis/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 //EdgeMesh defines EdgeMesh object structure
