@@ -22,11 +22,15 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
@@ -243,7 +247,224 @@ func runCommandWithShell(command string) (string, error) {
 	}
 	errout := cmd.GetStdErr()
 	if errout != "" {
-		return "", fmt.Errorf("%s", errout)
+		return "", fmt.Errorf("failed to run command(%s), err:%s", command, errout)
 	}
 	return cmd.GetStdOutput(), nil
+}
+
+// runCommandWithStdout executes the given command with "sh -c".
+// It returns the stdout and an error if the command outputs anything on the stderr.
+func runCommandWithStdout(command string) (string, error) {
+	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
+	cmd.ExecuteCommand()
+
+	if errout := cmd.GetStdErr(); errout != "" {
+		return "", fmt.Errorf("failed to run command(%s), err:%s", command, errout)
+	}
+
+	return cmd.GetStdOutput(), nil
+}
+
+// build Config from flags
+func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
+	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// isK8SComponentInstalled checks if said K8S version is already installed in the host
+func isK8SComponentInstalled(kubeConfig, master string) error {
+	config, err := BuildConfig(kubeConfig, master)
+	if err != nil {
+		return fmt.Errorf("Failed to build config, err: %v", err)
+	}
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return fmt.Errorf("Failed to init discovery client, err: %v", err)
+	}
+
+	discoveryClient.RESTClient().Post()
+	serverVersion, err := discoveryClient.ServerVersion()
+	if err != nil {
+		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
+	}
+
+	k8sMinorVersion, _ := strconv.Atoi(serverVersion.Minor)
+	if k8sMinorVersion >= types.DefaultK8SMinimumVersion {
+		return nil
+	}
+
+	return fmt.Errorf("Your minor version of K8s is lower than %d, please reinstall newer version", types.DefaultK8SMinimumVersion)
+}
+
+//installKubeEdge downloads the provided version of KubeEdge.
+//Untar's in the specified location /etc/kubeedge/ and then copies
+//the binary to excecutables' path (eg: /usr/local/bin)
+func installKubeEdge(componentType types.ComponentType, arch string, version string) error {
+
+	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+	}
+
+	//Check if the same version exists, then skip the download and just untar and continue
+	//TODO: It is always better to have the checksum validation of the downloaded file
+	//and checksum available at download URL. So that both can be compared to see if
+	//proper download has happened and then only proceed further.
+	//Currently it is missing and once checksum is in place, checksum check required
+	//to be added here.
+	dirname := fmt.Sprintf("kubeedge-v%s-linux-%s", version, arch)
+	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", version, arch)
+	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
+	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
+	if _, err = os.Stat(filePath); err == nil {
+		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded")
+	} else if !os.IsNotExist(err) {
+		return err
+	} else {
+		try := 0
+		for ; try < downloadRetryTimes; try++ {
+			//Download the tar from repo
+			dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
+				KubeEdgePath, KubeEdgeDownloadURL, version, filename)
+			if _, err := runCommandWithShell(dwnldURL); err != nil {
+				return err
+			}
+
+			//Verify the tar with checksum
+			fmt.Printf("%s checksum: \n", filename)
+			cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+			desiredChecksum, err := runCommandWithStdout(cmdStr)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("%s content: \n", checksumFilename)
+			cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
+			actualChecksum, err := runCommandWithStdout(cmdStr)
+			if err != nil {
+				return err
+			}
+
+			if desiredChecksum == actualChecksum {
+				break
+			} else {
+				fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+				//Cleanup the downloaded files
+				cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+				_, err := runCommandWithStdout(cmdStr)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		if try == downloadRetryTimes {
+			return fmt.Errorf("failed to download %s", filename)
+		}
+	}
+
+	// Compatible with 1.0.0
+	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
+	if version >= "1.1.0" {
+		if componentType == types.CloudCore {
+			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
+				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+		}
+		if componentType == types.EdgeCore {
+			untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/",
+				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
+		}
+	} else {
+		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s %s/.",
+			KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
+		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && cp %skubeedge/cloud/%s %s/.",
+			KubeEdgePath, KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+	}
+
+	if componentType == types.CloudCore {
+		stdout, err := runCommandWithStdout(untarFileAndMoveCloudCore)
+		if err != nil {
+			return err
+		}
+		fmt.Println(stdout)
+	}
+	if componentType == types.EdgeCore {
+		stdout, err := runCommandWithStdout(untarFileAndMoveEdgeCore)
+		if err != nil {
+			return err
+		}
+		fmt.Println(stdout)
+	}
+	return nil
+}
+
+//runEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
+//and the starts edgecore with logs being captured
+func runEdgeCore(version string) error {
+	// create the log dir for kubeedge
+	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
+	}
+
+	// add +x for edgecore
+	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeEdgeBinaryName)
+	if _, err := runCommandWithStdout(command); err != nil {
+		return err
+	}
+
+	var binExec string
+	if version >= "1.1.0" {
+		binExec = fmt.Sprintf("%s > %s/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeLogPath, KubeEdgeBinaryName)
+	} else {
+		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+	}
+
+	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
+	cmd.Cmd.Env = os.Environ()
+	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
+	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
+	err = cmd.ExecuteCmdShowOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", errout)
+	}
+	fmt.Println(cmd.GetStdOutput())
+
+	if version >= "1.1.0" {
+		fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+KubeEdgeBinaryName+".log")
+	} else {
+		fmt.Println("KubeEdge edgecore is running, For logs visit", KubeEdgePath, "kubeedge/edge/")
+	}
+
+	return nil
+}
+
+// killKubeEdgeBinary will search for KubeEdge process and forcefully kill it
+func killKubeEdgeBinary(proc string) error {
+	binExec := fmt.Sprintf("kill -9 $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+	if _, err := runCommandWithStdout(binExec); err != nil {
+		return err
+	}
+
+	fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath+proc+".log")
+	return nil
+}
+
+//isKubeEdgeProcessRunning checks if the given process is running or not
+func isKubeEdgeProcessRunning(proc string) (bool, error) {
+	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s' | awk '{print $2}'", proc[0:1], proc[1:])
+	stdout, err := runCommandWithStdout(procRunning)
+	if err != nil {
+		return false, err
+	}
+	if stdout != "" {
+		return true, nil
+	}
+
+	return false, nil
 }
