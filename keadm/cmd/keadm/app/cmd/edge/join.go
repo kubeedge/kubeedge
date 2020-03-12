@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -120,6 +121,9 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		latestVersion, err := util.GetLatestVersion()
 		if err != nil {
 			return err
+		}
+		if len(latestVersion) == 0 {
+			return fmt.Errorf("Failed to get the latest release version, please retry")
 		}
 		kubeVer = latestVersion[1:]
 	}
