@@ -22,12 +22,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -293,7 +295,17 @@ func isK8SComponentInstalled(kubeConfig, master string) error {
 		return fmt.Errorf("Failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
 	}
 
-	k8sMinorVersion, _ := strconv.Atoi(serverVersion.Minor)
+	return checkKubernetesVersion(serverVersion)
+}
+
+func checkKubernetesVersion(serverVersion *version.Info) error {
+	reg := regexp.MustCompile(`[[:digit:]]*`)
+	minorVersion := reg.FindString(serverVersion.Minor)
+
+	k8sMinorVersion, err := strconv.Atoi(minorVersion)
+	if err != nil {
+		return fmt.Errorf("Could not parse the minor version of K8s, error: %s", err)
+	}
 	if k8sMinorVersion >= types.DefaultK8SMinimumVersion {
 		return nil
 	}
