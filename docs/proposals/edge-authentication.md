@@ -10,7 +10,7 @@ approvers:
   - "@kadisi"
 
 creation-date: 2020-02-06
-last-updated: 2020-02-06
+last-updated: 2020-03-18
 status: alpha
 
 ---
@@ -19,59 +19,84 @@ status: alpha
 
 ## motivation
 
-The current connection between EdgeCore and CloudCore, that is, the authentication and authorization of the edge node to the cloud requires manual replication of the certificate, which has poor scalability and flexibility. And this root certificate is not within the K8S native authentication and authorization system and requires additional maintenance.
+The current connection between EdgeCore and CloudCore, that is, the authentication and authorization of the edge node to the cloud requires manual replication of the certificate, which has poor scalability and flexibility. And this root certificate is not within the k8s native authentication and authorization system and requires additional maintenance.
 
 ## goal
 
-To implement that edge nodes automatically apply for a certificate when joining the cluster, and k8s api server approves the certificate.
+To implement that edge nodes automatically apply for a certificate when joining the cluster, and k8s API server approves the certificate, then they can  establish mutual authentication TLS with CloudCore.
 
 ## design detail
 
+We implement the auto authentication based on the kubeedge installer keadm. The design idea is to reuse the k8s authentication mechanism.
+
+### keadm init
+
+In this command, we add the step of creating token following the example of kubeadm(token is stored in etcd as a secret). The token is **only** have the rights of making a Certificate Signing Request(CSR) which is used when edge nodes apply to join the cluster.
+
+Note: This token will be expired after 24 hours. Then you can get a new one running `keadm token create`.
+
+And this token only has the rights of applying for a node certificate in k8s cluster.
+
+when CloudCore starts, it gets `cluster info` configmap from API server and calculates a hash code which is named discovery-token-ca-cert-hash and used to join to cluster by EdgeCore.
+
+```shell
+curl -k -v -XGET  -H "Accept: application/json, */*" -H "User-Agent: kubeadm/v1.15.3 (linux/amd64) kubernetes/2d3c76f" 'https://<master ip:port>/api/v1/namespaces/kube-public/configmaps/cluster-info'
+```
+
+CloudCore also applies to the API server for token list to distinguish the valid token from invalid when edge nodes apply for the certificate.
+
+when the command `keadm init` finished,  It will show as following:
+
+```shell
+Then you can join any number of edge nodes by runnning the following on each node:
+keadm join --cloudcore-ipport=<ip:ipport address> --edgenode-name=<unique string as identifer> --token=<token id> --discovery-token-ca-cert-hash=<hash of cluster cert>
+```
+
+### keadm join
+
+The flags of command `keadm join` should add `--token` and `--discovery-token-ca-cert-hash` which are used to indicate edge identity and verify master identity respectively. So the current `keadm join` should be as follow:
+
+```shell
+keadm join --cloudcore-ipport=<ip:ipport address> --edgenode-name=<unique string as identifer> --token=<token id> --discovery-token-ca-cert-hash=<hash of cluster cert>
+```
+
+
+
 ![token.png](../images/edgeAuthentication/edge_authentication.jpg)
 
-Update the tool keadm to simplify the complexity of joining edge nodes to the cluster.
+#### 1. discovery cluster-info
 
-Firstly, Keadm establishes a TLS connection with Cloudcore. Then keadm sends a request of cluster-info to CLoudCore. Then the CloudCore will return the cluster-info containing  a public Key to keadm. Based on the discovery-token-ca-cert-hash flag, Keadm can validate the public key of the root certificate authority (CA) presented by the CloudCore. Then EdgeCore uses token to authenticate API Server,and CloudCore will forward token to the APIServer and forward a certificate to EdgeCore.If successful,EdgeCore and CloudCore will establish a wss connection.
+**This step is to have the node trust the Kubernetes master.**
 
-#### cloudcore：
+Edgecore apply for `cluster-info` configmap from CloudCore. Then EdgeCore calculates the hashcode of cert to compare with flag discovery-token-ca-cert-hash to verify the master.
 
-​	Cloudcore directly configures CA certificate and cloudcore certificate when accessing the api server. This cloudcore certificate is issued by a **same** CA with the edgecore certificate, so they can establish TLS.
-
-#### keadm join
-
-​	Authentication is split into discovery (having the Node trust the Kubernetes Master) and TLS bootstrap (having the Kubernetes Master trust the Node).
-
-##### 	preflight checks
+#### 2. preflight checks
 
 Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
 
-Check and install all the pre-requisites before executing edge-controller, which are
+Check and install all the pre-requisites, which are
 
-- Docker (currently 18.06.0ce3-0~ubuntu) and check is service is up.
-- mosquitto (latest available in OS repos) and check if running.
+- Docker (currently 18.06.0ce3-0~ubuntu) and check if service is up.
+- mosquitto (latest available in OS repos) and check if running
+- EdgeCore
+  - generate necessary config：edge.yaml and modules.yaml
+  - generate kubeconfig based on token and ca.crt：bootstrap-edge.conf
+  - run EdgeCore
 
-##### 	discovery clustor-info
 
-​	`keadm join` is invoked with `--discovery-token`, token discovery is used; in this case the node basically retrieves the cluster CA certificates from the  `cluster-info` ConfigMap in the `kube-public` namespace.
 
-​	In order to prevent "man in the middle" attacks, several steps are taken:
+The above two steps are done by keadm. Then next steps are by EdgeCore.
 
-+ First, the CA certificate is retrieved via **insecure connection** (note: this is possible because `kubeadm init` granted access to  `cluster-info` users for `system:unauthenticated` )
+#### 3. TLS bootstrap
 
-- Then the CA certificate goes through following validation steps:
-  - "Basic validation", using the token ID against a JWT signature
-  - "Pub key validation", using provided `--discovery-token-ca-cert-hash`. This value is available in the output of "keadm init" or can be calculated using standard tools (the hash is calculated over the bytes of the Subject Public Key Info (SPKI) object as in RFC7469). The `--discovery-token-ca-cert-hash flag` may be repeated multiple times to allow more than one public key.
-  - as a additional validation, the CA certificate is retrieved via secure connection and then compared with the CA retrieved initially
+**This step is to have API server trust the CloudCore.**
 
-##### TLS Bootstrap
+The EdgeCore generates a pair of keys. One of these which is named public key and other information are used to apply for a certificate. The other named private key is stored locally. 
 
-​	Once the cluster info are known, the file `bootstrap-edge.conf` is written, allowing edgecore to do TLS Bootstrapping.
+Then EdgeCore sends CSR to CloudCore with its token. 
 
-​	The TLS bootstrap mechanism uses the shared token to temporarily authenticate with the cloudcore to submit a certificate signing request (CSR) for a locally created key pair.
+Cloudcore then compares this token with its token list. If it is in the token list, Cloudcore will create a new client with token and ca.crt to communicate with API server. 
 
-**And the request is forwarded to k8s api-server**. Next controller manager approves the request and the operation completes saving `ca.crt` file and `edge.conf` file to be used by edgecore for joining the cluster, while`bootstrap-edge.conf` is deleted.
+API server passes the CSR to the component controller manager. The controller manager automaticly approves the request so the certificate of edge is OK. The Cloudcore then forward the certificate to the edge. 
 
-Please note that:
-
-- The temporary authentication is validated against the token
-- The temporary authentication resolve to a user member of  `system:bootstrappers:kadm:default-node-token` group which was granted access to CSR api
+From now on, the EdgeCore can establish mutual authentication TLS with Cloudcore.
