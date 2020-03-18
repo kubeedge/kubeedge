@@ -29,6 +29,40 @@ To implement that edge nodes automatically apply for a certificate when joining 
 
 We implement the auto authentication based on the kubeedge installer keadm. The design idea is to reuse the k8s authentication mechanism.
 
+![token.png](../images/edgeAuthentication/edge_authentication.jpg)
+
+##### Each step in the picture is described as follows:
+
+step 0: Once CloudCore starts, CloudCore applies to the apiserver for `cluster-info` configmap and tokenlist. The `cluster-info` configmap is for edgecore to verify the apiserver while the tokenlist is to ensure the token of edgecore is valid.
+
+**To have EdgeCore trust the API server:**
+
+step 1-2: After running `keadm join ...`, keadm asks the CloudCore for the `cluster-info` configmap. Then the CloudCore responses.
+
+step 3: Then edgecore calculates the hashcode of cert to compare with flag discovery-token-ca-cert-hash to verify the master.
+
+**To have the API server trust the EdgeCore:**
+
+step 4: Then EdgeCore sends CSR to CloudCore with its token. 
+
+step 5: CloudCore then compare this token with its token list. If it is in the token list, CloudCore will create a new client with token and ca.crt to communicate with API server. Next it forward the CSR to the API server through the client above. If it is not in, CloudCore will ignore this request.
+
+step 6: API server passes the CSR to the component controller manager. The controller manager automaticly approves the request.
+
+step 7-8: The CloudCore then forward the certificate to the edge. 
+
+step 9: The EdgeCore establish mutual authentication TLS with CloudCore.
+
+steps10: The CloudCore communicate with API server through https.
+
+Note: 
+
+Compare between step 4 and step 9:  In step4, EdgeCore makes a CSR to CloudCore based on **token **while in step 9, EdgeCore communicates with cloudcore through **certificate**.
+
+compare between step 5 and step 10:  in step 9, client is created by token and ca.crt, while in step10 client is created by original kubeconifg(this kubeconfig has more permissions but client with token can only make a CSR).
+
+
+
 ### keadm init
 
 In this command, we add the step of creating token following the example of kubeadm(token is stored in etcd as a secret). The token is **only** have the rights of making a Certificate Signing Request(CSR) which is used when edge nodes apply to join the cluster.
@@ -61,8 +95,6 @@ keadm join --cloudcore-ipport=<ip:ipport address> --edgenode-name=<unique string
 ```
 
 
-
-![token.png](../images/edgeAuthentication/edge_authentication.jpg)
 
 #### 1. discovery cluster-info
 
