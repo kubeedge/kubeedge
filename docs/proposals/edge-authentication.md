@@ -47,7 +47,7 @@ step 4: Edgecore will create CSR if they are same in step3. Then the EdgeCore se
 
 step 5: CloudCore then compare this token with token list. If it is in the token list, CloudCore will create a new client with token and ca.crt to communicate with API server. Next it forward the CSR of EdgeCore to the API server through the client above. If it is not in, CloudCore will ignore this request.
 
-step 6: API server passes the CSR to the component controller manager. The controller manager automaticly approves the CSR.
+step 6: API server passes the CSR to the component controller manager. The controller manager will approve the CSR.
 
 step 7-8: The CloudCore then forward the certificate to the EdgeCore. 
 
