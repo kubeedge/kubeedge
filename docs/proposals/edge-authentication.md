@@ -33,33 +33,33 @@ We implement the auto authentication based on the kubeedge installer keadm. The 
 
 ##### Each step in the picture is described as follows:
 
-step 0: Once CloudCore starts, CloudCore applies to the apiserver for `cluster-info` configmap and tokenlist. The `cluster-info` configmap is for edgecore to verify the apiserver while the tokenlist is to ensure the token of edgecore is valid.
+step 0: Once CloudCore starts, CloudCore applies to the API server for `cluster-info` configmap and tokenlist. The `cluster-info` configmap is for edgecore to verify the API server while the tokenlist is to ensure the token of EdgeCore is valid.
 
 **To have EdgeCore trust the API server:**
 
 step 1-2: After running `keadm join ...`, keadm asks the CloudCore for the `cluster-info` configmap. Then the CloudCore responses.
 
-step 3: Then edgecore calculates the hashcode of cert to compare with flag discovery-token-ca-cert-hash to verify the master.
+step 3: Then EdgeCore calculates the hashcode of cert to compare with flag discovery-token-ca-cert-hash to verify the API server.
 
 **To have the API server trust the EdgeCore:**
 
-step 4: Then EdgeCore sends CSR to CloudCore with its token. 
+step 4: Edgecore will create CSR if they are same in step3. Then the EdgeCore sends CSR to CloudCore with its token. 
 
-step 5: CloudCore then compare this token with its token list. If it is in the token list, CloudCore will create a new client with token and ca.crt to communicate with API server. Next it forward the CSR to the API server through the client above. If it is not in, CloudCore will ignore this request.
+step 5: CloudCore then compare this token with token list. If it is in the token list, CloudCore will create a new client with token and ca.crt to communicate with API server. Next it forward the CSR of EdgeCore to the API server through the client above. If it is not in, CloudCore will ignore this request.
 
-step 6: API server passes the CSR to the component controller manager. The controller manager automaticly approves the request.
+step 6: API server passes the CSR to the component controller manager. The controller manager automaticly approves the CSR.
 
-step 7-8: The CloudCore then forward the certificate to the edge. 
+step 7-8: The CloudCore then forward the certificate to the EdgeCore. 
 
 step 9: The EdgeCore establish mutual authentication TLS with CloudCore.
 
-steps10: The CloudCore communicate with API server through https.
+step 10: The CloudCore communicate with API server through https.
 
 Note: 
 
-Compare between step 4 and step 9:  In step4, EdgeCore makes a CSR to CloudCore based on **token **while in step 9, EdgeCore communicates with cloudcore through **certificate**.
+Compare between step 4 and step 9:  In step 4, EdgeCore makes a CSR to CloudCore based on **token **while in step 9, EdgeCore communicates with cloudcore through **certificate**.
 
-compare between step 5 and step 10:  in step 9, client is created by token and ca.crt, while in step10 client is created by original kubeconifg(this kubeconfig has more permissions but client with token can only make a CSR).
+compare between step 5 and step 10:  In step 5, client is created by token and ca.crt. while in step 10, client is created by original kubeconifg(this kubeconfig has **more permissions** but client with token can only make a CSR).
 
 
 
