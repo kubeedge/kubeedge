@@ -12,7 +12,7 @@ Kubeedge interacts with the standard K8s API, so the K8s cluster can be installe
 
 ## Limitation
 
-- Currently support of `KubeEdge installer` is available only for Ubuntu OS. CentOS and RaspberryPi supports are in-progress.
+- Currently support of `keadm` is available for Ubuntu and CentOS OS. RaspberryPi supports is in-progress.
 
 ## Getting KubeEdge Installer
 
