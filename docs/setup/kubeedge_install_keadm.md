@@ -42,7 +42,7 @@ There are currently two ways to get keadm
 
   2.  If you used `go get`, the `keadm` binary is available in `$GOPATH/bin/`
       
-      If you compiled from source, the `keadm` binary is in a subfolder `${KUBEEDGE_OUTPUT_SUBPATH}/bin` which defaults to `_output/local/bin` in your kubeedge project directory, or `$GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/`
+      If you compiled from source, the `keadm` binary is in `$GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/`
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
