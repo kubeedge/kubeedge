@@ -123,6 +123,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	if container.Message.Router.Operation == beehiveModel.ResponseOperation {
 		if ackChan, ok := mh.MessageAcks.Load(container.Message.Header.ParentID); ok {
 			close(ackChan.(chan struct{}))
+			mh.MessageAcks.Delete(container.Message.Header.ParentID)
 		}
 		return
 	}
@@ -428,7 +429,6 @@ LOOP:
 	for {
 		select {
 		case <-ackChan:
-			mh.MessageAcks.Delete(msg.GetID())
 			mh.saveSuccessPoint(copyMsg, info, nodeStore)
 			break LOOP
 		case <-ticker.C:
