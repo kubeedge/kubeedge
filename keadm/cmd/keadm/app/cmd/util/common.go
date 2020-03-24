@@ -72,6 +72,7 @@ const (
 	InterfaceName = "eth0"
 
 	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
+	RetryTimes              = 5
 )
 
 type latestReleaseVersion struct {
