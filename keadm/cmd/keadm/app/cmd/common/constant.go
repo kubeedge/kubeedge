@@ -55,4 +55,7 @@ const (
 
 	// RuntimeType is default runtime type
 	RuntimeType = "runtimetype"
+
+	// DefaultKubeEdgeVersion is the default KubeEdge version
+	DefaultKubeEdgeVersion = "1.2.1"
 )
