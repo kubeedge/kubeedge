@@ -12,9 +12,9 @@
 
 6. If all of the above is correctly set, login manually to your edge node and run your docker image manually by
 
-  ```shell
-   docker run <your-container-image>
-  ```
+   ```shell
+    docker run <your-container-image>
+   ```
   
 7. If the docker container image is not pulled from the docker hub, please check that there is enough space on the edge node.
 
