@@ -40,7 +40,7 @@ keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string a
   - For this command --cloudcore-ipport flag is a required option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=1.2.0
+keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=1.2.1
 `
 )
 
@@ -118,14 +118,21 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	}
 	if kubeVer == "" {
-		latestVersion, err := util.GetLatestVersion()
-		if err != nil {
-			return err
+		var latestVersion string
+		for i := 0; i < util.RetryTimes; i++ {
+			latestVersion, err := util.GetLatestVersion()
+			if err != nil {
+				return err
+			}
+			if len(latestVersion) != 0 {
+				kubeVer = latestVersion[1:]
+				break
+			}
 		}
 		if len(latestVersion) == 0 {
-			return fmt.Errorf("Failed to get the latest release version, please retry")
+			fmt.Println("Failed to get the latest KubeEdge release version, will use default version")
+			kubeVer = types.DefaultKubeEdgeVersion
 		}
-		kubeVer = latestVersion[1:]
 	}
 	toolList["KubeEdge"] = &util.KubeEdgeInstTool{
 		Common: util.Common{

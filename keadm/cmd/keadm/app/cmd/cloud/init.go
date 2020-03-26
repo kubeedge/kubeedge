@@ -38,7 +38,7 @@ keadm init
 
 - This command will download and install the default version of KubeEdge cloud component
 
-keadm init --kubeedge-version=1.2.0  --kube-config=/root/.kube/config
+keadm init --kubeedge-version=1.2.1  --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
@@ -110,14 +110,21 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		kubeVer = util.CheckIfAvailable(flgData.Val.(string), flgData.DefVal.(string))
 	}
 	if kubeVer == "" {
-		latestVersion, err := util.GetLatestVersion()
-		if err != nil {
-			return err
+		var latestVersion string
+		for i := 0; i < util.RetryTimes; i++ {
+			latestVersion, err := util.GetLatestVersion()
+			if err != nil {
+				return err
+			}
+			if len(latestVersion) != 0 {
+				kubeVer = latestVersion[1:]
+				break
+			}
 		}
 		if len(latestVersion) == 0 {
-			return fmt.Errorf("Failed to get the latest release version, please retry")
+			fmt.Println("Failed to get the latest KubeEdge release version, will use default version")
+			kubeVer = types.DefaultKubeEdgeVersion
 		}
-		kubeVer = latestVersion[1:]
 	}
 	toolList["Cloud"] = &util.KubeCloudInstTool{
 		Common: util.Common{
