@@ -117,3 +117,73 @@ jobs:
         - make edgeimage ARCH="arm64v8"
         - make edgesiteimage ARCH="arm64v8"
         - make bluetoothdevice_image
+
+  - stage: Test on amd64 and build Debian Packages for amd64, aarch64 and armv7l
+      name: build, smallbuild, crossbuild
+      arch: amd64
+      before_script:
+      - sudo apt-get install upx-ucl -y
+      - sudo apt-get install gcc-aarch64-linux-gnu -y
+      - sudo apt-get install libc6-dev-arm64-cross -y
+      - sudo apt-get install gcc-arm-linux-gnueabi -y
+      - sudo apt-get install libc6-dev-armel-cross -y
+      - sudo apt-get install ruby ruby-dev rubygems build-essential
+      - sudo gem install --no-document fpm
+      - export GOFLAGS=-mod=vendor
+      script:
+      - echo $PWD
+  # Creating folders to store files for installation for cloudcore and edgecore
+      - mkdir -p $HOME/cloudcore/cloudcore_folder
+      - mkdir -p $HOME/edgecore/edgecore_folder
+  # Copying files from the github repo to the respective folders
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh $HOME/cloudcore/cloudcore_folder/
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/devices/* $HOME/cloudcore/cloudcore_folder/.
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/build/crds/reliablesyncs/* $HOME/cloudcore/cloudcore_folder/.
+  # Creating the post_install script for Cloudcore
+      - echo "/etc/kubeedge/files/certgen.sh genCertAndKey edge" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "kubectl create -f devices_v1alpha1_devicemodel.yaml" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "kubectl create -f devices_v1alpha1_device.yaml" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "kubectl create -f cluster_objectsync_v1alpha1.yaml" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "kubectl create -f objectsync_v1alpha1.yaml" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "mkdir -p  /etc/kubeedge/config/" >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+      - echo "/usr/local/bin/kubeedge/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml"
+        >> $HOME/cloudcore/cloudcore_folder/post_install.sh
+  # Creating the post_install script for Edgecore
+      - echo "mkdir -p  /etc/kubeedge/config/" >> $HOME/edgecore/edgecore_folder/post_install.sh
+      - echo "/usr/local/bin/kubeedge/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml"
+        >> $HOME/edgecore/edgecore_folder/post_install.sh
+      - make
+  # Copying the cloudcore and edgecore build for amd64 to respective folders
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/cloudcore $HOME/cloudcore/cloudcore
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/edgecore $HOME/edgecore/edgecore
+  # Creating Packages for cloudcore/ edgecore for amd64. -v <version> needs to be replaced with tag version.
+      - fpm -s dir -t deb -v 1.2 -n kubeedge-cloudcore --after-install=$HOME/cloudcore/cloudcore_folder/post_install.sh
+        $HOME/cloudcore/cloudcore_folder/=/etc/kubeedge/files $HOME/cloudcore/cloudcore=/usr/local/bin/kubeedge/cloudcore
+      - fpm -s dir -t deb -v 1.2 -n kubeedge-edgecore --after-install=$HOME/edgecore/edgecore_folder/post_install.sh
+        $HOME/edgecore/edgecore_folder/=/etc/kubeedge/files $HOME/edgecore/edgecore=/usr/local/bin/kubeedge/edgecore
+      - make smallbuild
+      - make crossbuild
+  # Copying edgecore for aarch64 and building package for the same
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/edgecore $HOME/edgecore/edgecore
+      - fpm -s dir -t deb -v 1.2 -n kubeedge-edgecore -a aarch64 --after-install=$HOME/edgecore/edgecore_folder/post_install.sh
+        $HOME/edgecore/edgecore_folder/=/etc/kubeedge/files $HOME/edgecore/edgecore=/usr/local/bin/kubeedge/edgecore
+      - make crossbuild GOARM=GOARM7
+  # Copying edgecore for armv7 and building package for the same
+      - cp $GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/edgecore $HOME/edgecore/edgecore
+      - fpm -s dir -t deb -v 1.2 -n kubeedge-edgecore -a armv7l --after-install=$HOME/edgecore/edgecore_folder/post_install.sh
+        $HOME/edgecore/edgecore_folder/=/etc/kubeedge/files $HOME/edgecore/edgecore=/usr/local/kubeedge/edgecore
+      - pwd
+      - ls
+  deploy:
+    provider: releases
+    api_key:
+      secure: <Enter Key Here>
+    skip_cleanup: true
+    file:
+      - kubeedge-cloudcore_1.2_amd64.deb
+      - kubeedge-edgecore_1.2_amd64.deb
+      - kubeedge-edgecore_1.2_aarch64.deb
+      - kubeedge-edgecore_1.2_armv7l.deb
+    on:
+      repo: kubeedge/kubeedge
+      branch: master
