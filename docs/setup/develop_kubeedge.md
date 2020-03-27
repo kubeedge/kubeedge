@@ -61,7 +61,7 @@ kubeedge-master   Ready    master   4d3h   v1.17.1
 
 **Note:** Do not install **kubelet** and **kube-proxy** on edge side
 
-## Setup KubeEdge From SourceCode
+## Setup KubeEdge
 
 Setup From [Source](kubeedge_install_source.md).
 
