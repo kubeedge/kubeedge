@@ -29,9 +29,16 @@ package edged
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"k8s.io/kubernetes/pkg/kubelet/images"
+	"k8s.io/kubernetes/pkg/kubelet/server/portforward"
+	"k8s.io/kubernetes/pkg/kubelet/server/remotecommand"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -1143,4 +1150,166 @@ func (e *edged) getHostIPByInterface() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no ip and mask in this network card")
+}
+
+// findContainer finds and returns the container with the given pod ID, full name, and container name.
+// It returns nil if not found.
+func (e *edged) findContainer(podFullName string, podUID types.UID, containerName string) (*kubecontainer.Container, error) {
+	pods, err := e.containerRuntime.GetPods(false)
+	if err != nil {
+		return nil, err
+	}
+	// Resolve and type convert back again.
+	// We need the static pod UID but the kubecontainer API works with types.UID.
+	podUID = types.UID(e.podManager.TranslatePodUID(podUID))
+	pod := kubecontainer.Pods(pods).FindPod(podFullName, podUID)
+	return pod.FindContainerByName(containerName), nil
+}
+
+// RunInContainer runs a command in a container, returns the combined stdout, stderr as an array of bytes
+func (e *edged) RunInContainer(podFullName string, podUID types.UID, containerName string, cmd []string) ([]byte, error) {
+	container, err := e.findContainer(podFullName, podUID, containerName)
+	if err != nil {
+		return nil, err
+	}
+	if container == nil {
+		return nil, fmt.Errorf("container not found (%q)", containerName)
+	}
+	// TODO(tallclair): Pass a proper timeout value.
+	return e.runner.RunInContainer(container.ID, cmd, 0)
+}
+
+// GetKubeletContainerLogs returns logs from the container
+// TODO: this method is returning logs of random container attempts, when it should be returning the most recent attempt
+// or all of them.
+func (e *edged) GetKubeletContainerLogs(ctx context.Context, podFullName, containerName string, logOptions *v1.PodLogOptions, stdout, stderr io.Writer) error {
+	// Pod workers periodically write status to statusManager. If status is not
+	// cached there, something is wrong (or kubelet just restarted and hasn't
+	// caught up yet). Just assume the pod is not ready yet.
+	name, namespace, err := kubecontainer.ParsePodFullName(podFullName)
+	if err != nil {
+		return fmt.Errorf("unable to parse pod full name %q: %v", podFullName, err)
+	}
+
+	pod, ok := e.GetPodByName(namespace, name)
+	if !ok {
+		return fmt.Errorf("pod %q cannot be found - no logs available", name)
+	}
+
+	podUID := pod.UID
+	if mirrorPod, ok := e.podManager.GetMirrorPodByPod(pod); ok {
+		podUID = mirrorPod.UID
+	}
+	podStatus, found := e.statusManager.GetPodStatus(podUID)
+	if !found {
+		// If there is no cached status, use the status from the
+		// apiserver. This is useful if kubelet has recently been
+		// restarted.
+		podStatus = pod.Status
+	}
+
+	// TODO: Consolidate the logic here with kuberuntime.GetContainerLogs, here we convert container name to containerID,
+	// but inside kuberuntime we convert container id back to container name and restart count.
+	// TODO: After separate container log lifecycle management, we should get log based on the existing log files
+	// instead of container status.
+	containerID, err := e.validateContainerLogStatus(pod.Name, &podStatus, containerName, logOptions.Previous)
+	if err != nil {
+		return err
+	}
+
+	// Do a zero-byte write to stdout before handing off to the container runtime.
+	// This ensures at least one Write call is made to the writer when copying starts,
+	// even if we then block waiting for log output from the container.
+	if _, err := stdout.Write([]byte{}); err != nil {
+		return err
+	}
+
+	if e.dockerLegacyService != nil {
+		// dockerLegacyService should only be non-nil when we actually need it, so
+		// inject it into the runtimeService.
+		// TODO(random-liu): Remove this hack after deprecating unsupported log driver.
+		return e.dockerLegacyService.GetContainerLogs(ctx, pod, containerID, logOptions, stdout, stderr)
+	}
+	return e.containerRuntime.GetContainerLogs(ctx, pod, containerID, logOptions, stdout, stderr)
+}
+
+func (e *edged) ServeLogs(w http.ResponseWriter, req *http.Request) {
+}
+
+func (e *edged) GetExec(podFullName string, podUID types.UID, containerName string, cmd []string, streamOpts remotecommand.Options) (*url.URL, error) {
+	return nil, nil
+}
+
+func (e *edged) GetAttach(podFullName string, podUID types.UID, containerName string, streamOpts remotecommand.Options) (*url.URL, error) {
+	return nil, nil
+}
+
+func (e *edged) GetPortForward(podName, podNamespace string, podUID types.UID, portForwardOpts portforward.V4Options) (*url.URL, error) {
+	return nil, nil
+}
+
+// validateContainerLogStatus returns the container ID for the desired container to retrieve logs for, based on the state
+// of the container. The previous flag will only return the logs for the last terminated container, otherwise, the current
+// running container is preferred over a previous termination. If info about the container is not available then a specific
+// error is returned to the end user.
+func (e *edged) validateContainerLogStatus(podName string, podStatus *v1.PodStatus, containerName string, previous bool) (containerID kubecontainer.ContainerID, err error) {
+	var cID string
+
+	cStatus, found := podutil.GetContainerStatus(podStatus.ContainerStatuses, containerName)
+	if !found {
+		cStatus, found = podutil.GetContainerStatus(podStatus.InitContainerStatuses, containerName)
+	}
+	if !found && utilfeature.DefaultFeatureGate.Enabled(features.EphemeralContainers) {
+		cStatus, found = podutil.GetContainerStatus(podStatus.EphemeralContainerStatuses, containerName)
+	}
+	if !found {
+		return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is not available", containerName, podName)
+	}
+	lastState := cStatus.LastTerminationState
+	waiting, running, terminated := cStatus.State.Waiting, cStatus.State.Running, cStatus.State.Terminated
+
+	switch {
+	case previous:
+		if lastState.Terminated == nil || lastState.Terminated.ContainerID == "" {
+			return kubecontainer.ContainerID{}, fmt.Errorf("previous terminated container %q in pod %q not found", containerName, podName)
+		}
+		cID = lastState.Terminated.ContainerID
+
+	case running != nil:
+		cID = cStatus.ContainerID
+
+	case terminated != nil:
+		// in cases where the next container didn't start, terminated.ContainerID will be empty, so get logs from the lastState.Terminated.
+		if terminated.ContainerID == "" {
+			if lastState.Terminated != nil && lastState.Terminated.ContainerID != "" {
+				cID = lastState.Terminated.ContainerID
+			} else {
+				return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is terminated", containerName, podName)
+			}
+		} else {
+			cID = terminated.ContainerID
+		}
+
+	case lastState.Terminated != nil:
+		if lastState.Terminated.ContainerID == "" {
+			return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is terminated", containerName, podName)
+		}
+		cID = lastState.Terminated.ContainerID
+
+	case waiting != nil:
+		// output some info for the most common pending failures
+		switch reason := waiting.Reason; reason {
+		case images.ErrImagePull.Error():
+			return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is waiting to start: image can't be pulled", containerName, podName)
+		case images.ErrImagePullBackOff.Error():
+			return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is waiting to start: trying and failing to pull image", containerName, podName)
+		default:
+			return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is waiting to start: %v", containerName, podName, reason)
+		}
+	default:
+		// unrecognized state
+		return kubecontainer.ContainerID{}, fmt.Errorf("container %q in pod %q is waiting to start - no logs yet", containerName, podName)
+	}
+
+	return kubecontainer.ParseContainerID(cID), nil
 }

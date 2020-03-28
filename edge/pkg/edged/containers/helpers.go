@@ -23,29 +23,10 @@ Changes done are
 
 package containers
 
-import (
-	"time"
-
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-)
-
 //KubeSourcesReady is blank structure just for function referencing
 type KubeSourcesReady struct{}
 
 //AllReady give ready state of Kube Sources
 func (s *KubeSourcesReady) AllReady() bool {
 	return true
-}
-
-type containerRunner struct {
-}
-
-func (c *containerRunner) RunInContainer(id kubecontainer.ContainerID, cmd []string, timeout time.Duration) ([]byte, error) {
-	return nil, nil
-}
-
-//NewContainerRunner returns container manager object
-// TODO: we didn't realized Run In container interface yet
-func NewContainerRunner() kubecontainer.ContainerCommandRunner {
-	return &containerRunner{}
 }
