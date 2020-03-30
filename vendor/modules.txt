@@ -16,6 +16,8 @@ github.com/JeffAshton/win_pdh
 # github.com/Microsoft/go-winio v0.4.14
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
+# github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46
+github.com/NYTimes/gziphandler
 # github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
@@ -266,6 +268,7 @@ github.com/google/cadvisor/info/v1
 github.com/google/cadvisor/info/v2
 github.com/google/cadvisor/machine
 github.com/google/cadvisor/manager
+github.com/google/cadvisor/metrics
 github.com/google/cadvisor/storage
 github.com/google/cadvisor/summary
 github.com/google/cadvisor/utils
@@ -388,6 +391,10 @@ github.com/modern-go/reflect2
 github.com/morikuni/aec
 # github.com/mrunalp/fileutils v0.0.0-20171103030105-7d4729fb3618
 github.com/mrunalp/fileutils
+# github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
+github.com/munnerz/goautoneg
+# github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
+github.com/mxk/go-flowrate/flowrate
 # github.com/onsi/ginkgo v1.11.0
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
@@ -721,6 +728,7 @@ k8s.io/apimachinery/pkg/api/resource
 k8s.io/apimachinery/pkg/api/validation
 k8s.io/apimachinery/pkg/api/validation/path
 k8s.io/apimachinery/pkg/apis/meta/internalversion
+k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
 k8s.io/apimachinery/pkg/apis/meta/v1/validation
@@ -751,6 +759,7 @@ k8s.io/apimachinery/pkg/util/json
 k8s.io/apimachinery/pkg/util/mergepatch
 k8s.io/apimachinery/pkg/util/naming
 k8s.io/apimachinery/pkg/util/net
+k8s.io/apimachinery/pkg/util/proxy
 k8s.io/apimachinery/pkg/util/rand
 k8s.io/apimachinery/pkg/util/remotecommand
 k8s.io/apimachinery/pkg/util/runtime
@@ -768,13 +777,34 @@ k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/apiserver v0.17.1
+k8s.io/apiserver/pkg/admission
+k8s.io/apiserver/pkg/apis/apiserver
+k8s.io/apiserver/pkg/apis/apiserver/v1
+k8s.io/apiserver/pkg/apis/audit
+k8s.io/apiserver/pkg/apis/audit/v1
+k8s.io/apiserver/pkg/apis/audit/v1alpha1
+k8s.io/apiserver/pkg/apis/audit/v1beta1
+k8s.io/apiserver/pkg/audit
+k8s.io/apiserver/pkg/authentication/authenticator
+k8s.io/apiserver/pkg/authentication/user
+k8s.io/apiserver/pkg/authorization/authorizer
+k8s.io/apiserver/pkg/endpoints/handlers/negotiation
+k8s.io/apiserver/pkg/endpoints/handlers/responsewriters
+k8s.io/apiserver/pkg/endpoints/metrics
+k8s.io/apiserver/pkg/endpoints/request
 k8s.io/apiserver/pkg/features
+k8s.io/apiserver/pkg/registry/rest
+k8s.io/apiserver/pkg/server/healthz
 k8s.io/apiserver/pkg/server/httplog
+k8s.io/apiserver/pkg/server/mux
+k8s.io/apiserver/pkg/server/routes
 k8s.io/apiserver/pkg/storage
 k8s.io/apiserver/pkg/storage/etcd3
 k8s.io/apiserver/pkg/storage/etcd3/metrics
+k8s.io/apiserver/pkg/storage/names
 k8s.io/apiserver/pkg/storage/value
 k8s.io/apiserver/pkg/util/feature
+k8s.io/apiserver/pkg/util/flushwriter
 k8s.io/apiserver/pkg/util/term
 k8s.io/apiserver/pkg/util/wsstream
 # k8s.io/client-go v0.17.1
@@ -1040,9 +1070,12 @@ k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
 k8s.io/kube-openapi/cmd/openapi-gen
 k8s.io/kube-openapi/cmd/openapi-gen/args
+k8s.io/kube-openapi/pkg/builder
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/generators
 k8s.io/kube-openapi/pkg/generators/rules
+k8s.io/kube-openapi/pkg/handler
+k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
 # k8s.io/kubelet v0.17.1
@@ -1063,6 +1096,7 @@ k8s.io/kubernetes/pkg/apis/core/pods
 k8s.io/kubernetes/pkg/apis/core/v1
 k8s.io/kubernetes/pkg/apis/core/v1/helper
 k8s.io/kubernetes/pkg/apis/core/v1/helper/qos
+k8s.io/kubernetes/pkg/apis/core/v1/validation
 k8s.io/kubernetes/pkg/apis/core/validation
 k8s.io/kubernetes/pkg/apis/scheduling
 k8s.io/kubernetes/pkg/capabilities
@@ -1075,7 +1109,9 @@ k8s.io/kubernetes/pkg/features
 k8s.io/kubernetes/pkg/fieldpath
 k8s.io/kubernetes/pkg/kubelet/apis
 k8s.io/kubernetes/pkg/kubelet/apis/config
+k8s.io/kubernetes/pkg/kubelet/apis/podresources
 k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1
+k8s.io/kubernetes/pkg/kubelet/apis/resourcemetrics/v1alpha1
 k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1
 k8s.io/kubernetes/pkg/kubelet/cadvisor
 k8s.io/kubernetes/pkg/kubelet/checkpoint
@@ -1131,8 +1167,11 @@ k8s.io/kubernetes/pkg/kubelet/qos
 k8s.io/kubernetes/pkg/kubelet/remote
 k8s.io/kubernetes/pkg/kubelet/runtimeclass
 k8s.io/kubernetes/pkg/kubelet/secret
+k8s.io/kubernetes/pkg/kubelet/server
+k8s.io/kubernetes/pkg/kubelet/server/metrics
 k8s.io/kubernetes/pkg/kubelet/server/portforward
 k8s.io/kubernetes/pkg/kubelet/server/remotecommand
+k8s.io/kubernetes/pkg/kubelet/server/stats
 k8s.io/kubernetes/pkg/kubelet/server/streaming
 k8s.io/kubernetes/pkg/kubelet/stats/pidlimit
 k8s.io/kubernetes/pkg/kubelet/status
@@ -1176,6 +1215,7 @@ k8s.io/kubernetes/pkg/securitycontext
 k8s.io/kubernetes/pkg/util/async
 k8s.io/kubernetes/pkg/util/bandwidth
 k8s.io/kubernetes/pkg/util/config
+k8s.io/kubernetes/pkg/util/configz
 k8s.io/kubernetes/pkg/util/conntrack
 k8s.io/kubernetes/pkg/util/ebtables
 k8s.io/kubernetes/pkg/util/filesystem
