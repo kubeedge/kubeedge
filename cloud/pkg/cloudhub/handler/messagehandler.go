@@ -140,8 +140,13 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
 
+	nodeID = nodeID + "-" + connection.RemoteAddr().String()
 	if _, ok := mh.KeepaliveChannel[nodeID]; !ok {
+		klog.Infof("new edge node %s for project %s registering.", nodeID, projectID)
 		mh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
+	} else {
+		klog.Errorf("nodeID reuse error, nodeID:%s,projectID:%s", nodeID, projectID)
+		return
 	}
 
 	io := &hubio.JSONIO{Connection: connection}
@@ -285,8 +290,12 @@ func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) 
 func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo, code ExitCode) {
 	mh.nodeLocks.Delete(info.NodeID)
 	mh.nodeConns.Delete(info.NodeID)
-	close(mh.KeepaliveChannel[info.NodeID])
-	delete(mh.KeepaliveChannel, info.NodeID)
+	if mh.KeepaliveChannel[info.NodeID] != nil {
+		close(mh.KeepaliveChannel[info.NodeID])
+		delete(mh.KeepaliveChannel, info.NodeID)
+	} else {
+		klog.Errorf("fail to close and delete  connection,node %s, nodeid is nil", info.NodeID)
+	}
 
 	err := mh.MessageQueue.Publish(constructConnectMessage(info, false))
 	if err != nil {
