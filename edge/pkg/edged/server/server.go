@@ -14,7 +14,7 @@ import (
 //constants to define server address
 const (
 	ServerAddr = "127.0.0.1"
-	ServerPort = "10255"
+	ServerPort = "10350"
 )
 
 //Server is object to define server
