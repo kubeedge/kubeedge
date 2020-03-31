@@ -185,20 +185,20 @@ type Edged struct {
 	// default cgroupfs
 	// +Required
 	CGroupDriver string `json:"cgroupDriver,omitempty"`
-	//NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
-	//default ""
+	// NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
+	// default ""
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
-	//CNIConfDir indicates the full path of the directory in which to search for CNI config files
-	//default /etc/cni/net.d
+	// CNIConfDir indicates the full path of the directory in which to search for CNI config files
+	// default /etc/cni/net.d
 	CNIConfDir string `json:"cniConfDir,omitempty"`
-	//CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
-	//default /opt/cni/bin
+	// CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
+	// default /opt/cni/bin
 	CNIBinDir string `json:"cniBinDir,omitempty"`
-	//CNICacheDir indicates the full path of the directory in which CNI should store cache files
-	//default /var/lib/cni/cache
+	// CNICacheDir indicates the full path of the directory in which CNI should store cache files
+	// default /var/lib/cni/cache
 	CNICacheDir string `json:"cniCacheDirs,omitempty"`
-	//NetworkPluginMTU indicates the MTU to be passed to the network plugin
-	//default 1500
+	// NetworkPluginMTU indicates the MTU to be passed to the network plugin
+	// default 1500
 	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
 	// CgroupsPerQOS enables QoS based Cgroup hierarchy: top level cgroups for QoS Classes
 	// And all Burstable and BestEffort pods are brought up under their
@@ -207,6 +207,9 @@ type Edged struct {
 	// CgroupRoot is the root cgroup to use for pods.
 	// If CgroupsPerQOS is enabled, this is the root of the QoS cgroup hierarchy.
 	CgroupRoot string `json:"cgroupRoot"`
+	// EnableMetrics indicates whether enable the metrics
+	// default true
+	EnableMetrics bool `json:"enableMetrics,omitempty"`
 }
 
 // EdgeHub indicates the edgehub module config

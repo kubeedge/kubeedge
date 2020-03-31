@@ -95,6 +95,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
+	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
@@ -527,18 +528,27 @@ func newEdged(enable bool) (*edged, error) {
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
 
 	useLegacyCadvisorStats := cadvisor.UsingLegacyCadvisorStats(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-	imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-	cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
-	if err != nil {
-		return nil, err
-	}
-	ed.cadvisor = cadvisorInterface
+	if edgedconfig.Config.EnableMetrics {
+		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
+		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
+		if err != nil {
+			return nil, err
+		}
+		ed.cadvisor = cadvisorInterface
 
-	machineInfo, err := ed.cadvisor.MachineInfo()
-	if err != nil {
-		return nil, err
+		machineInfo, err := ed.cadvisor.MachineInfo()
+		if err != nil {
+			return nil, err
+		}
+		ed.machineInfo = machineInfo
+	} else {
+		cadvisorInterface, _ := edgecadvisor.New("")
+		ed.cadvisor = cadvisorInterface
+
+		var machineInfo cadvisorapi.MachineInfo
+		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
+		ed.machineInfo = &machineInfo
 	}
-	ed.machineInfo = machineInfo
 
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
@@ -546,7 +556,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.startupManager,
 		"",
 		containerRefManager,
-		machineInfo,
+		ed.machineInfo,
 		ed,
 		ed.os,
 		ed,
@@ -568,7 +578,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	containerManager, err := cm.NewContainerManager(mount.New(""),
-		cadvisorInterface,
+		ed.cadvisor,
 		cm.NodeConfig{
 			CgroupDriver:                 edgedconfig.Config.CGroupDriver,
 			SystemCgroupsName:            edgedconfig.Config.CGroupDriver,
@@ -604,7 +614,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	if useLegacyCadvisorStats {
 		ed.StatsProvider = stats.NewCadvisorStatsProvider(
-			cadvisorInterface,
+			ed.cadvisor,
 			ed.resourceAnalyzer,
 			ed.podManager,
 			ed.runtimeCache,
@@ -612,7 +622,7 @@ func newEdged(enable bool) (*edged, error) {
 			ed.statusManager)
 	} else {
 		ed.StatsProvider = stats.NewCRIStatsProvider(
-			cadvisorInterface,
+			ed.cadvisor,
 			ed.resourceAnalyzer,
 			ed.podManager,
 			ed.runtimeCache,
@@ -649,16 +659,20 @@ func newEdged(enable bool) (*edged, error) {
 }
 
 func (e *edged) initializeModules() error {
-	if err := e.cadvisor.Start(); err != nil {
-		// Fail kubelet and rely on the babysitter to retry starting kubelet.
-		// TODO(random-liu): Add backoff logic in the babysitter
-		klog.Fatalf("Failed to start cAdvisor %v", err)
+	if edgedconfig.Config.EnableMetrics {
+		if err := e.cadvisor.Start(); err != nil {
+			// Fail kubelet and rely on the babysitter to retry starting kubelet.
+			// TODO(random-liu): Add backoff logic in the babysitter
+			klog.Fatalf("Failed to start cAdvisor %v", err)
+		}
+
+		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
+		// ignore any errors, since if stats collection is not successful, the container manager will fail to start below.
+		e.StatsProvider.GetCgroupStats("/", true)
+
+		// Start resource analyzer
+		e.resourceAnalyzer.Start()
 	}
-
-	// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
-	// ignore any errors, since if stats collection is not successful, the container manager will fail to start below.
-	e.StatsProvider.GetCgroupStats("/", true)
-
 	// Start container manager.
 	node, err := e.initialNode()
 	if err != nil {
@@ -672,9 +686,6 @@ func (e *edged) initializeModules() error {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
 	}
-
-	// Start resource analyzer
-	e.resourceAnalyzer.Start()
 
 	return nil
 }
