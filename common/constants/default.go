@@ -97,6 +97,7 @@ const (
 	ResourceTypeServiceList   = "servicelist"
 	ResourceTypeEndpoints     = "endpoints"
 	ResourceTypeEndpointsList = "endpointslist"
+	ResourceTypeListener      = "listener"
 
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"

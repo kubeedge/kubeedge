@@ -124,8 +124,11 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Enable: false,
 			},
 			EdgeMesh: &EdgeMesh{
-				Enable:     true,
-				LBStrategy: LoadBalanceStrategNameRoundRobin,
+				Enable:          true,
+				LBStrategy:      EdgeMeshDefaultLoadBalanceStrategy,
+				ListenInterface: EdgeMeshDefaultInterface,
+				ListenPort:      EdgeMeshDefaultListenPort,
+				SubNet:          EdgeMeshDefaultSubNet,
 			},
 		},
 	}
