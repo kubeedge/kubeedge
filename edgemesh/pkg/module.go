@@ -1,15 +1,17 @@
 package pkg
 
 import (
-	"k8s.io/klog"
-
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/dns"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/listener"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/plugin"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/server"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
@@ -41,22 +43,31 @@ func (em *EdgeMesh) Enable() bool {
 
 //Start sets context and starts the controller
 func (em *EdgeMesh) Start() {
+	// install go-chassis plugins
+	plugin.Install()
+	// init tcp listener
+	listener.Init()
+	// init iptables
 	proxy.Init()
-	go server.Start()
+	// start proxy listener
+	go listener.Start()
+	// start dns server
+	go dns.Start()
 	// we need watch message to update the cache of instances
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeMesh Stop")
+			proxy.Clean()
 			return
 		default:
 		}
 		msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
 		if err != nil {
-			klog.Warningf("edgemesh receive msg error %v", err)
+			klog.Warningf("[EdgeMesh] receive msg error %v", err)
 			continue
 		}
-		klog.V(4).Infof("edgemesh get message: %v", msg)
-		proxy.MsgProcess(msg)
+		klog.V(4).Infof("[EdgeMesh] get message: %v", msg)
+		listener.MsgProcess(msg)
 	}
 }

@@ -29,6 +29,7 @@ type CoreInterface interface {
 	PersistentVolumesGetter
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
+	ListenerGetter
 }
 
 type metaClient struct {
@@ -82,6 +83,11 @@ func (m *metaClient) PersistentVolumeClaims(namespace string) PersistentVolumeCl
 // New VolumeAttachments metaClient
 func (m *metaClient) VolumeAttachments(namespace string) VolumeAttachmentsInterface {
 	return newVolumeAttachments(namespace, m.send)
+}
+
+// New Listener metaClient
+func (m *metaClient) Listener() ListenInterface {
+	return newListener(m.send)
 }
 
 // New creates new metaclient
