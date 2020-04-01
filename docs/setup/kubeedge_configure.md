@@ -99,7 +99,7 @@ Refer [here](deploy-edge-node.md) to add edge nodes.
 
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
-cert/key should exist in /etc/kubeedge/ca and /etc/kubeedge/certs [Generate certs](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_install_source.md#generate-certificates).
+cert/key should exist in /etc/kubeedge/ca and /etc/kubeedge/certs. Otherwise please refer to [generate certs](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_install_source.md#generate-certificates) to generate them.
 You need to copy these files to the corresponding directory on edge side.
 
 Create the `certs.tgz` by
@@ -222,4 +222,3 @@ The Edge part of KubeEdge uses MQTT for communication between deviceTwin and dev
 To use KubeEdge in double mqtt or external mode, you need to make sure that mosquitto or emqx edge is installed on the edge node as an MQTT Broker.
 
 At this point we have completed all configuration changes related to edgecore.
-
