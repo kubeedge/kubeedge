@@ -11,6 +11,7 @@ COMPONENTS=cloud \
 
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output
+GIT_TAG="1.2"
 
 define ALL_HELP_INFO
 # Build code.
@@ -33,6 +34,8 @@ all: clean
 else
 all: verify-golang
 	hack/make-rules/build.sh $(WHAT)
+	hack/create-packages-cloudcore.sh $(ARCH) $(GIT_TAG)
+	hack/create-packages-edgecore.sh $(ARCH) $(GIT_TAG)
 endif
 
 
@@ -154,15 +157,20 @@ define CROSSBUILD_HELP_INFO
 #   make crossbuild WHAT=edgecore GOARM=GOARM7
 #
 endef
-.PHONY: crossbuild 
+.PHONY: crossbuild
 ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: clean 
+   ifeq ($(GOARM),GOARM7)
+    ARCH_B="armv7l"
+   else
+    ARCH_B="aarch64"
+   endif
+crossbuild: clean
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+	hack/create-packages-edgecore.sh $(ARCH_B) $(GIT_TAG)
 endif
-
 
 
 SMALLBUILD_COMPONENTS=edgecore \

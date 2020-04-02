@@ -3,7 +3,7 @@ Description=edgecore.service
 
 [Service]
 Type=simple
-ExecStart=/etc/kubeedge/edgecore
+ExecStart=/usr/local/bin/kubeedge/edgecore
 
 [Install]
 WantedBy=multi-user.target
