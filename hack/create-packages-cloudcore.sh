@@ -31,7 +31,7 @@ mkdir -p "${TEMP_LOC}/cloudcore/cloudcore_folder"
 cp "${KUBEEDGE_ROOT}/build/tools/certgen.sh" "$TEMP_LOC/cloudcore/cloudcore_folder/certgen.sh"
 cp ${KUBEEDGE_ROOT}/build/crds/devices/* $TEMP_LOC/cloudcore/cloudcore_folder/.
 cp ${KUBEEDGE_ROOT}/build/crds/reliablesyncs/* $TEMP_LOC/cloudcore/cloudcore_folder/.
-cp ${KUBEEDGE_ROOT}/build/tools/cloudcore.service $TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service
+cp "${KUBEEDGE_ROOT}/build/tools/cloudcore.service" "$TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service"
 
 # Creating the post_install script for Cloudcore
 echo "/etc/kubeedge/files/certgen.sh genCertAndKey edge" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
@@ -44,9 +44,9 @@ echo "/usr/local/bin/kubeedge/cloudcore --minconfig > /etc/kubeedge/config/cloud
 
 # Copying the cloudcore and edgecore build for arm64 to respective folders
 # Binaries are copied into $TEMP_LOC/cloudcore folder
-cp ${KUBEEDGE_ROOT}/_output/local/bin/cloudcore $TEMP_LOC/cloudcore/cloudcore
+cp "${KUBEEDGE_ROOT}/_output/local/bin/cloudcore" "$TEMP_LOC/cloudcore/cloudcore"
 
 # Creating Packages for cloudcore for arm64. -v <version> needs to be replaced with tag version.
-mkdir -p ${KUBEEDGE_ROOT}/_output/local/pkg
-cd ${KUBEEDGE_ROOT}/_output/local/pkg
-fpm -s dir -t deb -v $GIT_TAG -a $ARCH -n kubeedge-cloudcore --after-install=$TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh $TEMP_LOC/cloudcore/cloudcore_folder/=/etc/kubeedge/files $TEMP_LOC/cloudcore/cloudcore=/usr/local/bin/kubeedge/cloudcore $TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service=/etc/systemd/system/cloudcore.service
+mkdir -p "${KUBEEDGE_ROOT}/_output/local/pkg"
+cd "${KUBEEDGE_ROOT}/_output/local/pkg" || exit
+fpm -s dir -t deb -v $GIT_TAG -a $ARCH -d kubectl -n kubeedge-cloudcore --after-install=$TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh $TEMP_LOC/cloudcore/cloudcore_folder/=/etc/kubeedge/files $TEMP_LOC/cloudcore/cloudcore=/usr/local/bin/kubeedge/cloudcore $TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service=/etc/systemd/system/cloudcore.service

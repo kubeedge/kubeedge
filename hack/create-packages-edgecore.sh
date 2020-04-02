@@ -29,15 +29,15 @@ GIT_TAG=$2
 mkdir -p "${TEMP_LOC}/edgecore/edgecore_folder"
 # Copying files from the github repo to the respective folders
 # Creating the post_install script for Edgecore
-cp ${KUBEEDGE_ROOT}/build/tools/edgecore.service $TEMP_LOC/edgecore/edgecore_folder/edgecore.service
+cp "${KUBEEDGE_ROOT}/build/tools/edgecore.service" "$TEMP_LOC/edgecore/edgecore_folder/edgecore.service"
 echo "mkdir -p  /etc/kubeedge/config/" >> $TEMP_LOC/edgecore/edgecore_folder/post_install.sh
 echo "/usr/local/bin/kubeedge/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml" >> $TEMP_LOC/edgecore/edgecore_folder/post_install.sh
 
 # Copying the cloudcore and edgecore build for arm64 to respective folders
 # Binaries are copied into $TEMP_LOC/cloudcore and $TEMP_LOC/edgecore folder
-cp ${KUBEEDGE_ROOT}/_output/local/bin/edgecore $TEMP_LOC/edgecore/edgecore
+cp "${KUBEEDGE_ROOT}/_output/local/bin/edgecore" "$TEMP_LOC/edgecore/edgecore"
 
 # Creating Packages for cloudcore/ edgecore for arm64. -v <version> needs to be replaced with tag version.
-mkdir -p ${KUBEEDGE_ROOT}/_output/local/pkg
-cd ${KUBEEDGE_ROOT}/_output/local/pkg
+mkdir -p "${KUBEEDGE_ROOT}/_output/local/pkg"
+cd "${KUBEEDGE_ROOT}/_output/local/pkg" || exit
 fpm -s dir -t deb -v $GIT_TAG -a $ARCH -n kubeedge-edgecore --after-install=$TEMP_LOC/edgecore/edgecore_folder/post_install.sh $TEMP_LOC/edgecore/edgecore_folder/=/etc/kubeedge/files $TEMP_LOC/edgecore/edgecore=/usr/local/bin/kubeedge/edgecore $TEMP_LOC/edgecore/edgecore_folder/edgecore.service=/etc/systemd/system/edgecore.service
