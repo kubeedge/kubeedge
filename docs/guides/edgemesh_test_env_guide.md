@@ -31,7 +31,7 @@
 ### How to test EdgeMesh
 Assume we have two edge nodes in ready state, we call them edge node "a" and "b"
 ```bash
-$ kubectl get deployments
+$ kubectl get nodes
 NAME          STATUS     ROLES    AGE   VERSION
 edge-node-a   Ready      edge     25m   v1.15.3-kubeedge-v1.1.0-beta.0.358+0b7ac7172442b5-dirty
 edge-node-b   Ready      edge     25m   v1.15.3-kubeedge-v1.1.0-beta.0.358+0b7ac7172442b5-dirty
