@@ -446,7 +446,7 @@ func newEdged(enable bool) (*edged, error) {
 		}
 
 		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
-			edgedconfig.Config.RemoteRuntimeEndpoint, edgedconfig.Config.RemoteRuntimeEndpoint)
+			edgedconfig.Config.RemoteRuntimeEndpoint, edgedconfig.Config.RemoteImageEndpoint)
 
 		klog.Info("Starting the GRPC server for the docker CRI shim.")
 		server := dockerremote.NewDockerServer(edgedconfig.Config.RemoteRuntimeEndpoint, ds)
@@ -467,7 +467,7 @@ func newEdged(enable bool) (*edged, error) {
 	httpClient := &http.Client{}
 	runtimeService, imageService, err := getRuntimeAndImageServices(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
-		edgedconfig.Config.RemoteRuntimeEndpoint,
+		edgedconfig.Config.RemoteImageEndpoint,
 		metav1.Duration{
 			Duration: time.Duration(edgedconfig.Config.RuntimeRequestTimeout) * time.Minute,
 		})
