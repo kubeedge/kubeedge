@@ -581,8 +581,8 @@ func newEdged(enable bool) (*edged, error) {
 		ed.cadvisor,
 		cm.NodeConfig{
 			CgroupDriver:                 edgedconfig.Config.CGroupDriver,
-			SystemCgroupsName:            edgedconfig.Config.CGroupDriver,
-			KubeletCgroupsName:           edgedconfig.Config.CGroupDriver,
+			SystemCgroupsName:            "",
+			KubeletCgroupsName:           "",
 			ContainerRuntime:             edgedconfig.Config.RuntimeType,
 			CgroupsPerQOS:                false,
 			KubeletRootDir:               DefaultRootDir,
@@ -660,6 +660,9 @@ func newEdged(enable bool) (*edged, error) {
 
 func (e *edged) initializeModules() error {
 	if edgedconfig.Config.EnableMetrics {
+		// Start resource analyzer
+		e.resourceAnalyzer.Start()
+
 		if err := e.cadvisor.Start(); err != nil {
 			// Fail kubelet and rely on the babysitter to retry starting kubelet.
 			// TODO(random-liu): Add backoff logic in the babysitter
@@ -669,9 +672,6 @@ func (e *edged) initializeModules() error {
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
 		// ignore any errors, since if stats collection is not successful, the container manager will fail to start below.
 		e.StatsProvider.GetCgroupStats("/", true)
-
-		// Start resource analyzer
-		e.resourceAnalyzer.Start()
 	}
 	// Start container manager.
 	node, err := e.initialNode()
