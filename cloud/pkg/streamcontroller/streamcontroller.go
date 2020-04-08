@@ -2,7 +2,9 @@ package streamcontroller
 
 import (
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/constants"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 type streamController struct {
@@ -15,8 +17,9 @@ func newstreamController(enable bool) *streamController {
 	}
 }
 
-func Register() {
-	core.Register(newstreamController(false))
+func Register(controller *v1alpha1.StreamController) {
+	config.InitConfigure(controller)
+	core.Register(newstreamController(controller.Enable))
 }
 
 func (s *streamController) Name() string {
@@ -31,7 +34,7 @@ func (s *streamController) Start() {
 	ts := newTunnelServer()
 	ts.Start()
 
-	server := newServer(ts)
+	server := newStreamServer(ts)
 	server.Start()
 }
 

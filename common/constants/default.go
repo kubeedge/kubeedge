@@ -11,6 +11,10 @@ const (
 	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultCertFile  = "/etc/kubeedge/certs/edge.crt"
 	DefaultKeyFile   = "/etc/kubeedge/certs/edge.key"
+
+	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
+	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
+	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
 )
 
 const (

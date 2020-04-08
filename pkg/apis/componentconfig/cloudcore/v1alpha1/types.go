@@ -68,6 +68,8 @@ type Modules struct {
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
+	// StreamController indicates streamController module config
+	StreamController *StreamController `json:"streamController,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -316,4 +318,37 @@ type SyncController struct {
 	// if set to false (for debugging etc.), skip checking other syncController configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
+}
+
+// SreamController indicates the stream controller
+type StreamController struct {
+	// Enable indicates whether streamcontroller is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// default true
+	Enable bool `json:"enable,omitempty"`
+
+	// TLSTunnelCAFile indicates ca file path
+	// default /etc/kubeedge/ca/rootCA.crt
+	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
+	// TLSTunnelCertFile indicates cert file path
+	// default /etc/kubeedge/certs/edge.crt
+	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
+	// TLSTunnelPrivateKeyFile indicates key file path
+	// default /etc/kubeedge/certs/edge.key
+	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
+	// TunnelPort set open port for tunnel server
+	// default 10002
+	TunnelPort uint32 `json:"tunnelPort,omitempty"`
+
+	// TLSStreamCAFile indicates kube-apiserver ca file path
+	// default /etc/kubeedge/ca/streamCA.crt
+	TLSStreamCAFile string `json:"tlsStreamCAFile,omitempty"`
+	// TLSStreamCertFile indicates cert file path
+	// default /etc/kubeedge/certs/stream.crt
+	TLSStreamCertFile string `json:"tlsStreamCertFile,omitempty"`
+	// TLSStreamPrivateKeyFile indicates key file path
+	// default /etc/kubeedge/certs/stream.key
+	TLSStreamPrivateKeyFile string `json:"tlsStreamPrivateKeyFile,omitempty"`
+	// StreamPort set open port for stream server
+	// default 10003
+	StreamPort uint32 `json:"streamPort,omitempty"`
 }

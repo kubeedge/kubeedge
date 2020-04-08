@@ -38,6 +38,7 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleDeviceController(*c.Modules.DeviceController)...)
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	allErrs = append(allErrs, ValidateLeaderElectionConfiguration(*c.LeaderElection)...)
+	allErrs = append(allErrs, ValidateModuleStreamController(*c.Modules.StreamController)...)
 	return allErrs
 }
 
@@ -139,6 +140,37 @@ func ValidateModuleSyncController(d v1alpha1.SyncController) field.ErrorList {
 	}
 
 	allErrs := field.ErrorList{}
+	return allErrs
+}
+
+// ValidateModuleStreamController validates `d` and returns an errorList if it is invalid
+func ValidateModuleStreamController(d v1alpha1.StreamController) field.ErrorList {
+	if !d.Enable {
+		return field.ErrorList{}
+	}
+
+	allErrs := field.ErrorList{}
+
+	if !utilvalidation.FileIsExist(d.TLSTunnelPrivateKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"), d.TLSTunnelPrivateKeyFile, "TLSTunnelPrivateKeyFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(d.TLSTunnelCertFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"), d.TLSTunnelCertFile, "TLSTunnelCertFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(d.TLSTunnelCAFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCAFile"), d.TLSTunnelCAFile, "TLSTunnelCAFile not exist"))
+	}
+
+	if !utilvalidation.FileIsExist(d.TLSStreamPrivateKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamPrivateKeyFile"), d.TLSStreamPrivateKeyFile, "TLSStreamPrivateKeyFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(d.TLSStreamCertFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamCertFile"), d.TLSStreamCertFile, "TLSStreamCertFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(d.TLSStreamCAFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamCAFile"), d.TLSStreamCAFile, "TLSStreamCAFile not exist"))
+	}
+
 	return allErrs
 }
 
