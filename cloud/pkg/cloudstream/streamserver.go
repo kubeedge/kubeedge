@@ -1,4 +1,4 @@
-package streamcontroller
+package cloudstream
 
 import (
 	"crypto/tls"
@@ -11,7 +11,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"
 )
 
@@ -54,7 +54,7 @@ func (s *StreamServer) getExec(r *restful.Request, w *restful.Response) {
 
 func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response) {
 
-	hostKey := r.HeaderParameter("Host")
+	hostKey := r.Request.Host
 	session, ok := s.tunnel.getSession(hostKey)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -106,7 +106,7 @@ func (s *StreamServer) Start() {
 			ClientCAs: pool,
 		},
 	}
-
+	klog.Infof("prepare to start stream server ...")
 	err = tunnelServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("start stream server error %v\n", err)

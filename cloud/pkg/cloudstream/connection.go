@@ -1,4 +1,4 @@
-package streamcontroller
+package cloudstream
 
 import (
 	"fmt"
@@ -80,6 +80,7 @@ func (l *LogsConnection) Serve() error {
 			}
 		}
 	*/
+	return nil
 }
 
 var _ ApiServerConnection = &LogsConnection{}

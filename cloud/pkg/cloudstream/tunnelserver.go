@@ -1,4 +1,4 @@
-package streamcontroller
+package cloudstream
 
 import (
 	"crypto/tls"
@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 )
 
 type TunnelServer struct {
@@ -95,6 +95,7 @@ func (s *TunnelServer) Start() {
 			ClientCAs: pool,
 		},
 	}
+	klog.Infof("prepare to start tunnel server ...")
 	err = tunnelServer.ListenAndServeTLS(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("start tunnelServer error %v\n", err)
