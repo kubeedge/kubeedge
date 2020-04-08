@@ -127,6 +127,17 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			SyncController: &SyncController{
 				Enable: true,
 			},
+			StreamController: &StreamController{
+				Enable:                  false,
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				TunnelPort:              10002,
+				TLSStreamCAFile:         constants.DefaultStreamCAFile,
+				TLSStreamCertFile:       constants.DefaultStreamCertFile,
+				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
+				StreamPort:              10003,
+			},
 		},
 		LeaderElection:	&componentbaseconfig.LeaderElectionConfiguration{
 			LeaderElect:		false,

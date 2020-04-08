@@ -1,14 +1,19 @@
 package streamcontroller
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
-	"k8s.io/klog"
-
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/config"
 )
 
 type TunnelServer struct {
@@ -76,12 +81,21 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 func (s *TunnelServer) Start() {
 
 	s.installDefaultHandler()
+	data, err := ioutil.ReadFile(config.Config.TLSTunnelCAFile)
+	if err != nil {
+		klog.Fatalf("read tls tunnel ca file error %v", err)
+	}
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(data)
 
 	tunnelServer := &http.Server{
-		Addr:    ":10002",
+		Addr:    fmt.Sprintf(":%d", config.Config.TunnelPort),
 		Handler: s.container,
+		TLSConfig: &tls.Config{
+			ClientCAs: pool,
+		},
 	}
-	err := tunnelServer.ListenAndServeTLS("./tunnelServer.crt", "./tunnelServer.key")
+	err = tunnelServer.ListenAndServeTLS(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("start tunnelServer error %v\n", err)
 	}

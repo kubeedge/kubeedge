@@ -1,29 +1,33 @@
 package streamcontroller
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller/config"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"
 )
 
-type Server struct {
+type StreamServer struct {
 	container *restful.Container
 	tunnel    *TunnelServer
 }
 
-func newServer(t *TunnelServer) *Server {
-	return &Server{
+func newStreamServer(t *TunnelServer) *StreamServer {
+	return &StreamServer{
 		container: restful.NewContainer(),
 		tunnel:    t,
 	}
 }
 
-func (s *Server) installDebugHandler() {
+func (s *StreamServer) installDebugHandler() {
 	ws := new(restful.WebService)
 	ws.Path("/containerLogs")
 	ws.Route(ws.GET("/{podNamespace}/{podID}/{containerName}").
@@ -44,11 +48,11 @@ func (s *Server) installDebugHandler() {
 	s.container.Add(ws)
 }
 
-func (s *Server) getExec(r *restful.Request, w *restful.Response) {
+func (s *StreamServer) getExec(r *restful.Request, w *restful.Response) {
 	panic("unimplement")
 }
 
-func (s *Server) getContainerLogs(r *restful.Request, w *restful.Response) {
+func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response) {
 
 	hostKey := r.HeaderParameter("Host")
 	session, ok := s.tunnel.getSession(hostKey)
@@ -85,16 +89,26 @@ func (s *Server) getContainerLogs(r *restful.Request, w *restful.Response) {
 	}
 }
 
-func (s *Server) Start() {
+func (s *StreamServer) Start() {
 	s.installDebugHandler()
 
-	tunnelServer := &http.Server{
-		Addr:    ":10350",
-		Handler: s.container,
-	}
-	//err := tunnelServer.ListenAndServeTLS("./server.crt", "./server.key")
-	err := tunnelServer.ListenAndServe()
+	pool := x509.NewCertPool()
+	data, err := ioutil.ReadFile(config.Config.TLSStreamCAFile)
 	if err != nil {
-		klog.Fatalf("start server error %v\n", err)
+		klog.Fatalf("read tls stream ca file error %v", err)
+	}
+	pool.AppendCertsFromPEM(data)
+
+	tunnelServer := &http.Server{
+		Addr:    fmt.Sprintf(":%d", config.Config.StreamPort),
+		Handler: s.container,
+		TLSConfig: &tls.Config{
+			ClientCAs: pool,
+		},
+	}
+
+	err = tunnelServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
+	if err != nil {
+		klog.Fatalf("start stream server error %v\n", err)
 	}
 }

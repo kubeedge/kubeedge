@@ -101,5 +101,5 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
 	synccontroller.Register(c.Modules.SyncController, c.KubeAPIConfig)
-	streamcontroller.Register()
+	streamcontroller.Register(c.Modules.StreamController)
 }
