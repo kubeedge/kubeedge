@@ -1,4 +1,4 @@
-package streamcontroller
+package cloudstream
 
 import (
 	"fmt"

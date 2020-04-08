@@ -69,7 +69,7 @@ type Modules struct {
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// StreamController indicates streamController module config
-	StreamController *StreamController `json:"streamController,omitempty"`
+	StreamController *StreamController `json:"cloudstream,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -322,7 +322,7 @@ type SyncController struct {
 
 // SreamController indicates the stream controller
 type StreamController struct {
-	// Enable indicates whether streamcontroller is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 

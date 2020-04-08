@@ -128,7 +128,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Enable: true,
 			},
 			StreamController: &StreamController{
-				Enable:                  false,
+				Enable:                  true,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
 				TLSTunnelCertFile:       constants.DefaultCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
