@@ -16,6 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
+	"github.com/kubeedge/kubeedge/cloud/pkg/streamcontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
@@ -100,4 +101,5 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
 	synccontroller.Register(c.Modules.SyncController, c.KubeAPIConfig)
+	streamcontroller.Register()
 }
