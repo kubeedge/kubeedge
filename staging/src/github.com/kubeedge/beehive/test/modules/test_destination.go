@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
 //Constants for module name and group
@@ -14,7 +14,10 @@ const (
 )
 
 type testModuleDest struct {
-	context *context.Context
+}
+
+func (m *testModuleDest) Enable() bool {
+	return true
 }
 
 func init() {
@@ -29,22 +32,21 @@ func (*testModuleDest) Group() string {
 	return DestinationGroup
 }
 
-func (m *testModuleDest) Start(c *context.Context) {
-	m.context = c
-	message, err := c.Receive(DestinationModule)
+func (m *testModuleDest) Start() {
+	message, err := beehiveContext.Receive(DestinationModule)
 	fmt.Printf("destination module receive message:%v error:%v\n", message, err)
-	message, err = c.Receive(DestinationModule)
+	message, err = beehiveContext.Receive(DestinationModule)
 	fmt.Printf("destination module receive message:%v error:%v\n", message, err)
 	resp := message.NewRespByMessage(&message, "fine")
 	if message.IsSync() {
-		c.SendResp(*resp)
+		beehiveContext.SendResp(*resp)
 	}
 
-	message, err = c.Receive(DestinationModule)
+	message, err = beehiveContext.Receive(DestinationModule)
 	fmt.Printf("destination module receive message:%v error:%v\n", message, err)
 	if message.IsSync() {
 		resp = message.NewRespByMessage(&message, "fine")
-		c.SendResp(*resp)
+		beehiveContext.SendResp(*resp)
 	}
 
 	//message, err = c.Receive(DestinationModule)
@@ -53,8 +55,4 @@ func (m *testModuleDest) Start(c *context.Context) {
 	//	resp = message.NewRespByMessage(&message, "20 years old")
 	//	c.SendResp(*resp)
 	//}
-}
-
-func (m *testModuleDest) Cleanup() {
-	m.context.Cleanup(m.Name())
 }
