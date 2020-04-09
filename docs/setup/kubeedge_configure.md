@@ -83,7 +83,7 @@ Node registration can be completed in two ways:
 
 #### Node - Automatic Registration
 
-Edge node can be registered automatically if the field `modules.edged.registerNode` in edgecore's config is true.
+Edge node can be registered automatically if the value of field `modules.edged.registerNode` in edgecore's config [edgecore config file](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_configure.md#create-and-set-edgecore-config-file) is set to true.
 
 ```yaml
 modules:
@@ -95,14 +95,14 @@ modules:
 
 Refer [here](deploy-edge-node.md) to add edge nodes.
 
-#### Check if the certificates are created (Run on cloud side)
+#### Check the existence of certificates (cloud side)
 
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
-The cert/key will be generated in the /etc/kubeedge/ca and /etc/kubeedge/certs respectively, so this command should be run with root or users who have read/ write permission to those directories.
-We need to copy these files to the corresponding edge side server directory.
+cert/key should exist in /etc/kubeedge/ca and /etc/kubeedge/certs. Otherwise please refer to [generate certs](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_install_source.md#generate-certificates) to generate them.
+You need to copy these files to the corresponding directory on edge side.
 
-We can create the `certs.tgz` by
+Create the `certs.tgz` by
 
 ```shell
 cd /etc/kubeedge
@@ -214,13 +214,10 @@ Verify the configurations before running `edgecore`
 
 #### Configuring MQTT mode
 
-The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes:
-
-+ internalMqttMode: internal mqtt broker is enabled.
-+ bothMqttMode: internal as well as external broker are enabled.
-+ externalMqttMode: only external broker is enabled.
-
-Use mode field in edge.yaml to select the desired mode.
+The Edge part of KubeEdge uses MQTT for communication between deviceTwin and devices. KubeEdge supports 3 MQTT modes (`internalMqttMode`, `bothMqttMode`, `externalMqttMode`), set `mqttMode` field in edgecore.yaml to the desired mode.
++ internalMqttMode: internal mqtt broker is enabled (`mqttMode`=0).
++ bothMqttMode: internal as well as external broker are enabled (`mqttMode`=1).
++ externalMqttMode: only external broker is enabled (`mqttMode`=2).
 
 To use KubeEdge in double mqtt or external mode, you need to make sure that mosquitto or emqx edge is installed on the edge node as an MQTT Broker.
 
