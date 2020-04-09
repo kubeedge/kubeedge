@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -16,11 +16,14 @@ const (
 )
 
 type testModuleSource struct {
-	context *context.Context
 }
 
 func init() {
 	core.Register(&testModuleSource{})
+}
+
+func (m *testModuleSource) Enable() bool {
+	return true
 }
 
 func (*testModuleSource) Name() string {
@@ -31,15 +34,14 @@ func (*testModuleSource) Group() string {
 	return SourceGroup
 }
 
-func (m *testModuleSource) Start(c *context.Context) {
-	m.context = c
+func (m *testModuleSource) Start() {
 	message := model.NewMessage("").SetRoute(SourceModule, "").
 		SetResourceOperation("test", model.InsertOperation).FillBody("hello")
-	c.Send(DestinationModule, *message)
+	beehiveContext.Send(DestinationModule, *message)
 
 	message = model.NewMessage("").SetRoute(SourceModule, "").
 		SetResourceOperation("test", model.UpdateOperation).FillBody("how are you")
-	resp, err := c.SendSync(DestinationModule, *message, 5*time.Second)
+	resp, err := beehiveContext.SendSync(DestinationModule, *message, 5*time.Second)
 	if err != nil {
 		fmt.Printf("failed to send sync message, error:%v\n", err)
 	} else {
@@ -48,9 +50,5 @@ func (m *testModuleSource) Start(c *context.Context) {
 
 	message = model.NewMessage("").SetRoute(SourceModule, DestinationGroup).
 		SetResourceOperation("test", model.DeleteOperation).FillBody("fine")
-	c.SendToGroup(DestinationGroup, *message)
-}
-
-func (m *testModuleSource) Cleanup() {
-	m.context.Cleanup(m.Name())
+	beehiveContext.SendToGroup(DestinationGroup, *message)
 }
