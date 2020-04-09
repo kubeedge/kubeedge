@@ -519,6 +519,8 @@ func newEdged(enable bool) (*edged, error) {
 			ContainerRuntime:             edgedconfig.Config.RuntimeType,
 			KubeletRootDir:               DefaultRootDir,
 			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
+			CgroupsPerQOS:                true,
+			CgroupRoot:                   "/",
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
