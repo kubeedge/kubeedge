@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###
-#Copyright 2019 The KubeEdge Authors.
+#Copyright 2020 The KubeEdge Authors.
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ echo "kubectl create -f devices_v1alpha1_device.yaml" >> $TEMP_LOC/cloudcore/clo
 echo "kubectl create -f cluster_objectsync_v1alpha1.yaml" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
 echo "kubectl create -f objectsync_v1alpha1.yaml" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
 echo "mkdir -p  /etc/kubeedge/config/" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
-echo "/usr/local/bin/kubeedge/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
+echo "/usr/bin/kubeedge/cloudcore --minconfig > /etc/kubeedge/config/cloudcore.yaml" >> $TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh
 
 # Copying the cloudcore and edgecore build for arm64 to respective folders
 # Binaries are copied into $TEMP_LOC/cloudcore folder
@@ -49,4 +49,4 @@ cp "${KUBEEDGE_ROOT}/_output/local/bin/cloudcore" "$TEMP_LOC/cloudcore/cloudcore
 # Creating Packages for cloudcore for arm64. -v <version> needs to be replaced with tag version.
 mkdir -p "${KUBEEDGE_ROOT}/_output/local/pkg"
 cd "${KUBEEDGE_ROOT}/_output/local/pkg" || exit
-fpm -s dir -t deb -v $GIT_TAG -a $ARCH -d kubectl -n kubeedge-cloudcore --after-install=$TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh $TEMP_LOC/cloudcore/cloudcore_folder/=/etc/kubeedge/files $TEMP_LOC/cloudcore/cloudcore=/usr/local/bin/kubeedge/cloudcore $TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service=/etc/systemd/system/cloudcore.service
+fpm -s dir -t deb -v $GIT_TAG -a $ARCH -d kubectl -n kubeedge-cloudcore --after-install=$TEMP_LOC/cloudcore/cloudcore_folder/post_install.sh $TEMP_LOC/cloudcore/cloudcore_folder/=/etc/kubeedge/files $TEMP_LOC/cloudcore/cloudcore=/usr/bin/kubeedge/cloudcore $TEMP_LOC/cloudcore/cloudcore_folder/cloudcore.service=/etc/systemd/system/cloudcore.service

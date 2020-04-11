@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###
-#Copyright 2019 The KubeEdge Authors.
+#Copyright 2020 The KubeEdge Authors.
 #
 #Licensed under the Apache License, Version 2.0 (the "License");
 #you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ mkdir -p "${TEMP_LOC}/edgecore/edgecore_folder"
 # Creating the post_install script for Edgecore
 cp "${KUBEEDGE_ROOT}/build/tools/edgecore.service" "$TEMP_LOC/edgecore/edgecore_folder/edgecore.service"
 echo "mkdir -p  /etc/kubeedge/config/" >> $TEMP_LOC/edgecore/edgecore_folder/post_install.sh
-echo "/usr/local/bin/kubeedge/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml" >> $TEMP_LOC/edgecore/edgecore_folder/post_install.sh
+echo "/usr/bin/kubeedge/edgecore --minconfig > /etc/kubeedge/config/edgecore.yaml" >> $TEMP_LOC/edgecore/edgecore_folder/post_install.sh
 
 # Copying the cloudcore and edgecore build for arm64 to respective folders
 # Binaries are copied into $TEMP_LOC/cloudcore and $TEMP_LOC/edgecore folder
@@ -40,4 +40,4 @@ cp "${KUBEEDGE_ROOT}/_output/local/bin/edgecore" "$TEMP_LOC/edgecore/edgecore"
 # Creating Packages for cloudcore/ edgecore for arm64. -v <version> needs to be replaced with tag version.
 mkdir -p "${KUBEEDGE_ROOT}/_output/local/pkg"
 cd "${KUBEEDGE_ROOT}/_output/local/pkg" || exit
-fpm -s dir -t deb -v $GIT_TAG -a $ARCH -n kubeedge-edgecore --after-install=$TEMP_LOC/edgecore/edgecore_folder/post_install.sh $TEMP_LOC/edgecore/edgecore_folder/=/etc/kubeedge/files $TEMP_LOC/edgecore/edgecore=/usr/local/bin/kubeedge/edgecore $TEMP_LOC/edgecore/edgecore_folder/edgecore.service=/etc/systemd/system/edgecore.service
+fpm -s dir -t deb -v $GIT_TAG -a $ARCH -n kubeedge-edgecore --after-install=$TEMP_LOC/edgecore/edgecore_folder/post_install.sh $TEMP_LOC/edgecore/edgecore_folder/=/etc/kubeedge/files $TEMP_LOC/edgecore/edgecore=/usr/bin/kubeedge/edgecore $TEMP_LOC/edgecore/edgecore_folder/edgecore.service=/etc/systemd/system/edgecore.service
