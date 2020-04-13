@@ -70,6 +70,10 @@ func (e *edged) initialNode() (*v1.Node, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		klog.Errorf("couldn't determine hostname: %v", err)
+		return nil, err
+	}
+	if len(e.nodeName) != 0 {
+		hostname = e.nodeName
 	}
 
 	ip, err := e.getIP()
