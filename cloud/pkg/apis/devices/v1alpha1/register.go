@@ -38,14 +38,14 @@ var (
 
 const (
 	// GroupName is the group name use in this package.
-	GroupName = "reliablesyncs.kubeedge.io"
+	GroupName = "devices.kubeedge.io"
 	// Version is the API version.
 	Version = "v1alpha1"
 )
 
 var (
 	// SchemeGroupVersion is the group version used to register these objects.
-	SchemeGroupVersion = schema.GroupVersion{Group: "devices.kubeedge.io", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: Version}
 )
 
 func init() {
