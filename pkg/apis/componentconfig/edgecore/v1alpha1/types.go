@@ -200,6 +200,13 @@ type Edged struct {
 	//NetworkPluginMTU indicates the MTU to be passed to the network plugin
 	//default 1500
 	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
+	// CgroupsPerQOS enables QoS based Cgroup hierarchy: top level cgroups for QoS Classes
+	// And all Burstable and BestEffort pods are brought up under their
+	// specific top level QoS cgroup.
+	CgroupsPerQOS bool `json:"cgroupsPerQOS"`
+	// CgroupRoot is the root cgroup to use for pods.
+	// If CgroupsPerQOS is enabled, this is the root of the QoS cgroup hierarchy.
+	CgroupRoot string `json:"cgroupRoot"`
 }
 
 // EdgeHub indicates the edgehub module config
