@@ -71,6 +71,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ImageGCLowThreshold:         constants.DefaultImageGCLowThreshold,
 				MaximumDeadContainersPerPod: constants.DefaultMaximumDeadContainersPerPod,
 				CGroupDriver:                CGroupDriverCGroupFS,
+				CgroupsPerQOS:               true,
+				CgroupRoot:                  constants.DefaultCgroupRoot,
 				NetworkPluginName:           "",
 				CNIConfDir:                  constants.DefaultCNIConfDir,
 				CNIBinDir:                   constants.DefaultCNIBinDir,
@@ -164,6 +166,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				DevicePluginEnabled:   false,
 				GPUPluginEnabled:      false,
 				CGroupDriver:          CGroupDriverCGroupFS,
+				CgroupsPerQOS:         true,
+				CgroupRoot:            constants.DefaultCgroupRoot,
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,
