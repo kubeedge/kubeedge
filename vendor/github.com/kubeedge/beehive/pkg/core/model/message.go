@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Constants for database operations and resource type settings
