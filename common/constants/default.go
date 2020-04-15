@@ -34,6 +34,7 @@ const (
 	DefaultCNICacheDir                 = "/var/lib/cni/cache"
 	DefaultNetworkPluginMTU            = 1500
 	DefaultConcurrentConsumers         = 5
+	DefaultCgroupRoot                  = "/"
 )
 const (
 	DefaultPodStatusSyncInterval = 60
