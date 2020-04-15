@@ -88,7 +88,7 @@ func (s *Server) getTLSConfig(cert, key string) (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-// get the protocal server by protocol type
+// get the protocol server by protocol type
 func (s *Server) getProtoServer(opts Options) error {
 	switch s.Type {
 	case api.ProtocolTypeQuic:

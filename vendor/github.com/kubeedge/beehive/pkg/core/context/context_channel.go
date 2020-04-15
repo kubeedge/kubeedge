@@ -155,7 +155,7 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 		return
 	}
 
-	klog.Warningf("Get bad anonName:%s when sendresp message, do nothing", anonName)
+	klog.V(4).Infof("Get bad anonName:%s when sendresp message, do nothing", anonName)
 }
 
 // SendToGroup send msg to modules. Todo: do not stuck
