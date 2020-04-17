@@ -101,6 +101,9 @@ type Modules struct {
 	// EdgeMesh indicates edgeMesh module config
 	// +Required
 	EdgeMesh *EdgeMesh `json:"edgeMesh,omitempty"`
+	// EdgeStream indicates edgestream module config
+	// +Required
+	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -294,7 +297,7 @@ type EdgeHubWebSocket struct {
 	// ReadDeadline indicates read dead line (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
-	// Server indicates websocket server address (ip:port)
+	// TunnelServer indicates websocket server address (ip:port)
 	// +Required
 	Server string `json:"server,omitempty"`
 	// WriteDeadline indicates write dead line (second)
@@ -388,4 +391,28 @@ type EdgeMesh struct {
 	SubNet string `json:"subNet,omitempty"`
 	// ListenPort indicates the listen port of EdgeMesh
 	ListenPort int `json:"listenPort,omitempty"`
+}
+
+// EdgeSream indicates the stream controller
+type EdgeStream struct {
+	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
+	// default true
+	Enable bool `json:"enable,omitempty"`
+
+	// TLSTunnelCAFile indicates ca file path
+	// default /etc/kubeedge/ca/rootCA.crt
+	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
+
+	// HandshakeTimeout indicates handshake timeout (second)
+	// default  30
+	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
+	// ReadDeadline indicates read dead line (second)
+	// default 15
+	ReadDeadline int32 `json:"readDeadline,omitempty"`
+	// TunnelServer indicates websocket server address (ip:port)
+	// +Required
+	TunnelServer string `json:"server,omitempty"`
+	// WriteDeadline indicates write dead line (second)
+	// default 15
+	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }

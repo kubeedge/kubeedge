@@ -2,32 +2,37 @@ package stream
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/gorilla/websocket"
 )
 
-type Connector interface {
+type EdgeConnector interface {
 	Bytes() ([]byte, error)
-	Dial() error
+	Serve(tunnel *websocket.Conn) error
+	fmt.Stringer
 }
 
-type LogsConnectorInfo struct {
+type EdgeLogsConnector struct {
 	Url    url.URL     `json:"url"`
 	Header http.Header `json:"header"`
 }
 
-func (l *LogsConnectorInfo) Bytes() ([]byte, error) {
+func (l *EdgeLogsConnector) Bytes() ([]byte, error) {
 	return json.Marshal(l)
 }
 
-func (l *LogsConnectorInfo) Dial() error {
-	/*
-		dialer := websocket.Dialer{
-			HandshakeTimeout: time.Second * 2,
-		}
-		con, _, err := dialer.Dial(l.Url.String(), l.Header)
-	*/
+func (l *EdgeLogsConnector) String() string {
+	return "EDGE_LOGS_CONNECTOR"
+}
+
+func (l *EdgeLogsConnector) Serve(tunnel *websocket.Conn) error {
+
 	return nil
 }
 
-var _ Connector = &LogsConnectorInfo{}
+func init() {
+	var _ EdgeConnector = &EdgeLogsConnector{}
+}

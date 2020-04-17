@@ -110,5 +110,6 @@ func (s *StreamServer) Start() {
 	err = tunnelServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("start stream server error %v\n", err)
+		return
 	}
 }

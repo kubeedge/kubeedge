@@ -134,6 +134,14 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ListenPort:      EdgeMeshDefaultListenPort,
 				SubNet:          EdgeMeshDefaultSubNet,
 			},
+			EdgeStream: &EdgeStream{
+				Enable:           true,
+				TLSTunnelCAFile:  constants.DefaultCAFile,
+				HandshakeTimeout: 30,
+				ReadDeadline:     15,
+				TunnelServer:     "127.0.0.1:10002",
+				WriteDeadline:    15,
+			},
 		},
 	}
 }
@@ -190,6 +198,10 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				MqttServerExternal: "tcp://127.0.0.1:1883",
 				MqttServerInternal: "tcp://127.0.0.1:1884",
 				MqttMode:           MqttModeExternal,
+			},
+			EdgeStream: &EdgeStream{
+				TLSTunnelCAFile: constants.DefaultCAFile,
+				TunnelServer:    "127.0.0.1:10002",
 			},
 		},
 	}

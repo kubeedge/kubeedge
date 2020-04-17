@@ -38,7 +38,7 @@ func (l *LogsConnection) Close() error {
 }
 
 func (l *LogsConnection) SendConnector() error {
-	connector := &stream.LogsConnectorInfo{
+	connector := &stream.EdgeLogsConnector{
 		Url:    *l.r.Request.URL,
 		Header: l.r.Request.Header,
 	}
@@ -46,7 +46,7 @@ func (l *LogsConnection) SendConnector() error {
 	if err != nil {
 		return err
 	}
-	m := stream.NewMessage(l.ID, stream.MessageTypeConnect, data)
+	m := stream.NewMessage(l.ID, stream.MessageTypeLogsConnect, data)
 	return l.WriteToTunnel(m)
 }
 
@@ -59,28 +59,8 @@ func (l *LogsConnection) Write(data []byte) (int, error) {
 }
 
 func (l *LogsConnection) Serve() error {
-	// reader from apiserver
 	// first send connect info
-	if err := l.SendConnector(); err != nil {
-		return err
-	}
-
-	// receive from apiserver
-	/*
-		for {
-			_, data, err := c.apiConn.ReadMessage()
-			if err != nil {
-				klog.Errorf("get netreader from aprserver error %v", err)
-				return err
-			}
-			m := stream.NewMessage(c.ID, stream.MessageTypeData, data)
-			if err := c.WriteToTunnel(m); err != nil {
-				klog.Errorf("apierver connection write messate to tunnelCon error %v", err)
-				return err
-			}
-		}
-	*/
-	return nil
+	return l.SendConnector()
 }
 
 var _ ApiServerConnection = &LogsConnection{}

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// SignRequest sign a http request so that it can talk to API Server
+// SignRequest sign a http request so that it can talk to API TunnelServer
 var SignRequest func(*http.Request) error
 
 // URLClientOption is a struct which provides options for client

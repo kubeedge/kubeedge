@@ -14,15 +14,18 @@ import (
 type MessageType uint64
 
 const (
-	MessageTypeConnect MessageType = iota
+	MessageTypeLogsConnect MessageType = iota
+	MessageTypeExecConnect MessageType = iota
 	MessageTypeData
 	MessageTypeRemoveConnect
 )
 
 func (m MessageType) String() string {
 	switch m {
-	case MessageTypeConnect:
-		return "CONNECT"
+	case MessageTypeLogsConnect:
+		return "LOGS_CONNECT"
+	case MessageTypeExecConnect:
+		return "EXEC_CONNECT"
 	case MessageTypeData:
 		return "DATA"
 	case MessageTypeRemoveConnect:
@@ -34,7 +37,7 @@ func (m MessageType) String() string {
 type Message struct {
 	ConnectID   uint64 // apiserver connection id
 	MessageType MessageType
-	Data        []byte // LogsConnectorInfo 或者 con 的原始数据
+	Data        []byte // EdgeLogsConnector 或者 con 的原始数据
 }
 
 func NewMessage(id uint64, messType MessageType, data []byte) *Message {
