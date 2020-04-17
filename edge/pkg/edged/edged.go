@@ -363,7 +363,7 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 func (e *edged) cgroupRoots() []string {
 	var cgroupRoots []string
 
-	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot("", edgedconfig.Config.CGroupDriver))
+	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot, edgedconfig.Config.CGroupDriver))
 	kubeletCgroup, err := cm.GetKubeletContainer("")
 	if err != nil {
 		klog.Warningf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.", err)
@@ -577,17 +577,21 @@ func newEdged(enable bool) (*edged, error) {
 		return nil, fmt.Errorf("New generic runtime manager failed, err: %s", err.Error())
 	}
 
+	if edgedconfig.Config.CgroupsPerQOS && edgedconfig.Config.CgroupRoot == "" {
+		klog.Info("--cgroups-per-qos enabled, but --cgroup-root was not specified.  defaulting to /")
+		edgedconfig.Config.CgroupRoot = "/"
+	}
+
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		ed.cadvisor,
 		cm.NodeConfig{
 			CgroupDriver:                 edgedconfig.Config.CGroupDriver,
-			SystemCgroupsName:            "",
-			KubeletCgroupsName:           "",
+			SystemCgroupsName:            edgedconfig.Config.SystemCgroups,
+			KubeletCgroupsName:           edgedconfig.Config.EdgeCoreCgroups,
 			ContainerRuntime:             edgedconfig.Config.RuntimeType,
-			CgroupsPerQOS:                false,
+			CgroupsPerQOS:                edgedconfig.Config.CgroupsPerQOS,
 			KubeletRootDir:               DefaultRootDir,
 			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
-			CgroupsPerQOS:                edgedconfig.Config.CgroupsPerQOS,
 			CgroupRoot:                   edgedconfig.Config.CgroupRoot,
 		},
 		false,
@@ -608,7 +612,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 	ed.runtimeCache = runtimeCache
 
-	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, time.Minute)
+	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod)
 
 	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, utilpod.NewPodDeleteSafety(), ed.metaClient)
 
