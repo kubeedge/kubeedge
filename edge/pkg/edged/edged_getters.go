@@ -29,11 +29,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
+
+	cadvisorapiv1 "github.com/google/cadvisor/info/v1"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/config"
+	"k8s.io/kubernetes/pkg/volume"
+	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
 	"k8s.io/utils/mount"
 	utilfile "k8s.io/utils/path"
 )
@@ -209,4 +215,88 @@ func (e *edged) podVolumeSubpathsDirExists(podUID types.UID) (bool, error) {
 // exist if the pod does not exist or subpaths are not specified.
 func (e *edged) getPodVolumeSubpathsDir(podUID types.UID) string {
 	return filepath.Join(e.getPodDir(podUID), config.DefaultKubeletVolumeSubpathsDirName)
+}
+
+// GetPodByName provides the first pod that matches namespace and name, as well
+// as whether the pod was found.
+func (e *edged) GetPodByName(namespace, name string) (*v1.Pod, bool) {
+	return e.podManager.GetPodByName(namespace, name)
+}
+
+// GetNode returns the node info for the configured node name of this edged.
+func (e *edged) GetNode() (*v1.Node, error) {
+	node := &v1.Node{}
+	node.Name = e.nodeName
+	return node, nil
+}
+
+// GetNodeConfig returns the container manager node config.
+func (e *edged) GetNodeConfig() cm.NodeConfig {
+	return e.containerManager.GetNodeConfig()
+}
+
+func (e *edged) ListVolumesForPod(podUID types.UID) (map[string]volume.Volume, bool) {
+	volumesToReturn := make(map[string]volume.Volume)
+	podVolumes := e.volumeManager.GetMountedVolumesForPod(
+		volumetypes.UniquePodName(podUID))
+	for outerVolumeSpecName, volume := range podVolumes {
+		// TODO: volume.Mounter could be nil if volume object is recovered
+		// from reconciler's sync state process. PR 33616 will fix this problem
+		// to create Mounter object when recovering volume state.
+		if volume.Mounter == nil {
+			continue
+		}
+		volumesToReturn[outerVolumeSpecName] = volume.Mounter
+	}
+
+	return volumesToReturn, len(volumesToReturn) > 0
+}
+
+func (e *edged) GetPods() []*v1.Pod {
+	return e.podManager.GetPods()
+}
+
+func (e *edged) GetPodCgroupRoot() string {
+	return e.containerManager.GetPodCgroupRoot()
+}
+
+func (e *edged) GetPodByCgroupfs(cgroupfs string) (*v1.Pod, bool) {
+	pcm := e.containerManager.NewPodContainerManager()
+	if result, podUID := pcm.IsPodCgroup(cgroupfs); result {
+		return e.podManager.GetPodByUID(podUID)
+	}
+	return nil, false
+}
+
+func (e *edged) GetVersionInfo() (*cadvisorapiv1.VersionInfo, error) {
+	return e.cadvisor.VersionInfo()
+}
+
+func (e *edged) GetCachedMachineInfo() (*cadvisorapiv1.MachineInfo, error) {
+	return e.machineInfo, nil
+}
+
+func (e *edged) GetRunningPods() ([]*v1.Pod, error) {
+	pods, err := e.runtimeCache.GetPods()
+	if err != nil {
+		return nil, err
+	}
+
+	apiPods := make([]*v1.Pod, 0, len(pods))
+	for _, pod := range pods {
+		apiPods = append(apiPods, pod.ToAPIPod())
+	}
+	return apiPods, nil
+}
+
+func (e *edged) ResyncInterval() time.Duration {
+	return time.Minute
+}
+
+func (e *edged) GetHostname() string {
+	return e.hostname
+}
+
+func (e *edged) LatestLoopEntryTime() time.Time {
+	return time.Time{}
 }

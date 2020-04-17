@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -185,28 +187,50 @@ type Edged struct {
 	// default cgroupfs
 	// +Required
 	CGroupDriver string `json:"cgroupDriver,omitempty"`
-	//NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
-	//default ""
+	// NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
+	// default ""
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
-	//CNIConfDir indicates the full path of the directory in which to search for CNI config files
-	//default /etc/cni/net.d
+	// CNIConfDir indicates the full path of the directory in which to search for CNI config files
+	// default /etc/cni/net.d
 	CNIConfDir string `json:"cniConfDir,omitempty"`
-	//CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
-	//default /opt/cni/bin
+	// CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
+	// default /opt/cni/bin
 	CNIBinDir string `json:"cniBinDir,omitempty"`
-	//CNICacheDir indicates the full path of the directory in which CNI should store cache files
-	//default /var/lib/cni/cache
+	// CNICacheDir indicates the full path of the directory in which CNI should store cache files
+	// default /var/lib/cni/cache
 	CNICacheDir string `json:"cniCacheDirs,omitempty"`
-	//NetworkPluginMTU indicates the MTU to be passed to the network plugin
-	//default 1500
+	// NetworkPluginMTU indicates the MTU to be passed to the network plugin
+	// default 1500
 	NetworkPluginMTU int32 `json:"networkPluginMTU,omitempty"`
 	// CgroupsPerQOS enables QoS based Cgroup hierarchy: top level cgroups for QoS Classes
 	// And all Burstable and BestEffort pods are brought up under their
 	// specific top level QoS cgroup.
+	// Default: true
 	CgroupsPerQOS bool `json:"cgroupsPerQOS"`
 	// CgroupRoot is the root cgroup to use for pods.
 	// If CgroupsPerQOS is enabled, this is the root of the QoS cgroup hierarchy.
+	// Default: ""
 	CgroupRoot string `json:"cgroupRoot"`
+	// EdgeCoreCgroups is the absolute name of cgroups to isolate the edgecore in
+	// Dynamic Kubelet Config (beta): This field should not be updated without a full node
+	// reboot. It is safest to keep this value the same as the local config.
+	// Default: ""
+	EdgeCoreCgroups string `json:"edgeCoreCgroups,omitempty"`
+	// systemCgroups is absolute name of cgroups in which to place
+	// all non-kernel processes that are not already in a container. Empty
+	// for no container. Rolling back the flag requires a reboot.
+	// Dynamic Kubelet Config (beta): This field should not be updated without a full node
+	// reboot. It is safest to keep this value the same as the local config.
+	// Default: ""
+	SystemCgroups string `json:"systemCgroups,omitempty"`
+	// How frequently to calculate and cache volume disk usage for all pods
+	// Dynamic Kubelet Config (beta): If dynamically updating this field, consider that
+	// shortening the period may carry a performance impact.
+	// Default: "1m"
+	VolumeStatsAggPeriod time.Duration `json:"volumeStatsAggPeriod,omitempty"`
+	// EnableMetrics indicates whether enable the metrics
+	// default true
+	EnableMetrics bool `json:"enableMetrics,omitempty"`
 }
 
 // EdgeHub indicates the edgehub module config
