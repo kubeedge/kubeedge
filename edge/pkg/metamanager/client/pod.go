@@ -19,7 +19,7 @@ type PodsGetter interface {
 type PodsInterface interface {
 	Create(*corev1.Pod) (*corev1.Pod, error)
 	Update(*corev1.Pod) error
-	Delete(name string) error
+	Delete(name, options string) error
 	Get(name string) (*corev1.Pod, error)
 }
 
@@ -43,9 +43,9 @@ func (c *pods) Update(cm *corev1.Pod) error {
 	return nil
 }
 
-func (c *pods) Delete(name string) error {
+func (c *pods) Delete(name, options string) error {
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, name)
-	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, nil)
+	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, options)
 	c.send.Send(podDeleteMsg)
 	return nil
 }

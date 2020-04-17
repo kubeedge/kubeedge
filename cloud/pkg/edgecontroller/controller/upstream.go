@@ -1005,17 +1005,21 @@ func (uc *UpstreamController) deletePod() {
 				continue
 			}
 
+			podUID, ok := msg.Content.(string)
+			if !ok {
+				klog.Warningf("Failed to get podUID from msg, pod namesapce: %s, pod name: %s", namespace, name)
+				continue
+			}
+
 			deleteOptions := metaV1.NewDeleteOptions(0)
+			// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
+			deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
 			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(name, deleteOptions)
-			if errors.IsNotFound(err) {
-				klog.Warningf("message: %s process failure, pod %s not found", msg.GetID(), name)
-				continue
-			}
 			if err != nil {
-				klog.Warningf("message: %s process failure with error: %s, name: %s", msg.GetID(), err, name)
+				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
 				continue
 			}
-			klog.V(4).Infof("message: %s process successfully", msg.GetID())
+			klog.V(4).Infof("Successfully terminate and remove pod from etcd, namespace: %s, name: %s", namespace, name)
 		}
 	}
 }

@@ -68,7 +68,7 @@ func (m *manager) updatePodStatus() {
 		if !ok {
 			// We don't handle graceful deletion of mirror pods.
 			if m.canBeDeleted(pod, podStatus) {
-				err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name)
+				err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name, string(pod.UID))
 				if err != nil {
 					klog.Warningf("Failed to delete status for pod %q: %v", format.Pod(pod), err)
 				} else {
