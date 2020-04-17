@@ -84,6 +84,7 @@ func (s *TunnelServer) Start() {
 	data, err := ioutil.ReadFile(config.Config.TLSTunnelCAFile)
 	if err != nil {
 		klog.Fatalf("read tls tunnel ca file error %v", err)
+		return
 	}
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(data)
@@ -99,5 +100,6 @@ func (s *TunnelServer) Start() {
 	err = tunnelServer.ListenAndServeTLS(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("start tunnelServer error %v\n", err)
+		return
 	}
 }

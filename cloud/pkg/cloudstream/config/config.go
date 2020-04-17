@@ -10,13 +10,13 @@ var Config Configure
 var once sync.Once
 
 type Configure struct {
-	v1alpha1.StreamController
+	v1alpha1.CloudStream
 }
 
-func InitConfigure(stream *v1alpha1.StreamController) {
+func InitConfigure(stream *v1alpha1.CloudStream) {
 	once.Do(func() {
 		Config = Configure{
-			StreamController: *stream,
+			CloudStream: *stream,
 		}
 	})
 }

@@ -38,7 +38,7 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleDeviceController(*c.Modules.DeviceController)...)
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	allErrs = append(allErrs, ValidateLeaderElectionConfiguration(*c.LeaderElection)...)
-	allErrs = append(allErrs, ValidateModuleStreamController(*c.Modules.StreamController)...)
+	allErrs = append(allErrs, ValidateModuleCloudStream(*c.Modules.CloudStream)...)
 	return allErrs
 }
 
@@ -143,8 +143,8 @@ func ValidateModuleSyncController(d v1alpha1.SyncController) field.ErrorList {
 	return allErrs
 }
 
-// ValidateModuleStreamController validates `d` and returns an errorList if it is invalid
-func ValidateModuleStreamController(d v1alpha1.StreamController) field.ErrorList {
+// ValidateModuleCloudStream validates `d` and returns an errorList if it is invalid
+func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
 	if !d.Enable {
 		return field.ErrorList{}
 	}

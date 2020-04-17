@@ -17,7 +17,7 @@ const (
 	ServerPort = "10350"
 )
 
-//Server is object to define server
+//TunnelServer is object to define server
 type Server struct {
 	podManager podmanager.Manager
 }

@@ -17,7 +17,7 @@ func newCloudStream(enable bool) *cloudStream {
 	}
 }
 
-func Register(controller *v1alpha1.StreamController) {
+func Register(controller *v1alpha1.CloudStream) {
 	config.InitConfigure(controller)
 	core.Register(newCloudStream(controller.Enable))
 }
