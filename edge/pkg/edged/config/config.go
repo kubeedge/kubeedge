@@ -25,9 +25,9 @@ const (
 	// ImagePullProgressDeadlineDefault gives the default image pull progress deadline
 	ImagePullProgressDeadlineDefault = 60
 
-	// KubeletPort is the default port for the kubelet server on each host machine.
+	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
-	KubeletPort = 10350
+	ServerPort = 10350
 )
 
 var Config Configure

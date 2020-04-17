@@ -4,6 +4,8 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/server"
 	"k8s.io/kubernetes/pkg/kubelet/server/stats"
@@ -14,7 +16,6 @@ import (
 //constants to define server address
 const (
 	ServerAddr = "127.0.0.1"
-	ServerPort = "10350"
 )
 
 //TunnelServer is object to define server
@@ -31,11 +32,11 @@ func NewServer(podManager podmanager.Manager) *Server {
 
 // ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stats.ResourceAnalyzer, enableCAdvisorJSONEndpoints bool) {
-	klog.Infof("starting to listen read-only on %s:%s", ServerAddr, ServerPort)
-	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, false, false, false, nil)
+	klog.Infof("starting to listen read-only on %s:%v", ServerAddr, config.ServerPort)
+	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, true, false, false, nil)
 
 	server := &http.Server{
-		Addr:           net.JoinHostPort(ServerAddr, ServerPort),
+		Addr:           net.JoinHostPort(ServerAddr, string(config.ServerPort)),
 		Handler:        &handler,
 		MaxHeaderBytes: 1 << 20,
 	}
