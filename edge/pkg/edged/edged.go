@@ -105,7 +105,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
-	utilpod "github.com/kubeedge/kubeedge/edge/pkg/edged/util/pod"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
@@ -614,7 +613,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod)
 
-	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, utilpod.NewPodDeleteSafety(), ed.metaClient)
+	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, ed, ed.metaClient)
 
 	if useLegacyCadvisorStats {
 		ed.StatsProvider = stats.NewCadvisorStatsProvider(
