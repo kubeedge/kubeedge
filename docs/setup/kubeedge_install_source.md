@@ -102,7 +102,7 @@ Please follow the instructions given below or click [Cross Compilation](cross-co
 
 ```shell
 cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make cross_build
+make crossbuild
 ```
 
 KubeEdge can also be compiled with a small binary size. Please follow the below steps to build a binary of lesser size:
@@ -110,7 +110,7 @@ KubeEdge can also be compiled with a small binary size. Please follow the below 
 ```shell
 apt-get install upx-ucl
 cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-make edge_small_build
+make smallbuild
 ```
 
 **Note:** If you are using the smaller version of the binary, it is compressed using upx, therefore the possible side effects of using upx compressed binaries like more RAM usage,
