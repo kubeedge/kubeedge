@@ -190,7 +190,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 func (e *edged) setNodeStatusDaemonEndpoints(node *edgeapi.NodeStatusRequest) {
 	node.Status.DaemonEndpoints = v1.NodeDaemonEndpoints{
 		KubeletEndpoint: v1.DaemonEndpoint{
-			Port: config.KubeletPort,
+			Port: config.ServerPort,
 		},
 	}
 }
