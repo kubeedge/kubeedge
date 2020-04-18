@@ -82,12 +82,12 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 	}
 	allErrs := field.ErrorList{}
 	if !utilvalidation.FileIsExist(h.TLSPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"),
-			h.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
+			h.TLSPrivateKeyFile, "TLSTunnelPrivateKeyFile not exist"))
 	}
 	if !utilvalidation.FileIsExist(h.TLSCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"),
-			h.TLSCertFile, "TLSCertFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
+			h.TLSCertFile, "TLSTunnelCertFile not exist"))
 	}
 
 	// Comments out the steps to verify CA certificate
@@ -174,6 +174,14 @@ func ValidateModuleEdgeStream(m v1alpha1.EdgeStream) field.ErrorList {
 	if !utilvalidation.FileIsExist(m.TLSTunnelCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCAFile"),
 			m.TLSTunnelCAFile, "TLSTunnelCAFile file not exist"))
+	}
+	if !utilvalidation.FileIsExist(m.TLSTunnelCertFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
+			m.TLSTunnelCAFile, "TLSTunnelCertFile file not exist"))
+	}
+	if !utilvalidation.FileIsExist(m.TLSTunnelPrivateKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
+			m.TLSTunnelCAFile, "TLSTunnelPrivateKeyFile file not exist"))
 	}
 	return allErrs
 }

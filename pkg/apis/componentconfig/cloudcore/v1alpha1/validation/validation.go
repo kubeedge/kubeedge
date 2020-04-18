@@ -88,10 +88,10 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 		}
 	}
 	if !utilvalidation.FileIsExist(c.TLSPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSTunnelPrivateKeyFile not exist"))
 	}
 	if !utilvalidation.FileIsExist(c.TLSCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"), c.TLSCertFile, "TLSCertFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"), c.TLSCertFile, "TLSTunnelCertFile not exist"))
 	}
 	if !utilvalidation.FileIsExist(c.TLSCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"), c.TLSCAFile, "TLSCAFile not exist"))

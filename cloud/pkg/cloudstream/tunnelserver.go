@@ -89,15 +89,32 @@ func (s *TunnelServer) Start() {
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(data)
 
+	cert, err := ioutil.ReadFile(config.Config.TLSTunnelCertFile)
+	if err != nil {
+		klog.Fatalf("read cert file %v error %v", config.Config.TLSTunnelCertFile, err)
+	}
+	key, err := ioutil.ReadFile(config.Config.TLSTunnelPrivateKeyFile)
+	if err != nil {
+		klog.Fatalf("read key file %v error %v", config.Config.TLSTunnelPrivateKeyFile, err)
+	}
+	certificate, err := tls.X509KeyPair(cert, key)
+	if err != nil {
+		panic(err)
+	}
+
 	tunnelServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Config.TunnelPort),
 		Handler: s.container,
 		TLSConfig: &tls.Config{
-			ClientCAs: pool,
+			ClientCAs:    pool,
+			Certificates: []tls.Certificate{certificate},
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			MinVersion:   tls.VersionTLS12,
+			CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 		},
 	}
 	klog.Infof("prepare to start tunnel server ...")
-	err = tunnelServer.ListenAndServeTLS(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
+	err = tunnelServer.ListenAndServeTLS("", "")
 	if err != nil {
 		klog.Fatalf("start tunnelServer error %v\n", err)
 		return
