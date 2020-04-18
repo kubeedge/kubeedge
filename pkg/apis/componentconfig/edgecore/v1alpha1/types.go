@@ -403,6 +403,13 @@ type EdgeStream struct {
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
 
+	// TLSTunnelCertFile indicates the file containing x509 Certificate for HTTPS
+	// default /etc/kubeedge/certs/edge.crt
+	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
+	// TLSTunnelPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
+	// default /etc/kubeedge/certs/edge.key
+	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
+
 	// HandshakeTimeout indicates handshake timeout (second)
 	// default  30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`

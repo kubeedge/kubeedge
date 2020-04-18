@@ -2,8 +2,6 @@ package edgestream
 
 import (
 	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -56,25 +54,21 @@ func (e *edgestream) Start() {
 
 	serverURL := url.URL{
 		Scheme: "wss",
-		Host:   "127.0.0.1:10250",
-		//Host: "localhost:10250",
-		Path: "/connect",
+		Host:   config.Config.TunnelServer,
+		Path:   "/v1/kubeedge/connect",
 	}
 
-	pool := x509.NewCertPool()
-	cadate, err := ioutil.ReadFile(config.Config.TLSTunnelCAFile)
+	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
-		klog.Fatalf("read ca file error %v", err)
-		return
+		klog.Fatalf("Failed to load x509 key pair: %v", err)
 	}
 
-	pool.AppendCertsFromPEM(cadate)
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
-		RootCAs:            pool,
+		InsecureSkipVerify: true,
+		Certificates:       []tls.Certificate{cert},
 	}
 
-	for range time.NewTicker(time.Second).C {
+	for range time.NewTicker(time.Second * 2).C {
 		err := e.TLSClientConnect(serverURL, tlsConfig)
 		if err != nil {
 			klog.Errorf("TLSClientConnect error %v", err)
@@ -94,7 +88,7 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 
 	con, _, err := dial.Dial(url.String(), header)
 	if err != nil {
-		klog.Errorf("dial error %v", err)
+		klog.Errorf("dial %v error %v", url.String(), err)
 		return err
 	}
 	session := NewTunnelSession(con)

@@ -135,12 +135,14 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				SubNet:          EdgeMeshDefaultSubNet,
 			},
 			EdgeStream: &EdgeStream{
-				Enable:           true,
-				TLSTunnelCAFile:  constants.DefaultCAFile,
-				HandshakeTimeout: 30,
-				ReadDeadline:     15,
-				TunnelServer:     "127.0.0.1:10002",
-				WriteDeadline:    15,
+				Enable:                  true,
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				HandshakeTimeout:        30,
+				ReadDeadline:            15,
+				TunnelServer:            "127.0.0.1:10002",
+				WriteDeadline:           15,
 			},
 		},
 	}
@@ -200,8 +202,10 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				MqttMode:           MqttModeExternal,
 			},
 			EdgeStream: &EdgeStream{
-				TLSTunnelCAFile: constants.DefaultCAFile,
-				TunnelServer:    "127.0.0.1:10002",
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				TunnelServer:            "127.0.0.1:10002",
 			},
 		},
 	}

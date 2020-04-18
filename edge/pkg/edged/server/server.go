@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 
@@ -36,7 +37,7 @@ func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stat
 	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, true, false, false, nil)
 
 	server := &http.Server{
-		Addr:           net.JoinHostPort(ServerAddr, string(config.ServerPort)),
+		Addr:           net.JoinHostPort(ServerAddr, fmt.Sprintf("%d", config.ServerPort)),
 		Handler:        &handler,
 		MaxHeaderBytes: 1 << 20,
 	}
