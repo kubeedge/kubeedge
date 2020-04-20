@@ -76,6 +76,17 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		hostname = e.nodeName
 	}
 
+	node.Labels = map[string]string{
+		// Kubernetes built-in labels
+		v1.LabelHostname:   hostname,
+		v1.LabelOSStable:   runtime.GOOS,
+		v1.LabelArchStable: runtime.GOARCH,
+
+		// KubeEdge specific labels
+		"node-role.kubernetes.io/edge":  "",
+		"node-role.kubernetes.io/agent": "",
+	}
+
 	ip, err := e.getIP()
 	if err != nil {
 		return nil, err

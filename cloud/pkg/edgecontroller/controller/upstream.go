@@ -320,14 +320,6 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
-
-	//add default labels
-	if node.Labels == nil {
-		node.Labels = make(map[string]string)
-	}
-	node.Labels["name"] = name
-	node.Labels["node-role.kubernetes.io/edge"] = ""
-
 	return uc.kubeClient.CoreV1().Nodes().Create(node)
 }
 
