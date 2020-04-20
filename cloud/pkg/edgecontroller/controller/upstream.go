@@ -88,6 +88,7 @@ type UpstreamController struct {
 	volumeAttachmentChan      chan model.Message
 	queryNodeChan             chan model.Message
 	updateNodeChan            chan model.Message
+	podDeleteChan             chan model.Message
 }
 
 // Start UpstreamController
@@ -105,6 +106,7 @@ func (uc *UpstreamController) Start() error {
 	uc.volumeAttachmentChan = make(chan model.Message, config.Config.Buffer.QueryVolumeAttachment)
 	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
+	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
 
 	go uc.dispatchMessage()
 
@@ -140,6 +142,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(config.Config.Load.UpdateNodeWorkers); i++ {
 		go uc.updateNode()
+	}
+	for i := 0; i < int(config.Config.Load.DeletePodWorkers); i++ {
+		go uc.deletePod()
 	}
 	return nil
 }
@@ -197,6 +202,10 @@ func (uc *UpstreamController) dispatchMessage() {
 				uc.updateNodeChan <- msg
 			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), operationType)
+			}
+		case model.ResourceTypePod:
+			if msg.GetOperation() == model.DeleteOperation {
+				uc.podDeleteChan <- msg
 			}
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
@@ -972,6 +981,45 @@ func (uc *UpstreamController) updateNode() {
 				klog.Warningf("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
+		}
+	}
+}
+
+func (uc *UpstreamController) deletePod() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop deletePod")
+			return
+		case msg := <-uc.podDeleteChan:
+			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			name, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				continue
+			}
+
+			podUID, ok := msg.Content.(string)
+			if !ok {
+				klog.Warningf("Failed to get podUID from msg, pod namesapce: %s, pod name: %s", namespace, name)
+				continue
+			}
+
+			deleteOptions := metaV1.NewDeleteOptions(0)
+			// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
+			deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
+			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(name, deleteOptions)
+			if err != nil {
+				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
+				continue
+			}
+			klog.V(4).Infof("Successfully terminate and remove pod from etcd, namespace: %s, name: %s", namespace, name)
 		}
 	}
 }

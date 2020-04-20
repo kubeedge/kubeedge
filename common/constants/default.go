@@ -61,6 +61,7 @@ const (
 	DefaultQueryVolumeAttachmentWorkers      = 4
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
+	DefaultDeletePodWorkers                  = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024
@@ -73,6 +74,7 @@ const (
 	DefaultQueryVolumeAttachmentBuffer      = 1024
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
+	DefaultDeletePodBuffer                  = 1024
 
 	DefaultETCDTimeout = 10
 

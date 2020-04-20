@@ -74,6 +74,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryVolumeAttachment:      constants.DefaultQueryVolumeAttachmentBuffer,
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
+					DeletePod:                  constants.DefaultDeletePodBuffer,
 				},
 				Context: &cloudcoreconfig.EdgeControllerContext{
 					SendModule:     metaconfig.ModuleNameMetaManager,
@@ -92,6 +93,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryVolumeAttachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
+					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 				},
 			},
 			Edged: &edgecoreconfig.Edged{
