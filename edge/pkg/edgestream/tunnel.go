@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package edgestream
 
 import (
@@ -13,110 +29,68 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
+// TunnelSession
 type TunnelSession struct {
-	sync.Mutex
-	Tunnel    *websocket.Conn
-	closed    bool // tunnel whether closed
-	LocalCons map[uint64]*LocalConnection
-}
-
-type LocalConnection struct {
-	sync.Mutex
-	ID     uint64
-	con    *websocket.Conn
-	closed bool // inditicate con whether closed
-	tunnel *TunnelSession
-}
-
-func (l *LocalConnection) Server() error {
-	defer l.Close()
-	// read data from localconnection and then write to tunnel
-	for {
-		l.con.SetReadDeadline(time.Now().Add(time.Second * 5))
-		_, data, err := l.con.ReadMessage()
-		if err != nil {
-			klog.Errorf("read local connection message error %v", err)
-			return err
-		}
-		msg := stream.NewMessage(l.ID, stream.MessageTypeData, data)
-		if err := msg.WriteTo(l.tunnel.Tunnel); err != nil {
-			klog.Errorf("read localconnnection message to tunnel error %v", err)
-			return err
-		}
-	}
-}
-func (l *LocalConnection) Close() {
-	l.Lock()
-	defer l.Unlock()
-	if !l.closed {
-		l.con.Close()
-	}
-	l.closed = true
+	Tunnel        stream.SafeWriteTunneler
+	closeLock     sync.Mutex
+	closed        bool // tunnel whether closed
+	localCons     map[uint64]stream.EdgedConnection
+	localConsLock sync.RWMutex
 }
 
 func NewTunnelSession(c *websocket.Conn) *TunnelSession {
 	return &TunnelSession{
-		Tunnel:    c,
-		LocalCons: make(map[uint64]*LocalConnection, 10),
+		closeLock:     sync.Mutex{},
+		localConsLock: sync.RWMutex{},
+		Tunnel:        stream.NewDefaultTunnel(c),
+		localCons:     make(map[uint64]stream.EdgedConnection, 128),
 	}
 }
 
 func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
-
-	logCon := &stream.EdgeLogsConnector{}
+	logCon := &stream.EdgedLogsConnection{
+		ReadChan: make(chan *stream.Message, 128),
+	}
 	if err := json.Unmarshal(m.Data, logCon); err != nil {
 		klog.Errorf("unmarshal connector data error %v", err)
 		return err
 	}
 
+	s.AddLocalConnection(m.ConnectID, logCon)
 	return logCon.Serve(s.Tunnel)
-	/*
-		l := &LocalConnection{
-			ID:     m.ConnectID,
-			con:    localCon,
-			tunnel: s,
-		}
-		s.LocalCons[l.ID] = l
-		go l.Server()
-		return nil
-	*/
 }
 
-func (s *TunnelSession) ServeConnection(m *stream.Message) error {
+func (s *TunnelSession) ServeConnection(m *stream.Message) {
 	switch m.MessageType {
 	case stream.MessageTypeLogsConnect:
-		return s.serveLogsConnection(m)
+		if err := s.serveLogsConnection(m); err != nil {
+			klog.Errorf("Serve Logs connection error %s", m.String())
+		}
 	case stream.MessageTypeExecConnect:
+		panic("TODO")
+	case stream.MessageTypeMetricConnect:
 		panic("TODO")
 	default:
 		panic(fmt.Errorf("Wrong message type %v", m.MessageType))
 	}
 
-	return nil
+	s.DeleteLocalConnection(m.ConnectID)
+	klog.Infof("Delete local connection MessageID %v Type %s", m.ConnectID, m.MessageType.String())
 }
 
 func (s *TunnelSession) Close() {
-	s.Lock()
-	defer s.Unlock()
+	s.closeLock.Lock()
+	defer s.closeLock.Unlock()
 	if !s.closed {
 		s.Tunnel.Close()
-	}
-	for _, c := range s.LocalCons {
-		c.Close()
 	}
 	s.closed = true
 }
 
-func (s *TunnelSession) WriteToLocal(m *stream.Message) error {
-	if m.MessageType != stream.MessageTypeData {
-		return nil
+func (s *TunnelSession) WriteToLocalConnection(m *stream.Message) {
+	if con, ok := s.GetLocalConnection(m.ConnectID); ok {
+		go con.CacheTunnelMessage(m)
 	}
-
-	local, ok := s.LocalCons[m.ConnectID]
-	if !ok {
-		return fmt.Errorf("can not find this tunnel")
-	}
-	return local.con.WriteMessage(websocket.TextMessage, m.Data)
 }
 
 func (s *TunnelSession) startPing(ctx context.Context) {
@@ -135,15 +109,14 @@ func (s *TunnelSession) startPing(ctx context.Context) {
 			}
 		}
 	}
-
 }
 
 func (s *TunnelSession) Serve() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer func() {
 		cancel()
-		klog.Info("prepare to close tunnel server ....")
 		s.Close()
+		klog.Info("Close tunnel session successfully")
 	}()
 
 	go s.startPing(ctx)
@@ -154,31 +127,35 @@ func (s *TunnelSession) Serve() error {
 			klog.Errorf("Read Message error %v", err)
 			return err
 		}
-		mess, err := stream.TunnelMessage(r)
+
+		mess, err := stream.ReadMessageFromTunnel(r)
 		if err != nil {
-			klog.Errorf("get tunnel Message error %v", err)
+			klog.Errorf("Get tunnel Message error %v", err)
 			return err
 		}
 
 		if mess.MessageType < stream.MessageTypeData {
-			err := s.ServeConnection(mess)
-			if err != nil {
-				klog.Errorf("server local connection error %v", err)
-				return err
-			}
+			go s.ServeConnection(mess)
 		}
-
-		if mess.MessageType == stream.MessageTypeRemoveConnect {
-			klog.Infof("receive remove client id %v", mess.ConnectID)
-			if localCon, ok := s.LocalCons[mess.ConnectID]; ok {
-				localCon.Close()
-			}
-			continue
-		}
-		// write data from tunnel to local connector
-		if err := s.WriteToLocal(mess); err != nil {
-			klog.Errorf("write to local connection error %v", err)
-			return err
-		}
+		s.WriteToLocalConnection(mess)
 	}
+}
+
+func (s *TunnelSession) AddLocalConnection(id uint64, con stream.EdgedConnection) {
+	s.localConsLock.Lock()
+	defer s.localConsLock.Unlock()
+	s.localCons[id] = con
+}
+
+func (s *TunnelSession) GetLocalConnection(id uint64) (stream.EdgedConnection, bool) {
+	s.localConsLock.RLock()
+	defer s.localConsLock.RUnlock()
+	con, ok := s.localCons[id]
+	return con, ok
+}
+
+func (s *TunnelSession) DeleteLocalConnection(id uint64) {
+	s.localConsLock.Lock()
+	defer s.localConsLock.Unlock()
+	delete(s.localCons, id)
 }

@@ -1,8 +1,23 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cloudstream
 
 import (
 	"fmt"
-	"io"
 	"sync"
 	"sync/atomic"
 
@@ -12,89 +27,108 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
-// Session 代表了tunnel链接对应的多个来着apiserver的连接
+// Session indicates one tunnel connection (default websocket) from edgecore
+// And multiple kube-apiserver initiated requests to this edgecore
 type Session struct {
-	sync.Mutex
-	nextID    uint64 // 唯一代表的此session 的id，用来区分message, 从0 开始，来一个apiserver 的连接，则+1
-	sessionID string // 代表这个session的唯一id，
+	// nextMessageID indicates the next message id
+	// it starts from 0 , when receive a new apiserver connection and then add 1
+	nextMessageID uint64
 
-	// server 和 特定agent 的tunnel通道
-	tunnelCon *websocket.Conn
-	closed    bool // websocket tunnelCon 是否关闭
+	// sessionID indicates the unique id of session
+	sessionID string
 
-	// 来自于apiserver 的连接 map,来一个apiserver 的连接，nextID 就+1,并使用+1的ID作为Key
-	//apiServerConn map[uint64]*ApiServerConnection
-	apiServerConn map[uint64]ApiServerConnection
+	// tunnel indicates  a tunnel connection between edgecore and cloudcore
+	// default is websocket
+	tunnel stream.SafeWriteTunneler
+	// tunnelClosed indicates whether tunnel closed
+	tunnelClosed bool
+
+	// apiServerConn indicates a connection request made by multiple apiserver to one edgecore
+	apiServerConn map[uint64]APIServerConnection
+	apiConnlock   *sync.Mutex
 }
 
 func (s *Session) WriteMessageToTunnel(m *stream.Message) error {
-	return m.WriteTo(s.tunnelCon)
+	return m.WriteTo(s.tunnel)
 }
 
 func (s *Session) Close() {
-	s.Lock()
-	s.tunnelCon.Close()
 	for _, c := range s.apiServerConn {
-		c.Close()
+		c.SetEdgePeerDone()
 	}
-	s.closed = true
-	s.Unlock()
+	s.tunnel.Close()
+	s.tunnelClosed = true
 }
 
-// Serve read tunnelCon message ,and write to specific apiserver connection
+// Serve read tunnel message ,and write to specific apiserver connection
 func (s *Session) Serve() {
 	defer s.Close()
 
 	for {
-		t, r, err := s.tunnelCon.NextReader()
+		t, r, err := s.tunnel.NextReader()
 		if err != nil {
 			klog.Errorf("get %v reader error %v", s, err)
 			return
 		}
 		if t != websocket.TextMessage {
-			klog.Errorf("wrong websocket message type")
+			klog.Errorf("Websocket message type must be %v type", websocket.TextMessage)
 			return
 		}
-		if err := s.ProxyTunnelToApiserver(r); err != nil {
-			klog.Errorf("get tunnelCon message error %v", err)
+		message, err := stream.ReadMessageFromTunnel(r)
+		if err != nil {
+			klog.Errorf("Read message from tunnel %v error %v", s.String(), err)
+			return
+		}
+
+		if err := s.ProxyTunnelMessageToApiserver(message); err != nil {
+			klog.Errorf("Proxy tunnel message [%s] to kube-apiserver error %v", message.String(), err)
 			continue
 		}
 	}
 }
 
-func (s *Session) ProxyTunnelToApiserver(r io.Reader) error {
-	message, err := stream.TunnelMessage(r)
-	if err != nil {
-		return err
-	}
-	// no need lock
-	con, ok := s.apiServerConn[message.ConnectID]
+func (s *Session) ProxyTunnelMessageToApiserver(message *stream.Message) error {
+	kubeCon, ok := s.apiServerConn[message.ConnectID]
 	if !ok {
-		return fmt.Errorf("can not find this connection %v of %v",
-			message.ConnectID, s)
+		return fmt.Errorf("Can not find apiServer connection id %v in %v",
+			message.ConnectID, s.String())
 	}
-	for i := 0; i < len(message.Data); {
-		n, err := con.Write(message.Data[i:])
-		if err != nil {
-			return err
+	switch message.MessageType {
+	case stream.MessageTypeRemoveConnect:
+		kubeCon.SetEdgePeerDone()
+	case stream.MessageTypeData:
+		for i := 0; i < len(message.Data); {
+			n, err := kubeCon.WriteToAPIServer(message.Data[i:])
+			if err != nil {
+				return err
+			}
+			i += n
 		}
-		i += n
+	default:
 	}
 	return nil
 }
 
 func (s *Session) String() string {
-	return fmt.Sprintf("session key %v", s.sessionID)
+	return fmt.Sprintf("Tunnel session [%v]", s.sessionID)
 }
 
-func (s *Session) AddAPIServerConnection(connection ApiServerConnection) (ApiServerConnection, error) {
-	id := atomic.AddUint64(&(s.nextID), 1)
-	s.Lock()
-	defer s.Unlock()
-	if s.closed {
-		return nil, fmt.Errorf("%v tunnelCon closed", s)
+func (s *Session) AddAPIServerConnection(connection APIServerConnection) (APIServerConnection, error) {
+	id := atomic.AddUint64(&(s.nextMessageID), 1)
+	s.apiConnlock.Lock()
+	defer s.apiConnlock.Unlock()
+	if s.tunnelClosed {
+		return nil, fmt.Errorf("The tunnel connection of %v has closed", s.String())
 	}
-	connection.SetID(id)
+	connection.SetMessageID(id)
 	s.apiServerConn[id] = connection
+	klog.Infof("Add a new apiserver connection %s in to %s", connection.String(), s.String())
 	return connection, nil
+}
+
+func (s *Session) DeleteAPIServerConnection(con APIServerConnection) {
+	s.apiConnlock.Lock()
+	defer s.apiConnlock.Unlock()
+	delete(s.apiServerConn, con.GetMessageID())
+	klog.Infof("Delete a apiserver connection %s from %s", con.String(), s.String())
 }

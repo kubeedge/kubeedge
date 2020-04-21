@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package stream
 
 import (
@@ -7,15 +23,15 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/gorilla/websocket"
 	"k8s.io/klog"
 )
 
 type MessageType uint64
 
 const (
-	MessageTypeLogsConnect MessageType = iota
-	MessageTypeExecConnect MessageType = iota
+	MessageTypeLogsConnect   MessageType = iota
+	MessageTypeExecConnect   MessageType = iota
+	MessageTypeMetricConnect MessageType = iota
 	MessageTypeData
 	MessageTypeRemoveConnect
 )
@@ -26,10 +42,12 @@ func (m MessageType) String() string {
 		return "LOGS_CONNECT"
 	case MessageTypeExecConnect:
 		return "EXEC_CONNECT"
+	case MessageTypeMetricConnect:
+		return "METRIC_CONNECT"
 	case MessageTypeData:
 		return "DATA"
 	case MessageTypeRemoveConnect:
-		return "REMOVE_CLIENT"
+		return "REMOVE_CONNECT"
 	}
 	return "UNKNOWN"
 }
@@ -37,7 +55,7 @@ func (m MessageType) String() string {
 type Message struct {
 	ConnectID   uint64 // apiserver connection id
 	MessageType MessageType
-	Data        []byte // EdgeLogsConnector 或者 con 的原始数据
+	Data        []byte // EdgedLogsConnection 或者 con 的原始数据
 }
 
 func NewMessage(id uint64, messType MessageType, data []byte) *Message {
@@ -48,8 +66,8 @@ func NewMessage(id uint64, messType MessageType, data []byte) *Message {
 	}
 }
 
-func (m *Message) WriteTo(con *websocket.Conn) error {
-	return con.WriteMessage(websocket.TextMessage, m.Bytes())
+func (m *Message) WriteTo(tunneler SafeWriteTunneler) error {
+	return tunneler.WriteMessage(m)
 }
 
 func (m *Message) Bytes() []byte {
@@ -61,10 +79,10 @@ func (m *Message) Bytes() []byte {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("MESSAGE: connectid %v MessageType %v", m.ConnectID, m.MessageType)
+	return fmt.Sprintf("MESSAGE: connectid %v MessageType %s", m.ConnectID, m.MessageType)
 }
 
-func TunnelMessage(r io.Reader) (*Message, error) {
+func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
 	buf := bufio.NewReader(r)
 	connectID, err := binary.ReadUvarint(buf)
 	if err != nil {
@@ -78,8 +96,8 @@ func TunnelMessage(r io.Reader) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	klog.Infof("Receive Tunnel message Connectid %d messageType %v data %v string:[ %v ]",
-		connectID, messageType, data, string(data))
+	klog.Infof("Receive Tunnel message Connectid %d messageType %s data:%v string:[%v]",
+		connectID, MessageType(messageType), data, string(data))
 	return &Message{
 		ConnectID:   connectID,
 		MessageType: MessageType(messageType),

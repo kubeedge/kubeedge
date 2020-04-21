@@ -165,7 +165,7 @@ func (dc *DownstreamController) syncSecret() {
 			}
 
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
-			klog.Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
+			klog.V(5).Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
 				msg.SetResourceVersion(secret.ResourceVersion)

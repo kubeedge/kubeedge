@@ -149,7 +149,7 @@ func (sb *servicebus) Start() {
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {
 	responseMsg := model.NewMessage(parentID)
 	h := http.Header{}
-	h.Add("TunnelServer", "kubeedge-edgecore")
+	h.Add("Server", "kubeedge-edgecore")
 	c := util.HTTPResponse{Header: h, StatusCode: statusCode, Body: []byte(content)}
 	responseMsg.Content = c
 	responseMsg.SetRoute("servicebus", modules.UserGroup)

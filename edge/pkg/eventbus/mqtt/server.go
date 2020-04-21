@@ -32,7 +32,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-//TunnelServer serve as an internal mqtt broker.
+//Server serve as an internal mqtt broker.
 type Server struct {
 	// Internal mqtt url
 	url string
