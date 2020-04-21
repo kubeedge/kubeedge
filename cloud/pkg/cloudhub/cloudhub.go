@@ -15,6 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -62,6 +63,11 @@ func (a *cloudHub) Start() {
 
 	// start dispatch message from the cloud to edge node
 	go messageq.DispatchMessage()
+
+	httpserver.SignCerts()
+
+	// HttpServer mainly used to issue certificates for the edge
+	httpserver.StartHttpServer()
 
 	servers.StartCloudHub(messageq)
 
