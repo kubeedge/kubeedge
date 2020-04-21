@@ -297,7 +297,7 @@ type EdgeHubWebSocket struct {
 	// ReadDeadline indicates read dead line (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
-	// TunnelServer indicates websocket server address (ip:port)
+	// Server indicates websocket server address (ip:port)
 	// +Required
 	Server string `json:"server,omitempty"`
 	// WriteDeadline indicates write dead line (second)

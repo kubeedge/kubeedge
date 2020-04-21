@@ -40,6 +40,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -190,7 +191,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 func (e *edged) setNodeStatusDaemonEndpoints(node *edgeapi.NodeStatusRequest) {
 	node.Status.DaemonEndpoints = v1.NodeDaemonEndpoints{
 		KubeletEndpoint: v1.DaemonEndpoint{
-			Port: config.ServerPort,
+			Port: constants.ServerPort,
 		},
 	}
 }

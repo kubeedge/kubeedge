@@ -5,8 +5,9 @@ package message
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -89,7 +90,7 @@ func (m *MessageRouter) GetResouce() string {
 
 type MessageHeader struct {
 	// the message uuid
-	ID string `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	ID string `protobuf:"bytes,1,opt,name=MessageID,proto3" json:"MessageID,omitempty"`
 	// the response message parent id must be same with the message received
 	// please use NewRespByMessage to new response message
 	ParentID string `protobuf:"bytes,2,opt,name=ParentID,proto3" json:"ParentID,omitempty"`

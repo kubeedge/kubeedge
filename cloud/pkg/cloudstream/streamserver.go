@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cloudstream
 
 import (
@@ -7,6 +23,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog"
@@ -49,16 +66,23 @@ func (s *StreamServer) installDebugHandler() {
 }
 
 func (s *StreamServer) getExec(r *restful.Request, w *restful.Response) {
-	panic("unimplement")
+	// TODO @kadisi
 }
 
 func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response) {
+	var err error
 
-	hostKey := r.Request.Host
-	session, ok := s.tunnel.getSession(hostKey)
+	defer func() {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			klog.Errorf(err.Error())
+		}
+	}()
+
+	sessionKey := strings.Split(r.Request.Host, ":")[0]
+	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		klog.Errorf("can not find %v session ", hostKey)
+		err = fmt.Errorf("Can not find %v session ", sessionKey)
 		return
 	}
 
@@ -66,25 +90,31 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	w.WriteHeader(http.StatusOK)
 
 	if _, ok := w.ResponseWriter.(http.Flusher); !ok {
-		w.WriteError(http.StatusInternalServerError,
-			fmt.Errorf("unable to convert %v into http.Flusher, cannot show logs", reflect.TypeOf(w)))
+		err = fmt.Errorf("Unable to convert %v into http.Flusher, cannot show logs", reflect.TypeOf(w))
 		return
 	}
 	fw := flushwriter.Wrap(w.ResponseWriter)
 
-	logConnection, err := session.AddAPIServerConnection(&LogsConnection{
-		r:       r,
-		flush:   fw,
-		session: session})
+	logConnection, err := session.AddAPIServerConnection(&ContainerLogsConnection{
+		r:            r,
+		flush:        fw,
+		session:      session,
+		ctx:          r.Request.Context(),
+		edgePeerStop: make(chan struct{}),
+	})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		klog.Errorf("create apiserver connection error %v", err)
+		klog.Errorf("Add apiserver connection into %s error %v", session.String(), err)
 		return
 	}
 
+	defer func() {
+		session.DeleteAPIServerConnection(logConnection)
+		klog.Infof("Delete %s from %s", logConnection.String(), session.String())
+	}()
+
 	if err := logConnection.Serve(); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		klog.Errorf("apiconnection Serve error %v", err)
+		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
+			logConnection.String(), session.String(), err)
 		return
 	}
 }
@@ -95,7 +125,8 @@ func (s *StreamServer) Start() {
 	pool := x509.NewCertPool()
 	data, err := ioutil.ReadFile(config.Config.TLSStreamCAFile)
 	if err != nil {
-		klog.Fatalf("read tls stream ca file error %v", err)
+		klog.Fatalf("Read tls stream ca file error %v", err)
+		return
 	}
 	pool.AppendCertsFromPEM(data)
 
@@ -106,10 +137,10 @@ func (s *StreamServer) Start() {
 			ClientCAs: pool,
 		},
 	}
-	klog.Infof("prepare to start stream server ...")
+	klog.Infof("Prepare to start stream server ...")
 	err = tunnelServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
-		klog.Fatalf("start stream server error %v\n", err)
+		klog.Fatalf("Start stream server error %v\n", err)
 		return
 	}
 }

@@ -82,12 +82,12 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 	}
 	allErrs := field.ErrorList{}
 	if !utilvalidation.FileIsExist(h.TLSPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
-			h.TLSPrivateKeyFile, "TLSTunnelPrivateKeyFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"),
+			h.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
 	}
 	if !utilvalidation.FileIsExist(h.TLSCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
-			h.TLSCertFile, "TLSTunnelCertFile not exist"))
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"),
+			h.TLSCertFile, "TLSCertFile not exist"))
 	}
 
 	// Comments out the steps to verify CA certificate
