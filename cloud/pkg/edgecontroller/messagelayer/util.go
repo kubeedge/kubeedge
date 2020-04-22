@@ -85,7 +85,7 @@ func GetResourceType(msg model.Message) (string, error) {
 		res = sli[controller.ResourceResourceTypeIndex]
 		index = controller.ResourceResourceTypeIndex
 	}
-	klog.Infof("The resource type is %s, %d", res, index)
+	klog.V(4).Infof("The resource type is %s, %d", res, index)
 
 	return res, nil
 }
@@ -110,6 +110,6 @@ func GetResourceName(msg model.Message) (string, error) {
 		res = sli[controller.ResourceResourceNameIndex]
 		index = controller.ResourceResourceNameIndex
 	}
-	klog.Infof("The resource name is %s, %d", res, index)
+	klog.V(4).Infof("The resource name is %s, %d", res, index)
 	return res, nil
 }
