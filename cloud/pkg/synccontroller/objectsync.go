@@ -160,7 +160,7 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
-		klog.Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
+		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
 		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}

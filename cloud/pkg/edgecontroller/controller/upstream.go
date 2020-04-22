@@ -249,7 +249,7 @@ func (uc *UpstreamController) updatePodStatus() {
 						if err := uc.messageLayer.Send(*delMsg); err != nil {
 							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, delMsg.GetOperation(), delMsg.GetResource())
 						} else {
-							klog.Infof("Send message successfully, operation: %s, resource: %s", delMsg.GetOperation(), delMsg.GetResource())
+							klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", delMsg.GetOperation(), delMsg.GetResource())
 						}
 
 						continue
