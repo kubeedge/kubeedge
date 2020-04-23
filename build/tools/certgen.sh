@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+set -o errexit
 
 readonly caPath=${CA_PATH:-/etc/kubeedge/ca}
 readonly caSubject=${CA_SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge/CN=kubeedge.io}
@@ -44,6 +46,41 @@ genCertAndKey() {
     local name=$1
     genCsr $name
     genCert $name
+}
+
+stream() {
+    readonly streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
+    readonly STREAM_KEY_FILE=${certPath}/stream.key
+    readonly STREAM_CSR_FILE=${certPath}/stream.csr
+    readonly STREAM_CRT_FILE=${certPath}/stream.crt
+    readonly K8SCA_FILE=/etc/kubernetes/pki/ca.crt
+    readonly K8SCA_KEY_FILE=/etc/kubernetes/pki/ca.key
+
+    if [ -z ${CLOUDCOREIPS} ]; then
+        echo "You must set CLOUDCOREIPS Env,The environment variable is set to specify the IP addresses of all cloudcore"
+        echo "If there are more than one IP need to be separated with space."
+        exit 1
+    fi
+
+    index=1
+    SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
+    for ip in ${CLOUDCOREIPS}; do
+        SUBJECTALTNAME="${SUBJECTALTNAME},"
+        index=$(($index+1))
+        SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
+    done
+
+    cp /etc/kubernetes/pki/ca.crt ${caPath}/streamCA.crt
+    echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
+
+    openssl genrsa -out ${STREAM_KEY_FILE}  2048
+    openssl req -new -key ${STREAM_KEY_FILE} -subj ${streamsubject} -out ${STREAM_CSR_FILE}
+
+    # verify
+    openssl req -in ${STREAM_CSR_FILE} -noout -text
+    openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
+    #verify
+    openssl x509 -in ${STREAM_CRT_FILE} -text -noout
 }
 
 buildSecret() {

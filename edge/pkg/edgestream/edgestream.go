@@ -40,13 +40,13 @@ const (
 
 type edgestream struct {
 	enable          bool
-	tunnelSessionID string
+	hostnameOveride string
 }
 
 func newEdgeStream(enable bool, hostnameOverride string) *edgestream {
 	return &edgestream{
 		enable:          enable,
-		tunnelSessionID: hostnameOverride,
+		hostnameOveride: hostnameOverride,
 	}
 }
 
@@ -107,7 +107,7 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 		HandshakeTimeout: time.Duration(config.Config.HandshakeTimeout) * time.Second,
 	}
 	header := http.Header{}
-	header.Add(stream.TunnelSessionID, e.tunnelSessionID)
+	header.Add(stream.TunnelSessionID, e.hostnameOveride)
 
 	con, _, err := dial.Dial(url.String(), header)
 	if err != nil {

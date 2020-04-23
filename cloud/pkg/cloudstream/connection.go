@@ -140,7 +140,6 @@ func (l *ContainerLogsConnection) Serve() error {
 			return nil
 		}
 	}
-	return nil
 }
 
 var _ APIServerConnection = &ContainerLogsConnection{}
