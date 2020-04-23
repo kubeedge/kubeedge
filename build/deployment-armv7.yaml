@@ -15,7 +15,7 @@ spec:
         app: nginx
     spec:
       nodeSelector:
-        name: edge-node
+        kubernetes.io/hostname: edge-node
       containers:
       - name: nginx
         image: arm32v7/nginx
