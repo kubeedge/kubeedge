@@ -970,6 +970,8 @@ k8s.io/client-go/tools/clientcmd
 k8s.io/client-go/tools/clientcmd/api
 k8s.io/client-go/tools/clientcmd/api/latest
 k8s.io/client-go/tools/clientcmd/api/v1
+k8s.io/client-go/tools/leaderelection
+k8s.io/client-go/tools/leaderelection/resourcelock
 k8s.io/client-go/tools/metrics
 k8s.io/client-go/tools/pager
 k8s.io/client-go/tools/record
@@ -1015,6 +1017,7 @@ k8s.io/code-generator/pkg/util
 # k8s.io/component-base v0.17.1
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
+k8s.io/component-base/config
 k8s.io/component-base/featuregate
 k8s.io/component-base/logs
 k8s.io/component-base/metrics
