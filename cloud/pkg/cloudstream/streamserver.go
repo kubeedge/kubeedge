@@ -33,8 +33,11 @@ import (
 )
 
 type StreamServer struct {
-	container *restful.Container
-	tunnel    *TunnelServer
+	// nextMessageID indicates the next message id
+	// it starts from 0 , when receive a new apiserver connection and then add 1
+	nextMessageID uint64
+	container     *restful.Container
+	tunnel        *TunnelServer
 }
 
 func newStreamServer(t *TunnelServer) *StreamServer {
@@ -95,7 +98,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	}
 	fw := flushwriter.Wrap(w.ResponseWriter)
 
-	logConnection, err := session.AddAPIServerConnection(&ContainerLogsConnection{
+	logConnection, err := session.AddAPIServerConnection(s, &ContainerLogsConnection{
 		r:            r,
 		flush:        fw,
 		session:      session,
@@ -135,6 +138,8 @@ func (s *StreamServer) Start() {
 		Handler: s.container,
 		TLSConfig: &tls.Config{
 			ClientCAs: pool,
+			// Populate PeerCertificates in requests, but don't reject connections without verified certificates
+			ClientAuth: tls.RequestClientCert,
 		},
 	}
 	klog.Infof("Prepare to start stream server ...")

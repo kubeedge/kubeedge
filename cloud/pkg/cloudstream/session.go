@@ -30,10 +30,6 @@ import (
 // Session indicates one tunnel connection (default websocket) from edgecore
 // And multiple kube-apiserver initiated requests to this edgecore
 type Session struct {
-	// nextMessageID indicates the next message id
-	// it starts from 0 , when receive a new apiserver connection and then add 1
-	nextMessageID uint64
-
 	// sessionID indicates the unique id of session
 	sessionID string
 
@@ -113,8 +109,8 @@ func (s *Session) String() string {
 	return fmt.Sprintf("Tunnel session [%v]", s.sessionID)
 }
 
-func (s *Session) AddAPIServerConnection(connection APIServerConnection) (APIServerConnection, error) {
-	id := atomic.AddUint64(&(s.nextMessageID), 1)
+func (s *Session) AddAPIServerConnection(ss *StreamServer, connection APIServerConnection) (APIServerConnection, error) {
+	id := atomic.AddUint64(&(ss.nextMessageID), 1)
 	s.apiConnlock.Lock()
 	defer s.apiConnlock.Unlock()
 	if s.tunnelClosed {

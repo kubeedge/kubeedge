@@ -66,7 +66,6 @@ func (s *TunnelServer) installDefaultHandler() {
 
 func (s *TunnelServer) addSession(id string, con *websocket.Conn) *Session {
 	session := &Session{
-		nextMessageID: 0,
 		tunnel:        stream.NewDefaultTunnel(con),
 		apiServerConn: make(map[uint64]APIServerConnection),
 		apiConnlock:   &sync.Mutex{},
