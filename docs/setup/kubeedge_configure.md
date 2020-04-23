@@ -202,15 +202,7 @@ Verify the configurations before running `edgecore`
     runtimeType: remote
     ```
 
-5. If your runtime-type is remote, specify the following parameters for remote/CRI based runtimes
-
-    ```yaml
-    remoteRuntimeEndpoint: /var/run/containerd/containerd.sock
-    remoteImageEndpoint: /var/run/containerd/containerd.sock
-    runtimeRequestTimeout: 2
-    podSandboxImage: k8s.gcr.io/pause
-    kubelet-root-dir: /var/run/kubelet/
-    ```
+5. If your runtime-type is remote, follow this guide[KubeEdge CRI Configuration](kubeedge_cri_configure.md) to setup KubeEdge with the remote/CRI based runtimes
 
 #### Configuring MQTT mode
 
