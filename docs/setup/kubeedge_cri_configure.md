@@ -1,6 +1,6 @@
 # KubeEdge lightweight runtime configuration
 
-## ContainerD
+## containerd
 
 Docker 18.09 ships with containerd, so you needn’t install `containerd` manually, otherwise install `containerd` in this way,
 
@@ -72,7 +72,7 @@ CONTAINER                                                           IMAGE       
 
 ## CRI-O
 
-Follow the [CRI-O install guide] (https://github.com/cri-o/cri-o/blob/master/tutorials/setup.md) to setup CRI-O.
+Follow the [CRI-O install guide](https://github.com/cri-o/cri-o/blob/master/tutorials/setup.md) to setup CRI-O.
 
 If your edge node is running on ARM platform and your distro is ubuntu18.04, you might need to build the binaries form source and install after that, since CRI-O packages is not available in [Kubic](https://build.opensuse.org/project/show/devel:kubic:libcontainers:stable) repository for this combination.
 
@@ -85,7 +85,7 @@ sudo make install
 sudo make install.config
 ```
 
-Setup CNI networking, please follow this guide [setup CNI] (https://github.com/cri-o/cri-o/blob/master/contrib/cni/README.md) to set up the CNI networking.
+Setup CNI networking, please follow this guide [setup CNI](https://github.com/cri-o/cri-o/blob/master/contrib/cni/README.md) to set up the CNI networking.
 Update edgecore config file, specify the following parameters for `CRI-O` based runtime,
 
 ```yaml
