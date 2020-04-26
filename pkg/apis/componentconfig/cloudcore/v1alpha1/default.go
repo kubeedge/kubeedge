@@ -47,6 +47,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				KeepaliveInterval: 30,
 				NodeLimit:         10,
 				TLSCAFile:         constants.DefaultCAFile,
+				TLSCAKeyFile:      constants.DefaultCAKeyFile,
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				WriteTimeout:      30,
@@ -167,6 +168,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 			CloudHub: &CloudHub{
 				NodeLimit:         10,
 				TLSCAFile:         constants.DefaultCAFile,
+				TLSCAKeyFile:      constants.DefaultCAKeyFile,
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				UnixSocket: &CloudHubUnixSocket{
