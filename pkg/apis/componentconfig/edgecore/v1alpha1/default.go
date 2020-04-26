@@ -102,6 +102,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
+				HttpServer:           "https://127.0.0.1:3000",
+				Token:                "",
 			},
 			EventBus: &EventBus{
 				Enable:               true,
@@ -193,6 +195,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
+				HttpServer:           "https://127.0.0.1:3000",
+				Token:                "",
 			},
 			EventBus: &EventBus{
 				MqttQOS:            0,

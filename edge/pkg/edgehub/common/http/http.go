@@ -3,6 +3,7 @@ package http
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -62,6 +63,22 @@ func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
 	return client, nil
 }
 
+// NewHTTPclientWithCA create client without certificate
+func NewHTTPclientWithCA(ca []byte)(*http.Client, error){
+	pool := x509.NewCertPool()
+	if ok := pool.AppendCertsFromPEM(ca); !ok {
+		return nil, fmt.Errorf("cannot parse the certificates")
+	}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:      pool,
+			InsecureSkipVerify: false,
+		},
+	}
+	client := &http.Client{Transport: tr, Timeout: connectTimeout}
+	return client, nil
+}
+
 // SendRequest sends a http request and return the resp info
 func SendRequest(req *http.Request, client *http.Client) (*http.Response, error) {
 	resp, err := client.Do(req)
@@ -78,8 +95,8 @@ func BuildRequest(method string, urlStr string, body io.Reader, token string) (*
 		return nil, err
 	}
 	if token != "" {
-		req.Header.Add("X-Auth-Token", token)
+		req.Header.Add("authorization", token)
 	}
-	req.Header.Add("Content-Type", "application/json")
 	return req, nil
 }
+

@@ -265,6 +265,10 @@ type EdgeHub struct {
 	// WebSocket indicates websocket config for EdgeHub module
 	// Optional if quic is configured
 	WebSocket *EdgeHubWebSocket `json:"websocket,omitempty"`
+	// Token indicates the priority of joining the cluster for the edge
+	Token string `json:"token,omitempty"`
+	// Http indicates the server for edge to apply for the certificate.
+	HttpServer string `json:"httpServer, omitempty"`
 }
 
 // EdgeHubQUIC indicates the quic client config
