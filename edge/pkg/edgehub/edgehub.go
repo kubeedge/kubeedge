@@ -60,7 +60,10 @@ func (eh *EdgeHub) Enable() bool {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
-
+	if err := eh.applyCerts(); err != nil {
+		klog.Errorf("failed to apply for edge certificate, error: %v", err)
+		return
+	}
 	for {
 		select {
 		case <-beehiveContext.Done():

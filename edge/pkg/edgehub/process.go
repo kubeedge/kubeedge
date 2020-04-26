@@ -2,6 +2,7 @@ package edgehub
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/klog"
@@ -12,12 +13,16 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/certutil"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 const (
 	waitConnectionPeriod = time.Minute
 	authEventType        = "auth_info_event"
+	caURL                ="/ca.crt"
+	certURL              ="/edge.crt"
 )
 
 var groupMap = map[string]string{
@@ -27,6 +32,54 @@ var groupMap = map[string]string{
 	"user":     modules.BusGroup,
 }
 
+// applyCerts get edge certificate to communicate with cloudcore
+func (eh *EdgeHub) applyCerts() error {
+	// make sure that the directory exists
+	if err := validation.EnsureParentSubExist(config.Config.TLSCAFile); err != nil {
+		return err
+	}
+	if err := validation.EnsureParentSubExist(config.Config.TLSCertFile); err != nil {
+		return err
+	}
+
+	// get ca.crt
+	url := config.Config.HttpServer + caURL
+	cacert, err := certutil.GetCACert(url)
+	if err != nil {
+		klog.Errorf("failed to get CA certificate")
+		return fmt.Errorf("failed to get CA certificate")
+	}
+
+	// validate the CA certificate by hashcode
+	tokenParts := strings.Split(config.Config.Token, " ")
+	if len(tokenParts) != 2 {
+		return fmt.Errorf("token credentials are in the wrong format")
+	}
+	ok, hash, newHash := certutil.ValidateCACerts(cacert, tokenParts[0])
+	if !ok {
+		klog.Errorf("failed to validate CA certificate. tokenCAhash: %s, CAhash: %s", hash, newHash)
+		return fmt.Errorf("failed to validate CA certificate. tokenCAhash: %s, CAhash: %s", hash, newHash)
+	}
+	// save the ca.crt to file
+	if err = certutil.SaveToFile(cacert, config.Config.TLSCAFile, "CERTIFICATE"); err != nil {
+		klog.Errorf("failed to save the CA certificate to file: %s, error: %v", config.Config.TLSCAFile, err)
+		return fmt.Errorf("failed to save the CA certificate to file: %s, error: %v", config.Config.TLSCAFile, err)
+	}
+
+	// get the edge.crt
+	url = config.Config.HttpServer + certURL
+	edgecert, err := certutil.GetEdgeCert(url, cacert, config.Config.Token)
+	if err != nil {
+		klog.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
+		return fmt.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
+	}
+	// save the edge.crt to the file
+	if err = certutil.SaveToFile(edgecert, config.Config.TLSCertFile, "CERTIFICATE"); err != nil {
+		klog.Errorf("failed to save the edge certificate to file: %s, error: %v", config.Config.TLSCertFile, err)
+		return fmt.Errorf("failed to save the edge certificate to file: %s, error: %v", config.Config.TLSCertFile, err)
+	}
+	return nil
+}
 func (eh *EdgeHub) initial() (err error) {
 
 	cloudHubClient, err := clients.GetClient()

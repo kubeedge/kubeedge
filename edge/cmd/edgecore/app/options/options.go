@@ -58,5 +58,6 @@ func (o *EdgeCoreOptions) Config() (*v1alpha1.EdgeCoreConfig, error) {
 	if err := cfg.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}
+
 	return cfg, nil
 }
