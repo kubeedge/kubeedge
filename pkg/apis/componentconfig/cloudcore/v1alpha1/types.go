@@ -89,6 +89,9 @@ type CloudHub struct {
 	// TLSCAFile indicates ca file path
 	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSCAFile string `json:"tlsCAFile,omitempty"`
+	// TLSCAKeyFile indicates caKey file path
+	// default /etc/kubeedge/ca/rootCA.key
+	TLSCAKeyFile  string `json:"tlsCAFile,omitempty"`
 	// TLSCertFile indicates cert file path
 	// default "/etc/kubeedge/certs/edge.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
