@@ -4,15 +4,17 @@ import (
 	gocontext "context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"syscall"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/kubernetes"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/leaderelection"
@@ -40,6 +42,10 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 		klog.Warningf("Create kube client for leaderElection failed with error: %s", err)
 		return
 	}
+	if err = CreateNamespaceIfNeeded(cli, "kubeedge"); err != nil {
+		klog.Warningf("Create Namespace kubeedge failed with error: %s", err)
+		return
+	}
 	coreRecorder := coreBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "CloudCore"})
 	leaderElectionConfig, err := makeLeaderElectionConfig(*cfg.LeaderElection, cli, coreRecorder)
 
@@ -61,8 +67,8 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 		},
 		OnStoppedLeading: func() {
 			// TODO: is it necessary to terminate the program gracefully?
-			//klog.Fatalf("leaderlection lost, rudely terminate program")
-			klog.Errorf("leaderlection lost, gracefully terminate program")
+			//klog.Fatalf("leaderelection lost, rudely terminate program")
+			klog.Errorf("leaderelection lost, gracefully terminate program")
 			// Trigger core.GracefulShutdown()
 			TriggerGracefulShutdown()
 		},
@@ -130,7 +136,7 @@ func TryToPatchPodReadinessGate() error {
 		}
 
 		//Creat patchBytes
-		getPod, err := cli.CoreV1().Pods(namespace).Get(podname, metaV1.GetOptions{})
+		getPod, err := cli.CoreV1().Pods(namespace).Get(podname, metav1.GetOptions{})
 		originalJSON, err := json.Marshal(getPod)
 		if err != nil {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
@@ -180,4 +186,23 @@ func TriggerGracefulShutdown() {
 	if err != nil {
 		klog.Errorf("Failed to trigger graceful shutdown: %v", err)
 	}
+}
+
+func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
+	c := cli.CoreV1()
+	if _, err := c.Namespaces().Get(ns, metav1.GetOptions{}); err == nil {
+		// the namespace already exists
+		return nil
+	}
+	newNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ns,
+			Namespace: "",
+		},
+	}
+	_, err := c.Namespaces().Create(newNs)
+	if err != nil && errors.IsAlreadyExists(err) {
+		err = nil
+	}
+	return err
 }
