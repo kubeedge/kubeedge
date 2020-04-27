@@ -99,6 +99,9 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
+
+	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, types.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
+		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
@@ -138,11 +141,12 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		Common: util.Common{
 			ToolVersion: kubeVer,
 		},
-		CloudCoreIP:   joinOptions.CloudCoreIPPort,
-		EdgeNodeName:  joinOptions.EdgeNodeName,
-		RuntimeType:   joinOptions.RuntimeType,
-		InterfaceName: joinOptions.InterfaceName,
-		CertPath:      joinOptions.CertPath,
+		CloudCoreIP:            joinOptions.CloudCoreIPPort,
+		EdgeNodeName:           joinOptions.EdgeNodeName,
+		RuntimeType:            joinOptions.RuntimeType,
+		InterfaceName:          joinOptions.InterfaceName,
+		CertPath:               joinOptions.CertPath,
+		RemoteRuntimeEndpoint:  joinOptions.RemoteRuntimeEndpoint,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
