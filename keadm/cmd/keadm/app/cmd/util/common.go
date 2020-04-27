@@ -73,6 +73,10 @@ const (
 
 	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
 	RetryTimes              = 5
+
+	TokenSecretName = "tokenSecret"
+	TokenDataName = "tokenData"
+	NameSpaceCloudCore = "kubeedge"
 )
 
 type latestReleaseVersion struct {

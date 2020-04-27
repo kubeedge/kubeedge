@@ -61,4 +61,10 @@ const (
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
 	DefaultKubeEdgeVersion = "1.2.1"
+
+	// Token sets the token used when edge applying for the certificate
+	Token = "token"
+
+	// HttpServer sets the IP address and port where to apply for the edge certificate
+	HttpServer = "httpServer"
 )
