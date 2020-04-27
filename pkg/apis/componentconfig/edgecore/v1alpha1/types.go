@@ -60,7 +60,7 @@ type EdgeCoreConfig struct {
 	// DataBase indicates database info
 	// +Required
 	DataBase *DataBase `json:"database,omitempty"`
-	// Modules indicates cloudcore modules config
+	// Modules indicates edgecore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
 }
@@ -68,14 +68,13 @@ type EdgeCoreConfig struct {
 // DataBase indicates the datebase info
 type DataBase struct {
 	// DriverName indicates database driver name
-	// default sqlite3
+	// default "sqlite3"
 	DriverName string `json:"driverName,omitempty"`
 	// AliasName indicates alias name
-	// default default
+	// default "default"
 	AliasName string `json:"aliasName,omitempty"`
 	// DataSource indicates the data source path
-	// default /var/lib/kubeedge/edge.db
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	// default "/var/lib/kubeedge/edge.db"
 	DataSource string `json:"dataSource,omitempty"`
 }
 
@@ -93,13 +92,13 @@ type Modules struct {
 	// MetaManager indicates meta module config
 	// +Required
 	MetaManager *MetaManager `json:"metamanager,omitempty"`
-	// ServiceBus indicates module config
+	// ServiceBus indicates servicebus module config
 	ServiceBus *ServiceBus `json:"servicebus,omitempty"`
-	// DeviceTwin indicates module config
+	// DeviceTwin indicates devicetwin module config
 	DeviceTwin *DeviceTwin `json:"devicetwin,omitempty"`
-	// DBTest indicates module config
+	// DBTest indicates dbtest module config
 	DBTest *DBTest `json:"dbtest,omitempty"`
-	// Mesh indicates mesh module config
+	// EdgeMesh indicates edgemesh module config
 	// +Required
 	EdgeMesh *EdgeMesh `json:"edgemesh,omitempty"`
 }
@@ -114,16 +113,16 @@ type Edged struct {
 	// default 10
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
 	// RuntimeType indicates cri runtime ,support: docker, remote
-	// default docker
+	// default "docker"
 	RuntimeType string `json:"runtimeType,omitempty"`
 	// DockerAddress indicates docker server address
-	// default unix:///var/run/docker.sock
+	// default "unix:///var/run/docker.sock"
 	DockerAddress string `json:"dockerAddress,omitempty"`
 	// RemoteRuntimeEndpoint indicates remote runtime endpoint
-	// default unix:///var/run/dockershim.sock
+	// default "unix:///var/run/dockershim.sock"
 	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint,omitempty"`
 	// RemoteImageEndpoint indicates remote image endpoint
-	// default unix:///var/run/dockershim.sock
+	// default "unix:///var/run/dockershim.sock"
 	RemoteImageEndpoint string `json:"remoteImageEndpoint,omitempty"`
 	// NodeIP indicates current node ip
 	// default get local host ip
@@ -158,10 +157,10 @@ type Edged struct {
 	// default true
 	RegisterNode bool `json:"registerNode,omitempty"`
 	//RegisterNodeNamespace indicates register node namespace
-	// default default
+	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
 	// InterfaceName indicates interface name
-	// default eth0
+	// default "eth0"
 	InterfaceName string `json:"interfaceName,omitempty"`
 	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
 	// default 5
@@ -184,20 +183,20 @@ type Edged struct {
 	// default 1
 	MaximumDeadContainersPerPod int32 `json:"maximumDeadContainersPerPod,omitempty"`
 	// CGroupDriver indicates container cgroup driver, support: cgroupfs,systemd
-	// default cgroupfs
+	// default "cgroupfs"
 	// +Required
 	CGroupDriver string `json:"cgroupDriver,omitempty"`
 	// NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
 	// default ""
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
 	// CNIConfDir indicates the full path of the directory in which to search for CNI config files
-	// default /etc/cni/net.d
+	// default "/etc/cni/net.d"
 	CNIConfDir string `json:"cniConfDir,omitempty"`
 	// CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
-	// default /opt/cni/bin
+	// default "/opt/cni/bin"
 	CNIBinDir string `json:"cniBinDir,omitempty"`
 	// CNICacheDir indicates the full path of the directory in which CNI should store cache files
-	// default /var/lib/cni/cache
+	// default "/var/lib/cni/cache"
 	CNICacheDir string `json:"cniCacheDirs,omitempty"`
 	// NetworkPluginMTU indicates the MTU to be passed to the network plugin
 	// default 1500
@@ -245,13 +244,13 @@ type EdgeHub struct {
 	// default e632aba927ea4ac2b575ec1603d56f10
 	ProjectID string `json:"projectID,omitempty"`
 	// TLSCAFile set ca file path
-	// default /etc/kubeedge/ca/rootCA.crt
+	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSCAFile string `json:"tlsCaFile,omitempty"`
 	// TLSCertFile indicates the file containing x509 Certificate for HTTPS
-	// default /etc/kubeedge/certs/edge.crt
+	// default "/etc/kubeedge/certs/edge.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
-	// default /etc/kubeedge/certs/edge.key
+	// default "/etc/kubeedge/certs/edge.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// Quic indicates quic config for edgehub module
 	// Optional if websocket is configured
@@ -318,10 +317,10 @@ type EventBus struct {
 	// default 100
 	MqttSessionQueueSize int32 `json:"mqttSessionQueueSize,omitempty"`
 	// MqttServerInternal indicates internal mqtt broker url
-	// default tcp://127.0.0.1:1884
+	// default "tcp://127.0.0.1:1884"
 	MqttServerInternal string `json:"mqttServerInternal,omitempty"`
 	// MqttServerExternal indicates external mqtt broker url
-	// default tcp://127.0.0.1:1883
+	// default "tcp://127.0.0.1:1883"
 	MqttServerExternal string `json:"mqttServerExternal,omitempty"`
 	// MqttMode indicates which broker type will be choose
 	// 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only

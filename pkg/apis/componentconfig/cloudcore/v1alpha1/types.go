@@ -68,9 +68,11 @@ type Modules struct {
 }
 
 // CloudHub indicates the config of cloudhub module.
-// CloudHub is a web socket or quic server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
+// CloudHub is a web socket or quic server responsible for watching changes at the cloud side,
+// caching and sending messages to EdgeHub.
 type CloudHub struct {
-	// Enable indicates whether cloudhub is enabled, if set to false (for debugging etc.), skip checking other cloudhub configs.
+	// Enable indicates whether cloudhub is enabled, if set to false (for debugging etc.),
+	// skip checking other cloudhub configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// KeepaliveInterval indicates keep-alive interval (second)
@@ -80,13 +82,13 @@ type CloudHub struct {
 	// default 10
 	NodeLimit int32 `json:"nodeLimit,omitempty"`
 	// TLSCAFile indicates ca file path
-	// default /etc/kubeedge/ca/rootCA.crt
+	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSCAFile string `json:"tlsCAFile,omitempty"`
 	// TLSCertFile indicates cert file path
-	// default /etc/kubeedge/certs/edge.crt
+	// default "/etc/kubeedge/certs/edge.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile indicates key file path
-	// default /etc/kubeedge/certs/edge.key
+	// default "/etc/kubeedge/certs/edge.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// WriteTimeout indicates write time (second)
 	// default 30
@@ -122,7 +124,7 @@ type CloudHubUnixSocket struct {
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// Address indicates unix domain socket address
-	// default unix:///var/lib/kubeedge/kubeedge.sock
+	// default "unix:///var/lib/kubeedge/kubeedge.sock"
 	Address string `json:"address,omitempty"`
 }
 
@@ -141,7 +143,8 @@ type CloudHubWebSocket struct {
 
 // EdgeController indicates the config of edgecontroller module
 type EdgeController struct {
-	// Enable indicates whether edgecontroller is enabled, if set to false (for debugging etc.), skip checking other edgecontroller configs.
+	// Enable indicates whether edgecontroller is enabled,
+	// if set to false (for debugging etc.), skip checking other edgecontroller configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// NodeUpdateFrequency indicates node update frequency (second)
@@ -262,7 +265,8 @@ type EdgeControllerLoad struct {
 
 // DeviceController indicates the device controller
 type DeviceController struct {
-	// Enable indicates whether devicecontroller is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// Enable indicates whether devicecontroller is enabled,
+	// if set to false (for debugging etc.), skip checking other devicecontroller configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// Context indicates send,receive,response modules for devicecontroller module
@@ -305,7 +309,8 @@ type DeviceControllerLoad struct {
 
 // SyncController indicates the sync controller
 type SyncController struct {
-	// Enable indicates whether devicecontroller is enabled, if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// Enable indicates whether devicecontroller is enabled,
+	// if set to false (for debugging etc.), skip checking other devicecontroller configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 }
