@@ -14,7 +14,7 @@ data:
       kubeConfig: ""
       master: ""
     modules:
-      cloudhub:
+      cloudHub:
         nodeLimit: 10
         tlsCAFile: /etc/kubeedge/ca/rootCA.crt
         tlsCertFile: /etc/kubeedge/certs/edge.crt
