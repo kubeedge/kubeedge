@@ -97,7 +97,7 @@ func (uc *UpstreamController) Start() error {
 
 	uc.nodeStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
 	uc.podStatusChan = make(chan model.Message, config.Config.Buffer.UpdatePodStatus)
-	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigmap)
+	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
 	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
 	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
@@ -116,7 +116,7 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(config.Config.Load.UpdatePodStatusWorkers); i++ {
 		go uc.updatePodStatus()
 	}
-	for i := 0; i < int(config.Config.Load.QueryConfigmapWorkers); i++ {
+	for i := 0; i < int(config.Config.Load.QueryConfigMapWorkers); i++ {
 		go uc.queryConfigMap()
 	}
 	for i := 0; i < int(config.Config.Load.QuerySecretWorkers); i++ {

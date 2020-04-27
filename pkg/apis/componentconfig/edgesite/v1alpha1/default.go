@@ -60,12 +60,12 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				Buffer: &cloudcoreconfig.EdgeControllerBuffer{
 					UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
 					UpdateNodeStatus:           constants.DefaultUpdateNodeStatusBuffer,
-					QueryConfigmap:             constants.DefaultQueryConfigMapBuffer,
+					QueryConfigMap:             constants.DefaultQueryConfigMapBuffer,
 					QuerySecret:                constants.DefaultQuerySecretBuffer,
 					QueryService:               constants.DefaultQueryServiceBuffer,
 					QueryEndpoints:             constants.DefaultQueryEndpointsBuffer,
 					PodEvent:                   constants.DefaultPodEventBuffer,
-					ConfigmapEvent:             constants.DefaultConfigMapEventBuffer,
+					ConfigMapEvent:             constants.DefaultConfigMapEventBuffer,
 					SecretEvent:                constants.DefaultSecretEventBuffer,
 					ServiceEvent:               constants.DefaultServiceEventBuffer,
 					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
@@ -84,7 +84,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				Load: &cloudcoreconfig.EdgeControllerLoad{
 					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
 					UpdateNodeStatusWorkers:           constants.DefaultUpdateNodeStatusWorkers,
-					QueryConfigmapWorkers:             constants.DefaultQueryConfigMapWorkers,
+					QueryConfigMapWorkers:             constants.DefaultQueryConfigMapWorkers,
 					QuerySecretWorkers:                constants.DefaultQuerySecretWorkers,
 					QueryServiceWorkers:               constants.DefaultQueryServiceWorkers,
 					QueryEndpointsWorkers:             constants.DefaultQueryEndpointsWorkers,
