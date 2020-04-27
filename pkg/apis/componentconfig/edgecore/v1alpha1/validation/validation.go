@@ -177,11 +177,11 @@ func ValidateModuleEdgeStream(m v1alpha1.EdgeStream) field.ErrorList {
 	}
 	if !utilvalidation.FileIsExist(m.TLSTunnelCertFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
-			m.TLSTunnelCAFile, "TLSTunnelCertFile file not exist"))
+			m.TLSTunnelCertFile, "TLSTunnelCertFile file not exist"))
 	}
 	if !utilvalidation.FileIsExist(m.TLSTunnelPrivateKeyFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
-			m.TLSTunnelCAFile, "TLSTunnelPrivateKeyFile file not exist"))
+			m.TLSTunnelPrivateKeyFile, "TLSTunnelPrivateKeyFile file not exist"))
 	}
 	return allErrs
 }

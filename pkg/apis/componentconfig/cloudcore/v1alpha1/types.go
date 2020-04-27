@@ -324,7 +324,7 @@ type SyncController struct {
 type CloudStream struct {
 	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt

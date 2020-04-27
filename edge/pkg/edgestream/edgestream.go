@@ -41,19 +41,21 @@ const (
 type edgestream struct {
 	enable          bool
 	hostnameOveride string
+	nodeIP          string
 }
 
-func newEdgeStream(enable bool, hostnameOverride string) *edgestream {
+func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
 	return &edgestream{
 		enable:          enable,
 		hostnameOveride: hostnameOverride,
+		nodeIP:          nodeIP,
 	}
 }
 
 // Register register edgestream
-func Register(s *v1alpha1.EdgeStream, hostnameOverride string) {
+func Register(s *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) {
 	config.InitConfigure(s)
-	core.Register(newEdgeStream(s.Enable, hostnameOverride))
+	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
 }
 
 func (e *edgestream) Name() string {
@@ -107,7 +109,8 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 		HandshakeTimeout: time.Duration(config.Config.HandshakeTimeout) * time.Second,
 	}
 	header := http.Header{}
-	header.Add(stream.TunnelSessionID, e.hostnameOveride)
+	header.Add(stream.SessionKeyHostNameOveride, e.hostnameOveride)
+	header.Add(stream.SessionKeyInternalIP, e.nodeIP)
 
 	con, _, err := dial.Dial(url.String(), header)
 	if err != nil {

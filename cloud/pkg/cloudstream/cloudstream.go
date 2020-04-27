@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	StreamControllerModuleName = "streamController"
-	StreamControllerGroupName  = "streamController"
+	CloudStreamModuleName = "cloudStream"
+	CloudStreamGroupName  = "cloudStream"
 )
 
 type cloudStream struct {
@@ -43,11 +43,11 @@ func Register(controller *v1alpha1.CloudStream) {
 }
 
 func (s *cloudStream) Name() string {
-	return StreamControllerModuleName
+	return CloudStreamModuleName
 }
 
 func (s *cloudStream) Group() string {
-	return StreamControllerGroupName
+	return CloudStreamGroupName
 }
 
 func (s *cloudStream) Start() {

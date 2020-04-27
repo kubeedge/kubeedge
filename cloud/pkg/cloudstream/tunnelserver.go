@@ -38,7 +38,7 @@ type TunnelServer struct {
 	container *restful.Container
 	upgrader  websocket.Upgrader
 	sync.Mutex
-	sessions map[string]*Session // key 是根据agent 发来的id 做区分
+	sessions map[string]*Session
 }
 
 func newTunnelServer() *TunnelServer {
@@ -64,17 +64,10 @@ func (s *TunnelServer) installDefaultHandler() {
 	s.container.Add(ws)
 }
 
-func (s *TunnelServer) addSession(id string, con *websocket.Conn) *Session {
-	session := &Session{
-		tunnel:        stream.NewDefaultTunnel(con),
-		apiServerConn: make(map[uint64]APIServerConnection),
-		apiConnlock:   &sync.Mutex{},
-		sessionID:     id,
-	}
+func (s *TunnelServer) addSession(key string, session *Session) {
 	s.Lock()
-	s.sessions[id] = session
+	s.sessions[key] = session
 	s.Unlock()
-	return session
 }
 
 func (s *TunnelServer) getSession(id string) (*Session, bool) {
@@ -85,13 +78,23 @@ func (s *TunnelServer) getSession(id string) (*Session, bool) {
 }
 
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
-	id := r.HeaderParameter(stream.TunnelSessionID)
+	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOveride)
+	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
 		return
 	}
-	klog.Infof("get a new tunnel agent %v", id)
-	session := s.addSession(id, con)
+	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, interalIP)
+
+	session := &Session{
+		tunnel:        stream.NewDefaultTunnel(con),
+		apiServerConn: make(map[uint64]APIServerConnection),
+		apiConnlock:   &sync.Mutex{},
+		sessionID:     hostNameOverride,
+	}
+
+	s.addSession(hostNameOverride, session)
+	s.addSession(interalIP, session)
 	session.Serve()
 }
 
