@@ -209,7 +209,7 @@ func IsCloudCore() (types.ModuleRunning, error) {
 		return types.KubeEdgeCloudRunning, nil
 	}
 
-	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	edgeCoreRunning, err := isEdgeCoreServiceRunning() //osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
 	if err != nil {
 		return types.NoneRunning, err
 	}
@@ -389,12 +389,12 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 		}
 		if componentType == types.EdgeCore {
 			untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s%s/edge/%s %s/",
-				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
+				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeEdgeBinaryName, KubeEdgePath)
 		}
 	} else {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %skubeedge/edge/%s %s/.",
 			KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
-		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && cp %skubeedge/cloud/%s %s/.",
+		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && cp %skubeedge/cloud/%s %s/.",
 			KubeEdgePath, KubeEdgePath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
 	}
 
@@ -425,18 +425,18 @@ func runEdgeCore(version string) error {
 	}
 
 	// add +x for edgecore
-	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeEdgeBinaryName)
+	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgePath, KubeEdgeBinaryName)
 	if _, err := runCommandWithStdout(command); err != nil {
 		return err
 	}
 
 	var binExec string
-	if version >= "1.1.0" {
-		binExec = fmt.Sprintf("%s > %s/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeLogPath, KubeEdgeBinaryName)
-	} else {
-		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
-	}
-
+	// if version >= "1.1.0" {
+	// 	binExec = fmt.Sprintf("%s > %s/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgeLogPath, KubeEdgeBinaryName)
+	// } else {
+	// 	binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+	// }
+	binExec = "sudo ln /etc/kubeedge/edgecore.service /etc/systemd/system/edgecore.service && sudo systemctl daemon-reload && sudo systemctl enable --now edgecore"
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
@@ -459,7 +459,12 @@ func runEdgeCore(version string) error {
 
 // killKubeEdgeBinary will search for KubeEdge process and forcefully kill it
 func killKubeEdgeBinary(proc string) error {
-	binExec := fmt.Sprintf("kill -9 $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+	var binExec string
+	if proc == "cloudcore" {
+		binExec = fmt.Sprintf("kill -9 $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+	} else {
+		binExec = fmt.Sprintf("systemctl stop %s.service && sudo rm /etc/systemd/system/%s.service", proc, proc)
+	}
 	if _, err := runCommandWithStdout(binExec); err != nil {
 		return err
 	}
@@ -472,6 +477,22 @@ func killKubeEdgeBinary(proc string) error {
 func isKubeEdgeProcessRunning(proc string) (bool, error) {
 	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s' | awk '{print $2}'", proc[0:1], proc[1:])
 	stdout, err := runCommandWithStdout(procRunning)
+	if err != nil {
+		return false, err
+	}
+	if stdout != "" {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func isEdgeCoreServiceRunning() (bool, error) {
+
+	serviceRunning := "systemctl is-active --quiet edgecore && echo Service is running"
+
+	stdout, err := runCommandWithStdout(serviceRunning)
+
 	if err != nil {
 		return false, err
 	}
