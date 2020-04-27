@@ -54,18 +54,18 @@ const (
 type ProtocolName string
 type MqttMode int
 
-// EdgeCoreConfig indicates the edgecore config which read from edgecore config file
+// EdgeCoreConfig indicates the EdgeCore config which read from EdgeCore config file
 type EdgeCoreConfig struct {
 	metav1.TypeMeta
 	// DataBase indicates database info
 	// +Required
 	DataBase *DataBase `json:"database,omitempty"`
-	// Modules indicates edgecore modules config
+	// Modules indicates EdgeCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
 }
 
-// DataBase indicates the datebase info
+// DataBase indicates the database info
 type DataBase struct {
 	// DriverName indicates database driver name
 	// default "sqlite3"
@@ -78,35 +78,36 @@ type DataBase struct {
 	DataSource string `json:"dataSource,omitempty"`
 }
 
-// Modules indicates the modules which edgecore will be used
+// Modules indicates the modules which edgeCore will be used
 type Modules struct {
 	// Edged indicates edged module config
 	// +Required
 	Edged *Edged `json:"edged,omitempty"`
-	// EdgeHub indicates edgehub module config
+	// EdgeHub indicates edgeHub module config
 	// +Required
-	EdgeHub *EdgeHub `json:"edgehub,omitempty"`
-	// EventBus indicates eventbus config for edgecore
+	EdgeHub *EdgeHub `json:"edgeHub,omitempty"`
+	// EventBus indicates eventBus config for edgeCore
 	// +Required
-	EventBus *EventBus `json:"eventbus,omitempty"`
+	EventBus *EventBus `json:"eventBus,omitempty"`
 	// MetaManager indicates meta module config
 	// +Required
-	MetaManager *MetaManager `json:"metamanager,omitempty"`
-	// ServiceBus indicates servicebus module config
-	ServiceBus *ServiceBus `json:"servicebus,omitempty"`
-	// DeviceTwin indicates devicetwin module config
-	DeviceTwin *DeviceTwin `json:"devicetwin,omitempty"`
-	// DBTest indicates dbtest module config
-	DBTest *DBTest `json:"dbtest,omitempty"`
-	// EdgeMesh indicates edgemesh module config
+	MetaManager *MetaManager `json:"metaManager,omitempty"`
+	// ServiceBus indicates serviceBus module config
+	ServiceBus *ServiceBus `json:"serviceBus,omitempty"`
+	// DeviceTwin indicates deviceTwin module config
+	DeviceTwin *DeviceTwin `json:"deviceTwin,omitempty"`
+	// DBTest indicates dbTest module config
+	DBTest *DBTest `json:"dbTest,omitempty"`
+	// EdgeMesh indicates edgeMesh module config
 	// +Required
-	EdgeMesh *EdgeMesh `json:"edgemesh,omitempty"`
+	EdgeMesh *EdgeMesh `json:"edgeMesh,omitempty"`
 }
 
 // Edged indicates the config fo edged module
 // edged is lighted-kubelet
 type Edged struct {
-	// Enable indicates whether edged is enabled, if set to false (for debugging etc.), skip checking other edged configs.
+	// Enable indicates whether edged is enabled,
+	// if set to false (for debugging etc.), skip checking other edged configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// NodeStatusUpdateFrequency indicates node status update frequency (second)
@@ -167,11 +168,11 @@ type Edged struct {
 	ConcurrentConsumers int `json:"concurrentConsumers,omitempty"`
 	// DevicePluginEnabled indicates enable device plugin
 	// default false
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
 	DevicePluginEnabled bool `json:"devicePluginEnabled"`
-	// GPUPluginEnabled indicates enable gpu gplugin
+	// GPUPluginEnabled indicates enable gpu plugin
 	// default false,
-	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
+	// Note: Can not use "omitempty" option, it will affect the output of the default configuration file
 	GPUPluginEnabled bool `json:"gpuPluginEnabled"`
 	// ImageGCHighThreshold indicates image gc high threshold (percent)
 	// default 80
@@ -182,17 +183,19 @@ type Edged struct {
 	// MaximumDeadContainersPerPod indicates max num dead containers per pod
 	// default 1
 	MaximumDeadContainersPerPod int32 `json:"maximumDeadContainersPerPod,omitempty"`
-	// CGroupDriver indicates container cgroup driver, support: cgroupfs,systemd
+	// CGroupDriver indicates container cgroup driver, support: cgroupfs, systemd
 	// default "cgroupfs"
 	// +Required
 	CGroupDriver string `json:"cgroupDriver,omitempty"`
-	// NetworkPluginName indicates the name of the network plugin to be invoked, if an empty string is specified, use noop plugin
+	// NetworkPluginName indicates the name of the network plugin to be invoked,
+	// if an empty string is specified, use noop plugin
 	// default ""
 	NetworkPluginName string `json:"networkPluginName,omitempty"`
 	// CNIConfDir indicates the full path of the directory in which to search for CNI config files
 	// default "/etc/cni/net.d"
 	CNIConfDir string `json:"cniConfDir,omitempty"`
-	// CNIBinDir indicates a comma-separated list of full paths of directories in which to search for CNI plugin binaries
+	// CNIBinDir indicates a comma-separated list of full paths of directories
+	// in which to search for CNI plugin binaries
 	// default "/opt/cni/bin"
 	CNIBinDir string `json:"cniBinDir,omitempty"`
 	// CNICacheDir indicates the full path of the directory in which CNI should store cache files
@@ -232,9 +235,10 @@ type Edged struct {
 	EnableMetrics bool `json:"enableMetrics,omitempty"`
 }
 
-// EdgeHub indicates the edgehub module config
+// EdgeHub indicates the EdgeHub module config
 type EdgeHub struct {
-	// Enable indicates whether edgehub is enabled, if set to false (for debugging etc.), skip checking other edgehub configs.
+	// Enable indicates whether EdgeHub is enabled,
+	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// Heartbeat indicates heart beat (second)
@@ -252,11 +256,11 @@ type EdgeHub struct {
 	// TLSPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
 	// default "/etc/kubeedge/certs/edge.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
-	// Quic indicates quic config for edgehub module
+	// Quic indicates quic config for EdgeHub module
 	// Optional if websocket is configured
 	Quic *EdgeHubQUIC `json:"quic,omitempty"`
-	// WebSocket indicates websocket config for edgehub module
-	// Optional if quic  is configured
+	// WebSocket indicates websocket config for EdgeHub module
+	// Optional if quic is configured
 	WebSocket *EdgeHubWebSocket `json:"websocket,omitempty"`
 }
 
@@ -271,7 +275,7 @@ type EdgeHubQUIC struct {
 	// ReadDeadline indicates read dead line (second)
 	// default 15
 	ReadDeadline int32 `json:"readDeadline,omitempty"`
-	// Server indicates quic server addres (ip:port)
+	// Server indicates quic server address (ip:port)
 	// +Required
 	Server string `json:"server,omitempty"`
 	// WriteDeadline indicates write dead line (second)
@@ -300,7 +304,8 @@ type EdgeHubWebSocket struct {
 
 // EventBus indicates the event bus module config
 type EventBus struct {
-	// Enable indicates whether eventbus is enabled, if set to false (for debugging etc.), skip checking other eventbus configs.
+	// Enable indicates whether EventBus is enabled, if set to false (for debugging etc.),
+	// skip checking other EventBus configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// MqttQOS indicates mqtt qos
@@ -308,7 +313,7 @@ type EventBus struct {
 	// default 0
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
 	MqttQOS uint8 `json:"mqttQOS"`
-	// MqttRetain indicates whether server will store the message and can be delivered to future subscribers
+	// MqttRetain indicates whether server will store the message and can be delivered to future subscribers,
 	// if this flag set true, sever will store the message and can be delivered to future subscribers
 	// default false
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
@@ -323,15 +328,18 @@ type EventBus struct {
 	// default "tcp://127.0.0.1:1883"
 	MqttServerExternal string `json:"mqttServerExternal,omitempty"`
 	// MqttMode indicates which broker type will be choose
-	// 0: internal mqtt broker enable only. 1: internal and external mqtt broker enable. 2: external mqtt broker enable only
+	// 0: internal mqtt broker enable only.
+	// 1: internal and external mqtt broker enable.
+	// 2: external mqtt broker enable only
 	// +Required
 	// default: 2
 	MqttMode MqttMode `json:"mqttMode"`
 }
 
-// MetaManager indicates the metamanager module config
+// MetaManager indicates the MetaManager module config
 type MetaManager struct {
-	// Enable indicates whether metamanager is enabled, if set to false (for debugging etc.), skip checking other metamanager configs.
+	// Enable indicates whether MetaManager is enabled,
+	// if set to false (for debugging etc.), skip checking other MetaManager configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// ContextSendGroup indicates send group
@@ -342,38 +350,42 @@ type MetaManager struct {
 	PodStatusSyncInterval int32 `json:"podStatusSyncInterval,omitempty"`
 }
 
-// ServiceBus indicates the servicebus module config
+// ServiceBus indicates the ServiceBus module config
 type ServiceBus struct {
-	// Enable indicates whether servicebus is enabled, if set to false (for debugging etc.), skip checking other servicebus configs.
+	// Enable indicates whether ServiceBus is enabled,
+	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
 	// default false
 	Enable bool `json:"enable"`
 }
 
-// DeviceTwin indicates the servicebus module config
+// DeviceTwin indicates the DeviceTwin module config
 type DeviceTwin struct {
-	// Enable indicates whether devicetwin is enabled, if set to false (for debugging etc.), skip checking other devicetwin configs.
+	// Enable indicates whether DeviceTwin is enabled,
+	// if set to false (for debugging etc.), skip checking other DeviceTwin configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 }
 
 // DBTest indicates the DBTest module config
 type DBTest struct {
-	// Enable indicates whether dbtest is enabled, if set to false (for debugging etc.), skip checking other dbtest configs.
+	// Enable indicates whether DBTest is enabled,
+	// if set to false (for debugging etc.), skip checking other DBTest configs.
 	// default false
 	Enable bool `json:"enable"`
 }
 
-// EdgeMesh indicates the edgemesh module config
+// EdgeMesh indicates the EdgeMesh module config
 type EdgeMesh struct {
-	// Enable indicates whether edgemesh is enabled, if set to false (for debugging etc.), skip checking other edgemesh configs.
+	// Enable indicates whether EdgeMesh is enabled,
+	// if set to false (for debugging etc.), skip checking other EdgeMesh configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
-	// lbStrategy indicates loadbalance stragety name
+	// lbStrategy indicates load balance strategy name
 	LBStrategy string `json:"lbStrategy,omitempty"`
-	// ListenInterface indicates the listen interface of edgemesh
+	// ListenInterface indicates the listen interface of EdgeMesh
 	ListenInterface string `json:"listenInterface,omitempty"`
-	// SubNet indicates the subnet of edgemesh
+	// SubNet indicates the subnet of EdgeMesh
 	SubNet string `json:"subNet,omitempty"`
-	// ListenPort indicates the listen port of edgemesh
+	// ListenPort indicates the listen port of EdgeMesh
 	ListenPort int `json:"listenPort,omitempty"`
 }

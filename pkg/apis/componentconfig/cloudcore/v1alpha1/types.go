@@ -22,20 +22,20 @@ import (
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
-// CloudCoreConfig indicates the config of cloudcore which get from cloudcore config file
+// CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
 type CloudCoreConfig struct {
 	metav1.TypeMeta
-	// KubeAPIConfig indicates the kubernetes cluster info which cloudcore will connected
+	// KubeAPIConfig indicates the kubernetes cluster info which cloudCore will connected
 	// +Required
 	KubeAPIConfig *KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
-	// Modules indicates cloudcore modules config
+	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
 type KubeAPIConfig struct {
-	// Master indicates the address of the Kubernetes API server (overrides any value in Kubeconfig)
+	// Master indicates the address of the Kubernetes API server (overrides any value in KubeConfig)
 	// such as https://127.0.0.1:8443
 	// default ""
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
@@ -49,30 +49,30 @@ type KubeAPIConfig struct {
 	// Burst to use while talking with kubernetes apiserver
 	// default 200
 	Burst int32 `json:"burst,omitempty"`
-	// Kubeconfig indicates the path to kubeconfig file with authorization and master location information.
+	// KubeConfig indicates the path to kubeConfig file with authorization and master location information.
 	// default "/root/.kube/config"
 	// +Required
 	KubeConfig string `json:"kubeConfig"`
 }
 
-// Modules indicates the modules of cloudcore will be use
+// Modules indicates the modules of CloudCore will be use
 type Modules struct {
-	// CloudHub indicates cloudhub module config
-	CloudHub *CloudHub `json:"cloudhub,omitempty"`
-	// EdgeController indicates edgecontroller module config
-	EdgeController *EdgeController `json:"edgecontroller,omitempty"`
-	// DeviceController indicates devicecontroller module config
-	DeviceController *DeviceController `json:"devicecontroller,omitempty"`
-	// SyncController indicates synccontroller module config
-	SyncController *SyncController `json:"devicecontroller,omitempty"`
+	// CloudHub indicates CloudHub module config
+	CloudHub *CloudHub `json:"cloudHub,omitempty"`
+	// EdgeController indicates EdgeController module config
+	EdgeController *EdgeController `json:"edgeController,omitempty"`
+	// DeviceController indicates DeviceController module config
+	DeviceController *DeviceController `json:"deviceController,omitempty"`
+	// SyncController indicates SyncController module config
+	SyncController *SyncController `json:"syncController,omitempty"`
 }
 
-// CloudHub indicates the config of cloudhub module.
+// CloudHub indicates the config of CloudHub module.
 // CloudHub is a web socket or quic server responsible for watching changes at the cloud side,
 // caching and sending messages to EdgeHub.
 type CloudHub struct {
-	// Enable indicates whether cloudhub is enabled, if set to false (for debugging etc.),
-	// skip checking other cloudhub configs.
+	// Enable indicates whether CloudHub is enabled, if set to false (for debugging etc.),
+	// skip checking other CloudHub configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// KeepaliveInterval indicates keep-alive interval (second)
@@ -128,7 +128,7 @@ type CloudHubUnixSocket struct {
 	Address string `json:"address,omitempty"`
 }
 
-// CloudHubWebSocket indicates the websocket config of cloudhub
+// CloudHubWebSocket indicates the websocket config of CloudHub
 type CloudHubWebSocket struct {
 	// Enable indicates whether enable websocket protocol
 	// default true
@@ -141,10 +141,10 @@ type CloudHubWebSocket struct {
 	Port uint32 `json:"port,omitempty"`
 }
 
-// EdgeController indicates the config of edgecontroller module
+// EdgeController indicates the config of EdgeController module
 type EdgeController struct {
-	// Enable indicates whether edgecontroller is enabled,
-	// if set to false (for debugging etc.), skip checking other edgecontroller configs.
+	// Enable indicates whether EdgeController is enabled,
+	// if set to false (for debugging etc.), skip checking other EdgeController configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// NodeUpdateFrequency indicates node update frequency (second)
@@ -152,13 +152,13 @@ type EdgeController struct {
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
 	// Buffer indicates k8s resource buffer
 	Buffer *EdgeControllerBuffer `json:"buffer,omitempty"`
-	// Context indicates send,receive,response modules for edgecontroller module
+	// Context indicates send,receive,response modules for EdgeController module
 	Context *EdgeControllerContext `json:"context,omitempty"`
-	// Load indicates edgecontroller load
+	// Load indicates EdgeController load
 	Load *EdgeControllerLoad `json:"load,omitempty"`
 }
 
-// EdgeControllerBuffer indicates the edgecontroller buffer
+// EdgeControllerBuffer indicates the EdgeController buffer
 type EdgeControllerBuffer struct {
 	// UpdatePodStatus indicates the buffer of pod status
 	// default 1024
@@ -166,9 +166,9 @@ type EdgeControllerBuffer struct {
 	// UpdateNodeStatus indicates the buffer of update node status
 	// default 1024
 	UpdateNodeStatus int32 `json:"updateNodeStatus,omitempty"`
-	// QueryConfigmap indicates the buffer of query configmap
+	// QueryConfigMap indicates the buffer of query configMap
 	// default 1024
-	QueryConfigmap int32 `json:"queryConfigmap,omitempty"`
+	QueryConfigMap int32 `json:"queryConfigMap,omitempty"`
 	// QuerySecret indicates the buffer of query secret
 	// default 1024
 	QuerySecret int32 `json:"querySecret,omitempty"`
@@ -181,9 +181,9 @@ type EdgeControllerBuffer struct {
 	// PodEvent indicates the buffer of pod event
 	// default 1
 	PodEvent int32 `json:"podEvent,omitempty"`
-	// ConfigmapEvent indicates the buffer of config map event
+	// ConfigMapEvent indicates the buffer of configMap event
 	// default 1
-	ConfigmapEvent int32 `json:"configmapEvent,omitempty"`
+	ConfigMapEvent int32 `json:"configMapEvent,omitempty"`
 	// SecretEvent indicates the buffer of secret event
 	// default 1
 	SecretEvent int32 `json:"secretEvent,omitempty"`
@@ -195,13 +195,13 @@ type EdgeControllerBuffer struct {
 	EndpointsEvent int32 `json:"endpointsEvent,omitempty"`
 	// QueryPersistentVolume indicates the buffer of query persistent volume
 	// default 1024
-	QueryPersistentVolume int32 `json:"queryPersistentvolume,omitempty"`
+	QueryPersistentVolume int32 `json:"queryPersistentVolume,omitempty"`
 	// QueryPersistentVolumeClaim indicates the buffer of query persistent volume claim
 	// default 1024
-	QueryPersistentVolumeClaim int32 `json:"queryPersistentvolumeclaim,omitempty"`
+	QueryPersistentVolumeClaim int32 `json:"queryPersistentVolumeClaim,omitempty"`
 	// QueryVolumeAttachment indicates the buffer of query volume attachment
 	// default 1024
-	QueryVolumeAttachment int32 `json:"queryVolumeattachment,omitempty"`
+	QueryVolumeAttachment int32 `json:"queryVolumeAttachment,omitempty"`
 	// QueryNode indicates the buffer of query node
 	// default 1024
 	QueryNode int32 `json:"queryNode,omitempty"`
@@ -213,7 +213,7 @@ type EdgeControllerBuffer struct {
 	DeletePod int32 `json:"deletePod,omitempty"`
 }
 
-// EdgeControllerContext indicates the edgecontroller context
+// EdgeControllerContext indicates the EdgeController context
 type EdgeControllerContext struct {
 	// SendModule indicates which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
@@ -223,7 +223,7 @@ type EdgeControllerContext struct {
 	ResponseModule metaconfig.ModuleName `json:"responseModule,omitempty"`
 }
 
-// EdgeControllerLoad indicates the edgecontroller load
+// EdgeControllerLoad indicates the EdgeController load
 type EdgeControllerLoad struct {
 	// UpdatePodStatusWorkers indicates the load of update pod status workers
 	// default 1
@@ -231,16 +231,16 @@ type EdgeControllerLoad struct {
 	// UpdateNodeStatusWorkers indicates the load of update node status workers
 	// default 1
 	UpdateNodeStatusWorkers int32 `json:"updateNodeStatusWorkers,omitempty"`
-	// QueryConfigmapWorkers indicates the load of query config map workers
+	// QueryConfigMapWorkers indicates the load of query config map workers
 	// default 1
-	QueryConfigmapWorkers int32 `json:"queryConfigmapWorkers,omitempty"`
+	QueryConfigMapWorkers int32 `json:"queryConfigMapWorkers,omitempty"`
 	// QuerySecretWorkers indicates the load of query secret workers
 	// default 4
 	QuerySecretWorkers int32 `json:"querySecretWorkers,omitempty"`
 	// QueryServiceWorkers indicates the load of query service workers
 	// default 4
 	QueryServiceWorkers int32 `json:"queryServiceWorkers,omitempty"`
-	// QueryEndpointsWorkers indicates the load of query endpointer workers
+	// QueryEndpointsWorkers indicates the load of query endpoint workers
 	// default 4
 	QueryEndpointsWorkers int32 `json:"queryEndpointsWorkers,omitempty"`
 	// QueryPersistentVolumeWorkers indicates the load of query persistent volume workers
@@ -248,7 +248,7 @@ type EdgeControllerLoad struct {
 	QueryPersistentVolumeWorkers int32 `json:"queryPersistentVolumeWorkers,omitempty"`
 	// QueryPersistentVolumeClaimWorkers indicates the load of query persistent volume claim workers
 	// default 4
-	QueryPersistentVolumeClaimWorkers int32 `json:"queryPersistentColumeClaimWorkers,omitempty"`
+	QueryPersistentVolumeClaimWorkers int32 `json:"queryPersistentVolumeClaimWorkers,omitempty"`
 	// QueryVolumeAttachmentWorkers indicates the load of query volume attachment workers
 	// default 4
 	QueryVolumeAttachmentWorkers int32 `json:"queryVolumeAttachmentWorkers,omitempty"`
@@ -265,11 +265,11 @@ type EdgeControllerLoad struct {
 
 // DeviceController indicates the device controller
 type DeviceController struct {
-	// Enable indicates whether devicecontroller is enabled,
-	// if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// Enable indicates whether deviceController is enabled,
+	// if set to false (for debugging etc.), skip checking other deviceController configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
-	// Context indicates send,receive,response modules for devicecontroller module
+	// Context indicates send,receive,response modules for deviceController module
 	Context *DeviceControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
 	Buffer *DeviceControllerBuffer `json:"buffer,omitempty"`
@@ -287,12 +287,12 @@ type DeviceControllerContext struct {
 	ResponseModule metaconfig.ModuleName `json:"responseModule,omitempty"`
 }
 
-// DeviceControllerBuffer indicates devicecontroller buffer
+// DeviceControllerBuffer indicates deviceController buffer
 type DeviceControllerBuffer struct {
 	// UpdateDeviceStatus indicates the buffer of update device status
 	// default 1024
 	UpdateDeviceStatus int32 `json:"updateDeviceStatus,omitempty"`
-	// DeviceEvent indicates the buffer of divice event
+	// DeviceEvent indicates the buffer of device event
 	// default 1
 	DeviceEvent int32 `json:"deviceEvent,omitempty"`
 	// DeviceModelEvent indicates the buffer of device model event
@@ -300,7 +300,7 @@ type DeviceControllerBuffer struct {
 	DeviceModelEvent int32 `json:"deviceModelEvent,omitempty"`
 }
 
-// DeviceControllerLoad indicates the devicecontroller load
+// DeviceControllerLoad indicates the deviceController load
 type DeviceControllerLoad struct {
 	// UpdateDeviceStatusWorkers indicates the load of update device status workers
 	// default 1
@@ -309,8 +309,8 @@ type DeviceControllerLoad struct {
 
 // SyncController indicates the sync controller
 type SyncController struct {
-	// Enable indicates whether devicecontroller is enabled,
-	// if set to false (for debugging etc.), skip checking other devicecontroller configs.
+	// Enable indicates whether syncController is enabled,
+	// if set to false (for debugging etc.), skip checking other syncController configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 }

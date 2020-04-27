@@ -32,28 +32,28 @@ const (
 	DataBaseDataSource = "/var/lib/kubeedge/edgesite.db"
 )
 
-// EdgeSiteConfig indicates the edgesite config which read from edgesite config file
+// EdgeSiteConfig indicates the EdgeSite config which read from EdgeSite config file
 type EdgeSiteConfig struct {
 	metav1.TypeMeta
 	// DataBase indicates database info
 	// +Required
 	DataBase *edgecoreconfig.DataBase `json:"database,omitempty"`
-	// KubeAPIConfig indicates the kubernetes cluster info which cloudcore will connected
+	// KubeAPIConfig indicates the kubernetes cluster info which CloudCore will connected
 	// +Required
 	KubeAPIConfig *cloudcoreconfig.KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
-	// Modules indicates cloudcore modules config
+	// Modules indicates CloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
 }
 
-// Modules indicates the modules which edgesite will be used
+// Modules indicates the modules which EdgeSite will be used
 type Modules struct {
-	// EdgeController indicates edgecontroller module config
-	EdgeController *cloudcoreconfig.EdgeController `json:"edgecontroller,omitempty"`
+	// EdgeController indicates edgeController module config
+	EdgeController *cloudcoreconfig.EdgeController `json:"edgeController,omitempty"`
 	// Edged indicates edged module config
 	// +Required
 	Edged *edgecoreconfig.Edged `json:"edged,omitempty"`
 	// MetaManager indicates meta module config
 	// +Required
-	MetaManager *edgecoreconfig.MetaManager `json:"metamanager,omitempty"`
+	MetaManager *edgecoreconfig.MetaManager `json:"metaManager,omitempty"`
 }
