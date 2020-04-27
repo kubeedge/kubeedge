@@ -135,7 +135,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				SubNet:          EdgeMeshDefaultSubNet,
 			},
 			EdgeStream: &EdgeStream{
-				Enable:                  true,
+				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
 				TLSTunnelCertFile:       constants.DefaultCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
@@ -200,12 +200,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				MqttServerExternal: "tcp://127.0.0.1:1883",
 				MqttServerInternal: "tcp://127.0.0.1:1884",
 				MqttMode:           MqttModeExternal,
-			},
-			EdgeStream: &EdgeStream{
-				TLSTunnelCAFile:         constants.DefaultCAFile,
-				TLSTunnelCertFile:       constants.DefaultCertFile,
-				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
-				TunnelServer:            "127.0.0.1:10002",
 			},
 		},
 	}

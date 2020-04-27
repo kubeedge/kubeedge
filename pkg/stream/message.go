@@ -53,9 +53,10 @@ func (m MessageType) String() string {
 }
 
 type Message struct {
-	ConnectID   uint64 // apiserver connection id
+	// ConnectID indicate the apiserver connection id
+	ConnectID   uint64
 	MessageType MessageType
-	Data        []byte // EdgedLogsConnection 或者 con 的原始数据
+	Data        []byte
 }
 
 func NewMessage(id uint64, messType MessageType, data []byte) *Message {

@@ -1,5 +1,6 @@
 package stream
 
 const (
-	TunnelSessionID = "TunnelSessionID"
+	SessionKeyHostNameOveride = "SessionHostNameOveride"
+	SessionKeyInternalIP      = "SessionInternalIP"
 )

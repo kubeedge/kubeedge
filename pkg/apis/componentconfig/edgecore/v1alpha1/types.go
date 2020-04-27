@@ -397,7 +397,7 @@ type EdgeMesh struct {
 type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
