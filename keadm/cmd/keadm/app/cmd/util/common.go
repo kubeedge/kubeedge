@@ -43,7 +43,7 @@ const (
 	CentOSType   = "centos"
 
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
-	EdgecoreServiceFileURL    = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/tools/edgecore.servic"
+	EdgecoreServiceFileURL    = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/tools/edgecore.service"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath        = "/usr/local/bin"
 	KubeEdgeConfPath          = KubeEdgePath + "kubeedge/edge/conf"
