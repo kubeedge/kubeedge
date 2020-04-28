@@ -460,7 +460,7 @@ func runEdgeCore(version string) error {
 	// } else {
 	// 	binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	// }
-	binExec = "sudo ln /etc/kubeedge/edgecore.service /etc/systemd/system/edgecore.service && sudo systemctl daemon-reload && sudo systemctl enable --now edgecore"
+	binExec = "sudo ln /etc/kubeedge/edgecore.service /etc/systemd/system/edgecore.service && sudo systemctl daemon-reload && sudo systemctl enable edgecore && sudo systemctl start edgecore"
 	cmd := &Command{Cmd: exec.Command("sh", "-c", binExec)}
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
