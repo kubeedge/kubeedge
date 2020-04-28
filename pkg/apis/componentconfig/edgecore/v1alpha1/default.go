@@ -85,9 +85,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Enable:            true,
 				Heartbeat:         15,
 				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
-				TLSCAFile:         constants.DefaultCAFile,
-				TLSCertFile:       constants.DefaultCertFile,
-				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				TLSCAFile:         "",
+				TLSCertFile:       "",
+				TLSPrivateKeyFile: "",
 				Quic: &EdgeHubQUIC{
 					Enable:           false,
 					HandshakeTimeout: 30,
@@ -102,8 +102,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
-				HttpServer:           "https://127.0.0.1:3000",
-				Token:                "",
+				HttpServer: "https://127.0.0.1:10002",
+				Token:      "",
 			},
 			EventBus: &EventBus{
 				Enable:               true,
@@ -185,9 +185,9 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,
-				TLSCAFile:         constants.DefaultCAFile,
-				TLSCertFile:       constants.DefaultCertFile,
-				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				TLSCAFile:         "",
+				TLSCertFile:       "",
+				TLSPrivateKeyFile: "",
 				WebSocket: &EdgeHubWebSocket{
 					Enable:           true,
 					HandshakeTimeout: 30,
@@ -195,8 +195,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
-				HttpServer:           "https://127.0.0.1:3000",
-				Token:                "",
+				HttpServer: "https://127.0.0.1:10002",
+				Token:      "",
 			},
 			EventBus: &EventBus{
 				MqttQOS:            0,

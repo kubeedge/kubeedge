@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"crypto/tls"
 	"sync"
 	"time"
 
@@ -60,10 +61,21 @@ func (eh *EdgeHub) Enable() bool {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
-	if err := eh.applyCerts(); err != nil {
-		klog.Errorf("failed to apply for edge certificate, error: %v", err)
-		return
+	if config.Config.TLSCAFile != "" && config.Config.TLSCertFile != "" && config.Config.TLSPrivateKeyFile != "" {
+		_, err := tls.LoadX509KeyPair(config.Config.TLSCertFile, config.Config.TLSPrivateKeyFile)
+		if err != nil {
+			if err := eh.applyCerts(); err != nil {
+				klog.Errorf("failed to apply for edge certificate, error: %v", err)
+				return
+			}
+		}
+	} else {
+		if err := eh.applyCerts(); err != nil {
+			klog.Errorf("failed to apply for edge certificate, error: %v", err)
+			return
+		}
 	}
+
 	for {
 		select {
 		case <-beehiveContext.Done():
