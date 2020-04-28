@@ -375,17 +375,31 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 					return err
 				}
 			}
-			if componentType == types.EdgeCore {
-				// also download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/
-				cmdStr = fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, EdgecoreServiceFileURL)
+		}
+		if try == downloadRetryTimes {
+			return fmt.Errorf("failed to download %s", filename)
+		}
+	}
+
+	// When installing  edgecore, also download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/, if it doesn't already exist.
+	if componentType == types.EdgeCore {
+		edgecoreServiceFileName := "edgecore.service"
+		if _, err = os.Stat(KubeEdgePath + edgecoreServiceFileName); err == nil {
+			fmt.Println("Expected or Default Edgecore service file is already downloaded")
+		} else if !os.IsNotExist(err) {
+			return err
+		} else {
+			try := 0
+			for ; try < downloadRetryTimes; try++ {
+				cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, EdgecoreServiceFileURL)
 				_, err := runCommandWithStdout(cmdStr)
 				if err != nil {
 					return err
 				}
 			}
-		}
-		if try == downloadRetryTimes {
-			return fmt.Errorf("failed to download %s", filename)
+			if try == downloadRetryTimes {
+				return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
+			}
 		}
 	}
 
