@@ -395,6 +395,8 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 				_, err := runCommandWithStdout(cmdStr)
 				if err != nil {
 					return err
+				} else {
+					break
 				}
 			}
 			if try == downloadRetryTimes {
