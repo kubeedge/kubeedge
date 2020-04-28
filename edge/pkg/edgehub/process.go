@@ -2,6 +2,7 @@ package edgehub
 
 import (
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"strings"
 	"time"
 
@@ -21,8 +22,8 @@ import (
 const (
 	waitConnectionPeriod = time.Minute
 	authEventType        = "auth_info_event"
-	caURL                ="/ca.crt"
-	certURL              ="/edge.crt"
+	caURL                = "/ca.crt"
+	certURL              = "/edge.crt"
 )
 
 var groupMap = map[string]string{
@@ -32,8 +33,12 @@ var groupMap = map[string]string{
 	"user":     modules.BusGroup,
 }
 
-// applyCerts get edge certificate to communicate with cloudcore
-func (eh *EdgeHub) applyCerts() error {
+// initialCertDirectory initializes the certificate directory before applying for certificate
+func (eh *EdgeHub) initialCertDirectory() error {
+	// set the certificate directory to the default path
+	config.Config.TLSCAFile = constants.DefaultCAFile
+	config.Config.TLSCertFile = constants.DefaultCertFile
+	config.Config.TLSPrivateKeyFile = constants.DefaultKeyFile
 	// make sure that the directory exists
 	if err := validation.EnsureParentSubExist(config.Config.TLSCAFile); err != nil {
 		return err
@@ -41,7 +46,15 @@ func (eh *EdgeHub) applyCerts() error {
 	if err := validation.EnsureParentSubExist(config.Config.TLSCertFile); err != nil {
 		return err
 	}
+	return nil
+}
 
+// applyCerts get edge certificate to communicate with cloudcore
+func (eh *EdgeHub) applyCerts() error {
+	if err := eh.initialCertDirectory(); err != nil {
+		klog.Errorf("failed to initial certificate directory")
+		return fmt.Errorf("failed to initial certificate directory")
+	}
 	// get ca.crt
 	url := config.Config.HttpServer + caURL
 	cacert, err := certutil.GetCACert(url)
