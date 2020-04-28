@@ -58,8 +58,9 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 			IPAddress:         "0.0.0.0",
 			Port:              10000,
 			CA:                "/etc/kubeedge/ca/rootCA.crt",
-			Cert:              "/etc/kubeedge/certs/edge.crt",
-			Key:               "/etc/kubeedge/certs/edge.key",
+			CAkey:             "/etc/kubeedge/ca/rootCA.crt",
+			Cert:              "/etc/kubeedge/certs/server.crt",
+			Key:               "/etc/kubeedge/certs/server.key",
 			KeepAliveInterval: 30,
 			WriteTimeout:      30,
 			NodeLimit:         10,
@@ -150,8 +151,8 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 		EdgeHub: EdgeHubSt{
 			WebSocket: WebSocketSt{
 				URL:              url,
-				CertFile:         "/etc/kubeedge/certs/edge.crt",
-				KeyFile:          "/etc/kubeedge/certs/edge.key",
+				CertFile:         "/etc/kubeedge/certs/server.crt",
+				KeyFile:          "/etc/kubeedge/certs/server.key",
 				HandshakeTimeout: 30,
 				WriteDeadline:    15,
 				ReadDeadline:     15,

@@ -25,19 +25,15 @@ type Configure struct {
 	Key           []byte
 }
 
-const (
-	rootCaFile= "/etc/kubeedge/ca/rootCA.key"
-)
-
 func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
 		ca, err := ioutil.ReadFile(hub.TLSCAFile)
 		if err != nil {
 			klog.Fatalf("read ca file %v error %v", hub.TLSCAFile, err)
 		}
-		caKey, err := ioutil.ReadFile(rootCaFile)
+		caKey, err := ioutil.ReadFile(hub.TLSCAKeyFile)
 		if err != nil {
-			klog.Fatalf("read caKey file %v error %v", rootCaFile, err)
+			klog.Fatalf("read caKey file %v error %v", hub.TLSCAKeyFile, err)
 		}
 		cert, err := ioutil.ReadFile(hub.TLSCertFile)
 		if err != nil {

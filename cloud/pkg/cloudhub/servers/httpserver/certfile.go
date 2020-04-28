@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/pkg/errors"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/client-go/util/keyutil"
 )
@@ -24,7 +24,7 @@ const (
 	rsaKeySize             = 2048
 )
 
-//Save cert file to filePath
+// WriteCertAndKey saves cert files to filePath
 func WriteCertAndKey(pkiPath string, name string, cert *x509.Certificate, key crypto.Signer) error {
 	if err := WriteKey(pkiPath, name, key); err != nil {
 		return errors.Wrap(err, "couldn't write key")
@@ -69,7 +69,7 @@ func WriteCert(pkiPath, name string, cert *x509.Certificate) error {
 func EncodeCertPEM(cert *x509.Certificate) []byte {
 	block := pem.Block{
 		Type:  CertificateBlockType,
-		Bytes: cert.Raw, //mark
+		Bytes: cert.Raw,
 	}
 	return pem.EncodeToMemory(&block)
 }
@@ -77,6 +77,7 @@ func EncodeCertPEM(cert *x509.Certificate) []byte {
 func pathForKey(pkiPath, name string) string {
 	return filepath.Join(pkiPath, fmt.Sprintf("%s.key", name))
 }
+
 func pathForCert(pkiPath, name string) string {
 	return filepath.Join(pkiPath, fmt.Sprintf("%s.crt", name))
 }

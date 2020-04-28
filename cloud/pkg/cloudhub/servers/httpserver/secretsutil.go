@@ -2,12 +2,11 @@ package httpserver
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
+
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	_ "k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 )
@@ -33,7 +32,7 @@ func GetSecret(secretName string, ns string) (*v1.Secret, error) {
 	return cli.CoreV1().Secrets(ns).Get(secretName, metav1.GetOptions{})
 }
 
-// CreateSecret creates a Secret
+// CreateSecret creates a secret
 func CreateSecret(secret *v1.Secret, ns string) error {
 	cli, err := utils.KubeClient()
 	if err != nil {
@@ -64,7 +63,7 @@ func CreateTokenSecret(caHashAndToken []byte) {
 }
 
 func CreateCaSecret(certDER, key []byte) {
-	caCert := &v1.Secret{
+	caSecret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
@@ -77,7 +76,7 @@ func CreateCaSecret(certDER, key []byte) {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	CreateSecret(caCert, NamespaceSystem)
+	CreateSecret(caSecret, NamespaceSystem)
 }
 
 func CreateCloudCoreSecret(certDER, key []byte) {

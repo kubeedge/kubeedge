@@ -21,31 +21,31 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/dgrijalva/jwt-go"
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	certutil "k8s.io/client-go/util/cert"
+
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
-
-//create server's certificate and key
-func SignCerts()([]byte,[]byte) {
-	cfgs := &certutil.Config{
+// SignCerts creates server's certificate and key
+func SignCerts() ([]byte, []byte) {
+	cfg := &certutil.Config{
 		CommonName:   "kubeedge",
 		Organization: []string{"HuaWei"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames:     certutil.AltNames{},
 	}
-	//new server's certificate from ca
-	certDER,keyDER,err:=NewCloudCoreCertDERandKey(cfgs)
-	if err!=nil{
-		fmt.Printf("%v",err)
-	}
-	return certDER,keyDER
-}
 
+	certDER, keyDER, err := NewCloudCoreCertDERandKey(cfg)
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	return certDER, keyDER
+}
 
 func GenerateToken() {
 	expiresAt := time.Now().Add(time.Hour * 24).Unix()
@@ -59,13 +59,13 @@ func GenerateToken() {
 	keyPEM := getCaKey()
 	tokenString, err := token.SignedString(keyPEM)
 
-	if err!=nil{
-		fmt.Printf("%v",err)
+	if err != nil {
+		fmt.Printf("%v", err)
 	}
-	caHash :=getCahash()
-	//combine caHash and tokenString into caHashAndToken
-	caHashAndToken:=strings.Join([]string{caHash, tokenString}, " ")
-	//save caHashAndToken to secret
+	caHash := getCaHash()
+	// combine caHash and tokenString into caHashAndToken
+	caHashAndToken := strings.Join([]string{caHash, tokenString}, " ")
+	// save caHashAndToken to secret
 	CreateTokenSecret([]byte(caHashAndToken))
 
 	fmt.Println(caHashAndToken)
@@ -81,8 +81,6 @@ func GenerateToken() {
 	}()
 }
 
-
-
 func refreshToken() string {
 	claims := &jwt.StandardClaims{}
 	expirationTime := time.Now().Add(5 * time.Minute)
@@ -90,21 +88,21 @@ func refreshToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	keyPEM := getCaKey()
 	tokenString, _ := token.SignedString(keyPEM)
-	caHash :=getCahash()
+	caHash := getCaHash()
 	//put caHash in token
-	caHashAndToken:=strings.Join([]string{caHash, tokenString}, " ")
+	caHashAndToken := strings.Join([]string{caHash, tokenString}, " ")
 	return caHashAndToken
 }
 
-// getCahash get ca-hash
-func getCahash() string {
-	caDER:= hubconfig.Config.Ca
-	digest:=sha256.Sum256(caDER)
+// getCaHash gets ca-hash
+func getCaHash() string {
+	caDER := hubconfig.Config.Ca
+	digest := sha256.Sum256(caDER)
 	return hex.EncodeToString(digest[:])
 }
 
-//getCaKey get caKey to encrypt token
+// getCaKey gets caKey to encrypt token
 func getCaKey() []byte {
-	caKey:=hubconfig.Config.CaKey
+	caKey := hubconfig.Config.CaKey
 	return caKey
 }
