@@ -43,6 +43,7 @@ const (
 	CentOSType   = "centos"
 
 	KubeEdgeDownloadURL       = "https://github.com/kubeedge/kubeedge/releases/download"
+	EdgecoreServiceFileURL    = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/tools/edgecore.servic"
 	KubeEdgePath              = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath        = "/usr/local/bin"
 	KubeEdgeConfPath          = KubeEdgePath + "kubeedge/edge/conf"
@@ -369,6 +370,14 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 				fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
 				//Cleanup the downloaded files
 				cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+				_, err := runCommandWithStdout(cmdStr)
+				if err != nil {
+					return err
+				}
+			}
+			if componentType == types.EdgeCore {
+				// also download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/
+				cmdStr = fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, EdgecoreServiceFileURL)
 				_, err := runCommandWithStdout(cmdStr)
 				if err != nil {
 					return err
