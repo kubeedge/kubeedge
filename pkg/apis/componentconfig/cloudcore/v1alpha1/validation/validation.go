@@ -62,11 +62,17 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	}
 
 	allErrs := field.ErrorList{}
+	validHttpsPort := utilvalidation.IsValidPortNum(int(c.Https.Port))
 	validWPort := utilvalidation.IsValidPortNum(int(c.WebSocket.Port))
 	validAddress := utilvalidation.IsValidIP(c.WebSocket.Address)
 	validQPort := utilvalidation.IsValidPortNum(int(c.Quic.Port))
 	validQAddress := utilvalidation.IsValidIP(c.Quic.Address)
 
+	if len(validHttpsPort) > 0 {
+		for _, m := range validHttpsPort {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.Https.Port, m))
+		}
+	}
 	if len(validWPort) > 0 {
 		for _, m := range validWPort {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("port"), c.WebSocket.Port, m))
@@ -95,6 +101,9 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 	}
 	if !utilvalidation.FileIsExist(c.TLSCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"), c.TLSCAFile, "TLSCAFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(c.TLSCAKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAKeyFile"), c.TLSCAKeyFile, "TLSCAKeyFile not exist"))
 	}
 	if !strings.HasPrefix(strings.ToLower(c.UnixSocket.Address), "unix://") {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),

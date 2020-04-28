@@ -136,6 +136,7 @@ type CloudHubSt struct {
 	IPAddress         string `yaml:"address"`
 	Port              uint16 `yaml:"port"`
 	CA                string `yaml:"ca"`
+	CAkey             string `yaml:"caKey"`
 	Cert              string `yaml:"cert"`
 	Key               string `yaml:"key"`
 	KeepAliveInterval uint32 `yaml:"keepalive-interval"`

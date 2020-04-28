@@ -16,15 +16,15 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
-//NewCertificateAuthorityDer return certDer and key
+// NewCertificateAuthorityDer returns certDer and key
 func NewCertificateAuthorityDer() ([]byte, crypto.Signer, error) {
 	caKey, err := NewPrivateKey()
 	if err != nil {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 	certDER, err := NewSelfSignedCACertDERBytes(caKey)
 	if err != nil {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 	return certDER, caKey, nil
 }
@@ -34,7 +34,7 @@ func NewPrivateKey() (crypto.Signer, error) {
 	return rsa.GenerateKey(cryptorand.Reader, 2048)
 }
 
-// NewSelfSignedCACert creates a CA certificate
+// NewSelfSignedCACertDERBytes creates a CA certificate
 func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	tmpl := x509.Certificate{
 		SerialNumber: big.NewInt(1024),
@@ -50,33 +50,31 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 		IsCA:                  true,
 	}
 
-	certDERBytes, err := x509.CreateCertificate(cryptorand.Reader, &tmpl, &tmpl, key.Public(), key)
+	caDERBytes, err := x509.CreateCertificate(cryptorand.Reader, &tmpl, &tmpl, key.Public(), key)
 	if err != nil {
 		return nil, err
 	}
-	return certDERBytes, err
+	return caDERBytes, err
 }
 
-func NewCloudCoreCertDERandKey(cfgs *certutil.Config) ([]byte, []byte, error) {
+func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 	serverKey, _ := NewPrivateKey()
 	keyDER := x509.MarshalPKCS1PrivateKey(serverKey.(*rsa.PrivateKey))
 
-	//get ca from config
+	// get ca from config
 	ca := hubconfig.Config.Ca
 	caCert, _ := x509.ParseCertificate(ca)
 	caKeyDER := hubconfig.Config.CaKey
 	caKey, _ := x509.ParsePKCS1PrivateKey(caKeyDER)
 
-	//creates a signed certificate using the given CA certificate and key
-	certDER, err := NewCertFromCa(cfgs, caCert, serverKey, crypto.Signer(caKey))
-	//serverCert, err :=x509.ParseCertificate(certDER)
+	certDER, err := NewCertFromCa(cfg, caCert, serverKey, crypto.Signer(caKey))
 	if err != nil {
 		fmt.Printf("%v", err)
 	}
 	return certDER, keyDER, err
 }
 
-// NewSignedCert creates a signed certificate using the given CA certificate and key
+// NewCertFromCa creates a signed certificate using the given CA certificate and key
 func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, clientKey crypto.PublicKey, caKey crypto.Signer) ([]byte, error) {
 	serial, err := cryptorand.Int(cryptorand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
@@ -109,7 +107,6 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, clientKey cry
 		return nil, err
 	}
 	return certDERBytes, err
-	//return x509.ParseCertificate(certDERBytes)
 }
 
 func ParseCertDerToCertificate(certDer, keyDer []byte) (*x509.Certificate, *rsa.PrivateKey, error) {
