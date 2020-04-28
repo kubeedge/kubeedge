@@ -36,7 +36,7 @@ func SignCerts()([]byte,[]byte) {
 		CommonName:   "kubeedge",
 		Organization: []string{"HuaWei"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		AltNames:     nil,
+		AltNames:     certutil.AltNames{},
 	}
 	//new server's certificate from ca
 	certDER,keyDER,err:=NewCloudCoreCertDERandKey(cfgs)
