@@ -395,9 +395,8 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 				_, err := runCommandWithStdout(cmdStr)
 				if err != nil {
 					return err
-				} else {
-					break
 				}
+				break
 			}
 			if try == downloadRetryTimes {
 				return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
