@@ -33,7 +33,7 @@ type CloudCoreConfig struct {
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
 	// Configuration for LeaderElection
-	LeaderElection *componentbaseconfig.LeaderElectionConfiguration
+	LeaderElection *componentbaseconfig.LeaderElectionConfiguration `json:"leaderelection,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
