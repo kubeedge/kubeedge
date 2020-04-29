@@ -2,7 +2,9 @@ package httpserver
 
 import (
 	"crypto"
-	cryptorand "crypto/rand"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -31,7 +33,7 @@ func NewCertificateAuthorityDer() ([]byte, crypto.Signer, error) {
 
 // NewPrivateKey creates an RSA private key
 func NewPrivateKey() (crypto.Signer, error) {
-	return rsa.GenerateKey(cryptorand.Reader, 2048)
+	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 }
 
 // NewSelfSignedCACertDERBytes creates a CA certificate
@@ -41,7 +43,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 		Subject: pkix.Name{
 			CommonName: "KubeEdge",
 		},
-		NotBefore: time.Now(),
+		NotBefore: time.Now().UTC(),
 		NotAfter:  time.Now().Add(time.Hour * 24 * 365 * 100),
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -50,7 +52,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 		IsCA:                  true,
 	}
 
-	caDERBytes, err := x509.CreateCertificate(cryptorand.Reader, &tmpl, &tmpl, key.Public(), key)
+	caDERBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, key.Public(), key)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +61,15 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 
 func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 	serverKey, _ := NewPrivateKey()
-	keyDER := x509.MarshalPKCS1PrivateKey(serverKey.(*rsa.PrivateKey))
+	keyDER, _ := x509.MarshalECPrivateKey(serverKey.(*ecdsa.PrivateKey))
 
 	// get ca from config
 	ca := hubconfig.Config.Ca
 	caCert, _ := x509.ParseCertificate(ca)
 	caKeyDER := hubconfig.Config.CaKey
-	caKey, _ := x509.ParsePKCS1PrivateKey(caKeyDER)
+	caKey, _ := x509.ParseECPrivateKey(caKeyDER)
 
-	certDER, err := NewCertFromCa(cfg, caCert, serverKey, crypto.Signer(caKey))
+	certDER, err := NewCertFromCa(cfg, caCert, serverKey, caKey)
 	if err != nil {
 		fmt.Printf("%v", err)
 	}
@@ -75,8 +77,8 @@ func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 }
 
 // NewCertFromCa creates a signed certificate using the given CA certificate and key
-func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, clientKey crypto.PublicKey, caKey crypto.Signer) ([]byte, error) {
-	serial, err := cryptorand.Int(cryptorand.Reader, new(big.Int).SetInt64(math.MaxInt64))
+func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey crypto.PublicKey, caKey crypto.Signer) ([]byte, error) {
+	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +99,12 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, clientKey cry
 		DNSNames:     cfg.AltNames.DNSNames,
 		IPAddresses:  cfg.AltNames.IPs,
 		SerialNumber: serial,
-		NotBefore:    caCert.NotBefore,
+		NotBefore:    time.Now().UTC(),
 		NotAfter:     time.Now().Add(time.Hour * 24 * 365 * 100),
 		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:  cfg.Usages,
 	}
-	certDERBytes, err := x509.CreateCertificate(cryptorand.Reader, &certTmpl, caCert, clientKey, caKey)
+	certDERBytes, err := x509.CreateCertificate(rand.Reader, &certTmpl, caCert, serverKey, caKey)
 	if err != nil {
 		return nil, err
 	}

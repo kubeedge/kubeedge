@@ -18,7 +18,8 @@ package httpserver
 
 import (
 	"crypto"
-	"crypto/rsa"
+	"crypto/ecdsa"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
@@ -41,7 +42,21 @@ func StartHttpServer() {
 	router.HandleFunc("/ca.crt", getCA).Methods("GET")
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.Https.Address, hubconfig.Config.Https.Port)
-	klog.Fatal(http.ListenAndServeTLS(addr, "", "", router))
+
+	cert, err := tls.X509KeyPair(hubconfig.Config.Cert, hubconfig.Config.Key)
+	if err != nil {
+		klog.Fatal(err)
+	}
+
+	server := &http.Server{
+		Addr:    addr,
+		Handler: router,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			ClientAuth:   tls.NoClientCert,
+		},
+	}
+	klog.Fatal(server.ListenAndServeTLS("", ""))
 }
 
 // getCA returns the caCertDER
@@ -163,7 +178,7 @@ func PrepareAllCerts() error {
 				return err
 			}
 
-			caKeyDER := x509.MarshalPKCS1PrivateKey(caKey.(*rsa.PrivateKey))
+			caKeyDER, _ := x509.MarshalECPrivateKey(caKey.(*ecdsa.PrivateKey))
 
 			err = CreateCaSecret(caDER, caKeyDER)
 			if err != nil {
@@ -215,7 +230,7 @@ func PrepareAllCerts() error {
 				klog.Errorf("failed to get cloudcore secret, error: %v", err)
 				return err
 			}
-			certDER := s.Data[CloudCoreDataName]
+			certDER := s.Data[CloudCoreCertName]
 			keyDER := s.Data[CloudCoreKeyDataName]
 
 			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
