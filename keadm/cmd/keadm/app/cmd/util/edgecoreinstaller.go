@@ -30,12 +30,12 @@ import (
 // It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
-	CertPath      			string
-	CloudCoreIP   			string
-	EdgeNodeName  			string
-	RuntimeType   			string
-	InterfaceName 			string
-	RemoteRuntimeEndpoint 	string
+	CertPath              string
+	CloudCoreIP           string
+	EdgeNodeName          string
+	RuntimeType           string
+	InterfaceName         string
+	RemoteRuntimeEndpoint string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion

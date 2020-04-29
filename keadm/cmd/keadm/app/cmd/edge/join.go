@@ -141,12 +141,12 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		Common: util.Common{
 			ToolVersion: kubeVer,
 		},
-		CloudCoreIP:            joinOptions.CloudCoreIPPort,
-		EdgeNodeName:           joinOptions.EdgeNodeName,
-		RuntimeType:            joinOptions.RuntimeType,
-		InterfaceName:          joinOptions.InterfaceName,
-		CertPath:               joinOptions.CertPath,
-		RemoteRuntimeEndpoint:  joinOptions.RemoteRuntimeEndpoint,
+		CloudCoreIP:           joinOptions.CloudCoreIPPort,
+		EdgeNodeName:          joinOptions.EdgeNodeName,
+		RuntimeType:           joinOptions.RuntimeType,
+		InterfaceName:         joinOptions.InterfaceName,
+		CertPath:              joinOptions.CertPath,
+		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
