@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 //define edgehub module name
@@ -61,7 +62,8 @@ func (eh *EdgeHub) Enable() bool {
 
 //Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
-	if config.Config.TLSCAFile != "" && config.Config.TLSCertFile != "" && config.Config.TLSPrivateKeyFile != "" {
+	// if there is no manual certificate setting or the setting has problems, then the edge applies for the certificate
+	if validation.FileIsExist(config.Config.TLSCAFile) && validation.FileIsExist(config.Config.TLSCertFile) && validation.FileIsExist(config.Config.TLSPrivateKeyFile) {
 		_, err := tls.LoadX509KeyPair(config.Config.TLSCertFile, config.Config.TLSPrivateKeyFile)
 		if err != nil {
 			if err := eh.applyCerts(); err != nil {

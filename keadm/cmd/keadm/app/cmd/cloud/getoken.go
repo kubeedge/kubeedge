@@ -29,33 +29,33 @@ to get the token.
 `
 )
 
+// NewGetoken returns the getoken command
 func NewGetoken(out io.Writer, init *types.GetokenOptions) *cobra.Command {
 	if init == nil {
 		init = newGetokenOptions()
 	}
 	cmd := &cobra.Command{
-		Use:        "getoken",
-		Short:      "To get the token for edge nodes to join the cluster",
-		Long:       getokenLongDescription,
-		Example:	getokenLongDescription,
-		RunE:		func (cmd *cobra.Command, args []string) error {
-						token, err := queryToken(util.NameSpaceCloudCore, util.TokenSecretName, init.Kubeconfig)
-						if err != nil {
-							fmt.Println("failed to get token")
-							return err
-						}
-						return showToken(token, out)
-					},
+		Use:     "getoken",
+		Short:   "To get the token for edge nodes to join the cluster",
+		Long:    getokenLongDescription,
+		Example: getokenLongDescription,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := queryToken(util.NameSpaceCloudCore, util.TokenSecretName, init.Kubeconfig)
+			if err != nil {
+				return fmt.Errorf("failed to get token: %v", err)
+			}
+			return showToken(token, out)
+		},
 	}
 	addGetokenFlags(cmd, init)
 	return cmd
 }
 
-
 func addGetokenFlags(cmd *cobra.Command, getokenOptions *types.GetokenOptions) {
 	cmd.Flags().StringVar(&getokenOptions.Kubeconfig, types.KubeConfig, getokenOptions.Kubeconfig,
-		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+		"Use this key to set kube-config path, eg: /root/.kube/config")
 }
+
 //
 func newGetokenOptions() *types.GetokenOptions {
 	opts := &types.GetokenOptions{}
@@ -77,7 +77,7 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 }
 
 // showToken prints the token
-func showToken(data []byte, out io.Writer) error{
+func showToken(data []byte, out io.Writer) error {
 	_, err := out.Write(data)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func showToken(data []byte, out io.Writer) error{
 	return nil
 }
 
-func kubeConfig(kubeconfigPath string) (conf *rest.Config, err error){
+func kubeConfig(kubeconfigPath string) (conf *rest.Config, err error) {
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func kubeConfig(kubeconfigPath string) (conf *rest.Config, err error){
 	return kubeConfig, nil
 }
 
-// KubeClient from config
+// KubeClient generates client from config
 func kubeClient(kubeConfigPath string) (*kubernetes.Clientset, error) {
 	kubeConfig, err := kubeConfig(kubeConfigPath)
 	if err != nil {

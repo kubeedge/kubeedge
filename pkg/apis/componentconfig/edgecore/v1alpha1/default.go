@@ -85,9 +85,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Enable:            true,
 				Heartbeat:         15,
 				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
-				TLSCAFile:         "",
-				TLSCertFile:       "",
-				TLSPrivateKeyFile: "",
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				Quic: &EdgeHubQUIC{
 					Enable:           false,
 					HandshakeTimeout: 30,
@@ -185,9 +185,9 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 			},
 			EdgeHub: &EdgeHub{
 				Heartbeat:         15,
-				TLSCAFile:         "",
-				TLSCertFile:       "",
-				TLSPrivateKeyFile: "",
+				TLSCAFile:         constants.DefaultCAFile,
+				TLSCertFile:       constants.DefaultCertFile,
+				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				WebSocket: &EdgeHubWebSocket{
 					Enable:           true,
 					HandshakeTimeout: 30,
