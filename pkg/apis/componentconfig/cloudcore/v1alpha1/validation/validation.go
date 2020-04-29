@@ -93,18 +93,6 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("Address"), c.Quic.Address, m))
 		}
 	}
-	if !utilvalidation.FileIsExist(c.TLSPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"), c.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(c.TLSCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"), c.TLSCertFile, "TLSCertFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(c.TLSCAFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"), c.TLSCAFile, "TLSCAFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(c.TLSCAKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAKeyFile"), c.TLSCAKeyFile, "TLSCAKeyFile not exist"))
-	}
 	if !strings.HasPrefix(strings.ToLower(c.UnixSocket.Address), "unix://") {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("address"),
 			c.UnixSocket.Address, "unixSocketAddress must has prefix unix://"))

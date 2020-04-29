@@ -2,15 +2,14 @@ package config
 
 import (
 	"io/ioutil"
-	"sync"
-
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
+	"sync"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	syncinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/reliablesyncs/v1alpha1"
 	synclister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"k8s.io/client-go/tools/cache"
 )
 
 var Config Configure
@@ -27,29 +26,29 @@ type Configure struct {
 
 func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
-		ca, err := ioutil.ReadFile(hub.TLSCAFile)
-		if err != nil {
-			klog.Fatalf("read ca file %v error %v", hub.TLSCAFile, err)
-		}
-		caKey, err := ioutil.ReadFile(hub.TLSCAKeyFile)
-		if err != nil {
-			klog.Fatalf("read caKey file %v error %v", hub.TLSCAKeyFile, err)
-		}
-		cert, err := ioutil.ReadFile(hub.TLSCertFile)
-		if err != nil {
-			klog.Fatalf("read cert file %v error %v", hub.TLSCertFile, err)
-		}
-		key, err := ioutil.ReadFile(hub.TLSPrivateKeyFile)
-		if err != nil {
-			klog.Fatalf("read key file %v error %v", hub.TLSPrivateKeyFile, err)
-		}
 		Config = Configure{
 			CloudHub:      *hub,
 			KubeAPIConfig: kubeAPIConfig,
-			Ca:            ca,
-			CaKey:         caKey,
-			Cert:          cert,
-			Key:           key,
+		}
+
+		ca, _ := ioutil.ReadFile(hub.TLSCAFile)
+		caKey, _ := ioutil.ReadFile(hub.TLSCAKeyFile)
+
+		if ca != nil && caKey != nil {
+			Config.Ca = ca
+			Config.CaKey = caKey
+		} else if !(ca == nil && caKey == nil) {
+			klog.Fatal("Both of ca and caKey should be specified!")
+		}
+
+		cert, _ := ioutil.ReadFile(hub.TLSCertFile)
+		key, _ := ioutil.ReadFile(hub.TLSPrivateKeyFile)
+
+		if cert != nil && key != nil {
+			Config.Cert = cert
+			Config.Key = key
+		} else if !(cert == nil && key == nil) {
+			klog.Fatal("Both of cert and key should be specified!")
 		}
 	})
 }

@@ -81,23 +81,7 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
-	/*
-	if !utilvalidation.FileIsExist(h.TLSPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSPrivateKeyFile"),
-			h.TLSPrivateKeyFile, "TLSPrivateKeyFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(h.TLSCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCertFile"),
-			h.TLSCertFile, "TLSCertFile not exist"))
-	}
-	*/
-	// Comments out the steps to verify CA certificate
-	/*
-		if !utilvalidation.FileIsExist(h.TLSCAFile) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("TLSCAFile"),
-				h.TLSCAFile, "TLSCAFile not exist"))
-		}
-	*/
+
 	if h.WebSocket.Enable == h.Quic.Enable {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("enable"),
 			h.Quic.Enable, "websocket.enable and quic.enable cannot be true and false at the same time"))

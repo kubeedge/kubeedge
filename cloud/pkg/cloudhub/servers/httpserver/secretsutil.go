@@ -49,7 +49,7 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 	return nil
 }
 
-func CreateTokenSecret(caHashAndToken []byte) {
+func CreateTokenSecret(caHashAndToken []byte) error {
 	token := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -62,10 +62,10 @@ func CreateTokenSecret(caHashAndToken []byte) {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	CreateSecret(token, NamespaceSystem)
+	return CreateSecret(token, NamespaceSystem)
 }
 
-func CreateCaSecret(certDER, key []byte) {
+func CreateCaSecret(certDER, key []byte) error {
 	caSecret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,10 +79,10 @@ func CreateCaSecret(certDER, key []byte) {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	CreateSecret(caSecret, NamespaceSystem)
+	return CreateSecret(caSecret, NamespaceSystem)
 }
 
-func CreateCloudCoreSecret(certDER, key []byte) {
+func CreateCloudCoreSecret(certDER, key []byte) error {
 	cloudCoreCert := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,5 +96,5 @@ func CreateCloudCoreSecret(certDER, key []byte) {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	CreateSecret(cloudCoreCert, NamespaceSystem)
+	return CreateSecret(cloudCoreCert, NamespaceSystem)
 }
