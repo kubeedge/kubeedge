@@ -13,11 +13,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	certSaveUtil "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 )
 
-const 	privateKeyBits       = 2048
+const privateKeyBits = 2048
 
 // GetCACert gets the cloudcore CA certificate
 func GetCACert(url string) ([]byte, error) {
@@ -38,20 +39,19 @@ func GetCACert(url string) ([]byte, error) {
 
 func getCSR() ([]byte, error) {
 	pk, _ := rsa.GenerateKey(rand.Reader, privateKeyBits)
-	privatekey := x509.MarshalPKCS1PrivateKey(pk)
 	// save the private key
-	if err := SaveToFile(privatekey, config.Config.TLSPrivateKeyFile, "PRIVATE KEY"); err != nil {
+	if err := certSaveUtil.WriteKey(constants.DefaultCertDir, "edge", pk); err != nil {
 		return nil, err
 	}
 
 	certReq := &x509.CertificateRequest{
-		Subject: 	pkix.Name{
-			Country: []string{"CN"},
-			Organization:    []string{"kubeEdge"},
-			OrganizationalUnit:  []string{},
-			Locality:   []string{"Hangzhou"},
-			Province:  []string{"Zhejiang"},
-			CommonName: "kubeedge.io",
+		Subject: pkix.Name{
+			Country:            []string{"CN"},
+			Organization:       []string{"kubeEdge"},
+			OrganizationalUnit: []string{},
+			Locality:           []string{"Hangzhou"},
+			Province:           []string{"Zhejiang"},
+			CommonName:         "kubeedge.io",
 		},
 	}
 	return x509.CreateCertificateRequest(rand.Reader, certReq, pk)
@@ -85,7 +85,7 @@ func SaveToFile(data []byte, file string, pemBlockType string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file: %s", file)
 	}
-	if err = pem.Encode(out, &pem.Block{Type:pemBlockType, Bytes:data}); err != nil {
+	if err = pem.Encode(out, &pem.Block{Type: pemBlockType, Bytes: data}); err != nil {
 		return err
 	}
 	return nil
