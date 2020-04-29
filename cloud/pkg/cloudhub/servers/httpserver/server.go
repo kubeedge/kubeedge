@@ -22,6 +22,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -35,6 +36,10 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
+const (
+	certificateBlockType = "CERTIFICATE"
+)
+
 // StartHttpServer starts the http service
 func StartHttpServer() {
 	router := mux.NewRouter()
@@ -43,7 +48,8 @@ func StartHttpServer() {
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.Https.Address, hubconfig.Config.Https.Port)
 
-	cert, err := tls.X509KeyPair(hubconfig.Config.Cert, hubconfig.Config.Key)
+	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
+
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -63,6 +69,15 @@ func StartHttpServer() {
 func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
 	w.Write(caCertDER)
+}
+
+// EncodeCertPEM returns PEM-endcoded certificate data
+func EncodeCertPEM(cert *x509.Certificate) []byte {
+	block := pem.Block{
+		Type:  certificateBlockType,
+		Bytes: cert.Raw,
+	}
+	return pem.EncodeToMemory(&block)
 }
 
 // edgeCoreClientCert will verify the token then create EdgeCoreCert and return it
@@ -140,7 +155,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 		return nil, fmt.Errorf("unable to ParsePKCS1PrivateKey: %v", err)
 	}
 
-	certDER, err := NewCertFromCa(cfgs, caCert, clientKey, crypto.Signer(caKey))
+	certDER, err := NewCertFromCa(cfgs, caCert, clientKey, caKey) //crypto.Signer(caKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to NewCertFromCa: %v", err)
 	}

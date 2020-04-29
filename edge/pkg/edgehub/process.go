@@ -10,7 +10,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	certSaveUtil "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
@@ -56,7 +55,7 @@ func (eh *EdgeHub) applyCerts() error {
 	}
 	// save the ca.crt to file
 	ca, _ := x509.ParseCertificate(cacert)
-	if err = certSaveUtil.WriteCert(constants.DefaultCADir, "ca", ca); err != nil {
+	if err = certutil.WriteCert(constants.DefaultCADir, "ca", ca); err != nil {
 		klog.Errorf("failed to save the CA certificate to file: %s, error: %v", constants.DefaultCADir+"ca.crt", err)
 		return fmt.Errorf("failed to save the CA certificate to file: %s, error: %v", constants.DefaultCADir+"ca.crt", err)
 	}
@@ -70,7 +69,7 @@ func (eh *EdgeHub) applyCerts() error {
 	}
 	// save the edge.crt to the file
 	cert, _ := x509.ParseCertificate(edgecert)
-	if err = certSaveUtil.WriteCert(constants.DefaultCertDir, "edge", cert); err != nil {
+	if err = certutil.WriteCert(constants.DefaultCertDir, "edge", cert); err != nil {
 		klog.Errorf("failed to save the edge certificate to file: %s, error: %v", constants.DefaultCertDir+"edge.crt", err)
 		return fmt.Errorf("failed to save the edge certificate to file: %s, error: %v", constants.DefaultCertDir+"edge.crt", err)
 	}
