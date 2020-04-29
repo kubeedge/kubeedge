@@ -14,14 +14,14 @@ import (
 const (
 	NamespaceSystem string = "kubeedge"
 
-	TokenSecretName      string = "tokenSecret"
-	TokenDataName        string = "tokenData"
-	CaSecretName         string = "caSecret"
-	CloudCoreSecretName  string = "cloudCoreSecret"
-	CaDataName           string = "caData"
-	CaKeyDataName        string = "caKeyData"
-	CloudCoreDataName    string = "cloudCoreData"
-	CloudCoreKeyDataName string = "cloudCoreKeyData"
+	TokenSecretName      string = "tokensecret"
+	TokenDataName        string = "tokendata"
+	CaSecretName         string = "casecret"
+	CloudCoreSecretName  string = "cloudcoresecret"
+	CaDataName           string = "cadata"
+	CaKeyDataName        string = "cakeydata"
+	CloudCoreCertName    string = "cloudcoredata"
+	CloudCoreKeyDataName string = "cloudcorekeydata"
 )
 
 func GetSecret(secretName string, ns string) (*v1.Secret, error) {
@@ -90,7 +90,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 			Namespace: NamespaceSystem,
 		},
 		Data: map[string][]byte{
-			CloudCoreDataName:    certDER,
+			CloudCoreCertName:    certDER,
 			CloudCoreKeyDataName: key,
 		},
 		StringData: map[string]string{},
