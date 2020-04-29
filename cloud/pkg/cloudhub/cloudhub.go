@@ -66,7 +66,9 @@ func (a *cloudHub) Start() {
 
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
-	httpserver.PrepareAllCerts()
+	if err := httpserver.PrepareAllCerts(); err != nil {
+		klog.Fatal(err)
+	}
 
 	// generate Token
 	httpserver.GenerateToken()

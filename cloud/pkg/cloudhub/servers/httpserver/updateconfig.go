@@ -1,23 +1,20 @@
 package httpserver
 
 import (
-	"bytes"
-
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
 func UpdateConfig(ca, caKey, cert, key []byte) {
-	blank := []byte("")
-	if !bytes.Equal(blank, ca) {
+	if ca != nil {
 		hubconfig.Config.Ca = ca
 	}
-	if !bytes.Equal(blank, caKey) {
+	if caKey != nil {
 		hubconfig.Config.CaKey = caKey
 	}
-	if !bytes.Equal(blank, cert) {
+	if cert != nil {
 		hubconfig.Config.Cert = cert
 	}
-	if !bytes.Equal(blank, key) {
+	if key != nil {
 		hubconfig.Config.Key = key
 	}
 }

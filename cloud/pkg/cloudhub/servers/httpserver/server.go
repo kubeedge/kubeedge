@@ -32,8 +32,6 @@ import (
 	"k8s.io/klog"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
-	"github.com/kubeedge/kubeedge/common/constants"
-	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 // StartHttpServer starts the http service
@@ -152,27 +150,33 @@ func CheckCertExistsFromSecret() bool {
 
 // PrepareAllCerts check whether the certificates exist in the local directory,
 // and then check whether certificates exist in the secret, generate if they don't exist
-func PrepareAllCerts() {
+func PrepareAllCerts() error {
 	// Check whether the ca exists in the local directory
-	if !(utilvalidation.FileIsExist(hubconfig.Config.CloudHub.TLSCAFile) && utilvalidation.FileIsExist(hubconfig.Config.CloudHub.TLSCAKeyFile)) {
+	if hubconfig.Config.Ca == nil && hubconfig.Config.CaKey == nil {
+		klog.Infof("Ca and CaKey don't exist, and will be signed by cloudcore")
 		// Check whether the ca exists in the secret
 		secretHasCA := CheckCaExistsFromSecret()
 		if !secretHasCA {
 			caDER, caKey, err := NewCertificateAuthorityDer()
 			if err != nil {
 				klog.Errorf("failed to create Certificate Authority, error: %v", err)
+				return err
 			}
 
 			caKeyDER := x509.MarshalPKCS1PrivateKey(caKey.(*rsa.PrivateKey))
 
-			CreateCaSecret(caDER, caKeyDER)
+			err = CreateCaSecret(caDER, caKeyDER)
+			if err != nil {
+				klog.Errorf("failed to create ca to secrets, error: %v", err)
+				return err
+			}
 
 			UpdateConfig(caDER, caKeyDER, []byte(""), []byte(""))
 		} else {
 			s, err := GetSecret(CaSecretName, NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get CaSecret, error: %v", err)
-				fmt.Errorf("failed to get CaSecret, error: %v", err)
+				return err
 			}
 			caDER := s.Data[CaDataName]
 			caKeyDER := s.Data[CaKeyDataName]
@@ -183,26 +187,33 @@ func PrepareAllCerts() {
 		// HubConfig has been initialized
 		ca := hubconfig.Config.Ca
 		caKey := hubconfig.Config.CaKey
-		CreateCaSecret(ca, caKey)
+		err := CreateCaSecret(ca, caKey)
+		if err != nil {
+			klog.Errorf("failed to create ca to secrets, error: %v", err)
+			return err
+		}
 	}
 
 	// Check whether the CloudCore certificates exist in the local directory
-	if !(utilvalidation.FileIsExist(hubconfig.Config.CloudHub.TLSCertFile) && utilvalidation.FileIsExist(hubconfig.Config.CloudHub.TLSPrivateKeyFile)) {
-		klog.Errorf("TLSCertFile and TLSPrivateKeyFile don't exist")
-		fmt.Println("TLSCertFile and TLSPrivateKeyFile don't git reset --soft HEAD^exist")
+	if hubconfig.Config.Key == nil && hubconfig.Config.Cert == nil {
+		klog.Infof("TLSCertFile and TLSPrivateKeyFile don't exist, and will be signed by cloudcore")
 		// Check whether the CloudCore certificates exist in the secret
 		secretHasCert := CheckCertExistsFromSecret()
 		if !secretHasCert {
 			certDER, keyDER := SignCerts()
 
-			CreateCloudCoreSecret(certDER, keyDER)
+			err := CreateCloudCoreSecret(certDER, keyDER)
+			if err != nil {
+				klog.Errorf("failed to create cloudcore cert to secrets, error: %v", err)
+				return err
+			}
 
 			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
 		} else {
 			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get cloudcore secret, error: %v", err)
-				fmt.Errorf("failed to get cloudcore secret error: %v", err)
+				return err
 			}
 			certDER := s.Data[CloudCoreDataName]
 			keyDER := s.Data[CloudCoreKeyDataName]
@@ -213,6 +224,11 @@ func PrepareAllCerts() {
 		// HubConfig has been initialized
 		cert := hubconfig.Config.Cert
 		key := hubconfig.Config.Key
-		CreateCaSecret(cert, key)
+		err := CreateCaSecret(cert, key)
+		if err != nil {
+			klog.Errorf("failed to create cloudcore cert to secrets, error: %v", err)
+			return err
+		}
 	}
+	return nil
 }

@@ -39,7 +39,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	tmpl := x509.Certificate{
 		SerialNumber: big.NewInt(1024),
 		Subject: pkix.Name{
-			CommonName: "Kubeedge",
+			CommonName: "KubeEdge",
 		},
 		NotBefore: time.Now(),
 		NotAfter:  time.Now().Add(time.Hour * 24 * 365 * 100),
