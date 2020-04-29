@@ -10,12 +10,10 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
-	"os"
-
-	certSaveUtil "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
+	"io/ioutil"
+	"os"
 )
 
 const privateKeyBits = 2048
@@ -40,7 +38,7 @@ func GetCACert(url string) ([]byte, error) {
 func getCSR() ([]byte, error) {
 	pk, _ := rsa.GenerateKey(rand.Reader, privateKeyBits)
 	// save the private key
-	if err := certSaveUtil.WriteKey(constants.DefaultCertDir, "edge", pk); err != nil {
+	if err := WriteKey(constants.DefaultCertDir, "edge", pk); err != nil {
 		return nil, err
 	}
 

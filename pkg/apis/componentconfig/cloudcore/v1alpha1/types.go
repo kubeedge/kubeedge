@@ -91,12 +91,12 @@ type CloudHub struct {
 	TLSCAFile string `json:"tlsCAFile,omitempty"`
 	// TLSCAKeyFile indicates caKey file path
 	// default /etc/kubeedge/ca/rootCA.key
-	TLSCAKeyFile string `json:"tlsCAFile,omitempty"`
-	// TLSCertFile indicates cert file path
-	// default "/etc/kubeedge/certs/edge.crt"
+	TLSCAKeyFile string `json:"tlsCAKeyFile,omitempty"`
+	// TLSPrivateKeyFile indicates key file path
+	// default "/etc/kubeedge/certs/server.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile indicates key file path
-	// default "/etc/kubeedge/certs/edge.key"
+	// default "/etc/kubeedge/certs/server.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// WriteTimeout indicates write time (second)
 	// default 30
