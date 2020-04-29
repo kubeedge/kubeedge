@@ -69,7 +69,7 @@ func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 	caKeyDER := hubconfig.Config.CaKey
 	caKey, _ := x509.ParseECPrivateKey(caKeyDER)
 
-	certDER, err := NewCertFromCa(cfg, caCert, serverKey, caKey)
+	certDER, err := NewCertFromCa(cfg, caCert, serverKey.Public(), caKey)
 	if err != nil {
 		fmt.Printf("%v", err)
 	}

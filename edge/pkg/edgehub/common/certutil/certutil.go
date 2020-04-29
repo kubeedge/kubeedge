@@ -2,16 +2,17 @@ package certutil
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"io/ioutil"
 	"os"
 )
@@ -21,7 +22,7 @@ const privateKeyBits = 2048
 // GetCACert gets the cloudcore CA certificate
 func GetCACert(url string) ([]byte, error) {
 	client := http.NewHTTPClient()
-	req, _ := http.BuildRequest("get", url, nil, "")
+	req, _ := http.BuildRequest("GET", url, nil, "")
 	res, err := http.SendRequest(req, client)
 	if err != nil {
 		return nil, err
@@ -36,9 +37,9 @@ func GetCACert(url string) ([]byte, error) {
 }
 
 func getCSR() ([]byte, error) {
-	pk, _ := rsa.GenerateKey(rand.Reader, privateKeyBits)
+	pk, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	// save the private key
-	if err := WriteKey(constants.DefaultCertDir, "edge", pk); err != nil {
+	if err := WriteKey(config.Config.TLSPrivateKeyFile, pk); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +63,7 @@ func GetEdgeCert(url string, cacert []byte, token string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create CSR: %v", err)
 	}
 	client, err := http.NewHTTPclientWithCA(cacert)
-	req, _ := http.BuildRequest("get", url, bytes.NewReader(csr), token)
+	req, _ := http.BuildRequest("GET", url, bytes.NewReader(csr), token)
 	res, err := http.SendRequest(req, client)
 	if err != nil {
 		return nil, err
