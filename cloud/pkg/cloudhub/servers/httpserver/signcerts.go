@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"k8s.io/klog"
+	"net"
 	"strings"
 	"time"
 
@@ -37,7 +38,11 @@ func SignCerts() ([]byte, []byte) {
 		CommonName:   "KubeEdge",
 		Organization: []string{"KubeEdge"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		AltNames:     certutil.AltNames{},
+		AltNames: certutil.AltNames{
+			IPs: []net.IP{
+				net.ParseIP("127.0.0.1"),
+			},
+		},
 	}
 
 	certDER, keyDER, err := NewCloudCoreCertDERandKey(cfg)

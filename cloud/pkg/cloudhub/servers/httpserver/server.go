@@ -119,16 +119,16 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 
 	csrContent, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Errorf("fail to read file! error:%v", err)
+		klog.Errorf("fail to read file! error:%v", err)
 	}
 	csr, err := x509.ParseCertificateRequest(csrContent)
 	if err != nil {
-		fmt.Errorf("fail to ParseCertificateRequest! error:%v", err)
+		klog.Errorf("fail to ParseCertificateRequest! error:%v", err)
 	}
 	subject := csr.Subject
 	clientCertDER, err := signCerts(subject, csr.PublicKey)
 	if err != nil {
-		fmt.Errorf("fail to signCerts! error:%v", err)
+		klog.Errorf("fail to signCerts! error:%v", err)
 	}
 
 	w.Write(clientCertDER)
@@ -150,7 +150,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 	}
 
 	caKeyDER := hubconfig.Config.CaKey
-	caKey, err := x509.ParsePKCS1PrivateKey(caKeyDER)
+	caKey, err := x509.ParseECPrivateKey(caKeyDER)
 	if err != nil {
 		return nil, fmt.Errorf("unable to ParsePKCS1PrivateKey: %v", err)
 	}
@@ -201,7 +201,7 @@ func PrepareAllCerts() error {
 				return err
 			}
 
-			UpdateConfig(caDER, caKeyDER, []byte(""), []byte(""))
+			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
 			s, err := GetSecret(CaSecretName, NamespaceSystem)
 			if err != nil {
@@ -211,7 +211,7 @@ func PrepareAllCerts() error {
 			caDER := s.Data[CaDataName]
 			caKeyDER := s.Data[CaKeyDataName]
 
-			UpdateConfig(caDER, caKeyDER, []byte(""), []byte(""))
+			UpdateConfig(caDER, caKeyDER, nil, nil)
 		}
 	} else {
 		// HubConfig has been initialized
@@ -238,7 +238,7 @@ func PrepareAllCerts() error {
 				return err
 			}
 
-			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
+			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
 			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
 			if err != nil {
@@ -248,7 +248,7 @@ func PrepareAllCerts() error {
 			certDER := s.Data[CloudCoreCertName]
 			keyDER := s.Data[CloudCoreKeyDataName]
 
-			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
+			UpdateConfig(nil, nil, certDER, keyDER)
 		}
 	} else {
 		// HubConfig has been initialized

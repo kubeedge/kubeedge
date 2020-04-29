@@ -25,32 +25,30 @@ const (
 )
 
 // WriteKey stores the given key at the given location
-func WriteKey(pkiPath, name string, key crypto.Signer) error {
+func WriteKey(pkiPath string, key crypto.Signer) error {
 	if key == nil {
 		return errors.New("private key cannot be nil when writing to file")
 	}
 
-	privateKeyPath := pathForKey(pkiPath, name)
 	encoded, err := keyutil.MarshalPrivateKeyToPEM(key)
 	if err != nil {
 		return errors.Wrapf(err, "unable to marshal private key to PEM")
 	}
-	if err := keyutil.WriteKey(privateKeyPath, encoded); err != nil {
-		return errors.Wrapf(err, "unable to write private key to file %s", privateKeyPath)
+	if err := keyutil.WriteKey(pkiPath, encoded); err != nil {
+		return errors.Wrapf(err, "unable to write private key to file %s", pkiPath)
 	}
 
 	return nil
 }
 
 // WriteCert stores the given certificate at the given location
-func WriteCert(pkiPath, name string, cert *x509.Certificate) error {
+func WriteCert(certPath string, cert *x509.Certificate) error {
 	if cert == nil {
 		return errors.New("certificate cannot be nil when writing to file")
 	}
 
-	certificatePath := pathForCert(pkiPath, name)
-	if err := certutil.WriteCert(certificatePath, EncodeCertPEM(cert)); err != nil {
-		return errors.Wrapf(err, "unable to write certificate to file %s", certificatePath)
+	if err := certutil.WriteCert(certPath, EncodeCertPEM(cert)); err != nil {
+		return errors.Wrapf(err, "unable to write certificate to file %s", certPath)
 	}
 
 	return nil

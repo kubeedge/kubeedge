@@ -2,14 +2,15 @@ package config
 
 import (
 	"io/ioutil"
-	"k8s.io/klog"
 	"sync"
+
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	syncinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/reliablesyncs/v1alpha1"
 	synclister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
-	"k8s.io/client-go/tools/cache"
 )
 
 var Config Configure
