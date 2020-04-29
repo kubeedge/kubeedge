@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"k8s.io/klog"
 	"strings"
 	"time"
 
@@ -33,8 +34,8 @@ import (
 // SignCerts creates server's certificate and key
 func SignCerts() ([]byte, []byte) {
 	cfg := &certutil.Config{
-		CommonName:   "kubeedge",
-		Organization: []string{"HuaWei"},
+		CommonName:   "KubeEdge",
+		Organization: []string{"KubeEdge"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames:     certutil.AltNames{},
 	}
@@ -60,22 +61,22 @@ func GenerateToken() {
 	tokenString, err := token.SignedString(keyPEM)
 
 	if err != nil {
-		fmt.Printf("%v", err)
+		klog.Fatal("Failed to generate the token for edgecore register, err: %v", err)
 	}
+
 	caHash := getCaHash()
 	// combine caHash and tokenString into caHashAndToken
-	caHashAndToken := strings.Join([]string{caHash, tokenString}, " ")
+	caHashToken := strings.Join([]string{caHash, tokenString}, " ")
 	// save caHashAndToken to secret
-	CreateTokenSecret([]byte(caHashAndToken))
-
-	fmt.Println(caHashAndToken)
+	CreateTokenSecret([]byte(caHashToken))
 
 	t := time.NewTicker(time.Hour * 12)
 	go func() {
 		for {
 			select {
 			case <-t.C:
-				refreshToken()
+				refreshedCaHashToken := refreshToken()
+				CreateTokenSecret([]byte(refreshedCaHashToken))
 			}
 		}
 	}()
@@ -83,7 +84,7 @@ func GenerateToken() {
 
 func refreshToken() string {
 	claims := &jwt.StandardClaims{}
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(time.Hour * 12)
 	claims.ExpiresAt = expirationTime.Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	keyPEM := getCaKey()

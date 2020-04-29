@@ -2,11 +2,11 @@ package httpserver
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 )
@@ -39,8 +39,11 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 		fmt.Printf("%v", err)
 	}
 	if _, err := cli.CoreV1().Secrets(ns).Create(secret); err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return errors.Wrap(err, "unable to create secret")
+		if apierrors.IsAlreadyExists(err) {
+			cli.CoreV1().Secrets(ns).Update(secret)
+		} else {
+			klog.Errorf("Failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
+			return fmt.Errorf("Failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
 		}
 	}
 	return nil

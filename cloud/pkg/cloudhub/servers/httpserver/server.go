@@ -40,8 +40,8 @@ import (
 func StartHttpServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/edge.crt", edgeCoreClientCert).Methods("GET")
-	//router.HandleFunc("/client.crt", edgeCoreClientCert).Methods("GET")
 	router.HandleFunc("/ca.crt", getCA).Methods("GET")
+
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.Https.Address, hubconfig.Config.Https.Port)
 	klog.Fatal(http.ListenAndServeTLS(addr, "", "", router))
 }
@@ -136,19 +136,18 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 }
 
 func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, NamespaceSystem); err == nil {
-		return true
-	} else {
+	if _, err := GetSecret(CaSecretName, NamespaceSystem); err != nil {
 		return false
 	}
+	return true
+
 }
 
 func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err == nil {
-		return true
-	} else {
+	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err != nil {
 		return false
 	}
+	return true
 }
 
 // PrepareAllCerts check whether the certificates exist in the local directory,
@@ -162,23 +161,13 @@ func PrepareAllCerts() {
 			caDER, caKey, err := NewCertificateAuthorityDer()
 			if err != nil {
 				klog.Errorf("failed to create Certificate Authority, error: %v", err)
-				fmt.Errorf("failed to create Certificate Authority, error: %v", err)
 			}
-
-			caCert, err := x509.ParseCertificate(caDER)
-			if err != nil {
-				klog.Errorf("failed to ParseCertificate, error: %v", err)
-				fmt.Errorf("failed to ParseCertificate, error: %v", err)
-			}
-
-			WriteCertAndKey("/etc/kubeedge/ca/", "rootCA", caCert, caKey)
 
 			caKeyDER := x509.MarshalPKCS1PrivateKey(caKey.(*rsa.PrivateKey))
 
 			CreateCaSecret(caDER, caKeyDER)
 
 			UpdateConfig(caDER, caKeyDER, []byte(""), []byte(""))
-
 		} else {
 			s, err := GetSecret(CaSecretName, NamespaceSystem)
 			if err != nil {
@@ -187,20 +176,8 @@ func PrepareAllCerts() {
 			}
 			caDER := s.Data[CaDataName]
 			caKeyDER := s.Data[CaKeyDataName]
-			caCert, err := x509.ParseCertificate(caDER)
-			if err != nil {
-				klog.Errorf("failed to ParseCertificate, error: %v", err)
-				fmt.Errorf("failed to ParseCertificate, error: %v", err)
-			}
-			caKey, err := x509.ParsePKCS1PrivateKey(caKeyDER)
-			if err != nil {
-				klog.Errorf("failed to ParsePKCS1PrivateKey, error: %v", err)
-				fmt.Errorf("failed to ParsePKCS1PrivateKey, error: %v", err)
-			}
 
 			UpdateConfig(caDER, caKeyDER, []byte(""), []byte(""))
-
-			WriteCertAndKey("/etc/kubeedge/ca/", "rootCA", caCert, caKey)
 		}
 	} else {
 		// HubConfig has been initialized
@@ -217,15 +194,8 @@ func PrepareAllCerts() {
 		secretHasCert := CheckCertExistsFromSecret()
 		if !secretHasCert {
 			certDER, keyDER := SignCerts()
-			cert, key, err := ParseCertDerToCertificate(certDER, keyDER)
-			if err != nil {
-				klog.Errorf("failed to ParseCertDerToCertificate, error: %v", err)
-				fmt.Errorf("failed to ParseCertDerToCertificate, error: %v", err)
-			}
 
 			CreateCloudCoreSecret(certDER, keyDER)
-
-			WriteCertAndKey("/etc/kubeedge/certs/", "server", cert, key)
 
 			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
 		} else {
@@ -237,20 +207,7 @@ func PrepareAllCerts() {
 			certDER := s.Data[CloudCoreDataName]
 			keyDER := s.Data[CloudCoreKeyDataName]
 
-			cert, err := x509.ParseCertificate(certDER)
-			if err != nil {
-				klog.Errorf("failed to ParseCertificate, error: %v", err)
-				fmt.Errorf("failed to ParseCertificate, error: %v", err)
-			}
-			key, err := x509.ParsePKCS1PrivateKey(keyDER)
-			if err != nil {
-				klog.Errorf("failed to ParsePKCS1PrivateKey, error: %v", err)
-				fmt.Errorf("failed to ParsePKCS1PrivateKey, error: %v", err)
-			}
-
 			UpdateConfig([]byte(""), []byte(""), certDER, keyDER)
-
-			WriteCertAndKey("/etc/kubeedge/certs/", "server", cert, key)
 		}
 	} else {
 		// HubConfig has been initialized
