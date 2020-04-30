@@ -37,7 +37,7 @@ type JoinOptions struct {
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
-	HttpServer            string
+	HTTPServer            string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI

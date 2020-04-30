@@ -35,7 +35,7 @@ var groupMap = map[string]string{
 // applyCerts get edge certificate to communicate with cloudcore
 func (eh *EdgeHub) applyCerts() error {
 	// get ca.crt
-	url := config.Config.HttpServer + caURL
+	url := config.Config.HTTPServer + caURL
 	cacert, err := certutil.GetCACert(url)
 	if err != nil {
 		klog.Errorf("failed to get CA certificate, err: %v", err)
@@ -65,7 +65,7 @@ func (eh *EdgeHub) applyCerts() error {
 	}
 
 	// get the edge.crt
-	url = config.Config.HttpServer + certURL
+	url = config.Config.HTTPServer + certURL
 	edgecert, err := certutil.GetEdgeCert(url, cacert, tokenParts[1])
 	if err != nil {
 		klog.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)

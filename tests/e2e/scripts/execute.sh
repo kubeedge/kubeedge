@@ -50,6 +50,7 @@ kubectl create -f ${curpath}/build/crds/devices/devices_v1alpha1_devicemodel.yam
 
 # edge side don't support kind cni now, delete kind cni plugin for workaround
 kubectl delete daemonset kindnet -nkube-system
+kubectl create ns kubeedge
 
 :> /tmp/testcase.log
 

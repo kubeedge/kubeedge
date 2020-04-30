@@ -65,6 +65,6 @@ const (
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
 
-	// HttpServer sets the IP address and port where to apply for the edge certificate
-	HttpServer = "httpServer"
+	// HTTPServer sets the IP address and port where to apply for the edge certificate
+	HTTPServer = "httpServer"
 )

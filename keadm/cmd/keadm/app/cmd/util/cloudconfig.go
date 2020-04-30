@@ -41,7 +41,7 @@ genCertAndKey() {
 }
 
 buildSecret() {
-    local name="edge"
+    local name=$1
     genCertAndKey ${name} > /dev/null 2>&1
     cat <<EOF
 apiVersion: v1

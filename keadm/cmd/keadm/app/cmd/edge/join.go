@@ -106,7 +106,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.Token, types.Token, "t", joinOptions.Token,
 		"Used for edge to apply for the certificate")
 
-	cmd.Flags().StringVarP(&joinOptions.HttpServer, types.HttpServer, "s", joinOptions.HttpServer,
+	cmd.Flags().StringVarP(&joinOptions.HTTPServer, types.HTTPServer, "s", joinOptions.HTTPServer,
 		"The IP address where to apply for the edge certificate")
 }
 
@@ -154,7 +154,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		CertPath:              joinOptions.CertPath,
 		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 		Token:                 joinOptions.Token,
-		HttpServer:            joinOptions.HttpServer,
+		HTTPServer:            joinOptions.HTTPServer,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}

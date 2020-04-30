@@ -102,7 +102,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
-				HttpServer: "https://127.0.0.1:10002",
+				HTTPServer: "https://127.0.0.1:10002",
 				Token:      "",
 			},
 			EventBus: &EventBus{
@@ -195,7 +195,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Server:           "127.0.0.1:10000",
 					WriteDeadline:    15,
 				},
-				HttpServer: "https://127.0.0.1:10002",
+				HTTPServer: "https://127.0.0.1:10002",
 				Token:      "",
 			},
 			EventBus: &EventBus{
