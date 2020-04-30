@@ -40,6 +40,9 @@ func InitContext(contextType string) {
 	})
 }
 
+func GetContext() gocontext.Context{
+	return context.ctx
+}
 func Done() <-chan struct{} {
 	return context.ctx.Done()
 }
