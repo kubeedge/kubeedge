@@ -30,11 +30,12 @@ import (
 // It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
-	CertPath      string
-	CloudCoreIP   string
-	EdgeNodeName  string
-	RuntimeType   string
-	InterfaceName string
+	CertPath              string
+	CloudCoreIP           string
+	EdgeNodeName          string
+	RuntimeType           string
+	InterfaceName         string
+	RemoteRuntimeEndpoint string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -88,6 +89,10 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 		if ku.InterfaceName != "" {
 			edgeCoreConfig.Modules.Edged.InterfaceName = ku.InterfaceName
+		}
+		if ku.RemoteRuntimeEndpoint != "" {
+			edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
+			edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
 		}
 
 		if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
