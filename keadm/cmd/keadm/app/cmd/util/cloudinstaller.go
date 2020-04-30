@@ -2,8 +2,10 @@ package util
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -23,6 +25,16 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
 	err := cu.InstallKubeEdge(types.CloudCore)
+	if err != nil {
+		return err
+	}
+
+	err = cu.generateCertificates()
+	if err != nil {
+		return err
+	}
+
+	err = cu.tarCertificates()
 	if err != nil {
 		return err
 	}

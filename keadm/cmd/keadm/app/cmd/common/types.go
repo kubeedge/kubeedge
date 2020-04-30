@@ -36,13 +36,6 @@ type JoinOptions struct {
 	InterfaceName         string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
-	Token                 string
-	HTTPServer            string
-}
-
-//JoinOptions has the kubeedge cloud init information filled by CLI
-type GetokenOptions struct {
-	Kubeconfig string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -143,7 +136,6 @@ type CloudHubSt struct {
 	IPAddress         string `yaml:"address"`
 	Port              uint16 `yaml:"port"`
 	CA                string `yaml:"ca"`
-	CAkey             string `yaml:"caKey"`
 	Cert              string `yaml:"cert"`
 	Key               string `yaml:"key"`
 	KeepAliveInterval uint32 `yaml:"keepalive-interval"`
