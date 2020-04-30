@@ -1,8 +1,10 @@
 package validation
 
-import "os"
+import (
+	"os"
+)
 
-// FileIsExist check file si exist
+// FileIsExist check file is exist
 func FileIsExist(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {

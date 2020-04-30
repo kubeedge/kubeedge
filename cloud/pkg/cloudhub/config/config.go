@@ -20,30 +20,36 @@ type Configure struct {
 	v1alpha1.CloudHub
 	KubeAPIConfig *v1alpha1.KubeAPIConfig
 	Ca            []byte
+	CaKey         []byte
 	Cert          []byte
 	Key           []byte
 }
 
 func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
-		ca, err := ioutil.ReadFile(hub.TLSCAFile)
-		if err != nil {
-			klog.Fatalf("read ca file %v error %v", hub.TLSCAFile, err)
-		}
-		cert, err := ioutil.ReadFile(hub.TLSCertFile)
-		if err != nil {
-			klog.Fatalf("read cert file %v error %v", hub.TLSCertFile, err)
-		}
-		key, err := ioutil.ReadFile(hub.TLSPrivateKeyFile)
-		if err != nil {
-			klog.Fatalf("read key file %v error %v", hub.TLSPrivateKeyFile, err)
-		}
 		Config = Configure{
 			CloudHub:      *hub,
 			KubeAPIConfig: kubeAPIConfig,
-			Ca:            ca,
-			Cert:          cert,
-			Key:           key,
+		}
+
+		ca, _ := ioutil.ReadFile(hub.TLSCAFile)
+		caKey, _ := ioutil.ReadFile(hub.TLSCAKeyFile)
+
+		if ca != nil && caKey != nil {
+			Config.Ca = ca
+			Config.CaKey = caKey
+		} else if !(ca == nil && caKey == nil) {
+			klog.Fatal("Both of ca and caKey should be specified!")
+		}
+
+		cert, _ := ioutil.ReadFile(hub.TLSCertFile)
+		key, _ := ioutil.ReadFile(hub.TLSPrivateKeyFile)
+
+		if cert != nil && key != nil {
+			Config.Cert = cert
+			Config.Key = key
+		} else if !(cert == nil && key == nil) {
+			klog.Fatal("Both of cert and key should be specified!")
 		}
 	})
 }

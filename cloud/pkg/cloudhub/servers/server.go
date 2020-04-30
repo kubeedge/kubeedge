@@ -3,6 +3,7 @@ package servers
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 
 	"k8s.io/klog"
@@ -30,11 +31,12 @@ func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
 func createTLSConfig(ca, cert, key []byte) tls.Config {
 	// init certificate
 	pool := x509.NewCertPool()
-	ok := pool.AppendCertsFromPEM(ca)
+	ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca}))
 	if !ok {
 		panic(fmt.Errorf("fail to load ca content"))
 	}
-	certificate, err := tls.X509KeyPair(cert, key)
+
+	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +60,7 @@ func startWebsocketServer() {
 		ExOpts:     api.WSServerOption{Path: "/"},
 	}
 	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeWS)
-	svc.ListenAndServeTLS("", "")
+	klog.Fatal(svc.ListenAndServeTLS("", ""))
 }
 
 func startQuicServer() {
@@ -73,5 +75,5 @@ func startQuicServer() {
 	}
 
 	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeQuic)
-	svc.ListenAndServeTLS("", "")
+	klog.Fatal(svc.ListenAndServeTLS("", ""))
 }

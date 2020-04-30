@@ -44,8 +44,6 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		nodeName = "integration-node-" + utils.GetRandomString(10)
 		nodeSelector = "node-" + utils.GetRandomString(3)
 
-		//Generate Cerificates for Edge and Cloud nodes copy to respective folders
-		Expect(utils.GenerateCerts()).Should(BeNil())
 		//Do the neccessary config changes in Cloud and Edge nodes
 		Expect(utils.DeploySetup(ctx, nodeName, "deployment")).Should(BeNil())
 		//Run ./cloudcore binary
@@ -53,7 +51,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		//Register the Edge Node to Master
 		Expect(utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
 		//Run ./edgecore after node registration
-		Expect(utils.StartEdgeCore()).Should(BeNil())
+		Expect(utils.StartEdgeCore(ctx.Cfg.K8SMasterForKubeEdge, nodeName)).Should(BeNil())
 		//Check node successfully registered or not
 		Eventually(func() string {
 			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)

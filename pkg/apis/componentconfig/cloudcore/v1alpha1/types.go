@@ -89,11 +89,14 @@ type CloudHub struct {
 	// TLSCAFile indicates ca file path
 	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSCAFile string `json:"tlsCAFile,omitempty"`
-	// TLSCertFile indicates cert file path
-	// default "/etc/kubeedge/certs/edge.crt"
+	// TLSCAKeyFile indicates caKey file path
+	// default "/etc/kubeedge/ca/rootCA.key"
+	TLSCAKeyFile string `json:"tlsCAKeyFile,omitempty"`
+	// TLSPrivateKeyFile indicates key file path
+	// default "/etc/kubeedge/certs/server.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile indicates key file path
-	// default "/etc/kubeedge/certs/edge.key"
+	// default "/etc/kubeedge/certs/server.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// WriteTimeout indicates write time (second)
 	// default 30
@@ -105,6 +108,9 @@ type CloudHub struct {
 	// WebSocket indicates websocket server info
 	// +Required
 	WebSocket *CloudHubWebSocket `json:"websocket,omitempty"`
+	// HTTPS indicates https server info
+	// +Required
+	Https *CloudHubHttps `json:"https,omitempty"`
 }
 
 // CloudHubQUIC indicates the quic server config
@@ -143,6 +149,19 @@ type CloudHubWebSocket struct {
 	Address string `json:"address,omitempty"`
 	// Port indicates the open port for websocket server
 	// default 10000
+	Port uint32 `json:"port,omitempty"`
+}
+
+// CloudHubHttps indicates the http config of CloudHub
+type CloudHubHttps struct {
+	// Enable indicates whether enable Https protocol
+	// default true
+	Enable bool `json:"enable,omitempty"`
+	// Address indicates server ip address
+	// default 0.0.0.0
+	Address string `json:"address,omitempty"`
+	// Port indicates the open port for HTTPS server
+	// default 10002
 	Port uint32 `json:"port,omitempty"`
 }
 

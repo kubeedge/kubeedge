@@ -124,7 +124,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		Expect(err).Should(BeNil())
 
 		//Run ./edgecore after node registration
-		Expect(utils.StartEdgeCore()).Should(BeNil())
+		Expect(utils.StartEdgeCore(ctx.Cfg.K8SMasterForKubeEdge, nodeName)).Should(BeNil())
 
 		//Check node successfully registered or not
 		Eventually(func() string {

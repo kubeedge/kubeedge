@@ -2,14 +2,17 @@ package wsclient
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/viaduct/pkg/api"
 	wsclient "github.com/kubeedge/viaduct/pkg/client"
 	"github.com/kubeedge/viaduct/pkg/conn"
@@ -52,9 +55,20 @@ func (wsc *WebSocketClient) Init() error {
 		return fmt.Errorf("failed to load x509 key pair, error: %v", err)
 	}
 
+	caCert, err := ioutil.ReadFile(config.Config.TLSCAFile)
+	if err != nil {
+		return err
+	}
+
+	pool := x509.NewCertPool()
+	if ok := pool.AppendCertsFromPEM(caCert); !ok {
+		return fmt.Errorf("cannot parse the certificates")
+	}
+
 	tlsConfig := &tls.Config{
+		RootCAs:            pool,
 		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
 	}
 
 	option := wsclient.Options{
