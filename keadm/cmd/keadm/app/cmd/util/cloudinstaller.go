@@ -77,6 +77,41 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	return nil
 }
 
+//generateCertificates - Certifcates ca,cert will be generated in /etc/kubeedge/
+func (cu *KubeCloudInstTool) generateCertificates() error {
+	//Create certgen.sh
+	if err := ioutil.WriteFile(KubeEdgeCloudCertGenPath, CertGenSh, 0775); err != nil {
+		return err
+	}
+
+	cmd := &Command{Cmd: exec.Command("bash", "-x", KubeEdgeCloudCertGenPath, "genCertAndKey", "server")}
+	err := cmd.ExecuteCmdShowOutput()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", "certificates not installed")
+	}
+	fmt.Println(stdout)
+	fmt.Println("Certificates got generated at:", KubeEdgePath, "ca and", KubeEdgePath, "certs")
+	return nil
+}
+
+//tarCertificates - certs will be tared at /etc/kubeedge/kubeedge/certificates/certs
+func (cu *KubeCloudInstTool) tarCertificates() error {
+	tarCmd := fmt.Sprintf("tar -cvzf %s %s", KubeEdgeEdgeCertsTarFileName, strings.Split(KubeEdgeEdgeCertsTarFileName, ".")[0])
+	cmd := &Command{Cmd: exec.Command("sh", "-c", tarCmd)}
+	cmd.Cmd.Dir = KubeEdgePath
+	err := cmd.ExecuteCmdShowOutput()
+	stdout := cmd.GetStdOutput()
+	errout := cmd.GetStdErr()
+	if err != nil || errout != "" {
+		return fmt.Errorf("%s", "error in tarring the certificates")
+	}
+	fmt.Println(stdout)
+	fmt.Println("Certificates got tared at:", KubeEdgePath, "path, Please copy it to desired edge node (at", KubeEdgePath, "path)")
+	return nil
+}
+
 //RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// create the log dir for kubeedge

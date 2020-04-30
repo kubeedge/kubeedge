@@ -17,15 +17,19 @@ limitations under the License.
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	cloudcore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	edgecore "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	edgesite "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgesite/v1alpha1"
@@ -68,7 +72,10 @@ func StartCloudCore() error {
 	return nil
 }
 
-func StartEdgeCore() error {
+func StartEdgeCore(master, nodeName string) error {
+	token := getSecret(master)
+	createEdgeCoreConfigFile(token, nodeName)
+
 	catConfig := exec.Command("sh", "-c", constants.CatEdgeCoreConfigFile)
 	Infof("===========> Executing: %s\n", strings.Join(catConfig.Args, " "))
 	cbytes, _ := catConfig.CombinedOutput()
@@ -93,6 +100,24 @@ func StartEdgeCore() error {
 		os.Exit(1)
 	}
 	return nil
+}
+
+func getSecret(master string) string {
+	secret := v1.Secret{}
+
+	err, resp := SendHttpRequest(http.MethodGet, master+"/api/v1/namespaces/kubeedge/secrets/tokensecret")
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return ""
+	}
+	err = json.Unmarshal(contents, &secret)
+	if err != nil {
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
+	}
+
+	return string(secret.Data[httpserver.TokenDataName])
 }
 
 func StartEdgeSite() error {
@@ -127,7 +152,6 @@ func DeploySetup(ctx *TestContext, nodeName, setupType string) error {
 	switch setupType {
 	case "deployment":
 		createCloudCoreConfigFile(ctx.Cfg.KubeConfigPath)
-		createEdgeCoreConfigFile(nodeName)
 	case "edgesite":
 		createEdgeSiteConfigFile(ctx.Cfg.K8SMasterForKubeEdge, nodeName)
 	}
@@ -167,7 +191,7 @@ func createCloudCoreConfigFile(kubeConfigPath string) {
 	}
 }
 
-func createEdgeCoreConfigFile(nodeName string) {
+func createEdgeCoreConfigFile(token, nodeName string) {
 	c := edgecore.NewDefaultEdgeCoreConfig()
 	// TODO change ca file path @kadisi
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
@@ -177,6 +201,7 @@ func createEdgeCoreConfigFile(nodeName string) {
 	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
 	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
 	c.Modules.EdgeStream.Enable = false
+	c.Modules.EdgeHub.Token = token
 
 	data, err := yaml.Marshal(c)
 	if err != nil {

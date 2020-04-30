@@ -66,7 +66,7 @@ func GenerateToken() {
 	tokenString, err := token.SignedString(keyPEM)
 
 	if err != nil {
-		klog.Fatal("Failed to generate the token for edgecore register, err: %v", err)
+		klog.Fatalf("Failed to generate the token for edgecore register, err: %v", err)
 	}
 
 	caHash := getCaHash()

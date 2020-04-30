@@ -41,7 +41,7 @@ const (
 )
 
 // StartHttpServer starts the http service
-func StartHttpServer() {
+func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/edge.crt", edgeCoreClientCert).Methods("GET")
 	router.HandleFunc("/ca.crt", getCA).Methods("GET")

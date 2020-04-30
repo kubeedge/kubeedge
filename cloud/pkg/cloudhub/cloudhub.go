@@ -74,7 +74,7 @@ func (a *cloudHub) Start() {
 	httpserver.GenerateToken()
 
 	// HttpServer mainly used to issue certificates for the edge
-	go httpserver.StartHttpServer()
+	go httpserver.StartHTTPServer()
 
 	servers.StartCloudHub(messageq)
 
