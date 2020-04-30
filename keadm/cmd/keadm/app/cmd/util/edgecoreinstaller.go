@@ -36,8 +36,6 @@ type KubeEdgeInstTool struct {
 	RuntimeType           string
 	InterfaceName         string
 	RemoteRuntimeEndpoint string
-	Token                 string
-	HTTPServer            string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -82,8 +80,6 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 
 		edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
 		edgeCoreConfig.Modules.EdgeHub.WebSocket.Server = ku.CloudCoreIP
-		edgeCoreConfig.Modules.EdgeHub.Token = ku.Token
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = ku.HTTPServer
 
 		if ku.EdgeNodeName != "" {
 			edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
