@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apiserver/pkg/util/term"
@@ -14,6 +15,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
+	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
@@ -55,7 +57,16 @@ kubernetes controller which manages devices so that the device metadata/status d
 			klog.Infof("Version: %+v", version.Get())
 
 			registerModules(config)
-			// start all modules
+
+			// If leader election is enabled, runCommand via LeaderElector until done and exit.
+			if config.LeaderElection.LeaderElect {
+				//TODO: expose electionChecker to a http server
+				electionChecker := kele.NewLeaderReadyzAdaptor(time.Second * 20)
+				kele.Run(config, electionChecker)
+				return
+			}
+
+			// Start all modules if disable leader election
 			core.Run()
 		},
 	}
