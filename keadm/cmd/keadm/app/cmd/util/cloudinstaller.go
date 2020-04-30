@@ -96,7 +96,7 @@ func (cu *KubeCloudInstTool) generateCertificates() error {
 		return err
 	}
 
-	cmd := &Command{Cmd: exec.Command("bash", "-x", KubeEdgeCloudCertGenPath, "genCertAndKey", "edge")}
+	cmd := &Command{Cmd: exec.Command("bash", "-x", KubeEdgeCloudCertGenPath, "genCertAndKey", "server")}
 	err := cmd.ExecuteCmdShowOutput()
 	stdout := cmd.GetStdOutput()
 	errout := cmd.GetStdErr()
