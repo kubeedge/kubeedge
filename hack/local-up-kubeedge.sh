@@ -42,7 +42,9 @@ function uninstall_kubeedge {
   [[ -n "${CLOUDCORE_PID-}" ]] && sudo kill "${CLOUDCORE_PID}" 2>/dev/null
 
   # kill the edgecore
-  [[ -n "${EDGECORE_PID-}" ]] && sudo kill "${EDGECORE_PID}" 2>/dev/null
+  if [[ -n "${EDGECORE_PID-}" ]]; then
+      sudo kill "${EDGECORE_PID}" 2>/dev/null
+  fi
 }
 
 # clean up
