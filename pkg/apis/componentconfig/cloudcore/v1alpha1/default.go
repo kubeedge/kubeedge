@@ -29,7 +29,7 @@ import (
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
-	c:= &CloudCoreConfig{
+	c := &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -127,15 +127,26 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			SyncController: &SyncController{
 				Enable: true,
 			},
+			CloudStream: &CloudStream{
+				Enable:                  false,
+				TLSTunnelCAFile:         constants.DefaultCAFile,
+				TLSTunnelCertFile:       constants.DefaultCertFile,
+				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
+				TunnelPort:              10002,
+				TLSStreamCAFile:         constants.DefaultStreamCAFile,
+				TLSStreamCertFile:       constants.DefaultStreamCertFile,
+				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
+				StreamPort:              10003,
+			},
 		},
-		LeaderElection:	&componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect:		false,
-			LeaseDuration:      metav1.Duration{Duration: 15 * time.Second},
-			RenewDeadline:      metav1.Duration{Duration: 10 * time.Second},
-			RetryPeriod:        metav1.Duration{Duration: 2 * time.Second},
-			ResourceLock: 		"endpointsleases",
-			ResourceNamespace:  "kubeedge",
-			ResourceName: 		"cloudcorelease",
+		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
+			LeaderElect:       false,
+			LeaseDuration:     metav1.Duration{Duration: 15 * time.Second},
+			RenewDeadline:     metav1.Duration{Duration: 10 * time.Second},
+			RetryPeriod:       metav1.Duration{Duration: 2 * time.Second},
+			ResourceLock:      "endpointsleases",
+			ResourceNamespace: "kubeedge",
+			ResourceName:      "cloudcorelease",
 		},
 	}
 	return c
@@ -169,8 +180,8 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 		},
-		LeaderElection:	&componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect:		false,
+		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
+			LeaderElect: false,
 		},
 	}
 }

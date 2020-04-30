@@ -39,6 +39,7 @@ func ValidateEdgeCoreConfiguration(c *v1alpha1.EdgeCoreConfig) field.ErrorList {
 	allErrs = append(allErrs, ValidateModuleDeviceTwin(*c.Modules.DeviceTwin)...)
 	allErrs = append(allErrs, ValidateModuleDBTest(*c.Modules.DBTest)...)
 	allErrs = append(allErrs, ValidateModuleEdgeMesh(*c.Modules.EdgeMesh)...)
+	allErrs = append(allErrs, ValidateModuleEdgeStream(*c.Modules.EdgeStream)...)
 	return allErrs
 }
 
@@ -161,5 +162,26 @@ func ValidateModuleEdgeMesh(m v1alpha1.EdgeMesh) field.ErrorList {
 	}
 	// TODO check meshconfig @kadisi
 	allErrs := field.ErrorList{}
+	return allErrs
+}
+
+// ValidateModuleEdgeStream validates `m` and returns an errorList if it is invalid
+func ValidateModuleEdgeStream(m v1alpha1.EdgeStream) field.ErrorList {
+	if !m.Enable {
+		return field.ErrorList{}
+	}
+	allErrs := field.ErrorList{}
+	if !utilvalidation.FileIsExist(m.TLSTunnelCAFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCAFile"),
+			m.TLSTunnelCAFile, "TLSTunnelCAFile file not exist"))
+	}
+	if !utilvalidation.FileIsExist(m.TLSTunnelCertFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
+			m.TLSTunnelCertFile, "TLSTunnelCertFile file not exist"))
+	}
+	if !utilvalidation.FileIsExist(m.TLSTunnelPrivateKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
+			m.TLSTunnelPrivateKeyFile, "TLSTunnelPrivateKeyFile file not exist"))
+	}
 	return allErrs
 }
