@@ -86,7 +86,6 @@ func GetResourceType(msg model.Message) (string, error) {
 		index = controller.ResourceResourceTypeIndex
 	}
 	klog.V(4).Infof("The resource type is %s, %d", res, index)
-
 	return res, nil
 }
 

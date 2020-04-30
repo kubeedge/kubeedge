@@ -23,6 +23,31 @@ $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh genCertAndKey ed
 
 The cert/ key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/certs` respectively, so this command should be run with root or users who have access to those directories. Copy these files to the corresponding edge side server directory.
 
+#### Generate Certificates for support `kubectl logs` command
+
++ First , you need to make sure you can find the kubernetes ca.crt and ca.key files. if you start up your kubernetes cluster by `kubeadmin`. 
+those files will be in `/etc/kubernetes/pki/` dir.
+
++ Second , set `CLOUDCOREIPS` env, The environment variable is set to specify the IP addresses of all cloudcore
+this is an example:
+```bash
+export CLOUDCOREIPS="172.20.12.45 172.20.12.46"
+```
+
++ third
+
+```bash
+$GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh stream 
+```
+
++ fourth
+
+Run the following command on the host on which each apiserver runs:
+** Note: ** You need to set the cloudcoreip variable first
+```
+iptables -t nat -A OUTPUT -p tcp  --dport 10350 -j DNAT --to {cloudcoreip}:10003
+```
+
 ### Compile Cloudcore
 
 + Make sure a C compiler is installed on your host. The installation is tested with `gcc` and `clang`.

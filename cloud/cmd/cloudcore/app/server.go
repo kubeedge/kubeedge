@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
@@ -100,4 +101,5 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
 	synccontroller.Register(c.Modules.SyncController, c.KubeAPIConfig)
+	cloudstream.Register(c.Modules.CloudStream)
 }

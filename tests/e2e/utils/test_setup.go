@@ -154,6 +154,7 @@ func createCloudCoreConfigFile(kubeConfigPath string) {
 	c.Modules.CloudHub.TLSCAFile = "/tmp/cloudcore/rootCA.crt"
 	c.Modules.CloudHub.TLSCertFile = "/tmp/cloudcore/kubeedge.crt"
 	c.Modules.CloudHub.TLSPrivateKeyFile = "/tmp/cloudcore/kubeedge.key"
+	c.Modules.CloudStream.Enable = false
 
 	data, err := yaml.Marshal(c)
 	if err != nil {
@@ -175,6 +176,7 @@ func createEdgeCoreConfigFile(nodeName string) {
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.DataBase.DataSource = "/tmp/edgecore/edgecore.db"
 	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
+	c.Modules.EdgeStream.Enable = false
 
 	data, err := yaml.Marshal(c)
 	if err != nil {
