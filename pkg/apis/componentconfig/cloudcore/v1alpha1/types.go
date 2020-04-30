@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	componentbaseconfig "k8s.io/component-base/config"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -31,6 +32,8 @@ type CloudCoreConfig struct {
 	// Modules indicates cloudcore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
+	// Configuration for LeaderElection
+	LeaderElection *componentbaseconfig.LeaderElectionConfiguration
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server

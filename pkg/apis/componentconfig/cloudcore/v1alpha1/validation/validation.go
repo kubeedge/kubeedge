@@ -38,6 +38,10 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	return allErrs
 }
+//TODO: ValidateLeaderElectioiConfiguration
+//func ValidateLeaderElectionConfiguration(l *componentbaseconfig.LeaderElectionConfiguration) field.ErrorList{
+//
+//}
 
 // ValidateModuleCloudHub validates `c` and returns an errorList if it is invalid
 func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
