@@ -242,7 +242,6 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 
 1. **Test create a VM workload: (optional)**
  On the master node, create a sample yaml file `vm.yaml` as:
- 
  ```shell
   apiVersion: v1
 kind: Pod
