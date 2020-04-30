@@ -43,9 +43,9 @@ cleanup() {
 startRuntime() {
 	echo "Create virtlet container bind host directories"
 	mkdir -p /usr/libexec/kubernetes/kubelet-plugins/volume/exec
-  mkdir -p /etc/libvirt/qemu
-  mkdir -p /var/lib/libvirt
-  mkdir -p /var/log/libvirt
+	mkdir -p /etc/libvirt/qemu
+	mkdir -p /var/lib/libvirt
+	mkdir -p /var/log/libvirt
 	mkdir -p /var/lib/virtlet/vms
 	mkdir -p /var/log/virtlet/vms
 	mkdir -p /var/run/libvirt
