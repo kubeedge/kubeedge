@@ -98,7 +98,7 @@ To request a server, use url like this: ```<service_name>.<service_namespace>.sv
 
 In our case, from edge node a or b, run the command:
 ```bash
-$ curl http://nginx-svc.default.svc.cluster.local:12345
+$ curl http://nginx-svc.default.svc.cluster:12345
 <!DOCTYPE html>
 <html>
 <head>
