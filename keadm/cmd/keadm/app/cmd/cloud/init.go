@@ -116,7 +116,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			if err != nil {
 				return err
 			}
-			if len(version) != 0 {
+			if len(version) > 0 {
 				kubeVer = version[1:]
 				latestVersion = version
 				break
