@@ -33,6 +33,10 @@ type HandlerStub struct {
 	podManager *PodManager
 }
 
+func (*HandlerStub) Enable() bool {
+	return true
+}
+
 // Return module name
 func (*HandlerStub) Name() string {
 	return constants.HandlerStub

@@ -34,6 +34,10 @@ func init() {
 type ControllerStub struct {
 }
 
+func (*ControllerStub) Enable() bool {
+	return true
+}
+
 // Return module name
 func (*ControllerStub) Name() string {
 	return constants.ControllerStub

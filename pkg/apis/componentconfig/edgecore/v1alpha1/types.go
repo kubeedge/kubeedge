@@ -268,7 +268,7 @@ type EdgeHub struct {
 	// Token indicates the priority of joining the cluster for the edge
 	Token string `json:"token"`
 	// HTTPServer indicates the server for edge to apply for the certificate.
-	HTTPServer string `json:"httpServer, omitempty"`
+	HTTPServer string `json:"httpServer,omitempty"`
 }
 
 // EdgeHubQUIC indicates the quic client config

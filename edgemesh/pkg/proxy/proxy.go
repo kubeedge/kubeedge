@@ -18,7 +18,7 @@ import (
 
 // iptables rules
 type Proxier struct {
-	iptables utiliptables.Interface
+	iptables     utiliptables.Interface
 	inboundRule  string
 	outboundRule string
 	dNatRule     string
