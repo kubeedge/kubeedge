@@ -153,7 +153,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	return nil
 }
 
-//Execute the instalation for each tool and start edgecore
+//Execute the installation for each tool and start edgecore
 func Execute(toolList map[string]types.ToolsInstaller) error {
 
 	//Install all the required pre-requisite tools

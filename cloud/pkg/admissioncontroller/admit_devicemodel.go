@@ -51,10 +51,10 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
-		klog.Fatalf("cannot marshal to a valid reponse %v", err)
+		klog.Fatalf("cannot marshal to a valid response %v", err)
 	}
 	if _, err := w.Write(respBytes); err != nil {
-		klog.Fatalf("cannot write reponse %v", err)
+		klog.Fatalf("cannot write response %v", err)
 	}
 }
 
