@@ -26,6 +26,7 @@ kubeedge::lint::cloud_lint() {
     cd ${KUBEEDGE_ROOT}/cloud
     golangci-lint run --skip-dirs 'pkg/client' --disable-all -E golint --deadline '10m' ./...
     go vet ./... 
+    find . -type f | grep -v vendor/ | grep -vE '\./\..*' | xargs misspell -error
   )
 }
 
@@ -35,6 +36,8 @@ kubeedge::lint::edge_lint() {
     cd ${KUBEEDGE_ROOT}/edge
     golangci-lint run --disable-all -E golint -E misspell --deadline '10m' ./...
     go vet ./...
+    # ignore mosquitto since it is a deb pkg name
+    find . -type f | grep -v vendor/ | grep -vE '\./\..*' | xargs misspell -i "mosquitto" -error
   )
 }
 
@@ -44,6 +47,8 @@ kubeedge::lint::keadm_lint() {
     cd ${KUBEEDGE_ROOT}/keadm
     golangci-lint run --deadline '10m' --disable-all -E golint ./...
     go vet ./...
+    # ignore mosquitto since it is a deb pkg name
+    find . -type f | grep -v vendor/ | grep -vE '\./\..*' | xargs misspell -i "mosquitto" -error
   )
 }
 
@@ -53,6 +58,7 @@ kubeedge::lint::bluetoothdevice_lint() {
     cd ${KUBEEDGE_ROOT}/mappers/bluetooth_mapper
     golangci-lint run --disable-all -E golint --deadline '10m' ./...
     go vet ./...
+    find . -type f | grep -v vendor/ | grep -vE '\./\..*' | xargs misspell -error
   )
 }
 

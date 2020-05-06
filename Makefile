@@ -11,6 +11,18 @@ COMPONENTS=cloud \
 
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output
+GOBIN ?= $(GOPATH)/bin
+
+define fetch_tool
+	@echo "installing $(1)@$(2) revision/version"
+	@cd /tmp && GO111MODULE=on go get '$(1)@$(2)'
+endef
+
+# tools version
+MISSPELL_VERSION=c0b55c8239520f6b5aa15a0207ca8b28027ba49e
+MISSPELL ?= $(GOBIN)/misspell
+$(MISSPELL):
+	$(call fetch_tool,github.com/client9/misspell/cmd/misspell,$(MISSPELL_VERSION))
 
 define ALL_HELP_INFO
 # Build code.
@@ -103,7 +115,7 @@ ifeq ($(HELP),y)
 lint:
 	@echo "$$LINT_HELP_INFO"
 else
-lint: 
+lint: $(MISSPELL)
 	hack/make-rules/lint.sh $(WHAT)
 endif
 
@@ -207,7 +219,7 @@ e2e:
 else
 e2e: 
 #	bash tests/e2e/scripts/execute.sh device_crd
-#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
+#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
 	bash tests/e2e/scripts/execute.sh
 endif
 
