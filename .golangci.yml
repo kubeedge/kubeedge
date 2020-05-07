@@ -20,7 +20,7 @@ run:
   # on Windows.
   skip-dirs:
     - vendor
-    - pkgs/client
+    - fake
 
 # output configuration options
 output:
@@ -45,4 +45,5 @@ linters:
   disable-all: true
   enable:
     - gofmt
+    - golint
     - misspell

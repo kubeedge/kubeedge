@@ -81,9 +81,8 @@ func (pm *PodManager) GetPod(key string) types.FakePod {
 	v, ok := pm.pods.Load(key)
 	if ok {
 		return v.(types.FakePod)
-	} else {
-		return types.FakePod{}
 	}
+	return types.FakePod{}
 }
 
 // ListPods lists all pods in cache

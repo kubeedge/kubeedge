@@ -64,7 +64,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP

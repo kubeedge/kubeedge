@@ -110,7 +110,7 @@ type CloudHub struct {
 	WebSocket *CloudHubWebSocket `json:"websocket,omitempty"`
 	// HTTPS indicates https server info
 	// +Required
-	Https *CloudHubHttps `json:"https,omitempty"`
+	HTTPS *CloudHubHTTPS `json:"https,omitempty"`
 	// AdvertiseAddress sets the IP address for the cloudcore to advertise.
 	AdvertiseAddress []string `json:"advertiseAddress,omitempty"`
 }
@@ -155,7 +155,7 @@ type CloudHubWebSocket struct {
 }
 
 // CloudHubHttps indicates the http config of CloudHub
-type CloudHubHttps struct {
+type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
 	Enable bool `json:"enable,omitempty"`

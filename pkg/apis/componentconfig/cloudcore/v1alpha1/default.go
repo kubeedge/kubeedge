@@ -70,7 +70,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Port:    10000,
 					Address: "0.0.0.0",
 				},
-				Https: &CloudHubHttps{
+				HTTPS: &CloudHubHTTPS{
 					Enable:  true,
 					Port:    10002,
 					Address: "0.0.0.0",
@@ -192,7 +192,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Port:    10000,
 					Address: "0.0.0.0",
 				},
-				Https: &CloudHubHttps{
+				HTTPS: &CloudHubHTTPS{
 					Enable:  true,
 					Port:    10002,
 					Address: "0.0.0.0",
