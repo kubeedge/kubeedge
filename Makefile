@@ -15,7 +15,7 @@ GOBIN ?= $(GOPATH)/bin
 
 define fetch_tool
 	@echo "installing $(1)@$(2) revision/version"
-	@cd /tmp && GO111MODULE=on go get '$(1)@$(2)'
+	@cd /tmp && GO111MODULE=on GOFLAGS= go get '$(1)@$(2)'
 endef
 
 # tools version
