@@ -50,7 +50,7 @@ The cloud native and microservice architecture is becoming more and more popular
 
 ### Service communication from cloud to edge
 * ESD1: Application on cloud visit service with clusterIP and request goes to EC(refer to step CS2, CS3)
-* ESD2: Router find out the PODs in this service and pick one with some kind of load balance mechanism. Then send the request to the choosen edge with the router rule set in CS3.
+* ESD2: Router find out the PODs in this service and pick one with some kind of load balance mechanism. Then send the request to the chosen edge with the router rule set in CS3.
 * ESD3: EdgeHub/ServiceBus get the request and redirect to the POD
 
 ### Service communication between edges

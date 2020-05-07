@@ -83,7 +83,7 @@ func TestMapperCharacteristics(t *testing.T) {
 
 		//Generate Cerificates for Edge and Cloud nodes copy to respective folders
 		Expect(utils.GenerateCerts()).Should(BeNil())
-		//Do the neccessary config changes in Cloud and Edge nodes
+		//Do the necessary config changes in Cloud and Edge nodes
 		Expect(utils.DeploySetup(ctx, nodeName, "deployment")).Should(BeNil())
 
 		//Apply CRD for devicemodel
@@ -131,7 +131,7 @@ func TestMapperCharacteristics(t *testing.T) {
 			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+nodeHandler, nodeName)
 			utils.Infof("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
-		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
+		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessful !!")
 
 		// Adding label to node
 		utils.ApplyLabelToNode(ctx.Cfg.K8SMasterForKubeEdge+nodeHandler+"/"+nodeName, "bluetooth", "true")
@@ -269,12 +269,12 @@ func TestMapperCharacteristics(t *testing.T) {
 			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+nodeHandler, nodeName)
 			utils.Infof("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
-		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
+		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessful !!")
 
 		Expect(utils.CleanUp("deployment")).Should(BeNil())
 		time.Sleep(2 * time.Second)
 
-		utils.Infof("Cleanup is Successfull !!")
+		utils.Infof("Cleanup is Successful !!")
 	})
 	RunSpecs(t, "Kubeedge Mapper Test Suite")
 }

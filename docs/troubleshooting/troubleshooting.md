@@ -1,6 +1,6 @@
 # FAQs
 
-This page contains a few commonly occuring questions.
+This page contains a few commonly occurring questions.
 For further support please contact us using the [support page](../getting-started/support.md)
 
 ## Container keeps pending/ terminating

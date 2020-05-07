@@ -31,7 +31,7 @@ sudo systemctl daemon-reload
 sudo systemctl start cloudcore
 ```
 
-**Note:** Please fix __ExecStart__ path in cloudcore.service. Do __NOT__ use relative path, use absoulte path instead.
+**Note:** Please fix __ExecStart__ path in cloudcore.service. Do __NOT__ use relative path, use absolute path instead.
 
 If you also want also an autostart, you have to execute this, too:
 
@@ -68,7 +68,7 @@ sudo systemctl daemon-reload
 sudo systemctl start edgecore
 ```
  
-**Note:** Please fix __ExecStart__ path in edgecore.service. Do __NOT__ use relative path, use absoulte path instead.
+**Note:** Please fix __ExecStart__ path in edgecore.service. Do __NOT__ use relative path, use absolute path instead.
  
 If you also want also an autostart, you have to execute this, too:
  
