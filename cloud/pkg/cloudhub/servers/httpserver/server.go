@@ -88,7 +88,7 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
 		return
 	}
-	bearerToken := strings.Split(authorizationHeader, " ")
+	bearerToken := strings.Split(authorizationHeader, ".")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))

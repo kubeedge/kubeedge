@@ -43,7 +43,7 @@ func (eh *EdgeHub) applyCerts() error {
 	}
 
 	// validate the CA certificate by hashcode
-	tokenParts := strings.Split(config.Config.Token, " ")
+	tokenParts := strings.Split(config.Config.Token, ".")
 	if len(tokenParts) != 2 {
 		return fmt.Errorf("token credentials are in the wrong format")
 	}
