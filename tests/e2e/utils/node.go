@@ -29,7 +29,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"k8s.io/api/core/v1"
 )
 
@@ -45,34 +45,34 @@ func getpwd() string {
 
 //DeRegisterNodeFromMaster function to deregister the node from master
 func DeRegisterNodeFromMaster(nodehandler, nodename string) error {
-	err, resp := SendHttpRequest(http.MethodDelete, nodehandler+"/"+nodename)
+	resp, err := SendHTTPRequest(http.MethodDelete, nodehandler+"/"+nodename)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
-	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 
 	return nil
 }
 
 //GenerateNodeReqBody function to generate the node request body
-func GenerateNodeReqBody(nodeid, nodeselector string) (error, map[string]interface{}) {
+func GenerateNodeReqBody(nodeid, nodeselector string) (map[string]interface{}, error) {
 	var temp map[string]interface{}
 
 	body := fmt.Sprintf(`{"kind": "Node","apiVersion": "v1","metadata": {"name": "%s","labels": {"name": "edgenode", "disktype":"%s", "node-role.kubernetes.io/edge": ""}}}`, nodeid, nodeselector)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
 		Fatalf("Unmarshal body failed: %v", err)
-		return err, temp
+		return temp, err
 	}
 
-	return nil, temp
+	return temp, nil
 }
 
 //RegisterNodeToMaster function to register node to master
 func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
-	err, body := GenerateNodeReqBody(UID, nodeselector)
+	body, err := GenerateNodeReqBody(UID, nodeselector)
 	if err != nil {
 		Fatalf("Unmarshal body failed: %v", err)
 		return err
@@ -106,7 +106,7 @@ func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
 
-	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
 }
 
@@ -114,7 +114,7 @@ func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 func CheckNodeReadyStatus(nodehandler, nodename string) string {
 	var node v1.Node
 	var nodeStatus = "unknown"
-	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
+	resp, err := SendHTTPRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return nodeStatus
@@ -137,7 +137,7 @@ func CheckNodeReadyStatus(nodehandler, nodename string) string {
 
 //CheckNodeDeleteStatus function to check node delete status
 func CheckNodeDeleteStatus(nodehandler, nodename string) int {
-	err, resp := SendHttpRequest(http.MethodGet, nodehandler+"/"+nodename)
+	resp, err := SendHTTPRequest(http.MethodGet, nodehandler+"/"+nodename)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1
@@ -163,7 +163,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 		if operation == http.MethodPost {
 			BodyBuf := bytes.NewReader(body)
 			req, err = http.NewRequest(operation, confighandler, BodyBuf)
-			Expect(err).Should(BeNil())
+			gomega.Expect(err).Should(gomega.BeNil())
 			req.Header.Set("Content-Type", "application/yaml")
 		} else if operation == http.MethodPatch {
 			jsondata, err := yaml.YAMLToJSON(body)
@@ -173,11 +173,11 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 			}
 			BodyBuf := bytes.NewReader(jsondata)
 			req, err = http.NewRequest(operation, confighandler, BodyBuf)
-			Expect(err).Should(BeNil())
+			gomega.Expect(err).Should(gomega.BeNil())
 			req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
 		} else {
 			req, err = http.NewRequest(operation, confighandler, bytes.NewReader([]byte("")))
-			Expect(err).Should(BeNil())
+			gomega.Expect(err).Should(gomega.BeNil())
 			req.Header.Set("Content-Type", "application/json")
 		}
 
@@ -191,9 +191,9 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 		Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 		defer resp.Body.Close()
 		if operation == http.MethodPost {
-			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+			gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 		} else {
-			Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+			gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 		}
 		configName <- nil
 
@@ -204,7 +204,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 
 //GetConfigmap function to get configmaps for respective edgenodes
 func GetConfigmap(apiConfigMap string) (int, []byte) {
-	err, resp := SendHttpRequest(http.MethodGet, apiConfigMap)
+	resp, err := SendHTTPRequest(http.MethodGet, apiConfigMap)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1, nil
@@ -217,7 +217,7 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 
 //DeleteConfigmap function to delete configmaps
 func DeleteConfigmap(apiConfigMap string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, apiConfigMap)
+	resp, err := SendHTTPRequest(http.MethodDelete, apiConfigMap)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1
@@ -246,7 +246,7 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	}
 	BodyBuf := bytes.NewReader(nodebody)
 	req, err := http.NewRequest(http.MethodPatch, taintHandler, BodyBuf)
-	Expect(err).Should(BeNil())
+	gomega.Expect(err).Should(gomega.BeNil())
 	client := &http.Client{}
 	t := time.Now()
 	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
@@ -257,14 +257,14 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	}
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
-	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 	return nil
 }
 
 //GetNodes function to get configmaps for respective edgenodes
 func GetNodes(api string) v1.NodeList {
 	var nodes v1.NodeList
-	err, resp := SendHttpRequest(http.MethodGet, api)
+	resp, err := SendHTTPRequest(http.MethodGet, api)
 	if err != nil {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 	}
@@ -298,7 +298,7 @@ func ApplyLabelToNode(apiserver, key, val string) error {
 	}
 	BodyBuf := bytes.NewReader(nodebody)
 	req, err := http.NewRequest(http.MethodPatch, apiserver, BodyBuf)
-	Expect(err).Should(BeNil())
+	gomega.Expect(err).Should(gomega.BeNil())
 	client := &http.Client{}
 	t := time.Now()
 	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
@@ -309,6 +309,6 @@ func ApplyLabelToNode(apiserver, key, val string) error {
 	}
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	defer resp.Body.Close()
-	Expect(resp.StatusCode).Should(Equal(http.StatusOK))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 	return nil
 }

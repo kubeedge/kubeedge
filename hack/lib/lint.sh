@@ -25,7 +25,7 @@ kubeedge::lint::cloud_lint() {
     echo "lint cloud"
     cd ${KUBEEDGE_ROOT}/cloud
     golangci-lint run
-    go vet ./... 
+    go vet ./...
   )
 }
 
@@ -58,7 +58,7 @@ kubeedge::lint::bluetoothdevice_lint() {
 
 kubeedge::lint::global_lint() {
   (
-    echo "checking gofmt repo-wide"
+    echo "lint repo-wide"
     cd ${KUBEEDGE_ROOT}
     golangci-lint run
     go vet ./...
@@ -88,7 +88,7 @@ kubeedge::lint::get_lintfuntion_by_component() {
 }
 
 kubeedge::lint::get_all_lintfuntion() {
-  local -a funcs 
+  local -a funcs
   for cl in "${ALL_COMPONENTS_AND_LINT_FUNCTIONS[@]}" ; do
     funcs+=("${cl##*::::}")
   done
@@ -98,8 +98,6 @@ kubeedge::lint::get_all_lintfuntion() {
 IFS=" " read -ra ALL_LINT_FUNCTIONS <<< "$(kubeedge::lint::get_all_lintfuntion)"
 
 kubeedge::lint::check() {
-  echo "checking golang lint $@"
-
   cd ${KUBEEDGE_ROOT}
 
   local -a funcs=()
@@ -109,7 +107,8 @@ kubeedge::lint::check() {
   done
 
   if [[ ${#funcs[@]} -eq 0 ]]; then
-    funcs+=("${ALL_LINT_FUNCTIONS[@]}")
+    # no param means check all
+    funcs+=("${ALL_LINT_FUNCTIONS[0]}")
   fi
 
   for f in ${funcs[@]}; do

@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
@@ -62,10 +62,10 @@ func HandleCloudDeployment(cloudConfigMap, cloudCoreDeployment, apiserver2, conf
 	nodes := strconv.FormatInt(int64(nodelimit), 10)
 	cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_cloud_config", "", apiserver2, cloudConfigMap, nodes)
 	err := utils.PrintCombinedOutput(cmd)
-	Expect(err).Should(BeNil())
+	gomega.Expect(err).Should(gomega.BeNil())
 	go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, confighdl, false)
 	ret := <-chconfigmapRet
-	Expect(ret).To(BeNil())
+	gomega.Expect(ret).To(gomega.BeNil())
 	utils.ProtocolQuic = IsQuicProtocol
 	//Handle cloudCore deployment
 	go utils.HandleDeployment(true, false, http.MethodPost, deploymenthdl, cloudCoreDeployment, imgURL, "", cloudConfigMap, 1)
@@ -83,11 +83,11 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 		go utils.RegisterNodeToMaster(nodeName, nodeHandler, nodeSelector)
 		cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edge_config", nodeName, cloudhub, configmap)
 		err := utils.PrintCombinedOutput(cmd)
-		Expect(err).Should(BeNil())
+		gomega.Expect(err).Should(gomega.BeNil())
 		//Create ConfigMaps for Each EdgeNode created
 		go utils.HandleConfigmap(chconfigmapRet, http.MethodPost, cmHandler, true)
 		ret := <-chconfigmapRet
-		Expect(ret).To(BeNil())
+		gomega.Expect(ret).To(gomega.BeNil())
 		//Store the ConfigMap against each edgenode
 		NodeInfo[nodeName] = append(NodeInfo[nodeName], configmap, nodeSelector)
 	}
@@ -103,11 +103,11 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 	}
 	time.Sleep(2 * time.Second)
 	podlist, err := utils.GetPods(podHandler, "")
-	Expect(err).To(BeNil())
+	gomega.Expect(err).To(gomega.BeNil())
 	utils.CheckPodRunningState(podHandler, podlist)
 
 	//Check All EdgeNode are in Running state
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		count := 0
 		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeReadyStatus(nodeHandler, edgenodeName)
@@ -117,7 +117,7 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 			}
 		}
 		return count
-	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessful !!")
+	}, "1200s", "2s").Should(gomega.Equal(numOfNodes), "Nodes register to the k8s master is unsuccessful !!")
 
 	return podlist
 }
@@ -133,7 +133,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 	for _, configmap := range NodeInfo {
 		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServerForDeployments+ConfigmapHandler+"/"+configmap[0], false)
 		ret := <-chconfigmapRet
-		Expect(ret).To(BeNil())
+		gomega.Expect(ret).To(gomega.BeNil())
 
 	}
 	//delete edgenode deployment
@@ -148,7 +148,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 		}
 	}
 	//Verify deployments, configmaps, nodes are deleted successfully
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		count := 0
 		for _, depName := range Deployments {
 			statusCode := utils.VerifyDeleteDeployment(apiServerForDeployments + DeploymentHandler + "/" + depName)
@@ -157,9 +157,9 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode deployments delete unsuccessful !!")
+	}, "60s", "4s").Should(gomega.Equal(len(Deployments)), "EdgeNode deployments delete unsuccessful !!")
 
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		count := 0
 		for _, configmap := range NodeInfo {
 			statusCode, _ := utils.GetConfigmap(apiServerForDeployments + ConfigmapHandler + "/" + configmap[0])
@@ -168,9 +168,9 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode configMaps delete unsuccessful !!")
+	}, "60s", "4s").Should(gomega.Equal(len(Deployments)), "EdgeNode configMaps delete unsuccessful !!")
 
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		count := 0
 		for edgenodeName := range NodeInfo {
 			status := utils.CheckNodeDeleteStatus(apiServerForRegisterNode+NodeHandler, edgenodeName)
@@ -180,7 +180,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(nodes), "EdgeNode deleton is unsuccessful !!")
+	}, "60s", "4s").Should(gomega.Equal(nodes), "EdgeNode deleton is unsuccessful !!")
 	//Cleanup globals
 	NodeInfo = map[string][]string{}
 	Deployments = nil
@@ -192,10 +192,10 @@ func DeleteCloudDeployment(apiserver string) {
 	//delete cloud configMap
 	go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiserver+ConfigmapHandler+"/"+CloudConfigMap, false)
 	ret := <-chconfigmapRet
-	Expect(ret).To(BeNil())
+	gomega.Expect(ret).To(gomega.BeNil())
 	//delete cloud svc
 	StatusCode := utils.DeleteSvc(apiserver + ServiceHandler + "/" + CloudCoreDeployment)
-	Expect(StatusCode).Should(Equal(http.StatusOK))
+	gomega.Expect(StatusCode).Should(gomega.Equal(http.StatusOK))
 }
 
 func ApplyLabel(nodeHandler string) error {
@@ -223,7 +223,7 @@ func AddFakePod(ControllerHubURL string, pod types.FakePod) {
 		utils.Fatalf("Unmarshal HTTP Response has failed: %v", err)
 	}
 
-	err, resp := SendHttpRequest(http.MethodPost,
+	resp, err := SendHTTPRequest(http.MethodPost,
 		ControllerHubURL+constants.PodResource,
 		bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -248,7 +248,7 @@ func AddFakePod(ControllerHubURL string, pod types.FakePod) {
 
 // DeleteFakePod deletes a fake pod
 func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
-	err, resp := SendHttpRequest(http.MethodDelete,
+	resp, err := SendHTTPRequest(http.MethodDelete,
 		ControllerHubURL+constants.PodResource+
 			"?name="+pod.Name+"&namespace="+pod.Namespace+"&nodename="+pod.NodeName,
 		nil)
@@ -275,7 +275,7 @@ func DeleteFakePod(ControllerHubURL string, pod types.FakePod) {
 // ListFakePods lists all fake pods
 func ListFakePods(ControllerHubURL string) []types.FakePod {
 	pods := []types.FakePod{}
-	err, resp := SendHttpRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
+	resp, err := SendHTTPRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
 	if err != nil {
 		utils.Fatalf("Frame HTTP request failed: %v", err)
 	}
@@ -298,26 +298,26 @@ func ListFakePods(ControllerHubURL string) []types.FakePod {
 	return pods
 }
 
-// SendHttpRequest launches a http request
-func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Response) {
+// SendHTTPRequest launches a http request
+func SendHTTPRequest(method, reqAPI string, body io.Reader) (*http.Response, error) {
 	var resp *http.Response
 	client := &http.Client{}
-	req, err := http.NewRequest(method, reqApi, body)
+	req, err := http.NewRequest(method, reqAPI, body)
 	if err != nil {
 		utils.Fatalf("Frame HTTP request failed: %v", err)
-		return err, resp
+		return resp, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
 	if err != nil {
 		utils.Fatalf("HTTP request is failed :%v", err)
-		return err, resp
+		return resp, err
 	}
 	if resp != nil {
 		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
 	}
-	return nil, resp
+	return resp, nil
 }
 
 // GetLatency calculates latency based on different percent

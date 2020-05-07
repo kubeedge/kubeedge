@@ -37,8 +37,8 @@ func NewTestContext(cfg Config) *TestContext {
 	}
 }
 
-//SendHttpRequest Function to prepare the http req and send
-func SendHttpRequest(method, reqApi string) (error, *http.Response) {
+//SendHTTPRequest Function to prepare the http req and send
+func SendHTTPRequest(method, reqAPI string) (*http.Response, error) {
 	var body io.Reader
 	var resp *http.Response
 
@@ -48,11 +48,11 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	client := &http.Client{
 		Transport: tr,
 	}
-	req, err := http.NewRequest(method, reqApi, body)
+	req, err := http.NewRequest(method, reqAPI, body)
 	if err != nil {
 		// handle error
 		Fatalf("Frame HTTP request failed: %v", err)
-		return err, resp
+		return resp, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
@@ -60,10 +60,10 @@ func SendHttpRequest(method, reqApi string) (error, *http.Response) {
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
-		return err, resp
+		return resp, err
 	}
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
-	return nil, resp
+	return resp, nil
 }
 
 //MapLabels function add label selector

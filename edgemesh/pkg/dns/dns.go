@@ -279,16 +279,16 @@ func (q *dnsQuestion) getQName(req []byte, offset uint16) uint16 {
 }
 
 // lookupFromMetaManager confirms if the service exists
-func lookupFromMetaManager(serviceUrl string) (exist bool, ip string) {
-	name, namespace := common.SplitServiceKey(serviceUrl)
+func lookupFromMetaManager(serviceURL string) (exist bool, ip string) {
+	name, namespace := common.SplitServiceKey(serviceURL)
 	s, _ := metaClient.Services(namespace).Get(name)
 	if s != nil {
 		svcName := namespace + "." + name
 		ip := listener.GetServiceServer(svcName)
-		klog.Infof("[EdgeMesh] dns server parse %s ip %s", serviceUrl, ip)
+		klog.Infof("[EdgeMesh] dns server parse %s ip %s", serviceURL, ip)
 		return true, ip
 	}
-	klog.Errorf("[EdgeMesh] service %s is not found in this cluster", serviceUrl)
+	klog.Errorf("[EdgeMesh] service %s is not found in this cluster", serviceURL)
 	return false, ""
 }
 

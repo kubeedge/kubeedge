@@ -52,7 +52,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
 				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
 			utils.Infof("Runtime stats: %+v", runtime)
@@ -64,7 +64,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
 				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
 			utils.Infof("Runtime stats: %+v", runtime)
@@ -77,7 +77,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
 				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
 			utils.Infof("Runtime stats: %+v", runtime)
@@ -89,7 +89,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
 				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
 			utils.Infof("Runtime stats: %+v", runtime)
