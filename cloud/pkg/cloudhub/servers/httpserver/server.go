@@ -88,13 +88,13 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
 		return
 	}
-	bearerToken := strings.Split(authorizationHeader, ".")
-	if len(bearerToken) != 4 {
+	bearerToken := strings.Split(authorizationHeader, " ")
+	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
 		return
 	}
-	token, err := jwt.Parse(strings.Join(bearerToken[1:], "."), func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("There was an error")
 		}
