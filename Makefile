@@ -21,8 +21,6 @@ endef
 # tools version
 MISSPELL_VERSION=c0b55c8239520f6b5aa15a0207ca8b28027ba49e
 MISSPELL ?= $(GOBIN)/misspell
-$(MISSPELL):
-	$(call fetch_tool,github.com/client9/misspell/cmd/misspell,$(MISSPELL_VERSION))
 
 define ALL_HELP_INFO
 # Build code.
@@ -306,3 +304,7 @@ bluetoothdevice: clean
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:bluetoothdevice
 	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+
+# no-phony target
+$(MISSPELL):
+	$(call fetch_tool,github.com/client9/misspell/cmd/misspell,$(MISSPELL_VERSION))
