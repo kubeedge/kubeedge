@@ -1,11 +1,11 @@
 # Setup from KubeEdge Installer
 
-Keadm is used to install the cloud and edge components of kubeedge. It is not responsible for installing K8s and runtime, 
+Keadm is used to install the cloud and edge components of KubeEdge. It is not responsible for installing K8s and runtime, 
 so users must install a k8s master on cloud and runtime on edge first. Or use an existing cluster.
 
 Please refer [kubernetes-compatibility](https://github.com/kubeedge/kubeedge#kubernetes-compatibility) to get **Kubernetes compatibility** and determine what version of Kubernetes would be installed.
 
-Kubeedge interacts with the standard K8s API, so the K8s cluster can be installed with any tools, such as:
+KubeEdge interacts with the standard K8s API, so the K8s cluster can be installed with any tools, such as:
 - [Creating kubernetes cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 - [Creating kubernetes cluster with minikube](<https://kubernetes.io/docs/setup/learning-environment/minikube/>)
 - [Creating kubernetes cluster with kind](<https://kubernetes.io/docs/setup/learning-environment/kind/>)
@@ -48,11 +48,12 @@ There are currently two ways to get keadm
 
 By default port '10000' in your cloudcore needs to be accessible for your edge nodes.
 
-`keadm init` will install cloudcore, generate the certs and install the CRDs. It also provide flag by which specific versions can be set.
+`keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific version can be set.
 
-1. Execute `keadm init` : keadm needs super user rights (or root rights) to run successfully.
+1. Execute `keadm init`: keadm needs super user rights (or root rights) to run successfully.
 
     Command flags
+    
     The optional flags with this command are mentioned below
 
     ```shell
@@ -123,11 +124,11 @@ tar -xvzf certs.tgz
 
 ## Setup Edge Side (KubeEdge Worker Node)
 
-`keadm join` will install edgecore and mqtt. It also provide flag by which specific versions can be set.
+`keadm join` will install edgecore and mqtt. It also provides a flag by which a specific version can be set.
 
 Execute `keadm join <flags>`
 
- Command flags
+  Command flags
 
   The optional flags with this command are shown in below shell
 
@@ -161,7 +162,7 @@ Execute `keadm join <flags>`
   ```
 
 **IMPORTANT NOTE:** 
-1. For this command --cloudcore-ipport flag is a Mandatory flag
+1. For this command `--cloudcore-ipport` flag is a mandatory flag
 1. The KubeEdge version used in cloud and edge side should be same. 
 
  Examples:
@@ -223,7 +224,7 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 	```
  
 1. **Setup VM runtime:** 
- Use script `hack/setup-vmruntime.sh` to set up VM runtime. It makes use of Arktos Runtime release to start three containers:
+ Use script [`hack/setup-vmruntime.sh`](/hack/setup-vmruntime.sh) to set up VM runtime. It makes use of Arktos Runtime release to start three containers:
  
 	 	vmruntime_vms
 		vmruntime_libvirt
@@ -243,7 +244,7 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 1. **Test create a VM workload: (optional)**
  On the master node, create a sample yaml file `vm.yaml` as:
  ```shell
-  apiVersion: v1
+apiVersion: v1
 kind: Pod
 metadata:
   name: testvm
