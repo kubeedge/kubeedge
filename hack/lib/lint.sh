@@ -68,6 +68,8 @@ kubeedge::lint::global_lint() {
     cd ${KUBEEDGE_ROOT}
     golangci-lint run --disable-all -E gofmt --deadline '10m' ./...
     go vet ./...
+    # ignore mosquitto since it is a deb pkg name
+    find . -type f | grep -v vendor/ | grep -vE '\./\..*' | xargs misspell -i "mosquitto" -error
   )
 }
 
