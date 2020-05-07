@@ -88,4 +88,4 @@ make e2e
 
 ### Details and use cases of integration test framework
 
-Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) to use cases of intergration test framework for KubeEdge.
+Please find the [link](https://github.com/kubeedge/kubeedge/tree/master/edge/test/integration) to use cases of integration test framework for KubeEdge.

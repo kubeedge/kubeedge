@@ -240,7 +240,7 @@ Flags:
     2. Check and install all the pre-requisites before executing edge-controller, which are
         * Docker (currently 18.06.0ce3-0~ubuntu) and check is service is up.
         * mosquitto (latest available in OS repos) and check if running.
-    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transfered from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
+    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transferred from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
     4. Create `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `curl` command to api-server
     5. This command will take mandatory `-e` or `--cloudcoreip` flag to specify the address of Kubeedge cloudcore
     6. Create `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`

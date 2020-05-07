@@ -113,5 +113,5 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 
 	})
 
-	RunSpecs(t, "kubeedge Performace Load test Suite")
+	RunSpecs(t, "kubeedge Performance Load test Suite")
 }

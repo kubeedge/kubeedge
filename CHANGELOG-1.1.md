@@ -36,7 +36,7 @@
 
 **Container Storage Interface (CSI) support**
 
-This feature enables running applications with persistant data store at edge and KubeEdge to support [basic CSI Volume Lifecycle](https://github.com/container-storage-interface/spec/blob/master/spec.md#volume-lifecycle) and is compatible with Kubernetes and CSI.
+This feature enables running applications with persistent data store at edge and KubeEdge to support [basic CSI Volume Lifecycle](https://github.com/container-storage-interface/spec/blob/master/spec.md#volume-lifecycle) and is compatible with Kubernetes and CSI.
 
 **Dynamic Admission Control Webhook**
 

@@ -59,7 +59,7 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_POD_DEPLOYMENT: Create a pod and check the pod is coming up correclty", func() {
+		It("E2E_POD_DEPLOYMENT: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeName)
