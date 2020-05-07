@@ -71,7 +71,7 @@ func GenerateToken() {
 
 	caHash := getCaHash()
 	// combine caHash and tokenString into caHashAndToken
-	caHashToken := strings.Join([]string{caHash, tokenString}, " ")
+	caHashToken := strings.Join([]string{caHash, tokenString}, ".")
 	// save caHashAndToken to secret
 	CreateTokenSecret([]byte(caHashToken))
 
@@ -96,7 +96,7 @@ func refreshToken() string {
 	tokenString, _ := token.SignedString(keyPEM)
 	caHash := getCaHash()
 	//put caHash in token
-	caHashAndToken := strings.Join([]string{caHash, tokenString}, " ")
+	caHashAndToken := strings.Join([]string{caHash, tokenString}, ".")
 	return caHashAndToken
 }
 
