@@ -44,7 +44,7 @@ func (eh *EdgeHub) applyCerts() error {
 
 	// validate the CA certificate by hashcode
 	tokenParts := strings.Split(config.Config.Token, ".")
-	if len(tokenParts) != 2 {
+	if len(tokenParts) != 4 {
 		return fmt.Errorf("token credentials are in the wrong format")
 	}
 	ok, hash, newHash := certutil.ValidateCACerts(cacert, tokenParts[0])
@@ -66,7 +66,7 @@ func (eh *EdgeHub) applyCerts() error {
 
 	// get the edge.crt
 	url = config.Config.HTTPServer + certURL
-	edgecert, err := certutil.GetEdgeCert(url, cacert, tokenParts[1])
+	edgecert, err := certutil.GetEdgeCert(url, cacert, strings.Join(tokenParts[1:], "."))
 	if err != nil {
 		klog.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
 		return fmt.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
