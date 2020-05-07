@@ -48,7 +48,7 @@ There are currently two ways to get keadm
 
 By default port '10000' in your cloudcore needs to be accessible for your edge nodes.
 
-`keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific versions can be set.
+`keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific version can be set.
 
 1. Execute `keadm init`: keadm needs super user rights (or root rights) to run successfully.
 
@@ -124,7 +124,7 @@ tar -xvzf certs.tgz
 
 ## Setup Edge Side (KubeEdge Worker Node)
 
-`keadm join` will install edgecore and mqtt. It also provides a flag by which a specific versions can be set.
+`keadm join` will install edgecore and mqtt. It also provides a flag by which a specific version can be set.
 
 Execute `keadm join <flags>`
 
