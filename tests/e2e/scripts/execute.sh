@@ -20,17 +20,14 @@ cd $workdir
 curpath=$PWD
 echo $PWD
 
-go get github.com/onsi/ginkgo/ginkgo
-sudo cp $GOPATH/bin/ginkgo /usr/bin/
+which ginkgo &> /dev/null || (
+    go get github.com/onsi/ginkgo/ginkgo
+    sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
+)
 
 bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
 bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
 bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
-
-#builds kubeedge components binary
-make
-
-sleep 2s
 
 E2E_DIR=${curpath}/tests/e2e
 sudo rm -rf ${E2E_DIR}/deployment/deployment.test
@@ -39,18 +36,9 @@ sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
 # Specify the module name to compile in below command
 bash -x ${E2E_DIR}/scripts/compile.sh $1
 
-kind create cluster --name test
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh
 
 kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
-kubectl create -f ${curpath}/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml
-kubectl create -f ${curpath}/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
-kubectl create -f ${curpath}/build/crds/devices/devices_v1alpha1_device.yaml
-kubectl create -f ${curpath}/build/crds/devices/devices_v1alpha1_devicemodel.yaml
-
-# edge side don't support kind cni now, delete kind cni plugin for workaround
-kubectl delete daemonset kindnet -nkube-system
-kubectl create ns kubeedge
 
 :> /tmp/testcase.log
 
