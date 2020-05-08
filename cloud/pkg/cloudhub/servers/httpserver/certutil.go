@@ -60,18 +60,32 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 }
 
 func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
-	serverKey, _ := NewPrivateKey()
-	keyDER, _ := x509.MarshalECPrivateKey(serverKey.(*ecdsa.PrivateKey))
+	serverKey, err := NewPrivateKey()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate a privateKey, err: %v", err)
+	}
+
+	keyDER, err := x509.MarshalECPrivateKey(serverKey.(*ecdsa.PrivateKey))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to convert an EC private key to SEC 1, ASN.1 DER form, err: %v", err)
+	}
 
 	// get ca from config
 	ca := hubconfig.Config.Ca
-	caCert, _ := x509.ParseCertificate(ca)
+	caCert, err := x509.ParseCertificate(ca)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse a caCert from the given ASN.1 DER data, err: %v", err)
+	}
+
 	caKeyDER := hubconfig.Config.CaKey
-	caKey, _ := x509.ParseECPrivateKey(caKeyDER)
+	caKey, err := x509.ParseECPrivateKey(caKeyDER)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse ECPrivateKey, err: %v", err)
+	}
 
 	certDER, err := NewCertFromCa(cfg, caCert, serverKey.Public(), caKey)
 	if err != nil {
-		fmt.Printf("%v", err)
+		return nil, nil, fmt.Errorf("failed to generate a certificate using the given CA certificate and key, err: %v", err)
 	}
 	return certDER, keyDER, err
 }

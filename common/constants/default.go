@@ -7,13 +7,15 @@ import (
 )
 
 const (
-	DefaultConfigDir = "/etc/kubeedge/config/"
-	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
-	DefaultCAKeyFile = "/etc/kubeedge/ca/rootCA.key"
-	DefaultCertFile  = "/etc/kubeedge/certs/server.crt"
-	DefaultKeyFile   = "/etc/kubeedge/certs/server.key"
-	DefaultCADir     = "/etc/kubeedge/ca"
-	DefaultCertDir   = "/etc/kubeedge/certs"
+	DefaultConfigDir    = "/etc/kubeedge/config/"
+	DefaultCAFile       = "/etc/kubeedge/ca/rootCA.crt"
+	DefaultCAKeyFile    = "/etc/kubeedge/ca/rootCA.key"
+	DefaultCertFile     = "/etc/kubeedge/certs/server.crt"
+	DefaultKeyFile      = "/etc/kubeedge/certs/server.key"
+	DefaultEdgeCertFile = "/etc/kubeedge/certs/edge.crt"
+	DefaultEdgeKeyFile  = "/etc/kubeedge/certs/edge.key"
+	DefaultCADir        = "/etc/kubeedge/ca"
+	DefaultCertDir      = "/etc/kubeedge/certs"
 
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
