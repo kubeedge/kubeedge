@@ -58,6 +58,9 @@ function cleanup {
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   trap cleanup EXIT
+else
+  trap cleanup ERR
+  trap cleanup INT
 fi
 
 function create_device_crd {
@@ -128,12 +131,14 @@ function healthcheck {
   fi
 }
 
+cleanup
+
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 check_prerequisites
 
 # Stop right away if there's an error
-set -e
+set -eE
 
 build_cloudcore
 build_edgecore
@@ -159,9 +164,10 @@ start_edgecore
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
     echo "Local KubeEdge cluster is running. Press Ctrl-C to shut it down."
-  else
-    echo "Local KubeEdge cluster is running."
-  fi
+else
+    echo "Local KubeEdge cluster is running. Use \"kill $BASHPID\" to shut it down."
+fi
+
 echo "Logs:
   /tmp/cloudcore.log
   /tmp/edgecore.log
@@ -176,4 +182,3 @@ To start using your kubeedge, you can run:
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
 fi
-
