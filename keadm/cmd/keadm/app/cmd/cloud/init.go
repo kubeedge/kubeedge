@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -117,7 +118,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 				return err
 			}
 			if len(version) > 0 {
-				kubeVer = version[1:]
+				kubeVer = strings.TrimPrefix(version, "v")
 				latestVersion = version
 				break
 			}
