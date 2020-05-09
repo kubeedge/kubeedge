@@ -24,7 +24,7 @@ kubeedge::lint::cloud_lint() {
   (
     echo "lint cloud"
     cd ${KUBEEDGE_ROOT}/cloud
-    golangci-lint run --skip-dirs 'pkg/client' --disable-all -E golint --deadline '10m' ./...
+    golangci-lint run
     go vet ./... 
   )
 }
@@ -33,7 +33,7 @@ kubeedge::lint::edge_lint() {
   (
     echo "lint edge"
     cd ${KUBEEDGE_ROOT}/edge
-    golangci-lint run --disable-all -E golint -E misspell --deadline '10m' ./...
+    golangci-lint run
     go vet ./...
   )
 }
@@ -42,7 +42,7 @@ kubeedge::lint::keadm_lint() {
   (
     echo "lint keadm"
     cd ${KUBEEDGE_ROOT}/keadm
-    golangci-lint run --deadline '10m' --disable-all -E golint ./...
+    golangci-lint run
     go vet ./...
   )
 }
@@ -51,7 +51,7 @@ kubeedge::lint::bluetoothdevice_lint() {
   (
     echo "lint bluetoothdevice"
     cd ${KUBEEDGE_ROOT}/mappers/bluetooth_mapper
-    golangci-lint run --disable-all -E golint --deadline '10m' ./...
+    golangci-lint run
     go vet ./...
   )
 }
@@ -60,7 +60,7 @@ kubeedge::lint::global_lint() {
   (
     echo "checking gofmt repo-wide"
     cd ${KUBEEDGE_ROOT}
-    golangci-lint run --disable-all -E gofmt --deadline '10m' ./...
+    golangci-lint run
     go vet ./...
   )
 }

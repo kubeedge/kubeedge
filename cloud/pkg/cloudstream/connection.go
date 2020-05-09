@@ -36,9 +36,9 @@ type APIServerConnection interface {
 	fmt.Stringer
 	// SendConnection indicates send EdgedConnection to edge
 	SendConnection() (stream.EdgedConnection, error)
-	// WriteToTunnel indicates writting message to tunnel
+	// WriteToTunnel indicates writing message to tunnel
 	WriteToTunnel(m *stream.Message) error
-	// WriteToAPIServer indicates writting data to apiserver response
+	// WriteToAPIServer indicates writing data to apiserver response
 	WriteToAPIServer(p []byte) (n int, err error)
 	// SetMessageID inidecates set messageid for it`s connection
 	// Every APIServerConnection has his unique message id

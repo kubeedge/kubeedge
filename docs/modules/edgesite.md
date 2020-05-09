@@ -14,7 +14,7 @@ There are scenarios user need to run a standalone Kubernetes cluster at edge to 
 
 * The edge cluster is in CDN instead of the user's site
 
-  The CDN sites usually be large around the world and the network connectivity and quality cannot be guaranteed. Another factor is that the application deployed in CDN edge do not need to interact with center usually. For those deploy edge cluster in CDN resources, they need to make sure the cluster is workable without the connection with central cloud not only for the deployed applicatons but also the schedule capabilities. So that the CDN edge is manageable regardless the connection to one center.
+  The CDN sites usually be large around the world and the network connectivity and quality cannot be guaranteed. Another factor is that the application deployed in CDN edge do not need to interact with center usually. For those deploy edge cluster in CDN resources, they need to make sure the cluster is workable without the connection with central cloud not only for the deployed applications but also the schedule capabilities. So that the CDN edge is manageable regardless the connection to one center.
 
 * User need to deploy an edge environment with limited resources and offline running for most of the time
 

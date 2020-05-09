@@ -16,7 +16,7 @@ define ALL_HELP_INFO
 # Build code.
 #
 # Args:
-#   WHAT: binary names to build. support: $(BINARIES) 
+#   WHAT: binary names to build. support: $(BINARIES)
 #         the build will produce executable files under $(OUT_DIR)
 #         If not specified, "everything" will be built.
 #
@@ -40,45 +40,45 @@ define VERIFY_HELP_INFO
 # verify golang,vendor and codegen
 #
 # Example:
-# make verify 
+# make verify
 endef
 .PHONY: verify
 ifeq ($(HELP),y)
 verify:
 	@echo "$$VERIFY_HELP_INFO"
 else
-verify:verify-golang verify-vendor verify-codegen 
+verify:verify-golang verify-vendor verify-codegen
 endif
 
 .PHONY: verify-golang
-verify-golang: 
+verify-golang:
 	bash hack/verify-golang.sh
 
 .PHONY: verify-vendor
-verify-vendor: 
+verify-vendor:
 	bash hack/verify-vendor.sh
 .PHONY: verify-codegen
-verify-codegen: 
+verify-codegen:
 	bash cloud/hack/verify-codegen.sh
 
 define TEST_HELP_INFO
 # run golang test case.
 #
 # Args:
-#   WHAT: Component names to be testd. support: $(COMPONENTS) 
+#   WHAT: Component names to be testd. support: $(COMPONENTS)
 #         If not specified, "everything" will be tested.
 #
 # Example:
-#   make test 
+#   make test
 #   make test HELP=y
 #   make test WHAT=cloud
 endef
-.PHONY: test 
+.PHONY: test
 ifeq ($(HELP),y)
 test:
 	@echo "$$TEST_HELP_INFO"
 else
-test: 
+test:
 	hack/make-rules/test.sh $(WHAT)
 endif
 
@@ -90,20 +90,20 @@ define LINT_HELP_INFO
 # run golang lint check.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(LINTS) 
+#   WHAT: Component names to be lint check. support: $(LINTS)
 #         If not specified, "everything" will be lint check.
 #
 # Example:
-#   make lint 
+#   make lint
 #   make lint HELP=y
 #   make lint WHAT=cloud
 endef
-.PHONY: lint 
+.PHONY: lint
 ifeq ($(HELP),y)
 lint:
 	@echo "$$LINT_HELP_INFO"
 else
-lint: 
+lint:
 	hack/make-rules/lint.sh $(WHAT)
 endif
 
@@ -113,21 +113,21 @@ define INTEGRATION_TEST_HELP_INFO
 # run integration test.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS) 
+#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS)
 #         If not specified, "everything" will be integration check.
 #
 # Example:
-#   make integrationtest 
+#   make integrationtest
 #   make integrationtest HELP=y
 endef
 
-.PHONY: integrationtest 
+.PHONY: integrationtest
 ifeq ($(HELP),y)
 integrationtest:
 	@echo "$$INTEGRATION_TEST_HELP_INFO"
 else
-integrationtest: 
-	hack/make-rules/build.sh edgecore 
+integrationtest:
+	hack/make-rules/build.sh edgecore
 	edge/test/integration/scripts/execute.sh
 endif
 
@@ -140,26 +140,26 @@ define CROSSBUILD_HELP_INFO
 # cross build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS) 
+#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
 #         If not specified, "everything" will be cross build.
 #
 # GOARM: go arm value, now support:$(GOARM_VALUES)
-#        If not specified ,default use GOARM=GOARM8 
+#        If not specified ,default use GOARM=GOARM8
 #
 #
 # Example:
-#   make crossbuild 
+#   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
 #   make crossbuild WHAT=edgecore GOARM=GOARM7
 #
 endef
-.PHONY: crossbuild 
+.PHONY: crossbuild
 ifeq ($(HELP),y)
 crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
-crossbuild: clean 
+crossbuild: clean
 	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
 endif
 
@@ -171,18 +171,18 @@ define SMALLBUILD_HELP_INFO
 # small build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS) 
+#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS)
 #         If not specified, "everything" will be small build.
 #
 #
 # Example:
-#   make smallbuild 
+#   make smallbuild
 #   make smallbuild HELP=y
 #   make smallbuild WHAT=edgecore
 #   make smallbuild WHAT=edgesite
 #
 endef
-.PHONY: smallbuild 
+.PHONY: smallbuild
 ifeq ($(HELP),y)
 smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
@@ -196,18 +196,18 @@ define E2E_HELP_INFO
 # e2e test.
 #
 # Example:
-#   make e2e 
+#   make e2e
 #   make e2e HELP=y
 #
 endef
-.PHONY: e2e 
+.PHONY: e2e
 ifeq ($(HELP),y)
 e2e:
 	@echo "$$E2E_HELP_INFO"
 else
-e2e: 
+e2e:
 #	bash tests/e2e/scripts/execute.sh device_crd
-#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
+#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
 	bash tests/e2e/scripts/execute.sh
 endif
 
@@ -232,16 +232,16 @@ define CLEAN_HELP_INFO
 # Clean up the output of make.
 #
 # Example:
-#   make clean 
+#   make clean
 #   make clean HELP=y
 #
 endef
-.PHONY: clean 
+.PHONY: clean
 ifeq ($(HELP),y)
 clean:
 	@echo "$$CLEAN_HELP_INFO"
 else
-clean: 
+clean:
 	hack/make-rules/clean.sh
 endif
 

@@ -6,7 +6,7 @@ EdgeD is an edge node module which manages pod lifecycle. It helps user to deplo
 
 Docker container runtime is currently supported for container and image management. In future other runtime support shall be added, like containerd etc.,
 
-There are many modules which work in tandom to achive edged's functionalities.
+There are many modules which work in tandom to achieve edged's functionalities.
 
 ![EdgeD OverAll](../../images/edged/edged-overall.png)  
 

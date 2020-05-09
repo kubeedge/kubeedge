@@ -121,7 +121,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_ES_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correclty", func() {
+		It("E2E_ES_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeSelector)

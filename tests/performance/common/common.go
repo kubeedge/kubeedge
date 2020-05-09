@@ -117,7 +117,7 @@ func HandleEdgeCorePodDeployment(depHandler, imgURL, podHandler, nodeHandler str
 			}
 		}
 		return count
-	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
+	}, "1200s", "2s").Should(Equal(numOfNodes), "Nodes register to the k8s master is unsuccessful !!")
 
 	return podlist
 }
@@ -157,7 +157,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode deployments delete unsuccessfull !!")
+	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode deployments delete unsuccessful !!")
 
 	Eventually(func() int {
 		count := 0
@@ -168,7 +168,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode configMaps delete unsuccessfull !!")
+	}, "60s", "4s").Should(Equal(len(Deployments)), "EdgeNode configMaps delete unsuccessful !!")
 
 	Eventually(func() int {
 		count := 0
@@ -180,7 +180,7 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 			}
 		}
 		return count
-	}, "60s", "4s").Should(Equal(nodes), "EdgeNode deleton is unsuccessfull !!")
+	}, "60s", "4s").Should(Equal(nodes), "EdgeNode deleton is unsuccessful !!")
 	//Cleanup globals
 	NodeInfo = map[string][]string{}
 	Deployments = nil
