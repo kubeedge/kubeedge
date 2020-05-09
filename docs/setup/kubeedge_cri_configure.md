@@ -1,4 +1,4 @@
-# KubeEdge lightweight runtime configuration
+# KubeEdge runtime configuration
 
 ## containerd
 
@@ -54,7 +54,7 @@ systemd_cgroup = true
 systemctl restart containerd
 ```
 
-Create the `nginx` application and check the container is created with `containerd`,
+Create the `nginx` application and check the container is created with `containerd` on edge side,
 
 ```bash
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
@@ -65,7 +65,7 @@ CONTAINER                                                           IMAGE       
 41c1a07fe7bf7425094a9b3be285c312127961c158f30fc308fd6a3b7376eab2    docker.io/library/nginx:1.15.12    io.containerd.runtime.v1.linux
 ```
 
-*NOTE: namespace here might be changed soon from “k8s.io” to “kubeedge.io”.*
+NOTE: since cri doesn't support multi-tenancy while containerd does, namespace for containers are set to "k8s.io" defaultly and no way to change that until the [cri's support](https://github.com/containerd/cri/pull/1462) has done.
 
 
 
@@ -89,7 +89,7 @@ Setup CNI networking, please follow this guide [setup CNI](https://github.com/cr
 Update edgecore config file, specify the following parameters for `CRI-O` based runtime,
 
 ```yaml
-remoteRuntimeEndpoint: unix:/// var/run/crio/crio.sock
+remoteRuntimeEndpoint: unix:///var/run/crio/crio.sock
 remoteImageEndpoint: unix:////var/run/crio/crio.sock
 runtimeRequestTimeout: 2
 podSandboxImage: k8s.gcr.io/pause:3.2
@@ -128,7 +128,7 @@ sudo systemctl start edgecore
 ```
 
 
-Create the application and check the container is created with `CRI-O`,
+Create the application and check the container is created with `CRI-O` on edge side,
 
 ```bash
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
@@ -170,6 +170,7 @@ spec:
 ```bash
 kubectl create -f nginx-untrusted.yaml
 
+# verify the container is running with qemu hypervisor on edge side,
 ps aux | grep qemu
 root      3941  3.0  1.0 2971576 174648 ?      Sl   17:38   0:02 /usr/bin/qemu-system-aarch64
 
