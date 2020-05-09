@@ -20,20 +20,19 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"k8s.io/klog"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/klog"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 )
 
 // SignCerts creates server's certificate and key
-func SignCerts() ([]byte, []byte) {
+func SignCerts() ([]byte, []byte, error) {
 	cfg := &certutil.Config{
 		CommonName:   "KubeEdge",
 		Organization: []string{"KubeEdge"},
@@ -47,10 +46,10 @@ func SignCerts() ([]byte, []byte) {
 
 	certDER, keyDER, err := NewCloudCoreCertDERandKey(cfg)
 	if err != nil {
-		fmt.Printf("%v", err)
+		return nil, nil, err
 	}
 
-	return certDER, keyDER
+	return certDER, keyDER, nil
 }
 
 func GenerateToken() {
@@ -93,7 +92,10 @@ func refreshToken() string {
 	claims.ExpiresAt = expirationTime.Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	keyPEM := getCaKey()
-	tokenString, _ := token.SignedString(keyPEM)
+	tokenString, err := token.SignedString(keyPEM)
+	if err != nil {
+		klog.Errorf("Failed to generate token signed by caKey, err: %v", err)
+	}
 	caHash := getCaHash()
 	//put caHash in token
 	caHashAndToken := strings.Join([]string{caHash, tokenString}, ".")
