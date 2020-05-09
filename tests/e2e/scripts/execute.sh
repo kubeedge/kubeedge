@@ -36,7 +36,10 @@ sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
 # Specify the module name to compile in below command
 bash -x ${E2E_DIR}/scripts/compile.sh $1
 
-ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh || {
+    echo "failed to start cluster !!!"
+    exit 1
+}
 
 kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 
