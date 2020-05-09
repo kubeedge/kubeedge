@@ -9,13 +9,13 @@ approvers:
   - "@kadisi"
 
 creation-date: 2020-03-28
-last-updated: 2020-03-28
+last-updated: 2020-05-09
 status: alpha
 
 ---
 # CloudCore High Availability Design
 ## Motivation
-Kubeedge is design to serve hundreds of edgenodes,and it is obviously single CC could hardly run well all the time, ideally it should be HA.
+Kubeedge is designed to serve hundreds of edgenodes, and ideally it should be high availability.
 #### Goal
 - Alpha
 
@@ -27,11 +27,11 @@ Realize ha in stateless mode, it means multiple CloudCores could serve at the sa
 ## Design detail for alpha
 ### Brief description of CloudCore
 
-At present, CloudCore is essentially an edge-resource distribution center, which encapsulates resource objects into messages.The dest-node of the message is recoreded in `Message.Router.Resource`.There are four type module which could generate delivery-messages(from cloud to edge)：
+At present, CloudCore is essentially an edge-resource distribution center, which encapsulates resource objects into messages.The dest-node of the message is recoreded in `Message.Router.Resource`.There are four type modules which could generate delivery-messages(from cloud to edge)：
 
 - DownStream (in EdgeController) 
   
-  When DownStream init, it will `Watch` all pod-event, and picks out pod-event which is assigned to edgenodes(labeled by "node-role.kubernetes.io/edge:"). Because of `pod.Spec.NodeName`, DownStream could directly build `Message.Router.Resource` when generate pod-related messages, but for configmaps and secrets, there is no such similar field. So when DownStream delivery pod, it will check if the pod refers to configmaps the secrets, and record configmapNames and secretNames and their dest-node.The list of edgenodes and the list of configmaps and secrets to dest-node are recored in **LocationCache**(aka. resource distribution route ), which is declared below:
+  When DownStream init, it will `Watch` all pod-event, and picks out pod-events which are assigned to edgenodes(labeled by "node-role.kubernetes.io/edge:"). Because of `pod.Spec.NodeName`, DownStream could directly build `Message.Router.Resource` when generate pod-related messages, but for configmaps and secrets, there is no such similar field. So when DownStream delivery pod, it will check if the pod refers to configmaps the secrets, and record configmapNames and secretNames and their dest-node.The list of edgenodes and the list of configmaps and secrets to dest-node are recored in **LocationCache**(aka. resource distribution route ), which is declared below:
   ```go
    // LocationCache cache the map of node, pod, configmap, secret
   type LocationCache struct {
@@ -51,7 +51,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
   ```
 - UpStream (in EdgeController)
 
-  When edge-node get the pod from cloud,it will check if there are related configmaps and secrets in edge-store. If not it will send a "Query" message（with node information) to cloud, and Upstream will response.
+  When edge-node gets the pod from cloud, it will check if there are related configmaps and secrets in edge-store. If not it will send a "Query" message（with node information) to cloud, and Upstream will response.
   
 - DeviceController
 
@@ -61,27 +61,31 @@ At present, CloudCore is essentially an edge-resource distribution center, which
 
   SyncController will periodically compare the saved objects resourceVersion with the objects in K8s, and then trigger the events such as retry and deletion. All resource that has been left out will be sent to edge-node again and again by SyncController. Data needed for SyncController running proerly is stored in etcd as CRD.
   
-#### Crash/Restart (√)
-  According to description above, all the data that CloudCore needs to run properly is:
+### Crash/Restart
+  Before designing high availability in hot standby mode, we should determine if CloudCore will run well and no message will be missing after crash and restart, that is the new CloudCore could synchronize the old state. According to description above, all the data is:
   
   1. LocationCache
   2. sync-CRD in etcd
   
-  For the former, CloudCore will triger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Message left out during crash will be re-sync when SyncController reruns.
+  For the former, CloudCore will triger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Messages left out during crash will be re-sync when SyncController reruns.
   
-### ha in hot standby mode
+### HA in hot standby mode
+#### The lifecycle of CloudCore
+  1. LeaderElection block
+  1. Become the leader
+  1. Start each controller and serve for edge-nodes
+  1. Notify the LoadBalance cloudcore is ready
+  1. Lose the leadership position due to network fluctuation or other reason, **shutdown immediatly**;At the same time, one of the standby cloudcores becomes leader. 
+  1. Restart by an external operation, downgrade to be a standby cloudcore also known as follower.
+  
+  The process of 3(start the controllers) also contains the cache initialization, such as the above-mentioned LocationCache.Ideally cache should initialize before the Leader election block, but it means the deconstruction of controllers as well as a lot of work. If subsequent discoveries show that cache initialization time led to the switch time growth greatly, then consider to deconstruct the controllers. At present, the cache initialization time is in milliseconds.
+  
 #### Leader election (refer to ha in controller manager)
   ![HotStandby-design.png](../images/cloudcore-ha-design/HotStandby.png)
   
-  There is a Lease type in Kubernetes. As the name suggests, its role is to create a resource with a lease. Suppose there are multiple nodes that want to compete for the leader, then everyone first tries to create this Lease resource. If the creation is successful, then you are the leader. Successful creation does not mean that you have always been a leader. You have to renew your leases regularly (leaseDurationSeconds). If you do not renew your lease, your lease will expire and other participants will preempt the leader's position.
-  Relative code has aleady exist in kubernetes/client-go.
+  According to the hot standby plan of Controller Manager, we use the concept of lease resources in K8S to realize LeaderElection. If there are multiple cloudcores vying for the Leader, each CC will try to create this lease resource in etcd. Successful creation means becoming a Leader and the lease must be renewed regularly (leaseDurationSeconds). If the Leader does not renew the lease, it  will expire and other followers will occupy the position of Leader. The definition of leaselock is shown below:
   ```go
   type LeaderElectionRecord struct {
-    // HolderIdentity is the ID that owns the lease. If empty, no one owns this lease and
-    // all callers may acquire. Versions of this library prior to Kubernetes 1.14 will not
-    // attempt to acquire leases with empty identities and will wait for the full lease
-    // interval to expire before attempting to reacquire. This value is set to empty when
-    // a client voluntarily steps down.
       HolderIdentity       string      `json:"holderIdentity"`
       LeaseDurationSeconds int         `json:"leaseDurationSeconds"`
       AcquireTime          metav1.Time `json:"acquireTime"`
@@ -89,19 +93,70 @@ At present, CloudCore is essentially an edge-resource distribution center, which
       LeaderTransitions    int         `json:"leaderTransitions"`
   }
   ```
-#### healthcheck and leadercheck for LoadBalance
+#### Notify the LoadBalance cloudcore is ready
+  After CloudCore becomes the Leader and successfully starts each controller, it is also necessary to inform the LoadBalance that CloudCore is ready. Considering that CloudCore will be deployed in the k8s cluster as a container, there are two types of LoadBalance :
+##### Kubernetes native loadbalancer
+According to the K8s's native loadbalance mechanism, the load balancer decides whether to forward traffic to the back-end based on whether the endpoint is ready. So let us review the readiness definition:
+- Container Readiness
 
-  We should expose healthcheck service for LoadBalance, as well as wheathe the CloudCore is Leader.
+  A client determines whether a Container is "ready" by testing whether the Pod's `status.containerStatuses[]` list includes an element whose `name` == name of the container and whose `ready` == true. That condition is set according to the following rule.
   
-#### What Follower do
-- Following
+  `Container is ready == Container is running AND readiness probe returns success`
+  
+- Pod Readiness
 
-  - stop delivery, but still List-Watch API-Server for updating LocationCache
-  - if the request is still received, just passthrough to leader
-  - Keep trying to possess Lease-Lock
+  A client determines whether a Pod is  "ready" by testing whether the Pod's `status.conditions[]` list includes an element whose `type` == "Ready" and whose `status` == "True". That condition is set according to the following rule.
+
+  `Pod is ready == All containers are ready`
+- Endpoint Readiness
+
+  A client determines whether an Endpoint is "ready" by testing whether the Endpoints’ `subsets[].addresses[]` list includes an element whose `targetRef` points to corresponding pod. That condition is set according to the following rule.
   
-- Preempted the leader's position
-  - Disconnect all edge-nodes and wait for new connection request
-  - Start to delivery message to edge-nodes
-  - SyncController ensure resending missing messages during switch.
+  `Endpoint is ready == Pod is ready`
+ 
+- PodReadinessGate
+```yaml
+...
+kind: Pod
+...
+spec: 
+  readinessGates:
+  - conditionType: "kubeedge.io/CloudCoreIsLeader"
+  
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: 2020-01-01T00:00:00Z
+    status: "False"
+    type: kubeedge.io/CloudCoreIsLeader
+```
+  When a Pod defines a PodReadinessGate shown as above, its PodReadiness definition will be rewritten, that is：
+
+  `Pod is ready == All containers are ready + PodReadinessGate is true`
+
+  for now:
+
+  `Endpoint is readiness == All container are ready + PodReadinessGate is true`
+
+It means traffic is not forward to the back cloudcore untill we Patch the status of "kubeedge.io/CloudCoreIsLeader" from "False" to "True" after this cloudcore becoming leader.
+
+##### Other LoadBalance such as keepalived
+
+In this case, we only need to expose a readyz endpoint handler to tell CloudCore whether or not the service is available externally. readyz endpoint handler calls Check.It fails (returns an error) if cloudcore has not been a leader or own the lease but had not been able to renew it.
+
+```go
+func (l *ReadyzAdaptor) Check(req *http.Request) error {
+	l.pointerLock.Lock()
+	defer l.pointerLock.Unlock()
+	if l.le == nil {
+		return fmt.Errorf("leaderElection is not setting")
+	}
+	if !l.le.IsLeader() {
+		return fmt.Errorf("not yet a leader")
+	}
+	return l.le.Check(l.timeout)
+}
+```
+At present, it is tentatively decided that this handle path is `/readyz/isLeader`.And register the handle to cloudhub http server.
+
   
