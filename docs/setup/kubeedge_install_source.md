@@ -13,7 +13,9 @@ git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeed
 cd $GOPATH/src/github.com/kubeedge/kubeedge
 ```
 
-### Generate Certificates
+### Generate Certificates(This step is required except kubeedge1.3)
+
+**Note: Kubeedge1.3 needs to skip this step Generate Certificates and clean up the local certificates in `/etc/kubeedge/ca` and `/etc/kubeedge/certs`. Because kubeedge1.3 has added the feature of generating certificates automatically.**
 
 RootCA certificate and a cert/ key pair is required to have a setup for KubeEdge. Same cert/ key pair can be used in both cloud and edge.
 
