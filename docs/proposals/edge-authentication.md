@@ -11,7 +11,7 @@ approvers:
 
 creation-date: 2020-02-06
 last-updated: 2020-05-08
-status: alpha
+status: Implemented
 
 ---
 
@@ -119,4 +119,3 @@ Then the CLoudCore and EdgeCore can establish mutual authentication TLS.
 1. Ports integration.
 2. Add certificate rotation function.
 3. Keadm needs improvement.
-
