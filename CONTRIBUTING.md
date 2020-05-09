@@ -119,7 +119,7 @@ The subject line should feature the what and the body of the commit should descr
 ```
 scripts: add test codes for metamanager
 
-this add some unit test codes to imporve code coverage for metamanager
+this add some unit test codes to improve code coverage for metamanager
 
 Fixes #12
 ```

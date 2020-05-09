@@ -30,7 +30,7 @@ function getContainerNetMode() {
 	fi
 }
 
-# judge if agrument is a valid ip address
+# judge if argument is a valid ip address
 function isValidIP() {
 	if isIPv4 "${1}"; then
 		true

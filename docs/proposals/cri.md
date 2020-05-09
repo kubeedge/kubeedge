@@ -268,7 +268,7 @@ PLEG and update pod status
 ```
 func NewGenericLifecycleRemote(runtime kubecontainer.Runtime, probeManager prober.Manager, channelCapacity int,
         relistPeriod time.Duration, podManager podmanager.Manager, statusManager status.Manager, podCache kubecontainer.Cache, clock clock.Clock, iface string) pleg.PodLifecycleEventGenerator {
-	Intialize with additional paramaters
+	Intialize with additional parameters
 }
 
 

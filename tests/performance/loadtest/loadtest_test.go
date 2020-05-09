@@ -71,7 +71,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 			}
 		}
 		return count
-	}, "1200s", "4s").Should(Equal(len(EdgeNodePods)), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
+	}, "1200s", "4s").Should(Equal(len(EdgeNodePods)), "Delete Application deployment is Unsuccessful, Pods are not deleted within the time")
 
 	newpods, err := utils.GetPods(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, "")
 	Expect(err).To(BeNil())
@@ -99,7 +99,7 @@ func RestartEdgeNodePodsToUseQuicProtocol() error {
 			}
 		}
 		return count
-	}, "60s", "2s").Should(Equal(ctx.Cfg.NumOfNodes), "Nodes register to the k8s master is unsuccessfull !!")
+	}, "60s", "2s").Should(Equal(ctx.Cfg.NumOfNodes), "Nodes register to the k8s master is unsuccessful !!")
 
 	return nil
 }

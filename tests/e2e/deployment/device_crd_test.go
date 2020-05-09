@@ -43,7 +43,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 	var testDescription GinkgoTestDescription
 	Context("Test Device Model Creation, Updation and deletion", func() {
 		BeforeEach(func() {
-			// Delete any pre-exisitng device models
+			// Delete any pre-existing device models
 			var deviceModelList v1alpha1.DeviceModelList
 			list, err := utils.GetDeviceModel(&deviceModelList, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, nil)
 			Expect(err).To(BeNil())
@@ -166,7 +166,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(IsDeviceDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			// Delete any pre-exisitng device models
+			// Delete any pre-existing device models
 			list, err := utils.GetDeviceModel(&deviceModelList, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, nil)
 			Expect(err).To(BeNil())
 			for _, model := range list {
@@ -473,7 +473,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(IsDeviceDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			// Delete any pre-exisitng device models
+			// Delete any pre-existing device models
 			list, err := utils.GetDeviceModel(&deviceModelList, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, nil)
 			Expect(err).To(BeNil())
 			for _, model := range list {
