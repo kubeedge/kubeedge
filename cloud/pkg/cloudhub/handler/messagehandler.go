@@ -142,6 +142,9 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 
 	if _, ok := mh.KeepaliveChannel[nodeID]; !ok {
 		mh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
+	} else {
+		klog.Warningf("Node %v/%v has not yet exit, OnRegister failed", projectID, nodeID)
+		return
 	}
 
 	io := &hubio.JSONIO{Connection: connection}
