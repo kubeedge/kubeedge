@@ -708,7 +708,12 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 		return pod.Spec.NodeName, nil
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
-	// TODO: Add status.hostIP here
+	case "status.hostIP":
+		hostIP, err := e.getHostIPByInterface()
+		if err != nil {
+			return "", err
+		}
+		return hostIP, nil
 	case "status.podIP":
 		return podIP, nil
 	case "status.podIPs":
