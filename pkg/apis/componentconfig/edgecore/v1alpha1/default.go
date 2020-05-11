@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -92,17 +93,17 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Enable:           false,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           "127.0.0.1:10001",
+					Server:           localIP + ":10001",
 					WriteDeadline:    15,
 				},
 				WebSocket: &EdgeHubWebSocket{
 					Enable:           true,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           "127.0.0.1:10000",
+					Server:           localIP + ":10000",
 					WriteDeadline:    15,
 				},
-				HTTPServer: "https://127.0.0.1:10002",
+				HTTPServer: fmt.Sprintf("https://%s:10002", localIP),
 				Token:      "",
 			},
 			EventBus: &EventBus{
@@ -192,10 +193,10 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Enable:           true,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           "127.0.0.1:10000",
+					Server:           localIP + ":10000",
 					WriteDeadline:    15,
 				},
-				HTTPServer: "https://127.0.0.1:10002",
+				HTTPServer: fmt.Sprintf("https://%s:10002", localIP),
 				Token:      "",
 			},
 			EventBus: &EventBus{

@@ -38,9 +38,7 @@ func SignCerts() ([]byte, []byte, error) {
 		Organization: []string{"KubeEdge"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
-			IPs: []net.IP{
-				net.ParseIP("127.0.0.1"),
-			},
+			IPs: getIps(hubconfig.Config.AdvertiseAddress),
 		},
 	}
 
@@ -50,6 +48,13 @@ func SignCerts() ([]byte, []byte, error) {
 	}
 
 	return certDER, keyDER, nil
+}
+
+func getIps(advertiseAddress []string) (Ips []net.IP) {
+	for _, addr := range advertiseAddress {
+		Ips = append(Ips, net.ParseIP(addr))
+	}
+	return
 }
 
 func GenerateToken() {
