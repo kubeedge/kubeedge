@@ -57,21 +57,21 @@ nohup ./edgecore > edgecore.log 2>&1 &
  ```
 
 If you have setup using the systemctl
- 
+
 Run edgecore with systemd
- 
+
 It is also possible to start the edgecore with systemd. If you want, you could use the example systemd-unit-file.
- 
+
 ```shell
 sudo ln build/tools/edgecore.service /etc/systemd/system/edgecore.service
 sudo systemctl daemon-reload
 sudo systemctl start edgecore
 ```
- 
+
 **Note:** Please fix __ExecStart__ path in edgecore.service. Do __NOT__ use relative path, use absolute path instead.
- 
+
 If you also want also an autostart, you have to execute this, too:
- 
+
 ```shell
 sudo systemctl enable edgecore
 ```

@@ -4,7 +4,7 @@
         "name": "modbus-mock-instance-01",
         "model": "modbus-mock-model",
         "protocol": "modbus-tcp-01"
-    }],    
+    }],
 	"deviceModels": [{
         "properties": [{
             "name": "temperature",

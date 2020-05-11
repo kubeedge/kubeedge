@@ -9,7 +9,7 @@ class DeviceTwin {
     constructor(mqttClient) {
         this.mqttClient = mqttClient;
     }
-    
+
     // transferType transfer data according to the dpl configuration
     transferType(visitor, property, data, callback) {
         let transData;
@@ -88,7 +88,7 @@ class DeviceTwin {
             default:
                 logger.error('unknown dataType: ', property.dataType);
                 callback(null);
-                break;    
+                break;
         }
     }
 
@@ -219,7 +219,7 @@ class DeviceTwin {
             return;
         }
         if (!deviceTwin.hasOwnProperty('actual') ||
-          (deviceTwin.hasOwnProperty('expected') && deviceTwin.expected.hasOwnProperty('metadata') && deviceTwin.actual.hasOwnProperty('metadata') && 
+          (deviceTwin.hasOwnProperty('expected') && deviceTwin.expected.hasOwnProperty('metadata') && deviceTwin.actual.hasOwnProperty('metadata') &&
             deviceTwin.expected.metadata.timestamp > deviceTwin.actual.metadata.timestamp &&
             deviceTwin.expected.value !== deviceTwin.actual.value)) {
           callback(deviceTwin.expected.value);

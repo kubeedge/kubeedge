@@ -22,6 +22,8 @@ set -o pipefail
 
 kubeedge::lint::check() {
     cd ${KUBEEDGE_ROOT}
+    git diff --cached --name-only master | grep -Ev "externalversions|fake|vendor" | xargs sed -i 's/[ \t]*$//'
+    [[ $(git diff --name-only) ]] && return 1
     golangci-lint run
     gofmt -l -w staging
 }

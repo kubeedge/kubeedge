@@ -2,7 +2,7 @@
 
 In most of the cases, when you are trying to compile KubeEdge edgecore on Raspberry Pi or any other device, you may run out of memory, in that case, it is advisable to cross-compile the Edgecore binary and transfer it to your edge device.
 
-## For ARM Architecture from x86 Architecture 
+## For ARM Architecture from x86 Architecture
 
 Clone KubeEdge
 
@@ -14,7 +14,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
 sudo apt-get install gcc-arm-linux-gnueabi
 export GOARCH=arm
 export GOOS="linux"
-export GOARM=6 #Pls give the appropriate arm version of your device 
+export GOARM=6 #Pls give the appropriate arm version of your device
 export CGO_ENABLED=1
 export CC=arm-linux-gnueabi-gcc
 make edgecore
@@ -41,11 +41,11 @@ Thread model: posix
 gcc version 6.3.0 20170516 (Raspbian 6.3.0-18+rpi1+deb9u1)
 ```
 
-If you see, Target has been defined as 
+If you see, Target has been defined as
 ```
 Target: arm-linux-gnueabihf
 ```
-in that case, export CC as 
+in that case, export CC as
 ```
 arm-linux-gnueabihf-gcc rather than arm-linux-gnueabi-gcc
 ```

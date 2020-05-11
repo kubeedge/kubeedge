@@ -16,7 +16,7 @@ spec:
       containers:
       - name: modbus-mapper-container
         image: <your_dockerhub_username>/modbus_mapper:v1.0
-        env: 
+        env:
         - name: CONNECTOR_MQTT_PORT
           value: "1883"
         - name: CONNECTOR_MQTT_IP
@@ -30,10 +30,10 @@ spec:
         - name: dpl-config-volume
           mountPath: /opt/src/dpl
       nodeSelector:
-        modbus: "true"      
+        modbus: "true"
       volumes:
       - name: dpl-config-volume
         configMap:
           name:  device-profile-config-<edge_node_name>
       restartPolicy: Always
-      
+

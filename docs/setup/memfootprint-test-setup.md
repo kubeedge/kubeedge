@@ -18,7 +18,7 @@ After deployment and provisioning of KubeEdge cloud and edge components in 2 VM'
 
 ### Test setup
 
-![KubeEdge Test Setup](../../docs/images/memfootprint-img/perftestsetup_diagram.PNG)  
+![KubeEdge Test Setup](../../docs/images/memfootprint-img/perftestsetup_diagram.PNG)
 
 *Fig 1: KubeEdge Test Setup*
 

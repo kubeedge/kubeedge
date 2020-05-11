@@ -26,7 +26,7 @@ if command -v docker > /dev/null 2>&1 ; then
 	#docker build
 	docker build -t edgemesh_init .
 	# delete iptables script
-	rm ./edgemesh-iptables.sh 
+	rm ./edgemesh-iptables.sh
 else
 	echo 'the docker command is no found!!'
 	exit 1

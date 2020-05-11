@@ -30,8 +30,8 @@ import (
 var (
 	edgeJoinLongDescription = `
 "keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
-It will also connect with cloud component to receive 
-further instructions and forward telemetry data from 
+It will also connect with cloud component to receive
+further instructions and forward telemetry data from
 devices to cloud
 `
 	edgeJoinExample = `
