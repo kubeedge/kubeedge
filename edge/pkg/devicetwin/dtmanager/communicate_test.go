@@ -158,7 +158,6 @@ func TestStartHeartBeat(t *testing.T) {
 				if retry >= maxRetries {
 					t.Errorf("Start Failed to add module in beehiveContext")
 				}
-
 			}
 		})
 	}

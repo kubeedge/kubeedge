@@ -196,7 +196,6 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 			gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 		}
 		configName <- nil
-
 	} else {
 		configName <- err
 	}
@@ -212,7 +211,6 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return resp.StatusCode, body
-
 }
 
 //DeleteConfigmap function to delete configmaps

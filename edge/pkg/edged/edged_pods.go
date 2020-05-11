@@ -623,7 +623,6 @@ func (e *edged) GetPodDNS(pod *v1.Pod) (*runtimeapi.DNSConfig, error) {
 
 // Make the environment variables for a pod in the given namespace.
 func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, podIP string, podIPs []string) ([]kubecontainer.EnvVar, error) {
-
 	var result []kubecontainer.EnvVar
 
 	var err error
@@ -955,7 +954,6 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 					Reason: "Completed"}
 				kubeStatus := toKubeContainerStatus(v1.PodSucceeded, containerStatus)
 				podStatus = &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
-
 			} else {
 				podStatus = e.convertStatusToAPIStatus(pod, podStatusRemote)
 				// Assume info is ready to process

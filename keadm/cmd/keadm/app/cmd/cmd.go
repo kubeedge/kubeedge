@@ -60,7 +60,6 @@ var (
 
 // NewKubeedgeCommand returns cobra.Command to run keadm commands
 func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
-
 	cmds := &cobra.Command{
 		Use:     "keadm",
 		Short:   "keadm: Bootstrap KubeEdge cluster",

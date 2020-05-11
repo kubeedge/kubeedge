@@ -55,7 +55,6 @@ func QueryDevice(key string, condition string) (*[]Device, error) {
 		return nil, err
 	}
 	return devices, nil
-
 }
 
 // QueryDeviceAll query twin
@@ -66,7 +65,6 @@ func QueryDeviceAll() (*[]Device, error) {
 		return nil, err
 	}
 	return devices, nil
-
 }
 
 //DeviceUpdate the struct for updating device
@@ -142,9 +140,7 @@ func DeleteDeviceTrans(deletes []string) error {
 			obm.Rollback()
 			return err
 		}
-
 	}
 	obm.Commit()
 	return nil
-
 }

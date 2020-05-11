@@ -236,7 +236,6 @@ func GetMatchingGlobalIP(addrs []net.Addr, family AddressFamily) (net.IP, error)
 			} else {
 				klog.Infof("%v is not an IPv%d address", ip, int(family))
 			}
-
 		}
 	}
 	return nil, nil

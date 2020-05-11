@@ -168,7 +168,6 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 		if err != nil {
 			SyncDeviceFromSqlite(context, deviceID)
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
-
 		} else {
 			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
 			payload, err := dttype.BuildDeviceAttrUpdate(baseMessage, result)
@@ -202,7 +201,6 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 	result := make(map[string]*dttype.MsgAttr)
 
 	for key, msgAttr := range msgAttrs {
-
 		if attr, exist := attrs[key]; exist {
 			if msgAttr == nil && dealType == 0 {
 				if *attr.Optional {
@@ -252,9 +250,7 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 			} else {
 				delete(result, key)
 			}
-
 		} else {
-
 			deviceAttr := dttype.MsgAttrToDeviceAttr(key, msgAttr)
 			deviceAttr.DeviceID = deviceID
 			deviceAttr.Value = msgAttr.Value

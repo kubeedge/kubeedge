@@ -130,7 +130,6 @@ func (tm *stubCloudHub) Start() {
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
-
 }
 
 func (tm *stubCloudHub) Cleanup() {

@@ -50,7 +50,6 @@ func (c *secrets) Delete(name string) error {
 }
 
 func (c *secrets) Get(name string) (*api.Secret, error) {
-
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
 	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(secretMsg)
@@ -75,7 +74,6 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	}
 	//else
 	return handleSecretFromMetaManager(content)
-
 }
 
 func handleSecretFromMetaDB(content []byte) (*api.Secret, error) {

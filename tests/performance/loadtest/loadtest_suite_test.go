@@ -115,7 +115,6 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
-
 	})
 
 	RunSpecs(t, "kubeedge Performance Load test Suite")

@@ -144,7 +144,6 @@ func (sctl *SyncController) manageDevice(sync *v1alpha1.ObjectSync) {
 
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
-
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event
 		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)

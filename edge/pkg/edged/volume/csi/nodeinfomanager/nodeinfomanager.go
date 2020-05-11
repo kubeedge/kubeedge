@@ -348,7 +348,6 @@ func (nim *nodeInfoManager) updateCSINode(
 	driverName string,
 	driverNodeID string,
 	topology map[string]string) error {
-
 	csiKubeClient := nim.volumeHost.GetKubeClient()
 	if csiKubeClient == nil {
 		return fmt.Errorf("error getting CSI client")
@@ -373,7 +372,6 @@ func (nim *nodeInfoManager) tryUpdateCSINode(
 	driverName string,
 	driverNodeID string,
 	topology map[string]string) error {
-
 	nodeInfo, err := csiKubeClient.StorageV1beta1().CSINodes().Get(string(nim.nodeName), metav1.GetOptions{})
 	if nodeInfo == nil || errors.IsNotFound(err) {
 		nodeInfo, err = nim.CreateCSINode()
@@ -423,11 +421,9 @@ func (nim *nodeInfoManager) tryInitializeCSINodeWithAnnotation(csiKubeClient cli
 		return err
 	}
 	return nil
-
 }
 
 func (nim *nodeInfoManager) CreateCSINode() (*storagev1beta1.CSINode, error) {
-
 	kubeClient := nim.volumeHost.GetKubeClient()
 	if kubeClient == nil {
 		return nil, fmt.Errorf("error getting kube client")
@@ -511,7 +507,6 @@ func (nim *nodeInfoManager) installDriverToCSINode(
 	driverName string,
 	driverNodeID string,
 	topology map[string]string) error {
-
 	csiKubeClient := nim.volumeHost.GetKubeClient()
 	if csiKubeClient == nil {
 		return fmt.Errorf("error getting CSI client")
@@ -559,7 +554,6 @@ func (nim *nodeInfoManager) installDriverToCSINode(
 
 func (nim *nodeInfoManager) uninstallDriverFromCSINode(
 	csiDriverName string) error {
-
 	csiKubeClient := nim.volumeHost.GetKubeClient()
 	if csiKubeClient == nil {
 		return fmt.Errorf("error getting CSI client")
@@ -582,7 +576,6 @@ func (nim *nodeInfoManager) uninstallDriverFromCSINode(
 func (nim *nodeInfoManager) tryUninstallDriverFromCSINode(
 	csiKubeClient clientset.Interface,
 	csiDriverName string) error {
-
 	nodeInfoClient := csiKubeClient.StorageV1beta1().CSINodes()
 	nodeInfo, err := nodeInfoClient.Get(string(nim.nodeName), metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
@@ -613,7 +606,6 @@ func (nim *nodeInfoManager) tryUninstallDriverFromCSINode(
 	_, err = nodeInfoClient.Update(nodeInfo)
 
 	return err // do not wrap error
-
 }
 
 func updateMaxAttachLimit(driverName string, maxLimit int64) nodeUpdateFunc {

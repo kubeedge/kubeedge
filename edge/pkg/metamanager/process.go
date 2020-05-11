@@ -558,7 +558,6 @@ func (m *metaManager) syncPodStatus() {
 }
 
 func (m *metaManager) processFunctionAction(message model.Message) {
-
 	var err error
 	var content []byte
 	switch message.GetContent().(type) {
@@ -616,7 +615,6 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 	}
 
 	sendToCloud(&message)
-
 }
 
 func (m *metaManager) processVolume(message model.Message) {
@@ -669,7 +667,6 @@ func (m *metaManager) runMetaManager() {
 				klog.Warning("MetaManager mainloop stop")
 				return
 			default:
-
 			}
 			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
 				klog.Infof("get a message %+v", msg)

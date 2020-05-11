@@ -26,7 +26,6 @@ import (
 
 // ValidateEdgeSiteConfiguration validates `c` and returns an errorList if it is invalid
 func ValidateEdgeSiteConfiguration(c *edgesiteconfig.EdgeSiteConfig) field.ErrorList {
-
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, edgevalidation.ValidateDataBase(*c.DataBase)...)
 	allErrs = append(allErrs, cloudvalidation.ValidateKubeAPIConfig(*c.KubeAPIConfig)...)

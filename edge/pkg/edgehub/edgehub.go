@@ -84,7 +84,6 @@ func (eh *EdgeHub) Start() {
 			klog.Warning("EdgeHub stop")
 			return
 		default:
-
 		}
 		err := eh.initial()
 		if err != nil {

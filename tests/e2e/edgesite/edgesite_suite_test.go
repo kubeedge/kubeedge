@@ -55,7 +55,6 @@ func TestEdgeSiteAppDeployment(t *testing.T) {
 			utils.Infof("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessful !!")
-
 	})
 
 	AfterSuite(func() {

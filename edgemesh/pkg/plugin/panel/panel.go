@@ -33,5 +33,4 @@ func init() {
 	control.InstallPlugin("edge", func(options control.Options) control.Panel {
 		return &EdgePanel{}
 	})
-
 }

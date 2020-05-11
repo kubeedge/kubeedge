@@ -98,7 +98,6 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-
 	})
 
 	RunSpecs(t, "kubeedge Performance Load test Suite")

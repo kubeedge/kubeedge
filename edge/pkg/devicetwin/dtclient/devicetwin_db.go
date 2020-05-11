@@ -74,7 +74,6 @@ func QueryDeviceTwin(key string, condition string) (*[]DeviceTwin, error) {
 		return nil, err
 	}
 	return twin, nil
-
 }
 
 //DeviceTwinUpdate the struct for updating device twin
