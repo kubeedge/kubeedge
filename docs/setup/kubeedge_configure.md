@@ -96,7 +96,7 @@ modules:
 
 Refer [here](deploy-edge-node.md) to add edge nodes.
 
-#### Check the existence of certificates (cloud side) (Before KubeEdge v1.3)
+#### Check the existence of certificates (cloud side) (Required for pre 1.3 releases)
 
 **Note:** From KubeEdge v1.3, just skip the follow steps of checking the existence of certificates. However, if you configure the cloudcore certificate manually, you must check if the path of certificate is right. And there is no need to transfer certificate file from the cloud side to edge side.
 
@@ -129,7 +129,7 @@ At this point we have completed all configuration changes related to cloudcore.
 
 ## Configuration Edge side (KubeEdge Worker Node)
 
-### Manually copy certs.tgz from cloud host to edge host(s)  (Before KubeEdge v1.3)
+### Manually copy certs.tgz from cloud host to edge host(s)  (Required for pre 1.3 releases)
 
 **Note:**  From KubeEdge v1.3 just skip this step, the edgecore will apply for the certificate automatically from the cloudcore when starting. You can also configure the local certificate(The CA certificate in edge site must be the same with cloudcore now). Any directory is OK as long as you configure it in the edgecore.yaml below.
 
@@ -243,7 +243,7 @@ Verify the configurations before running `edgecore`
     type: Opaque
     ```
 
-    Decode the token string by base64:
+    Decode the tokendata field by base64:
 
     ```shell
     echo ODEzNTZjY2MwODIzMmIxMTU0Y2ExYmI5MmRlZjY4YWQwMGQ3ZDcwOTIzYmU3YjcyZWZmOTVlMTdiZTk5MzdkNS5leUpoYkdjaU9pSklVekkxTmlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKbGVIQWlPakUxT0RreE5qRTVPRGw5LmpxNENXNk1WNHlUVkpVOWdBUzFqNkRCdE5qeVhQT3gxOHF5RnFfOWQ4WFkK |base64 -d
