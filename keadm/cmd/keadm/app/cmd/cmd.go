@@ -34,7 +34,7 @@ var (
     | Please give us feedback at:                              |
     | https://github.com/kubeedge/kubeedge/issues              |
     +----------------------------------------------------------+
-	
+
     Create a cluster with cloud node
     (which controls the edge node cluster), and edge nodes
     (where native containerized application, in the form of

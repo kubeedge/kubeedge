@@ -31,7 +31,7 @@ spec:
       accessMode: ReadWrite
       defaultValue: 0
   - name: io-config
-    description: register activation of io-config 
+    description: register activation of io-config
     type:
      int:
       accessMode: ReadWrite
@@ -57,7 +57,7 @@ spec:
     bluetooth:
      characteristicUUID: f000aa0204514000b000000000000000
      dataWrite:
-      "ON": [1]   #Here "ON" refers to the value of the property "temperature-enable" and [1] refers to the corresponding []byte value to be written into the device when the value of temperature-enable is "ON" 
+      "ON": [1]   #Here "ON" refers to the value of the property "temperature-enable" and [1] refers to the corresponding []byte value to be written into the device when the value of temperature-enable is "ON"
       "OFF": [0]
   - propertyName: io-config-initialize
     bluetooth:
@@ -72,7 +72,7 @@ spec:
     bluetooth:
      characteristicUUID: f000aa6504514000b000000000000000
      dataWrite:
-      "Red": [1]    #Here "Red" refers to the value of the property "io-data" and [1] refers to the corresponding []byte value to be written into the device when the value of io-data is "Red" 
+      "Red": [1]    #Here "Red" refers to the value of the property "io-data" and [1] refers to the corresponding []byte value to be written into the device when the value of io-data is "Red"
       "Green": [2]
       "RedGreen": [3]
       "Buzzer": [4]

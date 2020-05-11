@@ -8,7 +8,7 @@ Docker container runtime is currently supported for container and image manageme
 
 There are many modules which work in tandom to achieve edged's functionalities.
 
-![EdgeD OverAll](../../images/edged/edged-overall.png)  
+![EdgeD OverAll](../../images/edged/edged-overall.png)
 
 *Fig 1: EdgeD Functionalities*
 
@@ -23,15 +23,15 @@ Its primary jobs are as follows:
 - Keeps separate cache for config map and secrets respectively.
 - Regular cleanup of orphaned pods
 
-![Pod Addition Flow](../../images/edged/pod-addition-flow.png)  
+![Pod Addition Flow](../../images/edged/pod-addition-flow.png)
 
 *Fig 2: Pod Addition Flow*
 
-![Pod Deletion Flow](../../images/edged/pod-deletion-flow.png)  
+![Pod Deletion Flow](../../images/edged/pod-deletion-flow.png)
 
 *Fig 3: Pod Deletion Flow*
 
-![Pod Updation Flow](../../images/edged/pod-update-flow.png)  
+![Pod Updation Flow](../../images/edged/pod-update-flow.png)
 
 *Fig 4: Pod Updation Flow*
 
@@ -39,7 +39,7 @@ Its primary jobs are as follows:
 
 This module helps in monitoring pod status for edged. Every second, using probe's for liveness and readiness, it updates the information with pod status manager for every pod.
 
-![PLEG Design](../../images/edged/pleg-flow.png)  
+![PLEG Design](../../images/edged/pleg-flow.png)
 
 *Fig 5: PLEG at EdgeD*
 
@@ -48,8 +48,8 @@ This module helps in monitoring pod status for edged. Every second, using probe'
 Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes, without the need to recompile and also support multiple runtimes like docker, containerd, cri-o etc
 
 #### Why CRI for edge?
-Currently kubeedge edged supports only docker runtime using the legacy dockertools. 
-+ CRI support for  multiple container runtime in kubeedge is needed due to below mentioned factors 
+Currently kubeedge edged supports only docker runtime using the legacy dockertools.
++ CRI support for  multiple container runtime in kubeedge is needed due to below mentioned factors
   + Include CRI support as in kubernetes kubelet to support containerd, cri-o etc
 
   + Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
@@ -60,7 +60,7 @@ Currently kubeedge edged supports only docker runtime using the legacy dockertoo
   + Customer can run light weight container runtime on resource constrained edge node that cannot run the existing docker runtime
   + Customer has the option to choose from multiple container runtimes on his edge platform
 
-![CRI Design](../../images/edged/edged-cri.png)  
+![CRI Design](../../images/edged/edged-cri.png)
 
 *Fig 6: CRI at EdgeD*
 
@@ -70,7 +70,7 @@ At edged, Secrets are handled separately. For its operations like addition, dele
 Using these interfaces, secrets are updated in cache store.
 Below flow diagram explains the message flow.
 
-![Secret Message Handling](../../images/edged/secret-handling.png)  
+![Secret Message Handling](../../images/edged/secret-handling.png)
 
 *Fig 7: Secret Message Handling at EdgeD*
 
@@ -78,13 +78,13 @@ Also edged uses MetaClient module to fetch secret from Metamanager (if available
 Hence the subsequent query for same secret key will be responded by Metamanger only, hence reducing the response delay.
 Below flow diagram shows, how secret is fetched from metamanager and cloud. The flow of how secret is saved in metamanager.
 
-![Query Secret](../../images/edged/query-secret-from-edged.png)  
+![Query Secret](../../images/edged/query-secret-from-edged.png)
 
 *Fig 8: Query Secret by EdgeD*
 
 ## Probe Management
 
-Probe management creates to probes for readiness and liveness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveness probe helps in monitoring the health of pods, if they are up or down. 
+Probe management creates to probes for readiness and liveness respectively for pods to monitor the containers. Readiness probe helps by monitoring when the pod has reached to running state. Liveness probe helps in monitoring the health of pods, if they are up or down.
 As explained earlier, PLEG module uses its services.
 
 
@@ -93,7 +93,7 @@ At edged, ConfigMap are also handled separately. For its operations like additio
 Using these interfaces, configMaps are updated in cache store.
 Below flow diagram explains the message flow.
 
-![ConfigMap Message Handling](../../images/edged/configmap-handling.png)  
+![ConfigMap Message Handling](../../images/edged/configmap-handling.png)
 
 *Fig 9: ConfigMap Message Handling at EdgeD*
 
@@ -101,7 +101,7 @@ Also edged uses MetaClient module to fetch configmap from Metamanager (if availa
 Hence the subsequent query for same configmaps key will be responded by Metamanger only, hence reducing the response delay.
 Below flow diagram shows, how configmaps is fetched from metamanager and cloud. The flow of how configmaps is saved in metamanager.
 
-![Query Configmaps](../../images/edged/query-configmap-from-edged.png)  
+![Query Configmaps](../../images/edged/query-configmap-from-edged.png)
 
 *Fig 10: Query Configmaps by EdgeD*
 
@@ -119,7 +119,7 @@ The policy for garbage collecting images we apply takes two factors into conside
 
 Status manager is as an independent edge routine, which collects pods statuses every 10 seconds and forwards this information with cloud using metaclient interface to the cloud.
 
-![Status Manager Flow](../../images/edged/pod-status-manger-flow.png)  
+![Status Manager Flow](../../images/edged/pod-status-manger-flow.png)
 
 *Fig 11: Status Manager Flow*
 

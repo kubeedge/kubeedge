@@ -21,7 +21,7 @@ status: implementable
     * [Non\-goals](#non-goals)
   * [Proposal](#proposal)
     * [Use Cases](#use-cases)
-  * [Design Details](#design-details)  
+  * [Design Details](#design-details)
     * [CRD API Group and Version](#crd-api-group-and-version)
     * [Device model CRD](#device-model-crd)
     * [Device model type definition](#device-model-type-definition)

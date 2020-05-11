@@ -12,7 +12,7 @@ The main functions performed by edgehub are :-
 
 - Keep Alive
 - Publish Client Info
-- Route to Cloud 
+- Route to Cloud
 - Route to Edge
 
 
@@ -25,24 +25,24 @@ A keep-alive message or heartbeat is sent to cloudHub after every heartbeatPerio
 
 - The main responsibility of publish client info is to inform the other groups or modules regarding the status of connection to the cloud.
 
-- It sends a beehive message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected. 
+- It sends a beehive message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
 
 
-## Route To Cloud 
+## Route To Cloud
 
 The main responsibility of route to cloud is to receive from the other modules (through beehive framework), all the
 messages that are to be sent to the cloud, and send them to cloudHub through the websocket connection.
- 
+
 The major steps involved in this process are as follows :-
 
-1. Continuously receive messages from beehive Context 
-2. Send that message to cloudHub 
+1. Continuously receive messages from beehive Context
+2. Send that message to cloudHub
 3. If the message received is a sync message then :
- 
+
  	3.1 If response is received on syncChannel then it creates a map[string] chan containing the messageID of the message as key
-	    
+
 	3.2 It waits for one heartbeat period to receive a response on the channel created, if it does not receive any response on the channel within the specified time then it times out.
-	     
+
 	3.3 The response received on the channel is sent back to the module using the SendResponse() function.
 
 ![Route to Cloud](../../images/edgehub/route-to-cloud.png)

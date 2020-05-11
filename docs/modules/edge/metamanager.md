@@ -28,14 +28,14 @@ which sends it back to the cloud.
 ## Update Operation
 `Update` operations can happen on objects at the cloud/edge.
 
-The update message flow is similar to an insert operation. Additionally, metamanager checks if the resource being updated has changed locally. 
-If there is a delta, only then the update is stored locally and the message is 
+The update message flow is similar to an insert operation. Additionally, metamanager checks if the resource being updated has changed locally.
+If there is a delta, only then the update is stored locally and the message is
 passed to edged and response is sent back to the cloud.
 
 ![Update Operation](../../images/metamanager/meta-update.png)
 
 ## Delete Operation
-`Delete` operations are triggered when objects like pods are deleted from the 
+`Delete` operations are triggered when objects like pods are deleted from the
 cloud.
 
 ![Delete Operation](../../images/metamanager/meta-delete.png)
@@ -43,7 +43,7 @@ cloud.
 ## Query Operation
 `Query` operations let you query for metadata either locally at the edge or for some remote resources like config maps/secrets from the cloud. edged queries this
 metadata from metamanager which further handles local/remote query processing and
-returns the response back to edged. A Message resource can be broken into 3 parts 
+returns the response back to edged. A Message resource can be broken into 3 parts
 (resKey,resType,resId) based on separator ‘/’.
 
 ![Query Operation](../../images/metamanager/meta-query.png)
@@ -58,7 +58,7 @@ like remote query to the cloud.
 
 ## MetaSync Operation
 `MetaSync` operation messages are periodically sent by metamanager to sync the status of the
-pods running on the edge node. The sync interval is configurable in `conf/edge.yaml` 
+pods running on the edge node. The sync interval is configurable in `conf/edge.yaml`
 ( defaults to `60` seconds ).
 
 ```yaml

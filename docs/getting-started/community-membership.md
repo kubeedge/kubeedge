@@ -17,7 +17,7 @@ This document gives a brief overview of the KubeEdge community roles with the re
 ## Member
 
 Members are active participants in the community who contribute by authoring PRs,
-reviewing issues/PRs or participate in community discussions on slack/mailing list. 
+reviewing issues/PRs or participate in community discussions on slack/mailing list.
 
 
 ### Requirements
@@ -44,7 +44,7 @@ reviewing issues/PRs or participate in community discussions on slack/mailing li
 ## Approver
 
 Approvers are active members who have good experience and knowledge of the domain.
-They have actively participated in the issue/PR reviews and have identified relevant issues during review. 
+They have actively participated in the issue/PR reviews and have identified relevant issues during review.
 
 
 ### Requirements

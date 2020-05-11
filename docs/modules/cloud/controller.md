@@ -4,9 +4,9 @@
 ## Edge Controller Overview
  EdgeController is the bridge between Kubernetes Api-Server and edgecore
 
-   
+
 ## Operations Performed By Edge Controller
- 
+
  The following are the functions performed by Edge controller :-
  - Downstream Controller: Sync add/update/delete event to edgecore from K8s Api-server
  - Upstream Controller: Sync watch and Update status of resource and events(node, pod and configmap) to K8s-Api-server and also subscribe message from edgecore
@@ -15,7 +15,7 @@
 
 ## Downstream Controller:
 ### Sync add/update/delete event to edge
- 
+
 - Downstream controller: Watches K8S-Api-server and sends updates to edgecore via cloudHub
 - Sync (pod, configmap, secret) add/update/delete event to edge via cloudHub
 - Creates Respective manager (pod, configmap, secret) for handling events by calling manager interface
@@ -41,9 +41,9 @@
    - **HostIP**: IP address of the host to which pod is assigned
    - **PodIp**: IP address allocated to the Pod
    - **QosClass**: Assigned to the pod based on resource requirement
-   
+
    ![Upstream Controller](../../images/edgecontroller/UpstreamController.png)
-   
+
 ## Controller Manager:
 ### Creates manager Interface and implements ConfigmapManager, LocationCache and podManager
 

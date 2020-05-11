@@ -23,7 +23,7 @@
     }
     ```
 
-**Note:** 
+**Note:**
 1. the `metadata.name` must keep in line with edgecore's config `modules.edged.hostnameOverride`.
 
 2. Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `metadata.labels`.

@@ -38,7 +38,7 @@ Mapper can be specific to a protocol where standards are defined i.e Bluetooth, 
 All devices can be connected and controlled by drivers provided by their vendor.
 But the message from the device need to be translated into a format understood by KubeEdge.
 Also there should be a way to control the devices from the platform. Mapper is the application that interfaces between KubeEdge and devices.
-There should be a standard design for mappers supported by KubeEdge for keeping them generic and easy to use. 
+There should be a standard design for mappers supported by KubeEdge for keeping them generic and easy to use.
 
 ### Goals
 * A generic way to support multiple devices of different protocols by having a standard design for mappers provided by KubeEdge.
@@ -47,7 +47,7 @@ There should be a standard design for mappers supported by KubeEdge for keeping 
 
 ### Non-goals
 * Impose restriction on users to follow this design while writing applications for their device.
-* Have a single application that supports multiple devices of different protocols. 
+* Have a single application that supports multiple devices of different protocols.
 
 ### User cases
 1) Manage expected/actual state of a device.
@@ -94,13 +94,13 @@ type Schedule struct{
 	// can be made corresponding to name to stop the schedule.
 	Name string
 	// Frequency is the time in milliseconds after which this actions are to be performed
-	Frequency int 
+	Frequency int
 	// Actions is list of Actions to be performed in this schedule
 	Actions []Action
 }
 ```
 
-**3) Watcher**: Watcher has 3 responsibilities: 
+**3) Watcher**: Watcher has 3 responsibilities:
 
 a) To scan devices(wireless)/wait for device to turn on(wired) and connect to the correct device once it is Online/In-Range. It can use MAC address or any unique address provided by devices. In case of wired devices, GPIO can be an option.
 
@@ -110,7 +110,7 @@ c) To report the actual state of twin attributes.
 
 **4) Data-Converter**: Data received from the devices can be in complex formats. eg: HexDecimal with bytes shuffled. This data cannot be directly understood by KubeEdge.
 The responsibility of data-converter is the convert the readings into a format understood by KubeEdge.
-Many protocols have a standard defined for the reading returned by the device. Hence a common/configurable logic can be used. 
+Many protocols have a standard defined for the reading returned by the device. Hence a common/configurable logic can be used.
 
 **5) Health-Checker**: Health-Checker can be used to periodically report the state of the device to KubeEdge.
 This can be an optional component as not all devices support health-checking. In-future can be extended to report battery-state, malfunctioning when kubeedge supports these attributes.

@@ -3,7 +3,7 @@
 
 ## Device Controller Overview
  The device controller is the cloud component of KubeEdge which is responsible for device management. Device management in KubeEdge is implemented by making use of Kubernetes
- [Custom Resource Definitions (CRDs)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to describe device metadata/status and device controller to synchronize these device updates between edge and cloud. 
+ [Custom Resource Definitions (CRDs)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to describe device metadata/status and device controller to synchronize these device updates between edge and cloud.
  The device controller starts two separate goroutines called `upstream controller` and `downstream controller`. These are not separate controllers as such but named here for clarity.
 
 The device controller makes use of device model and device instance to implement device management :
@@ -15,10 +15,10 @@ The device controller makes use of device model and device instance to implement
  **Note**: Sample device model and device instance for a few protocols can be found at $GOPATH/src/github.com/kubeedge/kubeedge/build/crd-samples/devices
 
 ![Device Model](../../images/device-crd/device-crd-model.png)
- 
- 
+
+
 ## Operations Performed By Device Controller
- 
+
  The following are the functions performed by the device controller :-
  - **Downstream Controller**: Synchronize the device updates from the cloud to the edge node, by watching on K8S API server
  - **Upstream Controller**: Synchronize the device updates from the edge node to the cloud using device twin component
@@ -32,9 +32,9 @@ actions that the upstream controller can take:
   | Update Type                        | Action                                        |
   |-------------------------------     |---------------------------------------------- |
   |Device Twin Reported State Updated    |  The controller patches the reported state of the device twin property in the cloud. |
-  
+
 ![Device Upstream Controller](../../images/device-crd/device-upstream-controller.png)
-     
+
 ### Syncing Reported Device Twin Property Update From Edge To Cloud
 
 The mapper watches devices for updates and reports them to the event bus via the MQTT broker. The event bus sends the reported state of the device to the device twin which stores it locally and then syncs the updates to the cloud. The device controller watches for device updates from the edge ( via the cloudhub ) and updates the reported state in the cloud.

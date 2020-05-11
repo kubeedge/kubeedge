@@ -33,7 +33,7 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
 
 ## Configuration of kubeedge with websocket/quic
 ### Start the websocket server only
-1. User edit controller.yaml  
+1. User edit controller.yaml
 ```yaml
   cloudhub:
   protocol_websocket: true # enable websocket protocol
@@ -116,7 +116,7 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
   ```
 2. Running the edgecore, and start to connect to cloudhub through websocket protocol.
 
-### edgehub connect to cloudhub through quic 
+### edgehub connect to cloudhub through quic
 1. User edit edge.yaml
 ```yaml
     quic:
@@ -137,5 +137,5 @@ In edge scenarios, network connectivity could be unstable. With TCP + TLS, it be
         project-id: e632aba927ea4ac2b575ec1603d56f10
         node-id: edge-node
   ```
-    
+
 2. Run the edgecore, and start to connect to cloudhub through quic protocol.

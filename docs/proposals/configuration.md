@@ -4,7 +4,7 @@ title: KubeEdge Component Config Proposal
 authors:
   - "@kadisi"
   - "@fisherxu"
-  
+
 approvers:
   - "@kevin-wangzefeng"
   - "@sids-b"
@@ -33,7 +33,7 @@ status: implemented
       * [Use keadm to install and configure KubeEdge components](#use-keadm-to-install-and-configure-kubeedge-components)
    * [Task list tracking](#task-list-tracking)
 
-# KubeEdge Component Config Proposal 
+# KubeEdge Component Config Proposal
 
 ## Terminology
 
@@ -41,9 +41,9 @@ status: implemented
 
 * **KubeEdge modules:** refers to modules e.g. cloudhub, edgecontroller, devicecontroller, devicetwin, edged, edgehub, eventbus, metamanager, servicebus, etc.
 
-## Proposal 
+## Proposal
 
-Currently, KubeEdge components' configuration files are in the conf directory at the same level and have 3 configuration files, it is difficult to maintain and extend. 
+Currently, KubeEdge components' configuration files are in the conf directory at the same level and have 3 configuration files, it is difficult to maintain and extend.
 
 KubeEdge uses beehive package to analyse configuration files, when the program is running, it will print a lot of logs first. When we add subcommands to the program, such as `--version` , it will still print a lot of configuration information and then output the version information.
 
@@ -59,7 +59,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 * Start the KubeEdge component with the --config flag, this flag set to the path of the component's config file. The component will then load its config from this file, if --config flag not set, component will read a default configuration file.
 
-* Configuration file's definition refers to the kubernetes component config api design, which needs to be with a version number for future version management. 
+* Configuration file's definition refers to the kubernetes component config api design, which needs to be with a version number for future version management.
 
 * Need to abstract the apis for KubeEdge component configuration file  and defined in `pkg/apis/{components}/` dir.
 
@@ -69,20 +69,20 @@ We recommend referring to the kubernetes component config api design to redesign
 
 * New configuration files should consider backward compatibility in future upgrades
 
-* Support conversion of 3 old configfiles to one new configfile. 
-  
+* Support conversion of 3 old configfiles to one new configfile.
+
   take cloudcore as an example: now cloudcore has 3 configfiles: `controller.yaml,logging.yaml,modules.yaml`, We need to convert those three old configuration files into one new configuration file in one way.
 
 
-## Principle  
+## Principle
 
 * **Backward compatibility**
 
 	`keadm` provides subcommands for conversion
 
-* **Forward compatibility** 
-	
-	For configuration file, support addition/deprecattion of some fields, **Modify field not allowed**. 
+* **Forward compatibility**
+
+	For configuration file, support addition/deprecattion of some fields, **Modify field not allowed**.
 	Configuration need a version field.
 
 
@@ -90,7 +90,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 ### KubeEdge component config apis definition
 
-#### meta config apis 
+#### meta config apis
 
 defined in `pkg/apis/meta/v1alpha1/types.go`
 
@@ -136,7 +136,7 @@ const (
 
 ```
 
-#### cloudcore config apis 
+#### cloudcore config apis
 
 defined in `pkg/apis/cloudcore/v1alpha1/types.go`
 
@@ -834,9 +834,9 @@ default load `/etc/kubeedge/config/edgesite.yaml` configfile
 
  With `--minconfig` flag, users can easily get min used configurations as reference. It's useful to users that are new to KubeEdge, and they can modify/create their own configs accordingly. This configuration is suitable for beginners.
 
-* cloudcore 
+* cloudcore
 
-`# cloudcore --defaultconfig` 
+`# cloudcore --defaultconfig`
 
 ```yaml
 
@@ -921,7 +921,7 @@ modules:
 ```
 
 
-`# cloudcore --minconfig` 
+`# cloudcore --minconfig`
 
 ```yaml
 
@@ -950,7 +950,7 @@ modules:
 
 * edgecore
 
-`# edgecore --defaultconfig` 
+`# edgecore --defaultconfig`
 
 ```yaml
 
@@ -1023,12 +1023,12 @@ modules:
     contextSendModule: websocket
     enable: true
     podStatusSyncInterval: 60
-  servicebus: 
-    enable: false 
+  servicebus:
+    enable: false
 
 ```
 
-`# edgecore --minconfig` 
+`# edgecore --minconfig`
 
 ```yaml
 
@@ -1076,7 +1076,7 @@ modules:
 
 * edgesite
 
-`# edgesite --defaultconfig` 
+`# edgesite --defaultconfig`
 
 ```yaml
 
@@ -1161,7 +1161,7 @@ modules:
 
 ```
 
-`# edgesite --minconfig` 
+`# edgesite --minconfig`
 
 ```yaml
 
@@ -1206,11 +1206,11 @@ We use the second option, because:
 * If the component supports the old configuration file, it will add configuration-compatible logic inside the component. We might as well let keadm do this. such as:
 
 ```
-keadm convertconfig --component=<cloudcore,edgecore,edgesite> --srcdir=<old config dir> --desdir=<new config dir> 
+keadm convertconfig --component=<cloudcore,edgecore,edgesite> --srcdir=<old config dir> --desdir=<new config dir>
 
 ```
 
-`srcdir` flag set the dir of the old 2 configfiles. 
+`srcdir` flag set the dir of the old 2 configfiles.
 `desdir` flag set the dir of the new configfile. if `despath` is not set, keadm only print new config, user can create config file by those print info.
 
 keadm first load the old two configfiles and create the new config for each component.
@@ -1218,7 +1218,7 @@ keadm first load the old two configfiles and create the new config for each comp
 We can gradually abandon this command after the release of several stable versions.
 
 
-### new config file need version number 
+### new config file need version number
 
 Just like kubernetes component config, KubeEdge component config need `apiVersion` to define config version schema .
 
