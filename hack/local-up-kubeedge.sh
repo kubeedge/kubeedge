@@ -118,7 +118,7 @@ function start_edgecore {
 
   export CHECK_EDGECORE_ENVIRONMENT="false"
   echo "start edgecore..."
-  nohup sudo ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
+  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
