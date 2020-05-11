@@ -73,7 +73,6 @@ func (c *CentOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
 func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
-
 	arch := "amd64"
 	result, err := runCommandWithStdout("arch")
 	if err != nil {

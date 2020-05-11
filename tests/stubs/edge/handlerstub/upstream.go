@@ -53,7 +53,6 @@ func (dc *UpstreamController) SyncPods() {
 			klog.Infof("Stop sync pods")
 			return
 		default:
-
 		}
 		pods := dc.podManager.ListPods()
 		klog.V(4).Infof("Current pods number is: %v", len(pods))

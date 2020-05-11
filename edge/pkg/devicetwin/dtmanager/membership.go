@@ -340,7 +340,6 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 		} else {
 			result = payload
 		}
-
 	}
 	topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETGetResultSuffix
 	klog.Infof("Deal getting membership successful and send the result")
@@ -351,7 +350,6 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
 
 	return nil
-
 }
 
 //SyncDeviceFromSqlite sync device from sqlite

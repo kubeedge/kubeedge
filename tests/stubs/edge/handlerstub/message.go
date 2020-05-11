@@ -37,7 +37,6 @@ func (hs *HandlerStub) WaitforMessage() {
 				klog.Warning("stop waiting for message")
 				return
 			default:
-
 			}
 			if msg, err := beehiveContext.Receive(hs.Name()); err == nil {
 				klog.V(4).Infof("Receive a message %v", msg)

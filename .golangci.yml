@@ -21,6 +21,7 @@ run:
   skip-dirs:
     - vendor
     - fake
+    - externalversions
 
 # output configuration options
 output:
@@ -47,3 +48,4 @@ linters:
     - gofmt
     - golint
     - misspell
+    - whitespace

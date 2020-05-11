@@ -134,7 +134,6 @@ func DeleteEdgeDeployments(apiServerForRegisterNode, apiServerForDeployments str
 		go utils.HandleConfigmap(chconfigmapRet, http.MethodDelete, apiServerForDeployments+ConfigmapHandler+"/"+configmap[0], false)
 		ret := <-chconfigmapRet
 		gomega.Expect(ret).To(gomega.BeNil())
-
 	}
 	//delete edgenode deployment
 	for _, depName := range Deployments {

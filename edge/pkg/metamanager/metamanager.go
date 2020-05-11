@@ -59,7 +59,6 @@ func (m *metaManager) Enable() bool {
 }
 
 func (m *metaManager) Start() {
-
 	go func() {
 		period := getSyncInterval()
 		timer := time.NewTimer(period)

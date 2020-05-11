@@ -318,7 +318,6 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
 func installKubeEdge(componentType types.ComponentType, arch string, version string) error {
-
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)

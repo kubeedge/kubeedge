@@ -289,7 +289,6 @@ func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 
 // GetDeployments to get the deployments list
 func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
-
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
@@ -303,7 +302,6 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 		return err
 	}
 	return nil
-
 }
 func VerifyDeleteDeployment(getDeploymentAPI string) int {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
@@ -851,7 +849,6 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
 	if reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) == false || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) == false {
 		return false
-
 	}
 	return true
 }

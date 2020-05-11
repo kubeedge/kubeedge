@@ -535,7 +535,6 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 					TypeMeta: device.TypeMeta,
 				}
 				dc.deviceDeleted(deletedDevice)
-
 			} else if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) {
 				dc.updateProtocolInConfigMap(device)
 			} else {

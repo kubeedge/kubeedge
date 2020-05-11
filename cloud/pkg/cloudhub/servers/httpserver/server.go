@@ -168,7 +168,6 @@ func CheckCaExistsFromSecret() bool {
 		return false
 	}
 	return true
-
 }
 
 func CheckCertExistsFromSecret() bool {

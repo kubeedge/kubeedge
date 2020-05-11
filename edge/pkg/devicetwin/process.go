@@ -37,7 +37,6 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 	module.InitWorker(dt.DTContexts.CommChan[name], dt.DTContexts.ConfirmChan,
 		dt.HeartBeatToModule[name], dt.DTContexts)
 	dt.DTModules[name] = module
-
 }
 
 //distributeMsg distribute message to diff module
@@ -128,7 +127,6 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 		}
 	}
 	return nil
-
 }
 
 //SyncDeviceFromSqlite sync device from sqlite
@@ -260,7 +258,6 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			return true
 		}
 		return false
-
 	} else if strings.Compare(msgSource, "edgehub") == 0 {
 		if strings.Compare(message.Msg.Router.Resource, "node/connection") == 0 {
 			message.Action = dtcommon.LifeCycle
@@ -272,7 +269,6 @@ func classifyMsg(message *dttype.DTMessage) bool {
 }
 
 func (dt *DeviceTwin) runDeviceTwin() {
-
 	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
 	for _, v := range moduleNames {
 		dt.RegisterDTModule(v)
@@ -285,7 +281,6 @@ func (dt *DeviceTwin) runDeviceTwin() {
 				klog.Warning("Stop DeviceTwin ModulesContext Receive loop")
 				return
 			default:
-
 			}
 			if msg, ok := beehiveContext.Receive("twin"); ok == nil {
 				klog.Info("DeviceTwin receive msg")

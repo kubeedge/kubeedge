@@ -712,7 +712,6 @@ func (e *edged) StartGarbageCollection() {
 }
 
 func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, housekeepingCh <-chan time.Time, syncWorkQueueCh <-chan time.Time) {
-
 	for {
 		select {
 		case update := <-e.livenessManager.Updates():
@@ -885,7 +884,6 @@ func (e *edged) podRemoveWorkerRun(consumers int) {
 							e.podDeletionQueue.Add(item)
 						}(item)
 					}
-
 				}
 				e.podDeletionQueue.Done(item)
 			}
