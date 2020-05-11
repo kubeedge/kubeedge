@@ -28,6 +28,10 @@ type Configure struct {
 
 func InitConfigure(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 	once.Do(func() {
+		if len(hub.AdvertiseAddress) == 0 {
+			klog.Fatal("AdvertiseAddress must be specified!")
+		}
+
 		Config = Configure{
 			CloudHub:      *hub,
 			KubeAPIConfig: kubeAPIConfig,

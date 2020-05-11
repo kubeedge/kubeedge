@@ -111,6 +111,8 @@ type CloudHub struct {
 	// HTTPS indicates https server info
 	// +Required
 	Https *CloudHubHttps `json:"https,omitempty"`
+	// AdvertiseAddress sets the IP address for the cloudcore to advertise.
+	AdvertiseAddress []string `json:"advertiseAddress,omitempty"`
 }
 
 // CloudHubQUIC indicates the quic server config
