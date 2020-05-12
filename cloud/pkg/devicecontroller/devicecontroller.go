@@ -1,7 +1,6 @@
 package devicecontroller
 
 import (
-	"os"
 	"time"
 
 	"k8s.io/klog"
@@ -48,18 +47,20 @@ func (dc *DeviceController) Enable() bool {
 func (dc *DeviceController) Start() {
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		klog.Errorf("New downstream controller failed with error: %s", err)
-		os.Exit(1)
+		klog.Fatalf("New downstream controller failed with error: %s", err)
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		klog.Errorf("new upstream controller failed with error: %s", err)
-		os.Exit(1)
+		klog.Fatalf("new upstream controller failed with error: %s", err)
 	}
 
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Fatalf("start downstream failed with error: %s", err)
+	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
-	upstream.Start()
+	if err := upstream.Start(); err != nil {
+		klog.Fatalf("start upstream failed with error: %s", err)
+	}
 }
