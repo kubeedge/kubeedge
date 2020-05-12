@@ -256,7 +256,9 @@ func realServerAddress(conn *net.Conn) (string, int, error) {
 	}
 
 	port := int(addr.data[0])<<8 + int(addr.data[1])
-	syscall.SetNonblock(int(fd), true)
+	if err := syscall.SetNonblock(int(fd), true); err != nil {
+		return "", -1, nil
+	}
 
 	return ip.String(), port, nil
 }

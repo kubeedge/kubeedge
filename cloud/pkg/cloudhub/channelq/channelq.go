@@ -75,7 +75,10 @@ func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveM
 
 	messageKey, _ := getListMsgKey(msg)
 
-	nodeListStore.Add(msg)
+	if err := nodeListStore.Add(msg); err != nil {
+		klog.Errorf("failed to add msg: %s", err)
+		return
+	}
 	nodeListQueue.Add(messageKey)
 }
 
@@ -122,7 +125,10 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		}
 	}
 
-	nodeStore.Add(msg)
+	if err := nodeStore.Add(msg); err != nil {
+		klog.Errorf("fail to add message %v nodeStore, err: %v", msg, err)
+		return
+	}
 	nodeQueue.Add(messageKey)
 }
 
