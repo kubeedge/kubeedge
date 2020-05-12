@@ -186,7 +186,9 @@ func (cu *KubeCloudInstTool) TearDown() error {
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
 	//Kill cloudcore process
-	cu.KillKubeEdgeBinary(KubeCloudBinaryName)
+	if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
+		return err
+	}
 	// clean kubeedge namespace
 	err := cu.cleanNameSpace("kubeedge", cu.KubeConfig)
 	if err != nil {

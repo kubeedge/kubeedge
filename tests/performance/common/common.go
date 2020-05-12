@@ -19,6 +19,7 @@ package common
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math"
@@ -80,7 +81,10 @@ func CreateConfigMapforEdgeCore(cloudhub, cmHandler, nodeHandler string, numOfNo
 		nodeSelector := "node-" + utils.GetRandomString(5)
 		configmap := "edgecore-configmap-" + utils.GetRandomString(5)
 		//Register EdgeNodes to K8s Master
-		go utils.RegisterNodeToMaster(nodeName, nodeHandler, nodeSelector)
+		go func() {
+			err := utils.RegisterNodeToMaster(nodeName, nodeHandler, nodeSelector)
+			fmt.Printf("register node to master faiiled with error: %v\n", err)
+		}()
 		cmd := exec.Command("bash", "-x", "scripts/update_configmap.sh", "create_edge_config", nodeName, cloudhub, configmap)
 		err := utils.PrintCombinedOutput(cmd)
 		gomega.Expect(err).Should(gomega.BeNil())
@@ -209,7 +213,9 @@ func ApplyLabel(nodeHandler string) error {
 			}
 		}
 		if !isMasterNode {
-			utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal)
+			if err := utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

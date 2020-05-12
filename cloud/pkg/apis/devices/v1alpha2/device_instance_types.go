@@ -19,7 +19,7 @@ package v1alpha2
 import (
 	"encoding/json"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -378,7 +378,7 @@ type CustomizedValue map[string]interface{}
 
 func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
 	bytes, _ := json.Marshal(*in)
-	json.Unmarshal(bytes, out)
+	_ = json.Unmarshal(bytes, out)
 }
 
 func (in *CustomizedValue) DeepCopy() *CustomizedValue {
