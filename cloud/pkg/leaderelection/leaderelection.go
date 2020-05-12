@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"syscall"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,20 +149,26 @@ func TryToPatchPodReadinessGate() error {
 			return fmt.Errorf("failed to create two way merge patch: %v", err)
 		}
 
-		//Try to patch
+		var maxRetries = 3
 		var isPatchSuccess = false
-		for i := 1; i <= 5; i++ {
-			if _, err = cli.CoreV1().Pods(namespace).Patch(podname, types.StrategicMergePatchType, patchBytes, "status"); err != nil {
-				klog.Warningf("Error patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %v through apiserver: %v ,try again, times: %d", podname, err, i)
-				time.Sleep(time.Second)
-			} else {
-				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
+		for i := 1; i <= maxRetries; i++ {
+			_, err = cli.CoreV1().Pods(namespace).Patch(podname, types.StrategicMergePatchType, patchBytes, "status")
+			if err == nil {
 				isPatchSuccess = true
+				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
 				break
 			}
+			if errors.IsConflict(err) {
+				// If the patch failure is due to update conflict, the necessary retransmission is performed
+				if i >= maxRetries {
+					klog.Errorf("updateMaxRetries(%d) has reached, failed to patching podReadinessGate: kubeedge.io/CloudCoreIsLeader because of update conflict", maxRetries)
+				}
+				continue
+			}
+			break
 		}
-		if isPatchSuccess != true {
-			return fmt.Errorf("failed to patch after 5 attempts")
+		if !isPatchSuccess {
+			return err
 		}
 	} else {
 		klog.Infoln("CloudCore is not running in pod")
