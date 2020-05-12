@@ -74,6 +74,19 @@ In the cloudcore.yaml, modify the below settings.
 2. Before KubeEdge v1.3: check whether the cert files for `modules.cloudhub.tlsCAFile`, `modules.cloudhub.tlsCertFile`,`modules.cloudhub.tlsPrivateKeyFile` exists.
 
     From KubeEdge v1.3: just skip the above check. If you configure the CloudCore certificate manually, you must check if the path of certificate is right. 
+    
+    
+    
+    **Note:** If your KubeEdge version is before the v1.3, then just skip the step 3.
+    
+3. Configure the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `advertiseAddress`
+
+    ```yaml
+    modules:
+      cloudHub:
+        advertiseAddress:
+        - 10.1.11.85
+    ```
 
 ### Adding the edge nodes (KubeEdge Worker Node) on the Cloud side (KubeEdge Master)
 
@@ -209,6 +222,8 @@ Verify the configurations before running `edgecore`
     ```
 
 5. If your runtime-type is remote, follow this guide [KubeEdge CRI Configuration](kubeedge_cri_configure.md) to setup KubeEdge with the remote/CRI based runtimes.
+
+    
 
     **Note:** If your KubeEdge version is before the v1.3, then just skip the steps 6-7.
 
