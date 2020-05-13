@@ -37,6 +37,8 @@ import (
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
+const topic = "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
+
 var TokenClient Token
 var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
@@ -55,7 +57,6 @@ var readWrittenData bool
 
 // DataConversion checks whether data is properly as expected by the data converter.
 func DataConversion(client MQTT.Client, message MQTT.Message) {
-	topic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 	expectedTemp := "32.375000"
 	dataConverted = false
 	if message.Topic() == topic {
@@ -73,7 +74,6 @@ func DataConversion(client MQTT.Client, message MQTT.Message) {
 
 // WriteDataReceived checks whether data is properly written to connected device.
 func WriteDataReceived(client MQTT.Client, message MQTT.Message) {
-	topic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 	readWrittenData = false
 	if message.Topic() == topic {
 		devicePayload := message.Payload()
@@ -91,7 +91,6 @@ func WriteDataReceived(client MQTT.Client, message MQTT.Message) {
 
 // ScheculeExecute counts the number of times schedule is executed by the Scheduler.
 func ScheduleExecute(client MQTT.Client, message MQTT.Message) {
-	topic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
 	expectedTemp := "36"
 	if message.Topic() == topic {
 		devicePayload := message.Payload()
@@ -119,10 +118,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				utils.Infof("Connection successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
-			scheduletopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
-			Token := Client.Subscribe(scheduletopic, 0, WriteDataReceived)
+			Token := Client.Subscribe(topic, 0, WriteDataReceived)
 			if Token.Wait() && TokenClient.Error() != nil {
-				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
+				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), topic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})
@@ -164,10 +162,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				utils.Infof("Subscribe Connection Successful")
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
-			scheduletopic := "$ke/device/bluetooth-mapper/mock-temp-sensor-instance/scheduler/result"
-			Token := Client.Subscribe(scheduletopic, 0, DataConversion)
+			Token := Client.Subscribe(topic, 0, DataConversion)
 			if Token.Wait() && TokenClient.Error() != nil {
-				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), scheduletopic)
+				utils.Fatalf("Subscribe to Topic  Failed  %s, %s", TokenClient.Error(), topic)
 			}
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 			var expectedSchedule []scheduler.Schedule

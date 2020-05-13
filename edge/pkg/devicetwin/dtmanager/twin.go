@@ -31,6 +31,8 @@ const (
 	DealActual = 1
 	//DealExpected deal exepected
 	DealExpected = 0
+
+	stringType = "string"
 )
 
 var (
@@ -505,7 +507,7 @@ func isTwinValueDiff(twin *dttype.MsgTwin, msgTwin *dttype.MsgTwin, dealType int
 	if msgTwinValue != nil {
 		hasMsgTwin = true
 	}
-	valueType := "string"
+	valueType := stringType
 	if strings.Compare(twin.Metadata.Type, "deleted") == 0 {
 		if msgTwin.Metadata != nil {
 			valueType = msgTwin.Metadata.Type
@@ -701,8 +703,8 @@ func dealTwinCompare(returnResult *dttype.DealTwinResult, deviceID string, key s
 			}
 		} else {
 			if strings.Compare(twin.Metadata.Type, "deleted") == 0 {
-				twin.Metadata = &dttype.TypeMetadata{Type: "string"}
-				cols["attr_type"] = "string"
+				twin.Metadata = &dttype.TypeMetadata{Type: stringType}
+				cols["attr_type"] = stringType
 				syncResult[key].Metadata = twin.Metadata
 				isChange = true
 			}
@@ -784,7 +786,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 			return nil
 		}
 		// value type default string
-		valueType := "string"
+		valueType := stringType
 		if msgTwin.Metadata != nil {
 			valueType = msgTwin.Metadata.Type
 		}
@@ -824,7 +826,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 			}
 			return nil
 		}
-		valueType := "string"
+		valueType := stringType
 		if msgTwin.Metadata != nil {
 			valueType = msgTwin.Metadata.Type
 		}
@@ -868,7 +870,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 		msgTwin.Metadata.Type = deviceTwin.AttrType
 		isChange = true
 	} else {
-		deviceTwin.AttrType = "string"
+		deviceTwin.AttrType = stringType
 		isChange = true
 	}
 

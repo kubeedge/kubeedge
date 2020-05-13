@@ -48,6 +48,11 @@ const (
 	TwinETUpdateSuffix    = "/twin/update"
 	TwinETGetSuffix       = "/twin/get"
 	TwinETGetResultSuffix = "/twin/get/result"
+
+	BlueTooth         = "bluetooth"
+	ModBus            = "modbus"
+	Led               = "led"
+	IncorrectInstance = "incorrect-instance"
 )
 
 var (
@@ -325,14 +330,14 @@ func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool
 		Transport: tr,
 	}
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		body := pod
 		respBytes, err := json.Marshal(body)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 	}
 	if err != nil {
@@ -367,7 +372,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 	}
 
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageURL, nodeselector, configmapname, replica)
 		if err != nil {
 			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
@@ -377,7 +382,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 	}
 	if err != nil {
@@ -543,7 +548,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 	}
 
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		body := newDeviceModelObject(protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
@@ -559,7 +564,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -592,7 +597,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		Transport: tr,
 	}
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
@@ -608,7 +613,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -633,24 +638,24 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 	var deviceInstance v1alpha1.Device
 	if !updated {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceInstance = NewBluetoothDeviceInstance(nodeSelector)
-		case "modbus":
+		case ModBus:
 			deviceInstance = NewModbusDeviceInstance(nodeSelector)
-		case "led":
+		case Led:
 			deviceInstance = NewLedDeviceInstance(nodeSelector)
-		case "incorrect-instance":
+		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	} else {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceInstance = UpdatedBluetoothDeviceInstance(nodeSelector)
-		case "modbus":
+		case ModBus:
 			deviceInstance = UpdatedModbusDeviceInstance(nodeSelector)
-		case "led":
+		case Led:
 			deviceInstance = UpdatedLedDeviceInstance(nodeSelector)
-		case "incorrect-instance":
+		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	}
@@ -662,22 +667,22 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 	var deviceModel v1alpha1.DeviceModel
 	if !updated {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceModel = NewBluetoothDeviceModel()
-		case "modbus":
+		case ModBus:
 			deviceModel = NewModbusDeviceModel()
-		case "led":
+		case Led:
 			deviceModel = NewLedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
 		}
 	} else {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceModel = UpdatedBluetoothDeviceModel()
-		case "modbus":
+		case ModBus:
 			deviceModel = UpdatedModbusDeviceModel()
-		case "led":
+		case Led:
 			deviceModel = UpdatedLedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
