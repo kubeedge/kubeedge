@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
@@ -61,8 +62,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.
 			if config.LeaderElection.LeaderElect {
-				//TODO: expose electionChecker to a http server
 				electionChecker := kele.NewLeaderReadyzAdaptor(time.Second * 20)
+				hubconfig.Config.Checker = electionChecker
 				kele.Run(config, electionChecker)
 				return
 			}
