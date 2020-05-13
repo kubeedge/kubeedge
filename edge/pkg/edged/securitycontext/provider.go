@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/docker/docker/api/types/container"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 //SimpleSecurityContextProvider is object ot define security context provider

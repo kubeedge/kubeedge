@@ -24,8 +24,8 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
+	actionmanager "github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
+	dataconverter "github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
 )
 

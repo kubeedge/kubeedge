@@ -46,6 +46,7 @@ linters:
   disable-all: true
   enable:
     - gofmt
+    - goimports
     - golint
     - misspell
     - whitespace

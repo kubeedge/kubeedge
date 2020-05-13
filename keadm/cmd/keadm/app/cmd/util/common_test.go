@@ -17,8 +17,9 @@ limitations under the License.
 package util
 
 import (
-	"k8s.io/apimachinery/pkg/version"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/version"
 )
 
 func TestManagedKubernetesVersion(t *testing.T) {

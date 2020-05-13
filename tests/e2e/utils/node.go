@@ -30,7 +30,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/onsi/gomega"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 func getpwd() string {

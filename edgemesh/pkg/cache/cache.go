@@ -1,6 +1,6 @@
 package cache
 
-import "github.com/hashicorp/golang-lru"
+import lru "github.com/hashicorp/golang-lru"
 
 const DefaultCapacity = 20
 
