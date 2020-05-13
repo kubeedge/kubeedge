@@ -244,10 +244,10 @@ func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configm
 	var depObj *apps.DeploymentSpec
 	var namespace string
 
-	if edgecore == true {
+	if edgecore {
 		depObj = edgecoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
-	} else if cloudcore == true {
+	} else if cloudcore {
 		depObj = cloudcoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
 	} else {
@@ -348,7 +348,7 @@ func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
 
@@ -393,7 +393,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
 
@@ -447,16 +447,14 @@ func ExposeCloudService(name, serviceHandler string) error {
 		Fatalf("HTTP request is failed :%v", err)
 		return err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
 }
 
 // CreateServiceObject function to create a servcice object
 func CreateServiceObject(name string) *v1.Service {
-	var portInfo []v1.ServicePort
-
-	portInfo = []v1.ServicePort{
+	portInfo := []v1.ServicePort{
 		{
 			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000),
 		}, {
@@ -577,7 +575,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
 
@@ -626,14 +624,14 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
 
 // newDeviceInstanceObject creates a new device instance object
 func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha1.Device {
 	var deviceInstance v1alpha1.Device
-	if updated == false {
+	if !updated {
 		switch protocolType {
 		case "bluetooth":
 			deviceInstance = NewBluetoothDeviceInstance(nodeSelector)
@@ -662,7 +660,7 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 // newDeviceModelObject creates a new device model object
 func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceModel {
 	var deviceModel v1alpha1.DeviceModel
-	if updated == false {
+	if !updated {
 		switch protocolType {
 		case "bluetooth":
 			deviceModel = NewBluetoothDeviceModel()
@@ -707,7 +705,9 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, ex
 		for _, deviceModel := range list.Items {
 			if expectedDeviceModel.ObjectMeta.Name == deviceModel.ObjectMeta.Name {
 				modelExists = true
-				if reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) == false || expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace || reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) == false {
+				if !reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) ||
+					expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) {
 					return nil, errors.New("The device model is not matching with what was expected")
 				}
 			}
@@ -738,7 +738,10 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceAPI string, expectedDevice *v
 		for _, device := range list.Items {
 			if expectedDevice.ObjectMeta.Name == device.ObjectMeta.Name {
 				deviceExists = true
-				if reflect.DeepEqual(expectedDevice.TypeMeta, device.TypeMeta) == false || expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace || reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) == false || reflect.DeepEqual(expectedDevice.Spec, device.Spec) == false {
+				if !reflect.DeepEqual(expectedDevice.TypeMeta, device.TypeMeta) ||
+					expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
+					!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
 					return nil, errors.New("The device is not matching with what was expected")
 				}
 				twinExists := false
@@ -746,7 +749,7 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceAPI string, expectedDevice *v
 					for _, twin := range device.Status.Twins {
 						if expectedTwin.PropertyName == twin.PropertyName {
 							twinExists = true
-							if reflect.DeepEqual(expectedTwin.Desired, twin.Desired) == false {
+							if !reflect.DeepEqual(expectedTwin.Desired, twin.Desired) {
 								return nil, errors.New("Status twin " + twin.PropertyName + " not as expected")
 							}
 						}
@@ -847,7 +850,7 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	if reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) == false || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) == false {
+	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
 		return false
 	}
 	return true

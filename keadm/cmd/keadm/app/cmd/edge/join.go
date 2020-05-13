@@ -50,8 +50,8 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 		joinOptions = newJoinOptions()
 	}
 
-	tools := make(map[string]types.ToolsInstaller, 0)
-	flagVals := make(map[string]types.FlagData, 0)
+	tools := make(map[string]types.ToolsInstaller)
+	flagVals := make(map[string]types.FlagData)
 
 	cmd := &cobra.Command{
 		Use:     "join",

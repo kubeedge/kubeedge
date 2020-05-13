@@ -87,15 +87,9 @@ func GenerateToken() error {
 	t := time.NewTicker(time.Hour * 12)
 	go func() {
 		for {
-			select {
-			case <-t.C:
-				refreshedCaHashToken := refreshToken()
-				err := CreateTokenSecret([]byte(refreshedCaHashToken))
-				if err != nil {
-					klog.Errorf("Failed to create tokenSecret, err: %v", err)
-					return
-				}
-			}
+			<-t.C
+			refreshedCaHashToken := refreshToken()
+			CreateTokenSecret([]byte(refreshedCaHashToken))
 		}
 	}()
 	klog.Info("Succeed to creating token")

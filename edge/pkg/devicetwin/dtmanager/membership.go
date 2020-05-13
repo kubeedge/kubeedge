@@ -167,7 +167,7 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 	if !delta {
 		baseMessage.EventID = ""
 	}
-	if toAdd == nil || len(toAdd) == 0 {
+	if len(toAdd) == 0 {
 		return
 	}
 	dealType := 0
