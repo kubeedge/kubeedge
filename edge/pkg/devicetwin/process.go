@@ -157,9 +157,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		return err
 	}
 	attributes := make([]dtclient.DeviceAttr, 0)
-	for _, attr := range *deviceAttr {
-		attributes = append(attributes, attr)
-	}
+	attributes = append(attributes, *deviceAttr...)
 
 	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
@@ -167,9 +165,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 		return err
 	}
 	twins := make([]dtclient.DeviceTwin, 0)
-	for _, twin := range *deviceTwin {
-		twins = append(twins, twin)
-	}
+	twins = append(twins, *deviceTwin...)
 
 	context.DeviceList.Store(deviceID, &dttype.Device{
 		ID:          deviceID,

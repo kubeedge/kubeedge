@@ -54,10 +54,8 @@ func (m *manager) Start() {
 	syncTicker := time.Tick(syncPeriod)
 
 	go wait.Forever(func() {
-		select {
-		case <-syncTicker:
-			m.updatePodStatus()
-		}
+		<-syncTicker
+		m.updatePodStatus()
 	}, 0)
 }
 

@@ -86,7 +86,6 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 
 	// Monitor system signal and shutdown gracefully and it should be in main gorutine
 	core.GracefulShutdown()
-	return
 }
 
 // makeLeaderElectionConfig builds a leader election configuration. It will
@@ -125,7 +124,7 @@ func makeLeaderElectionConfig(config componentbaseconfig.LeaderElectionConfigura
 // Try to patch PodReadinessGate if program runs in pod
 func TryToPatchPodReadinessGate() error {
 	podname, isInPod := os.LookupEnv("CLOUDCORE_POD_NAME")
-	if isInPod == true {
+	if isInPod {
 		namespace := os.Getenv("CLOUDCORE_POD_NAMESPACE")
 		klog.Infof("CloudCore is running in pod %v/%v, try to patch PodReadinessGate", namespace, podname)
 		//TODO: use specific clients

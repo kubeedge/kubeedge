@@ -208,7 +208,7 @@ func ApplyLabel(nodeHandler string) error {
 				break
 			}
 		}
-		if isMasterNode == false {
+		if !isMasterNode {
 			utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal)
 		}
 	}
@@ -314,7 +314,7 @@ func SendHTTPRequest(method, reqAPI string, body io.Reader) (*http.Response, err
 		return resp, err
 	}
 	if resp != nil {
-		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	}
 	return resp, nil
 }
