@@ -228,7 +228,7 @@ func (q *ChannelMessageQueue) Connect(info *model.HubInfo) {
 	_, listStoreExit := q.listStorePool.Load(info.NodeID)
 
 	if queueExist && storeExit && listQueueExist && listStoreExit {
-		klog.Infof("edge node %s is already connected", info.NodeID)
+		klog.Infof("Message queue and store for edge node %s are already exist", info.NodeID)
 		return
 	}
 
