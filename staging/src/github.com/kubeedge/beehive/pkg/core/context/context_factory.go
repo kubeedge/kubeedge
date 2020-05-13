@@ -40,7 +40,7 @@ func InitContext(contextType string) {
 	})
 }
 
-func GetContext() gocontext.Context{
+func GetContext() gocontext.Context {
 	return context.ctx
 }
 func Done() <-chan struct{} {
