@@ -58,4 +58,3 @@ func TestNewConnection(t *testing.T) {
 		})
 	}
 }
-

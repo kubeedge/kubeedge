@@ -227,4 +227,3 @@ func TestGetFlags(t *testing.T) {
 		})
 	}
 }
-
