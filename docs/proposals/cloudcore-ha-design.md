@@ -157,6 +157,6 @@ func (l *ReadyzAdaptor) Check(req *http.Request) error {
 	return l.le.Check(l.timeout)
 }
 ```
-At present, it is tentatively decided that this handle path is `/readyz/isLeader`.And register the handle to cloudhub http server.
+At present, it is tentatively decided that this handle path is `/isCloudcoreReady`.And register the handle to cloudhub https server.
 
   
