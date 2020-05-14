@@ -226,9 +226,11 @@ func GetLatestVersion() (string, error) {
 	//Download the tar from repo
 	versionURL := "curl -k " + latestReleaseVersionURL
 	cmd := exec.Command("sh", "-c", versionURL)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	latestReleaseData, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%v:%v", err, stderr.String())
 	}
 
 	latestRelease := &latestReleaseVersion{}
