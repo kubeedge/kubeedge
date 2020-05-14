@@ -47,5 +47,6 @@ linters:
   enable:
     - gofmt
     - golint
+    - govet
     - misspell
     - whitespace
