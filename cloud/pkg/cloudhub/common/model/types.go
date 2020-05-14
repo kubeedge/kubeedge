@@ -55,6 +55,10 @@ const (
 	NodeID    = "node_id"
 )
 
+const (
+	StopGetFromQueue = "stopgetfromqueue"
+)
+
 // HubInfo saves identifier information for edge hub
 type HubInfo struct {
 	ProjectID string
