@@ -10,7 +10,7 @@ approvers:
 
 creation-date: 2020-03-28
 last-updated: 2020-05-09
-status: alpha
+status: Implemented
 
 ---
 # CloudCore High Availability Design
