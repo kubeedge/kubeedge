@@ -45,6 +45,7 @@ const (
 	DefaultConcurrentConsumers         = 5
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
+	DefaultTunnelPort                  = 10004
 )
 const (
 	DefaultPodStatusSyncInterval = 60
