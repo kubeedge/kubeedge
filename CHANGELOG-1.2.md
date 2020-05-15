@@ -1,21 +1,21 @@
 
-   * [v1.2.1](#v121)
-      * [Downloads for v1.2.1](#downloads-for-v121)
-         * [KubeEdge Binaries](#kubeedge-binaries)
-         * [Installer Binaries](#installer-binaries)
-         * [EdgeSite Binaries](#edgesite-binaries)
-      * [KubeEdge v1.2.1 Release Notes](#kubeedge-v121-release-notes)
-         * [Changelog since v1.2.0](#changelog-since-v120)
-   * [v1.2.0](#v120)
-      * [Downloads for v1.2.0](#downloads-for-v120)
-         * [KubeEdge Binaries](#kubeedge-binaries)
-         * [Installer Binaries](#installer-binaries)
-         * [EdgeSite Binaries](#edgesite-binaries)
-      * [KubeEdge v1.2 Release Notes](#kubeedge-v12-release-notes)
-         * [1.2 What's New](#12-whats-new)
-         * [Known Issues](#known-issues)
-         * [Other notable changes](#other-notable-changes)
-         
+  * [v1.2.1](#v121)
+     * [Downloads for v1.2.1](#downloads-for-v121)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+        * [EdgeSite Binaries](#edgesite-binaries)
+     * [KubeEdge v1.2.1 Release Notes](#kubeedge-v121-release-notes)
+        * [Changelog since v1.2.0](#changelog-since-v120)
+  * [v1.2.0](#v120)
+     * [Downloads for v1.2.0](#downloads-for-v120)
+        * [KubeEdge Binaries](#kubeedge-binaries-1)
+        * [Installer Binaries](#installer-binaries-1)
+        * [EdgeSite Binaries](#edgesite-binaries-1)
+     * [KubeEdge v1.2 Release Notes](#kubeedge-v12-release-notes)
+        * [1.2 What's New](#12-whats-new)
+        * [Known Issues](#known-issues)
+        * [Other notable changes](#other-notable-changes)
+
 # v1.2.1
 
 ## Downloads for v1.2.1
@@ -38,12 +38,12 @@
 | [edgesite-v1.2.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.1/edgesite-v1.2.1-linux-arm.tar.gz) | 25.7 MB | `e20f9384c8d7eed7ca946928adb0723b512d5dba5db48f6ed3ea96430a7471a7f90bbc58a3282788596220f516d290827f4b0c4c0bcb210bcfc911cb15142098` |
 
 
-# KubeEdge v1.2.1 Release Notes
+## KubeEdge v1.2.1 Release Notes
 
-Keadm is not responsible for installing K8s and Runtime now. Users need to install a K8s Master first or use an existing cluster. 
+Keadm is not responsible for installing K8s and Runtime now. Users need to install a K8s Master first or use an existing cluster.
 Refer to the documentation: [Install KubeEdge with Keadm](./docs/setup/kubeedge_install_keadm.md)
 
-## Changelog since v1.2.0
+### Changelog since v1.2.0
 
 - Fix bug for creating controller-manager and schduler pod in edgenode. ([#1484](https://github.com/kubeedge/kubeedge/pull/1484), [@fisherxu](https://github.com/fisherxu))
 
@@ -83,9 +83,9 @@ Refer to the documentation: [Install KubeEdge with Keadm](./docs/setup/kubeedge_
 | [edgesite-v1.2.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.0/edgesite-v1.2.0-linux-amd64.tar.gz) | 27.8 MB | `e655c00791b01eb27d57b276d1ba666b482729761fc795776bbb17a86b728c41f84918bc1ec002b8cabd45222334229ea1cb9f38c42e9eda1c69ee0ef3480b72` |
 | [edgesite-v1.2.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.2.0/edgesite-v1.2.0-linux-arm.tar.gz) | 25.4 MB | `d07d05a28614ae96cde6ec2706ebe9d03f6cb93042261c3ae9158508eac291a47131c73f706f828798e2ce7781700aaa148b0cf4cac88ca58a0f72df50acd669` |
 
-# KubeEdge v1.2 Release Notes
+## KubeEdge v1.2 Release Notes
 
-## 1.2 What's New
+### 1.2 What's New
 
 **Reliable message delivery from cloud to edge**
 
