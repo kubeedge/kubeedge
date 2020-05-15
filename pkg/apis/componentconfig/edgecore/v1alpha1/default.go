@@ -17,7 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path"
 
@@ -93,18 +94,21 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Enable:           false,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           localIP + ":10001",
+					Server:           net.JoinHostPort(localIP, "10001"),
 					WriteDeadline:    15,
 				},
 				WebSocket: &EdgeHubWebSocket{
 					Enable:           true,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           localIP + ":10000",
+					Server:           net.JoinHostPort(localIP, "10000"),
 					WriteDeadline:    15,
 				},
-				HTTPServer: fmt.Sprintf("https://%s:10002", localIP),
-				Token:      "",
+				HTTPServer: (&url.URL{
+					Scheme: "https",
+					Host:   net.JoinHostPort(localIP, "10002"),
+				}).String(),
+				Token: "",
 			},
 			EventBus: &EventBus{
 				Enable:               true,
@@ -144,7 +148,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
 				HandshakeTimeout:        30,
 				ReadDeadline:            15,
-				TunnelServer:            fmt.Sprintf("127.0.0.1:%v", constants.DefaultTunnelPort),
+				TunnelServer:            net.JoinHostPort("127.0.0.1", string(constants.DefaultTunnelPort)),
 				WriteDeadline:           15,
 			},
 		},
@@ -193,11 +197,14 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 					Enable:           true,
 					HandshakeTimeout: 30,
 					ReadDeadline:     15,
-					Server:           localIP + ":10000",
+					Server:           net.JoinHostPort(localIP, "10000"),
 					WriteDeadline:    15,
 				},
-				HTTPServer: fmt.Sprintf("https://%s:10002", localIP),
-				Token:      "",
+				HTTPServer: (&url.URL{
+					Scheme: "https",
+					Host:   net.JoinHostPort(localIP, "10002"),
+				}).String(),
+				Token: "",
 			},
 			EventBus: &EventBus{
 				MqttQOS:            0,
