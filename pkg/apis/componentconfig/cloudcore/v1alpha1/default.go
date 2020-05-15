@@ -142,7 +142,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSTunnelCAFile:         constants.DefaultCAFile,
 				TLSTunnelCertFile:       constants.DefaultCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
-				TunnelPort:              10002,
+				TunnelPort:              constants.DefaultTunnelPort,
 				TLSStreamCAFile:         constants.DefaultStreamCAFile,
 				TLSStreamCertFile:       constants.DefaultStreamCertFile,
 				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
