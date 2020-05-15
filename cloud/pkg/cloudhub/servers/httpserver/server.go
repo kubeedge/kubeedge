@@ -24,12 +24,12 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog"
 
@@ -230,9 +230,13 @@ func PrepareAllCerts() error {
 		// Check whether the CloudCore certificates exist in the secret
 		secretHasCert := CheckCertExistsFromSecret()
 		if !secretHasCert {
-			certDER, keyDER := SignCerts()
+			certDER, keyDER, err := SignCerts()
+			if err != nil {
+				klog.Errorf("failed to sign a certificate, error: %v", err)
+				return err
+			}
 
-			err := CreateCloudCoreSecret(certDER, keyDER)
+			err = CreateCloudCoreSecret(certDER, keyDER)
 			if err != nil {
 				klog.Errorf("failed to create cloudcore cert to secrets, error: %v", err)
 				return err
