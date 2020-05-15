@@ -357,7 +357,7 @@ type CloudStream struct {
 	// default /etc/kubeedge/certs/edge.key
 	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
 	// TunnelPort set open port for tunnel server
-	// default 10002
+	// default 10004
 	TunnelPort uint32 `json:"tunnelPort,omitempty"`
 
 	// TLSStreamCAFile indicates kube-apiserver ca file path
