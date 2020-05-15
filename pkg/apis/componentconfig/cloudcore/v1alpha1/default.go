@@ -21,6 +21,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	componentbaseconfig "k8s.io/component-base/config"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -29,6 +30,8 @@ import (
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
+	advertiseAddress, _ := utilnet.ChooseHostInterface()
+
 	c := &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -51,6 +54,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
 				WriteTimeout:      30,
+				AdvertiseAddress:  []string{advertiseAddress.String()},
 				Quic: &CloudHubQUIC{
 					Enable:             false,
 					Address:            "0.0.0.0",
@@ -160,6 +164,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 
 // NewMinCloudCoreConfig returns a min CloudCoreConfig object
 func NewMinCloudCoreConfig() *CloudCoreConfig {
+	advertiseAddress, _ := utilnet.ChooseHostInterface()
+
 	return &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -176,6 +182,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				TLSCAKeyFile:      constants.DefaultCAKeyFile,
 				TLSCertFile:       constants.DefaultCertFile,
 				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				AdvertiseAddress:  []string{advertiseAddress.String()},
 				UnixSocket: &CloudHubUnixSocket{
 					Enable:  true,
 					Address: "unix:///var/lib/kubeedge/kubeedge.sock",
