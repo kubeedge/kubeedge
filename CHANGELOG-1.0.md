@@ -1,22 +1,22 @@
 
-   * [v1.0.0](#v100)
-      * [Downloads for v1.0.0](#downloads-for-v100)
-         * [KubeEdge Binaries](#kubeedge-binaries)
-         * [Installer Binaries](#installer-binaries)
-         * [EdgeSite Binaries](#edgesite-binaries)
-      * [KubeEdge v1.0 Release Notes](#kubeedge-v10-release-notes)
-         * [1.0 What's New](#10-whats-new)
-         * [Known Issues](#known-issues)
-         * [Other notable changes](#other-notable-changes)
-   * [v1.0.0-beta.0](#v100-beta0)
-      * [Downloads for v1.0.0-beta.0](#downloads-for-v100-beta0)
-         * [KubeEdge Binaries](#kubeedge-binaries-1)
-         * [Installer Binaries](#installer-binaries-1)
-         * [EdgeSite Binaries](#edgesite-binaries-1)
-      * [Changelog since v0.3.0](#changelog-since-v030)
-         * [Features Added](#features-added)
-         * [Known Issues](#known-issues-1)
-         * [Other notable changes](#other-notable-changes-1)
+  * [v1.0.0](#v100)
+     * [Downloads for v1.0.0](#downloads-for-v100)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+        * [EdgeSite Binaries](#edgesite-binaries)
+     * [KubeEdge v1.0 Release Notes](#kubeedge-v10-release-notes)
+        * [1.0 What's New](#10-whats-new)
+        * [Known Issues](#known-issues)
+        * [Other notable changes](#other-notable-changes)
+  * [v1.0.0-beta.0](#v100-beta0)
+     * [Downloads for v1.0.0-beta.0](#downloads-for-v100-beta0)
+        * [KubeEdge Binaries](#kubeedge-binaries-1)
+        * [Installer Binaries](#installer-binaries-1)
+        * [EdgeSite Binaries](#edgesite-binaries-1)
+     * [Changelog since v0.3.0](#changelog-since-v030)
+        * [Features Added](#features-added)
+        * [Known Issues](#known-issues-1)
+        * [Other notable changes](#other-notable-changes-1)
 
 # v1.0.0
 
@@ -39,9 +39,9 @@
 | [edgesite-v1.0.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/edgesite-v1.0.0-linux-amd64.tar.gz) | 24.6 MB | `afe61db4908fa67e0aadd8ab26e35224a1de8096130c2df681780befdc317331c8a2be2a298d89e6603ad36dd19e339f7256f887d1d2fd5464b3ab4c43aae3c8` |
 | [edgesite-v1.0.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.0.0/edgesite-v1.0.0-linux-arm.tar.gz) | 22.5 MB | `1ea16aad0dc0f3517d9bddcc5de16d5b46dd881ac3cc4ff7522188dad176a517fa111c3b81a223e71f45d8e69096dbedf0703d9e2592dcec292a6231e455224d` |
 
-# KubeEdge v1.0 Release Notes
+## KubeEdge v1.0 Release Notes
 
-## 1.0 What's New
+### 1.0 What's New
 
 **Edge Mesh**
 
@@ -112,7 +112,7 @@ Edge Site enables to run a standalone Kubernetes cluster at the edge along with 
 
 ## Changelog since v0.3.0
 
-### Features Added 
+### Features Added
 
 
 **Edge Mesh**
