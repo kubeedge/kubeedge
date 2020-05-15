@@ -1,13 +1,13 @@
 
-   * [v1.1.0](#v110)
-      * [Downloads for v1.1.0](#downloads-for-v110)
-         * [KubeEdge Binaries](#kubeedge-binaries)
-         * [Installer Binaries](#installer-binaries)
-         * [EdgeSite Binaries](#edgesite-binaries)
-      * [KubeEdge v1.1 Release Notes](#kubeedge-v11-release-notes)
-         * [1.1 What's New](#11-whats-new)
-         * [Known Issues](#known-issues)
-         * [Other notable changes](#other-notable-changes)
+  * [v1.1.0](#v110)
+     * [Downloads for v1.1.0](#downloads-for-v110)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+        * [EdgeSite Binaries](#edgesite-binaries)
+     * [KubeEdge v1.1 Release Notes](#kubeedge-v11-release-notes)
+        * [1.1 What's New](#11-whats-new)
+        * [Known Issues](#known-issues)
+        * [Other notable changes](#other-notable-changes)
 
 # v1.1.0
 
@@ -30,9 +30,9 @@
 | [edgesite-v1.1.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.1.0/edgesite-v1.1.0-linux-amd64.tar.gz) | 27.4 MB | `a16d7f5e2f45ecb0f500f794c4f07ea74b2663bcac8008711a44b3cdea34d1f104f38c1c147ca90f3ab1ff7cf529d4445c1da34c3eff3386fc9b98f45ee173be` |
 | [edgesite-v1.1.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.1.0/edgesite-v1.1.0-linux-arm.tar.gz) | 25.1 MB | `facef575c67759d234568fef16cf7d8e2797874520f845817b56372a45413448aa55a9014d33de5535dd7a73b4d521ad5ebdedaff9f147e838a7f8d2887f4bf4` |
 
-# KubeEdge v1.1 Release Notes
+## KubeEdge v1.1 Release Notes
 
-## 1.1 What's New
+### 1.1 What's New
 
 **Container Storage Interface (CSI) support**
 
