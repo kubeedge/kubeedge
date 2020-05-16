@@ -16,6 +16,8 @@ limitations under the License.
 package loadtest
 
 import (
+	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -86,9 +88,12 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		wsPort, quicPort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		wsNodePort := strconv.FormatInt(int64(wsPort), 10)
 		quicNodePort := strconv.FormatInt(int64(quicPort), 10)
-		quiccloudHubURL = cloudCoreHostIP + ":" + quicNodePort
+		quiccloudHubURL = net.JoinHostPort(cloudCoreHostIP, quicNodePort)
 		cloudHubURL = quiccloudHubURL
-		wsscloudHubURL = "wss://" + cloudCoreHostIP + ":" + wsNodePort
+		wsscloudHubURL = (&url.URL{
+			Scheme: "wss",
+			Host:   net.JoinHostPort(cloudCoreHostIP, wsNodePort),
+		}).String()
 		cloudHubURL = wsscloudHubURL
 
 		//Deploye edgecore as a k8s resource to cluster-2
