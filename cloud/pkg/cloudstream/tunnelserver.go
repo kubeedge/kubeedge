@@ -19,19 +19,20 @@ package cloudstream
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/kubeedge/kubeedge/pkg/stream"
-
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
 	"k8s.io/klog"
 
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
 type TunnelServer struct {
@@ -102,24 +103,27 @@ func (s *TunnelServer) Start() {
 	s.installDefaultHandler()
 	data, err := ioutil.ReadFile(config.Config.TLSTunnelCAFile)
 	if err != nil {
-		klog.Fatalf("Read tls tunnel ca file error %v", err)
-		return
+		data = hubconfig.Config.Ca
+		klog.Info("Succeeded in loading TLSTunnelCAFile from the secret")
 	}
 	pool := x509.NewCertPool()
-	pool.AppendCertsFromPEM(data)
+	pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: data}))
 
 	cert, err := ioutil.ReadFile(config.Config.TLSTunnelCertFile)
 	if err != nil {
-		klog.Fatalf("Read cert file %v error %v", config.Config.TLSTunnelCertFile, err)
+		cert = hubconfig.Config.Cert
+		klog.Info("Succeeded in loading TLSTunnelCertFile from the secret")
 	}
 	key, err := ioutil.ReadFile(config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
-		klog.Fatalf("Read key file %v error %v", config.Config.TLSTunnelPrivateKeyFile, err)
+		key = hubconfig.Config.Key
+		klog.Info("Succeeded in loading TLSTunnelPrivateKeyFile from the secret")
 	}
-	certificate, err := tls.X509KeyPair(cert, key)
+	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
 	if err != nil {
 		panic(err)
 	}
+	klog.Info("Succeeded in loading TLSTunnelCert and Key")
 
 	tunnelServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Config.TunnelPort),
@@ -129,7 +133,7 @@ func (s *TunnelServer) Start() {
 			Certificates: []tls.Certificate{certificate},
 			ClientAuth:   tls.RequireAndVerifyClientCert,
 			MinVersion:   tls.VersionTLS12,
-			CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+			CipherSuites: []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256},
 		},
 	}
 	klog.Infof("Prepare to start tunnel server ...")
