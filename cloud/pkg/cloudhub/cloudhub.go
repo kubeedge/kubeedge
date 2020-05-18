@@ -20,6 +20,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
+var DoneTLSTunnelCerts = make(chan bool, 1)
+
 type cloudHub struct {
 	enable bool
 }
@@ -69,6 +71,9 @@ func (a *cloudHub) Start() {
 	if err := httpserver.PrepareAllCerts(); err != nil {
 		klog.Fatal(err)
 	}
+	// TODO: Will improve in the future
+	DoneTLSTunnelCerts <- true
+	close(DoneTLSTunnelCerts)
 
 	// generate Token
 	if err := httpserver.GenerateToken(); err != nil {
