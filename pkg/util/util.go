@@ -18,6 +18,7 @@ package util
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -453,8 +454,11 @@ func ValidateNodeIP(nodeIP net.IP) error {
 //Command executes command and returns output
 func Command(name string, arg []string) (string, error) {
 	cmd := exec.Command(name, arg...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	ret, err := cmd.Output()
 	if err != nil {
+		err = fmt.Errorf("%v: %v", err, stderr.String())
 		klog.Errorf("exec command failed: %v", err)
 		return string(ret), err
 	}

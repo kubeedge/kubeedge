@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"github.com/kubeedge/kubeedge/pkg/util"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
@@ -225,16 +226,13 @@ func IsCloudCore() (types.ModuleRunning, error) {
 func GetLatestVersion() (string, error) {
 	//Download the tar from repo
 	versionURL := "curl -k " + latestReleaseVersionURL
-	cmd := exec.Command("sh", "-c", versionURL)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	latestReleaseData, err := cmd.Output()
+	latestReleaseData, err := util.Command("sh",[]string{"-c",versionURL})
 	if err != nil {
-		return "", fmt.Errorf("%v:%v", err, stderr.String())
+		return "", err
 	}
 
 	latestRelease := &latestReleaseVersion{}
-	err = json.Unmarshal(latestReleaseData, latestRelease)
+	err = json.Unmarshal([]byte(latestReleaseData), latestRelease)
 	if err != nil {
 		return "", err
 	}
