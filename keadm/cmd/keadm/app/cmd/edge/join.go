@@ -122,8 +122,9 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	}
 	if kubeVer == "" {
 		var latestVersion string
+		var err error
 		for i := 0; i < util.RetryTimes; i++ {
-			latestVersion, err := util.GetLatestVersion()
+			latestVersion, err = util.GetLatestVersion()
 			if err != nil {
 				return err
 			}
