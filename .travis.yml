@@ -47,7 +47,7 @@ jobs:
       script:
         - make
         - make bluetoothdevice
-        - make smallbuild 
+        - make smallbuild
         - make crossbuild
         - make crossbuild GOARM=GOARM7
     - name: "unit test, integration test edge"
@@ -103,12 +103,14 @@ jobs:
         - make
         - make bluetoothdevice
         - make smallbuild
-    - name: "unit test"
+    - name: "unit test, interation test edge"
       arch: arm64
       before_script:
+        - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=vendor
       script:
         - make test
+        - make integrationtest
     - name: "build docker images on arm64"
       arch: arm64
       script:
