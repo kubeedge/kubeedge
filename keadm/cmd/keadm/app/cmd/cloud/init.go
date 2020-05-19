@@ -94,6 +94,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.Master, types.Master, initOpts.Master,
 		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
+
+	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
+		"Use this key to set SANs in certificate of cloudcore. eg: 10.10.102.78,10.10.102.79")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -134,6 +137,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			KubeConfig:  initOptions.KubeConfig,
 			Master:      initOptions.Master,
 		},
+		AdvertiseAddress: initOptions.AdvertiseAddress,
 	}
 	return nil
 }
