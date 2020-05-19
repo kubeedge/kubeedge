@@ -48,7 +48,7 @@ CloudCore now supports high availability deployment with active-standby mode ([#
 
 **EdgeNode auto TLS Bootstrapping**
 
-KubeEdge is now able to generate certificates and enforce TLS between CloudCore and EdgeCore automatically. ([#1605](https://github.com/kubeedge/kubeedge/pull/1605), [@fisherxu](https://github.com/fisherxu), [@ls889](https://github.com/ls889))
+KubeEdge is now able to generate certificates and enforce TLS between CloudCore and EdgeCore automatically. ([#1605](https://github.com/kubeedge/kubeedge/pull/1605), [@fisherxu](https://github.com/fisherxu), [@ls889](https://github.com/ls889),  [@XJangel](https://github.com/XJangel))
 
 **Edge Pod Logs**
 
