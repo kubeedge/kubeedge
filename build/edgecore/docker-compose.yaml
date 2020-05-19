@@ -21,7 +21,7 @@ services:
     image: ${EDGECOREIMAGE}
     build:
        context: ../..
-       dockerfile: ./build/edge/Dockerfile
+       dockerfile: ./build/edgecore/Dockerfile
        args:
         - BUILD_FROM=${ARCH}/golang:1.12-alpine3.10
         - RUN_FROM=${ARCH}/docker:dind

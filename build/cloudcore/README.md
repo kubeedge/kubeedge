@@ -4,7 +4,7 @@ This method will guide you to deploy the cloud part into a k8s cluster,
 so you need to login to the k8s master node (or where else if you can
 operate the cluster with `kubectl`).
 
-The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud`
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloudcore`
 will be used, so place these files to somewhere you can kubectl with.
 
 ### Prepare cloud image
@@ -21,7 +21,7 @@ For version lower than 1.3.0, we need to generate the tls certs and create
 `06-secret.yaml` based on it.
 
 ```bash
-cd build/cloud
+cd build/cloudcore
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 

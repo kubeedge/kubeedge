@@ -6,7 +6,7 @@ container and MQTT Broker, so make sure that docker engine listening on
 
 + Check the container runtime environment
   ```bash
-  cd build/edge
+  cd build/edgecore
   ./run_daemon.sh prepare
   ```
 

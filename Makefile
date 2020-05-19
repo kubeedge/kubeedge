@@ -1,5 +1,3 @@
-# make all builds both cloud and edge binaries
-
 BINARIES=cloudcore \
 	admission \
 	edgecore \
@@ -12,11 +10,11 @@ COMPONENTS=cloud \
 .EXPORT_ALL_VARIABLES:
 OUT_DIR ?= _output
 
-define ALL_HELP_INFO
-# Build code.
+define BINARY_HELP_INFO
+# Build binaries.
 #
 # Args:
-#   WHAT: binary names to build. support: $(BINARIES)
+#   WHAT: binary name to build. support: $(BINARIES)
 #         the build will produce executable files under $(OUT_DIR)
 #         If not specified, "everything" will be built.
 #
@@ -29,12 +27,11 @@ endef
 .PHONY: all
 ifeq ($(HELP),y)
 all: clean
-	@echo "$$ALL_HELP_INFO"
+	@echo "$$BINARY_HELP_INFO"
 else
 all: verify-golang
 	hack/make-rules/build.sh $(WHAT)
 endif
-
 
 define VERIFY_HELP_INFO
 # verify golang,vendor and codegen
@@ -103,10 +100,6 @@ INTEGRATION_TEST_COMPONENTS=edge
 define INTEGRATION_TEST_HELP_INFO
 # run integration test.
 #
-# Args:
-#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS)
-#         If not specified, "everything" will be integration check.
-#
 # Example:
 #   make integrationtest
 #   make integrationtest HELP=y
@@ -122,27 +115,27 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-CROSSBUILD_COMPONENTS=edgecore\
-	edgesite
-GOARM_VALUES=GOARM7 \
-	GOARM8
-
+ARCH ?= amd64
+ARCH_VALUES=amd64 \
+		 arm \
+		 arm64
 define CROSSBUILD_HELP_INFO
-# cross build components.
+# Cross build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
-#         If not specified, "everything" will be cross build.
+#   WHAT: binary name to build. support: $(BINARIES)
+#         the build will produce executable files under $(OUT_DIR)/$$ARCH
+#         If not specified, "everything" will be built.
 #
-# GOARM: go arm value, now support:$(GOARM_VALUES)
-#        If not specified ,default use GOARM=GOARM8
+# ARCH: go arch value, now support: $(ARCH_VALUES)
+#       If not specified ,default use ARCH=amd64
 #
 #
 # Example:
 #   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
-#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#   make crossbuild WHAT=edgecore ARCH=arm64
 #
 endef
 .PHONY: crossbuild
@@ -151,37 +144,8 @@ crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
 crossbuild: clean
-	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+	ARCH=$(ARCH) hack/make-rules/crossbuild.sh $(WHAT)
 endif
-
-
-
-SMALLBUILD_COMPONENTS=edgecore \
-	edgesite
-define SMALLBUILD_HELP_INFO
-# small build components.
-#
-# Args:
-#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS)
-#         If not specified, "everything" will be small build.
-#
-#
-# Example:
-#   make smallbuild
-#   make smallbuild HELP=y
-#   make smallbuild WHAT=edgecore
-#   make smallbuild WHAT=edgesite
-#
-endef
-.PHONY: smallbuild
-ifeq ($(HELP),y)
-smallbuild:
-	@echo "$$SMALLBUILD_HELP_INFO"
-else
-smallbuild: clean
-	hack/make-rules/smallbuild.sh $(WHAT)
-endif
-
 
 define E2E_HELP_INFO
 # e2e test.
@@ -236,52 +200,54 @@ clean:
 	hack/make-rules/clean.sh
 endif
 
+VERSION ?= $(shell git describe --tags)
 
-QEMU_ARCH ?= x86_64
-ARCH ?= amd64
-IMAGE_TAG ?= $(shell git describe --tags)
-GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
+define RELEASE_HELP_INFO
+# Release version.
+#
+# Example:
+#   make release
+#   make release HELP=y
+#   make release VERSION=v1.3.0
+#
+endef
+.PHONY: release
+ifeq ($(HELP),y)
+release:
+	@echo "$$RELEASE_HELP_INFO"
+else
+release: clean
+	hack/make-rules/release.sh $(VERSION)
+endif
 
-.PHONY: cloudimage
-cloudimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
+IMAGES=cloudcore \
+	admission \
+	edgecore \
+	edgesite \
+	csidriver \
+	bluetooth
 
-.PHONY: admissionimage
-admissionimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
-
-.PHONY: csidriverimage
-csidriverimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
-
-.PHONY: edgeimage
-edgeimage:
-	mkdir -p ./build/edge/tmp
-	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edge/Dockerfile .
-
-.PHONY: edgesiteimage
-edgesiteimage:
-	mkdir -p ./build/edgesite/tmp
-	rm -rf ./build/edgesite/tmp/*
-	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
-	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edgesite/Dockerfile .
+define IMAGE_HELP_INFO
+# Build images.
+#
+# Args:
+#   WHAT: component name to build. support: $(IMAGES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make image
+#   make image HELP=y
+#   make image WHAT=cloudcore
+endef
+.PHONY: image
+ifeq ($(HELP),y)
+image:
+	@echo "$$IMAGE_HELP_INFO"
+else
+image:
+	hack/make-rules/image.sh $(WHAT)
+endif
 
 .PHONY: bluetoothdevice
 bluetoothdevice: clean
 	hack/make-rules/bluetoothdevice.sh
-
-.PHONY: bluetoothdevice_image
-bluetoothdevice_image:bluetoothdevice
-	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
