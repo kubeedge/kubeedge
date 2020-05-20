@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
@@ -59,6 +58,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	return caDERBytes, err
 }
 
+// NewCloudCoreCertDERandKey creates certificate and key for CloudCore
 func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 	serverKey, err := NewPrivateKey()
 	if err != nil {
@@ -123,16 +123,4 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey cry
 		return nil, err
 	}
 	return certDERBytes, err
-}
-
-func ParseCertDerToCertificate(certDer, keyDer []byte) (*x509.Certificate, *rsa.PrivateKey, error) {
-	cert, err := x509.ParseCertificate(certDer)
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
-	key, err := x509.ParsePKCS1PrivateKey(keyDer)
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
-	return cert, key, err
 }

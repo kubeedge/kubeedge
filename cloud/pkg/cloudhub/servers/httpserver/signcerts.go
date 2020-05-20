@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -57,7 +58,8 @@ func getIps(advertiseAddress []string) (Ips []net.IP) {
 	return
 }
 
-func GenerateToken() {
+// GenerateToken will create a token consisting of caHash and jwt Token and save it to secret
+func GenerateToken() error {
 	expiresAt := time.Now().Add(time.Hour * 24).Unix()
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -70,14 +72,17 @@ func GenerateToken() {
 	tokenString, err := token.SignedString(keyPEM)
 
 	if err != nil {
-		klog.Fatalf("Failed to generate the token for edgecore register, err: %v", err)
+		return fmt.Errorf("Failed to generate the token for EdgeCore register, err: %v", err)
 	}
 
 	caHash := getCaHash()
 	// combine caHash and tokenString into caHashAndToken
 	caHashToken := strings.Join([]string{caHash, tokenString}, ".")
 	// save caHashAndToken to secret
-	CreateTokenSecret([]byte(caHashToken))
+	err = CreateTokenSecret([]byte(caHashToken))
+	if err != nil {
+		return fmt.Errorf("Failed to create tokenSecret, err: %v", err)
+	}
 
 	t := time.NewTicker(time.Hour * 12)
 	go func() {
@@ -85,10 +90,16 @@ func GenerateToken() {
 			select {
 			case <-t.C:
 				refreshedCaHashToken := refreshToken()
-				CreateTokenSecret([]byte(refreshedCaHashToken))
+				err := CreateTokenSecret([]byte(refreshedCaHashToken))
+				if err != nil {
+					klog.Errorf("Failed to create tokenSecret, err: %v", err)
+					return
+				}
 			}
 		}
 	}()
+	klog.Info("Succeed to creating token")
+	return nil
 }
 
 func refreshToken() string {
