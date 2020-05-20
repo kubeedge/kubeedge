@@ -45,7 +45,7 @@ function uninstall_kubeedge {
   [[ -n "${EDGECORE_PID-}" ]] && sudo kill "${EDGECORE_PID}" 2>/dev/null
 
   # delete data
-  rm -rf /etc/kubeedge /var/lib/kubeedge
+  rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 }
 
 # clean up
@@ -90,7 +90,8 @@ function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
-  sed -i "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" ${CLOUD_CONFIGFILE}
+  sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
+    -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
@@ -112,12 +113,13 @@ function start_edgecore {
 
   sed -i -e "s|token: .*|token: ${token}|g" \
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
+      -e "s|/etc/|/tmp/etc/|g" \
       -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 
-  export CHECK_EDGECORE_ENVIRONMENT="false"
   echo "start edgecore..."
+  export CHECK_EDGECORE_ENVIRONMENT="false"
   nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
