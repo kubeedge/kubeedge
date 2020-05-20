@@ -78,7 +78,7 @@ Take a look at our [development guide], If you are interested in building and co
 
 ## Roadmap
 
-* [2020 Q1 Roadmap](./docs/getting-started/roadmap.md#2020-q1-roadmap)
+* [2020 Q2 Roadmap](./docs/getting-started/roadmap.md#2020-q2-roadmap)
 
 ## Meeting
 
