@@ -31,7 +31,7 @@ func NewCertificateAuthorityDer() ([]byte, crypto.Signer, error) {
 	return certDER, caKey, nil
 }
 
-// NewPrivateKey creates an RSA private key
+// NewPrivateKey creates an ECDSA private key
 func NewPrivateKey() (crypto.Signer, error) {
 	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 }
