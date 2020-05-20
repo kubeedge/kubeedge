@@ -5,6 +5,8 @@ git:
 
 sudo: required
 
+os: linux
+
 dist: bionic
 
 services:
@@ -109,7 +111,6 @@ jobs:
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=vendor
       script:
-        - make test
         - make integrationtest
     - name: "build docker images on arm64"
       arch: arm64
