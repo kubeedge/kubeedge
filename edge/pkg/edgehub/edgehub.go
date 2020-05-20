@@ -67,13 +67,13 @@ func (eh *EdgeHub) Start() {
 		_, err := tls.LoadX509KeyPair(config.Config.TLSCertFile, config.Config.TLSPrivateKeyFile)
 		if err != nil {
 			if err := eh.applyCerts(); err != nil {
-				klog.Fatalf("failed to apply for edge certificate, error: %v", err)
+				klog.Fatalf("Error: %v", err)
 				return
 			}
 		}
 	} else {
 		if err := eh.applyCerts(); err != nil {
-			klog.Fatalf("failed to apply for edge certificate, error: %v", err)
+			klog.Fatalf("Error: %v", err)
 			return
 		}
 	}

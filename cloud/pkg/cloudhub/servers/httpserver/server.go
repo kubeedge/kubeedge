@@ -40,7 +40,7 @@ const (
 	certificateBlockType = "CERTIFICATE"
 )
 
-// StartHttpServer starts the http service
+// StartHTTPServer starts the http service
 func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/edge.crt", edgeCoreClientCert).Methods("GET")
@@ -152,7 +152,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 	caKeyDER := hubconfig.Config.CaKey
 	caKey, err := x509.ParseECPrivateKey(caKeyDER)
 	if err != nil {
-		return nil, fmt.Errorf("unable to ParsePKCS1PrivateKey: %v", err)
+		return nil, fmt.Errorf("unable to ParseECPrivateKey: %v", err)
 	}
 
 	certDER, err := NewCertFromCa(cfgs, caCert, clientKey, caKey) //crypto.Signer(caKey)
@@ -163,6 +163,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 	return certDER, err
 }
 
+// CheckCaExistsFromSecret checks ca from secret
 func CheckCaExistsFromSecret() bool {
 	if _, err := GetSecret(CaSecretName, NamespaceSystem); err != nil {
 		return false
@@ -171,6 +172,7 @@ func CheckCaExistsFromSecret() bool {
 
 }
 
+// CheckCertExistsFromSecret checks CloudCore certificate from secret
 func CheckCertExistsFromSecret() bool {
 	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err != nil {
 		return false
@@ -183,17 +185,22 @@ func CheckCertExistsFromSecret() bool {
 func PrepareAllCerts() error {
 	// Check whether the ca exists in the local directory
 	if hubconfig.Config.Ca == nil && hubconfig.Config.CaKey == nil {
-		klog.Infof("Ca and CaKey don't exist, and will be signed by cloudcore")
+		klog.Info("Ca and CaKey don't exist in local directory, and will read from the secret")
 		// Check whether the ca exists in the secret
 		secretHasCA := CheckCaExistsFromSecret()
 		if !secretHasCA {
+			klog.Info("Ca and CaKey don't exist in the secret, and will be created by CloudCore")
 			caDER, caKey, err := NewCertificateAuthorityDer()
 			if err != nil {
 				klog.Errorf("failed to create Certificate Authority, error: %v", err)
 				return err
 			}
 
-			caKeyDER, _ := x509.MarshalECPrivateKey(caKey.(*ecdsa.PrivateKey))
+			caKeyDER, err := x509.MarshalECPrivateKey(caKey.(*ecdsa.PrivateKey))
+			if err != nil {
+				klog.Errorf("failed to convert an EC private key to SEC 1, ASN.1 DER form, error: %v", err)
+				return err
+			}
 
 			err = CreateCaSecret(caDER, caKeyDER)
 			if err != nil {
@@ -219,17 +226,18 @@ func PrepareAllCerts() error {
 		caKey := hubconfig.Config.CaKey
 		err := CreateCaSecret(ca, caKey)
 		if err != nil {
-			klog.Errorf("failed to create ca to secrets, error: %v", err)
+			klog.Errorf("failed to save ca and key to the secret, error: %v", err)
 			return err
 		}
 	}
 
 	// Check whether the CloudCore certificates exist in the local directory
 	if hubconfig.Config.Key == nil && hubconfig.Config.Cert == nil {
-		klog.Infof("TLSCertFile and TLSPrivateKeyFile don't exist, and will be signed by cloudcore")
+		klog.Infof("CloudCoreCert and key don't exist in local directory, and will read from the secret")
 		// Check whether the CloudCore certificates exist in the secret
 		secretHasCert := CheckCertExistsFromSecret()
 		if !secretHasCert {
+			klog.Info("CloudCoreCert and key don't exist in the secret, and will be signed by CA")
 			certDER, keyDER, err := SignCerts()
 			if err != nil {
 				klog.Errorf("failed to sign a certificate, error: %v", err)
@@ -238,7 +246,7 @@ func PrepareAllCerts() error {
 
 			err = CreateCloudCoreSecret(certDER, keyDER)
 			if err != nil {
-				klog.Errorf("failed to create cloudcore cert to secrets, error: %v", err)
+				klog.Errorf("failed to save CloudCore cert and key to secret, error: %v", err)
 				return err
 			}
 
@@ -246,7 +254,7 @@ func PrepareAllCerts() error {
 		} else {
 			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
 			if err != nil {
-				klog.Errorf("failed to get cloudcore secret, error: %v", err)
+				klog.Errorf("failed to get CloudCore secret, error: %v", err)
 				return err
 			}
 			certDER := s.Data[CloudCoreCertName]
@@ -260,7 +268,7 @@ func PrepareAllCerts() error {
 		key := hubconfig.Config.Key
 		err := CreateCaSecret(cert, key)
 		if err != nil {
-			klog.Errorf("failed to create cloudcore cert to secrets, error: %v", err)
+			klog.Errorf("failed to save CloudCore cert to secret, error: %v", err)
 			return err
 		}
 	}
