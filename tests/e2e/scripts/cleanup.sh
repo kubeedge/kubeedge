@@ -38,7 +38,7 @@ kill_all_components() {
 }
 
 cleanup_files(){
-    sudo rm -rf /etc/kubeedge /var/lib/kubeedge
+    sudo rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
     sudo rm -f tests/e2e/config.json
     find -name "*.test" | xargs sudo rm -f
 }
