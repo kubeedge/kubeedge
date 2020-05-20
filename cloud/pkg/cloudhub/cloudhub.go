@@ -71,7 +71,9 @@ func (a *cloudHub) Start() {
 	}
 
 	// generate Token
-	httpserver.GenerateToken()
+	if err := httpserver.GenerateToken(); err != nil {
+		klog.Fatal(err)
+	}
 
 	// HttpServer mainly used to issue certificates for the edge
 	go httpserver.StartHTTPServer()

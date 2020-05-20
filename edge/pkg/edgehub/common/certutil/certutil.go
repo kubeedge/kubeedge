@@ -9,12 +9,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
-	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/http"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"io/ioutil"
-	"os"
 )
 
 const privateKeyBits = 2048
@@ -22,7 +21,10 @@ const privateKeyBits = 2048
 // GetCACert gets the cloudcore CA certificate
 func GetCACert(url string) ([]byte, error) {
 	client := http.NewHTTPClient()
-	req, _ := http.BuildRequest("GET", url, nil, "")
+	req, err := http.BuildRequest("GET", url, nil, "")
+	if err != nil {
+		return nil, err
+	}
 	res, err := http.SendRequest(req, client)
 	if err != nil {
 		return nil, err
@@ -37,7 +39,10 @@ func GetCACert(url string) ([]byte, error) {
 }
 
 func getCSR() ([]byte, error) {
-	pk, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	pk, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, err
+	}
 	// save the private key
 	if err := WriteKey(config.Config.TLSPrivateKeyFile, pk); err != nil {
 		return nil, err
@@ -63,7 +68,10 @@ func GetEdgeCert(url string, cacert []byte, token string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create CSR: %v", err)
 	}
 	client, err := http.NewHTTPclientWithCA(cacert)
-	req, _ := http.BuildRequest("GET", url, bytes.NewReader(csr), token)
+	req, err := http.BuildRequest("GET", url, bytes.NewReader(csr), token)
+	if err != nil {
+		return nil, err
+	}
 	res, err := http.SendRequest(req, client)
 	if err != nil {
 		return nil, err
@@ -75,19 +83,6 @@ func GetEdgeCert(url string, cacert []byte, token string) ([]byte, error) {
 		return nil, err
 	}
 	return edgecert, nil
-}
-
-// SaveToFile saves the certificate or private key
-func SaveToFile(data []byte, file string, pemBlockType string) error {
-	out, err := os.Create(file)
-	defer out.Close()
-	if err != nil {
-		return fmt.Errorf("failed to create file: %s", file)
-	}
-	if err = pem.Encode(out, &pem.Block{Type: pemBlockType, Bytes: data}); err != nil {
-		return err
-	}
-	return nil
 }
 
 func hashCA(cacerts []byte) string {
