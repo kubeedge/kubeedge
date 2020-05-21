@@ -60,7 +60,7 @@ const (
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.2.1"
+	DefaultKubeEdgeVersion = "1.3.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -69,12 +69,12 @@ const (
 	CertPort = "certport"
 
 	//
-	AdvertiseAddress = "advertiseaddress"
+	AdvertiseAddress = "advertise-address"
 	//
 	NameSpaceCloudCore = "kubeedge"
 
 	//
-	TokenSecretName = "tokenSecret"
+	TokenSecretName = "tokensecret"
 
-	TokenDataName = "tokenData"
+	TokenDataName = "tokendata"
 )

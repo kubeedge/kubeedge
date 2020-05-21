@@ -41,7 +41,7 @@ type JoinOptions struct {
 	CertPort              string
 }
 
-type GetokenOptions struct {
+type GettokenOptions struct {
 	Kubeconfig string
 }
 
