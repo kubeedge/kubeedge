@@ -22,14 +22,14 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //Write2File writes data into a file in path
 func Write2File(path string, data interface{}) error {
-	d, err := yaml.Marshal(&data)
+	d, err := yaml.Marshal(data)
 	if err != nil {
 		return err
 	}
