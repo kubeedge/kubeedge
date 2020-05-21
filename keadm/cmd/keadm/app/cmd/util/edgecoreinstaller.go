@@ -107,8 +107,8 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 
 		if strings.HasPrefix(ku.ToolVersion, "1.2") {
-			edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "edge.key"}, "")
-			edgeCoreConfig.Modules.EdgeHub.TLSCertFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "edge.crt"}, "")
+			edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.key"}, "")
+			edgeCoreConfig.Modules.EdgeHub.TLSCertFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.crt"}, "")
 		}
 		if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
 			return err

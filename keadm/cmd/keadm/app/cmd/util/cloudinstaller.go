@@ -63,8 +63,8 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		}
 
 		if strings.HasPrefix(cu.ToolVersion, "1.2") {
-			cloudCoreConfig.Modules.CloudHub.TLSPrivateKeyFile = KubeEdgeCloudDefaultCertPath + "edge.key"
-			cloudCoreConfig.Modules.CloudHub.TLSCertFile = KubeEdgeCloudDefaultCertPath + "edge.crt"
+			cloudCoreConfig.Modules.CloudHub.TLSPrivateKeyFile = KubeEdgeCloudDefaultCertPath + "server.key"
+			cloudCoreConfig.Modules.CloudHub.TLSCertFile = KubeEdgeCloudDefaultCertPath + "server.crt"
 		}
 		if err := types.Write2File(KubeEdgeCloudCoreNewYaml, cloudCoreConfig); err != nil {
 			return err

@@ -16,27 +16,27 @@ import (
 )
 
 var (
-	getokenLongDescription = `
-"keadm getoken" command prints the token to use for establishing bidirectional trust between edge nodes and cloudcore. 
+	gettokenLongDescription = `
+"keadm gettoken" command prints the token to use for establishing bidirectional trust between edge nodes and cloudcore. 
 A token can be used when a edge node is about to join the cluster. With this token the cloudcore then approve the 
 certificate request.
 `
-	getokenExample = `
-keadm getoken --kube-config = /root/.kube/config
+	gettokenExample = `
+keadm gettoken --kube-config = /root/.kube/config
 - kube-config is the absolute path of kubeconfig which used to build secure connectivity between keadm and kube-apiserver
 to get the token. 
 `
 )
 
-func NewGetoken(out io.Writer, init *common.GetokenOptions) *cobra.Command {
+func NewGettoken(out io.Writer, init *common.GettokenOptions) *cobra.Command {
 	if init == nil {
-		init = newGetokenOptions()
+		init = newGettokenOptions()
 	}
 	cmd := &cobra.Command{
-		Use:     "getoken",
+		Use:     "gettoken",
 		Short:   "To get the token for edge nodes to join the cluster",
-		Long:    getokenLongDescription,
-		Example: getokenLongDescription,
+		Long:    gettokenLongDescription,
+		Example: gettokenLongDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := queryToken(common.NameSpaceCloudCore, common.TokenSecretName, init.Kubeconfig)
 			if err != nil {
@@ -46,18 +46,18 @@ func NewGetoken(out io.Writer, init *common.GetokenOptions) *cobra.Command {
 			return showToken(token, out)
 		},
 	}
-	addGetokenFlags(cmd, init)
+	addGettokenFlags(cmd, init)
 	return cmd
 }
 
-func addGetokenFlags(cmd *cobra.Command, getokenOptions *common.GetokenOptions) {
-	cmd.Flags().StringVar(&getokenOptions.Kubeconfig, common.KubeConfig, getokenOptions.Kubeconfig,
+func addGettokenFlags(cmd *cobra.Command, gettokenOptions *common.GettokenOptions) {
+	cmd.Flags().StringVar(&gettokenOptions.Kubeconfig, common.KubeConfig, gettokenOptions.Kubeconfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
 
 //
-func newGetokenOptions() *common.GetokenOptions {
-	opts := &common.GetokenOptions{}
+func newGettokenOptions() *common.GettokenOptions {
+	opts := &common.GettokenOptions{}
 	opts.Kubeconfig = common.DefaultKubeConfig
 	return opts
 }
