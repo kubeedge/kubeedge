@@ -25,9 +25,9 @@ KubeEdge is composed of cloud and edge sides. It is built upon Kubernetes and pr
 
 |                         | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     |
 |-------------------------|----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.0            | ✓              | ✓               | ✓               | ✗               |
 | KubeEdge 1.1            | ✗              | ✗               | ✓               | ✗               |
 | KubeEdge 1.2            | ✗              | ✗               | ✓               | ✓               |
+| KubeEdge 1.3            | ✗              | ✗               | ✓               | ✓               |
 | KubeEdge HEAD (master)  | ✗              | ✗               | ✓               | ✓               |
 
 ### Cloud side (KubeEdge Master)
