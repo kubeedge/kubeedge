@@ -19,6 +19,7 @@ package util
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -36,6 +37,8 @@ type KubeEdgeInstTool struct {
 	RuntimeType           string
 	InterfaceName         string
 	RemoteRuntimeEndpoint string
+	Token                 string
+	CertPort              string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -94,7 +97,19 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
 			edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
 		}
+		if ku.Token != "" {
+			edgeCoreConfig.Modules.EdgeHub.Token = ku.Token
+		}
+		if ku.CertPort != "" {
+			edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":" + ku.CertPort
+		} else {
+			edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":10002"
+		}
 
+		if strings.HasPrefix(ku.ToolVersion, "1.2") {
+			edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.key"}, "")
+			edgeCoreConfig.Modules.EdgeHub.TLSCertFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.crt"}, "")
+		}
 		if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
 			return err
 		}

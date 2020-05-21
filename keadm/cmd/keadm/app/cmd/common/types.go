@@ -22,9 +22,10 @@ import (
 
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
-	KubeEdgeVersion string
-	KubeConfig      string
-	Master          string
+	KubeEdgeVersion  string
+	KubeConfig       string
+	Master           string
+	AdvertiseAddress string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -36,6 +37,12 @@ type JoinOptions struct {
 	InterfaceName         string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
+	Token                 string
+	CertPort              string
+}
+
+type GettokenOptions struct {
+	Kubeconfig string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host

@@ -22,10 +22,12 @@ import (
 	"os"
 
 	"github.com/ghodss/yaml"
-
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 //K8SInstTool embedes Common struct and contains the default K8S version and
@@ -58,6 +60,41 @@ func (ks *K8SInstTool) InstallTools() error {
 	err = installCRDs(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return err
+	}
+
+	err = createKubeEdgeNs(ks.KubeConfig, ks.Master)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createKubeEdgeNs(kubeConfig, master string) error {
+	config, err := BuildConfig(kubeConfig, master)
+	if err != nil {
+		return fmt.Errorf("Failed to build config, err: %v", err)
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("Failed to create client, err: %v", err)
+	}
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "kubeedge",
+		},
+	}
+
+	_, err = client.CoreV1().Namespaces().Get("kubeedge", metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			_, err = client.CoreV1().Namespaces().Create(ns)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 
 	return nil
