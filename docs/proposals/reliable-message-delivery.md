@@ -149,7 +149,7 @@ AckMessage.Operation = "response"
 We use K8s CRD to save the resourceVersion of objects that have been successfully persisted to the edge.
 
 We designed two types of CRD to save the resourceVersion. ClusterObjectSync is used to save the cluster
-scoped object and ObjectSync is used to save the namesapce scoped object. 
+scoped object and ObjectSync is used to save the namespace scoped object. 
 Their names consist of the related node name and object UUID.
 
 #### The ClusterObjectSync
