@@ -16,6 +16,7 @@ import (
 //It implements ToolsInstaller interface
 type KubeCloudInstTool struct {
 	Common
+	AdvertiseAddress string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -29,14 +30,16 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		return err
 	}
 
-	err = cu.generateCertificates()
-	if err != nil {
-		return err
-	}
+	if cu.ToolVersion < "1.3.0" {
+		err = cu.generateCertificates()
+		if err != nil {
+			return err
+		}
 
-	err = cu.tarCertificates()
-	if err != nil {
-		return err
+		err = cu.tarCertificates()
+		if err != nil {
+			return err
+		}
 	}
 
 	if cu.ToolVersion >= "1.2.0" {
@@ -55,6 +58,14 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 			cloudCoreConfig.KubeAPIConfig.Master = cu.Master
 		}
 
+		if cu.AdvertiseAddress != "" {
+			cloudCoreConfig.Modules.CloudHub.AdvertiseAddress = strings.Split(cu.AdvertiseAddress, ",")
+		}
+
+		if strings.HasPrefix(cu.ToolVersion, "1.2") {
+			cloudCoreConfig.Modules.CloudHub.TLSPrivateKeyFile = KubeEdgeCloudDefaultCertPath + "server.key"
+			cloudCoreConfig.Modules.CloudHub.TLSCertFile = KubeEdgeCloudDefaultCertPath + "server.crt"
+		}
 		if err := types.Write2File(KubeEdgeCloudCoreNewYaml, cloudCoreConfig); err != nil {
 			return err
 		}
