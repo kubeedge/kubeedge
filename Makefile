@@ -82,21 +82,12 @@ test:
 	hack/make-rules/test.sh $(WHAT)
 endif
 
-LINTS=cloud \
-	edge \
-	keadm \
-	bluetoothdevice
 define LINT_HELP_INFO
 # run golang lint check.
-#
-# Args:
-#   WHAT: Component names to be lint check. support: $(LINTS)
-#         If not specified, "everything" will be lint check.
 #
 # Example:
 #   make lint
 #   make lint HELP=y
-#   make lint WHAT=cloud
 endef
 .PHONY: lint
 ifeq ($(HELP),y)
@@ -104,7 +95,7 @@ lint:
 	@echo "$$LINT_HELP_INFO"
 else
 lint:
-	hack/make-rules/lint.sh $(WHAT)
+	hack/make-rules/lint.sh
 endif
 
 

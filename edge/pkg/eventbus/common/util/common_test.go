@@ -33,7 +33,6 @@ var clientOptions = MQTT.NewClientOptions()
 
 //TestCheckKeyExist checks the functionality of CheckKeyExist function
 func TestCheckKeyExist(t *testing.T) {
-
 	tests := []struct {
 		name          string
 		keys          []string

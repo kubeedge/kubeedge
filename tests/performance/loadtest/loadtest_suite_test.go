@@ -66,7 +66,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP
@@ -98,7 +98,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 
 		//Deploye edgecore as a k8s resource to cluster-2
 		podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
-			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
 
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
 		ToTaint = true
@@ -115,7 +115,6 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
-
 	})
 
 	RunSpecs(t, "kubeedge Performance Load test Suite")

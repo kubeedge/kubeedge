@@ -66,7 +66,6 @@ func (sb *servicebus) Start() {
 			klog.Warning("ServiceBus stop")
 			return
 		default:
-
 		}
 		msg, err := beehiveContext.Receive("servicebus")
 		if err != nil {

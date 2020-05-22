@@ -94,7 +94,6 @@ func TestDealMembershipDetailInvalidMsg(t *testing.T) {
 }
 
 func TestDealMembershipDetailInvalidContent(t *testing.T) {
-
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -140,7 +139,6 @@ func TestDealMembershipUpdatedEmptyMessage(t *testing.T) {
 }
 
 func TestDealMembershipUpdatedInvalidMsg(t *testing.T) {
-
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -156,7 +154,6 @@ func TestDealMembershipUpdatedInvalidMsg(t *testing.T) {
 	assert.Equal(t, nil, value)
 }
 func TestDealMembershipUpdatedInvalidContent(t *testing.T) {
-
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -254,7 +251,6 @@ func TestDealMerbershipGetEmptyMsg(t *testing.T) {
 }
 
 func TestDealMerbershipGetInvalidMsg(t *testing.T) {
-
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",

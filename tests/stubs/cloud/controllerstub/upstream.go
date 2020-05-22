@@ -60,7 +60,6 @@ func (uc *UpstreamController) WaitforMessage() {
 			klog.Infof("Stop waiting for message")
 			return
 		default:
-
 		}
 		// Receive message from cloudhub
 		msg, err := beehiveContext.Receive(constants.ControllerStub)

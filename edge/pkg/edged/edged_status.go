@@ -243,7 +243,6 @@ func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 		newNodeReadyCondition.LastTransitionTime = currentTime
 		node.Status.Conditions = append(node.Status.Conditions, newNodeReadyCondition)
 	}
-
 }
 
 func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
@@ -272,7 +271,6 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
-
 }
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {

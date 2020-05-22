@@ -59,7 +59,6 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 		Long:    edgeJoinLongDescription,
 		Example: edgeJoinExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			//Visit all the flags and store their values and default values.
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
@@ -79,7 +78,6 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 }
 
 func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
-
 	cmd.Flags().StringVar(&joinOptions.KubeEdgeVersion, types.KubeEdgeVersion, joinOptions.KubeEdgeVersion,
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
@@ -164,7 +162,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 
 //Execute the installation for each tool and start edgecore
 func Execute(toolList map[string]types.ToolsInstaller) error {
-
 	//Install all the required pre-requisite tools
 	for name, tool := range toolList {
 		if name != "KubeEdge" {

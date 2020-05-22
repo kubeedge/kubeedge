@@ -109,7 +109,7 @@ func PullImageInAllEdgeNodes(appDeployments []string) {
 	var podlist metav1.PodList
 	for kubenode, val := range NodeInfo {
 		UID := "edgecore-app-" + utils.GetRandomString(5)
-		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], val[1], val[0], 1)
+		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], val[1], val[0], 1)
 		Expect(IsAppDeployed).Should(BeTrue())
 		appDeployments = append(appDeployments, UID)
 		err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
@@ -126,7 +126,7 @@ func PullImageInAllEdgeNodes(appDeployments []string) {
 	}
 	//after pulling image to all edgenodes, delete the deployments on respective edgenodes
 	for i := range appDeployments {
-		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
+		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageURL[1], nodeSelector, "", 10)
 		Expect(IsAppDeployed).Should(BeTrue())
 	}
 	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
@@ -159,7 +159,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
-			IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+UID, "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
+			IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+UID, "", ctx.Cfg.AppImageURL[1], nodeSelector, "", 10)
 			Expect(IsAppDeployed).Should(BeTrue())
 
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
@@ -174,7 +174,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 10
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -202,7 +202,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 20
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -230,7 +230,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 50
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -257,7 +257,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 75
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -284,7 +284,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 100
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -316,7 +316,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			// Print result
 			testTimer.PrintResult()
 			for i := range appDeployments {
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageURL[1], nodeSelector, "", 10)
 				Expect(IsAppDeployed).Should(BeTrue())
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
@@ -347,7 +347,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					UID = "edgecore-app-" + utils.GetRandomString(5)
 					appDeployments = append(appDeployments, UID)
 					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-						UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
+						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
 				}
 				time.Sleep(10 * time.Second)
 				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, nodeName)
@@ -369,7 +369,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					UID = "edgecore-app-" + utils.GetRandomString(5)
 					appDeployments = append(appDeployments, UID)
 					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-						UID, ctx.Cfg.AppImageUrl[1], nodeSelector, "", replica)
+						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
 
 				}
 				time.Sleep(10 * time.Second)
@@ -391,7 +391,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			testTimer.End()
 			// Print result
 			testTimer.PrintResult()
-			IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+UID, "", ctx.Cfg.AppImageUrl[1], nodeSelector, "", 10)
+			IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+UID, "", ctx.Cfg.AppImageURL[1], nodeSelector, "", 10)
 			Expect(IsAppDeployed).Should(BeTrue())
 
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
@@ -412,7 +412,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 1
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -437,7 +437,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 10
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -464,7 +464,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 50
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -490,7 +490,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 75
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())
@@ -515,7 +515,7 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 				replica := 100
 				//Generate the random string and assign as a UID
 				UID = "edgecore-app-" + utils.GetRandomString(5)
-				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageUrl[1], "", "", replica)
+				IsAppDeployed := utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, UID, ctx.Cfg.AppImageURL[1], "", "", replica)
 				Expect(IsAppDeployed).Should(BeTrue())
 				err := utils.GetDeployments(&deploymentList, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler)
 				Expect(err).To(BeNil())

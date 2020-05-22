@@ -64,10 +64,8 @@ var (
 
 //Function to run the Ginkgo Test
 func TestEdgecoreEventBus(t *testing.T) {
-
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
-
 		MemDeviceUpdate = &MembershipUpdate{}
 		common.Infof("Before Suite execution")
 

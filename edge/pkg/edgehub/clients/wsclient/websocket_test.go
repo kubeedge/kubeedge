@@ -60,7 +60,6 @@ func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSoc
 func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	klog.Infof("receive message: %s", container.Message.GetContent())
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
-
 }
 
 func initServerEntries() {

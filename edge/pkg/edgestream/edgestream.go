@@ -71,7 +71,6 @@ func (e *edgestream) Enable() bool {
 }
 
 func (e *edgestream) Start() {
-
 	serverURL := url.URL{
 		Scheme: "wss",
 		Host:   config.Config.TunnelServer,

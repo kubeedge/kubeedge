@@ -161,7 +161,6 @@ func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{})
 			} else {
 				klog.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
 			}
-
 		}
 		return true
 	})

@@ -269,7 +269,6 @@ func dealDelta(context *dtcontext.DTContext, deviceID string, payload []byte) er
 
 // dealSyncResult build and send sync result, is delta update
 func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twin map[string]*dttype.MsgTwin) error {
-
 	klog.Infof("Deal sync result of device %s: sync with cloud", deviceID)
 	resource := "device/" + deviceID + "/twin/edge_updated"
 	return context.Send("",
@@ -280,7 +279,6 @@ func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage d
 
 //dealDocument build document and save current state as last state, update sqlite
 func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twinDocument map[string]*dttype.TwinDoc) error {
-
 	klog.Infof("Deal document of device %s: build and send document", deviceID)
 	payload, _ := dttype.BuildDeviceTwinDocument(baseMessage, twinDocument)
 	topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.TwinETDocumentSuffix
@@ -293,7 +291,6 @@ func dealDocument(context *dtcontext.DTContext, deviceID string, baseMessage dtt
 
 // DealGetTwin deal get twin event
 func DealGetTwin(context *dtcontext.DTContext, deviceID string, payload []byte) error {
-
 	klog.Info("Deal the event of getting twin")
 	msg := []byte("")
 	para := dttype.Parameter{}
@@ -486,7 +483,6 @@ func dealTwinDelete(returnResult *dttype.DealTwinResult, deviceID string, key st
 	} else {
 		delete(document, key)
 		delete(syncResult, key)
-
 	}
 
 	return nil
@@ -519,7 +515,6 @@ func isTwinValueDiff(twin *dttype.MsgTwin, msgTwin *dttype.MsgTwin, dealType int
 	}
 	if hasMsgTwin {
 		if hasTwin {
-
 			err := dtcommon.ValidateValue(valueType, *msgTwinValue.Value)
 			if err != nil {
 				return false, err
@@ -712,7 +707,6 @@ func dealTwinCompare(returnResult *dttype.DealTwinResult, deviceID string, key s
 				isChange = true
 			}
 		}
-
 	}
 	if isChange {
 		update = append(update, dtclient.DeviceTwinUpdate{DeviceID: deviceID, Name: key, Cols: cols})
@@ -732,7 +726,6 @@ func dealTwinCompare(returnResult *dttype.DealTwinResult, deviceID string, key s
 				delete(syncResult, key)
 			}
 		}
-
 	} else {
 		if dealType == RestDealType {
 			delete(document, key)
@@ -745,7 +738,6 @@ func dealTwinCompare(returnResult *dttype.DealTwinResult, deviceID string, key s
 				delete(syncResult, key)
 			}
 		}
-
 	}
 	return nil
 }
@@ -903,14 +895,12 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 		} else {
 			delete(syncResult, key)
 		}
-
 	} else {
 		delete(document, key)
 		delete(syncResult, key)
 	}
 
 	return nil
-
 }
 
 //DealMsgTwin get diff while updating twin
@@ -969,9 +959,7 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 			if err != nil {
 				return returnResult
 			}
-
 		}
-
 	}
 	context.DeviceList.Store(deviceID, deviceModel)
 	return returnResult

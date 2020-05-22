@@ -51,7 +51,6 @@ func (c *configMaps) Delete(name string) error {
 }
 
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
-
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
 	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(configMapMsg)
@@ -74,7 +73,6 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		return handleConfigMapFromMetaDB(content)
 	}
 	return handleConfigMapFromMetaManager(content)
-
 }
 
 func handleConfigMapFromMetaDB(content []byte) (*api.ConfigMap, error) {

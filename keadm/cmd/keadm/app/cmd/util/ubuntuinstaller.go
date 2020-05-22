@@ -74,7 +74,6 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
 func (u *UbuntuOS) InstallKubeEdge(componentType types.ComponentType) error {
-
 	arch, err := getSystemArch()
 	if err != nil {
 		return err

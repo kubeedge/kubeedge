@@ -230,7 +230,6 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 			return fmt.Errorf("fetching NodePublishSecretRef %s/%s failed: %v",
 				secretRef.Namespace, secretRef.Name, err)
 		}
-
 	}
 
 	err = csi.NodePublishVolume(

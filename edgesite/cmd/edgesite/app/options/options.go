@@ -44,18 +44,18 @@ func (o *EdgeSiteOptions) Flags() (fss cliflag.NamedFlagSets) {
 	return
 }
 
-func (c *EdgeSiteOptions) Validate() []error {
+func (o *EdgeSiteOptions) Validate() []error {
 	var errs []error
-	if !validation.FileIsExist(c.ConfigFile) {
+	if !validation.FileIsExist(o.ConfigFile) {
 		errs = append(errs, field.Required(field.NewPath("config"),
-			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", c.ConfigFile)))
+			fmt.Sprintf("config file %v not exist. For the configuration file format, please refer to --minconfig and --defaultconfig command", o.ConfigFile)))
 	}
 	return errs
 }
 
-func (c *EdgeSiteOptions) Config() (*v1alpha1.EdgeSiteConfig, error) {
+func (o *EdgeSiteOptions) Config() (*v1alpha1.EdgeSiteConfig, error) {
 	cfg := v1alpha1.NewDefaultEdgeSiteConfig()
-	if err := cfg.Parse(c.ConfigFile); err != nil {
+	if err := cfg.Parse(o.ConfigFile); err != nil {
 		return nil, err
 	}
 	return cfg, nil

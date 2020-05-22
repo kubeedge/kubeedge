@@ -30,7 +30,7 @@ import (
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -118,7 +118,7 @@ type DeviceTwinResult struct {
 }
 
 // Function to get nginx deployment spec
-func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.DeploymentSpec {
+func nginxDeploymentSpec(imgURL, selector string, replicas int) *apps.DeploymentSpec {
 	var nodeselector map[string]string
 	if selector == "" {
 		nodeselector = map[string]string{}
@@ -136,7 +136,7 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 				Containers: []v1.Container{
 					{
 						Name:  "nginx",
-						Image: imgUrl,
+						Image: imgURL,
 					},
 				},
 				NodeSelector: nodeselector,
@@ -240,18 +240,18 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 	return &deplObj
 }
 
-func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configmap string, replicas int) *apps.Deployment {
+func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configmap string, replicas int) *apps.Deployment {
 	var depObj *apps.DeploymentSpec
 	var namespace string
 
 	if edgecore == true {
-		depObj = edgecoreDeploymentSpec(imgUrl, configmap, replicas)
+		depObj = edgecoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
 	} else if cloudcore == true {
-		depObj = cloudcoreDeploymentSpec(imgUrl, configmap, replicas)
+		depObj = cloudcoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
 	} else {
-		depObj = nginxDeploymentSpec(imgUrl, nodeselector, replicas)
+		depObj = nginxDeploymentSpec(imgURL, nodeselector, replicas)
 		namespace = Namespace
 	}
 
@@ -267,7 +267,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configm
 	return &deployment
 }
 
-func NewPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
+func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 	pod := v1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -278,7 +278,7 @@ func NewPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 			Containers: []v1.Container{
 				{
 					Name:  "nginx",
-					Image: imgUrl,
+					Image: imgURL,
 				},
 			},
 			NodeSelector: map[string]string{"disktype": nodeselector},
@@ -288,9 +288,8 @@ func NewPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 }
 
 // GetDeployments to get the deployments list
-func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
-
-	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
+func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -303,12 +302,11 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 		return err
 	}
 	return nil
-
 }
-func VerifyDeleteDeployment(getDeploymentApi string) int {
-	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
+func VerifyDeleteDeployment(getDeploymentAPI string) int {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	if err != nil {
-		Fatalf("SendHttpRequest is failed: %v", err)
+		Fatalf("SendHTTPRequest is failed: %v", err)
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
@@ -355,7 +353,7 @@ func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool
 }
 
 // HandleDeployment to handle app deployment/delete deployment.
-func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageUrl, nodeselector, configmapname string, replica int) bool {
+func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageURL, nodeselector, configmapname string, replica int) bool {
 	var req *http.Request
 	var err error
 	var body io.Reader
@@ -370,7 +368,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 
 	switch operation {
 	case "POST":
-		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageUrl, nodeselector, configmapname, replica)
+		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageURL, nodeselector, configmapname, replica)
 		if err != nil {
 			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
 		}
@@ -400,8 +398,8 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 }
 
 // DeleteDeployment to delete deployment
-func DeleteDeployment(DeploymentApi, deploymentname string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, DeploymentApi+"/"+deploymentname)
+func DeleteDeployment(DeploymentAPI, deploymentname string) int {
+	resp, err := SendHTTPRequest(http.MethodDelete, DeploymentAPI+"/"+deploymentname)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -450,7 +448,7 @@ func ExposeCloudService(name, serviceHandler string) error {
 		return err
 	}
 	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
-	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
 }
 
@@ -483,7 +481,7 @@ func CreateServiceObject(name string) *v1.Service {
 func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	var svc v1.ServiceList
 	var wssport, quicport int32
-	err, resp := SendHttpRequest(http.MethodGet, serviceHandler)
+	resp, err := SendHTTPRequest(http.MethodGet, serviceHandler)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -521,7 +519,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 
 // DeleteSvc function to delete service
 func DeleteSvc(svcname string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, svcname)
+	resp, err := SendHTTPRequest(http.MethodDelete, svcname)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -691,8 +689,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 }
 
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
-func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
-	err, resp := SendHttpRequest(http.MethodGet, getDeviceModelApi)
+func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -722,8 +720,8 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, ex
 }
 
 // GetDevice to get the device list
-func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
-	err, resp := SendHttpRequest(http.MethodGet, getDeviceApi)
+func GetDevice(list *v1alpha1.DeviceList, getDeviceAPI string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -755,7 +753,7 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v
 					}
 				}
 				if !twinExists {
-					return nil, errors.New("Status twin(s) not found !!!!")
+					return nil, errors.New("status twin(s) not found")
 				}
 			}
 		}
@@ -851,7 +849,6 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
 	if reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) == false || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) == false {
 		return false
-
 	}
 	return true
 }

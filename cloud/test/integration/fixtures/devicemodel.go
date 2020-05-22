@@ -143,7 +143,6 @@ func withOperation(operationType v1alpha1.BluetoothArithmeticOperationType, valu
 		op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.OrderOfOperations =
 			append(op.devicePropertyVisitor.VisitorConfig.Bluetooth.BluetoothDataConverter.OrderOfOperations, bluetoothOperation)
 	}
-
 }
 
 func withRegister(register v1alpha1.ModbusRegisterType) DevicePropertyVisitorOption {

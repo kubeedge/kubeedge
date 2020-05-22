@@ -62,14 +62,14 @@ var _ = Describe("Application deployment test in keadm E2E scenario", func() {
 		It("E2E_POD_DEPLOYMENT: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeName)
+			pod := NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeName)
 
 			CreatePodTest(nodeName, podName, ctx, pod)
 		})
 	})
 })
 
-func NewPodObj(podName, imgUrl, nodeName string) *corev1.Pod {
+func NewPodObj(podName, imgURL, nodeName string) *corev1.Pod {
 	pod := corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,7 +80,7 @@ func NewPodObj(podName, imgUrl, nodeName string) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",
-					Image: imgUrl,
+					Image: imgURL,
 				},
 			},
 			NodeName: nodeName,

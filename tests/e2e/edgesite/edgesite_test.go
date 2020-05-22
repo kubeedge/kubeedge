@@ -124,7 +124,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 		It("E2E_ES_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
 
 			CreatePodTest(nodeName, podName, ctx, pod)
 		})
@@ -132,7 +132,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 		It("E2E_ES_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
 
 			podlist := CreatePodTest(nodeName, podName, ctx, pod)
 			for _, pod := range podlist.Items {
@@ -144,7 +144,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 		It("E2E_ES_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
-			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeSelector)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
 
 			podlist := CreatePodTest(nodeName, podName, ctx, pod)
 			for _, pod := range podlist.Items {
@@ -160,7 +160,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			for i := 0; i < 10; i++ {
 				//Generate the random string and assign as podName
 				podName := "pod-app-" + utils.GetRandomString(5)
-				pod := utils.NewPodObj(podName, ctx.Cfg.AppImageUrl[0], nodeSelector)
+				pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
 
 				podlist := CreatePodTest(nodeName, podName, ctx, pod)
 				for _, pod := range podlist.Items {

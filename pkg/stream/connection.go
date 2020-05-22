@@ -37,7 +37,7 @@ type EdgedConnection interface {
 
 type EdgedLogsConnection struct {
 	MessID   uint64        // message id
-	Url      url.URL       `json:"url"`
+	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
 	ReadChan chan *Message `json:"-"`
 }
@@ -65,7 +65,7 @@ func (l *EdgedLogsConnection) String() string {
 func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	//connect edged
 	client := http.Client{}
-	req, err := http.NewRequest("GET", l.Url.String(), nil)
+	req, err := http.NewRequest("GET", l.URL.String(), nil)
 	if err != nil {
 		klog.Errorf("create new logs request error %v", err)
 		return err
