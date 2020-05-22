@@ -75,7 +75,6 @@ func (eh *EdgeHub) applyCerts() error {
 }
 
 func (eh *EdgeHub) initial() (err error) {
-
 	cloudHubClient, err := clients.GetClient()
 	if err != nil {
 		return err
@@ -152,7 +151,6 @@ func (eh *EdgeHub) routeToEdge() {
 			klog.Warning("EdgeHub RouteToEdge stop")
 			return
 		default:
-
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
@@ -231,7 +229,6 @@ func (eh *EdgeHub) keepalive() {
 			klog.Warning("EdgeHub KeepAlive stop")
 			return
 		default:
-
 		}
 		msg := model.NewMessage("").
 			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").

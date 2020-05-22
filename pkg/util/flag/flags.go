@@ -26,22 +26,22 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type configValue int
+type ConfigValue int
 
 const (
-	ConfigFalse configValue = 0
-	ConfigTrue  configValue = 1
+	ConfigFalse ConfigValue = 0
+	ConfigTrue  ConfigValue = 1
 )
 
-func (m *configValue) IsBoolFlag() bool {
+func (m *ConfigValue) IsBoolFlag() bool {
 	return true
 }
 
-func (m *configValue) Get() interface{} {
-	return configValue(*m)
+func (m *ConfigValue) Get() interface{} {
+	return ConfigValue(*m)
 }
 
-func (m *configValue) Set(s string) error {
+func (m *ConfigValue) Set(s string) error {
 	boolVal, err := strconv.ParseBool(s)
 	if boolVal {
 		*m = ConfigTrue
@@ -51,23 +51,23 @@ func (m *configValue) Set(s string) error {
 	return err
 }
 
-func (m *configValue) String() string {
+func (m *ConfigValue) String() string {
 	return fmt.Sprintf("%v", bool(*m == ConfigTrue))
 }
 
 // The type of the flag as required by the pflag.Value interface
-func (m *configValue) Type() string {
+func (m *ConfigValue) Type() string {
 	return "config"
 }
 
-func ConfigVar(p *configValue, name string, value configValue, usage string) {
+func ConfigVar(p *ConfigValue, name string, value ConfigValue, usage string) {
 	*p = value
 	pflag.Var(p, name, usage)
 	pflag.Lookup(name).NoOptDefVal = "true"
 }
 
-func Config(name string, value configValue, usage string) *configValue {
-	p := new(configValue)
+func Config(name string, value ConfigValue, usage string) *ConfigValue {
+	p := new(ConfigValue)
 	ConfigVar(p, name, value, usage)
 	return p
 }

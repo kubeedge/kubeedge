@@ -209,7 +209,6 @@ func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byt
 		return []byte(""), err
 	}
 	return payload, nil
-
 }
 
 //DeviceTwinResult device get result
@@ -235,7 +234,6 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 			twin.ActualVersion = nil
 			twin.ExpectedVersion = nil
 			result[k] = &twin
-
 		}
 	} else {
 		result = twins
@@ -246,7 +244,6 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 		return []byte(""), err
 	}
 	return payload, nil
-
 }
 
 // BuildErrorResult build error result
@@ -260,7 +257,6 @@ func BuildErrorResult(para Parameter) ([]byte, error) {
 		return []byte(""), err
 	}
 	return errorResult, nil
-
 }
 
 //DeviceUpdate device update
@@ -316,7 +312,6 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 					value := expectedValue
 					delta[k] = value
 				}
-
 			}
 		} else {
 			continue
@@ -340,7 +335,6 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 
 //BuildDeviceTwinDocument  build device twin document
 func BuildDeviceTwinDocument(baseMessage BaseMessage, twins map[string]*TwinDoc) ([]byte, bool) {
-
 	payload, err := json.Marshal(DeviceTwinDocument{BaseMessage: baseMessage, Twin: twins})
 	if err != nil {
 		return []byte(""), false

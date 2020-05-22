@@ -45,7 +45,7 @@ func (esd *EdgeServiceDiscovery) GetAllMicroServices() ([]*registry.MicroService
 // FindMicroServiceInstances find micro-service instances (subnets)
 func (esd *EdgeServiceDiscovery) FindMicroServiceInstances(consumerID, microServiceName string, tags utiltags.Tags) ([]*registry.MicroServiceInstance, error) {
 	// parse microServiceName
-	name, namespace, port, err := parseServiceUrl(microServiceName)
+	name, namespace, port, err := parseServiceURL(microServiceName)
 	if err != nil {
 		return nil, err
 	}
@@ -125,22 +125,22 @@ func (esd *EdgeServiceDiscovery) AutoSync() {}
 // Close close all websocket connection
 func (esd *EdgeServiceDiscovery) Close() error { return nil }
 
-// parseServiceUrl parses serviceUrl to ${service_name}.${namespace}.svc.${cluster}:${port}, keeps with k8s service
-func parseServiceUrl(serviceUrl string) (name, namespace string, port int, err error) {
-	name, namespace = common.SplitServiceKey(serviceUrl)
-	serviceUrlSplit := strings.Split(serviceUrl, ":")
-	if len(serviceUrlSplit) == 1 {
+// parseServiceURL parses serviceURL to ${service_name}.${namespace}.svc.${cluster}:${port}, keeps with k8s service
+func parseServiceURL(serviceURL string) (name, namespace string, port int, err error) {
+	name, namespace = common.SplitServiceKey(serviceURL)
+	serviceURLSplit := strings.Split(serviceURL, ":")
+	if len(serviceURLSplit) == 1 {
 		// default
 		port = 80
-	} else if len(serviceUrlSplit) == 2 {
-		port, err = strconv.Atoi(serviceUrlSplit[1])
+	} else if len(serviceURLSplit) == 2 {
+		port, err = strconv.Atoi(serviceURLSplit[1])
 		if err != nil {
-			klog.Errorf("[EdgeMesh] service url %s invalid", serviceUrl)
+			klog.Errorf("[EdgeMesh] service url %s invalid", serviceURL)
 			return
 		}
 	} else {
-		klog.Errorf("[EdgeMesh] service url %s invalid", serviceUrl)
-		err = fmt.Errorf("service url %s invalid", serviceUrl)
+		klog.Errorf("[EdgeMesh] service url %s invalid", serviceURL)
+		err = fmt.Errorf("service url %s invalid", serviceURL)
 	}
 	return
 }

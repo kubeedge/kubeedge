@@ -67,7 +67,6 @@ func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
 		klog.Infof("%s is healthy %v", dtmName, time.Now().Unix())
-
 	} else if strings.Compare(content.(string), "stop") == 0 {
 		klog.Infof("%s stop", dtmName)
 		return errors.New("stop")

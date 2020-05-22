@@ -94,11 +94,11 @@ func (l *ContainerLogsConnection) String() string {
 func (l *ContainerLogsConnection) SendConnection() (stream.EdgedConnection, error) {
 	connector := &stream.EdgedLogsConnection{
 		MessID: l.MessageID,
-		Url:    *l.r.Request.URL,
+		URL:    *l.r.Request.URL,
 		Header: l.r.Request.Header,
 	}
-	connector.Url.Scheme = "http"
-	connector.Url.Host = net.JoinHostPort("127.0.0.1", fmt.Sprintf("%v", constants.ServerPort))
+	connector.URL.Scheme = "http"
+	connector.URL.Host = net.JoinHostPort("127.0.0.1", fmt.Sprintf("%v", constants.ServerPort))
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
 		return nil, err

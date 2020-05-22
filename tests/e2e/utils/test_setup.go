@@ -105,7 +105,7 @@ func StartEdgeCore(master, nodeName string) error {
 func getSecret(master string) string {
 	secret := v1.Secret{}
 
-	err, resp := SendHttpRequest(http.MethodGet, master+"/api/v1/namespaces/kubeedge/secrets/tokensecret")
+	resp, err := SendHTTPRequest(http.MethodGet, master+"/api/v1/namespaces/kubeedge/secrets/tokensecret")
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

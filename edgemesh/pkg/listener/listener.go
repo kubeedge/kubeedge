@@ -37,7 +37,7 @@ const (
 	defaultNetworkPrefix = "9.251."
 	maxPoolSize          = 65534
 
-	SO_ORIGINAL_DST = 80
+	SoOriginalDst = 80
 )
 
 var (
@@ -242,7 +242,7 @@ func realServerAddress(conn *net.Conn) (string, int, error) {
 
 	var addr sockAddr
 	size := uint32(unsafe.Sizeof(addr))
-	err = getSockOpt(int(fd), syscall.SOL_IP, SO_ORIGINAL_DST, uintptr(unsafe.Pointer(&addr)), &size)
+	err = getSockOpt(int(fd), syscall.SOL_IP, SoOriginalDst, uintptr(unsafe.Pointer(&addr)), &size)
 	if err != nil {
 		return "", -1, err
 	}
@@ -369,18 +369,18 @@ func addServer(svcName, svcPorts string) {
 	if ip != "" {
 		svcDesc.set(svcName, ip, svcPorts)
 		return
-	} else {
-		if len(unused) == 0 {
-			// try to expand
-			expandPool()
-			if len(unused) == 0 {
-				klog.Warningf("[EdgeMesh] insufficient fake IP !!")
-				return
-			}
-		}
-		ip = unused[0]
-		unused = unused[1:]
 	}
+	if len(unused) == 0 {
+		// try to expand
+		expandPool()
+		if len(unused) == 0 {
+			klog.Warningf("[EdgeMesh] insufficient fake IP !!")
+			return
+		}
+	}
+	ip = unused[0]
+	unused = unused[1:]
+
 	svcDesc.set(svcName, ip, svcPorts)
 	err := metaClient.Listener().Add(svcName, ip)
 	if err != nil {

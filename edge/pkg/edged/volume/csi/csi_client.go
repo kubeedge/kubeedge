@@ -240,7 +240,6 @@ func (c *csiDriverClient) nodeGetInfoV1(ctx context.Context) (
 	maxVolumePerNode int64,
 	accessibleTopology map[string]string,
 	err error) {
-
 	nodeClient, closer, err := c.nodeV1ClientCreator(c.addr)
 	if err != nil {
 		return "", 0, nil, err
@@ -264,7 +263,6 @@ func (c *csiDriverClient) nodeGetInfoV0(ctx context.Context) (
 	maxVolumePerNode int64,
 	accessibleTopology map[string]string,
 	err error) {
-
 	nodeClient, closer, err := c.nodeV1ClientCreator(c.addr)
 	if err != nil {
 		return "", 0, nil, err
@@ -320,7 +318,6 @@ func (c *csiDriverClient) NodePublishVolume(
 	}
 
 	return fmt.Errorf("failed to call NodePublishVolume. Both nodeV1ClientCreator and nodeV0ClientCreator are nil")
-
 }
 
 func (c *csiDriverClient) NodeExpandVolume(ctx context.Context, volumeID, volumePath string, newSize resource.Quantity) (resource.Quantity, error) {
@@ -589,7 +586,6 @@ func (c *csiDriverClient) NodeSupportsNodeExpand(ctx context.Context) (bool, err
 	}
 
 	return false, fmt.Errorf("failed to call NodeSupportsNodeExpand. Both nodeV1ClientCreator and nodeV0ClientCreator are nil")
-
 }
 
 func (c *csiDriverClient) NodeSupportsStageUnstage(ctx context.Context) (bool, error) {
@@ -827,7 +823,6 @@ func (c *csiDriverClient) nodeGetVolumeStatsV1(
 		default:
 			klog.Errorf("unknown key %s in usage", unit.String())
 		}
-
 	}
 	return metrics, nil
 }

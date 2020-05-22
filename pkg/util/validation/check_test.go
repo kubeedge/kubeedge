@@ -8,7 +8,6 @@ import (
 )
 
 func TestFileIsExist(t *testing.T) {
-
 	dir, err := ioutil.TempDir("", "TestTempFile_BadDir")
 	if err != nil {
 		t.Fatalf("%v", err)

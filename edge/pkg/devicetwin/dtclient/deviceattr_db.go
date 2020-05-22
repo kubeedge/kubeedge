@@ -69,7 +69,6 @@ func QueryDeviceAttr(key string, condition string) (*[]DeviceAttr, error) {
 		return nil, err
 	}
 	return attrs, nil
-
 }
 
 //DeviceDelete the struct for deleting device

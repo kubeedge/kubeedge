@@ -126,7 +126,6 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 			return false, nil
 		}
 		return true, err
-
 	})
 	return &resp, err
 }

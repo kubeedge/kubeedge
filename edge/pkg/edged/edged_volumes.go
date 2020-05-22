@@ -58,7 +58,6 @@ func (e *edged) newVolumeMounterFromPlugins(spec *volume.Spec, pod *api.Pod, opt
 // cleanupOrphanedPodDirs removes the volumes of pods that should not be
 // running and that have no containers running.
 func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*container.Pod) error {
-
 	allPods := sets.NewString()
 	for _, pod := range pods {
 		allPods.Insert(string(pod.UID))

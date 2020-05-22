@@ -40,7 +40,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 			// Create Edge Nodes
 			numOfEdgeNodes = 10
 			podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
-				ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, numOfEdgeNodes)
+				ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, numOfEdgeNodes)
 		})
 
 		AfterEach(func() {

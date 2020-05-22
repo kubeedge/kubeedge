@@ -220,7 +220,6 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (tm *testManager) Start() {
-
 	http.HandleFunc("/pods", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
