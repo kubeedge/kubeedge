@@ -46,7 +46,9 @@ There are currently two ways to get keadm
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
-By default port '10000' in your cloudcore needs to be accessible for your edge nodes.
+By default ports '10000' and '10002' in your cloudcore needs to be accessible for your edge nodes.
+
+**Note**: '10002' only needed since 1.3 release 
 
 `keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific version can be set.
 
@@ -76,18 +78,21 @@ By default port '10000' in your cloudcore needs to be accessible for your edge n
     
     
     Flags:
+          --advertise-address string            Use this key to set SANs in certificate of cloudcore. eg: 10.10.102.78,10.10.102.79
       -h, --help                                help for init
           --kube-config string                  Use this key to set kube-config path, eg: $HOME/.kube/config (default "/root/.kube/config")
           --kubeedge-version string[="1.2.0"]   Use this key to download and use the required KubeEdge version (default "1.2.0")
           --master string                       Use this key to set K8s master address, eg: http://127.0.0.1:8080
     ```
 
-**IMPORTANT NOTE:** At least one of kubeconfig or master must be configured correctly, so that it can be used to verify the version and other info of the k8s cluster.
+**IMPORTANT NOTE:** 
+1. At least one of kubeconfig or master must be configured correctly, so that it can be used to verify the version and other info of the k8s cluster.
+1. `--advertise-address`(only needed since 1.3 release) is the address exposed by the cloud side (will be added to the SANs of the CloudCore certificate), the default value is the local IP
 
 Examples:
 
  ```shell
-  keadm init
+  keadm init --advertise-address=`THE-EXPOSED-IP`(only needed since 1.3 release)
  ```
 
 Sample execution output:
@@ -97,7 +102,9 @@ Kubernetes version verification passed, KubeEdge installation will start...
 KubeEdge cloudcore is running, For logs visit:  /var/log/kubeedge/cloudcore.log
 ```  
 
-## Manually copy certs.tgz from cloud host to edge host(s)
+## (**Only Needed in Pre 1.3 Release**) Manually copy certs.tgz from cloud host to edge host(s)
+
+**Note**: Since release 1.3, feature `EdgeNode auto TLS Bootstrapping` has been added and there is no need to manually copy certificate.
 
 Now users still need to copy the certs to the edge nodes. In the future, it will support the use of tokens for authentication.
 
@@ -123,6 +130,18 @@ tar -xvzf certs.tgz
 
 
 ## Setup Edge Side (KubeEdge Worker Node)
+
+### Get Token From Cloud Side
+
+Run `keadm gettoken` in **cloud side** will return the token, which will be used when joining edge nodes.
+
+  ```shell
+  # from cloud side
+  keadm gettoken
+  27a37ef16159f7d3be8fae95d588b79b3adaaf92727b72659eb89758c66ffda2.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTAyMTYwNzd9.JBj8LLYWXwbbvHKffJBpPd5CyxqapRQYDIXtFZErgYE
+  ```
+
+### Join Edge Node
 
 `keadm join` will install edgecore and mqtt. It also provides a flag by which a specific version can be set.
 
@@ -153,22 +172,25 @@ Execute `keadm join <flags>`
   
   Flags:
         --certPath string                     The certPath used by edgecore, the default value is /etc/kubeedge/certs (default "/etc/kubeedge/certs")
+    -s, --certport string                     The port where to apply for the edge certificate
     -e, --cloudcore-ipport string             IP:Port address of KubeEdge CloudCore
     -i, --edgenode-name string                KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own
     -h, --help                                help for join
         --interfacename string                KubeEdge Node interface name string, the default value is eth0
         --kubeedge-version string[="1.2.0"]   Use this key to download and use the required KubeEdge version (default "1.2.0")
     -r, --runtimetype string                  Container runtime type
+    -t, --token string                        Used for edge to apply for the certificate
   ```
 
 **IMPORTANT NOTE:** 
 1. For this command `--cloudcore-ipport` flag is a mandatory flag
+1. If you want to apply certificate for edge node automatically, `--token` is needed.
 1. The KubeEdge version used in cloud and edge side should be same. 
 
  Examples:
 
  ```shell
-  keadm join --cloudcore-ipport=192.168.20.50:10000
+  keadm join --cloudcore-ipport=192.168.20.50:10000 --token=27a37ef16159f7d3be8fae95d588b79b3adaaf92727b72659eb89758c66ffda2.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1OTAyMTYwNzd9.JBj8LLYWXwbbvHKffJBpPd5CyxqapRQYDIXtFZErgYE
  ```
 
 Sample execution output:
