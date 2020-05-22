@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"runtime"
 
 	"k8s.io/klog"
 
@@ -527,3 +528,20 @@ func SpliceErrors(errors []error) string {
 	stb.WriteString("]\n")
 	return stb.String()
 }
+
+func getMachineArchitecture() string {
+	return runtime.GOARCH
+}
+
+// GetPodSandboxImage return proper podSandboxImage according to the host architecture.
+// for ARM arch, the podSandboxImage should be "kubeedge/pause-arm:3.1"
+func GetPodSandboxImage() string {
+	arch := getMachineArchitecture()
+	podSandboxImage := constants.DefaultPodSandboxImage
+	if arch == "arm" || arch == "arm64" {
+		s := strings.Split(podSandboxImage,":")
+		podSandboxImage = s[0] + "-arm:" + s[1]
+	}
+	return podSandboxImage
+}
+
