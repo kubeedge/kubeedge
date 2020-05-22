@@ -27,7 +27,7 @@
 ### Installer Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
-| []() |  MB |  |
+| [keadm-v1.3.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.0/keadm-v1.3.0-linux-amd64.tar.gz) |  15.1 MB | ec86e027abf5602b90a90557cc3153dcd85fb5350ba0e57a6bd607606d7a0e1165535548b11c31df70db52f2a9aef3604f6be6b8e3d097afeeda9d845bdee507 |
 
 ### EdgeSite Binaries
 | filename | Size | sha512 hash |
