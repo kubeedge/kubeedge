@@ -37,7 +37,7 @@ var DeviceState string
 
 type DeviceUpdates struct {
 	EventID     string `json:"event_id"`
-	Timestamp   int    `json:"timestamp"`
+	Timestamp   int64  `json:"timestamp"`
 	DeviceField `json:"device"`
 }
 
