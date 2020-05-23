@@ -75,7 +75,7 @@ const (
 	etcHostsPath  = "/etc/hosts"
 	systemdSuffix = ".slice"
 
-	Windows = "Windows"
+	windows = "windows"
 )
 
 // GetActivePods returns non-terminal pods
@@ -289,7 +289,7 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 	// - OS is not Windows
 	// Kubernetes will not mount /etc/hosts if:
 	// - when the Pod sandbox is being created, its IP is still unknown. Hence, PodIP will not have been set.
-	mountEtcHostsFile := len(podIP) > 0 && runtime.GOOS != Windows
+	mountEtcHostsFile := len(podIP) > 0 && runtime.GOOS != windows
 	klog.Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, podIP, mountEtcHostsFile)
 	mounts := []kubecontainer.Mount{}
 	for _, mount := range container.VolumeMounts {
@@ -353,7 +353,7 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 
 		// Docker Volume Mounts fail on Windows if it is not of the form C:/
 		containerPath := mount.MountPath
-		if runtime.GOOS == Windows {
+		if runtime.GOOS == windows {
 			if (strings.HasPrefix(hostPath, "/") || strings.HasPrefix(hostPath, "\\")) && !strings.Contains(hostPath, ":") {
 				hostPath = "c:" + hostPath
 			}
@@ -395,7 +395,7 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 }
 
 func makeAbsolutePath(goos, path string) string {
-	if goos != Windows {
+	if goos != windows {
 		return "/" + path
 	}
 	// These are all for windows
@@ -603,7 +603,7 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 
 	// Disabling adding TerminationMessagePath on Windows as these files would be mounted as docker volume and
 	// Docker for Windows has a bug where only directories can be mounted
-	if len(container.TerminationMessagePath) != 0 && runtime.GOOS != Windows {
+	if len(container.TerminationMessagePath) != 0 && runtime.GOOS != windows {
 		p := e.getPodContainerDir(pod.UID, container.Name)
 		if err := os.MkdirAll(p, 0750); err != nil {
 			klog.Errorf("Error on creating %q: %v", p, err)

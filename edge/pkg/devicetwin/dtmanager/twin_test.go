@@ -48,7 +48,7 @@ var (
 	typeInt     = "int"
 	typeString  = "string"
 
-	value = "value"
+	valueType = "value"
 )
 
 // sendMsg sends message to receiverChannel and heartbeatChannel
@@ -76,7 +76,7 @@ func receiveMsg(commChannel chan interface{}, message *dttype.DTMessage) {
 // twinValueFunc returns a new TwinValue
 func twinValueFunc() *dttype.TwinValue {
 	var twinValue dttype.TwinValue
-	value := value
+	value := valueType
 	valueMetaData := &dttype.ValueMetadata{Timestamp: time.Now().UnixNano() / 1e6}
 	twinValue.Value = &value
 	twinValue.Metadata = valueMetaData
@@ -524,7 +524,7 @@ func TestDealDeviceTwinResult(t *testing.T) {
 
 	str := typeString
 	optionTrue := true
-	value := value
+	value := valueType
 	msgTwinValue := make(map[string]*dttype.MsgTwin)
 	msgTwinValue[deviceB] = &dttype.MsgTwin{
 		Expected: &dttype.TwinValue{Value: &value},
@@ -1328,7 +1328,7 @@ func TestDealTwinAdd(t *testing.T) {
 
 // TestDealMsgTwin is function to test DealMsgTwin
 func TestDealMsgTwin(t *testing.T) {
-	value := value
+	value := valueType
 	str := typeString
 	optionTrue := true
 	optionFalse := false
