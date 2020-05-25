@@ -18,33 +18,33 @@ exemptMilestones: false
 # Set to true to ignore issues with an assignee (defaults to false)
 exemptAssignees: false
 # Label to use when marking as stale
-staleLabel: stale
+staleLabel: lifecycle/stale
 
 pull:
-  daysUntilClose: 7
-  daysUntilStale: 30
+  daysUntilClose: 60
+  daysUntilStale: 90
   markComment: >
-    Hello 👋 Looks like there was no activity on this amazing PR for last 30 days.
+    Hello 👋 Looks like there was no activity on this amazing PR for last 90 days.
 
     **Do you mind updating us on the status?** Is there anything we can help with? If you plan to still work on it, just comment on this PR or push a commit. Thanks! 🤗
 
-    If there will be no activity for next week, this issue will be closed (we can always reopen a PR if you get back to this!).
+    If there will be no activity for 60 days, this issue will be closed (we can always reopen a PR if you get back to this!).
   #unmarkComment: No need for unmark comment.
   closeComment: >
-    Closing for now as promised, let us know if you need this to be reopened! 🤗
+    Closing for now as there was no activity for last 60 days after marked as stale, let us know if you need this to be reopened! 🤗
 
 issues:
-  daysUntilClose: 7
-  daysUntilStale: 30
+  daysUntilClose: 60
+  daysUntilStale: 90
   markComment: >
-    Hello 👋 Looks like there was no activity on this issue for last 30 days.
+    Hello 👋 Looks like there was no activity on this issue for last 90 days.
 
     **Do you mind updating us on the status?** Is this still reproducible or needed? If yes, just comment on this PR or push a commit. Thanks! 🤗
 
-    If there will be no activity for next week, this issue will be closed (we can always reopen an issue if we need!).
+    If there will be no activity for 60 days, this issue will be closed (we can always reopen an issue if we need!).
   #unmarkComment: No need for unmark comment.
   closeComment: >
-    Closing for now as promised, let us know if you need this to be reopened! 🤗
+    Closing for now as there was no activity for last 60 days after marked as stale, let us know if you need this to be reopened! 🤗
 
 # Limit the number of actions per hour, from 1-30. Default is 30
 limitPerRun: 30
