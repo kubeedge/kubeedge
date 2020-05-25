@@ -336,6 +336,14 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "", "led")
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
+
+			newLedDevice := utils.NewLedDeviceInstance(nodeName)
+			time.Sleep(2 * time.Second)
+			Eventually(func() bool {
+				_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newLedDevice)
+				return err == nil
+			}, "20s", "2s").Should(Equal(true), "Device creation is not finished!!")
+
 			IsDeviceUpdated, statusCode := utils.HandleDeviceInstance(http.MethodPatch, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+utils.UpdatedLedDeviceInstance(nodeName).Name, "led")
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
@@ -369,6 +377,14 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "", "bluetooth")
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
+
+			newBluetoothDevice := utils.NewBluetoothDeviceInstance(nodeName)
+			time.Sleep(2 * time.Second)
+			Eventually(func() bool {
+				_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newBluetoothDevice)
+				return err == nil
+			}, "20s", "2s").Should(Equal(true), "Device creation is not finished!!")
+
 			IsDeviceUpdated, statusCode := utils.HandleDeviceInstance(http.MethodPatch, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+utils.UpdatedBluetoothDeviceInstance(nodeName).Name, "bluetooth")
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
@@ -402,6 +418,14 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "", "modbus")
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
+
+			newModbusDevice := utils.NewModbusDeviceInstance(nodeName)
+			time.Sleep(2 * time.Second)
+			Eventually(func() bool {
+				_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newModbusDevice)
+				return err == nil
+			}, "20s", "2s").Should(Equal(true), "Device creation is not finished!!")
+
 			IsDeviceUpdated, statusCode := utils.HandleDeviceInstance(http.MethodPatch, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+utils.UpdatedModbusDeviceInstance(nodeName).Name, "modbus")
 			Expect(IsDeviceUpdated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
