@@ -22,8 +22,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
+	appsv1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -56,14 +60,29 @@ func (ks *K8SInstTool) InstallTools() error {
 		return err
 	}
 
-	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
-
-	err = installCRDs(ks.KubeConfig, ks.Master)
+	config, err := BuildConfig(ks.KubeConfig, ks.Master)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build config, err: %v", err)
 	}
 
-	err = createKubeEdgeNs(ks.KubeConfig, ks.Master)
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create client, err: %v", err)
+	}
+
+	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
+
+	if ks.ToolVersion.GE(semver.MustParse("1.3.0")) {
+		if err := installCloudFromFile(client); err != nil {
+			return err
+		}
+	} else {
+		if err := createKubeEdgeNs(client); err != nil {
+			return err
+		}
+	}
+
+	err = installCRDs(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return err
 	}
@@ -71,22 +90,14 @@ func (ks *K8SInstTool) InstallTools() error {
 	return nil
 }
 
-func createKubeEdgeNs(kubeConfig, master string) error {
-	config, err := BuildConfig(kubeConfig, master)
-	if err != nil {
-		return fmt.Errorf("Failed to build config, err: %v", err)
-	}
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("Failed to create client, err: %v", err)
-	}
+func createKubeEdgeNs(client *kubernetes.Clientset) error {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubeedge",
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), "kubeedge", metav1.GetOptions{})
+	_, err := client.CoreV1().Namespaces().Get(context.Background(), KubeEdgeCloudNameSpace, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
@@ -190,6 +201,109 @@ func createKubeEdgeCRD(clientset crdclient.Interface, crdFile string) error {
 	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
 
 	return err
+}
+
+func installCloudFromFile(clientSet *kubernetes.Clientset) error {
+	err := os.MkdirAll(KubeEdgeCloudPath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+	}
+
+	files := []string{"01-namespace.yaml",
+		"02-serviceaccount.yaml",
+		"03-clusterrole.yaml",
+		"04-clusterrolebinding.yaml",
+		"05-configmap.yaml",
+		"07-deployment.yaml",
+		"08-service.yaml.example"}
+	for _, file := range files {
+		//check it first, do not download when it exists
+		_, err := os.Lstat(KubeEdgeCloudPath + "/" + file)
+		if err != nil {
+			if os.IsNotExist(err) {
+				//Download the tar from repo
+				dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCloudPath, KubeEdgeCloudDownloadURL, file)
+				_, err := runCommandWithShell(dwnldURL)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+
+		content, err := ioutil.ReadFile(KubeEdgeCloudPath + "/" + file)
+		if err != nil {
+			return err
+		}
+		switch file {
+		case files[0]:
+			namespace := &coreV1.Namespace{}
+			err := yaml.Unmarshal(content, namespace)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[1]:
+			serviceAccount := &coreV1.ServiceAccount{}
+			err = yaml.Unmarshal(content, serviceAccount)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.CoreV1().ServiceAccounts(KubeEdgeCloudNameSpace).Create(context.Background(), serviceAccount, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[2]:
+			clusterRole := &rbacv1.ClusterRole{}
+			err = yaml.Unmarshal(content, clusterRole)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.RbacV1().ClusterRoles().Create(context.Background(), clusterRole, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[3]:
+			clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
+			err = yaml.Unmarshal(content, clusterRoleBinding)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.RbacV1().ClusterRoleBindings().Create(context.Background(), clusterRoleBinding, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[4]:
+			configMap := &coreV1.ConfigMap{}
+			err = yaml.Unmarshal(content, configMap)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.CoreV1().ConfigMaps(KubeEdgeCloudNameSpace).Create(context.Background(), configMap, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[5]:
+			deployment := &appsv1.Deployment{}
+			err = yaml.Unmarshal(content, deployment)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.AppsV1().Deployments(KubeEdgeCloudNameSpace).Create(context.Background(), deployment, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		case files[6]:
+			service := &coreV1.Service{}
+			err = yaml.Unmarshal(content, service)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal: %v", err)
+			}
+			if _, err = clientSet.CoreV1().Services(KubeEdgeCloudNameSpace).Create(context.Background(), service, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 //TearDown shoud uninstall K8S, but it is not required either for cloud or edge node.

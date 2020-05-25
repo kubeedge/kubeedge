@@ -66,10 +66,14 @@ const (
 	KubeEdgeCloudCoreNewYaml = KubeEdgeNewConfigDir + "cloudcore.yaml"
 	KubeEdgeEdgeCoreNewYaml  = KubeEdgeNewConfigDir + "edgecore.yaml"
 
-	KubeEdgeLogPath = "/var/log/kubeedge/"
-	KubeEdgeCrdPath = KubeEdgePath + "crds"
+	KubeEdgeLogPath   = "/var/log/kubeedge/"
+	KubeEdgeCrdPath   = KubeEdgePath + "crds"
+	KubeEdgeCloudPath = KubeEdgePath + "cloud"
 
-	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
+	KubeEdgeCloudNameSpace = "kubeedge"
+
+	KubeEdgeCRDDownloadURL   = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
+	KubeEdgeCloudDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/cloud"
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
@@ -275,6 +279,21 @@ func runCommandWithStdout(command string) (string, error) {
 	}
 
 	return cmd.GetStdOutput(), nil
+}
+
+// runCommandWithExit executes the given command with "sh -c".
+// Only return err when failed to exec command.
+func runCommandWithExit(command string) (string, error) {
+	cmd := exec.Command("sh", "-c", command)
+	stdout, err := cmd.Output()
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			return "", nil
+		}
+		return "", err
+	}
+
+	return string(stdout), nil
 }
 
 // build Config from flags
@@ -538,22 +557,20 @@ func killKubeEdgeBinary(proc string) error {
 		return err
 	}
 
-	fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath+proc+".log")
+	fmt.Printf("KubeEdge %s is stopped, For logs visit: %s%s.log\n", proc, KubeEdgeLogPath, proc)
 	return nil
 }
 
 //isKubeEdgeProcessRunning checks if the given process is running or not
 func isKubeEdgeProcessRunning(proc string) (bool, error) {
-	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s' | awk '{print $2}'", proc[0:1], proc[1:])
-	stdout, err := runCommandWithStdout(procRunning)
-	if err != nil {
+	command := fmt.Sprintf("ps aux | grep %s | grep -v grep || kubectl get deploy -A | grep %s", proc, proc)
+	stdout, err := runCommandWithExit(command)
+
+	if err != nil || stdout == "" {
 		return false, err
 	}
-	if stdout != "" {
-		return true, nil
-	}
 
-	return false, nil
+	return true, nil
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {

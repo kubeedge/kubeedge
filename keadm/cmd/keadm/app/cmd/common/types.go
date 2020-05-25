@@ -22,18 +22,24 @@ import (
 	"github.com/blang/semver"
 )
 
+type BaseOptions struct {
+	KubeConfig string
+	Master     string
+}
+
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
+	BaseOptions
 	KubeEdgeVersion  string
-	KubeConfig       string
-	Master           string
 	AdvertiseAddress string
 	DNS              string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
 type JoinOptions struct {
-	InitOptions
+	BaseOptions
+	KubeEdgeVersion       string
+	AdvertiseAddress      string
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
@@ -45,7 +51,7 @@ type JoinOptions struct {
 }
 
 type ResetOptions struct {
-	Kubeconfig string
+	BaseOptions
 }
 
 type GettokenOptions struct {

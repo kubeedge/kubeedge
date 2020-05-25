@@ -21,6 +21,7 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -35,7 +36,9 @@ In edge node it shuts down the edge processes of KubeEdge
 `
 	resetExample = `
 For cloud node:
-keadm reset
+keadm reset --kube-config=/root/.kube/config
+
+  - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 
 For edge node:
 keadm reset
@@ -44,12 +47,13 @@ keadm reset
 
 func newResetOptions() *common.ResetOptions {
 	opts := &common.ResetOptions{}
-	opts.Kubeconfig = common.DefaultKubeConfig
+	opts.KubeConfig = common.DefaultKubeConfig
 	return opts
 }
 
 // NewKubeEdgeReset represents the reset command
 func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
+	flagVals := make(map[string]types.FlagData)
 	IsEdgeNode := false
 	if reset == nil {
 		reset = newResetOptions()
@@ -74,17 +78,27 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Tear down cloud node. It includes
-			// 1. killing cloudcore process
+			checkFlags := func(f *pflag.Flag) {
+				util.AddToolVals(f, flagVals)
+			}
+			cmd.Flags().VisitAll(checkFlags)
 
 			// Tear down edge node. It includes
 			// 1. killing edgecore process, but don't delete node from K8s
-			return TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig)
+			return TearDownKubeEdge(IsEdgeNode, reset.KubeConfig)
 		},
 	}
 
 	addResetFlags(cmd, reset)
 	return cmd
+}
+
+func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
+	cmd.Flags().StringVar(&resetOpts.KubeConfig, types.KubeConfig, resetOpts.KubeConfig,
+		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+
+	cmd.Flags().StringVar(&resetOpts.Master, types.Master, resetOpts.Master,
+		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
 }
 
 // TearDownKubeEdge will bring down either cloud or edge components,
@@ -97,13 +111,5 @@ func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 	}
 
 	err := ke.TearDown()
-	if err != nil {
-		return fmt.Errorf("TearDown failed, err:%v", err)
-	}
-	return nil
-}
-
-func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
-	cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
-		"Use this key to set kube-config path, eg: $HOME/.kube/config")
+	return err
 }

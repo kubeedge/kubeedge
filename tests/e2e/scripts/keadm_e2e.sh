@@ -43,22 +43,25 @@ function prepare_cluster() {
 }
 
 function start_kubeedge() {
+  export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
+
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
+  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=${MASTER_IP}
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
   # ensure tokensecret is generated
   while true; do
-      sleep 3
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
+      echo "wait cloud generate token secret"
+      sleep 3
   done
 
   export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
   sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=${MASTER_IP}:10000 --edgenode-name=edge-node
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
