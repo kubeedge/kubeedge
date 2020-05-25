@@ -137,7 +137,7 @@ func SendHTTPRequest(method, reqAPI string, body io.Reader) (*http.Response, err
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
-	klog.V(4).Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	klog.V(4).Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	if err != nil {
 		klog.Errorf("HTTP request is failed :%v", err)
 		return resp, err

@@ -103,7 +103,7 @@ func RegisterNodeToMaster(UID, nodehandler, nodeselector string) error {
 		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
@@ -151,7 +151,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 	var req *http.Request
 	var file string
 	curpath := getpwd()
-	if IsEdgeCore == true {
+	if IsEdgeCore {
 		file = path.Join(curpath, "../../performance/assets/02-edgeconfigmap.yaml")
 	} else {
 		file = path.Join(curpath, "../../performance/assets/01-configmap.yaml")
@@ -188,7 +188,7 @@ func HandleConfigmap(configName chan error, operation, confighandler string, IsE
 		if err != nil {
 			Fatalf("Sending HTTP request failed: %v", err)
 		}
-		Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 		defer resp.Body.Close()
 		if operation == http.MethodPost {
 			gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
@@ -227,7 +227,7 @@ func DeleteConfigmap(apiConfigMap string) int {
 func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	var temp map[string]interface{}
 	var body string
-	if toTaint == true {
+	if toTaint {
 		body = fmt.Sprintf(`{"spec":{"taints":[{"effect":"NoSchedule","key":"key","value":"value"}]}}`)
 	} else {
 		body = fmt.Sprintf(`{"spec":{"taints":null}}`)
@@ -253,7 +253,7 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 	return nil
@@ -281,8 +281,10 @@ func GetNodes(api string) v1.NodeList {
 }
 
 func ApplyLabelToNode(apiserver, key, val string) error {
-	var temp map[string]interface{}
-	var body string
+	var (
+		temp map[string]interface{}
+		body string
+	)
 	body = fmt.Sprintf(`{"metadata":{"labels":{"%s":"%s"}}}`, key, val)
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {
@@ -305,7 +307,7 @@ func ApplyLabelToNode(apiserver, key, val string) error {
 		Fatalf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
 	return nil

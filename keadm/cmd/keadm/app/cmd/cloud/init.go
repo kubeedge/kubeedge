@@ -51,8 +51,8 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 		init = newInitOptions()
 	}
 
-	tools := make(map[string]types.ToolsInstaller, 0)
-	flagVals := make(map[string]types.FlagData, 0)
+	tools := make(map[string]types.ToolsInstaller)
+	flagVals := make(map[string]types.FlagData)
 
 	var cmd = &cobra.Command{
 		Use:     "init",
@@ -78,8 +78,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 
 //newInitOptions will initialise new instance of options everytime
 func newInitOptions() *types.InitOptions {
-	var opts *types.InitOptions
-	opts = &types.InitOptions{}
+	opts := &types.InitOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
 	return opts
 }

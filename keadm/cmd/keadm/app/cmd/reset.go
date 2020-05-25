@@ -81,7 +81,7 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 func TearDownKubeEdge(isEdgeNode bool) error {
 	var ke types.ToolsInstaller
 	ke = &util.KubeCloudInstTool{Common: util.Common{}}
-	if false != isEdgeNode {
+	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
 

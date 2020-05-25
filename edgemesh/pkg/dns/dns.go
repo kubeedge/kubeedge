@@ -202,10 +202,7 @@ func parseDNSQuery(req []byte) (que *dnsQuestion, err error) {
 
 // isAQuery judges if the dns pkg is a query
 func (h *dnsHeader) isAQuery() bool {
-	if h.flags&dnsQR != dnsQR {
-		return true
-	}
-	return false
+	return h.flags&dnsQR != dnsQR
 }
 
 // getHeader gets dns pkg head

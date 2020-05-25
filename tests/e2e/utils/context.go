@@ -62,7 +62,7 @@ func SendHTTPRequest(method, reqAPI string) (*http.Response, error) {
 		Fatalf("HTTP request is failed :%v", err)
 		return resp, err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return resp, nil
 }
 

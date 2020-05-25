@@ -360,7 +360,6 @@ func MsgProcess(msg model.Message) {
 			klog.Warningf("[EdgeMesh] invalid %s operation on podlist", msg.GetOperation())
 		}
 	}
-	return
 }
 
 // addServer adds a server
@@ -387,7 +386,6 @@ func addServer(svcName, svcPorts string) {
 		klog.Errorf("[EdgeMesh] add listener %s to edge db error: %v", svcName, err)
 		return
 	}
-	return
 }
 
 // updateServer updates a server

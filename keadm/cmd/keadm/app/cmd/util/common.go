@@ -214,7 +214,7 @@ func IsCloudCore() (types.ModuleRunning, error) {
 		return types.NoneRunning, err
 	}
 
-	if false != edgeCoreRunning {
+	if edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
 	}
 
