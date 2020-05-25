@@ -154,10 +154,6 @@ const (
 	ResolvConfDefault = "/etc/resolv.conf"
 )
 
-var (
-	zeroDuration = metav1.Duration{}
-)
-
 // podReady holds the initPodReady flag and its lock
 type podReady struct {
 	// initPodReady is flag to check Pod ready status
