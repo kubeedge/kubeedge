@@ -24,5 +24,4 @@ kubeedge::lint::check() {
     cd ${KUBEEDGE_ROOT}
     golangci-lint run
     gofmt -l -w staging
-    go vet ./...
 }

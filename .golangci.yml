@@ -48,5 +48,6 @@ linters:
     - gofmt
     - golint
     - gosimple
+    - govet
     - misspell
     - whitespace
