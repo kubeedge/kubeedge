@@ -99,7 +99,7 @@ function start_cloudcore {
 
   # ensure tokensecret is generated
   while true; do
-      sleep 10
+      sleep 3
       kubectl get secret -nkubeedge| grep -q tokensecret && break
   done
 }
@@ -194,7 +194,7 @@ if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
 else
     while true; do
-        sleep 10
+        sleep 3
         kubectl get nodes | grep edge-node | grep -q Ready && break
     done
     kubectl label node edge-node disktype=test
