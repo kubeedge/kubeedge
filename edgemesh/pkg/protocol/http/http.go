@@ -109,7 +109,7 @@ func (p *HTTP) responseCallback(data *invocation.Response) error {
 		StatusCode: http.StatusServiceUnavailable,
 		Proto:      p.req.Proto,
 		Request:    p.req,
-		Header:     make(http.Header, 0),
+		Header:     make(http.Header),
 	}
 	respBytes, _ = httpResponseToBytes(resp)
 	// send error response back

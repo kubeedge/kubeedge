@@ -147,10 +147,9 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pm.AddPod(ns+"/"+p.Name, p)
 
 		// Send msg
-		select {
-		case pm.event <- msg:
-			klog.V(4).Infof("Finish add pod request")
-		}
+		pm.event <- msg
+		klog.V(4).Infof("Finish add pod request")
+
 	case http.MethodDelete:
 		// Delete Pod
 		klog.V(4).Infof("Receive delete pod request")
@@ -178,10 +177,8 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pm.DeletePod(ns + "/" + name)
 
 		// Send msg
-		select {
-		case pm.event <- msg:
-			klog.V(4).Infof("Finish delete pod request")
-		}
+		pm.event <- msg
+		klog.V(4).Infof("Finish delete pod request")
 
 	default:
 		klog.Errorf("Http type: %s unsupported", req.Method)

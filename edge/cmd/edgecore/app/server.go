@@ -131,14 +131,14 @@ func environmentCheck() error {
 	// if kubelet is running, return error
 	if find, err := findProcess("kubelet"); err != nil {
 		return err
-	} else if find == true {
+	} else if find {
 		return errors.New("Kubelet should not running on edge node when running edgecore")
 	}
 
 	// if kube-proxy is running, return error
 	if find, err := findProcess("kube-proxy"); err != nil {
 		return err
-	} else if find == true {
+	} else if find {
 		return errors.New("Kube-proxy should not running on edge node when running edgecore")
 	}
 

@@ -98,7 +98,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		req.Header.Set("Content-Type", "application/yaml")
 		resp, err := client.Do(req)
 		Expect(err).To(BeNil())
-		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
 		//Apply CRD for deviceinstance
@@ -113,7 +113,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		req.Header.Set("Content-Type", "application/yaml")
 		resp, err = client.Do(req)
 		Expect(err).To(BeNil())
-		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
 		//Run ./cloudcore binary
@@ -182,7 +182,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		resp, err = client.Do(req)
 		Expect(err).To(BeNil())
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 
 		//apply CRD for mock deviceinstance
 		curPath = getpwd()
@@ -197,7 +197,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		resp, err = client.Do(req)
 		Expect(err).To(BeNil())
 		Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+		utils.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 
 		//updating deployment file with edgenode name and dockerhubusername
 		curPath = getpwd()

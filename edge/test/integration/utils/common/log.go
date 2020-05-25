@@ -51,7 +51,7 @@ func PrintTestcaseNameandStatus() {
 	var testdesc ginkgo.GinkgoTestDescription
 	var Status string
 	testdesc = ginkgo.CurrentGinkgoTestDescription()
-	if testdesc.Failed == true {
+	if testdesc.Failed {
 		Status = "FAILED"
 	} else {
 		Status = "PASSED"

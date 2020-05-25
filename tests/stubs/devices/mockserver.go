@@ -67,11 +67,9 @@ func main() {
 	defer cancel()
 	d.Init(createServiceAndAdvertise)
 
-	select {
-	case <-ctx.Done():
-		klog.Info("Stopping server and cleaning up")
-		d.StopAdvertising()
-		d.RemoveAllServices()
-		klog.Info("Stopped advertising and removed all services!!!!")
-	}
+	<-ctx.Done()
+	klog.Info("Stopping server and cleaning up")
+	d.StopAdvertising()
+	d.RemoveAllServices()
+	klog.Info("Stopped advertising and removed all services!!!!")
 }

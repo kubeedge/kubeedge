@@ -65,7 +65,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 		klog.Errorf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

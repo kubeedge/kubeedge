@@ -240,7 +240,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 			break
 		}
 	}
-	if checkModelExists != true {
+	if !checkModelExists {
 		addDeviceModelAndVisitors(deviceModel, deviceProfile)
 	}
 	bytes, err := json.Marshal(deviceProfile)
@@ -702,7 +702,7 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha1.Device,
 			break
 		}
 	}
-	if checkModelReferenced != true {
+	if !checkModelReferenced {
 		deleteDeviceModelAndVisitors(deviceModel, deviceProfile)
 	}
 	bytes, err := json.Marshal(deviceProfile)
