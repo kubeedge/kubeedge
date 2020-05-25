@@ -16,8 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-const privateKeyBits = 2048
-
 // GetCACert gets the cloudcore CA certificate
 func GetCACert(url string) ([]byte, error) {
 	client := http.NewHTTPClient()

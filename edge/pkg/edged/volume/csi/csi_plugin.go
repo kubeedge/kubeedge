@@ -67,10 +67,8 @@ const (
 	fsTypeBlockName = "block"
 
 	// TODO: increase to something useful
-	csiResyncPeriod = time.Minute
+	//csiResyncPeriod = time.Minute
 )
-
-var deprecatedSocketDirVersions = []string{"0.1.0", "0.2.0", "0.3.0", "0.4.0"}
 
 type csiPlugin struct {
 	host            volume.VolumeHost

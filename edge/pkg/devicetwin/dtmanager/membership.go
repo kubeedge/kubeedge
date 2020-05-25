@@ -20,7 +20,6 @@ import (
 var (
 	//memActionCallBack map for action to callback
 	memActionCallBack map[string]CallBack
-	mutex             sync.Mutex
 )
 
 //MemWorker deal membership event
