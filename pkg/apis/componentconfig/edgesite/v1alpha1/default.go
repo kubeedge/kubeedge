@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"os"
 	"path"
+	"runtime"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -138,6 +139,15 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	var podSandboxImage string
+	switch runtime.GOARCH {
+	case "amd64":
+		podSandboxImage = constants.DefaultPodSandboxImage
+	case "arm":
+		podSandboxImage = constants.DefaultArmPodSandboxImage
+	case "arm64":
+		podSandboxImage = constants.DefaultArm64PodSandboxImage
+	}
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -159,13 +169,12 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 				ClusterDomain:         "",
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
-				//TODO (@kuramal) Automatically set PodSandboxImage according to the architecture.(x86,amd64,arm or arm64)
-				PodSandboxImage:     constants.DefaultPodSandboxImage,
-				HostnameOverride:    hostnameOverride,
-				InterfaceName:       constants.DefaultInterfaceName,
-				DevicePluginEnabled: false,
-				GPUPluginEnabled:    false,
-				CGroupDriver:        edgecoreconfig.CGroupDriverCGroupFS,
+				PodSandboxImage:       podSandboxImage,
+				HostnameOverride:      hostnameOverride,
+				InterfaceName:         constants.DefaultInterfaceName,
+				DevicePluginEnabled:   false,
+				GPUPluginEnabled:      false,
+				CGroupDriver:          edgecoreconfig.CGroupDriverCGroupFS,
 			},
 		},
 	}

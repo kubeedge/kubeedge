@@ -29,6 +29,8 @@ const (
 	DefaultRemoteRuntimeEndpoint       = "unix:///var/run/dockershim.sock"
 	DefaultRemoteImageEndpoint         = "unix:///var/run/dockershim.sock"
 	DefaultPodSandboxImage             = "kubeedge/pause:3.1"
+	DefaultArmPodSandboxImage          = "kubeedge/pause-arm:3.1"
+	DefaultArm64PodSandboxImage        = "kubeedge/pause-arm64:3.1"
 	DefaultNodeStatusUpdateFrequency   = 10
 	DefaultImagePullProgressDeadline   = 60
 	DefaultRuntimeRequestTimeout       = 2
