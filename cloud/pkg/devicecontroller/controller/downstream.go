@@ -280,6 +280,8 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile 
 		propertyVisitor.Name = pptv.PropertyName
 		propertyVisitor.PropertyName = pptv.PropertyName
 		propertyVisitor.ModelName = deviceModel.Name
+		propertyVisitor.ReportCycle = pptv.ReportCycle
+		propertyVisitor.CollectCycle = pptv.CollectCycle
 		if pptv.Modbus != nil {
 			propertyVisitor.Protocol = Modbus
 			propertyVisitor.VisitorConfig = pptv.Modbus
