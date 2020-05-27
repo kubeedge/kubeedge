@@ -32,6 +32,8 @@ import (
 	"k8s.io/klog"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //AddressFamily is uint type var to describe family ips
@@ -534,7 +536,8 @@ func getMachineArchitecture() string {
 }
 
 // GetPodSandboxImage return proper podSandboxImage according to the host architecture.
-// for ARM arch, the podSandboxImage should be "kubeedge/pause-arm:3.1"
+// for x86 arch, DefaultPodSandboxImage is fine,
+// but for ARM arch, the podSandboxImage should be "kubeedge/pause-arm:3.1"
 func GetPodSandboxImage() string {
 	arch := getMachineArchitecture()
 	podSandboxImage := constants.DefaultPodSandboxImage
@@ -544,4 +547,3 @@ func GetPodSandboxImage() string {
 	}
 	return podSandboxImage
 }
-

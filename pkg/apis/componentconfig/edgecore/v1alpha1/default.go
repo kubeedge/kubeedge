@@ -36,6 +36,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	podSandboxImage := util.GetPodSandboxImage()
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -60,7 +61,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ClusterDomain:               "",
 				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
-				PodSandboxImage:             constants.DefaultPodSandboxImage,
+				PodSandboxImage:             podSandboxImage,
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
 				HostnameOverride:            hostnameOverride,
@@ -162,6 +163,8 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	podSandboxImage := util.GetPodSandboxImage()
+
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -179,7 +182,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				NodeIP:                localIP,
 				ClusterDNS:            "",
 				ClusterDomain:         "",
-				PodSandboxImage:       constants.DefaultPodSandboxImage,
+				PodSandboxImage:       podSandboxImage,
 				HostnameOverride:      hostnameOverride,
 				InterfaceName:         constants.DefaultInterfaceName,
 				DevicePluginEnabled:   false,
