@@ -25,12 +25,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
 	"k8s.io/klog"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 //AddressFamily is uint type var to describe family ips
@@ -525,4 +528,20 @@ func SpliceErrors(errors []error) string {
 	}
 	stb.WriteString("]\n")
 	return stb.String()
+}
+
+// GetPodSandboxImage return proper podSandboxImage according to the host architecture.
+// for x86 arch, DefaultPodSandboxImage is fine,
+// but for arm arch, the podSandboxImage should be "kubeedge/pause-arm:3.1" or "kubeedge/pause-arm64:3.1"
+func GetPodSandboxImage() string {
+	var podSandboxImage string
+	switch runtime.GOARCH {
+	case "amd64":
+		podSandboxImage = constants.DefaultPodSandboxImage
+	case "arm":
+		podSandboxImage = constants.DefaultArmPodSandboxImage
+	case "arm64":
+		podSandboxImage = constants.DefaultArm64PodSandboxImage
+	}
+	return podSandboxImage
 }

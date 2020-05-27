@@ -36,6 +36,8 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	podSandboxImage := util.GetPodSandboxImage()
+
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -107,7 +109,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
 				RemoteRuntimeEndpoint:       constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:         constants.DefaultRemoteImageEndpoint,
-				PodSandboxImage:             constants.DefaultPodSandboxImage,
+				PodSandboxImage:             podSandboxImage,
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
 				HostnameOverride:            hostnameOverride,
@@ -138,6 +140,8 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	podSandboxImage := util.GetPodSandboxImage()
+
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -160,7 +164,7 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 				RemoteRuntimeEndpoint: constants.DefaultRemoteRuntimeEndpoint,
 				RemoteImageEndpoint:   constants.DefaultRemoteImageEndpoint,
 				//TODO (@kuramal) Automatically set PodSandboxImage according to the architecture.(x86,amd64,arm or arm64)
-				PodSandboxImage:     constants.DefaultPodSandboxImage,
+				PodSandboxImage:     podSandboxImage,
 				HostnameOverride:    hostnameOverride,
 				InterfaceName:       constants.DefaultInterfaceName,
 				DevicePluginEnabled: false,
