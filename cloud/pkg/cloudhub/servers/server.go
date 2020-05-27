@@ -60,7 +60,7 @@ func startWebsocketServer() {
 		Addr:       fmt.Sprintf("%s:%d", hubconfig.Config.WebSocket.Address, hubconfig.Config.WebSocket.Port),
 		ExOpts:     api.WSServerOption{Path: "/"},
 	}
-	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeWS)
+	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeWS)
 	klog.Fatal(svc.ListenAndServeTLS("", ""))
 }
 
@@ -75,6 +75,6 @@ func startQuicServer() {
 		ExOpts:     api.QuicServerOption{MaxIncomingStreams: int(hubconfig.Config.Quic.MaxIncomingStreams)},
 	}
 
-	klog.Infof("Startting cloudhub %s server", api.ProtocolTypeQuic)
+	klog.Infof("Starting cloudhub %s server", api.ProtocolTypeQuic)
 	klog.Fatal(svc.ListenAndServeTLS("", ""))
 }

@@ -60,6 +60,19 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	return logCon.Serve(s.Tunnel)
 }
 
+func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
+	metricsCon := &stream.EdgedMetricsConnection{
+		ReadChan: make(chan *stream.Message, 128),
+	}
+	if err := json.Unmarshal(m.Data, metricsCon); err != nil {
+		klog.Errorf("unmarshal connector data error %v", err)
+		return err
+	}
+
+	s.AddLocalConnection(m.ConnectID, metricsCon)
+	return metricsCon.Serve(s.Tunnel)
+}
+
 func (s *TunnelSession) ServeConnection(m *stream.Message) {
 	switch m.MessageType {
 	case stream.MessageTypeLogsConnect:
@@ -69,7 +82,9 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 	case stream.MessageTypeExecConnect:
 		panic("TODO")
 	case stream.MessageTypeMetricConnect:
-		panic("TODO")
+		if err := s.serveMetricsConnection(m); err != nil {
+			klog.Errorf("Serve Metrics connection error %s", m.String())
+		}
 	default:
 		panic(fmt.Errorf("Wrong message type %v", m.MessageType))
 	}
