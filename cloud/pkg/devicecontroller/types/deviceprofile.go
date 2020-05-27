@@ -74,6 +74,10 @@ type PropertyVisitor struct {
 	ModelName string `json:"modelName,omitempty"`
 	// Protocol is protocol of propertyVisitor
 	Protocol string `json:"protocol,omitempty"`
+	// Define how frequent mapper will report the value.
+	ReportCycle int64 `json:"reportCycle,omitempty"`
+	// Define how frequent mapper will collect from device.
+	CollectCycle int64 `json:"collectCycle,omitempty"`
 	// VisitorConfig is property visitor configuration
 	VisitorConfig interface{} `json:"visitorConfig,omitempty"`
 }

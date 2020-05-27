@@ -93,6 +93,18 @@ func withVisitorName(name string) DevicePropertyVisitorOption {
 	}
 }
 
+func withVisitorReportCycle(reportCycle int64) DevicePropertyVisitorOption {
+	return func(op *DevicePropertyVisitorOp) {
+		op.devicePropertyVisitor.ReportCycle = reportCycle
+	}
+}
+
+func withVisitorCollectCycle(collectCycle int64) DevicePropertyVisitorOption {
+	return func(op *DevicePropertyVisitorOp) {
+		op.devicePropertyVisitor.CollectCycle = collectCycle
+	}
+}
+
 func withVisitorConfig(protocol deviceProtocol) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
 		switch protocol {
@@ -235,7 +247,10 @@ func NewDeviceModelBluetooth(name string, namespace string) *v1alpha1.DeviceMode
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolBluetooth),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolBluetooth),
 		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withEndIndex(endIndex),
 		withOperation(v1alpha1.BluetoothAdd, operationValue))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
@@ -249,7 +264,10 @@ func NewDeviceModelBluetoothBadOperationType(name string, namespace string) *v1a
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolBluetooth),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolBluetooth),
 		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withEndIndex(endIndex),
 		withOperation("modulo", operationValue))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
@@ -263,7 +281,10 @@ func NewDeviceModelBluetoothNoStartIndex(name string, namespace string) *v1alpha
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolBluetooth),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolBluetooth),
 		withCharacteristicUUID(characteristicUUID), withEndIndex(endIndex), withOperation(v1alpha1.BluetoothAdd, operationValue))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -276,7 +297,10 @@ func NewDeviceModelBluetoothNoEndIndex(name string, namespace string) *v1alpha1.
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolBluetooth),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolBluetooth),
 		withCharacteristicUUID(characteristicUUID), withStartIndex(startIndex), withOperation(v1alpha1.BluetoothMultiply, operationValue))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -289,7 +313,10 @@ func NewDeviceModelBluetoothNoCharacteristicUUID(name string, namespace string) 
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolBluetooth),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolBluetooth),
 		withStartIndex(startIndex), withEndIndex(endIndex), withOperation(v1alpha1.BluetoothAdd, operationValue))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -302,7 +329,10 @@ func NewDeviceModelModbus(name string, namespace string) *v1alpha1.DeviceModel {
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolModbus),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolModbus),
 		withRegister(v1alpha1.ModbusRegisterTypeCoilRegister), withLimit(limit), withOffset(offset))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -315,7 +345,10 @@ func NewDeviceModelModbusBadRegister(name string, namespace string) *v1alpha1.De
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolModbus),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolModbus),
 		withRegister("test-register"), withLimit(limit), withOffset(offset))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -328,7 +361,10 @@ func NewDeviceModelModbusNoLimit(name string, namespace string) *v1alpha1.Device
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolModbus),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolModbus),
 		withRegister(v1alpha1.ModbusRegisterTypeCoilRegister), withOffset(offset))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 	return deviceModel
@@ -340,7 +376,10 @@ func NewDeviceModelModbusNoOffset(name string, namespace string) *v1alpha1.Devic
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolModbus),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolModbus),
 		withRegister(v1alpha1.ModbusRegisterTypeCoilRegister), withLimit(limit))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -353,7 +392,10 @@ func NewDeviceModelModbusNoRegister(name string, namespace string) *v1alpha1.Dev
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolModbus),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolModbus),
 		withLimit(limit), withOffset(offset))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 
@@ -366,7 +408,10 @@ func NewDeviceModelOpcUA(name string, namespace string) *v1alpha1.DeviceModel {
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolOPCUA),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolOPCUA),
 		withBrowseName("test"), withNodeID("node1"))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 	return deviceModel
@@ -378,7 +423,10 @@ func NewDeviceModelOpcUANoNodeID(name string, namespace string) *v1alpha1.Device
 		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
-	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature), withVisitorConfig(deviceProtocolOPCUA),
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolOPCUA),
 		withBrowseName("test"))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 	return deviceModel

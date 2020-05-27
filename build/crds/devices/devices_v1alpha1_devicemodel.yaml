@@ -217,6 +217,14 @@ spec:
                       This should refer to one of the device properties defined in
                       the device model.'
                     type: string
+                  reportCycle:
+                    description: 'Define how frequent mapper will report the value.'
+                    format: int64
+                    type: integer
+                  collectCycle:
+                    description: 'Define how frequent mapper will collect from device.'
+                    format: int64
+                    type: integer
                 required:
                   - propertyName
                 type: object
