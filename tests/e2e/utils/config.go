@@ -23,8 +23,6 @@ import (
 	"time"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
-
 type vmSpec struct {
 	IP       string `json:"ip"`
 	Username string `json:"username"`

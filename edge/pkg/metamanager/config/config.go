@@ -6,10 +6,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-const (
-	defaultSyncInterval = 60
-)
-
 var Config Configure
 var once sync.Once
 
