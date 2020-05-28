@@ -23,6 +23,9 @@ package csi
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	api "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -31,8 +34,6 @@ import (
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/volume"
 	utilstrings "k8s.io/utils/strings"
-	"os"
-	"path/filepath"
 )
 
 func getCredentialsFromSecret(k8s kubernetes.Interface, secretRef *api.SecretReference) (map[string]string, error) {
