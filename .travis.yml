@@ -70,7 +70,7 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install -y kubectl
       script:
-        - make e2e
+        - travis_retry make e2e
     - name: "keadm e2e test"
       arch: amd64
       before_script:
@@ -83,7 +83,7 @@ jobs:
         - sudo apt-get update
         - sudo apt-get install -y kubectl
       script:
-        - make keadm_e2e
+        - travis_retry make keadm_e2e
     - name: "build docker images on amd64"
       arch: amd64
       script:

@@ -41,23 +41,9 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		utils.Infof("Before Suite Execution")
 		//cfg = utils.LoadConfig()
 		ctx = utils.NewTestContext(utils.LoadConfig())
-		nodeName = "integration-node-" + utils.GetRandomString(10)
-		nodeSelector = "node-" + utils.GetRandomString(3)
+		nodeName = "edge-node"
+		nodeSelector = "test"
 
-		//Do the necessary config changes in Cloud and Edge nodes
-		Expect(utils.DeploySetup(ctx, nodeName, "deployment")).Should(BeNil())
-		//Run ./cloudcore binary
-		Expect(utils.StartCloudCore()).Should(BeNil())
-		//Register the Edge Node to Master
-		Expect(utils.RegisterNodeToMaster(nodeName, ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeSelector)).Should(BeNil())
-		//Run ./edgecore after node registration
-		Expect(utils.StartEdgeCore(ctx.Cfg.K8SMasterForKubeEdge, nodeName)).Should(BeNil())
-		//Check node successfully registered or not
-		Eventually(func() string {
-			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
-			utils.Infof("Node Name: %v, Node Status: %v", nodeName, status)
-			return status
-		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessful !!")
 		err := utils.MqttConnect()
 		Expect(err).To(BeNil())
 	})
