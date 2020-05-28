@@ -33,6 +33,8 @@ const (
 	DeviceInstanceHandler = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devices"
 	DeviceModelHandler    = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devicemodels"
 	ConfigmapHandler      = "/api/v1/namespaces/default/configmaps"
+
+	off = "OFF"
 )
 
 var CRDTestTimerGroup *utils.TestTimerGroup = utils.NewTestTimerGroup()
@@ -302,7 +304,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Eventually(func() bool {
 				return utils.TwinResult.Twin != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
-			stringValue := "OFF"
+			stringValue := off
 			expectedTwin := map[string]*utils.MsgTwin{
 				"temperature-enable": {
 					Expected: &utils.TwinValue{
@@ -355,7 +357,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Eventually(func() bool {
 				return utils.TwinResult.Twin != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
-			stringValue := "OFF"
+			stringValue := off
 			expectedTwin := map[string]*utils.MsgTwin{
 				"power-status": {
 					Expected: &utils.TwinValue{
@@ -547,7 +549,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			newLedDevice := utils.NewLedDeviceInstance(nodeName)
 			time.Sleep(3 * time.Second)
 			var deviceTwinUpdateMessage utils.DeviceTwinUpdate
-			reportedValue := "OFF"
+			reportedValue := off
 			deviceTwinUpdateMessage.Twin = map[string]*utils.MsgTwin{
 				"power-status": {Actual: &utils.TwinValue{Value: &reportedValue}, Metadata: &utils.TypeMetadata{Type: "string"}},
 			}
@@ -558,7 +560,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			list, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newLedDevice)
 			Expect(err).To(BeNil())
 			Expect(list[0].Status.Twins[0].PropertyName).To(Equal("power-status"))
-			Expect(list[0].Status.Twins[0].Reported.Value).To(Equal("OFF"))
+			Expect(list[0].Status.Twins[0].Reported.Value).To(Equal(off))
 		})
 	})
 })
