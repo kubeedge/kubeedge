@@ -179,7 +179,7 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				NodeIP:                localIP,
 				ClusterDNS:            "",
 				ClusterDomain:         "",
-				PodSandboxImage:       constants.DefaultPodSandboxImage,
+				PodSandboxImage:       util.GetPodSandboxImage(),
 				HostnameOverride:      hostnameOverride,
 				InterfaceName:         constants.DefaultInterfaceName,
 				DevicePluginEnabled:   false,
