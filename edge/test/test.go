@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -31,8 +30,7 @@ func Register(t *v1alpha1.DBTest) {
 }
 
 type testManager struct {
-	moduleWait *sync.WaitGroup
-	enable     bool
+	enable bool
 }
 
 func (tm *testManager) Name() string {

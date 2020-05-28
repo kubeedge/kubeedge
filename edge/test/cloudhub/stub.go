@@ -26,11 +26,6 @@ type Attributes struct {
 	ProjectID string `json:"project_id"`
 }
 
-type record struct {
-	Data         string `json:"data"`
-	PartitionKey string `json:"partition_key"`
-}
-
 type stubCloudHub struct {
 	wsConn *websocket.Conn
 	enable bool

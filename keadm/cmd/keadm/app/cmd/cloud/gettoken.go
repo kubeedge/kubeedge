@@ -17,14 +17,14 @@ import (
 
 var (
 	gettokenLongDescription = `
-"keadm gettoken" command prints the token to use for establishing bidirectional trust between edge nodes and cloudcore. 
-A token can be used when a edge node is about to join the cluster. With this token the cloudcore then approve the 
+"keadm gettoken" command prints the token to use for establishing bidirectional trust between edge nodes and cloudcore.
+A token can be used when a edge node is about to join the cluster. With this token the cloudcore then approve the
 certificate request.
 `
 	gettokenExample = `
 keadm gettoken --kube-config = /root/.kube/config
 - kube-config is the absolute path of kubeconfig which used to build secure connectivity between keadm and kube-apiserver
-to get the token. 
+to get the token.
 `
 )
 
@@ -36,7 +36,7 @@ func NewGettoken(out io.Writer, init *common.GettokenOptions) *cobra.Command {
 		Use:     "gettoken",
 		Short:   "To get the token for edge nodes to join the cluster",
 		Long:    gettokenLongDescription,
-		Example: gettokenLongDescription,
+		Example: gettokenExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := queryToken(common.NameSpaceCloudCore, common.TokenSecretName, init.Kubeconfig)
 			if err != nil {
