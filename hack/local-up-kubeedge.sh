@@ -42,9 +42,10 @@ function uninstall_kubeedge {
   [[ -n "${CLOUDCORE_PID-}" ]] && sudo kill "${CLOUDCORE_PID}" 2>/dev/null
 
   # kill the edgecore
-  if [[ -n "${EDGECORE_PID-}" ]]; then
-      sudo kill "${EDGECORE_PID}" 2>/dev/null
-  fi
+  [[ -n "${EDGECORE_PID-}" ]] && sudo kill "${EDGECORE_PID}" 2>/dev/null
+
+  # delete data
+  rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 }
 
 # clean up
@@ -58,6 +59,9 @@ function cleanup {
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   trap cleanup EXIT
+else
+  trap cleanup ERR
+  trap cleanup INT
 fi
 
 function create_device_crd {
@@ -86,11 +90,18 @@ function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
-  sed -i "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" ${CLOUD_CONFIGFILE}
+  sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
+    -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
-  nohup ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
+  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
+
+  # ensure tokensecret is generated
+  while true; do
+      sleep 3
+      kubectl get secret -nkubeedge| grep -q tokensecret && break
+  done
 }
 
 function start_edgecore {
@@ -100,13 +111,16 @@ function start_edgecore {
 
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
-  sed -i "s|token: .*|token: ${token}|g" ${EDGE_CONFIGFILE}
-  sed -i "s|hostnameOverride: .*|hostnameOverride: edge-node|g" ${EDGE_CONFIGFILE}
+  sed -i -e "s|token: .*|token: ${token}|g" \
+      -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
+      -e "s|/etc/|/tmp/etc/|g" \
+      -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
+
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 
-  export CHECK_EDGECORE_ENVIRONMENT="false"
   echo "start edgecore..."
-  nohup ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
+  export CHECK_EDGECORE_ENVIRONMENT="false"
+  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
@@ -128,12 +142,14 @@ function healthcheck {
   fi
 }
 
+cleanup
+
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
 
 check_prerequisites
 
 # Stop right away if there's an error
-set -e
+set -eE
 
 build_cloudcore
 build_edgecore
@@ -159,9 +175,10 @@ start_edgecore
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
     echo "Local KubeEdge cluster is running. Press Ctrl-C to shut it down."
-  else
-    echo "Local KubeEdge cluster is running."
-  fi
+else
+    echo "Local KubeEdge cluster is running. Use \"kill $BASHPID\" to shut it down."
+fi
+
 echo "Logs:
   /tmp/cloudcore.log
   /tmp/edgecore.log
@@ -175,5 +192,10 @@ To start using your kubeedge, you can run:
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
+else
+    while true; do
+        sleep 3
+        kubectl get nodes | grep edge-node | grep -q Ready && break
+    done
+    kubectl label node edge-node disktype=test
 fi
-
