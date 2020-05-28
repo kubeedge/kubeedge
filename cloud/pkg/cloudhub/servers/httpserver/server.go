@@ -45,6 +45,7 @@ func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/edge.crt", edgeCoreClientCert).Methods("GET")
 	router.HandleFunc("/ca.crt", getCA).Methods("GET")
+	router.HandleFunc("/readyz", electionHandler).Methods("GET")
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
@@ -69,6 +70,18 @@ func StartHTTPServer() {
 func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
 	w.Write(caCertDER)
+}
+
+//electionHandler returns the status whether the cloudcore is ready
+func electionHandler(w http.ResponseWriter, r *http.Request) {
+	checker := hubconfig.Config.Checker
+	if checker.Check(r) != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(fmt.Sprintf("Cloudcore is not ready")))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(fmt.Sprintf("Cloudcore is ready")))
+	}
 }
 
 // EncodeCertPEM returns PEM-endcoded certificate data
