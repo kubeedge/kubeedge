@@ -108,11 +108,11 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
@@ -144,11 +144,11 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte("unmarshal request body error"))
 		}
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
@@ -173,11 +173,11 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
@@ -203,11 +203,11 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
