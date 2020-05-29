@@ -3,10 +3,12 @@ package httpserver
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 )
@@ -27,7 +29,7 @@ const (
 func GetSecret(secretName string, ns string) (*v1.Secret, error) {
 	cli, err := utils.KubeClient()
 	if err != nil {
-		fmt.Printf("%v", err)
+		return nil, fmt.Errorf("failed to create KubeClient, error: %s", err)
 	}
 	return cli.CoreV1().Secrets(ns).Get(secretName, metav1.GetOptions{})
 }
@@ -36,14 +38,16 @@ func GetSecret(secretName string, ns string) (*v1.Secret, error) {
 func CreateSecret(secret *v1.Secret, ns string) error {
 	cli, err := utils.KubeClient()
 	if err != nil {
-		fmt.Printf("%v", err)
+		return fmt.Errorf("failed to create KubeClient, error: %s", err)
+	}
+	if err := CreateNamespaceIfNeeded(cli, ns); err != nil {
+		return fmt.Errorf("failed to create Namespace kubeedge, error: %s", err)
 	}
 	if _, err := cli.CoreV1().Secrets(ns).Create(secret); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			cli.CoreV1().Secrets(ns).Update(secret)
 		} else {
-			klog.Errorf("Failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
-			return fmt.Errorf("Failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
+			return fmt.Errorf("failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
 		}
 	}
 	return nil
@@ -97,4 +101,22 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		Type:       "Opaque",
 	}
 	return CreateSecret(cloudCoreCert, NamespaceSystem)
+}
+
+func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
+	c := cli.CoreV1()
+	if _, err := c.Namespaces().Get(ns, metav1.GetOptions{}); err == nil {
+		return nil
+	}
+	newNs := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ns,
+			Namespace: "",
+		},
+	}
+	_, err := c.Namespaces().Create(newNs)
+	if err != nil && errors.IsAlreadyExists(err) {
+		err = nil
+	}
+	return err
 }
