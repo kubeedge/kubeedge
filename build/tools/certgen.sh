@@ -49,6 +49,7 @@ genCertAndKey() {
 }
 
 stream() {
+    ensureFolder
     readonly streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
     readonly STREAM_KEY_FILE=${certPath}/stream.key
     readonly STREAM_CSR_FILE=${certPath}/stream.csr
