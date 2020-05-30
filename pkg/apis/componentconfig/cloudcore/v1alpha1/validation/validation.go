@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	componentbaseconfig "k8s.io/component-base/config"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
@@ -149,13 +150,13 @@ func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if !utilvalidation.FileIsExist(d.TLSTunnelPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"), d.TLSTunnelPrivateKeyFile, "TLSTunnelPrivateKeyFile not exist"))
+		klog.Warningf("TLSTunnelPrivateKeyFile does not exist in %s, will load from secret", d.TLSTunnelPrivateKeyFile)
 	}
 	if !utilvalidation.FileIsExist(d.TLSTunnelCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"), d.TLSTunnelCertFile, "TLSTunnelCertFile not exist"))
+		klog.Warningf("TLSTunnelCertFile does not exist in %s, will load from secret", d.TLSTunnelCertFile)
 	}
 	if !utilvalidation.FileIsExist(d.TLSTunnelCAFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCAFile"), d.TLSTunnelCAFile, "TLSTunnelCAFile not exist"))
+		klog.Warningf("TLSTunnelCAFile does not exist in %s, will load from secret", d.TLSTunnelCAFile)
 	}
 
 	if !utilvalidation.FileIsExist(d.TLSStreamPrivateKeyFile) {
