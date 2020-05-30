@@ -27,6 +27,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/stream"
@@ -76,26 +77,28 @@ func (e *edgestream) Start() {
 		Host:   config.Config.TunnelServer,
 		Path:   "/v1/kubeedge/connect",
 	}
-
-	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
-	if err != nil {
-		klog.Fatalf("Failed to load x509 key pair: %v", err)
-	}
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
-	}
-
-	for range time.NewTicker(time.Second * 2).C {
-		select {
-		case <-beehiveContext.Done():
-			return
-		default:
-		}
-		err := e.TLSClientConnect(serverURL, tlsConfig)
+	// TODO: Will improve in the future
+	ok := <-edgehub.HasTLSTunnelCerts
+	if ok {
+		cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 		if err != nil {
-			klog.Errorf("TLSClientConnect error %v", err)
+			klog.Fatalf("Failed to load x509 key pair: %v", err)
+		}
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			Certificates:       []tls.Certificate{cert},
+		}
+
+		for range time.NewTicker(time.Second * 2).C {
+			select {
+			case <-beehiveContext.Done():
+				return
+			default:
+			}
+			err := e.TLSClientConnect(serverURL, tlsConfig)
+			if err != nil {
+				klog.Errorf("TLSClientConnect error %v", err)
+			}
 		}
 	}
 }

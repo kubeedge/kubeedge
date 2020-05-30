@@ -22,6 +22,8 @@ const (
 	ModuleNameEdgeHub = "websocket"
 )
 
+var HasTLSTunnelCerts = make(chan bool, 1)
+
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
 	chClient      clients.Adapter
@@ -77,6 +79,8 @@ func (eh *EdgeHub) Start() {
 			return
 		}
 	}
+	HasTLSTunnelCerts <- true
+	close(HasTLSTunnelCerts)
 
 	for {
 		select {

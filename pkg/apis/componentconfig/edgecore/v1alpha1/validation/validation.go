@@ -152,21 +152,9 @@ func ValidateModuleEdgeMesh(m v1alpha1.EdgeMesh) field.ErrorList {
 
 // ValidateModuleEdgeStream validates `m` and returns an errorList if it is invalid
 func ValidateModuleEdgeStream(m v1alpha1.EdgeStream) field.ErrorList {
-	if !m.Enable {
-		return field.ErrorList{}
-	}
 	allErrs := field.ErrorList{}
-	if !utilvalidation.FileIsExist(m.TLSTunnelCAFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCAFile"),
-			m.TLSTunnelCAFile, "TLSTunnelCAFile file not exist"))
-	}
-	if !utilvalidation.FileIsExist(m.TLSTunnelCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelCertFile"),
-			m.TLSTunnelCertFile, "TLSTunnelCertFile file not exist"))
-	}
-	if !utilvalidation.FileIsExist(m.TLSTunnelPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSTunnelPrivateKeyFile"),
-			m.TLSTunnelPrivateKeyFile, "TLSTunnelPrivateKeyFile file not exist"))
+	if !m.Enable {
+		return allErrs
 	}
 	return allErrs
 }
