@@ -312,21 +312,21 @@ func MsgProcess(msg model.Message) {
 	// process services
 	if svcs := filterResourceTypeService(msg); len(svcs) != 0 {
 		klog.Infof("[EdgeMesh] %s services: %d resource: %s", msg.GetOperation(), len(svcs), msg.Router.Resource)
-		for _, svc := range svcs {
-			svcName := svc.Namespace + "." + svc.Name
-			svcPorts := getSvcPorts(svc, svcName)
+		for i := range svcs {
+			svcName := svcs[i].Namespace + "." + svcs[i].Name
+			svcPorts := getSvcPorts(svcs[i], svcName)
 			switch msg.GetOperation() {
 			case "insert":
-				cache.GetMeshCache().Add("service"+"."+svcName, &svc)
-				klog.Infof("[EdgeMesh] insert svc %s.%s into cache", svc.Namespace, svc.Name)
+				cache.GetMeshCache().Add("service"+"."+svcName, &svcs[i])
+				klog.Infof("[EdgeMesh] insert svc %s.%s into cache", svcs[i].Namespace, svcs[i].Name)
 				addServer(svcName, svcPorts)
 			case "update":
-				cache.GetMeshCache().Add("service"+"."+svcName, &svc)
-				klog.Infof("[EdgeMesh] update svc %s.%s in cache", svc.Namespace, svc.Name)
+				cache.GetMeshCache().Add("service"+"."+svcName, &svcs[i])
+				klog.Infof("[EdgeMesh] update svc %s.%s in cache", svcs[i].Namespace, svcs[i].Name)
 				updateServer(svcName, svcPorts)
 			case "delete":
 				cache.GetMeshCache().Remove("service" + "." + svcName)
-				klog.Infof("[EdgeMesh] delete svc %s.%s from cache", svc.Namespace, svc.Name)
+				klog.Infof("[EdgeMesh] delete svc %s.%s from cache", svcs[i].Namespace, svcs[i].Name)
 				delServer(svcName)
 			default:
 				klog.Warningf("[EdgeMesh] invalid %s operation on services", msg.GetOperation())
