@@ -4,10 +4,10 @@ function usage() {
 	echo 'this is the edgemesh-iptables usage'
 	echo "${0} -p PROXY_PORT [-i HIJACK_IP] [-t HIJACK_PORT] [-b EXCLUDE_IP] [-c EXCLUDE_PORT] [-h]"
 	echo ''
-	echo '  -p: Specify the edgemesh port to which all TCP traffic from the Pod will be redirectd to. (default 10001)'
-	echo '  -i: Comma separated list of outbound IP for which tarffic is to be redirectd to edgemesh. The'
+	echo '  -p: Specify the edgemesh port to which all TCP traffic from the Pod will be redirected to. (default 10001)'
+	echo '  -i: Comma separated list of outbound IP for which traffic is to be redirected to edgemesh. The'
 	echo '      wildcard character "*" can be used to configure redirection for all IPs. (default "*")'
-	echo '  -t: Comma separated list of outbound Port for which tarffic is to be redirectd to edgemesh. The'
+	echo '  -t: Comma separated list of outbound Port for which traffic is to be redirected to edgemesh. The'
 	echo '      wildcard character "*" can be used to configure redirection for all Ports. (default "*")'
 	echo '  -b: Comma separated list of outbound IP range in CIDR to be excluded from redirection to edgemesh.'
 	echo '      The Empty character "" can be used to configure redirection for all IPs. (default "")'
@@ -106,7 +106,7 @@ function bridgeNetMode() {
 		done
 	fi
 	
-	# Redirect app callback to itself via Servie IP （default not redirectd）
+	# Redirect app callback to itself via Service IP （default not redirected）
 	get_local_IP=$(ip addr |grep inet|grep -v inet6|awk '{print $2}'|tr -d "addr:")
 	
 	for LOCAL_IP in $get_local_IP; do
