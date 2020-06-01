@@ -97,11 +97,13 @@ const (
 	// Resource sep
 	ResourceSep = "/"
 
-	ResourceTypeService       = "service"
-	ResourceTypeServiceList   = "servicelist"
-	ResourceTypeEndpoints     = "endpoints"
-	ResourceTypeEndpointsList = "endpointslist"
-	ResourceTypeListener      = "listener"
+	ResourceTypeService        = "service"
+	ResourceTypeServiceList    = "servicelist"
+	ResourceTypeEndpoints      = "endpoints"
+	ResourceTypeEndpointsList  = "endpointslist"
+	ResourceTypeListener       = "listener"
+	ResourceTypeGateway        = "gateway"
+	ResourceTypeVirtualService = "virtualservice"
 
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"

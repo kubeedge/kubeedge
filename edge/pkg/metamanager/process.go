@@ -65,8 +65,26 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 	}
 }
 
+func sendToEventBus(message *model.Message, content []byte, sync bool) {
+	operation := message.GetOperation()
+	resourceString := resourceSend2EventBus(operation, message.GetResource())
+	message.BuildRouter(message.Router.Source, modules.BusGroup, resourceString, "publish")
+	message.FillBody(content)
+	if sync {
+		beehiveContext.SendResp(*message)
+	} else {
+		beehiveContext.Send(modules.EdgeEventBusModuleName, *message)
+	}
+}
+
 func sendToCloud(message *model.Message) {
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
+}
+
+func resourceSend2EventBus(operation string, str string) string {
+	_, resourceType, resourceId := parseResource(str)
+	resource := "$hw/events/" + resourceType + "/" + resourceId + "/" + operation
+	return resource
 }
 
 // Resource format: <namespace>/<restype>[/resid]
@@ -102,6 +120,15 @@ func isEdgeMeshResource(resType string) bool {
 	return resType == constants.ResourceTypeService ||
 		resType == constants.ResourceTypeServiceList ||
 		resType == constants.ResourceTypeEndpoints ||
+		resType == model.ResourceTypePodlist
+}
+
+// if resource type is Gateway related
+func isGatewayResource(resType string) bool {
+	return resType == constants.ResourceTypeService ||
+		resType == constants.ResourceTypeServiceList ||
+		resType == constants.ResourceTypeGateway ||
+		resType == constants.ResourceTypeVirtualService ||
 		resType == model.ResourceTypePodlist
 }
 
@@ -176,6 +203,11 @@ func (m *metaManager) processInsert(message model.Message) {
 			feedbackError(err, "Error to save meta to DB", message)
 			return
 		}
+	}
+
+	if isGatewayResource(resType) {
+		// Notify gateway only
+		sendToEventBus(&message, content, false)
 	}
 
 	if resType == constants.ResourceTypeListener {
@@ -269,6 +301,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 					continue
 				}
 			}
+			sendToEventBus(&message, content, false)
 			sendToEdgeMesh(&message, false)
 			resp := message.NewRespByMessage(&message, OK)
 			sendToCloud(resp)
@@ -284,7 +317,23 @@ func (m *metaManager) processUpdate(message model.Message) {
 				feedbackError(err, "Error to update meta to DB", message)
 				return
 			}
+			sendToEventBus(&message, content, false)
 			sendToEdgeMesh(&message, false)
+			resp := message.NewRespByMessage(&message, OK)
+			sendToCloud(resp)
+			return
+                case constants.ResourceTypeGateway, constants.ResourceTypeVirtualService:
+			meta := &dao.Meta{
+				Key:   resKey,
+				Type:  resType,
+				Value: string(content)}
+			err = dao.InsertOrUpdate(meta)
+			if err != nil {
+				klog.Errorf("Update meta failed, %s", msgDebugInfo(&message))
+				feedbackError(err, "Error to update meta to DB", message)
+				return
+			}
+			sendToEventBus(&message, content, false)
 			resp := message.NewRespByMessage(&message, OK)
 			sendToCloud(resp)
 			return
@@ -320,6 +369,9 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
 	case CloudControlerModel:
+		if isGatewayResource(resType) {
+			sendToEventBus(&message, content, false)
+		}
 		if isEdgeMeshResource(resType) {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
@@ -385,6 +437,27 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
+	if isGatewayResource(resType) {
+		var content []byte
+		switch message.GetContent().(type) {
+		case []uint8:
+			content = message.GetContent().([]byte)
+		default:
+			content, err = json.Marshal(message.GetContent())
+			if err != nil {
+				klog.Errorf("marshal delete message content failed, %s", msgDebugInfo(&message))
+				feedbackError(err, "Error to marshal message content", message)
+				return
+		        }
+		}
+		sendToEventBus(&message, content, false)
+		if resType == constants.ResourceTypeGateway || resType == constants.ResourceTypeVirtualService {
+			resp := message.NewRespByMessage(&message, OK)
+			sendToCloud(resp)
+			return
+		}
+	}
+
 	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
 		// Notify edgemesh
 		sendToEdgeMesh(&message, false)
