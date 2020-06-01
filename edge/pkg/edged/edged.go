@@ -1246,7 +1246,7 @@ func (e *edged) deletePod(obj interface{}) {
 func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
 	var secrets []v1.Secret
 	for _, imagePullSecret := range pod.Spec.ImagePullSecrets {
-		secret, err := e.metaClient.Secrets(e.namespace).Get(imagePullSecret.Name)
+		secret, err := e.metaClient.Secrets(pod.Namespace).Get(imagePullSecret.Name)
 		if err != nil {
 			return nil, err
 		}
