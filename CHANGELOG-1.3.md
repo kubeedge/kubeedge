@@ -1,4 +1,10 @@
-
+  * [v1.3.1](#v131)
+     * [Downloads for v1.3.1](#downloads-for-v131)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+        * [EdgeSite Binaries](#edgesite-binaries)
+     * [KubeEdge v1.3.1 Release Notes](#kubeedge-v131-release-notes)
+        * [Changelog since v1.3.0](#changelog-since-v130)
   * [v1.3.0](#v130)
      * [Downloads for v1.3.0](#downloads-for-v130)
         * [KubeEdge Binaries](#kubeedge-binaries)
@@ -11,6 +17,42 @@
   * [v1.3.0-beta.0](#v130-beta0)
      * [Changelog since v1.2.0](#changelog-since-v120)
         * [Bug Fixes](#bug-fixes-1)
+        
+# v1.3.1
+
+## Downloads for v1.3.1
+
+### KubeEdge Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+
+
+### Installer Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+
+### EdgeSite Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+
+
+## KubeEdge v1.3.1 Release Notes
+
+### Changelog since v1.3.0
+
+- Expose readyz checker in cloudcore. ([#1663](https://github.com/kubeedge/kubeedge/pull/1663), [@Poor12](https://github.com/Poor12))
+
+- Configure tls use ECDSA cipher and fix handshake failure. ([#1702](https://github.com/kubeedge/kubeedge/pull/1702), [@luogangyi](https://github.com/luogangyi))
+
+- Automatically create kubeedge namespace when creating a secret. ([#1705](https://github.com/kubeedge/kubeedge/pull/1705), [@ls889](https://github.com/ls889))
+
+- Fix using same namespace while syncPodStatus. ([#1708](https://github.com/kubeedge/kubeedge/pull/1708), [@GsssC](https://github.com/GsssC))
+
+- Fix edgemesh caching serviceList bug. ([#1757](https://github.com/kubeedge/kubeedge/pull/1757), [@liuzhiyi1993](https://github.com/liuzhiyi1993))
+
+- Fix certs issue for kubectl logs after V1.3. ([#1697](https://github.com/kubeedge/kubeedge/pull/1697), [@ls889](https://github.com/ls889))
+
+- Update keadm to support KubeEdge 1.3 and pre 1.3 releases. ([#1701](https://github.com/kubeedge/kubeedge/pull/1701), [@XJangel](https://github.com/XJangel))
 
 # v1.3.0
 
