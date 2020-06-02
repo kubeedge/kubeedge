@@ -21,7 +21,9 @@ const (
 	CatEdgecoreLog  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; cat edgecore.log"
 	CatEdgeSiteLog  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; cat  edgesite.log"
 
+	NameSpaceHandler  = "/api/v1/namespaces"
 	AppHandler        = "/api/v1/namespaces/default/pods"
+	AppCustomHandler  = "/api/v1/namespaces/%s/pods"
 	NodeHandler       = "/api/v1/nodes"
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
 )

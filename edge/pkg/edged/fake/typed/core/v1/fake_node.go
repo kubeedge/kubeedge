@@ -18,12 +18,12 @@ type FakeNodes struct {
 
 // Get takes name of the node, and returns the corresponding node object
 func (c *FakeNodes) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.Node, err error) {
-	return c.MetaClient.Nodes(metav1.NamespaceDefault).Get(name)
+	return c.MetaClient.Nodes().Get(name)
 }
 
 // Update takes the representation of a node and updates it
 func (c *FakeNodes) Update(ctx context.Context, node *corev1.Node, opts metav1.UpdateOptions) (result *corev1.Node, err error) {
-	err = c.MetaClient.Nodes(metav1.NamespaceDefault).Update(node)
+	err = c.MetaClient.Nodes().Update(node)
 	if err != nil {
 		return nil, err
 	}

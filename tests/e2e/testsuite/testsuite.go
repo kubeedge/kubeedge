@@ -17,6 +17,7 @@ limitations under the License.
 package testsuite
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -53,13 +54,17 @@ func CreateDeploymentTest(replica int, deplName, nodeName, nodeSelector string, 
 
 func CreatePodTest(nodeName, podName string, ctx *utils.TestContext, pod *metav1.Pod) metav1.PodList {
 	var podlist metav1.PodList
-	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podName, pod)
+	appHandler := constants.AppHandler
+	if pod.Namespace != "" {
+		appHandler = fmt.Sprintf(constants.AppCustomHandler, pod.Namespace)
+	}
+	IsAppDeployed := utils.HandlePod(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+appHandler, podName, pod)
 	gomega.Expect(IsAppDeployed).Should(gomega.BeTrue())
 	label := nodeName
 
 	time.Sleep(time.Second * 1)
 
-	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
+	podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+appHandler, label)
 	gomega.Expect(err).To(gomega.BeNil())
 	utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 	return podlist

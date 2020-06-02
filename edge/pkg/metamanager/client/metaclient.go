@@ -44,12 +44,12 @@ func (m *metaClient) ConfigMaps(namespace string) ConfigMapsInterface {
 	return newConfigMaps(namespace, m.send)
 }
 
-func (m *metaClient) Nodes(namespace string) NodesInterface {
-	return newNodes(namespace, m.send)
+func (m *metaClient) Nodes() NodesInterface {
+	return newNodes(m.send)
 }
 
-func (m *metaClient) NodeStatus(namespace string) NodeStatusInterface {
-	return newNodeStatus(namespace, m.send)
+func (m *metaClient) NodeStatus() NodeStatusInterface {
+	return newNodeStatus(m.send)
 }
 
 func (m *metaClient) Secrets(namespace string) SecretsInterface {

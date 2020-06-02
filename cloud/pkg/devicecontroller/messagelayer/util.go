@@ -7,16 +7,19 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
-	constants "github.com/kubeedge/kubeedge/common/constants"
+	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResource(nodeID, resourceType, resourceID string) (resource string, err error) {
 	if nodeID == "" || resourceType == "" {
-		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
+		err = fmt.Errorf("required parameter are not set (node id or resource type)")
 		return
 	}
-	resource = fmt.Sprintf("%s%s%s%s%s", deviceconstants.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, resourceType)
+
+	resource = strings.Join([]string{controller.ResourceNode, nodeID, resourceType}, constants.ResourceSep)
+
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}

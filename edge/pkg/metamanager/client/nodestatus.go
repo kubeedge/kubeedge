@@ -11,7 +11,7 @@ import (
 
 //NodeStatusGetter is interface to get node status
 type NodeStatusGetter interface {
-	NodeStatus(namespace string) NodeStatusInterface
+	NodeStatus() NodeStatusInterface
 }
 
 //NodeStatusInterface is node status interface
@@ -23,14 +23,13 @@ type NodeStatusInterface interface {
 }
 
 type nodeStatus struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newNodeStatus(namespace string, s SendInterface) *nodeStatus {
+func newNodeStatus(s SendInterface) *nodeStatus {
 	return &nodeStatus{
-		send:      s,
-		namespace: namespace,
+		send: s,
 	}
 }
 
@@ -39,7 +38,7 @@ func (c *nodeStatus) Create(ns *edgeapi.NodeStatusRequest) (*edgeapi.NodeStatusR
 }
 
 func (c *nodeStatus) Update(rsName string, ns edgeapi.NodeStatusRequest) error {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNodeStatus, rsName)
+	resource := fmt.Sprintf("_/%s/%s", model.ResourceTypeNodeStatus, rsName)
 	nodeStatusMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, ns)
 	_, err := c.send.SendSync(nodeStatusMsg)
 	if err != nil {

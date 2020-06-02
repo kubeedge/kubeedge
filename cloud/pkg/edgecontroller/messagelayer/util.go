@@ -18,7 +18,7 @@ func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource
 		return
 	}
 
-	resource = fmt.Sprintf("%s%s%s%s%s%s%s", controller.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+	resource = strings.Join([]string{controller.ResourceNode, nodeID, namespace, resourceType}, constants.ResourceSep)
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}

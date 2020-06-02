@@ -31,9 +31,9 @@ type volumeattachments struct {
 	send      SendInterface
 }
 
-func newVolumeAttachments(n string, s SendInterface) *volumeattachments {
+func newVolumeAttachments(ns string, s SendInterface) *volumeattachments {
 	return &volumeattachments{
-		namespace: n,
+		namespace: ns,
 		send:      s,
 	}
 }

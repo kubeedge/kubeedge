@@ -28,6 +28,7 @@ import (
 var (
 	nodeName     string
 	nodeSelector string
+	namespace    string
 	//context to load config and access across the package
 	ctx *utils.TestContext
 )
@@ -41,6 +42,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		ctx = utils.NewTestContext(utils.LoadConfig())
 		nodeName = "edge-node"
 		nodeSelector = "test"
+		namespace = "default"
 
 		err := utils.MqttConnect()
 		Expect(err).To(BeNil())

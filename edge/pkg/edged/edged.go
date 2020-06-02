@@ -173,7 +173,6 @@ type edged struct {
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
 	hostname                  string
-	namespace                 string
 	nodeName                  string
 	runtimeCache              kubecontainer.RuntimeCache
 	uid                       types.UID
@@ -418,7 +417,6 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
-		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
@@ -1015,8 +1013,8 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
-	//when starting, send msg to metamanager once to get existing pods
-	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
+	//send msg to metamanager to get existing pods
+	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), "_/"+model.ResourceTypePod,
 		model.QueryOperation)
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {

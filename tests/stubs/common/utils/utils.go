@@ -21,17 +21,20 @@ import (
 	"strings"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	constants "github.com/kubeedge/kubeedge/common/constants"
+	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	"github.com/kubeedge/kubeedge/common/constants"
 	testconstants "github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource string, err error) {
 	if nodeID == "" || namespace == "" || resourceType == "" {
-		err = fmt.Errorf("Required parameter are not set (node id, namespace or resource type)")
+		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 		return
 	}
-	resource = fmt.Sprintf("%s%s%s%s%s%s%s", testconstants.ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+
+	resource = strings.Join([]string{controller.ResourceNode, nodeID, namespace, resourceType}, constants.ResourceSep)
+
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}

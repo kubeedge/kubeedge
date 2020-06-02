@@ -17,6 +17,7 @@ limitations under the License.
 package deployment
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -43,6 +44,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			testDescription = CurrentGinkgoTestDescription()
 			// Start test timer
 			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
+
 		})
 		AfterEach(func() {
 			// End test timer
@@ -97,7 +99,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 	})
-	Context("Test application deployment using Pod spec", func() {
+	Context("Test application deployment using Pod spec in default namespace", func() {
 		BeforeEach(func() {
 			// Get current test description
 			testDescription = CurrentGinkgoTestDescription()
@@ -192,6 +194,58 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 				Expect(StatusCode).Should(Equal(http.StatusOK))
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
+		})
+	})
+	Context("Test application deployment using Pod spec in kubeedge namespace", func() {
+		BeforeEach(func() {
+			namespace = "kubeedge"
+			// Get current test description
+			testDescription = CurrentGinkgoTestDescription()
+			// Start test timer
+			testTimer = DeploymentTestTimerGroup.NewTestTimer(testDescription.TestText)
+		})
+		AfterEach(func() {
+			// End test timer
+			testTimer.End()
+			// Print result
+			testTimer.PrintResult()
+			var podlist corev1.PodList
+			label := nodeName
+			appHandler := fmt.Sprintf(constants.AppCustomHandler, namespace)
+			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+appHandler, label)
+			Expect(err).To(BeNil())
+			for _, pod := range podlist.Items {
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + appHandler + "/" + pod.Name)
+				Expect(StatusCode).Should(Equal(http.StatusOK))
+			}
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+appHandler, podlist)
+			utils.PrintTestcaseNameandStatus()
+		})
+
+		It("E2E_POD_NAMESPACE_DEPLOYMENY_1: Create pod with volume in random namespace successfully", func() {
+			//Generate the random string and assign as podName
+			podName := "pod-app-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			pod.Namespace = namespace
+			pod.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{{
+				Name:      "hp",
+				MountPath: "/hp",
+			}}
+			pod.Spec.Volumes = []corev1.Volume{{
+				Name: "hp",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{Path: "/tmp"},
+				},
+			}}
+
+			podlist := CreatePodTest(nodeName, podName, ctx, pod)
+			appHandler := fmt.Sprintf(constants.AppCustomHandler, namespace)
+			for _, pod := range podlist.Items {
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + appHandler + "/" + pod.Name)
+				Expect(StatusCode).Should(Equal(http.StatusOK))
+			}
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+appHandler, podlist)
 		})
 	})
 })
