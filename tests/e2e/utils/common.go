@@ -54,6 +54,7 @@ const (
 	ModBus            = "modbus"
 	Led               = "led"
 	IncorrectInstance = "incorrect-instance"
+	Customized        = "customized"
 )
 
 var (
@@ -645,6 +646,8 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 			deviceInstance = NewModbusDeviceInstance(nodeSelector)
 		case Led:
 			deviceInstance = NewLedDeviceInstance(nodeSelector)
+		case Customized:
+			deviceInstance = NewCustomizedDeviceInstance(nodeSelector)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
@@ -674,6 +677,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 			deviceModel = NewModbusDeviceModel()
 		case Led:
 			deviceModel = NewLedDeviceModel()
+		case Customized:
+			deviceModel = NewCustomizedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
 		}

@@ -17,9 +17,8 @@ limitations under the License.
 package fixtures
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type DevicePropertyOp struct {
@@ -123,6 +122,10 @@ func withVisitorConfig(protocol deviceProtocol) DevicePropertyVisitorOption {
 			op.devicePropertyVisitor.VisitorConfig = v1alpha1.VisitorConfig{
 				OpcUA: &v1alpha1.VisitorConfigOPCUA{},
 			}
+		case deviceProtocolCustomized:
+			op.devicePropertyVisitor.VisitorConfig = v1alpha1.VisitorConfig{
+				CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{},
+			}
 		default:
 		}
 	}
@@ -184,6 +187,18 @@ func withNodeID(nodeID string) DevicePropertyVisitorOption {
 func withBrowseName(browseName string) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
 		op.devicePropertyVisitor.VisitorConfig.OpcUA.BrowseName = browseName
+	}
+}
+
+func withProtocolName(protocolName string) DevicePropertyVisitorOption {
+	return func(op *DevicePropertyVisitorOp) {
+		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.ProtocolName = protocolName
+	}
+}
+
+func withProtocolDefinition(definition *v1alpha1.CustomizedValue) DevicePropertyVisitorOption {
+	return func(op *DevicePropertyVisitorOp) {
+		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.Definition = definition
 	}
 }
 
@@ -428,6 +443,37 @@ func NewDeviceModelOpcUANoNodeID(name string, namespace string) *v1alpha1.Device
 		withVisitorReportCycle(reportCycle),
 		withVisitorConfig(deviceProtocolOPCUA),
 		withBrowseName("test"))
+	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	return deviceModel
+}
+
+func NewDeviceModelCustomized(name string, namespace string) *v1alpha1.DeviceModel {
+	deviceModel := newDeviceModel(name, namespace)
+	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
+		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
+
+	definition := &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"}
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolCustomized),
+		withProtocolName("test"), withProtocolDefinition(definition))
+	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
+	return deviceModel
+}
+
+func NewDeviceModelCustomizedNoDefinition(name string, namespace string) *v1alpha1.DeviceModel {
+	deviceModel := newDeviceModel(name, namespace)
+	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
+		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
+
+	devicePropertyVisitorOp := newDevicePropVisitorOp(withVisitorName(devicePropertyTemperature),
+		withVisitorCollectCycle(collectCycle),
+		withVisitorReportCycle(reportCycle),
+		withVisitorConfig(deviceProtocolCustomized),
+		withProtocolName("test"))
 	deviceModel.Spec.PropertyVisitors = append(deviceModel.Spec.PropertyVisitors, devicePropertyVisitorOp.devicePropertyVisitor)
 	return deviceModel
 }

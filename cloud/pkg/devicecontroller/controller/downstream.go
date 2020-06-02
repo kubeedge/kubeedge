@@ -42,11 +42,12 @@ import (
 
 // Constants for protocol, datatype, configmap, deviceProfile
 const (
-	OPCUA     = "opcua"
-	ModbusRTU = "modbus-rtu"
-	ModbusTCP = "modbus-tcp"
-	Modbus    = "modbus"
-	Bluetooth = "bluetooth"
+	OPCUA              = "opcua"
+	ModbusRTU          = "modbus-rtu"
+	ModbusTCP          = "modbus-tcp"
+	Modbus             = "modbus"
+	Bluetooth          = "bluetooth"
+	CustomizedProtocol = "customized-protocol"
 
 	DataTypeInt    = "int"
 	DataTypeString = "string"
@@ -291,7 +292,11 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile 
 		} else if pptv.Bluetooth != nil {
 			propertyVisitor.Protocol = Bluetooth
 			propertyVisitor.VisitorConfig = pptv.Bluetooth
+		} else if pptv.CustomizedProtocol != nil {
+			propertyVisitor.Protocol = CustomizedProtocol
+			propertyVisitor.VisitorConfig = pptv.CustomizedProtocol
 		}
+
 		deviceProfile.PropertyVisitors = append(deviceProfile.PropertyVisitors, propertyVisitor)
 	}
 }
@@ -328,8 +333,14 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = Bluetooth
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
+	} else if device.Spec.Protocol.CustomizedProtocol != nil {
+		protocol = CustomizedProtocol + "-" + device.Name
+		deviceInstance.Protocol = protocol
+		deviceProtocol.Name = protocol
+		deviceProtocol.Protocol = CustomizedProtocol
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.CustomizedProtocol
 	} else {
-		klog.Warning("Device doesnt support valid protocol")
+		klog.Warning("Device doesn't support valid protocol")
 	}
 	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
 	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
@@ -483,6 +494,8 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 			deviceProtocol = buildDeviceProtocol(ModbusTCP, device.Name, device.Spec.Protocol.Modbus.TCP)
 		} else if device.Spec.Protocol.Bluetooth != nil {
 			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Name, device.Spec.Protocol.Bluetooth)
+		} else if device.Spec.Protocol.CustomizedProtocol != nil {
+			deviceProtocol = buildDeviceProtocol(CustomizedProtocol, device.Name, device.Spec.Protocol.CustomizedProtocol)
 		} else {
 			klog.Warning("Unsupported device protocol")
 		}

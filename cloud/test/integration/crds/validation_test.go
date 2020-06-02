@@ -68,6 +68,12 @@ func TestValidDeviceModel(t *testing.T) {
 				return deviceModel
 			},
 		},
+		"valid customized protocol device model": {
+			deviceModelFn: func() *v1alpha1.DeviceModel {
+				deviceModel := fixtures.NewDeviceModelCustomized("customized-device-model", testNamespace)
+				return deviceModel
+			},
+		},
 	}
 
 	crdClient := buildCrdClient(t)
@@ -160,6 +166,12 @@ func TestInvalidDeviceModel(t *testing.T) {
 				return deviceModel
 			},
 		},
+		"device model with customized protocol no definition": {
+			deviceModelFn: func() *v1alpha1.DeviceModel {
+				deviceModel := fixtures.NewDeviceModelCustomizedNoDefinition("model-customized-no-definition", testNamespace)
+				return deviceModel
+			},
+		},
 	}
 
 	crdClient := buildCrdClient(t)
@@ -200,6 +212,12 @@ func TestValidDevice(t *testing.T) {
 		"valid device with opc ua protocol": {
 			deviceInstanceFn: func() v1alpha1.Device {
 				deviceInstance := fixtures.NewDeviceOpcUA("device-opcua", testNamespace)
+				return deviceInstance
+			},
+		},
+		"valid device with customized protocol": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceCustomized("device-customized", testNamespace)
 				return deviceInstance
 			},
 		},
@@ -314,6 +332,12 @@ func TestInvalidDevice(t *testing.T) {
 		"device opcua no url": {
 			deviceInstanceFn: func() v1alpha1.Device {
 				deviceInstance := fixtures.NewDeviceOpcUANoURL("device-opcua-no-url", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device customized no protocol name": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceCustomizedNoName("device-customized-no-name", testNamespace)
 				return deviceInstance
 			},
 		},

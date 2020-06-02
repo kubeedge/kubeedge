@@ -212,6 +212,19 @@ spec:
                     required:
                       - nodeID
                     type: object
+                  customizedProtocol:
+                    description: customized protocol
+                    properties:
+                      protocolName:
+                        description: The name of protocol
+                        type: string
+                      definition:
+                        description: customized definition
+                        type: object
+                    required:
+                      - protocolName
+                      - definition
+                    type: object
                   propertyName:
                     description: 'Required: The device property name to be accessed.
                       This should refer to one of the device properties defined in

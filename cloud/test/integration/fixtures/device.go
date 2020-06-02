@@ -89,6 +89,10 @@ func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 			op.device.Spec.Protocol = v1alpha1.ProtocolConfig{
 				OpcUA: &v1alpha1.ProtocolConfigOpcUA{},
 			}
+		case deviceProtocolCustomized:
+			op.device.Spec.Protocol = v1alpha1.ProtocolConfig{
+				CustomizedProtocol: &v1alpha1.ProtocolConfigCustomized{},
+			}
 		default:
 		}
 	}
@@ -151,6 +155,12 @@ func withTCPServerIP(ip string) DeviceOption {
 func withOPCUAServerURL(url string) DeviceOption {
 	return func(op *DeviceOp) {
 		op.device.Spec.Protocol.OpcUA.URL = url
+	}
+}
+
+func withCustromizedProtocolName(name string) DeviceOption {
+	return func(op *DeviceOp) {
+		op.device.Spec.Protocol.CustomizedProtocol.ProtocolName = name
 	}
 }
 
@@ -271,6 +281,18 @@ func NewDeviceOpcUA(name string, namespace string) v1alpha1.Device {
 func NewDeviceOpcUANoURL(name string, namespace string) v1alpha1.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
 		withProtocolConfig(deviceProtocolOPCUA))
+	return deviceInstanceOp.device
+}
+
+func NewDeviceCustomized(name string, namespace string) v1alpha1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+		withProtocolConfig(deviceProtocolCustomized), withCustromizedProtocolName("test-customized-protocol"))
+	return deviceInstanceOp.device
+}
+
+func NewDeviceCustomizedNoName(name string, namespace string) v1alpha1.Device {
+	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
+		withProtocolConfig(deviceProtocolCustomized))
 	return deviceInstanceOp.device
 }
 

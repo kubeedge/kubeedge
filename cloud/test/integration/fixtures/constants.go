@@ -52,11 +52,12 @@ type deviceProtocol string
 
 // Supported protocols constants
 const (
-	deviceProtocolBluetooth deviceProtocol = "bluetooth"
-	deviceProtocolModbus    deviceProtocol = "modbus"
-	deviceProtocolModbusRTU deviceProtocol = "modbusRTU"
-	deviceProtocolModbusTCP deviceProtocol = "modbusTCP"
-	deviceProtocolOPCUA     deviceProtocol = "opcua"
+	deviceProtocolBluetooth  deviceProtocol = "bluetooth"
+	deviceProtocolModbus     deviceProtocol = "modbus"
+	deviceProtocolModbusRTU  deviceProtocol = "modbusRTU"
+	deviceProtocolModbusTCP  deviceProtocol = "modbusTCP"
+	deviceProtocolOPCUA      deviceProtocol = "opcua"
+	deviceProtocolCustomized deviceProtocol = "customizedProtocol"
 )
 
 // integer property type constants
