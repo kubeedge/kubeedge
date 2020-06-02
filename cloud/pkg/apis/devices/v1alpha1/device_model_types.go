@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -106,6 +107,9 @@ type VisitorConfig struct {
 	// Bluetooth represents a set of additional visitor config fields of bluetooth protocol.
 	// +optional
 	Bluetooth *VisitorConfigBluetooth `json:"bluetooth,omitempty"`
+	// CustomizedProtocol represents a set of visitor config fields of bluetooth protocol.
+	// +optional
+	CustomizedProtocol *VisitorConfigCustomized `json:"customizedProtocol,omitempty"`
 }
 
 // Common visitor configurations for bluetooth protocol
@@ -200,6 +204,14 @@ const (
 	ModbusRegisterTypeHoldingRegister       ModbusRegisterType = "HoldingRegister"
 )
 
+// Common visitor configurations for customized protocol
+type VisitorConfigCustomized struct {
+	// Required: name of customized protocol
+	ProtocolName string `json:"protocolName,omitempty"`
+	// Required: The definition of customized protocol
+	Definition *CustomizedValue `json:"definition,omitempty"`
+}
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -219,4 +231,20 @@ type DeviceModelList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DeviceModel `json:"items"`
+}
+
+type CustomizedValue map[string]interface{}
+
+func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
+	bytes, _ := json.Marshal(*in)
+	json.Unmarshal(bytes, out)
+}
+
+func (in *CustomizedValue) DeepCopy() *CustomizedValue {
+	if in == nil {
+		return nil
+	}
+	out := new(CustomizedValue)
+	in.DeepCopyInto(out)
+	return out
 }

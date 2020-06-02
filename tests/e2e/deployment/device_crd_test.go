@@ -330,6 +330,43 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
 			Expect(statusCode).Should(Equal(http.StatusNotFound))
 		})
+		It("E2E_CREATE_DEVICE_5: Create device instance for customized protocol", func() {
+			var deviceList v1alpha1.DeviceList
+			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "customized")
+			Expect(IsDeviceModelCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "", "customized")
+			Expect(IsDeviceCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			newCustomizedDevice := utils.NewCustomizedDeviceInstance(nodeName)
+			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &newCustomizedDevice)
+			Expect(err).To(BeNil())
+			time.Sleep(3 * time.Second)
+			statusCode, body := utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			var configMap v1.ConfigMap
+			err = json.Unmarshal(body, &configMap)
+			Expect(err).To(BeNil())
+			isEqual := utils.CompareConfigMaps(configMap, utils.NewConfigMapCustomized(nodeName))
+			Expect(isEqual).Should(Equal(true))
+			go utils.TwinSubscribe(utils.NewCustomizedDeviceInstance(nodeName).Name)
+			Eventually(func() bool {
+				return utils.TwinResult.Twin != nil
+			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
+			stringValue := "OFF"
+			expectedTwin := map[string]*utils.MsgTwin{
+				"temperature-enable": {
+					Expected: &utils.TwinValue{
+						Value: &stringValue,
+					},
+					Metadata: &utils.TypeMetadata{
+						Type: "string",
+					},
+				},
+			}
+			isEqual = utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			Expect(isEqual).Should(Equal(true))
+		})
 		It("E2E_UPDATE_DEVICE_1: Update device instance for LED device (No Protocol)", func() {
 			var deviceList v1alpha1.DeviceList
 			IsDeviceModelCreated, statusCode := utils.HandleDeviceModel(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceModelHandler, "", "led")
