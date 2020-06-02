@@ -6,4 +6,7 @@ const (
 
 	// EdgeMeshModuleName name
 	EdgeMeshModuleName = "edgemesh"
+
+	// EdgeEventBusModuleName name
+	EdgeEventBusModuleName = "eventbus"
 )
