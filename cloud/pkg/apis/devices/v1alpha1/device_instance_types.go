@@ -45,6 +45,9 @@ type ProtocolConfig struct {
 	// Protocol configuration for bluetooth
 	// +optional
 	Bluetooth *ProtocolConfigBluetooth `json:"bluetooth,omitempty"`
+	// Configuration for customized protocol
+	// +optional
+	CustomizedProtocol *ProtocolConfigCustomized `json:"customizedProtocol,omitempty"`
 }
 
 type ProtocolConfigOpcUA struct {
@@ -109,6 +112,13 @@ type ProtocolConfigBluetooth struct {
 	// Unique identifier assigned to the device.
 	// +optional
 	MACAddress string `json:"macAddress,omitempty"`
+}
+
+type ProtocolConfigCustomized struct {
+	// Unique protocol name
+	// Required.
+	ProtocolName string           `json:"protocolName,omitempty"`
+	ConfigData   *CustomizedValue `json:"configData,omitempty"`
 }
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.

@@ -164,6 +164,18 @@ spec:
                   required:
                     - url
                   type: object
+                customizedProtocol:
+                  description: Protocol configuration for customized Protocol
+                  properties:
+                    protocolName:
+                      description: The name of protocol
+                      type: string
+                    configData:
+                      description: customized config data
+                      type: object
+                  required:
+                    - protocolName
+                  type: object
               type: object
           required:
             - deviceModelRef

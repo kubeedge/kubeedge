@@ -268,6 +268,61 @@ func NewBluetoothDeviceModel() v1alpha1.DeviceModel {
 	return newDeviceModel
 }
 
+func NewCustomizedDeviceModel() v1alpha1.DeviceModel {
+	deviceProperty1 := v1alpha1.DeviceProperty{
+		Name:        "temperature",
+		Description: "temperature in degree celsius",
+		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+			AccessMode: "ReadWrite",
+			Maximum:    100,
+			Unit:       "degree celsius",
+		}},
+	}
+	deviceProperty2 := v1alpha1.DeviceProperty{
+		Name:        "temperature-enable",
+		Description: "enable data collection of temperature sensor",
+		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+			AccessMode:   "ReadWrite",
+			DefaultValue: "OFF",
+		}},
+	}
+	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+	newDeviceModel := v1alpha1.DeviceModel{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "DeviceModel",
+			APIVersion: "devices.kubeedge.io/v1alpha1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "sensor-tag-customized-model",
+			Namespace: Namespace,
+		},
+		Spec: v1alpha1.DeviceModelSpec{
+			Properties:       properties,
+			PropertyVisitors: propertyVisitors,
+		},
+	}
+	return newDeviceModel
+}
+
 func UpdatedLedDeviceModel() v1alpha1.DeviceModel {
 	deviceProperty1 := v1alpha1.DeviceProperty{
 		Name:        "power-status",
@@ -732,6 +787,65 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 						Value: "1",
 						Metadata: map[string]string{
 							"type": "int",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
+		},
+	}
+	return deviceInstance
+}
+
+func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
+	deviceInstance := v1alpha1.Device{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Device",
+			APIVersion: "devices.kubeedge.io/v1alpha1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "sensor-tag-customized-instance-01",
+			Namespace: Namespace,
+			Labels: map[string]string{
+				"description":  "TISimplelinkSensorTag",
+				"manufacturer": "TexasInstruments",
+				"model":        "CC2650",
+			},
+		},
+		Spec: v1alpha1.DeviceSpec{
+			DeviceModelRef: &v12.LocalObjectReference{
+				Name: "sensor-tag-customized-model",
+			},
+			NodeSelector: &v12.NodeSelector{
+				NodeSelectorTerms: []v12.NodeSelectorTerm{
+					{
+						MatchExpressions: []v12.NodeSelectorRequirement{
+							{
+								Key:      "",
+								Operator: v12.NodeSelectorOpIn,
+								Values:   []string{nodeSelector},
+							},
+						},
+					},
+				},
+			},
+			Protocol: v1alpha1.ProtocolConfig{
+				CustomizedProtocol: &v1alpha1.ProtocolConfigCustomized{
+					ProtocolName: "CustomizedProtocol1",
+					ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				},
+			},
+		},
+		Status: v1alpha1.DeviceStatus{
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha1.TwinProperty{
+						Value: "OFF",
+						Metadata: map[string]string{
+							"type": "string",
 						},
 					},
 					Reported: v1alpha1.TwinProperty{
@@ -1265,6 +1379,95 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 				Scale:          1,
 				IsSwap:         true,
 				IsRegisterSwap: true,
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(deviceProfile)
+	if err != nil {
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+	}
+	configMap.Data["deviceProfile.json"] = string(bytes)
+
+	return configMap
+}
+
+func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
+	configMap := v12.ConfigMap{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "device-profile-config-" + nodeSelector,
+			Namespace: Namespace,
+		},
+	}
+	configMap.Data = make(map[string]string)
+
+	deviceProfile := &types.DeviceProfile{}
+	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+		{
+			Name:     "sensor-tag-customized-instance-01",
+			ID:       "sensor-tag-customized-instance-01",
+			Model:    "sensor-tag-customized-model",
+			Protocol: "customized-protocol-sensor-tag-customized-instance-01",
+		},
+	}
+	deviceProfile.DeviceModels = []*types.DeviceModel{
+		{
+			Name: "sensor-tag-customized-model",
+			Properties: []*types.Property{
+
+				{
+					Name:         "temperature",
+					DataType:     "int",
+					Description:  "temperature in degree celsius",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 0,
+					Maximum:      100,
+					Unit:         "degree celsius",
+				},
+				{
+					Name:         "temperature-enable",
+					DataType:     "string",
+					Description:  "enable data collection of temperature sensor",
+					AccessMode:   "ReadWrite",
+					DefaultValue: "OFF",
+				},
+			},
+		},
+	}
+	deviceProfile.Protocols = []*types.Protocol{
+		{
+			Name:     "customized-protocol-sensor-tag-customized-instance-01",
+			Protocol: "customized-protocol",
+			ProtocolConfig: &v1alpha1.ProtocolConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+		},
+	}
+	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
+		{
+			Name:         "temperature",
+			PropertyName: "temperature",
+			ModelName:    "sensor-tag-customized-model",
+			Protocol:     "customized-protocol",
+
+			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+		},
+		{
+			Name:         "temperature-enable",
+			PropertyName: "temperature-enable",
+			ModelName:    "sensor-tag-customized-model",
+			Protocol:     "customized-protocol",
+			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
 			},
 		},
 	}
