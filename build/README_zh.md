@@ -23,7 +23,6 @@ build/
 │       ├── create-device-instance.yaml
 │       └── create-device-model.yaml
 ├── deployment.yaml
-├── deployment-armv7.yaml
 ├── edge
 │   ├── docker-compose.yaml
 │   ├── Dockerfile
@@ -73,9 +72,3 @@ edgecore以deployment部署的相关步骤及说明
 
 ## deployment.yaml
 deployment的模板,用于部署nginx到edge node使用
-
-## deployment-armv7.xml
-deployment的模板,用于部署nginx到edge node使用,主要用于armv7架构的edgenode使用。
-
-如果在armv7的边缘节点不使用专属架构的image,有可能会造成pod起不来,pod的状态为`ExitCode:1`
-边缘节点对应的docker的日志信息为:`standard_init_linux.go: exec user process caused "exec format error"`
