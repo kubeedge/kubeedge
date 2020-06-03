@@ -959,6 +959,17 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 				},
 			},
 		},
+		Data: v1alpha1.DeviceData{
+			DataProperties: []v1alpha1.DataProperty{
+				{
+					PropertyName: "temperature",
+					Metadata: map[string]string{
+						"type": "string",
+					},
+				},
+			},
+			DataTopic: "$ke/events/+/device/customized/update",
+		},
 	}
 	return deviceInstance
 }
@@ -1072,6 +1083,20 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 			Name:  "led-light-instance-01",
 			ID:    "led-light-instance-01",
 			Model: "led-light",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "power-status",
+					Desired: v1alpha1.TwinProperty{
+						Value: "ON",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1130,6 +1155,20 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			ID:       "sensor-tag-instance-01",
 			Protocol: "bluetooth-sensor-tag-instance-01",
 			Model:    "cc2650-sensortag",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "io-data",
+					Desired: v1alpha1.TwinProperty{
+						Value: "1",
+						Metadata: map[string]string{
+							"type": "int",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1321,6 +1360,133 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			Name:  "sensor-tag-instance-02",
 			ID:    "sensor-tag-instance-02",
 			Model: "sensor-tag-model",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha1.TwinProperty{
+						Value: "OFF",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
+		},
+	}
+	deviceProfile.DeviceModels = []*types.DeviceModel{
+		{
+			Name: "sensor-tag-model",
+			Properties: []*types.Property{
+
+				{
+					Name:         "temperature",
+					DataType:     "int",
+					Description:  "temperature in degree celsius",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 0,
+					Maximum:      100,
+					Unit:         "degree celsius",
+				},
+				{
+					Name:         "temperature-enable",
+					DataType:     "string",
+					Description:  "enable data collection of temperature sensor",
+					AccessMode:   "ReadWrite",
+					DefaultValue: "OFF",
+				},
+			},
+		},
+	}
+	deviceProfile.Protocols = []*types.Protocol{
+		{
+			ProtocolConfig: nil,
+		},
+	}
+	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
+		{
+			Name:         "temperature",
+			PropertyName: "temperature",
+			ModelName:    "sensor-tag-model",
+			Protocol:     "modbus",
+			VisitorConfig: v1alpha1.VisitorConfigModbus{
+				Register:       "CoilRegister",
+				Offset:         2,
+				Limit:          1,
+				Scale:          1,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+		{
+			Name:         "temperature-enable",
+			PropertyName: "temperature-enable",
+			ModelName:    "sensor-tag-model",
+			Protocol:     "modbus",
+			VisitorConfig: v1alpha1.VisitorConfigModbus{
+				Register:       "DiscreteInputRegister",
+				Offset:         3,
+				Limit:          1,
+				Scale:          1,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(deviceProfile)
+	if err != nil {
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+	}
+	configMap.Data["deviceProfile.json"] = string(bytes)
+
+	return configMap
+}
+
+func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
+	configMap := v12.ConfigMap{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "device-profile-config-" + nodeSelector,
+			Namespace: Namespace,
+		},
+	}
+	configMap.Data = make(map[string]string)
+
+	deviceProfile := &types.DeviceProfile{}
+	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+		{
+			Name:  "sensor-tag-instance-02",
+			ID:    "sensor-tag-instance-02",
+			Model: "sensor-tag-model",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha1.TwinProperty{
+						Value: "ON",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
+			DataProperties: []v1alpha1.DataProperty{
+				{
+					PropertyName: "temperature",
+					Metadata: map[string]string{
+						"type": "string",
+					},
+				},
+			},
+			DataTopic: "$ke/events/+/device/customized/update",
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1412,6 +1578,20 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			ID:       "sensor-tag-customized-instance-01",
 			Model:    "sensor-tag-customized-model",
 			Protocol: "customized-protocol-sensor-tag-customized-instance-01",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha1.TwinProperty{
+						Value: "OFF",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
