@@ -867,6 +867,19 @@ func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
 	return true
 }
 
+// CompareConfigMaps is used to compare 2 device profile in config maps
+func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
+	deviceProfile := configMap.Data["deviceProfile.json"]
+	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
+	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
+	json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
+	json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
+	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) {
+		return false
+	}
+	return true
+}
+
 // CompareTwin is used to compare 2 device Twins
 func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*MsgTwin) bool {
 	for key := range expectedDeviceTwin {

@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+)
+
 // DeviceProfile is structure to store in configMap. These types would be consumed by mappers to marshal / unmarshal the device profile json
 type DeviceProfile struct {
 	// DeviceInstances is used to store list of all devices.
@@ -22,6 +26,18 @@ type DeviceInstance struct {
 	Protocol string `json:"protocol,omitempty"`
 	// Model is deviceInstance model name
 	Model string `json:"model,omitempty"`
+	// A list of device twins containing desired/reported desired/reported values of twin properties..
+	// Optional: A passive device won't have twin properties and this list could be empty.
+	// +optional
+	Twins []v1alpha1.Twin `json:"twins,omitempty"`
+	// A list of data properties, which are not required to be processed by edgecore
+	// +optional
+	DataProperties []v1alpha1.DataProperty `json:"dataProperties,omitempty"`
+	// Topic used by mapper, all data collected from dataProperties
+	// should be published to this topic,
+	// the default value is $ke/events/device/+/data/update
+	// +optional
+	DataTopic string `json:"dataTopic,omitempty"`
 }
 
 // DeviceModel is structure to store deviceModel in deviceProfile.json in configmap
