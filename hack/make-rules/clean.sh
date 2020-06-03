@@ -23,8 +23,14 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
+kubeedge::clean::cache(){
+  unset GOARM
+  go clean -cache
+}
+
 kubeedge::clean::bin(){
   rm -rf $KUBEEDGE_OUTPUT_BINPATH/*
 }
 
+kubeedge::clean::cache
 kubeedge::clean::bin
