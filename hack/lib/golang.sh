@@ -253,6 +253,7 @@ kubeedge::golang::is_supported_goarm() {
 kubeedge::golang::cross_build_place_binaries() {
   kubeedge::check::env
   
+  set -x
   local -a targets=()
   local goarm=${goarm:-${KUBEEDGE_ALL_CROSS_GOARMS[0]}}
 

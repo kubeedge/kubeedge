@@ -78,7 +78,7 @@ ifeq ($(HELP),y)
 test:
 	@echo "$$TEST_HELP_INFO"
 else
-test:
+test: clean
 	hack/make-rules/test.sh $(WHAT)
 endif
 
