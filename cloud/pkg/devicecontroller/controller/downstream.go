@@ -342,6 +342,11 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 	} else {
 		klog.Warning("Device doesn't support valid protocol")
 	}
+
+	deviceInstance.Twins = device.Status.Twins
+	deviceInstance.DataProperties = device.Data.DataProperties
+	deviceInstance.DataTopic = device.Data.DataTopic
+
 	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
 	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
 }
@@ -427,7 +432,6 @@ func isDeviceUpdated(oldTwin *v1alpha1.Device, newTwin *v1alpha1.Device) bool {
 	// does not care fields
 	oldTwin.ObjectMeta.ResourceVersion = newTwin.ObjectMeta.ResourceVersion
 	oldTwin.ObjectMeta.Generation = newTwin.ObjectMeta.Generation
-
 	// return true if ObjectMeta or Spec or Status changed, else false
 	return !reflect.DeepEqual(oldTwin.ObjectMeta, newTwin.ObjectMeta) || !reflect.DeepEqual(oldTwin.Spec, newTwin.Spec) || !reflect.DeepEqual(oldTwin.Status, newTwin.Status)
 }
@@ -442,8 +446,18 @@ func isProtocolConfigUpdated(oldTwin *v1alpha1.ProtocolConfig, newTwin *v1alpha1
 	return !reflect.DeepEqual(oldTwin, newTwin)
 }
 
-// updateProtocolInConfigMap updates the protocol in the deviceProfile in configmap
-func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Device) {
+// isDeviceStatusUpdated checks if DeviceStatus is updated
+func isDeviceStatusUpdated(oldTwin *v1alpha1.DeviceStatus, newTwin *v1alpha1.DeviceStatus) bool {
+	return !reflect.DeepEqual(oldTwin, newTwin)
+}
+
+// isDeviceDataUpdated checks if DeviceData is updated
+func isDeviceDataUpdated(oldData *v1alpha1.DeviceData, newData *v1alpha1.DeviceData) bool {
+	return !reflect.DeepEqual(oldData, newData)
+}
+
+// updateConfigMap updates the protocol, twins and data in the deviceProfile in configmap
+func (dc *DownstreamController) updateConfigMap(device *v1alpha1.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 		if !ok {
@@ -500,9 +514,16 @@ func (dc *DownstreamController) updateProtocolInConfigMap(device *v1alpha1.Devic
 			klog.Warning("Unsupported device protocol")
 		}
 
-		// update the protocol in deviceInstance
+		// update the twins, data and protocol in deviceInstance
 		for _, devInst := range deviceProfile.DeviceInstances {
 			if device.Name == devInst.Name {
+				// update twins
+				devInst.Twins = device.Status.Twins
+				// update data
+				devInst.DataProperties = device.Data.DataProperties
+				// update data topic
+				devInst.DataTopic = device.Data.DataTopic
+				// update protocol
 				devInst.Protocol = deviceProtocol.Name
 				break
 			}
@@ -550,29 +571,36 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha1.Device) {
 					TypeMeta: device.TypeMeta,
 				}
 				dc.deviceDeleted(deletedDevice)
-			} else if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) {
-				dc.updateProtocolInConfigMap(device)
 			} else {
-				// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
-				twin := make(map[string]*types.MsgTwin)
-				addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
-				addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
-				msg := model.NewMessage("")
-
-				resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
-				if err != nil {
-					klog.Warningf("Built message resource failed with error: %s", err)
-					return
+				// update config map if spec, data or twins changed
+				if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
+					isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
+					isDeviceDataUpdated(&cachedDevice.Data, &device.Data) {
+					dc.updateConfigMap(device)
 				}
-				msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-				content := types.DeviceTwinUpdate{Twin: twin}
-				content.EventID = uuid.NewV4().String()
-				content.Timestamp = time.Now().UnixNano() / 1e6
-				msg.Content = content
+				// update twin properties
+				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
+					// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
+					twin := make(map[string]*types.MsgTwin)
+					addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
+					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
+					msg := model.NewMessage("")
 
-				err = dc.messageLayer.Send(*msg)
-				if err != nil {
-					klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
+					resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
+					if err != nil {
+						klog.Warningf("Built message resource failed with error: %s", err)
+						return
+					}
+					msg.BuildRouter(constants.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+					content := types.DeviceTwinUpdate{Twin: twin}
+					content.EventID = uuid.NewV4().String()
+					content.Timestamp = time.Now().UnixNano() / 1e6
+					msg.Content = content
+
+					err = dc.messageLayer.Send(*msg)
+					if err != nil {
+						klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
+					}
 				}
 			}
 		}

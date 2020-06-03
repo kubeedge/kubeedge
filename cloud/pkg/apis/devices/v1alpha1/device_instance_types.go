@@ -155,6 +155,29 @@ type TwinProperty struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
+// DeviceData reports the device's time-series data to edge MQTT broker.
+// These data should not be processed by edgecore. Instead, they can be process by
+// third-party data-processing apps like EMQX kuiper.
+type DeviceData struct {
+	// A list of data properties, which are not required to be processed by edgecore
+	// +optional
+	DataProperties []DataProperty `json:"dataProperties,omitempty"`
+	// Topic used by mapper, all data collected from dataProperties
+	// should be published to this topic,
+	// the default value is $ke/events/device/+/data/update
+	DataTopic string `json:"dataTopic,omitempty"`
+}
+
+// DataProperty represents the device property for external use.
+type DataProperty struct {
+	// Required: The property name for which should be processed by external apps.
+	// This property should be present in the device model.
+	PropertyName string `json:"propertyName,omitempty"`
+	// Additional metadata like timestamp when the value was reported etc.
+	// +optional
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -166,6 +189,7 @@ type Device struct {
 
 	Spec   DeviceSpec   `json:"spec,omitempty"`
 	Status DeviceStatus `json:"status,omitempty"`
+	Data   DeviceData   `json:"data,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
