@@ -126,8 +126,9 @@ func (esd *EdgeServiceDiscovery) AutoSync() {}
 func (esd *EdgeServiceDiscovery) Close() error { return nil }
 
 // parseServiceURL parses serviceURL to ${service_name}.${namespace}.svc.${cluster}:${port}, keeps with k8s service
-func parseServiceURL(serviceURL string) (name, namespace string, port int, err error) {
-	name, namespace = common.SplitServiceKey(serviceURL)
+func parseServiceURL(serviceURL string) (string, string, int, error) {
+	var port int
+	var err error
 	serviceURLSplit := strings.Split(serviceURL, ":")
 	if len(serviceURLSplit) == 1 {
 		// default
@@ -136,13 +137,15 @@ func parseServiceURL(serviceURL string) (name, namespace string, port int, err e
 		port, err = strconv.Atoi(serviceURLSplit[1])
 		if err != nil {
 			klog.Errorf("[EdgeMesh] service url %s invalid", serviceURL)
-			return
+			return "", "", 0, err
 		}
 	} else {
 		klog.Errorf("[EdgeMesh] service url %s invalid", serviceURL)
 		err = fmt.Errorf("service url %s invalid", serviceURL)
+		return "", "", 0, err
 	}
-	return
+	name, namespace := common.SplitServiceKey(serviceURLSplit[0])
+	return name, namespace, port, nil
 }
 
 // getService get k8s service from either lruCache or metaManager
