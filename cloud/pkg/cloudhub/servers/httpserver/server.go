@@ -34,6 +34,7 @@ import (
 	"k8s.io/klog"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
@@ -43,9 +44,9 @@ const (
 // StartHTTPServer starts the http service
 func StartHTTPServer() {
 	router := mux.NewRouter()
-	router.HandleFunc("/edge.crt", edgeCoreClientCert).Methods("GET")
-	router.HandleFunc("/ca.crt", getCA).Methods("GET")
-	router.HandleFunc("/readyz", electionHandler).Methods("GET")
+	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods("GET")
+	router.HandleFunc(constants.DefaultCAURL, getCA).Methods("GET")
+	router.HandleFunc(constants.DefaultCloudCoreReadyCheckURL, electionHandler).Methods("GET")
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
@@ -60,7 +61,7 @@ func StartHTTPServer() {
 		Handler: router,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
-			ClientAuth:   tls.NoClientCert,
+			ClientAuth:   tls.RequestClientCert,
 		},
 	}
 	klog.Fatal(server.ListenAndServeTLS("", ""))
@@ -93,23 +94,59 @@ func EncodeCertPEM(cert *x509.Certificate) []byte {
 	return pem.EncodeToMemory(&block)
 }
 
-// edgeCoreClientCert will verify the token then create EdgeCoreCert and return it
+// edgeCoreClientCert will verify the certificate of EdgeCore or token then create EdgeCoreCert and return it
 func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
+	if cert := r.TLS.PeerCertificates; len(cert) > 0 {
+		if err := verifyCert(cert[0]); err != nil {
+			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", r.Header.Get(constants.NodeName))
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(err.Error()))
+		} else {
+			signEdgeCert(w, r)
+		}
+		return
+	}
+	if verifyAuthorization(w, r) {
+		signEdgeCert(w, r)
+	} else {
+		klog.Errorf("failed to sign the certificate for edgenode: %s, invalid token", r.Header.Get(constants.NodeName))
+	}
+}
+
+// verifyCert verifies the edge certificate by CA certificate when edge certificates rotate.
+func verifyCert(cert *x509.Certificate) error {
+	roots := x509.NewCertPool()
+	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certificateBlockType, Bytes: hubconfig.Config.Ca}))
+	if !ok {
+		return fmt.Errorf("failed to parse root certificate")
+	}
+	opts := x509.VerifyOptions{
+		Roots:     roots,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	if _, err := cert.Verify(opts); err != nil {
+		return fmt.Errorf("failed to verify edge certificate: %v", err)
+	}
+	return nil
+}
+
+// verifyAuthorization verifies the token from EdgeCore CSR
+func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
-		return
+		return false
 	}
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
-		return
+		return false
 	}
 	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("There was an error")
+			return nil, fmt.Errorf("there was an error")
 		}
 		caKey := hubconfig.Config.CaKey
 		return caKey, nil
@@ -118,30 +155,34 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
-			return
+			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
-		return
+		return false
 	}
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
-		return
+		return false
 	}
+	return true
+}
 
+// signEdgeCert signs the CSR from EdgeCore
+func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	csrContent, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		klog.Errorf("fail to read file! error:%v", err)
+		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 	}
 	csr, err := x509.ParseCertificateRequest(csrContent)
 	if err != nil {
-		klog.Errorf("fail to ParseCertificateRequest! error:%v", err)
+		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
 	}
 	subject := csr.Subject
 	clientCertDER, err := signCerts(subject, csr.PublicKey)
 	if err != nil {
-		klog.Errorf("fail to signCerts! error:%v", err)
+		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 	}
 
 	w.Write(clientCertDER)
@@ -168,7 +209,8 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 		return nil, fmt.Errorf("unable to ParseECPrivateKey: %v", err)
 	}
 
-	certDER, err := NewCertFromCa(cfgs, caCert, clientKey, caKey) //crypto.Signer(caKey)
+	edgeCertSigningDuration := hubconfig.Config.CloudHub.EdgeCertSigningDuration
+	certDER, err := NewCertFromCa(cfgs, caCert, clientKey, caKey, edgeCertSigningDuration) //crypto.Signer(caKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to NewCertFromCa: %v", err)
 	}
