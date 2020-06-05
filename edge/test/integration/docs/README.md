@@ -2,7 +2,7 @@
 
 - [Background](#Background)
     - [Integration test framework features](#Integration-test-framework-features)
-    - [Folder Structure](#Folder-structure-of-Integration-tests)    
+    - [Folder Structure](#Folder-structure-of-Integration-tests)
     - [Sample Testcase](#Sample-Testcase)
     - [Configurations](#Configurations)
     - [Run Tests](#Run-Tests)
@@ -54,7 +54,7 @@ It("TC_TEST_EBUS_7: change the device status to unknown from eventbus", func() {
     return deviceState
     }, "60s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
     Client.Disconnect(1)
-})		
+})
 ```
 ## Configurations
 ##### Modify the test configurations accordingly in the below mentioned file
@@ -70,7 +70,7 @@ cat >config.json<<END
 
 mqttEndpoint : Specify mqttEndpoint accordingly to Run the integration tests on internal or External MQTT server.
 testManager: testManager will listen and serve the request on http://127.0.0.1:12345
-edgedEndpoint: edgedEndpoint will listen and serve the request on http://127.0.0.1:10255  
+edgedEndpoint: edgedEndpoint will listen and serve the request on http://127.0.0.1:10255
 image_url: Specify the docker Image Name/Image URL's for application deployments on edge node.
 ```
 ## Run Tests
@@ -79,33 +79,33 @@ image_url: Specify the docker Image Name/Image URL's for application deployments
 * Integration test scripts are written in a way that user can run all test suites together or run individual test suites or only failed test case.
 
 **Run all test suites:**
-```shell 
+```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-    
+
     1. bash -x test/integration/scripts/compile.sh
     2. bash test/integration/scripts/fast_test.sh
-    
+
     Above 2 commands will ensure you run all the tests.
 ```
 
 **Run Individual Test Suite:**
-```shell 
+```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-    
+
     Ex:
     1. bash -x test/integration/scripts/compile.sh <device>
-    2. bash test/integration/scripts/fast_test.sh <device>    
-    #or     
+    2. bash test/integration/scripts/fast_test.sh <device>
+    #or
     1. bash -x test/integration/scripts/compile.sh <appdeployment>
-    2. bash test/integration/scripts/fast_test.sh <appdeployment>           
+    2. bash test/integration/scripts/fast_test.sh <appdeployment>
 ```
 
 **Run Failed Test:**
-```shell 
+```shell
     cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
-    
-    Ex:   
-    bash test/integration/scripts/fast_test.sh <device> -ginkgo.focus="Failed test case ID/Name"   
+
+    Ex:
+    bash test/integration/scripts/fast_test.sh <device> -ginkgo.focus="Failed test case ID/Name"
 ```
 ## Test Logs
 ##### Integration test logs

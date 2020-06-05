@@ -46,8 +46,8 @@ test: ## test case
 # https://deepzz.com/post/study-golang-test.html
 # https://deepzz.com/post/the-command-flag-of-go-test.html
 benchmark: ## run benchmarks tests
-	@go test ${TESTFLAGS} $(filter-out ${INTEGRATION_PACKAGE},${PACKAGES})  -bench . -run Benchmark 
-	
+	@go test ${TESTFLAGS} $(filter-out ${INTEGRATION_PACKAGE},${PACKAGES})  -bench . -run Benchmark
+
 coverage: ## generate coverprofiles from the unit tests, except tests that require root
 	@rm -f coverage.txt
 	@go test -i ${TESTFLAGS} $(filter-out ${INTEGRATION_PACKAGE},${PACKAGES}) 2> /dev/null

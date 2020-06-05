@@ -19,7 +19,6 @@
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
 
-#set -x
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -136,7 +135,7 @@ kubeedge::check::env() {
     errors+="GOPATH environment value not set"
   fi
 
-  # check other env 
+  # check other env
 
   # check lenth of errors
   if [[ ${#errors[@]} -ne 0 ]] ; then
@@ -178,7 +177,7 @@ kubeedge::golang::get_all_targets() {
 }
 
 kubeedge::golang::get_all_binares() {
-  local -a binares 
+  local -a binares
   for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
     binares+=("${bt%%:*}")
   done
@@ -195,11 +194,11 @@ kubeedge::golang::build_binaries() {
   for binArg in "$@"; do
     targets+=("$(kubeedge::golang::get_target_by_binary $binArg)")
   done
-  
+
   if [[ ${#targets[@]} -eq 0 ]]; then
     targets=("${KUBEEDGE_ALL_TARGETS[@]}")
   fi
-    
+
   local -a binaries
   while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
 
@@ -227,11 +226,11 @@ kubeedge::golang::is_cross_build_binary() {
   local key=$1
   for bin in "${KUBEEDGE_ALL_CROSS_BINARIES[@]}" ; do
     if [ "${bin}" == "${key}" ]; then
-      echo ${YES} 
+      echo ${YES}
       return
     fi
   done
-  echo ${NO} 
+  echo ${NO}
 }
 
 KUBEEDGE_ALL_CROSS_GOARMS=(
@@ -243,17 +242,16 @@ kubeedge::golang::is_supported_goarm() {
   local key=$1
   for value in ${KUBEEDGE_ALL_CROSS_GOARMS[@]} ; do
     if [ "${value}" == "${key}" ]; then
-      echo ${YES} 
+      echo ${YES}
       return
     fi
   done
-  echo ${NO} 
+  echo ${NO}
 }
 
 kubeedge::golang::cross_build_place_binaries() {
   kubeedge::check::env
-  
-  set -x
+
   local -a targets=()
   local goarm=${goarm:-${KUBEEDGE_ALL_CROSS_GOARMS[0]}}
 
@@ -275,10 +273,10 @@ kubeedge::golang::cross_build_place_binaries() {
         targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
     done
   fi
-  
+
   if [ "$(kubeedge::golang::is_supported_goarm ${goarm})" == "${NO}" ]; then
     echo "GOARM${goarm} does not support cross build"
-    exit 1 
+    exit 1
   fi
 
   local -a binaries
@@ -312,11 +310,11 @@ kubeedge::golang::is_small_build_binary() {
   local key=$1
   for bin in "${KUBEEDGE_ALL_SMALL_BINARIES[@]}" ; do
     if [ "${bin}" == "${key}" ]; then
-      echo ${YES} 
+      echo ${YES}
       return
     fi
   done
-  echo ${NO} 
+  echo ${NO}
 }
 
 kubeedge::golang::small_build_place_binaries() {
@@ -336,7 +334,7 @@ kubeedge::golang::small_build_place_binaries() {
         targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
     done
   fi
-  
+
   local -a binaries
   while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
 

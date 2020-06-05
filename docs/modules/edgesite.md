@@ -21,7 +21,7 @@ There are scenarios user need to run a standalone Kubernetes cluster at edge to 
   In some IOT scenarios, user need to deploy a full control edge environment and running offline.
 
 For these use cases, a standalone, full controlled, light weight Edge cluster is required.
-By integrating KubeEdge and standard Kubernetes, this EdgeSite enables customers to run an efficient kubernetes cluster for Edge/IOT computing. 
+By integrating KubeEdge and standard Kubernetes, this EdgeSite enables customers to run an efficient kubernetes cluster for Edge/IOT computing.
 
 ## Assumptions
 
@@ -62,7 +62,7 @@ With the integration, the following can be enabled
 
 + [Creating cluster with kubeadm](<https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/>)
 
-+ KubeEdge supports https connection to Kubernetes apiserver. 
++ KubeEdge supports https connection to Kubernetes apiserver.
 
   Enter the path to kubeconfig file in controller.yaml
   ```yaml
@@ -71,7 +71,7 @@ With the integration, the following can be enabled
       ...
       kubeconfig: "path_to_kubeconfig_file" #Enter path to kubeconfig file to enable https connection to k8s apiserver
   ```
-  
+
 + (Optional) KubeEdge also supports insecure http connection to Kubernetes apiserver for testing, debugging cases.
   Please follow below steps to enable http port in Kubernetes apiserver.
 
@@ -117,7 +117,7 @@ With the integration, the following can be enabled
 Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite/conf/edgeSite.yaml) configuration file, with the IP address of K8S API server
 
 + Configure K8S (API Server)
-  
+
   Replace `localhost` at `controller.kube.master` with the IP address
 
   ```yaml
@@ -132,7 +132,7 @@ Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite
   Replace `edge-node` with an unique edge id/name in below fields :
     - `controller.kube.node-id`
     - `controller.edged.hostname-override`
-  
+
   ```yaml
   controller:
     kube:
@@ -180,11 +180,11 @@ Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite
 
 ### Deploy EdgeSite (Worker) Node to K8S Cluster
 
-We have provided a sample node.json to add a node in kubernetes. Please make sure edgesite (worker) node is added to k8s api-server. 
+We have provided a sample node.json to add a node in kubernetes. Please make sure edgesite (worker) node is added to k8s api-server.
 Run below steps:
 
 + Modify node.json
-  
+
   Replace `edge-node` in [node.json](https://github.com/kubeedge/kubeedge/blob/master/build/node.json#L5) file, to the id/name of the edgesite node. ID/Name should be same as used before while updating `edgesite.yaml`
 
   ```json
@@ -196,7 +196,7 @@ Run below steps:
   ```
 
 + Add node in K8S API server
-  
+
   In the console execute the below command
 
     ```shell

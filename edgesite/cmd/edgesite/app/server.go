@@ -28,9 +28,9 @@ func NewEdgeSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "edgesite",
 		Long: `EdgeSite helps running lightweight clusters at edge, which contains three modules: edgecontroller,
-metamanager, and edged. EdgeController is an extended kubernetes controller which manages edge nodes and pods metadata 
-so that the data can be targeted to a specific edge node. MetaManager is the message processor between edged and edgehub. 
-It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).Edged is an agent that 
+metamanager, and edged. EdgeController is an extended kubernetes controller which manages edge nodes and pods metadata
+so that the data can be targeted to a specific edge node. MetaManager is the message processor between edged and edgehub.
+It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).Edged is an agent that
 runs on edge nodes and manages containerized applications.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()

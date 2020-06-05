@@ -20,17 +20,17 @@ status: implementable
     * [Non\-goals](#non-goals)
   * [Proposal](#proposal)
     * [Use Cases](#use-cases)
-  * [High Level Design](#high-level-design)  
+  * [High Level Design](#high-level-design)
     * [Edged with CRI support](#edged-with-cri-support)
-  * [Low Level Design](#low-level-design)  
+  * [Low Level Design](#low-level-design)
     * [Configuration parameters](#configuration-parameters)
     * [Data structure modifications](#data-structure-modifications)
     * [Edged object creation modifications](#edged-object-creation-modifications)
     * [Runtime dependent module modifications](#runtime-dependent-module-modifications)
     * [Runtime dependent functional modifications](#runtime-dependent-functional-modifications)
-  * [Open Questions](#open-questions) 
-    
-    
+  * [Open Questions](#open-questions)
+
+
 ## Motivation
 This proposal addresses the Container Runtime Interface support in edged to enable the following
 1. Support light weight container runtimes on resource constrained edge node which are unable to run the existing docker runtime
@@ -48,8 +48,8 @@ CRI support in edged must:
 ## Proposal
 
 Currently Kubernetes kubelet CRI supports container runtimes like containerd, cri-o etc and support for docker runtime is
-provided using dockershim as well. However going forward even docker runtime will be supported through only CRI. However 
-currently kubeedge edged supports only docker runtime using the legacy dockertools. Hence we propose to support multiple 
+provided using dockershim as well. However going forward even docker runtime will be supported through only CRI. However
+currently kubeedge edged supports only docker runtime using the legacy dockertools. Hence we propose to support multiple
 container runtime in kubeedge edged as follows
 1. Include CRI support as in kubernetes kubelet to support contianerd, cri-o etc
 2. Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
@@ -114,7 +114,7 @@ type edged struct {
 ###  Edged object creation modifications
 
 The existing newEdged() function needs to modified include creating CRI runtime object based on the runtime type including
-creations of objects for runtime and image services. However the existing edged does not provide the support for all the 
+creations of objects for runtime and image services. However the existing edged does not provide the support for all the
 parameters required to create the CRI runtime object and default parameters need to be considered for the same like Image GC manager, Container GC manager, Volume manager and container lifecycle manager (clcm)
 
 ```go
@@ -123,18 +123,18 @@ parameters required to create the CRI runtime object and default parameters need
 func newEdged() (*edged, error) {
        conf := getConfig()
        ......
-       
+
        switch based on runtimeType {
             case DockerContainerRuntime:
 	        Create runtime based on docker tools
                 Set containerRuntimeName to DockerContainerRuntime
 		Initialize Container GC, Image GC and Volume Plugin Manager accordingly
-		
+
             case RemoteContainerRuntime:
                 Set remoteImageEndpoint same as remoteRuntimeEndpoint if not explicitly specified
                 Initialize the following required for initializing remote runtime
 			containerRefManager
-			httpClient 
+			httpClient
 			runtimeService
 			imageService
 			clcm
@@ -189,13 +189,13 @@ func (e *edged) Start(c *context.Context) {
     case DockerContainerRuntime:
       Initialize volume manager based on dockertools
       Initialize PLEG based on dockertools
-      
+
     case RemoteContainerRuntime:
       Initialize volume manager based on remote runtime
       Initialize PLEG based on remote runtime
   }
   ....
-    
+
 }
 ```
 
@@ -209,7 +209,7 @@ func (e *edged) initializeModules() error {
   switch based on runtime type {
     case DockerContainerRuntime:
 	 Start with docker runtime
-	    
+
     case RemoteContainerRuntime:
          Start with remote runtime
   ....
@@ -220,7 +220,7 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
     case DockerContainerRuntime:
 	 Ensure iamge exists for docker runtime
 	 Start pod with docker runtime
-	    
+
     case RemoteContainerRuntime:
          Get current status from pod cache
 	 Sync pod with remote runtime
@@ -232,11 +232,11 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
   switch based on runtime type {
     case DockerContainerRuntime:
 	 TerminatePod with docker runtime
-	    
+
     case RemoteContainerRuntime:
          KillPod with remote runtime
    }
-  
+
   ....
 }
 
@@ -252,7 +252,7 @@ func (e *edged) HandlePodCleanups() error {
   switch switch based on runtime type {
     case DockerContainerRuntime:
        GetPods for docker runtime
-	    
+
     case RemoteContainerRuntime:
        GetPods for remote runtime
   }
@@ -277,7 +277,7 @@ func (gl *GenericLifecycle) updatePodStatus(pod *v1.Pod) error {
   Get pod status based on remote/docker runtime
   Convert to API pod status for remote runtime
   Set pod status phase for remote runtime
-  
+
   ....
 }
 ```

@@ -46,7 +46,7 @@ Copy the deployment.yaml from the above link in cloud host, and run
 ```bash
 $ kubectl create -f deployment.yaml
 deployment.apps/nginx-deployment created
-``` 
+```
 Check the pod is up and is running state, as we could see the pod is running on edge node b
 
 ```bash
@@ -126,4 +126,4 @@ Commercial support is available at
 </html>
 ```
 >* EdgeMesh supports both Host Networking and Container Networking
->* If you ever used EdgeMesh of old version, check your iptables rules. It might affect your test result.  
+>* If you ever used EdgeMesh of old version, check your iptables rules. It might affect your test result.

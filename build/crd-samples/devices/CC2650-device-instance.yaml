@@ -1,4 +1,4 @@
-  
+
 apiVersion: devices.kubeedge.io/v1alpha1
 kind: Device
 metadata:

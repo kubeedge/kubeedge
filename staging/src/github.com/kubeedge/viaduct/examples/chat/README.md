@@ -1,4 +1,4 @@
-# Generate Certificates 
+# Generate Certificates
 ca certificate and a cert/key pair is required to have a setup for examples/chat. Same cert/key pair can be used in both server and client.
 
 	# Generete Root Key
@@ -10,7 +10,7 @@ ca certificate and a cert/key pair is required to have a setup for examples/chat
 	# Generate csr, Fill required details after running the command
 	openssl req -new -key chat.key -out chat.csr
 	# Generate Certificate
-	openssl x509 -req -in chat.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out char.crt -days 500 -sha256 
+	openssl x509 -req -in chat.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out char.crt -days 500 -sha256
 
 # How to Run
 
