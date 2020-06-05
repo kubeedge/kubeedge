@@ -5,8 +5,8 @@ KubeEdge is used by many companies. If you are using KubeEdge in your organizati
 <a href="https://www.huaweicloud.com/en-us/product/ief.html" border="0" target="_blank"><img alt="HuaweiCloud" src="docs/adopters/huawei-cloud.png" height="70"></a>
 <a href="https://cucc.wocloud.cn/" border="0" target="_blank"><img alt="ChinaUnicom-WoCloud" src="docs/adopters/china-unicom-wocloud.png" height="70"></a> &nbsp; &nbsp;
 <a href="https://www.raisecom.com/" border="0" target="_blank"><img alt="Raisecom Technology" src="docs/adopters/raisecom-technology.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
-<a href="https://kubesphere.io" border="0" target="_blank"><img alt="KubeSphere Container Platform" src="docs/adopters/kubesphere-logo.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
-
+<a href="https://kubesphere.io" border="0" target="_blank"><img alt="KubeSphere Container Platform" src="docs/adopters/kubesphere-logo.png" height="70"></a> &nbsp; &nbsp; &nbsp;
+<a href="http://xh-iot.net/" border="0" target="_blank"><img alt="XH-iot" src="docs/adopters/xh-iot.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
 
 ## Success Stories
 
@@ -31,3 +31,22 @@ China Telecom Research Institute used KubeEdge as an important part of the imple
 In this application scenario, KubeEdge completed the unified management of edge applications. KubeEdge could also make full use of the advantages of the collaboration of the cloud and edge. With the help of KubeEdge as the edge computing platform, the monitoring on safety of the manufactory with AI was completed effectively, which reduced the occurrence of safety accidents and improved the production efficiency of the manufactory.
 
 Based on this successful case, more deep learning algorithm will be deployed on KubeEdge to handle problems on edge computing. More cooperation about scenario-faced industrial intelligent application with KubeEdge will be carried out in the future.
+
+### XingHai IoT
+
+#### Challenges
+Xinghai IoT is an IoT company that provides comprehensive smart building solutions by leveraging a construction IoT platform, intelligent hardware, and AI. It is a creator and practitioner of smart campus standards for China Overseas Property Management and a core full-chain service provider of smart campus solutions from Huawei.
+
+The company serves its customers in 80 major cities in China and around the world. It has delivered 741 projects, covering more than 156 million square meters. Its business covers a diverse range of building types, such as high-end residential buildings, commercial complexes, super office buildings, government properties, and industrial parks.
+
+In recent years, as its business expands and occupant demands for service quality grow, Xinhai IoT has been committed to using edge computing and IoT to build sustainable smart campuses, improving efficiency for campus operations and management.
+
+#### Highlights
+Xinghai IoT now offers services in a wide range of areas. Therefore, its solutions should be portable and replicable and need to ensure real-time data processing and secure data storage. KubeEdge, with services designed for cloud native development and edge-cloud synergy, has become an indispensable part of Xinghai IoT for building smart campuses.
++ 	Container images are built once to run anywhere, effectively reducing the deployment and O&M complexity of new campuses.
++ Edge-cloud synergy enables data to be processed at the edge, ensuring real-time performance and security and lowering network bandwidth costs.
++ KubeEdge makes adding hardware easy and supports common protocols. No secondary development is needed.
+
+#### Benefits
+Xinghai IoT built a smart campus with cloud-edge-device synergy based on KubeEdge and its own Xinghai IoT cloud platform, greatly improving the efficiency of campus management. With AI assistance, nearly 30% of the repetitive work is automated. In the future, Xinghai IoT will continue to collaborate with KubeEdge to launch KubeEdge-based smart campus solutions.
+
