@@ -307,8 +307,8 @@ func (m *metaManager) processUpdate(message model.Message) {
 		Value: string(content)}
 	err = dao.InsertOrUpdate(meta)
 	if err != nil {
-		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
-		feedbackError(err, "Error to update meta to DB", message)
+		klog.Errorf("MetaManager update meta to DB failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "MetaManager update meta to DB failed", message)
 		return
 	}
 
@@ -666,10 +666,10 @@ func (m *metaManager) runMetaManager() {
 			default:
 			}
 			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
-				klog.Infof("get a message %+v", msg)
+				klog.Infof("MetaManager get a message %+v", msg)
 				m.process(msg)
 			} else {
-				klog.Errorf("get a message %+v: %v", msg, err)
+				klog.Errorf("MetaManager get a message %+v: %v", msg, err)
 			}
 		}
 	}()

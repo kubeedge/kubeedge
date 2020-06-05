@@ -115,15 +115,15 @@ func (eh *EdgeHub) sendToKeepChannel(message model.Message) error {
 	defer eh.keeperLock.RUnlock()
 	channel, exist := eh.syncKeeper[message.GetParentID()]
 	if !exist {
-		klog.Errorf("failed to get sync keeper channel, messageID:%+v", message)
-		return fmt.Errorf("failed to get sync keeper channel, messageID:%+v", message)
+		klog.Errorf("EdgeHub failed to get respose message sync keeper channel for messageID:%+v", message)
+		return fmt.Errorf("failed to get response message sync keeper channel for messageID:%+v", message)
 	}
 	// send response into synckeep channel
 	select {
 	case channel <- message:
 	default:
-		klog.Errorf("failed to send message to sync keep channel")
-		return fmt.Errorf("failed to send message to sync keep channel")
+		klog.Errorf("EdgeHub failed to send response message to sync keep channel")
+		return fmt.Errorf("failed to send response message to sync keep channel")
 	}
 	return nil
 }
@@ -154,15 +154,15 @@ func (eh *EdgeHub) routeToEdge() {
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
-			klog.Errorf("websocket read error: %v", err)
+			klog.Errorf("EdgeHub websocket read error: %v", err)
 			eh.reconnectChan <- struct{}{}
 			return
 		}
 
-		klog.Infof("received msg from cloud-hub:%+v", message)
+		klog.V(2).Infof("EdgeHub received msg from cloud-hub: %+v", message)
 		err = eh.dispatch(message)
 		if err != nil {
-			klog.Errorf("failed to dispatch message, discard: %v", err)
+			klog.Errorf("EdgeHub failed to dispatch message, discard: %v", err)
 		}
 	}
 }
@@ -172,8 +172,8 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	err := eh.chClient.Send(message)
 	eh.keeperLock.Unlock()
 	if err != nil {
-		klog.Errorf("failed to send message: %v", err)
-		return fmt.Errorf("failed to send message, error: %v", err)
+		klog.Errorf("EdgeHub client failed to send message to cloud: %v", err)
+		return fmt.Errorf("edgeHub client failed to send message to cloud, error: %v", err)
 	}
 
 	syncKeep := func(message model.Message) {
@@ -185,7 +185,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 			beehiveContext.SendResp(response)
 			eh.deleteKeepChannel(response.GetParentID())
 		case <-sendTimer.C:
-			klog.Warningf("timeout to receive response for message: %+v", message)
+			klog.Warningf("EdgeHub timeout to receive response from cloud for message: %+v", message)
 			eh.deleteKeepChannel(message.GetID())
 		}
 	}
@@ -207,7 +207,7 @@ func (eh *EdgeHub) routeToCloud() {
 		}
 		message, err := beehiveContext.Receive(ModuleNameEdgeHub)
 		if err != nil {
-			klog.Errorf("failed to receive message from edge: %v", err)
+			klog.Errorf("EdgeHub failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -215,7 +215,7 @@ func (eh *EdgeHub) routeToCloud() {
 		// post message to cloud hub
 		err = eh.sendToCloud(message)
 		if err != nil {
-			klog.Errorf("failed to send message to cloud: %v", err)
+			klog.Errorf("EdgeHub failed to send message to cloud: %v", err)
 			eh.reconnectChan <- struct{}{}
 			return
 		}
@@ -237,7 +237,7 @@ func (eh *EdgeHub) keepalive() {
 		// post message to cloud hub
 		err := eh.sendToCloud(*msg)
 		if err != nil {
-			klog.Errorf("websocket write error: %v", err)
+			klog.Errorf("EdgeHub websocket write error: %v", err)
 			eh.reconnectChan <- struct{}{}
 			return
 		}
