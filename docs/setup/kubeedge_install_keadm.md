@@ -1,6 +1,6 @@
 # Setup from KubeEdge Installer
 
-Keadm is used to install the cloud and edge components of KubeEdge. It is not responsible for installing K8s and runtime, 
+Keadm is used to install the cloud and edge components of KubeEdge. It is not responsible for installing K8s and runtime,
 so users must install a k8s master on cloud and runtime on edge first. Or use an existing cluster.
 
 Please refer [kubernetes-compatibility](https://github.com/kubeedge/kubeedge#kubernetes-compatibility) to get **Kubernetes compatibility** and determine what version of Kubernetes would be installed.
@@ -27,7 +27,7 @@ There are currently two ways to get keadm
 - Building from source
 
   1. Download the source code.
-  
+
       ```shell
       git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
       cd $GOPATH/src/github.com/kubeedge/kubeedge
@@ -41,42 +41,42 @@ There are currently two ways to get keadm
       ```
 
   2.  If you used `go get`, the `keadm` binary is available in `$GOPATH/bin/`
-      
+
       If you compiled from source, the `keadm` binary is in `$GOPATH/src/github.com/kubeedge/kubeedge/_output/local/bin/`
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
 By default ports '10000' and '10002' in your cloudcore needs to be accessible for your edge nodes.
 
-**Note**: '10002' only needed since 1.3 release 
+**Note**: '10002' only needed since 1.3 release
 
 `keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific version can be set.
 
 1. Execute `keadm init`: keadm needs super user rights (or root rights) to run successfully.
 
     Command flags
-    
+
     The optional flags with this command are mentioned below
 
     ```shell
     "keadm init" command install KubeEdge's master node (on the cloud) component.
     It checks if the Kubernetes Master are installed already,
     If not installed, please install the Kubernetes first.
-    
+
     Usage:
       keadm init [flags]
-    
+
     Examples:
-    
+
     keadm init
-    
+
     - This command will download and install the default version of KubeEdge cloud component
-    
+
     keadm init --kubeedge-version=1.2.0  --kube-config=/root/.kube/config
-    
+
       - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
-    
-    
+
+
     Flags:
           --advertise-address string            Use this key to set SANs in certificate of cloudcore. eg: 10.10.102.78,10.10.102.79
       -h, --help                                help for init
@@ -85,7 +85,7 @@ By default ports '10000' and '10002' in your cloudcore needs to be accessible fo
           --master string                       Use this key to set K8s master address, eg: http://127.0.0.1:8080
     ```
 
-**IMPORTANT NOTE:** 
+**IMPORTANT NOTE:**
 1. At least one of kubeconfig or master must be configured correctly, so that it can be used to verify the version and other info of the k8s cluster.
 1. `--advertise-address`(only needed since 1.3 release) is the address exposed by the cloud side (will be added to the SANs of the CloudCore certificate), the default value is the local IP
 
@@ -100,7 +100,7 @@ Sample execution output:
 Kubernetes version verification passed, KubeEdge installation will start...
 ...
 KubeEdge cloudcore is running, For logs visit:  /var/log/kubeedge/cloudcore.log
-```  
+```
 
 ## (**Only Needed in Pre 1.3 Release**) Manually copy certs.tgz from cloud host to edge host(s)
 
@@ -153,23 +153,23 @@ Execute `keadm join <flags>`
 
   ```shell
   "keadm join" command bootstraps KubeEdge's worker node (at the edge) component.
-  It will also connect with cloud component to receive 
-  further instructions and forward telemetry data from 
+  It will also connect with cloud component to receive
+  further instructions and forward telemetry data from
   devices to cloud
-  
+
   Usage:
     keadm join [flags]
-  
+
   Examples:
-  
+
   keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string as edge identifier>
-  
+
     - For this command --cloudcore-ipport flag is a required option
     - This command will download and install the default version of pre-requisites and KubeEdge
-  
+
   keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=1.2.0
-  
-  
+
+
   Flags:
         --certPath string                     The certPath used by edgecore, the default value is /etc/kubeedge/certs (default "/etc/kubeedge/certs")
     -s, --certport string                     The port where to apply for the edge certificate
@@ -182,10 +182,10 @@ Execute `keadm join <flags>`
     -t, --token string                        Used for edge to apply for the certificate
   ```
 
-**IMPORTANT NOTE:** 
-1. For this command `--cloudcore-ipport` flag is a mandatory flag
+**IMPORTANT NOTE:**
+1. For this command `--cloudcore-ipport` flag is a mandatory flag.
 1. If you want to apply certificate for edge node automatically, `--token` is needed.
-1. The KubeEdge version used in cloud and edge side should be same. 
+1. The kubeEdge version used in cloud and edge side should be same.
 
  Examples:
 
@@ -208,15 +208,15 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 
 ### Steps
 1. **Install CNI plugin:**
-	- Download CNI plugin release and extract it: 
-	
+	- Download CNI plugin release and extract it:
+
 	```
-	$ wget https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz 
-		
+	$ wget https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz
+
 	# Extract the tarball
 	$ mkdir cni
 	$ tar -zxvf v0.2.0.tar.gz -C cni
-		
+
 	$ mkdir -p /opt/cni/bin
 	$ cp ./cni/* /opt/cni/bin/
 	```
@@ -224,8 +224,8 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 	- Configure cni plugin
 
 	```
-	$ mkdir -p /etc/cni/net.d/ 
-		
+	$ mkdir -p /etc/cni/net.d/
+
 	$ cat >/etc/cni/net.d/bridge.conf <<EOF
 	{
 	  "cniVersion": "0.3.1",
@@ -241,20 +241,20 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 	      { "dst": "0.0.0.0/0" }
 	    ]
 	  }
-	}	
+	}
 	EOF
 	```
- 
-1. **Setup VM runtime:** 
+
+1. **Setup VM runtime:**
  Use script [`hack/setup-vmruntime.sh`](/hack/setup-vmruntime.sh) to set up VM runtime. It makes use of Arktos Runtime release to start three containers:
- 
+
 	 	vmruntime_vms
 		vmruntime_libvirt
 		vmruntime_virtlet
 
 
 1. **Start edgecore service and join the cluster:**
- The step is similare to provision containers with specify `remote-runtime-endpoint`. 
+ The step is similare to provision containers with specify `remote-runtime-endpoint`.
 
  Examples:
 
@@ -282,7 +282,7 @@ spec:
       requests:
         cpu: "3"
         memory: "200Mi"
- ``` 
+ ```
 
 Then use `kubectl create -f vm.yaml` to create VM pod on the edge node. You should see the workload on master:
 
@@ -292,16 +292,16 @@ On master:
 # kubectl get pods -o wide
 NAME     READY   STATUS    RESTARTS   AGE   IP           NODE          NOMINATED NODE   READINESS GATES
 testvm   1/1     Running   0          38s   10.88.0.18   testnodevm3   <none>           <none>
- ``` 
- 
+ ```
+
  On the edge worker node: either ssh into the VM instance or `virsh list` can verify the VM is created and running:
- 
+
  ```shell
  Id    Name                           State
 ----------------------------------------------------
  1     virtlet-10628888-2584-testvm   running
- ``` 
-  
+ ```
+
 
 ## Reset KubeEdge Master and Worker nodes
 
@@ -364,7 +364,7 @@ Flags:
      kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_device.yaml
      kubectl create -f https://raw.githubusercontent.com/kubeedge/kubeedge/<kubeEdge Version>/build/crds/devices/devices_v1alpha1_devicemodel.yaml
     ```
-   
+
     Also, create ClusterObjectSync and ObjectSync CRDs which are used in reliable message delivery.
 
     ```shell

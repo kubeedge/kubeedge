@@ -33,8 +33,8 @@ func NewCloudCoreCommand() *cobra.Command {
 		Use: "cloudcore",
 		Long: `CloudCore is the core cloud part of KubeEdge, which contains three modules: cloudhub,
 edgecontroller, and devicecontroller. Cloudhub is a web server responsible for watching changes at the cloud side,
-caching and sending messages to EdgeHub. EdgeController is an extended kubernetes controller which manages 
-edge nodes and pods metadata so that the data can be targeted to a specific edge node. DeviceController is an extended 
+caching and sending messages to EdgeHub. EdgeController is an extended kubernetes controller which manages
+edge nodes and pods metadata so that the data can be targeted to a specific edge node. DeviceController is an extended
 kubernetes controller which manages devices so that the device metadata/status date can be synced between edge and cloud.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			verflag.PrintAndExitIfRequested()

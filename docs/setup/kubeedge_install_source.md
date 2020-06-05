@@ -30,7 +30,7 @@ The cert/ key will be generated in the `/etc/kubeedge/ca` and `/etc/kubeedge/cer
 
 #### Generate Certificates for support `kubectl logs` command
 
-+ First , you need to make sure you can find the kubernetes ca.crt and ca.key files. if you start up your kubernetes cluster by `kubeadmin`. 
++ First , you need to make sure you can find the kubernetes ca.crt and ca.key files. if you start up your kubernetes cluster by `kubeadmin`.
 those files will be in `/etc/kubernetes/pki/` dir.
 
 + Second , set `CLOUDCOREIPS` env, The environment variable is set to specify the IP addresses of all cloudcore
@@ -42,7 +42,7 @@ export CLOUDCOREIPS="172.20.12.45 172.20.12.46"
 + third
 
 ```bash
-$GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh stream 
+$GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh stream
 ```
 
 + fourth

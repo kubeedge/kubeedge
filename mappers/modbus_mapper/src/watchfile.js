@@ -80,7 +80,7 @@ function buildMaps(dplConfigs, i) {
     } else {
         logger.error('failed to find model[%s] for deviceid', dplConfigs.deviceModels[i].model);
     }
-    
+
     let foundPro = dplConfigs.protocols.findIndex((element)=>{
         return element.name === dplConfigs.deviceInstances[i].protocol;
     });
@@ -88,7 +88,7 @@ function buildMaps(dplConfigs, i) {
         devPro.set(dplConfigs.deviceInstances[i].id, dplConfigs.protocols[foundMod]);
     } else {
         logger.error('failed to find protocol[%s] for deviceid', dplConfigs.deviceModels[i].protocol);
-    } 
+    }
 }
 
 // buildVisitorMaps build map[model-property-protocol]propertyVisitor
@@ -100,7 +100,7 @@ function buildVisitorMaps(dplConfigs, i, j) {
         modVisitr.set(util.format('%s-%s-%s', dplConfigs.propertyVisitors[foundVisitor].modelName, dplConfigs.propertyVisitors[foundVisitor].propertyName, dplConfigs.propertyVisitors[foundVisitor].protocol), dplConfigs.propertyVisitors[foundVisitor]);
     } else {
         logger.error('failed to find visitor for model[%s], property[%s]', dplConfigs.deviceModels[i].name, dplConfigs.deviceModels[i].properties[j].name);
-    }  
+    }
 }
 
 module.exports = {watchChange, loadDpl, loadConfig};
