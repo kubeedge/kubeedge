@@ -39,8 +39,9 @@ import (
 
 //Constants used by installers
 const (
-	UbuntuOSType = "ubuntu"
-	CentOSType   = "centos"
+	UbuntuOSType   = "ubuntu"
+	RaspbianOSType = "raspbian"
+	CentOSType     = "centos"
 
 	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
 	KubeEdgePath                 = "/etc/kubeedge/"
@@ -187,12 +188,13 @@ func GetOSVersion() string {
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
 	switch GetOSVersion() {
-	case UbuntuOSType:
+	case UbuntuOSType, RaspbianOSType:
 		return &UbuntuOS{}
 	case CentOSType:
 		return &CentOS{}
 	default:
-		panic("This OS version is currently un-supported by keadm")
+		fmt.Printf("This OS version is currently un-supported by keadm, %s", GetOSVersion())
+		panic("This OS version is currently un-supported by keadm,")
 	}
 }
 
@@ -322,6 +324,10 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
+	}
+
+	if arch == "armhf" {
+		arch = "arm"
 	}
 
 	//Check if the same version exists, then skip the download and just untar and continue
