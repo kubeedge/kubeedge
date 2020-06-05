@@ -43,10 +43,9 @@ In recent years, as its business expands and occupant demands for service qualit
 
 #### Highlights
 Xinghai IoT now offers services in a wide range of areas. Therefore, its solutions should be portable and replicable and need to ensure real-time data processing and secure data storage. KubeEdge, with services designed for cloud native development and edge-cloud synergy, has become an indispensable part of Xinghai IoT for building smart campuses.
-+ 	Container images are built once to run anywhere, effectively reducing the deployment and O&M complexity of new campuses.
++ Container images are built once to run anywhere, effectively reducing the deployment and O&M complexity of new campuses.
 + Edge-cloud synergy enables data to be processed at the edge, ensuring real-time performance and security and lowering network bandwidth costs.
 + KubeEdge makes adding hardware easy and supports common protocols. No secondary development is needed.
 
 #### Benefits
 Xinghai IoT built a smart campus with cloud-edge-device synergy based on KubeEdge and its own Xinghai IoT cloud platform, greatly improving the efficiency of campus management. With AI assistance, nearly 30% of the repetitive work is automated. In the future, Xinghai IoT will continue to collaborate with KubeEdge to launch KubeEdge-based smart campus solutions.
-
