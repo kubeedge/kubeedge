@@ -159,11 +159,7 @@ perform the event once.
 
  ### Configuration File
 
-<<<<<<< HEAD
  The user can give the configurations specific to the bluetooth device using configurations provided in the configuration file present at $GOPATH/src/github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration/config.yaml.
-=======
- The user can give the configurations specific to the bluetooth device using configurations provided in the configuration file present at $GOPATH/src/github.com/kubeedge/kubeedge/device/bluetooth_mapper/configuration/config.yaml.
->>>>>>> Lint: cleanup white noise
  The details provided in the configuration file are used by action-manager module, scheduler module, watcher module, the data-converter module and the controller.
 
  **Example:** Given below is the instructions using which user can create their own configuration file, for their device.
