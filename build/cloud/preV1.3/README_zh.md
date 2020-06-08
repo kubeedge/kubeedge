@@ -24,6 +24,7 @@ cd build/cloud
 接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
 
 ```bash
+cd preV1.3
 for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
 
