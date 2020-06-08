@@ -1,4 +1,4 @@
-# KubeEdge Open Governance
+# Governance
 
 The governance model adopted here is heaviliy influenced by a set of CNCF projects, especially drew
 reference from [Kubernetes governance](https://github.com/kubernetes/community/blob/master/governance.md).

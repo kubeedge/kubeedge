@@ -19,80 +19,87 @@ application orchestration capabilities to hosts at Edge.
    KubeEdge Home <https://kubeedge.io>
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting Started
 
-   getting-started/getting-started
-   getting-started/contribute.md
-   getting-started/roadmap.md
-   getting-started/support.md
-   getting-started/community-membership
-   getting-started/reporting_bugs
+   Why KubeEdge <components/kubeedge.md>
+   getting-started
+   roadmap
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Setup
 
-   setup/kubeedge_install_keadm
-   setup/develop_kubeedge
-   setup/memfootprint-test-setup
-   setup/cross-compilation
-   Integrate with HuaweiCloud [Intelligent EdgeFabric (IEF)] <guides/try_kubeedge_with_ief>
+   setup/keadm
+   setup/local
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Configuration
+
+   KuBeEdge <configuration/kubeedge>
+   CRI <configuration/cri>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: General Components
+
+   components/beehive
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Cloud Components
+
+   components/cloud/controller
+   components/cloud/cloudhub
+   components/cloud/device_controller
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Edge Components
+
+   components/edge/edged
+   components/edge/eventbus
+   components/edge/metamanager
+   components/edge/edgehub
+   components/edge/devicetwin
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: General Concepts
-
-   modules/kubeedge.md
-   modules/beehive
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Edge Concepts
-
-   modules/edge/edged
-   modules/edge/eventbus
-   modules/edge/metamanager
-   modules/edge/edgehub
-   modules/edge/devicetwin
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Cloud Concepts
-
-   modules/cloud/controller
-   modules/cloud/cloudhub
-   modules/cloud/device_controller
-
-.. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Edgesite
 
-   modules/edgesite
+   EdgeSite <components/edgesite>
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Mappers
 
-   mappers/bluetooth_mapper
-   mappers/modbus_mapper
+   Bluetooth <components/mappers/bluetooth_mapper>
+   ModBus <components/mappers/modbus_mapper>
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Guides
+   :maxdepth: 1
+   :caption: Contributing
 
-   guides/message_topics
-   guides/unit_test_guide
-   guides/device_crd_guide
-   guides/edgemesh_test_env_guide
+   contributing/contribute
+   governance
+   Maintainer <contributing/community>
+   propoals
+   contributing/feature-lifecycle
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Troubleshooting
+   :maxdepth: 1
+   :caption: Developer Guide
 
-   troubleshooting/troubleshooting
+   Device Manager <contributing/device_crd_guide>
+   contributing/message_topics
+   Unit Test <contributing/unit_test_guide>
+   Bluetooth Mapper E2E Test <contributing/bluetooth_mapper_e2e_guide>
+   EdgeMesh Test <contributing/edgemesh_test_env_guide>
+   Memory Footprint Test <contributing/memfootprint-test-setup>
 
+.. toctree::
+   :maxdepth: 1
 
-
-
+   FAQ <troubleshooting>

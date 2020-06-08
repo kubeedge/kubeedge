@@ -73,13 +73,13 @@ In the cloudcore.yaml, modify the below settings.
 
 2. Before KubeEdge v1.3: check whether the cert files for `modules.cloudhub.tlsCAFile`, `modules.cloudhub.tlsCertFile`,`modules.cloudhub.tlsPrivateKeyFile` exists.
 
-    From KubeEdge v1.3: just skip the above check. If you configure the CloudCore certificate manually, you must check if the path of certificate is right. 
-    
-    
-    
+    From KubeEdge v1.3: just skip the above check. If you configure the CloudCore certificate manually, you must check if the path of certificate is right.
+
+
+
     **Note:** If your KubeEdge version is before the v1.3, then just skip the step 3.
-    
-3. Configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `advertiseAddress`, which will be add to SANs in cert of cloudcore. 
+
+3. Configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `advertiseAddress`, which will be add to SANs in cert of cloudcore.
 
     ```yaml
     modules:
@@ -107,7 +107,40 @@ modules:
 
 #### Node - Manual Registration
 
-Refer [here](deploy-edge-node.md) to add edge nodes.
+##### Copy `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` to your working directory and change `metadata.name` to the name of edge node
+
+```shell
+mkdir -p ~/kubeedge/yaml
+cp $GOPATH/src/github.com/kubeedge/kubeedge/build/node.json ~/kubeedge/yaml
+```
+
+Node.json
+
+```script
+{
+  "kind": "Node",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "edge-node",
+    "labels": {
+      "name": "edge-node",
+      "node-role.kubernetes.io/edge": ""
+    }
+  }
+}
+```
+
+**Note:**
+1. the `metadata.name` must keep in line with edgecore's config `modules.edged.hostnameOverride`.
+
+2. Make sure role is set to edge for the node. For this a key of the form `"node-role.kubernetes.io/edge"` must be present in `metadata.labels`.
+If role is not set for the node, the pods, configmaps and secrets created/updated in the cloud cannot be synced with the node they are targeted for.
+
+##### Deploy edge node (**you must run the command on cloud side**)
+
+```shell
+kubectl apply -f ~/kubeedge/yaml/node.json
+```
 
 #### Check the existence of certificates (cloud side) (Required for pre 1.3 releases)
 
@@ -221,9 +254,9 @@ Verify the configurations before running `edgecore`
     runtimeType: remote
     ```
 
-5. If your runtime-type is remote, follow this guide [KubeEdge CRI Configuration](kubeedge_cri_configure.md) to setup KubeEdge with the remote/CRI based runtimes.
+5. If your runtime-type is remote, follow this guide [KubeEdge CRI Configuration](cri.md) to setup KubeEdge with the remote/CRI based runtimes.
 
-    
+
 
     **Note:** If your KubeEdge version is before the v1.3, then just skip the steps 6-7.
 
