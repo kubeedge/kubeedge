@@ -28,6 +28,9 @@ type DeviceSpec struct {
 	DeviceModelRef *v1.LocalObjectReference `json:"deviceModelRef,omitempty"`
 	// Required: The protocol configuration used to connect to the device.
 	Protocol ProtocolConfig `json:"protocol,omitempty"`
+	// Required: List of property visitors which describe how to access the device properties.
+	// PropertyVisitors must unique by propertyVisitor.propertyName.
+	PropertyVisitors []DevicePropertyVisitor `json:"propertyVisitors,omitempty"`
 	// NodeSelector indicates the binding preferences between devices and nodes.
 	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
 	// +optional
@@ -176,6 +179,21 @@ type DataProperty struct {
 	// Additional metadata like timestamp when the value was reported etc.
 	// +optional
 	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+// DevicePropertyVisitor describes the specifics of accessing a particular device
+// property. Visitors are intended to be consumed by device mappers which connect to devices
+// and collect data / perform actions on the device.
+type DevicePropertyVisitor struct {
+	// Required: The device property name to be accessed. This should refer to one of the
+	// device properties defined in the device model.
+	PropertyName string `json:"propertyName,omitempty"`
+	// Define how frequent mapper will report the value.
+	ReportCycle int64 `json:"reportCycle,omitempty"`
+	// Define how frequent mapper will collect from device.
+	CollectCycle int64 `json:"collectCycle,omitempty"`
+	// Required: Protocol relevant config details about the how to access the device property.
+	VisitorConfig `json:",inline"`
 }
 
 // +genclient

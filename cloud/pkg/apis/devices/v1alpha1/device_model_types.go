@@ -26,9 +26,6 @@ import (
 type DeviceModelSpec struct {
 	// Required: List of device properties.
 	Properties []DeviceProperty `json:"properties,omitempty"`
-	// Required: List of property visitors which describe how to access the device properties.
-	// PropertyVisitors must unique by propertyVisitor.propertyName.
-	PropertyVisitors []DevicePropertyVisitor `json:"propertyVisitors,omitempty"`
 }
 
 // DeviceProperty describes an individual device property / attribute like temperature / humidity etc.
@@ -80,21 +77,6 @@ const (
 	ReadWrite PropertyAccessMode = "ReadWrite"
 	ReadOnly  PropertyAccessMode = "ReadOnly"
 )
-
-// DevicePropertyVisitor describes the specifics of accessing a particular device
-// property. Visitors are intended to be consumed by device mappers which connect to devices
-// and collect data / perform actions on the device.
-type DevicePropertyVisitor struct {
-	// Required: The device property name to be accessed. This should refer to one of the
-	// device properties defined in the device model.
-	PropertyName string `json:"propertyName,omitempty"`
-	// Define how frequent mapper will report the value.
-	ReportCycle int64 `json:"reportCycle,omitempty"`
-	// Define how frequent mapper will collect from device.
-	CollectCycle int64 `json:"collectCycle,omitempty"`
-	// Required: Protocol relevant config details about the how to access the device property.
-	VisitorConfig `json:",inline"`
-}
 
 // At least one of its members must be specified.
 type VisitorConfig struct {

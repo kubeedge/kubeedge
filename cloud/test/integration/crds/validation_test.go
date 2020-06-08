@@ -111,67 +111,6 @@ func TestInvalidDeviceModel(t *testing.T) {
 				return deviceModel
 			},
 		},
-
-		"device model with ble protocol property bad operation type": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelBluetoothBadOperationType("model-bluetooth-bad-operation-type", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with ble protocol property no start index": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelBluetoothNoStartIndex("model-bluetooth-no-start-index", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with ble protocol property no end index": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelBluetoothNoEndIndex("model-bluetooth-bad-operation-type", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with ble protocol property no characteristic UUID": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelBluetoothNoCharacteristicUUID("model-bluetooth-no-char-uuid", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with modbus protocol property bad register": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelModbusBadRegister("model-modbus-bad-register", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with modbus protocol property no register": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelModbusNoRegister("model-modbus-no-register", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with modbus protocol property no limit": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelModbusNoLimit("model-modbus-no-limit", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with ble protocol with no offset": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelModbusNoOffset("model-modbus-no-offset", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with opc ua property no nodeID": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelOpcUANoNodeID("model-modbus-no-nodeID", testNamespace)
-				return deviceModel
-			},
-		},
-		"device model with customized protocol no definition": {
-			deviceModelFn: func() *v1alpha1.DeviceModel {
-				deviceModel := fixtures.NewDeviceModelCustomizedNoDefinition("model-customized-no-definition", testNamespace)
-				return deviceModel
-			},
-		},
 	}
 
 	crdClient := buildCrdClient(t)
@@ -344,6 +283,66 @@ func TestInvalidDevice(t *testing.T) {
 		"device no model reference": {
 			deviceInstanceFn: func() v1alpha1.Device {
 				deviceInstance := fixtures.NewDeviceNoModelReference("device-no-model-ref", "default")
+				return deviceInstance
+			},
+		},
+		"device with ble protocol property bad operation type": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceBluetoothBadOperationType("device-bluetooth-bad-operation-type", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with ble protocol property no start index": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceBluetoothNoStartIndex("device-bluetooth-no-start-index", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with ble protocol property no end index": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceBluetoothNoEndIndex("device-bluetooth-bad-operation-type", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with ble protocol property no characteristic UUID": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceBluetoothNoCharacteristicUUID("device-bluetooth-no-char-uuid", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with modbus protocol property bad register": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceModbusBadRegister("device-modbus-bad-register", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with modbus protocol property no register": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceModbusNoRegister("device-modbus-no-register", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with modbus protocol property no limit": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceModbusNoLimit("device-modbus-no-limit", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with ble protocol with no offset": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceModbusNoOffset("device-modbus-no-offset", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with opc ua property no nodeID": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceOpcUANoNodeID("device-modbus-no-nodeID", testNamespace)
+				return deviceInstance
+			},
+		},
+		"device with customized protocol no definition": {
+			deviceInstanceFn: func() v1alpha1.Device {
+				deviceInstance := fixtures.NewDeviceCustomizedNoDefinition("device-customized-no-definition", testNamespace)
 				return deviceInstance
 			},
 		},

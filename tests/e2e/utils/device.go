@@ -63,33 +63,7 @@ func NewModbusDeviceModel() v1alpha1.DeviceModel {
 		}},
 	}
 	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
-				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
-				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
-				Scale:          1.0,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+
 	newDeviceModel := v1alpha1.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
@@ -100,8 +74,7 @@ func NewModbusDeviceModel() v1alpha1.DeviceModel {
 			Namespace: Namespace,
 		},
 		Spec: v1alpha1.DeviceModelSpec{
-			Properties:       properties,
-			PropertyVisitors: propertyVisitors,
+			Properties: properties,
 		},
 	}
 	return newDeviceModel
@@ -158,99 +131,6 @@ func NewBluetoothDeviceModel() v1alpha1.DeviceModel {
 		}},
 	}
 	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 2,
-					EndIndex:   1,
-					ShiftRight: 2,
-					OrderOfOperations: []v1alpha1.BluetoothOperations{
-						{
-							BluetoothOperationType:  "Multiply",
-							BluetoothOperationValue: 0.03125,
-						},
-					},
-				},
-			},
-		},
-	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0204514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"ON":  {1},
-					"OFF": {0},
-				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-config-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-data-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-config",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-data",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"Red":            {1},
-					"Green":          {2},
-					"RedGreen":       {3},
-					"Buzzer":         {4},
-					"BuzzerRed":      {5},
-					"BuzzerGreen":    {6},
-					"BuzzerRedGreen": {7},
-				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
 	newDeviceModel := v1alpha1.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
@@ -261,8 +141,7 @@ func NewBluetoothDeviceModel() v1alpha1.DeviceModel {
 			Namespace: Namespace,
 		},
 		Spec: v1alpha1.DeviceModelSpec{
-			Properties:       properties,
-			PropertyVisitors: propertyVisitors,
+			Properties: properties,
 		},
 	}
 	return newDeviceModel
@@ -287,25 +166,6 @@ func NewCustomizedDeviceModel() v1alpha1.DeviceModel {
 		}},
 	}
 	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
-			},
-		},
-	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
-			},
-		},
-	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
 	newDeviceModel := v1alpha1.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
@@ -316,8 +176,7 @@ func NewCustomizedDeviceModel() v1alpha1.DeviceModel {
 			Namespace: Namespace,
 		},
 		Spec: v1alpha1.DeviceModelSpec{
-			Properties:       properties,
-			PropertyVisitors: propertyVisitors,
+			Properties: properties,
 		},
 	}
 	return newDeviceModel
@@ -376,33 +235,6 @@ func UpdatedModbusDeviceModel() v1alpha1.DeviceModel {
 		}},
 	}
 	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
-				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
-				Scale:          2,
-				IsSwap:         false,
-				IsRegisterSwap: true,
-			},
-		},
-	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
-				Register:       "DiscreteInputRegister",
-				Offset:         1,
-				Limit:          1,
-				Scale:          1.0,
-				IsSwap:         true,
-				IsRegisterSwap: false,
-			},
-		},
-	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
 	newDeviceModel := v1alpha1.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
@@ -413,8 +245,7 @@ func UpdatedModbusDeviceModel() v1alpha1.DeviceModel {
 			Namespace: Namespace,
 		},
 		Spec: v1alpha1.DeviceModelSpec{
-			Properties:       properties,
-			PropertyVisitors: propertyVisitors,
+			Properties: properties,
 		},
 	}
 	return newDeviceModel
@@ -471,99 +302,6 @@ func UpdatedBluetoothDeviceModel() v1alpha1.DeviceModel {
 		}},
 	}
 	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   3,
-					ShiftRight: 1,
-					OrderOfOperations: []v1alpha1.BluetoothOperations{
-						{
-							BluetoothOperationType:  "Multiply",
-							BluetoothOperationValue: 0.05,
-						},
-					},
-				},
-			},
-		},
-	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0204514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"On":  {1},
-					"OFF": {0},
-				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-config-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-data-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000001",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-config",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
-		PropertyName: "io-data",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"Red":            {2},
-					"Green":          {3},
-					"RedGreen":       {4},
-					"Buzzer":         {5},
-					"BuzzerRed":      {6},
-					"BuzzerGreen":    {7},
-					"BuzzerRedGreen": {8},
-				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
 	newDeviceModel := v1alpha1.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
@@ -574,8 +312,7 @@ func UpdatedBluetoothDeviceModel() v1alpha1.DeviceModel {
 			Namespace: Namespace,
 		},
 		Spec: v1alpha1.DeviceModelSpec{
-			Properties:       properties,
-			PropertyVisitors: propertyVisitors,
+			Properties: properties,
 		},
 	}
 	return newDeviceModel
@@ -689,6 +426,34 @@ func NewMockInstance(nodeSelector string) v1alpha1.Device {
 }
 
 func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Modbus: &v1alpha1.VisitorConfigModbus{
+				Register:       "CoilRegister",
+				Offset:         2,
+				Limit:          1,
+				Scale:          1,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Modbus: &v1alpha1.VisitorConfigModbus{
+				Register:       "DiscreteInputRegister",
+				Offset:         3,
+				Limit:          1,
+				Scale:          1.0,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -720,6 +485,7 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 					},
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha1.DeviceStatus{
 			Twins: []v1alpha1.Twin{
@@ -742,6 +508,100 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 }
 
 func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa0104514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 2,
+					EndIndex:   1,
+					ShiftRight: 2,
+					OrderOfOperations: []v1alpha1.BluetoothOperations{
+						{
+							BluetoothOperationType:  "Multiply",
+							BluetoothOperationValue: 0.03125,
+						},
+					},
+				},
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa0204514000b000000000000000",
+				DataWriteToBluetooth: map[string][]byte{
+					"ON":  {1},
+					"OFF": {0},
+				},
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-config-initialize",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6604514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-data-initialize",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6504514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-config",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6604514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-data",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6504514000b000000000000000",
+				DataWriteToBluetooth: map[string][]byte{
+					"Red":            {1},
+					"Green":          {2},
+					"RedGreen":       {3},
+					"Buzzer":         {4},
+					"BuzzerRed":      {5},
+					"BuzzerGreen":    {6},
+					"BuzzerRedGreen": {7},
+				},
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
+
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -778,6 +638,7 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					MACAddress: "BC:6A:29:AE:CC:96",
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha1.DeviceStatus{
 			Twins: []v1alpha1.Twin{
@@ -800,6 +661,25 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 }
 
 func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -837,6 +717,7 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
 					ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha1.DeviceStatus{
 			Twins: []v1alpha1.Twin{
@@ -911,6 +792,33 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 }
 
 func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Modbus: &v1alpha1.VisitorConfigModbus{
+				Register:       "CoilRegister",
+				Offset:         2,
+				Limit:          1,
+				Scale:          2,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Modbus: &v1alpha1.VisitorConfigModbus{
+				Register:       "DiscreteInputRegister",
+				Offset:         1,
+				Limit:          1,
+				Scale:          1.0,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -942,6 +850,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 					},
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha1.DeviceStatus{
 			Twins: []v1alpha1.Twin{
@@ -975,6 +884,99 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 }
 
 func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
+	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa0104514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   3,
+					ShiftRight: 1,
+					OrderOfOperations: []v1alpha1.BluetoothOperations{
+						{
+							BluetoothOperationType:  "Multiply",
+							BluetoothOperationValue: 0.05,
+						},
+					},
+				},
+			},
+		},
+	}
+	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "temperature-enable",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa0204514000b000000000000000",
+				DataWriteToBluetooth: map[string][]byte{
+					"ON":  {1},
+					"OFF": {0},
+				},
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-config-initialize",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6604514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-data-initialize",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6504514000b000000000000001",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-config",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6604514000b000000000000000",
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
+		PropertyName: "io-data",
+		VisitorConfig: v1alpha1.VisitorConfig{
+			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+				CharacteristicUUID: "f000aa6504514000b000000000000000",
+				DataWriteToBluetooth: map[string][]byte{
+					"Red":            {2},
+					"Green":          {3},
+					"RedGreen":       {4},
+					"Buzzer":         {5},
+					"BuzzerRed":      {6},
+					"BuzzerGreen":    {7},
+					"BuzzerRedGreen": {8},
+				},
+				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+					StartIndex: 1,
+					EndIndex:   1,
+				},
+			},
+		},
+	}
+	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
 	deviceInstance := v1alpha1.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
@@ -1011,6 +1013,7 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					MACAddress: "BC:6A:29:AE:CC:69",
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha1.DeviceStatus{
 			Twins: []v1alpha1.Twin{
@@ -1148,90 +1151,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
-	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
-		{
-			Name:     "sensor-tag-instance-01",
-			ID:       "sensor-tag-instance-01",
-			Protocol: "bluetooth-sensor-tag-instance-01",
-			Model:    "cc2650-sensortag",
-			Twins: []v1alpha1.Twin{
-				{
-					PropertyName: "io-data",
-					Desired: v1alpha1.TwinProperty{
-						Value: "1",
-						Metadata: map[string]string{
-							"type": "int",
-						},
-					},
-					Reported: v1alpha1.TwinProperty{
-						Value: "unknown",
-					},
-				},
-			},
-		},
-	}
-	deviceProfile.DeviceModels = []*types.DeviceModel{
-		{
-			Name: "cc2650-sensortag",
-			Properties: []*types.Property{
-				{
-					Name:         "temperature",
-					DataType:     "int",
-					Description:  "temperature in degree celsius",
-					AccessMode:   "ReadOnly",
-					DefaultValue: 0,
-					Maximum:      100,
-					Unit:         "degree celsius",
-				},
-				{
-					Name:         "temperature-enable",
-					DataType:     "string",
-					Description:  "enable data collection of temperature sensor",
-					AccessMode:   "ReadWrite",
-					DefaultValue: "ON",
-				},
-				{
-					Name:         "io-config-initialize",
-					DataType:     "int",
-					Description:  "initialize io-config with value 0",
-					AccessMode:   "ReadWrite",
-					DefaultValue: 0,
-				},
-				{
-					Name:         "io-data-initialize",
-					DataType:     "int",
-					Description:  "initialize io-data with value 0",
-					AccessMode:   "ReadWrite",
-					DefaultValue: 0,
-				},
-				{
-					Name:         "io-config",
-					DataType:     "int",
-					Description:  "register activation of io-config",
-					AccessMode:   "ReadWrite",
-					DefaultValue: 1,
-				}, {
-					Name:         "io-data",
-					DataType:     "int",
-					Description:  "data field to control io-control",
-					AccessMode:   "ReadWrite",
-					DefaultValue: 0,
-				},
-			},
-		},
-	}
-	deviceProfile.Protocols = []*types.Protocol{
-		{
-			Name:     "bluetooth-sensor-tag-instance-01",
-			Protocol: "bluetooth",
-			ProtocolConfig: v1alpha1.ProtocolConfigBluetooth{
-				MACAddress: "BC:6A:29:AE:CC:96",
-			},
-		},
-	}
-
-	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
+	propertyVisitors := []*types.PropertyVisitor{
 		{
 			Name:         "temperature",
 			PropertyName: "temperature",
@@ -1331,6 +1251,89 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			},
 		},
 	}
+	deviceProfile := &types.DeviceProfile{}
+	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+		{
+			Name:     "sensor-tag-instance-01",
+			ID:       "sensor-tag-instance-01",
+			Protocol: "bluetooth-sensor-tag-instance-01",
+			Model:    "cc2650-sensortag",
+			Twins: []v1alpha1.Twin{
+				{
+					PropertyName: "io-data",
+					Desired: v1alpha1.TwinProperty{
+						Value: "1",
+						Metadata: map[string]string{
+							"type": "int",
+						},
+					},
+					Reported: v1alpha1.TwinProperty{
+						Value: "unknown",
+					},
+				},
+			},
+			PropertyVisitors: propertyVisitors,
+		},
+	}
+	deviceProfile.DeviceModels = []*types.DeviceModel{
+		{
+			Name: "cc2650-sensortag",
+			Properties: []*types.Property{
+				{
+					Name:         "temperature",
+					DataType:     "int",
+					Description:  "temperature in degree celsius",
+					AccessMode:   "ReadOnly",
+					DefaultValue: 0,
+					Maximum:      100,
+					Unit:         "degree celsius",
+				},
+				{
+					Name:         "temperature-enable",
+					DataType:     "string",
+					Description:  "enable data collection of temperature sensor",
+					AccessMode:   "ReadWrite",
+					DefaultValue: "ON",
+				},
+				{
+					Name:         "io-config-initialize",
+					DataType:     "int",
+					Description:  "initialize io-config with value 0",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 0,
+				},
+				{
+					Name:         "io-data-initialize",
+					DataType:     "int",
+					Description:  "initialize io-data with value 0",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 0,
+				},
+				{
+					Name:         "io-config",
+					DataType:     "int",
+					Description:  "register activation of io-config",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 1,
+				}, {
+					Name:         "io-data",
+					DataType:     "int",
+					Description:  "data field to control io-control",
+					AccessMode:   "ReadWrite",
+					DefaultValue: 0,
+				},
+			},
+		},
+	}
+	deviceProfile.Protocols = []*types.Protocol{
+		{
+			Name:     "bluetooth-sensor-tag-instance-01",
+			Protocol: "bluetooth",
+			ProtocolConfig: v1alpha1.ProtocolConfigBluetooth{
+				MACAddress: "BC:6A:29:AE:CC:96",
+			},
+		},
+	}
 
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
@@ -1354,6 +1357,36 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
+	propertyVisitors := []*types.PropertyVisitor{
+		{
+			Name:         "temperature",
+			PropertyName: "temperature",
+			ModelName:    "sensor-tag-model",
+			Protocol:     "modbus",
+			VisitorConfig: v1alpha1.VisitorConfigModbus{
+				Register:       "CoilRegister",
+				Offset:         2,
+				Limit:          1,
+				Scale:          1,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+		{
+			Name:         "temperature-enable",
+			PropertyName: "temperature-enable",
+			ModelName:    "sensor-tag-model",
+			Protocol:     "modbus",
+			VisitorConfig: v1alpha1.VisitorConfigModbus{
+				Register:       "DiscreteInputRegister",
+				Offset:         3,
+				Limit:          1,
+				Scale:          1,
+				IsSwap:         true,
+				IsRegisterSwap: true,
+			},
+		},
+	}
 	deviceProfile := &types.DeviceProfile{}
 	deviceProfile.DeviceInstances = []*types.DeviceInstance{
 		{
@@ -1374,6 +1407,7 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 					},
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1405,7 +1439,30 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			ProtocolConfig: nil,
 		},
 	}
-	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
+
+	bytes, err := json.Marshal(deviceProfile)
+	if err != nil {
+		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+	}
+	configMap.Data["deviceProfile.json"] = string(bytes)
+
+	return configMap
+}
+
+func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
+	configMap := v12.ConfigMap{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "device-profile-config-" + nodeSelector,
+			Namespace: Namespace,
+		},
+	}
+	configMap.Data = make(map[string]string)
+
+	propertyVisitors := []*types.PropertyVisitor{
 		{
 			Name:         "temperature",
 			PropertyName: "temperature",
@@ -1435,28 +1492,6 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			},
 		},
 	}
-
-	bytes, err := json.Marshal(deviceProfile)
-	if err != nil {
-		Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
-	}
-	configMap.Data["deviceProfile.json"] = string(bytes)
-
-	return configMap
-}
-
-func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
-	configMap := v12.ConfigMap{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "device-profile-config-" + nodeSelector,
-			Namespace: Namespace,
-		},
-	}
-	configMap.Data = make(map[string]string)
 
 	deviceProfile := &types.DeviceProfile{}
 	deviceProfile.DeviceInstances = []*types.DeviceInstance{
@@ -1486,7 +1521,8 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 					},
 				},
 			},
-			DataTopic: "$ke/events/+/device/customized/update",
+			DataTopic:        "$ke/events/+/device/customized/update",
+			PropertyVisitors: propertyVisitors,
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1518,36 +1554,6 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			ProtocolConfig: nil,
 		},
 	}
-	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
-		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
-				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
-				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-	}
 
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
@@ -1571,6 +1577,30 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
+	propertyVisitors := []*types.PropertyVisitor{
+		{
+			Name:         "temperature",
+			PropertyName: "temperature",
+			ModelName:    "sensor-tag-customized-model",
+			Protocol:     "customized-protocol",
+
+			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+		},
+		{
+			Name:         "temperature-enable",
+			PropertyName: "temperature-enable",
+			ModelName:    "sensor-tag-customized-model",
+			Protocol:     "customized-protocol",
+			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+				ProtocolName: "CustomizedProtocol1",
+				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+			},
+		},
+	}
+
 	deviceProfile := &types.DeviceProfile{}
 	deviceProfile.DeviceInstances = []*types.DeviceInstance{
 		{
@@ -1592,6 +1622,7 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 					},
 				},
 			},
+			PropertyVisitors: propertyVisitors,
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1625,29 +1656,6 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			ProtocolConfig: &v1alpha1.ProtocolConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
 				ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
-			},
-		},
-	}
-	deviceProfile.PropertyVisitors = []*types.PropertyVisitor{
-		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "sensor-tag-customized-model",
-			Protocol:     "customized-protocol",
-
-			VisitorConfig: v1alpha1.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
-			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "sensor-tag-customized-model",
-			Protocol:     "customized-protocol",
-			VisitorConfig: v1alpha1.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
 			},
 		},
 	}
