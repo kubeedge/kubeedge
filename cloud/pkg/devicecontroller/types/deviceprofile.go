@@ -12,8 +12,6 @@ type DeviceProfile struct {
 	DeviceModels []*DeviceModel `json:"deviceModels,omitempty"`
 	// Protocols is list of all protocols used by DeviceInstances
 	Protocols []*Protocol `json:"protocols,omitempty"`
-	// PropertyVisitors is list of all PropertyVisitors in DeviceModels
-	PropertyVisitors []*PropertyVisitor `json:"propertyVisitors,omitempty"`
 }
 
 // DeviceInstance is structure to store device in deviceProfile.json in configmap
@@ -38,6 +36,8 @@ type DeviceInstance struct {
 	// the default value is $ke/events/device/+/data/update
 	// +optional
 	DataTopic string `json:"dataTopic,omitempty"`
+	// PropertyVisitors is list of all PropertyVisitors in DeviceModels
+	PropertyVisitors []*PropertyVisitor `json:"propertyVisitors,omitempty"`
 }
 
 // DeviceModel is structure to store deviceModel in deviceProfile.json in configmap

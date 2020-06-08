@@ -874,10 +874,7 @@ func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap)
 	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
 	json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
 	json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
-	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) {
-		return false
-	}
-	return true
+	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 
 // CompareTwin is used to compare 2 device Twins
