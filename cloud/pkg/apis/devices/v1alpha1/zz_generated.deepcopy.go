@@ -239,13 +239,6 @@ func (in *DeviceModelSpec) DeepCopyInto(out *DeviceModelSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.PropertyVisitors != nil {
-		in, out := &in.PropertyVisitors, &out.PropertyVisitors
-		*out = make([]DevicePropertyVisitor, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
 	return
 }
 
@@ -302,6 +295,13 @@ func (in *DeviceSpec) DeepCopyInto(out *DeviceSpec) {
 		**out = **in
 	}
 	in.Protocol.DeepCopyInto(&out.Protocol)
+	if in.PropertyVisitors != nil {
+		in, out := &in.PropertyVisitors, &out.PropertyVisitors
+		*out = make([]DevicePropertyVisitor, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = new(v1.NodeSelector)

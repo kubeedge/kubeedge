@@ -216,8 +216,8 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		// create deviceProfileStruct
 		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
 		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
-		deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
-		deviceProfile.Protocols = make([]*types.Protocol, 0)
+		//deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
+		//deviceProfile.Protocols = make([]*types.Protocol, 0)
 	} else {
 		err := json.Unmarshal([]byte(dp), deviceProfile)
 		if err != nil {
@@ -276,11 +276,18 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile 
 		model.Properties = append(model.Properties, property)
 	}
 	deviceProfile.DeviceModels = append(deviceProfile.DeviceModels, model)
-	for _, pptv := range deviceModel.Spec.PropertyVisitors {
+}
+
+// add PropertyVisitors to DeviceInstance in configmap
+func addPropertyVisitorsToDeviceInstance(device *v1alpha1.Device, deviceInstance *types.DeviceInstance) {
+	// clear old PropertyVisitors
+	deviceInstance.PropertyVisitors = make([]*types.PropertyVisitor, 0, len(device.Spec.PropertyVisitors))
+	// add new PropertyVisitors
+	for _, pptv := range device.Spec.PropertyVisitors {
 		propertyVisitor := &types.PropertyVisitor{}
 		propertyVisitor.Name = pptv.PropertyName
 		propertyVisitor.PropertyName = pptv.PropertyName
-		propertyVisitor.ModelName = deviceModel.Name
+		propertyVisitor.ModelName = device.Spec.DeviceModelRef.Name
 		propertyVisitor.ReportCycle = pptv.ReportCycle
 		propertyVisitor.CollectCycle = pptv.CollectCycle
 		if pptv.Modbus != nil {
@@ -296,8 +303,7 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile 
 			propertyVisitor.Protocol = CustomizedProtocol
 			propertyVisitor.VisitorConfig = pptv.CustomizedProtocol
 		}
-
-		deviceProfile.PropertyVisitors = append(deviceProfile.PropertyVisitors, propertyVisitor)
+		deviceInstance.PropertyVisitors = append(deviceInstance.PropertyVisitors, propertyVisitor)
 	}
 }
 
@@ -346,6 +352,8 @@ func addDeviceInstanceAndProtocol(device *v1alpha1.Device, deviceProfile *types.
 	deviceInstance.Twins = device.Status.Twins
 	deviceInstance.DataProperties = device.Data.DataProperties
 	deviceInstance.DataTopic = device.Data.DataTopic
+
+	addPropertyVisitorsToDeviceInstance(device, deviceInstance)
 
 	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
 	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
@@ -517,6 +525,8 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha1.Device) {
 		// update the twins, data and protocol in deviceInstance
 		for _, devInst := range deviceProfile.DeviceInstances {
 			if device.Name == devInst.Name {
+				// update property visitors
+				addPropertyVisitorsToDeviceInstance(device, devInst)
 				// update twins
 				devInst.Twins = device.Status.Twins
 				// update data
@@ -789,20 +799,6 @@ func deleteDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfi
 			deviceProfile.DeviceModels[len(deviceProfile.DeviceModels)-1] = nil
 			deviceProfile.DeviceModels = deviceProfile.DeviceModels[:len(deviceProfile.DeviceModels)-1]
 			break
-		}
-	}
-
-	allVisitorsNotDeleted := true
-	for allVisitorsNotDeleted {
-		allVisitorsNotDeleted = false
-		for i, vst := range deviceProfile.PropertyVisitors {
-			if vst.ModelName == deviceModel.Name {
-				deviceProfile.PropertyVisitors[i] = deviceProfile.PropertyVisitors[len(deviceProfile.PropertyVisitors)-1]
-				deviceProfile.PropertyVisitors[len(deviceProfile.PropertyVisitors)-1] = nil
-				deviceProfile.PropertyVisitors = deviceProfile.PropertyVisitors[:len(deviceProfile.PropertyVisitors)-1]
-				allVisitorsNotDeleted = true
-				break
-			}
 		}
 	}
 }
