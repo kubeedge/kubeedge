@@ -445,8 +445,13 @@ LOOP:
 func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *beehiveModel.Message) {
 	err := mh.hubIoWrite(hi, info.NodeID, msg)
 	if err != nil {
-		klog.Errorf("write error, connection for node %s will be closed, affected event %s, reason %s",
-			info.NodeID, dumpMessageMetadata(msg), err.Error())
+		errStr := "write error, connection for node %s "
+		errReason := "will be closed, affected event %s, reason %s"
+		if err.Error() == "node disconnected" {
+			errReason = "has been closed, affected event %s, reason %s "
+		}
+		errStr = errStr + errReason
+		klog.Errorf(errStr, info.NodeID, dumpMessageMetadata(msg), err.Error())
 		return
 	}
 }
