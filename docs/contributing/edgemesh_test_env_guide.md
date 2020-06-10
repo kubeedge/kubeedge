@@ -1,6 +1,7 @@
 # Edgemesh test env config guide
+
 ## Docker support
-* Refer to [Usage](./../setup/installer_setup.md) to prepare KubeEdge environment, make sure "docker0" exists
+* Make sure "docker0" exists
 * Then follow [EdgeMesh guide](#EdgeMesh test guide) to deploy Service
 
 ## Usage of EdgeMesh

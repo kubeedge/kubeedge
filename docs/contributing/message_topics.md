@@ -3,7 +3,7 @@ KubeEdge uses MQTT for communication between deviceTwin and devices/apps.
 EventBus can be started in multiple MQTT modes and acts as an interface for sending/receiving messages on relevant MQTT topics.
 
 The purpose of this document is to describe the topics which KubeEdge uses for communication.
-Please read Beehive [documentation](../modules/beehive.md) for understanding about message format used by KubeEdge.
+Please read Beehive [documentation](../components/beehive.md) for understanding about message format used by KubeEdge.
 
 ## Subscribe Topics
 On starting EventBus, it subscribes to these 5 topics:
