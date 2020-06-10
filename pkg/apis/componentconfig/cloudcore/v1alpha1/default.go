@@ -155,7 +155,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			RenewDeadline:     metav1.Duration{Duration: 10 * time.Second},
 			RetryPeriod:       metav1.Duration{Duration: 2 * time.Second},
 			ResourceLock:      "endpointsleases",
-			ResourceNamespace: "kubeedge",
+			ResourceNamespace: constants.KubeEdgeNameSpace,
 			ResourceName:      "cloudcorelease",
 		},
 	}

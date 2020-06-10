@@ -146,3 +146,8 @@ const (
 	// May be overridden by a flag at startup in the future.
 	ServerPort = 10350
 )
+
+const (
+	KubeEdge          = "kubeedge"
+	KubeEdgeNameSpace = "kubeedge"
+)
