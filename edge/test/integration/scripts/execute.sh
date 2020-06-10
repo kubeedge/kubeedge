@@ -14,47 +14,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-curpath=$PWD
-echo $PWD
+TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
 
-VAR_EDGED_DIR="/var/lib/kubeedge"
-if [ ! -d ${VAR_EDGED_DIR} ]; then
-  sudo mkdir -p ${VAR_EDGED_DIR} && sudo chown $USER:$USER ${VAR_EDGED_DIR}
-fi
+function cleanup() {
+  sudo pkill -9 edgecore || true
+  while true; do
+    sleep 1
+    ps faux | grep -q [e]dgecore || break
+  done
 
-go get github.com/onsi/ginkgo/ginkgo
-sudo cp $GOPATH/bin/ginkgo /usr/bin/
+  sudo rm -rf $TEST_DIR/appdeployment/appdeployment.test $TEST_DIR/device/device.test
+}
 
-sudo pkill edgecore
-#kill the edgecore process if it exists, wait 2s delay before start the edgecore process.
-sleep 2s
+function do_preparation() {
+  sudo mkdir -p /var/lib/kubeedge
 
-PWD=${curpath}/edge/test/integration
+  which ginkgo &>/dev/null || {
+    go get github.com/onsi/ginkgo/ginkgo
+    sudo cp $GOPATH/bin/ginkgo /usr/bin/
+  }
 
-# create cert files
-$PWD/scripts/generate_cert.sh
-sudo rm -rf $PWD/appdeployment/appdeployment.test
-sudo rm -rf $PWD/device/device.test
-# Specify the module name to compile in below command
-bash -x $PWD/scripts/compile.sh $1
-export MQTT_SERVER=127.0.0.1
-:> /tmp/testcase.log
-bash -x ${PWD}/scripts/fast_test.sh $1
-#stop the edgecore after the test completion
-sudo pkill edgecore
-grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
-echo "Integration Test Final Summary Report"
-echo "==============================================="
-echo "Total Number of Test cases = `grep "Ran " /tmp/testcase.log | awk '{sum+=$2} END {print sum}'`"
-passed=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $3}' | sed -r "s/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-echo "Number of Test cases PASSED = $passed"
-fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
-echo "Number of Test cases FAILED = $fail"
-echo "==================Result Summary======================="
-if [ "$fail" != "0" ];then
-    echo "Integration suite has failures, Please check !!"
-    exit 1
-else
-    echo "Integration suite successfully passed all the tests !!"
-    exit 0
-fi
+  # create cert files
+  $TEST_DIR/scripts/generate_cert.sh
+
+  local module=$1
+  # Specify the module name to compile in below command
+  bash -x $TEST_DIR/scripts/compile.sh $module
+}
+
+function run_test() {
+  :> /tmp/testcase.log
+
+  local module=$1
+  MQTT_SERVER=127.0.0.1 bash -x ${TEST_DIR}/scripts/fast_test.sh $module
+
+  grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
+  echo "Integration Test Final Summary Report"
+  echo "==============================================="
+  echo "Total Number of Test cases = `grep "Ran " /tmp/testcase.log | awk '{sum+=$2} END {print sum}'`"
+  passed=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $3}' | sed -r "s/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
+  echo "Number of Test cases PASSED = $passed"
+  fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
+  echo "Number of Test cases FAILED = $fail"
+  echo "==================Result Summary======================="
+  if [ "$fail" != "0" ];then
+      echo "Integration suite has failures, Please check !!"
+      exit 1
+  else
+      echo "Integration suite successfully passed all the tests !!"
+      exit 0
+  fi
+}
+
+set -eE
+trap cleanup ERR
+trap cleanup EXIT
+
+cleanup
+
+do_preparation $1
+
+run_test $1

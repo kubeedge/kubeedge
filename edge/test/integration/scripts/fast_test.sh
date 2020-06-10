@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # Copyright 2019 The KubeEdge Authors.
 #
@@ -14,16 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cd `dirname $0`
-workdir=`pwd`
-cd $workdir
 
 debugflag="-test.v -ginkgo.v"
 compilemodule=$1
 runtest=$2
 
-#setup env
-cd ../
+KUBEEDGE_ROOT=$(realpath $(dirname "${BASH_SOURCE[0]}")/../../../..)
+cd $(dirname $(dirname "${BASH_SOURCE[0]}"))
+
 #Pre-configurations required for running the suite.
 #Any new config addition required corresponding code changes.
 cat >config.json<<END
@@ -36,12 +34,12 @@ cat >config.json<<END
 }
 END
 
-if [ $# -eq 0 ]
-  then
+if [[ $# -eq 0 ]]; then
     #run testcase
-    ./appdeployment/appdeployment.test  $debugflag  2>&1 | tee -a /tmp/testcase.log
+    export KUBEEDGE_ROOT=$KUBEEDGE_ROOT
+    ./appdeployment/appdeployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
     ./device/device.test  $debugflag  2>&1 | tee -a /tmp/testcase.log
 else
-    ./$compilemodule/$compilemodule.test  $debugflag  $runtest 2>&1 | tee -a /tmp/testcase.log
+    ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
 fi
 
