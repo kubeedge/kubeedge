@@ -4,7 +4,7 @@ KubeEdge is an open source system for extending native containerized application
 
 In this quick-start guide, we will explain:
 
-- How to ask questions, build and contribute to Thanos.
+- How to ask questions, build and contribute to KubeEdge.
 - A few common ways of deploying KubeEdge.
 - Links for further reading.
 
