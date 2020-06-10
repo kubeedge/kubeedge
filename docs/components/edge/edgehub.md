@@ -1,4 +1,4 @@
-# Edgehub
+# EdgeHub
 
 ## Overview
 

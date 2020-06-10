@@ -178,3 +178,54 @@ crictl pods
 POD ID              CREATED              STATE               NAME                NAMESPACE           ATTEMPT
 b1c0911644cb9       About a minute ago   Ready               nginx-untrusted     default             0
 ```
+
+## Virtlet
+
+Make sure no libvirt is running on the worker nodes.
+
+### Steps
+1. **Install CNI plugin:**
+	- Download CNI plugin release and extract it:
+
+	```
+	$ wget https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz
+
+	# Extract the tarball
+	$ mkdir cni
+	$ tar -zxvf v0.2.0.tar.gz -C cni
+
+	$ mkdir -p /opt/cni/bin
+	$ cp ./cni/* /opt/cni/bin/
+	```
+
+	- Configure cni plugin
+
+	```
+	$ mkdir -p /etc/cni/net.d/
+
+	$ cat >/etc/cni/net.d/bridge.conf <<EOF
+	{
+	  "cniVersion": "0.3.1",
+	  "name": "containerd-net",
+	  "type": "bridge",
+	  "bridge": "cni0",
+	  "isGateway": true,
+	  "ipMasq": true,
+	  "ipam": {
+	    "type": "host-local",
+	    "subnet": "10.88.0.0/16",
+	    "routes": [
+	      { "dst": "0.0.0.0/0" }
+	    ]
+	  }
+	}
+	EOF
+	```
+
+1. **Setup VM runtime:**
+ Use script [`hack/setup-vmruntime.sh`](../../hack/setup-vmruntime.sh) to set up VM runtime. It makes use of Arktos Runtime release to start three containers:
+
+	 	vmruntime_vms
+		vmruntime_libvirt
+		vmruntime_virtlet
+
