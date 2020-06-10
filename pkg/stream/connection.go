@@ -121,3 +121,90 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 }
 
 var _ EdgedConnection = &EdgedLogsConnection{}
+
+type EdgedMetricsConnection struct {
+	MessID   uint64        // message id
+	URL      url.URL       `json:"url"`
+	Header   http.Header   `json:"header"`
+	ReadChan chan *Message `json:"-"`
+}
+
+func (l *EdgedMetricsConnection) GetMessageID() uint64 {
+	return l.MessID
+}
+
+func (l *EdgedMetricsConnection) CacheTunnelMessage(msg *Message) {
+	l.ReadChan <- msg
+}
+
+func (l *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
+	data, err := json.Marshal(l)
+	if err != nil {
+		return nil, err
+	}
+	return NewMessage(l.MessID, MessageTypeMetricConnect, data), nil
+}
+
+func (l *EdgedMetricsConnection) String() string {
+	return fmt.Sprintf("EDGE_METRICS_CONNECTOR Message MessageID %v", l.MessID)
+}
+
+func (l *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
+	//connect edged
+	client := http.Client{}
+	req, err := http.NewRequest("GET", l.URL.String(), nil)
+	if err != nil {
+		klog.Errorf("create new metrics request error %v", err)
+		return err
+	}
+	req.Header = l.Header
+	resp, err := client.Do(req)
+	if err != nil {
+		klog.Errorf("request metrics error %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+	scan := bufio.NewScanner(resp.Body)
+	stop := make(chan struct{})
+
+	go func() {
+		for mess := range l.ReadChan {
+			if mess.MessageType == MessageTypeRemoveConnect {
+				klog.Infof("receive remove client id %v", mess.ConnectID)
+				close(stop)
+				return
+			}
+		}
+	}()
+
+	defer func() {
+		for retry := 0; retry < 3; retry++ {
+			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
+			if err := msg.WriteTo(tunnel); err != nil {
+				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
+			} else {
+				break
+			}
+		}
+	}()
+
+	for scan.Scan() {
+		select {
+		case <-stop:
+			klog.Infof("receive stop single, so stop metrics scan ...")
+			return nil
+		default:
+		}
+		// 10 = \n
+		msg := NewMessage(l.MessID, MessageTypeData, append(scan.Bytes(), 10))
+		err := msg.WriteTo(tunnel)
+		if err != nil {
+			klog.Errorf("write tunnel message %v error", msg)
+			return err
+		}
+		klog.Infof("%v write metrics %v", l.String(), string(scan.Bytes()))
+	}
+	return nil
+}
+
+var m EdgedConnection = &EdgedMetricsConnection{}

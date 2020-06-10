@@ -143,3 +143,95 @@ func (l *ContainerLogsConnection) Serve() error {
 }
 
 var _ APIServerConnection = &ContainerLogsConnection{}
+
+// EdgeMetricsConnection indicates the metrics request initiated by metrics-server
+type EdgeMetricsConnection struct {
+	// MessageID indicate the unique id to create his message
+	MessageID    uint64
+	ctx          context.Context
+	r            *restful.Request
+	flush        io.Writer
+	session      *Session
+	edgePeerStop chan struct{}
+}
+
+func (l *EdgeMetricsConnection) GetMessageID() uint64 {
+	return l.MessageID
+}
+
+func (l *EdgeMetricsConnection) SetEdgePeerDone() {
+	close(l.edgePeerStop)
+}
+
+func (l *EdgeMetricsConnection) EdgePeerDone() <-chan struct{} {
+	return l.edgePeerStop
+}
+
+func (l *EdgeMetricsConnection) WriteToAPIServer(p []byte) (n int, err error) {
+	return l.flush.Write(p)
+}
+
+func (l *EdgeMetricsConnection) WriteToTunnel(m *stream.Message) error {
+	return l.session.WriteMessageToTunnel(m)
+}
+
+func (l *EdgeMetricsConnection) SetMessageID(id uint64) {
+	l.MessageID = id
+}
+
+func (l *EdgeMetricsConnection) String() string {
+	return fmt.Sprintf("APIServer_MetricsConnection MessageID %v", l.MessageID)
+}
+
+func (l *EdgeMetricsConnection) SendConnection() (stream.EdgedConnection, error) {
+	connector := &stream.EdgedMetricsConnection{
+		MessID: l.MessageID,
+		URL:    *l.r.Request.URL,
+		Header: l.r.Request.Header,
+	}
+	connector.URL.Scheme = "http"
+	connector.URL.Host = net.JoinHostPort("127.0.0.1", fmt.Sprintf("%v", constants.ServerPort))
+	m, err := connector.CreateConnectMessage()
+	if err != nil {
+		return nil, err
+	}
+	if err := l.WriteToTunnel(m); err != nil {
+		klog.Errorf("%s write %s error %v", l.String(), connector.String(), err)
+		return nil, err
+	}
+	return connector, nil
+}
+
+func (l *EdgeMetricsConnection) Serve() error {
+	defer func() {
+		klog.Infof("%s end successful", l.String())
+	}()
+
+	// first send connect message
+	if _, err := l.SendConnection(); err != nil {
+		klog.Errorf("%s send %s info error %v", l.String(), stream.MessageTypeMetricConnect, err)
+		return err
+	}
+
+	for {
+		select {
+		case <-l.ctx.Done():
+			// if apiserver request end, send close message to edge
+			msg := stream.NewMessage(l.MessageID, stream.MessageTypeRemoveConnect, nil)
+			for retry := 0; retry < 3; retry++ {
+				if err := l.WriteToTunnel(msg); err != nil {
+					klog.Warningf("%v send %s message to edge error %v", l, msg.MessageType, err)
+				} else {
+					break
+				}
+			}
+			klog.Infof("%s send close message to edge successfully", l.String())
+			return nil
+		case <-l.EdgePeerDone():
+			klog.Infof("%s find edge peer done, so stop this connection", l.String())
+			return nil
+		}
+	}
+}
+
+var m APIServerConnection = &EdgeMetricsConnection{}
