@@ -80,6 +80,15 @@ func (srv *WSServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	defaultCloseHandler := wsConn.CloseHandler()
+	projectID := req.Header.Get("project_id")
+	nodeID := req.Header.Get("node_id")
+
+	wsConn.SetCloseHandler(func(code int, text string) error {
+		klog.Infof("the peer closed the ws connection, project_id: %s, node_id: %s", projectID, nodeID)
+		return defaultCloseHandler(code, text)
+	})
+
 	conn := conn.NewConnection(&conn.ConnectionOptions{
 		ConnType: api.ProtocolTypeWS,
 		Base:     wsConn,

@@ -54,17 +54,14 @@ var VolumeRegExp = regexp.MustCompile(VolumePattern)
 type MessageHandle struct {
 	KeepaliveInterval int
 	WriteTimeout      int
-	Nodes             sync.Map
 	nodeConns         sync.Map
-	nodeLocks         sync.Map
 	MessageQueue      *channelq.ChannelMessageQueue
 	Handlers          []HandleFunc
 	NodeLimit         int
-	KeepaliveChannel  map[string]chan struct{}
 	MessageAcks       sync.Map
 }
 
-type HandleFunc func(hi hubio.CloudHubIO, info *model.HubInfo, exitServe chan ExitCode, stopSendMsg chan struct{})
+type HandleFunc func(hi hubio.CloudHubIO, exitServe chan ExitCode, stopSendMsg chan struct{})
 
 var once sync.Once
 
@@ -81,7 +78,6 @@ func InitHandler(eventq *channelq.ChannelMessageQueue) {
 			NodeLimit:         int(hubconfig.Config.NodeLimit),
 		}
 
-		CloudhubHandler.KeepaliveChannel = make(map[string]chan struct{})
 		CloudhubHandler.Handlers = []HandleFunc{
 			CloudhubHandler.KeepaliveCheckLoop,
 			CloudhubHandler.MessageWriteLoop,
@@ -109,7 +105,11 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 
 	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.Infof("Keepalive message received from node: %s", nodeID)
-		mh.KeepaliveChannel[nodeID] <- struct{}{}
+		if v, ok := mh.nodeConns.Load(nodeID); ok {
+			if hubIO, ok := v.(hubio.CloudHubIO); ok {
+				hubIO.KeepaliveChannel() <- struct{}{}
+			}
+		}
 		return
 	}
 
@@ -140,28 +140,24 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	nodeID := connection.ConnectionState().Headers.Get("node_id")
 	projectID := connection.ConnectionState().Headers.Get("project_id")
 
-	if _, ok := mh.KeepaliveChannel[nodeID]; !ok {
-		mh.KeepaliveChannel[nodeID] = make(chan struct{}, 1)
-	}
-
-	io := &hubio.JSONIO{Connection: connection}
-	go mh.ServeConn(io, &model.HubInfo{ProjectID: projectID, NodeID: nodeID})
+	io := hubio.NewJSONIO(nodeID, projectID, connection)
+	go mh.ServeConn(io)
 }
 
 // KeepaliveCheckLoop checks whether the edge node is still alive
-func (mh *MessageHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, info *model.HubInfo, stopServe chan ExitCode, stopSendMsg chan struct{}) {
+func (mh *MessageHandle) KeepaliveCheckLoop(hi hubio.CloudHubIO, stopServe chan ExitCode, stopSendMsg chan struct{}) {
 	keepaliveTicker := time.NewTimer(time.Duration(mh.KeepaliveInterval) * time.Second)
 	for {
 		select {
-		case _, ok := <-mh.KeepaliveChannel[info.NodeID]:
+		case _, ok := <-hi.KeepaliveChannel():
 			if !ok {
 				return
 			}
-			klog.Infof("Node %s is still alive", info.NodeID)
+			klog.Infof("Node %s is still alive", hi.GetHubInfo().NodeID)
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
 			klog.Warningf("Timeout to receive heart beat from edge node %s for project %s",
-				info.NodeID, info.ProjectID)
+				hi.GetHubInfo().NodeID, hi.GetHubInfo().ProjectID)
 			stopServe <- nodeDisconnect
 			close(stopSendMsg)
 			return
@@ -229,45 +225,40 @@ func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.
 }
 
 func (mh *MessageHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *beehiveModel.Message) error {
-	value, ok := mh.nodeLocks.Load(nodeID)
-	if !ok {
-		return fmt.Errorf("node disconnected")
-	}
-	mutex := value.(*sync.Mutex)
-	mutex.Lock()
-	defer mutex.Unlock()
+	hi.Lock()
+	defer hi.Unlock()
 
 	return hi.WriteData(msg)
 }
 
 // ServeConn starts serving the incoming connection
-func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
-	err := mh.RegisterNode(hi, info)
+func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO) {
+	err := mh.RegisterNode(hi)
 	if err != nil {
-		klog.Errorf("fail to register node %s, reason %s", info.NodeID, err.Error())
+		klog.Errorf("fail to register node %s, reason %s", hi.GetHubInfo().NodeID, err.Error())
 		return
 	}
 
-	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
+	klog.Infof("edge node %s for project %s connected", hi.GetHubInfo().NodeID, hi.GetHubInfo().ProjectID)
 	exitServe := make(chan ExitCode, 3)
 	stopSendMsg := make(chan struct{})
 
 	for _, handle := range mh.Handlers {
-		go handle(hi, info, exitServe, stopSendMsg)
+		go handle(hi, exitServe, stopSendMsg)
 	}
 
 	code := <-exitServe
-	mh.UnregisterNode(hi, info, code)
+	mh.UnregisterNode(hi, code)
 }
 
 // RegisterNode register node in cloudhub for the incoming connection
-func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) error {
-	mh.MessageQueue.Connect(info)
+func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO) error {
+	mh.MessageQueue.Connect(hi.GetHubInfo())
 
-	err := mh.MessageQueue.Publish(constructConnectMessage(info, true))
+	err := mh.MessageQueue.Publish(constructConnectMessage(hi.GetHubInfo(), true))
 	if err != nil {
-		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
-		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
+		klog.Errorf("fail to publish node connect event for node %s, reason %s", hi.GetHubInfo().NodeID, err.Error())
+		notifyEventQueueError(hi, messageQueueDisconnect, hi.GetHubInfo().NodeID)
 		err = hi.Close()
 		if err != nil {
 			klog.Errorf("fail to close connection, reason: %s", err.Error())
@@ -275,25 +266,20 @@ func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) 
 		return err
 	}
 
-	mh.nodeConns.Store(info.NodeID, hi)
-	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
-	mh.Nodes.Store(info.NodeID, true)
+	mh.nodeConns.Store(hi.GetHubInfo().NodeID, hi)
 	return nil
 }
 
 // UnregisterNode unregister node in cloudhub
-func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo, code ExitCode) {
-	mh.nodeLocks.Delete(info.NodeID)
-	mh.nodeConns.Delete(info.NodeID)
-	close(mh.KeepaliveChannel[info.NodeID])
-	delete(mh.KeepaliveChannel, info.NodeID)
+func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, code ExitCode) {
+	mh.nodeConns.Delete(hi.GetHubInfo().NodeID)
+	close(hi.KeepaliveChannel())
 
-	err := mh.MessageQueue.Publish(constructConnectMessage(info, false))
+	err := mh.MessageQueue.Publish(constructConnectMessage(hi.GetHubInfo(), false))
 	if err != nil {
-		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
+		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", hi.GetHubInfo().NodeID, err.Error())
 	}
-	notifyEventQueueError(hi, code, info.NodeID)
-	mh.Nodes.Delete(info.NodeID)
+	notifyEventQueueError(hi, code, hi.GetHubInfo().NodeID)
 	err = hi.Close()
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
@@ -301,7 +287,7 @@ func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo
 
 	// delete the nodeQueue and nodeStore when node stopped
 	if code == nodeStop {
-		mh.MessageQueue.Close(info)
+		mh.MessageQueue.Close(hi.GetHubInfo())
 	}
 }
 
@@ -312,46 +298,46 @@ func (mh *MessageHandle) GetNodeCount() int {
 		num++
 		return true
 	}
-	mh.Nodes.Range(iter)
+	mh.nodeConns.Range(iter)
 	return num
 }
 
 // ListMessageWriteLoop processes all list type resource write requests
-func (mh *MessageHandle) ListMessageWriteLoop(hi hubio.CloudHubIO, info *model.HubInfo, stopServe chan ExitCode, stopSendMsg chan struct{}) {
-	nodeListQueue, err := mh.MessageQueue.GetNodeListQueue(info.NodeID)
+func (mh *MessageHandle) ListMessageWriteLoop(hi hubio.CloudHubIO, stopServe chan ExitCode, stopSendMsg chan struct{}) {
+	nodeListQueue, err := mh.MessageQueue.GetNodeListQueue(hi.GetHubInfo().NodeID)
 	if err != nil {
-		klog.Errorf("Failed to get nodeQueue for node %s: %v", info.NodeID, err)
+		klog.Errorf("Failed to get nodeQueue for node %s: %v", hi.GetHubInfo().NodeID, err)
 		stopServe <- messageQueueDisconnect
 		return
 	}
-	nodeListStore, err := mh.MessageQueue.GetNodeListStore(info.NodeID)
+	nodeListStore, err := mh.MessageQueue.GetNodeListStore(hi.GetHubInfo().NodeID)
 	if err != nil {
-		klog.Errorf("Failed to get nodeStore for node %s: %v", info.NodeID, err)
+		klog.Errorf("Failed to get nodeStore for node %s: %v", hi.GetHubInfo().NodeID, err)
 		stopServe <- messageQueueDisconnect
 		return
 	}
 	for {
 		select {
 		case <-stopSendMsg:
-			klog.Errorf("Node %s disconnected and stopped sending messages", info.NodeID)
+			klog.Errorf("Node %s disconnected and stopped sending messages", hi.GetHubInfo().NodeID)
 			return
 		default:
-			mh.handleMessage(nodeListQueue, nodeListStore, hi, info, stopServe, "listMessage")
+			mh.handleMessage(nodeListQueue, nodeListStore, hi, hi.GetHubInfo(), stopServe, "listMessage")
 		}
 	}
 }
 
 // MessageWriteLoop processes all write requests
-func (mh *MessageHandle) MessageWriteLoop(hi hubio.CloudHubIO, info *model.HubInfo, stopServe chan ExitCode, stopSendMsg chan struct{}) {
-	nodeQueue, err := mh.MessageQueue.GetNodeQueue(info.NodeID)
+func (mh *MessageHandle) MessageWriteLoop(hi hubio.CloudHubIO, stopServe chan ExitCode, stopSendMsg chan struct{}) {
+	nodeQueue, err := mh.MessageQueue.GetNodeQueue(hi.GetHubInfo().NodeID)
 	if err != nil {
-		klog.Errorf("Failed to get nodeQueue for node %s: %v", info.NodeID, err)
+		klog.Errorf("Failed to get nodeQueue for node %s: %v", hi.GetHubInfo().NodeID, err)
 		stopServe <- messageQueueDisconnect
 		return
 	}
-	nodeStore, err := mh.MessageQueue.GetNodeStore(info.NodeID)
+	nodeStore, err := mh.MessageQueue.GetNodeStore(hi.GetHubInfo().NodeID)
 	if err != nil {
-		klog.Errorf("Failed to get nodeStore for node %s: %v", info.NodeID, err)
+		klog.Errorf("Failed to get nodeStore for node %s: %v", hi.GetHubInfo().NodeID, err)
 		stopServe <- messageQueueDisconnect
 		return
 	}
@@ -359,10 +345,10 @@ func (mh *MessageHandle) MessageWriteLoop(hi hubio.CloudHubIO, info *model.HubIn
 	for {
 		select {
 		case <-stopSendMsg:
-			klog.Errorf("Node %s disconnected and stopped sending messages", info.NodeID)
+			klog.Errorf("Node %s disconnected and stopped sending messages", hi.GetHubInfo().NodeID)
 			return
 		default:
-			mh.handleMessage(nodeQueue, nodeStore, hi, info, stopServe, "message")
+			mh.handleMessage(nodeQueue, nodeStore, hi, hi.GetHubInfo(), stopServe, "message")
 		}
 	}
 }
