@@ -30,9 +30,9 @@ type JSONIO struct {
 	keepaliveChannel chan struct{}
 }
 
-func NewJSONIO(nodeId, projectId string, conn conn.Connection) CloudHubIO {
+func NewJSONIO(nodeID, projectID string, conn conn.Connection) CloudHubIO {
 	return &JSONIO{
-		hubInfo:          commonmodel.HubInfo{},
+		hubInfo:          commonmodel.HubInfo{NodeID: nodeID, ProjectID: projectID},
 		Connection:       conn,
 		keepaliveChannel: make(chan struct{}, 1),
 	}
