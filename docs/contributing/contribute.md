@@ -12,7 +12,7 @@ The goal of the community is to develop a cloud native edge computing platform b
 - See [Community Membership](community.md) for a list of various community roles. With gradual contributions, one can move up in the chain.
 
 
-## Prepartion
+## Preparation
 
 - Choose matched [golang](https://golang.org/dl) version and install:
 
