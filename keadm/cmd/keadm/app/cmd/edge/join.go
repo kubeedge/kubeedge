@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -87,7 +88,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 		"KubeEdge Node interface name string, the default value is eth0")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
-		"The certPath used by edgecore, the default value is /etc/kubeedge/certs")
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, types.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")

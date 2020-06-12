@@ -68,12 +68,8 @@ const (
 	// HttpServer sets the port where to apply for the edge certificate
 	CertPort = "certport"
 
-	//
 	AdvertiseAddress = "advertise-address"
-	//
-	NameSpaceCloudCore = "kubeedge"
 
-	//
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"

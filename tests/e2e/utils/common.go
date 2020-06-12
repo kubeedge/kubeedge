@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
 
@@ -264,7 +265,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configm
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Labels:    map[string]string{"app": "kubeedge"},
+			Labels:    map[string]string{"app": constants.KubeEdge},
 			Namespace: namespace,
 		},
 		Spec: *depObj,
@@ -469,7 +470,7 @@ func CreateServiceObject(name string) *v1.Service {
 
 	Service := v1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": "kubeedge"}},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.KubeEdge}},
 
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,
