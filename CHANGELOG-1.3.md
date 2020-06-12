@@ -140,7 +140,7 @@ KubeEdge now support CRI-O as container runtime, to use less memory on edge node
 - support kubectl logs to fetch logs of pods at edge (https://github.com/kubeedge/kubeedge/pull/1606, @kadisi)
 - CloudCore now supports HA with active-standby mode (https://github.com/kubeedge/kubeedge/pull/1600, @GsssC, @kevin-wangzefeng)
 - Add feature to provision VM workload (https://github.com/kubeedge/kubeedge/pull/1618, @dingyin)
-- A set of component config API fiels have been updated with capitalization (https://github.com/kubeedge/kubeedge/pull/1616, @kevin-wangzefeng)
+- A set of component config API fields have been updated with capitalization (https://github.com/kubeedge/kubeedge/pull/1616, @kevin-wangzefeng)
 - Add support for CRI-O as light-weight runtime (https://github.com/kubeedge/kubeedge/pull/1610, @chendave)
 - Edge nodes are now registered with kubernetes.io/arch kubernetes.io/os labels automatically (https://github.com/kubeedge/kubeedge/pull/1601, @kevin-wangzefeng)
 - Add metrics interfaces at edge (https://github.com/kubeedge/kubeedge/pull/1573, @fisherxu)
