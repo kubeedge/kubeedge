@@ -1,9 +1,9 @@
 approvers:
-  - CindyXing
+  - chendave
+  - fisherxu
+  - kadisi
   - kevin-wangzefeng
-  - m1093782566
   - qizha
-  - rohitsardesai83
   - sids-b
   - skdwriting
 reviewers:
@@ -15,3 +15,8 @@ reviewers:
   - rohitsardesai83
   - sids-b
   - subpathdev
+
+emeritus_approvers:
+  - CindyXing
+  - m1093782566
+  - rohitsardesai83
