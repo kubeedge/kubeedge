@@ -75,7 +75,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
   1. Become the leader
   1. Start each controller and serve for edge-nodes
   1. Notify the LoadBalance cloudcore is ready
-  1. Lose the leadership position due to network fluctuation or other reason, **shutdown immediatly**;At the same time, one of the standby cloudcores becomes leader. 
+  1. Lose the leadership position due to network fluctuation or other reason, **shutdown immediately**;At the same time, one of the standby cloudcores becomes leader. 
   1. Restart by an external operation, downgrade to be a standby cloudcore also known as follower.
   
   The process of 3(start the controllers) also contains the cache initialization, such as the above-mentioned LocationCache.Ideally cache should initialize before the Leader election block, but it means the deconstruction of controllers as well as a lot of work. If subsequent discoveries show that cache initialization time led to the switch time growth greatly, then consider to deconstruct the controllers. At present, the cache initialization time is in milliseconds.
@@ -138,7 +138,7 @@ status:
 
   `Endpoint is readiness == All container are ready + PodReadinessGate is true`
 
-It means traffic is not forward to the back cloudcore untill we Patch the status of "kubeedge.io/CloudCoreIsLeader" from "False" to "True" after this cloudcore becoming leader.
+It means traffic is not forward to the back cloudcore until we Patch the status of "kubeedge.io/CloudCoreIsLeader" from "False" to "True" after this cloudcore becoming leader.
 
 ##### Other LoadBalance such as keepalived
 
