@@ -35,6 +35,7 @@ import (
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
 	Common
+	HttpsProxy string
 }
 
 //InstallTools sets the OS interface, checks if K8S installation is required or not.
@@ -57,7 +58,7 @@ func (ks *K8SInstTool) InstallTools() error {
 
 	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
 
-	err = installCRDs(ks.KubeConfig, ks.Master)
+	err = installCRDs(ks.KubeConfig, ks.Master, ks.HttpsProxy)
 	if err != nil {
 		return err
 	}
@@ -100,7 +101,7 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 	return nil
 }
 
-func installCRDs(kubeConfig, master string) error {
+func installCRDs(kubeConfig, master string, httpsProxy string) error {
 	config, err := BuildConfig(kubeConfig, master)
 	if err != nil {
 		return fmt.Errorf("Failed to build config, err: %v", err)
@@ -124,7 +125,7 @@ func installCRDs(kubeConfig, master string) error {
 		if err != nil {
 			if os.IsNotExist(err) {
 				//Download the tar from repo
-				dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", KubeEdgeCRDDownloadURL, crdFile)
+				dwnldURL := fmt.Sprintf("cd %s && https_proxy=%s wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", httpsProxy, KubeEdgeCRDDownloadURL, crdFile)
 				_, err := runCommandWithShell(dwnldURL)
 				if err != nil {
 					return err
@@ -154,7 +155,7 @@ func installCRDs(kubeConfig, master string) error {
 		if err != nil {
 			if os.IsNotExist(err) {
 				//Download the tar from repo
-				dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", KubeEdgeCRDDownloadURL, crdFile)
+				dwnldURL := fmt.Sprintf("cd %s && https_proxy=%s wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", httpsProxy, KubeEdgeCRDDownloadURL, crdFile)
 				_, err := runCommandWithShell(dwnldURL)
 				if err != nil {
 					return err
