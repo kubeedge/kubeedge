@@ -262,6 +262,11 @@ func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
 
 // RegisterNode register node in cloudhub for the incoming connection
 func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) error {
+	if _, ok := mh.Nodes.Load(info.NodeID); ok {
+		hi.Close()
+		return fmt.Errorf("waiting for the old unregistered, close the new connection")
+	}
+
 	mh.MessageQueue.Connect(info)
 
 	err := mh.MessageQueue.Publish(constructConnectMessage(info, true))
@@ -293,7 +298,6 @@ func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
 	notifyEventQueueError(hi, code, info.NodeID)
-	mh.Nodes.Delete(info.NodeID)
 	err = hi.Close()
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
@@ -303,6 +307,7 @@ func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo
 	if code == nodeStop {
 		mh.MessageQueue.Close(info)
 	}
+	mh.Nodes.Delete(info.NodeID)
 }
 
 // GetNodeCount returns the number of connected Nodes
@@ -403,17 +408,24 @@ func (mh *MessageHandle) handleMessage(nodeQueue workqueue.RateLimitingInterface
 		return
 	}
 	if msgType == "listMessage" {
-		mh.send(hi, info, msg)
-		// delete successfully sent events from the queue/store
-		nodeStore.Delete(msg)
+		if e := mh.send(hi, info, msg); e != nil {
+			time.Sleep(1 * time.Second)
+			nodeQueue.Add(key)
+		} else {
+			// delete successfully sent events from the queue/store
+			nodeStore.Delete(msg)
+		}
 	} else {
-		mh.sendMsg(hi, info, msg, copyMsg, nodeStore)
+		if e := mh.sendMsg(hi, info, msg, copyMsg, nodeStore); e != nil {
+			time.Sleep(1 * time.Second)
+			nodeQueue.Add(key)
+		}
 	}
 
 	nodeQueue.Done(key)
 }
 
-func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, copyMsg *beehiveModel.Message, nodeStore cache.Store) {
+func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, copyMsg *beehiveModel.Message, nodeStore cache.Store) error {
 	ackChan := make(chan struct{})
 	mh.MessageAcks.Store(msg.GetID(), ackChan)
 
@@ -423,26 +435,29 @@ func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, 
 		retryInterval time.Duration = 5
 	)
 	ticker := time.NewTimer(retryInterval * time.Second)
-	mh.send(hi, info, msg)
+	if err := mh.send(hi, info, msg); err != nil {
+		return err
+	}
 
-LOOP:
 	for {
 		select {
 		case <-ackChan:
 			mh.saveSuccessPoint(copyMsg, info, nodeStore)
-			break LOOP
+			return nil
 		case <-ticker.C:
 			if retry == 4 {
-				break LOOP
+				return fmt.Errorf("send failed after retry")
 			}
-			mh.send(hi, info, msg)
+			if err := mh.send(hi, info, msg); err != nil {
+				return err
+			}
 			retry++
 			ticker.Reset(time.Second * retryInterval)
 		}
 	}
 }
 
-func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *beehiveModel.Message) {
+func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *beehiveModel.Message) error {
 	err := mh.hubIoWrite(hi, info.NodeID, msg)
 	if err != nil {
 		errStr := "write error, connection for node %s "
@@ -452,8 +467,9 @@ func (mh *MessageHandle) send(hi hubio.CloudHubIO, info *model.HubInfo, msg *bee
 		}
 		errStr = errStr + errReason
 		klog.Errorf(errStr, info.NodeID, dumpMessageMetadata(msg), err.Error())
-		return
+		return err
 	}
+	return nil
 }
 
 func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model.HubInfo, nodeStore cache.Store) {
