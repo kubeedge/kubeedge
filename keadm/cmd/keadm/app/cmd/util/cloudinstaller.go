@@ -17,7 +17,7 @@ import (
 type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
-	HttpsProxy       string
+	HTTPSProxy       string
 }
 
 // InstallTools downloads KubeEdge for the specified version

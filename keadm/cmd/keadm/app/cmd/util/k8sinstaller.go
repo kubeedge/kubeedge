@@ -35,7 +35,7 @@ import (
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
 	Common
-	HttpsProxy string
+	HTTPSProxy string
 }
 
 //InstallTools sets the OS interface, checks if K8S installation is required or not.
@@ -58,7 +58,7 @@ func (ks *K8SInstTool) InstallTools() error {
 
 	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
 
-	err = installCRDs(ks.KubeConfig, ks.Master, ks.HttpsProxy)
+	err = installCRDs(ks.KubeConfig, ks.Master, ks.HTTPSProxy)
 	if err != nil {
 		return err
 	}

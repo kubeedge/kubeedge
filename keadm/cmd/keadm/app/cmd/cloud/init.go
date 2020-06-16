@@ -97,7 +97,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
 		"Use this key to set SANs in certificate of cloudcore. eg: 10.10.102.78,10.10.102.79")
 
-	cmd.Flags().StringVar(&initOpts.HttpsProxy, types.HttpsProxy, initOpts.HttpsProxy,
+	cmd.Flags().StringVar(&initOpts.HTTPSProxy, types.HTTPSProxy, initOpts.HTTPSProxy,
 		"Use this key to set https proxy for downloading essential files")
 }
 
@@ -108,7 +108,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			KubeConfig: initOptions.KubeConfig,
 			Master:     initOptions.Master,
 		},
-		HttpsProxy: initOptions.HttpsProxy,
+		HTTPSProxy: initOptions.HTTPSProxy,
 	}
 
 	var kubeVer string

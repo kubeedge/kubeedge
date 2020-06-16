@@ -74,5 +74,5 @@ const (
 
 	TokenDataName = "tokendata"
 
-	HttpsProxy = "httpsproxy"
+	HTTPSProxy = "httpsproxy"
 )
