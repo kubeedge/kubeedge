@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/klog"
-
 	"github.com/kubeedge/beehive/pkg/core/model"
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 )
 
 // constants for resource types
@@ -55,10 +55,6 @@ const (
 	NodeID    = "node_id"
 )
 
-const (
-	StopGetFromQueue = "stopgetfromqueue"
-)
-
 // HubInfo saves identifier information for edge hub
 type HubInfo struct {
 	ProjectID string
@@ -79,28 +75,15 @@ func NewResource(resType, resID string, info *HubInfo) string {
 
 // IsNodeStopped indicates if the node is stopped or running
 func IsNodeStopped(msg *model.Message) bool {
-	tokens := strings.Split(msg.Router.Resource, "/")
-	if len(tokens) != 2 || tokens[0] != ResNode {
+	resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+	if resourceType != beehiveModel.ResourceTypeNode {
 		return false
 	}
-	if msg.Router.Operation == OpDelete {
+
+	if msg.Router.Operation == model.DeleteOperation {
 		return true
 	}
-	if msg.Router.Operation != OpUpdate || msg.Content == nil {
-		return false
-	}
-	body, ok := msg.Content.(map[string]interface{})
-	if !ok {
-		klog.Errorf("fail to decode node update message: %s, type is %T", msg.GetContent(), msg.Content)
-		// it can't be determined if the node has stopped
-		return false
-	}
-	// trust struct of json body
-	action, ok := body["action"]
-	if !ok || action.(string) != "stop" {
-		return false
-	}
-	return true
+	return false
 }
 
 // IsFromEdge judges if the event is sent from edge

@@ -147,10 +147,14 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 	io := &hubio.JSONIO{Connection: connection}
 
 	if _, ok := mh.nodeRegistered.Load(nodeID); ok {
+		if conn, exist := mh.nodeConns.Load(nodeID); exist {
+			conn.(hubio.CloudHubIO).Close()
+		}
 		mh.nodeConns.Store(nodeID, io)
 		return
 	}
-	go mh.ServeConn(io, &model.HubInfo{ProjectID: projectID, NodeID: nodeID})
+	mh.nodeConns.Store(nodeID, io)
+	go mh.ServeConn(&model.HubInfo{ProjectID: projectID, NodeID: nodeID})
 }
 
 // KeepaliveCheckLoop checks whether the edge node is still alive
@@ -166,8 +170,9 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 			klog.Infof("Node %s is still alive", info.NodeID)
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
-			if _, ok := mh.nodeConns.Load(info.NodeID); ok {
+			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {
 				klog.Warningf("Timeout to receive heart beat from edge node %s for project %s", info.NodeID, info.ProjectID)
+				conn.(hubio.CloudHubIO).Close()
 				mh.nodeConns.Delete(info.NodeID)
 			}
 		}
@@ -246,8 +251,8 @@ func (mh *MessageHandle) hubIoWrite(hi hubio.CloudHubIO, nodeID string, msg *bee
 }
 
 // ServeConn starts serving the incoming connection
-func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
-	err := mh.RegisterNode(hi, info)
+func (mh *MessageHandle) ServeConn(info *model.HubInfo) {
+	err := mh.RegisterNode(info)
 	if err != nil {
 		klog.Errorf("fail to register node %s, reason %s", info.NodeID, err.Error())
 		return
@@ -261,14 +266,18 @@ func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
 	}
 
 	code := <-exitServe
-	mh.UnregisterNode(hi, info, code)
+	mh.UnregisterNode(info, code)
 }
 
 // RegisterNode register node in cloudhub for the incoming connection
-func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) error {
+func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
+	hi, err := mh.getNodeConnection(info.NodeID)
+	if err != nil {
+		return err
+	}
 	mh.MessageQueue.Connect(info)
 
-	err := mh.MessageQueue.Publish(constructConnectMessage(info, true))
+	err = mh.MessageQueue.Publish(constructConnectMessage(info, true))
 	if err != nil {
 		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
 		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
@@ -279,7 +288,6 @@ func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) 
 		return err
 	}
 
-	mh.nodeConns.Store(info.NodeID, hi)
 	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
 	mh.Nodes.Store(info.NodeID, true)
 	mh.nodeRegistered.Store(info.NodeID, true)
@@ -287,7 +295,12 @@ func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) 
 }
 
 // UnregisterNode unregister node in cloudhub
-func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo, code ExitCode) {
+func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
+	if hi, err := mh.getNodeConnection(info.NodeID); err == nil {
+		notifyEventQueueError(hi, code, info.NodeID)
+		hi.Close()
+	}
+
 	mh.nodeLocks.Delete(info.NodeID)
 	mh.nodeConns.Delete(info.NodeID)
 	mh.nodeRegistered.Delete(info.NodeID)
@@ -298,9 +311,9 @@ func (mh *MessageHandle) UnregisterNode(hi hubio.CloudHubIO, info *model.HubInfo
 	if err != nil {
 		klog.Errorf("fail to publish node disconnect event for node %s, reason %s", info.NodeID, err.Error())
 	}
-	notifyEventQueueError(hi, code, info.NodeID)
+
 	mh.Nodes.Delete(info.NodeID)
-	err = hi.Close()
+
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
 	}
@@ -326,6 +339,7 @@ func (mh *MessageHandle) GetNodeCount() int {
 func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe chan ExitCode) {
 	nodeListQueue := mh.MessageQueue.GetNodeListQueue(info.NodeID)
 	nodeListStore := mh.MessageQueue.GetNodeListStore(info.NodeID)
+	nodeQueue := mh.MessageQueue.GetNodeQueue(info.NodeID)
 
 	for {
 		key, quit := nodeListQueue.Get()
@@ -342,8 +356,10 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 		msg := obj.(*beehiveModel.Message)
 
 		if model.IsNodeStopped(msg) {
-			klog.Warningf("node %s is stopped, will disconnect", info.NodeID)
-
+			klog.Warningf("node %s is deleted, data for node will be cleaned up", info.NodeID)
+			nodeQueue.ShutDown()
+			nodeListQueue.ShutDown()
+			stopServe <- nodeStop
 			return
 		}
 		if !model.IsToEdge(msg) {
@@ -388,10 +404,6 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		}
 		msg := obj.(*beehiveModel.Message)
 
-		if model.IsNodeStopped(msg) {
-			klog.Warningf("node %s is stopped, will disconnect", info.NodeID)
-			return
-		}
 		if !model.IsToEdge(msg) {
 			klog.Infof("skip only to cloud event for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 			continue
@@ -526,6 +538,15 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 
 func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
 	mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(objectSyncName, metav1.NewDeleteOptions(0))
+}
+
+func (mh *MessageHandle) getNodeConnection(nodeid string) (hubio.CloudHubIO, error) {
+	conn, ok := mh.nodeConns.Load(nodeid)
+	if !ok {
+		return nil, fmt.Errorf("Failed to get connection for node: %s", nodeid)
+	}
+
+	return conn.(hubio.CloudHubIO), nil
 }
 
 func deepcopy(msg *beehiveModel.Message) *beehiveModel.Message {
