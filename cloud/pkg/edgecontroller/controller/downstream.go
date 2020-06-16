@@ -266,6 +266,20 @@ func (dc *DownstreamController) syncEdgeNodes() {
 				}
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
+
+				msg := model.NewMessage("")
+				resource, err := messagelayer.BuildResource(node.Name, "namespace", constants.ResourceNode, node.Name)
+				if err != nil {
+					klog.Warningf("Built message resource failed with error: %s", err)
+					break
+				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+				err = dc.messageLayer.Send(*msg)
+				if err != nil {
+					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				} else {
+					klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				}
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
