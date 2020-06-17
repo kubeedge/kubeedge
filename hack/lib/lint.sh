@@ -23,6 +23,7 @@ set -o pipefail
 kubeedge::lint::check() {
     cd ${KUBEEDGE_ROOT}
     # skip deleted files
+    set +o pipefail
     git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor" | xargs --no-run-if-empty sed -i 's/[ \t]*$//'
 
     [[ $(git diff --name-only) ]] && {
@@ -31,4 +32,5 @@ kubeedge::lint::check() {
     }
     golangci-lint run
     gofmt -l -w staging
+    set -o pipefail
 }
