@@ -666,7 +666,7 @@ func (m *metaManager) runMetaManager() {
 			default:
 			}
 			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
-				klog.Infof("get a message %+v", msg)
+				klog.V(2).Infof("get a message %+v", msg)
 				m.process(msg)
 			} else {
 				klog.Errorf("get a message %+v: %v", msg, err)
