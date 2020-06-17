@@ -298,7 +298,7 @@ func (e *edged) Start() {
 		false,
 		volumepathhandler.NewBlockVolumePathHandler(),
 	)
-	go e.volumeManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
+	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
 	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, kubecontainer.NewRefManager(), record.NewEventRecorder())
@@ -327,7 +327,7 @@ func (e *edged) Start() {
 	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csiplugin.PluginHandler))
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
-	go e.pluginManager.Run(edgedutil.NewSourcesReady(), utilwait.NeverStop)
+	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 
 	klog.Infof("starting syncPod")
 	e.syncPod()
@@ -684,7 +684,7 @@ func (e *edged) initializeModules() error {
 	}
 
 	// containerManager must start after cAdvisor because it needs filesystem capacity information
-	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(), e.statusManager, e.runtimeService)
+	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
@@ -969,7 +969,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
-	//send msg to metamanager to get existing pods
+	//when starting, send msg to metamanager once to get existing pods
 	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
 		model.QueryOperation)
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
