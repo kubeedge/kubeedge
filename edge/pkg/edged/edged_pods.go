@@ -46,16 +46,20 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
+	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/fieldpath"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/envvars"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/server/portforward"
 	"k8s.io/kubernetes/pkg/kubelet/server/remotecommand"
@@ -628,6 +632,23 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 	var result []kubecontainer.EnvVar
 
 	var err error
+	if pod.Spec.EnableServiceLinks == nil {
+		return nil, fmt.Errorf("nil pod.spec.enableServiceLinks encountered, cannot construct envvars")
+	}
+
+	// Note:  These are added to the docker Config, but are not included in the checksum computed
+	// by kubecontainer.HashContainer(...).  That way, we can still determine whether an
+	// v1.Container is already running by its hash. (We don't want to restart a container just
+	// because some service changed.)
+	//
+	// Note that there is a race between Kubelet seeing the pod and kubelet seeing the service.
+	// To avoid this users can: (1) wait between starting a service and starting; or (2) detect
+	// missing service env var and exit and be restarted; or (3) use DNS instead of env vars
+	// and keep trying to resolve the DNS name of the service (recommended).
+	serviceEnv, err := e.getServiceEnvVarMap(pod.Namespace, *pod.Spec.EnableServiceLinks)
+	if err != nil {
+		return result, err
+	}
 
 	// Determine the final values of variables:
 	//
@@ -686,6 +707,12 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 				}
 			}
 		}
+		// Accesses apiserver+Pods.
+		// So, the master may set service env vars, or kubelet may.  In case both are doing
+		// it, we delete the key from the kubelet-generated ones so we don't have duplicate
+		// env vars.
+		// TODO: remove this next line once all platforms use apiserver+Pods.
+		delete(serviceEnv, envVar.Name)
 
 		tmpEnv[envVar.Name] = runtimeVal
 	}
@@ -694,7 +721,72 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 	for k, v := range tmpEnv {
 		result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
 	}
+
+	// Append remaining service env vars.
+	for k, v := range serviceEnv {
+		// Accesses apiserver+Pods.
+		// So, the master may set service env vars, or kubelet may.  In case both are doing
+		// it, we skip the key from the kubelet-generated ones so we don't have duplicate
+		// env vars.
+		// TODO: remove this next line once all platforms use apiserver+Pods.
+		if _, present := tmpEnv[k]; !present {
+			result = append(result, kubecontainer.EnvVar{Name: k, Value: v})
+		}
+	}
 	return result, nil
+}
+
+var masterServices = sets.NewString("kubernetes")
+
+func (e *edged) getServiceEnvVarMap(ns string, enableServiceLinks bool) (map[string]string, error) {
+	var (
+		serviceMap = make(map[string]*v1.Service)
+		m          = make(map[string]string)
+	)
+
+	// Get all service resources from the master (via a cache),
+	// and populate them into service environment variables.
+	if e.serviceLister == nil {
+		// Kubelets without masters (e.g. plain GCE ContainerVM) don't set env vars.
+		return m, nil
+	}
+	services, err := e.serviceLister.List(labels.Everything())
+	if err != nil {
+		return m, fmt.Errorf("failed to list services when setting up env vars")
+	}
+
+	// project the services in namespace ns onto the master services
+	for i := range services {
+		service := services[i]
+		// ignore services where ClusterIP is "None" or empty
+		if !v1helper.IsServiceIPSet(&service) {
+			continue
+		}
+		serviceName := service.Name
+
+		// We always want to add environment variabled for master services
+		// from the master service namespace, even if enableServiceLinks is false.
+		// We also add environment variables for other services in the same
+		// namespace, if enableServiceLinks is true.
+		//todo masterservice's namespace hard-coded temporarily
+		if service.Namespace == "default" && masterServices.Has(serviceName) {
+			if _, exists := serviceMap[serviceName]; !exists {
+				serviceMap[serviceName] = &service
+			}
+		} else if service.Namespace == ns && enableServiceLinks {
+			serviceMap[serviceName] = &service
+		}
+	}
+
+	mappedServices := []*v1.Service{}
+	for key := range serviceMap {
+		mappedServices = append(mappedServices, serviceMap[key])
+	}
+
+	for _, e := range envvars.FromServices(mappedServices) {
+		m[e.Name] = e.Value
+	}
+	return m, nil
 }
 
 // podFieldSelectorRuntimeValue returns the runtime value of the given

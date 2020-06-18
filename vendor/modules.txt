@@ -1161,6 +1161,7 @@ k8s.io/kubernetes/pkg/kubelet/dockershim/network/hostport
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/kubenet
 k8s.io/kubernetes/pkg/kubelet/dockershim/network/metrics
 k8s.io/kubernetes/pkg/kubelet/dockershim/remote
+k8s.io/kubernetes/pkg/kubelet/envvars
 k8s.io/kubernetes/pkg/kubelet/events
 k8s.io/kubernetes/pkg/kubelet/eviction/api
 k8s.io/kubernetes/pkg/kubelet/images

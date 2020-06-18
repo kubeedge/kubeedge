@@ -39,6 +39,7 @@ import (
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -165,6 +166,30 @@ type podReady struct {
 }
 
 // edged is the main edged implementation.
+type serviceLister interface {
+	List(labels.Selector) ([]v1.Service, error)
+}
+
+type EdgeServiceLister struct {
+	metaClient client.CoreInterface
+}
+
+func NewEdgeServiceLister() *EdgeServiceLister {
+	return &EdgeServiceLister{
+		metaClient: client.New(),
+	}
+}
+
+func (esl *EdgeServiceLister) List(selector labels.Selector) ([]v1.Service, error) {
+	services, err := esl.metaClient.Services("").ListAll()
+	if err != nil {
+		klog.Errorf("metamanager list service err: %v", err)
+		return nil, err
+	}
+	return services, nil
+}
+
+//Define edged
 type edged struct {
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
@@ -243,6 +268,8 @@ type edged struct {
 	// Optional, defaults to simple Docker implementation
 	runner          kubecontainer.ContainerCommandRunner
 	podLastSyncTime sync.Map
+	// serviceLister knows how to list services
+	serviceLister serviceLister
 }
 
 // Register register edged
@@ -423,6 +450,8 @@ func newEdged(enable bool) (*edged, error) {
 		recorder:                  recorder,
 		enable:                    enable,
 	}
+
+	ed.serviceLister = NewEdgeServiceLister()
 
 	err := ed.makePodDir()
 	if err != nil {

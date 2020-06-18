@@ -283,10 +283,11 @@ func HandleAddAndDeletePods(operation string, edgedpoint string, UID string, con
 		return false
 	}
 
+	var enableServiceLinks = true
 	payload := &v1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Job", APIVersion: "batch/v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: UID, Namespace: metav1.NamespaceDefault, UID: types.UID(UID)},
-		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container},
+		Spec:       v1.PodSpec{RestartPolicy: restartPolicy, Containers: container, EnableServiceLinks: &enableServiceLinks},
 	}
 	respbytes, err := json.Marshal(payload)
 	if err != nil {
