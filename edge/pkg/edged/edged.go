@@ -40,6 +40,7 @@ import (
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -169,6 +170,30 @@ type podReady struct {
 }
 
 // edged is the main edged implementation.
+type serviceLister interface {
+	List(labels.Selector) ([]v1.Service, error)
+}
+
+type EdgeServiceLister struct {
+	metaClient client.CoreInterface
+}
+
+func NewEdgeServiceLister() *EdgeServiceLister {
+	return &EdgeServiceLister{
+		metaClient: client.New(),
+	}
+}
+
+func (esl *EdgeServiceLister) List(selector labels.Selector) ([]v1.Service, error) {
+	services, err := esl.metaClient.Services("").ListAll()
+	if err != nil {
+		klog.Errorf("metamanager list service err: %v", err)
+		return nil, err
+	}
+	return services, nil
+}
+
+//Define edged
 type edged struct {
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
@@ -254,6 +279,9 @@ type edged struct {
 
 	// Pod killer handles pods to be killed
 	podKiller PodKiller
+
+	// serviceLister knows how to list services
+	serviceLister serviceLister
 }
 
 // Register register edged
@@ -458,6 +486,9 @@ func newEdged(enable bool) (*edged, error) {
 		enable:                    enable,
 	}
 	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
+
+	ed.serviceLister = NewEdgeServiceLister()
+
 	err := ed.makePodDir()
 	if err != nil {
 		klog.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
