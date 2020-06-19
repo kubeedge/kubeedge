@@ -9,6 +9,8 @@ import (
 	"github.com/go-chassis/go-chassis/core/registry"
 
 	meshConfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
+	// Register panel to aviod panic error
+	_ "github.com/kubeedge/kubeedge/edgemesh/pkg/plugin/panel"
 	meshRegistry "github.com/kubeedge/kubeedge/edgemesh/pkg/plugin/registry"
 )
 
