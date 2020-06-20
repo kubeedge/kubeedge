@@ -4,7 +4,7 @@ The purpose of this document is to give introduction about unit tests and to hel
 ## Unit Test
 
 Read this [article](http://softwaretestingfundamentals.com/unit-testing/) for a simple introduction about unit tests and benefits of unit testing. Go has its own built-in package called testing and command called ```go test```.
-For more detailed information on golang's builtin testing package read this [document](https://golang.org/pkg/testing/]).
+For more detailed information on golang's builtin testing package read this [document](https://golang.org/pkg/testing/).
 
 ## Mocks
 
