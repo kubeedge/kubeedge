@@ -91,7 +91,6 @@ func (in *Device) DeepCopyInto(out *Device) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
 	in.Status.DeepCopyInto(&out.Status)
-	in.Data.DeepCopyInto(&out.Data)
 	return
 }
 
@@ -302,6 +301,7 @@ func (in *DeviceSpec) DeepCopyInto(out *DeviceSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	in.Data.DeepCopyInto(&out.Data)
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = new(v1.NodeSelector)
