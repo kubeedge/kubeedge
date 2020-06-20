@@ -851,6 +851,17 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 				},
 			},
 			PropertyVisitors: propertyVisitors,
+			Data: v1alpha2.DeviceData{
+				DataProperties: []v1alpha2.DataProperty{
+					{
+						PropertyName: "temperature",
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+				},
+				DataTopic: "$ke/events/+/device/customized/update",
+			},
 		},
 		Status: v1alpha2.DeviceStatus{
 			Twins: []v1alpha2.Twin{
@@ -867,17 +878,6 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 					},
 				},
 			},
-		},
-		Data: v1alpha2.DeviceData{
-			DataProperties: []v1alpha2.DataProperty{
-				{
-					PropertyName: "temperature",
-					Metadata: map[string]string{
-						"type": "string",
-					},
-				},
-			},
-			DataTopic: "$ke/events/+/device/customized/update",
 		},
 	}
 	return deviceInstance
