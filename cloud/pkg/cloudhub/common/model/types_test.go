@@ -83,17 +83,12 @@ func TestIsNodeStopped(t *testing.T) {
 		"timestamp":  time.Now().Unix(),
 	}
 	content, _ := json.Marshal(body)
-	bodyAction := map[string]interface{}{
-		"event_type": OpConnect,
-		"timestamp":  time.Now().Unix(),
-		"action":     "stop",
-	}
+
 	msgResource := modelMessage("", "", 0, "", "", "", "Resource1", nil)
-	msgOpDelete := modelMessage("", "", 0, "", "", OpDelete, "node/Node1", nil)
-	msgNoContent := modelMessage("", "", 0, "", "", "", "node/Node1", nil)
-	msgContent := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", content)
-	msgNoAction := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", body)
-	msgActionStop := modelMessage("", "", 0, "", "", OpUpdate, "node/Node1", bodyAction)
+	msgOpDelete := modelMessage("", "", 0, "", "", model.DeleteOperation, "node/edge-node/default/node/Node1", nil)
+	msgNoContent := modelMessage("", "", 0, "", "", "", "node/edge-node/default/node/Node1", nil)
+	msgContent := modelMessage("", "", 0, "", "", model.UpdateOperation, "node/edge-node/default/node/Node1", content)
+	msgNoAction := modelMessage("", "", 0, "", "", model.UpdateOperation, "node/edge-node/default/node/Node1", body)
 	tests := []struct {
 		name      string
 		msg       *model.Message
@@ -123,11 +118,6 @@ func TestIsNodeStopped(t *testing.T) {
 			name:      "TestIsNodeStopped(): Case 5: msg.Content[action] is nil",
 			msg:       &msgNoAction,
 			errorWant: false,
-		},
-		{
-			name:      "TestIsNodeStopped(): Case 6: msg.Content[action]=stop",
-			msg:       &msgActionStop,
-			errorWant: true,
 		},
 	}
 	for _, test := range tests {
