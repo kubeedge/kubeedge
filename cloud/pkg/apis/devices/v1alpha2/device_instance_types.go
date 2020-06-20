@@ -28,9 +28,14 @@ type DeviceSpec struct {
 	DeviceModelRef *v1.LocalObjectReference `json:"deviceModelRef,omitempty"`
 	// Required: The protocol configuration used to connect to the device.
 	Protocol ProtocolConfig `json:"protocol,omitempty"`
-	// Required: List of property visitors which describe how to access the device properties.
+	// List of property visitors which describe how to access the device properties.
 	// PropertyVisitors must unique by propertyVisitor.propertyName.
+	// +optional
 	PropertyVisitors []DevicePropertyVisitor `json:"propertyVisitors,omitempty"`
+	// Data section describe a list of time-series properties which should be processed
+	// on edge node.
+	// +optional
+	Data DeviceData `json:"data,omitempty"`
 	// NodeSelector indicates the binding preferences between devices and nodes.
 	// Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector for more details
 	// +optional
@@ -120,8 +125,10 @@ type ProtocolConfigBluetooth struct {
 type ProtocolConfigCustomized struct {
 	// Unique protocol name
 	// Required.
-	ProtocolName string           `json:"protocolName,omitempty"`
-	ConfigData   *CustomizedValue `json:"configData,omitempty"`
+	ProtocolName string `json:"protocolName,omitempty"`
+	// Any config data
+	// +optional
+	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
@@ -162,12 +169,12 @@ type TwinProperty struct {
 // These data should not be processed by edgecore. Instead, they can be process by
 // third-party data-processing apps like EMQX kuiper.
 type DeviceData struct {
-	// A list of data properties, which are not required to be processed by edgecore
-	// +optional
+	// Required: A list of data properties, which are not required to be processed by edgecore
 	DataProperties []DataProperty `json:"dataProperties,omitempty"`
 	// Topic used by mapper, all data collected from dataProperties
 	// should be published to this topic,
 	// the default value is $ke/events/device/+/data/update
+	// +optional
 	DataTopic string `json:"dataTopic,omitempty"`
 }
 
@@ -189,8 +196,10 @@ type DevicePropertyVisitor struct {
 	// device properties defined in the device model.
 	PropertyName string `json:"propertyName,omitempty"`
 	// Define how frequent mapper will report the value.
+	// +optional
 	ReportCycle int64 `json:"reportCycle,omitempty"`
 	// Define how frequent mapper will collect from device.
+	// +optional
 	CollectCycle int64 `json:"collectCycle,omitempty"`
 	// Required: Protocol relevant config details about the how to access the device property.
 	VisitorConfig `json:",inline"`
@@ -207,7 +216,6 @@ type Device struct {
 
 	Spec   DeviceSpec   `json:"spec,omitempty"`
 	Status DeviceStatus `json:"status,omitempty"`
-	Data   DeviceData   `json:"data,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

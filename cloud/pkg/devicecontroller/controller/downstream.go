@@ -350,8 +350,8 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 	}
 
 	deviceInstance.Twins = device.Status.Twins
-	deviceInstance.DataProperties = device.Data.DataProperties
-	deviceInstance.DataTopic = device.Data.DataTopic
+	deviceInstance.DataProperties = device.Spec.Data.DataProperties
+	deviceInstance.DataTopic = device.Spec.Data.DataTopic
 
 	addPropertyVisitorsToDeviceInstance(device, deviceInstance)
 
@@ -530,9 +530,9 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 				// update twins
 				devInst.Twins = device.Status.Twins
 				// update data
-				devInst.DataProperties = device.Data.DataProperties
+				devInst.DataProperties = device.Spec.Data.DataProperties
 				// update data topic
-				devInst.DataTopic = device.Data.DataTopic
+				devInst.DataTopic = device.Spec.Data.DataTopic
 				// update protocol
 				devInst.Protocol = deviceProtocol.Name
 				break
@@ -585,7 +585,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 				// update config map if spec, data or twins changed
 				if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
 					isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Data, &device.Data) {
+					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
 					dc.updateConfigMap(device)
 				}
 				// update twin properties
