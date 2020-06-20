@@ -35,7 +35,7 @@ func (p *HTTP) Process() {
 		req, err := http.ReadRequest(bufio.NewReader(p.Conn))
 		if err != nil {
 			if err == io.EOF {
-				klog.Infof("[EdgeMesh] http client disconnected.")
+				klog.V(2).Infof("[EdgeMesh] http client disconnected.")
 				return
 			}
 			klog.Errorf("[EdgeMesh] parse http request err: %v", err)

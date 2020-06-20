@@ -54,11 +54,6 @@ func (esd *EdgeServiceDiscovery) FindMicroServiceInstances(consumerID, microServ
 	if err != nil {
 		return nil, err
 	}
-	// get pods
-	pods, err := esd.getPods(name, namespace)
-	if err != nil {
-		return nil, err
-	}
 	// get targetPort
 	var targetPort int
 	for _, p := range service.Spec.Ports {
@@ -75,28 +70,18 @@ func (esd *EdgeServiceDiscovery) FindMicroServiceInstances(consumerID, microServ
 
 	// gen
 	var microServiceInstances []*registry.MicroServiceInstance
-	var hostPort int32
-	// all pods share the same hostport, get from pods[0]
-	if pods[0].Spec.HostNetwork {
-		// host network
-		hostPort = int32(targetPort)
-	} else {
-		// container network
-		for _, container := range pods[0].Spec.Containers {
-			for _, port := range container.Ports {
-				if port.ContainerPort == int32(targetPort) {
-					hostPort = port.HostPort
-				}
-			}
-		}
+
+	endpoint, err := esd.getEndpoints(name, namespace)
+	if err != nil {
+		return nil, err
 	}
-	for _, p := range pods {
-		if p.Status.Phase == v1.PodRunning {
+	for _, e := range endpoint.Subsets {
+		for _, addr := range e.Addresses {
 			microServiceInstances = append(microServiceInstances, &registry.MicroServiceInstance{
 				InstanceID:   "",
 				ServiceID:    name + "." + namespace,
 				HostName:     "",
-				EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", p.Status.HostIP, hostPort)},
+				EndpointsMap: map[string]string{"rest": fmt.Sprintf("%s:%d", addr.IP, targetPort)},
 			})
 		}
 	}
@@ -175,37 +160,30 @@ func (esd *EdgeServiceDiscovery) getService(name, namespace string) (*v1.Service
 	return svc, nil
 }
 
-// getPods get service pods from either lruCache or metaManager
-func (esd *EdgeServiceDiscovery) getPods(name, namespace string) ([]v1.Pod, error) {
-	var pods []v1.Pod
-	key := fmt.Sprintf("pods.%s.%s", namespace, name)
+// getEndpoints get service endpoints from either lruCache or metaManager
+func (esd *EdgeServiceDiscovery) getEndpoints(name, namespace string) (*v1.Endpoints, error) {
+	var endpoints *v1.Endpoints
+	key := fmt.Sprintf("endpoints.%s.%s", namespace, name)
 	// try to get from cache
 	v, ok := cache.GetMeshCache().Get(key)
 	if ok {
-		pods, ok = v.([]v1.Pod)
+		endpoints, ok = v.(*v1.Endpoints)
 		if !ok {
-			klog.Errorf("[EdgeMesh] pods %s from cache with invalid type", key)
-			return nil, fmt.Errorf("pods %s from cache with invalid type", key)
+			klog.Errorf("[EdgeMesh] endpoints %s from cache with invalid type", key)
+			return nil, fmt.Errorf("endpoints %s from cache with invalid type", key)
 		}
-		if len(pods) == 0 {
-			klog.Errorf("[EdgeMesh] pod list %s is empty", key)
-			return nil, fmt.Errorf("pod list %s is empty", key)
-		}
-		klog.Infof("[EdgeMesh] get pods %s from cache", key)
+		klog.Infof("[EdgeMesh] get endpoints %s from cache", key)
 	} else {
 		// get from metaClient
 		var err error
-		pods, err = esd.metaClient.Services(namespace).GetPods(name)
+		endpoints, err = esd.metaClient.Endpoints(namespace).Get(name)
 		if err != nil {
-			klog.Errorf("[EdgeMesh] get pods from metaClient failed, error: %v", err)
+			klog.Errorf("[EdgeMesh] get endpoints from metaClient failed, error: %v", err)
 			return nil, err
 		}
-		if len(pods) == 0 {
-			klog.Errorf("[EdgeMesh] pod list %s is empty", key)
-			return nil, fmt.Errorf("pod list %s is empty", key)
-		}
-		cache.GetMeshCache().Add(key, pods)
+
+		cache.GetMeshCache().Add(key, endpoints)
 		klog.Infof("[EdgeMesh] get pods %s from metaClient", key)
 	}
-	return pods, nil
+	return endpoints, nil
 }
