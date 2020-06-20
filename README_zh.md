@@ -81,7 +81,7 @@ KubeEdge 由以下组件构成:
 
 ## 路线图
 
-* [2020 Q2 Roadmap](./docs/getting-started/roadmap_zh.md#2020-q2-roadmap)
+* [2020 Q2 Roadmap](./docs/roadmap_zh.md#2020-q2-roadmap)
 
 ## 社区例会
 
