@@ -47,7 +47,7 @@ ifeq ($(HELP),y)
 verify:
 	@echo "$$VERIFY_HELP_INFO"
 else
-verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses
+verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses verify-copyright
 endif
 
 .PHONY: verify-golang
@@ -63,6 +63,9 @@ verify-codegen:
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
 	bash hack/verify-vendor-licenses.sh
+.PHONY: verify-copyright
+verify-copyright:
+	go run hack/copyright.go verify
 
 define TEST_HELP_INFO
 # run golang test case.
