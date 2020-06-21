@@ -94,6 +94,20 @@ type MsgTwin struct {
 	ActualVersion   *TwinVersion  `json:"actual_version,omitempty"`
 }
 
+// IsSynced validates if the messages are in SYNC
+func (m *MsgTwin) IsSynced() bool {
+	if m == nil {
+		return false
+	}
+	if m.Expected == nil && m.Actual == nil {
+		return true
+	}
+	if m.Expected != nil && m.Actual != nil {
+		return *m.Expected.Value == *m.Actual.Value
+	}
+	return false
+}
+
 //DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
@@ -106,7 +120,7 @@ type DeviceTwinResult struct {
 	Twin map[string]*MsgTwin `json:"twin"`
 }
 
-// HubclientInit create mqtt client config
+// HubClientInit create mqtt client config
 func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
 	if username != "" {
@@ -173,7 +187,7 @@ func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) {
 	}
 }
 
-//subscribe function subscribes  the device twin information through the MQTT broker
+// TwinSubscribe subscribe function subscribes the device twin information through the MQTT broker
 func TwinSubscribe(deviceID string) {
 	getTwinResult := DeviceETPrefix + deviceID + TwinETGetResultSuffix
 	TokenClient = Client.Subscribe(getTwinResult, 0, OnTwinMessageReceived)

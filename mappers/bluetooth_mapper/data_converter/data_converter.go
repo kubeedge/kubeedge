@@ -35,9 +35,19 @@ type Converter struct {
 	DataRead  DataRead  `yaml:"read"`
 }
 
-//dataWrite structure contains configuration information specific to data-writes
+//DataWrite structure contains configuration information specific to data-writes
 type DataWrite struct {
 	Attributes []WriteAttribute `yaml:"attributes"`
+}
+
+// GetByName get attribute by name
+func (d DataWrite) GetByName(name string) *WriteAttribute {
+	for _, converterAttribute := range d.Attributes {
+		if strings.EqualFold(converterAttribute.Name, name) {
+			return &converterAttribute
+		}
+	}
+	return nil
 }
 
 //WriteAttribute structure contains the name of the attribute as well as a data-map of values to be written
