@@ -6,6 +6,8 @@ import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -68,6 +70,9 @@ type SyncController struct {
 	deviceLister            devicelister.DeviceLister
 	clusterObjectSyncLister synclister.ClusterObjectSyncLister
 	objectSyncLister        synclister.ObjectSyncLister
+
+	// client
+	crdClient *versioned.Clientset
 }
 
 func newSyncController(enable bool) *SyncController {
@@ -123,7 +128,15 @@ func newSyncController(enable bool) *SyncController {
 		nodeLister:              nodeInformer.Lister(),
 		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
 		objectSyncLister:        objectSyncInformer.Lister(),
+
+		crdClient: crdClient,
 	}
+
+	sctl.nodeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: func(obj interface{}) {
+			sctl.deleteObjectSyncs()
+		},
+	})
 
 	return sctl
 }
@@ -177,6 +190,8 @@ func (sctl *SyncController) Start() {
 	}
 
 	go wait.Until(sctl.reconcile, 5*time.Second, beehiveContext.Done())
+
+	sctl.deleteObjectSyncs()
 }
 
 func (sctl *SyncController) reconcile() {
@@ -188,7 +203,7 @@ func (sctl *SyncController) reconcile() {
 
 	allObjectSyncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
-		klog.Errorf("Filed to list all the ObjectSyncs: %v", err)
+		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
 	sctl.manageObjectSync(allObjectSyncs)
 
@@ -221,6 +236,37 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 			klog.Errorf("Unsupported object kind: %v", sync.Spec.ObjectKind)
 		}
 	}
+}
+
+func (sctl *SyncController) deleteObjectSyncs() {
+	syncs, err := sctl.objectSyncLister.List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
+	}
+	for _, sync := range syncs {
+		nodeName := getNodeName(sync.Name)
+		isGarbage, err := sctl.checkObjectSync(sync)
+		if err != nil {
+			klog.Errorf("failed to check ObjectSync outdated, %s", err)
+		}
+		if isGarbage {
+			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
+			err = sctl.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(sync.Name, metav1.NewDeleteOptions(0))
+			if err != nil {
+				klog.Errorf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
+			}
+		}
+	}
+}
+
+// checkObjectSync checks whether objectSync is outdated
+func (sctl *SyncController) checkObjectSync(sync *v1alpha1.ObjectSync) (bool, error) {
+	nodeName := getNodeName(sync.Name)
+	_, err := sctl.nodeLister.Get(nodeName)
+	if errors.IsNotFound(err) {
+		return true, nil
+	}
+	return false, err
 }
 
 // BuildObjectSyncName builds the name of objectSync/clusterObjectSync
