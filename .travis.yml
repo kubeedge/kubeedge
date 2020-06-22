@@ -32,9 +32,12 @@ jobs:
         - export GO111MODULE=on
         - export GOFLAGS=-mod=mod
         - sudo apt-get install jq -y
+        - go get github.com/raviqqe/liche@0.2.0
+        # revert any changes to go.mod
+        - git checkout .
       script:
         - make verify
-        - make lint
+        - travis_retry make lint
 
     - stage: "Test on amd64"
       name: "build, smallbuild, crossbuild"

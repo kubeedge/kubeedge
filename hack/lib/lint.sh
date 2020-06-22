@@ -72,4 +72,9 @@ kubeedge::lint::check() {
     # only check format issue under staging dir
     echo "check any issue under staging dir by gofmt ..."
     gofmt -l -w staging
+
+    # check docs link
+    echo "check any broken links ..."
+    find . -mindepth 1 -maxdepth 1 -type d | grep -Ev "vendor|LICENSES|.git" | xargs -r -n2 -i{} liche --recursive {} --exclude "(technet.microsoft.com|istio|build.opensuse.org)" --document-root .
+    liche --document-root . README*
 }

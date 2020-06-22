@@ -569,7 +569,7 @@ status:
 ```
 
 ### Validation
-[Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation) can be used to guard against bad requests.
+[Open API v3 Schema based validation](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#validation) can be used to guard against bad requests.
 Invalid values for fields ( example string value for a boolean field etc) can be validated using this.
 In some cases , we also need custom validations (e.g create a device instance which refers to a non -existent device model ) .
 [Validation admission web hooks](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook) can be used to implement such custom validation rules.
