@@ -6,13 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 var (
@@ -64,7 +61,7 @@ func newGettokenOptions() *common.GettokenOptions {
 
 // queryToken gets token from k8s
 func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, error) {
-	client, err := kubeClient(kubeConfigPath)
+	client, err := util.KubeClient(kubeConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -82,26 +79,4 @@ func showToken(data []byte, out io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func kubeConfig(kubeconfigPath string) (conf *rest.Config, err error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		return nil, err
-	}
-	kubeConfig.QPS = float32(constants.DefaultKubeQPS)
-	kubeConfig.Burst = int(constants.DefaultKubeBurst)
-	kubeConfig.ContentType = constants.DefaultKubeContentType
-
-	return kubeConfig, nil
-}
-
-// KubeClient from config
-func kubeClient(kubeConfigPath string) (*kubernetes.Clientset, error) {
-	kubeConfig, err := kubeConfig(kubeConfigPath)
-	if err != nil {
-		klog.Warningf("get kube config failed with error: %s", err)
-		return nil, err
-	}
-	return kubernetes.NewForConfig(kubeConfig)
 }
