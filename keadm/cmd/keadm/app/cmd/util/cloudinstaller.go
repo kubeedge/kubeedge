@@ -181,6 +181,10 @@ func (cu *KubeCloudInstTool) TearDown() error {
 
 	//Kill cloudcore process
 	cu.KillKubeEdgeBinary(KubeCloudBinaryName)
-
+	// clean kubeedge namespace
+	err := cu.cleanNameSpace("kubeedge", cu.KubeConfig)
+	if err != nil {
+		return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
+	}
 	return nil
 }
