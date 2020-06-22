@@ -4,15 +4,22 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/config"
 )
 
-type sourcesReady struct{}
+type SourcesReadyFn func() bool
+
+type sourcesReady struct {
+	// sourcesReady is a function that evaluates if the sources are ready.
+	sourcesReadyFn SourcesReadyFn
+}
 
 func (s *sourcesReady) AddSource(source string) {}
 
 func (s *sourcesReady) AllReady() bool {
-	return true
+	return s.sourcesReadyFn()
 }
 
 //NewSourcesReady returns a new sourceready object
-func NewSourcesReady() config.SourcesReady {
-	return &sourcesReady{}
+func NewSourcesReady(sourcesReadyFn SourcesReadyFn) config.SourcesReady {
+	return &sourcesReady{
+		sourcesReadyFn: sourcesReadyFn,
+	}
 }
