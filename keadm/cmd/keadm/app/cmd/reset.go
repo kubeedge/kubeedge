@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -41,9 +42,18 @@ keadm reset
 `
 )
 
+func newResetOptions() *common.ResetOptions {
+	opts := &common.ResetOptions{}
+	opts.Kubeconfig = common.DefaultKubeConfig
+	return opts
+}
+
 // NewKubeEdgeReset represents the reset command
-func NewKubeEdgeReset(out io.Writer) *cobra.Command {
+func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 	IsEdgeNode := false
+	if reset == nil {
+		reset = newResetOptions()
+	}
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
@@ -69,22 +79,31 @@ func NewKubeEdgeReset(out io.Writer) *cobra.Command {
 
 			// Tear down edge node. It includes
 			// 1. killing edgecore process, but don't delete node from K8s
-			return TearDownKubeEdge(IsEdgeNode)
+			return TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig)
 		},
 	}
 
+	addResetFlags(cmd, reset)
 	return cmd
 }
 
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
-func TearDownKubeEdge(isEdgeNode bool) error {
+func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 	var ke types.ToolsInstaller
-	ke = &util.KubeCloudInstTool{Common: util.Common{}}
+	ke = &util.KubeCloudInstTool{Common: util.Common{KubeConfig: kubeConfig}}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
 
-	ke.TearDown()
+	err := ke.TearDown()
+	if err != nil {
+		return fmt.Errorf("TearDown failed, err:%v", err)
+	}
 	return nil
+}
+
+func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
+	cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
+		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 }
