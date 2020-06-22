@@ -41,6 +41,10 @@ type JoinOptions struct {
 	CertPort              string
 }
 
+type ResetOptions struct {
+	Kubeconfig string
+}
+
 type GettokenOptions struct {
 	Kubeconfig string
 }
