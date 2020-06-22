@@ -17,13 +17,18 @@ import (
 
 //EdgeMesh defines EdgeMesh object structure
 type EdgeMesh struct {
-	enable bool
+	enable        bool
+	interfaceAddr string
 }
 
 // Register register edgemesh
 func Register(m *v1alpha1.EdgeMesh) {
+	dns.Init(m.InterfaceAddr)
 	meshconfig.InitConfigure(m)
-	core.Register(&EdgeMesh{enable: m.Enable})
+	core.Register(&EdgeMesh{
+		enable:        m.Enable,
+		interfaceAddr: m.InterfaceAddr,
+	})
 }
 
 // Name returns the name of EdgeMesh module
@@ -52,7 +57,7 @@ func (em *EdgeMesh) Start() {
 	// start proxy listener
 	go listener.Start()
 	// start dns server
-	go dns.Start()
+	go dns.Start(em.interfaceAddr)
 	// we need watch message to update the cache of instances
 	for {
 		select {

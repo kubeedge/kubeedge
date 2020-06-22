@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 	"unsafe"
@@ -22,8 +23,7 @@ import (
 type Event int
 
 var (
-	// default docker0
-	ifi = "docker0"
+	ifi = "edgemesh"
 	// QR: 0 represents query, 1 represents response
 	dnsQR       = uint16(0x8000)
 	oneByteSize = uint16(1)
@@ -77,29 +77,47 @@ var metaClient client.CoreInterface
 // dnsConn saves DNS protocol
 var dnsConn *net.UDPConn
 
+//Init creates network interface
+func Init(addr string) {
+	// create a network interface
+	checkInterface := fmt.Sprintf("brctl show | grep %s 2>/dev/null", ifi)
+	cmd := &common.Command{Cmd: exec.Command("sh", "-c", checkInterface)}
+	cmd.ExecuteCommand()
+
+	if cmd.GetStdOutput() != "" {
+		recreateInterface := fmt.Sprintf("ifconfig %s %s", ifi, addr)
+		cmd := &common.Command{Cmd: exec.Command("sh", "-c", recreateInterface)}
+		cmd.ExecuteCommand()
+		if errout := cmd.GetStdErr(); errout != "" {
+			klog.Errorf("[EdgeMesh] failed to update interface address, err: %s", errout)
+		}
+	} else {
+		createInterface := fmt.Sprintf("brctl addbr %s && ifconfig %s %s up", ifi, ifi, addr)
+		cmd := &common.Command{Cmd: exec.Command("sh", "-c", createInterface)}
+		cmd.ExecuteCommand()
+		if errout := cmd.GetStdErr(); errout != "" {
+			klog.Errorf("[EdgeMesh] failed to create interface, err: %s", errout)
+		}
+	}
+}
+
 // Start is for external call
-func Start() {
-	startDNS()
+func Start(addr string) {
+	startDNS(addr)
 }
 
 // startDNS starts edgemesh dns server
-func startDNS() {
+func startDNS(addr string) {
 	// init meta client
 	metaClient = client.New()
-	// get dns listen ip
-	lip, err := common.GetInterfaceIP(ifi)
-	if err != nil {
-		klog.Errorf("[EdgeMesh] get dns listen ip err: %v", err)
-		return
-	}
 
-	laddr := &net.UDPAddr{
-		IP:   lip,
+	udpAddr := &net.UDPAddr{
+		IP:   net.ParseIP(addr),
 		Port: 53,
 	}
-	udpConn, err := net.ListenUDP("udp", laddr)
+	udpConn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		klog.Errorf("[EdgeMesh] dns server listen on %v error: %v", laddr, err)
+		klog.Errorf("[EdgeMesh] dns server listen on %v error: %v", udpAddr, err)
 		return
 	}
 	defer udpConn.Close()

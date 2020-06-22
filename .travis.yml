@@ -55,14 +55,20 @@ jobs:
     - name: "unit test, integration test edge"
       arch: amd64
       before_script:
+        - sudo apt-get install bridge-utils -y
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=mod
+        - git checkout .
+        # travis-ci own dns is too slow
+        - echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
       script:
         - make test
         - make integrationtest
     - name: "e2e test"
       arch: amd64
       before_script:
+        # travis-ci own dns is too slow
+        - echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
         - go mod vendor
@@ -71,7 +77,7 @@ jobs:
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
         - sudo apt-get update
-        - sudo apt-get install -y kubectl
+        - sudo apt-get install -y kubectl bridge-utils
       script:
         - travis_retry make e2e
     - name: "keadm e2e test"
@@ -80,7 +86,6 @@ jobs:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
         - go mod vendor
-        - export GOFLAGS=-mod=vendor
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list

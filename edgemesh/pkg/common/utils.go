@@ -1,10 +1,13 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
-	"net"
+	"io"
 	"os"
+	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/go-chassis/go-chassis/core/common"
 )
@@ -25,16 +28,73 @@ func SplitServiceKey(key string) (name, namespace string) {
 	return key, ns
 }
 
-func GetInterfaceIP(name string) (net.IP, error) {
-	ifi, err := net.InterfaceByName(name)
+//Command defines commands to be executed and captures std out and std error
+type Command struct {
+	Cmd    *exec.Cmd
+	StdOut []byte
+	StdErr []byte
+}
+
+//ExecuteCommand executes the command and captures the output in stdOut
+func (cm *Command) ExecuteCommand() {
+	var err error
+	cm.StdOut, err = cm.Cmd.Output()
 	if err != nil {
-		return nil, err
+		fmt.Println("Output failed: ", err)
+		cm.StdErr = []byte(err.Error())
 	}
-	addrs, _ := ifi.Addrs()
-	for _, addr := range addrs {
-		if ip, ipn, _ := net.ParseCIDR(addr.String()); len(ipn.Mask) == 4 {
-			return ip, nil
-		}
+}
+
+//GetStdOutput gets StdOut field
+func (cm Command) GetStdOutput() string {
+	if len(cm.StdOut) != 0 {
+		return strings.TrimRight(string(cm.StdOut), "\n")
 	}
-	return nil, fmt.Errorf("no ip of version 4 found for interface %s", name)
+	return ""
+}
+
+//GetStdErr gets StdErr field
+func (cm Command) GetStdErr() string {
+	if len(cm.StdErr) != 0 {
+		return strings.TrimRight(string(cm.StdErr), "\n")
+	}
+	return ""
+}
+
+//ExecuteCmdShowOutput captures both StdOut and StdErr after exec.cmd().
+//It helps in the commands where it takes some time for execution.
+func (cm Command) ExecuteCmdShowOutput() error {
+	var stdoutBuf, stderrBuf bytes.Buffer
+	stdoutIn, _ := cm.Cmd.StdoutPipe()
+	stderrIn, _ := cm.Cmd.StderrPipe()
+
+	var errStdout, errStderr error
+	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+	err := cm.Cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start '%s' because of error: %v", strings.Join(cm.Cmd.Args, " "), err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		_, errStdout = io.Copy(stdout, stdoutIn)
+		wg.Done()
+	}()
+
+	_, errStderr = io.Copy(stderr, stderrIn)
+	wg.Wait()
+
+	err = cm.Cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("failed to run '%s' because of error: %v", strings.Join(cm.Cmd.Args, " "), err)
+	}
+	if errStdout != nil || errStderr != nil {
+		return fmt.Errorf("failed to capture stdout or stderr")
+	}
+
+	cm.StdOut, cm.StdErr = stdoutBuf.Bytes(), stderrBuf.Bytes()
+	return nil
 }

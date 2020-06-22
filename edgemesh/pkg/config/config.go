@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
@@ -26,13 +25,7 @@ func InitConfigure(e *v1alpha1.EdgeMesh) {
 			EdgeMesh: *e,
 		}
 		if Config.Enable {
-			// get listen ip
-			var err error
-			Config.ListenIP, err = common.GetInterfaceIP(Config.ListenInterface)
-			if err != nil {
-				klog.Errorf("[EdgeMesh] get listen ip err: %v", err)
-				return
-			}
+			Config.ListenIP = net.ParseIP(e.InterfaceAddr)
 			// get listener
 			tmpPort := 0
 			listenAddr := &net.TCPAddr{

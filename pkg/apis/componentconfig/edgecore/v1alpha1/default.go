@@ -137,11 +137,11 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Enable: false,
 			},
 			EdgeMesh: &EdgeMesh{
-				Enable:          true,
-				LBStrategy:      EdgeMeshDefaultLoadBalanceStrategy,
-				ListenInterface: EdgeMeshDefaultInterface,
-				ListenPort:      EdgeMeshDefaultListenPort,
-				SubNet:          EdgeMeshDefaultSubNet,
+				Enable:        true,
+				LBStrategy:    EdgeMeshDefaultLoadBalanceStrategy,
+				InterfaceAddr: EdgeMeshDefaultInterfaceAddr,
+				ListenPort:    EdgeMeshDefaultListenPort,
+				SubNet:        EdgeMeshDefaultSubNet,
 			},
 			EdgeStream: &EdgeStream{
 				Enable:                  false,
