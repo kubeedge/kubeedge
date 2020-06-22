@@ -183,12 +183,4 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: make cloudimage
-
-      - run: make admissionimage
-
-      - run: make edgeimage ARCH="amd64"
-
-      - run: make edgesiteimage ARCH="amd64"
-
-      - run: make bluetoothdevice_image
+      - run: make image

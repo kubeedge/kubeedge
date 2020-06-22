@@ -256,66 +256,40 @@ clean:
 	hack/make-rules/clean.sh
 endif
 
+VERSION ?= $(shell git describe --tags)
 
-QEMU_ARCH ?= x86_64
-ARCH ?= amd64
-IMAGE_TAG ?= $(shell git describe --tags)
-GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
+IMAGES=cloudcore \
+  admission \
+  edgecore \
+  edgesite \
+  csidriver \
+  bluetooth
 
-.PHONY: cloudimage
-cloudimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
-
-.PHONY: admissionimage
-admissionimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
-
-.PHONY: csidriverimage
-csidriverimage:
-	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
-
-.PHONY: edgeimage
-edgeimage:
-	mkdir -p ./build/edge/tmp
-	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
-	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edge/Dockerfile .
-
-.PHONY: edgesiteimage
-edgesiteimage:
-	mkdir -p ./build/edgesite/tmp
-	rm -rf ./build/edgesite/tmp/*
-	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
-	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edgesite/Dockerfile .
+define IMAGE_HELP_INFO
+# Build images.
+#
+# Args:
+#   WHAT: component name to build. support: $(IMAGES)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make image
+#   make image HELP=y
+#   make image WHAT=cloudcore
+endef
+.PHONY: image
+ifeq ($(HELP),y)
+image:
+	@echo "$$IMAGE_HELP_INFO"
+else
+image:
+	hack/make-rules/image.sh $(WHAT)
+endif
 
 # Mappers
 .PHONY: bluetoothdevice
 bluetoothdevice: clean
 	hack/make-rules/bluetoothdevice.sh
-.PHONY: bluetoothdevice_image
-bluetoothdevice_image:bluetoothdevice
-	sudo docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
-
-.PHONY: modbusmapper
-modbusmapper: clean
-	hack/make-rules/modbusmapper.sh
-.PHONY: modbusmapper_image
-modbusmapper_image:modbusmapper
-	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
-
-.PHONY: mappers
-mappers:bluetoothdevice modbusmapper
-
 
 define INSTALL_HELP_INFO
 # install
