@@ -65,11 +65,7 @@ jobs:
 
       - run: make
 
-      - run: make bluetoothdevice
-
       - run: make smallbuild
-
-      - run: make crossbuild
 
       - run: make crossbuild GOARM=GOARM7
 

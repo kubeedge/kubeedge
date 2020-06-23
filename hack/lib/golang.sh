@@ -25,6 +25,7 @@ set -o pipefail
 
 YES="y"
 NO="n"
+KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
 kubeedge::version::get_version_info() {
 
@@ -150,6 +151,7 @@ kubeedge::check::env() {
 ALL_BINARIES_AND_TARGETS=(
   cloudcore:cloud/cmd/cloudcore
   admission:cloud/cmd/admission
+  csidriver:cloud/cmd/csidriver
   keadm:keadm/cmd/keadm
   edgecore:edge/cmd/edgecore
   edgesite:edgesite/cmd/edgesite
@@ -207,153 +209,58 @@ kubeedge::golang::build_binaries() {
   goldflags="${GOLDFLAGS=-s -w -buildid=} $(kubeedge::version::ldflags)"
   gogcflags="${GOGCFLAGS:-}"
 
-  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
+  local build_option=${BUILD_OPTION:-}
+  local dep=${DEP:-}
+
+  # do not build small binary in CI env
+  local enable_smallbuild=${ENABLE_SMALLBUILD:-No}
+  [[ ${enable_smallbuild} == "YES" ]] && goldflags="-w -s -extldflags -static $goldflags"
+
+  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH} .build
+
+  docker rm -f kubeedge_build &>/dev/null || true
+
+  docker run -itd --name kubeedge_build -v ${KUBEEDGE_ROOT}:/go/src/github.com/kubeedge/kubeedge \
+    -w /go/src/github.com/kubeedge/kubeedge golang:1.13-stretch
+
+  if [[ "${dep}" ]]; then
+    docker exec -i kubeedge_build bash -c "apt-get update && apt-get install -y ${dep}"
+  fi
+
   for bin in ${binaries[@]}; do
     echo "building $bin"
     local name="${bin##*/}"
-    set -x
-    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
-    set +x
+    # sqlite need cgo indeed
+    docker exec -i kubeedge_build bash -c "GOOS=linux CGO_ENABLED=1 ${build_option} \
+      go build -mod=vendor -o .build/${name} -gcflags '$gogcflags' -ldflags '$goldflags' $bin"
+    # do not build small binary in CI env
+    [[ ${enable_smallbuild} == "YES" ]] && upx-ucl -9 .build/${name}
   done
 
+  mv .build/* ${KUBEEDGE_OUTPUT_BINPATH}
+  docker rm -f kubeedge_build &>/dev/null
+  rm -rf .build
 }
 
+kubeedge::golang::crossbuild_binaries() {
+  case $ARCH in
+    arm)
+      BUILD_OPTION="CC=arm-linux-gnueabi-gcc GOARCH=arm GOARM=7" DEP="gcc-arm-linux-gnueabi" kubeedge::golang::build_binaries "$@"
+      ;;
+    arm64)
+      BUILD_OPTION="CC=aarch64-linux-gnu-gcc GOARCH=arm64" DEP="gcc-aarch64-linux-gnu" kubeedge::golang::build_binaries "$@"
+      ;;
+    *)
+      kubeedge::golang::build_binaries "$@"
+      ;;
+  esac
 
-KUBEEDGE_ALL_CROSS_BINARIES=(
-edgecore
-edgesite
-)
-
-kubeedge::golang::is_cross_build_binary() {
-  local key=$1
-  for bin in "${KUBEEDGE_ALL_CROSS_BINARIES[@]}" ; do
-    if [ "${bin}" == "${key}" ]; then
-      echo ${YES}
-      return
-    fi
-  done
-  echo ${NO}
-}
-
-KUBEEDGE_ALL_CROSS_GOARMS=(
-8
-7
-)
-
-kubeedge::golang::is_supported_goarm() {
-  local key=$1
-  for value in ${KUBEEDGE_ALL_CROSS_GOARMS[@]} ; do
-    if [ "${value}" == "${key}" ]; then
-      echo ${YES}
-      return
-    fi
-  done
-  echo ${NO}
-}
-
-kubeedge::golang::cross_build_place_binaries() {
-  kubeedge::check::env
-
-  local -a targets=()
-  local goarm=${goarm:-${KUBEEDGE_ALL_CROSS_GOARMS[0]}}
-
-  for arg in "$@"; do
-      if [[ "${arg}" == GOARM* ]]; then
-        # Assume arguments starting with a dash are flags to pass to go.
-        goarm="${arg##*GOARM}"
-      else
-        if [ "$(kubeedge::golang::is_cross_build_binary ${arg})" == "${NO}" ]; then
-          echo "${arg} does not support cross build"
-          exit 1
-        fi
-        targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
-      fi
-  done
-
-  if [[ ${#targets[@]} -eq 0 ]]; then
-    for bin in ${KUBEEDGE_ALL_CROSS_BINARIES[@]}; do
-        targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
-    done
-  fi
-
-  if [ "$(kubeedge::golang::is_supported_goarm ${goarm})" == "${NO}" ]; then
-    echo "GOARM${goarm} does not support cross build"
-    exit 1
-  fi
-
-  local -a binaries
-  while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
-
-  local ldflags
-  read -r ldflags <<< "$(kubeedge::version::ldflags)"
-
-  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
-  for bin in ${binaries[@]}; do
-    echo "cross buildding $bin GOARM${goarm}"
-    local name="${bin##*/}"
-    if [ "${goarm}" == "8" ]; then
-      set -x
-      GOARCH=arm64 GOOS="linux" CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
-      set +x
-    elif [ "${goarm}" == "7" ]; then
-      set -x
-      GOARCH=arm GOOS="linux" GOARM=${goarm} CGO_ENABLED=1 CC=arm-linux-gnueabi-gcc go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
-      set +x
-    fi
+  local arch_dir=${KUBEEDGE_OUTPUT_BINPATH}/${ARCH}
+  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}/${ARCH}
+  for file in ${KUBEEDGE_OUTPUT_BINPATH}/*; do
+    [[ -d $file ]] || mv -- ${file} ${arch_dir}/
   done
 }
-
-KUBEEDGE_ALL_SMALL_BINARIES=(
-edgecore
-edgesite
-)
-
-kubeedge::golang::is_small_build_binary() {
-  local key=$1
-  for bin in "${KUBEEDGE_ALL_SMALL_BINARIES[@]}" ; do
-    if [ "${bin}" == "${key}" ]; then
-      echo ${YES}
-      return
-    fi
-  done
-  echo ${NO}
-}
-
-kubeedge::golang::small_build_place_binaries() {
-  kubeedge::check::env
-  local -a targets=()
-
-  for arg in "$@"; do
-    if [ "$(kubeedge::golang::is_small_build_binary ${arg})" == "${NO}" ]; then
-      echo "${arg} does not support small build"
-      exit 1
-    fi
-    targets+=("$(kubeedge::golang::get_target_by_binary $arg)")
-  done
-
-  if [[ ${#targets[@]} -eq 0 ]]; then
-    for bin in ${KUBEEDGE_ALL_SMALL_BINARIES[@]}; do
-        targets+=("$(kubeedge::golang::get_target_by_binary $bin)")
-    done
-  fi
-
-  local -a binaries
-  while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
-
-  local ldflags
-  read -r ldflags <<< "$(kubeedge::version::ldflags)"
-
-  mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
-  for bin in ${binaries[@]}; do
-    echo "small building $bin"
-    local name="${bin##*/}"
-    set -x
-    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "-w -s -extldflags -static $ldflags" $bin
-    upx-ucl -9 ${KUBEEDGE_OUTPUT_BINPATH}/${name}
-    set +x
-  done
-}
-
 
 kubeedge::golang::get_cloud_test_dirs() {
   (
