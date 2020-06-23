@@ -560,7 +560,7 @@ func newEdged(enable bool) (*edged, error) {
 		false,
 		0,
 		0,
-		false,
+		true,
 		metav1.Duration{Duration: 100 * time.Millisecond},
 		runtimeService,
 		imageService,
