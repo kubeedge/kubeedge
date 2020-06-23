@@ -96,4 +96,16 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 
 ## Reset KubeEdge Master and Worker nodes
 
-`keadm reset` will stop KubeEdge components. It doesn't uninstall/remove any of the pre-requisites.
+### Master
+`keadm reset` will stop `cloudcore` and delete KubeEdge related resources from Kubernetes master like `kubeedge` namespace. It doesn't uninstall/remove any of the pre-requisites.
+
+It provides a flag for users to specify kubeconfig path, the default path is `/root/.kube/config`.
+
+ Example:
+
+```shell
+ # keadm reset --kube-config=$HOME/.kube/config
+```
+
+ ### Node
+`keadm reset` will stop `edgecore` and it doesn't uninstall/remove any of the pre-requisites.
