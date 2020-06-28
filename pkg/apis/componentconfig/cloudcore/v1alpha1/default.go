@@ -115,7 +115,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryVolumeAttachmentWorkers:      constants.DefaultQueryVolumeAttachmentWorkers,
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
-					DeletePodWorkers:                  constants.DefaultDeletePodBuffer,
+					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 				},
 			},
 			DeviceController: &DeviceController{
