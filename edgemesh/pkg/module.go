@@ -5,6 +5,8 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxier"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
@@ -53,12 +55,28 @@ func (em *EdgeMesh) Start() {
 	go listener.Start()
 	// start dns server
 	go dns.Start()
+
+	opts := proxier.NewOptions()
+	proxier, err := proxier.NewProxyServer(opts)
+	if err != nil {
+		klog.Fatal(err)
+	}
+
+	go func() {
+		if err := proxier.Run(); err != nil {
+			klog.Errorf("[EdgeMesh] failed to start proxier, err: %v", err)
+		}
+	}()
+
 	// we need watch message to update the cache of instances
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeMesh Stop")
 			proxy.Clean()
+			if err := proxier.CleanupAndExit(); err != nil {
+				klog.Errorf("[EdgeMesh] proxier failed to cleanup, err: %v", err)
+			}
 			return
 		default:
 		}
@@ -69,5 +87,7 @@ func (em *EdgeMesh) Start() {
 		}
 		klog.V(4).Infof("[EdgeMesh] get message: %v", msg)
 		listener.MsgProcess(msg)
+		klog.Warning("[EdgeMesh] proxier process msg")
+		proxier.MsgProcess(msg)
 	}
 }
