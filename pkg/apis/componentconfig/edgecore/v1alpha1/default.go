@@ -60,7 +60,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ClusterDomain:               "",
 				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
 				EdgedMemoryCapacity:         constants.DefaultEdgedMemoryCapacity,
-				PodSandboxImage:             constants.DefaultPodSandboxImage,
+				PodSandboxImage:             util.GetPodSandboxImage(),
 				ImagePullProgressDeadline:   constants.DefaultImagePullProgressDeadline,
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
 				HostnameOverride:            hostnameOverride,
