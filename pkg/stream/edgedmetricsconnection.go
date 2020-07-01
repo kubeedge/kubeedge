@@ -26,54 +26,45 @@ import (
 	"k8s.io/klog"
 )
 
-// EdgedConnection indicate the connection request to the edged
-type EdgedConnection interface {
-	CreateConnectMessage() (*Message, error)
-	Serve(tunnel SafeWriteTunneler) error
-	CacheTunnelMessage(msg *Message)
-	GetMessageID() uint64
-	fmt.Stringer
-}
-
-type EdgedLogsConnection struct {
+type EdgedMetricsConnection struct {
 	MessID   uint64        // message id
 	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
 	ReadChan chan *Message `json:"-"`
 }
 
-func (l *EdgedLogsConnection) GetMessageID() uint64 {
-	return l.MessID
+func (ms *EdgedMetricsConnection) GetMessageID() uint64 {
+	return ms.MessID
 }
 
-func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
-	l.ReadChan <- msg
+func (ms *EdgedMetricsConnection) CacheTunnelMessage(msg *Message) {
+	ms.ReadChan <- msg
 }
 
-func (l *EdgedLogsConnection) CreateConnectMessage() (*Message, error) {
-	data, err := json.Marshal(l)
+func (ms *EdgedMetricsConnection) CreateConnectMessage() (*Message, error) {
+	data, err := json.Marshal(ms)
 	if err != nil {
 		return nil, err
 	}
-	return NewMessage(l.MessID, MessageTypeLogsConnect, data), nil
+	return NewMessage(ms.MessID, MessageTypeMetricConnect, data), nil
 }
 
-func (l *EdgedLogsConnection) String() string {
-	return fmt.Sprintf("EDGE_LOGS_CONNECTOR Message MessageID %v", l.MessID)
+func (ms *EdgedMetricsConnection) String() string {
+	return fmt.Sprintf("EDGE_Metrics_CONNECTOR Message MessageID %v", ms.MessID)
 }
 
-func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
+func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	//connect edged
 	client := http.Client{}
-	req, err := http.NewRequest("GET", l.URL.String(), nil)
+	req, err := http.NewRequest("GET", ms.URL.String(), nil)
 	if err != nil {
-		klog.Errorf("create new logs request error %v", err)
+		klog.Errorf("create new metrics request error %v", err)
 		return err
 	}
-	req.Header = l.Header
+	req.Header = ms.Header
 	resp, err := client.Do(req)
 	if err != nil {
-		klog.Errorf("request logs error %v", err)
+		klog.Errorf("request metrics error %v", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -81,7 +72,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	stop := make(chan struct{})
 
 	go func() {
-		for mess := range l.ReadChan {
+		for mess := range ms.ReadChan {
 			if mess.MessageType == MessageTypeRemoveConnect {
 				klog.Infof("receive remove client id %v", mess.ConnectID)
 				close(stop)
@@ -92,9 +83,9 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
+			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
 			if err := msg.WriteTo(tunnel); err != nil {
-				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
+				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
 			} else {
 				break
 			}
@@ -104,20 +95,20 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	for scan.Scan() {
 		select {
 		case <-stop:
-			klog.Infof("receive stop single, so stop logs scan ...")
+			klog.Infof("receive stop single, so stop metrics scan ...")
 			return nil
 		default:
 		}
 		// 10 = \n
-		msg := NewMessage(l.MessID, MessageTypeData, append(scan.Bytes(), 10))
+		msg := NewMessage(ms.MessID, MessageTypeData, append(scan.Bytes(), 10))
 		err := msg.WriteTo(tunnel)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
 			return err
 		}
-		klog.Infof("%v write logs %v", l.String(), string(scan.Bytes()))
+		klog.Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
 	}
 	return nil
 }
 
-var _ EdgedConnection = &EdgedLogsConnection{}
+var _ EdgedConnection = &EdgedMetricsConnection{}
