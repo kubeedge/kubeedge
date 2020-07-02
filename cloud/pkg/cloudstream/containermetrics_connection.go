@@ -75,8 +75,8 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 		Header: ms.r.Request.Header,
 	}
 	targetPort := strings.Split(ms.r.Request.Host, ":")[1]
-	connector.URL.Scheme = "http"
-	connector.URL.Host = net.JoinHostPort("127.0.0.1", fmt.Sprintf("%v", targetPort))
+	connector.URL.Scheme = httpScheme
+	connector.URL.Host = net.JoinHostPort(defaultServerHost, targetPort)
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
 		return nil, err

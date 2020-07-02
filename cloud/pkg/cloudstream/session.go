@@ -63,7 +63,7 @@ func (s *Session) Serve() {
 	for {
 		t, r, err := s.tunnel.NextReader()
 		if err != nil {
-			klog.Errorf("get %v reader error %v", s, err)
+			klog.Errorf("get %v reader error %v", s.String(), err)
 			return
 		}
 		if t != websocket.TextMessage {

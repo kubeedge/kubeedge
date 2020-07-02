@@ -459,7 +459,12 @@ func newEdged(enable bool) (*edged, error) {
 	//create and start the docker shim running as a grpc server
 	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
 		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
-		streamingConfig := &streaming.Config{}
+		streamingConfig := &streaming.Config{
+			StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
+			SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
+			SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
+		}
+
 		DockerClientConfig := &dockershim.ClientConfig{
 			DockerEndpoint:            edgedconfig.Config.DockerAddress,
 			ImagePullProgressDeadline: time.Duration(edgedconfig.Config.ImagePullProgressDeadline) * time.Second,
@@ -477,7 +482,10 @@ func newEdged(enable bool) (*edged, error) {
 			MTU:                int(edgedconfig.Config.NetworkPluginMTU),
 		}
 
-		redirectContainerStream := redirectContainerStream
+		// TODO(daixiang0): Support RedirectContainerStreaming
+		// from k8s getStreamingConfig()
+		streamingConfig.Addr = net.JoinHostPort("localhost", "0")
+
 		cgroupDriver := ed.cgroupDriver
 
 		ds, err := dockershim.NewDockerService(DockerClientConfig,
@@ -487,7 +495,7 @@ func newEdged(enable bool) (*edged, error) {
 			cgroupName,
 			cgroupDriver,
 			DockershimRootDir,
-			redirectContainerStream)
+			true)
 
 		if err != nil {
 			return nil, err
