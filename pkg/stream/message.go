@@ -29,9 +29,9 @@ import (
 type MessageType uint64
 
 const (
-	MessageTypeLogsConnect   MessageType = iota
-	MessageTypeExecConnect   MessageType = iota
-	MessageTypeMetricConnect MessageType = iota
+	MessageTypeLogsConnect MessageType = iota
+	MessageTypeExecConnect
+	MessageTypeMetricConnect
 	MessageTypeData
 	MessageTypeRemoveConnect
 )
@@ -97,7 +97,7 @@ func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	klog.Infof("Receive Tunnel message Connectid %d messageType %s data:%v string:[%v]",
+	klog.V(6).Infof("Receive Tunnel message Connectid %d messageType %s data:%v string:[%v]",
 		connectID, MessageType(messageType), data, string(data))
 	return &Message{
 		ConnectID:   connectID,
