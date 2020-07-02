@@ -11,25 +11,25 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 )
 
-// UpgradeSPDYHandler is a handler for proxy requests that may require an upgrade
-type UpgradeSPDYHandler struct {
+// UpgradeHandler is a handler for proxy requests that may require an upgrade
+type UpgradeHandler struct {
 	// Responder is passed errors that occur while setting up proxying.
 	Responder awareproxy.ErrorResponder
 
 	Session *cloudstream.Session
 }
 
-// NewUpgradeSPDYHandler creates a new proxy handler with a default flush interval. Responder is required for returning
+// NewUpgradeHandler creates a new proxy handler with a default flush interval. Responder is required for returning
 // errors to the caller.
-func NewUpgradeSPDYHandler(s *cloudstream.Session) *UpgradeSPDYHandler {
-	return &UpgradeSPDYHandler{
+func NewUpgradeHandler(s *cloudstream.Session) *UpgradeHandler {
+	return &UpgradeHandler{
 		Session:   s,
 		Responder: &responder{},
 	}
 }
 
 // ServeHTTP handles the proxy request
-func (h *UpgradeSPDYHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *UpgradeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	if !httpstream.IsUpgradeRequest(req) {
 		klog.V(6).Infof("Request was not an upgrade")

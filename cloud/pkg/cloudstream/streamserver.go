@@ -25,11 +25,12 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/proxy"
+
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/proxy"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"
 )
 
@@ -133,19 +134,6 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	}
 }
 
-func (s *StreamServer) getExec(request *restful.Request, response *restful.Response) {
-
-	sessionKey := strings.Split(request.Request.Host, ":")[0]
-	session, ok := s.tunnel.getSession(sessionKey)
-	if !ok {
-		klog.Errorf("Exec: Can not find %v session ", sessionKey)
-		return
-	}
-
-	handler := proxy.NewUpgradeSPDYHandler(session)
-	handler.ServeHTTP(response.ResponseWriter, request.Request)
-}
-
 func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	var err error
 
@@ -187,6 +175,19 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 			metricsConnection.String(), session.String(), err)
 		return
 	}
+}
+
+func (s *StreamServer) getExec(request *restful.Request, response *restful.Response) {
+
+	sessionKey := strings.Split(request.Request.Host, ":")[0]
+	session, ok := s.tunnel.getSession(sessionKey)
+	if !ok {
+		klog.Errorf("Exec: Can not find %v session ", sessionKey)
+		return
+	}
+
+	handler := proxy.NewUpgradeHandler(session)
+	handler.ServeHTTP(response.ResponseWriter, request.Request)
 }
 
 func (s *StreamServer) Start() {
