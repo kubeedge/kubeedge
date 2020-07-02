@@ -96,7 +96,7 @@ application orchestration capabilities to hosts at Edge.
    contributing/message_topics
    Unit Test <contributing/unit_test_guide>
    Bluetooth Mapper E2E Test <contributing/bluetooth_mapper_e2e_guide>
-   EdgeMesh Test <contributing/edgemesh_test_env_guide>
+   contributing/edgemesh_guide
    Memory Footprint Test <contributing/memfootprint-test-setup>
 
 .. toctree::
