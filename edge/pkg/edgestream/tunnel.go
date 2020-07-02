@@ -60,6 +60,20 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	return logCon.Serve(s.Tunnel)
 }
 
+func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
+	execCon := &stream.EdgedExecConnection{
+		ReadChan: make(chan *stream.Message, 128),
+	}
+	if err := json.Unmarshal(m.Data, execCon); err != nil {
+		klog.Errorf("unmarshal connector data error %v", err)
+		return err
+	}
+
+	s.AddLocalConnection(m.ConnectID, execCon)
+	klog.V(6).Infof("Get Exec Connection info: %++v", *execCon)
+	return execCon.Serve(s.Tunnel)
+}
+
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	metricsCon := &stream.EdgedMetricsConnection{
 		ReadChan: make(chan *stream.Message, 128),
@@ -80,17 +94,19 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 			klog.Errorf("Serve Logs connection error %s", m.String())
 		}
 	case stream.MessageTypeExecConnect:
-		panic("TODO")
+		if err := s.serveContainerExecConnection(m); err != nil {
+			klog.Errorf("Serve Container Exec connection error %s", m.String())
+		}
 	case stream.MessageTypeMetricConnect:
 		if err := s.serveMetricsConnection(m); err != nil {
 			klog.Errorf("Serve Metrics connection error %s", m.String())
 		}
 	default:
-		panic(fmt.Errorf("Wrong message type %v", m.MessageType))
+		panic(fmt.Sprintf("Wrong message type %v", m.MessageType))
 	}
 
 	s.DeleteLocalConnection(m.ConnectID)
-	klog.Infof("Delete local connection MessageID %v Type %s", m.ConnectID, m.MessageType.String())
+	klog.V(6).Infof("Delete local connection MessageID %v Type %s", m.ConnectID, m.MessageType.String())
 }
 
 func (s *TunnelSession) Close() {
@@ -104,7 +120,7 @@ func (s *TunnelSession) Close() {
 
 func (s *TunnelSession) WriteToLocalConnection(m *stream.Message) {
 	if con, ok := s.GetLocalConnection(m.ConnectID); ok {
-		go con.CacheTunnelMessage(m)
+		con.CacheTunnelMessage(m)
 	}
 }
 
