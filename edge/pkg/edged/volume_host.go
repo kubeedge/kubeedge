@@ -139,10 +139,11 @@ func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface  { ret
 func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                    { return nil, nil }
 func (evh *edgedVolumeHost) GetNodeAllocatable() (api.ResourceList, error) { return nil, nil }
 func (evh *edgedVolumeHost) GetNodeLabels() (map[string]string, error) {
-	node, err := evh.edge.initialNode()
+	node, err := evh.edge.metaClient.Nodes("default").Get(evh.edge.nodeName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving node: %v", err)
+		return nil, err
 	}
+
 	return node.Labels, nil
 }
 func (evh *edgedVolumeHost) GetNodeName() types.NodeName { return types.NodeName(evh.edge.nodeName) }
