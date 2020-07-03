@@ -240,7 +240,7 @@ type edged struct {
 	dockerLegacyService dockershim.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
 	runner          kubecontainer.ContainerCommandRunner
-	podLastSyncTime map[types.UID]time.Time
+	podLastSyncTime sync.Map
 }
 
 // Register register edged
@@ -420,7 +420,6 @@ func newEdged(enable bool) (*edged, error) {
 		nodeIP:                    net.ParseIP(edgedconfig.Config.NodeIP),
 		recorder:                  recorder,
 		enable:                    enable,
-		podLastSyncTime:           make(map[types.UID]time.Time),
 	}
 
 	err := ed.makePodDir()
@@ -913,13 +912,17 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 
 	podUID := pod.GetUID()
-	curPodStatus, err := e.podCache.GetNewerThan(podUID, e.podLastSyncTime[podUID])
+	t, ok := e.podLastSyncTime.Load(podUID)
+	if !ok {
+		t = time.Time{}
+	}
+	curPodStatus, err := e.podCache.GetNewerThan(podUID, t.(time.Time))
 	if err != nil {
 		klog.Errorf("pod %s cache newer failed: %v", podName, err)
 		return err
 	}
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
-	e.podLastSyncTime[podUID] = time.Now()
+	e.podLastSyncTime.Store(podUID, time.Now())
 	if err := result.Error(); err != nil {
 		// Do not return error if the only failures were pods in backoff
 		for _, r := range result.SyncResults {
@@ -952,7 +955,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 		return err
 	}
 
-	delete(e.podLastSyncTime, pod.GetUID())
+	e.podLastSyncTime.Delete(pod.GetUID())
 	err = e.containerRuntime.KillPod(pod, kubecontainer.ConvertPodStatusToRunningPod(e.containerRuntimeName, podStatus), nil)
 	if err != nil {
 		if err == apis.ErrContainerNotFound {
