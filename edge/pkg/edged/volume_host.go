@@ -138,8 +138,14 @@ func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*ap
 func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface  { return nil }
 func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                    { return nil, nil }
 func (evh *edgedVolumeHost) GetNodeAllocatable() (api.ResourceList, error) { return nil, nil }
-func (evh *edgedVolumeHost) GetNodeLabels() (map[string]string, error)     { return nil, nil }
-func (evh *edgedVolumeHost) GetNodeName() types.NodeName                   { return types.NodeName(evh.edge.nodeName) }
+func (evh *edgedVolumeHost) GetNodeLabels() (map[string]string, error) {
+	node, err := evh.edge.initialNode()
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving node: %v", err)
+	}
+	return node.Labels, nil
+}
+func (evh *edgedVolumeHost) GetNodeName() types.NodeName { return types.NodeName(evh.edge.nodeName) }
 func (evh *edgedVolumeHost) GetPodVolumeDeviceDir(podUID types.UID, pluginName string) string {
 	return ""
 }
