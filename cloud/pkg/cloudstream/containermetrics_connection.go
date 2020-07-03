@@ -35,7 +35,7 @@ type ContainerMetricsConnection struct {
 	MessageID    uint64
 	ctx          context.Context
 	r            *restful.Request
-	flush        io.Writer
+	writer       io.Writer
 	session      *Session
 	edgePeerStop chan struct{}
 }
@@ -53,7 +53,7 @@ func (ms *ContainerMetricsConnection) EdgePeerDone() <-chan struct{} {
 }
 
 func (ms *ContainerMetricsConnection) WriteToAPIServer(p []byte) (n int, err error) {
-	return ms.flush.Write(p)
+	return ms.writer.Write(p)
 }
 
 func (ms *ContainerMetricsConnection) WriteToTunnel(m *stream.Message) error {
