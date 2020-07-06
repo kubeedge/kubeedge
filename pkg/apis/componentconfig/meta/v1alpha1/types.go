@@ -28,10 +28,9 @@ const (
 
 // Available modules for EdgeCore
 const (
-	ModuleNameEventBus   ModuleName = "eventbus"
-	ModuleNameServiceBus ModuleName = "servicebus"
-	// TODO @kadisi change websocket to edgehub
-	ModuleNameEdgeHub     ModuleName = "websocket"
+	ModuleNameEventBus    ModuleName = "eventbus"
+	ModuleNameServiceBus  ModuleName = "servicebus"
+	ModuleNameEdgeHub     ModuleName = "edgehub"
 	ModuleNameMetaManager ModuleName = "metaManager"
 	ModuleNameEdged       ModuleName = "edged"
 	ModuleNameTwin        ModuleName = "twin"

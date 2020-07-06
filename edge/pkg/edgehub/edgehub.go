@@ -14,12 +14,13 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	metaV1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 //define edgehub module name
 const (
-	ModuleNameEdgeHub = "websocket"
+	ModuleNameEdgeHub = string(metaV1.ModuleNameEdgeHub)
 )
 
 var HasTLSTunnelCerts = make(chan bool, 1)

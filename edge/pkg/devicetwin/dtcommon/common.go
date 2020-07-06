@@ -99,7 +99,7 @@ const (
 	// TwinModule twin module
 	TwinModule = "TwinModule"
 	// HubModule the name of hub module
-	HubModule = "websocket"
+	HubModule = "edgehub"
 	// EventHubModule the name of event hub module
 	EventHubModule = "eventbus"
 	// DeviceTwinModule the name of twin module
