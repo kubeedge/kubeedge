@@ -22,9 +22,6 @@ package edged
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -34,8 +31,13 @@ import (
 	"k8s.io/kubernetes/pkg/util/removeall"
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
-	utilio "k8s.io/utils/io"
-	"k8s.io/utils/mount"
+)
+
+const (
+	procMountsPath = "/proc/mounts"
+	listTryTime    = 3
+	// mount info field length
+	expectedNumFieldsPerLine = 6
 )
 
 // newVolumeMounterFromPlugins attempts to find a plugin by volume spec, pod
@@ -87,33 +89,26 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 		// If there are still volume directories, do not delete directory
 		volumePaths, err := e.getPodVolumePathListFromDisk(uid)
 		if err != nil {
-			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but error %v occurred during reading volume dir from disk", uid, err))
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("orphaned pod %q found, but error %v occurred during reading volume dir from disk", uid, err))
 			continue
 		}
 		if len(volumePaths) > 0 {
-			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but volume paths are still present on disk", uid))
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("orphaned pod %q found, but volume paths are still present on disk", uid))
 			continue
 		}
 
-		// TODO: by paas group
-		// k8s has no cleanupMoutPoints, what the purpose of this method?
-		// can be contributed?
-		klog.Infof("Clearing up volume directories of orphaned pod %q.", uid)
-		if err := e.cleanupMountPoints(e.getPodVolumesDir(uid)); err != nil {
-			klog.Warningf("Failed to clearing up volume mount points of pod %q: %s.", uid, err)
-		}
 		// If there are any volume-subpaths, do not cleanup directories
 		volumeSubpathExists, err := e.podVolumeSubpathsDirExists(uid)
 		if err != nil {
-			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but error %v occurred during reading of volume-subpaths dir from disk", uid, err))
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("orphaned pod %q found, but error %v occurred during reading of volume-subpaths dir from disk", uid, err))
 			continue
 		}
 		if volumeSubpathExists {
-			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("Orphaned pod %q found, but volume subpaths are still present on disk", uid))
+			orphanVolumeErrors = append(orphanVolumeErrors, fmt.Errorf("orphaned pod %q found, but volume subpaths are still present on disk", uid))
 			continue
 		}
 
-		klog.Infof("Orphaned pod %q found, removing", uid)
+		klog.V(3).Infof("Orphaned pod %q found, removing", uid)
 		if err := removeall.RemoveAllOneFilesystem(e.mounter, e.getPodDir(uid)); err != nil {
 			klog.Errorf("Failed to remove orphaned pod %q dir; err: %v", uid, err)
 			orphanRemovalErrors = append(orphanRemovalErrors, err)
@@ -134,25 +129,6 @@ func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*
 	return utilerrors.NewAggregate(orphanRemovalErrors)
 }
 
-// cleanMountPoints traverses the volume directory to find out all mount points and umount them
-func (e *edged) cleanupMountPoints(volumeDir string) error {
-	mounter := mount.New("")
-	mountPoints, err := listProcMounts(volumeDir)
-	if err != nil {
-		return err
-	}
-	errlist := []error{}
-	for _, mp := range mountPoints {
-		if err := mounter.Unmount(mp.Path); err != nil {
-			errlist = append(errlist, err)
-		}
-	}
-	if len(errlist) != 0 {
-		return utilerrors.NewAggregate(errlist)
-	}
-	return nil
-}
-
 // podVolumesExist checks with the volume manager and returns true any of the
 // pods for the specified volume are mounted.
 func (e *edged) podVolumesExist(podUID types.UID) bool {
@@ -163,48 +139,4 @@ func (e *edged) podVolumesExist(podUID types.UID) bool {
 	}
 
 	return false
-}
-
-// listProcMounts is come from k8s.io\kubernetes\pkg\util\mount.listProcMounts
-func listProcMounts(mountFilePath string) ([]mount.MountPoint, error) {
-	listTryTime, expectedNumFieldsPerLine := 3, 6
-	content, err := utilio.ConsistentRead(mountFilePath, listTryTime)
-	if err != nil {
-		return nil, err
-	}
-
-	out := []mount.MountPoint{}
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
-		if line == "" {
-			// the last split() item is empty string following the last \n
-			continue
-		}
-		fields := strings.Fields(line)
-		if len(fields) != expectedNumFieldsPerLine {
-			return nil, fmt.Errorf("wrong number of fields (expected %d, got %d): %s", expectedNumFieldsPerLine, len(fields), line)
-		}
-
-		mp := mount.MountPoint{
-			Device: fields[0],
-			Path:   fields[1],
-			Type:   fields[2],
-			Opts:   strings.Split(fields[3], ","),
-		}
-
-		freq, err := strconv.Atoi(fields[4])
-		if err != nil {
-			return nil, err
-		}
-		mp.Freq = freq
-
-		pass, err := strconv.Atoi(fields[5])
-		if err != nil {
-			return nil, err
-		}
-		mp.Pass = pass
-
-		out = append(out, mp)
-	}
-	return out, nil
 }
