@@ -241,7 +241,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		}
 	}
 	if !checkModelExists {
-		addDeviceModelAndVisitors(deviceModel, deviceProfile)
+		addDeviceModelAndVisitors(deviceModel,device, deviceProfile)
 	}
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
@@ -252,7 +252,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 }
 
 // addDeviceModelAndVisitors adds deviceModels and deviceVisitors in configMap
-func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile *types.DeviceProfile) {
+func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel,device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
 	model.Properties = make([]*types.Property, 0)
@@ -281,7 +281,13 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel, deviceProfile 
 		propertyVisitor.PropertyName = pptv.PropertyName
 		propertyVisitor.ModelName = deviceModel.Name
 		if pptv.Modbus != nil {
-			propertyVisitor.Protocol = Modbus
+			if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil{
+				propertyVisitor.Protocol = ModbusTCP
+			} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil{
+				propertyVisitor.Protocol = ModbusRTU
+			}else {
+				propertyVisitor.Protocol = Modbus
+			}
 			propertyVisitor.VisitorConfig = pptv.Modbus
 		} else if pptv.OpcUA != nil {
 			propertyVisitor.Protocol = OPCUA

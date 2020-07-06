@@ -8,6 +8,11 @@ function bitArrayToInt(bitArr, callback) {
     let bitStr = '';
     if (bitArr.length > 0 && bitArr.length < 64) {
         for (let i = 0; i < bitArr.length; i++){
+            if (bitArr[i] == false){
+                bitArr[i] = 0
+            } else if (bitArr[i] == true){
+                bitArr[i] = 1
+            }
             bitStr = bitStr + bitArr[i].toString();
         }
         num = parseInt(bitStr,2);

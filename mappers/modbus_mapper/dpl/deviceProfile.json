@@ -10,7 +10,7 @@
             "name": "temperature",
             "minimum": 0,
             "maximum": 100,
-            "datatype": "int",
+            "dataType": "int",
             "accessMode": "rw"
         }],
         "name": "modbus-mock-model",

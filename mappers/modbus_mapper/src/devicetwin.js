@@ -23,6 +23,7 @@ class DeviceTwin {
                     callback(null, data);
                 }
             },
+
             function(internalData, callback) {
                 if (visitor.visitorConfig.isSwap && (visitor.visitorConfig.register === 'HoldingRegister' || visitor.visitorConfig.register === 'InputRegister')) {
                     common.switchByte(internalData, (switchedData)=>{
@@ -107,7 +108,7 @@ class DeviceTwin {
                 }
             },
             metadata: {
-                tyep: property.dataType
+                type: property.dataType
             }
         };
         reply_msg.twin = twin;

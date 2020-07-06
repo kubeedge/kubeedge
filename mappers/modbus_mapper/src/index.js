@@ -261,7 +261,7 @@ WatchFiles.watchChange(path.join(__dirname, 'dpl'), ()=>{
 logger.info('start to check devicetwin state');
 setInterval(()=>{
     let dt = new DeviceTwin(mqtt_client);
-    logger.info('chechking devicetwin state');
+    logger.info('checking devicetwin state');
     for (let instance of devIns) {
         if (devPro.has(instance[0])) {
             let protocol = devPro.get(instance[0]);
@@ -277,6 +277,7 @@ function syncDeviceTwin(dt, key, protocol, actuals) {
         let visitor;
         if (typeof(protocol) != 'undefined') {
             modbusProtocolTransfer(protocol.protocol, (transferedProtocol)=>{
+                transferedProtocol = 'modbus-tcp'
                 if (devIns.has(key) && modVistr.has(util.format('%s-%s-%s', devIns.get(key).model, property.name, transferedProtocol))) {
                     visitor = modVistr.get(util.format('%s-%s-%s', devIns.get(key).model, property.name, transferedProtocol));
                 } else {
@@ -319,7 +320,7 @@ function dealDeltaMsg(msg, key, visitor, protocol, value) {
 
 function modbusProtocolTransfer(protocol, callback) {
     let transferedProtocol;
-    if (protocol === 'modbus-rtu' || protocol === 'modbus-tcp') {
+    if (protocol.slice(0,10) == 'modbus-rtu' || protocol.slice(0,10) === 'modbus-tcp') {
         transferedProtocol = 'modbus';
     } else {
         transferedProtocol = protocol;
