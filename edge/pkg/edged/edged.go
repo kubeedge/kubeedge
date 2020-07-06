@@ -131,7 +131,9 @@ const (
 	imageGcHighThreshold = "edged.image-gc-high-threshold"
 	syncMsgRespTimeout   = 1 * time.Minute
 	//DefaultRootDir give default directory
-	DefaultRootDir                   = "/var/lib/edged"
+	DefaultRootDir = "/var/lib/edged"
+	// ContainerLogsDir is the location of container logs.
+	ContainerLogsDir                 = "/var/log/containers"
 	workerResyncIntervalJitterFactor = 0.5
 	//EdgeController gives controller name
 	EdgeController = "edgecontroller"
@@ -679,7 +681,12 @@ func (e *edged) initializeModules() error {
 		klog.Errorf("Failed to initialNode %v", err)
 		return err
 	}
-
+	// If the container logs directory does not exist, create it.
+	if _, err := os.Stat(ContainerLogsDir); err != nil {
+		if err := e.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
+			klog.Errorf("Failed to create directory %q: %v", ContainerLogsDir, err)
+		}
+	}
 	// containerManager must start after cAdvisor because it needs filesystem capacity information
 	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
