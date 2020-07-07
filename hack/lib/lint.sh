@@ -27,7 +27,7 @@ kubeedge::lint::check() {
     git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor|images|adopters" | xargs --no-run-if-empty sed -i 's/[ \t]*$//'
 
     [[ $(git diff --name-only) ]] && {
-      echo "Some files have white noise issue, please run \`make lint\` to check"
+      echo "Some files have white noise issue, please run \`make lint\` to slove this issue"
       return 1
     }
     golangci-lint run
