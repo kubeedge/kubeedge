@@ -39,6 +39,10 @@ type DownstreamController struct {
 
 	endpointsManager *manager.EndpointsManager
 
+	persistentvolumsManager *manager.PersistentvolumeManager
+
+	persistentvolumclaimsManager *manager.PersistentvolumeclaimManager
+
 	lc *manager.LocationCache
 }
 
@@ -438,6 +442,115 @@ func (dc *DownstreamController) syncEndpoints() {
 		}
 	}
 }
+func (dc *DownstreamController) syncPersistentvolumes() {
+	var operation string
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("Stop edgecontroller downstream syncPersistentvolumes loop")
+			return
+		case e := <-dc.persistentvolumsManager.Events():
+			pv, ok := e.Object.(*v1.PersistentVolume)
+			if !ok {
+				klog.Warningf("Object type: %T unsupported", pv)
+				continue
+			}
+			switch e.Type {
+			case watch.Added:
+				dc.lc.AddOrUpdatePersistentVolume(*pv)
+				operation = model.InsertOperation
+			case watch.Modified:
+				dc.lc.AddOrUpdatePersistentVolume(*pv)
+				operation = model.UpdateOperation
+			case watch.Deleted:
+				dc.lc.DeletePersistentVolume(*pv)
+				operation = model.DeleteOperation
+			default:
+				// unsupported operation, no need to send to any node
+				klog.Warningf("persistentVolume event type: %s unsupported", e.Type)
+				continue
+			}
+			// send to all nodes
+			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
+				nodeName, ok := key.(string)
+				if !ok {
+					klog.Warning("Failed to assert key to sting")
+					return true
+				}
+				msg := model.NewMessage("")
+				msg.SetResourceVersion(pv.ResourceVersion)
+				resource, err := messagelayer.BuildResource(nodeName, pv.Namespace, common.ResourceTypePersistentVolume, pv.Name)
+				if err != nil {
+					klog.Warningf("Built message resource failed with error: %v", err)
+					return true
+				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
+				msg.Content = pv
+				if err := dc.messageLayer.Send(*msg); err != nil {
+					klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				} else {
+					klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				}
+				return true
+			})
+		}
+	}
+}
+
+func (dc *DownstreamController) syncPersistentvolumclaims() {
+	var operation string
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("Stop edgecontroller downstream syncPersistentvolumclaims loop")
+			return
+		case e := <-dc.persistentvolumclaimsManager.Events():
+			pvc, ok := e.Object.(*v1.PersistentVolumeClaim)
+			if !ok {
+				klog.Warningf("Object type: %T unsupported", pvc)
+				continue
+			}
+			switch e.Type {
+			case watch.Added:
+				dc.lc.AddOrUpdatePersistentvolumeclaim(*pvc)
+				operation = model.InsertOperation
+			case watch.Modified:
+				dc.lc.AddOrUpdatePersistentvolumeclaim(*pvc)
+				operation = model.UpdateOperation
+			case watch.Deleted:
+				dc.lc.DeletePersistentvolumeclaim(*pvc)
+				operation = model.DeleteOperation
+			default:
+				// unsupported operation, no need to send to any node
+				klog.Warningf("Persistentvolumclaim event type: %s unsupported", e.Type)
+				continue
+			}
+			// send to all nodes
+			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
+				nodeName, ok := key.(string)
+				if !ok {
+					klog.Warning("Failed to assert key to sting")
+					return true
+				}
+				msg := model.NewMessage("")
+				msg.SetResourceVersion(pvc.ResourceVersion)
+				resource, err := messagelayer.BuildResource(nodeName, pvc.Namespace, common.ResourceTypePersistentVolumeClaim, pvc.Name)
+				if err != nil {
+					klog.Warningf("Built message resource failed with error: %v", err)
+					return true
+				}
+				msg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, operation)
+				msg.Content = pvc
+				if err := dc.messageLayer.Send(*msg); err != nil {
+					klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				} else {
+					klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				}
+				return true
+			})
+		}
+	}
+}
 
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
@@ -460,6 +573,11 @@ func (dc *DownstreamController) Start() error {
 	// endpoints
 	go dc.syncEndpoints()
 
+	//persistentvolumes
+	go dc.syncPersistentvolumes()
+
+	//persistentvolumeclaims
+	go dc.syncPersistentvolumclaims()
 	return nil
 }
 
@@ -559,16 +677,29 @@ func NewDownstreamController() (*DownstreamController, error) {
 		return nil, err
 	}
 
+	persistentvolumsManager, err := manager.NewPersistentvolumeManager(cli, v1.NamespaceAll)
+	if err != nil {
+		klog.Warningf("Create persistentvolums manager failed with error: %s", err)
+		return nil, err
+	}
+
+	persistentvolumclaimsManager, err := manager.NewPersistentvolumeclaimManager(cli, v1.NamespaceAll)
+	if err != nil {
+		klog.Warningf("Create persistentvolumclaims manager failed with error: %s", err)
+		return nil, err
+	}
 	dc := &DownstreamController{
-		kubeClient:       cli,
-		podManager:       podManager,
-		configmapManager: configMapManager,
-		secretManager:    secretManager,
-		nodeManager:      nodesManager,
-		serviceManager:   serviceManager,
-		endpointsManager: endpointsManager,
-		messageLayer:     messagelayer.NewContextMessageLayer(),
-		lc:               lc,
+		kubeClient:                   cli,
+		podManager:                   podManager,
+		configmapManager:             configMapManager,
+		secretManager:                secretManager,
+		nodeManager:                  nodesManager,
+		serviceManager:               serviceManager,
+		endpointsManager:             endpointsManager,
+		persistentvolumsManager:      persistentvolumsManager,
+		persistentvolumclaimsManager: persistentvolumclaimsManager,
+		messageLayer:                 messagelayer.NewContextMessageLayer(),
+		lc:                           lc,
 	}
 	if err := dc.initLocating(); err != nil {
 		return nil, err

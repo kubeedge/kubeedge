@@ -22,6 +22,10 @@ type LocationCache struct {
 	endpoints sync.Map
 	// servicePods is a map, key is namespace/serviceName, value is []v1.Pod
 	servicePods sync.Map
+	// persistentvolume is a map, key is namespace/persistentvolumeName, value is v1.persistentvolume
+	persistentvolume sync.Map
+	// persistentvolumeclaim is a map, key is namespace/persistentvolumeclaimName, value is v1.persistentvolumeclaim
+	persistentvolumeclaim sync.Map
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -211,6 +215,26 @@ func (lc *LocationCache) AddOrUpdateEndpoints(endpoints v1.Endpoints) {
 // DeleteEndpoints in cache
 func (lc *LocationCache) DeleteEndpoints(endpoints v1.Endpoints) {
 	lc.endpoints.Delete(fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name))
+}
+
+// AddOrUpdatePersistentVolume in cache
+func (lc *LocationCache) AddOrUpdatePersistentVolume(persistentVolume v1.PersistentVolume) {
+	lc.persistentvolume.Store(fmt.Sprintf("%s/%s", persistentVolume.Namespace, persistentVolume.Name), persistentVolume)
+}
+
+// AddOrUpdatePersistentVolume in cache
+func (lc *LocationCache) DeletePersistentVolume(persistentVolume v1.PersistentVolume) {
+	lc.persistentvolume.Delete(fmt.Sprintf("%s/%s", persistentVolume.Namespace, persistentVolume.Name))
+}
+
+// AddOrUpdatePersistentvolumeclaim in cache
+func (lc *LocationCache) AddOrUpdatePersistentvolumeclaim(persistentvolumeclaim v1.PersistentVolumeClaim) {
+	lc.persistentvolumeclaim.Store(fmt.Sprintf("%s/%s", persistentvolumeclaim.Namespace, persistentvolumeclaim.Name), persistentvolumeclaim)
+}
+
+// AddOrUpdatePersistentvolumeclaim in cache
+func (lc *LocationCache) DeletePersistentvolumeclaim(persistentvolumeclaim v1.PersistentVolumeClaim) {
+	lc.persistentvolumeclaim.Delete(fmt.Sprintf("%s/%s", persistentvolumeclaim.Namespace, persistentvolumeclaim.Name))
 }
 
 // IsEndpointsUpdated checks if endpoints is actually updated
