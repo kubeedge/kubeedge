@@ -241,7 +241,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 		}
 	}
 	if !checkModelExists {
-		addDeviceModelAndVisitors(deviceModel,device, deviceProfile)
+		addDeviceModelAndVisitors(deviceModel,device,deviceProfile)
 	}
 	bytes, err := json.Marshal(deviceProfile)
 	if err != nil {
@@ -252,7 +252,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha1.Device, config
 }
 
 // addDeviceModelAndVisitors adds deviceModels and deviceVisitors in configMap
-func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel,device *v1alpha1.Device, deviceProfile *types.DeviceProfile) {
+func addDeviceModelAndVisitors(deviceModel *v1alpha1.DeviceModel,device *v1alpha1.Device,deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
 	model.Properties = make([]*types.Property, 0)
