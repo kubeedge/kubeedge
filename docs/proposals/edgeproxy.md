@@ -53,6 +53,7 @@ Support accessing CRD-api.
 ## Design detail for alpha
 ### Architecture
    ![EdgeProxy.png](../images/edgeproxy/EdgeProxy.jpg)
+   
    **EdgeProxy**:Module which receives client requests directly,
    dispatchs request by request type
    
@@ -93,6 +94,7 @@ Support accessing CRD-api.
    4. handler.XXXResouce can complete the request response according to the corresponding interface.
 #### Specical design for the watch
    ![EdgeProxy-request.png](../images/edgeproxy/EdgeProxy-Watch.png) 
+   
    The watch request is a process of long connection and the server pushes messages. The detailed operation diagram of the push message is as above
    
    **Steps**:
