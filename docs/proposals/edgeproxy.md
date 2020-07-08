@@ -1,5 +1,5 @@
 ---
-title: CloudCore HA Design
+title: EdgeProxy Design
 authors:
   - "@threestoneliu"
   - "@GsssC"
