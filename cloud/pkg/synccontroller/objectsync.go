@@ -106,6 +106,50 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 	sendEvents(err, nodeName, sync, commonconst.ResourceTypeService, service.ResourceVersion, service)
 }
 
+func (sctl *SyncController) managePersistentvolume(sync *v1alpha1.ObjectSync) {
+	persistentvolume, err := sctl.persistentvolumeLister.Get(sync.Spec.ObjectName)
+
+	nodeName := getNodeName(sync.Name)
+
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			persistentvolume = &v1.PersistentVolume{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage persistentvolume sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
+	}
+	sendEvents(err, nodeName, sync, commonconst.ResourceTypePersistentVolume, persistentvolume.ResourceVersion, persistentvolume)
+}
+
+func (sctl *SyncController) managePersistentvolumeclaim(sync *v1alpha1.ObjectSync) {
+	persistentvolumeclaim, err := sctl.persistentvolumeclaimLister.PersistentVolumeClaims(sync.Namespace).Get(sync.Spec.ObjectName)
+
+	nodeName := getNodeName(sync.Name)
+
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			persistentvolumeclaim = &v1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      sync.Spec.ObjectName,
+					Namespace: sync.Namespace,
+					UID:       types.UID(getObjectUID(sync.Name)),
+				},
+			}
+		} else {
+			klog.Errorf("Failed to manage persistentvolumeclaim sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
+			return
+		}
+	}
+	sendEvents(err, nodeName, sync, commonconst.ResourceTypePersistentVolumeClaim, persistentvolumeclaim.ResourceVersion, persistentvolumeclaim)
+}
+
 func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
 	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 

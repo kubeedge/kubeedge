@@ -39,37 +39,43 @@ type SyncController struct {
 	enable bool
 
 	// informer
-	podInformer               coreinformers.PodInformer
-	configMapInformer         coreinformers.ConfigMapInformer
-	secretInformer            coreinformers.SecretInformer
-	serviceInformer           coreinformers.ServiceInformer
-	endpointInformer          coreinformers.EndpointsInformer
-	nodeInformer              coreinformers.NodeInformer
-	deviceInformer            deviceinformer.DeviceInformer
-	clusterObjectSyncInformer syncinformer.ClusterObjectSyncInformer
-	objectSyncInformer        syncinformer.ObjectSyncInformer
+	podInformer                   coreinformers.PodInformer
+	configMapInformer             coreinformers.ConfigMapInformer
+	secretInformer                coreinformers.SecretInformer
+	serviceInformer               coreinformers.ServiceInformer
+	endpointInformer              coreinformers.EndpointsInformer
+	nodeInformer                  coreinformers.NodeInformer
+	deviceInformer                deviceinformer.DeviceInformer
+	clusterObjectSyncInformer     syncinformer.ClusterObjectSyncInformer
+	objectSyncInformer            syncinformer.ObjectSyncInformer
+	persistentvolumeInformer      coreinformers.PersistentVolumeInformer
+	persistentvolumeclaimInformer coreinformers.PersistentVolumeClaimInformer
 
 	// synced
-	podSynced               cache.InformerSynced
-	configMapSynced         cache.InformerSynced
-	secretSynced            cache.InformerSynced
-	serviceSynced           cache.InformerSynced
-	endpointSynced          cache.InformerSynced
-	nodeSynced              cache.InformerSynced
-	deviceSynced            cache.InformerSynced
-	clusterObjectSyncSynced cache.InformerSynced
-	objectSyncSynced        cache.InformerSynced
+	podSynced                   cache.InformerSynced
+	configMapSynced             cache.InformerSynced
+	secretSynced                cache.InformerSynced
+	serviceSynced               cache.InformerSynced
+	endpointSynced              cache.InformerSynced
+	nodeSynced                  cache.InformerSynced
+	deviceSynced                cache.InformerSynced
+	clusterObjectSyncSynced     cache.InformerSynced
+	objectSyncSynced            cache.InformerSynced
+	persistentvolumeSynced      cache.InformerSynced
+	persistentvolumeclaimSynced cache.InformerSynced
 
 	// lister
-	podLister               corelisters.PodLister
-	configMapLister         corelisters.ConfigMapLister
-	secretLister            corelisters.SecretLister
-	serviceLister           corelisters.ServiceLister
-	endpointLister          corelisters.EndpointsLister
-	nodeLister              corelisters.NodeLister
-	deviceLister            devicelister.DeviceLister
-	clusterObjectSyncLister synclister.ClusterObjectSyncLister
-	objectSyncLister        synclister.ObjectSyncLister
+	podLister                   corelisters.PodLister
+	configMapLister             corelisters.ConfigMapLister
+	secretLister                corelisters.SecretLister
+	serviceLister               corelisters.ServiceLister
+	endpointLister              corelisters.EndpointsLister
+	nodeLister                  corelisters.NodeLister
+	deviceLister                devicelister.DeviceLister
+	clusterObjectSyncLister     synclister.ClusterObjectSyncLister
+	objectSyncLister            synclister.ObjectSyncLister
+	persistentvolumeLister      corelisters.PersistentVolumeLister
+	persistentvolumeclaimLister corelisters.PersistentVolumeClaimLister
 
 	// client
 	crdClient *versioned.Clientset
@@ -92,6 +98,8 @@ func newSyncController(enable bool) *SyncController {
 	secretInformer := kubeSharedInformers.Core().V1().Secrets()
 	serviceInformer := kubeSharedInformers.Core().V1().Services()
 	endpointInformer := kubeSharedInformers.Core().V1().Endpoints()
+	persistentvolumeInformer := kubeSharedInformers.Core().V1().PersistentVolumes()
+	persistentvolumeclaimInformer := kubeSharedInformers.Core().V1().PersistentVolumeClaims()
 	nodeInformer := kubeSharedInformers.Core().V1().Nodes()
 	deviceInformer := crdFactory.Devices().V1alpha1().Devices()
 	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
@@ -100,34 +108,40 @@ func newSyncController(enable bool) *SyncController {
 	sctl := &SyncController{
 		enable: enable,
 
-		podInformer:               podInformer,
-		configMapInformer:         configMapInformer,
-		secretInformer:            secretInformer,
-		serviceInformer:           serviceInformer,
-		endpointInformer:          endpointInformer,
-		nodeInformer:              nodeInformer,
-		deviceInformer:            deviceInformer,
-		clusterObjectSyncInformer: clusterObjectSyncInformer,
-		objectSyncInformer:        objectSyncInformer,
+		podInformer:                   podInformer,
+		configMapInformer:             configMapInformer,
+		secretInformer:                secretInformer,
+		serviceInformer:               serviceInformer,
+		endpointInformer:              endpointInformer,
+		nodeInformer:                  nodeInformer,
+		deviceInformer:                deviceInformer,
+		clusterObjectSyncInformer:     clusterObjectSyncInformer,
+		objectSyncInformer:            objectSyncInformer,
+		persistentvolumeInformer:      persistentvolumeInformer,
+		persistentvolumeclaimInformer: persistentvolumeclaimInformer,
 
-		podSynced:               podInformer.Informer().HasSynced,
-		configMapSynced:         configMapInformer.Informer().HasSynced,
-		secretSynced:            secretInformer.Informer().HasSynced,
-		serviceSynced:           serviceInformer.Informer().HasSynced,
-		endpointSynced:          endpointInformer.Informer().HasSynced,
-		nodeSynced:              nodeInformer.Informer().HasSynced,
-		deviceSynced:            deviceInformer.Informer().HasSynced,
-		clusterObjectSyncSynced: clusterObjectSyncInformer.Informer().HasSynced,
-		objectSyncSynced:        objectSyncInformer.Informer().HasSynced,
+		podSynced:                   podInformer.Informer().HasSynced,
+		configMapSynced:             configMapInformer.Informer().HasSynced,
+		secretSynced:                secretInformer.Informer().HasSynced,
+		serviceSynced:               serviceInformer.Informer().HasSynced,
+		endpointSynced:              endpointInformer.Informer().HasSynced,
+		nodeSynced:                  nodeInformer.Informer().HasSynced,
+		deviceSynced:                deviceInformer.Informer().HasSynced,
+		clusterObjectSyncSynced:     clusterObjectSyncInformer.Informer().HasSynced,
+		objectSyncSynced:            objectSyncInformer.Informer().HasSynced,
+		persistentvolumeSynced:      persistentvolumeInformer.Informer().HasSynced,
+		persistentvolumeclaimSynced: persistentvolumeclaimInformer.Informer().HasSynced,
 
-		podLister:               podInformer.Lister(),
-		configMapLister:         configMapInformer.Lister(),
-		secretLister:            secretInformer.Lister(),
-		serviceLister:           serviceInformer.Lister(),
-		endpointLister:          endpointInformer.Lister(),
-		nodeLister:              nodeInformer.Lister(),
-		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
-		objectSyncLister:        objectSyncInformer.Lister(),
+		podLister:                   podInformer.Lister(),
+		configMapLister:             configMapInformer.Lister(),
+		secretLister:                secretInformer.Lister(),
+		serviceLister:               serviceInformer.Lister(),
+		endpointLister:              endpointInformer.Lister(),
+		nodeLister:                  nodeInformer.Lister(),
+		clusterObjectSyncLister:     clusterObjectSyncInformer.Lister(),
+		objectSyncLister:            objectSyncInformer.Lister(),
+		persistentvolumeLister:      persistentvolumeInformer.Lister(),
+		persistentvolumeclaimLister: persistentvolumeclaimInformer.Lister(),
 
 		crdClient: crdClient,
 	}
@@ -168,6 +182,8 @@ func (sctl *SyncController) Start() {
 	go sctl.secretInformer.Informer().Run(beehiveContext.Done())
 	go sctl.serviceInformer.Informer().Run(beehiveContext.Done())
 	go sctl.endpointInformer.Informer().Run(beehiveContext.Done())
+	go sctl.persistentvolumeInformer.Informer().Run(beehiveContext.Done())
+	go sctl.persistentvolumeclaimInformer.Informer().Run(beehiveContext.Done())
 	go sctl.nodeInformer.Informer().Run(beehiveContext.Done())
 
 	go sctl.deviceInformer.Informer().Run(beehiveContext.Done())
@@ -180,6 +196,8 @@ func (sctl *SyncController) Start() {
 		sctl.secretSynced,
 		sctl.serviceSynced,
 		sctl.endpointSynced,
+		sctl.persistentvolumeSynced,
+		sctl.persistentvolumeclaimSynced,
 		sctl.nodeSynced,
 		sctl.deviceSynced,
 		sctl.clusterObjectSyncSynced,
@@ -231,6 +249,10 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 			sctl.manageService(sync)
 		case commonconst.ResourceTypeEndpoints:
 			sctl.manageEndpoint(sync)
+		case commonconst.ResourceTypePersistentVolume:
+			sctl.managePersistentvolume(sync)
+		case commonconst.ResourceTypePersistentVolumeClaim:
+			sctl.managePersistentvolumeclaim(sync)
 		// TODO: add device here
 		default:
 			klog.Errorf("Unsupported object kind: %v", sync.Spec.ObjectKind)

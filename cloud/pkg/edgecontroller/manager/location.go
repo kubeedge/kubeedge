@@ -22,16 +22,23 @@ type LocationCache struct {
 	endpoints sync.Map
 	// servicePods is a map, key is namespace/serviceName, value is []v1.Pod
 	servicePods sync.Map
+	// persistentvolume is a map, key is namespace/persistentvolumeName, value is nodeName
+	persistentvolumeNode sync.Map
+	// persistentvolumeclaim is a map, key is namespace/persistentvolumeclaimName, value is nodeName
+	persistentvolumeclaimNode sync.Map
 }
 
-// PodConfigMapsAndSecrets return configmaps and secrets used by pod
-func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secrets []string) {
+// PodConfigMapsAndSecretsAndPersistentvolumeclaims return configmaps and secrets and  Persistentvolumeclaims  used by pod
+func (lc *LocationCache) PodConfigMapsAndSecretsAndPersistentvolumeclaims(pod v1.Pod) (configMaps, secrets, persistentvolumeclaims []string) {
 	for _, v := range pod.Spec.Volumes {
 		if v.ConfigMap != nil {
 			configMaps = append(configMaps, v.ConfigMap.Name)
 		}
 		if v.Secret != nil {
 			secrets = append(secrets, v.Secret.SecretName)
+		}
+		if v.PersistentVolumeClaim != nil {
+			persistentvolumeclaims = append(persistentvolumeclaims, v.PersistentVolumeClaim.ClaimName)
 		}
 	}
 	// used by envs
@@ -63,7 +70,7 @@ func (lc *LocationCache) newNodes(oldNodes []string, node string) []string {
 
 // AddOrUpdatePod add pod to node, pod to configmap, configmap to pod, pod to secret, secret to pod relation
 func (lc *LocationCache) AddOrUpdatePod(pod v1.Pod) {
-	configMaps, secrets := lc.PodConfigMapsAndSecrets(pod)
+	configMaps, secrets, persistentvolumeclaims := lc.PodConfigMapsAndSecretsAndPersistentvolumeclaims(pod)
 	for _, c := range configMaps {
 		configMapKey := fmt.Sprintf("%s/%s", pod.Namespace, c)
 		// update configMapPod
@@ -91,6 +98,20 @@ func (lc *LocationCache) AddOrUpdatePod(pod v1.Pod) {
 		}
 		lc.secretNode.Store(secretKey, newNodes)
 	}
+
+	for _, s := range persistentvolumeclaims {
+		persistentvolumeclaimKey := fmt.Sprintf("%s/%s", pod.Namespace, s)
+		// update secretPod
+		value, ok := lc.persistentvolumeclaimNode.Load(persistentvolumeclaimKey)
+		var newNodes []string
+		if ok {
+			nodes, _ := value.([]string)
+			newNodes = lc.newNodes(nodes, pod.Spec.NodeName)
+		} else {
+			newNodes = []string{pod.Spec.NodeName}
+		}
+		lc.persistentvolumeclaimNode.Store(persistentvolumeclaimKey, newNodes)
+	}
 }
 
 // ConfigMapNodes return all nodes which deploy pod on with configmap
@@ -109,6 +130,30 @@ func (lc *LocationCache) ConfigMapNodes(namespace, name string) (nodes []string)
 func (lc *LocationCache) SecretNodes(namespace, name string) (nodes []string) {
 	secretKey := fmt.Sprintf("%s/%s", namespace, name)
 	value, ok := lc.secretNode.Load(secretKey)
+	if ok {
+		if nodes, ok := value.([]string); ok {
+			return nodes
+		}
+	}
+	return
+}
+
+// PersistentvolumclaimNodes return all nodes which deploy pod on with persistentvolumclaim
+func (lc *LocationCache) PersistentvolumNodes(namespace, name string) (nodes []string) {
+	persistentvolumKey := fmt.Sprintf("%s/%s", namespace, name)
+	value, ok := lc.persistentvolumeNode.Load(persistentvolumKey)
+	if ok {
+		if nodes, ok := value.([]string); ok {
+			return nodes
+		}
+	}
+	return
+}
+
+// PersistentvolumclaimNodes return all nodes which deploy pod on with persistentvolumclaim
+func (lc *LocationCache) PersistentvolumclaimNodes(namespace, name string) (nodes []string) {
+	persistentvolumclaimKey := fmt.Sprintf("%s/%s", namespace, name)
+	value, ok := lc.persistentvolumeclaimNode.Load(persistentvolumclaimKey)
 	if ok {
 		if nodes, ok := value.([]string); ok {
 			return nodes
@@ -242,4 +287,26 @@ func (lc *LocationCache) GetAllEndpoints() []v1.Endpoints {
 		return true
 	})
 	return endpoints
+}
+
+// AddOrUpdatePersistentVolume in cache
+func (lc *LocationCache) AddOrUpdatePersistentVolume(namespace, name string, nodes []string) {
+	lc.persistentvolumeNode.Store(fmt.Sprintf("%s/%s", namespace, name), nodes)
+}
+
+// AddOrUpdatePersistentVolume in cache
+func (lc *LocationCache) DeletePersistentVolume(persistentVolume v1.PersistentVolume) {
+	lc.persistentvolumeNode.Delete(fmt.Sprintf("%s/%s", v1.NamespaceDefault, persistentVolume.Name))
+}
+
+// AddOrUpdatePersistentvolumeclaim in cache and AddOrUpdateAddOrUpdatePersistentVolume in cache
+func (lc *LocationCache) AddOrUpdatePersistentvolumeclaim(persistentvolumeclaim v1.PersistentVolumeClaim) {
+	//AddOrUpdatePersistentVolume in cache
+	nodes := lc.PersistentvolumclaimNodes(persistentvolumeclaim.Namespace, persistentvolumeclaim.Name)
+	lc.AddOrUpdatePersistentVolume(v1.NamespaceDefault, persistentvolumeclaim.Spec.VolumeName, nodes)
+}
+
+// AddOrUpdatePersistentvolumeclaim in cache
+func (lc *LocationCache) DeletePersistentvolumeclaim(persistentvolumeclaim v1.PersistentVolumeClaim) {
+	lc.persistentvolumeclaimNode.Delete(fmt.Sprintf("%s/%s", persistentvolumeclaim.Namespace, persistentvolumeclaim.Name))
 }
