@@ -263,8 +263,8 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 }
 
-//TestDealDeviceUpdated is function to test dealDeviceUpdated().
-func TestDealDeviceUpdated(t *testing.T) {
+//TestDealUpdateDeviceAttr is function to test dealUpdateDeviceAttr().
+func TestDealUpdateDeviceAttr(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	content := dttype.DeviceUpdate{}
@@ -283,7 +283,7 @@ func TestDealDeviceUpdated(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:     "DealDeviceUpdatedTest-Wrong Message Type",
+			name:     "DealUpdateDeviceAttrTest-Wrong Message Type",
 			context:  dtContexts,
 			resource: "Device",
 			msg:      "",
@@ -291,7 +291,7 @@ func TestDealDeviceUpdated(t *testing.T) {
 			wantErr:  errors.New("msg not Message type"),
 		},
 		{
-			name:     "DealDeviceUpdatedTest-Correct Message Type",
+			name:     "DealUpdateDeviceAttrTest-Correct Message Type",
 			context:  dtContexts,
 			resource: "DeviceA",
 			msg:      &msg,
@@ -301,20 +301,20 @@ func TestDealDeviceUpdated(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := dealDeviceUpdated(test.context, test.resource, test.msg)
+			got, err := dealUpdateDeviceAttr(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("dealDeviceUpdated() error = %v, wantErr %v", err, test.wantErr)
+				t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("dealDeviceUpdated() = %v, want %v", got, test.want)
+				t.Errorf("dealUpdateDeviceAttr() = %v, want %v", got, test.want)
 			}
 		})
 	}
 }
 
-// TestDeviceUpdated is function to test DeviceUpdated().
-func TestDeviceUpdated(t *testing.T) {
+// TestUpdateDeviceAttr is function to test UpdateDeviceAttr().
+func TestUpdateDeviceAttr(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
@@ -455,13 +455,13 @@ func TestDeviceUpdated(t *testing.T) {
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
 
-			got, err := DeviceUpdated(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
+			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
 			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("DeviceUpdated() error = %v, wantErr %v", err, test.wantErr)
+				t.Errorf("UpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("DeviceUpdated() failed Got = %v, want %v", got, test.want)
+				t.Errorf("UpdateDeviceAttr() failed Got = %v, want %v", got, test.want)
 			}
 		})
 	}
