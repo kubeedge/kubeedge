@@ -131,7 +131,9 @@ const (
 	imageGcHighThreshold = "edged.image-gc-high-threshold"
 	syncMsgRespTimeout   = 1 * time.Minute
 	//DefaultRootDir give default directory
-	DefaultRootDir                   = "/var/lib/edged"
+	DefaultRootDir = "/var/lib/edged"
+	// ContainerLogsDir is the location of container logs.
+	ContainerLogsDir                 = "/var/log/containers"
 	workerResyncIntervalJitterFactor = 0.5
 	//EdgeController gives controller name
 	EdgeController = "edgecontroller"
@@ -240,7 +242,7 @@ type edged struct {
 	dockerLegacyService dockershim.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
 	runner          kubecontainer.ContainerCommandRunner
-	podLastSyncTime map[types.UID]time.Time
+	podLastSyncTime sync.Map
 }
 
 // Register register edged
@@ -420,7 +422,6 @@ func newEdged(enable bool) (*edged, error) {
 		nodeIP:                    net.ParseIP(edgedconfig.Config.NodeIP),
 		recorder:                  recorder,
 		enable:                    enable,
-		podLastSyncTime:           make(map[types.UID]time.Time),
 	}
 
 	err := ed.makePodDir()
@@ -680,7 +681,12 @@ func (e *edged) initializeModules() error {
 		klog.Errorf("Failed to initialNode %v", err)
 		return err
 	}
-
+	// If the container logs directory does not exist, create it.
+	if _, err := os.Stat(ContainerLogsDir); err != nil {
+		if err := e.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
+			klog.Errorf("Failed to create directory %q: %v", ContainerLogsDir, err)
+		}
+	}
 	// containerManager must start after cAdvisor because it needs filesystem capacity information
 	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
@@ -913,13 +919,17 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 
 	podUID := pod.GetUID()
-	curPodStatus, err := e.podCache.GetNewerThan(podUID, e.podLastSyncTime[podUID])
+	t, ok := e.podLastSyncTime.Load(podUID)
+	if !ok {
+		t = time.Time{}
+	}
+	curPodStatus, err := e.podCache.GetNewerThan(podUID, t.(time.Time))
 	if err != nil {
 		klog.Errorf("pod %s cache newer failed: %v", podName, err)
 		return err
 	}
 	result := e.containerRuntime.SyncPod(pod, curPodStatus, secrets, e.podAdditionBackoff)
-	e.podLastSyncTime[podUID] = time.Now()
+	e.podLastSyncTime.Store(podUID, time.Now())
 	if err := result.Error(); err != nil {
 		// Do not return error if the only failures were pods in backoff
 		for _, r := range result.SyncResults {
@@ -952,7 +962,7 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 		return err
 	}
 
-	delete(e.podLastSyncTime, pod.GetUID())
+	e.podLastSyncTime.Delete(pod.GetUID())
 	err = e.containerRuntime.KillPod(pod, kubecontainer.ConvertPodStatusToRunningPod(e.containerRuntimeName, podStatus), nil)
 	if err != nil {
 		if err == apis.ErrContainerNotFound {

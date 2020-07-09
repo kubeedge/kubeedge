@@ -104,17 +104,17 @@ With the integration, the following can be enabled
 + Build EdgeSite
 
   ```shell
-  cd $GOPATH/src/github.com/kubeedge/kubeedge/edgesite
-  make
+  cd $GOPATH/src/github.com/kubeedge/kubeedge
+  make all WHAT=edgesite
   ```
 
 ##### Download Release packages
 
-  TBA
+Click [here](https://github.com/kubeedge/kubeedge/releases) and download.
 
 #### Configuring EdgeSite
 
-Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite/conf/edgeSite.yaml) configuration file, with the IP address of K8S API server
+Genarate edgesite config by `edgesite --minconfig` and update:
 
 + Configure K8S (API Server)
 
@@ -173,7 +173,7 @@ Modify [edgeSite.yaml](https://github.com/kubeedge/kubeedge/blob/master/edgesite
     # verify the configurations before running edgesite
     ./edgesite
     # or
-    nohup ./edgesite > edgesite.log 2>&1 &
+    nohup ./edgesite --config /path/to/edgesite/config > edgesite.log 2>&1 &
   ```
 
 **Note:** Please run edgesite using the users who have root permission.

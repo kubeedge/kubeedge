@@ -77,6 +77,7 @@ type SyncController struct {
 	clusterObjectSyncLister     synclister.ClusterObjectSyncLister
 	objectSyncLister            synclister.ObjectSyncLister
 
+
 	// client
 	crdClient *versioned.Clientset
 }
