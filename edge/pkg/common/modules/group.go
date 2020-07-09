@@ -14,5 +14,6 @@ const (
 	// UserGroup is ServiceBus group
 	UserGroup = "user"
 	// MeshGroup group
-	MeshGroup = "mesh"
+	MeshGroup  = "mesh"
+	ProxyGroup = "proxy"
 )

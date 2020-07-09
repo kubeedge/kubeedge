@@ -104,6 +104,8 @@ type Modules struct {
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
+	// +Required
+	EdgePorxy *EdgePorxy `json:"edgeProxy,omitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -429,4 +431,19 @@ type EdgeStream struct {
 	// WriteDeadline indicates write dead line (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
+}
+
+type EdgePorxy struct {
+	// default true
+	Enable bool `json:"enable,omitempty"`
+	// default 10005
+	ListenPort int `json:"listenPort,omitempty"`
+
+	RemoteAddr string `json:"remoteAddr,omitempty"`
+
+	CAFile string `json:"caFile,omitempty"`
+
+	CertFile string `json:"certFile,omitempty"`
+
+	PrivateKeyFile string `json:"privateKeyFile,omitempty"`
 }
