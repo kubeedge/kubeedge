@@ -74,9 +74,7 @@ type SyncController struct {
 	deviceLister                devicelister.DeviceLister
 	clusterObjectSyncLister     synclister.ClusterObjectSyncLister
 	objectSyncLister            synclister.ObjectSyncLister
-
-	// client
-	crdClient *versioned.Clientset
+	
 }
 
 func newSyncController(enable bool) *SyncController {
@@ -141,7 +139,6 @@ func newSyncController(enable bool) *SyncController {
 		clusterObjectSyncLister:     clusterObjectSyncInformer.Lister(),
 		objectSyncLister:            objectSyncInformer.Lister(),
 
-		crdClient: crdClient,
 	}
 
 	return sctl
