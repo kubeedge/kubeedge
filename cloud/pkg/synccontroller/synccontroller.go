@@ -74,7 +74,6 @@ type SyncController struct {
 	deviceLister                devicelister.DeviceLister
 	clusterObjectSyncLister     synclister.ClusterObjectSyncLister
 	objectSyncLister            synclister.ObjectSyncLister
-	
 }
 
 func newSyncController(enable bool) *SyncController {
@@ -138,7 +137,6 @@ func newSyncController(enable bool) *SyncController {
 		nodeLister:                  nodeInformer.Lister(),
 		clusterObjectSyncLister:     clusterObjectSyncInformer.Lister(),
 		objectSyncLister:            objectSyncInformer.Lister(),
-
 	}
 
 	return sctl
