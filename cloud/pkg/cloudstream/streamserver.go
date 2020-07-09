@@ -153,18 +153,11 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		return
 	}
 
-	w.Header().Set("Transfer-Encoding", "chunked")
 	w.WriteHeader(http.StatusOK)
-
-	if _, ok := w.ResponseWriter.(http.Flusher); !ok {
-		err = fmt.Errorf("Unable to convert %v into http.Flusher, cannot grab metrics data from edge", reflect.TypeOf(w))
-		return
-	}
-	fw := flushwriter.Wrap(w.ResponseWriter)
 
 	metricsConnection, err := session.AddAPIServerConnection(s, &ContainerMetricsConnection{
 		r:            r,
-		flush:        fw,
+		writer:       w.ResponseWriter,
 		session:      session,
 		ctx:          r.Request.Context(),
 		edgePeerStop: make(chan struct{}),
