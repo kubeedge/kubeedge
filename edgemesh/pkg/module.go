@@ -12,7 +12,6 @@ import (
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/dns"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/listener"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/plugin"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -45,14 +44,10 @@ func (em *EdgeMesh) Enable() bool {
 
 //Start sets context and starts the controller
 func (em *EdgeMesh) Start() {
-	// install go-chassis plugins
-	plugin.Install()
 	// init tcp listener
 	listener.Init()
 	// init iptables
 	proxy.Init()
-	// start proxy listener
-	go listener.Start()
 	// start dns server
 	go dns.Start()
 
