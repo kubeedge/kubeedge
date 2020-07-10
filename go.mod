@@ -24,7 +24,6 @@ require (
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
@@ -36,7 +35,6 @@ require (
 	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
-	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
@@ -50,7 +48,6 @@ require (
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
-	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1

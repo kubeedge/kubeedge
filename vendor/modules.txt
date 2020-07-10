@@ -80,8 +80,6 @@ github.com/bifurcation/mint
 github.com/bifurcation/mint/syntax
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
-# github.com/cenkalti/backoff v2.1.1+incompatible
-github.com/cenkalti/backoff
 # github.com/checkpoint-restore/go-criu v0.0.0-20190109184317-bdb7599cd87b
 github.com/checkpoint-restore/go-criu/rpc
 # github.com/cheekybits/genny v1.0.0
@@ -156,6 +154,8 @@ github.com/docker/go-connections/sockets
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.4.0
 github.com/docker/go-units
+# github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34
+github.com/docker/libnetwork/ipvs
 # github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c
 github.com/docker/spdystream
 github.com/docker/spdystream/spdy
@@ -173,62 +173,8 @@ github.com/evanphx/json-patch
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
-# github.com/go-chassis/foundation v0.0.0-20190621030543-c3b63f787f4c
-github.com/go-chassis/foundation/security
-# github.com/go-chassis/go-archaius v0.20.0
-github.com/go-chassis/go-archaius
-github.com/go-chassis/go-archaius/core
-github.com/go-chassis/go-archaius/core/cast
-github.com/go-chassis/go-archaius/core/config-manager
-github.com/go-chassis/go-archaius/core/event-system
-github.com/go-chassis/go-archaius/sources/commandline-source
-github.com/go-chassis/go-archaius/sources/configcenter
-github.com/go-chassis/go-archaius/sources/enviromentvariable-source
-github.com/go-chassis/go-archaius/sources/file-source
-github.com/go-chassis/go-archaius/sources/memory-source
-github.com/go-chassis/go-archaius/sources/utils
 # github.com/go-chassis/go-chassis v1.7.1
-github.com/go-chassis/go-chassis/client/rest
-github.com/go-chassis/go-chassis/control
-github.com/go-chassis/go-chassis/core/client
 github.com/go-chassis/go-chassis/core/common
-github.com/go-chassis/go-chassis/core/config
-github.com/go-chassis/go-chassis/core/config/model
-github.com/go-chassis/go-chassis/core/config/schema
-github.com/go-chassis/go-chassis/core/fault
-github.com/go-chassis/go-chassis/core/handler
-github.com/go-chassis/go-chassis/core/invocation
-github.com/go-chassis/go-chassis/core/loadbalancer
-github.com/go-chassis/go-chassis/core/metadata
-github.com/go-chassis/go-chassis/core/qpslimiter
-github.com/go-chassis/go-chassis/core/registry
-github.com/go-chassis/go-chassis/core/router
-github.com/go-chassis/go-chassis/core/router/weightpool
-github.com/go-chassis/go-chassis/core/tls
-github.com/go-chassis/go-chassis/core/tracing
-github.com/go-chassis/go-chassis/healthz/client
-github.com/go-chassis/go-chassis/pkg/backoff
-github.com/go-chassis/go-chassis/pkg/circuit
-github.com/go-chassis/go-chassis/pkg/goplugin
-github.com/go-chassis/go-chassis/pkg/runtime
-github.com/go-chassis/go-chassis/pkg/string
-github.com/go-chassis/go-chassis/pkg/util
-github.com/go-chassis/go-chassis/pkg/util/fileutil
-github.com/go-chassis/go-chassis/pkg/util/httputil
-github.com/go-chassis/go-chassis/pkg/util/iputil
-github.com/go-chassis/go-chassis/pkg/util/tags
-github.com/go-chassis/go-chassis/security
-github.com/go-chassis/go-chassis/security/common
-github.com/go-chassis/go-chassis/security/plugins/plain
-github.com/go-chassis/go-chassis/session
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/metric_collector
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/rolling
-github.com/go-chassis/go-chassis/third_party/forked/k8s.io/apimachinery/pkg/util/sets
-# github.com/go-chassis/go-chassis-config v0.10.0
-github.com/go-chassis/go-chassis-config
-# github.com/go-chassis/go-restful-swagger20 v1.0.1
-github.com/go-chassis/go-restful-swagger20
 # github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
 github.com/go-mesh/openlogging
 # github.com/go-openapi/jsonpointer v0.19.3
@@ -320,8 +266,6 @@ github.com/googleapis/gnostic/extensions
 github.com/gorilla/mux
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
-# github.com/hashicorp/go-version v1.2.0
-github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.3
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -471,12 +415,6 @@ github.com/opencontainers/runtime-spec/specs-go
 # github.com/opencontainers/selinux v1.3.1-0.20190929122143-5215b1806f52
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
-# github.com/opentracing/opentracing-go v1.1.0
-github.com/opentracing/opentracing-go
-github.com/opentracing/opentracing-go/ext
-github.com/opentracing/opentracing-go/log
-# github.com/patrickmn/go-cache v2.1.0+incompatible
-github.com/patrickmn/go-cache
 # github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 github.com/paypal/gatt
 github.com/paypal/gatt/examples/option
@@ -516,8 +454,6 @@ github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.3.0
-github.com/spf13/cast
 # github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
@@ -557,9 +493,6 @@ go.etcd.io/etcd/raft/tracker
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
 go.uber.org/multierr
-# go.uber.org/ratelimit v0.1.0
-go.uber.org/ratelimit
-go.uber.org/ratelimit/internal/clock
 # go.uber.org/zap v1.10.0
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -1037,6 +970,7 @@ k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider v0.17.1
 k8s.io/cloud-provider
+k8s.io/cloud-provider/service/helpers
 k8s.io/cloud-provider/volume
 k8s.io/cloud-provider/volume/errors
 k8s.io/cloud-provider/volume/helpers
@@ -1065,6 +999,7 @@ k8s.io/code-generator/pkg/util
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
 k8s.io/component-base/config
+k8s.io/component-base/config/v1alpha1
 k8s.io/component-base/featuregate
 k8s.io/component-base/logs
 k8s.io/component-base/metrics
@@ -1098,6 +1033,8 @@ k8s.io/kube-openapi/pkg/handler
 k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
+# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kubelet v0.17.1
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
@@ -1218,10 +1155,16 @@ k8s.io/kubernetes/pkg/probe/exec
 k8s.io/kubernetes/pkg/probe/http
 k8s.io/kubernetes/pkg/probe/tcp
 k8s.io/kubernetes/pkg/proxy
+k8s.io/kubernetes/pkg/proxy/apis
+k8s.io/kubernetes/pkg/proxy/apis/config
+k8s.io/kubernetes/pkg/proxy/apis/config/scheme
+k8s.io/kubernetes/pkg/proxy/apis/config/v1alpha1
 k8s.io/kubernetes/pkg/proxy/config
 k8s.io/kubernetes/pkg/proxy/healthcheck
 k8s.io/kubernetes/pkg/proxy/iptables
+k8s.io/kubernetes/pkg/proxy/ipvs
 k8s.io/kubernetes/pkg/proxy/metrics
+k8s.io/kubernetes/pkg/proxy/userspace
 k8s.io/kubernetes/pkg/proxy/util
 k8s.io/kubernetes/pkg/scheduler/algorithm
 k8s.io/kubernetes/pkg/scheduler/algorithm/predicates
@@ -1243,7 +1186,9 @@ k8s.io/kubernetes/pkg/util/filesystem
 k8s.io/kubernetes/pkg/util/goroutinemap
 k8s.io/kubernetes/pkg/util/goroutinemap/exponentialbackoff
 k8s.io/kubernetes/pkg/util/hash
+k8s.io/kubernetes/pkg/util/ipset
 k8s.io/kubernetes/pkg/util/iptables
+k8s.io/kubernetes/pkg/util/ipvs
 k8s.io/kubernetes/pkg/util/oom
 k8s.io/kubernetes/pkg/util/parsers
 k8s.io/kubernetes/pkg/util/pod
