@@ -1219,11 +1219,16 @@ k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6/go.mod h1:GRQhZsXIAJ1xR0C
 =======
 k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a h1:UcxjrRMyNx/i/y8G7kPvLyy7rfbeuf1PYyBf973pgyU=
 k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a/go.mod h1:1TqjTSzOxsLGIKfj0lK8EeCP7K1iUG65v09OM0/WG5E=
+<<<<<<< HEAD
 k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e h1:/5ICwBmHQdQKP9MQwVCTpbGRwEeVnvFxdybyXhp9fjw=
 >>>>>>> EdgeMesh: proxy by iptables/ipvs
 >>>>>>> EdgeMesh: proxy by iptables/ipvs
 k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e/go.mod h1:mgf+oU6dfeM9fd1pv9OQQ0rqeKUnu2EnbxyYQn3L26c=
 k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831 h1:vGt3JeKFCIdBifOZ6lHsMLwLWlMebW48vuiXS1zhTxs=
+=======
+k8s.io/kube-proxy v0.17.1 h1:UpqSNVaMrGP4cQldHDPxsXrSUiKLDny7mR0ANbpb0fU=
+k8s.io/kube-proxy v0.17.1/go.mod h1:Vz/TedeV9dMIBDTQ5FsmRLF+swQlKtVSvX394nnnCEg=
+>>>>>>> use 0.17.1 kube-proxy
 k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831/go.mod h1:6Bi5kzXvie78plcqBH/luIcEs9ulsP5dXoTzz7XxfSQ=
 k8s.io/kube-scheduler v0.19.3 h1:BG/Yo76YG5cZNgNGMX7dDDtI9couQbsWe6YUQJNgvM8=
 k8s.io/kube-scheduler v0.19.3/go.mod h1:E/JO0m9xwbbo2qqo13OZupXOvHTrbOFscLSnOMC5TBM=

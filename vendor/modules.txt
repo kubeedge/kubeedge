@@ -1347,10 +1347,13 @@ k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
 <<<<<<< HEAD
+<<<<<<< HEAD
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kube-scheduler v0.19.3
 =======
+=======
+>>>>>>> use 0.17.1 kube-proxy
 <<<<<<< HEAD
 # k8s.io/kube-scheduler v0.18.6
 >>>>>>> update vendor
@@ -1363,6 +1366,9 @@ k8s.io/kubelet/config/v1beta1
 =======
 =======
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+=======
+# k8s.io/kube-proxy v0.17.1
+>>>>>>> use 0.17.1 kube-proxy
 k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kubelet v0.17.1
 >>>>>>> update vendor
