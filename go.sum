@@ -1079,6 +1079,7 @@ k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30/go.mod h1:BXM9ceUBTj2QnfH
 k8s.io/kube-openapi v0.0.0-20190709113604-33be087ad058/go.mod h1:nfDlWeOsu3pUf4yWGL+ERqohP4YsZcBJXWMK+gkzOA4=
 k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a h1:UcxjrRMyNx/i/y8G7kPvLyy7rfbeuf1PYyBf973pgyU=
 k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a/go.mod h1:1TqjTSzOxsLGIKfj0lK8EeCP7K1iUG65v09OM0/WG5E=
+k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e/go.mod h1:mgf+oU6dfeM9fd1pv9OQQ0rqeKUnu2EnbxyYQn3L26c=
 k8s.io/kube-proxy v0.17.1 h1:UpqSNVaMrGP4cQldHDPxsXrSUiKLDny7mR0ANbpb0fU=
 k8s.io/kube-proxy v0.17.1/go.mod h1:Vz/TedeV9dMIBDTQ5FsmRLF+swQlKtVSvX394nnnCEg=
 k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831/go.mod h1:6Bi5kzXvie78plcqBH/luIcEs9ulsP5dXoTzz7XxfSQ=
