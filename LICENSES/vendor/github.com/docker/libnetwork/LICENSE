@@ -1,6 +1,6 @@
-= vendor/github.com/opentracing/opentracing-go licensed under: =
+= vendor/github.com/docker/libnetwork licensed under: =
 
-                                 Apache License
+Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
@@ -188,7 +188,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2016 The OpenTracing Authors
+   Copyright {yyyy} {name of copyright owner}
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -202,4 +202,5 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-= vendor/github.com/opentracing/opentracing-go/LICENSE f4e91fcd9abdeb3c904b834127d5cb20
+
+= vendor/github.com/docker/libnetwork/LICENSE d2794c0df5b907fdace235a619d80314
