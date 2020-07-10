@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/constant"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/dns"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/listener"
+	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxier"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxy"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
