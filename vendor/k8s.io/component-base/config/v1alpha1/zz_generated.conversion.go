@@ -49,11 +49,14 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+<<<<<<< HEAD
 	if err := s.AddConversionFunc((*config.LoggingConfiguration)(nil), (*LoggingConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_config_LoggingConfiguration_To_v1alpha1_LoggingConfiguration(a.(*config.LoggingConfiguration), b.(*LoggingConfiguration), scope)
 	}); err != nil {
 		return err
 	}
+=======
+>>>>>>> update vendor
 	if err := s.AddConversionFunc((*ClientConnectionConfiguration)(nil), (*config.ClientConnectionConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_ClientConnectionConfiguration_To_config_ClientConnectionConfiguration(a.(*ClientConnectionConfiguration), b.(*config.ClientConnectionConfiguration), scope)
 	}); err != nil {
@@ -69,11 +72,14 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+<<<<<<< HEAD
 	if err := s.AddConversionFunc((*LoggingConfiguration)(nil), (*config.LoggingConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_LoggingConfiguration_To_config_LoggingConfiguration(a.(*LoggingConfiguration), b.(*config.LoggingConfiguration), scope)
 	}); err != nil {
 		return err
 	}
+=======
+>>>>>>> update vendor
 	return nil
 }
 
@@ -140,6 +146,7 @@ func autoConvert_config_LeaderElectionConfiguration_To_v1alpha1_LeaderElectionCo
 	out.ResourceNamespace = in.ResourceNamespace
 	return nil
 }
+<<<<<<< HEAD
 
 func autoConvert_v1alpha1_LoggingConfiguration_To_config_LoggingConfiguration(in *LoggingConfiguration, out *config.LoggingConfiguration, s conversion.Scope) error {
 	out.Format = in.Format
@@ -150,3 +157,5 @@ func autoConvert_config_LoggingConfiguration_To_v1alpha1_LoggingConfiguration(in
 	out.Format = in.Format
 	return nil
 }
+=======
+>>>>>>> update vendor

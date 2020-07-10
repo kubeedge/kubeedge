@@ -94,6 +94,7 @@ github.com/bifurcation/mint/syntax
 # github.com/blang/semver v3.5.1+incompatible
 ## explicit
 github.com/blang/semver
+<<<<<<< HEAD
 # github.com/cenkalti/backoff v2.1.1+incompatible
 github.com/cenkalti/backoff
 # github.com/cespare/xxhash/v2 v2.1.1
@@ -101,6 +102,11 @@ github.com/cespare/xxhash/v2
 # github.com/checkpoint-restore/go-criu/v4 v4.0.2
 github.com/checkpoint-restore/go-criu/v4
 github.com/checkpoint-restore/go-criu/v4/rpc
+=======
+# github.com/checkpoint-restore/go-criu v0.0.0-20190109184317-bdb7599cd87b
+## explicit
+github.com/checkpoint-restore/go-criu/rpc
+>>>>>>> update vendor
 # github.com/cheekybits/genny v1.0.0
 ## explicit
 github.com/cheekybits/genny/generic
@@ -187,6 +193,8 @@ github.com/docker/go-connections/sockets
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.4.0
 github.com/docker/go-units
+# github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34
+github.com/docker/libnetwork/ipvs
 # github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c
 ## explicit
 github.com/docker/spdystream
@@ -208,6 +216,7 @@ github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
+<<<<<<< HEAD
 # github.com/go-chassis/foundation v0.0.0-20190621030543-c3b63f787f4c
 github.com/go-chassis/foundation/security
 # github.com/go-chassis/go-archaius v0.20.0
@@ -268,8 +277,15 @@ github.com/go-chassis/go-chassis-config
 github.com/go-chassis/go-restful-swagger20
 # github.com/go-chassis/paas-lager v1.1.1
 ## explicit
+<<<<<<< HEAD
 # github.com/go-logr/logr v0.2.0
 github.com/go-logr/logr
+=======
+=======
+# github.com/go-chassis/go-chassis v1.7.1
+github.com/go-chassis/go-chassis/core/common
+>>>>>>> update vendor
+>>>>>>> update vendor
 # github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
 github.com/go-mesh/openlogging
 # github.com/go-ole/go-ole v1.2.4
@@ -379,12 +395,18 @@ github.com/gorilla/mux
 # github.com/gorilla/websocket v1.4.0
 ## explicit
 github.com/gorilla/websocket
+<<<<<<< HEAD
 # github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
+=======
+<<<<<<< HEAD
+>>>>>>> update vendor
 # github.com/hashicorp/go-version v1.2.0
 ## explicit
 github.com/hashicorp/go-version
+=======
+>>>>>>> update vendor
 # github.com/hashicorp/golang-lru v0.5.3
 ## explicit
 github.com/hashicorp/golang-lru
@@ -556,7 +578,11 @@ github.com/opencontainers/runtime-spec/specs-go
 # github.com/opencontainers/selinux v1.5.2
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
+<<<<<<< HEAD
 github.com/opencontainers/selinux/pkg/pwalk
+=======
+<<<<<<< HEAD
+>>>>>>> update vendor
 # github.com/opentracing/opentracing-go v1.1.0
 ## explicit
 github.com/opentracing/opentracing-go
@@ -564,6 +590,8 @@ github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
+=======
+>>>>>>> update vendor
 # github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 ## explicit
 github.com/paypal/gatt
@@ -617,9 +645,13 @@ github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
+<<<<<<< HEAD
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
 # github.com/spf13/cobra v1.0.0
+=======
+# github.com/spf13/cobra v0.0.5
+>>>>>>> update vendor
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
@@ -672,9 +704,6 @@ go.opencensus.io/trace/tracestate
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
 go.uber.org/multierr
-# go.uber.org/ratelimit v0.1.0
-go.uber.org/ratelimit
-go.uber.org/ratelimit/internal/clock
 # go.uber.org/zap v1.10.0
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -1235,6 +1264,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider v0.19.3
 ## explicit
 k8s.io/cloud-provider
+k8s.io/cloud-provider/service/helpers
 k8s.io/cloud-provider/volume
 k8s.io/cloud-provider/volume/errors
 # k8s.io/cluster-bootstrap v0.19.3
@@ -1270,8 +1300,11 @@ k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
+<<<<<<< HEAD
 k8s.io/component-base/config/validation
 k8s.io/component-base/configz
+=======
+>>>>>>> update vendor
 k8s.io/component-base/featuregate
 k8s.io/component-base/logs
 k8s.io/component-base/logs/json
@@ -1313,14 +1346,27 @@ k8s.io/kube-openapi/pkg/handler
 k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
+<<<<<<< HEAD
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kube-scheduler v0.19.3
+=======
+<<<<<<< HEAD
+# k8s.io/kube-scheduler v0.18.6
+>>>>>>> update vendor
 ## explicit
 k8s.io/kube-scheduler/extender/v1
 # k8s.io/kubelet v0.19.3
 ## explicit
+<<<<<<< HEAD
 k8s.io/kubelet/config/v1beta1
+=======
+=======
+# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+k8s.io/kube-proxy/config/v1alpha1
+# k8s.io/kubelet v0.17.1
+>>>>>>> update vendor
+>>>>>>> update vendor
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 # k8s.io/kubernetes v1.19.3
@@ -1536,11 +1582,20 @@ k8s.io/kubernetes/pkg/probe/exec
 k8s.io/kubernetes/pkg/probe/http
 k8s.io/kubernetes/pkg/probe/tcp
 k8s.io/kubernetes/pkg/proxy
+k8s.io/kubernetes/pkg/proxy/apis
+k8s.io/kubernetes/pkg/proxy/apis/config
+k8s.io/kubernetes/pkg/proxy/apis/config/scheme
+k8s.io/kubernetes/pkg/proxy/apis/config/v1alpha1
 k8s.io/kubernetes/pkg/proxy/config
 k8s.io/kubernetes/pkg/proxy/healthcheck
 k8s.io/kubernetes/pkg/proxy/iptables
+<<<<<<< HEAD
 k8s.io/kubernetes/pkg/proxy/metaproxier
+=======
+k8s.io/kubernetes/pkg/proxy/ipvs
+>>>>>>> update vendor
 k8s.io/kubernetes/pkg/proxy/metrics
+k8s.io/kubernetes/pkg/proxy/userspace
 k8s.io/kubernetes/pkg/proxy/util
 k8s.io/kubernetes/pkg/proxy/util/iptables
 k8s.io/kubernetes/pkg/scheduler/apis/config
@@ -1563,8 +1618,13 @@ k8s.io/kubernetes/pkg/util/filesystem
 k8s.io/kubernetes/pkg/util/goroutinemap
 k8s.io/kubernetes/pkg/util/goroutinemap/exponentialbackoff
 k8s.io/kubernetes/pkg/util/hash
+k8s.io/kubernetes/pkg/util/ipset
 k8s.io/kubernetes/pkg/util/iptables
+<<<<<<< HEAD
 k8s.io/kubernetes/pkg/util/node
+=======
+k8s.io/kubernetes/pkg/util/ipvs
+>>>>>>> update vendor
 k8s.io/kubernetes/pkg/util/oom
 k8s.io/kubernetes/pkg/util/parsers
 k8s.io/kubernetes/pkg/util/pod
