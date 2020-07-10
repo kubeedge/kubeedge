@@ -1033,7 +1033,7 @@ k8s.io/kube-openapi/pkg/handler
 k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
-# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+# k8s.io/kube-proxy v0.17.1
 k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kubelet v0.17.1
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
