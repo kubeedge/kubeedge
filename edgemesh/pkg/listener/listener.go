@@ -3,12 +3,13 @@ package listener
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/klog"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
