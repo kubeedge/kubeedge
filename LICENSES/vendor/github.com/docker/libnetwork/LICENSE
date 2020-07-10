@@ -1,6 +1,6 @@
-= vendor/github.com/go-chassis/go-archaius licensed under: =
+= vendor/github.com/docker/libnetwork licensed under: =
 
-                                 Apache License
+Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
@@ -188,7 +188,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2019-present, tianxiaoliang
+   Copyright {yyyy} {name of copyright owner}
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -202,4 +202,5 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-= vendor/github.com/go-chassis/go-archaius/LICENSE 9866ab86b7f5e030a49bd8ff75a77464
+
+= vendor/github.com/docker/libnetwork/LICENSE d2794c0df5b907fdace235a619d80314
