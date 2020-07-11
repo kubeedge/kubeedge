@@ -23,7 +23,7 @@ package podmanager
 import (
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/pod"
@@ -105,8 +105,8 @@ func (pm *podManager) GetPodByFullName(podFullName string) (*v1.Pod, bool) {
 }
 
 func (pm *podManager) DeletePod(pod *v1.Pod) {
-	pm.lock.RLock()
-	defer pm.lock.RUnlock()
+	pm.lock.Lock()
+	defer pm.lock.Unlock()
 	podFullName := container.GetPodFullName(pod)
 	delete(pm.podByUID, pod.UID)
 	delete(pm.podByFullName, podFullName)
