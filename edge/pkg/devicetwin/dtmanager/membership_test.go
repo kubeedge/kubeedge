@@ -244,7 +244,7 @@ func TestDealMerbershipGetEmptyMsg(t *testing.T) {
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
 	}
-	value, err := dealMerbershipGet(dtc, "t", "invalid")
+	value, err := dealMembershipGet(dtc, "t", "invalid")
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("msg not Message type"), err)
 	assert.Equal(t, nil, value)
@@ -260,7 +260,7 @@ func TestDealMerbershipGetInvalidMsg(t *testing.T) {
 		Content: "hello",
 	}
 
-	value, err := dealMerbershipGet(dtc, "t", m)
+	value, err := dealMembershipGet(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
 	assert.Equal(t, nil, value)
@@ -290,7 +290,7 @@ func TestDealMerbershipGetValid(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMerbershipGet(dtc, "t", m)
+	value, err := dealMembershipGet(dtc, "t", m)
 	assert.Equal(t, nil, value)
 	assert.NoError(t, err)
 }
@@ -350,7 +350,7 @@ func TestAdded(t *testing.T) {
 	var b = dttype.BaseMessage{
 		EventID: "eventid",
 	}
-	Added(dtc, d, b, true)
+	AddDevice(dtc, d, b, true)
 }
 func TestRemoved(t *testing.T) {
 	ormerMock.EXPECT().Begin().Return(nil).Times(1)
@@ -378,6 +378,6 @@ func TestRemoved(t *testing.T) {
 	var b = dttype.BaseMessage{
 		EventID: "eventid",
 	}
-	Removed(dtc, d, b, true)
+	RemoveDevice(dtc, d, b, true)
 }
 */
