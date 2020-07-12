@@ -61,7 +61,7 @@ func (mw MemWorker) Start() {
 
 func initMemActionCallBack() {
 	memActionCallBack = make(map[string]CallBack)
-	memActionCallBack[dtcommon.MemGet] = dealMerbershipGet
+	memActionCallBack[dtcommon.MemGet] = dealMembershipGet
 	memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdated
 	memActionCallBack[dtcommon.MemDetailResult] = dealMembershipDetail
 }
@@ -104,11 +104,11 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	context.LockAll()
 	var toRemove []dttype.Device
 	isDelta := false
-	Added(context, devices.Devices, baseMessage, isDelta)
+	AddDevice(context, devices.Devices, baseMessage, isDelta)
 	toRemove = getRemoveList(context, devices.Devices)
 
 	if toRemove != nil || len(toRemove) != 0 {
-		Removed(context, toRemove, baseMessage, isDelta)
+		RemoveDevice(context, toRemove, baseMessage, isDelta)
 	}
 	klog.Info("Deal node detail info successful")
 	return nil, nil
@@ -135,16 +135,16 @@ func dealMembershipUpdated(context *dtcontext.DTContext, resource string, msg in
 	baseMessage := dttype.BaseMessage{EventID: updateEdgeGroups.EventID}
 	if updateEdgeGroups.AddDevices != nil && len(updateEdgeGroups.AddDevices) > 0 {
 		//add device
-		Added(context, updateEdgeGroups.AddDevices, baseMessage, false)
+		AddDevice(context, updateEdgeGroups.AddDevices, baseMessage, false)
 	}
 	if updateEdgeGroups.RemoveDevices != nil && len(updateEdgeGroups.RemoveDevices) > 0 {
 		// delete device
-		Removed(context, updateEdgeGroups.RemoveDevices, baseMessage, false)
+		RemoveDevice(context, updateEdgeGroups.RemoveDevices, baseMessage, false)
 	}
 	return nil, nil
 }
 
-func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	klog.Infof("MEMBERSHIP EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -160,8 +160,8 @@ func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interf
 	return nil, nil
 }
 
-// Added add device to the edge group
-func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
+// AddDevice add device to the edge group
+func AddDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
 	klog.Infof("Add devices to edge group")
 	if !delta {
 		baseMessage.EventID = ""
@@ -181,7 +181,7 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 				klog.Errorf("Add device %s failed, has existed", device.ID)
 				continue
 			}
-			DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType)
+			UpdateDeviceAttr(context, device.ID, device.Attributes, baseMessage, dealType)
 			DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType)
 			//todo sync twin
 			continue
@@ -229,7 +229,7 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 
 		if device.Attributes != nil {
 			klog.Infof("Add device attr during first adding device %s", device.ID)
-			DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType)
+			UpdateDeviceAttr(context, device.ID, device.Attributes, baseMessage, dealType)
 		}
 		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
 		baseMessage := dttype.BuildBaseMessage()
@@ -251,8 +251,8 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 	}
 }
 
-// Removed remove device from the edge group
-func Removed(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
+// RemoveDevice remove device from the edge group
+func RemoveDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage dttype.BaseMessage, delta bool) {
 	klog.Infof("Begin to remove devices")
 	if !delta {
 		baseMessage.EventID = ""
