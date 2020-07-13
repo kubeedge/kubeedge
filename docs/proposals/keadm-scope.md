@@ -36,6 +36,11 @@ For edge, commands shall be:
 
 - `keadm join`
 - `keadm reset`
+- `keadm analysis`
+- `keadm check`
+- `keadm export-log`
+- `keadm get`
+- `keadm describe`
 
 **NOTE:**
 `node` key is used for edge component in the command, for superficial reasons. Because `kubeedge edge init` had `edge` used twice and didn't sound nice.
@@ -191,14 +196,187 @@ Flags:
 
 ```
 
+### keadm analysis --help
+
+```
+keadm analysis command can be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
+
+Usage:
+  keadm analysis [command]
+
+Examples:
+
+# view the running status of key components such as sqlite, edgehub, metamanager, and edged.
+keadm analysis edge
+
+Available Commands:
+  help        Help about any command
+  edge        view the running status of key components such as sqlite, edgehub, metamanager, and edged.
+  log         analyze the log of each component to determine the internal problems of the component.
+  network     analyze the network of each component to determine the internal problems of the component.
+
+```
+
+
+
+### keadm pre-check --help
+
+```
+keadm check command can be check whether the system specific items meet the requirements of edgecore or cloud installation and operation.
+
+Usage:
+  keadm pre-check 
+
+Examples:
+
+# 
+keadm pre-check edge
+```
+
+
+
+### keadm get --help
+
+```
+keadm get command prints a table of the most important information about the specified resources
+
+Usage:
+  keadm get
+[(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...]
+(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
+
+Examples:
+
+# list all pod
+keadm get pod
+
+# list pod in namespace test
+keadm get pod -n test
+
+# List a single deployment controller with specified NAME in ps output format.
+keadm get deployment web
+
+# List the complete information of the distributed deployment controller with the specified name in the yaml output format.
+keadm get deployment web -o yaml
+
+Available resource:
+  deployment
+  statefulset
+  pod
+  podstatus
+  service
+  configmap
+  secret
+  node
+  persistentvolumesclaims
+  endpoint
+  
+Flags:
+  -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
+context is ignored even if specified with --namespace.
+      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in
+the template. Only applies to golang and jsonpath output formats.
+      --chunk-size=500: Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is beta and
+may change in the future.
+      --field-selector='': Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector
+key1=value1,key2=value2). The server only supports a limited number of field queries per type.
+  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from a server.
+      --ignore-not-found=false: If the requested object does not exist the command will return exit code 0.
+  -k, --kustomize='': Process the kustomization directory. This flag can't be used together with -f or -R.
+  -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are
+case-sensitive. You can also use multiple flag options like -L label1 -L label2...
+      --no-headers=false: When using the default or custom-column output format, don't print headers (default print
+headers).
+  -o, --output='': Output format. One of:
+json|yaml|wide|name|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...
+See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns], golang template
+[http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template
+[http://kubernetes.io/docs/user-guide/jsonpath].
+      --raw='': Raw URI to request from the server.  Uses the transport specified by the kubeconfig file.
+  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage
+related manifests organized within the same directory.
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+      --server-print=true: If true, have the server return the appropriate table output. Supports extension APIs and
+CRDs.
+      --show-kind=false: If present, list the resource type for the requested object(s).
+      --show-labels=false: When printing, show all labels as the last column (default hide labels column)
+      --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed
+as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resource specified by this JSONPath expression
+must be an integer or a string.
+      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The
+template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+  -w, --watch=false: After listing/getting the requested object, watch for changes. Uninitialized objects are excluded
+if no object name is provided.
+      --watch-only=false: Watch for changes to the requested object(s), without listing/getting first.
+
+```
+
+
+
+### keadm describe --help
+
+```
+keadm analysis command can show details of a specific resource or group of resources.
+
+Usage:
+  keadm describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]
+
+Examples:
+
+  # Describe a node
+  keadm describe nodes kubernetes-node-emt8.c.myproject.internal
+
+  # Describe a pod
+  keadm describe pods/nginx
+
+  # Describe a pod identified by type and name in "pod.json"
+  keadm describe -f pod.json
+
+  # Describe all pods
+  keadm describe pods
+
+  # Describe pods by label name=myLabel
+  keadm describe po -l name=myLabel
+
+  # Describe all pods managed by the 'frontend' replication controller (rc-created pods
+  # get the name of the rc as a prefix in the pod the name).
+  keadm describe pods frontend
+
+Available resource:
+  deployment
+  statefulset
+  pod
+  podstatus
+  service
+  configmap
+  secret
+  node
+  persistentvolumesclaims
+  endpoint
+  
+Options:
+  -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
+context is ignored even if specified with --namespace.
+  -f, --filename=[]: Filename, directory, or URL to files containing the resource to describe
+  -k, --kustomize='': Process the kustomization directory. This flag can't be used together with -f or -R.
+  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage
+related manifests organized within the same directory.
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+      --show-events=true: If true, display events related to the described object.
+
+```
+
+
+
 ## Explaining the commands
 
 ### Master Node (on the Cloud) commands
 
 `keadm init`
   - What is it?
-     * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-
+    
+* This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
+  
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
@@ -261,3 +439,57 @@ Flags:
 
     1. Remove node using `curl` command from K8S cluster
     2. Kill `edgecore` process
+
+`keadm analysis`
+
+- What is it?
+  - This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
+
+- What shall be its scope ?
+  1. use `edge` parameter to  view the running status of key components such as sqlite, edgehub, metamanager, and edged.
+  2. use `network` parameter to verify cloudcore network connectivity
+  3. use `log` to analyze the log of each component to determine the internal problems of the component
+
+`keadm pre-check`
+
+- What is it?
+  
+- This command will be check whether the system specific items meet the requirements of edgecore or cloud installation and operation.
+  
+- What shall be its scope ?
+
+  1. Check items include hardware resources or operating system resources (cpu, memory, disk, network, pid limit,etc.)
+2. Check the runtime environment
+  3. use `edge` parameter to check the installation and operating environment of the edge node
+
+
+
+`keadm get`
+
+- What is it?
+  
+  - This command can be used to get some resources
+  
+- What shall be its scope ?
+
+  1. use `<resource>` parameter can obtain specific resources，resource include pod,configmap,secret,node etc. that can be seen at the edge node
+
+  2. Use `-n <namespace>` flag to select namespace and use `--all-namespace` flag to show all namespace.
+
+  3. Use `-l <selector>` flag to selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+
+  4. ...
+
+     
+
+`keadm describe`
+
+- What is it?
+  
+  - This command can be used to obtain part of the resource description
+- What shall be its scope ?
+
+  1. use `<resource> <resource_name>` parameter can obtain specific resources,resource include pod,configmap,secret,node etc. that can be seen at the edge node
+
+     
+  
