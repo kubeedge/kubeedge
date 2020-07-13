@@ -50,13 +50,13 @@ class Modbus {
         let client = this.client;
         switch(visitor.visitorConfig.register){
         case 'CoilRegister':
-            client.writeCoils(parseInt(visitor.visitorConfig.index), value, (err, data)=>{
+            client.writeCoils(parseInt(visitor.visitorConfig.offset), value, (err, data)=>{
                 client.close();
                 callback(err, data);
             });
             break;
         case 'HoldingRegister':
-            client.writeRegisters(parseInt(visitor.visitorConfig.index), value, (err, data)=>{
+            client.writeRegisters(parseInt(visitor.visitorConfig.offset), value, (err, data)=>{
                 client.close();
                 callback(err, data);
             });
@@ -83,8 +83,8 @@ class Modbus {
                             transData = (value).toString(2).split('').map(function(s) { return parseInt(s); });
                         } else if (visitor.visitorConfig.register === 'HoldingRegister') {
                             common.IntToByteArray(value, (byteArr)=>{
-                                if (byteArr.length < visitor.visitorConfig.offset) {
-                                    let zeroArr = new Array(visitor.visitorConfig.offset -byteArr.length).fill(0);
+                                if (byteArr.length < visitor.visitorConfig.limit) {
+                                    let zeroArr = new Array(visitor.visitorConfig.limit -byteArr.length).fill(0);
                                     byteArr = zeroArr.concat(byteArr);
                                     transData = byteArr;
                                 } else {
@@ -147,25 +147,25 @@ class Modbus {
         let client = this.client;
         switch (visitor.visitorConfig.register) {
             case 'CoilRegister':
-                client.readCoils(parseInt(visitor.visitorConfig.index), parseInt(visitor.visitorConfig.offset), (err, data)=>{
+                client.readCoils(parseInt(visitor.visitorConfig.offset), parseInt(visitor.visitorConfig.limit), (err, data)=>{
                     client.close();
                     callback(err, err?data:[data.data[0]]);
                 });
                 break;
             case 'DiscreteInputRegister':
-                client.readDiscreteInputs(parseInt(visitor.visitorConfig.index), parseInt(visitor.visitorConfig.offset), (err, data)=>{
+                client.readDiscreteInputs(parseInt(visitor.visitorConfig.offset), parseInt(visitor.visitorConfig.limit), (err, data)=>{
                     client.close();
                     callback(err, err?data:[data.data[0]]);
                 });
                 break;
             case 'HoldingRegister':
-                client.readHoldingRegisters(parseInt(visitor.visitorConfig.index), parseInt(visitor.visitorConfig.offset), (err, data)=>{
+                client.readHoldingRegisters(parseInt(visitor.visitorConfig.offset), parseInt(visitor.visitorConfig.limit), (err, data)=>{
                     client.close();
                     callback(err, err?data:data.data);
                 });
                 break;
             case 'InputRegister':
-                client.readInputRegisters(parseInt(visitor.visitorConfig.index), parseInt(visitor.visitorConfig.offset), (err, data)=>{
+                client.readInputRegisters(parseInt(visitor.visitorConfig.offset), parseInt(visitor.visitorConfig.limit), (err, data)=>{
                     client.close();
                     callback(err, err?data:data.data);
                 });
