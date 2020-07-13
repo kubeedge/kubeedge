@@ -196,44 +196,76 @@ Flags:
 
 ```
 
-### keadm analysis --help
+### keadm diagnose --help
 
 ```
-keadm analysis command can be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
+keadm diagnose command can be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault.
 
 Usage:
-  keadm analysis [command]
+  keadm diagnose [command]
 
 Examples:
 
-# view the running status of key components such as sqlite, edgehub, metamanager, and edged.
-keadm analysis edge
+# view the running status of node (key components such as sqlite, edgehub, metamanager, edged and many more)
+keadm analysis node
 
 Available Commands:
-  help        Help about any command
-  edge        view the running status of key components such as sqlite, edgehub, metamanager, and edged.
-  log         analyze the log of each component to determine the internal problems of the component.
-  network     analyze the network of each component to determine the internal problems of the component.
+  all           All resource
+  node          Troubleshoot the cause of edge node failure with installed IEF software
+  pod           Troubleshooting specific container application instances on nodes
+  installation  It is same as "keadm check"
 
 ```
 
-
-
-### keadm pre-check --help
+### keadm check --help
 
 ```
-keadm check command can be check whether the system specific items meet the requirements of edgecore or cloud installation and operation.
+keadm check command can be check whether the system specific items meet the requirements of edgecore installation and operation.
 
 Usage:
-  keadm pre-check 
+  keadm check [command]
+
+Available Commands:
+  all      Check all
+  arch     Determine the node hardware architecture whether support or not
+  cpu      Determine if the NUMBER of CPU cores meets the requirement
+  memory   Check the system memory size and the amount of memory left
+  disk     Check whether the disk meets the requirements
+  dns      Check whether the node domain name resolution function is normal
+  docker   Check whether the node Docker function is normal
+  network  Check whether the node can communicate with the endpoint on the cloud
+  gpu      Check whether there is gpu device on the node and whether the GPU driver is installed and running normally
+  npu      Check the node for the presence of nPU devices
+  pid      Check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient
+  glic      Check glic version
+  port      Check port whether the required port is occupied
+  
+
+Flags:
+  -h, --help   help for keadm check
+
+Use "keadm check [command] --help" for more information about a command
+```
+
+
+
+### keadm collect --help
+
+```
+Obtain all data of the current node, and then locate and use operation personnel.
+
+Usage:
+  keadm collect [flags]
 
 Examples:
 
-# 
-keadm pre-check edge
+keadm collect --path . 
+
+Flags:
+  --path    Cache data and store data compression packages in a directory that defaults to the current directory
+  --detail  Whether to print internal log output
+
 ```
-
-
 
 ### keadm get --help
 
@@ -316,7 +348,15 @@ if no object name is provided.
 ### keadm describe --help
 
 ```
-keadm analysis command can show details of a specific resource or group of resources.
+Show details of a specific resource or group of resources
+
+Print a detailed description of the selected resources, including related resources such as events or controllers. You
+may select a single object by name, all objects of that type, provide a name prefix, or label selector. For example:
+
+  $ kubectl describe TYPE NAME_PREFIX
+
+ will first check for an exact match on TYPE and NAME_PREFIX. If no such resource exists, it will output details for
+every resource that has a name prefixed with NAME_PREFIX.
 
 Usage:
   keadm describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]
@@ -409,6 +449,7 @@ related manifests organized within the same directory.
 ### Worker Node (at the Edge) commands
 
 `keadm join`
+
   - What is it?
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
@@ -440,7 +481,7 @@ related manifests organized within the same directory.
     1. Remove node using `curl` command from K8S cluster
     2. Kill `edgecore` process
 
-`keadm analysis`
+`keadm diagnose`
 
 - What is it?
   - This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
@@ -450,19 +491,174 @@ related manifests organized within the same directory.
   2. use `network` parameter to verify cloudcore network connectivity
   3. use `log` to analyze the log of each component to determine the internal problems of the component
 
-`keadm pre-check`
+`keadm check`
 
 - What is it?
   
-- This command will be check whether the system specific items meet the requirements of edgecore or cloud installation and operation.
+  - This command will be check whether the system specific items meet the requirements of edgecore installation and operation.
   
 - What shall be its scope ?
 
   1. Check items include hardware resources or operating system resources (cpu, memory, disk, network, pid limit,etc.)
-2. Check the runtime environment
-  3. use `edge` parameter to check the installation and operating environment of the edge node
 
+  2. Use command `arch` can check node hardware architecture:
 
+     - x86_64 architecture
+       Ubuntu 16.04 LTS (Xenial Xerus), Ubuntu 18.04 LTS (Bionic Beaver), CentOS 7.x and RHEL 7.x, Galaxy Kylin 4.0.2, ZTE new fulcrum v5.5, winning the bid Kylin v7.0
+
+     - armv7i (arm32) architecture
+       Raspbian GNU/Linux 9 (stretch)
+
+     - aarch64 (arm64) architecture
+       Ubuntu 18.04.2 LTS (Bionic Beaver)
+
+  3. Use command `cpu` can cetermine if the NUMBER of CPU cores meets the requirement, minimum 1Vcores.
+
+  4. Use command `memory` check the system memory size and the amount of memory left, requirements minimum 256MB.
+
+  5. Use command `disk` check whether the disk meets the requirements, requirements minimum 1 GB.
+
+  6. Use command `dns` Check whether the node domain name resolution function is normal.
+
+  7. Use command `docker `  Check whether the node Docker function is normal, the Docker version must be higher than 17.06, it is recommended to use the 18.06.3 version.
+
+  8. Use command `network `  check whether the node can communicate with the endpoint on the cloud,  default to ping "8.8.8.8".
+
+  9. Use command `gpu ` check whether there is gpu device on the node and whether the GPU driver is installed and running normally, currently only Nvidia Gpus are supported, such as the common Tesla P4, P40 T4 and so on
+
+  10. Use command `npu ` check the node for the presence of nPU devices
+
+  11. Use command `pid ` check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient.
+
+  12. Use command `glibc` check glibc version ,version must be higher than 2.17.
+
+  13. Use command `port` check port whether the required port is occupied
+
+      - 8102: The edge node logs are reported to AOM
+
+      - 8149: Edge node monitoring and reporting to AOM
+
+      - 8065: The edge node alarm is reported to AOM
+
+      - 443: Edge node connects to IEF
+
+      - 8883: Built-in port used by MQTT Broker
+
+      - 1883: Port used by external MQTT Broker
+
+      - 20004: The edge node reports the message to DIS
+
+`keadm collect`
+
+- What is it?
+
+  - This command will be obtain all related data of the current node, and then locate and use  operation personnel.
+
+- What shall be its scope ?
+
+  1. system data
+
+    - Hardware architecture
+
+      Collect arch command output and determine the type of IEF installation
+
+    - CPU information
+
+      Parse the /proc/cpuinfo file and output the cpu information file
+
+    - Memory information
+
+      Collect free -h command output
+
+    - Hard disk information
+
+      Collect df -h command output, and mount command output
+
+    - Internet Information
+
+      Collect netstat -anp command output and copy /etc/resolv.conf and /etc/hosts files
+
+    - Process information
+
+      Collect ps -aux command output
+
+    - Time information
+
+      Collect date and uptime command output
+
+    - History command input
+
+      Collect all the commands entered by the current user
+
+  2. Edgecore data
+
+  - database data
+
+    Copy the /var/lib/kubeedge/edgecore.db file
+
+  - log files
+
+    Copy all files under /var/*log*/*kubeedge*/
+
+  - service file
+
+    Copy the edgecore.service, edgelogger.service, edgemonitor.service, edgedaemon.service files under /lib/systemd/system/
+
+  - software version
+
+  - certificate
+
+    Copy all files under /etc/kubeedge/certs/
+
+  - Edge-Core configuration file in  software (including Edge-daemon)
+
+    Copy all files under /etc/kubeedge/config/
+
+  3. docker data
+
+  - Docker version information
+
+    Collect docker version command output
+
+  - Docker information
+
+    Collect docker info command output
+
+  - Docker log information
+
+    Collect journalctl -u docker.service command output
+
+  - Docker container information
+
+    Collect docker ps -a command output
+
+  - Docker container configuration and log information
+
+    Copy all files under /var/lib/docker/containers
+
+  - Docker image information
+
+    Collect docker images command output
+
+  - GPU device information
+
+    Collect ls /dev/nvidiactl /dev/nvidia-uvm /dev/nvidia? 2>&1 command output
+
+  - GPU kernel module information
+
+    Collect lsmod |grep -e nvidia -e nvidia-uvm 2>&1 command output
+
+  - GPU own information
+
+    Collect /var/IEF/nvidia/bin/nvidia-smi 2>&1 command output
+
+  - GPU driver status information
+
+    Collect systemctl status nvidia-drivers-loader command output
+
+  - NPU device information
+
+    Collect ls /dev/davinci_manager /dev/hisi_hdc /dev/davinci? command output
 
 `keadm get`
 
