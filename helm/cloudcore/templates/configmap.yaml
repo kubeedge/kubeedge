@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cloudcore.name" . }}
+  namespace: kubeedge
+  labels:
+    {{- include "cloudcore.labels" . | nindent 4 }}
+data:
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha1
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
+    modules:
+      cloudHub:
+        nodeLimit: 10
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000

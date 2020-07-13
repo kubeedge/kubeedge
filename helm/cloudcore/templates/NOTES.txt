@@ -1,0 +1,12 @@
+Finish cloudcore deployment.
+
+You can use following command to get cloudcore:
+  export CLOUDCORE_IP=$(kubectl get pods --namespace kubeedge -l "app.kubernetes.io/name={{ include "cloudcore.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].status.hostIP}")
+
+{{- if .Values.service.create }}
+  {{- if contains "NodePort" .Values.service.type }}
+If you create service:
+  export CLOUDCORE_IP=$(kubectl get nodes --namespace kubeedge -o jsonpath="{.items[0].status.addresses[0].address}")
+  export CLOUDCORE_PORT=$(kubectl get --namespace kubeedge -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "a.fullname" . }})
+  {{- end }}
+{{- end }}
