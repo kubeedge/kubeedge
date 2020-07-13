@@ -59,7 +59,7 @@ func (dw DeviceWorker) Start() {
 
 func initDeviceActionCallBack() {
 	deviceActionCallBack = make(map[string]CallBack)
-	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceUpdated
+	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceAttrUpdate
 	deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
 }
 
@@ -120,7 +120,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	return nil, nil
 }
 
-func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")

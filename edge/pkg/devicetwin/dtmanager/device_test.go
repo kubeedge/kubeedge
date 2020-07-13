@@ -102,7 +102,7 @@ func TestDeviceStartAction(t *testing.T) {
 	}
 }
 
-// TestDevicetHeartBeat is function to test Start() when value is passed in HeartBeatChan.
+// TestDeviceHeartBeat is function to test Start() when value is passed in HeartBeatChan.
 func TestDeviceStartHeartBeat(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
@@ -150,7 +150,6 @@ func TestDeviceStartHeartBeat(t *testing.T) {
 	}
 }
 
-// TestDealDeviceStatusUpdate test dealDeviceStatusUpdate
 func TestDealDeviceStateUpdate(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
@@ -263,7 +262,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 }
 
-//TestDealUpdateDeviceAttr is function to test dealUpdateDeviceAttr().
 func TestDealUpdateDeviceAttr(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
@@ -301,7 +299,7 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := dealUpdateDeviceAttr(test.context, test.resource, test.msg)
+			got, err := dealDeviceAttrUpdate(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -313,7 +311,6 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 	}
 }
 
-// TestUpdateDeviceAttr is function to test UpdateDeviceAttr().
 func TestUpdateDeviceAttr(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
@@ -467,7 +464,6 @@ func TestUpdateDeviceAttr(t *testing.T) {
 	}
 }
 
-// TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
 	dtContextsEmptyAttributes, err := dtcontext.InitDTContext()
 	if err != nil {
