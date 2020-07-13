@@ -278,7 +278,7 @@ func PrepareAllCerts() error {
 		// HubConfig has been initialized
 		cert := hubconfig.Config.Cert
 		key := hubconfig.Config.Key
-		err := CreateCaSecret(cert, key)
+		err := CreateCloudCoreSecret(cert, key)
 		if err != nil {
 			klog.Errorf("failed to save CloudCore cert to secret, error: %v", err)
 			return err
