@@ -36,9 +36,9 @@ For edge, commands shall be:
 
 - `keadm join`
 - `keadm reset`
-- `keadm analysis`
+- `keadm diagnose`
+- `keadm collect`
 - `keadm check`
-- `keadm export-log`
 - `keadm get`
 - `keadm describe`
 
@@ -213,7 +213,7 @@ Available Commands:
   all           All resource
   node          Troubleshoot the cause of edge node failure with installed software
   pod           Troubleshooting specific container application instances on nodes
-  installation  It is same as "keadm check"
+  installation  It is same as "keadm check all"
 
 ```
 
