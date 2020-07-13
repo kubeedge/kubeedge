@@ -127,7 +127,7 @@ func TestDealMembershipDetailValid(t *testing.T) {
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdatedEmptyMessage(t *testing.T) {
+func TestDealMembershipUpdateEmptyMessage(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -138,7 +138,7 @@ func TestDealMembershipUpdatedEmptyMessage(t *testing.T) {
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdatedInvalidMsg(t *testing.T) {
+func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -148,12 +148,12 @@ func TestDealMembershipUpdatedInvalidMsg(t *testing.T) {
 		Content: "invalidmessage",
 	}
 
-	value, err := dealMembershipUpdated(dtc, "t", m)
+	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
 	assert.Equal(t, nil, value)
 }
-func TestDealMembershipUpdatedInvalidContent(t *testing.T) {
+func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -165,12 +165,12 @@ func TestDealMembershipUpdatedInvalidContent(t *testing.T) {
 		Content: cnt,
 	}
 
-	value, err := dealMembershipUpdated(dtc, "t", m)
+	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdatedValidAddedDevice(t *testing.T) {
+func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 
 	mockCtrl := gomock.NewController(t)
@@ -205,12 +205,12 @@ func TestDealMembershipUpdatedValidAddedDevice(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdated(dtc, "t", m)
+	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdatedValidRemovedDevice(t *testing.T) {
+func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -234,23 +234,23 @@ func TestDealMembershipUpdatedValidRemovedDevice(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdated(dtc, "t", m)
+	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMerbershipGetEmptyMsg(t *testing.T) {
+func TestDealMembershipGetEmptyMsg(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
 	}
-	value, err := dealMerbershipGet(dtc, "t", "invalid")
+	value, err := dealMembershipGet(dtc, "t", "invalid")
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("msg not Message type"), err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMerbershipGetInvalidMsg(t *testing.T) {
+func TestDealMembershipGetInvalidMsg(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -260,13 +260,13 @@ func TestDealMerbershipGetInvalidMsg(t *testing.T) {
 		Content: "hello",
 	}
 
-	value, err := dealMerbershipGet(dtc, "t", m)
+	value, err := dealMembershipGet(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMerbershipGetValid(t *testing.T) {
+func TestDealMembershipGetValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -290,12 +290,11 @@ func TestDealMerbershipGetValid(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMerbershipGet(dtc, "t", m)
-	assert.Equal(t, nil, value)
+	_, err := dealMembershipGet(dtc, "t", m)
 	assert.NoError(t, err)
 }
 
-func TestDealGetMembershipValid(t *testing.T) {
+func TestDealMembershipGetInnerValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -317,11 +316,11 @@ func TestDealGetMembershipValid(t *testing.T) {
 	}
 	content, _ := json.Marshal(payload)
 
-	err := DealGetMembership(dtc, content)
+	err := dealMembershipGetInner(dtc, content)
 	assert.NoError(t, err)
 }
 
-func TestDealGetMembershipInValid(t *testing.T) {
+func TestDealMembershipGetInnerInValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -329,7 +328,7 @@ func TestDealGetMembershipInValid(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	err := DealGetMembership(dtc, []byte("invalid"))
+	err := dealMembershipGetInner(dtc, []byte("invalid"))
 	assert.NoError(t, err)
 }
 
