@@ -64,21 +64,15 @@ Key:
 
 ## Guides
 
-### User Guide
-
 See our documentation on [kubeedge.io](https://kubeedge.io).
 
 **Quick Start** - Install KubeEdge with [keadm](./docs/setup/keadm.md).
 
-Try some examples of KubeEdge on [examples](https://github.com/kubeedge/examples).
-
-### Developer Guide
-
-Take a look at our [development guide], If you are interested in building and contributing KubeEdge.
+To learn deeply about KubeEdge, try some examples on [examples](https://github.com/kubeedge/examples).
 
 ## Roadmap
 
-* [2020 Q2 Roadmap](./docs/getting-started/roadmap.md#2020-q2-roadmap)
+* [2020 Q2 Roadmap](./docs/roadmap.md#2020-q2-roadmap)
 
 ## Meeting
 
@@ -116,6 +110,3 @@ details on submitting patches and the contribution workflow.
 ## License
 
 KubeEdge is under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
-
-
-[development guide]: ./docs/setup/develop_kubeedge.md

@@ -6,7 +6,8 @@ KubeEdge is used by many companies. If you are using KubeEdge in your organizati
 <a href="https://cucc.wocloud.cn/" border="0" target="_blank"><img alt="ChinaUnicom-WoCloud" src="docs/adopters/china-unicom-wocloud.png" height="70"></a> &nbsp; &nbsp;
 <a href="https://www.raisecom.com/" border="0" target="_blank"><img alt="Raisecom Technology" src="docs/adopters/raisecom-technology.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
 <a href="https://kubesphere.io" border="0" target="_blank"><img alt="KubeSphere Container Platform" src="docs/adopters/kubesphere-logo.png" height="70"></a> &nbsp; &nbsp; &nbsp;
-<a href="http://xh-iot.net/" border="0" target="_blank"><img alt="XH-iot" src="docs/adopters/xh-iot.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
+<a href="http://xh-iot.net/" border="0" target="_blank"><img alt="XH-iot" src="docs/adopters/xh-iot.png" height="70"></a> &nbsp; &nbsp; &nbsp;
+<a href="http://www.jylink.com/" border="0" target="_blank"><img alt="jylink" src="docs/adopters/jylink.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
 
 ## Success Stories
 
@@ -49,3 +50,22 @@ Xinghai IoT now offers services in a wide range of areas. Therefore, its solutio
 
 #### Benefits
 Xinghai IoT built a smart campus with cloud-edge-device synergy based on KubeEdge and its own Xinghai IoT cloud platform, greatly improving the efficiency of campus management. With AI assistance, nearly 30% of the repetitive work is automated. In the future, Xinghai IoT will continue to collaborate with KubeEdge to launch KubeEdge-based smart campus solutions.
+
+
+## Jingying Shuzhi Technology Co., Ltd
+
+### Business Background
+Jingying Shuzhi Technology Co., Ltd focuses on providing security monitoring and management solutions for coal mining and gas enterprises. Their solutions cover reliable, stable data collection and transmission, on-site perception, risk prediction, and intelligent supervision to help these enterprises improve production security and reduce management costs. By leveraging AIoT and cloud-edge-device synergy, Jingying Shuzhi Technology Co., Ltd has built an intelligent sensing network for safe production in high-risk industries, promoting the in-depth integration of next-generation information technologies and safe production.
+
+### Highlights
+Jingying Shuzhi Technology Co., Ltd worked with KubeEdge to develop the Mine Brain solution, which covers the cloud, edge, and devices and makes coal production safer. This solution has the following advantages:
++ KubeEdge is compatible with the Kubernetes ecosystem. It allows Kubernetes applications to be smoothly migrated to KubeEdge, greatly improving deployment efficiency.
++ AI models are trained on the cloud and model inference is performed on the edge, greatly improving resource utilization and inference speed.
++ Service instances can recover automatically and run normally even if edge nodes are disconnected from the cloud, so the system is more reliable.
++ Edge intelligence, powerful computing, and management of a massive number of edge devices makes precise audio and video recognition possible for a range of different scenarios.
+
+With a foundation based on years of accumulated experience, Jingying Shuzhi Technology Co., Ltd has developed the ability to handle many different AI scenarios and cloud-edge-device O&M, effectively ensuring reliable services and precise recognition.
+
+### Benefits
+With the Mine Brain solution, coal mining enterprises in Shanxi have achieved intelligent coal mining in more than 1,000 mines. AI analysis algorithms delivered from the cloud to mining sites provide real-time risk assessments with an identification rate of up to 98%. Centralized monitoring of IT infrastructure at remote sites has reduced the cost of O&M by 65%, and integrated full-stack IT devices have reduced deployment costs by 75%. The Mine Brain solution has helped the coal industry ensure safe production, and ultimately achieved intelligent upgrade for the entire industry.
+Jingying Shuzhi Technology Co., Ltd will continue to work with KubeEdge, leveraging AI, IoT, and big data technologies to launch comprehensive intelligent edge solutions for safe production in the coal industry.

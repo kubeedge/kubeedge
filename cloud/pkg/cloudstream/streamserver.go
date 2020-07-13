@@ -66,6 +66,20 @@ func (s *StreamServer) installDebugHandler() {
 	ws.Route(ws.POST("/{podNamespace}/{podID}/{uid}/{containerName}").
 		To(s.getExec))
 	s.container.Add(ws)
+
+	ws = new(restful.WebService)
+	ws.Path("/stats")
+	ws.Route(ws.GET("").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/summary").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/container").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/{podName}/{containerName}").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/{namespace}/{podName}/{uid}/{containerName}").
+		To(s.getMetrics))
+	s.container.Add(ws)
 }
 
 func (s *StreamServer) getExec(r *restful.Request, w *restful.Response) {
@@ -118,6 +132,49 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	if err := logConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			logConnection.String(), session.String(), err)
+		return
+	}
+}
+
+func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
+	var err error
+
+	defer func() {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			klog.Errorf(err.Error())
+		}
+	}()
+
+	sessionKey := strings.Split(r.Request.Host, ":")[0]
+	session, ok := s.tunnel.getSession(sessionKey)
+	if !ok {
+		err = fmt.Errorf("Can not find %v session ", sessionKey)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	metricsConnection, err := session.AddAPIServerConnection(s, &ContainerMetricsConnection{
+		r:            r,
+		writer:       w.ResponseWriter,
+		session:      session,
+		ctx:          r.Request.Context(),
+		edgePeerStop: make(chan struct{}),
+	})
+	if err != nil {
+		klog.Errorf("Add apiserver connection into %s error %v", session.String(), err)
+		return
+	}
+
+	defer func() {
+		session.DeleteAPIServerConnection(metricsConnection)
+		klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
+	}()
+
+	if err := metricsConnection.Serve(); err != nil {
+		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
+			metricsConnection.String(), session.String(), err)
 		return
 	}
 }
