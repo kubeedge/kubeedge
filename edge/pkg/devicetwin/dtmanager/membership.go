@@ -61,8 +61,8 @@ func (mw MemWorker) Start() {
 
 func initMemActionCallBack() {
 	memActionCallBack = make(map[string]CallBack)
-	memActionCallBack[dtcommon.MemGet] = dealMerbershipGet
-	memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdated
+	memActionCallBack[dtcommon.MemGet] = dealMembershipGet
+	memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdate
 	memActionCallBack[dtcommon.MemDetailResult] = dealMembershipDetail
 }
 func getRemoveList(context *dtcontext.DTContext, devices []dttype.Device) []dttype.Device {
@@ -114,7 +114,7 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	return nil, nil
 }
 
-func dealMembershipUpdated(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	klog.Infof("Membership event")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -144,7 +144,7 @@ func dealMembershipUpdated(context *dtcontext.DTContext, resource string, msg in
 	return nil, nil
 }
 
-func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	klog.Infof("MEMBERSHIP EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -156,7 +156,7 @@ func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interf
 		return nil, errors.New("assertion failed")
 	}
 
-	dealGetMembershipInner(context, contentData)
+	dealMembershipGetInner(context, contentData)
 	return nil, nil
 }
 
@@ -304,8 +304,8 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 	}
 }
 
-// dealGetMembershipInner deal get membership event
-func dealGetMembershipInner(context *dtcontext.DTContext, payload []byte) error {
+// dealMembershipGetInner deal get membership event
+func dealMembershipGetInner(context *dtcontext.DTContext, payload []byte) error {
 	klog.Info("Deal getting membership event")
 	result := []byte("")
 	edgeGet, err := dttype.UnmarshalBaseMessage(payload)
