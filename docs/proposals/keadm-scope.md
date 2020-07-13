@@ -36,6 +36,11 @@ For edge, commands shall be:
 
 - `keadm join`
 - `keadm reset`
+- `keadm diagnose`
+- `keadm collect`
+- `keadm check`
+- `keadm get`
+- `keadm describe`
 
 **NOTE:**
 `node` key is used for edge component in the command, for superficial reasons. Because `kubeedge edge init` had `edge` used twice and didn't sound nice.
@@ -191,14 +196,208 @@ Flags:
 
 ```
 
+### keadm diagnose --help
+
+```
+keadm diagnose command can be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault.
+
+Usage:
+  keadm diagnose [command]
+
+Examples:
+
+# view the running status of node (key components such as sqlite, edgehub, metamanager, edged and many more)
+keadm analysis node
+
+Available Commands:
+  all           All resource
+  node          Troubleshoot the cause of edge node failure with installed software
+  pod           Troubleshooting specific container application instances on nodes
+  installation  It is same as "keadm check all"
+
+```
+
+### keadm check --help
+
+```
+keadm check command can be check whether the system specific items meet the requirements of edgecore installation and operation.
+
+Usage:
+  keadm check [command]
+
+Available Commands:
+  all      Check all
+  arch     Determine the node hardware architecture whether support or not
+  cpu      Determine if the NUMBER of CPU cores meets the requirement
+  memory   Check the system memory size and the amount of memory left
+  disk     Check whether the disk meets the requirements
+  dns      Check whether the node domain name resolution function is normal
+  docker   Check whether the node Docker function is normal
+  network  Check whether the node can communicate with the endpoint on the cloud
+  gpu      Check whether there is gpu device on the node and whether the GPU driver is installed and running normally
+  npu      Check the node for the presence of nPU devices
+  pid      Check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient
+  glic     Check glic version
+  port     Check port whether the required port is occupied
+  
+
+Flags:
+  -h, --help   help for keadm check
+
+Use "keadm check [command] --help" for more information about a command
+```
+
+
+
+### keadm collect --help
+
+```
+Obtain all data of the current node, and then locate and use operation personnel.
+
+Usage:
+  keadm collect [flags]
+
+Examples:
+
+keadm collect --path . 
+
+Flags:
+  --path    Cache data and store data compression packages in a directory that defaults to the current directory
+  --detail  Whether to print internal log output
+
+```
+
+### keadm get --help
+
+```
+"keadm get" command prints a table of the most important information about the specified resourcesv from sqlite db file.
+You can filter the list using a label selector and the --selector flag. If the desired resource type 
+is namespaced you will only see results in your current namespace unless you pass --all-namespaces.
+
+Usage:
+  keadm get [resource]
+[(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...]
+(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]
+
+Examples:
+
+# list all pod
+keadm get pod
+
+# list pod in namespace test
+keadm get pod -n test
+
+# List a single configmap  with specified NAME in ps output format.
+keadm get configmap web -n default
+
+# List the complete information of the configmap with the specified name in the yaml output format.
+keadm get configmap web -n default -o yaml
+
+Available resource:
+  pod
+  node
+  service
+  secret
+  configmap
+  endpoint
+  persistentvolumesclaims
+
+  
+Flags:
+  -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
+context is ignored even if specified with --namespace.
+      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in
+the template. Only applies to golang and jsonpath output formats.
+      --chunk-size=500: Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is beta and
+may change in the future.
+      --field-selector='': Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector
+key1=value1,key2=value2). The server only supports a limited number of field queries per type.
+  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from sqlite db file.
+      --ignore-not-found=false: If the requested object does not exist the command will return exit code 0.
+  -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are
+case-sensitive. You can also use multiple flag options like -L label1 -L label2...
+      --no-headers=false: When using the default or custom-column output format, don't print headers (default print
+headers).
+  -o, --output='': Output format. One of:
+json|yaml|wide|name|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...
+See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns], golang template
+[http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template
+[http://kubernetes.io/docs/user-guide/jsonpath].
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+      --show-kind=false: If present, list the resource type for the requested object(s).
+      --show-labels=false: When printing, show all labels as the last column (default hide labels column)
+      --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed
+as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resource specified by this JSONPath expression
+must be an integer or a string.
+      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The
+template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
+
+```
+
+
+### keadm describe --help
+
+```
+Show details of a specific resource or group of resources
+
+Print a detailed description of the selected resources, including related resources such as events or controllers. You
+may select a single object by name, all objects of that type, provide a name prefix, or label selector. For example:
+
+  $ kubectl describe TYPE NAME_PREFIX
+
+ will first check for an exact match on TYPE and NAME_PREFIX. If no such resource exists, it will output details for
+every resource that has a name prefixed with NAME_PREFIX.
+
+Usage:
+  keadm describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]
+
+Examples:
+
+  # Describe a node
+  keadm describe nodes kubernetes-node-emt8.c.myproject.internal
+
+  # Describe a pod
+  keadm describe pods/nginx
+
+  # Describe a pod identified by type and name in "pod.json"
+  keadm describe -f pod.json
+
+  # Describe all pods
+  keadm describe pods
+
+  # Describe pods by label name=myLabel
+  keadm describe po -l name=myLabel
+
+
+Available resource:
+  pod
+  node
+  service
+  secret
+  configmap
+  endpoint
+  persistentvolumesclaims
+  
+Options:
+  -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
+context is ignored even if specified with --namespace.
+  -f, --filename=[]: Filename, directory, or URL to files containing the resource to describe
+  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+      --show-events=true: If true, display events related to the described object.
+
+```
+
+
+
 ## Explaining the commands
 
 ### Master Node (on the Cloud) commands
 
 `keadm init`
   - What is it?
-     * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-
+    
+* This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
+  
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
@@ -231,6 +430,7 @@ Flags:
 ### Worker Node (at the Edge) commands
 
 `keadm join`
+
   - What is it?
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
@@ -261,3 +461,199 @@ Flags:
 
     1. Remove node using `curl` command from K8S cluster
     2. Kill `edgecore` process
+
+`keadm diagnose`
+
+- What is it?
+  - This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
+
+- What shall be its scope ?
+  1. use `edge` parameter to  view the running status of key components such as sqlite, edgehub, metamanager, and edged.
+  2. use `network` parameter to verify cloudcore network connectivity
+  3. use `log` to analyze the log of each component to determine the internal problems of the component
+
+`keadm check`
+
+- What is it?
+  
+  - This command will be check whether the system specific items meet the requirements of edgecore installation and operation.
+  
+- What shall be its scope ?
+
+  1. Check items include hardware resources or operating system resources (cpu, memory, disk, network, pid limit,etc.)
+
+  2. Use command `arch` can check node hardware architecture:
+
+     - x86_64 architecture
+       Ubuntu 16.04 LTS (Xenial Xerus), Ubuntu 18.04 LTS (Bionic Beaver), CentOS 7.x and RHEL 7.x, Galaxy Kylin 4.0.2, ZTE new fulcrum v5.5, winning the bid Kylin v7.0
+
+     - armv7i (arm32) architecture
+       Raspbian GNU/Linux 9 (stretch)
+
+     - aarch64 (arm64) architecture
+       Ubuntu 18.04.2 LTS (Bionic Beaver)
+
+  3. Use command `cpu` can cetermine if the NUMBER of CPU cores meets the requirement, minimum 1Vcores.
+
+  4. Use command `memory` check the system memory size and the amount of memory left, requirements minimum 256MB.
+
+  5. Use command `disk` check whether the disk meets the requirements, requirements minimum 1 GB.
+
+  6. Use command `dns` Check whether the node domain name resolution function is normal.
+
+  7. Use command `docker `  Check whether the node Docker function is normal, the Docker version must be higher than 17.06, it is recommended to use the 18.06.3 version.
+
+  8. Use command `network `  check whether the node can communicate with the endpoint on the cloud,  default to ping "8.8.8.8".
+
+  9. Use command `gpu ` check whether there is gpu device on the node and whether the GPU driver is installed and running normally, currently only Nvidia Gpus are supported, such as the common Tesla P4, P40 T4 and so on
+
+  10. Use command `npu ` check the node for the presence of nPU devices
+
+  11. Use command `pid ` check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient.
+
+  12. Use command `glibc` check glibc version ,version must be higher than 2.17.
+
+  13. Use command `port` check port whether the required port is occupied
+
+      - 8883: Built-in port used by MQTT Broker
+
+      - 1883: Port used by external MQTT Broker
+
+
+`keadm collect`
+
+- What is it?
+
+  - This command will be obtain all related data of the current node, and then locate and use  operation personnel.
+
+- What shall be its scope ?
+
+  1. system data
+
+    - Hardware architecture
+
+      Collect arch command output and determine the type of  installation
+
+    - CPU information
+
+      Parse the /proc/cpuinfo file and output the cpu information file
+
+    - Memory information
+
+      Collect free -h command output
+
+    - Hard disk information
+
+      Collect df -h command output, and mount command output
+
+    - Internet Information
+
+      Collect netstat -anp command output and copy /etc/resolv.conf and /etc/hosts files
+
+    - Process information
+
+      Collect ps -aux command output
+
+    - Time information
+
+      Collect date and uptime command output
+
+    - History command input
+
+      Collect all the commands entered by the current user
+
+  2. Edgecore data
+
+  - database data
+
+    Copy the /var/lib/kubeedge/edgecore.db file
+
+  - log files
+
+    Copy all files under /var/*log*/*kubeedge*/
+
+  - service file
+
+    Copy the edgecore.service, edgelogger.service, edgemonitor.service, edgedaemon.service files under /lib/systemd/system/
+
+  - software version
+
+  - certificate
+
+    Copy all files under /etc/kubeedge/certs/
+
+  - Edge-Core configuration file in  software (including Edge-daemon)
+
+    Copy all files under /etc/kubeedge/config/
+
+  3. docker data
+
+  - Docker version information
+
+    Collect docker version command output
+
+  - Docker information
+
+    Collect docker info command output
+
+  - Docker log information
+
+    Collect journalctl -u docker.service command output
+
+  - Docker container information
+
+    Collect docker ps -a command output
+
+  - Docker container configuration and log information
+
+    Copy all files under /var/lib/docker/containers
+
+  - Docker image information
+
+    Collect docker images command output
+
+  - GPU device information
+
+    Collect ls /dev/nvidiactl /dev/nvidia-uvm /dev/nvidia? 2>&1 command output
+
+  - GPU kernel module information
+
+    Collect lsmod |grep -e nvidia -e nvidia-uvm 2>&1 command output
+
+  - GPU driver status information
+
+    Collect systemctl status nvidia-drivers-loader command output
+
+  - NPU device information
+
+    Collect ls /dev/davinci_manager /dev/hisi_hdc /dev/davinci? command output
+
+`keadm get`
+
+- What is it?
+  
+  - This command can be used to get some resources
+  
+- What shall be its scope ?
+
+  1. use `<resource>` parameter can obtain specific resources，resource include pod,configmap,secret,node etc. that can be seen at the edge node
+
+  2. Use `-n <namespace>` flag to select namespace and use `--all-namespace` flag to show all namespace.
+
+  3. Use `-l <selector>` flag to selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+
+  4. ...
+
+     
+
+`keadm describe`
+
+- What is it?
+  
+  - This command can be used to obtain part of the resource description
+- What shall be its scope ?
+
+  1. use `<resource> <resource_name>` parameter can obtain specific resources,resource include pod,configmap,secret,node etc. that can be seen at the edge node
+
+     
+  
