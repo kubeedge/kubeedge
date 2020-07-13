@@ -211,7 +211,7 @@ keadm analysis node
 
 Available Commands:
   all           All resource
-  node          Troubleshoot the cause of edge node failure with installed IEF software
+  node          Troubleshoot the cause of edge node failure with installed software
   pod           Troubleshooting specific container application instances on nodes
   installation  It is same as "keadm check"
 
@@ -534,19 +534,10 @@ related manifests organized within the same directory.
 
   13. Use command `port` check port whether the required port is occupied
 
-      - 8102: The edge node logs are reported to AOM
-
-      - 8149: Edge node monitoring and reporting to AOM
-
-      - 8065: The edge node alarm is reported to AOM
-
-      - 443: Edge node connects to IEF
-
       - 8883: Built-in port used by MQTT Broker
 
       - 1883: Port used by external MQTT Broker
 
-      - 20004: The edge node reports the message to DIS
 
 `keadm collect`
 
@@ -560,7 +551,7 @@ related manifests organized within the same directory.
 
     - Hardware architecture
 
-      Collect arch command output and determine the type of IEF installation
+      Collect arch command output and determine the type of  installation
 
     - CPU information
 
@@ -647,10 +638,6 @@ related manifests organized within the same directory.
   - GPU kernel module information
 
     Collect lsmod |grep -e nvidia -e nvidia-uvm 2>&1 command output
-
-  - GPU own information
-
-    Collect /var/IEF/nvidia/bin/nvidia-smi 2>&1 command output
 
   - GPU driver status information
 
