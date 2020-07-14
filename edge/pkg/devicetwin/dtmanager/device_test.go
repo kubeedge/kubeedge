@@ -103,7 +103,7 @@ func TestDeviceStartAction(t *testing.T) {
 }
 
 // TestDeviceHeartBeat is function to test Start() when value is passed in HeartBeatChan.
-func TestDeviceStartHeartBeat(t *testing.T) {
+func TestDeviceHeartBeat(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
