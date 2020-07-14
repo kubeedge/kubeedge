@@ -106,7 +106,6 @@ func (dc *DownstreamController) syncConfigMap() {
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				operation = model.DeleteOperation
-				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("config map event type: %s unsupported", e.Type)
@@ -114,6 +113,9 @@ func (dc *DownstreamController) syncConfigMap() {
 			}
 
 			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
+			if e.Type == watch.Deleted {
+				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
+			}
 			klog.V(4).Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
@@ -157,7 +159,6 @@ func (dc *DownstreamController) syncSecret() {
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				operation = model.DeleteOperation
-				dc.lc.DeleteSecret(secret.Namespace, secret.Name)
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("secret event type: %s unsupported", e.Type)
@@ -165,6 +166,9 @@ func (dc *DownstreamController) syncSecret() {
 			}
 
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
+			if e.Type == watch.Deleted {
+				dc.lc.DeleteSecret(secret.Namespace, secret.Name)
+			}
 			klog.V(4).Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
