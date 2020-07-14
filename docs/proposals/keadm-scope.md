@@ -237,8 +237,8 @@ Available Commands:
   gpu      Check whether there is gpu device on the node and whether the GPU driver is installed and running normally
   npu      Check the node for the presence of nPU devices
   pid      Check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient
-  glic      Check glic version
-  port      Check port whether the required port is occupied
+  glic     Check glic version
+  port     Check port whether the required port is occupied
   
 
 Flags:
@@ -270,12 +270,14 @@ Flags:
 ### keadm get --help
 
 ```
-keadm get command prints a table of the most important information about the specified resources
+"keadm get" command prints a table of the most important information about the specified resourcesv from sqlite db file.
+You can filter the list using a label selector and the --selector flag. If the desired resource type 
+is namespaced you will only see results in your current namespace unless you pass --all-namespaces.
 
 Usage:
-  keadm get
+  keadm get [resource]
 [(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...]
-(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
+(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]
 
 Examples:
 
@@ -285,23 +287,21 @@ keadm get pod
 # list pod in namespace test
 keadm get pod -n test
 
-# List a single deployment controller with specified NAME in ps output format.
-keadm get deployment web
+# List a single configmap  with specified NAME in ps output format.
+keadm get configmap web -n default
 
-# List the complete information of the distributed deployment controller with the specified name in the yaml output format.
-keadm get deployment web -o yaml
+# List the complete information of the configmap with the specified name in the yaml output format.
+keadm get configmap web -n default -o yaml
 
 Available resource:
-  deployment
-  statefulset
   pod
-  podstatus
-  service
-  configmap
-  secret
   node
-  persistentvolumesclaims
+  service
+  secret
+  configmap
   endpoint
+  persistentvolumesclaims
+
   
 Flags:
   -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
@@ -312,9 +312,8 @@ the template. Only applies to golang and jsonpath output formats.
 may change in the future.
       --field-selector='': Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector
 key1=value1,key2=value2). The server only supports a limited number of field queries per type.
-  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from a server.
+  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from sqlite db file.
       --ignore-not-found=false: If the requested object does not exist the command will return exit code 0.
-  -k, --kustomize='': Process the kustomization directory. This flag can't be used together with -f or -R.
   -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are
 case-sensitive. You can also use multiple flag options like -L label1 -L label2...
       --no-headers=false: When using the default or custom-column output format, don't print headers (default print
@@ -324,12 +323,7 @@ json|yaml|wide|name|custom-columns=...|custom-columns-file=...|go-template=...|g
 See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns], golang template
 [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template
 [http://kubernetes.io/docs/user-guide/jsonpath].
-      --raw='': Raw URI to request from the server.  Uses the transport specified by the kubeconfig file.
-  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage
-related manifests organized within the same directory.
   -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
-      --server-print=true: If true, have the server return the appropriate table output. Supports extension APIs and
-CRDs.
       --show-kind=false: If present, list the resource type for the requested object(s).
       --show-labels=false: When printing, show all labels as the last column (default hide labels column)
       --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed
@@ -337,12 +331,8 @@ as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resourc
 must be an integer or a string.
       --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The
 template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
-  -w, --watch=false: After listing/getting the requested object, watch for changes. Uninitialized objects are excluded
-if no object name is provided.
-      --watch-only=false: Watch for changes to the requested object(s), without listing/getting first.
 
 ```
-
 
 
 ### keadm describe --help
@@ -378,29 +368,20 @@ Examples:
   # Describe pods by label name=myLabel
   keadm describe po -l name=myLabel
 
-  # Describe all pods managed by the 'frontend' replication controller (rc-created pods
-  # get the name of the rc as a prefix in the pod the name).
-  keadm describe pods frontend
 
 Available resource:
-  deployment
-  statefulset
   pod
-  podstatus
-  service
-  configmap
-  secret
   node
-  persistentvolumesclaims
+  service
+  secret
+  configmap
   endpoint
+  persistentvolumesclaims
   
 Options:
   -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
 context is ignored even if specified with --namespace.
   -f, --filename=[]: Filename, directory, or URL to files containing the resource to describe
-  -k, --kustomize='': Process the kustomization directory. This flag can't be used together with -f or -R.
-  -R, --recursive=false: Process the directory used in -f, --filename recursively. Useful when you want to manage
-related manifests organized within the same directory.
   -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
       --show-events=true: If true, display events related to the described object.
 
