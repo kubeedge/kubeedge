@@ -46,9 +46,18 @@ linters:
   disable-all: true
   enable:
     - goconst
+    - errcheck
     - gofmt
     - golint
     - gosimple
     - govet
     - misspell
     - whitespace
+
+issues:
+    # Excluding configuration per-path, per-linter, per-text and per-source
+    exclude-rules:
+      - path: edge
+        linters:
+          - errcheck
+
