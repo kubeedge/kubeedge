@@ -168,7 +168,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	klog.Infof("Begin to deal device twin of the device %s", deviceID)
 	now := time.Now().UnixNano() / 1e6
 	result := []byte("")
-	deviceModel, isExist := context.GetDevice(deviceID)
+	device, isExist := context.GetDevice(deviceID)
 	if !isExist {
 		klog.Errorf("Update twin rejected due to the device %s is not existed", deviceID)
 		dealUpdateResult(context, deviceID, eventID, dtcommon.NotFoundCode, errors.New("Update rejected due to the device is not existed"), result)
@@ -219,7 +219,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		dealDocument(context, deviceID, dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Document)
 	}
 
-	delta, ok := dttype.BuildDeviceTwinDelta(dttype.BuildBaseMessage(), deviceModel.Twin)
+	delta, ok := dttype.BuildDeviceTwinDelta(dttype.BuildBaseMessage(), device.Twin)
 	if ok {
 		dealDelta(context, deviceID, delta)
 	}
@@ -921,7 +921,7 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 		Document:   document,
 		Err:        nil}
 
-	deviceModel, ok := context.GetDevice(deviceID)
+	device, ok := context.GetDevice(deviceID)
 	if !ok {
 		klog.Errorf("invalid device id")
 		return dttype.DealTwinResult{Add: add,
@@ -933,10 +933,10 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 			Err:        errors.New("invalid device id")}
 	}
 
-	twins := deviceModel.Twin
+	twins := device.Twin
 	if twins == nil {
-		deviceModel.Twin = make(map[string]*dttype.MsgTwin)
-		twins = deviceModel.Twin
+		device.Twin = make(map[string]*dttype.MsgTwin)
+		twins = device.Twin
 	}
 
 	var err error
@@ -963,6 +963,6 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 			}
 		}
 	}
-	context.DeviceList.Store(deviceID, deviceModel)
+	context.DeviceList.Store(deviceID, device)
 	return returnResult
 }
