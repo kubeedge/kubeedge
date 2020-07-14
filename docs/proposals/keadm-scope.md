@@ -424,7 +424,6 @@ context is ignored even if specified with --namespace.
 ### Worker Node (at the Edge) commands
 
 `keadm join`
-
   - What is it?
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
