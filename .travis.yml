@@ -29,6 +29,7 @@ jobs:
       name: "Verify vendor, codegen, gofmt, golint, govet"
       before_script:
         - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.23.7
+        - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -s -- --version v3.2.4
         - export GO111MODULE=on
         - export GOFLAGS=-mod=mod
         - sudo apt-get install jq -y

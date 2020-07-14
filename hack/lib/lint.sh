@@ -72,4 +72,7 @@ kubeedge::lint::check() {
     # only check format issue under staging dir
     echo "check any issue under staging dir by gofmt ..."
     gofmt -l -w staging
+
+    echo "check any issue by helm lint ..."
+    helm lint helm/cloudcore
 }
