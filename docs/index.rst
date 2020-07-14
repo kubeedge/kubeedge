@@ -32,6 +32,7 @@ application orchestration capabilities to hosts at Edge.
 
    setup/keadm
    setup/local
+   setup/helm
    setup/upgrade
 
 .. toctree::
