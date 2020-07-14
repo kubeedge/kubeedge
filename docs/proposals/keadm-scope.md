@@ -40,7 +40,6 @@ For edge, commands shall be:
 - `keadm collect`
 - `keadm check`
 - `keadm get`
-- `keadm describe`
 
 **NOTE:**
 `node` key is used for edge component in the command, for superficial reasons. Because `kubeedge edge init` had `edge` used twice and didn't sound nice.
@@ -289,29 +288,20 @@ keadm get configmap web -n default
 # List the complete information of the configmap with the specified name in the yaml output format.
 keadm get configmap web -n default -o yaml
 
-Available resource:
+Available resource type:
   pod
   node
   service
   secret
   configmap
   endpoint
-  persistentvolumesclaims
 
   
 Flags:
   -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
 context is ignored even if specified with --namespace.
-      --allow-missing-template-keys=true: If true, ignore any errors in templates when a field or map key is missing in
-the template. Only applies to golang and jsonpath output formats.
       --chunk-size=500: Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is beta and
 may change in the future.
-      --field-selector='': Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector
-key1=value1,key2=value2). The server only supports a limited number of field queries per type.
-  -f, --filename=[]: Filename, directory, or URL to files identifying the resource to get from sqlite db file.
-      --ignore-not-found=false: If the requested object does not exist the command will return exit code 0.
-  -L, --label-columns=[]: Accepts a comma separated list of labels that are going to be presented as columns. Names are
-case-sensitive. You can also use multiple flag options like -L label1 -L label2...
       --no-headers=false: When using the default or custom-column output format, don't print headers (default print
 headers).
   -o, --output='': Output format. One of:
@@ -320,66 +310,9 @@ See custom columns [http://kubernetes.io/docs/user-guide/kubectl-overview/#custo
 [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template
 [http://kubernetes.io/docs/user-guide/jsonpath].
   -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
-      --show-kind=false: If present, list the resource type for the requested object(s).
-      --show-labels=false: When printing, show all labels as the last column (default hide labels column)
       --sort-by='': If non-empty, sort list types using this field specification.  The field specification is expressed
 as a JSONPath expression (e.g. '{.metadata.name}'). The field in the API resource specified by this JSONPath expression
 must be an integer or a string.
-      --template='': Template string or path to template file to use when -o=go-template, -o=go-template-file. The
-template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].
-
-```
-
-
-### keadm describe --help
-
-```
-Show details of a specific resource or group of resources
-
-Print a detailed description of the selected resources, including related resources such as events or controllers. You
-may select a single object by name, all objects of that type, provide a name prefix, or label selector. For example:
-
-  $ kubectl describe TYPE NAME_PREFIX
-
- will first check for an exact match on TYPE and NAME_PREFIX. If no such resource exists, it will output details for
-every resource that has a name prefixed with NAME_PREFIX.
-
-Usage:
-  keadm describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]
-
-Examples:
-
-  # Describe a node
-  keadm describe nodes kubernetes-node-emt8.c.myproject.internal
-
-  # Describe a pod
-  keadm describe pods/nginx
-
-  # Describe a pod identified by type and name in "pod.json"
-  keadm describe -f pod.json
-
-  # Describe all pods
-  keadm describe pods
-
-  # Describe pods by label name=myLabel
-  keadm describe po -l name=myLabel
-
-
-Available resource:
-  pod
-  node
-  service
-  secret
-  configmap
-  endpoint
-  persistentvolumesclaims
-  
-Options:
-  -A, --all-namespaces=false: If present, list the requested object(s) across all namespaces. Namespace in current
-context is ignored even if specified with --namespace.
-  -f, --filename=[]: Filename, directory, or URL to files containing the resource to describe
-  -l, --selector='': Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
-      --show-events=true: If true, display events related to the described object.
 
 ```
 
@@ -609,28 +542,18 @@ context is ignored even if specified with --namespace.
 
 - What is it?
   
-  - This command can be used to get some resources
+  - This command will be responsible to get and format the data in the edge-site database edgecore.db (such as kubectl), help for debug
   
 - What shall be its scope ?
 
-  1. use `<resource>` parameter can obtain specific resources，resource include pod,configmap,secret,node etc. that can be seen at the edge node
+  1. use `<resource>` parameter can obtain specific resources(pod node service secret configmap endpoint etc.) from edgecore.db file, that delivered from the cloud-site to edge-site
 
-  2. Use `-n <namespace>` flag to select namespace and use `--all-namespace` flag to show all namespace.
+  2. Use `-n <namespace>` flag to show resources fileter by namespace and use `--all-namespace` flag to show resources in all namespace
 
   3. Use `-l <selector>` flag to selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
 
-  4. ...
-
-     
-
-`keadm describe`
-
-- What is it?
+  4. Use `-o <format>` flag to specify the output format (json|yaml|wide|name|custom-columns=...|etc.)
   
-  - This command can be used to obtain part of the resource description
-- What shall be its scope ?
-
-  1. use `<resource> <resource_name>` parameter can obtain specific resources,resource include pod,configmap,secret,node etc. that can be seen at the edge node
-
+  
      
   
