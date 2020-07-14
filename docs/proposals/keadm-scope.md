@@ -236,6 +236,7 @@ Available Commands:
   network  Check whether the node can communicate with the endpoint on the cloud
   pid      Check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient
   
+
 Flags:
   -h, --help   help for keadm check
 
@@ -390,8 +391,9 @@ context is ignored even if specified with --namespace.
 
 `keadm init`
   - What is it?
-     * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-
+    
+* This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
+  
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
@@ -424,6 +426,7 @@ context is ignored even if specified with --namespace.
 ### Worker Node (at the Edge) commands
 
 `keadm join`
+
   - What is it?
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
@@ -458,6 +461,7 @@ context is ignored even if specified with --namespace.
 `keadm diagnose`
 
 - What is it?
+
   
 - This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
   
@@ -466,6 +470,7 @@ context is ignored even if specified with --namespace.
     2. Use command `node` can roubleshoot the cause of edge node failure with installed software
     3. Use command `pod` can troubleshooting specific container application instances on nodes
     4. Use command `installation` is same as "keadm check all"
+
 
 
 `keadm check`
@@ -499,9 +504,11 @@ context is ignored even if specified with --namespace.
 
   7. Use command `docker `  Check whether the node Docker function is normal, the Docker version must be higher than 17.06, it is recommended to use the 18.06.3 version.
 
+
   8. Use command `network `  check whether the node can communicate with the endpoint on the cloud,  default to ping clusterdns.
 
   11. Use command `pid ` check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient.
+
 
 
 

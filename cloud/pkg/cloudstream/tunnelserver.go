@@ -109,16 +109,12 @@ func (s *TunnelServer) Start() {
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: data}))
 
-	cert, err := ioutil.ReadFile(config.Config.TLSTunnelCertFile)
-	if err != nil {
-		cert = hubconfig.Config.Cert
-		klog.Info("Succeeded in loading TLSTunnelCertFile from the secret")
-	}
-	key, err := ioutil.ReadFile(config.Config.TLSTunnelPrivateKeyFile)
-	if err != nil {
-		key = hubconfig.Config.Key
-		klog.Info("Succeeded in loading TLSTunnelPrivateKeyFile from the secret")
-	}
+	cert := hubconfig.Config.Cert
+	klog.Info("Succeeded in loading TLSTunnelCertFile from the secret")
+
+	key := hubconfig.Config.Key
+	klog.Info("Succeeded in loading TLSTunnelPrivateKeyFile from the secret")
+
 	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
 	if err != nil {
 		panic(err)
