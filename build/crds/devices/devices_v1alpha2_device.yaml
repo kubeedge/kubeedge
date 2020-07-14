@@ -50,7 +50,50 @@ spec:
                 modbus:
                   description: Protocol configuration for modbus
                   properties:
-                    rtu:
+                    slaveID:
+                      description: Required. 0-255
+                      format: int64
+                      type: integer
+                      minimum: 0
+                      maximum: 255
+                  required:
+                    - slaveID
+                  type: object
+                opcua:
+                  description: Protocol configuration for opc-ua
+                  properties:
+                    certificate:
+                      description: Certificate for access opc server.
+                      type: string
+                    password:
+                      description: Password for access opc server.
+                      type: string
+                    privateKey:
+                      description: PrivateKey for access opc server.
+                      type: string
+                    securityMode:
+                      description: Defaults to "none".
+                      type: string
+                    securityPolicy:
+                      description: Defaults to "none".
+                      type: string
+                    timeout:
+                      description: Timeout seconds for the opc server connection.???
+                      format: int64
+                      type: integer
+                    url:
+                      description: 'Required: The URL for opc server endpoint.'
+                      type: string
+                    userName:
+                      description: Username for access opc server.
+                      type: string
+                  required:
+                    - url
+                  type: object
+                common:
+                  description: Common part of protocol configuration
+                  properties:
+                    com:
                       properties:
                         baudRate:
                           description: Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
@@ -94,12 +137,6 @@ spec:
                         serialPort:
                           description: Required.
                           type: string
-                        slaveID:
-                          description: Required. 0-255
-                          format: int64
-                          type: integer
-                          minimum: 0
-                          maximum: 255
                         stopBits:
                           description: Required. Bit that stops 1|2
                           format: int64
@@ -112,7 +149,6 @@ spec:
                         - dataBits
                         - parity
                         - serialPort
-                        - slaveID
                         - stopBits
                       type: object
                     tcp:
@@ -124,45 +160,36 @@ spec:
                           description: Required.
                           format: int64
                           type: integer
-                        slaveID:
-                          description: Required.
-                          type: string
                       required:
                         - ip
                         - port
-                        - slaveID
                       type: object
-                  type: object
-                opcua:
-                  description: Protocol configuration for opc-ua
-                  properties:
-                    certificate:
-                      description: Certificate for access opc server.
+                    commType:
+                      description: Communication type, like tcp client, tcp server or COM
                       type: string
-                    password:
-                      description: Password for access opc server.
-                      type: string
-                    privateKey:
-                      description: PrivateKey for access opc server.
-                      type: string
-                    securityMode:
-                      description: Defaults to "none".
-                      type: string
-                    securityPolicy:
-                      description: Defaults to "none".
-                      type: string
-                    timeout:
-                      description: Timeout seconds for the opc server connection.???
+                    reconnTimeout:
+                      description: Reconnection timeout
+                      type: integer
+                    reconnRetryTimes:
+                      description: Reconnecting retry times
+                      type: integer
+                    collectTimeout:
+                      description: 'Define timeout of mapper collect from device.'
                       format: int64
                       type: integer
-                    url:
-                      description: 'Required: The URL for opc server endpoint.'
+                    collectRetryTimes:
+                      description: 'Define retry times of mapper will collect from device.'
+                      format: int64
+                      type: integer
+                    collectType:
+                      description: 'Define collect type, sync or async.'
                       type: string
-                    userName:
-                      description: Username for access opc server.
-                      type: string
-                  required:
-                    - url
+                      enum:
+                        - sync
+                        - async
+                    customizedValues:
+                      description: Customized values for provided protocol
+                      type: object
                   type: object
                 customizedProtocol:
                   description: Protocol configuration for customized Protocol
@@ -312,12 +339,12 @@ spec:
                       protocolName:
                         description: The name of protocol
                         type: string
-                      definition:
-                        description: customized definition
+                      configData:
+                        description: customized config data
                         type: object
                     required:
                       - protocolName
-                      - definition
+                      - configData
                     type: object
                   propertyName:
                     description: 'Required: The device property name to be accessed.
@@ -332,6 +359,9 @@ spec:
                     description: 'Define how frequent mapper will collect from device.'
                     format: int64
                     type: integer
+                  customizedValues:
+                    description: Customized values for visitor of provided protocols
+                    type: object
                 required:
                   - propertyName
                 type: object

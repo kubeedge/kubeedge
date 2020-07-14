@@ -12,12 +12,14 @@ spec:
   protocol:
     modbus:
       rtu:
+        slaveID: 1
+    common:
+      com:
         serialPort: '1'
         baudRate: 115200
         dataBits: 8
         parity: even
         stopBits: 1
-        slaveID: 1
   nodeSelector:
     nodeSelectorTerms:
     - matchExpressions:

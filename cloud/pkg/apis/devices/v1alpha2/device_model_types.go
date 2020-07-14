@@ -190,8 +190,8 @@ const (
 type VisitorConfigCustomized struct {
 	// Required: name of customized protocol
 	ProtocolName string `json:"protocolName,omitempty"`
-	// Required: The definition of customized protocol
-	Definition *CustomizedValue `json:"definition,omitempty"`
+	// Required: The configData of customized protocol
+	ConfigData *CustomizedValue `json:"configData,omitempty"`
 }
 
 // +genclient
