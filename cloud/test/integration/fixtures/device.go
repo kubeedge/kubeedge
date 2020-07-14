@@ -76,13 +76,19 @@ func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 		case deviceProtocolModbusRTU:
 			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					RTU: &v1alpha2.ProtocolConfigModbusRTU{},
+					SlaveID: 1,
+				},
+				Common: &v1alpha2.ProtocolConfigCommon{
+					COM: &v1alpha2.ProtocolConfigCOM{},
 				},
 			}
 		case deviceProtocolModbusTCP:
 			op.device.Spec.Protocol = v1alpha2.ProtocolConfig{
 				Modbus: &v1alpha2.ProtocolConfigModbus{
-					TCP: &v1alpha2.ProtocolConfigModbusTCP{},
+					SlaveID: 1,
+				},
+				Common: &v1alpha2.ProtocolConfigCommon{
+					TCP: &v1alpha2.ProtocolConfigTCP{},
 				},
 			}
 		case deviceProtocolBluetooth:
@@ -104,55 +110,55 @@ func withProtocolConfig(protocol deviceProtocol) DeviceOption {
 
 func withBaudRate(baudRate int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.BaudRate = baudRate
+		op.device.Spec.Protocol.Common.COM.BaudRate = baudRate
 	}
 }
 
 func withDataBits(dataBits int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.DataBits = dataBits
+		op.device.Spec.Protocol.Common.COM.DataBits = dataBits
 	}
 }
 
 func withParity(parity string) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.Parity = parity
+		op.device.Spec.Protocol.Common.COM.Parity = parity
 	}
 }
 
 func withSerialPort(serialPort string) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.SerialPort = serialPort
+		op.device.Spec.Protocol.Common.COM.SerialPort = serialPort
 	}
 }
 
 func withStopBits(stopBits int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.StopBits = stopBits
+		op.device.Spec.Protocol.Common.COM.StopBits = stopBits
 	}
 }
 
 func withSlaveID(slaveID int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.RTU.SlaveID = slaveID
+		op.device.Spec.Protocol.Modbus.SlaveID = slaveID
 	}
 }
 
 func withTCPPort(port int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.TCP.Port = port
+		op.device.Spec.Protocol.Common.TCP.Port = port
 	}
 }
 
-func withTCPSlaveID(tcpSlaveID string) DeviceOption {
+func withTCPSlaveID(tcpSlaveID int64) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.TCP.SlaveID = tcpSlaveID
+		op.device.Spec.Protocol.Modbus.SlaveID = tcpSlaveID
 	}
 }
 
 func withTCPServerIP(ip string) DeviceOption {
 	return func(op *DeviceOp) {
-		op.device.Spec.Protocol.Modbus.TCP.IP = ip
+		op.device.Spec.Protocol.Common.TCP.IP = ip
 	}
 }
 
@@ -290,9 +296,9 @@ func withProtocolName(protocolName string) DevicePropertyVisitorOption {
 	}
 }
 
-func withProtocolDefinition(definition *v1alpha2.CustomizedValue) DevicePropertyVisitorOption {
+func withProtocolConfigData(configData *v1alpha2.CustomizedValue) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.Definition = definition
+		op.devicePropertyVisitor.VisitorConfig.CustomizedProtocol.ConfigData = configData
 	}
 }
 
@@ -396,19 +402,19 @@ func NewDeviceModbusRTUBadStopBits(name string, namespace string) v1alpha2.Devic
 
 func NewDeviceModbusTCP(name string, namespace string) v1alpha2.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
-		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPPort(8080), withTCPSlaveID("1"))
+		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPPort(8080), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
 func NewDeviceModbusTCPNoIP(name string, namespace string) v1alpha2.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
-		withProtocolConfig(deviceProtocolModbusTCP), withTCPPort(8080), withTCPSlaveID("1"))
+		withProtocolConfig(deviceProtocolModbusTCP), withTCPPort(8080), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
 func NewDeviceModbusTCPNoPort(name string, namespace string) v1alpha2.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
-		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPSlaveID("1"))
+		withProtocolConfig(deviceProtocolModbusTCP), withTCPServerIP("127.0.0.1"), withTCPSlaveID(1))
 	return deviceInstanceOp.device
 }
 
@@ -578,7 +584,7 @@ func NewDeviceOpcUANoNodeID(name string, namespace string) v1alpha2.Device {
 	return deviceInstanceOp.device
 }
 
-func NewDeviceCustomizedNoDefinition(name string, namespace string) v1alpha2.Device {
+func NewDeviceCustomizedNoConfigData(name string, namespace string) v1alpha2.Device {
 	deviceInstanceOp := newDeviceOp(withDeviceName(name), withDeviceNamespace(namespace), withDeviceModelReference(DeviceModelRef),
 		withProtocolConfig(deviceProtocolCustomized), withCustromizedProtocolName("test-customized-protocol"))
 

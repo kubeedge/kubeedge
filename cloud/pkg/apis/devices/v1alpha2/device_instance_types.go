@@ -53,6 +53,9 @@ type ProtocolConfig struct {
 	// Protocol configuration for bluetooth
 	// +optional
 	Bluetooth *ProtocolConfigBluetooth `json:"bluetooth,omitempty"`
+	// Configuration for protocol common part
+	// +optional
+	Common *ProtocolConfigCommon `json:"common,omitempty"`
 	// Configuration for customized protocol
 	// +optional
 	CustomizedProtocol *ProtocolConfigCustomized `json:"customizedProtocol,omitempty"`
@@ -86,22 +89,47 @@ type ProtocolConfigOpcUA struct {
 
 // Only one of its members may be specified.
 type ProtocolConfigModbus struct {
-	// +optional
-	RTU *ProtocolConfigModbusRTU `json:"rtu,omitempty"`
-	// +optional
-	TCP *ProtocolConfigModbusTCP `json:"tcp,omitempty"`
+	// Required. 0-255
+	SlaveID int64 `json:"slaveID,omitempty"`
 }
 
-type ProtocolConfigModbusTCP struct {
+// Only one of COM or TCP may be specified.
+type ProtocolConfigCommon struct {
+	// +optional
+	COM *ProtocolConfigCOM `json:"com,omitempty"`
+	// +optional
+	TCP *ProtocolConfigTCP `json:"tcp,omitempty"`
+	// Communication type, like tcp client, tcp server or COM
+	// +optional
+	CommType string `json:"commType,omitempty"`
+	// Reconnection timeout
+	// +optional
+	ReconnTimeout int64 `json:"reconnTimeout,omitempty"`
+	// Reconnecting retry times
+	// +optional
+	ReconnRetryTimes int64 `json:"reconnRetryTimes,omitempty"`
+	// Define timeout of mapper collect from device.
+	// +optional
+	CollectTimeout int64 `json:"collectTimeout,omitempty"`
+	// Define retry times of mapper will collect from device.
+	// +optional
+	CollectRetryTimes int64 `json:"collectRetryTimes,omitempty"`
+	// Define collect type, sync or async.
+	// +optional
+	CollectType string `json:"collectType,omitempty"`
+	// Customized values for provided protocol
+	// +optional
+	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
+}
+
+type ProtocolConfigTCP struct {
 	// Required.
 	IP string `json:"ip,omitempty"`
 	// Required.
 	Port int64 `json:"port,omitempty"`
-	// Required.
-	SlaveID string `json:"slaveID,omitempty"`
 }
 
-type ProtocolConfigModbusRTU struct {
+type ProtocolConfigCOM struct {
 	// Required.
 	SerialPort string `json:"serialPort,omitempty"`
 	// Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
@@ -112,8 +140,6 @@ type ProtocolConfigModbusRTU struct {
 	Parity string `json:"parity,omitempty"`
 	// Required. Bit that stops 1|2
 	StopBits int64 `json:"stopBits,omitempty"`
-	// Required. 0-255
-	SlaveID int64 `json:"slaveID,omitempty"`
 }
 
 type ProtocolConfigBluetooth struct {
@@ -201,6 +227,9 @@ type DevicePropertyVisitor struct {
 	// Define how frequent mapper will collect from device.
 	// +optional
 	CollectCycle int64 `json:"collectCycle,omitempty"`
+	// Customized values for visitor of provided protocols
+	// +optional
+	CustomizedValues *CustomizedValue `json:"customizedValues,omitempty"`
 	// Required: Protocol relevant config details about the how to access the device property.
 	VisitorConfig `json:",inline"`
 }

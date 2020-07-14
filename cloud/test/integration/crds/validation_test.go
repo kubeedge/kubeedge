@@ -340,9 +340,9 @@ func TestInvalidDevice(t *testing.T) {
 				return deviceInstance
 			},
 		},
-		"device with customized protocol no definition": {
+		"device with customized protocol no configData": {
 			deviceInstanceFn: func() v1alpha2.Device {
-				deviceInstance := fixtures.NewDeviceCustomizedNoDefinition("device-customized-no-definition", testNamespace)
+				deviceInstance := fixtures.NewDeviceCustomizedNoConfigData("device-customized-no-configdata", testNamespace)
 				return deviceInstance
 			},
 		},
