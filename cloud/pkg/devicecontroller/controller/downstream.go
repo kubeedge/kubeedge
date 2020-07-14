@@ -43,8 +43,6 @@ import (
 // Constants for protocol, datatype, configmap, deviceProfile
 const (
 	OPCUA              = "opcua"
-	ModbusRTU          = "modbus-rtu"
-	ModbusTCP          = "modbus-tcp"
 	Modbus             = "modbus"
 	Bluetooth          = "bluetooth"
 	CustomizedProtocol = "customized-protocol"
@@ -303,6 +301,9 @@ func addPropertyVisitorsToDeviceInstance(device *v1alpha2.Device, deviceInstance
 			propertyVisitor.Protocol = CustomizedProtocol
 			propertyVisitor.VisitorConfig = pptv.CustomizedProtocol
 		}
+		if pptv.CustomizedValues != nil {
+			propertyVisitor.CustomizedValues = pptv.CustomizedValues
+		}
 		deviceInstance.PropertyVisitors = append(deviceInstance.PropertyVisitors, propertyVisitor)
 	}
 }
@@ -314,6 +315,9 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 	deviceInstance.ID = device.Name
 	deviceInstance.Name = device.Name
 	deviceInstance.Model = device.Spec.DeviceModelRef.Name
+	if device.Spec.Protocol.Common != nil {
+		deviceProtocol.ProtocolCommonConfig = device.Spec.Protocol.Common
+	}
 	var protocol string
 	if device.Spec.Protocol.OpcUA != nil {
 		protocol = OPCUA + "-" + device.Name
@@ -321,18 +325,12 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = OPCUA
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
-	} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
-		protocol = ModbusRTU + "-" + device.Name
+	} else if device.Spec.Protocol.Modbus != nil {
+		protocol = Modbus + "-" + device.Name
 		deviceInstance.Protocol = protocol
 		deviceProtocol.Name = protocol
-		deviceProtocol.Protocol = ModbusRTU
-		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.RTU
-	} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
-		protocol = ModbusTCP + "-" + device.Name
-		deviceInstance.Protocol = protocol
-		deviceProtocol.Name = protocol
-		deviceProtocol.Protocol = ModbusTCP
-		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus.TCP
+		deviceProtocol.Protocol = Modbus
+		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus
 	} else if device.Spec.Protocol.Bluetooth != nil {
 		protocol = Bluetooth + "-" + device.Name
 		deviceInstance.Protocol = protocol
@@ -510,10 +508,8 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		deviceProtocol := &types.Protocol{}
 		if device.Spec.Protocol.OpcUA != nil {
 			deviceProtocol = buildDeviceProtocol(OPCUA, device.Name, device.Spec.Protocol.OpcUA)
-		} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.RTU != nil {
-			deviceProtocol = buildDeviceProtocol(ModbusRTU, device.Name, device.Spec.Protocol.Modbus.RTU)
-		} else if device.Spec.Protocol.Modbus != nil && device.Spec.Protocol.Modbus.TCP != nil {
-			deviceProtocol = buildDeviceProtocol(ModbusTCP, device.Name, device.Spec.Protocol.Modbus.TCP)
+		} else if device.Spec.Protocol.Modbus != nil {
+			deviceProtocol = buildDeviceProtocol(Modbus, device.Name, device.Spec.Protocol.Modbus)
 		} else if device.Spec.Protocol.Bluetooth != nil {
 			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Name, device.Spec.Protocol.Bluetooth)
 		} else if device.Spec.Protocol.CustomizedProtocol != nil {
