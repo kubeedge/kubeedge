@@ -390,9 +390,8 @@ context is ignored even if specified with --namespace.
 
 `keadm init`
   - What is it?
-    
-* This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-  
+     * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
+
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
