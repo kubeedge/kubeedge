@@ -234,13 +234,8 @@ Available Commands:
   dns      Check whether the node domain name resolution function is normal
   docker   Check whether the node Docker function is normal
   network  Check whether the node can communicate with the endpoint on the cloud
-  gpu      Check whether there is gpu device on the node and whether the GPU driver is installed and running normally
-  npu      Check the node for the presence of nPU devices
   pid      Check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient
-  glic     Check glic version
-  port     Check port whether the required port is occupied
   
-
 Flags:
   -h, --help   help for keadm check
 
@@ -465,12 +460,15 @@ context is ignored even if specified with --namespace.
 `keadm diagnose`
 
 - What is it?
-  - This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
-
+  
+- This command will be help to diagnose specific fault scenarios in an all-round way and locate the cause of the fault
+  
 - What shall be its scope ?
-  1. use `edge` parameter to  view the running status of key components such as sqlite, edgehub, metamanager, and edged.
-  2. use `network` parameter to verify cloudcore network connectivity
-  3. use `log` to analyze the log of each component to determine the internal problems of the component
+    1. Use command `all` can diagnose all resource
+    2. Use command `node` can roubleshoot the cause of edge node failure with installed software
+    3. Use command `pod` can troubleshooting specific container application instances on nodes
+    4. Use command `installation` is same as "keadm check all"
+
 
 `keadm check`
 
@@ -503,21 +501,10 @@ context is ignored even if specified with --namespace.
 
   7. Use command `docker `  Check whether the node Docker function is normal, the Docker version must be higher than 17.06, it is recommended to use the 18.06.3 version.
 
-  8. Use command `network `  check whether the node can communicate with the endpoint on the cloud,  default to ping "8.8.8.8".
-
-  9. Use command `gpu ` check whether there is gpu device on the node and whether the GPU driver is installed and running normally, currently only Nvidia Gpus are supported, such as the common Tesla P4, P40 T4 and so on
-
-  10. Use command `npu ` check the node for the presence of nPU devices
+  8. Use command `network `  check whether the node can communicate with the endpoint on the cloud,  default to ping clusterdns.
 
   11. Use command `pid ` check if the current number of processes in the environment is too many. If the number of available processes is less than 5%, the number of processes is considered insufficient.
 
-  12. Use command `glibc` check glibc version ,version must be higher than 2.17.
-
-  13. Use command `port` check port whether the required port is occupied
-
-      - 8883: Built-in port used by MQTT Broker
-
-      - 1883: Port used by external MQTT Broker
 
 
 `keadm collect`
@@ -612,21 +599,6 @@ context is ignored even if specified with --namespace.
 
     Collect docker images command output
 
-  - GPU device information
-
-    Collect ls /dev/nvidiactl /dev/nvidia-uvm /dev/nvidia? 2>&1 command output
-
-  - GPU kernel module information
-
-    Collect lsmod |grep -e nvidia -e nvidia-uvm 2>&1 command output
-
-  - GPU driver status information
-
-    Collect systemctl status nvidia-drivers-loader command output
-
-  - NPU device information
-
-    Collect ls /dev/davinci_manager /dev/hisi_hdc /dev/davinci? command output
 
 `keadm get`
 
