@@ -3,8 +3,8 @@
 echo 'create edgemesh init Container image'
 
 function usage() {
-	echo "execute 'sh createImg.sh [rpm | deb]' to create docker image"
-	echo "execute 'sh createImg.sh help for use help'"
+	echo "execute 'bash createImg.sh [rpm | deb]' to create docker image"
+	echo "execute 'bash createImg.sh help for use help'"
 }
 
 path="${1}"
@@ -28,6 +28,6 @@ if command -v docker > /dev/null 2>&1 ; then
 	# delete iptables script
 	rm ./edgemesh-iptables.sh
 else
-	echo 'the docker command is no found!!'
+	echo 'the docker command is not found!!'
 	exit 1
 fi
