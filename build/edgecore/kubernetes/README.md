@@ -4,7 +4,7 @@ This method will guide you to deploy the edge part into a k8s cluster,
 so you need to login to the k8s master node (or where else if you can
 operate the cluster with `kubectl`).
 
-The manifests and scripts in `github.com/kubeedge/kubeedge/build/edge/kubernetes`
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/edgecore/kubernetes`
 will be used, so place these files to somewhere you can kubectl with.
 
 First, ensure your k8s cluster can pull edge core image. If the
@@ -13,7 +13,7 @@ image not exist. We can make one, and push to your registry.
 - Check the container runtime environment
 
 ```bash
-cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
+cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edgecore
 ./run_daemon.sh prepare
 ```
 

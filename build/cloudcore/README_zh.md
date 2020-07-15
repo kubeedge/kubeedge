@@ -2,7 +2,7 @@
 
 此方式将部署 cloud 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
 
-存放在 `github.com/kubeedge/kubeedge/build/cloud` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
+存放在 `github.com/kubeedge/kubeedge/build/cloudcore` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
 
 首先， 确保 k8s 集群可以拉到 edge controller 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
 
@@ -14,7 +14,7 @@ make cloudimage
 (可选)然后，使用1.3.0以下版本时，需要手动生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
 
 ```bash
-cd build/cloud
+cd build/cloudcore
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 

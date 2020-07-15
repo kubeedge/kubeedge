@@ -2,14 +2,14 @@
 
 此方式将部署 edge 端到 k8s 集群，所以需要登录到 k8s 的 master 节点上（或者其他可以用 `kubectl` 操作集群的机器）。
 
-存放在 `github.com/kubeedge/kubeedge/build/edge/kubernetes` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
+存放在 `github.com/kubeedge/kubeedge/build/edgecore/kubernetes` 里的各个编排文件和脚本会被用到。所以需要先将这些文件放到可以用 kubectl 操作的地方。
 
 首先， 确保 k8s 集群可以拉到 edge core 镜像。如果没有， 可以构建一个，然后推到集群能拉到的 registry 上。
 
 - 检查容器运行环境
 
 ```bash
-  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edgecore
   ./run_daemon.sh prepare
 ```
 

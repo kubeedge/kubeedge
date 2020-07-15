@@ -29,6 +29,7 @@ kubeedge::clean::cache(){
 }
 
 kubeedge::clean::bin(){
+  rm -rf $KUBEEDGE_ROOT/output
   rm -rf $KUBEEDGE_OUTPUT_BINPATH/*
 }
 

@@ -4,9 +4,7 @@ ARG RUN_FROM=docker:dind
 FROM ${BUILD_FROM} AS builder
 
 ARG GO_LDFLAGS
-ARG QEMU_ARCH=x86_64
 
-COPY ./build/edge/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
 COPY . /go/src/github.com/kubeedge/kubeedge
 
 RUN apk --no-cache update && \
@@ -17,9 +15,7 @@ github.com/kubeedge/kubeedge/edge/cmd/edgecore
 
 FROM ${RUN_FROM}
 
-LABEL maintainer="zhanghongtong <zhanghongtong@foxmail.com>"
-
-COPY --from=builder /usr/bin/qemu* /usr/bin/
+LABEL maintainer="Xiang Dai<long0dai@foxmail.com>"
 
 ENV GOARCHAIUS_CONFIG_PATH /etc/kubeedge/edge
 ENV database.source /var/lib/kubeedge/edge.db

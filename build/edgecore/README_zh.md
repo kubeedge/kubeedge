@@ -5,7 +5,7 @@
 
 + 检查容器运行环境
   ```
-  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
+  cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edgecore
   ./run_daemon.sh prepare
   ```
 

@@ -24,7 +24,7 @@ fi
 
 cd ${SRC_DIR}
 
-docker build -t ${imageRepo}/edgecore:latest -f ${SRC_DIR}/build/edge/Dockerfile .
+docker build -t ${imageRepo}/edgecore:latest -f ${SRC_DIR}/build/edgecore/Dockerfile .
 
 docker push ${imageRepo}/edgecore:latest
 
