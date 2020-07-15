@@ -321,25 +321,6 @@ func TestUpdateDeviceAttr(t *testing.T) {
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	// adds is fake DeviceAttr used as argument
-	adds := make([]dtclient.DeviceAttr, 0)
-	// deletes is fake DeviceDelete used as argument
-	deletes := make([]dtclient.DeviceDelete, 0)
-	// updates is fake DeviceAttrUpdate used as argument
-	updates := make([]dtclient.DeviceAttrUpdate, 0)
-	adds = append(adds, dtclient.DeviceAttr{
-		DeviceID: "Test",
-	})
-	deletes = append(deletes, dtclient.DeviceDelete{
-		DeviceID: "test",
-		Name:     "test",
-	})
-	updates = append(updates, dtclient.DeviceAttrUpdate{
-		DeviceID: "test",
-		Name:     "test",
-		Cols:     make(map[string]interface{}),
-	})
-
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
 
