@@ -8,14 +8,13 @@ import (
 	"io"
 	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 )
 
-
+// NewCmdGetDb represents the getdb command
 func NewCmdGetDb(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "getdb",
@@ -83,21 +82,19 @@ func getRowsData(out io.Writer, cmd *cobra.Command) (*[]string, *[]string, error
 	return &keyData, &valueData, nil
 }
 
-
-func RunOutput(keyData *[]string, valueData *[]string, out io.Writer, cmd *cobra.Command) error {
+func runOutput(keyData *[]string, valueData *[]string, out io.Writer, cmd *cobra.Command) error {
 	const flag = "output"
 	of, err := cmd.Flags().GetString(flag)
 	if err != nil {
 		klog.Fatalf("error accessing flag %s for command %s: %v", flag, cmd.Name(), err)
 	}
 
-
 	switch of {
 	case "":
 		fmt.Fprintf(out, "KEY\n%s\n", strings.Join(*keyData, "\n"))
 		return nil
 	case "json":
-		for i, v := range(*valueData) {
+		for i, v := range *valueData {
 			var bytesContent bytes.Buffer
 			err := json.Indent(&bytesContent, []byte(v), "", "\t")
 			if err != nil {
@@ -111,7 +108,7 @@ func RunOutput(keyData *[]string, valueData *[]string, out io.Writer, cmd *cobra
 
 		return nil
 	case "yaml":
-		return  nil
+		return nil
 	}
 	return nil
 }
