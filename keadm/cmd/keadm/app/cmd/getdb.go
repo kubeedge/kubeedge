@@ -58,7 +58,7 @@ func getRowsData(out io.Writer, cmd *cobra.Command) (*[]string, *[]string, error
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	keyData := make([]string, 0)
 	valueData := make([]string, 0)
 
@@ -105,10 +105,10 @@ func RunOutput(keyData *[]string, valueData *[]string, out io.Writer, cmd *cobra
 			}
 			content := bytesContent.String()
 			content = fmt.Sprintf("---------------%s---------------\n%s\n", (*keyData)[i], content)
-			
+
 			fmt.Fprint(out, content)
 		}
-		
+
 		return nil
 	case "yaml":
 		return  nil
