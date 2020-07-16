@@ -20,16 +20,19 @@ func NewCmdGetDb(out io.Writer) *cobra.Command {
 		Use:   "getdb",
 		Short: "get format output of edgecore.db",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			for i, s := range args {
 				fmt.Printf("i=%d, s=%s\n", i, s)
 			}
 
 			keyData, valueData, err := getRowsData(out, cmd)
-			CheckErr(err, fatal)
+			if err != nil {
+				klog.Fatal("can't get rows from edgecore.db")
+			}
 
 			err = runOutput(keyData, valueData, out, cmd)
-			CheckErr(err, fatal)
+			if err != nil {
+				klog.Fatal("failed to output the content")
+			}
 		},
 	}
 
