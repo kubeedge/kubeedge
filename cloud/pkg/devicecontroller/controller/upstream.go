@@ -108,7 +108,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			klog.Info("Stop updateDeviceStatus")
 			return
 		case msg := <-uc.deviceStatusChan:
-			klog.Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			klog.V(5).Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			msgTwin, err := uc.unmarshalDeviceStatusMessage(msg)
 			if err != nil {
 				klog.Warningf("Unmarshall failed due to error %v", err)

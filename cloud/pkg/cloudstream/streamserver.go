@@ -25,9 +25,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/proxy"
-
 	"github.com/emicklei/go-restful"
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
@@ -178,16 +177,65 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 }
 
 func (s *StreamServer) getExec(request *restful.Request, response *restful.Response) {
+	var err error
+
+	defer func() {
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			klog.Errorf(err.Error())
+		}
+	}()
 
 	sessionKey := strings.Split(request.Request.Host, ":")[0]
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
-		klog.Errorf("Exec: Can not find %v session ", sessionKey)
+		err = fmt.Errorf("Exec: Can not find %v session ", sessionKey)
 		return
 	}
 
-	handler := proxy.NewUpgradeHandler(session)
-	handler.ServeHTTP(response.ResponseWriter, request.Request)
+	if !httpstream.IsUpgradeRequest(request.Request) {
+		err = fmt.Errorf("Request was not an upgrade")
+		return
+	}
+
+	// Once the connection is hijacked, the ErrorResponder will no longer work, so
+	// hijacking should be the last step in the upgrade.
+	requestHijacker, ok := response.ResponseWriter.(http.Hijacker)
+	if !ok {
+		klog.V(6).Infof("Unable to hijack response writer: %T", response.ResponseWriter)
+		err = fmt.Errorf("request connection cannot be hijacked: %T", response.ResponseWriter)
+		return
+	}
+	requestHijackedConn, _, err := requestHijacker.Hijack()
+	if err != nil {
+		klog.V(6).Infof("Unable to hijack response: %v", err)
+		err = fmt.Errorf("error hijacking connection: %v", err)
+		return
+	}
+	defer requestHijackedConn.Close()
+
+	execConnection, err := session.AddAPIServerConnection(s, &ContainerExecConnection{
+		r:            request,
+		Conn:         requestHijackedConn,
+		session:      session,
+		ctx:          request.Request.Context(),
+		edgePeerStop: make(chan struct{}),
+	})
+	if err != nil {
+		klog.Errorf("Add apiserver exec connection into %s error %v", session.String(), err)
+		return
+	}
+
+	defer func() {
+		session.DeleteAPIServerConnection(execConnection)
+		klog.Infof("Delete %s from %s", execConnection.String(), session.String())
+	}()
+
+	if err := execConnection.Serve(); err != nil {
+		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
+			execConnection.String(), session.String(), err)
+		return
+	}
 }
 
 func (s *StreamServer) Start() {

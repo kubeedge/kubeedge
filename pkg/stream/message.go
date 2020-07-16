@@ -29,9 +29,9 @@ import (
 type MessageType uint64
 
 const (
-	MessageTypeLogsConnect   MessageType = iota
-	MessageTypeExecConnect   MessageType = iota
-	MessageTypeMetricConnect MessageType = iota
+	MessageTypeLogsConnect MessageType = iota
+	MessageTypeExecConnect
+	MessageTypeMetricConnect
 	MessageTypeData
 	MessageTypeRemoveConnect
 )

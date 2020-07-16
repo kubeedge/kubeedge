@@ -108,7 +108,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	}
 
 	if container.Message.GetOperation() == model.OpKeepalive {
-		klog.Infof("Keepalive message received from node: %s", nodeID)
+		klog.V(5).Infof("Keepalive message received from node: %s", nodeID)
 		mh.KeepaliveChannel[nodeID] <- struct{}{}
 		return
 	}
@@ -167,7 +167,7 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 				klog.Warningf("Stop keepalive check for node: %s", info.NodeID)
 				return
 			}
-			klog.Infof("Node %s is still alive", info.NodeID)
+			klog.V(5).Infof("Node %s is still alive", info.NodeID)
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
 			if conn, ok := mh.nodeConns.Load(info.NodeID); ok {
@@ -225,7 +225,7 @@ func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveMode
 
 func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.Message) error {
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
-	klog.Infof("event received for node %s %s, content: %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
+	klog.V(5).Infof("event received for node %s %s, content: %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 	if model.IsFromEdge(msg) {
 		err := mh.MessageQueue.Publish(msg)
 		if err != nil {
@@ -533,7 +533,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 	// TODO: save device info
 	if msg.GetGroup() == deviceconst.GroupTwin {
 	}
-	klog.Infof("saveSuccessPoint successfully for message: %s", msg.GetResource())
+	klog.V(5).Infof("saveSuccessPoint successfully for message: %s", msg.GetResource())
 }
 
 func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
