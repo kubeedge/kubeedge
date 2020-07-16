@@ -28,7 +28,7 @@ func NewCmdGetDb(out io.Writer) *cobra.Command {
 			keyData, valueData, err := getRowsData(out, cmd)
 			CheckErr(err, fatal)
 
-			err = RunOutput(keyData, valueData, out, cmd)
+			err = runOutput(keyData, valueData, out, cmd)
 			CheckErr(err, fatal)
 		},
 	}
