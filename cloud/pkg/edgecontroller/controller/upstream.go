@@ -25,6 +25,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"time"
 
@@ -366,22 +367,25 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 
 				if !errors.IsNotFound(err) {
-					klog.Errorf("get node %s info error: %v , register node failed", name, err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("get node %s info error: %v , register node failed", name, err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
 				node := &v1.Node{}
 				err = json.Unmarshal(data, node)
 				if err != nil {
-					klog.Errorf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
 				if _, err = uc.createNode(name, node); err != nil {
-					klog.Errorf("create node %s error: %v , register node failed", name, err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("create node %s error: %v , register node failed", name, err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
