@@ -1,6 +1,6 @@
 module github.com/kubeedge/viaduct
 
-go 1.13
+go 1.14
 
 require (
 	github.com/bifurcation/mint v0.0.0-20180715133206-93c51c6ce115 // indirect
