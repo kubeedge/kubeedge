@@ -73,6 +73,6 @@ func NewKubeedgeCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	cmds.AddCommand(NewKubeEdgeReset(out, nil))
 	cmds.AddCommand(NewCmdVersion(out))
 	cmds.AddCommand(cloud.NewGettoken(out, nil))
-
+	cmds.AddCommand(NewCmdGetDb(out))
 	return cmds
 }
