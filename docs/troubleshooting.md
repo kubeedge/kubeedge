@@ -10,7 +10,7 @@ This page contains a few commonly occurring questions.
 4. Check the architecture of the node running `edgecore` and make sure that container image you are trying to run is of the same architecture.
    For example, if you are running `edgecore` on Raspberry Pi 4, which is of `arm64v8` architecture, the nginx image to be executed would be `arm64v8/nginx` from the docker hub.
 
-5. Also, check that the `podSandboxImage` is correctly set as defined in [Modification in edgecore.yaml](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_configure.md#modification-in-edgecoreyaml).
+5. Also, check that the `podSandboxImage` is correctly set as defined in [Modification in edgecore.yaml](./configuration/kubeedge.md#modification-in-edgecoreyaml).
 
 6. If all of the above is correctly set, login manually to your edge node and run your docker image manually by
 
