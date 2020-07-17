@@ -97,7 +97,7 @@ Node registration can be completed in two ways:
 
 #### Node - Automatic Registration
 
-Edge node can be registered automatically if the value of field `modules.edged.registerNode` in edgecore's config [edgecore config file](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_configure.md#create-and-set-edgecore-config-file) is set to true.
+Edge node can be registered automatically if the value of field `modules.edged.registerNode` in edgecore's [config](#create-and-set-edgecore-config-file) is set to true.
 
 ```yaml
 modules:
@@ -148,7 +148,7 @@ kubectl apply -f ~/kubeedge/yaml/node.json
 
 RootCA certificate and a cert/key pair is required to have a setup for KubeEdge. Same cert/key pair can be used in both cloud and edge.
 
-cert/key should exist in /etc/kubeedge/ca and /etc/kubeedge/certs. Otherwise please refer to [generate certs](https://github.com/kubeedge/kubeedge/blob/master/docs/setup/kubeedge_install_source.md#generate-certificates) to generate them.
+cert/key should exist in /etc/kubeedge/ca and /etc/kubeedge/certs. Otherwise please refer to [generate certs](https://github.com/kubeedge/kubeedge/blob/release-1.3/docs/setup/kubeedge_install_source.md#generate-certificates) to generate them.
 You need to copy these files to the corresponding directory on edge side.
 
 Create the `certs.tgz` by
