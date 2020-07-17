@@ -8,7 +8,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
@@ -20,10 +22,6 @@ func NewCmdGetDb(out io.Writer) *cobra.Command {
 		Use:   "getdb",
 		Short: "get format output of edgecore.db",
 		Run: func(cmd *cobra.Command, args []string) {
-			for i, s := range args {
-				fmt.Printf("i=%d, s=%s\n", i, s)
-			}
-
 			keyData, valueData, err := getRowsData(out, cmd)
 			if err != nil {
 				klog.Fatal("can't get rows from edgecore.db")
@@ -111,7 +109,21 @@ func runOutput(keyData *[]string, valueData *[]string, out io.Writer, cmd *cobra
 
 		return nil
 	case "yaml":
+		for i, v := range *valueData {
+			jsonMap := make(map[string]interface{})
+			err := json.Unmarshal([]byte(v), &jsonMap)
+			if err != nil {
+				return err
+			}
+			y, err := yaml.Marshal(&jsonMap)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(out, "---------------%s---------------\n%s\n", (*keyData)[i], string(y))
+		}
+
 		return nil
+	default:
+		return errors.Errorf("invalid output format: %s", of)
 	}
-	return nil
 }
