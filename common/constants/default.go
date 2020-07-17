@@ -17,6 +17,11 @@ const (
 	DefaultCADir        = "/etc/kubeedge/ca"
 	DefaultCertDir      = "/etc/kubeedge/certs"
 
+	DefaultCAURL   = "/ca.crt"
+	DefaultCertURL = "/edge.crt"
+
+	DefaultCloudCoreReadyCheckURL = "/readyz"
+
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
@@ -139,6 +144,11 @@ const (
 const (
 	// TODO put all modulename and group name together @kadisi
 	DeviceTwinModuleName = "twin"
+)
+
+const (
+	// NodeName is for the clearer log of cloudcore.
+	NodeName = "NodeName"
 )
 
 const (

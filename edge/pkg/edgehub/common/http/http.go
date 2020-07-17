@@ -3,7 +3,6 @@ package http
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net"
@@ -65,15 +64,16 @@ func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
 }
 
 // NewHTTPclientWithCA create client without certificate
-func NewHTTPclientWithCA(ca []byte) (*http.Client, error) {
+func NewHTTPclientWithCA(capem []byte, certificate tls.Certificate) (*http.Client, error) {
 	pool := x509.NewCertPool()
-	if ok := pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca})); !ok {
+	if ok := pool.AppendCertsFromPEM(capem); !ok {
 		return nil, fmt.Errorf("cannot parse the certificates")
 	}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			RootCAs:            pool,
 			InsecureSkipVerify: false,
+			Certificates:       []tls.Certificate{certificate},
 		},
 	}
 	client := &http.Client{Transport: tr, Timeout: connectTimeout}
@@ -90,7 +90,7 @@ func SendRequest(req *http.Request, client *http.Client) (*http.Response, error)
 }
 
 // BuildRequest Creates a HTTP request.
-func BuildRequest(method string, urlStr string, body io.Reader, token string) (*http.Request, error) {
+func BuildRequest(method string, urlStr string, body io.Reader, token string, nodeName string) (*http.Request, error) {
 	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
@@ -98,6 +98,9 @@ func BuildRequest(method string, urlStr string, body io.Reader, token string) (*
 	if token != "" {
 		bearerToken := "Bearer " + token
 		req.Header.Add("Authorization", bearerToken)
+	}
+	if nodeName != "" {
+		req.Header.Add("NodeName", nodeName)
 	}
 	return req, nil
 }
