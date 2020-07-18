@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/spf13/cobra"
@@ -23,19 +24,44 @@ import (
 
 const DefaultDbPath = "/var/lib/kubeedge/edgecore.db"
 
+var allNamespaces bool
+
 // NewCmdDebugGet represents the debug get command
 func NewCmdDebugGet(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get and format data of available resource types in the local database of the edge node",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			availableResourceTypes := map[string]bool{
+				"all":       true,
+				"pod":       true,
+				"node":      true,
+				"service":   true,
+				"secret":    true,
+				"configmap": true,
+				"endpoint":  true,
+			}
+
 			initDb(getDbPath(cmd))
 			if len(args) != 1 {
 				klog.Fatal("need to specify exactly one type of output, e.g: keadm debug get pod")
 			}
 			resourceType := args[0]
+			if !availableResourceTypes[resourceType] {
+				klog.Fatalf("resource type %s is not available", resourceType)
+			}
+
+			namespace, err := getNamespaceFromFlag(cmd)
+			if err != nil {
+				return err
+			}
 
 			result, err := getResult(resourceType)
+			if err != nil {
+				return err
+			}
+
+			result, err = filterNamespace(result, namespace, cmd)
 			if err != nil {
 				return err
 			}
@@ -46,6 +72,9 @@ func NewCmdDebugGet(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringP("input", "i", DefaultDbPath, "Indicate the edge node database path, the default path is `/var/lib/kubeedge/edgecore.db`")
 	cmd.Flags().StringP("output", "o", "", "Indicate the output format. Currently supports formats such as yaml|json|wide")
+	cmd.Flags().StringP("namespace", "n", "default", "List the requested object(s) in specified namespaces")
+	cmd.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "List the requested object(s) across all namespaces")
+
 	return cmd
 }
 
@@ -66,6 +95,34 @@ func getResult(resourceType string) (*[]dao.Meta, error) {
 		}
 	}
 	return result, nil
+}
+
+func getNamespaceFromKey(key string) string {
+	return strings.Split(key, "/")[0]
+}
+
+func getNamespaceFromFlag(cmd *cobra.Command) (string, error) {
+	const flag = "namespace"
+	return cmd.Flags().GetString(flag)
+}
+
+func filterNamespace(result *[]dao.Meta, namespace string, cmd *cobra.Command) (*[]dao.Meta, error) {
+	const flag = "all-namespaces"
+	flagValue, err := cmd.Flags().GetBool(flag)
+	if err != nil {
+		return nil, err
+	}
+	if flagValue {
+		return result, nil
+	}
+
+	filterResult := make([]dao.Meta, 0)
+	for _, v := range *result {
+		if getNamespaceFromKey(v.Key) == namespace {
+			filterResult = append(filterResult, v)
+		}
+	}
+	return &filterResult, nil
 }
 
 func getDbPath(cmd *cobra.Command) string {
@@ -179,6 +236,10 @@ func printResult(metas *[]dao.Meta, out io.Writer, cmd *cobra.Command) error {
 		displayList.Items = append(displayList.Items, *item.(*unstructured.Unstructured))
 	}
 
+	byteContent, err := json.Marshal(displayList)
+	if err != nil {
+		return err
+	}
 	switch of {
 	case "":
 		fmt.Fprintln(out, "KEY")
@@ -187,10 +248,6 @@ func printResult(metas *[]dao.Meta, out io.Writer, cmd *cobra.Command) error {
 		}
 	case "json":
 		var byteContentIndented bytes.Buffer
-		byteContent, err := json.Marshal(displayList)
-		if err != nil {
-			return err
-		}
 
 		err = json.Indent(&byteContentIndented, byteContent, "", "\t")
 		if err != nil {
@@ -200,10 +257,6 @@ func printResult(metas *[]dao.Meta, out io.Writer, cmd *cobra.Command) error {
 		content := byteContentIndented.String()
 		fmt.Fprintln(out, content)
 	case "yaml":
-		byteContent, err := json.Marshal(displayList)
-		if err != nil {
-			return err
-		}
 		yamlMap := make(map[string]interface{})
 		err = json.Unmarshal(byteContent, &yamlMap)
 		if err != nil {
