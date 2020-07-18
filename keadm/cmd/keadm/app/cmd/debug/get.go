@@ -34,18 +34,38 @@ func NewCmdDebugGet(out io.Writer) *cobra.Command {
 				klog.Fatal("need to specify exactly one type of output, e.g: keadm debug get pod")
 			}
 			resourceType := args[0]
-			result, err := dao.QueryAllMeta("type", args[0])
+
+			result, err := getResult(resourceType)
 			if err != nil {
 				return err
 			}
 
-			return printResult(result, resourceType, out, cmd)
+			return printResult(result, out, cmd)
 		},
 	}
 
-	cmd.Flags().StringP("dbPath", "d", DefaultDbPath, fmt.Sprintf("dbPath; path to edgecore.db, default: %s", DefaultDbPath))
+	cmd.Flags().StringP("input", "i", DefaultDbPath, fmt.Sprintf("dbPath; path to edgecore.db, default: %s", DefaultDbPath))
 	cmd.Flags().StringP("output", "o", "", "Output format; available options are 'yaml', 'json'")
 	return cmd
+}
+
+func getResult(resourceType string) (*[]dao.Meta, error) {
+	var result *[]dao.Meta
+	var err error
+	if resourceType == "all" {
+		meta := new([]dao.Meta)
+		_, err := dbm.DBAccess.QueryTable(dao.MetaTableName).All(meta)
+		if err != nil {
+			return nil, err
+		}
+		result = meta
+	} else {
+		result, err = dao.QueryAllMeta("type", resourceType)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func getDbPath(cmd *cobra.Command) string {
@@ -89,7 +109,7 @@ func initDb(dbPath string) {
 	}
 }
 
-func printResult(metas *[]dao.Meta, resourceType string, out io.Writer, cmd *cobra.Command) error {
+func printResult(metas *[]dao.Meta, out io.Writer, cmd *cobra.Command) error {
 	const flag = "output"
 	of, err := cmd.Flags().GetString(flag)
 	if err != nil {
@@ -110,7 +130,7 @@ func printResult(metas *[]dao.Meta, resourceType string, out io.Writer, cmd *cob
 		jsonMap := make(map[string]interface{})
 		err := json.Unmarshal(byteJSON, &jsonMap)
 		jsonMap["apiVersion"] = "v1"
-		jsonMap["kind"] = resourceType
+		jsonMap["kind"] = v.Type
 
 		byteJSON, err = json.Marshal(jsonMap)
 		if err != nil {
@@ -180,7 +200,17 @@ func printResult(metas *[]dao.Meta, resourceType string, out io.Writer, cmd *cob
 		content := byteContentIndented.String()
 		fmt.Fprintln(out, content)
 	case "yaml":
-		byteContent, err := yaml.Marshal(displayList)
+		byteContent, err := json.Marshal(displayList)
+		if err != nil {
+			return err
+		}
+		yamlMap := make(map[string]interface{})
+		err = json.Unmarshal(byteContent, &yamlMap)
+		if err != nil {
+			return err
+		}
+
+		byteContent, err = yaml.Marshal(yamlMap)
 		if err != nil {
 			return err
 		}
