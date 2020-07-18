@@ -44,8 +44,8 @@ func NewCmdDebugGet(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("input", "i", DefaultDbPath, fmt.Sprintf("dbPath; path to edgecore.db, default: %s", DefaultDbPath))
-	cmd.Flags().StringP("output", "o", "", "Output format; available options are 'yaml', 'json'")
+	cmd.Flags().StringP("input", "i", DefaultDbPath, "Indicate the edge node database path, the default path is `/var/lib/kubeedge/edgecore.db`")
+	cmd.Flags().StringP("output", "o", "", "Indicate the output format. Currently supports formats such as yaml|json|wide")
 	return cmd
 }
 
