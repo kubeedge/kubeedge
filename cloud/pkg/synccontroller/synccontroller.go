@@ -25,9 +25,9 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	crdinformerfactory "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
-	deviceinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/devices/v1alpha1"
+	deviceinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/devices/v1alpha2"
 	syncinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/reliablesyncs/v1alpha1"
-	devicelister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha1"
+	devicelister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
 	synclister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
@@ -93,7 +93,7 @@ func newSyncController(enable bool) *SyncController {
 	serviceInformer := kubeSharedInformers.Core().V1().Services()
 	endpointInformer := kubeSharedInformers.Core().V1().Endpoints()
 	nodeInformer := kubeSharedInformers.Core().V1().Nodes()
-	deviceInformer := crdFactory.Devices().V1alpha1().Devices()
+	deviceInformer := crdFactory.Devices().V1alpha2().Devices()
 	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 

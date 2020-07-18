@@ -6,323 +6,323 @@ import (
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 )
 
-func NewLedDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func NewLedDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "power-status",
 		Description: "Indicates whether the led light is ON/OFF",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "OFF",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "gpio-pin-number",
 		Description: "Indicates the GPIO pin to which LED is connected",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadOnly",
 			DefaultValue: 18,
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	newDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2}
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func NewModbusDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func NewModbusDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "temperature",
 		Description: "temperature in degree celsius",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode: "ReadWrite",
 			Maximum:    100,
 			Unit:       "degree celsius",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "temperature-enable",
 		Description: "enable data collection of temperature sensor",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "OFF",
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2}
 
-	newDeviceModel := v1alpha1.DeviceModel{
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-model",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func NewBluetoothDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func NewBluetoothDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "temperature",
 		Description: "temperature in degree celsius",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode: "ReadOnly",
 			Maximum:    100,
 			Unit:       "degree celsius",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "temperature-enable",
 		Description: "enable data collection of temperature sensor",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "ON",
 		}},
 	}
-	deviceProperty3 := v1alpha1.DeviceProperty{
+	deviceProperty3 := v1alpha2.DeviceProperty{
 		Name:        "io-config-initialize",
 		Description: "initialize io-config with value 0",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	deviceProperty4 := v1alpha1.DeviceProperty{
+	deviceProperty4 := v1alpha2.DeviceProperty{
 		Name:        "io-data-initialize",
 		Description: "initialize io-data with value 0",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	deviceProperty5 := v1alpha1.DeviceProperty{
+	deviceProperty5 := v1alpha2.DeviceProperty{
 		Name:        "io-config",
 		Description: "register activation of io-config",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 1,
 		}},
 	}
-	deviceProperty6 := v1alpha1.DeviceProperty{
+	deviceProperty6 := v1alpha2.DeviceProperty{
 		Name:        "io-data",
 		Description: "data field to control io-control",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
-	newDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "cc2650-sensortag",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func NewCustomizedDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func NewCustomizedDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "temperature",
 		Description: "temperature in degree celsius",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode: "ReadWrite",
 			Maximum:    100,
 			Unit:       "degree celsius",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "temperature-enable",
 		Description: "enable data collection of temperature sensor",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "OFF",
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	newDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2}
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-customized-model",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func UpdatedLedDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func UpdatedLedDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "power-status",
 		Description: "Indicates whether the led light is ON/OFF",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "ON",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "gpio-pin-number",
 		Description: "Indicates the GPIO pin to which LED is connected",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 17,
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	updatedDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2}
+	updatedDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return updatedDeviceModel
 }
 
-func UpdatedModbusDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func UpdatedModbusDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "temperature",
 		Description: "temperature in degree",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode: "ReadOnly",
 			Maximum:    200,
 			Unit:       "celsius",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "temperature-enable",
 		Description: "enable data collection of temperature sensor",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "ON",
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2}
-	newDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2}
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-model",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func UpdatedBluetoothDeviceModel() v1alpha1.DeviceModel {
-	deviceProperty1 := v1alpha1.DeviceProperty{
+func UpdatedBluetoothDeviceModel() v1alpha2.DeviceModel {
+	deviceProperty1 := v1alpha2.DeviceProperty{
 		Name:        "temperature",
 		Description: "temperature in degree",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode: "ReadOnly",
 			Maximum:    200,
 			Unit:       "degree",
 		}},
 	}
-	deviceProperty2 := v1alpha1.DeviceProperty{
+	deviceProperty2 := v1alpha2.DeviceProperty{
 		Name:        "temperature-enable",
 		Description: "enable data collection of temperature sensor",
-		Type: v1alpha1.PropertyType{String: &v1alpha1.PropertyTypeString{
+		Type: v1alpha2.PropertyType{String: &v1alpha2.PropertyTypeString{
 			AccessMode:   "ReadWrite",
 			DefaultValue: "OFF",
 		}},
 	}
-	deviceProperty3 := v1alpha1.DeviceProperty{
+	deviceProperty3 := v1alpha2.DeviceProperty{
 		Name:        "io-config-initialize",
 		Description: "initialize io-config with value 0",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	deviceProperty4 := v1alpha1.DeviceProperty{
+	deviceProperty4 := v1alpha2.DeviceProperty{
 		Name:        "io-data-initialize",
 		Description: "initialize io-data with value 0",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	deviceProperty5 := v1alpha1.DeviceProperty{
+	deviceProperty5 := v1alpha2.DeviceProperty{
 		Name:        "io-config",
 		Description: "register activation of io-config",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 1,
 		}},
 	}
-	deviceProperty6 := v1alpha1.DeviceProperty{
+	deviceProperty6 := v1alpha2.DeviceProperty{
 		Name:        "io-data",
 		Description: "data field to control io-control",
-		Type: v1alpha1.PropertyType{Int: &v1alpha1.PropertyTypeInt64{
+		Type: v1alpha2.PropertyType{Int: &v1alpha2.PropertyTypeInt64{
 			AccessMode:   "ReadWrite",
 			DefaultValue: 0,
 		}},
 	}
-	properties := []v1alpha1.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
-	newDeviceModel := v1alpha1.DeviceModel{
+	properties := []v1alpha2.DeviceProperty{deviceProperty1, deviceProperty2, deviceProperty3, deviceProperty4, deviceProperty5, deviceProperty6}
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "DeviceModel",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "cc2650-sensortag",
 			Namespace: Namespace,
 		},
-		Spec: v1alpha1.DeviceModelSpec{
+		Spec: v1alpha2.DeviceModelSpec{
 			Properties: properties,
 		},
 	}
 	return newDeviceModel
 }
 
-func NewLedDeviceInstance(nodeSelector string) v1alpha1.Device {
-	deviceInstance := v1alpha1.Device{
+func NewLedDeviceInstance(nodeSelector string) v1alpha2.Device {
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light-instance-01",
@@ -332,7 +332,7 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":       "led-light",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
@@ -350,17 +350,17 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 				},
 			},
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "power-status",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "ON",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -372,11 +372,11 @@ func NewLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 }
 
 // NewMockInstance create an instance for mock bluetooth device.
-func NewMockInstance(nodeSelector string) v1alpha1.Device {
-	deviceInstance := v1alpha1.Device{
+func NewMockInstance(nodeSelector string) v1alpha2.Device {
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "mock-temp-sensor-instance",
@@ -387,7 +387,7 @@ func NewMockInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "sensortagmock",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "mock-temp-sensor-model",
 			},
@@ -405,17 +405,17 @@ func NewMockInstance(nodeSelector string) v1alpha1.Device {
 				},
 			},
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "io-data",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "Red",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -425,11 +425,11 @@ func NewMockInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
+	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
 				Offset:         2,
 				Limit:          1,
@@ -439,10 +439,10 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor2 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
 				Offset:         3,
 				Limit:          1,
@@ -452,12 +452,12 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+	propertyVisitors := []v1alpha2.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
 
-	deviceInstance := v1alpha1.Device{
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-instance-02",
@@ -468,7 +468,7 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "CC2650",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
@@ -487,17 +487,17 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 			PropertyVisitors: propertyVisitors,
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "OFF",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -507,17 +507,17 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+func NewBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
+	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 2,
 					EndIndex:   1,
 					ShiftRight: 2,
-					OrderOfOperations: []v1alpha1.BluetoothOperations{
+					OrderOfOperations: []v1alpha2.BluetoothOperations{
 						{
 							BluetoothOperationType:  "Multiply",
 							BluetoothOperationValue: 0.03125,
@@ -527,62 +527,62 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor2 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0204514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"ON":  {1},
 					"OFF": {0},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor3 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-config-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor4 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-data-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor5 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-config",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor6 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-data",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"Red":            {1},
@@ -593,19 +593,19 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					"BuzzerGreen":    {6},
 					"BuzzerRedGreen": {7},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
+	propertyVisitors := []v1alpha2.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
 
-	deviceInstance := v1alpha1.Device{
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-instance-01",
@@ -616,7 +616,7 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "cc2650-sensortag",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
@@ -633,24 +633,24 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					},
 				},
 			},
-			Protocol: v1alpha1.ProtocolConfig{
-				Bluetooth: &v1alpha1.ProtocolConfigBluetooth{
+			Protocol: v1alpha2.ProtocolConfig{
+				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:96",
 				},
 			},
 			PropertyVisitors: propertyVisitors,
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "io-data",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "1",
 						Metadata: map[string]string{
 							"type": "int",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -660,30 +660,30 @@ func NewBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
+	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			CustomizedProtocol: &v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				Definition:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 			},
 		},
 	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor2 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			CustomizedProtocol: &v1alpha1.VisitorConfigCustomized{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			CustomizedProtocol: &v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+				Definition:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
 			},
 		},
 	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
-	deviceInstance := v1alpha1.Device{
+	propertyVisitors := []v1alpha2.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-customized-instance-01",
@@ -694,7 +694,7 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "CC2650",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-customized-model",
 			},
@@ -711,25 +711,25 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
 					},
 				},
 			},
-			Protocol: v1alpha1.ProtocolConfig{
-				CustomizedProtocol: &v1alpha1.ProtocolConfigCustomized{
+			Protocol: v1alpha2.ProtocolConfig{
+				CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{
 					ProtocolName: "CustomizedProtocol1",
-					ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+					ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 				},
 			},
 			PropertyVisitors: propertyVisitors,
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "OFF",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -739,11 +739,11 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func UpdatedLedDeviceInstance(nodeSelector string) v1alpha1.Device {
-	deviceInstance := v1alpha1.Device{
+func UpdatedLedDeviceInstance(nodeSelector string) v1alpha2.Device {
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light-instance-01",
@@ -753,7 +753,7 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":       "led-light-1",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "led-light",
 			},
@@ -771,17 +771,17 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 				},
 			},
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "power-status",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "OFF",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -791,11 +791,11 @@ func UpdatedLedDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
+	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
 				Offset:         2,
 				Limit:          1,
@@ -805,10 +805,10 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor2 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Modbus: &v1alpha1.VisitorConfigModbus{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Modbus: &v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
 				Offset:         1,
 				Limit:          1,
@@ -818,11 +818,11 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
-	deviceInstance := v1alpha1.Device{
+	propertyVisitors := []v1alpha2.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2}
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-instance-02",
@@ -833,7 +833,7 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "CC2650-sensorTag",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "sensor-tag-model",
 			},
@@ -852,24 +852,24 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 			PropertyVisitors: propertyVisitors,
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "ON",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
 			},
 		},
-		Data: v1alpha1.DeviceData{
-			DataProperties: []v1alpha1.DataProperty{
+		Data: v1alpha2.DeviceData{
+			DataProperties: []v1alpha2.DataProperty{
 				{
 					PropertyName: "temperature",
 					Metadata: map[string]string{
@@ -883,17 +883,17 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
-	devicePropertyVisitor1 := v1alpha1.DevicePropertyVisitor{
+func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha2.Device {
+	devicePropertyVisitor1 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   3,
 					ShiftRight: 1,
-					OrderOfOperations: []v1alpha1.BluetoothOperations{
+					OrderOfOperations: []v1alpha2.BluetoothOperations{
 						{
 							BluetoothOperationType:  "Multiply",
 							BluetoothOperationValue: 0.05,
@@ -903,62 +903,62 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 			},
 		},
 	}
-	devicePropertyVisitor2 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor2 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "temperature-enable",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0204514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"ON":  {1},
 					"OFF": {0},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor3 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor3 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-config-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor4 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor4 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-data-initialize",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000001",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor5 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor5 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-config",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	devicePropertyVisitor6 := v1alpha1.DevicePropertyVisitor{
+	devicePropertyVisitor6 := v1alpha2.DevicePropertyVisitor{
 		PropertyName: "io-data",
-		VisitorConfig: v1alpha1.VisitorConfig{
-			Bluetooth: &v1alpha1.VisitorConfigBluetooth{
+		VisitorConfig: v1alpha2.VisitorConfig{
+			Bluetooth: &v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"Red":            {2},
@@ -969,18 +969,18 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					"BuzzerGreen":    {7},
 					"BuzzerRedGreen": {8},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
 			},
 		},
 	}
-	propertyVisitors := []v1alpha1.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
-	deviceInstance := v1alpha1.Device{
+	propertyVisitors := []v1alpha2.DevicePropertyVisitor{devicePropertyVisitor1, devicePropertyVisitor2, devicePropertyVisitor3, devicePropertyVisitor4, devicePropertyVisitor5, devicePropertyVisitor6}
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "sensor-tag-instance-01",
@@ -991,7 +991,7 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 				"model":        "cc2650-sensor-tag",
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			DeviceModelRef: &v12.LocalObjectReference{
 				Name: "cc2650-sensortag",
 			},
@@ -1008,24 +1008,24 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 					},
 				},
 			},
-			Protocol: v1alpha1.ProtocolConfig{
-				Bluetooth: &v1alpha1.ProtocolConfigBluetooth{
+			Protocol: v1alpha2.ProtocolConfig{
+				Bluetooth: &v1alpha2.ProtocolConfigBluetooth{
 					MACAddress: "BC:6A:29:AE:CC:69",
 				},
 			},
 			PropertyVisitors: propertyVisitors,
 		},
-		Status: v1alpha1.DeviceStatus{
-			Twins: []v1alpha1.Twin{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "io-data",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "1",
 						Metadata: map[string]string{
 							"type": "int",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -1035,11 +1035,11 @@ func UpdatedBluetoothDeviceInstance(nodeSelector string) v1alpha1.Device {
 	return deviceInstance
 }
 
-func IncorrectDeviceModel() v1alpha1.DeviceModel {
-	newDeviceModel := v1alpha1.DeviceModel{
+func IncorrectDeviceModel() v1alpha2.DeviceModel {
+	newDeviceModel := v1alpha2.DeviceModel{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "device-model",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light",
@@ -1049,11 +1049,11 @@ func IncorrectDeviceModel() v1alpha1.DeviceModel {
 	return newDeviceModel
 }
 
-func IncorrectDeviceInstance() v1alpha1.Device {
-	deviceInstance := v1alpha1.Device{
+func IncorrectDeviceInstance() v1alpha2.Device {
+	deviceInstance := v1alpha2.Device{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "device",
-			APIVersion: "devices.kubeedge.io/v1alpha1",
+			APIVersion: "devices.kubeedge.io/v1alpha2",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "led-light-instance-01",
@@ -1086,16 +1086,16 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 			Name:  "led-light-instance-01",
 			ID:    "led-light-instance-01",
 			Model: "led-light",
-			Twins: []v1alpha1.Twin{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "power-status",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "ON",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -1157,10 +1157,10 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
-					OrderOfOperations: []v1alpha1.BluetoothOperations{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+					OrderOfOperations: []v1alpha2.BluetoothOperations{
 						{
 							BluetoothOperationType:  "Multiply",
 							BluetoothOperationValue: 0.03125,
@@ -1177,13 +1177,13 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature-enable",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa0204514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"ON":  {1},
 					"OFF": {0},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
@@ -1194,9 +1194,9 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "io-config-initialize",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
@@ -1207,9 +1207,9 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "io-data-initialize",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
@@ -1220,9 +1220,9 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "io-config",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
@@ -1233,7 +1233,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			PropertyName: "io-data",
 			ModelName:    "cc2650-sensortag",
 			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha1.VisitorConfigBluetooth{
+			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
 				CharacteristicUUID: "f000aa6504514000b000000000000000",
 				DataWriteToBluetooth: map[string][]byte{
 					"Red":            {1},
@@ -1244,7 +1244,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					"BuzzerGreen":    {6},
 					"BuzzerRedGreen": {7},
 				},
-				BluetoothDataConverter: v1alpha1.BluetoothReadConverter{
+				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
 					StartIndex: 1,
 					EndIndex:   1,
 				},
@@ -1258,16 +1258,16 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 			ID:       "sensor-tag-instance-01",
 			Protocol: "bluetooth-sensor-tag-instance-01",
 			Model:    "cc2650-sensortag",
-			Twins: []v1alpha1.Twin{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "io-data",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "1",
 						Metadata: map[string]string{
 							"type": "int",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -1329,7 +1329,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 		{
 			Name:     "bluetooth-sensor-tag-instance-01",
 			Protocol: "bluetooth",
-			ProtocolConfig: v1alpha1.ProtocolConfigBluetooth{
+			ProtocolConfig: v1alpha2.ProtocolConfigBluetooth{
 				MACAddress: "BC:6A:29:AE:CC:96",
 			},
 		},
@@ -1363,7 +1363,7 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature",
 			ModelName:    "sensor-tag-model",
 			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
+			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
 				Offset:         2,
 				Limit:          1,
@@ -1377,7 +1377,7 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature-enable",
 			ModelName:    "sensor-tag-model",
 			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
+			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
 				Offset:         3,
 				Limit:          1,
@@ -1393,16 +1393,16 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 			Name:  "sensor-tag-instance-02",
 			ID:    "sensor-tag-instance-02",
 			Model: "sensor-tag-model",
-			Twins: []v1alpha1.Twin{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "OFF",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -1468,7 +1468,7 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature",
 			ModelName:    "sensor-tag-model",
 			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
+			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "CoilRegister",
 				Offset:         2,
 				Limit:          1,
@@ -1482,7 +1482,7 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature-enable",
 			ModelName:    "sensor-tag-model",
 			Protocol:     "modbus",
-			VisitorConfig: v1alpha1.VisitorConfigModbus{
+			VisitorConfig: v1alpha2.VisitorConfigModbus{
 				Register:       "DiscreteInputRegister",
 				Offset:         3,
 				Limit:          1,
@@ -1499,21 +1499,21 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 			Name:  "sensor-tag-instance-02",
 			ID:    "sensor-tag-instance-02",
 			Model: "sensor-tag-model",
-			Twins: []v1alpha1.Twin{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "ON",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
 			},
-			DataProperties: []v1alpha1.DataProperty{
+			DataProperties: []v1alpha2.DataProperty{
 				{
 					PropertyName: "temperature",
 					Metadata: map[string]string{
@@ -1584,9 +1584,9 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			ModelName:    "sensor-tag-customized-model",
 			Protocol:     "customized-protocol",
 
-			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+			VisitorConfig: v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				Definition:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 			},
 		},
 		{
@@ -1594,9 +1594,9 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			PropertyName: "temperature-enable",
 			ModelName:    "sensor-tag-customized-model",
 			Protocol:     "customized-protocol",
-			VisitorConfig: v1alpha1.VisitorConfigCustomized{
+			VisitorConfig: v1alpha2.VisitorConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				Definition:   &v1alpha1.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+				Definition:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
 			},
 		},
 	}
@@ -1608,16 +1608,16 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			ID:       "sensor-tag-customized-instance-01",
 			Model:    "sensor-tag-customized-model",
 			Protocol: "customized-protocol-sensor-tag-customized-instance-01",
-			Twins: []v1alpha1.Twin{
+			Twins: []v1alpha2.Twin{
 				{
 					PropertyName: "temperature-enable",
-					Desired: v1alpha1.TwinProperty{
+					Desired: v1alpha2.TwinProperty{
 						Value: "OFF",
 						Metadata: map[string]string{
 							"type": "string",
 						},
 					},
-					Reported: v1alpha1.TwinProperty{
+					Reported: v1alpha2.TwinProperty{
 						Value: "unknown",
 					},
 				},
@@ -1653,9 +1653,9 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 		{
 			Name:     "customized-protocol-sensor-tag-customized-instance-01",
 			Protocol: "customized-protocol",
-			ProtocolConfig: &v1alpha1.ProtocolConfigCustomized{
+			ProtocolConfig: &v1alpha2.ProtocolConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha1.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 			},
 		},
 	}
