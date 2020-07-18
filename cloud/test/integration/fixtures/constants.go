@@ -18,7 +18,7 @@ package fixtures
 
 // CRD API Constants
 const (
-	apiVersion      = "devices.kubeedge.io/v1alpha1"
+	apiVersion      = "devices.kubeedge.io/v1alpha2"
 	deviceModelKind = "DeviceModel"
 	deviceKind      = "Device"
 )

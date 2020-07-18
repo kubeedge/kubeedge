@@ -17,12 +17,12 @@ limitations under the License.
 package fixtures
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type DevicePropertyOp struct {
-	deviceProperty v1alpha1.DeviceProperty
+	deviceProperty v1alpha2.DeviceProperty
 }
 
 type DevicePropertyOption func(*DevicePropertyOp)
@@ -39,28 +39,28 @@ func withDescription(description string) DevicePropertyOption {
 	}
 }
 
-func withStringType(accessMode v1alpha1.PropertyAccessMode, defaultValue string) DevicePropertyOption {
+func withStringType(accessMode v1alpha2.PropertyAccessMode, defaultValue string) DevicePropertyOption {
 	return func(op *DevicePropertyOp) {
-		stringType := &v1alpha1.PropertyTypeString{
+		stringType := &v1alpha2.PropertyTypeString{
 			DefaultValue: defaultValue,
 		}
 		stringType.AccessMode = accessMode
-		op.deviceProperty.Type = v1alpha1.PropertyType{
+		op.deviceProperty.Type = v1alpha2.PropertyType{
 			String: stringType,
 		}
 	}
 }
 
-func withIntType(accessMode v1alpha1.PropertyAccessMode, defaultValue int64, minimum int64, maximum int64, unit string) DevicePropertyOption {
+func withIntType(accessMode v1alpha2.PropertyAccessMode, defaultValue int64, minimum int64, maximum int64, unit string) DevicePropertyOption {
 	return func(op *DevicePropertyOp) {
-		intType := &v1alpha1.PropertyTypeInt64{
+		intType := &v1alpha2.PropertyTypeInt64{
 			DefaultValue: defaultValue,
 			Minimum:      minimum,
 			Maximum:      maximum,
 			Unit:         unit,
 		}
 		intType.AccessMode = accessMode
-		op.deviceProperty.Type = v1alpha1.PropertyType{
+		op.deviceProperty.Type = v1alpha2.PropertyType{
 			Int: intType,
 		}
 	}
@@ -74,15 +74,15 @@ func (op *DevicePropertyOp) applyDevicePropertyOpts(opts []DevicePropertyOption)
 
 func newDevicePropertyOp(opts ...DevicePropertyOption) *DevicePropertyOp {
 	op := &DevicePropertyOp{
-		deviceProperty: v1alpha1.DeviceProperty{},
+		deviceProperty: v1alpha2.DeviceProperty{},
 	}
 	op.applyDevicePropertyOpts(opts)
 	return op
 }
 
-func newDeviceModel(name string, namespace string) *v1alpha1.DeviceModel {
-	spec := v1alpha1.DeviceModelSpec{}
-	deviceModel := &v1alpha1.DeviceModel{
+func newDeviceModel(name string, namespace string) *v1alpha2.DeviceModel {
+	spec := v1alpha2.DeviceModelSpec{}
+	deviceModel := &v1alpha2.DeviceModel{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -96,22 +96,22 @@ func newDeviceModel(name string, namespace string) *v1alpha1.DeviceModel {
 	return deviceModel
 }
 
-func DeviceModelWithPropertyNoName(name string, namespace string) *v1alpha1.DeviceModel {
+func DeviceModelWithPropertyNoName(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withDescription(devicePropertyTemperatureDesc),
-		withStringType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), ""))
+		withStringType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), ""))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 	return deviceModel
 }
 
-func DeviceModelWithPropertyNoType(name string, namespace string) *v1alpha1.DeviceModel {
+func DeviceModelWithPropertyNoType(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 	return deviceModel
 }
 
-func DeviceModelWithPropertyBadAccessMode(name string, namespace string) *v1alpha1.DeviceModel {
+func DeviceModelWithPropertyBadAccessMode(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
 		withStringType("", ""))
@@ -120,37 +120,37 @@ func DeviceModelWithPropertyBadAccessMode(name string, namespace string) *v1alph
 	return deviceModel
 }
 
-func NewDeviceModelBluetooth(name string, namespace string) *v1alpha1.DeviceModel {
+func NewDeviceModelBluetooth(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
 }
 
-func NewDeviceModelModbus(name string, namespace string) *v1alpha1.DeviceModel {
+func NewDeviceModelModbus(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
 }
 
-func NewDeviceModelOpcUA(name string, namespace string) *v1alpha1.DeviceModel {
+func NewDeviceModelOpcUA(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel
 }
 
-func NewDeviceModelCustomized(name string, namespace string) *v1alpha1.DeviceModel {
+func NewDeviceModelCustomized(name string, namespace string) *v1alpha2.DeviceModel {
 	deviceModel := newDeviceModel(name, namespace)
 	devicePropertyOp := newDevicePropertyOp(withName(devicePropertyTemperature), withDescription(devicePropertyTemperatureDesc),
-		withIntType(v1alpha1.PropertyAccessMode(v1alpha1.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
+		withIntType(v1alpha2.PropertyAccessMode(v1alpha2.ReadOnly), 0, minimum, maximum, devicePropertyUnit))
 	deviceModel.Spec.Properties = append(deviceModel.Spec.Properties, devicePropertyOp.deviceProperty)
 
 	return deviceModel

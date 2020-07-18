@@ -33,7 +33,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
@@ -46,16 +46,16 @@ var (
 )
 
 const (
-	mockHandler           = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devicemodels"
-	mockInstanceHandler   = "/apis/devices.kubeedge.io/v1alpha1/namespaces/default/devices"
+	mockHandler           = "/apis/devices.kubeedge.io/v1alpha2/namespaces/default/devicemodels"
+	mockInstanceHandler   = "/apis/devices.kubeedge.io/v1alpha2/namespaces/default/devices"
 	crdHandler            = "/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions"
 	appHandler            = "/api/v1/namespaces/default/pods"
 	nodeHandler           = "/api/v1/nodes"
 	deploymentHandler     = "/apis/apps/v1/namespaces/default/deployments"
 	deviceCRD             = "devices.devices.kubeedge.io"
 	deviceModelCRD        = "devicemodels.devices.kubeedge.io"
-	deviceModelPath       = "../../../../build/crds/devices/devices_v1alpha1_devicemodel.yaml"
-	deviceInstancePath    = "../../../../build/crds/devices/devices_v1alpha1_device.yaml"
+	deviceModelPath       = "../../../../build/crds/devices/devices_v1alpha2_devicemodel.yaml"
+	deviceInstancePath    = "../../../../build/crds/devices/devices_v1alpha2_device.yaml"
 	devMockInstancePath   = "./crds/deviceinstance.yaml"
 	devMockModelPath      = "./crds/devicemodel.yaml"
 	makeFilePath          = "../../../../mappers/bluetooth_mapper/"
@@ -228,7 +228,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+appHandler, podlist)
 
 		// Delete mock device instances created
-		var deviceList v1alpha1.DeviceList
+		var deviceList v1alpha2.DeviceList
 		deviceInstanceList, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+mockInstanceHandler, nil)
 		Expect(err).To(BeNil())
 		for _, device := range deviceInstanceList {
@@ -238,7 +238,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		}
 
 		// Delete mock device model created
-		var deviceModelList v1alpha1.DeviceModelList
+		var deviceModelList v1alpha2.DeviceModelList
 		list, err := utils.GetDeviceModel(&deviceModelList, ctx.Cfg.K8SMasterForKubeEdge+mockHandler, nil)
 		Expect(err).To(BeNil())
 		for _, model := range list {

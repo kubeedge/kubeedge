@@ -1,4 +1,4 @@
-apiVersion: devices.kubeedge.io/v1alpha1
+apiVersion: devices.kubeedge.io/v1alpha2
 kind: DeviceModel
 metadata:
   name: mock-temp-sensor-model

@@ -408,4 +408,4 @@ spec:
                 type: object
               type: array
           type: object
-  version: v1alpha1
+  version: v1alpha2

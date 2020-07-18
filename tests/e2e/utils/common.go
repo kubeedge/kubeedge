@@ -38,7 +38,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
@@ -636,8 +636,8 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 }
 
 // newDeviceInstanceObject creates a new device instance object
-func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha1.Device {
-	var deviceInstance v1alpha1.Device
+func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha2.Device {
+	var deviceInstance v1alpha2.Device
 	if !updated {
 		switch protocolType {
 		case BlueTooth:
@@ -667,8 +667,8 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 }
 
 // newDeviceModelObject creates a new device model object
-func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceModel {
-	var deviceModel v1alpha1.DeviceModel
+func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceModel {
+	var deviceModel v1alpha2.DeviceModel
 	if !updated {
 		switch protocolType {
 		case BlueTooth:
@@ -698,7 +698,7 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 }
 
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
-func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
+func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha2.DeviceModel) ([]v1alpha2.DeviceModel, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
@@ -731,7 +731,7 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, ex
 }
 
 // GetDevice to get the device list
-func GetDevice(list *v1alpha1.DeviceList, getDeviceAPI string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
+func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v1alpha2.Device) ([]v1alpha2.Device, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
