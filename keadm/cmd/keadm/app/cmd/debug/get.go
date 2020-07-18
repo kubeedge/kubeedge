@@ -69,13 +69,13 @@ func getResult(resourceType string) (*[]dao.Meta, error) {
 }
 
 func getDbPath(cmd *cobra.Command) string {
+	const flag = "input"
 	dbPath := os.Getenv("EDGECORE_DB_PATH")
 	if len(dbPath) == 0 {
 		dbPath = DefaultDbPath
 	}
 
-	if cmd.Flags().Changed("dbPath") {
-		const flag = "dbPath"
+	if cmd.Flags().Changed(flag) {
 		var err error
 		dbPath, err = cmd.Flags().GetString(flag)
 
