@@ -29,7 +29,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/helpers"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
@@ -266,7 +266,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(TokenClient.Error()).NotTo(HaveOccurred())
 		})
 		It("E2E_WATCHER: Test whether the watcher performs it operation correctly", func() {
-			var deviceList v1alpha1.DeviceList
+			var deviceList v1alpha2.DeviceList
 			newLedDevice := utils.NewMockInstance(nodeName)
 			time.Sleep(20 * time.Second)
 			list, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+mockInstanceHandler, &newLedDevice)

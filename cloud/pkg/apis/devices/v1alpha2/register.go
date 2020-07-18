@@ -16,13 +16,13 @@ limitations under the License.
 
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1alpha1 contains API Schema definitions for the devices v1alpha1 API group
+// Package v1alpha2 contains API Schema definitions for the devices v1alpha2 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=kubeedge/cloud/pkg/apis/devices
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=devices.kubeedge.io
-package v1alpha1
+package v1alpha2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +40,7 @@ const (
 	// GroupName is the group name use in this package.
 	GroupName = "devices.kubeedge.io"
 	// Version is the API version.
-	Version = "v1alpha1"
+	Version = "v1alpha2"
 )
 
 var (
