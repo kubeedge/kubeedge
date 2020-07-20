@@ -180,7 +180,10 @@ type edged struct {
 	containerRuntimeName      string
 	concurrentConsumers       int
 	// container runtime
-	containerRuntime   kubecontainer.Runtime
+	containerRuntime kubecontainer.Runtime
+	// Streaming runtime handles container streaming.
+	streamingRuntime kubecontainer.StreamingRuntime
+
 	podCache           kubecontainer.Cache
 	os                 kubecontainer.OSInterface
 	resourceAnalyzer   serverstats.ResourceAnalyzer
@@ -600,6 +603,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	ed.containerRuntime = containerRuntime
+	ed.streamingRuntime = containerRuntime
 	ed.runner = containerRuntime
 	ed.containerManager = containerManager
 	ed.runtimeService = runtimeService
