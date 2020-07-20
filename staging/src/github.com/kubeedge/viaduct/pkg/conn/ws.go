@@ -195,7 +195,6 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 		klog.Errorf("write message error(%+v)", err)
 		return nil, err
 	}
-	conn.locker.Unlock()
 	//receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.WriteDeadline)
 	return &response, err
