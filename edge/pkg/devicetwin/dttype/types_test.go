@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // TestSetEventID is function to test SetEventID().
@@ -613,35 +613,35 @@ func TestUnmarshalDeviceTwinUpdate(t *testing.T) {
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongInput",
 			payload: []byte(""),
 			want:    &DeviceTwinUpdate{},
-			wantErr: errors.New("Unmarshal update request body failed, Please check the request"),
+			wantErr: errors.New(ErrorUnmarshalInfo),
 		},
 		{
 			// Failure Case - correct input with empty twin
 			name:    "UnmarshalDeviceTwinUpdateTest-EmptyTwin",
 			payload: bytesEmptyTwin,
 			want:    &DeviceTwinUpdate{},
-			wantErr: errors.New("Update twin error, the update request body not have key:twin"),
+			wantErr: errors.New(ErrorUpdateInfo),
 		},
 		{
 			// Failure Case - wrong key format
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongKeyFormat",
 			payload: bytesTwinKeyError,
 			want:    &keyErrorTwinUpdate,
-			wantErr: errors.New("The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128"),
+			wantErr: errors.New(ErrorKeyInfo),
 		},
 		{
 			// Failure Case - wrong expected value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongExpectedValue",
 			payload: bytesTwinKeyExpectedValueError,
 			want:    &keyTwinUpdateExpectedValueError,
-			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512"),
+			wantErr: errors.New(ErrorValueInfo),
 		},
 		{
 			// Failure Case - wrong actual value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongActualValue",
 			payload: bytesTwinKeyActualValueError,
 			want:    &keyTwinUpdateActualValueError,
-			wantErr: errors.New("The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512"),
+			wantErr: errors.New(ErrorValueInfo),
 		},
 		{
 			// Success Case
