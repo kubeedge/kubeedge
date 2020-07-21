@@ -654,8 +654,10 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 
 		dc.deleteFromDeviceProfile(device, nodeConfigMap)
 
-		// no device is bound to the configMap, then remove the configMap directly.
-		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" {
+		// There are two cases we can delete configMap:
+		// 1. no device bound to it, as Data[DeviceProfileJSON] is "{}"
+		// 2. device instance created alone then removed, as Data[DeviceProfileJSON] is ""
+		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
 			deleteOptions := &metav1.DeleteOptions{}
 			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(nodeConfigMap.Name, deleteOptions)
 			// remove from cache
