@@ -34,3 +34,5 @@ Note: topic wildcards
 
 ![eventbus sends response messages to external client](../../images/eventbus/eventbus-handleResMsgToClient.jpg)
 
+The flow is almost the same in internal mode except the eventbus is as message broker itself.
+
