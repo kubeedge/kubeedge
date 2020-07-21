@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -28,6 +28,13 @@ type BaseMessage struct {
 	EventID   string `json:"event_id"`
 	Timestamp int64  `json:"timestamp"`
 }
+
+const (
+	ErrorUnmarshalInfo = "Unmarshal update request body failed, please check the request"
+	ErrorUpdateInfo    = "Update twin error, key:twin does not exist"
+	ErrorKeyInfo       = "The key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes"
+	ErrorValueInfo     = "The value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes"
+)
 
 //SetEventID set event id
 func (bs *BaseMessage) SetEventID(eventID string) {
@@ -245,25 +252,23 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 	var deviceTwinUpdate DeviceTwinUpdate
 	err := json.Unmarshal(payload, &deviceTwinUpdate)
 	if err != nil {
-		return &deviceTwinUpdate, errors.New("Unmarshal update request body failed, Please check the request")
+		return &deviceTwinUpdate, errors.New(ErrorUnmarshalInfo)
 	}
 	if deviceTwinUpdate.Twin == nil {
-		return &deviceTwinUpdate, errors.New("Update twin error, the update request body not have key:twin")
+		return &deviceTwinUpdate, errors.New(ErrorUpdateInfo)
 	}
 	for key, value := range deviceTwinUpdate.Twin {
 		match := dtcommon.ValidateTwinKey(key)
-		errorKey := `The key of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 128`
 		if !match {
-			return &deviceTwinUpdate, errors.New(errorKey)
+			return &deviceTwinUpdate, errors.New(ErrorKeyInfo)
 		}
-		errorValue := `The value of twin must be only include upper or lowercase letter, number, english, and special letter - _ . , : / @ # and length of key under 512`
 		if value != nil {
 			if value.Expected != nil {
 				if value.Expected.Value != nil {
 					if *value.Expected.Value != "" {
 						match := dtcommon.ValidateTwinValue(*value.Expected.Value)
 						if !match {
-							return &deviceTwinUpdate, errors.New(errorValue)
+							return &deviceTwinUpdate, errors.New(ErrorValueInfo)
 						}
 					}
 				}
@@ -273,7 +278,7 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 					if *value.Actual.Value != "" {
 						match := dtcommon.ValidateTwinValue(*value.Actual.Value)
 						if !match {
-							return &deviceTwinUpdate, errors.New(errorValue)
+							return &deviceTwinUpdate, errors.New(ErrorValueInfo)
 						}
 					}
 				}
