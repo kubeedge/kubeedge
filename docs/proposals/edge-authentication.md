@@ -10,7 +10,7 @@ approvers:
   - "@kadisi"
 
 creation-date: 2020-02-06
-last-updated: 2020-05-08
+last-updated: 2020-07-22
 status: Implemented
 
 ---
@@ -113,9 +113,40 @@ Then the CLoudCore and EdgeCore can establish mutual authentication TLS.
 
 4. Waiting for client access through https protocol.
 
+#### Certificate rotation
+
+Here we implement the certificate rotation for edge nodes. The rotation process is as follows:
+
+![cert-rotation](../images/edgeAuthentication/cert-rotation.png)
+
+**step 0:** 
+
+After getting the certificate, the EdgeCore will wait approximately 70%-90% of the total lifetime of the certificate before the next rotation.
+
+With jitter, if a number of nodes are added to a cluster at approximately the same time (such as cluster creation time), they won't all try to rotate certificates at the same time for the rest of the life of the cluster.
+
+**step 1:** 
+
+When the waiting deadline expires, the EdgeCore requests for a new certificate again by its old certificate.
+
+**step 2:** 
+
+The CloudCore verifies the certificate of EdgeCore by CA certificate. If passed, it will issue the CSR.
+
+**step 3:**
+
+ The CloudCore return the new certificate to the EdgeCore.
+
+**step 4:** 
+
+The old certificate is replaced by new certificate. The EdgeCore reconnects with CloudCore.
+
+**step 5:** 
+
+Then the EdgeCore waits for the next rotation.
+
 
 
 ## Future development tasks
 1. Ports integration.
-2. Add certificate rotation function.
-3. Keadm needs improvement.
+2. Save the token to a file, delete the token file after the edge node is successfully registered.
