@@ -486,6 +486,20 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceDeleted).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusNotFound))
 		})
+		It("E2E_DELETE_DEVICE_3: Delete device instance without device model", func() {
+			IsDeviceCreated, statusCode := utils.HandleDeviceInstance(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "", "led")
+			Expect(IsDeviceCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			time.Sleep(1 * time.Second)
+			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			IsDeviceDeleted, statusCode := utils.HandleDeviceInstance(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+utils.NewLedDeviceInstance(nodeName).Name, "")
+			Expect(IsDeviceDeleted).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			time.Sleep(1 * time.Second)
+			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
+			Expect(statusCode).Should(Equal(http.StatusNotFound))
+		})
 	})
 	Context("Test Change in device twin", func() {
 		BeforeEach(func() {
