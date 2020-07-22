@@ -26,14 +26,17 @@ var (
 	edgeDebugLongDescription = `
 "keadm help command provide debug function to help diagnose the cluster
 `
+	edgeDebugShortDescription = `
+"debug function to help diagnose the cluster
+`
 )
 
 // NewEdgeDebug returns KubeEdge edge debug command.
 func NewEdgeDebug(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "debug",
-		Short:   "provide debug function to help diagnose the cluster",
-		Long:    edgeDebugLongDescription,
+		Use:   "debug",
+		Short: edgeDebugShortDescription,
+		Long:  edgeDebugLongDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("requires a subcommand")
