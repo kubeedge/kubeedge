@@ -11,8 +11,7 @@ spec:
     name: sensor-tag-model
   protocol:
     modbus:
-      rtu:
-        slaveID: 1
+      slaveID: 1
     common:
       com:
         serialPort: '1'
