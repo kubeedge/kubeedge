@@ -21,12 +21,17 @@ This file is derived from K8S Kubelet code with reduced set of methods
 package clcm
 
 import (
+	"fmt"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager/containermap"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
+	"k8s.io/kubernetes/pkg/kubelet/config"
+	"k8s.io/kubernetes/pkg/kubelet/status"
 )
 
 const (
@@ -65,4 +70,37 @@ func NewContainerLifecycleManager(kubeletRootDir string) (ContainerLifecycleMana
 
 func (clcm *containerLifecycleManagerImpl) InternalContainerLifecycle() InternalContainerLifecycle {
 	return &internalContainerLifecycleImpl{clcm.cpuManager}
+}
+
+func (clcm *containerLifecycleManagerImpl) StartCpuManager(activePods cpumanager.ActivePodsFunc,
+	sourcesReady config.SourcesReady,
+	podStatusProvider status.PodStatusProvider,
+	runtimeService internalapi.RuntimeService) error {
+	containerMap, err := buildContainerMapFromRuntime(runtimeService)
+	if err != nil {
+		klog.Errorf("Error when starting the CPU manager in Container Lifecycle Manager: [%v]", err)
+		return err
+	}
+	clcm.cpuManager.Start(activePods, sourcesReady, podStatusProvider, runtimeService, containerMap)
+	return nil
+}
+
+// this function is copied from https://github.com/kubernetes/kubernetes/blob/v1.18.0/pkg/kubelet/cm/container_manager_linux.go
+func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (containermap.ContainerMap, error) {
+	podSandboxMap := make(map[string]string)
+	podSandboxList, _ := runtimeService.ListPodSandbox(nil)
+	for _, p := range podSandboxList {
+		podSandboxMap[p.Id] = p.Metadata.Uid
+	}
+
+	containerMap := containermap.NewContainerMap()
+	containerList, _ := runtimeService.ListContainers(nil)
+	for _, c := range containerList {
+		if _, exists := podSandboxMap[c.PodSandboxId]; !exists {
+			return nil, fmt.Errorf("no PodsandBox found with Id '%s'", c.PodSandboxId)
+		}
+		containerMap.Add(podSandboxMap[c.PodSandboxId], c.Metadata.Name, c.Id)
+	}
+
+	return containerMap, nil
 }

@@ -18,6 +18,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	v1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
@@ -67,7 +68,7 @@ func (c *clusterObjectSyncs) Get(name string, options v1.GetOptions) (result *v1
 		Resource("clusterobjectsyncs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -83,7 +84,7 @@ func (c *clusterObjectSyncs) List(opts v1.ListOptions) (result *v1alpha1.Cluster
 		Resource("clusterobjectsyncs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -99,7 +100,7 @@ func (c *clusterObjectSyncs) Watch(opts v1.ListOptions) (watch.Interface, error)
 		Resource("clusterobjectsyncs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.Background())
 }
 
 // Create takes the representation of a clusterObjectSync and creates it.  Returns the server's representation of the clusterObjectSync, and an error, if there is any.
@@ -108,7 +109,7 @@ func (c *clusterObjectSyncs) Create(clusterObjectSync *v1alpha1.ClusterObjectSyn
 	err = c.client.Post().
 		Resource("clusterobjectsyncs").
 		Body(clusterObjectSync).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -120,7 +121,7 @@ func (c *clusterObjectSyncs) Update(clusterObjectSync *v1alpha1.ClusterObjectSyn
 		Resource("clusterobjectsyncs").
 		Name(clusterObjectSync.Name).
 		Body(clusterObjectSync).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -135,7 +136,7 @@ func (c *clusterObjectSyncs) UpdateStatus(clusterObjectSync *v1alpha1.ClusterObj
 		Name(clusterObjectSync.Name).
 		SubResource("status").
 		Body(clusterObjectSync).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -146,7 +147,7 @@ func (c *clusterObjectSyncs) Delete(name string, options *v1.DeleteOptions) erro
 		Resource("clusterobjectsyncs").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -161,7 +162,7 @@ func (c *clusterObjectSyncs) DeleteCollection(options *v1.DeleteOptions, listOpt
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -173,7 +174,7 @@ func (c *clusterObjectSyncs) Patch(name string, pt types.PatchType, data []byte,
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }

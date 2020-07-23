@@ -5,12 +5,11 @@ go 1.14
 require (
 	cloud.google.com/go v0.43.0 // indirect
 	github.com/256dpi/gomqtt v0.10.4
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/astaxie/beego v1.12.0
-	github.com/aws/aws-sdk-go v1.21.10 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/checkpoint-restore/go-criu v0.0.0-20190109184317-bdb7599cd87b // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.2.0
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50 // indirect
@@ -49,6 +48,7 @@ require (
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
+	github.com/opencontainers/runc v1.0.0-rc9 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
@@ -63,26 +63,27 @@ require (
 	github.com/vishvananda/netlink v1.0.0
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
-	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1 // indirect
-	google.golang.org/grpc v1.23.1
+	google.golang.org/grpc v1.26.0
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
-	gopkg.in/yaml.v2 v2.2.7
-	k8s.io/api v0.17.1
-	k8s.io/apiextensions-apiserver v0.17.1
-	k8s.io/apimachinery v0.17.1
-	k8s.io/apiserver v0.17.1
-	k8s.io/client-go v0.17.1
-	k8s.io/cloud-provider v0.17.1
-	k8s.io/code-generator v0.17.1
-	k8s.io/component-base v0.17.1
-	k8s.io/cri-api v0.17.1
-	k8s.io/csi-translation-lib v0.17.1
+	gopkg.in/yaml.v2 v2.2.8
+	k8s.io/api v0.18.0
+	k8s.io/apiextensions-apiserver v0.18.0
+	k8s.io/apimachinery v0.18.0
+	k8s.io/apiserver v0.18.0
+	k8s.io/client-go v0.18.0
+	k8s.io/cloud-provider v0.18.0
+	k8s.io/code-generator v0.18.0
+	k8s.io/component-base v0.18.0
+	k8s.io/cri-api v0.18.0
+	k8s.io/csi-translation-lib v0.18.0
 	k8s.io/klog v1.0.0
-	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/kubelet v0.17.1
-	k8s.io/kubernetes v1.17.1
-	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
-	sigs.k8s.io/yaml v1.1.0
+	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
+	k8s.io/kube-scheduler v0.18.0 // indirect
+	k8s.io/kubelet v0.18.0
+	k8s.io/kubernetes v1.18.0
+	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+	sigs.k8s.io/structured-merge-diff v1.0.1-0.20191108220359-b1b620dd3f06 // indirect
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
@@ -114,7 +115,7 @@ replace (
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
-	k8s.io/kubectl => k8s.io/kubectl v0.17.0
+	k8s.io/kubectl => k8s.io/kubectl v0.18.0
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
 	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.0.0-20190718190548-039b99e58dbd
 	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.0.0-20190718185242-1e1642704fe6

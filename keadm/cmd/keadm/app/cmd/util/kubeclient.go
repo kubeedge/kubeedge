@@ -1,8 +1,10 @@
 package util
 
 import (
+	"context"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -38,5 +40,5 @@ func (co *Common) cleanNameSpace(ns, kubeConfigPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create KubeClient, error: %s", err)
 	}
-	return cli.CoreV1().Namespaces().Delete(ns, nil)
+	return cli.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{})
 }
