@@ -18,6 +18,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"context"
 	"time"
 
 	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
@@ -70,7 +71,7 @@ func (c *devices) Get(name string, options v1.GetOptions) (result *v1alpha2.Devi
 		Resource("devices").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -87,7 +88,7 @@ func (c *devices) List(opts v1.ListOptions) (result *v1alpha2.DeviceList, err er
 		Resource("devices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -104,7 +105,7 @@ func (c *devices) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("devices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.Background())
 }
 
 // Create takes the representation of a device and creates it.  Returns the server's representation of the device, and an error, if there is any.
@@ -114,7 +115,7 @@ func (c *devices) Create(device *v1alpha2.Device) (result *v1alpha2.Device, err 
 		Namespace(c.ns).
 		Resource("devices").
 		Body(device).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -127,7 +128,7 @@ func (c *devices) Update(device *v1alpha2.Device) (result *v1alpha2.Device, err 
 		Resource("devices").
 		Name(device.Name).
 		Body(device).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -143,7 +144,7 @@ func (c *devices) UpdateStatus(device *v1alpha2.Device) (result *v1alpha2.Device
 		Name(device.Name).
 		SubResource("status").
 		Body(device).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -155,7 +156,7 @@ func (c *devices) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("devices").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -171,7 +172,7 @@ func (c *devices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.Lis
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -184,7 +185,7 @@ func (c *devices) Patch(name string, pt types.PatchType, data []byte, subresourc
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }

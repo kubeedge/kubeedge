@@ -1,12 +1,14 @@
 package leaderelection
 
 import (
+	"context"
 	gocontext "context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
 	"syscall"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -134,7 +136,7 @@ func TryToPatchPodReadinessGate() error {
 		}
 
 		//Creat patchBytes
-		getPod, err := cli.CoreV1().Pods(namespace).Get(podname, metav1.GetOptions{})
+		getPod, err := cli.CoreV1().Pods(namespace).Get(gocontext.Background(), podname, metav1.GetOptions{})
 		originalJSON, err := json.Marshal(getPod)
 		if err != nil {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
@@ -151,7 +153,7 @@ func TryToPatchPodReadinessGate() error {
 		var maxRetries = 3
 		var isPatchSuccess = false
 		for i := 1; i <= maxRetries; i++ {
-			_, err = cli.CoreV1().Pods(namespace).Patch(podname, types.StrategicMergePatchType, patchBytes, "status")
+			_, err = cli.CoreV1().Pods(namespace).Patch(gocontext.Background(), podname, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}, "status")
 			if err == nil {
 				isPatchSuccess = true
 				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
@@ -194,7 +196,7 @@ func TriggerGracefulShutdown() {
 
 func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
 	c := cli.CoreV1()
-	if _, err := c.Namespaces().Get(ns, metav1.GetOptions{}); err == nil {
+	if _, err := c.Namespaces().Get(gocontext.Background(), ns, metav1.GetOptions{}); err == nil {
 		// the namespace already exists
 		return nil
 	}
@@ -204,7 +206,7 @@ func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
 			Namespace: "",
 		},
 	}
-	_, err := c.Namespaces().Create(newNs)
+	_, err := c.Namespaces().Create(context.Background(), newNs, metav1.CreateOptions{})
 	if err != nil && errors.IsAlreadyExists(err) {
 		err = nil
 	}

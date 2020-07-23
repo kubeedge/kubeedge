@@ -20,7 +20,16 @@ This file is derived from K8S Kubelet code with reduced set of methods
 
 package clcm
 
+import (
+	internalapi "k8s.io/cri-api/pkg/apis"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	"k8s.io/kubernetes/pkg/kubelet/config"
+	"k8s.io/kubernetes/pkg/kubelet/status"
+)
+
 // ContainerLifecycleManager interface
 type ContainerLifecycleManager interface {
 	InternalContainerLifecycle() InternalContainerLifecycle
+	StartCpuManager(activePods cpumanager.ActivePodsFunc, sourcesReady config.SourcesReady,
+		podStatusProvider status.PodStatusProvider, runtimeService internalapi.RuntimeService) error
 }

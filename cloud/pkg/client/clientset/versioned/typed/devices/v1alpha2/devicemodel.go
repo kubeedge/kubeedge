@@ -18,6 +18,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"context"
 	"time"
 
 	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
@@ -69,7 +70,7 @@ func (c *deviceModels) Get(name string, options v1.GetOptions) (result *v1alpha2
 		Resource("devicemodels").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -86,7 +87,7 @@ func (c *deviceModels) List(opts v1.ListOptions) (result *v1alpha2.DeviceModelLi
 		Resource("devicemodels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -103,7 +104,7 @@ func (c *deviceModels) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("devicemodels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.Background())
 }
 
 // Create takes the representation of a deviceModel and creates it.  Returns the server's representation of the deviceModel, and an error, if there is any.
@@ -113,7 +114,7 @@ func (c *deviceModels) Create(deviceModel *v1alpha2.DeviceModel) (result *v1alph
 		Namespace(c.ns).
 		Resource("devicemodels").
 		Body(deviceModel).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -126,7 +127,7 @@ func (c *deviceModels) Update(deviceModel *v1alpha2.DeviceModel) (result *v1alph
 		Resource("devicemodels").
 		Name(deviceModel.Name).
 		Body(deviceModel).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -138,7 +139,7 @@ func (c *deviceModels) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("devicemodels").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -154,7 +155,7 @@ func (c *deviceModels) DeleteCollection(options *v1.DeleteOptions, listOptions v
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -167,7 +168,7 @@ func (c *deviceModels) Patch(name string, pt types.PatchType, data []byte, subre
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
