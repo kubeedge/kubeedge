@@ -9,12 +9,11 @@ import (
 )
 
 var (
-	edgecollectLongDescription = `
-"Obtain all the data of the current node, and then provide it to the operation and maintenance personnel to locate the problem
+	edgecollectLongDescription = `"keadm debug collect " command obtain all the data of the current node  
+and then provide it to the operation and maintenance personnel to locate the problem
 `
-	edgecollectShortDescription = `
-"Obtain all the data of the current node
-`
+	edgecollectShortDescription = `Obtain all the data of the current node`
+
 	edgecollectExample = `
 # Check all items and specified as the current directory
 keadm debug collect --path .
@@ -35,8 +34,9 @@ func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.
 			return ExecuteCollect()
 		},
 	}
-	cmd.AddCommand()
+
 	addCollectOtherFlags(cmd, collectOptions)
+
 	return cmd
 
 }

@@ -23,12 +23,9 @@ import (
 )
 
 var (
-	edgeDebugLongDescription = `
-"keadm help command provide debug function to help diagnose the cluster
-`
-	edgeDebugShortDescription = `
-"debug function to help diagnose the cluster
-`
+	edgeDebugLongDescription = `"keadm debug" command help  provide debug function to help diagnose the cluster`
+
+	edgeDebugShortDescription = `debug function to help diagnose the cluster`
 )
 
 // NewEdgeDebug returns KubeEdge edge debug command.
