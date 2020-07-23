@@ -21,6 +21,12 @@ const (
 	TickerTimeoutDefault = 20 * time.Millisecond
 )
 
+var (
+	// singleton
+	channelContext     *ChannelContext
+	channelContextOnce sync.Once
+)
+
 // ChannelContext is object for Context channel
 type ChannelContext struct {
 	//ConfigFactory goarchaius.ConfigurationFactory
@@ -32,9 +38,13 @@ type ChannelContext struct {
 	anonChsLock  sync.RWMutex
 }
 
-// NewChannelContext creates and returns object of new channel context
-// TODO: Singleton
-func NewChannelContext() *ChannelContext {
+func GetChannelContext() *ChannelContext {
+	channelContextOnce.Do(func() { channelContext = newChannelContext() })
+	return channelContext
+}
+
+// newChannelContext creates and returns object of new channel context
+func newChannelContext() *ChannelContext {
 	channelMap := make(map[string]chan model.Message)
 	moduleChannels := make(map[string]map[string]chan model.Message)
 	anonChannels := make(map[string]chan model.Message)

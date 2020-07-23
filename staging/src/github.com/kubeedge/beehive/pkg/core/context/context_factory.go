@@ -31,7 +31,7 @@ func InitContext(contextType string) {
 		}
 		switch contextType {
 		case MsgCtxTypeChannel:
-			channelContext := NewChannelContext()
+			channelContext := GetChannelContext()
 			context.messageContext = channelContext
 			context.moduleContext = channelContext
 		default:
