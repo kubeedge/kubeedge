@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	edgecollectLongDescription = `"keadm debug collect " command obtain all the data of the current node  
+	edgecollectLongDescription = `"keadm debug collect " command obtain all the data of the current node
 and then provide it to the operation and maintenance personnel to locate the problem
 `
 	edgecollectShortDescription = `Obtain all the data of the current node`
