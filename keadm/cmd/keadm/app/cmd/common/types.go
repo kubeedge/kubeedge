@@ -49,6 +49,13 @@ type GettokenOptions struct {
 	Kubeconfig string
 }
 
+//ColletcOptions has the kubeedge debug colletc information filled by CLI
+type ColletcOptions struct {
+	Config     string
+	OutputPath string
+	Detail     string
+}
+
 //InstallState enum set used for verifying a tool version is installed in host
 type InstallState uint8
 

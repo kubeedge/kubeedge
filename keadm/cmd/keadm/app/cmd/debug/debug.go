@@ -45,7 +45,7 @@ func NewEdgeDebug(out io.Writer) *cobra.Command {
 		},
 	}
 	// add subCommand collect
-	//cmd.AddCommand(collect.NewEdgeCollect(out,nil))
+	cmd.AddCommand(NewEdgeCollect(out, nil))
 
 	return cmd
 }

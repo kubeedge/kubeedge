@@ -73,4 +73,9 @@ const (
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"
+
+	EdgecoreConfig = "config"
+
+	// Default edgecore config path
+	EdgecoreConfigPath = "/etc/kubeedge/edgecore.yaml"
 )
