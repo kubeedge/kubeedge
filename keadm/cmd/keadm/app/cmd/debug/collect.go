@@ -38,7 +38,6 @@ func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.
 	addCollectOtherFlags(cmd, collectOptions)
 
 	return cmd
-
 }
 
 // add Collect flags
