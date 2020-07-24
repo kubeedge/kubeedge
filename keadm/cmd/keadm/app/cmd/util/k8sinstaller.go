@@ -117,8 +117,8 @@ func installCRDs(kubeConfig, master string) error {
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
-	for _, crdFile := range []string{"devices/devices_v1alpha1_device.yaml",
-		"devices/devices_v1alpha1_devicemodel.yaml"} {
+	for _, crdFile := range []string{"devices/devices_v1alpha2_device.yaml",
+		"devices/devices_v1alpha2_devicemodel.yaml"} {
 		//check it first, do not download when it exists
 		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
 		if err != nil {
