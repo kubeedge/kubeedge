@@ -33,16 +33,16 @@ func InitConfigure(ep *v1alpha1.EdgePorxy) {
 			panic(err)
 		}
 		Config.CaData = caData
-		if utils.FileExists(ep.CertFile) {
-			certData, err := loadFromFile(ep.CertFile)
+		if utils.FileExists(ep.K8sCertFile) {
+			certData, err := loadFromFile(ep.K8sCertFile)
 			if err != nil {
 				klog.Errorf("load edgeproxy cert file failed! err: %v", err)
 				panic(err)
 			}
 			Config.CertData = certData
 		}
-		if utils.FileExists(ep.PrivateKeyFile) {
-			keyData, err := loadFromFile(ep.PrivateKeyFile)
+		if utils.FileExists(ep.K8sPrivateKeyFile) {
+			keyData, err := loadFromFile(ep.K8sPrivateKeyFile)
 			if err != nil {
 				klog.Errorf("load edgeproxy key file failed! err: %v", err)
 				panic(err)

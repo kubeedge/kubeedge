@@ -1,12 +1,13 @@
 package server
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 )
 
 func NewProxyServer(eph http.Handler) (*ProxyServer, error) {
@@ -30,11 +31,19 @@ type ProxyServer struct {
 
 func (ps *ProxyServer) Run() {
 	ps.installPath()
-	server := &http.Server{
-		Handler: ps.mux,
-		Addr:    fmt.Sprintf(":%d", config.Config.ListenPort),
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(proxyconfig.Config.CaData)
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    certPool,
 	}
-	err := server.ListenAndServe()
+	server := &http.Server{
+		Handler:   ps.mux,
+		Addr:      fmt.Sprintf(":%d", proxyconfig.Config.ListenPort),
+		TLSConfig: tlsConfig,
+	}
+	err := server.ListenAndServeTLS(proxyconfig.Config.ServerCertFile, proxyconfig.Config.ServerKeyFile)
+	//err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
