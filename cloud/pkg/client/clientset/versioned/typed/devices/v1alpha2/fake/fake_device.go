@@ -18,7 +18,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,29 +29,29 @@ import (
 
 // FakeDevices implements DeviceInterface
 type FakeDevices struct {
-	Fake *FakeDevicesV1alpha1
+	Fake *FakeDevicesV1alpha2
 	ns   string
 }
 
-var devicesResource = schema.GroupVersionResource{Group: "devices", Version: "v1alpha1", Resource: "devices"}
+var devicesResource = schema.GroupVersionResource{Group: "devices", Version: "v1alpha2", Resource: "devices"}
 
-var devicesKind = schema.GroupVersionKind{Group: "devices", Version: "v1alpha1", Kind: "Device"}
+var devicesKind = schema.GroupVersionKind{Group: "devices", Version: "v1alpha2", Kind: "Device"}
 
 // Get takes name of the device, and returns the corresponding device object, and an error if there is any.
-func (c *FakeDevices) Get(name string, options v1.GetOptions) (result *v1alpha1.Device, err error) {
+func (c *FakeDevices) Get(name string, options v1.GetOptions) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(devicesResource, c.ns, name), &v1alpha1.Device{})
+		Invokes(testing.NewGetAction(devicesResource, c.ns, name), &v1alpha2.Device{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Device), err
+	return obj.(*v1alpha2.Device), err
 }
 
 // List takes label and field selectors, and returns the list of Devices that match those selectors.
-func (c *FakeDevices) List(opts v1.ListOptions) (result *v1alpha1.DeviceList, err error) {
+func (c *FakeDevices) List(opts v1.ListOptions) (result *v1alpha2.DeviceList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(devicesResource, devicesKind, c.ns, opts), &v1alpha1.DeviceList{})
+		Invokes(testing.NewListAction(devicesResource, devicesKind, c.ns, opts), &v1alpha2.DeviceList{})
 
 	if obj == nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (c *FakeDevices) List(opts v1.ListOptions) (result *v1alpha1.DeviceList, er
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.DeviceList{ListMeta: obj.(*v1alpha1.DeviceList).ListMeta}
-	for _, item := range obj.(*v1alpha1.DeviceList).Items {
+	list := &v1alpha2.DeviceList{ListMeta: obj.(*v1alpha2.DeviceList).ListMeta}
+	for _, item := range obj.(*v1alpha2.DeviceList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -78,43 +78,43 @@ func (c *FakeDevices) Watch(opts v1.ListOptions) (watch.Interface, error) {
 }
 
 // Create takes the representation of a device and creates it.  Returns the server's representation of the device, and an error, if there is any.
-func (c *FakeDevices) Create(device *v1alpha1.Device) (result *v1alpha1.Device, err error) {
+func (c *FakeDevices) Create(device *v1alpha2.Device) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(devicesResource, c.ns, device), &v1alpha1.Device{})
+		Invokes(testing.NewCreateAction(devicesResource, c.ns, device), &v1alpha2.Device{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Device), err
+	return obj.(*v1alpha2.Device), err
 }
 
 // Update takes the representation of a device and updates it. Returns the server's representation of the device, and an error, if there is any.
-func (c *FakeDevices) Update(device *v1alpha1.Device) (result *v1alpha1.Device, err error) {
+func (c *FakeDevices) Update(device *v1alpha2.Device) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(devicesResource, c.ns, device), &v1alpha1.Device{})
+		Invokes(testing.NewUpdateAction(devicesResource, c.ns, device), &v1alpha2.Device{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Device), err
+	return obj.(*v1alpha2.Device), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeDevices) UpdateStatus(device *v1alpha1.Device) (*v1alpha1.Device, error) {
+func (c *FakeDevices) UpdateStatus(device *v1alpha2.Device) (*v1alpha2.Device, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(devicesResource, "status", c.ns, device), &v1alpha1.Device{})
+		Invokes(testing.NewUpdateSubresourceAction(devicesResource, "status", c.ns, device), &v1alpha2.Device{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Device), err
+	return obj.(*v1alpha2.Device), err
 }
 
 // Delete takes name of the device and deletes it. Returns an error if one occurs.
 func (c *FakeDevices) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(devicesResource, c.ns, name), &v1alpha1.Device{})
+		Invokes(testing.NewDeleteAction(devicesResource, c.ns, name), &v1alpha2.Device{})
 
 	return err
 }
@@ -123,17 +123,17 @@ func (c *FakeDevices) Delete(name string, options *v1.DeleteOptions) error {
 func (c *FakeDevices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(devicesResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.DeviceList{})
+	_, err := c.Fake.Invokes(action, &v1alpha2.DeviceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched device.
-func (c *FakeDevices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Device, err error) {
+func (c *FakeDevices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(devicesResource, c.ns, name, pt, data, subresources...), &v1alpha1.Device{})
+		Invokes(testing.NewPatchSubresourceAction(devicesResource, c.ns, name, pt, data, subresources...), &v1alpha2.Device{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Device), err
+	return obj.(*v1alpha2.Device), err
 }

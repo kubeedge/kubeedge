@@ -1,4 +1,4 @@
-apiVersion: devices.kubeedge.io/v1alpha1
+apiVersion: devices.kubeedge.io/v1alpha2
 kind: Device
 metadata:
   name: led-light-instance-01

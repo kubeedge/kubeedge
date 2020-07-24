@@ -21,7 +21,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
 
 const (
@@ -46,14 +46,14 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(addDeviceCrds(scheme))
 }
 
-// TODO: move this func to apis/devices/v1alpha1/register.go
+// TODO: move this func to apis/devices/v1alpha2/register.go
 func addDeviceCrds(scheme *runtime.Scheme) error {
 	// Add Device
-	scheme.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Device{}, &v1alpha1.DeviceList{})
-	metav1.AddToGroupVersion(scheme, v1alpha1.SchemeGroupVersion)
+	scheme.AddKnownTypes(v1alpha2.SchemeGroupVersion, &v1alpha2.Device{}, &v1alpha2.DeviceList{})
+	metav1.AddToGroupVersion(scheme, v1alpha2.SchemeGroupVersion)
 	// Add DeviceModel
-	scheme.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.DeviceModel{}, &v1alpha1.DeviceModelList{})
-	metav1.AddToGroupVersion(scheme, v1alpha1.SchemeGroupVersion)
+	scheme.AddKnownTypes(v1alpha2.SchemeGroupVersion, &v1alpha2.DeviceModel{}, &v1alpha2.DeviceModelList{})
+	metav1.AddToGroupVersion(scheme, v1alpha2.SchemeGroupVersion)
 
 	return nil
 }
@@ -149,7 +149,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 					},
 					Rule: admissionregistrationv1beta1.Rule{
 						APIGroups:   []string{"devices.kubeedge.io"},
-						APIVersions: []string{"v1alpha1"},
+						APIVersions: []string{"v1alpha2"},
 						Resources:   []string{"devicemodels"},
 					},
 				}},

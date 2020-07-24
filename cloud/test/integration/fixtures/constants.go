@@ -18,7 +18,7 @@ package fixtures
 
 // CRD API Constants
 const (
-	apiVersion      = "devices.kubeedge.io/v1alpha1"
+	apiVersion      = "devices.kubeedge.io/v1alpha2"
 	deviceModelKind = "DeviceModel"
 	deviceKind      = "Device"
 )
@@ -35,6 +35,13 @@ const (
 	devicePropertyUnit            = "degree celsius"
 )
 
+// Property Vistor Constants
+const (
+	// time.Duration, nanosecond
+	reportCycle  = 1000000000
+	collectCycle = 500000000
+)
+
 // Device instance constants
 const (
 	DefaultNamespace = "default"
@@ -45,11 +52,12 @@ type deviceProtocol string
 
 // Supported protocols constants
 const (
-	deviceProtocolBluetooth deviceProtocol = "bluetooth"
-	deviceProtocolModbus    deviceProtocol = "modbus"
-	deviceProtocolModbusRTU deviceProtocol = "modbusRTU"
-	deviceProtocolModbusTCP deviceProtocol = "modbusTCP"
-	deviceProtocolOPCUA     deviceProtocol = "opcua"
+	deviceProtocolBluetooth  deviceProtocol = "bluetooth"
+	deviceProtocolModbus     deviceProtocol = "modbus"
+	deviceProtocolModbusRTU  deviceProtocol = "modbusRTU"
+	deviceProtocolModbusTCP  deviceProtocol = "modbusTCP"
+	deviceProtocolOPCUA      deviceProtocol = "opcua"
+	deviceProtocolCustomized deviceProtocol = "customizedProtocol"
 )
 
 // integer property type constants

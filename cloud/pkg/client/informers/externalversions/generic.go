@@ -20,8 +20,8 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
-	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	v1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -52,16 +52,16 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=devices, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("devices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha1().Devices().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("devicemodels"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha1().DeviceModels().Informer()}, nil
+	// Group=devices, Version=v1alpha2
+	case v1alpha2.SchemeGroupVersion.WithResource("devices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha2().Devices().Informer()}, nil
+	case v1alpha2.SchemeGroupVersion.WithResource("devicemodels"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Devices().V1alpha2().DeviceModels().Informer()}, nil
 
 		// Group=reliablesyncs.kubeedge.io, Version=v1alpha1
-	case reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"):
+	case v1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Reliablesyncs().V1alpha1().ClusterObjectSyncs().Informer()}, nil
-	case reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"):
+	case v1alpha1.SchemeGroupVersion.WithResource("objectsyncs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Reliablesyncs().V1alpha1().ObjectSyncs().Informer()}, nil
 
 	}
