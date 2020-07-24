@@ -25,6 +25,8 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
+	utilsexec "k8s.io/utils/exec"
 )
 
 var (
@@ -74,12 +76,21 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Tear down cloud node. It includes
-			// 1. killing cloudcore process
+			// 1. kill cloudcore/edgecore process.
+			// For edgecore, don't delete node from K8S
+			if err := TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig); err != nil {
+				return err
+			}
 
-			// Tear down edge node. It includes
-			// 1. killing edgecore process, but don't delete node from K8s
-			return TearDownKubeEdge(IsEdgeNode, reset.Kubeconfig)
+			// 2. remove containers managed by KE
+			_, _ = fmt.Fprintln(out, "[Test] Test here!")
+			if err2 := RemoveContainers(utilsexec.New()); err2 != nil {
+				return err2
+			}
+
+			// 3. TODO: any other actions here?
+
+			return nil
 		},
 	}
 
@@ -101,6 +112,29 @@ func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 		return fmt.Errorf("TearDown failed, err:%v", err)
 	}
 	return nil
+}
+
+// RemoveContainers removes all Kubernetes-managed containers
+func RemoveContainers(execer utilsexec.Interface) error {
+	criSocketPath, err := utilruntime.DetectCRISocket()
+	if err != nil {
+		return err
+	}
+	fmt.Println("[Test] Got criSocketPath", criSocketPath)
+
+	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
+	if err != nil {
+		return err
+	}
+	fmt.Println("[Test] Got containerRuntime", containerRuntime)
+
+	containers, err := containerRuntime.ListKubeContainers()
+	if err != nil {
+		return err
+	}
+	fmt.Println("[Test] Got containers", containers)
+
+	return containerRuntime.RemoveContainers(containers)
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
