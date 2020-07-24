@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
-	devicesv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	devicesv1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
 
 // admitFunc is the type we use for all of our validators and mutators
@@ -66,7 +66,7 @@ func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1
 	switch review.Request.Operation {
 	case admissionv1beta1.Create, admissionv1beta1.Update:
 		raw := review.Request.Object.Raw
-		devicemodel := devicesv1alpha1.DeviceModel{}
+		devicemodel := devicesv1alpha2.DeviceModel{}
 		deserializer := codecs.UniversalDeserializer()
 		if _, _, err := deserializer.Decode(raw, nil, &devicemodel); err != nil {
 			klog.Errorf("validation failed with error: %v", err)
@@ -88,7 +88,7 @@ func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1
 	return &reviewResponse
 }
 
-func validateDeviceModel(devicemodel *devicesv1alpha1.DeviceModel, response *admissionv1beta1.AdmissionResponse) string {
+func validateDeviceModel(devicemodel *devicesv1alpha2.DeviceModel, response *admissionv1beta1.AdmissionResponse) string {
 	//device properties must be either Int or String while additional properties is not banned.
 	var msg string
 	for _, property := range devicemodel.Spec.Properties {

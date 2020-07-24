@@ -35,14 +35,14 @@ runTests() {
   kubectl get crd devicemodels.devices.kubeedge.io --no-headers --output=go-template={{.metadata.name}} > /dev/null 2>&1 || ret=$?
   if [[ "${ret}" -ne 0 ]]; then
     logStatus "Creating device model crd"
-    kubectl create -f "${SCRIPT_ROOT}/build/crds/devices/devices_v1alpha1_devicemodel.yaml"
+    kubectl create -f "${SCRIPT_ROOT}/build/crds/devices/devices_v1alpha2_devicemodel.yaml"
   fi
 
   ret=0
   kubectl get crd devices.devices.kubeedge.io --no-headers --output=go-template={{.metadata.name}} > /dev/null 2>&1 || ret=$?
   if [[ "${ret}" -ne 0 ]]; then
     logStatus "Creating device crd"
-    kubectl create -f "${SCRIPT_ROOT}/build/crds/devices/devices_v1alpha1_device.yaml"
+    kubectl create -f "${SCRIPT_ROOT}/build/crds/devices/devices_v1alpha2_device.yaml"
   fi
 
   logStatus  "Running integration test cases"

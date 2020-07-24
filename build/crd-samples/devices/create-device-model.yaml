@@ -1,4 +1,4 @@
-apiVersion: devices.kubeedge.io/v1alpha1
+apiVersion: devices.kubeedge.io/v1alpha2
 kind: DeviceModel
 metadata:
  name: sensor-tag-model
@@ -18,20 +18,4 @@ spec:
       string:
         accessMode: ReadWrite
         defaultValue: 'OFF'
- propertyVisitors:
-  - propertyName: temperature
-    modbus:
-     register: CoilRegister
-     offset: 2
-     limit: 1
-     scale: 1
-     isSwap: true
-     isRegisterSwap: true
-  - propertyName: temperature-enable
-    modbus:
-     register: DiscreteInputRegister
-     offset: 3
-     limit: 1
-     scale: 1.0
-     isSwap: true
-     isRegisterSwap: true
+
