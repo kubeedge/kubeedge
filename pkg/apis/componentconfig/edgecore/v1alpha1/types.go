@@ -443,7 +443,11 @@ type EdgePorxy struct {
 
 	CAFile string `json:"caFile,omitempty"`
 
-	CertFile string `json:"certFile,omitempty"`
+	K8sCertFile string `json:"certFile,omitempty"`
 
-	PrivateKeyFile string `json:"privateKeyFile,omitempty"`
+	K8sPrivateKeyFile string `json:"privateKeyFile,omitempty"`
+
+	ServerCertFile string `json:"serverCertFile,omitempty"`
+
+	ServerKeyFile string `json:"serverKeyFile,omitempty"`
 }
