@@ -72,7 +72,7 @@ func (clcm *containerLifecycleManagerImpl) InternalContainerLifecycle() Internal
 	return &internalContainerLifecycleImpl{clcm.cpuManager}
 }
 
-func (clcm *containerLifecycleManagerImpl) StartCpuManager(activePods cpumanager.ActivePodsFunc,
+func (clcm *containerLifecycleManagerImpl) StartCPUManager(activePods cpumanager.ActivePodsFunc,
 	sourcesReady config.SourcesReady,
 	podStatusProvider status.PodStatusProvider,
 	runtimeService internalapi.RuntimeService) error {
@@ -85,7 +85,7 @@ func (clcm *containerLifecycleManagerImpl) StartCpuManager(activePods cpumanager
 	return nil
 }
 
-// this function is copied from https://github.com/kubernetes/kubernetes/blob/v1.18.0/pkg/kubelet/cm/container_manager_linux.go
+// This is introduced from Kubernetes 1.18 container_manager_linux.go
 func buildContainerMapFromRuntime(runtimeService internalapi.RuntimeService) (containermap.ContainerMap, error) {
 	podSandboxMap := make(map[string]string)
 	podSandboxList, _ := runtimeService.ListPodSandbox(nil)

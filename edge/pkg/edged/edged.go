@@ -700,7 +700,7 @@ func (e *edged) initializeModules() error {
 	}
 
 	// start the CPU manager in the clcm
-	err = e.clcm.StartCpuManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
+	err = e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		// klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
