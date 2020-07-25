@@ -126,7 +126,7 @@ spec:
           - mountPath: /csi
             name: csi-socket-dir
         - name: csi-driver
-          image: kubeedge/csidriver:v1.1.0
+          image: kubeedge/csidriver:v1.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
