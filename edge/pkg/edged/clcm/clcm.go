@@ -30,6 +30,6 @@ import (
 // ContainerLifecycleManager interface
 type ContainerLifecycleManager interface {
 	InternalContainerLifecycle() InternalContainerLifecycle
-	StartCpuManager(activePods cpumanager.ActivePodsFunc, sourcesReady config.SourcesReady,
+	StartCPUManager(activePods cpumanager.ActivePodsFunc, sourcesReady config.SourcesReady,
 		podStatusProvider status.PodStatusProvider, runtimeService internalapi.RuntimeService) error
 }
