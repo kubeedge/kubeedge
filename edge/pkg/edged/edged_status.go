@@ -261,14 +261,13 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 	if err != nil {
 		return nodeInfo, err
 	}
-	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
+	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("%s://%s", e.containerRuntimeName, runtimeVersion.String())
 
 	nodeInfo.KernelVersion = kernel
 	nodeInfo.OperatingSystem = runtime.GOOS
 	nodeInfo.Architecture = runtime.GOARCH
 	nodeInfo.KubeletVersion = e.version
 	nodeInfo.OSImage = prettyName
-	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
 }
