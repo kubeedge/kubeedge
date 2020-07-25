@@ -8,6 +8,7 @@ Please refer [kubernetes-compatibility](https://github.com/kubeedge/kubeedge#kub
 
 - Currently support of `keadm` is available for Ubuntu and CentOS OS. RaspberryPi supports is in-progress.
 - Need super user rights (or root rights) to run.
+- Currently `keadm` does not support installing cloucore and edgecore system service.
 
 ## Setup Cloud Side (KubeEdge Master Node)
 
@@ -16,6 +17,8 @@ By default ports `10000` and `10002` in your cloudcore needs to be accessible fo
 **Note**: port `10002` only needed since 1.3 release.
 
 `keadm init` will install cloudcore, generate the certs and install the CRDs. It also provides a flag by which a specific version can be set.
+
+But we need to manually write a service script on `/usr/lib/systemd/system` if we want to automatically run `cloudcore`.
 
 **IMPORTANT NOTE:**
 1. At least one of kubeconfig or master must be configured correctly, so that it can be used to verify the version and other info of the k8s cluster.
@@ -75,6 +78,8 @@ Run `keadm gettoken` in **cloud side** will return the token, which will be used
 ### Join Edge Node
 
 `keadm join` will install edgecore and mqtt. It also provides a flag by which a specific version can be set.
+
+But we need to manually write a service script on `/usr/lib/systemd/system` if we want to automatically run `edgecore`.
 
 Example:
 
