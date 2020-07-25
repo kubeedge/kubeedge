@@ -18,6 +18,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -38,7 +40,7 @@ var devicesResource = schema.GroupVersionResource{Group: "devices", Version: "v1
 var devicesKind = schema.GroupVersionKind{Group: "devices", Version: "v1alpha2", Kind: "Device"}
 
 // Get takes name of the device, and returns the corresponding device object, and an error if there is any.
-func (c *FakeDevices) Get(name string, options v1.GetOptions) (result *v1alpha2.Device, err error) {
+func (c *FakeDevices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(devicesResource, c.ns, name), &v1alpha2.Device{})
 
@@ -49,7 +51,7 @@ func (c *FakeDevices) Get(name string, options v1.GetOptions) (result *v1alpha2.
 }
 
 // List takes label and field selectors, and returns the list of Devices that match those selectors.
-func (c *FakeDevices) List(opts v1.ListOptions) (result *v1alpha2.DeviceList, err error) {
+func (c *FakeDevices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.DeviceList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(devicesResource, devicesKind, c.ns, opts), &v1alpha2.DeviceList{})
 
@@ -71,14 +73,14 @@ func (c *FakeDevices) List(opts v1.ListOptions) (result *v1alpha2.DeviceList, er
 }
 
 // Watch returns a watch.Interface that watches the requested devices.
-func (c *FakeDevices) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeDevices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(devicesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a device and creates it.  Returns the server's representation of the device, and an error, if there is any.
-func (c *FakeDevices) Create(device *v1alpha2.Device) (result *v1alpha2.Device, err error) {
+func (c *FakeDevices) Create(ctx context.Context, device *v1alpha2.Device, opts v1.CreateOptions) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(devicesResource, c.ns, device), &v1alpha2.Device{})
 
@@ -89,7 +91,7 @@ func (c *FakeDevices) Create(device *v1alpha2.Device) (result *v1alpha2.Device, 
 }
 
 // Update takes the representation of a device and updates it. Returns the server's representation of the device, and an error, if there is any.
-func (c *FakeDevices) Update(device *v1alpha2.Device) (result *v1alpha2.Device, err error) {
+func (c *FakeDevices) Update(ctx context.Context, device *v1alpha2.Device, opts v1.UpdateOptions) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(devicesResource, c.ns, device), &v1alpha2.Device{})
 
@@ -101,7 +103,7 @@ func (c *FakeDevices) Update(device *v1alpha2.Device) (result *v1alpha2.Device, 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeDevices) UpdateStatus(device *v1alpha2.Device) (*v1alpha2.Device, error) {
+func (c *FakeDevices) UpdateStatus(ctx context.Context, device *v1alpha2.Device, opts v1.UpdateOptions) (*v1alpha2.Device, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(devicesResource, "status", c.ns, device), &v1alpha2.Device{})
 
@@ -112,7 +114,7 @@ func (c *FakeDevices) UpdateStatus(device *v1alpha2.Device) (*v1alpha2.Device, e
 }
 
 // Delete takes name of the device and deletes it. Returns an error if one occurs.
-func (c *FakeDevices) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeDevices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(devicesResource, c.ns, name), &v1alpha2.Device{})
 
@@ -120,15 +122,15 @@ func (c *FakeDevices) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeDevices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(devicesResource, c.ns, listOptions)
+func (c *FakeDevices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(devicesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha2.DeviceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched device.
-func (c *FakeDevices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha2.Device, err error) {
+func (c *FakeDevices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.Device, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(devicesResource, c.ns, name, pt, data, subresources...), &v1alpha2.Device{})
 
