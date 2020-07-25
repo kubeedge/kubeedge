@@ -54,8 +54,7 @@ function start_kubeedge() {
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
 
-  export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG) --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.
