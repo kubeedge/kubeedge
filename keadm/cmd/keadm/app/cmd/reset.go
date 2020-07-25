@@ -82,10 +82,11 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 				return err
 			}
 
-			// 2. remove containers managed by KE
-			_, _ = fmt.Fprintln(out, "[Test] Test here!")
-			if err2 := RemoveContainers(utilsexec.New()); err2 != nil {
-				return err2
+			// 2. remove containers managed by KE. Only for edge node.
+			if IsEdgeNode {
+				if err2 := RemoveContainers(utilsexec.New()); err2 != nil {
+					return err2
+				}
 			}
 
 			// 3. TODO: any other actions here?
