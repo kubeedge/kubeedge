@@ -18,6 +18,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"context"
 	time "time"
 
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
@@ -60,13 +61,13 @@ func NewFilteredDeviceInformer(client versioned.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DevicesV1alpha2().Devices(namespace).List(options)
+				return client.DevicesV1alpha2().Devices(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DevicesV1alpha2().Devices(namespace).Watch(options)
+				return client.DevicesV1alpha2().Devices(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&devicesv1alpha2.Device{},
