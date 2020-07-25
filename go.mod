@@ -82,7 +82,6 @@ require (
 	k8s.io/kubelet v0.18.0
 	k8s.io/kubernetes v1.18.0
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
-	sigs.k8s.io/structured-merge-diff v1.0.1-0.20191108220359-b1b620dd3f06 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
 
