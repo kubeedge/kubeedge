@@ -18,13 +18,13 @@ package cmd
 
 import (
 	"fmt"
-	"io"
-
 	"github.com/spf13/cobra"
+	"io"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 )
@@ -82,14 +82,17 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 				return err
 			}
 
-			// 2. remove containers managed by KE. Only for edge node.
-			if IsEdgeNode {
-				if err2 := RemoveContainers(utilsexec.New()); err2 != nil {
-					return err2
-				}
+			// 2. Remove containers managed by KE. Only for edge node.
+			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
+				return err
 			}
 
-			// 3. TODO: any other actions here?
+			// 3. Clean stateful directories
+			if err := cleanDirectories(IsEdgeNode); err != nil {
+				return err
+			}
+
+			//4. TODO: clean status information
 
 			return nil
 		},
@@ -116,7 +119,11 @@ func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
 }
 
 // RemoveContainers removes all Kubernetes-managed containers
-func RemoveContainers(execer utilsexec.Interface) error {
+func RemoveContainers(isEdgeNode bool, execer utilsexec.Interface) error {
+	if !isEdgeNode {
+		return nil
+	}
+
 	criSocketPath, err := utilruntime.DetectCRISocket()
 	if err != nil {
 		return err
@@ -136,6 +143,21 @@ func RemoveContainers(execer utilsexec.Interface) error {
 	fmt.Println("[Test] Got containers", containers)
 
 	return containerRuntime.RemoveContainers(containers)
+}
+
+func cleanDirectories(isEdgeNode bool) error {
+	var dirToClean = []string{"/var/lib/edged", "/etc/kubeedge"}
+
+	if isEdgeNode {
+		dirToClean = append(dirToClean, "/var/lib/dockershim", "/var/run/kubernetes", "/var/lib/cni")
+	}
+
+	// TODO: more mount directories?
+
+	for _, dir := range dirToClean {
+		_ = phases.CleanDir(dir)
+	}
+	return nil
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
