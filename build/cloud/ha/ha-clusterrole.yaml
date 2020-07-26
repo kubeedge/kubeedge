@@ -7,8 +7,8 @@ metadata:
     kubeedge: cloudcore
 rules:
 - apiGroups: [""]
-  resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services"]
-  verbs: ["get", "list", "watch", "create", "update"]
+  resources: ["nodes", "nodes/status", "configmaps", "pods", "pods/status", "secrets", "endpoints", "services", "namespaces"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["delete", "patch"]

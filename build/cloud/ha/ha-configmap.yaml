@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudcore
+  namespace: kubeedge
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+data:
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha1
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
+    leaderElection:
+      leaderElect: true
+      leaseDuration: 15s
+      renewDeadline: 10s
+      retryPeriod: 2s
+      resourceLock: configmaps
+      resourceName: cloudcore-leader
+      resourceNamespace: kubeedge
+    modules:
+      cloudHub:
+        # Add your cloudcore exposed address here
+        advertiseAddress: []
+        nodeLimit: 10
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCAKeyFile: /etc/kubeedge/ca/rootCA.key
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000
+        https:
+          address: 0.0.0.0
+          enable: true
+          port: 10002
+

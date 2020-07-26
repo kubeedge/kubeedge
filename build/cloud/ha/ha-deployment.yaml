@@ -8,6 +8,11 @@ metadata:
   namespace: kubeedge
 spec:
   replicas: 2
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+    type: RollingUpdate
   selector:
     matchLabels:
       k8s-app: kubeedge
@@ -18,7 +23,6 @@ spec:
         k8s-app: kubeedge
         kubeedge: cloudcore
     spec:
-      hostNetwork: true
       readinessGates:
         - conditionType: "kubeedge.io/CloudCoreIsLeader"
       affinity:
@@ -39,11 +43,14 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: cloudcore
-          image: kubeedge/cloudcore:v1.3.0
+          image: kubeedge/cloudcore:v1.3.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 10000
               name: cloudhub
+              protocol: TCP
+            - containerPort: 10002
+              name: cert
               protocol: TCP
           resources:
             limits:
@@ -55,8 +62,6 @@ spec:
           volumeMounts:
             - name: conf
               mountPath: /etc/kubeedge/config
-            - name: certs
-              mountPath: /etc/kubeedge
           env:
             - name: CLOUDCORE_POD_NAME
               valueFrom:
@@ -73,13 +78,4 @@ spec:
         - name: conf
           configMap:
             name: cloudcore
-        - name: certs
-          secret:
-            secretName: cloudcore
-            items:
-              - key: edge.crt
-                path: certs/edge.crt
-              - key: edge.key
-                path: certs/edge.key
-              - key: rootCA.crt
-                path: ca/rootCA.crt
+
