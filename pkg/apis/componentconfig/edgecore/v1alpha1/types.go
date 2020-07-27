@@ -457,16 +457,15 @@ type EdgePorxy struct {
 	Enable bool `json:"enable,omitempty"`
 	// default 10005
 	ListenPort int `json:"listenPort,omitempty"`
-
+	// cloud side apiserver access address
 	RemoteAddr string `json:"remoteAddr,omitempty"`
-
+	// edgeproxy ca file
+	// default /etc/kubeedge/ca/proxyca.crt
 	CAFile string `json:"caFile,omitempty"`
-
-	K8sCertFile string `json:"certFile,omitempty"`
-
-	K8sPrivateKeyFile string `json:"privateKeyFile,omitempty"`
-
+	//  ServerCertFile indicates the file containing x509 Certificate for HTTPS
+	// default /etc/kubeedge/certs/proxy.crt
 	ServerCertFile string `json:"serverCertFile,omitempty"`
-
+	// ServerKeyFile indicates the file containing x509 private key matching ServerCertFile
+	// default /etc/kubeedge/certs/proxy.key
 	ServerKeyFile string `json:"serverKeyFile,omitempty"`
 }
