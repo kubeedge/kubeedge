@@ -5,6 +5,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"k8s.io/klog"
+
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
@@ -40,17 +42,22 @@ func (r *RemoteProxy) modifyResponse(resp *http.Response) error {
 	ctx = util.WithRespContentType(ctx, respContentType)
 	req = req.WithContext(ctx)
 	// get http code range from https://github.com/kubernetes/kubernetes/blob/release-1.19/staging/src/k8s.io/client-go/rest/request.go#L1044
+	klog.V(4).Infof("cache request %v", req)
 	if resp.StatusCode >= http.StatusOK && resp.StatusCode <= http.StatusPartialContent {
 		source := resp.Body
 		wrapped := util.NewDuplicateReadCloser(source)
 		go func() {
+			var err error
 			switch reqInfo.Verb {
 			case "list":
-				r.cacheMgr.CacheListObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheListObj(ctx, wrapped.DupData())
 			case "get":
-				r.cacheMgr.CacheObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheObj(ctx, wrapped.DupData())
 			case "watch":
-				r.cacheMgr.CacheWatchObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheWatchObj(ctx, wrapped.DupData())
+			}
+			if err != nil {
+				klog.Errorf("req %v cache resp error: %v", req, err)
 			}
 		}()
 		resp.Body = wrapped

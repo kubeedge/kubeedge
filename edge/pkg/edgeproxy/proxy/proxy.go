@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"k8s.io/klog"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
@@ -31,8 +33,10 @@ type EdgeProxyHandler struct {
 
 func (ep *EdgeProxyHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if ep.checker.Check() {
+		klog.V(1).Info("proxy client request handle by remote server!")
 		ep.remote.ServeHTTP(writer, request)
 	} else {
+		klog.V(1).Info("proxy client request handle by local server!")
 		ep.local.ServeHTTP(writer, request)
 	}
 }

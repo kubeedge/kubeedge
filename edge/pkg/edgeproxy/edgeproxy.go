@@ -43,7 +43,6 @@ func (e *edgeProxy) Start() {
 	decoderMgr := decoder.DefaultDecoderMgr
 	cacheMgr := cache.NewCacheMgr(decoderMgr)
 	c := checker.NewHealthzChecker(config.Config.RemoteAddr)
-	//c := checker.AlwaysFlase{}
 	eph, err := proxy.NewEdgeProxyHandler(cacheMgr, c)
 	if err != nil {
 		panic(err)

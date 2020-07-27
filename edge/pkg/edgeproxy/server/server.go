@@ -4,8 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 	"net/http"
+
+	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 
 	"github.com/gorilla/mux"
 )
@@ -43,7 +44,6 @@ func (ps *ProxyServer) Run() {
 		TLSConfig: tlsConfig,
 	}
 	err := server.ListenAndServeTLS(proxyconfig.Config.ServerCertFile, proxyconfig.Config.ServerKeyFile)
-	//err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
