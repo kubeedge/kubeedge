@@ -72,6 +72,7 @@ type ColletcOptions struct {
 
 type ResetOptions struct {
 	Kubeconfig string
+	Force      bool
 }
 
 type GettokenOptions struct {
