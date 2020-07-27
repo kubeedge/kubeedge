@@ -22,15 +22,22 @@ set -o pipefail
 
 kubeedge::lint::check() {
     cd ${KUBEEDGE_ROOT}
-    # skip deleted files
+    echo "start lint ..."
     set +o pipefail
+    echo "check any whitenoise ..."
+    # skip deleted files
     git diff --cached --name-only --diff-filter=ACRMTU master | grep -Ev "externalversions|fake|vendor|images|adopters" | xargs --no-run-if-empty sed -i 's/[ \t]*$//'
 
     [[ $(git diff --name-only) ]] && {
       echo "Some files have white noise issue, please run \`make lint\` to slove this issue"
       return 1
     }
-    golangci-lint run
-    gofmt -l -w staging
     set -o pipefail
+
+    echo "check any issue by golangci-lint ..."
+    golangci-lint run -v
+
+    # only check format issue under staging dir
+    echo "check any issue under staging dir by gofmt ..."
+    gofmt -l -w staging
 }
