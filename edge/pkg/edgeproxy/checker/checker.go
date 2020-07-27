@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/klog"
+
 	"go.uber.org/atomic"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
@@ -12,20 +14,6 @@ import (
 
 type Checker interface {
 	Check() bool
-}
-
-type AlwaysTrue struct {
-}
-
-func (a AlwaysTrue) Check() bool {
-	return true
-}
-
-type AlwaysFlase struct {
-}
-
-func (a AlwaysFlase) Check() bool {
-	return false
 }
 
 func NewHealthzChecker(url string) *healthzChecker {
@@ -62,6 +50,7 @@ func (h *healthzChecker) loop() {
 			resp, err := h.client.Get(healthzUrl)
 			if err != nil {
 				isHealthy = false
+				klog.Warningf("check %s failed", healthzUrl)
 				continue
 			}
 			if resp.StatusCode == http.StatusOK {
@@ -69,6 +58,7 @@ func (h *healthzChecker) loop() {
 				break
 			}
 		}
+		klog.Infof("healthzChecker check %s result %v", healthzUrl, isHealthy)
 		h.isOk.Store(isHealthy)
 	}
 

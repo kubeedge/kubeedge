@@ -12,8 +12,7 @@ const (
 
 // Cache metadata object
 type Cache struct {
-	ID int64 `orm:"pk; auto; column(id)"`
-	// TODO 确认resource namespace name字段长度
+	ID        int64  `orm:"pk; auto; column(id)"`
 	UA        string `orm:"column(ua); size(256);"`
 	Resource  string `orm:"column(resource); size(256)"`
 	Namespace string `orm:"column(namespace); size(256)"`

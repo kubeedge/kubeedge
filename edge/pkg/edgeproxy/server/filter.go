@@ -25,6 +25,10 @@ func WithReqContentType(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()
 		reqContentType := request.Header.Get("Accept")
+		parts := strings.Split(reqContentType, ",")
+		if len(parts) >= 1 {
+			reqContentType = parts[0]
+		}
 		if len(reqContentType) == 0 {
 			klog.Errorf("request %s accept content type is null!", request.URL.String())
 			http.Error(writer, "accept must need set.", http.StatusBadRequest)

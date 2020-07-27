@@ -1,8 +1,10 @@
 package cache
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 
 	"github.com/astaxie/beego/orm"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -37,7 +39,7 @@ type CacheMgr struct {
 	decoderMgr decoder.DecoderMgr
 }
 
-func (cm *CacheMgr) CacheListObj(ctx context.Context, dataChan <-chan []byte) error {
+func (cm *CacheMgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
 	cachedao.DeleteCache(ua, reqInfo.Resource, reqInfo.Namespace, "")
@@ -52,24 +54,30 @@ func (cm *CacheMgr) CacheListObj(ctx context.Context, dataChan <-chan []byte) er
 	}
 	apiVersion := gv.String()
 	accessor := meta.NewAccessor()
-	for data := range dataChan {
-		listObj, _, err := decoder.Decode(data, nil, nil)
-		if err != nil {
+	var buf bytes.Buffer
+	n, err := buf.ReadFrom(rc)
+	if err != nil {
+		return err
+	} else if n == 0 {
+		klog.Warningf("response length is 0!")
+		return nil
+	}
+	listObj, _, err := decoder.Decode(buf.Bytes(), nil, nil)
+	if err != nil {
+		return err
+	}
+	meta.EachListItem(listObj, func(object runtime.Object) error {
+		accessor.SetKind(object, util.GetResourceKind(reqInfo.Resource))
+		accessor.SetAPIVersion(object, apiVersion)
+		if err := cm.cacheSingleObj(ctx, object); err != nil {
 			return err
 		}
-		meta.EachListItem(listObj, func(object runtime.Object) error {
-			accessor.SetKind(object, util.GetResourceKind(reqInfo.Resource))
-			accessor.SetAPIVersion(object, apiVersion)
-			if err := cm.cacheSingleObj(ctx, object); err != nil {
-				return err
-			}
-			return nil
-		})
-	}
+		return nil
+	})
 	return nil
 }
 
-func (cm *CacheMgr) CacheObj(ctx context.Context, dataChan <-chan []byte) error {
+func (cm *CacheMgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	contentType, _ := util.GetRespContentType(ctx)
 	gv := schema.GroupVersion{
@@ -82,16 +90,21 @@ func (cm *CacheMgr) CacheObj(ctx context.Context, dataChan <-chan []byte) error 
 	}
 	apiVersion := gv.String()
 	accessor := meta.NewAccessor()
-	for data := range dataChan {
-		obj, _, err := decoder.Decode(data, nil, nil)
-		if err != nil {
-			return err
-		}
-		accessor.SetKind(obj, util.GetResourceKind(reqInfo.Resource))
-		accessor.SetAPIVersion(obj, apiVersion)
-		cm.cacheSingleObj(ctx, obj)
-
+	var buf bytes.Buffer
+	n, err := buf.ReadFrom(rc)
+	if err != nil {
+		return err
+	} else if n == 0 {
+		klog.Warningf("response length is 0!")
+		return nil
 	}
+	obj, _, err := decoder.Decode(buf.Bytes(), nil, nil)
+	if err != nil {
+		return err
+	}
+	accessor.SetKind(obj, util.GetResourceKind(reqInfo.Resource))
+	accessor.SetAPIVersion(obj, apiVersion)
+	cm.cacheSingleObj(ctx, obj)
 	return nil
 }
 
@@ -116,7 +129,7 @@ func (cm *CacheMgr) cacheSingleObj(ctx context.Context, obj runtime.Object) erro
 	return err
 }
 
-func (cm *CacheMgr) CacheWatchObj(ctx context.Context, dataChan chan []byte) error {
+func (cm *CacheMgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	contentType, _ := util.GetRespContentType(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
@@ -124,7 +137,7 @@ func (cm *CacheMgr) CacheWatchObj(ctx context.Context, dataChan chan []byte) err
 		Group:   reqInfo.APIGroup,
 		Version: reqInfo.APIVersion,
 	}
-	watchDecoder, err := cm.decoderMgr.GetStreamDecocer(contentType, gv, util.NewBytesChanReadCloser(dataChan))
+	watchDecoder, err := cm.decoderMgr.GetStreamDecocer(contentType, gv, rc)
 	if err != nil {
 		return err
 	}

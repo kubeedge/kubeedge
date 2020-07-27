@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	metav1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -36,6 +37,7 @@ type LocalProxy struct {
 func (l *LocalProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	requinfo, _ := apirequest.RequestInfoFrom(ctx)
+	klog.V(4).Infof("serve request %v from local server!", req)
 	switch requinfo.Verb {
 	case "watch":
 		l.watch(w, req)
@@ -53,6 +55,7 @@ func (l *LocalProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (l *LocalProxy) forbidden(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	info, _ := apirequest.RequestInfoFrom(ctx)
+	klog.V(4).Infof("reqest verb %s doesn't support by local server", info.Verb)
 	qualitiedResource := schema.GroupResource{
 		Group:    info.APIGroup,
 		Resource: info.Resource,
@@ -63,7 +66,7 @@ func (l *LocalProxy) forbidden(w http.ResponseWriter, req *http.Request) {
 
 func (l *LocalProxy) watch(w http.ResponseWriter, req *http.Request) {
 	opts := metainternalversion.ListOptions{}
-	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, &opts)
+	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metainternalversion.SchemeGroupVersion, &opts)
 	if err != nil {
 		l.Err(err, w, req)
 		return
@@ -159,6 +162,11 @@ func (l *LocalProxy) get(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
+	//TODO  cannot support create events craete operation。
+	if reqinfo.Resource == "events" {
+		l.forbidden(w, req)
+		return
+	}
 	obj, err := l.cacheMgr.QueryObj(ctx, ua, reqinfo.Resource, reqinfo.Namespace, reqinfo.Name)
 	if err != nil {
 		l.Err(err, w, req)
