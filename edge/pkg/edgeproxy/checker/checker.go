@@ -16,7 +16,7 @@ type Checker interface {
 	Check() bool
 }
 
-func NewHealthzChecker(url string) *healthzChecker {
+func NewHealthzChecker(url string) Checker {
 	hc := &healthzChecker{
 		url:      url,
 		isOk:     atomic.NewBool(false),
@@ -42,15 +42,15 @@ func (h *healthzChecker) Check() bool {
 }
 
 func (h *healthzChecker) loop() {
-	healthzUrl := strings.Join([]string{h.url, "healthz"}, "/")
+	healthzURL := strings.Join([]string{h.url, "healthz"}, "/")
 	intervalTicker := time.NewTicker(h.interval)
 	isHealthy := false
 	for range intervalTicker.C {
 		for i := 0; i < 3; i++ {
-			resp, err := h.client.Get(healthzUrl)
+			resp, err := h.client.Get(healthzURL)
 			if err != nil {
 				isHealthy = false
-				klog.Warningf("check %s failed", healthzUrl)
+				klog.Warningf("check %s failed", healthzURL)
 				continue
 			}
 			if resp.StatusCode == http.StatusOK {
@@ -58,8 +58,7 @@ func (h *healthzChecker) loop() {
 				break
 			}
 		}
-		klog.Infof("healthzChecker check %s result %v", healthzUrl, isHealthy)
+		klog.Infof("healthzChecker check %s result %v", healthzURL, isHealthy)
 		h.isOk.Store(isHealthy)
 	}
-
 }

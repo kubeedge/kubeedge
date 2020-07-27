@@ -14,20 +14,20 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/proxy/remote"
 )
 
-func NewEdgeProxyHandler(cacheMgr *cache.CacheMgr, c checker.Checker) (*EdgeProxyHandler, error) {
-	remoteUrl, err := url.Parse(config.Config.RemoteAddr)
+func NewEdgeProxyHandler(cacheMgr *cache.Mgr, c checker.Checker) (*EdgeProxyHandler, error) {
+	remoteURL, err := url.Parse(config.Config.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
-	r := remote.NewRemoteProxy(remoteUrl, cacheMgr)
+	r := remote.NewRemoteProxy(remoteURL, cacheMgr)
 	l := local.NewLocalProxy(cacheMgr, c)
 	eph := &EdgeProxyHandler{remote: r, local: l, checker: c}
 	return eph, nil
 }
 
 type EdgeProxyHandler struct {
-	remote  *remote.RemoteProxy
-	local   *local.LocalProxy
+	remote  *remote.Proxy
+	local   *local.Proxy
 	checker checker.Checker
 }
 
