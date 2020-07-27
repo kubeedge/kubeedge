@@ -29,17 +29,17 @@ func InitDBTable(module core.Module) {
 	orm.RegisterModel(new(cachedao.Cache))
 }
 
-func NewCacheMgr(decoderMgr decoder.DecoderMgr) *CacheMgr {
-	return &CacheMgr{
+func NewCacheMgr(decoderMgr decoder.Mgr) *Mgr {
+	return &Mgr{
 		decoderMgr: decoderMgr,
 	}
 }
 
-type CacheMgr struct {
-	decoderMgr decoder.DecoderMgr
+type Mgr struct {
+	decoderMgr decoder.Mgr
 }
 
-func (cm *CacheMgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
+func (cm *Mgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
 	cachedao.DeleteCache(ua, reqInfo.Resource, reqInfo.Namespace, "")
@@ -77,7 +77,7 @@ func (cm *CacheMgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	return nil
 }
 
-func (cm *CacheMgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
+func (cm *Mgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	contentType, _ := util.GetRespContentType(ctx)
 	gv := schema.GroupVersion{
@@ -108,7 +108,7 @@ func (cm *CacheMgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
 	return nil
 }
 
-func (cm *CacheMgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
+func (cm *Mgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
 	objbyte, err := json.Marshal(obj)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (cm *CacheMgr) cacheSingleObj(ctx context.Context, obj runtime.Object) erro
 	return err
 }
 
-func (cm *CacheMgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
+func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	contentType, _ := util.GetRespContentType(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
@@ -170,11 +170,9 @@ func (cm *CacheMgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 			klog.Warningf("watch event type is watch.Error! %v", obj)
 		}
 	}
-
-	return nil
 }
 
-func (cm *CacheMgr) QueryList(ctx context.Context, ua, resource, namespace string) ([]runtime.Object, error) {
+func (cm *Mgr) QueryList(ctx context.Context, ua, resource, namespace string) ([]runtime.Object, error) {
 	liststr, err := cachedao.QueryCacheList(ua, resource, namespace)
 	if err != nil {
 		return nil, err
@@ -200,7 +198,7 @@ func (cm *CacheMgr) QueryList(ctx context.Context, ua, resource, namespace strin
 	return objs, nil
 }
 
-func (cm *CacheMgr) QueryObj(ctx context.Context, ua, resource, namespace, name string) (runtime.Object, error) {
+func (cm *Mgr) QueryObj(ctx context.Context, ua, resource, namespace, name string) (runtime.Object, error) {
 	objstr, err := cachedao.Query(ua, resource, namespace, name)
 	if err != nil {
 		return nil, err

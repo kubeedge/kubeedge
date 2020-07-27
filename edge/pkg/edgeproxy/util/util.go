@@ -60,8 +60,8 @@ var (
 	}
 )
 
-func GetResourceKind(resouce string) string {
-	return resourceToKind[resouce]
+func GetResourceKind(resource string) string {
+	return resourceToKind[resource]
 }
 
 func GetReourceList(resource string) string {

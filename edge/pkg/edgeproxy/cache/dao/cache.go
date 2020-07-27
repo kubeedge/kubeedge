@@ -22,7 +22,7 @@ type Cache struct {
 
 func (cache *Cache) TableUnique() [][]string {
 	return [][]string{
-		[]string{"ua", "resource", "namespace", "name"},
+		{"ua", "resource", "namespace", "name"},
 	}
 }
 

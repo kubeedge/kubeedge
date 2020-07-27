@@ -11,17 +11,17 @@ import (
 	clientscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-func (l *LocalProxy) WriteObject(statusCode int, obj runtime.Object, w http.ResponseWriter, req *http.Request) {
-	gv := l.getRequestGroupVersion(req)
+func (p *Proxy) WriteObject(statusCode int, obj runtime.Object, w http.ResponseWriter, req *http.Request) {
+	gv := p.getRequestGroupVersion(req)
 	responsewriters.WriteObjectNegotiated(clientscheme.Codecs, negotiation.DefaultEndpointRestrictions, gv, w, req, statusCode, obj)
 }
 
-func (l *LocalProxy) Err(err error, w http.ResponseWriter, req *http.Request) {
-	gv := l.getRequestGroupVersion(req)
+func (p *Proxy) Err(err error, w http.ResponseWriter, req *http.Request) {
+	gv := p.getRequestGroupVersion(req)
 	responsewriters.ErrorNegotiated(err, clientscheme.Codecs, gv, w, req)
 }
 
-func (l *LocalProxy) getRequestGroupVersion(req *http.Request) schema.GroupVersion {
+func (p *Proxy) getRequestGroupVersion(req *http.Request) schema.GroupVersion {
 	ctx := req.Context()
 	gv := schema.GroupVersion{
 		Group:   "",

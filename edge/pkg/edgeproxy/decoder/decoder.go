@@ -12,25 +12,25 @@ import (
 	restclientwatch "k8s.io/client-go/rest/watch"
 )
 
-type DecoderMgr interface {
+type Mgr interface {
 	GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error)
 	GetStreamDecocer(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (*restclientwatch.Decoder, error)
 }
 
-var DefaultDecoderMgr = &decoderMgr{
+var DefaultDecoderMgr = &mgr{
 	serializer: serializer.NewCodecFactory(scheme.Scheme).WithoutConversion(),
 }
 
-type decoderMgr struct {
+type mgr struct {
 	serializer runtime.NegotiatedSerializer
 }
 
-func (dm *decoderMgr) GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error) {
+func (dm *mgr) GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error) {
 	decoder, _, err := dm.decoder(contentType, gv)
 	return decoder, err
 }
 
-func (dm *decoderMgr) decoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, runtime.SerializerInfo, error) {
+func (dm *mgr) decoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, runtime.SerializerInfo, error) {
 	mediaTypes := dm.serializer.SupportedMediaTypes()
 	info, ok := runtime.SerializerInfoForMediaType(mediaTypes, contentType)
 	if !ok {
@@ -43,7 +43,7 @@ func (dm *decoderMgr) decoder(contentType string, gv schema.GroupVersion) (runti
 	return decoder, info, nil
 }
 
-func (dm *decoderMgr) GetStreamDecocer(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (*restclientwatch.Decoder, error) {
+func (dm *mgr) GetStreamDecocer(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (*restclientwatch.Decoder, error) {
 	objDecoder, info, err := dm.decoder(contentType, gv)
 	if err != nil {
 		return nil, err

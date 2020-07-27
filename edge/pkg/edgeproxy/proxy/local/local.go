@@ -25,34 +25,34 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
-func NewLocalProxy(cacheMgr *cache.CacheMgr, checker checker.Checker) *LocalProxy {
-	return &LocalProxy{cacheMgr: cacheMgr, checker: checker}
+func NewLocalProxy(cacheMgr *cache.Mgr, checker checker.Checker) *Proxy {
+	return &Proxy{cacheMgr: cacheMgr, checker: checker}
 }
 
-type LocalProxy struct {
-	cacheMgr *cache.CacheMgr
+type Proxy struct {
+	cacheMgr *cache.Mgr
 	checker  checker.Checker
 }
 
-func (l *LocalProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	requinfo, _ := apirequest.RequestInfoFrom(ctx)
 	klog.V(4).Infof("serve request %v from local server!", req)
 	switch requinfo.Verb {
 	case "watch":
-		l.watch(w, req)
+		p.watch(w, req)
 	case "list":
-		l.list(w, req)
+		p.list(w, req)
 	case "get":
-		l.get(w, req)
+		p.get(w, req)
 	case "delete", "deletecollection":
-		l.forbidden(w, req)
+		p.forbidden(w, req)
 	default:
-		l.get(w, req)
+		p.get(w, req)
 	}
 }
 
-func (l *LocalProxy) forbidden(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) forbidden(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	klog.V(4).Infof("reqest verb %s doesn't support by local server", info.Verb)
@@ -61,21 +61,21 @@ func (l *LocalProxy) forbidden(w http.ResponseWriter, req *http.Request) {
 		Resource: info.Resource,
 	}
 	s := errors.NewForbidden(qualitiedResource, info.Name, fmt.Errorf("don't support delete opetion in local mode"))
-	l.Err(s, w, req)
+	p.Err(s, w, req)
 }
 
-func (l *LocalProxy) watch(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 	opts := metainternalversion.ListOptions{}
 	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metainternalversion.SchemeGroupVersion, &opts)
 	if err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		err := fmt.Errorf("unable to start watch - can't get http.Flusher: %#v", w)
 		utilruntime.HandleError(err)
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	ctx := req.Context()
@@ -95,14 +95,14 @@ func (l *LocalProxy) watch(w http.ResponseWriter, req *http.Request) {
 		case <-watchTimeout.C:
 			return
 		case <-checkInterval.C:
-			if l.checker.Check() {
+			if p.checker.Check() {
 				return
 			}
 		}
 	}
 }
 
-func (l *LocalProxy) list(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
 	listKind := util.GetReourceList(reqinfo.Resource)
@@ -112,9 +112,9 @@ func (l *LocalProxy) list(w http.ResponseWriter, req *http.Request) {
 		Kind:    listKind,
 	}
 	ua, _ := util.GetAppUserAgent(ctx)
-	objs, err := l.cacheMgr.QueryList(ctx, ua, reqinfo.Resource, reqinfo.Namespace)
+	objs, err := p.cacheMgr.QueryList(ctx, ua, reqinfo.Resource, reqinfo.Namespace)
 	if err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	listRv := 0
@@ -128,7 +128,7 @@ func (l *LocalProxy) list(w http.ResponseWriter, req *http.Request) {
 	}
 	listobj, err := scheme.Scheme.New(gkv)
 	if err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	accessor.SetResourceVersion(listobj, strconv.Itoa(listRv))
@@ -147,30 +147,30 @@ func (l *LocalProxy) list(w http.ResponseWriter, req *http.Request) {
 
 	uri, err := namer.GenerateListLink(req)
 	if err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	if err := namer.SetSelfLink(listobj, uri); err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
 	meta.SetList(listobj, objs)
-	l.WriteObject(http.StatusOK, listobj, w, req)
+	p.WriteObject(http.StatusOK, listobj, w, req)
 }
 
-func (l *LocalProxy) get(w http.ResponseWriter, req *http.Request) {
+func (p *Proxy) get(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
 	//TODO  cannot support create events craete operation。
 	if reqinfo.Resource == "events" {
-		l.forbidden(w, req)
+		p.forbidden(w, req)
 		return
 	}
-	obj, err := l.cacheMgr.QueryObj(ctx, ua, reqinfo.Resource, reqinfo.Namespace, reqinfo.Name)
+	obj, err := p.cacheMgr.QueryObj(ctx, ua, reqinfo.Resource, reqinfo.Namespace, reqinfo.Name)
 	if err != nil {
-		l.Err(err, w, req)
+		p.Err(err, w, req)
 		return
 	}
-	l.WriteObject(http.StatusOK, obj, w, req)
+	p.WriteObject(http.StatusOK, obj, w, req)
 }
