@@ -2,7 +2,7 @@ package dtmanager
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,45 +17,48 @@ import (
 )
 
 var (
-	//ActionCallBack map for action to callback
+	// ActionCallBack map for action to callback
 	ActionCallBack map[string]CallBack
 )
 
-//CommWorker deal app response event
+// CommWorker deal app response event
 type CommWorker struct {
 	Worker
 	Group string
 }
 
-//Start worker
+// Start worker
 func (cw CommWorker) Start() {
 	initActionCallBack()
 	for {
 		select {
 		case msg, ok := <-cw.ReceiverChan:
-			klog.V(2).Info("receive msg commModule")
+			klog.V(3).Info("[DtManager] receive msg")
 			if !ok {
+				klog.V(3).Infof("[DtManager] failed to get msg")
 				return
 			}
 			if dtMsg, isDTMessage := msg.(*dttype.DTMessage); isDTMessage {
 				if fn, exist := ActionCallBack[dtMsg.Action]; exist {
 					_, err := fn(cw.DTContexts, dtMsg.Identity, dtMsg.Msg)
 					if err != nil {
-						klog.Errorf("CommModule deal %s event failed: %v", dtMsg.Action, err)
+						klog.Errorf("[DtManager] failed to handle msg %v with %s action, err: %v", dtMsg.Msg, dtMsg.Action, err)
 					}
 				} else {
-					klog.Errorf("CommModule deal %s event failed, not found callback", dtMsg.Action)
+					klog.Errorf("[DtManager] failed to handle msg %v with %s action, err: invalid action", dtMsg.Msg, dtMsg.Action)
 				}
 			}
 
 		case <-time.After(time.Duration(60) * time.Second):
-			cw.checkConfirm(cw.DTContexts, nil)
+			_, err := cw.checkConfirm(cw.DTContexts, nil)
+			klog.V(2).Infof("[DtManager] failed to check confirm, err: %v", err)
 		case v, ok := <-cw.HeartBeatChan:
 			if !ok {
+				klog.V(3).Infof("[DtManager] failed to get heartbeat info")
 				return
 			}
 			if err := cw.DTContexts.HeartBeat(cw.Group, v); err != nil {
-				return
+				klog.V(2).Infof("[DtManager] failed to handle heartbeat info %v, err: %v", v, err)
 			}
 		}
 	}
@@ -75,12 +78,12 @@ func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
-		klog.Infof("Disconnected with cloud, not send msg to cloud")
+		klog.Infof("[DtManager] skip send msg to cloud since disconnected")
 		return nil, nil
 	}
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return nil, fmt.Errorf("invalid msg format, value: %v", msg)
 	}
 	beehiveContext.Send(dtcommon.HubModule, *message)
 	msgID := message.GetID()
@@ -88,42 +91,45 @@ func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interfac
 	return nil, nil
 }
 func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	klog.V(2).Infof("CONNECTED EVENT")
+	klog.V(3).Infof("[DtManager] deal lifecycle event")
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return nil, fmt.Errorf("invalid msg format, value: %v", msg)
 	}
-	connectedInfo, _ := (message.Content.(string))
-	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
+	connectedInfo := message.Content.(string)
+	switch connectedInfo {
+	case connect.CloudConnected:
 		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
 			_, err := detailRequest(context, msg)
 			if err != nil {
-				klog.Errorf("detail request: %v", err)
+				klog.Errorf("[DtManager] detail request: %v", err)
 				return nil, err
 			}
 		}
 		context.State = dtcommon.Connected
-	} else if strings.Compare(connectedInfo, connect.CloudDisconnected) == 0 {
+	case connect.CloudDisconnected:
 		context.State = dtcommon.Disconnected
 	}
+
 	return nil, nil
 }
 func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	klog.V(2).Infof("CONFIRM EVENT")
+	klog.V(3).Infof("[DtManager] deal confirm event")
 	value, ok := msg.(*model.Message)
 
-	if ok {
-		parentMsgID := value.GetParentID()
-		klog.Infof("CommModule deal confirm msgID %s", parentMsgID)
-		context.ConfirmMap.Delete(parentMsgID)
-	} else {
-		return nil, errors.New("CommModule deal confirm, type not correct")
+	if !ok {
+		return nil, fmt.Errorf("invalid msg format, value: %v", msg)
 	}
+
+	parentMsgID := value.GetParentID()
+	klog.V(2).Infof("[DtManager] confirm msg, id: %s", parentMsgID)
+	context.ConfirmMap.Delete(parentMsgID)
+
 	return nil, nil
 }
 
 func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
-	//todo eventid uuid
+	// TODO eventid uuid
 	getDetail := dttype.GetDetailNode{
 		EventType: "group_membership_event",
 		EventID:   "123",
@@ -132,12 +138,11 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 		TimeStamp: time.Now().UnixNano() / 1000000}
 	getDetailJSON, marshalErr := json.Marshal(getDetail)
 	if marshalErr != nil {
-		klog.Errorf("Marshal request error while request detail, err: %#v", marshalErr)
+		klog.Errorf("[DtManager] failed to marshal request, err: %#v", marshalErr)
 		return nil, marshalErr
 	}
 
 	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
-	klog.V(2).Info("Request detail")
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
 	beehiveContext.Send(dtcommon.HubModule, *message)
@@ -145,22 +150,23 @@ func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, 
 }
 
 func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
-	klog.V(2).Info("CheckConfirm")
+	klog.Infof("[DtManager] check confirm event")
 	context.ConfirmMap.Range(func(key interface{}, value interface{}) bool {
-		dtmsg, ok := value.(*dttype.DTMessage)
-		klog.V(2).Info("has msg")
+		dtMsg, ok := value.(*dttype.DTMessage)
 		if !ok {
+			klog.Errorf("[DtManager] invalid msg format, key: %v, value: %v", key, value)
+			context.ConfirmMap.Delete(key)
+			return true
+		}
 
-		} else {
-			klog.V(2).Info("redo task due to no recv")
-			if fn, exist := ActionCallBack[dtmsg.Action]; exist {
-				_, err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
-				if err != nil {
-					klog.Errorf("CommModule deal %s event failed: %v", dtmsg.Action, err)
-				}
-			} else {
-				klog.Errorf("CommModule deal %s event failed, not found callback", dtmsg.Action)
+		klog.Info("[DtManager] redo task due to no confirm info")
+		if fn, exist := ActionCallBack[dtMsg.Action]; exist {
+			_, err := fn(cw.DTContexts, dtMsg.Identity, dtMsg.Msg)
+			if err != nil {
+				klog.Errorf("[DtManager] failed to handle msg %v with %s action, err: %v", dtMsg.Msg, dtMsg.Action, err)
 			}
+		} else {
+			klog.Errorf("[DtManager] failed to handle msg %v with %s action, err: invalid action", dtMsg.Msg, dtMsg.Action)
 		}
 		return true
 	})

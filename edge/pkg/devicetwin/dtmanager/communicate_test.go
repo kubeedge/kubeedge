@@ -198,7 +198,7 @@ func TestDealSendToCloud(t *testing.T) {
 			name:    "dealSendToCloudTest-StateConnected",
 			context: dtContextStateConnected,
 			msg:     "",
-			wantErr: errors.New("msg not Message type"),
+			wantErr: errors.New("invalid msg format, value: "),
 		},
 		{
 			name:    "dealSendToCloudTest-ActualMsg",
@@ -244,7 +244,7 @@ func TestDealLifeCycle(t *testing.T) {
 			name:    "dealLifeCycleTest-WrongMessageFormat",
 			context: dtContext,
 			msg:     "",
-			wantErr: errors.New("msg not Message type"),
+			wantErr: errors.New("invalid msg format, value: "),
 		},
 		{
 			name:    "dealLifeCycleTest-CloudConnected",
@@ -284,7 +284,7 @@ func TestDealConfirm(t *testing.T) {
 			name:    "dealConfirmTest-WrongMsg",
 			context: dtContext,
 			msg:     "",
-			wantErr: errors.New("CommModule deal confirm, type not correct"),
+			wantErr: errors.New("invalid msg format, value: "),
 		},
 		{
 			name:    "dealConfirmTest-CorrectMsg",
@@ -315,7 +315,7 @@ func TestCheckConfirm(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext()
 	dtContext.State = dtcommon.Connected
-	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})
+	dtContext.ConfirmMap.Store("invalidMessage", "invalidMessage")
 	dtContext.ConfirmMap.Store("actionMessage", &dttype.DTMessage{
 		Msg:    &model.Message{},
 		Action: dtcommon.SendToCloud,
@@ -330,7 +330,7 @@ func TestCheckConfirm(t *testing.T) {
 			name:    "checkConfirmTest",
 			Worker:  Worker{DTContexts: dtContext},
 			context: dtContext,
-			msg:     &dttype.DTMessage{Action: "action"},
+			msg:     &dttype.DTMessage{Action: dtcommon.Confirm},
 		},
 	}
 	for _, test := range tests {
@@ -338,7 +338,15 @@ func TestCheckConfirm(t *testing.T) {
 			cw := CommWorker{
 				Worker: test.Worker,
 			}
-			cw.checkConfirm(test.context, test.msg)
+			_, _ = cw.checkConfirm(test.context, test.msg)
+
+			// empty message is invalid so should be removed
+			_, ok := dtContext.ConfirmMap.Load("invalidMessage")
+			if ok {
+				t.Errorf(" checkconfirm() failed because dealSendToCloud() failed to delete invalid message in ConfirmMap")
+				return
+			}
+
 			_, exist := test.context.ConfirmMap.Load("actionMessage")
 			if !exist {
 				t.Errorf(" checkconfirm() failed because dealSendToCloud() failed to store message in ConfirmMap")
