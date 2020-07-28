@@ -14,7 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/proxy/remote"
 )
 
-func NewEdgeProxyHandler(cacheMgr *cache.Mgr, c checker.Checker) (*EdgeProxyHandler, error) {
+func NewEdgeProxyHandler(cacheMgr cache.Manager, c checker.Checker) (*EdgeProxyHandler, error) {
 	remoteURL, err := url.Parse(config.Config.RemoteAddr)
 	if err != nil {
 		return nil, err

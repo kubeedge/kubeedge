@@ -25,12 +25,12 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
-func NewLocalProxy(cacheMgr *cache.Mgr, checker checker.Checker) *Proxy {
+func NewLocalProxy(cacheMgr cache.Manager, checker checker.Checker) *Proxy {
 	return &Proxy{cacheMgr: cacheMgr, checker: checker}
 }
 
 type Proxy struct {
-	cacheMgr *cache.Mgr
+	cacheMgr cache.Manager
 	checker  checker.Checker
 }
 
