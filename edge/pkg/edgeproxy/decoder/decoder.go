@@ -8,13 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/runtime/serializer/streaming"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
 	restclientwatch "k8s.io/client-go/rest/watch"
 )
 
-type Mgr interface {
+// Manager interface provides methods to get the corresponding Decoder based on the resource type.
+type Manager interface {
 	GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error)
-	GetStreamDecocer(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (*restclientwatch.Decoder, error)
+	GetStreamDecoder(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (watch.Decoder, error)
 }
 
 var DefaultDecoderMgr = &mgr{
@@ -26,11 +28,11 @@ type mgr struct {
 }
 
 func (dm *mgr) GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error) {
-	decoder, _, err := dm.decoder(contentType, gv)
+	decoder, _, err := dm.getDecoder(contentType, gv)
 	return decoder, err
 }
 
-func (dm *mgr) decoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, runtime.SerializerInfo, error) {
+func (dm *mgr) getDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, runtime.SerializerInfo, error) {
 	mediaTypes := dm.serializer.SupportedMediaTypes()
 	info, ok := runtime.SerializerInfoForMediaType(mediaTypes, contentType)
 	if !ok {
@@ -43,13 +45,13 @@ func (dm *mgr) decoder(contentType string, gv schema.GroupVersion) (runtime.Deco
 	return decoder, info, nil
 }
 
-func (dm *mgr) GetStreamDecocer(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (*restclientwatch.Decoder, error) {
-	objDecoder, info, err := dm.decoder(contentType, gv)
+func (dm *mgr) GetStreamDecoder(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (watch.Decoder, error) {
+	objDecoder, info, err := dm.getDecoder(contentType, gv)
 	if err != nil {
 		return nil, err
 	}
-	framereader := info.StreamSerializer.Framer.NewFrameReader(reader)
-	watchEventDecoder := streaming.NewDecoder(framereader, info.StreamSerializer)
+	frameReader := info.StreamSerializer.Framer.NewFrameReader(reader)
+	watchEventDecoder := streaming.NewDecoder(frameReader, info.StreamSerializer)
 	watchDecoder := restclientwatch.NewDecoder(watchEventDecoder, objDecoder)
 	return watchDecoder, nil
 }

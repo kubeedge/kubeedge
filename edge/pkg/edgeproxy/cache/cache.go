@@ -31,10 +31,10 @@ type Manager interface {
 }
 
 type Mgr struct {
-	decoderMgr decoder.Mgr
+	decoderMgr decoder.Manager
 }
 
-func NewCacheMgr(decoderMgr decoder.Mgr) Manager {
+func NewCacheMgr(decoderMgr decoder.Manager) Manager {
 	return &Mgr{
 		decoderMgr: decoderMgr,
 	}
@@ -146,7 +146,7 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 		Group:   reqInfo.APIGroup,
 		Version: reqInfo.APIVersion,
 	}
-	watchDecoder, err := cm.decoderMgr.GetStreamDecocer(contentType, gv, rc)
+	watchDecoder, err := cm.decoderMgr.GetStreamDecoder(contentType, gv, rc)
 	if err != nil {
 		return err
 	}
