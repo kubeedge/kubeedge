@@ -152,6 +152,14 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TunnelServer:            net.JoinHostPort("127.0.0.1", string(constants.DefaultTunnelPort)),
 				WriteDeadline:           15,
 			},
+			EdgePorxy: &EdgePorxy{
+				Enable:         false,
+				ListenPort:     constants.DefaultProxyPort,
+				RemoteAddr:     constants.DefaultProxyRemoteURL,
+				CAFile:         constants.DefaultProxyCAFile,
+				ServerCertFile: constants.DefaultProxyCertFile,
+				ServerKeyFile:  constants.DefaultProxyKeyFile,
+			},
 		},
 	}
 }

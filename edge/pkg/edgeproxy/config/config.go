@@ -25,6 +25,9 @@ func InitConfigure(ep *v1alpha1.EdgePorxy) {
 		Config = Configure{
 			EdgePorxy: *ep,
 		}
+		if !ep.Enable {
+			return
+		}
 		caData, err := loadFromFile(ep.CAFile)
 		if err != nil {
 			klog.Errorf("load edgeproxy ca file failed! err: %v", err)

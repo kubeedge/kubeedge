@@ -434,7 +434,7 @@ type EdgeStream struct {
 }
 
 type EdgePorxy struct {
-	// default true
+	// default false
 	Enable bool `json:"enable,omitempty"`
 	// default 10005
 	ListenPort int `json:"listenPort,omitempty"`

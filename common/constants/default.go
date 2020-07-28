@@ -25,6 +25,10 @@ const (
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
+
+	DefaultProxyCAFile   = "/etc/kubeedge/ca/proxyCA.crt"
+	DefaultProxyCertFile = "/etc/kubeedge/certs/proxy.crt"
+	DefaultProxyKeyFile  = "/etc/kubeedge/certs/proxy.key"
 )
 
 const (
@@ -160,4 +164,9 @@ const (
 const (
 	KubeEdge          = "kubeedge"
 	KubeEdgeNameSpace = "kubeedge"
+)
+
+const (
+	DefaultProxyPort      = 10005
+	DefaultProxyRemoteURL = "https://127.0.0.1:6443"
 )
