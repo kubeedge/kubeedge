@@ -126,13 +126,13 @@ func parseEndpoint(ep string) (string, string, error) {
 }
 
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	klog.Infof("gprc call: %s", info.FullMethod)
-	klog.Infof("gprc request: %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("grpc call: %s", info.FullMethod)
+	klog.Infof("grpc request: %+v", protosanitizer.StripSecrets(req))
 	resp, err := handler(ctx, req)
 	if err != nil {
-		klog.Errorf("gprc error: %v", err)
+		klog.Errorf("grpc error: %v", err)
 	} else {
-		klog.Infof("gprc response: %+v", protosanitizer.StripSecrets(resp))
+		klog.Infof("grpc response: %+v", protosanitizer.StripSecrets(resp))
 	}
 	return resp, err
 }
