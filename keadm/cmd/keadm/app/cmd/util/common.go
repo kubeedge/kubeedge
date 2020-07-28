@@ -50,12 +50,10 @@ const (
 	KubeEdgeBinaryName           = "edgecore"
 	KubeEdgeCloudDefaultCertPath = KubeEdgePath + "certs/"
 	KubeEdgeConfigEdgeYaml       = KubeEdgeConfPath + "/edge.yaml"
-	KubeEdgeConfigNodeJSON       = KubeEdgeConfPath + "/node.json"
 	KubeEdgeConfigModulesYaml    = KubeEdgeConfPath + "/modules.yaml"
 
 	KubeEdgeCloudCertGenPath     = KubeEdgePath + "certgen.sh"
 	KubeEdgeEdgeCertsTarFileName = "certs.tgz"
-	KubeEdgeEdgeCertsTarFilePath = KubeEdgePath + "certs.tgz"
 	KubeEdgeCloudConfPath        = KubeEdgePath + "kubeedge/cloud/conf"
 	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
 	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
@@ -69,8 +67,6 @@ const (
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
-
-	InterfaceName = "eth0"
 
 	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
 	RetryTimes              = 5
