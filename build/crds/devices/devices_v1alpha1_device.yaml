@@ -1,0 +1,216 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: devices.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: Device
+    plural: devices
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            deviceModelRef:
+              description: 'Required: DeviceModelRef is reference to the device model
+                used as a template to create the device instance.'
+              type: object
+            nodeSelector:
+              description: NodeSelector indicates the binding preferences between
+                devices and nodes. Refer to k8s.io/kubernetes/pkg/apis/core NodeSelector
+                for more details
+              type: object
+            protocol:
+              description: 'Required: The protocol configuration used to connect to
+                the device.'
+              properties:
+                bluetooth:
+                  description: Protocol configuration for bluetooth
+                  properties:
+                    macAddress:
+                      description: Unique identifier assigned to the device.
+                      type: string
+                  type: object
+                modbus:
+                  description: Protocol configuration for modbus
+                  properties:
+                    rtu:
+                      properties:
+                        baudRate:
+                          description: Required. BaudRate 115200|57600|38400|19200|9600|4800|2400|1800|1200|600|300|200|150|134|110|75|50
+                          format: int64
+                          type: integer
+                          enum:
+                            - 115200
+                            - 57600
+                            - 38400
+                            - 19200
+                            - 9600
+                            - 4800
+                            - 2400
+                            - 1800
+                            - 1200
+                            - 600
+                            - 300
+                            - 200
+                            - 150
+                            - 134
+                            - 110
+                            - 75
+                            - 50
+                        dataBits:
+                          description: Required. Valid values are 8, 7, 6, 5.
+                          format: int64
+                          type: integer
+                          enum:
+                            - 8
+                            - 7
+                            - 6
+                            - 5
+                        parity:
+                          description: Required. Valid options are "none", "even",
+                            "odd". Defaults to "none".
+                          type: string
+                          enum:
+                            - none
+                            - even
+                            - odd
+                        serialPort:
+                          description: Required.
+                          type: string
+                        slaveID:
+                          description: Required. 0-255
+                          format: int64
+                          type: integer
+                          minimum: 0
+                          maximum: 255
+                        stopBits:
+                          description: Required. Bit that stops 1|2
+                          format: int64
+                          type: integer
+                          enum:
+                            - 1
+                            - 2
+                      required:
+                        - baudRate
+                        - dataBits
+                        - parity
+                        - serialPort
+                        - slaveID
+                        - stopBits
+                      type: object
+                    tcp:
+                      properties:
+                        ip:
+                          description: Required.
+                          type: string
+                        port:
+                          description: Required.
+                          format: int64
+                          type: integer
+                        slaveID:
+                          description: Required.
+                          type: string
+                      required:
+                        - ip
+                        - port
+                        - slaveID
+                      type: object
+                  type: object
+                opcua:
+                  description: Protocol configuration for opc-ua
+                  properties:
+                    certificate:
+                      description: Certificate for access opc server.
+                      type: string
+                    password:
+                      description: Password for access opc server.
+                      type: string
+                    privateKey:
+                      description: PrivateKey for access opc server.
+                      type: string
+                    securityMode:
+                      description: Defaults to "none".
+                      type: string
+                    securityPolicy:
+                      description: Defaults to "none".
+                      type: string
+                    timeout:
+                      description: Timeout seconds for the opc server connection.???
+                      format: int64
+                      type: integer
+                    url:
+                      description: 'Required: The URL for opc server endpoint.'
+                      type: string
+                    userName:
+                      description: Username for access opc server.
+                      type: string
+                  required:
+                    - url
+                  type: object
+              type: object
+          required:
+            - deviceModelRef
+            - nodeSelector
+          type: object
+        status:
+          properties:
+            twins:
+              description: A list of device twins containing desired/reported desired/reported
+                values of twin properties. A passive device won't have twin properties
+                and this list could be empty.
+              items:
+                properties:
+                  desired:
+                    description: 'Required: the desired property value.'
+                    properties:
+                      metadata:
+                        description: Additional metadata like timestamp when the value
+                          was reported etc.
+                        type: object
+                      value:
+                        description: 'Required: The value for this property.'
+                        type: string
+                    required:
+                      - value
+                    type: object
+                  propertyName:
+                    description: 'Required: The property name for which the desired/reported
+                      values are specified. This property should be present in the
+                      device model.'
+                    type: string
+                  reported:
+                    description: 'Required: the reported property value.'
+                    properties:
+                      metadata:
+                        description: Additional metadata like timestamp when the value
+                          was reported etc.
+                        type: object
+                      value:
+                        description: 'Required: The value for this property.'
+                        type: string
+                    required:
+                      - value
+                    type: object
+                required:
+                  - propertyName
+                type: object
+              type: array
+          type: object
+  version: v1alpha1

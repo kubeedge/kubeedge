@@ -1,0 +1,225 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: devicemodels.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: DeviceModel
+    plural: devicemodels
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            properties:
+              description: 'Required: List of device properties.'
+              items:
+                properties:
+                  description:
+                    description: The device property description.
+                    type: string
+                  name:
+                    description: 'Required: The device property name.'
+                    type: string
+                  type:
+                    description: 'Required: PropertyType represents the type and data
+                      validation of the property.'
+                    properties:
+                      int:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: int64
+                            type: integer
+                          maximum:
+                            format: int64
+                            type: integer
+                          minimum:
+                            format: int64
+                            type: integer
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      string:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                    type: object
+                required:
+                  - name
+                  - type
+                type: object
+              type: array
+            propertyVisitors:
+              description: 'Required: List of property visitors which describe how
+                to access the device properties. PropertyVisitors must unique by propertyVisitor.propertyName.'
+              items:
+                properties:
+                  bluetooth:
+                    description: Bluetooth represents a set of additional visitor
+                      config fields of bluetooth protocol.
+                    properties:
+                      characteristicUUID:
+                        description: 'Required: Unique ID of the corresponding operation'
+                        type: string
+                      dataConverter:
+                        description: Responsible for converting the data being read
+                          from the bluetooth device into a form that is understandable
+                          by the platform
+                        properties:
+                          endIndex:
+                            description: 'Required: Specifies the end index of incoming
+                              byte stream to be considered to convert the data the
+                              value specified should be inclusive for example if 3
+                              is specified it includes the third index'
+                            format: int64
+                            type: integer
+                          orderOfOperations:
+                            description: Specifies in what order the operations(which
+                              are required to be performed to convert incoming data
+                              into understandable form) are performed
+                            items:
+                              properties:
+                                operationType:
+                                  description: 'Required: Specifies the operation
+                                    to be performed to convert incoming data'
+                                  type: string
+                                  enum:
+                                    - Add
+                                    - Subtract
+                                    - Multiply
+                                    - Divide
+                                operationValue:
+                                  description: 'Required: Specifies with what value
+                                    the operation is to be performed'
+                                  format: double
+                                  type: number
+                              type: object
+                            type: array
+                          shiftLeft:
+                            description: Refers to the number of bits to shift left,
+                              if left-shift operation is necessary for conversion
+                            format: int64
+                            type: integer
+                          shiftRight:
+                            description: Refers to the number of bits to shift right,
+                              if right-shift operation is necessary for conversion
+                            format: int64
+                            type: integer
+                          startIndex:
+                            description: 'Required: Specifies the start index of the
+                              incoming byte stream to be considered to convert the
+                              data. For example: start-index:2, end-index:3 concatenates
+                              the value present at second and third index of the incoming
+                              byte stream. If we want to reverse the order we can
+                              give it as start-index:3, end-index:2'
+                            format: int64
+                            type: integer
+                        required:
+                          - endIndex
+                          - startIndex
+                        type: object
+                      dataWrite:
+                        description: 'Responsible for converting the data coming from
+                          the platform into a form that is understood by the bluetooth
+                          device For example: "ON":[1], "OFF":[0]'
+                        type: object
+                    required:
+                      - characteristicUUID
+                    type: object
+                  modbus:
+                    description: Modbus represents a set of additional visitor config
+                      fields of modbus protocol.
+                    properties:
+                      isRegisterSwap:
+                        description: Indicates whether the high and low register swapped.
+                          Defaults to false.
+                        type: boolean
+                      isSwap:
+                        description: Indicates whether the high and low byte swapped.
+                          Defaults to false.
+                        type: boolean
+                      limit:
+                        description: 'Required: Limit number of registers to read/write.'
+                        format: int64
+                        type: integer
+                      offset:
+                        description: 'Required: Offset indicates the starting register
+                          number to read/write data.'
+                        format: int64
+                        type: integer
+                      register:
+                        description: 'Required: Type of register'
+                        type: string
+                        enum:
+                          - CoilRegister
+                          - DiscreteInputRegister
+                          - InputRegister
+                          - HoldingRegister
+                      scale:
+                        description: The scale to convert raw property data into final
+                          units. Defaults to 1.0
+                        format: double
+                        type: number
+                    required:
+                      - limit
+                      - offset
+                      - register
+                    type: object
+                  opcua:
+                    description: Opcua represents a set of additional visitor config
+                      fields of opc-ua protocol.
+                    properties:
+                      browseName:
+                        description: The name of opc-ua node
+                        type: string
+                      nodeID:
+                        description: 'Required: The ID of opc-ua node, e.g. "ns=1,i=1005"'
+                        type: string
+                    required:
+                      - nodeID
+                    type: object
+                  propertyName:
+                    description: 'Required: The device property name to be accessed.
+                      This should refer to one of the device properties defined in
+                      the device model.'
+                    type: string
+                required:
+                  - propertyName
+                type: object
+              type: array
+          type: object
+  version: v1alpha1
