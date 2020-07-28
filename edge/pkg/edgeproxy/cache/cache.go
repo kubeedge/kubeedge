@@ -21,22 +21,31 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
+// Manager interface provides methods for EdgeProxy to cache http req/resp.
+type Manager interface {
+	CacheListObj(ctx context.Context, rc io.ReadCloser) error
+	CacheObj(ctx context.Context, rc io.ReadCloser) error
+	CacheWatchObj(ctx context.Context, rc io.ReadCloser) error
+	QueryList(ctx context.Context, ua, resource, namespace string) ([]runtime.Object, error)
+	QueryObj(ctx context.Context, ua, resource, namespace, name string) (runtime.Object, error)
+}
+
+type Mgr struct {
+	decoderMgr decoder.Mgr
+}
+
+func NewCacheMgr(decoderMgr decoder.Mgr) Manager {
+	return &Mgr{
+		decoderMgr: decoderMgr,
+	}
+}
+
 func InitDBTable(module core.Module) {
 	if !module.Enable() {
 		klog.Infof("Module %s is disabled, DB cache for it will not be registered", module.Name())
 		return
 	}
 	orm.RegisterModel(new(cachedao.Cache))
-}
-
-func NewCacheMgr(decoderMgr decoder.Mgr) *Mgr {
-	return &Mgr{
-		decoderMgr: decoderMgr,
-	}
-}
-
-type Mgr struct {
-	decoderMgr decoder.Mgr
 }
 
 func (cm *Mgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {

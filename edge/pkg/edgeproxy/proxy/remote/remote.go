@@ -13,7 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
-func NewRemoteProxy(remote *url.URL, cacheMgr *cache.Mgr) *Proxy {
+func NewRemoteProxy(remote *url.URL, cacheMgr cache.Manager) *Proxy {
 	rp := &Proxy{
 		proxy:    httputil.NewSingleHostReverseProxy(remote),
 		cacheMgr: cacheMgr,
@@ -27,7 +27,7 @@ func NewRemoteProxy(remote *url.URL, cacheMgr *cache.Mgr) *Proxy {
 
 type Proxy struct {
 	proxy    *httputil.ReverseProxy
-	cacheMgr *cache.Mgr
+	cacheMgr cache.Manager
 }
 
 func (r *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
