@@ -33,6 +33,7 @@ func CreateEdgeCoreConfigFile(nodeName string) error {
 	c.Modules.DBTest.Enable = true
 	c.DataBase.DataSource = DBFile
 	c.Modules.EdgeStream.Enable = false
+	c.Modules.EdgePorxy.Enable = false
 
 	data, err := yaml.Marshal(c)
 	if err != nil {
