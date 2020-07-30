@@ -38,6 +38,9 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 	req := resp.Request
 	ctx := req.Context()
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
+	if !util.CanCacheResource(reqInfo.Resource) {
+		return nil
+	}
 	respContentType := resp.Header.Get("Content-Type")
 	ctx = util.WithRespContentType(ctx, respContentType)
 	req = req.WithContext(ctx)

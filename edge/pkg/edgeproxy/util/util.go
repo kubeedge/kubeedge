@@ -60,6 +60,16 @@ var (
 	}
 )
 
+func CanCacheResource(resource string) bool {
+	_, ok := resourceToKind[resource]
+	return ok
+}
+
+func CanRespResource(resource string) bool {
+	_, ok := resourceToList[resource]
+	return ok
+}
+
 func GetResourceKind(resource string) string {
 	return resourceToKind[resource]
 }

@@ -36,9 +36,13 @@ type Proxy struct {
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	requinfo, _ := apirequest.RequestInfoFrom(ctx)
+	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
+	if !util.CanRespResource(reqInfo.Resource) {
+		p.forbidden(w, req)
+		return
+	}
 	klog.V(4).Infof("serve request %v from local server!", req)
-	switch requinfo.Verb {
+	switch reqInfo.Verb {
 	case "watch":
 		p.watch(w, req)
 	case "list":
