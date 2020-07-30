@@ -77,6 +77,80 @@ spec:
                         required:
                           - accessMode
                         type: object
+                      double:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: double
+                            type: number
+                          maximum:
+                            format: double
+                            type: number
+                          minimum:
+                            format: double
+                            type: number
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      float:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: float
+                            type: number
+                          maximum:
+                            format: float
+                            type: number
+                          minimum:
+                            format: float
+                            type: number
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      boolean:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            type: boolean
+                        required:
+                          - accessMode
+                        type: object
+                      bytes:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                        required:
+                          - accessMode
+                        type: object
                     type: object
                 required:
                   - name

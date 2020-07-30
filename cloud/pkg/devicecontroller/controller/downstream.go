@@ -47,8 +47,12 @@ const (
 	Bluetooth          = "bluetooth"
 	CustomizedProtocol = "customized-protocol"
 
-	DataTypeInt    = "int"
-	DataTypeString = "string"
+	DataTypeInt     = "int"
+	DataTypeString  = "string"
+	DataTypeDouble  = "double"
+	DataTypeFloat   = "float"
+	DataTypeBoolean = "boolean"
+	DataTypeBytes   = "bytes"
 
 	ConfigMapKind    = "ConfigMap"
 	ConfigMapVersion = "v1"
@@ -270,6 +274,27 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile 
 			property.AccessMode = string(ppt.Type.String.AccessMode)
 			property.DataType = DataTypeString
 			property.DefaultValue = ppt.Type.String.DefaultValue
+		} else if ppt.Type.Double != nil {
+			property.AccessMode = string(ppt.Type.Int.AccessMode)
+			property.DataType = DataTypeDouble
+			property.DefaultValue = ppt.Type.Double.DefaultValue
+			property.Maximum = ppt.Type.Double.Maximum
+			property.Minimum = ppt.Type.Double.Minimum
+			property.Unit = ppt.Type.Double.Unit
+		} else if ppt.Type.Float != nil {
+			property.AccessMode = string(ppt.Type.Int.AccessMode)
+			property.DataType = DataTypeFloat
+			property.DefaultValue = ppt.Type.Float.DefaultValue
+			property.Maximum = ppt.Type.Float.Maximum
+			property.Minimum = ppt.Type.Float.Minimum
+			property.Unit = ppt.Type.Float.Unit
+		} else if ppt.Type.Boolean != nil {
+			property.AccessMode = string(ppt.Type.String.AccessMode)
+			property.DataType = DataTypeBoolean
+			property.DefaultValue = ppt.Type.String.DefaultValue
+		} else if ppt.Type.Bytes != nil {
+			property.AccessMode = string(ppt.Type.String.AccessMode)
+			property.DataType = DataTypeBytes
 		}
 		model.Properties = append(model.Properties, property)
 	}

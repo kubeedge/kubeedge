@@ -1119,6 +1119,8 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 					Description:  "Indicates the GPIO pin to which LED is connected",
 					AccessMode:   "ReadOnly",
 					DefaultValue: 18,
+					Maximum:      0,
+					Minimum:      0,
 				},
 			},
 		},
@@ -1286,6 +1288,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					AccessMode:   "ReadOnly",
 					DefaultValue: 0,
 					Maximum:      100,
+					Minimum:      0,
 					Unit:         "degree celsius",
 				},
 				{
@@ -1301,6 +1304,8 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					Description:  "initialize io-config with value 0",
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
+					Maximum:      0,
+					Minimum:      0,
 				},
 				{
 					Name:         "io-data-initialize",
@@ -1308,6 +1313,8 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					Description:  "initialize io-data with value 0",
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
+					Maximum:      0,
+					Minimum:      0,
 				},
 				{
 					Name:         "io-config",
@@ -1315,12 +1322,16 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 					Description:  "register activation of io-config",
 					AccessMode:   "ReadWrite",
 					DefaultValue: 1,
+					Maximum:      0,
+					Minimum:      0,
 				}, {
 					Name:         "io-data",
 					DataType:     "int",
 					Description:  "data field to control io-control",
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
+					Maximum:      0,
+					Minimum:      0,
 				},
 			},
 		},
@@ -1422,6 +1433,7 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
 					Maximum:      100,
+					Minimum:      0,
 					Unit:         "degree celsius",
 				},
 				{
@@ -1537,6 +1549,7 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
 					Maximum:      100,
+					Minimum:      0,
 					Unit:         "degree celsius",
 				},
 				{
@@ -1637,6 +1650,7 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 					AccessMode:   "ReadWrite",
 					DefaultValue: 0,
 					Maximum:      100,
+					Minimum:      0,
 					Unit:         "degree celsius",
 				},
 				{

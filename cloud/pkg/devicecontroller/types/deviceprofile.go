@@ -62,10 +62,10 @@ type Property struct {
 	AccessMode string `json:"accessMode,omitempty"`
 	// DefaultValue is property defaultValue
 	DefaultValue interface{} `json:"defaultValue,omitempty"`
-	// Minimum is property minimum value in case of int
-	Minimum int64 `json:"minimum,omitempty"`
-	// Maximum is property maximum value in case of int
-	Maximum int64 `json:"maximum,omitempty"`
+	// Minimum is property minimum value in case of int, double and float
+	Minimum interface{} `json:"minimum,omitempty"`
+	// Maximum is property maximum value in case of int, double and float
+	Maximum interface{} `json:"maximum,omitempty"`
 	// Unit is unit of measurement
 	Unit string `json:"unit,omitempty"`
 }
