@@ -14,7 +14,7 @@ fi
 #terminate edge core if running
 stop_edgecore () {
 if pgrep edgecore >/dev/null 2>&1 ; then
-     pkill -9 edgecore
+     pkill edgecore
 fi
 }
 
