@@ -45,6 +45,14 @@ type PropertyType struct {
 	Int *PropertyTypeInt64 `json:"int,omitempty"`
 	// +optional
 	String *PropertyTypeString `json:"string,omitempty"`
+	// +optional
+	Double *PropertyTypeDouble `json:"double,omitempty"`
+	// +optional
+	Float *PropertyTypeFloat `json:"float,omitempty"`
+	// +optional
+	Boolean *PropertyTypeBoolean `json:"boolean,omitempty"`
+	// +optional
+	Bytes *PropertyTypeBytes `json:"bytes,omitempty"`
 }
 
 type PropertyTypeInt64 struct {
@@ -66,6 +74,46 @@ type PropertyTypeString struct {
 	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
 	// +optional
 	DefaultValue string `json:"defaultValue,omitempty"`
+}
+
+type PropertyTypeDouble struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue float64 `json:"defaultValue,omitempty"`
+	// +optional
+	Minimum float64 `json:"minimum,omitempty"`
+	// +optional
+	Maximum float64 `json:"maximum,omitempty"`
+	// The unit of the property
+	// +optional
+	Unit string `json:"unit,omitempty"`
+}
+
+type PropertyTypeFloat struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue float32 `json:"defaultValue,omitempty"`
+	// +optional
+	Minimum float32 `json:"minimum,omitempty"`
+	// +optional
+	Maximum float32 `json:"maximum,omitempty"`
+	// The unit of the property
+	// +optional
+	Unit string `json:"unit,omitempty"`
+}
+
+type PropertyTypeBoolean struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
+	// +optional
+	DefaultValue bool `json:"defaultValue,omitempty"`
+}
+
+type PropertyTypeBytes struct {
+	// Required: Access mode of property, ReadWrite or ReadOnly.
+	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
 }
 
 // The access mode for  a device property.
