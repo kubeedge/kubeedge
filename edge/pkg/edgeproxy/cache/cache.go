@@ -2,11 +2,11 @@ package cache
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
-	"io"
-
 	"github.com/astaxie/beego/orm"
+	"io"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -63,6 +63,15 @@ func (cm *Mgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	}
 	apiVersion := gv.String()
 	accessor := meta.NewAccessor()
+
+	algo, _ := util.GetRespContentEncoding(ctx)
+	if algo == "gzip" {
+		rc, err = gzip.NewReader(rc)
+		if err != nil {
+			return err
+		}
+	}
+
 	var buf bytes.Buffer
 	n, err := buf.ReadFrom(rc)
 	if err != nil {
@@ -153,8 +162,15 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 	for {
 		watchType, obj, err := watchDecoder.Decode()
 		if err != nil {
-			klog.Errorf("cache watch obj error! %v", err)
-			return err
+			switch err {
+			case io.EOF:
+				return nil
+			case io.ErrUnexpectedEOF:
+				klog.V(1).Infof("Unexpected EOF during watch stream event decoding: %v", err)
+			default:
+				klog.Errorf("cache watch obj error! %v", err)
+				return err
+			}
 		}
 		accessor := meta.NewAccessor()
 		name, _ := accessor.Name(obj)
