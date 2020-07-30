@@ -10,6 +10,7 @@ const (
 	RespContentType EdgeProxyContextType = iota
 	ReqContentType
 	AppUserAgent
+	RespContentEncoding
 )
 
 func WithRespContentType(parent context.Context, contentType string) context.Context {
@@ -27,6 +28,15 @@ func WithReqContentType(parent context.Context, contentType string) context.Cont
 
 func GetReqContentType(parent context.Context) (string, bool) {
 	req, ok := parent.Value(ReqContentType).(string)
+	return req, ok
+}
+
+func WithRespContentEncoding(parent context.Context, algo string) context.Context {
+	return context.WithValue(parent, RespContentEncoding, algo)
+}
+
+func GetRespContentEncoding(parent context.Context) (string, bool) {
+	req, ok := parent.Value(RespContentEncoding).(string)
 	return req, ok
 }
 

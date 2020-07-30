@@ -43,6 +43,8 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 	}
 	respContentType := resp.Header.Get("Content-Type")
 	ctx = util.WithRespContentType(ctx, respContentType)
+	algo := resp.Header.Get("Content-Encoding")
+	ctx = util.WithRespContentEncoding(ctx, algo)
 	req = req.WithContext(ctx)
 	// get http code range from https://github.com/kubernetes/kubernetes/blob/release-1.19/staging/src/k8s.io/client-go/rest/request.go#L1044
 	klog.V(4).Infof("cache request %v", req)
