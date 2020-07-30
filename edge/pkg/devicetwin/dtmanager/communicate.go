@@ -152,6 +152,10 @@ func (cw CommWorker) checkConfirm(context *dtcontext.DTContext, msg interface{})
 		if !ok {
 
 		} else {
+			if time.Now().UnixNano()/1e6-dtmsg.Msg.Header.Timestamp < 60000 {
+				return true
+			}
+
 			klog.V(2).Info("redo task due to no recv")
 			if fn, exist := ActionCallBack[dtmsg.Action]; exist {
 				_, err := fn(cw.DTContexts, dtmsg.Identity, dtmsg.Msg)
