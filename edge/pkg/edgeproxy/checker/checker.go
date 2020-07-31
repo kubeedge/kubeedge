@@ -45,8 +45,9 @@ func (h *healthzChecker) loop() {
 	healthzURL := strings.Join([]string{h.url, "healthz"}, "/")
 	intervalTicker := time.NewTicker(h.interval)
 	isHealthy := false
+	retryTimes := 3
 	for range intervalTicker.C {
-		for i := 0; i < 3; i++ {
+		for i := 0; i < retryTimes; i++ {
 			resp, err := h.client.Get(healthzURL)
 			if err != nil {
 				isHealthy = false
