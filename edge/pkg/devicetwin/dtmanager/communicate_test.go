@@ -315,11 +315,24 @@ func TestCheckConfirm(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContext, _ := dtcontext.InitDTContext()
 	dtContext.State = dtcommon.Connected
-	dtContext.ConfirmMap.Store("emptyMessage", &dttype.DTMessage{})
-	dtContext.ConfirmMap.Store("actionMessage", &dttype.DTMessage{
-		Msg:    &model.Message{},
-		Action: dtcommon.SendToCloud,
-	})
+
+	emptyMessage := &dttype.DTMessage{Msg: &model.Message{
+		Header: model.MessageHeader{
+			Timestamp: time.Now().UnixNano() / 1e6,
+		},
+	}}
+	actionMessage := &dttype.DTMessage{
+		Action: "action",
+		Msg: &model.Message{
+			Header: model.MessageHeader{
+				Timestamp: time.Now().UnixNano() / 1e6,
+			},
+		},
+	}
+
+	dtContext.ConfirmMap.Store("emptyMessage", emptyMessage)
+	dtContext.ConfirmMap.Store("actionMessage", actionMessage)
+
 	tests := []struct {
 		name    string
 		Worker  Worker
@@ -330,7 +343,7 @@ func TestCheckConfirm(t *testing.T) {
 			name:    "checkConfirmTest",
 			Worker:  Worker{DTContexts: dtContext},
 			context: dtContext,
-			msg:     &dttype.DTMessage{Action: "action"},
+			msg:     actionMessage,
 		},
 	}
 	for _, test := range tests {
