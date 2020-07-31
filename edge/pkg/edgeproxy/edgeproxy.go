@@ -42,8 +42,8 @@ func (e *edgeProxy) Group() string {
 func (e *edgeProxy) Start() {
 	decoderMgr := decoder.DefaultDecoderMgr
 	cacheMgr := cache.NewCacheMgr(decoderMgr)
-	c := checker.NewHealthzChecker(config.Config.RemoteAddr)
-	eph, err := proxy.NewEdgeProxyHandler(cacheMgr, c)
+	healthzChecker := checker.NewHealthzChecker(config.Config.RemoteAddr)
+	eph, err := proxy.NewEdgeProxyHandler(cacheMgr, healthzChecker)
 	if err != nil {
 		panic(err)
 	}

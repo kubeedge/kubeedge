@@ -45,7 +45,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		p.list(w, req)
 	case "get":
 		p.get(w, req)
-	case "delete", "deletecollection":
+	case "delete", "create", "deletecollection":
 		p.forbidden(w, req)
 	default:
 		p.get(w, req)
@@ -84,7 +84,8 @@ func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Transfer-Encoding", "chunked")
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
-	timeout := time.Duration(10) * time.Minute
+	defaultTimeoutSeconds := 0
+	timeout := time.Duration(defaultTimeoutSeconds) * time.Second
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
