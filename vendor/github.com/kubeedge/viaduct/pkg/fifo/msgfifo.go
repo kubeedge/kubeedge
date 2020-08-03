@@ -2,6 +2,7 @@ package fifo
 
 import (
 	"fmt"
+	"sync"
 
 	"k8s.io/klog"
 
@@ -10,7 +11,8 @@ import (
 )
 
 type MessageFifo struct {
-	fifo chan model.Message
+	fifo      chan model.Message
+	closeOnce sync.Once
 }
 
 // set the fifo capacity to MessageFiFoSizeMax
@@ -42,4 +44,10 @@ func (f *MessageFifo) Get(msg *model.Message) error {
 		return fmt.Errorf("the fifo is broken")
 	}
 	return nil
+}
+
+func (f *MessageFifo) Close() {
+	f.closeOnce.Do(func() {
+		close(f.fifo)
+	})
 }
