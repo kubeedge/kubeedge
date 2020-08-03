@@ -213,6 +213,7 @@ func (conn *WSConnection) LocalAddr() net.Addr {
 }
 
 func (conn *WSConnection) Close() error {
+	conn.messageFifo.Close()
 	return conn.wsConn.Close()
 }
 
