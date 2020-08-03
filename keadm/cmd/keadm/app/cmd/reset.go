@@ -18,15 +18,17 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
+	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/spf13/cobra"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
+
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 var (
@@ -84,7 +86,7 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 
 			// 2. Remove containers managed by KubeEdge. Only for edge node.
 			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
-				return err
+				klog.Warningf("Failed to remove containers: %v\n", err)
 			}
 
 			// 3. Clean stateful directories
@@ -124,11 +126,20 @@ func RemoveContainers(isEdgeNode bool, execer utilsexec.Interface) error {
 		return nil
 	}
 
-	criSocketPath, _ := utilruntime.DetectCRISocket()
+	criSocketPath, err := utilruntime.DetectCRISocket()
+	if err != nil {
+		return err
+	}
 
-	containerRuntime, _ := utilruntime.NewContainerRuntime(execer, criSocketPath)
+	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
+	if err != nil {
+		return err
+	}
 
-	containers, _ := containerRuntime.ListKubeContainers()
+	containers, err := containerRuntime.ListKubeContainers()
+	if err != nil {
+		return err
+	}
 
 	return containerRuntime.RemoveContainers(containers)
 }
@@ -140,11 +151,12 @@ func cleanDirectories(isEdgeNode bool) error {
 		dirToClean = append(dirToClean, "/var/lib/dockershim", "/var/run/kubernetes", "/var/lib/cni")
 	}
 
-	// TODO: more mount directories?
-
 	for _, dir := range dirToClean {
-		_ = phases.CleanDir(dir)
+		if err := phases.CleanDir(dir); err != nil {
+			klog.Warningf("Failed to delete directory %s: %v", dir, err)
+		}
 	}
+
 	return nil
 }
 
