@@ -26,14 +26,15 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-	"time"
-
 	v1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	"sort"
+	"sync"
+	"time"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -72,6 +73,11 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 	}
 }
 
+type PodWrap struct {
+	pod        *v1.Pod
+	timestramp int64
+}
+
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
 	kubeClient   *kubernetes.Clientset
@@ -90,6 +96,12 @@ type UpstreamController struct {
 	queryNodeChan             chan model.Message
 	updateNodeChan            chan model.Message
 	podDeleteChan             chan model.Message
+
+	//cache pod status
+	cachedPod                    map[string]*PodWrap
+	cachedPodLock                sync.RWMutex
+	cachedPodExpiredIntervalLoop int
+	cachedPodExpiredInterval     int64
 }
 
 // Start UpstreamController
@@ -108,6 +120,12 @@ func (uc *UpstreamController) Start() error {
 	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
 	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
+
+	//init cachedPod
+	uc.cachedPod = make(map[string]*PodWrap)
+	uc.cachedPodExpiredIntervalLoop = 1800
+	uc.cachedPodExpiredInterval = 600
+	go uc.checkPodExpiredLoop()
 
 	go uc.dispatchMessage()
 
@@ -214,6 +232,60 @@ func (uc *UpstreamController) dispatchMessage() {
 	}
 }
 
+func (uc *UpstreamController) checkPodExpiredLoop() {
+	cacheExpiredTicker := time.NewTimer(time.Duration(uc.cachedPodExpiredIntervalLoop) * time.Second)
+	for {
+		select {
+		case <-beehiveContext.Done(): //exit
+			klog.Info("checkPodExpiredLoop exit!")
+			return
+		case <-cacheExpiredTicker.C:
+			klog.Infof("Checking pod expired: len(podCache): %d", len(uc.cachedPod))
+			for key, podWrap := range uc.cachedPod {
+				if podWrap == nil {
+					continue
+				}
+				if time.Now().Unix()-podWrap.timestramp > uc.cachedPodExpiredInterval {
+					uc.removePodFromCache(podWrap.pod)
+					klog.Infof("PodExpired: key[%s] timestamp [%d] expires in %d s, remove it from cache", key, podWrap.timestramp, uc.cachedPodExpiredInterval)
+				}
+			}
+		}
+	}
+}
+
+func (uc *UpstreamController) removePodFromCache(pod *v1.Pod) {
+	key := pod.Namespace + "-" + pod.Name
+	uc.cachedPodLock.Lock()
+	defer uc.cachedPodLock.Unlock()
+	delete(uc.cachedPod, key)
+}
+
+func (uc *UpstreamController) getPod(ns, podName string) (*v1.Pod, error) {
+	cachedKey := ns + "-" + podName
+	uc.cachedPodLock.Lock()
+	val, ok := uc.cachedPod[cachedKey]
+	if ok {
+		val.timestramp = time.Now().Unix()
+		uc.cachedPodLock.Unlock()
+		return val.pod, nil
+	}
+	uc.cachedPodLock.Unlock()
+
+	klog.Infof("cache miss, cache not found for key[], get from api-server.", cachedKey)
+	pod, err := uc.kubeClient.CoreV1().Pods(ns).Get(podName, metaV1.GetOptions{})
+	if err == nil {
+		uc.cachedPodLock.Lock()
+		uc.cachedPod[cachedKey] = &PodWrap{
+			pod:        pod,
+			timestramp: time.Now().Unix(),
+		}
+		uc.cachedPodLock.Unlock()
+	}
+
+	return pod, err
+}
+
 func (uc *UpstreamController) updatePodStatus() {
 	for {
 		select {
@@ -227,7 +299,7 @@ func (uc *UpstreamController) updatePodStatus() {
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
 				for _, podStatus := range podStatuses {
-					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(podStatus.Name, metaV1.GetOptions{})
+					getPod, err := uc.getPod(namespace, podStatus.Name)
 					if errors.IsNotFound(err) {
 						klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
 
@@ -293,7 +365,13 @@ func (uc *UpstreamController) updatePodStatus() {
 					}
 
 					uc.normalizePodStatus(getPod, &status)
+					if apiequality.Semantic.DeepEqual(getPod.Status, status) {
+						klog.Infof("message: %s, namespace[%s] pod[%s] status is not changed, skip update pod", msg.GetID(), namespace, podStatus.Name)
+						continue
+					}
+
 					getPod.Status = status
+					uc.removePodFromCache(getPod)
 
 					if updatedPod, err := uc.kubeClient.CoreV1().Pods(getPod.Namespace).UpdateStatus(getPod); err != nil {
 						klog.Warningf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
