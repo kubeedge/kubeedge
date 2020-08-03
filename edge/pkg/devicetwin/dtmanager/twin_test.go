@@ -266,7 +266,7 @@ func TestDealTwinSync(t *testing.T) {
 			name:    "TestDealTwinSync(): Case 3: Unmarshal update request body failed",
 			context: &dtcontext.DTContext{},
 			msg:     msgTypeFunc(content),
-			err:     errors.New(dttype.ErrorUpdateInfo),
+			err:     dttype.ErrorUpdate,
 		},
 		{
 			name:     "TestDealTwinSync(): Case 4: Success case",
@@ -463,7 +463,7 @@ func TestDealDeviceTwin(t *testing.T) {
 			context:      &contextDeviceB,
 			deviceID:     deviceB,
 			dealType:     RestDealType,
-			err:          errors.New(dttype.ErrorUpdateInfo),
+			err:          dttype.ErrorUpdate,
 			rollbackNums: 0,
 			beginNums:    1,
 			commitNums:   1,
