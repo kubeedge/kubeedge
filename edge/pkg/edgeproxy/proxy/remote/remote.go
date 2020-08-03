@@ -41,8 +41,10 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 	if !util.CanCacheResource(reqInfo.Resource) {
 		return nil
 	}
+	// Store Resoponse Content-Type Header information to the context
 	respContentType := resp.Header.Get("Content-Type")
 	ctx = util.WithRespContentType(ctx, respContentType)
+	// Store Resoponse Content-Encoding Header information to the context, k8s apiserver automatically enables gzip compression when the response content greater than 128k
 	algo := resp.Header.Get("Content-Encoding")
 	ctx = util.WithRespContentEncoding(ctx, algo)
 	req = req.WithContext(ctx)
@@ -51,15 +53,16 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 	if resp.StatusCode >= http.StatusOK && resp.StatusCode <= http.StatusPartialContent {
 		source := resp.Body
 		wrapped := util.NewDuplicateReadCloser(source)
+		// cache response content according to the reqestInfo.Verb
 		go func() {
 			var err error
 			switch reqInfo.Verb {
 			case "list":
-				err = r.cacheMgr.CacheListObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheListObj(ctx, wrapped.DupReadCloser())
 			case "get":
-				err = r.cacheMgr.CacheObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheObj(ctx, wrapped.DupReadCloser())
 			case "watch":
-				err = r.cacheMgr.CacheWatchObj(ctx, wrapped.DupData())
+				err = r.cacheMgr.CacheWatchObj(ctx, wrapped.DupReadCloser())
 			}
 			if err != nil {
 				klog.Errorf("req %v cache resp error: %v", req, err)

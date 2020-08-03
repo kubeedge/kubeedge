@@ -15,8 +15,10 @@ import (
 
 // Manager interface provides methods to get the corresponding Decoder based on the resource type.
 type Manager interface {
+	// generate decoder based on contentType and groupVersion
 	GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error)
-	GetStreamDecoder(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (watch.Decoder, error)
+	// generate watch decoder based on contentType, groupVersion and readCloser
+	GetStreamDecoder(contentType string, gv schema.GroupVersion, rc io.ReadCloser) (watch.Decoder, error)
 }
 
 var DefaultDecoderMgr = &mgr{
@@ -45,12 +47,12 @@ func (dm *mgr) getDecoder(contentType string, gv schema.GroupVersion) (runtime.D
 	return decoder, info, nil
 }
 
-func (dm *mgr) GetStreamDecoder(contentType string, gv schema.GroupVersion, reader io.ReadCloser) (watch.Decoder, error) {
+func (dm *mgr) GetStreamDecoder(contentType string, gv schema.GroupVersion, rc io.ReadCloser) (watch.Decoder, error) {
 	objDecoder, info, err := dm.getDecoder(contentType, gv)
 	if err != nil {
 		return nil, err
 	}
-	frameReader := info.StreamSerializer.Framer.NewFrameReader(reader)
+	frameReader := info.StreamSerializer.Framer.NewFrameReader(rc)
 	watchEventDecoder := streaming.NewDecoder(frameReader, info.StreamSerializer)
 	watchDecoder := restclientwatch.NewDecoder(watchEventDecoder, objDecoder)
 	return watchDecoder, nil
