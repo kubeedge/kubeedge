@@ -254,7 +254,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
-	model.Properties = make([]*types.Property, 0)
+	model.Properties = make([]*types.Property, 0, len(deviceModel.Spec.Properties))
 	for _, ppt := range deviceModel.Spec.Properties {
 		property := &types.Property{}
 		property.Name = ppt.Name
@@ -402,7 +402,7 @@ func createDevice(device *v1alpha2.Device) types.Device {
 	// TODO: optional is Always false, currently not present in CRD definition, need to add or remove from deviceTwin @ Edge
 	opt := false
 	optional := &opt
-	twin := make(map[string]*types.MsgTwin)
+	twin := make(map[string]*types.MsgTwin, len(device.Status.Twins))
 	for i, dtwin := range device.Status.Twins {
 		expected := &types.TwinValue{}
 		expected.Value = &device.Status.Twins[i].Desired.Value

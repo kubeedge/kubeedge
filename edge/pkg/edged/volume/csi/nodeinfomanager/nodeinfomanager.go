@@ -335,7 +335,7 @@ func updateTopologyLabels(topology map[string]string) nodeUpdateFunc {
 		}
 
 		if node.Labels == nil {
-			node.Labels = make(map[string]string)
+			node.Labels = make(map[string]string, len(topology))
 		}
 		for k, v := range topology {
 			node.Labels[k] = v
@@ -512,7 +512,7 @@ func (nim *nodeInfoManager) installDriverToCSINode(
 		return fmt.Errorf("error getting CSI client")
 	}
 
-	topologyKeys := make(sets.String)
+	topologyKeys := make(sets.String, len(topology))
 	for k := range topology {
 		topologyKeys.Insert(k)
 	}
