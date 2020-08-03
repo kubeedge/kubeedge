@@ -178,7 +178,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	var err error
 	if content == nil {
 		klog.Errorf("Update twin of device %s error, key:twin does not exist", deviceID)
-		err = errors.New(dttype.ErrorUpdateInfo)
+		err = dttype.ErrorUpdate
 		dealUpdateResult(context, deviceID, eventID, dtcommon.BadRequestCode, err, result)
 		return err
 	}
