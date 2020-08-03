@@ -23,10 +23,15 @@ import (
 
 // Manager interface provides methods for EdgeProxy to cache http req/resp.
 type Manager interface {
+	// intercept the list response result, split result into individual object and store them in cache table
 	CacheListObj(ctx context.Context, rc io.ReadCloser) error
+	// intercept the list response result, and store result in cache table
 	CacheObj(ctx context.Context, rc io.ReadCloser) error
+	// intercept the list response result, and store result in cache table
 	CacheWatchObj(ctx context.Context, rc io.ReadCloser) error
+	//query all cached data that meets the conditions from the cache table and deserialize it into runtime.Object
 	QueryList(ctx context.Context, ua, resource, namespace string) ([]runtime.Object, error)
+	// query the cached data that meets the conditions from the cache table and deserialize it into runtime.Object
 	QueryObj(ctx context.Context, ua, resource, namespace, name string) (runtime.Object, error)
 }
 
@@ -40,6 +45,7 @@ func NewCacheMgr(decoderMgr decoder.Manager) Manager {
 	}
 }
 
+// register cache structure as the orm Model
 func InitDBTable(module core.Module) {
 	if !module.Enable() {
 		klog.Infof("Module %s is disabled, DB cache for it will not be registered", module.Name())
@@ -63,7 +69,7 @@ func (cm *Mgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	}
 	apiVersion := gv.String()
 	accessor := meta.NewAccessor()
-
+	// When the list response body is compressed with gzip, use gzip.Reader to read
 	algo, _ := util.GetRespContentEncoding(ctx)
 	if algo == "gzip" {
 		rc, err = gzip.NewReader(rc)
@@ -126,6 +132,7 @@ func (cm *Mgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
 	return nil
 }
 
+// store the single object into cache table.
 func (cm *Mgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
 	objbyte, err := json.Marshal(obj)
 	if err != nil {
@@ -159,6 +166,7 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 	if err != nil {
 		return err
 	}
+	// The watch request is httpstream, cyclically to obtain the latest data
 	for {
 		watchType, obj, err := watchDecoder.Decode()
 		if err != nil {

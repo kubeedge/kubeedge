@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/server"
 )
 
+// Store k8s requestInfo in the context of the request.
 func WithRequestInfo(handler http.Handler) http.Handler {
 	cfg := &server.Config{
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
@@ -21,6 +22,7 @@ func WithRequestInfo(handler http.Handler) http.Handler {
 	return filters.WithRequestInfo(handler, resolver)
 }
 
+// Store the accept request header information in the context of the request. When the apiserver is not accessible, the local server will use this value for serialization
 func WithReqContentType(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()
@@ -40,6 +42,7 @@ func WithReqContentType(handler http.Handler) http.Handler {
 	})
 }
 
+// Store user-agent info. so we will use this info to distinguish different list/watch clients
 func WithAppUserAgent(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ctx := request.Context()

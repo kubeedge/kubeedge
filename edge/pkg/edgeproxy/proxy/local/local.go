@@ -56,6 +56,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//Respond to operations that the local server cannot handle
 func (p *Proxy) forbidden(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	info, _ := apirequest.RequestInfoFrom(ctx)
@@ -68,6 +69,8 @@ func (p *Proxy) forbidden(w http.ResponseWriter, req *http.Request) {
 	p.Err(s, w, req)
 }
 
+//Responding to client's watch operation。But No watch events wil be generated。
+//when k8s apiserver is accessible, the method will be interrupted.
 func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 	opts := metainternalversion.ListOptions{}
 	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metainternalversion.SchemeGroupVersion, &opts)
@@ -107,6 +110,7 @@ func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//Responding to client's list operation
 func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
@@ -122,6 +126,12 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 		p.Err(err, w, req)
 		return
 	}
+	listobj, err := scheme.Scheme.New(gkv)
+	if err != nil {
+		p.Err(err, w, req)
+		return
+	}
+	// iterate objs to get the latest resourceversion
 	listRv := 0
 	accessor := meta.NewAccessor()
 	for i := range objs {
@@ -131,17 +141,12 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 			listRv = rvInt
 		}
 	}
-	listobj, err := scheme.Scheme.New(gkv)
-	if err != nil {
-		p.Err(err, w, req)
-		return
-	}
 	accessor.SetResourceVersion(listobj, strconv.Itoa(listRv))
+	// compute and set selflink of listobjs
 	clusterScoped := true
 	if reqinfo.Namespace != "" {
 		clusterScoped = false
 	}
-
 	prefix := "/" + path.Join(reqinfo.APIPrefix, reqinfo.APIGroup, reqinfo.APIVersion)
 	namer := handlers.ContextBasedNaming{
 		SelfLinker:         runtime.SelfLinker(meta.NewAccessor()),
@@ -163,6 +168,7 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	p.WriteObject(http.StatusOK, listobj, w, req)
 }
 
+//Responding to client's get operation
 func (p *Proxy) get(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
