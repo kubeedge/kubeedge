@@ -29,12 +29,10 @@ type BaseMessage struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-const (
-	ErrorUnmarshalInfo = "Unmarshal update request body failed, please check the request"
-	ErrorUpdateInfo    = "Update twin error, key:twin does not exist"
-	ErrorKeyInfo       = "The key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes"
-	ErrorValueInfo     = "The value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes"
-)
+var ErrorUnmarshal = errors.New("Unmarshal update request body failed, please check the request")
+var ErrorUpdate = errors.New("Update twin error, key:twin does not exist")
+var ErrorKey = errors.New("The key of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of key should be less than 128 bytes")
+var ErrorValue = errors.New("The value of twin must only include upper or lowercase letters, number, english, and special letter - _ . , : / @ # and the length of value should be less than 512 bytes")
 
 //SetEventID set event id
 func (bs *BaseMessage) SetEventID(eventID string) {
@@ -252,15 +250,15 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 	var deviceTwinUpdate DeviceTwinUpdate
 	err := json.Unmarshal(payload, &deviceTwinUpdate)
 	if err != nil {
-		return &deviceTwinUpdate, errors.New(ErrorUnmarshalInfo)
+		return &deviceTwinUpdate, ErrorUnmarshal
 	}
 	if deviceTwinUpdate.Twin == nil {
-		return &deviceTwinUpdate, errors.New(ErrorUpdateInfo)
+		return &deviceTwinUpdate, ErrorUpdate
 	}
 	for key, value := range deviceTwinUpdate.Twin {
 		match := dtcommon.ValidateTwinKey(key)
 		if !match {
-			return &deviceTwinUpdate, errors.New(ErrorKeyInfo)
+			return &deviceTwinUpdate, ErrorKey
 		}
 		if value != nil {
 			if value.Expected != nil {
@@ -268,7 +266,7 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 					if *value.Expected.Value != "" {
 						match := dtcommon.ValidateTwinValue(*value.Expected.Value)
 						if !match {
-							return &deviceTwinUpdate, errors.New(ErrorValueInfo)
+							return &deviceTwinUpdate, ErrorValue
 						}
 					}
 				}
@@ -278,7 +276,7 @@ func UnmarshalDeviceTwinUpdate(payload []byte) (*DeviceTwinUpdate, error) {
 					if *value.Actual.Value != "" {
 						match := dtcommon.ValidateTwinValue(*value.Actual.Value)
 						if !match {
-							return &deviceTwinUpdate, errors.New(ErrorValueInfo)
+							return &deviceTwinUpdate, ErrorValue
 						}
 					}
 				}
