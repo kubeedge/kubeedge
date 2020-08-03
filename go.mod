@@ -18,7 +18,6 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652 // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
