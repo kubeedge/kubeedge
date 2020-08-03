@@ -22,9 +22,9 @@ import (
 	"io"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 )
@@ -82,7 +82,7 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 				return err
 			}
 
-			// 2. Remove containers managed by KE. Only for edge node.
+			// 2. Remove containers managed by KubeEdge. Only for edge node.
 			if err := RemoveContainers(IsEdgeNode, utilsexec.New()); err != nil {
 				return err
 			}
@@ -124,23 +124,11 @@ func RemoveContainers(isEdgeNode bool, execer utilsexec.Interface) error {
 		return nil
 	}
 
-	criSocketPath, err := utilruntime.DetectCRISocket()
-	if err != nil {
-		return err
-	}
-	fmt.Println("[Test] Got criSocketPath", criSocketPath)
+	criSocketPath, _ := utilruntime.DetectCRISocket()
 
-	containerRuntime, err := utilruntime.NewContainerRuntime(execer, criSocketPath)
-	if err != nil {
-		return err
-	}
-	fmt.Println("[Test] Got containerRuntime", containerRuntime)
+	containerRuntime, _ := utilruntime.NewContainerRuntime(execer, criSocketPath)
 
-	containers, err := containerRuntime.ListKubeContainers()
-	if err != nil {
-		return err
-	}
-	fmt.Println("[Test] Got containers", containers)
+	containers, _ := containerRuntime.ListKubeContainers()
 
 	return containerRuntime.RemoveContainers(containers)
 }
