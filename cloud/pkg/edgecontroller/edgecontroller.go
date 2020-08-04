@@ -36,7 +36,7 @@ func (ec *EdgeController) Name() string {
 
 // Group of controller
 func (ec *EdgeController) Group() string {
-	return constants.EdgeControllerModuleName
+	return constants.EdgeControllerGroupName
 }
 
 // Enable indicates whether enable this module
