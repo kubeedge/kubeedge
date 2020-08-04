@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -396,7 +397,7 @@ func (dc *DownstreamController) syncEndpoints() {
 						LabelSelector: labelSelectorString,
 						Limit:         100,
 					}
-					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(listOptions)
+					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(context.Background(), listOptions)
 					if err == nil {
 						dc.lc.AddOrUpdateServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name), pods.Items)
 					}
@@ -476,7 +477,7 @@ func (dc *DownstreamController) initLocating() error {
 
 	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
-	nodes, err := dc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: selector.String()})
+	nodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return err
 	}
@@ -492,10 +493,10 @@ func (dc *DownstreamController) initLocating() error {
 	}
 
 	if !config.Config.EdgeSiteEnable {
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	} else {
 		selector := fields.OneTermEqualSelector("spec.nodeName", config.Config.NodeName).String()
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{FieldSelector: selector})
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{FieldSelector: selector})
 	}
 	if err != nil {
 		return err
