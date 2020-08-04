@@ -70,7 +70,7 @@ func (b *byteReadCloser) Read(p []byte) (n int, err error) {
 		b.buf = buf
 		b.bufClear.Store(false)
 	}
-	// the lengths of p and buf maybe be consistent, there is data in buf that has not been copied to p
+	// The length of buf and p may be different, and there may be data that has not been copied in buf
 	n = copy(p, b.buf)
 	b.buf = b.buf[n:]
 	if len(b.buf) == 0 {

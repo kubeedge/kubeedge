@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/klog"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -19,9 +17,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
@@ -97,7 +97,7 @@ func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
 	watchTimeout := time.NewTimer(timeout)
-	checkInterval := time.NewTicker(time.Duration(2) * time.Second)
+	checkInterval := time.NewTicker(time.Duration(config.Config.HealthzCheckInterval) * time.Second)
 	for {
 		select {
 		case <-watchTimeout.C:

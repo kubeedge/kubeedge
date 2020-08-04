@@ -468,4 +468,13 @@ type EdgePorxy struct {
 	// ServerKeyFile indicates the file containing x509 private key matching ServerCertFile
 	// default /etc/kubeedge/certs/proxy.key
 	ServerKeyFile string `json:"serverKeyFile,omitempty"`
+	// Number of retries when healthzChecker fails
+	// default 3
+	HealthzCheckRetryTimes int `json:"checkRetryTimes,omitempty"`
+	// HealthzChecker execution interval
+	// default 5
+	HealthzCheckInterval int `json:"checkInterval,omitempty"`
+	// HealthzCheck execution timeout
+	// default 3
+	HealthzCheckTimeout int `json:"checkTimeout,omitempty"`
 }

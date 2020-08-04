@@ -5,9 +5,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"k8s.io/klog"
-
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"

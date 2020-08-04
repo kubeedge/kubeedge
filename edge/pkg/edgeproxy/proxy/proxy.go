@@ -7,7 +7,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
-
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/proxy/local"
