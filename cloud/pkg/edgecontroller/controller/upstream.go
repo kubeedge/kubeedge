@@ -272,7 +272,7 @@ func (uc *UpstreamController) getPod(ns, podName string) (*v1.Pod, error) {
 	}
 	uc.cachedPodLock.Unlock()
 
-	klog.Infof("cache miss, cache not found for key[], get from api-server.", cachedKey)
+	klog.Infof("cache miss, cache not found for key[%s], get from api-server.", cachedKey)
 	pod, err := uc.kubeClient.CoreV1().Pods(ns).Get(podName, metaV1.GetOptions{})
 	if err == nil {
 		uc.cachedPodLock.Lock()
