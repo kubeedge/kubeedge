@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -66,7 +67,7 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
-	secret, err := client.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

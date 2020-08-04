@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"context"
+
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +17,6 @@ type FakePersistentVolumeClaims struct {
 }
 
 // Get takes name of the persistentVolumeClaim, and returns the corresponding persistentVolumeClaim object
-func (c *FakePersistentVolumeClaims) Get(name string, options metav1.GetOptions) (result *corev1.PersistentVolumeClaim, err error) {
+func (c *FakePersistentVolumeClaims) Get(ctx context.Context, name string, options metav1.GetOptions) (result *corev1.PersistentVolumeClaim, err error) {
 	return c.MetaClient.PersistentVolumeClaims(c.ns).Get(name, options)
 }

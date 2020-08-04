@@ -1,6 +1,7 @@
 package admissioncontroller
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
@@ -177,19 +178,19 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 func registerValidateWebhook(client admissionregistrationv1beta1client.ValidatingWebhookConfigurationInterface,
 	webhooks []admissionregistrationv1beta1.ValidatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
-		existing, err := client.Get(hook.Name, metav1.GetOptions{})
+		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 		if err == nil && existing != nil {
 			existing.Webhooks = hook.Webhooks
 			klog.Infof("Updating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(existing); err != nil {
+			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
 				return err
 			}
 		} else {
 			klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(&hook); err != nil {
+			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
 				return err
 			}
 		}
