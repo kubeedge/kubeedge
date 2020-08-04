@@ -1000,7 +1000,6 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 		return err
 	}
 
-	e.podLastSyncTime.Delete(pod.GetUID())
 	err = e.containerRuntime.KillPod(pod, kubecontainer.ConvertPodStatusToRunningPod(e.containerRuntimeName, podStatus), nil)
 	if err != nil {
 		if err == apis.ErrContainerNotFound {
@@ -1008,6 +1007,9 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 		}
 		return fmt.Errorf("consume removed pod [%s] failed, %v", podName, err)
 	}
+
+	e.podLastSyncTime.Delete(pod.GetUID())
+
 	klog.Infof("consume removed pod [%s] successfully\n", podName)
 	return nil
 }
@@ -1402,15 +1404,39 @@ func (e *edged) HandlePodCleanups() error {
 	if !e.isInitPodReady() {
 		return nil
 	}
-	pods := e.podManager.GetPods()
-	containerRunningPods, err := e.containerRuntime.GetPods(false)
+	desiredPods := e.podManager.GetPods()
+
+	desiredLen := len(desiredPods)
+
+	runningPods, err := e.containerRuntime.GetPods(false)
 	if err != nil {
 		return err
 	}
-	e.removeOrphanedPodStatuses(pods)
-	err = e.cleanupOrphanedPodDirs(pods, containerRunningPods)
+	runningLen := len(runningPods)
+
+	if runningLen > desiredLen {
+		var errorString string
+
+		desiredMap := make(map[types.UID]int, desiredLen)
+		for i, pod := range desiredPods {
+			desiredMap[pod.UID] = i
+		}
+
+		for _, pod := range runningPods {
+			id := pod.ID
+			if _, exist := desiredMap[id]; !exist {
+				err := e.containerRuntime.KillPod(nil, *pod, nil)
+				errorString += fmt.Sprintf("container [%s] with err [%v]", id, err)
+			}
+		}
+		if errorString != "" {
+			return fmt.Errorf("failed to cleanup, err: %s", errorString)
+		}
+	}
+	e.removeOrphanedPodStatuses(desiredPods)
+	err = e.cleanupOrphanedPodDirs(desiredPods, runningPods)
 	if err != nil {
-		return fmt.Errorf("Failed cleaning up orphaned pod directories: %s", err.Error())
+		return fmt.Errorf("failed cleaning up orphaned pod directories: %s", err.Error())
 	}
 
 	return nil
