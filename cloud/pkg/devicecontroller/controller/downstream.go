@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"strconv"
@@ -47,8 +48,12 @@ const (
 	Bluetooth          = "bluetooth"
 	CustomizedProtocol = "customized-protocol"
 
-	DataTypeInt    = "int"
-	DataTypeString = "string"
+	DataTypeInt     = "int"
+	DataTypeString  = "string"
+	DataTypeDouble  = "double"
+	DataTypeFloat   = "float"
+	DataTypeBoolean = "boolean"
+	DataTypeBytes   = "bytes"
 
 	ConfigMapKind    = "ConfigMap"
 	ConfigMapVersion = "v1"
@@ -180,13 +185,13 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
-			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
+			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
 				klog.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 				return
 			}
 		}
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
@@ -200,7 +205,7 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
 	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 		klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 		return
 	}
@@ -254,7 +259,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile *types.DeviceProfile) {
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
-	model.Properties = make([]*types.Property, 0)
+	model.Properties = make([]*types.Property, 0, len(deviceModel.Spec.Properties))
 	for _, ppt := range deviceModel.Spec.Properties {
 		property := &types.Property{}
 		property.Name = ppt.Name
@@ -270,6 +275,27 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile 
 			property.AccessMode = string(ppt.Type.String.AccessMode)
 			property.DataType = DataTypeString
 			property.DefaultValue = ppt.Type.String.DefaultValue
+		} else if ppt.Type.Double != nil {
+			property.AccessMode = string(ppt.Type.Int.AccessMode)
+			property.DataType = DataTypeDouble
+			property.DefaultValue = ppt.Type.Double.DefaultValue
+			property.Maximum = ppt.Type.Double.Maximum
+			property.Minimum = ppt.Type.Double.Minimum
+			property.Unit = ppt.Type.Double.Unit
+		} else if ppt.Type.Float != nil {
+			property.AccessMode = string(ppt.Type.Int.AccessMode)
+			property.DataType = DataTypeFloat
+			property.DefaultValue = ppt.Type.Float.DefaultValue
+			property.Maximum = ppt.Type.Float.Maximum
+			property.Minimum = ppt.Type.Float.Minimum
+			property.Unit = ppt.Type.Float.Unit
+		} else if ppt.Type.Boolean != nil {
+			property.AccessMode = string(ppt.Type.String.AccessMode)
+			property.DataType = DataTypeBoolean
+			property.DefaultValue = ppt.Type.String.DefaultValue
+		} else if ppt.Type.Bytes != nil {
+			property.AccessMode = string(ppt.Type.String.AccessMode)
+			property.DataType = DataTypeBytes
 		}
 		model.Properties = append(model.Properties, property)
 	}
@@ -402,7 +428,7 @@ func createDevice(device *v1alpha2.Device) types.Device {
 	// TODO: optional is Always false, currently not present in CRD definition, need to add or remove from deviceTwin @ Edge
 	opt := false
 	optional := &opt
-	twin := make(map[string]*types.MsgTwin)
+	twin := make(map[string]*types.MsgTwin, len(device.Status.Twins))
 	for i, dtwin := range device.Status.Twins {
 		expected := &types.TwinValue{}
 		expected.Value = &device.Status.Twins[i].Desired.Value
@@ -544,7 +570,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}
@@ -707,8 +733,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 		// 1. no device bound to it, as Data[DeviceProfileJSON] is "{}"
 		// 2. device instance created alone then removed, as Data[DeviceProfileJSON] is ""
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
-			deleteOptions := &metav1.DeleteOptions{}
-			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(nodeConfigMap.Name, deleteOptions)
+			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{})
 			// remove from cache
 			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 			return
@@ -716,7 +741,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}

@@ -21,6 +21,7 @@ and the full file path is k8s.io/kubernetes/pkg/volume/csi/csi_util.go
 package csi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -38,7 +39,7 @@ import (
 
 func getCredentialsFromSecret(k8s kubernetes.Interface, secretRef *api.SecretReference) (map[string]string, error) {
 	credentials := map[string]string{}
-	secret, err := k8s.CoreV1().Secrets(secretRef.Namespace).Get(secretRef.Name, meta.GetOptions{})
+	secret, err := k8s.CoreV1().Secrets(secretRef.Namespace).Get(context.Background(), secretRef.Name, meta.GetOptions{})
 	if err != nil {
 		klog.Errorf("failed to find the secret %s in the namespace %s with error: %v\n", secretRef.Name, secretRef.Namespace, err)
 		return credentials, err

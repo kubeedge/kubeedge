@@ -78,10 +78,10 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 	checker := hubconfig.Config.Checker
 	if checker.Check(r) != nil {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(fmt.Sprintf("Cloudcore is not ready")))
+		w.Write([]byte("Cloudcore is not ready"))
 	} else {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("Cloudcore is ready")))
+		w.Write([]byte("Cloudcore is ready"))
 	}
 }
 
@@ -135,13 +135,13 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
@@ -154,16 +154,16 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+			w.Write([]byte("Invalid authorization token"))
 			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	return true

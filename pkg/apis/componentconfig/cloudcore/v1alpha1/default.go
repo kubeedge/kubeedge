@@ -48,7 +48,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			CloudHub: &CloudHub{
 				Enable:                  true,
 				KeepaliveInterval:       30,
-				NodeLimit:               10,
+				NodeLimit:               1000,
 				TLSCAFile:               constants.DefaultCAFile,
 				TLSCAKeyFile:            constants.DefaultCAKeyFile,
 				TLSCertFile:             constants.DefaultCertFile,
@@ -178,7 +178,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
-				NodeLimit:         10,
+				NodeLimit:         1000,
 				TLSCAFile:         constants.DefaultCAFile,
 				TLSCAKeyFile:      constants.DefaultCAKeyFile,
 				TLSCertFile:       constants.DefaultCertFile,
