@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -32,6 +31,7 @@ import (
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -101,25 +101,36 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 
 func (s *TunnelServer) Start() {
 	s.installDefaultHandler()
-	data, err := ioutil.ReadFile(config.Config.TLSTunnelCAFile)
-	if err != nil {
+	var data []byte
+	var key []byte
+	var cert []byte
+
+	if streamconfig.Config.Ca != nil {
+		data = streamconfig.Config.Ca
+		klog.Info("Succeed in loading TunnelCA from local directory")
+	} else {
 		data = hubconfig.Config.Ca
-		klog.Info("Succeeded in loading TLSTunnelCAFile from the secret")
+		klog.Info("Succeed in loading TunnelCA from CloudHub")
 	}
+
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: data}))
 
-	cert := hubconfig.Config.Cert
-	klog.Info("Succeeded in loading TLSTunnelCertFile from the secret")
-
-	key := hubconfig.Config.Key
-	klog.Info("Succeeded in loading TLSTunnelPrivateKeyFile from the secret")
+	if streamconfig.Config.Key != nil && streamconfig.Config.Cert != nil {
+		cert = streamconfig.Config.Cert
+		key = streamconfig.Config.Key
+		klog.Info("Succeed in loading TunnelCert and Key from local directory")
+	} else {
+		cert = hubconfig.Config.Cert
+		key = hubconfig.Config.Key
+		klog.Info("Succeed in loading TunnelCert and Key from CloudHub")
+	}
 
 	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
 	if err != nil {
+		klog.Error("Failed to load TLSTunnelCert and Key")
 		panic(err)
 	}
-	klog.Info("Succeeded in loading TLSTunnelCert and Key")
 
 	tunnelServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Config.TunnelPort),
