@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/atomic"
 	"k8s.io/klog"
 
-	"go.uber.org/atomic"
-
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
@@ -20,10 +20,10 @@ func NewHealthzChecker(url string) Checker {
 	hc := &healthzChecker{
 		url:      url,
 		isOk:     atomic.NewBool(false),
-		interval: time.Duration(5) * time.Second,
+		interval: time.Duration(config.Config.HealthzCheckInterval) * time.Second,
 		client: &http.Client{
 			Transport: util.GetInsecureTransport(),
-			Timeout:   time.Duration(3) * time.Second,
+			Timeout:   time.Duration(config.Config.HealthzCheckTimeout) * time.Second,
 		},
 	}
 	go hc.loop()
@@ -45,9 +45,8 @@ func (h *healthzChecker) loop() {
 	healthzURL := strings.Join([]string{h.url, "healthz"}, "/")
 	intervalTicker := time.NewTicker(h.interval)
 	isHealthy := false
-	retryTimes := 3
 	for range intervalTicker.C {
-		for i := 0; i < retryTimes; i++ {
+		for i := 0; i < config.Config.HealthzCheckRetryTimes; i++ {
 			resp, err := h.client.Get(healthzURL)
 			if err != nil {
 				isHealthy = false

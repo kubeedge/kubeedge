@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
-
 	"github.com/gorilla/mux"
+
+	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
 )
 
 func NewProxyServer(eph http.Handler) (*ProxyServer, error) {

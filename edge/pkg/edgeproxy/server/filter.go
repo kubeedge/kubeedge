@@ -4,13 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"k8s.io/klog"
-
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/server"
+	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
 // Store k8s requestInfo in the context of the request.

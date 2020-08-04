@@ -5,8 +5,9 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"github.com/astaxie/beego/orm"
 	"io"
+
+	"github.com/astaxie/beego/orm"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,10 +15,9 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/decoder"
-
 	"github.com/kubeedge/beehive/pkg/core"
 	cachedao "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/decoder"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
