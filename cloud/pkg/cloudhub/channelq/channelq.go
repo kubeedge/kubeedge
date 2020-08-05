@@ -15,6 +15,7 @@ import (
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -162,7 +163,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 		}
 	}
 
-	if msg.GetSource() == edgeconst.EdgeControllerModuleName {
+	if msg.GetSource() == modules.EdgeControllerModuleName {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		if resourceType == beehiveModel.ResourceTypeNode {
 			return true

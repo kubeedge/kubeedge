@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"sort"
 	"time"
 
@@ -248,7 +249,7 @@ func (uc *UpstreamController) updatePodStatus() {
 						pod := &v1.Pod{}
 						pod.Namespace, pod.Name = namespace, podStatus.Name
 						delMsg.Content = pod
-						delMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+						delMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
 						if err := uc.messageLayer.Send(*delMsg); err != nil {
 							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, delMsg.GetOperation(), delMsg.GetResource())
 						} else {
@@ -473,7 +474,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 					klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
@@ -565,7 +566,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 		if err != nil {
 			klog.Warningf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 		}
-		resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+		resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 		err = uc.messageLayer.Response(*resMsg)
 		if err != nil {
 			klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
@@ -739,7 +740,7 @@ func (uc *UpstreamController) updateNode() {
 					klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 					continue
 				}
-				resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+				resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
 					continue
@@ -929,7 +930,7 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 		return
 	}
 
-	resMsg.BuildRouter(constants.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+	resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 	if err = uc.messageLayer.Response(*resMsg); err != nil {
 		klog.Warningf("Response message: %s failed, response failed with error: %s", msg.GetID(), err)
 		return
