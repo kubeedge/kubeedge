@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,7 +32,7 @@ func GetSecret(secretName string, ns string) (*v1.Secret, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KubeClient, error: %s", err)
 	}
-	return cli.CoreV1().Secrets(ns).Get(secretName, metav1.GetOptions{})
+	return cli.CoreV1().Secrets(ns).Get(context.Background(), secretName, metav1.GetOptions{})
 }
 
 // CreateSecret creates a secret
@@ -43,9 +44,9 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 	if err := CreateNamespaceIfNeeded(cli, ns); err != nil {
 		return fmt.Errorf("failed to create Namespace kubeedge, error: %s", err)
 	}
-	if _, err := cli.CoreV1().Secrets(ns).Create(secret); err != nil {
+	if _, err := cli.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{}); err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			cli.CoreV1().Secrets(ns).Update(secret)
+			cli.CoreV1().Secrets(ns).Update(context.Background(), secret, metav1.UpdateOptions{})
 		} else {
 			return fmt.Errorf("failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
 		}
@@ -105,7 +106,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 
 func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
 	c := cli.CoreV1()
-	if _, err := c.Namespaces().Get(ns, metav1.GetOptions{}); err == nil {
+	if _, err := c.Namespaces().Get(context.Background(), ns, metav1.GetOptions{}); err == nil {
 		return nil
 	}
 	newNs := &corev1.Namespace{
@@ -114,7 +115,7 @@ func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
 			Namespace: "",
 		},
 	}
-	_, err := c.Namespaces().Create(newNs)
+	_, err := c.Namespaces().Create(context.Background(), newNs, metav1.CreateOptions{})
 	if err != nil && errors.IsAlreadyExists(err) {
 		err = nil
 	}

@@ -44,6 +44,8 @@ TEXT ·libc_utimes_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_utimes(SB)
 TEXT ·libc_futimes_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_futimes(SB)
+TEXT ·libc_fcntl_trampoline(SB),NOSPLIT,$0-0
+	JMP	libc_fcntl(SB)
 TEXT ·libc_poll_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_poll(SB)
 TEXT ·libc_madvise_trampoline(SB),NOSPLIT,$0-0
@@ -82,8 +84,6 @@ TEXT ·libc_flistxattr_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_flistxattr(SB)
 TEXT ·libc_setattrlist_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_setattrlist(SB)
-TEXT ·libc_fcntl_trampoline(SB),NOSPLIT,$0-0
-	JMP	libc_fcntl(SB)
 TEXT ·libc_kill_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_kill(SB)
 TEXT ·libc_ioctl_trampoline(SB),NOSPLIT,$0-0
@@ -106,8 +106,6 @@ TEXT ·libc_chown_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_chown(SB)
 TEXT ·libc_chroot_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_chroot(SB)
-TEXT ·libc_clock_gettime_trampoline(SB),NOSPLIT,$0-0
-	JMP	libc_clock_gettime(SB)
 TEXT ·libc_close_trampoline(SB),NOSPLIT,$0-0
 	JMP	libc_close(SB)
 TEXT ·libc_dup_trampoline(SB),NOSPLIT,$0-0

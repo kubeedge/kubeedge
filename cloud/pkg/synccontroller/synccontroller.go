@@ -1,6 +1,7 @@
 package synccontroller
 
 import (
+	"context"
 	"os"
 	"strings"
 	"time"
@@ -251,7 +252,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 		}
 		if isGarbage {
 			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
-			err = sctl.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(sync.Name, metav1.NewDeleteOptions(0))
+			err = sctl.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
 			if err != nil {
 				klog.Errorf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
 			}

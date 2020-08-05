@@ -546,7 +546,7 @@ func (e *edged) IsPodDeleted(uid types.UID) bool {
 // removeOrphanedPodStatuses removes obsolete entries in podStatus where
 // the pod is no longer considered bound to this node.
 func (e *edged) removeOrphanedPodStatuses(pods []*v1.Pod) {
-	podUIDs := make(map[types.UID]bool)
+	podUIDs := make(map[types.UID]bool, len(pods))
 	for _, pod := range pods {
 		podUIDs[pod.UID] = true
 	}

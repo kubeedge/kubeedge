@@ -5,6 +5,9 @@ const (
 	// module
 	EdgeControllerModuleName = "edgecontroller"
 
+	// Group name
+	EdgeControllerGroupName = "edgecontroller"
+
 	ResourceNodeIDIndex       = 1
 	ResourceNamespaceIndex    = 2
 	ResourceResourceTypeIndex = 3

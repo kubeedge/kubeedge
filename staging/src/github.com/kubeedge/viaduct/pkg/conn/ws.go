@@ -176,7 +176,7 @@ func (conn *WSConnection) Write(raw []byte) (int, error) {
 
 func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
-	lane.SetReadDeadline(conn.WriteDeadline)
+	lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = false
 	conn.locker.Lock()
 	defer conn.locker.Unlock()

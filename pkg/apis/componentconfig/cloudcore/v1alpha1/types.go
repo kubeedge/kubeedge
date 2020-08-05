@@ -85,7 +85,7 @@ type CloudHub struct {
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
 	// NodeLimit indicates node limit
-	// default 10
+	// default 1000
 	NodeLimit int32 `json:"nodeLimit,omitempty"`
 	// TLSCAFile indicates ca file path
 	// default "/etc/kubeedge/ca/rootCA.crt"
