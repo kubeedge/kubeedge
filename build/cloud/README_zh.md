@@ -18,6 +18,15 @@ cd build/cloud
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 
+(可选)从KubeEdge 1.3.0开始，我们可以在`05-configmap.yaml`中配置暴露给边缘节点的所有CloudCore IP地址（例如浮动IP），并将其添加到Cloudcore证书中的SAN中。
+
+```
+modules:
+  cloudHub:
+    advertiseAddress:
+    - 10.1.11.85
+```
+
 最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service`08-service.yaml`，
 将 cloud hub 暴露到集群外，让 edge core 能够连到。
 
