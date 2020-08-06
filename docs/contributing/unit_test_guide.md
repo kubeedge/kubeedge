@@ -28,15 +28,15 @@ There is gomock package in kubeedge vendor directory without mockgen. Please use
 
  Read [godoc](https://godoc.org/github.com/onsi/ginkgo) for more information about ginkgo.
 
-See a [sample](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/dao/meta_test.go) in kubeedge where go builtin package testing and gomock is used for writing unit tests.
+See a [sample](/edge/pkg/metamanager/dao/meta_test.go) in kubeedge where go builtin package testing and gomock is used for writing unit tests.
 
-See a [sample](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
+See a [sample](/edge/pkg/devicetwin/dtmodule/dtmodule_test.go) in kubeedge where ginkgo is used for testing.
 
 ## Writing UT using GoMock
 
 ### Example : metamanager/dao/meta.go
 
-After reading the code of meta.go, we can find that there are 3 interfaces of beego which are used. They are [Ormer](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go), [QuerySeter](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go) and [RawSeter](https://github.com/kubeedge/kubeedge/blob/master/vendor/github.com/astaxie/beego/orm/types.go).
+After reading the code of meta.go, we can find that there are 3 interfaces of beego which are used. They are [Ormer](/vendor/github.com/astaxie/beego/orm/types.go), [QuerySeter](/vendor/github.com/astaxie/beego/orm/types.go) and [RawSeter](/vendor/github.com/astaxie/beego/orm/types.go).
 
 We need to create fake implementations of these interfaces so that we do not rely on the original implementation of this interface and their function calls.
 
