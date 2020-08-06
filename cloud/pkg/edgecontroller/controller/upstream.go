@@ -484,48 +484,37 @@ func (uc *UpstreamController) updateNodeStatus() {
 	}
 }
 
-const (
-	CONFIGMAP = iota
-	SECRET
-	SERVICE
-	ENDPOINTS
-	PERSISTENTVOLUME
-	PERSISTENTVOLUMECLAIM
-	VOLUMEATTACHMENT
-	NODE
-)
-
-func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType int) (interface{}, string, error) {
+func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
 	switch queryType {
-	case CONFIGMAP:
+	case model.ResourceTypeConfigmap:
 		configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metaV1.GetOptions{})
 		resourceVersion := configMap.ResourceVersion
 		return configMap, resourceVersion, err
-	case SECRET:
+	case model.ResourceTypeSecret:
 		secret, err := uc.kubeClient.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
 		resourceVersion := secret.ResourceVersion
 		return secret, resourceVersion, err
-	case SERVICE:
+	case common.ResourceTypeService:
 		svc, err := uc.kubeClient.CoreV1().Services(namespace).Get(name, metaV1.GetOptions{})
 		resourceVersion := svc.ResourceVersion
 		return svc, resourceVersion, err
-	case ENDPOINTS:
+	case common.ResourceTypeEndpoints:
 		eps, err := uc.kubeClient.CoreV1().Endpoints(namespace).Get(name, metaV1.GetOptions{})
 		resourceVersion := eps.ResourceVersion
 		return eps, resourceVersion, err
-	case PERSISTENTVOLUME:
+	case common.ResourceTypePersistentVolume:
 		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(name, metaV1.GetOptions{})
 		resourceVersion := pv.ResourceVersion
 		return pv, resourceVersion, err
-	case PERSISTENTVOLUMECLAIM:
+	case common.ResourceTypePersistentVolumeClaim:
 		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(name, metaV1.GetOptions{})
 		resourceVersion := pvc.ResourceVersion
 		return pvc, resourceVersion, err
-	case VOLUMEATTACHMENT:
+	case common.ResourceTypeVolumeAttachment:
 		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(name, metaV1.GetOptions{})
 		resourceVersion := va.ResourceVersion
 		return va, resourceVersion, err
-	case NODE:
+	case model.ResourceTypeNode:
 		node, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
@@ -536,7 +525,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	}
 }
 
-func queryInner(uc *UpstreamController, msg model.Message, queryType int) {
+func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 	klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 	namespace, err := messagelayer.GetNamespace(msg)
 	if err != nil {
@@ -567,7 +556,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType int) {
 		if err != nil {
 			klog.Warningf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
 		}
-		resource, err := messagelayer.BuildResource(nodeID, namespace, model.ResourceTypeConfigmap, name)
+		resource, err := messagelayer.BuildResource(nodeID, namespace, queryType, name)
 		if err != nil {
 			klog.Warningf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 		}
@@ -590,7 +579,7 @@ func (uc *UpstreamController) queryConfigMap() {
 			klog.Warning("stop queryConfigMap")
 			return
 		case msg := <-uc.configMapChan:
-			queryInner(uc, msg, CONFIGMAP)
+			queryInner(uc, msg, model.ResourceTypeConfigmap)
 		}
 	}
 }
@@ -602,7 +591,7 @@ func (uc *UpstreamController) querySecret() {
 			klog.Warning("stop querySecret")
 			return
 		case msg := <-uc.secretChan:
-			queryInner(uc, msg, SECRET)
+			queryInner(uc, msg, model.ResourceTypeSecret)
 		}
 	}
 }
@@ -614,7 +603,7 @@ func (uc *UpstreamController) queryService() {
 			klog.Warning("stop queryService")
 			return
 		case msg := <-uc.serviceChan:
-			queryInner(uc, msg, SERVICE)
+			queryInner(uc, msg, common.ResourceTypeService)
 		}
 	}
 }
@@ -626,7 +615,7 @@ func (uc *UpstreamController) queryEndpoints() {
 			klog.Warning("stop queryEndpoints")
 			return
 		case msg := <-uc.endpointsChan:
-			queryInner(uc, msg, ENDPOINTS)
+			queryInner(uc, msg, common.ResourceTypeEndpoints)
 		}
 	}
 }
@@ -638,7 +627,7 @@ func (uc *UpstreamController) queryPersistentVolume() {
 			klog.Warning("stop queryPersistentVolume")
 			return
 		case msg := <-uc.persistentVolumeChan:
-			queryInner(uc, msg, PERSISTENTVOLUME)
+			queryInner(uc, msg, common.ResourceTypePersistentVolume)
 		}
 	}
 }
@@ -650,7 +639,7 @@ func (uc *UpstreamController) queryPersistentVolumeClaim() {
 			klog.Warning("stop queryPersistentVolumeClaim")
 			return
 		case msg := <-uc.persistentVolumeClaimChan:
-			queryInner(uc, msg, PERSISTENTVOLUMECLAIM)
+			queryInner(uc, msg, common.ResourceTypePersistentVolumeClaim)
 		}
 	}
 }
@@ -662,7 +651,7 @@ func (uc *UpstreamController) queryVolumeAttachment() {
 			klog.Warning("stop queryVolumeAttachment")
 			return
 		case msg := <-uc.volumeAttachmentChan:
-			queryInner(uc, msg, VOLUMEATTACHMENT)
+			queryInner(uc, msg, common.ResourceTypeVolumeAttachment)
 		}
 	}
 }
@@ -806,7 +795,7 @@ func (uc *UpstreamController) queryNode() {
 			klog.Warning("stop queryNode")
 			return
 		case msg := <-uc.queryNodeChan:
-			queryInner(uc, msg, NODE)
+			queryInner(uc, msg, model.ResourceTypeNode)
 		}
 	}
 }
