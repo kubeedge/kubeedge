@@ -114,5 +114,5 @@ Has deep understanding of KubeEdge and related domain and facilitates major agre
 
 **Note :** These roles are applicable only for KubeEdge github organization and repositories. Currently KubeEdge doesn't have a formal process for review and acceptance into these roles. We will come-up with a process soon.
 
-[Code of Conduct]: https://github.com/kubeedge/kubeedge/blob/master/CODE_OF_CONDUCT.md
+[Code of Conduct]: /CODE_OF_CONDUCT.md
 [two-factor authentication]: https://help.github.com/articles/about-two-factor-authentication
