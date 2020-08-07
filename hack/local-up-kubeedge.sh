@@ -66,8 +66,8 @@ fi
 
 function create_device_crd {
   echo "creating the device crd..."
-  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1alpha1_device.yaml
-  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1alpha1_devicemodel.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1alpha2_device.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/devices/devices_v1alpha2_devicemodel.yaml
 }
 
 function create_objectsync_crd {

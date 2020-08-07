@@ -37,7 +37,7 @@ A sample device model can be found [here](https://github.com/kubeedge/kubeedge/b
 
  Mapper design details can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/mapper-design.md#mapper-design)
 
- An example of a mapper application created to support bluetooth protocol can be found [here](https://github.com/kubeedge/kubeedge/tree/master/device/bluetooth_mapper#bluetooth-mapper)
+ An example of a mapper application created to support bluetooth protocol can be found [here](https://github.com/kubeedge/kubeedge/tree/master/mappers/bluetooth_mapper#bluetooth-mapper)
 
 
 ## Usage of Device CRD

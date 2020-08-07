@@ -17,7 +17,11 @@ limitations under the License.
 package config
 
 import (
+	"encoding/pem"
+	"io/ioutil"
 	"sync"
+
+	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -27,12 +31,43 @@ var once sync.Once
 
 type Configure struct {
 	v1alpha1.CloudStream
+	Ca   []byte
+	Cert []byte
+	Key  []byte
 }
 
 func InitConfigure(stream *v1alpha1.CloudStream) {
 	once.Do(func() {
 		Config = Configure{
 			CloudStream: *stream,
+		}
+
+		ca, err := ioutil.ReadFile(stream.TLSTunnelCAFile)
+		if err == nil {
+			block, _ := pem.Decode(ca)
+			ca = block.Bytes
+		}
+		if ca != nil {
+			Config.Ca = ca
+		}
+
+		cert, err := ioutil.ReadFile(stream.TLSTunnelCertFile)
+		if err == nil {
+			block, _ := pem.Decode(cert)
+			cert = block.Bytes
+		}
+
+		key, err := ioutil.ReadFile(stream.TLSTunnelPrivateKeyFile)
+		if err == nil {
+			block, _ := pem.Decode(key)
+			key = block.Bytes
+		}
+
+		if cert != nil && key != nil {
+			Config.Cert = cert
+			Config.Key = key
+		} else if !(cert == nil && key == nil) {
+			klog.Fatal("Both of tunnelCert and key should be specified!")
 		}
 	})
 }

@@ -23,7 +23,14 @@ function watchChange(paths, onChange) {
     watcher.on('ready', ()=>{
         watcher.on('add', ()=>{
             logger.info('watched file added, load dpl config');
-            onChange(filename);
+            setTimeout(() => {
+                onChange(filename);
+            }, 5000);
+        }).on('change', ()=> {
+            logger.info('watched file change, load dpl config');
+            setTimeout(() => {
+                onChange(filename);
+            }, 5000);
         });
     });
 }
@@ -85,7 +92,7 @@ function buildMaps(dplConfigs, i) {
         return element.name === dplConfigs.deviceInstances[i].protocol;
     });
     if (foundPro != -1) {
-        devPro.set(dplConfigs.deviceInstances[i].id, dplConfigs.protocols[foundMod]);
+        devPro.set(dplConfigs.deviceInstances[i].id, dplConfigs.protocols[foundPro]);
     } else {
         logger.error('failed to find protocol[%s] for deviceid', dplConfigs.deviceModels[i].protocol);
     }

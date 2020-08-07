@@ -1,4 +1,4 @@
 
 # Modbus Mapper
 
-Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/mappers/modbus_mapper.md#modbus-mapper) for detailed documentation of the modbus mapper.
+- Click [here](../../docs/components/mappers/modbus_mapper.md#modbus-mapper) for detailed documentation of the modbus mapper.

@@ -24,8 +24,10 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	stderrors "errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -227,7 +229,7 @@ func (uc *UpstreamController) updatePodStatus() {
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
 				for _, podStatus := range podStatuses {
-					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(podStatus.Name, metaV1.GetOptions{})
+					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(context.Background(), podStatus.Name, metaV1.GetOptions{})
 					if errors.IsNotFound(err) {
 						klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
 
@@ -295,13 +297,13 @@ func (uc *UpstreamController) updatePodStatus() {
 					uc.normalizePodStatus(getPod, &status)
 					getPod.Status = status
 
-					if updatedPod, err := uc.kubeClient.CoreV1().Pods(getPod.Namespace).UpdateStatus(getPod); err != nil {
+					if updatedPod, err := uc.kubeClient.CoreV1().Pods(getPod.Namespace).UpdateStatus(context.Background(), getPod, metaV1.UpdateOptions{}); err != nil {
 						klog.Warningf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
 					} else {
 						klog.Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
 						if updatedPod.DeletionTimestamp != nil && (status.Phase == v1.PodSucceeded || status.Phase == v1.PodFailed) {
 							if uc.isPodNotRunning(status.ContainerStatuses) {
-								if err := uc.kubeClient.CoreV1().Pods(updatedPod.Namespace).Delete(updatedPod.Name, metaV1.NewDeleteOptions(0)); err != nil {
+								if err := uc.kubeClient.CoreV1().Pods(updatedPod.Namespace).Delete(context.Background(), updatedPod.Name, *metaV1.NewDeleteOptions(0)); err != nil {
 									klog.Warningf("message: %s, graceful delete pod failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, updatedPod.Namespace, updatedPod.Name)
 								}
 								klog.Infof("message: %s, pod delete successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
@@ -321,7 +323,7 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
-	return uc.kubeClient.CoreV1().Nodes().Create(node)
+	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
 func (uc *UpstreamController) updateNodeStatus() {
@@ -359,7 +361,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 			switch msg.GetOperation() {
 			case model.InsertOperation:
-				_, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
+				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if err == nil {
 					klog.Infof("node: %s already exists, do nothing", name)
 					uc.nodeMsgResponse(name, namespace, "OK", msg)
@@ -367,22 +369,25 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 
 				if !errors.IsNotFound(err) {
-					klog.Errorf("get node %s info error: %v , register node failed", name, err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("get node %s info error: %v , register node failed", name, err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
 				node := &v1.Node{}
 				err = json.Unmarshal(data, node)
 				if err != nil {
-					klog.Errorf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
 				if _, err = uc.createNode(name, node); err != nil {
-					klog.Errorf("create node %s error: %v , register node failed", name, err)
-					uc.nodeMsgResponse(name, namespace, "", msg)
+					errLog := fmt.Sprintf("create node %s error: %v , register node failed", name, err)
+					klog.Error(errLog)
+					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
 				}
 
@@ -396,7 +401,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 					continue
 				}
 
-				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
+				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
 					klog.Warningf("message: %s process failure, node %s not found", msg.GetID(), name)
 					continue
@@ -449,7 +454,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
 
 				getNode.Status = nodeStatusRequest.Status
-				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(getNode)
+				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
@@ -698,7 +703,7 @@ func (uc *UpstreamController) updateNode() {
 
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
-				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
+				getNode, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 				if errors.IsNotFound(err) {
 					klog.Warningf("message: %s process failure, node %s not found", msg.GetID(), name)
 					continue
@@ -715,7 +720,7 @@ func (uc *UpstreamController) updateNode() {
 				for k, v := range noderequest.Annotations {
 					getNode.Annotations[k] = v
 				}
-				node, err := uc.kubeClient.CoreV1().Nodes().Update(getNode)
+				node, err := uc.kubeClient.CoreV1().Nodes().Update(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
@@ -778,7 +783,7 @@ func (uc *UpstreamController) deletePod() {
 			deleteOptions := metaV1.NewDeleteOptions(0)
 			// Use the pod UID as the precondition for deletion to prevent deleting a newly created pod with the same name and namespace.
 			deleteOptions.Preconditions = metaV1.NewUIDPreconditions(podUID)
-			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(name, deleteOptions)
+			err = uc.kubeClient.CoreV1().Pods(namespace).Delete(context.Background(), name, *deleteOptions)
 			if err != nil {
 				klog.Warningf("Failed to delete pod, namespace: %s, name: %s, err: %v", namespace, name, err)
 				continue

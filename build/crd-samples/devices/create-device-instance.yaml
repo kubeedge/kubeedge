@@ -1,4 +1,4 @@
-apiVersion: devices.kubeedge.io/v1alpha1
+apiVersion: devices.kubeedge.io/v1alpha2
 kind: Device
 metadata:
   name: sensor-tag-instance-01
@@ -11,13 +11,14 @@ spec:
     name: sensor-tag-model
   protocol:
     modbus:
-      rtu:
+      slaveID: 1
+    common:
+      com:
         serialPort: '1'
         baudRate: 115200
         dataBits: 8
         parity: even
         stopBits: 1
-        slaveID: 1
   nodeSelector:
     nodeSelectorTerms:
     - matchExpressions:
@@ -25,6 +26,23 @@ spec:
         operator: In
         values:
         - node1
+  propertyVisitors:
+    - propertyName: temperature
+      modbus:
+        register: CoilRegister
+        offset: 2
+        limit: 1
+        scale: 1
+        isSwap: true
+        isRegisterSwap: true
+    - propertyName: temperature-enable
+      modbus:
+        register: DiscreteInputRegister
+        offset: 3
+        limit: 1
+        scale: 1.0
+        isSwap: true
+        isRegisterSwap: true
 status:
   twins:
     - propertyName: temperature-enable

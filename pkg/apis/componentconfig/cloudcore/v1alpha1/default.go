@@ -46,15 +46,16 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
-				Enable:            true,
-				KeepaliveInterval: 30,
-				NodeLimit:         10,
-				TLSCAFile:         constants.DefaultCAFile,
-				TLSCAKeyFile:      constants.DefaultCAKeyFile,
-				TLSCertFile:       constants.DefaultCertFile,
-				TLSPrivateKeyFile: constants.DefaultKeyFile,
-				WriteTimeout:      30,
-				AdvertiseAddress:  []string{advertiseAddress.String()},
+				Enable:                  true,
+				KeepaliveInterval:       30,
+				NodeLimit:               1000,
+				TLSCAFile:               constants.DefaultCAFile,
+				TLSCAKeyFile:            constants.DefaultCAKeyFile,
+				TLSCertFile:             constants.DefaultCertFile,
+				TLSPrivateKeyFile:       constants.DefaultKeyFile,
+				WriteTimeout:            30,
+				AdvertiseAddress:        []string{advertiseAddress.String()},
+				EdgeCertSigningDuration: 365,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
 					Address:            "0.0.0.0",
@@ -177,7 +178,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
-				NodeLimit:         10,
+				NodeLimit:         1000,
 				TLSCAFile:         constants.DefaultCAFile,
 				TLSCAKeyFile:      constants.DefaultCAKeyFile,
 				TLSCertFile:       constants.DefaultCertFile,
