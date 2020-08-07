@@ -142,12 +142,10 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	nodeStatus.Status.Phase = e.getNodePhase()
 
 	devicePluginCapacity, _, removedDevicePlugins := e.getDevicePluginResourceCapacity()
-	if devicePluginCapacity != nil {
-		for k, v := range devicePluginCapacity {
-			klog.Infof("Update capacity for %s to %d", k, v.Value())
-			nodeStatus.Status.Capacity[k] = v
-			nodeStatus.Status.Allocatable[k] = v
-		}
+	for k, v := range devicePluginCapacity {
+		klog.Infof("Update capacity for %s to %d", k, v.Value())
+		nodeStatus.Status.Capacity[k] = v
+		nodeStatus.Status.Allocatable[k] = v
 	}
 
 	nameSet := sets.NewString(string(v1.ResourceCPU), string(v1.ResourceMemory), string(v1.ResourceStorage),
@@ -261,14 +259,13 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 	if err != nil {
 		return nodeInfo, err
 	}
-	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
+	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("%s://%s", e.containerRuntimeName, runtimeVersion.String())
 
 	nodeInfo.KernelVersion = kernel
 	nodeInfo.OperatingSystem = runtime.GOOS
 	nodeInfo.Architecture = runtime.GOARCH
 	nodeInfo.KubeletVersion = e.version
 	nodeInfo.OSImage = prettyName
-	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
 }
@@ -394,6 +391,9 @@ func (e *edged) registerNode() error {
 	res, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
 	if err != nil || res.Content != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
+		if res.Content != "OK" {
+			klog.Errorf("response from cloud core: %s", res.Content)
+		}
 		return err
 	}
 

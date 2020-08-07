@@ -39,6 +39,7 @@ application orchestration capabilities to hosts at Edge.
 
    KuBeEdge <configuration/kubeedge>
    CRI <configuration/cri>
+   Storage <configuration/storage>
 
 .. toctree::
    :maxdepth: 1

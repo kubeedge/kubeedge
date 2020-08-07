@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -106,7 +107,6 @@ func (dc *DownstreamController) syncConfigMap() {
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				operation = model.DeleteOperation
-				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("config map event type: %s unsupported", e.Type)
@@ -114,6 +114,9 @@ func (dc *DownstreamController) syncConfigMap() {
 			}
 
 			nodes := dc.lc.ConfigMapNodes(configMap.Namespace, configMap.Name)
+			if e.Type == watch.Deleted {
+				dc.lc.DeleteConfigMap(configMap.Namespace, configMap.Name)
+			}
 			klog.V(4).Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
@@ -157,7 +160,6 @@ func (dc *DownstreamController) syncSecret() {
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				operation = model.DeleteOperation
-				dc.lc.DeleteSecret(secret.Namespace, secret.Name)
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("secret event type: %s unsupported", e.Type)
@@ -165,6 +167,9 @@ func (dc *DownstreamController) syncSecret() {
 			}
 
 			nodes := dc.lc.SecretNodes(secret.Namespace, secret.Name)
+			if e.Type == watch.Deleted {
+				dc.lc.DeleteSecret(secret.Namespace, secret.Name)
+			}
 			klog.V(4).Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
 				msg := model.NewMessage("")
@@ -392,7 +397,7 @@ func (dc *DownstreamController) syncEndpoints() {
 						LabelSelector: labelSelectorString,
 						Limit:         100,
 					}
-					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(listOptions)
+					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(context.Background(), listOptions)
 					if err == nil {
 						dc.lc.AddOrUpdateServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name), pods.Items)
 					}
@@ -472,7 +477,7 @@ func (dc *DownstreamController) initLocating() error {
 
 	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
-	nodes, err := dc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: selector.String()})
+	nodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return err
 	}
@@ -488,10 +493,10 @@ func (dc *DownstreamController) initLocating() error {
 	}
 
 	if !config.Config.EdgeSiteEnable {
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{})
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	} else {
 		selector := fields.OneTermEqualSelector("spec.nodeName", config.Config.NodeName).String()
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(metav1.ListOptions{FieldSelector: selector})
+		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{FieldSelector: selector})
 	}
 	if err != nil {
 		return err

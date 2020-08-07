@@ -142,6 +142,7 @@ process_content () {
 #############################################################################
 
 export GO111MODULE=on
+export GOFLAGS=-mod=mod
 
 # Check bash version
 if (( BASH_VERSINFO[0] < 4 )); then
@@ -199,6 +200,13 @@ for PACKAGE in $(go list -m -json all | jq -r .Path | sort -f); do
   fi
   if [[ ! -e "${DEPS_DIR}/${PACKAGE}" ]]; then
     echo "${PACKAGE} doesn't exist in ${DEPS_DIR}, skipping" >&2
+    continue
+  fi
+  if [[ "${PACKAGE}" = "sigs.k8s.io/structured-merge-diff" ]]; then
+    # this package doesn't exist, but has v3 subdirectory as a different package
+    # so it can't be  filtered by the previous rule
+    # temporarily treat this way until find out a better rule
+    echo "${PACKAGE}, temporarily skipping" >&2
     continue
   fi
   echo "${PACKAGE}"

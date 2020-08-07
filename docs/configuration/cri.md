@@ -34,12 +34,12 @@ podSandboxImage: k8s.gcr.io/pause:3.2
 runtimeType: remote
 ```
 
-By default, cgroup driver of CRI is configured as `cgroupfs`, if this is not the case, you can switch to `system` manually in `edgecore.yaml`,
+By default, cgroup driver of CRI is configured as `cgroupfs`, if this is not the case, you can switch to `systemd` manually in `edgecore.yaml`,
 
 ```yaml
 modules:
   edged:
-    cgroupDriver: system
+    cgroupDriver: systemd
 ```
 
 Set `systemd_cgroup` to true in containerd’s configuration file (/etc/containerd/config.toml ), restart contained service after that.
@@ -96,7 +96,7 @@ podSandboxImage: k8s.gcr.io/pause:3.2
 runtimeType: remote
 ```
 
-By default, `CRI-O` uses `cgroupfs` as a cgroup driver manager, update the `CRI-O` config file (/etc/crio/crio.conf.d/00-default.conf) like this if you want to switch to `system` instead.
+By default, `CRI-O` uses `cgroupfs` as a cgroup driver manager, update the `CRI-O` config file (/etc/crio/crio.conf.d/00-default.conf) like this if you want to switch to `systemd` instead.
 
 ```conf
 # Cgroup management implementation used for the runtime.
@@ -115,7 +115,7 @@ Remember to update `edgecore.yaml` as well for your cgroup driver manager,
 ```yaml
 modules:
   edged:
-    cgroupDriver: system
+    cgroupDriver: systemd
 ```
 
 Start `CRI-O` and `edgecore` services (assume both services are taken care of by `systemd`),

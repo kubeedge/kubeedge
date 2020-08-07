@@ -8,7 +8,7 @@ metadata:
     kubeedge: cloudcore
 data:
   cloudcore.yaml: |
-    apiVersion: cloudcore.config.kubeedge.io/v1alpha1
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha2
     kind: CloudCore
     kubeAPIConfig:
       kubeConfig: ""

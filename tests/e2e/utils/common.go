@@ -38,7 +38,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
@@ -54,6 +54,7 @@ const (
 	ModBus            = "modbus"
 	Led               = "led"
 	IncorrectInstance = "incorrect-instance"
+	Customized        = "customized"
 )
 
 var (
@@ -635,8 +636,8 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 }
 
 // newDeviceInstanceObject creates a new device instance object
-func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha1.Device {
-	var deviceInstance v1alpha1.Device
+func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha2.Device {
+	var deviceInstance v1alpha2.Device
 	if !updated {
 		switch protocolType {
 		case BlueTooth:
@@ -645,6 +646,8 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 			deviceInstance = NewModbusDeviceInstance(nodeSelector)
 		case Led:
 			deviceInstance = NewLedDeviceInstance(nodeSelector)
+		case Customized:
+			deviceInstance = NewCustomizedDeviceInstance(nodeSelector)
 		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
@@ -664,8 +667,8 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 }
 
 // newDeviceModelObject creates a new device model object
-func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceModel {
-	var deviceModel v1alpha1.DeviceModel
+func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceModel {
+	var deviceModel v1alpha2.DeviceModel
 	if !updated {
 		switch protocolType {
 		case BlueTooth:
@@ -674,6 +677,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 			deviceModel = NewModbusDeviceModel()
 		case Led:
 			deviceModel = NewLedDeviceModel()
+		case Customized:
+			deviceModel = NewCustomizedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
 		}
@@ -693,7 +698,7 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 }
 
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
-func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
+func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha2.DeviceModel) ([]v1alpha2.DeviceModel, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
@@ -726,7 +731,7 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelAPI string, ex
 }
 
 // GetDevice to get the device list
-func GetDevice(list *v1alpha1.DeviceList, getDeviceAPI string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
+func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v1alpha2.Device) ([]v1alpha2.Device, error) {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
@@ -856,10 +861,22 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
+	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
+	Infof("configMap.Data %v", configMap.Data)
 	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
 		return false
 	}
 	return true
+}
+
+// CompareConfigMaps is used to compare 2 device profile in config maps
+func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
+	deviceProfile := configMap.Data["deviceProfile.json"]
+	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
+	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
+	json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
+	json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
+	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 
 // CompareTwin is used to compare 2 device Twins

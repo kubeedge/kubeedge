@@ -1,0 +1,161 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: devicemodels.devices.kubeedge.io
+spec:
+  group: devices.kubeedge.io
+  names:
+    kind: DeviceModel
+    plural: devicemodels
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            properties:
+              description: 'Required: List of device properties.'
+              items:
+                properties:
+                  description:
+                    description: The device property description.
+                    type: string
+                  name:
+                    description: 'Required: The device property name.'
+                    type: string
+                  type:
+                    description: 'Required: PropertyType represents the type and data
+                      validation of the property.'
+                    properties:
+                      int:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: int64
+                            type: integer
+                          maximum:
+                            format: int64
+                            type: integer
+                          minimum:
+                            format: int64
+                            type: integer
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      string:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      double:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: double
+                            type: number
+                          maximum:
+                            format: double
+                            type: number
+                          minimum:
+                            format: double
+                            type: number
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      float:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            format: float
+                            type: number
+                          maximum:
+                            format: float
+                            type: number
+                          minimum:
+                            format: float
+                            type: number
+                          unit:
+                            description: The unit of the property
+                            type: string
+                        required:
+                          - accessMode
+                        type: object
+                      boolean:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                          defaultValue:
+                            type: boolean
+                        required:
+                          - accessMode
+                        type: object
+                      bytes:
+                        properties:
+                          accessMode:
+                            description: 'Required: Access mode of property, ReadWrite
+                              or ReadOnly.'
+                            type: string
+                            enum:
+                              - ReadOnly
+                              - ReadWrite
+                        required:
+                          - accessMode
+                        type: object
+                    type: object
+                required:
+                  - name
+                  - type
+                type: object
+              type: array
+          type: object
+  version: v1alpha2

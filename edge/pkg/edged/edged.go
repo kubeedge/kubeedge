@@ -180,7 +180,10 @@ type edged struct {
 	containerRuntimeName      string
 	concurrentConsumers       int
 	// container runtime
-	containerRuntime   kubecontainer.Runtime
+	containerRuntime kubecontainer.Runtime
+	// Streaming runtime handles container streaming.
+	streamingRuntime kubecontainer.StreamingRuntime
+
 	podCache           kubecontainer.Cache
 	os                 kubecontainer.OSInterface
 	resourceAnalyzer   serverstats.ResourceAnalyzer
@@ -327,6 +330,13 @@ func (e *edged) Start() {
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
+
+	// start the CPU manager in the clcm
+	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
+	if err != nil {
+		klog.Errorf("Failed to start container manager, err: %v", err)
+		return
+	}
 
 	klog.Infof("starting syncPod")
 	e.syncPod()
@@ -583,14 +593,15 @@ func newEdged(enable bool) (*edged, error) {
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		ed.cadvisor,
 		cm.NodeConfig{
-			CgroupDriver:                 edgedconfig.Config.CGroupDriver,
-			SystemCgroupsName:            edgedconfig.Config.SystemCgroups,
-			KubeletCgroupsName:           edgedconfig.Config.EdgeCoreCgroups,
-			ContainerRuntime:             edgedconfig.Config.RuntimeType,
-			CgroupsPerQOS:                edgedconfig.Config.CgroupsPerQOS,
-			KubeletRootDir:               DefaultRootDir,
-			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
-			CgroupRoot:                   edgedconfig.Config.CgroupRoot,
+			CgroupDriver:                      edgedconfig.Config.CGroupDriver,
+			SystemCgroupsName:                 edgedconfig.Config.SystemCgroups,
+			KubeletCgroupsName:                edgedconfig.Config.EdgeCoreCgroups,
+			ContainerRuntime:                  edgedconfig.Config.RuntimeType,
+			CgroupsPerQOS:                     edgedconfig.Config.CgroupsPerQOS,
+			KubeletRootDir:                    DefaultRootDir,
+			ExperimentalCPUManagerPolicy:      string(cpumanager.PolicyNone),
+			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
+			ExperimentalTopologyManagerPolicy: "none",
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
@@ -600,6 +611,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	ed.containerRuntime = containerRuntime
+	ed.streamingRuntime = containerRuntime
 	ed.runner = containerRuntime
 	ed.containerManager = containerManager
 	ed.runtimeService = runtimeService

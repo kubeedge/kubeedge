@@ -1,5 +1,5 @@
 
-apiVersion: devices.kubeedge.io/v1alpha1
+apiVersion: devices.kubeedge.io/v1alpha2
 kind: Device
 metadata:
   name: sensor-tag-instance-01
@@ -20,6 +20,43 @@ spec:
         operator: In
         values:
         - edge-node1          #pls give your edge node name
+  propertyVisitors:
+    - propertyName: temperature
+      bluetooth:
+        characteristicUUID: f000aa0104514000b000000000000000
+        dataConverter:
+        startIndex: 1
+        endIndex: 0
+        shiftRight: 2
+        orderOfOperations:
+        - operationType: Multiply
+          operationValue: 0.03125
+    - propertyName: temperature-enable
+      bluetooth:
+        characteristicUUID: f000aa0204514000b000000000000000
+        dataWrite:
+        "ON": [1]   #Here "ON" refers to the value of the property "temperature-enable" and [1] refers to the corresponding []byte value to be written into the device when the value of temperature-enable is "ON"
+        "OFF": [0]
+    - propertyName: io-config-initialize
+      bluetooth:
+        characteristicUUID: f000aa6604514000b000000000000000
+    - propertyName: io-data-initialize
+      bluetooth:
+        characteristicUUID: f000aa6504514000b000000000000000
+    - propertyName: io-config
+      bluetooth:
+        characteristicUUID: f000aa6604514000b000000000000000
+    - propertyName: io-data
+      bluetooth:
+        characteristicUUID: f000aa6504514000b000000000000000
+        dataWrite:
+        "Red": [1]    #Here "Red" refers to the value of the property "io-data" and [1] refers to the corresponding []byte value to be written into the device when the value of io-data is "Red"
+        "Green": [2]
+        "RedGreen": [3]
+        "Buzzer": [4]
+        "BuzzerRed": [5]
+        "BuzzerGreen": [6]
+        "BuzzerRedGreen": [7]
 status:
   twins:
     - propertyName: temperature-enable

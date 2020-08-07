@@ -11,7 +11,7 @@ services:
   - docker
 
 go:
-  - 1.13
+  - 1.14
 
 before_install:
   - |
@@ -28,8 +28,9 @@ jobs:
     - stage: "Verify vendor, codegen, gofmt, golint, govet"
       name: "Verify vendor, codegen, gofmt, golint, govet"
       before_script:
-        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.22.2
+        - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.23.7
         - export GO111MODULE=on
+        - export GOFLAGS=-mod=mod
         - sudo apt-get install jq -y
       script:
         - make verify
@@ -55,7 +56,7 @@ jobs:
       arch: amd64
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
       script:
         - make test
         - make integrationtest
@@ -64,6 +65,7 @@ jobs:
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
+        - go mod vendor
         - export GOFLAGS=-mod=vendor
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -77,6 +79,7 @@ jobs:
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
+        - go mod vendor
         - export GOFLAGS=-mod=vendor
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -107,7 +110,7 @@ jobs:
     - name: "unit test"
       arch: arm64
       before_script:
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
       script:
         - make test
     - name: "build docker images on arm64"

@@ -102,8 +102,8 @@ func TestDeviceStartAction(t *testing.T) {
 	}
 }
 
-// TestDevicetHeartBeat is function to test Start() when value is passed in HeartBeatChan.
-func TestDeviceStartHeartBeat(t *testing.T) {
+// TestDeviceHeartBeat is function to test Start() when value is passed in HeartBeatChan.
+func TestDeviceHeartBeat(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	heartChanStop := make(chan interface{}, 1)
@@ -150,7 +150,6 @@ func TestDeviceStartHeartBeat(t *testing.T) {
 	}
 }
 
-// TestDealDeviceStatusUpdate test dealDeviceStatusUpdate
 func TestDealDeviceStateUpdate(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
@@ -263,8 +262,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 }
 
-//TestDealDeviceUpdated is function to test dealDeviceUpdated().
-func TestDealDeviceUpdated(t *testing.T) {
+func TestDealUpdateDeviceAttr(t *testing.T) {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	dtContexts, _ := dtcontext.InitDTContext()
 	content := dttype.DeviceUpdate{}
@@ -283,7 +281,7 @@ func TestDealDeviceUpdated(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:     "DealDeviceUpdatedTest-Wrong Message Type",
+			name:     "DealUpdateDeviceAttrTest-Wrong Message Type",
 			context:  dtContexts,
 			resource: "Device",
 			msg:      "",
@@ -291,7 +289,7 @@ func TestDealDeviceUpdated(t *testing.T) {
 			wantErr:  errors.New("msg not Message type"),
 		},
 		{
-			name:     "DealDeviceUpdatedTest-Correct Message Type",
+			name:     "DealUpdateDeviceAttrTest-Correct Message Type",
 			context:  dtContexts,
 			resource: "DeviceA",
 			msg:      &msg,
@@ -301,20 +299,19 @@ func TestDealDeviceUpdated(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := dealDeviceUpdated(test.context, test.resource, test.msg)
+			got, err := dealDeviceAttrUpdate(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("dealDeviceUpdated() error = %v, wantErr %v", err, test.wantErr)
+				t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("dealDeviceUpdated() = %v, want %v", got, test.want)
+				t.Errorf("dealUpdateDeviceAttr() = %v, want %v", got, test.want)
 			}
 		})
 	}
 }
 
-// TestDeviceUpdated is function to test DeviceUpdated().
-func TestDeviceUpdated(t *testing.T) {
+func TestUpdateDeviceAttr(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	var querySeterMock *beego.MockQuerySeter
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
@@ -323,25 +320,6 @@ func TestDeviceUpdated(t *testing.T) {
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-
-	// adds is fake DeviceAttr used as argument
-	adds := make([]dtclient.DeviceAttr, 0)
-	// deletes is fake DeviceDelete used as argument
-	deletes := make([]dtclient.DeviceDelete, 0)
-	// updates is fake DeviceAttrUpdate used as argument
-	updates := make([]dtclient.DeviceAttrUpdate, 0)
-	adds = append(adds, dtclient.DeviceAttr{
-		DeviceID: "Test",
-	})
-	deletes = append(deletes, dtclient.DeviceDelete{
-		DeviceID: "test",
-		Name:     "test",
-	})
-	updates = append(updates, dtclient.DeviceAttrUpdate{
-		DeviceID: "test",
-		Name:     "test",
-		Cols:     make(map[string]interface{}),
-	})
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
@@ -455,19 +433,18 @@ func TestDeviceUpdated(t *testing.T) {
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
 
-			got, err := DeviceUpdated(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
+			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
 			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("DeviceUpdated() error = %v, wantErr %v", err, test.wantErr)
+				t.Errorf("UpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("DeviceUpdated() failed Got = %v, want %v", got, test.want)
+				t.Errorf("UpdateDeviceAttr() failed Got = %v, want %v", got, test.want)
 			}
 		})
 	}
 }
 
-// TestDealMsgAttr is function to test DealMsgAttr().
 func TestDealMsgAttr(t *testing.T) {
 	dtContextsEmptyAttributes, err := dtcontext.InitDTContext()
 	if err != nil {
