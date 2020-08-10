@@ -120,9 +120,7 @@ func (eh *EdgeHub) routeToEdge() {
 }
 
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
-	eh.keeperLock.Lock()
 	err := eh.chClient.Send(message)
-	eh.keeperLock.Unlock()
 	if err != nil {
 		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
