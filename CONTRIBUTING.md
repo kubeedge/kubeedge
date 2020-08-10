@@ -20,7 +20,7 @@ Welcome to KubeEdge!
 
 ## Code of Conduct
 
-Please make sure to read and observe our [Code of Conduct](https://github.com/kubeedge/kubeedge/blob/master/CODE_OF_CONDUCT.md).
+Please make sure to read and observe our [Code of Conduct](/CODE_OF_CONDUCT.md).
 
 ## Community Expectations
 
