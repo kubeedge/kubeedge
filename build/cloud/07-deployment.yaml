@@ -38,6 +38,8 @@ spec:
           mountPath: /etc/kubeedge/config
         - name: certs
           mountPath: /etc/kubeedge
+        - name: sock
+          mountPath: /var/lib/kubeedge
       restartPolicy: Always
       serviceAccount: cloudcore
       serviceAccountName: cloudcore
@@ -49,3 +51,8 @@ spec:
         hostPath:
           path: /etc/kubeedge
           type: DirectoryOrCreate
+      - name: sock
+        hostPath:
+          path: /var/lib/kubeedge
+          type: DirectoryOrCreate
+
