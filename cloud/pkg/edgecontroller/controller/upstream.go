@@ -492,35 +492,35 @@ func (uc *UpstreamController) updateNodeStatus() {
 func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metaV1.GetOptions{})
+		configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := configMap.ResourceVersion
 		return configMap, resourceVersion, err
 	case model.ResourceTypeSecret:
-		secret, err := uc.kubeClient.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
+		secret, err := uc.kubeClient.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := secret.ResourceVersion
 		return secret, resourceVersion, err
 	case common.ResourceTypeService:
-		svc, err := uc.kubeClient.CoreV1().Services(namespace).Get(name, metaV1.GetOptions{})
+		svc, err := uc.kubeClient.CoreV1().Services(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := svc.ResourceVersion
 		return svc, resourceVersion, err
 	case common.ResourceTypeEndpoints:
-		eps, err := uc.kubeClient.CoreV1().Endpoints(namespace).Get(name, metaV1.GetOptions{})
+		eps, err := uc.kubeClient.CoreV1().Endpoints(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := eps.ResourceVersion
 		return eps, resourceVersion, err
 	case common.ResourceTypePersistentVolume:
-		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(name, metaV1.GetOptions{})
+		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := pv.ResourceVersion
 		return pv, resourceVersion, err
 	case common.ResourceTypePersistentVolumeClaim:
-		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(name, metaV1.GetOptions{})
+		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := pvc.ResourceVersion
 		return pvc, resourceVersion, err
 	case common.ResourceTypeVolumeAttachment:
-		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(name, metaV1.GetOptions{})
+		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := va.ResourceVersion
 		return va, resourceVersion, err
 	case model.ResourceTypeNode:
-		node, err := uc.kubeClient.CoreV1().Nodes().Get(name, metaV1.GetOptions{})
+		node, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
 	default:
