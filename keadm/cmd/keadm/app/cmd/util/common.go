@@ -519,7 +519,6 @@ func retryDownload(filename, checksumFilename, version string) error {
 			if _, err := runCommandWithStdout(cmdStr); err != nil {
 				return err
 			}
-			continue
 		} else {
 			break
 		}
