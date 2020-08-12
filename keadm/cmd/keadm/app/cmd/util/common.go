@@ -27,14 +27,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gookit/gcli/v2/interact"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //Constants used by installers
@@ -362,15 +362,26 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 	if _, err = os.Stat(filePath); err == nil {
 		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and will checksum for it.")
 		if success, _ := checkSum(filename, checksumFilename, version); !success {
-			cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
-			if _, err := runCommandWithStdout(cmdStr); err != nil {
-				return err
+			ans := interact.SelectOne(
+				fmt.Sprintf("%v in your path checksum failed and do you want to continue to install ?", filename),
+				[]string{"yes", "no"},
+				"",
+			)
+			if strings.ToLower(ans) == "yes" {
+				fmt.Println("We will use unSafe binaray to install kubeedge.")
+			} else if strings.ToLower(ans) == "no" {
+				fmt.Printf("We will delete broken file %v and try to download again \n", filename)
+				cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+				if _, err := runCommandWithStdout(cmdStr); err != nil {
+					return err
+				}
+				if err := retryDownload(filename, checksumFilename, version); err != nil {
+					return err
+				}
 			}
-			if err := retryDownload(filename, checksumFilename, version); err != nil {
-				return err
-			}
+		} else {
+			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and checksum successfully.")
 		}
-		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and checksum successfully.")
 	} else if !os.IsNotExist(err) {
 		return err
 	} else {

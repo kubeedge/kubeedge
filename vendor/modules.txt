@@ -349,6 +349,20 @@ github.com/google/uuid
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
+# github.com/gookit/color v1.2.6
+github.com/gookit/color
+# github.com/gookit/gcli/v2 v2.3.3
+## explicit
+github.com/gookit/gcli/v2/interact
+# github.com/gookit/goutil v0.3.1
+github.com/gookit/goutil/arrutil
+github.com/gookit/goutil/cliutil
+github.com/gookit/goutil/envutil
+github.com/gookit/goutil/fmtutil
+github.com/gookit/goutil/mathutil
+github.com/gookit/goutil/strutil
+github.com/gookit/goutil/sysutil
+github.com/gookit/goutil/sysutil/process
 # github.com/gorilla/mux v1.7.3
 ## explicit
 github.com/gorilla/mux
@@ -375,7 +389,7 @@ github.com/imdario/mergo
 github.com/inconshreveable/mousetrap
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
-# github.com/json-iterator/go v1.1.8
+# github.com/json-iterator/go v1.1.10
 github.com/json-iterator/go
 # github.com/karrick/godirwalk v1.10.12
 ## explicit
@@ -631,7 +645,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
+# golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/ssh/terminal
@@ -654,7 +668,8 @@ golang.org/x/net/websocket
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
+# golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
@@ -682,7 +697,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20190920225731-5eefd052ad72
+# golang.org/x/tools v0.0.0-20191130070609-6e064ea0cf2d
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
@@ -694,6 +709,7 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/module
 golang.org/x/tools/internal/semver
+golang.org/x/tools/internal/span
 # golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
