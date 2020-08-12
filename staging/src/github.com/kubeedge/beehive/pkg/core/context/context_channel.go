@@ -150,8 +150,18 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 
 	ctx.anonChsLock.RLock()
 	defer ctx.anonChsLock.RUnlock()
+
+	deadline := time.Now().Add(MessageTimeoutDefault)
+	sendTimer := time.NewTimer(time.Until(deadline))
+
 	if channel, exist := ctx.anonChannels[anonName]; exist {
-		channel <- message
+		select {
+		case channel <- message:
+		case <-sendTimer.C:
+			klog.Warning("timeout when SendResp message")
+			return
+		}
+		sendTimer.Stop()
 		return
 	}
 
