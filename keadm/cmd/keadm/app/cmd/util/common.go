@@ -35,6 +35,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 )
 
 //Constants used by installers
@@ -363,21 +364,21 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and will checksum for it.")
 		if success, _ := checkSum(filename, checksumFilename, version); !success {
 			ans := interact.SelectOne(
-				fmt.Sprintf("%v in your path checksum failed and do you want to continue to install ?", filename),
+				fmt.Sprintf("%v in your path checksum failed and do you want to delete this file and try to download again?", filename),
 				[]string{"yes", "no"},
 				"",
 			)
 			if strings.ToLower(ans) == "yes" {
-				fmt.Println("We will use unSafe binaray to install kubeedge.")
-			} else if strings.ToLower(ans) == "no" {
-				fmt.Printf("We will delete broken file %v and try to download again \n", filename)
 				cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
 				if _, err := runCommandWithStdout(cmdStr); err != nil {
 					return err
 				}
+				klog.Infof("%v have been deleted and will try to download again", filename)
 				if err := retryDownload(filename, checksumFilename, version); err != nil {
 					return err
 				}
+			} else if strings.ToLower(ans) == "no" {
+				klog.Warningf("failed to checksum and will continue to install.")
 			}
 		} else {
 			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and checksum successfully.")
