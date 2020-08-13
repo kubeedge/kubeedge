@@ -5,6 +5,7 @@
         * [EdgeSite Binaries](#edgesite-binaries)
      * [KubeEdge v1.4 Release Notes](#kubeedge-v14-release-notes)
         * [1.4 What's New](#14-whats-new)
+        * [Important Steps before Upgrading](#important-steps-before-upgrading)       
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
   * [v1.4.0-beta.0](#v140-beta0)
