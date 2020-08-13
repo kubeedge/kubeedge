@@ -58,6 +58,7 @@ on the cloud and on the edge side. ([#1982](https://github.com/kubeedge/kubeedge
 ### Important Steps before Upgrading
 
 **Device CRD API change**
+
 KubeEdge Device Controller now only reflects v1alpha2 for Device CRD, please make sure [Device v1alpha2](https://github.com/kubeedge/kubeedge/blob/release-1.4/build/crds/devices/devices_v1alpha2_device.yaml) and [DeviceModel v1alpha2](https://github.com/kubeedge/kubeedge/blob/release-1.4/build/crds/devices/devices_v1alpha2_devicemodel.yaml) installed, and you would need to manually convert their existing custom resources from v1alpha1 to v1alpha2.
 
 It's recommended to keep v1alpha1 CRD and custom resources in the cluster or exported somewhere before upgrading, in case any rollback is needed.
