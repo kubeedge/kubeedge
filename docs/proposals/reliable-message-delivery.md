@@ -239,6 +239,15 @@ the edge node is back online.
 
 - When an edgenode is deleted from cloud, cloudcore will remove the corresponding message queue and store.
 
+### ObjectSync CR Garbage Collection
+
+When the EdgeNode is not in the cluster, all the ObjectSync CRs of the EdgeNode should be deleted.
+
+Now, There are two main ways to trigger garbage collection: start of CloudCore and deleted event of EdgeNode.
+
+* When CloudCore starts, it will first check whether there are old ObjectSync CRs and delete them.
+* When CloudCore is running, deleted event of the EdgeNode will trigger garbage collection.
+
 ## Performance
 
 We need to run performance tests after introducing the reliability feature and publish the difference
