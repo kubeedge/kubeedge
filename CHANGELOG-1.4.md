@@ -42,7 +42,7 @@ Upgrade device API from v1alpha1 to v1alpha2, enhancement include:
 
 Users are now able to customize the protocol of the edge device and also able to get and process the date in edge side.([#1687](https://github.com/kubeedge/kubeedge/pull/1687), [@luogangyi](https://github.com/luogangyi), [@kevin-wangzefeng](https://github.com/kevin-wangzefeng)).
 
-**Support Metrics-Server in Cloud**
+**Metrics-Server Support for metrics collection across cloud and edge**
 
 Users are now able to deploy metrics-server to collect resource metrics from edge nodes. Follow the [instructions here](/docs/setup/keadm.md#support-metrics-server-in-cloud) to deploy the metrics-server. ([#1735](https://github.com/kubeedge/kubeedge/pull/1735), [@Poor12](https://github.com/Poor12), [@kadisi](https://github.com/kadisi)).
 
