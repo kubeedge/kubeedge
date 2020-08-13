@@ -63,6 +63,17 @@ Key:
 * `+` KubeEdge has features or API objects that may not be present in the Kubernetes version.
 * `-` The Kubernetes version has features or API objects that KubeEdge can't use.
 
+### Golang compatibility
+
+|                     | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     | Golang 1.14     |
+|---------------------|----------------|-----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓              | ✓               | ✓               | ✗               | ✗               |
+| KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               | ✗               |
+| KubeEdge 1.2        | ✗              | ✗               | ✓               | ✗               | ✗               |
+| KubeEdge 1.3        | ✗              | ✗               | ✗               | ✓               | ✗               |
+| KubeEdge 1.4        | ✗              | ✗               | ✗               | ✗               | ✓               |
+| KubeEdge HEAD       | ✗              | ✗               | ✗               | ✗               | ✓               | 
+
 ## Guides
 
 See our documentation on [kubeedge.io](https://kubeedge.io).
