@@ -25,15 +25,22 @@
 ### KubeEdge Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [kubeedge-v1.3.1-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/kubeedge-v1.3.1-linux-arm64.tar.gz) |  76 MB | b1392dc2813078482dbb769ba21dd4c5583eb55f3ca3bfb531923ad4a4f080f12f411afe637840946198ba8b93345f2355d0f29414c4aea456f67265f467bdf2 |
+| [kubeedge-v1.3.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/kubeedge-v1.3.1-linux-arm.tar.gz) | 74.9 MB | 2e7312d16583664d4ddb125630ea2612eabc1df4e935ff8c1d4cf1b92e8a3968dde8b2123f6b4f8d1e029caa385f2b0dfd7f92c133d84c9953e5dcea1b479a40 |
+| [kubeedge-v1.3.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/edgesite-v1.3.1-linux-amd64.tar.gz) | 80.7 MB | 00c03e5343399ce518ed0445f5d400cfe908429c26305768b1e184787b55364aa256b44f335fa4a124f11bf6fd18c4a9d7a8f7b9fec932650d12469bb743b2a9 |
 
 
 ### Installer Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [keadm-v1.3.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/keadm-v1.3.1-linux-amd64.tar.gz) |  15.1 MB | 6f2d55f4fcb21da6b71ef5ed371e82deb9cb04fa079dee3692861cbbe3ec00eeebd237e26631218085c01ab66f4332d4a47c4cfe4080f115e8396a2dcf74e3b1 |
 
 ### EdgeSite Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [edgesite-v1.3.1-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/edgesite-v1.3.1-linux-arm64.tar.gz) | 27.5 MB | 06a221a5bdfacc3a5dbbae75d5518b5e3fcbf7ca27d6623021747f53136a33d6994dc6281b0b2b5752e5cd53d71434efeb5cd98e0fe31b1d8b65fb7fedbd3bd0 |
+| [edgesite-v1.3.1-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/edgesite-v1.3.1-linux-arm.tar.gz) | 27.2 MB | 39350b8bfd0b0f434296b9634e4727a3dd54fc8d45b453ad2479aaeb259ece634dc4049b00ff93a47bff674fd0c34f9ef99caab6d8ccb11b34e391df1409d801 |
+| [edgesite-v1.3.1-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.3.1/edgesite-v1.3.1-linux-amd64.tar.gz) | 29.8 MB | b45bccbd2d0f76991325838cdba84c21eebed85c6d33b893b92d468a052e424b72a1e81a452e9e4e13cae25808c7ccb174b68102e647903da1ed609a1fb3e96f |
 
 
 ## KubeEdge v1.3.1 Release Notes
