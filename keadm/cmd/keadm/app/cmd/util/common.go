@@ -352,9 +352,10 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 			for {
 				result, err := ask4confirm()
 				if err != nil {
+					fmt.Println(err.Error())
 					continue
 				}
-				if result == "yes" {
+				if result {
 					cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
 					if _, err := runCommandWithStdout(cmdStr); err != nil {
 						return err
@@ -363,9 +364,9 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 					if err := retryDownload(filename, checksumFilename, version); err != nil {
 						return err
 					}
-				} else if result == "no" {
+				} else {
 					klog.Warningf("failed to checksum and will continue to install.")
-					return nil
+					break
 				}
 			}
 		} else {
@@ -660,10 +661,10 @@ func retryDownload(filename, checksumFilename, version string) error {
 	return nil
 }
 
-func ask4confirm() (string, error) {
+func ask4confirm() (bool, error) {
 	var s string
 
-	fmt.Println("(yes/no/quit): ")
+	fmt.Println("(yes/no): ")
 	_, err := fmt.Scan(&s)
 	if err != nil {
 		panic(err)
@@ -673,12 +674,10 @@ func ask4confirm() (string, error) {
 	s = strings.ToLower(s)
 
 	if s == "y" || s == "yes" {
-		return "yes", nil
+		return true, nil
 	} else if s == "n" || s == "no" {
-		return "no", nil
-	} else if s == "quit" {
-		return "quit", nil
+		return false, nil
 	} else {
-		return "", fmt.Errorf("Invalid Input")
+		return false, fmt.Errorf("Invalid Input")
 	}
 }
