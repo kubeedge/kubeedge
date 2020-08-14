@@ -69,11 +69,9 @@ const (
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
-	InterfaceName = "eth0"
-
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 
-	RetryTimes              = 5
+	RetryTimes = 5
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
