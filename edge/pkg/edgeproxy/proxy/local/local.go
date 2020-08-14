@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversionscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -73,7 +74,7 @@ func (p *Proxy) forbidden(w http.ResponseWriter, req *http.Request) {
 //when k8s apiserver is accessible, the method will be interrupted.
 func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 	opts := metainternalversion.ListOptions{}
-	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metainternalversion.SchemeGroupVersion, &opts)
+	err := metainternalversionscheme.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, &opts)
 	if err != nil {
 		p.Err(err, w, req)
 		return

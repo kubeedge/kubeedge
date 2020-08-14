@@ -1,9 +1,11 @@
 package remote
 
 import (
+	"compress/gzip"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog"
@@ -41,7 +43,16 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 		return nil
 	}
 	// Store Resoponse Content-Type Header information to the context
+	// to support mime types with addition detail,such as application/vnd.kubernetes.protobuf;stream=watch
 	respContentType := resp.Header.Get("Content-Type")
+	parts := strings.Split(respContentType, ",")
+	if len(parts) >= 1 {
+		respContentType = parts[0]
+	}
+	parts = strings.Split(respContentType, ";")
+	if len(parts) >= 1 {
+		respContentType = parts[0]
+	}
 	ctx = util.WithRespContentType(ctx, respContentType)
 	// Store Resoponse Content-Encoding Header information to the context, k8s apiserver automatically enables gzip compression when the response content greater than 128k
 	algo := resp.Header.Get("Content-Encoding")
@@ -55,13 +66,23 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 		// cache response content according to the reqestInfo.Verb
 		go func() {
 			var err error
+			drc := wrapped.DupReadCloser()
+			//When the response uses gzip compression, use gzip.Reader to read the response body
+			algo, _ := util.GetRespContentEncoding(ctx)
+			if algo == "gzip" {
+				drc, err = gzip.NewReader(drc)
+				if err != nil {
+					klog.Errorf("compress response body error!%v",err)
+					return
+				}
+			}
 			switch reqInfo.Verb {
 			case "list":
-				err = r.cacheMgr.CacheListObj(ctx, wrapped.DupReadCloser())
+				err = r.cacheMgr.CacheListObj(ctx, drc)
 			case "get":
-				err = r.cacheMgr.CacheObj(ctx, wrapped.DupReadCloser())
+				err = r.cacheMgr.CacheObj(ctx, drc)
 			case "watch":
-				err = r.cacheMgr.CacheWatchObj(ctx, wrapped.DupReadCloser())
+				err = r.cacheMgr.CacheWatchObj(ctx, drc)
 			}
 			if err != nil {
 				klog.Errorf("req %v cache resp error: %v", req, err)

@@ -2,9 +2,7 @@ package cache
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
-	"encoding/json"
 	"io"
 
 	"github.com/astaxie/beego/orm"
@@ -36,12 +34,15 @@ type Manager interface {
 }
 
 type Mgr struct {
-	decoderMgr decoder.Manager
+	decoderMgr        decoder.Manager
+	backendSerializer runtime.Serializer
 }
 
 func NewCacheMgr(decoderMgr decoder.Manager) Manager {
+	backendSerializer := decoderMgr.GetBackendSerializer()
 	return &Mgr{
-		decoderMgr: decoderMgr,
+		decoderMgr:        decoderMgr,
+		backendSerializer: backendSerializer,
 	}
 }
 
@@ -69,15 +70,6 @@ func (cm *Mgr) CacheListObj(ctx context.Context, rc io.ReadCloser) error {
 	}
 	apiVersion := gv.String()
 	accessor := meta.NewAccessor()
-	// When the list response body is compressed with gzip, use gzip.Reader to read
-	algo, _ := util.GetRespContentEncoding(ctx)
-	if algo == "gzip" {
-		rc, err = gzip.NewReader(rc)
-		if err != nil {
-			return err
-		}
-	}
-
 	var buf bytes.Buffer
 	n, err := buf.ReadFrom(rc)
 	if err != nil {
@@ -134,7 +126,8 @@ func (cm *Mgr) CacheObj(ctx context.Context, rc io.ReadCloser) error {
 
 // store the single object into cache table.
 func (cm *Mgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
-	objbyte, err := json.Marshal(obj)
+	var objbyte bytes.Buffer
+	err := cm.backendSerializer.Encode(obj, &objbyte)
 	if err != nil {
 		return err
 	}
@@ -148,7 +141,7 @@ func (cm *Mgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
 		Resource:  reqInfo.Resource,
 		Namespace: namesapce,
 		Name:      name,
-		Value:     string(objbyte),
+		Value:     string(objbyte.Bytes()),
 	}
 	err = cachedao.InsertOrUpdate(&cache)
 	return err
@@ -162,6 +155,7 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 		Group:   reqInfo.APIGroup,
 		Version: reqInfo.APIVersion,
 	}
+	apiVersion := gv.String()
 	watchDecoder, err := cm.decoderMgr.GetStreamDecoder(contentType, gv, rc)
 	if err != nil {
 		return err
@@ -183,9 +177,13 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 		accessor := meta.NewAccessor()
 		name, _ := accessor.Name(obj)
 		namespace, _ := accessor.Namespace(obj)
+
 		switch watchType {
 		case watch.Modified, watch.Added:
-			objbyte, err := json.Marshal(obj)
+			accessor.SetKind(obj, util.GetResourceKind(reqInfo.Resource))
+			accessor.SetAPIVersion(obj, apiVersion)
+			var objbyte bytes.Buffer
+			err := cm.backendSerializer.Encode(obj, &objbyte)
 			if err != nil {
 				return err
 			}
@@ -194,7 +192,7 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 				Resource:  reqInfo.Resource,
 				Namespace: namespace,
 				Name:      name,
-				Value:     string(objbyte),
+				Value:     string(objbyte.Bytes()),
 			}
 			cachedao.InsertOrUpdate(&cache)
 		case watch.Deleted:
@@ -211,18 +209,8 @@ func (cm *Mgr) QueryList(ctx context.Context, ua, resource, namespace string) ([
 		return nil, err
 	}
 	objs := make([]runtime.Object, 0)
-	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
-	contentType, _ := util.GetReqContentType(ctx)
-	gv := schema.GroupVersion{
-		Group:   reqInfo.APIGroup,
-		Version: reqInfo.APIVersion,
-	}
-	objDecoder, err := cm.decoderMgr.GetDecoder(contentType, gv)
-	if err != nil {
-		return nil, err
-	}
 	for i := range liststr {
-		obj, _, err := objDecoder.Decode([]byte(liststr[i]), nil, nil)
+		obj, _, err := cm.backendSerializer.Decode([]byte(liststr[i]), nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -236,17 +224,7 @@ func (cm *Mgr) QueryObj(ctx context.Context, ua, resource, namespace, name strin
 	if err != nil {
 		return nil, err
 	}
-	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
-	contentType, _ := util.GetReqContentType(ctx)
-	gv := schema.GroupVersion{
-		Group:   reqInfo.APIGroup,
-		Version: reqInfo.APIVersion,
-	}
-	objDecoder, err := cm.decoderMgr.GetDecoder(contentType, gv)
-	if err != nil {
-		return nil, err
-	}
-	obj, _, err := objDecoder.Decode([]byte(objstr), nil, nil)
+	obj, _, err := cm.backendSerializer.Decode([]byte(objstr), nil, nil)
 	if err != nil {
 		return nil, err
 	}
