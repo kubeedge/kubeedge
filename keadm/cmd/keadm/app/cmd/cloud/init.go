@@ -117,7 +117,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		for i := 0; i < util.RetryTimes; i++ {
 			version, err := util.GetLatestVersion()
 			if err != nil {
-				return err
+				fmt.Println("Failed to get the latest KubeEdge release version")
+				continue
 			}
 			if len(version) > 0 {
 				kubeVer = strings.TrimPrefix(version, "v")
