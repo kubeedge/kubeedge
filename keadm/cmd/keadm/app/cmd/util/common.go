@@ -28,7 +28,6 @@ import (
 	"sync"
 
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -70,13 +69,9 @@ const (
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
-	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
+	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
 )
-
-type latestReleaseVersion struct {
-	TagName string `json:"tag_name"`
-}
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
 func AddToolVals(f *pflag.Flag, flagData map[string]types.FlagData) {
@@ -249,13 +244,7 @@ func GetLatestVersion() (string, error) {
 		return "", err
 	}
 
-	latestRelease := &latestReleaseVersion{}
-	err = json.Unmarshal(latestReleaseData, latestRelease)
-	if err != nil {
-		return "", err
-	}
-
-	return latestRelease.TagName, nil
+	return string(latestReleaseData), nil
 }
 
 // runCommandWithShell executes the given command with "sh -c".
