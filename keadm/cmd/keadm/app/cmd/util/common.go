@@ -1,12 +1,9 @@
 /*
 Copyright 2019 The KubeEdge Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +24,15 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gookit/gcli/v2/interact"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"k8s.io/klog"
 )
 
 //Constants used by installers
@@ -52,10 +50,12 @@ const (
 	KubeEdgeBinaryNamePre        = "edge_core"
 	KubeEdgeCloudDefaultCertPath = KubeEdgePath + "certs/"
 	KubeEdgeConfigEdgeYaml       = KubeEdgeConfPath + "/edge.yaml"
+	KubeEdgeConfigNodeJSON       = KubeEdgeConfPath + "/node.json"
 	KubeEdgeConfigModulesYaml    = KubeEdgeConfPath + "/modules.yaml"
 
 	KubeEdgeCloudCertGenPath     = KubeEdgePath + "certgen.sh"
 	KubeEdgeEdgeCertsTarFileName = "certs.tgz"
+	KubeEdgeEdgeCertsTarFilePath = KubeEdgePath + "certs.tgz"
 	KubeEdgeCloudConfPath        = KubeEdgePath + "kubeedge/cloud/conf"
 	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
 	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
@@ -69,6 +69,8 @@ const (
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
 
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
+
+	InterfaceName = "eth0"
 
 	latestReleaseVersionURL = "https://api.github.com/repos/kubeedge/kubeedge/releases/latest"
 	RetryTimes              = 5
@@ -356,48 +358,33 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	if _, err = os.Stat(filePath); err == nil {
-		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded")
+		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and will checksum for it.")
+		if success, _ := checkSum(filename, checksumFilename, version); !success {
+			ans := interact.SelectOne(
+				fmt.Sprintf("%v in your path checksum failed and do you want to delete this file and try to download again?", filename),
+				[]string{"yes", "no"},
+				"",
+			)
+			if strings.ToLower(ans) == "yes" {
+				cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+				if _, err := runCommandWithStdout(cmdStr); err != nil {
+					return err
+				}
+				klog.Infof("%v have been deleted and will try to download again", filename)
+				if err := retryDownload(filename, checksumFilename, version); err != nil {
+					return err
+				}
+			} else if strings.ToLower(ans) == "no" {
+				klog.Warningf("failed to checksum and will continue to install.")
+			}
+		} else {
+			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and checksum successfully.")
+		}
 	} else if !os.IsNotExist(err) {
 		return err
 	} else {
-		try := 0
-		for ; try < downloadRetryTimes; try++ {
-			//Download the tar from repo
-			dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
-				KubeEdgePath, KubeEdgeDownloadURL, version, filename)
-			if _, err := runCommandWithShell(dwnldURL); err != nil {
-				return err
-			}
-
-			//Verify the tar with checksum
-			fmt.Printf("%s checksum: \n", filename)
-			cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
-			desiredChecksum, err := runCommandWithStdout(cmdStr)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("%s content: \n", checksumFilename)
-			cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
-			actualChecksum, err := runCommandWithStdout(cmdStr)
-			if err != nil {
-				return err
-			}
-
-			if desiredChecksum == actualChecksum {
-				break
-			} else {
-				fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-				//Cleanup the downloaded files
-				cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
-				_, err := runCommandWithStdout(cmdStr)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		if try == downloadRetryTimes {
-			return fmt.Errorf("failed to download %s", filename)
+		if err := retryDownload(filename, checksumFilename, version); err != nil {
+			return err
 		}
 	}
 
@@ -580,6 +567,74 @@ func isKubeEdgeProcessRunning(proc string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func checkSum(filename, checksumFilename, version string) (bool, error) {
+	//Verify the tar with checksum
+	fmt.Printf("%s checksum: \n", filename)
+	cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+	actualChecksum, err := runCommandWithStdout(cmdStr)
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Printf("%s content: \n", checksumFilename)
+	cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
+	desiredChecksum, err := runCommandWithStdout(cmdStr)
+	if err != nil {
+		return false, err
+	}
+
+	if desiredChecksum != actualChecksum {
+		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+		//Cleanup the downloaded files
+		cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+		_, err = runCommandWithStdout(cmdStr)
+		return false, err
+	}
+	return true, nil
+}
+
+func retryDownload(filename, checksumFilename, version string) error {
+	try := 0
+	for ; try < downloadRetryTimes; try++ {
+		//Download the tar from repo
+		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
+			KubeEdgePath, KubeEdgeDownloadURL, version, filename)
+		if _, err := runCommandWithShell(dwnldURL); err != nil {
+			return err
+		}
+
+		//Verify the tar with checksum
+		fmt.Printf("%s checksum: \n", filename)
+		cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+		actualChecksum, err := runCommandWithStdout(cmdStr)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s content: \n", checksumFilename)
+		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
+		desiredChecksum, err := runCommandWithStdout(cmdStr)
+		if err != nil {
+			return err
+		}
+
+		if desiredChecksum != actualChecksum {
+			fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+			//Cleanup the downloaded files
+			cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+			if _, err := runCommandWithStdout(cmdStr); err != nil {
+				return err
+			}
+		} else {
+			break
+		}
+	}
+	if try == downloadRetryTimes {
+		return fmt.Errorf("failed to download %s", filename)
+	}
+	return nil
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
