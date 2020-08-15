@@ -664,18 +664,16 @@ func retryDownload(filename, checksumFilename, version string) error {
 func ask4confirm() (bool, error) {
 	var s string
 
-	fmt.Println("(yes/no): ")
-	_, err := fmt.Scan(&s)
-	if err != nil {
-		panic(err)
+	fmt.Println("[y/N]: ")
+	if _, err := fmt.Scan(&s); err != nil {
+		return false, err
 	}
 
-	s = strings.TrimSpace(s)
-	s = strings.ToLower(s)
+	s = strings.ToLower(strings.TrimSpace(s))
 
-	if s == "y" || s == "yes" {
+	if s == "y" {
 		return true, nil
-	} else if s == "n" || s == "no" {
+	} else if s == "n" {
 		return false, nil
 	} else {
 		return false, fmt.Errorf("Invalid Input")
