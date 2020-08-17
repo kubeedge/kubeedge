@@ -21,7 +21,7 @@
 **What this PR does / why we need it**:
 
 **Which issue(s) this PR fixes**:
-<!-- 
+<!--
 *Automatically closes linked issue when PR is merged.
 Usage: `Fixes #<issue number>`, or `Fixes (paste link of issue)`.
 _If PR is about `failing-tests or flakes`, please post the related issues/tests in a comment and do not use `Fixes`_*
@@ -32,10 +32,16 @@ Fixes #
 
 **Does this PR introduce a user-facing change?**:
 <!--
-If no, just write "NONE" in the release-note block below.
-If yes, a release note is required:
-Enter your extended release note in the block below. If the PR requires additional action from users switching to the new release, include the string "action required".
--->
-```release-note
+If yes, you should add a release note to changelog.md:
 
-```
+Please write follow this format:
+<pr title> ([#<pr id>](<pr link>), [@<your github name>](<your github homepage link>))
+
+For example:
+Add tree to store copy of dependency's license ([#1847](https://github.com/kubeedge/kubeedge/pull/1847), [@kevin-wangzefeng](https://github.com/kevin-wangzefeng))
+
+The pr title should start with an uppercase letter.
+-->
+
+* [ ] I added CHANGELOG entry for this change.
+* [ ] Change is not relevant to the end user.
