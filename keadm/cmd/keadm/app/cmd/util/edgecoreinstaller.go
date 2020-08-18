@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/google/uuid"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -74,7 +75,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 }
 
 func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
-	if ku.ToolVersion >= "1.2.0" {
+	if ku.ToolVersion.GE(semver.MustParse("1.2.0")) {
 		//This makes sure the path is created, if it already exists also it is fine
 		err := os.MkdirAll(KubeEdgeNewConfigDir, os.ModePerm)
 		if err != nil {
@@ -106,7 +107,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":10002"
 		}
 
-		if strings.HasPrefix(ku.ToolVersion, "1.2") {
+		if ku.ToolVersion.Major == 1 && ku.ToolVersion.Minor == 2 {
 			edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.key"}, "")
 			edgeCoreConfig.Modules.EdgeHub.TLSCertFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.crt"}, "")
 		}
