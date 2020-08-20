@@ -1,19 +1,24 @@
 package debug
 
 import (
+	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/mem"
 
 	"io"
 	"net"
 	"net/http"
-	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	constant "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -74,8 +79,11 @@ func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
 	cmd := &cobra.Command{
 		Short: object.Desc,
 		Use:   object.Use,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return object.ExecuteCheck(object.Use, co)
+		Run: func(cmd *cobra.Command, args []string) {
+			err := object.ExecuteCheck(object.Use, co)
+			if err != nil {
+				fmt.Println(err)
+			}
 		},
 	}
 	switch object.Use {
@@ -84,8 +92,10 @@ func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.IP, "ip", "i", co.IP, "specify test ip")
 		cmd.Flags().StringVarP(&co.EdgeHubURL, "edge-hub-url", "e", co.EdgeHubURL, "specify edgehub url,")
 		cmd.Flags().StringVarP(&co.Runtime, "runtime", "r", co.Runtime, "specify test runtime")
+		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
 	case constant.ArgCheckDNS:
 		cmd.Flags().StringVarP(&co.Domain, "domain", "d", co.Domain, "specify test domain")
+		cmd.Flags().StringVarP(&co.DNSIP, "dns-ip", "D", co.DNSIP, "specify test dns ip")
 	case constant.ArgCheckNetwork:
 		cmd.Flags().StringVarP(&co.IP, "ip", "i", co.IP, "specify test ip")
 		cmd.Flags().StringVarP(&co.EdgeHubURL, "edge-hub-url", "e", co.EdgeHubURL, "specify edgehub url,")
@@ -99,7 +109,7 @@ func NewSubEdgeCheck(out io.Writer, object CheckObject) *cobra.Command {
 // add flags
 func NewCheckOptins() *types.CheckOptions {
 	co := &types.CheckOptions{}
-	co.Runtime = "docker"
+	co.Runtime = types.DefaultRuntime
 	co.Domain = "www.github.com"
 	co.Timeout = 1
 	return co
@@ -121,7 +131,7 @@ func (co *CheckObject) ExecuteCheck(use string, ob *types.CheckOptions) error {
 	case constant.ArgCheckDisk:
 		err = CheckDisk()
 	case constant.ArgCheckDNS:
-		err = CheckDNS(ob.Domain)
+		err = CheckDNSSpecify(ob.Domain, ob.DNSIP)
 	case constant.ArgCheckNetwork:
 		err = CheckNetWork(ob.IP, ob.Timeout, ob.EdgeHubURL)
 	case constant.ArgCheckRuntime:
@@ -131,11 +141,10 @@ func (co *CheckObject) ExecuteCheck(use string, ob *types.CheckOptions) error {
 	}
 
 	if err != nil {
-		checkFail(use)
+		util.PrintFail(use, constant.StrCheck)
 	} else {
-		checkSuccedd(use)
+		util.PrintSuccedd(use, constant.StrCheck)
 	}
-
 	return err
 }
 
@@ -160,7 +169,7 @@ func CheckAll(ob *types.CheckOptions) error {
 		return err
 	}
 
-	err = CheckDNS(ob.Domain)
+	err = CheckDNSSpecify(ob.Domain, ob.DNSIP)
 	if err != nil {
 		return err
 	}
@@ -183,8 +192,8 @@ func CheckAll(ob *types.CheckOptions) error {
 }
 
 func CheckArch() error {
-	o, err := execShellFilter(constant.CmdGetArch)
-	if !IsContain(constant.AllowedValueArch, string(o)) {
+	o, err := util.ExecShellFilter(constant.CmdGetArch)
+	if !util.IsContain(constant.AllowedValueArch, string(o)) {
 		return fmt.Errorf("arch not support: %s", string(o))
 	}
 	fmt.Printf("arch is : %s\n", string(o))
@@ -192,15 +201,67 @@ func CheckArch() error {
 }
 
 func CheckCPU() error {
-	return ComparisonSize(constant.CmdGetCPUNum, constant.AllowedValueCPU, constant.ArgCheckCPU, constant.UnitCore)
+	percent, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		return err
+	}
+
+	cpuNum, err := cpu.Counts(true)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("CPU total: %v core, Allowed > %v core\n", cpuNum, constant.AllowedValueCPU)
+	fmt.Printf("CPU usage rate: %.2f, Allowed rate < %v\n", percent[0]/100, constant.AllowedCurrentValueCPURate)
+
+	if cpuNum < constant.AllowedValueCPU || percent[0]/100 > constant.AllowedCurrentValueCPURate {
+		return errors.New("cpu check failed")
+	}
+	return nil
 }
 
 func CheckMemory() error {
-	return ComparisonSize(constant.CmdGetMenorySize, constant.AllowedValueMemory, constant.ArgCheckMemory, constant.UnitMB)
+	mem, err := mem.VirtualMemory()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Memory total: %.2f MB, Allowed > %v MB\n", float32(mem.Total)/constant.MB, constant.AllowedValueMemory/constant.MB)
+	fmt.Printf("Memory Free total: %.2f MB, Allowed > %v MB\n", float32(mem.Free)/constant.MB, constant.AllowedCurrentValueMem/constant.MB)
+	fmt.Printf("Memory usage rate: %.2f, Allowed rate < %v\n", mem.UsedPercent/100,
+		constant.AllowedCurrentValueMemRate)
+
+	if mem.Total < constant.AllowedValueMemory ||
+		mem.Free < constant.AllowedCurrentValueMem ||
+		mem.UsedPercent/100 > constant.AllowedCurrentValueMemRate {
+		return errors.New("memory check failed")
+	}
+
+	return nil
 }
 
 func CheckDisk() error {
-	return ComparisonSize(constant.CmdGetDiskSize, constant.AllowedValueDisk, constant.ArgCheckDisk, constant.UnitGB)
+	parts, err := disk.Partitions(false)
+	if err != nil {
+		return err
+	}
+
+	diskInfo, err := disk.Usage(parts[0].Mountpoint)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Disk total: %.2f MB, Allowed > %v MB\n", float32(diskInfo.Total)/constant.MB, constant.AllowedValueDisk/constant.MB)
+	fmt.Printf("Disk Free total: %.2f MB, Allowed > %vMB\n", float32(diskInfo.Free)/constant.MB, constant.AllowedCurrentValueDisk/constant.MB)
+	fmt.Printf("Disk usage rate: %.2f, Allowed rate < %v\n", diskInfo.UsedPercent/100, constant.AllowedCurrentValueDiskRate)
+
+	if diskInfo.Total < constant.AllowedValueDisk ||
+		diskInfo.Free < constant.AllowedCurrentValueDisk ||
+		diskInfo.UsedPercent/100 > constant.AllowedCurrentValueDiskRate {
+		return errors.New("disk check failed")
+	}
+
+	return nil
 }
 
 func CheckDNS(domain string) error {
@@ -216,9 +277,24 @@ func CheckDNS(domain string) error {
 	return err
 }
 
+func CheckDNSSpecify(domain string, dns string) error {
+	if dns != "" {
+		net.DefaultResolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: time.Millisecond * time.Duration(4000),
+				}
+				return d.DialContext(ctx, "udp", fmt.Sprintf("%s:53", dns))
+			},
+		}
+	}
+	return CheckDNS(domain)
+}
+
 func CheckNetWork(IP string, timeout int, edgeHubURL string) error {
 	if IP == "" && edgeHubURL == "" {
-		result, err := execShellFilter(constant.CmdGetDNSIP)
+		result, err := util.ExecShellFilter(constant.CmdGetDNSIP)
 		if err != nil {
 			return err
 		}
@@ -231,7 +307,7 @@ func CheckNetWork(IP string, timeout int, edgeHubURL string) error {
 		}
 	}
 	if IP != "" {
-		result, err := execShellFilter(fmt.Sprintf(constant.CmdPing, IP, timeout))
+		result, err := util.ExecShellFilter(fmt.Sprintf(constant.CmdPing, IP, timeout))
 
 		if err != nil {
 			return err
@@ -245,8 +321,9 @@ func CheckNetWork(IP string, timeout int, edgeHubURL string) error {
 }
 
 func CheckHTTP(url string) error {
+	cfg := &tls.Config{InsecureSkipVerify: false}
+	httpTransport := &http.Transport{TLSClientConfig: cfg}
 	// setup a http client
-	httpTransport := &http.Transport{}
 	httpClient := &http.Client{Transport: httpTransport, Timeout: time.Second * 3}
 	response, err := httpClient.Get(url)
 	if err != nil {
@@ -261,8 +338,8 @@ func CheckHTTP(url string) error {
 }
 
 func CheckRuntime(runtime string) error {
-	if runtime == "docker" {
-		result, err := execShellFilter(constant.CmdGetStatusDocker)
+	if runtime == types.DefaultRuntime {
+		result, err := util.ExecShellFilter(constant.CmdGetStatusDocker)
 		if err != nil {
 			return err
 		}
@@ -278,11 +355,11 @@ func CheckRuntime(runtime string) error {
 }
 
 func CheckPid() error {
-	rMax, err := execShellFilter(constant.CmdGetMaxProcessNum)
+	rMax, err := util.ExecShellFilter(constant.CmdGetMaxProcessNum)
 	if err != nil {
 		return err
 	}
-	r, err := execShellFilter(constant.CmdGetProcessNum)
+	r, err := util.ExecShellFilter(constant.CmdGetProcessNum)
 	if err != nil {
 		return err
 	}
@@ -294,113 +371,4 @@ func CheckPid() error {
 		return nil
 	}
 	return fmt.Errorf("Maximum PIDs: %s; Running processes: %s", rMax, r)
-}
-
-/**
-Execute command and compare size
-c:       cmd
-require: Minimum resource requirement
-name：   the name  of check item
-unit:    resourceUnit, e.g. MB，GB
-*/
-func ComparisonSize(c string, require string, name string, unit string) error {
-	result, err := execShellFilter(c)
-	if err != nil {
-		return fmt.Errorf("exec \"%s\" fail: %s", c, err.Error())
-	}
-	if len(result) == 0 {
-		return fmt.Errorf("exec \"%s\" fail", c)
-	}
-	resultInt, err := ConverData(result)
-	if err != nil {
-		return fmt.Errorf("conver %s fail: %s", result, err.Error())
-	}
-	requireInt, err := ConverData(require)
-	if err != nil {
-		return fmt.Errorf("conver %s fail: %s", require, err)
-	}
-
-	if resultInt < requireInt {
-		return fmt.Errorf("%s requirements: %s, current value: %s", name, require, result)
-	}
-	fmt.Printf("%s requirements: %s, current value: %s\n", name, require, result)
-
-	return nil
-}
-
-// Execute shell script and filter
-func execShellFilter(c string) (string, error) {
-	cmd := exec.Command("sh", "-c", c)
-	o, err := cmd.Output()
-	str := strings.Replace(string(o), " ", "", -1)
-	str = strings.Replace(str, "\n", "", -1)
-	if err != nil {
-		return str, fmt.Errorf("exec fail: %s, %s", c, err)
-	}
-	return str, nil
-}
-
-// Determine if it is in the array
-func IsContain(items []string, item string) bool {
-	for _, eachItem := range items {
-		if eachItem == item {
-			return true
-		}
-	}
-	return false
-}
-
-/**
-Convert data string to int type
-input: data, for example: 1GB、1G、1MB、1024k、1024
-*/
-func ConverData(input string) (int, error) {
-	// If it is a number, just return
-	v, err := strconv.Atoi(input)
-	if err == nil {
-		return v, nil
-	}
-
-	re, err := regexp.Compile(`([0-9]+)([a-zA-z]+)`)
-	if err != nil {
-		return 0, err
-	}
-	result := re.FindStringSubmatch(input)
-	if len(result) != 3 {
-		return 0, fmt.Errorf("regexp err")
-	}
-	v, err = strconv.Atoi(result[1])
-	if err != nil {
-		return 0, err
-	}
-	unit := strings.ToUpper(result[2])
-	unit = unit[:1]
-
-	switch unit {
-	case "G":
-		v = v * constant.GB
-	case "M":
-		v = v * constant.MB
-	case "K":
-		v = v * constant.KB
-	default:
-		return 0, fmt.Errorf("unit err")
-	}
-	return v, nil
-}
-
-//print fail
-func checkFail(s string) {
-	s = s + " check failed."
-	fmt.Println("\n+-------------------+")
-	fmt.Printf("|%s|\n", s)
-	fmt.Println("+-------------------+")
-}
-
-//print success
-func checkSuccedd(s string) {
-	s = s + " check succeed."
-	fmt.Println("\n+-------------------+")
-	fmt.Printf("|%s|\n", s)
-	fmt.Println("+-------------------+")
 }

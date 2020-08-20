@@ -78,6 +78,14 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
+
+	UnitCore = "core"
+	UnitMB   = "MB"
+	UnitGB   = "GB"
+
+	KB int = 1024
+	MB int = KB * 1024
+	GB int = MB * 1024
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
@@ -807,4 +815,55 @@ func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) 
 		return nil, err
 	}
 	return edgeCoreConfig, nil
+}
+
+// Determine if it is in the array
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}
+
+//print fail
+func PrintFail(cmd string, s string) {
+	v := fmt.Sprintf("|%s %s failed|", s, cmd)
+	printResult(v)
+}
+
+//print success
+func PrintSuccedd(cmd string, s string) {
+	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
+	printResult(v)
+}
+
+func printResult(s string) {
+	line := "|"
+	if len(s) > 2 {
+		for i := 0; i < len(s)-2; i++ {
+			line = line + "-"
+		}
+		line = line + "|"
+	}
+
+	fmt.Println("")
+	fmt.Println(line)
+	fmt.Println(s)
+	fmt.Println(line)
+}
+
+//IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsProcessRunningWithFilter(proc string, filter string) (bool, error) {
+	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s'|grep -v '%s' | awk '{print $2}'", proc[0:1], proc[1:], filter)
+	stdout, err := runCommandWithStdout(procRunning)
+	if err != nil {
+		return false, err
+	}
+	if stdout != "" {
+		return true, nil
+	}
+
+	return false, nil
 }

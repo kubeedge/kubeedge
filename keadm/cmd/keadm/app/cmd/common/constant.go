@@ -80,6 +80,37 @@ const (
 	// eg.  "/tmp/kubeedge" or "/etc/kubeedge" by default
 	TarballPath = "tarballpath"
 
+	StrCheck    = "check"
+	StrDiagnose = "diagnose"
+
+	CmdGetArch = "arch"
+	//CmdGetCPUNum     = "cat /proc/cpuinfo  |grep processor| wc -l"
+	//CmdGetMenorySize = "free -h |grep Mem|awk '{print $2}'"
+	//CmdGetDiskSize      = "df -h |grep -ve \" /.\"|sed -n \"2p\"|awk '{print $2}'"
+	CmdGetDNSIP         = "cat /etc/resolv.conf |grep nameserver|grep -v ':'|awk '{print $2}'|sed -n '1p'"
+	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
+	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $4}'"
+	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
+	CmdGetProcessNum    = "ps -A|wc -l"
+
+	AllowedValueCPU     = 1
+	AllowedValueMemory  = 256 * MB
+	AllowedValueDisk    = GB
+	AllowedValuePIDRate = 0.05
+
+	AllowedCurrentValueCPURate  = 0.9
+	AllowedCurrentValueMemRate  = 0.9
+	AllowedCurrentValueDiskRate = 0.9
+
+	AllowedCurrentValueMem  = 128 * MB
+	AllowedCurrentValueDisk = 512 * MB
+
+	KB = 1024
+	MB = KB * 1024
+	GB = MB * 1024
+
+	DefaultDomain = "www.github.com"
+
 	EdgecoreConfig = "config"
 
 	// Default edgecore config path
@@ -173,28 +204,11 @@ const (
 	ArgCheckRuntime = "runtime"
 	ArgCheckNetwork = "network"
 	ArgCheckPID     = "pid"
+
+	DefaultRuntime = "docker"
 )
 
 var (
-	DiagnoseObjectMap = []DiagnoseObject{
-		{
-			Use:  ArgDiagnoseAll,
-			Desc: DescDiagnoseAll,
-		},
-		{
-			Use:  ArgDiagnoseNode,
-			Desc: DescDiagnoseNode,
-		},
-		{
-			Use:  ArgDiagnosePod,
-			Desc: DescDiagnosePod,
-		},
-		{
-			Use:  ArgDiagnoseInstall,
-			Desc: DescDiagnoseInstall,
-		},
-	}
-
 	AllowedValueArch = []string{"amd64", "arm64v8", "arm32v7", "i386", "s390x", "x86_64", "aarch64"}
 
 	CheckObjectMap = []CheckObject{
@@ -233,6 +247,21 @@ var (
 		{
 			Use:  ArgCheckPID,
 			Desc: DescPID,
+		},
+	}
+
+	DiagnoseObjectMap = []DiagnoseObject{
+		{
+			Use:  ArgDiagnoseNode,
+			Desc: DescDiagnoseNode,
+		},
+		{
+			Use:  ArgDiagnosePod,
+			Desc: DescDiagnosePod,
+		},
+		{
+			Use:  ArgDiagnoseInstall,
+			Desc: DescDiagnoseInstall,
 		},
 	}
 )
