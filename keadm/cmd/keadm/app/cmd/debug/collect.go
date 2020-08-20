@@ -1,7 +1,6 @@
 package debug
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -9,14 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/cobra"
-	"k8s.io/klog"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -29,6 +26,8 @@ keadm debug collect --output-path .
 `
 )
 
+var pringDeatilFlag = false
+
 // NewEdgeJoin returns KubeEdge edge join command.
 func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.Command {
 	if collectOptions == nil {
@@ -40,8 +39,11 @@ func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.
 		Short:   "Obtain all the data of the current node",
 		Long:    edgecollectLongDescription,
 		Example: edgecollectExample,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return ExecuteCollect(collectOptions)
+		Run: func(cmd *cobra.Command, args []string) {
+			err := ExecuteCollect(collectOptions)
+			if err != nil {
+				fmt.Println(err)
+			}
 		},
 	}
 	cmd.AddCommand()
@@ -87,37 +89,50 @@ func ExecuteCollect(collectOptions *types.ColletcOptions) error {
 	if err != nil {
 		return err
 	}
-	klog.Infof("create tmp file: %s", tmpName)
+	printDetail(fmt.Sprintf("create tmp file: %s", tmpName))
 
-	collectSystemData(fmt.Sprintf("%s/system", tmpName))
-	klog.Infof("collect systemd data finish")
+	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
+	if err != nil {
+		fmt.Printf("collect System data failed")
+	}
+	printDetail("collect systemd data finish")
 
 	edgeconfig, err := util.ParseEdgecoreConfig(collectOptions.Config)
 
 	if err != nil {
-		klog.Warningf("fail to load edgecore config: %s", err.Error())
+		fmt.Printf("fail to load edgecore config: %s", err.Error())
 	}
-	collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
-	klog.Infof("collect edgecore data finish")
+	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
+	if err != nil {
+		fmt.Printf("collect edgecore data failed")
+	}
+	printDetail("collect edgecore data finish")
 
 	if edgeconfig.Modules.Edged.RuntimeType == "docker" ||
 		edgeconfig.Modules.Edged.RuntimeType == "" {
-		collectRuntimeData(fmt.Sprintf("%s/runtime", tmpName))
-		klog.Infof("collect runtime data finish")
+		err = collectRuntimeData(fmt.Sprintf("%s/runtime", tmpName))
+		if err != nil {
+			fmt.Printf("collect runtime data failed")
+			return err
+		}
+		printDetail("collect runtime data finish")
 	} else {
-		klog.Warningf("now runtime only support: docker")
+		fmt.Printf("now runtime only support: docker")
 		// TODO
 		// other runtime
 	}
 
 	OutputPath := collectOptions.OutputPath
 	zipName := fmt.Sprintf("%s/edge_%s.tar.gz", OutputPath, timenow)
-	util.Compress(zipName, []string{tmpName})
-	klog.Infof("compress data finish")
+	err = util.Compress(zipName, []string{tmpName})
+	if err != nil {
+		return err
+	}
+	printDetail("compress data finish")
 
 	// delete tmp direction
 	os.RemoveAll(tmpName)
-	klog.V(2).Infof("Remove tmp data finish")
+	printDetail("Remove tmp data finish")
 
 	fmt.Printf("collecting data finish, path: %s\n", zipName)
 	return nil
@@ -138,14 +153,8 @@ func VerificationParameters(collectOptions *types.ColletcOptions) error {
 	}
 	collectOptions.OutputPath = path
 
-	var klogFlags flag.FlagSet
-	klog.InitFlags(&klogFlags)
-	klogFlags.Set("logtostderr", "false")
-
 	if collectOptions.Detail {
-		klogFlags.Set("stderrthreshold", "INFO")
-	} else {
-		klogFlags.Set("stderrthreshold", "WARNING")
+		pringDeatilFlag = true
 	}
 
 	return nil
@@ -158,9 +167,12 @@ func makeDirTmp() (string, string, error) {
 }
 
 // collect system data
-func collectSystemData(tmpPath string) {
-	klog.Infof("create tmp file: %s", tmpPath)
-	os.Mkdir(tmpPath, os.ModePerm)
+func collectSystemData(tmpPath string) error {
+	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	err := os.Mkdir(tmpPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
 
 	// arch info
 	ExecuteShell(common.CmdArchInfo, tmpPath)
@@ -184,12 +196,17 @@ func collectSystemData(tmpPath string) {
 	ExecuteShell(common.CmdHistorynfo, tmpPath)
 	// network info
 	ExecuteShell(common.CmdNetworkInfo, tmpPath)
+
+	return nil
 }
 
 // collect edgecore data
-func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *types.ColletcOptions) {
-	klog.Infof("create tmp file: %s", tmpPath)
-	os.Mkdir(tmpPath, os.ModePerm)
+func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *types.ColletcOptions) error {
+	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	err := os.Mkdir(tmpPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
 
 	if config.DataBase.DataSource != "" {
 		CopyFile(config.DataBase.DataSource, tmpPath)
@@ -209,24 +226,28 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *t
 		CopyFile(config.Modules.EdgeHub.TLSCertFile, tmpPath)
 		CopyFile(config.Modules.EdgeHub.TLSPrivateKeyFile, tmpPath)
 	} else {
-		klog.Infof("not found cert config, use default path: %s", tmpPath)
+		printDetail(fmt.Sprintf("not found cert config, use default path: %s", tmpPath))
 		CopyFile(common.DefaultCertPath+"/", tmpPath)
 	}
 
 	if config.Modules.EdgeHub.TLSCAFile != "" {
 		CopyFile(config.Modules.EdgeHub.TLSCAFile, tmpPath)
 	} else {
-		klog.Infof("not found ca config, use default path: %s", tmpPath)
+		printDetail(fmt.Sprintf("not found ca config, use default path: %s", tmpPath))
 		CopyFile(constants.DefaultCAKeyFile, tmpPath)
 	}
 
 	ExecuteShell(common.CmdEdgecoreVersion, tmpPath)
+	return nil
 }
 
 // collect runtime/docker data
-func collectRuntimeData(tmpPath string) {
-	klog.Infof("create tmp file: %s", tmpPath)
-	os.Mkdir(tmpPath, os.ModePerm)
+func collectRuntimeData(tmpPath string) error {
+	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	err := os.Mkdir(tmpPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
 
 	CopyFile(common.PathDockerService, tmpPath)
 	ExecuteShell(common.CmdDockerVersion, tmpPath)
@@ -234,26 +255,33 @@ func collectRuntimeData(tmpPath string) {
 	ExecuteShell(common.CmdDockerImageInfo, tmpPath)
 	ExecuteShell(common.CmdContainerInfo, tmpPath)
 	ExecuteShell(common.CmdContainerLogInfo, tmpPath)
+	return nil
 }
 
 func CopyFile(pathSrc, tmpPath string) {
 	c := fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath)
-	klog.Infof("Copy File: %s", c)
+	printDetail(fmt.Sprintf("Copy File: %s", c))
 	cmd := exec.Command("sh", "-c", c)
 	_, err := cmd.Output()
 	if err != nil {
-		klog.Warningf("fail to copy file:  %s", c)
-		klog.Warningf("Output: %s", err.Error())
+		fmt.Printf("fail to copy file:  %s", c)
+		fmt.Printf("Output: %s\n", err.Error())
 	}
 }
 
 func ExecuteShell(cmdStr string, tmpPath string) {
 	c := fmt.Sprintf(cmdStr, tmpPath)
-	klog.Infof("Execute Shell: %s", c)
+	printDetail(fmt.Sprintf("Execute Shell: %s", c))
 	cmd := exec.Command("sh", "-c", c)
 	_, err := cmd.Output()
 	if err != nil {
-		klog.Warningf("fail to execute Shell: %s", c)
-		klog.Warningf("Output: %s", err.Error())
+		fmt.Printf("fail to execute Shell: %s\n", c)
+		fmt.Printf("Output: %s\n", err.Error())
+	}
+}
+
+func printDetail(msg string) {
+	if pringDeatilFlag {
+		fmt.Println(msg)
 	}
 }
