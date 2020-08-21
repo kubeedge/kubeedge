@@ -113,7 +113,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	klog.V(4).Infof("create volume result: %v", result)
 	data := result.GetContent().(string)
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("create volume with error: %s", data)
 		return nil, errors.New(data)
 	}
