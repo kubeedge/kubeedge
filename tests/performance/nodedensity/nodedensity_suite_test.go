@@ -73,8 +73,8 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
 				cloudCoreHostIP = pod.Status.HostIP
+				break
 			}
-			break
 		}
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(300 * time.Second)
