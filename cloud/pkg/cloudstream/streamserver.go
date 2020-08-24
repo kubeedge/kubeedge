@@ -190,7 +190,7 @@ func (s *StreamServer) Start() {
 	}
 	pool.AppendCertsFromPEM(data)
 
-	tunnelServer := &http.Server{
+	streamServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Config.StreamPort),
 		Handler: s.container,
 		TLSConfig: &tls.Config{
@@ -200,7 +200,7 @@ func (s *StreamServer) Start() {
 		},
 	}
 	klog.Infof("Prepare to start stream server ...")
-	err = tunnelServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
+	err = streamServer.ListenAndServeTLS(config.Config.TLSStreamCertFile, config.Config.TLSStreamPrivateKeyFile)
 	if err != nil {
 		klog.Fatalf("Start stream server error %v\n", err)
 		return
