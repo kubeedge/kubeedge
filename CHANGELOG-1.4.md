@@ -21,7 +21,7 @@
 | -------- | ---- | ----------- |
 | [kubeedge-v1.4.0-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.4.0/kubeedge-v1.4.0-linux-arm64.tar.gz) |  82.9 MB | 7df701756b825c45ebd05b7efb78a0858fd0bf3a8ebd985de8efffc0dc8b2badac00b279a08d8d9ffbae3a4495dba1804f36c7b10f248c61beefe700c7a04900 |
 | [kubeedge-v1.4.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.4.0/kubeedge-v1.4.0-linux-arm.tar.gz) | 82.9 MB | 2fd85ff1b688ce8cee4b41c01e2d18d78be454ee4d1096a83a2e431ef0952d126dea54a5eb6685bf6f8b854d209f3fc64bc2d223a5ac051e4ac1e3d4ba6772f5 |
-| [kubeedge-v1.4.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.4.0/edgesite-v1.4.0-linux-amd64.tar.gz) | 78.5 MB | f0580f4fb0e8c53a3feffa7fa29c19343d576abe31e6f60458a6255643b1807590a39efffbbc632e461f888eb7b23e0eea2dfafe251b1605b83d169b8e5f49b8 |
+| [kubeedge-v1.4.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.4.0/kubeedge-v1.4.0-linux-amd64.tar.gz) | 78.5 MB | f0580f4fb0e8c53a3feffa7fa29c19343d576abe31e6f60458a6255643b1807590a39efffbbc632e461f888eb7b23e0eea2dfafe251b1605b83d169b8e5f49b8 |
 
 
 ### Installer Binaries
