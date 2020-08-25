@@ -27,6 +27,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
+	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
@@ -41,6 +42,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/opencontainers/runc v1.0.0-rc9 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
+	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pkg/errors v0.9.1
 	github.com/sailorvii/modbus v0.1.2
@@ -70,7 +72,19 @@ require (
 	k8s.io/kubelet v0.19.3
 	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+	k8s.io/api v0.18.6
+	k8s.io/apiextensions-apiserver v0.18.6
+	k8s.io/apimachinery v0.18.6
+	k8s.io/apiserver v0.18.6
+	k8s.io/client-go v0.18.6
+	k8s.io/cloud-provider v0.18.6
+	k8s.io/code-generator v0.18.6
+	k8s.io/component-base v0.18.6
+	k8s.io/cri-api v0.18.6
+	k8s.io/csi-translation-lib v0.18.6
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
+	k8s.io/kube-proxy v0.0.0
 	k8s.io/kube-scheduler v0.18.6 // indirect
 	k8s.io/kubelet v0.18.6
 	k8s.io/kubernetes v1.18.6

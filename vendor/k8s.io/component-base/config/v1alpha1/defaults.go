@@ -73,6 +73,9 @@ func RecommendedDefaultClientConnectionConfiguration(obj *ClientConnectionConfig
 	}
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> update vendor
 
 // RecommendedDebuggingConfiguration defaults profiling and debugging configuration.
 // This will set the recommended default
@@ -96,6 +99,7 @@ func NewRecommendedDebuggingConfiguration() *DebuggingConfiguration {
 	RecommendedDebuggingConfiguration(ret)
 	return ret
 }
+<<<<<<< HEAD
 
 // RecommendedLoggingConfiguration defaults logging configuration.
 // This will set the recommended default
@@ -111,5 +115,7 @@ func RecommendedLoggingConfiguration(obj *LoggingConfiguration) {
 		obj.Format = "text"
 	}
 }
+=======
+>>>>>>> update vendor
 =======
 >>>>>>> update vendor
