@@ -19,6 +19,8 @@ package util
 import (
 	"fmt"
 
+	"github.com/blang/semver"
+
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -26,12 +28,12 @@ import (
 //on Hosts having CentOS OS.
 //It implements OSTypeInstaller interface
 type CentOS struct {
-	KubeEdgeVersion string
+	KubeEdgeVersion semver.Version
 	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
-func (c *CentOS) SetKubeEdgeVersion(version string) {
+func (c *CentOS) SetKubeEdgeVersion(version semver.Version) {
 	c.KubeEdgeVersion = version
 }
 
