@@ -3,7 +3,7 @@ Description=cloudcore.service
 
 [Service]
 Type=simple
-ExecStart=/etc/kubeedge/cloudcore
+ExecStart=cloudcore
 
 [Install]
 WantedBy=multi-user.target

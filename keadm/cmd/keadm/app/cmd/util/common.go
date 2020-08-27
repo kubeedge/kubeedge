@@ -44,7 +44,7 @@ const (
 	CentOSType     = "centos"
 
 	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
-	EdgeCoreServiceFileURL       = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
+	ServiceFileURL       = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath                 = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath           = "/usr/local/bin"
 	KubeEdgeConfPath             = KubeEdgePath + "kubeedge/edge/conf"
@@ -395,32 +395,34 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 		When installing edgecore, if the version is >= 1.1,
 		download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/ acc.
 	*/
-	if componentType == types.EdgeCore {
-		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
+	strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
 
-		//	No need to download if the version is less than 1.1 (or 1.1.0)
-		if version.GE(semver.MustParse("1.1.0")) {
-			try := 0
-
-			edgecoreServiceFileName := "edgecore.service"
-
+	//	No need to download if the version is less than 1.1 (or 1.1.0)
+	if hasSystemd()&&version.GE(semver.MustParse("1.1.0")) {
+		var urlForServiceFile string
+		var ServiceFileName string
+		if componentType == types.EdgeCore {
+			ServiceFileName= "edgecore.service"
 			if version.EQ(semver.MustParse("1.1.0")) {
-				edgecoreServiceFileName = "edge.service"
+				ServiceFileName = "edge.service"
 			}
-
-			urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
-			for ; try < downloadRetryTimes; try++ {
+		}else if componentType == types.CloudCore{
+			ServiceFileName = "cloudcore.service"
+		}
+		ServiceFilePath := KubeEdgePath+ServiceFileName
+		//download if serviceFile not exisits
+		if _,err := os.Stat(ServiceFilePath);err!=nil{
+			if os.IsNotExist(err){
+				urlForServiceFile = fmt.Sprintf(ServiceFileURL, strippedVersion, ServiceFileName)
 				cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
-				_, err := runCommandWithStdout(cmdStr)
-				if err != nil {
-					return err
+				if _, err := runCommandWithStdout(cmdStr);err!=nil{
+					return fmt.Errorf("failed to download %s", ServiceFileName)
 				}
-				break
-			}
-			if try == downloadRetryTimes {
-				return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
+			}else{
+				return err
 			}
 		}
+		fmt.Printf("serviceFile already exisits in %s, skip download",ServiceFilePath)
 	}
 
 	// Compatible with 1.0.0
@@ -491,7 +493,7 @@ func runEdgeCore(version semver.Version) error {
 		if version.EQ(semver.MustParse("1.1.0")) {
 			edgecoreServiceName = "edge"
 		}
-		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
+		binExec = fmt.Sprintf("sudo ln -f /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
 	} else {
 		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, binaryName)
 	}

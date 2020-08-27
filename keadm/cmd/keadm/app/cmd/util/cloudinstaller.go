@@ -139,6 +139,7 @@ func (cu *KubeCloudInstTool) tarCertificates() error {
 //RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// create the log dir for kubeedge
+	fmt.Println("Start to run cloudcore")
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
@@ -147,27 +148,36 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	// add +x for cloudcore
 	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeCloudBinaryName)
 	if _, err := runCommandWithShell(command); err != nil {
-		return err
+		return fmt.Errorf("failed to add +x for cloudcore: %s",err)
 	}
 
 	// start cloudcore
+	systemdExist := hasSystemd()
+	cloudcoreServiceName := "cloudcore"
 	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
-		command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+		if systemdExist{
+			command = fmt.Sprintf("sudo ln -f /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", cloudcoreServiceName, cloudcoreServiceName, cloudcoreServiceName, cloudcoreServiceName)
+		}else{
+			command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+		}
 	} else {
 		command = fmt.Sprintf("%s > %skubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	}
 	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
 	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
-	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	cmd.ExecuteCommand()
-	if errout := cmd.GetStdErr(); errout != "" {
-		return fmt.Errorf("%s", errout)
+	err = cmd.ExecuteCmdShowOutput()
+	if err!=nil{
+		return err
 	}
-	fmt.Println(cmd.GetStdOutput())
-
+	if errout := cmd.GetStdErr(); errout != "" {
+		return fmt.Errorf("failed to run cloudcore by {%s} : %s",command,errout)
+	}
 	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
-		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
+		if systemdExist {
+			fmt.Printf("KubeEdge cloudcore is running, For logs visit: journalctl -u %s.service -b\n", cloudcoreServiceName)
+		}else{
+			fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
+		}
 	} else {
 		fmt.Println("KubeEdge cloudcore is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
 	}
