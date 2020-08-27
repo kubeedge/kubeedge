@@ -36,6 +36,7 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1027,6 +1028,8 @@ func (e *edged) syncPod() {
 		switch result.Content.(type) {
 		case []byte:
 			content = result.GetContent().([]byte)
+		case string:
+			content = []byte(result.GetContent().(string))
 		default:
 			content, err = json.Marshal(result.Content)
 			if err != nil {
@@ -1084,7 +1087,13 @@ func (e *edged) syncPod() {
 			if err != nil {
 				klog.Errorf("handle volume failed: %v", err)
 			} else {
-				resp := result.NewRespByMessage(&result, res)
+				m := jsonpb.Marshaler{}
+				js, err := m.MarshalToString(res.(proto.Message))
+				if err != nil {
+					klog.Errorf("failed to marshal to string with error: %s", err)
+					continue
+				}
+				resp := result.NewRespByMessage(&result, js)
 				beehiveContext.SendResp(*resp)
 			}
 		default:

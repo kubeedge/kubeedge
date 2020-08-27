@@ -17,7 +17,7 @@ limitations under the License.
 package csidriver
 
 import (
-	"encoding/base64"
+	"bytes"
 	"encoding/json"
 	"errors"
 
@@ -118,14 +118,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, errors.New(data)
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		klog.Errorf("create volume decode with error: %v", err)
-		return nil, err
-	}
-
 	response := &csi.CreateVolumeResponse{}
-	err = json.Unmarshal([]byte(decodeBytes), response)
+	err = jsonpb.Unmarshal(bytes.NewReader([]byte(data)), response)
 	if err != nil {
 		klog.Errorf("create volume unmarshal with error: %v", err)
 		return nil, nil
@@ -200,19 +194,13 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	klog.V(4).Infof("delete volume result: %v", result)
 	data := result.GetContent().(string)
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("delete volume with error: %s", data)
 		return nil, errors.New(data)
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		klog.Errorf("delete volume decode with error: %v", err)
-		return nil, err
-	}
-
 	deleteVolumeResponse := &csi.DeleteVolumeResponse{}
-	err = json.Unmarshal([]byte(decodeBytes), deleteVolumeResponse)
+	err = jsonpb.Unmarshal(bytes.NewReader([]byte(data)), deleteVolumeResponse)
 	if err != nil {
 		klog.Errorf("delete volume unmarshal with error: %v", err)
 		return nil, nil
@@ -282,19 +270,13 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	klog.V(4).Infof("controller publish volume result: %v", result)
 	data := result.GetContent().(string)
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("controller publish volume with error: %s", data)
 		return nil, errors.New(data)
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		klog.Errorf("controller publish volume decode with error: %v", err)
-		return nil, err
-	}
-
 	controllerPublishVolumeResponse := &csi.ControllerPublishVolumeResponse{}
-	err = json.Unmarshal([]byte(decodeBytes), controllerPublishVolumeResponse)
+	err = jsonpb.Unmarshal(bytes.NewReader([]byte(data)), controllerPublishVolumeResponse)
 	if err != nil {
 		klog.Errorf("controller publish volume unmarshal with error: %v", err)
 		return nil, nil
@@ -364,19 +346,13 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	klog.V(4).Infof("controller Unpublish Volume result: %v", result)
 	data := result.GetContent().(string)
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("controller Unpublish Volume with error: %s", data)
 		return nil, errors.New(data)
 	}
 
-	decodeBytes, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		klog.Errorf("controller Unpublish Volume decode with error: %v", err)
-		return nil, err
-	}
-
 	controllerUnpublishVolumeResponse := &csi.ControllerUnpublishVolumeResponse{}
-	err = json.Unmarshal([]byte(decodeBytes), controllerUnpublishVolumeResponse)
+	err = jsonpb.Unmarshal(bytes.NewReader([]byte(data)), controllerUnpublishVolumeResponse)
 	if err != nil {
 		klog.Errorf("controller Unpublish Volume unmarshal with error: %v", err)
 		return nil, nil
