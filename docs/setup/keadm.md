@@ -96,69 +96,307 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 ```
 
 ### Enable `kubectl logs` Feature
+#### 1. Environments:
+1. Master node (k8s + KubeEdge):
+   1. Hardware: PC (Intel CPU)
+   2. K8s version: v1.18.6
+   3. KubeEdge version: v1.4.0
+   4. IP: 192.168.0.139
+2. Worker node (k8s):
+   1. Hardware: PC (Intel CPU)
+   2. K8s version: v1.18.6
+   3. IP: 192.168.0.179
+3. Edge node (KubeEdge)
+   1. Hardware: Raspberry Pi 4 8GB (ARM CPU)
+   2. K8s version: v1.18.6
+   3. KubeEdge version: v1.4.0
+   4. IP: 192.168.0.128
+
+#### 2. Process of enabling kubtctl logs feature
+
 1. Make sure you can find the kubernetes `ca.crt` and `ca.key` files. If you set up your kubernetes cluster by `kubeadm` , those files will be in `/etc/kubernetes/pki/` dir.
+
+    ``` shell
+    ls /etc/kubernetes/pki/  
+    ```
 
 2. Set `CLOUDCOREIPS` env. The environment variable is set to specify the IP address of cloudcore, or a VIP if you have a highly available cluster.
 
-  ```bash
-  export CLOUDCOREIPS="192.168.0.1"
-  ```
+    ```bash
+    export CLOUDCOREIPS="192.168.0.139"
+    ```
+    (Warning: we must use the same ** terminal ** to continue our work, or we need to type this command again.)
+Checking the environment variable with the following command:
+    ``` shell
+    echo $CLOUDCOREIPS
+    ```
+3. Generate the certificates for ** CloudStream ** on cloud node, however, the generation file is not in the `/etc/kubeedge/`, we need to copy it from the repository which was git cloned from GitHub.
+   Change user to root:
+    ```shell
+    sudo su
+    ```
+    Copy certificates generation file from original cloned repository:
+    ```shell
+    cp $GOPATH/src/github.com/kubeedge/kubeedge/build/tools/certgen.sh /etc/kubeedge/
+    ```
+    Change directory to the kubeedge directory:
+    ```shell
+    cd /etc/kubeedge/
+    ```
+    Generate certificates from `certgen.sh` 
+    ```bash
+    /etc/kubeedge/certgen.sh stream
+    ```
 
-3. Generate the certificates used by `CloudStream` on the cloud node.
+4. It is needed to set iptables or firewall on the host. (This command should be executed on every apiserver deployed node.)(In my case, this is my master node, and execute this command by root.)
+   Run the following command on the host on which each apiserver runs:
+   
+    ** Note: ** You need to set the cloudcoreips variable first
 
-  ```bash
-  /etc/kubeedge/certgen.sh stream
-  ```
+    ```bash
+    iptables -t nat -A OUTPUT -p tcp --dport 10350 -j DNAT --to $CLOUDCOREIPS:10003
+    ```
+    > Port 10003 and 10350 are the default ports for the CloudStream and edgecore,
+      use your own ports if you have changed them.
+  
+    If you are not sure if you have setting of iptables, and you want to clean all of them.
+    (If you set up iptables wrongly, it will block you out of your `kubectl logs` feature)
+    The following command is what I used to clean up my Raspberry Pi 4 8GB iptables:
+    ``` shell
+    iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+    ```
 
-4. Run the following command on the host on which each apiserver runs:
-  ** Note: ** You need to set the cloudcoreips variable first
-
-  ```bash
-  iptables -t nat -A OUTPUT -p tcp --dport 10350 -j DNAT --to $CLOUDCOREIPS:10003
-  ```
-  > Port 10003 and 10350 are the default ports for the CloudStream and edgecore,
-    use your own ports if you have changed them.
 
 
-5. Modify  `/etc/kubeedge/config/cloudcore.yaml` or `/etc/kubeedge/config/edgecore.yaml` of cloudcore and edgecore. Set `cloudStream` and `edgeStream`  to  `enable: true`.
+5. Modify c/kubeedge/config/cloudcore.yaml and /etc/kubeedge/config/edgecore.yaml on cloudcore and edgecore. Set up `cloudStream` and `edgeStream` to `enable: true`.Also, you have to change the server IP to your cloudcore IP (the same as $CLOUDCOREIPS).
 
-  ```
-  ...
-  modules:
+    Open the YAML file in cloudcore:
+    ```shell
+    sudo nano /etc/kubeedge/config/cloudcore.yaml
+    ``` 
+
+    Modify the file in the following part (`enable: true`):
+    ```yaml
     cloudStream:
       enable: true
-  ...
+      streamPort: 10003
+      tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt
+      tlsStreamCertFile: /etc/kubeedge/certs/stream.crt
+      tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key
+      tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
+      tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+      tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
+      tunnelPort: 10004
+    ```
 
-  ...
-  modules:
+    Open the YAML file in edgecore:
+    ``` shell
+    sudo nano /etc/kubeedge/config/edgecore.yaml
+    ```
+    Modify the file in the following part (`enable: true`), (`server: 192.168.0.193:10004`):
+    ``` yaml  
     edgeStream:
       enable: true
-  ...
-  ```
+      handshakeTimeout: 30
+      readDeadline: 15
+      server: 192.168.0.139:10004
+      tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
+      tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+      tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
+      writeDeadline: 15
+    ```  
 
-6. Restart all the cloudcore and edgecore.
+
+
+
+
+6. Restart all the cloudcore and edgecore.(Warning: there are some containers which are related to the edgecore. Thus, we have to restart edgecore.service first and make those kube-proxy related containers `pending` or `pause`, and then kill those containers. Finally, we can restart edgecore again to make it work properly.
+Before you start to restart any service, please turn your user into root. Since you have to possess the rights of accessing the docker and system services directly.)
+
+    ``` shell
+    sudo su
+    ```
+    cloudCore:
+    ``` shell
+    pkill cloudcore
+    nohup cloudcore > cloudcore.log 2>&1 &
+    ```
+    edgeCore:
+    ``` shell
+    systemctl restart edgecore.service
+    docker ps
+    ```
+    | CONTAINER ID  | NAMES                                           |
+    |---------------|-------------------------------------------------|
+    | d40ad4007d6f9 | k8s_POD_weave-net-fr9vx_kube-system_...         |
+    | f59bdacbfc48  | k8s_kube-proxy_kube-proxy-s8476_kube-system_... |
+    | f15a4b9aae7a  | k8s_POD_kube-proxy-s8476_kube-system_.....      |
+
+
+    Kill those `Network` related containers to make restart 
+    ``` shell
+    docker container kill d40ad407d6f9
+    docker container kill f59bdacbfc48
+    docker container kill f15a4b9aae7a
+    systemctl restart edgecore.service
+    ```
+
+    Use the following command to check if `kubectl logs` feature is activated or not on localhost (The Raspberry Pi 4 is the KubeEdge Edge node in my case).
+    Check if the edge stream feature is activated or not:
+
+    ``` shell
+    sudo netstat -tulpn | grep edgecore
+    ```
+
+    | tcp | 0 | 0 | 127.0.0.1:10350 | 0.0.0.0:* | LISTEN | 2613/`edgecore` |
+    |-----|---|---|-----------------|-----------|--------|-----------------|
+
+    Make sure if your edge stream service can be accessed:
+    ```shell
+    curl "http://localhost:10350/stats/summary?only_cpu_and_memory=true"
+    ```
+
+    If you successfully activate the feature, you will see the following information (Block below is part of it):
+
+    ``` shell
+    root@raspberrypi:/home/pi# curl "http://localhost:10350/stats/summary?only_cpu_and_memory=true"
+    {
+      "node": {
+      "nodeName": "raspberrypi",
+      "systemContainers": [
+        {
+         "name": "pods",
+         "startTime": "2020-08-22T11:04:10Z",
+         "cpu": {
+         "time": "2020-08-23T02:29:35Z",
+         "usageNanoCores": 12480180,
+         "usageCoreNanoSeconds": 846749998105
+        },
+        .
+        .
+        .
+        .
+        .
+        "workingSetBytes": 5156864,
+        "rssBytes": 5914624,
+        "pageFaults": 0,
+        "majorPageFaults": 0
+       }
+      }
+     ]
+    }
+    ```
+
+
 
 ### Support Metrics-server in Cloud
 1. The realization of this function point reuses cloudstream and edgestream modules. So you also need to perform all steps of *Enable `kubectl logs` Feature*.
 
-2. Since the kubelet ports of edge nodes and cloud nodes are not the same, the current release version of metrics-server(0.3.x) does not support automatic port identification, so you need to manually compile the image yourself now.
+2. Since the kubelet ports of edge nodes and cloud nodes are not the same, the current release version of metrics-server(0.3.x) does not support automatic port identification (It is the 0.4.0 feature), so you need to manually compile the image from master branch yourself now.
 
-```bash
-git clone https://github.com/kubernetes-sigs/metrics-server.git
-cd metrics-server
-make container
-docker images
-docker tag 2d9eb6e0d887 metrics-server-kubeedge:latest
-```
+    Git clone latest metrics server repository:
+
+    ```bash
+    git clone https://github.com/kubernetes-sigs/metrics-server.git
+    ```
+   
+    Go to the metrics server directory:
+
+    ```bash
+    cd metrics-server
+    ```
+
+    Make the docker image:
+
+    ```bash
+    make container
+    ```
+
+    Check if you have this docker image:
+
+    ```bash
+    docker images
+    ```
+
+    |                  REPOSITORY                           |                    TAG                   |   IMAGE ID   |     CREATE     |  SIZE  |
+    |-------------------------------------------------------|------------------------------------------|--------------|----------------|--------|
+    | gcr.io/k8s-staging-metrics-serer/ metrics-serer-amd64 | 6d92704c5a68cd29a7a81bce68e6c2230c7a6912 | a24f71249d69 | 19 seconds ago | 57.2MB |
+    | metrics-server-kubeedge                               |                 latest                   | aef0fa7a834c | 28 seconds ago | 57.2MB |
+
+
+    Make sure you change the tag of image by using its IMAGE ID to be compactable with image name in yaml file.
+
+    ```bash
+    docker tag a24f71249d69 metrics-server-kubeedge:latest
+    ```
 
 3. Apply the deployment yaml. For specific deployment documents, you can refer to https://github.com/kubernetes-sigs/metrics-server/tree/master/manifests.
+
+    Before you deploy metrics-server, you have to make sure that you deploy it on the node which has apiserver deployed on. In my case, that is my master node. As a consequence, I need to make master node schedulable by the following command:
+
+    ``` shell
+    kubectl taint nodes --all node-role.kubernetes.io/master-
+    ```
+   
+    Then, in the deployment.yaml file, I must specify that metrics-server is deployed on master node.
+    (I used hostname as the marked label.)
+    In `metrics-server-deployment.yaml`
+    ``` yaml
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  #Specify which label in [kubectl get nodes --show-labels] you want to match
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    #Specify the value in key
+                    - charlie-latest
+    ```
+
+    The deployment YAML files can be found in this repository:
+    [DockerAndKubernetesCourseCode](https://github.com/DanWahlin/DockerAndKubernetesCourseCode/tree/master/samples/prometheus/metrics-server)
 
 **IMPORTANT NOTE:**
 1. Metrics-server needs to use hostnetwork network mode.
 
-2. Use the image compiled by yourself and set imagePullPolicy to IfNotPresent.
+2. Use the image compiled by yourself and set imagePullPolicy to Never.
 
 3. Enable the feature of --kubelet-use-node-status-port for Metrics-server
+
+    Those settings need to be written in deployment yaml (metrics-server-deployment.yaml) file like this:
+
+    ``` yaml
+          volumes:
+          # mount in tmp so we can safely use from-scratch images and/or read-only containers
+          - name: tmp-dir
+            emptyDir: {}
+          hostNetwork: true                          #Add this line to enable hostnetwork mode
+          containers:
+          - name: metrics-server
+            image: metrics-server-kubeedge:latest    #Make sure that the REPOSITORY and TAG are correct
+            # Modified args to include --kubelet-insecure-tls for Docker Desktop (don't use this flag with a real k8s cluster!!)
+            imagePullPolicy: Never                   #Make sure that the delpoyment uses the image you built up
+            args:
+              - --cert-dir=/tmp
+              - --secure-port=4443
+              - --v=2
+              - --kubelet-insecure-tls
+              - --kubelet-preferred-address-types=InternalDNS,InternalIP,ExternalIP,Hostname
+              - --kubelet-use-node-status-port       #Enable the feature of --kubelet-use-node-status-port for Metrics-server
+            ports:
+            - name: main-port
+              containerPort: 4443
+              protocol: TCP
+    ```
+
+
+    Metrics server works finally!
+
+    <img src="../images/metrics-server/final_result.png" width="713" height="376">
+
 
 ## Reset KubeEdge Master and Worker nodes
 
