@@ -120,6 +120,12 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				MqttServerExternal:   "tcp://127.0.0.1:1883",
 				MqttServerInternal:   "tcp://127.0.0.1:1884",
 				MqttMode:             MqttModeExternal,
+				TLS: &EventBusTLS{
+					Enable:                false,
+					TLSMqttCAFile:         constants.DefaultMqttCAFile,
+					TLSMqttCertFile:       constants.DefaultMqttCertFile,
+					TLSMqttPrivateKeyFile: constants.DefaultMqttKeyFile,
+				},
 			},
 			MetaManager: &MetaManager{
 				Enable:                true,
@@ -214,12 +220,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				MqttServerExternal: "tcp://127.0.0.1:1883",
 				MqttServerInternal: "tcp://127.0.0.1:1884",
 				MqttMode:           MqttModeExternal,
-				Tls: &EventBusTls{
-					Enable:                false,
-					TLSMqttCAFile:         constants.DefaultMqttCAFile,
-					TLSMqttCertFile:       constants.DefaultMqttCertFile,
-					TLSMqttPrivateKeyFile: constants.DefaultMqttKeyFile,
-				},
 			},
 		},
 	}
