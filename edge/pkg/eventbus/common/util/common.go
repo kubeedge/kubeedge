@@ -2,11 +2,14 @@ package util
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"io/ioutil"
 	"os"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	"k8s.io/klog"
 )
 
@@ -50,8 +53,39 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 			opts.SetPassword(password)
 		}
 	}
-	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
+
+	klog.Infof("Start to config MQTT client tls connect")
+	tlsConfig := &tls.Config{}
+	if eventconfig.Config.Tls.Enable == true {
+		cert, err := tls.LoadX509KeyPair(eventconfig.Config.Tls.TLSMqttCertFile, eventconfig.Config.Tls.TLSMqttPrivateKeyFile)
+		if err != nil {
+			klog.Errorf("Failed to load x509 key pair: %v", err)
+			return nil
+		}
+
+		caCert, err := ioutil.ReadFile(eventconfig.Config.Tls.TLSMqttCAFile)
+		if err != nil {
+			klog.Errorf("Failed to read TLSMqttCAFile")
+			return nil
+		}
+
+		pool := x509.NewCertPool()
+		if ok := pool.AppendCertsFromPEM(caCert); !ok {
+			klog.Errorf("Cannot parse the certificates")
+			return nil
+		}
+
+		tlsConfig = &tls.Config{
+			RootCAs:            pool,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: false,
+		}
+	} else {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
+	}
 	opts.SetTLSConfig(tlsConfig)
+	klog.Infof("config MQTT client tls connect successful")
+
 	return opts
 }
 
