@@ -9,6 +9,11 @@ const (
 	ResourceTypeNodeConnection = "node/connection"
 	OperationNodeConnection    = "publish"
 	SourceNodeConnection       = "edgehub"
+
+	ResourceGroupName = "resource"
+	TwinGroupName     = "twin"
+	FuncGroupName     = "func"
+	UserGroupName     = "user"
 )
 
 //BuildMsg returns message object with router and content details
