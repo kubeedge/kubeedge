@@ -187,6 +187,10 @@ func (esd *EdgeServiceDiscovery) getPods(name, namespace string) ([]v1.Pod, erro
 			klog.Errorf("[EdgeMesh] pods %s from cache with invalid type", key)
 			return nil, fmt.Errorf("pods %s from cache with invalid type", key)
 		}
+		if len(pods) == 0 {
+			klog.Errorf("[EdgeMesh] pod list %s is empty", key)
+			return nil, fmt.Errorf("pod list %s is empty", key)
+		}
 		klog.Infof("[EdgeMesh] get pods %s from cache", key)
 	} else {
 		// get from metaClient
