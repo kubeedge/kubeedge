@@ -344,6 +344,24 @@ type EventBus struct {
 	// +Required
 	// default: 2
 	MqttMode MqttMode `json:"mqttMode"`
+	// Tls indicates tls config for EventBus module
+	TLS *EventBusTLS `json:"eventBusTLS,omitempty"`
+}
+
+// EventBusTLS indicates the EventBus tls config with MQTT broker
+type EventBusTLS struct {
+	// Enable indicates whether enable tls connection
+	// default false
+	Enable bool `json:"enable,omitempty"`
+	// TLSMqttCAFile sets ca file path
+	// default "/etc/kubeedge/ca/rootCA.crt"
+	TLSMqttCAFile string `json:"tlsMqttCAFile,omitempty"`
+	// TLSMqttCertFile indicates the file containing x509 Certificate for HTTPS
+	// default "/etc/kubeedge/certs/server.crt"
+	TLSMqttCertFile string `json:"tlsMqttCertFile,omitempty"`
+	// TLSMqttPrivateKeyFile indicates the file containing x509 private key matching tlsMqttCertFile
+	// default "/etc/kubeedge/certs/server.key"
+	TLSMqttPrivateKeyFile string `json:"tlsMqttPrivateKeyFile,omitempty"`
 }
 
 // MetaManager indicates the MetaManager module config
