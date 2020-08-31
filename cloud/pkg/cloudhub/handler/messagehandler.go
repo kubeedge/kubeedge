@@ -175,6 +175,14 @@ func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan 
 				klog.Warningf("Stop keepalive check for node: %s", info.NodeID)
 				return
 			}
+
+			// Reset is called after Stop or expired timer
+			if !keepaliveTicker.Stop() {
+				select {
+				case <-keepaliveTicker.C:
+				default:
+				}
+			}
 			klog.V(4).Infof("Node %s is still alive", info.NodeID)
 			keepaliveTicker.Reset(time.Duration(mh.KeepaliveInterval) * time.Second)
 		case <-keepaliveTicker.C:
