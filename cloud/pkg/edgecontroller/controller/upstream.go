@@ -523,7 +523,6 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		node, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
->>>>>>> Remove the redundant code.
 	default:
 		err := stderrors.New("Wrong query type")
 		klog.Error(err)
