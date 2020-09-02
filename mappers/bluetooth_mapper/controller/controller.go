@@ -131,10 +131,10 @@ func (c *Config) handleScheduleCreateMessage(client MQTT.Client, message MQTT.Me
 			}
 		}
 		if scheduleExists {
-			c.Scheduler.Schedules = append(c.Scheduler.Schedules, newSchedule)
 			klog.Infof("Schedule: %s has been updated", newSchedule.Name)
 			klog.Infof("Updated Schedule: %v", newSchedule)
 		} else {
+			c.Scheduler.Schedules = append(c.Scheduler.Schedules, newSchedule)
 			klog.Infof("Schedule: %s has been added", newSchedule.Name)
 			klog.Infof("New Schedule: %v", newSchedule)
 		}
@@ -187,10 +187,10 @@ func (c *Config) handleActionCreateMessage(client MQTT.Client, message MQTT.Mess
 			}
 		}
 		if actionExists {
-			c.ActionManager.Actions = append(c.ActionManager.Actions, newAction)
 			klog.Infof("Action: %s has been updated", newAction.Name)
 			klog.Infof("Updated Action: %v", newAction)
 		} else {
+			c.ActionManager.Actions = append(c.ActionManager.Actions, newAction)
 			klog.Infof("Action: %s has been added ", newAction.Name)
 			klog.Infof("New Action: %v", newAction)
 		}
