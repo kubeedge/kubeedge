@@ -531,7 +531,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 }
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
-	klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+	klog.V(4).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 	namespace, err := messagelayer.GetNamespace(msg)
 	if err != nil {
 		klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
@@ -545,7 +545,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 
 	switch msg.GetOperation() {
 	case model.QueryOperation:
-		data, resourceVersion, err := kubeClientGet(uc, namespace, name, queryType)
+		object, resourceVersion, err := kubeClientGet(uc, namespace, name, queryType)
 		if errors.IsNotFound(err) {
 			klog.Warningf("message: %s process failure, resource not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 			return
@@ -556,7 +556,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 		}
 		resMsg := model.NewMessage(msg.GetID())
 		resMsg.SetResourceVersion(resourceVersion)
-		resMsg.Content = data
+		resMsg.Content = object
 		nodeID, err := messagelayer.GetNodeID(msg)
 		if err != nil {
 			klog.Warningf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
