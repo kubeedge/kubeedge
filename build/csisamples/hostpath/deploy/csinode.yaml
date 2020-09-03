@@ -1,5 +1,5 @@
 kind: DaemonSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: csi-hostpath-edge
   namespace: kubeedge
@@ -43,7 +43,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: quay.io/k8scsi/hostpathplugin:v1.1.0
+          image: quay.io/k8scsi/hostpathplugin:v1.3.0
           imagePullPolicy: IfNotPresent
           args:
             - "--drivername=csi-hostpath"
