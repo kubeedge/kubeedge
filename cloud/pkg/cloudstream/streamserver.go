@@ -80,6 +80,15 @@ func (s *StreamServer) installDebugHandler() {
 	ws.Route(ws.GET("/{namespace}/{podName}/{uid}/{containerName}").
 		To(s.getMetrics))
 	s.container.Add(ws)
+
+	// metrics api is widely used for Promethus
+	ws = new(restful.WebService)
+	ws.Path("/metrics")
+	ws.Route(ws.GET("").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/cadvisor").
+		To(s.getMetrics))
+	s.container.Add(ws)
 }
 
 func (s *StreamServer) getExec(r *restful.Request, w *restful.Response) {
