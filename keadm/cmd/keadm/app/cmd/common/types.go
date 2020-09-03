@@ -28,6 +28,7 @@ type InitOptions struct {
 	KubeConfig       string
 	Master           string
 	AdvertiseAddress string
+	DNS              string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
