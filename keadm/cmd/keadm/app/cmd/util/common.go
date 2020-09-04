@@ -346,7 +346,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	if _, err = os.Stat(filePath); err == nil {
-		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and will checksum for it.")
+		klog.Infof("Expected or Default KubeEdge version %v is already downloaded and will checksum for it.", version)
 		if success, _ := checkSum(filename, checksumFilename, version); !success {
 			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
 			for {
@@ -370,7 +370,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 				}
 			}
 		} else {
-			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded and checksum successfully.")
+			klog.Infof("Expected or Default KubeEdge version %v is already downloaded and checksum successfully.", version)
 		}
 	} else if !os.IsNotExist(err) {
 		return err
