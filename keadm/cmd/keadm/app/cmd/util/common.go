@@ -336,7 +336,6 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 	}
 
 	//Check if the same version exists, then skip the download and just untar and continue
-	//TODO: It is always better to have the checksum validation of the downloaded file
 	//and checksum available at download URL. So that both can be compared to see if
 	//proper download has happened and then only proceed further.
 	//Currently it is missing and once checksum is in place, checksum check required
