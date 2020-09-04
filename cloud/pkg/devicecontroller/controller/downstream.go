@@ -172,7 +172,7 @@ func (dc *DownstreamController) syncDevice() {
 
 // addToConfigMap adds device in the configmap
 func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
-	configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+	configMap, ok := dc.configMapManager.ConfigMap.Load(device.Namespace + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 	if !ok {
 		nodeConfigMap := &v1.ConfigMap{}
 		nodeConfigMap.Kind = ConfigMapKind
@@ -183,7 +183,7 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		// TODO: how to handle 2 device of multiple namespaces bind to same node ?
 		dc.addDeviceProfile(device, nodeConfigMap)
 		// store new config map
-		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		dc.configMapManager.ConfigMap.Store(device.Namespace+device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
 			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
@@ -204,9 +204,9 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	}
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
-	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+	dc.configMapManager.ConfigMap.Store(device.Namespace+device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
-		klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+		klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 		return
 	}
 }
@@ -717,7 +717,7 @@ func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, ve
 // deleteFromConfigMap deletes a device from configMap
 func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+		configMap, ok := dc.configMapManager.ConfigMap.Load(device.Namespace + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 		if !ok {
 			return
 		}
@@ -735,14 +735,14 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
 			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{})
 			// remove from cache
-			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
+			dc.configMapManager.ConfigMap.Delete(device.Namespace + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 			return
 		}
 
 		// store new config map
-		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
+		dc.configMapManager.ConfigMap.Store(device.Namespace+device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
-			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
 	}
