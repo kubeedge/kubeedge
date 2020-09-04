@@ -165,7 +165,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
 	cmd.Cmd.Env = os.Environ()
-	err = cmd.ExecuteCmdShowOutput()
+	err = cmd.ExcuteCommandCaptureOutput()
 	if err!=nil{
 		if errout := cmd.GetStdErr(); errout != "" {
 			fmt.Printf("failed to run cloudcore by {%s}, stderr: %s\n",command,errout)

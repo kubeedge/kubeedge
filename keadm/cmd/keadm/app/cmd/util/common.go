@@ -117,6 +117,17 @@ func (cm *Command) ExecuteCommand() {
 		cm.StdErr = []byte(err.Error())
 	}
 }
+//ExcuteCommandCaptureOutput the commadn and capture both output in stdOut and stdErr
+func(cm *Command) ExcuteCommandCaptureOutput()error{
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cm.Cmd.Stdout = &stdout
+	cm.Cmd.Stderr = &stderr
+	err := cm.Cmd.Run()
+	cm.StdOut = stdout.Bytes()
+	cm.StdErr = stdout.Bytes()
+	return err
+}
 
 //GetStdOutput gets StdOut field
 func (cm Command) GetStdOutput() string {
