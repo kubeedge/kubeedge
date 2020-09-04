@@ -167,10 +167,10 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	cmd.Cmd.Env = os.Environ()
 	err = cmd.ExecuteCmdShowOutput()
 	if err!=nil{
+		if errout := cmd.GetStdErr(); errout != "" {
+			fmt.Printf("failed to run cloudcore by {%s}, stderr: %s\n",command,errout)
+		}
 		return err
-	}
-	if errout := cmd.GetStdErr(); errout != "" {
-		return fmt.Errorf("failed to run cloudcore by {%s} : %s",command,errout)
 	}
 	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
 		if systemdExist {

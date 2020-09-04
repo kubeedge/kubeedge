@@ -161,14 +161,14 @@ func (cm Command) ExecuteCmdShowOutput() error {
 	wg.Wait()
 
 	err = cm.Cmd.Wait()
-	if err != nil {
-		return fmt.Errorf("failed to run '%s' because of error : %s", strings.Join(cm.Cmd.Args, " "), err.Error())
-	}
+	// capture stdout and stderr before return
+	cm.StdOut, cm.StdErr = stdoutBuf.Bytes(), stderrBuf.Bytes()
 	if errStdout != nil || errStderr != nil {
 		return fmt.Errorf("failed to capture stdout or stderr")
 	}
-
-	cm.StdOut, cm.StdErr = stdoutBuf.Bytes(), stderrBuf.Bytes()
+	if err != nil {
+		return fmt.Errorf("failed to run '%s' because of error : %s", strings.Join(cm.Cmd.Args, " "), err.Error())
+	}
 	return nil
 }
 
