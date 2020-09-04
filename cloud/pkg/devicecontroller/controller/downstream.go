@@ -180,7 +180,6 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		nodeConfigMap.Name = DeviceProfileConfigPrefix + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
 		nodeConfigMap.Namespace = device.Namespace
 		nodeConfigMap.Data = make(map[string]string)
-		// TODO: how to handle 2 device of multiple namespaces bind to same node ?
 		dc.addDeviceProfile(device, nodeConfigMap)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Namespace+device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
