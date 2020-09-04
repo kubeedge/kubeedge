@@ -125,7 +125,7 @@ func(cm *Command) ExcuteCommandCaptureOutput()error{
 	cm.Cmd.Stderr = &stderr
 	err := cm.Cmd.Run()
 	cm.StdOut = stdout.Bytes()
-	cm.StdErr = stdout.Bytes()
+	cm.StdErr = stderr.Bytes()
 	return err
 }
 
