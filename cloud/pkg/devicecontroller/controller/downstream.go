@@ -178,19 +178,19 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		nodeConfigMap.Kind = ConfigMapKind
 		nodeConfigMap.APIVersion = ConfigMapVersion
 		nodeConfigMap.Name = DeviceProfileConfigPrefix + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-		nodeConfigMap.Namespace = "default"
+		nodeConfigMap.Namespace = constants.ConfigmapNamespace
 		nodeConfigMap.Data = make(map[string]string)
 		dc.addDeviceProfile(device, nodeConfigMap)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
-			if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
+			if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
 				klog.Errorf("Failed to create config map %v, error %v", nodeConfigMap, err)
 				return
 			}
 		}
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v, error %v", nodeConfigMap, err)
 			return
 		}
@@ -204,7 +204,7 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
 	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-	if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+	if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 		klog.Errorf("Failed to update config map %v, error %v", nodeConfigMap, err)
 		return
 	}
@@ -574,7 +574,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v, error %v", nodeConfigMap, err)
 			return
 		}
@@ -738,7 +738,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 		// 1. no device bound to it, as Data[DeviceProfileJSON] is "{}"
 		// 2. device instance created alone then removed, as Data[DeviceProfileJSON] is ""
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
-			dc.kubeClient.CoreV1().ConfigMaps("default").Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{})
+			dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{})
 			// remove from cache
 			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 			return
@@ -746,7 +746,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps("default").Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(constants.ConfigmapNamespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v, error %v", nodeConfigMap, err)
 			return
 		}

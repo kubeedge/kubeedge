@@ -13,6 +13,8 @@ const (
 
 	DefaultMessageLayer = "context"
 
+	ConfigmapNamespace = "default"
+
 	DefaultContextSendModuleName     = CloudHubControllerModuleName
 	DefaultContextReceiveModuleName  = DeviceControllerModuleName
 	DefaultContextResponseModuleName = CloudHubControllerModuleName
