@@ -492,7 +492,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		configMap, err := uc.kubeClient.CoreV1().ConfigMaps("default").Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := configMap.ResourceVersion
 		return configMap, resourceVersion, err
 	case model.ResourceTypeSecret:
