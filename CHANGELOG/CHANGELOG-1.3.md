@@ -17,7 +17,7 @@
   * [v1.3.0-beta.0](#v130-beta0)
      * [Changelog since v1.2.0](#changelog-since-v120)
         * [Bug Fixes](#bug-fixes-1)
-        
+
 # v1.3.1
 
 ## Downloads for v1.3.1
