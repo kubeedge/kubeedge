@@ -17,9 +17,10 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	componentbaseconfig "k8s.io/component-base/config"
-	"time"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -114,6 +115,8 @@ type CloudHub struct {
 	HTTPS *CloudHubHTTPS `json:"https,omitempty"`
 	// AdvertiseAddress sets the IP address for the cloudcore to advertise.
 	AdvertiseAddress []string `json:"advertiseAddress,omitempty"`
+	// DNSNames sets the DNSNames for CloudCore.
+	DNSNames []string `json:"dnsNames,omitempty"`
 	// EdgeCertSigningDuration indicates the validity period of edge certificate
 	// default 365d
 	EdgeCertSigningDuration time.Duration `json:"edgeCertSigningDuration,omitempty"`
