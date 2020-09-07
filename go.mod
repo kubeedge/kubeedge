@@ -16,6 +16,8 @@ require (
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
+	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
@@ -24,6 +26,9 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
+	github.com/golang/protobuf v1.3.2
+	github.com/google/cadvisor v0.35.0
+	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
@@ -125,7 +130,7 @@ replace (
 	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
 	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
-	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.18.6
 	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
 	k8s.io/kubectl => k8s.io/kubectl v0.19.1
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747

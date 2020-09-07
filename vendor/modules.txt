@@ -214,7 +214,12 @@ github.com/emicklei/go-restful/log
 github.com/euank/go-kmsg-parser/kmsgparser
 # github.com/evanphx/json-patch v4.9.0+incompatible
 github.com/evanphx/json-patch
+<<<<<<< HEAD
 # github.com/fsnotify/fsnotify v1.4.9
+=======
+# github.com/fsnotify/fsnotify v1.4.7
+## explicit
+>>>>>>> Upgrade to 1.18.6
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 ## explicit
@@ -1244,6 +1249,7 @@ k8s.io/client-go/tools/record
 k8s.io/client-go/tools/record/util
 k8s.io/client-go/tools/reference
 k8s.io/client-go/tools/remotecommand
+k8s.io/client-go/tools/watch
 k8s.io/client-go/transport
 k8s.io/client-go/transport/spdy
 k8s.io/client-go/util/cert
@@ -1343,6 +1349,7 @@ k8s.io/kube-openapi/pkg/util/sets
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kube-scheduler v0.19.3
@@ -1352,6 +1359,9 @@ k8s.io/kube-proxy/config/v1alpha1
 <<<<<<< HEAD
 =======
 # k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+=======
+# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.18.6
+>>>>>>> Upgrade to 1.18.6
 ## explicit
 k8s.io/kube-proxy/config/v1alpha1
 >>>>>>> update vendor
@@ -1595,6 +1605,7 @@ k8s.io/kubernetes/pkg/proxy/apis
 k8s.io/kubernetes/pkg/proxy/apis/config
 k8s.io/kubernetes/pkg/proxy/apis/config/scheme
 k8s.io/kubernetes/pkg/proxy/apis/config/v1alpha1
+k8s.io/kubernetes/pkg/proxy/apis/config/validation
 k8s.io/kubernetes/pkg/proxy/config
 k8s.io/kubernetes/pkg/proxy/healthcheck
 k8s.io/kubernetes/pkg/proxy/iptables
@@ -1627,10 +1638,16 @@ k8s.io/kubernetes/pkg/util/hash
 k8s.io/kubernetes/pkg/util/ipset
 k8s.io/kubernetes/pkg/util/iptables
 <<<<<<< HEAD
+<<<<<<< HEAD
 k8s.io/kubernetes/pkg/util/node
 =======
 k8s.io/kubernetes/pkg/util/ipvs
 >>>>>>> update vendor
+=======
+k8s.io/kubernetes/pkg/util/iptables/testing
+k8s.io/kubernetes/pkg/util/ipvs
+k8s.io/kubernetes/pkg/util/node
+>>>>>>> Upgrade to 1.18.6
 k8s.io/kubernetes/pkg/util/oom
 k8s.io/kubernetes/pkg/util/parsers
 k8s.io/kubernetes/pkg/util/pod
