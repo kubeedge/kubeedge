@@ -9,7 +9,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -81,9 +81,18 @@ func (eh *EdgeHub) sendToKeepChannel(message model.Message) error {
 }
 
 func (eh *EdgeHub) dispatch(message model.Message) error {
-	// TODO: dispatch message by the message type
-	md, ok := groupMap[message.GetGroup()]
-	if !ok {
+	group := message.GetGroup()
+	md := ""
+	switch group {
+	case messagepkg.ResourceGroupName:
+		md = modules.MetaGroup
+	case messagepkg.TwinGroupName:
+		md = modules.TwinGroup
+	case messagepkg.FuncGroupName:
+		md = modules.MetaGroup
+	case messagepkg.UserGroupName:
+		md = modules.BusGroup
+	default:
 		klog.Warningf("msg_group not found")
 		return fmt.Errorf("msg_group not found")
 	}
@@ -206,8 +215,8 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	}
 
 	for _, group := range groupMap {
-		message := model.NewMessage("").BuildRouter(message.SourceNodeConnection, group,
-			message.ResourceTypeNodeConnection, message.OperationNodeConnection).FillBody(content)
+		message := model.NewMessage("").BuildRouter(messagepkg.SourceNodeConnection, group,
+			messagepkg.ResourceTypeNodeConnection, messagepkg.OperationNodeConnection).FillBody(content)
 		beehiveContext.SendToGroup(group, *message)
 	}
 }
