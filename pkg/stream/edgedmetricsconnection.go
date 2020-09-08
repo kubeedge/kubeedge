@@ -62,6 +62,12 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 		return err
 	}
 	req.Header = ms.Header
+	// Since current tunnel implementation only support Text message,
+	// we should force Accept-Encoding to identity to avoid any compression.
+	// For example, user may pass accept-encoding: gzip in header.
+	// TODO: luogangyi
+	// When we support binary message, we can remove this setting.
+	req.Header.Set("accept-encoding", "identity")
 	resp, err := client.Do(req)
 	if err != nil {
 		klog.Errorf("request metrics error %v", err)
