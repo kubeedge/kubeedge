@@ -17,7 +17,7 @@
 TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
 
 function cleanup() {
-  sudo pkill -9 edgecore || true
+  sudo pkill edgecore || true
   while true; do
     sleep 1
     ps faux | grep -q [e]dgecore || break

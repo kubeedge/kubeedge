@@ -28,7 +28,7 @@ func StartModules() {
 // GracefulShutdown is if it gets the special signals it does modules cleanup
 func GracefulShutdown() {
 	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGKILL,
+	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
 	select {
 	case s := <-c:
