@@ -6,6 +6,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxier"
+	"os"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
@@ -52,38 +53,61 @@ func (em *EdgeMesh) Start() {
 	// start dns server
 	go dns.Start()
 
-	opts := proxier.NewOptions()
-	proxier, err := proxier.NewProxyServer(opts)
-	if err != nil {
-		klog.Fatal(err)
+	var singleNode bool
+	if _, err := os.Stat("/root/.kube/config"); err != nil {
+		singleNode = true
 	}
 
-	go func() {
-		if err := proxier.Run(); err != nil {
-			klog.Errorf("[EdgeMesh] failed to start proxier, err: %v", err)
-		}
-	}()
-
-	// we need watch message to update the cache of instances
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("EdgeMesh Stop")
-			proxy.Clean()
-			if err := proxier.CleanupAndExit(); err != nil {
-				klog.Errorf("[EdgeMesh] proxier failed to cleanup, err: %v", err)
-			}
-			return
-		default:
-		}
-		msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
+	if !singleNode {
+		opts := proxier.NewOptions()
+		proxier, err := proxier.NewProxyServer(opts)
 		if err != nil {
-			klog.Warningf("[EdgeMesh] receive msg error %v", err)
-			continue
+			klog.Fatal(err)
 		}
-		klog.V(4).Infof("[EdgeMesh] get message: %v", msg)
-		listener.MsgProcess(msg)
-		klog.Warning("[EdgeMesh] proxier process msg")
-		proxier.MsgProcess(msg)
+
+		go func() {
+			if err := proxier.Run(); err != nil {
+				klog.Errorf("[EdgeMesh] failed to start proxier, err: %v", err)
+			}
+		}()
+
+		for {
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeMesh Stop")
+				proxy.Clean()
+				if err := proxier.CleanupAndExit(); err != nil {
+					klog.Errorf("[EdgeMesh] proxier failed to cleanup, err: %v", err)
+				}
+				return
+			default:
+			}
+			msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
+			if err != nil {
+				klog.Warningf("[EdgeMesh] receive msg error %v", err)
+				continue
+			}
+			klog.V(4).Infof("[EdgeMesh] get message: %v", msg)
+			listener.MsgProcess(msg)
+			klog.Warning("[EdgeMesh] proxier process msg")
+			proxier.MsgProcess(msg)
+		}
+	} else {
+		for {
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeMesh Stop")
+				proxy.Clean()
+				return
+			default:
+			}
+			msg, err := beehiveContext.Receive(constant.ModuleNameEdgeMesh)
+			if err != nil {
+				klog.Warningf("[EdgeMesh] receive msg error %v", err)
+				continue
+			}
+			klog.V(4).Infof("[EdgeMesh] get message: %v", msg)
+			listener.MsgProcess(msg)
+		}
 	}
 }
