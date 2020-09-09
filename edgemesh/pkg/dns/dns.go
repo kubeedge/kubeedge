@@ -112,22 +112,24 @@ func startDNS() {
 			continue
 		}
 
-		que, err := parseDNSQuery(req[:n])
-		if err != nil {
-			continue
-		}
+		go func(req []byte, n int, u *net.UDPConn, s *net.UDPAddr) {
+			que, err := parseDNSQuery(req[:n])
+			if err != nil {
+				return
+			}
 
-		que.from = from
+			que.from = from
 
-		rsp := make([]byte, 0)
-		rsp, err = recordHandle(que, req[:n])
-		if err != nil {
-			klog.Warningf("[EdgeMesh] failed to resolve dns: %v", err)
-			continue
-		}
-		if _, err = dnsConn.WriteTo(rsp, from); err != nil {
-			klog.Warningf("[EdgeMesh] failed to write: %v", err)
-		}
+			rsp := make([]byte, 0)
+			rsp, err = recordHandle(que, req[:n])
+			if err != nil {
+				klog.Warningf("[EdgeMesh] failed to resolve dns: %v", err)
+				return
+			}
+			if _, err = dnsConn.WriteTo(rsp, from); err != nil {
+				klog.Warningf("[EdgeMesh] failed to write: %v", err)
+			}
+		}(req, n, dnsConn, from)
 	}
 }
 
