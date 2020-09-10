@@ -351,7 +351,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 		if success, _ := checkSum(filename, checksumFilename, version); !success {
 			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
 			for {
-				confirm, err := ask4confirm()
+				confirm, err := askForconfirm()
 				if err != nil {
 					fmt.Println(err.Error())
 					continue
@@ -655,7 +655,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version) er
 	return nil
 }
 
-func ask4confirm() (bool, error) {
+func askForconfirm() (bool, error) {
 	var s string
 
 	fmt.Println("[y/N]: ")
