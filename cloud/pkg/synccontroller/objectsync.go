@@ -13,6 +13,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
@@ -172,7 +173,7 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 		klog.Warningf("build message resource failed with error: %s", err)
 		return nil
 	}
-	msg.BuildRouter(edgectrconst.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
+	msg.BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
 	msg.Content = obj
 
 	resourceVersion := GetObjectResourceVersion(obj)
