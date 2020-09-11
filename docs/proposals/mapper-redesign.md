@@ -130,10 +130,10 @@ In the certification mode, we will use one side authentication. The certificatio
 ### Miscellaneous
 #### Device status definition
 ```go
-const DeviceStatus {
+const (
     DEVSTOK
     DEVSTERR        /*Expected value is not equal as setting*/
     DEVSTDISCONN    
     DEVSTUNHEALTHY  /*Unhealthy status from device*/
-}
+)
 ```
