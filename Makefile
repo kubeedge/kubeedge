@@ -82,16 +82,21 @@ define TEST_HELP_INFO
 # Args:
 #   WHAT: Component names to be testd. support: $(COMPONENTS)
 #         If not specified, "everything" will be tested.
+#   PROFILE: Generate profile named as "coverage.out"
 #
 # Example:
 #   make test
 #   make test HELP=y
+#   make test PROFILE=y
 #   make test WHAT=cloud
 endef
 .PHONY: test
 ifeq ($(HELP),y)
 test:
 	@echo "$$TEST_HELP_INFO"
+else ifeq ($(PROFILE),y)
+test: clean
+	PROFILE=coverage.out hack/make-rules/test.sh $(WHAT)
 else
 test: clean
 	hack/make-rules/test.sh $(WHAT)
