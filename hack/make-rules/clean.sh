@@ -25,6 +25,7 @@ source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
 kubeedge::clean::cache(){
   unset GOARM
+  go clean -testcache
   go clean -cache
 }
 
