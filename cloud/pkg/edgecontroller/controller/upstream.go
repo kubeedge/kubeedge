@@ -224,14 +224,17 @@ func (uc *UpstreamController) updatePodStatus() {
 		case msg := <-uc.podStatusChan:
 			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
-			namespace, podStatuses := uc.unmarshalPodStatusMessage(msg)
+			namespace, nodeName, podStatuses := uc.unmarshalPodStatusMessage(msg)
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
 				for _, podStatus := range podStatuses {
 					getPod, err := uc.kubeClient.CoreV1().Pods(namespace).Get(context.Background(), podStatus.Name, metaV1.GetOptions{})
-					if errors.IsNotFound(err) {
-						klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
-
+					if errors.IsNotFound(err) || (err == nil && nodeName != "" && getPod.Spec.NodeName != nodeName) { // Should delete the pod that have been scheduled to another node on edge side
+						if errors.IsNotFound(err) {
+							klog.Warningf("message: %s, pod not found, namespace: %s, name: %s", msg.GetID(), namespace, podStatus.Name)
+						} else {
+							klog.Warningf("message: %s, the node that the pod runs on has changed,from %s to %s, namespace: %s, name: %s", msg.GetID(), nodeName, getPod.Spec.NodeName, namespace, podStatus.Name)
+						}
 						// Send request to delete this pod on edge side
 						delMsg := model.NewMessage("")
 						nodeID, err := messagelayer.GetNodeID(msg)
@@ -1077,13 +1080,14 @@ func (uc *UpstreamController) queryNode() {
 	}
 }
 
-func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns string, podStatuses []edgeapi.PodStatusRequest) {
+func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns, nodeName string, podStatuses []edgeapi.PodStatusRequest) {
 	ns, err := messagelayer.GetNamespace(msg)
 	if err != nil {
 		klog.Warningf("message: %s process failure, get namespace with error: %s", msg.GetID(), err)
 		return
 	}
 	name, _ := messagelayer.GetResourceName(msg)
+	nodeName, _ = messagelayer.GetNodeID(msg)
 
 	var data []byte
 	switch msg.Content.(type) {
