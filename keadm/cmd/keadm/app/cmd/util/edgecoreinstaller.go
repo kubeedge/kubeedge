@@ -156,7 +156,9 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	//Kill edge core process
-	ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
+	if err := ku.KillKubeEdgeBinary(KubeEdgeBinaryName); err != nil {
+		return err
+	}
 
 	return nil
 }

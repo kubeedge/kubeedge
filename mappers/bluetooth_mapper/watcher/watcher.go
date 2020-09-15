@@ -61,7 +61,9 @@ func (w *Watcher) Initiate(device gatt.Device, nameOfDevice, idOfDevice string, 
 		gatt.PeripheralDisconnected(onPeripheralDisconnected),
 		gatt.PeripheralDiscovered(onPeripheralDiscovered),
 	)
-	device.Init(onStateChanged)
+	if err := device.Init(onStateChanged); err != nil {
+		klog.Errorf("Init device failed with error: %v", err)
+	}
 	<-done
 	klog.Infof("Watcher Done")
 }

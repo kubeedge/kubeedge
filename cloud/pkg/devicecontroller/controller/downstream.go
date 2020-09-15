@@ -734,7 +734,10 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 		// 1. no device bound to it, as Data[DeviceProfileJSON] is "{}"
 		// 2. device instance created alone then removed, as Data[DeviceProfileJSON] is ""
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
-			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{})
+			if err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(context.Background(), nodeConfigMap.Name, metav1.DeleteOptions{}); err != nil {
+				klog.Errorf("failed to delete config map %s in namespace %s", nodeConfigMap.Name, device.Namespace)
+				return
+			}
 			// remove from cache
 			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 			return
