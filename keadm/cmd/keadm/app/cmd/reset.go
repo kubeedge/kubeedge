@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"io"
 
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 	phases "k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset"
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 	utilsexec "k8s.io/utils/exec"
 
