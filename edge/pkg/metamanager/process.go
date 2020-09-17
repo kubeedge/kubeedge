@@ -66,7 +66,10 @@ func sendToEdgeMesh(message *model.Message, sync bool) {
 }
 
 func sendToCloud(message *model.Message) {
+	oldSync := message.Header.Sync
+	message.Header.Sync = false
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
+	message.Header.Sync = oldSync
 }
 
 // Resource format: <namespace>/<restype>[/resid]
