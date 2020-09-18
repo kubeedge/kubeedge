@@ -34,6 +34,7 @@ import (
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
+	systemReserved := map[string]string{"cpu": constants.DefaultSystemReservedCPU, "memory": constants.DefaultSystemReservedMEM}
 
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -82,6 +83,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				NetworkPluginMTU:            constants.DefaultNetworkPluginMTU,
 				VolumeStatsAggPeriod:        constants.DefaultVolumeStatsAggPeriod,
 				EnableMetrics:               true,
+				MaxPods:                     constants.DefaultMaxPods,
+				SystemReserved:              systemReserved,
 			},
 			EdgeHub: &EdgeHub{
 				Enable:            true,

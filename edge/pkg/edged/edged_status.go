@@ -52,7 +52,6 @@ import (
 )
 
 var initNode v1.Node
-var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
 
 func (e *edged) initialNode() (*v1.Node, error) {
 	var node = &v1.Node{}
@@ -121,8 +120,14 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		return nil, err
 	}
 
-	node.Status.Capacity[v1.ResourcePods] = *resource.NewQuantity(110, resource.DecimalSI)
-	node.Status.Allocatable[v1.ResourcePods] = *resource.NewQuantity(110, resource.DecimalSI)
+	var maxPods int64
+	if config.Config.MaxPods > 0 {
+		maxPods = int64(config.Config.MaxPods)
+	} else {
+		maxPods = int64(constants.DefaultMaxPods)
+	}
+	node.Status.Capacity[v1.ResourcePods] = *resource.NewQuantity(maxPods, resource.DecimalSI)
+	node.Status.Allocatable[v1.ResourcePods] = *resource.NewQuantity(maxPods, resource.DecimalSI)
 
 	return node, nil
 }
@@ -326,7 +331,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
+func (e *edged) setMemInfo(capacity, allocatable v1.ResourceList) error {
 	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
@@ -335,26 +340,45 @@ func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
 	if len(matches) != 2 {
 		return fmt.Errorf("failed to match regexp in output: %q", string(out))
 	}
-	m, err := strconv.ParseInt(string(matches[1]), 10, 64)
+	machineMem, err := strconv.ParseInt(string(matches[1]), 10, 64)
 	if err != nil {
 		return err
 	}
-	totalMem := m / 1024
-	mem := resource.MustParse(strconv.FormatInt(totalMem, 10) + "Mi")
-	total[v1.ResourceMemory] = mem.DeepCopy()
+	machineMemKi := machineMem / 1024
+	machineMemMi := resource.MustParse(strconv.FormatInt(machineMemKi, 10) + "Mi")
+	capacity[v1.ResourceMemory] = machineMemMi.DeepCopy()
 
-	if mem.Cmp(reservationMemory) > 0 {
-		mem.Sub(reservationMemory)
+	var reservationMemory resource.Quantity
+	if config.Config.SystemReserved["memory"] != "" {
+		reservationMemory = resource.MustParse(config.Config.SystemReserved["memory"])
+	} else {
+		reservationMemory = resource.MustParse(constants.DefaultSystemReservedMEM)
 	}
-	allocated[v1.ResourceMemory] = mem.DeepCopy()
+	if machineMemMi.Cmp(reservationMemory) > 0 {
+		machineMemMi.Sub(reservationMemory)
+	}
+	allocatable[v1.ResourceMemory] = machineMemMi.DeepCopy()
 
 	return nil
 }
 
-func (e *edged) setCPUInfo(total, allocated v1.ResourceList) error {
-	total[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
-	allocated[v1.ResourceCPU] = total[v1.ResourceCPU].DeepCopy()
+func (e *edged) setCPUInfo(capacity, allocatable v1.ResourceList) error {
+	capacity[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
+	allocatable[v1.ResourceCPU] = capacity[v1.ResourceCPU].DeepCopy()
 
+	cpu := resource.MustParse(fmt.Sprintf("%d", runtime.NumCPU()))
+	capacity[v1.ResourceCPU] = cpu.DeepCopy()
+
+	var reservationCPU resource.Quantity
+	if config.Config.SystemReserved["cpu"] != "" {
+		reservationCPU = resource.MustParse(config.Config.SystemReserved["cpu"])
+	} else {
+		reservationCPU = resource.MustParse(constants.DefaultSystemReservedCPU)
+	}
+	if cpu.Cmp(reservationCPU) > 0 {
+		cpu.Sub(reservationCPU)
+	}
+	allocatable[v1.ResourceCPU] = cpu.DeepCopy()
 	return nil
 }
 

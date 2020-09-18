@@ -41,6 +41,7 @@ import (
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -576,6 +577,33 @@ func newEdged(enable bool) (*edged, error) {
 		edgedconfig.Config.CgroupRoot = "/"
 	}
 
+	nodeAllocatableConfig := cm.NodeAllocatableConfig{
+		SystemReserved: v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse(constants.DefaultSystemReservedCPU),
+			v1.ResourceMemory: resource.MustParse(constants.DefaultSystemReservedMEM),
+		},
+	}
+	if edgedconfig.Config.SystemReserved != nil {
+		nodeAllocatableConfig.SystemReserved = v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse(edgedconfig.Config.SystemReserved["cpu"]),
+			v1.ResourceMemory: resource.MustParse(edgedconfig.Config.SystemReserved["memory"]),
+		}
+		if edgedconfig.Config.SystemReservedCgroup != "" {
+			nodeAllocatableConfig.SystemReservedCgroupName = edgedconfig.Config.SystemReservedCgroup
+		}
+	}
+	if edgedconfig.Config.KubeReserved != nil {
+		nodeAllocatableConfig.KubeReserved = v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse(edgedconfig.Config.KubeReserved["cpu"]),
+			v1.ResourceMemory: resource.MustParse(edgedconfig.Config.KubeReserved["memory"]),
+		}
+		if edgedconfig.Config.KubeReservedCgroup != "" {
+			nodeAllocatableConfig.KubeReservedCgroupName = edgedconfig.Config.KubeReservedCgroup
+		}
+	}
+	if len(edgedconfig.Config.EnforceNodeAllocatable) > 0 {
+		nodeAllocatableConfig.EnforceNodeAllocatable = sets.NewString(edgedconfig.Config.EnforceNodeAllocatable...)
+	}
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		ed.cadvisor,
 		cm.NodeConfig{
@@ -589,6 +617,7 @@ func newEdged(enable bool) (*edged, error) {
 			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
 			ExperimentalTopologyManagerPolicy: "none",
 			ExperimentalTopologyManagerScope:  "container",
+			NodeAllocatableConfig:             nodeAllocatableConfig,
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
