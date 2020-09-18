@@ -107,6 +107,9 @@ func (ctx *ChannelContext) SendSync(module string, message model.Message, timeou
 	deadline := time.Now().Add(timeout)
 
 	// make sure to set sync flag
+	if !message.Header.Sync {
+		klog.Warningf("Get a async-msg when use beehive.SendSync(),msg.Header:{%v},msg.Route:{%v}",message.Header,message.Router)
+	}
 	message.Header.Sync = true
 
 	// check req/resp channel
