@@ -57,6 +57,10 @@ func (ctx *ChannelContext) Cleanup(module string) {
 
 // Send send msg to a module. Todo: do not stuck
 func (ctx *ChannelContext) Send(module string, message model.Message) {
+	// check if msg is sync
+	if message.Header.Sync {
+		klog.Warningf("Get a sync-msg when use beehive.Send(),msg.Header:{%v},msg.Route:{%v}",message.Header,message.Router)
+	}
 	// avoid exception because of channel colsing
 	// TODO: need reconstruction
 	defer func() {
