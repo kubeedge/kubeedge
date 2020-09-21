@@ -5,32 +5,32 @@ This page contains a few commonly occurring questions.
 
 ## keadm init failed to download release
 
-If you have issue about connection to github, please follow below guide with proxy before do setup, take `v1.4.0` as example:
+If you have issue about connection to github, please follow below guide with proxy before do setup, take `v1.3.1` as example:
 
-- download release pkgs from [release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.4.0)
+- download release pkgs from [release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.3.1)
 - download crds yamls matches the release version you downloaded, links as below:
-  - [devices_v1alpha1_device.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.4.0/build/crds/devices/devices_v1alpha2_device.yaml)
-  - [devices_v1alpha1_devicemodel.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.4.0/build/crds/devices/devices_v1alpha2_devicemodel.yaml)
-  - [cluster_objectsync_v1alpha1.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.4.0/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml)
-  - [objectsync_v1alpha1.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.4.0/build/crds/reliablesyncs/objectsync_v1alpha1.yaml)
+  - [devices_v1alpha1_device.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.3.1/build/crds/devices/devices_v1alpha1_device.yaml)
+  - [devices_v1alpha1_devicemodel.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.3.1/build/crds/devices/devices_v1alpha1_devicemodel.yaml)
+  - [cluster_objectsync_v1alpha1.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.3.1/build/crds/reliablesyncs/cluster_objectsync_v1alpha1.yaml)
+  - [objectsync_v1alpha1.yaml](https://raw.githubusercontent.com/kubeedge/kubeedge/v1.3.1/build/crds/reliablesyncs/objectsync_v1alpha1.yaml)
 - put them under `/etc/kubeedge` as below:
     ```bash
     $ tree -L 3
     .
     ├── crds
     │   ├── devices
-    │   │   ├── devices_v1alpha2_devicemodel.yaml
-    │   │   └── devices_v1alpha2_device.yaml
+    │   │   ├── devices_v1alpha1_devicemodel.yaml
+    │   │   └── devices_v1alpha1_device.yaml
     │   └── reliablesyncs
     │       ├── cluster_objectsync_v1alpha1.yaml
     │       └── objectsync_v1alpha1.yaml
-    └── kubeedge-v1.4.0-linux-amd64.tar.gz
+    └── kubeedge-v1.3.1-linux-amd64.tar.gz
 
     3 directories, 5 files
 
     ```
 
-Then you can do setup without any network issue, `keadm` would detect them and not download again(make sure you specify `v1.4.0` with option `--kubeedge-version 1.4.0`).
+Then you can do setup without any network issue, `keadm` would detect them and not download again(make sure you specify `v1.3.1` with option `--kubeedge-version 1.3.1`).
 
 ## Container keeps pending/ terminating
 

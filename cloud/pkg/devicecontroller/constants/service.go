@@ -1,5 +1,7 @@
 package constants
 
+import "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
+
 // Service level constants
 const (
 	ResourceDeviceIndex         = 2

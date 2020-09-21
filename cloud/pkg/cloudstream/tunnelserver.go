@@ -51,8 +51,7 @@ func newTunnelServer() *TunnelServer {
 			ReadBufferSize:   1024,
 			Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 				w.WriteHeader(status)
-				_, err := w.Write([]byte(reason.Error()))
-				klog.Errorf("failed to write http response, err: %v", err)
+				w.Write([]byte(reason.Error()))
 			},
 		},
 	}

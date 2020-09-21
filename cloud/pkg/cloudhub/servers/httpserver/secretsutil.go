@@ -46,9 +46,7 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 	}
 	if _, err := cli.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{}); err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			if _, err := cli.CoreV1().Secrets(ns).Update(context.Background(), secret, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("failed to update the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
-			}
+			cli.CoreV1().Secrets(ns).Update(context.Background(), secret, metav1.UpdateOptions{})
 		} else {
 			return fmt.Errorf("failed to create the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
 		}

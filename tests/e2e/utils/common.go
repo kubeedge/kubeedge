@@ -33,7 +33,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -874,8 +874,8 @@ func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap)
 	deviceProfile := configMap.Data["deviceProfile.json"]
 	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
 	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
-	_ = json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
-	_ = json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
+	json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
+	json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
 	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 

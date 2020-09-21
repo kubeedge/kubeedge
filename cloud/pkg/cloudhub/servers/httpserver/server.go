@@ -70,9 +70,7 @@ func StartHTTPServer() {
 // getCA returns the caCertDER
 func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
-	if _, err := w.Write(caCertDER); err != nil {
-		klog.Errorf("failed to write caCertDER, err: %v", err)
-	}
+	w.Write(caCertDER)
 }
 
 //electionHandler returns the status whether the cloudcore is ready
@@ -80,14 +78,10 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 	checker := hubconfig.Config.Checker
 	if checker.Check(r) != nil {
 		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is not ready"))); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
+		w.Write([]byte("Cloudcore is not ready"))
 	} else {
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is ready"))); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
+		w.Write([]byte("Cloudcore is ready"))
 	}
 }
 
@@ -106,9 +100,7 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 		if err := verifyCert(cert[0]); err != nil {
 			klog.Errorf("failed to sign the certificate for edgenode: %s, failed to verify the certificate", r.Header.Get(constants.NodeName))
 			w.WriteHeader(http.StatusUnauthorized)
-			if _, err := w.Write([]byte(err.Error())); err != nil {
-				klog.Errorf("failed to write response, err: %v", err)
-			}
+			w.Write([]byte(err.Error()))
 		} else {
 			signEdgeCert(w, r)
 		}
@@ -143,17 +135,13 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
@@ -166,22 +154,16 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
-			if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
-				klog.Errorf("Wrire body error %v", err)
-			}
+			w.Write([]byte("Invalid authorization token"))
+			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
-			klog.Errorf("Wrire body error %v", err)
-		}
-
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
-			klog.Errorf("Wrire body error %v", err)
-		}
+		w.Write([]byte("Invalid authorization token"))
 		return false
 	}
 	return true
@@ -203,9 +185,7 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
 	}
 
-	if _, err := w.Write(clientCertDER); err != nil {
-		klog.Errorf("wrire error %v", err)
-	}
+	w.Write(clientCertDER)
 }
 
 // signCerts will create a certificate for EdgeCore

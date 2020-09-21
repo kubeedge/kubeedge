@@ -97,9 +97,7 @@ func (p *HTTP) responseCallback(data *invocation.Response) error {
 					klog.Errorf("[EdgeMesh] convert http response to bytes err: %v", err)
 				} else {
 					// send response back
-					if _, err := p.Conn.Write(respBytes); err != nil {
-						klog.Errorf("[EdgeMesh] write err: %v", err)
-					}
+					p.Conn.Write(respBytes)
 					return nil
 				}
 			}
@@ -115,10 +113,8 @@ func (p *HTTP) responseCallback(data *invocation.Response) error {
 	}
 	respBytes, _ = httpResponseToBytes(resp)
 	// send error response back
-	if _, err = p.Conn.Write(respBytes); err != nil {
-		return err
-	}
-	return nil
+	p.Conn.Write(respBytes)
+	return err
 }
 
 // httpResponseToBytes transforms http.Response to bytes

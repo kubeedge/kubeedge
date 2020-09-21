@@ -1,8 +1,6 @@
 package plugin
 
 import (
-	"k8s.io/klog"
-
 	"github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-chassis/control"
 	"github.com/go-chassis/go-chassis/core/config"
@@ -45,11 +43,7 @@ func Install() {
 		Infra:   config.GlobalDefinition.Panel.Infra,
 		Address: config.GlobalDefinition.Panel.Settings["address"],
 	}
-	if err := control.Init(opts); err != nil {
-		klog.Errorf("failed to init control: %v", err)
-	}
+	control.Init(opts)
 	// init archaius
-	if err := archaius.Init(); err != nil {
-		klog.Errorf("failed to init arahaius: %v", err)
-	}
+	archaius.Init()
 }
