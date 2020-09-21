@@ -104,14 +104,8 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pods := pm.ListPods()
 		klog.V(4).Infof("Current pods number: %v", len(pods))
 		rspBodyBytes := new(bytes.Buffer)
-		if err := json.NewEncoder(rspBodyBytes).Encode(pods); err != nil {
-			klog.Errorf("Encode to json file with error: %v", err)
-			return
-		}
-		if _, err := w.Write(rspBodyBytes.Bytes()); err != nil {
-			klog.Errorf("Write error: %v", err)
-			return
-		}
+		json.NewEncoder(rspBodyBytes).Encode(pods)
+		w.Write(rspBodyBytes.Bytes())
 		klog.V(4).Infof("Finish list pod request")
 	case http.MethodPost:
 		klog.V(4).Infof("Receive add pod request")
@@ -121,17 +115,13 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				klog.Errorf("Read body error %v", err)
-				if _, err := w.Write([]byte("Read request body error")); err != nil {
-					klog.Errorf("Write error: %v", err)
-				}
+				w.Write([]byte("Read request body error"))
 				return
 			}
 			klog.V(4).Infof("Request body is %s", string(body))
 			if err = json.Unmarshal(body, &p); err != nil {
 				klog.Errorf("Unmarshal request body error %v", err)
-				if _, err := w.Write([]byte("Unmarshal request body error")); err != nil {
-					klog.Errorf("Wrire body error %v", err)
-				}
+				w.Write([]byte("Unmarshal request body error"))
 				return
 			}
 		}
@@ -146,9 +136,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		resource, err := utils.BuildResource(p.NodeName, p.Namespace, model.ResourceTypePod, p.Name)
 		if err != nil {
 			klog.Errorf("Build message resource failed with error: %s", err)
-			if _, err := w.Write([]byte("Build message resource failed with error")); err != nil {
-				klog.Errorf("Write body error %v", err)
-			}
+			w.Write([]byte("Build message resource failed with error"))
 			return
 		}
 		msg.Content = p
@@ -179,9 +167,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		resource, err := utils.BuildResource(nodename, ns, model.ResourceTypePod, name)
 		if err != nil {
 			klog.Errorf("Build message resource failed with error: %s", err)
-			if _, err := w.Write([]byte("Build message resource failed with error")); err != nil {
-				klog.Errorf("write error: %v", err)
-			}
+			w.Write([]byte("Build message resource failed with error"))
 			return
 		}
 		msg.Content = pm.GetPod(ns + "/" + name)

@@ -30,7 +30,6 @@ import (
 	syncinformer "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions/reliablesyncs/v1alpha1"
 	devicelister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
 	synclister "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
@@ -150,12 +149,12 @@ func Register(ec *configv1alpha1.SyncController, kubeAPIConfig *configv1alpha1.K
 
 // Name of controller
 func (sctl *SyncController) Name() string {
-	return modules.SyncControllerModuleName
+	return SyncControllerModuleName
 }
 
 // Group of controller
 func (sctl *SyncController) Group() string {
-	return modules.SyncControllerModuleGroup
+	return SyncControllerModuleGroup
 }
 
 // Group of controller

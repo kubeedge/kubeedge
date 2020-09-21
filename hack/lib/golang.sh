@@ -202,17 +202,15 @@ kubeedge::golang::build_binaries() {
   local -a binaries
   while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
 
-  local goldflags gogcflags
-  # If GOLDFLAGS is unset, then set it to the a default of "-s -w".
-  goldflags="${GOLDFLAGS=-s -w -buildid=} $(kubeedge::version::ldflags)"
-  gogcflags="${GOGCFLAGS:-}"
+  local ldflags
+  read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
   for bin in ${binaries[@]}; do
     echo "building $bin"
     local name="${bin##*/}"
     set -x
-    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
+    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
     set +x
   done
 

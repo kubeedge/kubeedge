@@ -25,12 +25,6 @@ define ALL_HELP_INFO
 #   make all
 #   make all HELP=y
 #   make all WHAT=cloudcore
-#   make all WHAT=cloudcore GOLDFLAGS="" GOGCFLAGS="-N -l"
-#     Note: Specify GOLDFLAGS as an empty string for building unstripped binaries, specify GOGCFLAGS
-#     to "-N -l" to disable optimizations and inlining, this will be helpful when you want to
-#     use the debugging tools like delve. When GOLDFLAGS is unspecified, it defaults to "-s -w" which strips
-#     debug information, see https://golang.org/cmd/link for other flags.
-
 endef
 .PHONY: all
 ifeq ($(HELP),y)

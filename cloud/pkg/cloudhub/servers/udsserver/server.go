@@ -42,10 +42,7 @@ func StartServer(address string) {
 	})
 
 	klog.Info("start unix domain socket server")
-	if err := uds.StartServer(); err != nil {
-		klog.Fatalf("failed to start uds server: %v", err)
-		return
-	}
+	uds.StartServer()
 }
 
 // ExtractMessage extracts message from clients

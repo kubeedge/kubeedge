@@ -67,8 +67,5 @@ func (hs *HandlerStub) Start() {
 		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
-	if err := upstream.Start(); err != nil {
-		klog.Errorf("Failed to start upstream with error: %v", err)
-		return
-	}
+	upstream.Start()
 }

@@ -82,11 +82,8 @@ func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
 		return err
 	}
 
+	// TODO: may support more case
 	switch result {
-	case "armv7l":
-		arch = "arm"
-	case "aarch64":
-		arch = "arm64"
 	case "x86_64":
 		arch = "amd64"
 	default:

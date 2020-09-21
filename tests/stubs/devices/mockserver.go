@@ -21,31 +21,20 @@ var timeDuration *int
 
 func createServiceAndAdvertise(d gatt.Device, s gatt.State) {
 	// Setup GAP and GATT services for Linux implementation.
-	if err := d.AddService(service.NewGapService("SensorTagMock")); err != nil {
-		klog.Errorf("failed to add service SensorTagMock, error: %v", err)
-	}
-
-	if err := d.AddService(service.NewGattService()); err != nil {
-		klog.Errorf("failed to add service, error: %v", err)
-	}
+	d.AddService(service.NewGapService("SensorTagMock"))
+	d.AddService(service.NewGattService())
 
 	// Creating a temperature reading service
 	temperatureSvc := services.NewTemperatureService()
-	if err := d.AddService(temperatureSvc); err != nil {
-		klog.Errorf("failed to add service, error: %v", err)
-	}
+	d.AddService(temperatureSvc)
 
 	// Advertise device name and service's UUIDs.
 	klog.Info("Advertising device name and service UUID")
-	if err := d.AdvertiseNameAndServices("mock temp sensor model", []gatt.UUID{temperatureSvc.UUID()}); err != nil {
-		klog.Errorf("failed to mock temp sensor model, error: %v", err)
-	}
+	d.AdvertiseNameAndServices("mock temp sensor model", []gatt.UUID{temperatureSvc.UUID()})
 
 	// Advertise as an OpenBeacon iBeacon
 	klog.Info("Advertise as an OpenBeacon iBeacon")
-	if err := d.AdvertiseIBeacon(gatt.MustParseUUID(openBeaconUUID), 1, 2, -59); err != nil {
-		klog.Errorf("Failed to advertise, error: %v", err)
-	}
+	d.AdvertiseIBeacon(gatt.MustParseUUID(openBeaconUUID), 1, 2, -59)
 }
 
 //usage is responsible for setting up the default settings of all defined command-line flags for klog.
@@ -76,17 +65,11 @@ func main() {
 	duration := time.Duration(*timeDuration) * time.Minute
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
-	if err := d.Init(createServiceAndAdvertise); err != nil {
-		klog.Errorf("Failed to create service, err: %s", err)
-	}
+	d.Init(createServiceAndAdvertise)
 
 	<-ctx.Done()
 	klog.Info("Stopping server and cleaning up")
-	if err := d.StopAdvertising(); err != nil {
-		klog.Fatalf("failed to stop advertising, err: %v", err)
-	}
-	if err := d.RemoveAllServices(); err != nil {
-		klog.Fatalf("failed to remove all services, err: %v", err)
-	}
+	d.StopAdvertising()
+	d.RemoveAllServices()
 	klog.Info("Stopped advertising and removed all services!!!!")
 }
