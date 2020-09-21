@@ -10,7 +10,7 @@
             "name": "temperature",
             "minimum": 0,
             "maximum": 100,
-            "dataType": "int",
+            "datatype": "int",
             "accessMode": "rw"
         }],
         "name": "modbus-mock-model",
@@ -23,16 +23,15 @@
             "isRegisterSwap": true,
             "register": "HoldingRegister",
             "offset": 1,
-            "isSwap": false,
-            "limit": 1
+            "isSwap": false
         },
         "propertyName": "temperature",
         "modelName": "modbus-mock-model",
-        "protocol": "modbus",
+        "protocol": "modbus-tcp",
         "name": "temperature"
     }],
 	"protocols": [{
-        "protocol_config": {
+        "protocolConfig": {
             "ip": "127.0.0.1",
             "port": 5028,
             "slaveID": 1
