@@ -72,6 +72,7 @@ require (
 	k8s.io/apiserver v0.18.6
 	k8s.io/client-go v0.18.6
 	k8s.io/cloud-provider v0.18.6
+	k8s.io/cluster-bootstrap v0.18.6 // indirect
 	k8s.io/code-generator v0.18.6
 	k8s.io/component-base v0.18.6
 	k8s.io/cri-api v0.18.6
