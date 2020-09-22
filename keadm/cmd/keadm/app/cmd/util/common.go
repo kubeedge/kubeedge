@@ -399,17 +399,24 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 				edgecoreServiceFileName = "edge.service"
 			}
 
-			urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
-			for ; try < downloadRetryTimes; try++ {
-				cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
-				_, err := runCommandWithStdout(cmdStr)
-				if err != nil {
+			_, err := os.Lstat(KubeEdgePath + "/" + edgecoreServiceFileName)
+			if err != nil {
+				if os.IsNotExist(err) {
+					urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
+					for ; try < downloadRetryTimes; try++ {
+						cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
+						_, err := runCommandWithStdout(cmdStr)
+						if err != nil {
+							return err
+						}
+						break
+					}
+					if try == downloadRetryTimes {
+						return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
+					}
+				} else {
 					return err
 				}
-				break
-			}
-			if try == downloadRetryTimes {
-				return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
 			}
 		}
 	}
