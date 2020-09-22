@@ -32,6 +32,7 @@ import (
 )
 
 var DeviceConnected = make(chan bool)
+var ConfigmapChanged = make(chan struct{})
 var done = make(chan struct{})
 var deviceName string
 var deviceID string
