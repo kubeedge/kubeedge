@@ -49,7 +49,7 @@ make edgecore
 
 ##### in `modules.yaml` (add the `testManager`)
 
-Kubeedge uses [beehive](../../docs/components/beehive.md) framework as the inter-module communication, all modules in the kubeedge need to register with beehive.
+KubeEdge uses [beehive](../../docs/components/beehive.md) framework as the inter-module communication, all modules in the kubeedge need to register with beehive.
 `testManager` is a module like other KubeEdge modules. So, it has to be configured as shown below.
 
 ```yaml
