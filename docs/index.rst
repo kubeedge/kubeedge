@@ -38,7 +38,7 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 1
    :caption: Configuration
 
-   KuBeEdge <configuration/kubeedge>
+   KubeEdge <configuration/kubeedge>
    CRI <configuration/cri>
    Storage <configuration/storage>
 
