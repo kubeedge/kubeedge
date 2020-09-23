@@ -9,7 +9,7 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
-	"k8s.io/apiserver/pkg/util/term"
+	"k8s.io/component-base/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/klog"

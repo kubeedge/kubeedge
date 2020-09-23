@@ -6,6 +6,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
 const (
@@ -28,7 +29,7 @@ type Container struct {
 	// ID of the container.
 	ID string `json:"id,omitempty"`
 	// Status of the container.
-	Status  kubecontainer.ContainerState `json:"status,omitempty"`
+	Status  api.ContainerState `json:"status,omitempty"`
 	StartAt time.Time                    `json:"startat,omitempty"`
 }
 
@@ -59,7 +60,7 @@ type ContainerInspect struct {
 
 // ContainerStatus represents the status of a container.
 type ContainerStatus struct {
-	kubecontainer.ContainerStatus
+	api.ContainerStatus
 	// Reference to the image in use. For most runtimes, this should be an
 	// image ID
 	ImageRef string `json:"image_ref,omitempty"`

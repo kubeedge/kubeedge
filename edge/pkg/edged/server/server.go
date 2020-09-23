@@ -33,7 +33,7 @@ func NewServer(podManager podmanager.Manager) *Server {
 // ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stats.ResourceAnalyzer, enableCAdvisorJSONEndpoints bool) {
 	klog.Infof("starting to listen read-only on %s:%v", ServerAddr, constants.ServerPort)
-	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, true, false, false, nil)
+	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, true, false, false, false, nil)
 
 	server := &http.Server{
 		Addr:           net.JoinHostPort(ServerAddr, fmt.Sprintf("%d", constants.ServerPort)),

@@ -3,86 +3,67 @@ module github.com/kubeedge/kubeedge
 go 1.14
 
 require (
-	cloud.google.com/go v0.43.0 // indirect
 	github.com/256dpi/gomqtt v0.10.4
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/astaxie/beego v1.12.0
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/checkpoint-restore/go-criu v0.0.0-20190109184317-bdb7599cd87b // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/container-storage-interface/spec v1.2.0
-	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50 // indirect
-	github.com/containerd/containerd v1.1.7 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/docker v1.4.2-0.20200309214505-aa6a9891b09c
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
-	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
-	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/mock v1.3.1
-	github.com/golang/protobuf v1.3.2
-	github.com/google/cadvisor v0.35.0
-	github.com/google/go-cmp v0.3.1 // indirect
+	github.com/golang/protobuf v1.4.2
+	github.com/google/cadvisor v0.37.0
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.11.0
-	github.com/mesos/mesos-go v0.0.10 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
-	github.com/opencontainers/runc v1.0.0-rc9 // indirect
-	github.com/opencontainers/runtime-spec v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pborman/uuid v1.2.0
-	github.com/pkg/errors v0.9.0
-	github.com/prometheus/common v0.6.0 // indirect
-	github.com/prometheus/procfs v0.0.3 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/vishvananda/netlink v1.0.0
-	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
-	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
-	google.golang.org/grpc v1.26.0
-	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
+	github.com/vishvananda/netlink v1.1.0
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.18.6
-	k8s.io/apiextensions-apiserver v0.18.6
-	k8s.io/apimachinery v0.18.6
-	k8s.io/apiserver v0.18.6
-	k8s.io/client-go v0.18.6
-	k8s.io/cloud-provider v0.18.6
-	k8s.io/cluster-bootstrap v0.18.6 // indirect
-	k8s.io/code-generator v0.18.6
-	k8s.io/component-base v0.18.6
-	k8s.io/cri-api v0.18.6
-	k8s.io/csi-translation-lib v0.18.6
+	k8s.io/api v0.19.1
+	k8s.io/apiextensions-apiserver v0.19.1
+	k8s.io/apimachinery v0.19.1
+	k8s.io/apiserver v0.19.1
+	k8s.io/client-go v0.19.1
+	k8s.io/cloud-provider v0.19.1
+	k8s.io/code-generator v0.19.1
+	k8s.io/component-base v0.19.1
+	k8s.io/cri-api v0.19.1
+	k8s.io/csi-translation-lib v0.19.1
 	k8s.io/klog v1.0.0
-	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
-	k8s.io/kube-scheduler v0.18.6 // indirect
-	k8s.io/kubelet v0.18.6
-	k8s.io/kubernetes v1.18.6
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
+	k8s.io/kube-scheduler v0.19.1 // indirect
+	k8s.io/kubelet v0.19.1
+	k8s.io/kubernetes v1.19.1
+	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -115,7 +96,7 @@ replace (
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
-	k8s.io/kubectl => k8s.io/kubectl v0.18.6
+	k8s.io/kubectl => k8s.io/kubectl v0.19.1
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
 	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.0.0-20190718190548-039b99e58dbd
 	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.0.0-20190718185242-1e1642704fe6
