@@ -11,7 +11,7 @@
     - [References](#References)
 
 ## Background
-Kubeedge integration tests are designed based on the **Gomega** and **Ginkgo** framework.
+KubeEdge integration tests are designed based on the **Gomega** and **Ginkgo** framework.
 Framework provides an environment for the automation test scripts to be executed. With the use of framework, users can efficiently work with the automation test scripts, including development, execution, logging and reporting.
 
 ## Integration test framework features
