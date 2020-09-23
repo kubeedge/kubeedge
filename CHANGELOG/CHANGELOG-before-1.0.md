@@ -111,7 +111,7 @@ Supported Commands :
 
 - fix EdgeController config keys ([#490](https://github.com/kubeedge/kubeedge/pull/490), [@sids-b](https://github.com/sids-b))
 
-- Added README.MD for Kubeedge installer #issue-477. ([#489](https://github.com/kubeedge/kubeedge/pull/489), [@srivatsav123](https://github.com/srivatsav123))
+- Added README.MD for KubeEdge installer #issue-477. ([#489](https://github.com/kubeedge/kubeedge/pull/489), [@srivatsav123](https://github.com/srivatsav123))
 
 - fix the broken link ([#481](https://github.com/kubeedge/kubeedge/pull/481), [@lou-lan](https://github.com/lou-lan))
 
