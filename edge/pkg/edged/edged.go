@@ -27,6 +27,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	cadvisorapi2 "github.com/google/cadvisor/info/v2"
+	"k8s.io/kubernetes/pkg/kubelet/runtimeclass"
 	"net"
 	"net/http"
 	"os"
@@ -57,6 +59,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
 	klconfigmap "k8s.io/kubernetes/pkg/kubelet/configmap"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/legacy"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/images"
@@ -68,15 +71,15 @@ import (
 	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
-	"k8s.io/kubernetes/pkg/kubelet/remote"
+	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	serverstats "k8s.io/kubernetes/pkg/kubelet/server/stats"
-	"k8s.io/kubernetes/pkg/kubelet/server/streaming"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	"k8s.io/kubernetes/pkg/kubelet/stats"
 	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/kubelet/volumemanager"
-	schedulercache "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
+	schedulercache "k8s.io/kubernetes/pkg/scheduler/framework/v1alpha1"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/configmap"
 	"k8s.io/kubernetes/pkg/volume/downwardapi"
@@ -200,7 +203,7 @@ type edged struct {
 	podDeletionQueue   *workqueue.Type
 	podDeletionBackoff *flowcontrol.Backoff
 	imageGCManager     images.ImageGCManager
-	containerGCManager kubecontainer.ContainerGC
+	containerGCManager kubecontainer.GC
 	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
@@ -241,10 +244,11 @@ type edged struct {
 	// Cached MachineInfo returned by cadvisor.
 	machineInfo *cadvisorapi.MachineInfo
 
-	dockerLegacyService dockershim.DockerLegacyService
+	dockerLegacyService legacy.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
-	runner          kubecontainer.ContainerCommandRunner
+	runner          kubecontainer.CommandRunner
 	podLastSyncTime sync.Map
+	runtimeClassManager *runtimeclass.Manager
 }
 
 // Register register edged
@@ -270,6 +274,10 @@ func (e *edged) Group() string {
 //Enable indicates whether this module is enabled
 func (e *edged) Enable() bool {
 	return e.enable
+}
+
+func (e  *edged) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
+	return e.cadvisor.GetRequestedContainersInfo(containerName,  options)
 }
 
 func (e *edged) Start() {
@@ -302,7 +310,7 @@ func (e *edged) Start() {
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
-	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, kubecontainer.NewRefManager(), record.NewEventRecorder())
+	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, record.NewEventRecorder())
 	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
 	e.statusManager.Start()
 	e.pleg.Start()
@@ -370,7 +378,7 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 func (e *edged) cgroupRoots() []string {
 	var cgroupRoots []string
 
-	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot, edgedconfig.Config.CGroupDriver))
+	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot,edgedconfig.Config.CgroupsPerQOS ,edgedconfig.Config.CGroupDriver))
 	kubeletCgroup, err := cm.GetKubeletContainer("")
 	if err != nil {
 		klog.Warningf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.", err)
@@ -431,7 +439,7 @@ func newEdged(enable bool) (*edged, error) {
 		recorder:                  recorder,
 		enable:                    enable,
 	}
-
+	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
 	err := ed.makePodDir()
 	if err != nil {
 		klog.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
@@ -448,7 +456,7 @@ func newEdged(enable bool) (*edged, error) {
 		Namespace: "",
 	}
 	statsProvider := edgeimages.NewStatsProvider()
-	containerGCPolicy := kubecontainer.ContainerGCPolicy{
+	containerGCPolicy := kubecontainer.GCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
 		MaxPerPodContainer: int(edgedconfig.Config.MaximumDeadContainersPerPod),
@@ -524,7 +532,7 @@ func newEdged(enable bool) (*edged, error) {
 		edgedconfig.Config.ClusterDomain,
 		ResolvConfDefault)
 
-	containerRefManager := kubecontainer.NewRefManager()
+	//containerRefManager := kubecontainer.NewRefManager()
 	httpClient := &http.Client{}
 	runtimeService, imageService, err := getRuntimeAndImageServices(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
@@ -572,7 +580,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.livenessManager,
 		ed.startupManager,
 		"",
-		containerRefManager,
+		//containerRefManager,
 		ed.machineInfo,
 		ed,
 		ed.os,
@@ -589,6 +597,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.clcm.InternalContainerLifecycle(),
 		nil,
 		nil,
+		ed.runtimeClassManager,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("New generic runtime manager failed, err: %s", err.Error())
