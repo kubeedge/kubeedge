@@ -5,9 +5,9 @@ authors:
     - "@sailorvii"
     - "@luogangyi"
 approvers:
+  - "@kevin-wangzefeng"
   - "@"
-  - "@"
-creation-date: 2020-09-
+creation-date: 2020-09-09
 last-updated: 
 ---
 
@@ -16,8 +16,8 @@ last-updated:
 
 The original description could refer to the doc [mapper-design.md](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/mapper-design.md "mapper-design.md").
 
-Mapper is an interface between kubeedge and devices. It could set/get device data, get and report the device status.
-Kubeedge uses device controller, device twin and mapper to control the devices. 
+Mapper is an interface between KubeEdge and devices. It could set/get device data, get and report the device status.
+KubeEdge uses device controller, device twin and mapper to control the devices. 
 The device controller is on the cloud side, it uses [CRD](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md "device crd") to define and control devices.
 The device twin is on the edge side, it stores the value/status from the mapper and transfers the messages with device controller and mapper.
 
@@ -130,10 +130,11 @@ In the certification mode, we will use one side authentication. The certificatio
 ### Miscellaneous
 #### Device status definition
 ```go
+type DevStatus int32
 const (
-    DEVSTOK
-    DEVSTERR        /*Expected value is not equal as setting*/
-    DEVSTDISCONN    
-    DEVSTUNHEALTHY  /*Unhealthy status from device*/
+    DEVSTOK        DevStatus = 0
+    DEVSTERR       DevStatus = 1 /*Expected value is not equal as setting*/
+    DEVSTDISCONN   DevStatus = 2 
+    DEVSTUNHEALTHY DevStatus = 3 /*Unhealthy status from device*/
 )
 ```
