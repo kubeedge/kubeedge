@@ -122,7 +122,6 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	// handle the response from edge
 	if VolumeRegExp.MatchString(container.Message.GetResource()) {
 		beehiveContext.SendResp(*container.Message)
-		return
 	}
 
 	// handle the ack message from edge
