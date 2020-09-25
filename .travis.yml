@@ -21,7 +21,7 @@ before_install:
         travis_terminate 0
       fi
 
-install: true
+install: skip
 
 jobs:
   include:
