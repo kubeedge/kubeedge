@@ -60,7 +60,7 @@ Support for corresponding CNI with pause container and IP will be considered lat
 
 ## Secret Management
 
-At edged, Secrets are handled separately. For operations like addition, deletion and modifications, there are separate sets of config messages or interfaces.
+In edged, Secrets are handled separately. For operations like addition, deletion and modification, there are separate sets of config messages and interfaces.
 Using these interfaces, secrets are updated in cache store.
 The flow diagram below explains the message flow.
 
@@ -68,9 +68,7 @@ The flow diagram below explains the message flow.
 
 *Fig 7: Secret Message Handling at EdgeD*
 
-Also edged uses the MetaClient module to fetch secrets from Metamanager (if available), falling back to cloud. Whenever edged queries for a new secret which Metamanager doesn't have, the request is forwarded to cloud. Before sending the response containing the secret, it stores a copy of it and sends it to edged.
-Subsequent queries for same secret key will be responded to by Metamanger only, reducing the response delay.
-The flow diagram below shows how a secret is fetched from metamanager and cloud. It also descibes how the secret is saved in metamanager.
+edged uses the MetaClient module to fetch secrets from MetaManager. If edged queries for a new secret which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the secret, MetaManager stores it in a local database. Subsequent queries for the same secret key will be retrieved from the database, reducing latency. The flow diagram below shows how a secret is fetched from MetaManager and the Cloud. It also descibes how the secret is stored in MetaManager.
 
 ![Query Secret](../../images/edged/query-secret-from-edged.png)
 
@@ -83,7 +81,7 @@ As explained earlier, the PLEG module uses its services.
 
 
 ## ConfigMap Management
-In edged, ConfigMaps are also handled separately. For operations like addition, deletion and modifications, there are separate sets of config messages or interfaces.
+In edged, ConfigMaps are also handled separately. For operations like addition, deletion and modification, there are separate sets of config messages and interfaces.
 Using these interfaces, ConfigMaps are updated in cache store.
 The flow diagram below explains the message flow.
 
@@ -91,9 +89,7 @@ The flow diagram below explains the message flow.
 
 *Fig 9: ConfigMap Message Handling at EdgeD*
 
-Also edged uses MetaClient module to fetch ConfigMaps from Metamanager (if available), falling back to cloud. Whenever edged queries for a new ConfigMap which Metamanager doesn't have, the request is forwarded to cloud. Before sending the response containing the ConfigMap, it stores a copy of it and sends it to edged.
-Subsequent queries for same ConfigMap key will be responded by Metamanger only, reducing the response delay.
-The flow diagram below shows how ConfigMaps are fetched from metamanager and cloud. It also descibes how ConfigMaps are saved in metamanager.
+edged uses the MetaClient module to fetch ConfigMaps from MetaManager. If edged queries for a new ConfigMap which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the ConfigMap, MetaManager stores it in a local database. Subsequent queries for the same ConfigMap key will be retrieved from the database, reducing latency. The flow diagram below shows how ConfigMaps are fetched from MetaManager and the Cloud. It also descibes how ConfigMaps are stored in MetaManager.
 
 ![Query Configmaps](../../images/edged/query-configmap-from-edged.png)
 
