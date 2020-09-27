@@ -45,20 +45,14 @@ This module helps in monitoring pod status for edged. Every second, using probes
 
 ## CRI for edged
 
-Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes, without the need to recompile and also support multiple runtimes like docker, containerd, cri-o etc
+Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes like Docker, containerd, CRI-O, etc., without the need to recompile.  For more on how to configure KubeEdge for container runtimes, see [KubeEdge runtime configuration](../../configuration/cri.md).
 
-#### Why CRI for edge?
-Currently KubeEdge edged supports only the docker runtime using legacy dockertools.
-+ CRI support for multiple container runtimes in KubeEdge is needed due to the factors mentioned below
-  + Include CRI support as in kubernetes kubelet to support containerd, cri-o etc
+#### Why CRI for edged?
+CRI support for multiple container runtimes in KubeEdge is needed in order to:
++ Support light-weight container runtimes on resource-constrained edge nodes which are unable to run the existing Docker runtime.
++ Support multiple container runtimes like Docker, containerd, CRI-O, etc., on edge nodes.
 
-  + Continue with docker runtime support using legacy dockertools until CRI support for the same is available i.e. support
-    for docker runtime using dockershim is not considered in edged
-  + Support light weight container runtimes on resource constrained edge node which are unable to run the existing docker runtime
-  + Support multiple container runtimes like docker, containerd, cri-o etc on the edge node.
-  + Support for corresponding CNI with pause container and IP will be considered later
-  + Customer can run light weight container runtime on resource constrained edge node that cannot run the existing docker runtime
-  + Customer has the option to choose from multiple container runtimes on his edge platform
+Support for corresponding CNI with pause container and IP will be considered later.
 
 ![CRI Design](../../images/edged/edged-cri.png)
 
