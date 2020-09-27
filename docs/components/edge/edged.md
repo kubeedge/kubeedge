@@ -4,7 +4,7 @@
 
 EdgeD is an edge node module which manages pod lifecycle. It helps users to deploy containerized workloads or applications at the edge node. Those workloads could perform any operation from simple telemetry data manipulation to analytics or ML inference and so on. Using `kubectl` command line interface at the cloud side, users can issue commands to launch the workloads.
 
-The Docker container runtime is currently supported for container and image management. In the future support for other runtimes shall be added, like containerd etc.,
+Several OCI-compliant runtimes are supported through the Container Runtime Interface (CRI). See [KubeEdge runtime configuration](../../configuration/cri.md) for more information on how to configure edged to make use of other runtimes.
 
 There are many modules which work in tandem to achieve edged's functionalities.
 
