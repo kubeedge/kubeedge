@@ -1,4 +1,4 @@
-# Upgrading
+# Upgrading KubeEdge
 
 Please refer to following guide to upgrade your KubeEdge cluster.
 
