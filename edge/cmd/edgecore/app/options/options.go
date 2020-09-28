@@ -18,6 +18,7 @@ package options
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -33,8 +34,12 @@ type EdgeCoreOptions struct {
 }
 
 func NewEdgeCoreOptions() *EdgeCoreOptions {
+	edgecorePath := os.Getenv("EDGECORE_CONFIG_PATH")
+	if edgecorePath == "" {
+		edgecorePath = constants.DefaultConfigDir
+	}
 	return &EdgeCoreOptions{
-		ConfigFile: path.Join(constants.DefaultConfigDir, "edgecore.yaml"),
+		ConfigFile: path.Join(edgecorePath, "edgecore.yaml"),
 	}
 }
 
