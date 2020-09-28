@@ -66,9 +66,9 @@ Key:
 
 ## Guides
 
-See our documentation on [kubeedge.io](https://kubeedge.io).
+Get start with this [doc](./docs/getting-started.md).
 
-**Quick Start** - Install KubeEdge with [keadm](./docs/setup/keadm.md).
+See our documentation on [kubeedge.io](https://kubeedge.io) for more details.
 
 To learn deeply about KubeEdge, try some examples on [examples](https://github.com/kubeedge/examples).
 
