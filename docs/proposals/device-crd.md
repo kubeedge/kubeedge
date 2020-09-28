@@ -718,7 +718,7 @@ data:
 ```
 
 If the mapper wants to discover what properties a device supports, it can get the model information from the device instance.
-Also , it can get the protocol information to connect to the device from the device instace. Once it has access to the device model ,
+Also , it can get the protocol information to connect to the device from the device instance. Once it has access to the device model ,
 it can get the properties supported by the device. In order to access the property , the mapper needs to get the corresponding visitor information.
 This can be retrieved from the propertyVisitors list. Finally , using the visitorConfig, the mapper can read/write the data associated with the property.
 
