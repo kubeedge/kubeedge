@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -81,6 +82,9 @@ func (s *TunnelServer) getSession(id string) (*Session, bool) {
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOveride)
 	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
+	if interalIP == "" {
+		interalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
+	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
 		return
