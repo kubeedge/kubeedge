@@ -45,7 +45,7 @@ This module helps in monitoring pod status for edged. Every second, using probes
 
 ## CRI for edged
 
-Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes like Docker, containerd, CRI-O, etc., without the need to recompile.  For more on how to configure KubeEdge for container runtimes, see [KubeEdge runtime configuration](../../configuration/cri.md).
+Container Runtime Interface (CRI) – a plugin interface which enables edged to use a wide variety of container runtimes like Docker, containerd, CRI-O, etc., without the need to recompile. For more on how to configure KubeEdge for container runtimes, see [KubeEdge runtime configuration](../../configuration/cri.md).
 
 #### Why CRI for edged?
 CRI support for multiple container runtimes in edged is needed in order to:
