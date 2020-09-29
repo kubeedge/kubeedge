@@ -80,12 +80,12 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 	checker := hubconfig.Config.Checker
 	if checker.Check(r) != nil {
 		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is not ready"))); err != nil {
+		if _, err := w.Write([]byte("Cloudcore is not ready")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
 		}
 	} else {
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is ready"))); err != nil {
+		if _, err := w.Write([]byte("Cloudcore is ready")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
 		}
 	}
@@ -143,7 +143,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
 		}
 		return false
@@ -151,7 +151,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("failed to write http response, err: %v", err)
 		}
 		return false
@@ -166,12 +166,12 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
-			if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+			if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 				klog.Errorf("Wrire body error %v", err)
 			}
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("Wrire body error %v", err)
 		}
 
@@ -179,7 +179,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	}
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
-		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
 			klog.Errorf("Wrire body error %v", err)
 		}
 		return false
