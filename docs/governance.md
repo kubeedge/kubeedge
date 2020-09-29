@@ -1,7 +1,6 @@
 # Governance
 
-The governance model adopted here is heavily influenced by a set of CNCF projects, especially drew
-reference from [Kubernetes governance](https://github.com/kubernetes/community/blob/master/governance.md).
+The governance model adopted here is heavily influenced by a set of CNCF projects, especially drawing reference from [Kubernetes governance](https://github.com/kubernetes/community/blob/master/governance.md).
 *For similar structures some of the same wordings from kubernetes governance are borrowed to adhere
 to the originally construed meaning.*
 
