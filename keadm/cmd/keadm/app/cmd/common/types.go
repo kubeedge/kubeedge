@@ -29,6 +29,7 @@ type InitOptions struct {
 	Master           string
 	AdvertiseAddress string
 	DNS              string
+	TarballPath      string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -82,6 +83,12 @@ const (
 	EdgeCore  ComponentType = "edgecore"
 )
 
+// InstallOptions is defined to know the options for installing kubeedge
+type InstallOptions struct {
+	ComponentType ComponentType
+	TarballPath   string
+}
+
 //ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
@@ -92,8 +99,8 @@ type ToolsInstaller interface {
 type OSTypeInstaller interface {
 	InstallMQTT() error
 	IsK8SComponentInstalled(string, string) error
-	InstallKubeEdge(ComponentType) error
 	SetKubeEdgeVersion(version semver.Version)
+	InstallKubeEdge(InstallOptions) error
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
 	IsKubeEdgeProcessRunning(string) (bool, error)

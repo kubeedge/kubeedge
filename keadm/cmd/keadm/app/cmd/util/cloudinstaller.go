@@ -20,6 +20,7 @@ type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
 	DNSName          string
+	TarballPath      string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -28,7 +29,12 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	err := cu.InstallKubeEdge(types.CloudCore)
+	opts := &types.InstallOptions{
+		TarballPath:   cu.TarballPath,
+		ComponentType: types.CloudCore,
+	}
+
+	err := cu.InstallKubeEdge(*opts)
 	if err != nil {
 		return err
 	}
