@@ -41,6 +41,7 @@ type KubeEdgeInstTool struct {
 	Token                 string
 	CertPort              string
 	CGroupDriver          string
+	TarballPath           string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -58,7 +59,12 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	err = ku.InstallKubeEdge(types.EdgeCore)
+	opts := &types.InstallOptions{
+		TarballPath:   ku.TarballPath,
+		ComponentType: types.EdgeCore,
+	}
+
+	err = ku.InstallKubeEdge(*opts)
 	if err != nil {
 		return err
 	}

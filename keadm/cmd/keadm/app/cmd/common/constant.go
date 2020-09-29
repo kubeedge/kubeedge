@@ -78,4 +78,8 @@ const (
 
 	// CGroupDriver is type of edgecore Cgroup
 	CGroupDriver = "cgroupdriver"
+
+	// TarballPath sets the temp directory path for KubeEdge tarball, if not exist, download it
+	// eg.  "/tmp/kubeedge" or "/etc/kubeedge" by default
+	TarballPath = "tarballpath"
 )
