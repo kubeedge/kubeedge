@@ -423,12 +423,9 @@ func (e *edged) syncNodeStatus() {
 			klog.Errorf("Register node failed: %v", err)
 			return
 		}
-		if err := e.updateNodeStatus(); err != nil {
-			klog.Errorf("Unable to update node status: %v", err)
-		}
-	} else {
-		if err := e.updateNodeStatus(); err != nil {
-			klog.Errorf("Unable to update node status: %v", err)
-		}
+	}
+
+	if err := e.updateNodeStatus(); err != nil {
+		klog.Errorf("Unable to update node status: %v", err)
 	}
 }
