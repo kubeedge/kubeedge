@@ -62,6 +62,6 @@ func (dm *mgr) GetStreamDecoder(contentType string, gv schema.GroupVersion, rc i
 }
 
 func (dm *mgr) GetBackendSerializer() runtime.Serializer {
-	serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme.Scheme, scheme.Scheme, json.SerializerOptions{false, false, false})
+	serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme.Scheme, scheme.Scheme, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false})
 	return serializer
 }

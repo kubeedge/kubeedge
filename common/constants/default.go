@@ -22,7 +22,6 @@ const (
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
 
-
 	DefaultMqttCAFile   = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
@@ -30,7 +29,6 @@ const (
 	DefaultProxyCAFile   = "/etc/kubeedge/ca/proxyCA.crt"
 	DefaultProxyCertFile = "/etc/kubeedge/certs/proxy.crt"
 	DefaultProxyKeyFile  = "/etc/kubeedge/certs/proxy.key"
-
 )
 
 const (

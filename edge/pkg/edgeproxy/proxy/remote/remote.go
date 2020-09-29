@@ -72,7 +72,7 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 			if algo == "gzip" {
 				drc, err = gzip.NewReader(drc)
 				if err != nil {
-					klog.Errorf("compress response body error!%v",err)
+					klog.Errorf("compress response body error! %v", err)
 					return
 				}
 			}

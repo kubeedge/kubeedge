@@ -141,7 +141,7 @@ func (cm *Mgr) cacheSingleObj(ctx context.Context, obj runtime.Object) error {
 		Resource:  reqInfo.Resource,
 		Namespace: namesapce,
 		Name:      name,
-		Value:     string(objbyte.Bytes()),
+		Value:     objbyte.String(),
 	}
 	err = cachedao.InsertOrUpdate(&cache)
 	return err
@@ -192,7 +192,7 @@ func (cm *Mgr) CacheWatchObj(ctx context.Context, rc io.ReadCloser) error {
 				Resource:  reqInfo.Resource,
 				Namespace: namespace,
 				Name:      name,
-				Value:     string(objbyte.Bytes()),
+				Value:     objbyte.String(),
 			}
 			cachedao.InsertOrUpdate(&cache)
 		case watch.Deleted:
