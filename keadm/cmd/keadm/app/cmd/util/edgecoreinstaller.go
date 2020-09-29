@@ -40,6 +40,7 @@ type KubeEdgeInstTool struct {
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+	CGroupDriver          string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -90,6 +91,16 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 		if ku.RuntimeType != "" {
 			edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
+		}
+		if ku.CGroupDriver != "" {
+			switch ku.CGroupDriver {
+			case v1alpha1.CGroupDriverSystemd:
+				edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+			case v1alpha1.CGroupDriverCGroupFS:
+				edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+			default:
+				return fmt.Errorf("unsupported CGroupDriver: %s", ku.CGroupDriver)
+			}
 		}
 		if ku.InterfaceName != "" {
 			edgeCoreConfig.Modules.Edged.InterfaceName = ku.InterfaceName
