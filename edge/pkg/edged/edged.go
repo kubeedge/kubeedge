@@ -534,6 +534,9 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	ed.clcm, err = clcm.NewContainerLifecycleManager(DefaultRootDir)
+	if err != nil {
+		return nil, err
+	}
 
 	useLegacyCadvisorStats := cadvisor.UsingLegacyCadvisorStats(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
 	if edgedconfig.Config.EnableMetrics {
