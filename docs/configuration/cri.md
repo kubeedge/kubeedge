@@ -2,7 +2,7 @@
 
 ## containerd
 
-Docker 18.09 ships with containerd, so you needn’t install `containerd` manually, otherwise install `containerd` in this way,
+Docker 18.09 ships with `containerd`, so you should not need to install it manually. If you do not have `containerd`, you may install it by running the following:
 
 ```bash
 # Install containerd
@@ -16,7 +16,7 @@ containerd config default > /etc/containerd/config.toml
 systemctl restart containerd
 ```
 
-In case of using `containerd` shipped with Docker, you still need to update containerd’s configuration, this is because “cri” plugin is disabled by default, you need to enable it so that KubeEdge can use the `containerd` as the runtime.
+When using `containerd` shipped with Docker, the cri plugin is disabled by default. You will need to update `containerd`’s configuration to enable KubeEdge to use `containerd` as its runtime:
 
 ```bash
 # Configure containerd
@@ -24,7 +24,7 @@ mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 ```
 
-Update `edgecore` config file `edgecore.yaml`, specify the following parameters for `containerd` based runtime,
+Update the `edgecore` config file `edgecore.yaml`, specifying the following parameters for the `containerd`-based runtime:
 
 ```yaml
 remoteRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
@@ -34,7 +34,7 @@ podSandboxImage: k8s.gcr.io/pause:3.2
 runtimeType: remote
 ```
 
-By default, cgroup driver of CRI is configured as `cgroupfs`, if this is not the case, you can switch to `systemd` manually in `edgecore.yaml`,
+By default, the cgroup driver of cri is configured as `cgroupfs`. If this is not the case, you can switch to `systemd` manually in `edgecore.yaml`:
 
 ```yaml
 modules:
@@ -42,7 +42,7 @@ modules:
     cgroupDriver: systemd
 ```
 
-Set `systemd_cgroup` to true in containerd’s configuration file (/etc/containerd/config.toml ), restart contained service after that.
+Set `systemd_cgroup` to `true` in `containerd`’s configuration file (/etc/containerd/config.toml), and then restart `containerd`:
 
 ```toml
 # /etc/containerd/config.toml
@@ -54,7 +54,7 @@ systemd_cgroup = true
 systemctl restart containerd
 ```
 
-Create the `nginx` application and check the container is created with `containerd` on edge side,
+Create the `nginx` application and check that the container is created with `containerd` on the edge side:
 
 ```bash
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
@@ -65,28 +65,25 @@ CONTAINER                                                           IMAGE       
 41c1a07fe7bf7425094a9b3be285c312127961c158f30fc308fd6a3b7376eab2    docker.io/library/nginx:1.15.12    io.containerd.runtime.v1.linux
 ```
 
-NOTE: since cri doesn't support multi-tenancy while containerd does, namespace for containers are set to "k8s.io" defaultly and no way to change that until the [cri's support](https://github.com/containerd/cri/pull/1462) has done.
-
-
-
+NOTE: since cri doesn't support multi-tenancy while `containerd` does, the namespace for containers are set to "k8s.io" by default. There is not a way to change that until [support in cri](https://github.com/containerd/cri/pull/1462) has been implemented.
 
 ## CRI-O
 
 Follow the [CRI-O install guide](https://github.com/cri-o/cri-o/blob/master/tutorials/setup.md) to setup CRI-O.
 
-If your edge node is running on ARM platform and your distro is ubuntu18.04, you might need to build the binaries form source and install after that, since CRI-O packages is not available in [Kubic](https://build.opensuse.org/project/show/devel:kubic:libcontainers:stable) repository for this combination.
+If your edge node is running on the ARM platform and your distro is ubuntu18.04, you might need to build the binaries form source and then install, since CRI-O packages are not available in the [Kubic](https://build.opensuse.org/project/show/devel:kubic:libcontainers:stable) repository for this combination.
 
 ```bash
 git clone https://github.com/cri-o/cri-o
 cd cri-o
 make
 sudo make install
-# generate and install configuraion files
+# generate and install configuration files
 sudo make install.config
 ```
 
-Setup CNI networking, please follow this guide [setup CNI](https://github.com/cri-o/cri-o/blob/master/contrib/cni/README.md) to set up the CNI networking.
-Update edgecore config file, specify the following parameters for `CRI-O` based runtime,
+Set up CNI networking by following this guide: [setup CNI](https://github.com/cri-o/cri-o/blob/master/contrib/cni/README.md).
+Update the edgecore config file, specifying the following parameters for the `CRI-O`-based runtime:
 
 ```yaml
 remoteRuntimeEndpoint: unix:///var/run/crio/crio.sock
@@ -96,21 +93,20 @@ podSandboxImage: k8s.gcr.io/pause:3.2
 runtimeType: remote
 ```
 
-By default, `CRI-O` uses `cgroupfs` as a cgroup driver manager, update the `CRI-O` config file (/etc/crio/crio.conf.d/00-default.conf) like this if you want to switch to `systemd` instead.
+By default, `CRI-O` uses `cgroupfs` as a cgroup driver manager. If you want to switch to `systemd` instead, update the `CRI-O` config file (/etc/crio/crio.conf.d/00-default.conf):
 
 ```conf
 # Cgroup management implementation used for the runtime.
 cgroup_manager = "systemd"
 ```
 
-*NOTE: pause image should be updated if you are on ARM platform and the `pause` image you are using is not a multi-arch image.*
+*NOTE: the `pause` image should be updated if you are on ARM platform and the `pause` image you are using is not a multi-arch image. To set the pause image, update the `CRI-O` config file:*
 
-Here is an example, update the `CRI-O` config file to make the pause image points to the correct image,
 ```conf
 pause_image = "k8s.gcr.io/pause-arm64:3.1"
 ```
 
-Remember to update `edgecore.yaml` as well for your cgroup driver manager,
+Remember to update `edgecore.yaml` as well for your cgroup driver manager:
 
 ```yaml
 modules:
@@ -127,8 +123,7 @@ sudo systemctl start crio
 sudo systemctl start edgecore
 ```
 
-
-Create the application and check the container is created with `CRI-O` on edge side,
+Create the application and check that the container is created with `CRI-O` on the edge side:
 
 ```bash
 kubectl apply -f $GOPATH/src/github.com/kubeedge/kubeedge/build/deployment.yaml
@@ -139,19 +134,22 @@ CONTAINER ID        IMAGE               CREATED             STATE               
 41c1a07fe7bf7       f6d22dec9931b       2 days ago          Running             nginx               0                   51f727498b06f
 ```
 
-## Kata-container
+## Kata Containers
 
-Kata-container is created to primarily address the security challenges in the multi-tenant untrusted cloud environment, multi-tenancy support is still in KubeEdge’s [backlog](https://github.com/kubeedge/kubeedge/issues/268). If you have a downstream customized KubeEdge which supports multi-tenancy already then Kata-container as a lightweight and secure container runtime is good option for you.
+Kata Containers is a container runtime created to address security challenges in the multi-tenant, untrusted cloud environment. However, multi-tenancy support is still in KubeEdge’s [backlog](https://github.com/kubeedge/kubeedge/issues/268). If you have a downstream customized KubeEdge which supports multi-tenancy already then Kata Containers is a good option for a lightweight and secure container runtime.
 
 Follow the [install guide]( https://github.com/kata-containers/documentation/blob/master/how-to/containerd-kata.md) to install and configure containerd and  Kata Containers.
 
-If you have “kata-runtime” installed, run this command to check if your host system can run and create a Kata Container,
+If you have “kata-runtime” installed, run this command to check if your host system can run and create a Kata Container:
 ```bash
 kata-runtime kata-check
 ```
 
-`RuntimeClass` is a feature for selecting the container runtime configuration to use to run a pod’s containers that is supported since `containerd` v1.2.0, thus, if your `containerd` is later than  v1.2.0, you will have two choices to configure containerd to use Kata Containers, “Kata Containers as  a RuntimeClass” or “Kata Containers as the runtime for untrusted workload".
-Suppose you have configured Kata Containers as the runtime for untrusted workload, here is the way you can verify whether it works on your edge node,
+`RuntimeClass` is a feature for selecting the container runtime configuration to use to run a pod’s containers that is supported since `containerd` v1.2.0.  If your `containerd` version is later than v1.2.0, you have two choices to configure `containerd` to use Kata Containers:
+- Kata Containers as a RuntimeClass
+- Kata Containers as a runtime for untrusted workloads
+
+Suppose you have configured Kata Containers as the runtime for untrusted workloads. In order to verify whether it works on your edge node, you can run:
 
 ```yaml
 cat nginx-untrusted.yaml
@@ -185,9 +183,10 @@ Make sure no libvirt is running on the worker nodes.
 
 ### Steps
 1. **Install CNI plugin:**
-	- Download CNI plugin release and extract it:
+    
+	Download CNI plugin release and extract it:
 
-	```
+	```bash
 	$ wget https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-linux-amd64-v0.8.2.tgz
 
 	# Extract the tarball
@@ -198,9 +197,9 @@ Make sure no libvirt is running on the worker nodes.
 	$ cp ./cni/* /opt/cni/bin/
 	```
 
-	- Configure cni plugin
+	Configure CNI plugin:
 
-	```
+	```bash
 	$ mkdir -p /etc/cni/net.d/
 
 	$ cat >/etc/cni/net.d/bridge.conf <<EOF
@@ -223,9 +222,8 @@ Make sure no libvirt is running on the worker nodes.
 	```
 
 1. **Setup VM runtime:**
- Use script [`hack/setup-vmruntime.sh`](../../hack/setup-vmruntime.sh) to set up VM runtime. It makes use of Arktos Runtime release to start three containers:
+ Use the script [`hack/setup-vmruntime.sh`](../../hack/setup-vmruntime.sh) to set up a VM runtime. It makes use of the Arktos Runtime release to start three containers:
 
 	 	vmruntime_vms
 		vmruntime_libvirt
 		vmruntime_virtlet
-
