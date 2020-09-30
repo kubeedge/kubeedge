@@ -24,6 +24,6 @@ import (
 
 func main() {
 	if err := app.Run(); err != nil {
-		klog.Fatal(err)
+		klog.Error(err)
 	}
 }
