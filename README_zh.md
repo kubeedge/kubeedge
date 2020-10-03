@@ -1,7 +1,7 @@
 # KubeEdge
 [![Build Status](https://travis-ci.org/kubeedge/kubeedge.svg?branch=master)](https://travis-ci.org/kubeedge/kubeedge)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeedge/kubeedge)](https://goreportcard.com/report/github.com/kubeedge/kubeedge)
-[![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](/LICENSE)
+[![LICENSE](https://img.shields.io/github/license/kubeedge/kubeedge.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/blob/master/LICENSE)
 [![Releases](https://img.shields.io/github/release/kubeedge/kubeedge/all.svg?style=flat-square)](https://github.com/kubeedge/kubeedge/releases)
 [![Documentation Status](https://readthedocs.org/projects/kubeedge/badge/?version=latest)](https://kubeedge.readthedocs.io/en/latest/?badge=latest)
 
@@ -33,18 +33,18 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 KubeEdge 由以下组件构成:
 
 ### 云上部分
-- [CloudHub](/docs/components/cloud/cloudhub.md): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化, 缓存并发送消息到 EdgeHub。
-- [EdgeController](/docs/components/cloud/controller.md): EdgeController 是一个扩展的 Kubernetes 控制器，管理边缘节点和 Pods 的元数据确保数据能够传递到指定的边缘节点。
-- [DeviceController](/docs/components/cloud/device_controller.md): DeviceController 是一个扩展的 Kubernetes 控制器，管理边缘设备，确保设备信息、设备状态的云边同步。
+- [CloudHub](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/cloudhub.md): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化, 缓存并发送消息到 EdgeHub。
+- [EdgeController](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/controller.md): EdgeController 是一个扩展的 Kubernetes 控制器，管理边缘节点和 Pods 的元数据确保数据能够传递到指定的边缘节点。
+- [DeviceController](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/device_controller.md): DeviceController 是一个扩展的 Kubernetes 控制器，管理边缘设备，确保设备信息、设备状态的云边同步。
 
 
 ### 边缘部分
-- [EdgeHub](/docs/components/edge/edgehub.md): EdgeHub 是一个 Web Socket 客户端，负责与边缘计算的云服务（例如 KubeEdge 架构图中的 Edge Controller）交互，包括同步云端资源更新、报告边缘主机和设备状态变化到云端等功能。
-- [Edged](/docs/components/edge/edged.md): Edged 是运行在边缘节点的代理，用于管理容器化的应用程序。
-- [EventBus](/docs/components/edge/eventbus.md): EventBus 是一个与 MQTT 服务器（mosquitto）交互的 MQTT 客户端，为其他组件提供订阅和发布功能。
+- [EdgeHub](https://github.com/kubeedge/kubeedge/blob/master/docs/components/edge/edgehub.md): EdgeHub 是一个 Web Socket 客户端，负责与边缘计算的云服务（例如 KubeEdge 架构图中的 Edge Controller）交互，包括同步云端资源更新、报告边缘主机和设备状态变化到云端等功能。
+- [Edged](https://github.com/kubeedge/kubeedge/blob/master/docs/components/edge/edged.md): Edged 是运行在边缘节点的代理，用于管理容器化的应用程序。
+- [EventBus](https://github.com/kubeedge/kubeedge/blob/master/docs/components/edge/eventbus.md): EventBus 是一个与 MQTT 服务器（mosquitto）交互的 MQTT 客户端，为其他组件提供订阅和发布功能。
 - ServiceBus: ServiceBus是一个运行在边缘的HTTP客户端，接受来自云上服务的请求，与运行在边缘端的HTTP服务器交互，提供了云上服务通过HTTP协议访问边缘端HTTP服务器的能力。
-- [DeviceTwin](/docs/components/edge/devicetwin.md): DeviceTwin 负责存储设备状态并将设备状态同步到云，它还为应用程序提供查询接口。
-- [MetaManager](/docs/components/edge/metamanager.md): MetaManager 是消息处理器，位于 Edged 和 Edgehub 之间，它负责向轻量级数据库（SQLite）存储/检索元数据。
+- [DeviceTwin](https://github.com/kubeedge/kubeedge/blob/master/docs/components/edge/devicetwin.md): DeviceTwin 负责存储设备状态并将设备状态同步到云，它还为应用程序提供查询接口。
+- [MetaManager](https://github.com/kubeedge/kubeedge/blob/master/docs/components/edge/metamanager.md): MetaManager 是消息处理器，位于 Edged 和 Edgehub 之间，它负责向轻量级数据库（SQLite）存储/检索元数据。
 
 
 ### 架构

@@ -185,7 +185,7 @@ Run below steps:
 
 + Modify node.json
 
-  Replace `edge-node` in [node.json](/build/node.json#L5) file, to the id/name of the edgesite node. ID/Name should be same as used before while updating `edgesite.yaml`
+  Replace `edge-node` in [node.json](https://github.com/kubeedge/kubeedge/blob/master/build/node.json#L5) file, to the id/name of the edgesite node. ID/Name should be same as used before while updating `edgesite.yaml`
 
   ```json
     {

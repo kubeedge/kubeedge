@@ -20,7 +20,7 @@ export CC=arm-linux-gnueabi-gcc
 make edgecore
 ```
 
-If you are compiling KubeEdge edgecore for Raspberry Pi and check the [Makefile](/Makefile) for the edge.
+If you are compiling KubeEdge edgecore for Raspberry Pi and check the [Makefile](https://github.com/kubeedge/kubeedge/blob/master/Makefile) for the edge.
 
 In that CC has been defined as
 ```

@@ -71,5 +71,5 @@ The major steps involved in this process are as follows :-
 
 EdgeHub can be configured to communicate in two ways as mentioned below:
 
-- **Through websocket protocol**: Click [here](/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-websocket-protocol) for details.
-- **Through QUIC protocol**: Click [here](/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-quic) for details.
+- **Through websocket protocol**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-websocket-protocol) for details.
+- **Through QUIC protocol**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#edgehub-connect-to-cloudhub-through-quic) for details.

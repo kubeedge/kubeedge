@@ -8,18 +8,18 @@ We currently manage devices from the cloud and synchronize the device updates be
 
 A `device model` describes the device properties exposed by the device and property visitors to access these properties. A device model is like a reusable template using which many devices can be created and managed.
 
-Details on device model definition can be found [here](/docs/proposals/device-crd.md#device-model-type-definition).
+Details on device model definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-model-type-definition).
 
-A sample device model can be found [here](/docs/proposals/device-crd.md#device-model-sample)
+A sample device model can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-model-sample)
 
 
 ## Device Instance
 
 A `device` instance represents an actual device object. It is like an instantiation of the `device model` and references properties defined in the model. The device spec is static while the device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
 
-Details on device instance definition can be found [here](/docs/proposals/device-crd.md#device-instance-type-definition).
+Details on device instance definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-instance-type-definition).
 
-A sample device model can be found [here](/docs/proposals/device-crd.md#device-instance-sample).
+A sample device model can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-instance-sample).
 
 
 ## Device Mapper
@@ -35,7 +35,7 @@ A sample device model can be found [here](/docs/proposals/device-crd.md#device-i
 
  Mapper can be specific to a protocol where standards are defined i.e Bluetooth, Zigbee, etc or specific to a device if it a custom protocol.
 
- Mapper design details can be found [here](/docs/proposals/mapper-design.md#mapper-design)
+ Mapper design details can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/mapper-design.md#mapper-design)
 
  An example of a mapper application created to support bluetooth protocol can be found [here](https://github.com/kubeedge/kubeedge/tree/master/mappers/bluetooth_mapper#bluetooth-mapper)
 
