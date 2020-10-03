@@ -19,7 +19,6 @@ import (
 type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
-	DNSName          string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -62,10 +61,6 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 
 		if cu.AdvertiseAddress != "" {
 			cloudCoreConfig.Modules.CloudHub.AdvertiseAddress = strings.Split(cu.AdvertiseAddress, ",")
-		}
-
-		if cu.DNSName != "" {
-			cloudCoreConfig.Modules.CloudHub.DNSNames = strings.Split(cu.DNSName, ",")
 		}
 
 		if cu.ToolVersion.Major == 1 && cu.ToolVersion.Minor == 2 {

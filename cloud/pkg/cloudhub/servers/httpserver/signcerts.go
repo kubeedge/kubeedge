@@ -39,8 +39,7 @@ func SignCerts() ([]byte, []byte, error) {
 		Organization: []string{"KubeEdge"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
-			DNSNames: hubconfig.Config.DNSNames,
-			IPs:      getIps(hubconfig.Config.AdvertiseAddress),
+			IPs: getIps(hubconfig.Config.AdvertiseAddress),
 		},
 	}
 

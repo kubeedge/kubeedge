@@ -142,7 +142,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			Master:      initOptions.Master,
 		},
 		AdvertiseAddress: initOptions.AdvertiseAddress,
-		DNSName:          initOptions.DNS,
 	}
 	return nil
 }

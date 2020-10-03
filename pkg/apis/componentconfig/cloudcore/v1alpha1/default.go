@@ -55,7 +55,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSPrivateKeyFile:       constants.DefaultKeyFile,
 				WriteTimeout:            30,
 				AdvertiseAddress:        []string{advertiseAddress.String()},
-				DNSNames:                []string{""},
 				EdgeCertSigningDuration: 365,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
