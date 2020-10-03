@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/blang/semver"
-
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -30,12 +28,12 @@ const downloadRetryTimes int = 3
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
 type UbuntuOS struct {
-	KubeEdgeVersion semver.Version
+	KubeEdgeVersion string
 	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
-func (u *UbuntuOS) SetKubeEdgeVersion(version semver.Version) {
+func (u *UbuntuOS) SetKubeEdgeVersion(version string) {
 	u.KubeEdgeVersion = version
 }
 

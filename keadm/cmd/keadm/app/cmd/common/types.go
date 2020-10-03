@@ -18,8 +18,6 @@ package common
 
 import (
 	"time"
-
-	"github.com/blang/semver"
 )
 
 //InitOptions has the kubeedge cloud init information filled by CLI
@@ -91,7 +89,7 @@ type OSTypeInstaller interface {
 	InstallMQTT() error
 	IsK8SComponentInstalled(string, string) error
 	InstallKubeEdge(ComponentType) error
-	SetKubeEdgeVersion(version semver.Version)
+	SetKubeEdgeVersion(string)
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
 	IsKubeEdgeProcessRunning(string) (bool, error)

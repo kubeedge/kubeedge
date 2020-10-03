@@ -27,7 +27,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/blang/semver"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
@@ -91,7 +90,7 @@ func CheckIfAvailable(val, defval string) string {
 type Common struct {
 	types.OSTypeInstaller
 	OSVersion   string
-	ToolVersion semver.Version
+	ToolVersion string
 	KubeConfig  string
 	Master      string
 }
@@ -325,7 +324,7 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 //installKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
-func installKubeEdge(componentType types.ComponentType, arch string, version semver.Version) error {
+func installKubeEdge(componentType types.ComponentType, arch string, version string) error {
 	err := os.MkdirAll(KubeEdgePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgePath)
@@ -396,15 +395,22 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 		download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/ acc.
 	*/
 	if componentType == types.EdgeCore {
-		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
+		splittedVersion := strings.Split(version, ".")
+		strippedVersion := ""
+
+		if len(splittedVersion) < 2 {
+			return fmt.Errorf("The version you specified [%s] is not valid", version)
+		}
+
+		strippedVersion = splittedVersion[0] + "." + splittedVersion[1]
 
 		//	No need to download if the version is less than 1.1 (or 1.1.0)
-		if version.GE(semver.MustParse("1.1.0")) {
+		if strippedVersion >= "1.1" {
 			try := 0
 
 			edgecoreServiceFileName := "edgecore.service"
 
-			if version.EQ(semver.MustParse("1.1.0")) {
+			if strippedVersion == "1.1" {
 				edgecoreServiceFileName = "edge.service"
 			}
 
@@ -425,7 +431,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 
 	// Compatible with 1.0.0
 	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
-	if version.GE(semver.MustParse("1.1.0")) {
+	if version >= "1.1.0" {
 		if componentType == types.CloudCore {
 			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
 				KubeEdgePath, KubeEdgePath, filename, KubeEdgePath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
@@ -460,7 +466,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 
 //runEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edgecore with logs being captured
-func runEdgeCore(version semver.Version) error {
+func runEdgeCore(version string) error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
@@ -469,7 +475,7 @@ func runEdgeCore(version semver.Version) error {
 
 	var binaryName string
 
-	if version.GE(semver.MustParse("1.1.0")) {
+	if version >= "1.1.0" {
 		binaryName = KubeEdgeBinaryName
 	} else {
 		binaryName = KubeEdgeBinaryNamePre
@@ -487,8 +493,8 @@ func runEdgeCore(version semver.Version) error {
 
 	edgecoreServiceName := "edgecore"
 
-	if version.GE(semver.MustParse("1.1.0")) && systemdExist {
-		if version.EQ(semver.MustParse("1.1.0")) {
+	if version >= "1.1.0" && systemdExist {
+		if version == "1.1" || version == "1.1.0" {
 			edgecoreServiceName = "edge"
 		}
 		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
@@ -507,7 +513,7 @@ func runEdgeCore(version semver.Version) error {
 	}
 	fmt.Println(cmd.GetStdOutput())
 
-	if version.GE(semver.MustParse("1.1.0")) {
+	if version >= "1.1.0" {
 		if systemdExist {
 			fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -b\n", edgecoreServiceName)
 		} else {

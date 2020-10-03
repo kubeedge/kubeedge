@@ -21,7 +21,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -134,7 +133,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	}
 	toolList["Cloud"] = &util.KubeCloudInstTool{
 		Common: util.Common{
-			ToolVersion: semver.MustParse(kubeVer),
+			ToolVersion: kubeVer,
 			KubeConfig:  initOptions.KubeConfig,
 			Master:      initOptions.Master,
 		},

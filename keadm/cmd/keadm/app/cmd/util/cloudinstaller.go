@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
-
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -31,7 +29,8 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	if err != nil {
 		return err
 	}
-	if cu.ToolVersion.LT(semver.MustParse("1.3.0")) {
+
+	if cu.ToolVersion < "1.3.0" {
 		err = cu.generateCertificates()
 		if err != nil {
 			return err
@@ -43,7 +42,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		}
 	}
 
-	if cu.ToolVersion.GE(semver.MustParse("1.2.0")) {
+	if cu.ToolVersion >= "1.2.0" {
 		//This makes sure the path is created, if it already exists also it is fine
 		err = os.MkdirAll(KubeEdgeNewConfigDir, os.ModePerm)
 		if err != nil {
@@ -63,7 +62,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 			cloudCoreConfig.Modules.CloudHub.AdvertiseAddress = strings.Split(cu.AdvertiseAddress, ",")
 		}
 
-		if cu.ToolVersion.Major == 1 && cu.ToolVersion.Minor == 2 {
+		if strings.HasPrefix(cu.ToolVersion, "1.2") {
 			cloudCoreConfig.Modules.CloudHub.TLSPrivateKeyFile = KubeEdgeCloudDefaultCertPath + "server.key"
 			cloudCoreConfig.Modules.CloudHub.TLSCertFile = KubeEdgeCloudDefaultCertPath + "server.crt"
 		}
@@ -151,7 +150,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 
 	// start cloudcore
-	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
+	if cu.ToolVersion >= "1.1.0" {
 		command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
 	} else {
 		command = fmt.Sprintf("%s > %skubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
@@ -166,7 +165,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 	fmt.Println(cmd.GetStdOutput())
 
-	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
+	if cu.ToolVersion >= "1.1.0" {
 		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
 	} else {
 		fmt.Println("KubeEdge cloudcore is running, For logs visit", KubeEdgePath+"kubeedge/cloud/")
