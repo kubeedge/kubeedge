@@ -174,6 +174,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			continue
 		}
 		klog.Infof("message: %s, resource type is: %s", msg.GetID(), resourceType)
+		operationType := msg.GetOperation()
+		klog.Infof("message: %s, operation type is: %s", msg.GetID(), operationType)
 
 		switch resourceType {
 		case model.ResourceTypeNodeStatus:
@@ -195,19 +197,17 @@ func (uc *UpstreamController) dispatchMessage() {
 		case common.ResourceTypeVolumeAttachment:
 			uc.volumeAttachmentChan <- msg
 		case model.ResourceTypeNode:
-			switch msg.GetOperation() {
+			switch operationType {
 			case model.QueryOperation:
 				uc.queryNodeChan <- msg
 			case model.UpdateOperation:
 				uc.updateNodeChan <- msg
 			default:
-				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
+				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), operationType)
 			}
 		case model.ResourceTypePod:
 			if msg.GetOperation() == model.DeleteOperation {
 				uc.podDeleteChan <- msg
-			} else {
-				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
