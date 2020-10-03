@@ -101,8 +101,7 @@ KubeEdge 由以下组件构成:
 
 ## 文档
 
-从此[文档](./doc/getting-started.md)开始你的KubeEdge之旅！
-访问[https://docs.kubeedge.io](https://docs.kubeedge.io) 获得更多详细信息。
+通过该链接 [https://docs.kubeedge.io](https://docs.kubeedge.io) 可用找到有关 KubeEdge 的各个模块的详细信息。
 一些说明 KubeEdge 平台的使用案例的示例应用程序和演示可以在[这个仓库](https://github.com/kubeedge/examples) 中找到。
 
 ## 支持
