@@ -35,10 +35,6 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 	klog.Infof("Config for LeaderElection : %v", *cfg.LeaderElection)
 	// Init Context for leaderElection
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	// Init podReadinessGate to false at the begin of Run
-	if err := TryToPatchPodReadinessGate(corev1.ConditionFalse); err != nil {
-		klog.Errorf("Error init pod readinessGate: %v", err)
-	}
 
 	coreBroadcaster := record.NewBroadcaster()
 	cli, err := utils.KubeClient()
@@ -62,7 +58,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 			// Start all modules,
 			core.StartModules()
 			// Patch PodReadinessGate if program run in pod
-			err := TryToPatchPodReadinessGate(corev1.ConditionTrue)
+			err := TryToPatchPodReadinessGate()
 			if err != nil {
 				// Terminate the program gracefully
 				klog.Errorf("Error patching pod readinessGate: %v", err)
@@ -73,11 +69,6 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 			// TODO: is it necessary to terminate the program gracefully?
 			//klog.Fatalf("leaderelection lost, rudely terminate program")
 			klog.Errorf("leaderelection lost, gracefully terminate program")
-			// Reset PodReadinessGate to false if cloudcore stop
-			err := TryToPatchPodReadinessGate(corev1.ConditionFalse)
-			if err != nil {
-				klog.Errorf("Error reset pod readinessGate: %v", err)
-			}
 			// Trigger core.GracefulShutdown()
 			TriggerGracefulShutdown()
 		},
@@ -132,7 +123,7 @@ func makeLeaderElectionConfig(config componentbaseconfig.LeaderElectionConfigura
 }
 
 // Try to patch PodReadinessGate if program runs in pod
-func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
+func TryToPatchPodReadinessGate() error {
 	podname, isInPod := os.LookupEnv("CLOUDCORE_POD_NAME")
 	if isInPod {
 		namespace := os.Getenv("CLOUDCORE_POD_NAMESPACE")
@@ -150,7 +141,7 @@ func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
 		}
 		//Todo: Read PodReadinessGate from CloudCore configuration or env
-		condition := corev1.PodCondition{Type: "kubeedge.io/CloudCoreIsLeader", Status: status}
+		condition := corev1.PodCondition{Type: "kubeedge.io/CloudCoreIsLeader", Status: corev1.ConditionTrue}
 		podutil.UpdatePodCondition(&getPod.Status, &condition)
 		newJSON, err := json.Marshal(getPod)
 		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalJSON, newJSON, corev1.Pod{})
