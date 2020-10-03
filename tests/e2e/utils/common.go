@@ -861,8 +861,6 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
-	Infof("configMap.Data %v", configMap.Data)
 	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
 		return false
 	}

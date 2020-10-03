@@ -6,7 +6,7 @@ approvers:
     - "@kevin-wangzefeng"
     - "@fisherxu"
 creation-date: 2020-05-13
-last-updated: 2020-07-31
+last-updated: 2020-07-23
 status: implementable
 ---
 
@@ -39,22 +39,28 @@ We propose below modifications on current design.
 * Add common part in protocol config section
 * Extract common part of Modbus protocol config into an independent common part.
 * Allow add any customized K-V in protocol config and property visitor section.
-* Support using boolean, float, double and bytes to describe type of property in device model.
 
 
 
 ### Use Cases
 
 * Reuse device model.
-  * Considering device properties are physical attributes, but property visitors are manually configured attributes. Combining device properties and property visitors in device model decrease the reusability of device model.
-  * Case 1: Same devices are connected to a central management server, eg. SCADA. In this case, devices have same properties but different property visitors.
-  * Case 2: Same devices are using different industrial protocol. In this case, devices have same properties but different property visitors.
+  * Considering device properties are physical attributes, but property visitors are manually configured
+attributes. Combining device properties and property visitors in device model decrease the reusability of device model.
+  * Case 1: Same devices are connected to a central management server, eg. SCADA. In this case, devices have same properties but
+  different property visitors.
+  * Case 2: Same devices are using different industrial protocol. In this case, devices have same properties but
+  different property visitors.
 * Customized data collect cycle and report cycle
-   * Users can define collect cycle and report cycle to each property. For example, a temperature property may need be collected per second, while a throughput property may need be collected per hour.
+   * Users can define collect cycle and report cycle to each property. For example, a temperature property may need be collected
+   per second, while a throughput property may need be collected per hour.
 * Deal data of non-twin properties.
-  * Currently, only twin properties will be sync between edge and cloud. Non-twin properties are not processed by edge-core. Time-Serial data are produced from devices and should have a way to allow user deal with these data.
+  * Currently, only twin properties will be sync between edge and cloud. Non-twin properties are not processed by edge-core. 
+  Time-Serial data are produced from devices and should have a way to allow user deal with these data.
 * Deal various industrial protocols
-  * Currently, only Modbus, OPC-UA and bluetooth are supported by KubeEdge. However there are thousands of industrial protocols. It is impossible to define all these protocols in KubeEdge. If users want to use these un-predefined protocols, we should provide a way to support.
+  * Currently, only Modbus, OPC-UA and bluetooth are supported by KubeEdge. However there are thousands of industrial protocols.
+  It is impossible to define all these protocols in KubeEdge. If users want to use these un-predefined protocols, we should provide
+  a way to support.
 * Customized provided protocol
   * If user want to add some special control value, such as bulk related collection, in provided protocol like Modbus, he can use the customized K-V features.
 
@@ -242,75 +248,6 @@ type VisitorConfigCustomized struct {
 
 type CustomizedValue map[string]interface{}
 ```
-### modifications on device model types
-```golang
-// Represents the type and data validation of a property.
-// Only one of its members may be specified.
-type PropertyType struct {
-	// +optional
-	Int *PropertyTypeInt64 `json:"int,omitempty"`
-	// +optional
-	String *PropertyTypeString `json:"string,omitempty"`
-	// +optional
-	Double *PropertyTypeDouble `json:"double,omitempty"`
-	// +optional
-	Float *PropertyTypeFloat `json:"float,omitempty"`
-	// +optional
-	Boolean *PropertyTypeBoolean `json:"boolean,omitempty"`
-	// +optional
-	Bytes *PropertyTypeBytes `json:"bytes,omitempty"`
-}
-
-...
-
-type PropertyTypeString struct {
-	// Required: Access mode of property, ReadWrite or ReadOnly.
-	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
-	// +optional
-	DefaultValue string `json:"defaultValue,omitempty"`
-}
-
-type PropertyTypeDouble struct {
-	// Required: Access mode of property, ReadWrite or ReadOnly.
-	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
-	// +optional
-	DefaultValue float64 `json:"defaultValue,omitempty"`
-	// +optional
-	Minimum float64 `json:"minimum,omitempty"`
-	// +optional
-	Maximum float64 `json:"maximum,omitempty"`
-	// The unit of the property
-	// +optional
-	Unit string `json:"unit,omitempty"`
-}
-
-type PropertyTypeFloat struct {
-	// Required: Access mode of property, ReadWrite or ReadOnly.
-	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
-	// +optional
-	DefaultValue float32 `json:"defaultValue,omitempty"`
-	// +optional
-	Minimum float32 `json:"minimum,omitempty"`
-	// +optional
-	Maximum float32 `json:"maximum,omitempty"`
-	// The unit of the property
-	// +optional
-	Unit string `json:"unit,omitempty"`
-}
-
-type PropertyTypeBoolean struct {
-	// Required: Access mode of property, ReadWrite or ReadOnly.
-	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
-	// +optional
-	DefaultValue bool `json:"defaultValue,omitempty"`
-}
-
-type PropertyTypeBytes struct {
-	// Required: Access mode of property, ReadWrite or ReadOnly.
-	AccessMode PropertyAccessMode `json:"accessMode,omitempty"`
-}
-```
-
 ### modifications on device profile（used in configmap）
 ```golang
 type DeviceInstance struct {
