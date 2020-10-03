@@ -22,7 +22,6 @@ import (
 	"path"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
@@ -64,7 +63,8 @@ func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 	}
 	allErrs := field.ErrorList{}
 	if e.NodeIP == "" {
-		klog.Warningf("NodeIP is empty , use default ip which can connect to cloud.")
+		allErrs = append(allErrs, field.Invalid(field.NewPath("NodeIp"), e.NodeIP,
+			"Need sed NodeIP"))
 	}
 	switch e.CGroupDriver {
 	case v1alpha1.CGroupDriverCGroupFS, v1alpha1.CGroupDriverSystemd:
