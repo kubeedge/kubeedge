@@ -31,7 +31,7 @@
         "name": "temperature"
     }],
 	"protocols": [{
-        "protocolConfig": {
+        "protocol_config": {
             "ip": "127.0.0.1",
             "port": 5028,
             "slaveID": 1
