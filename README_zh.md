@@ -55,12 +55,11 @@ KubeEdge 由以下组件构成:
 
 ### Kubernetes 版本兼容
 
-|                     | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 | Kubernetes 1.18 |
+|                     | Kubernetes 1.11 | Kubernetes 1.12 | Kubernetes 1.13 | Kubernetes 1.14 | Kubernetes 1.15 | Kubernetes 1.16 | Kubernetes 1.17 |
 |---------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.2        | ✓               | ✓              | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.3        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
-| KubeEdge 1.4        | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
-| KubeEdge HEAD       | ✓               | ✓              | ✓               | ✓               | ✓              | ✓               | ✓               |
+| KubeEdge 1.0        | ✓               | ✓              | ✓               | ✓              | ✓               | -               | -               |
+| KubeEdge 1.1        | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
+| KubeEdge HEAD       | ✓               | ✓               | ✓               | ✓               | ✓             | ✓               | ✓               |
 
 说明:
 * `✓` KubeEdge和Kubernetes的版本是完全兼容的
@@ -69,12 +68,11 @@ KubeEdge 由以下组件构成:
 
 ### Golang 版本依赖
 
-|                         | Golang 1.11     | Golang 1.12     | Golang 1.13     | Golang 1.14     |
-|-------------------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓              |
-| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓              |
-| KubeEdge 1.4            | ✗               | ✗               | ✓               | ✓              |
-| KubeEdge HEAD (master)  | ✗               | ✗               | ✓               | ✓              |
+|                     | Golang 1.10    | Golang 1.11     | Golang 1.12     | Golang 1.13     |
+|---------------------|----------------|-----------------|-----------------|-----------------|
+| KubeEdge 1.0        | ✓              | ✓              | ✓               | ✗               |
+| KubeEdge 1.1        | ✗              | ✗               | ✓               | ✗               |
+| KubeEdge HEAD       | ✗              | ✗               | ✓               | ✓              |
 
 ## 使用
 
