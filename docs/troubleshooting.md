@@ -4,7 +4,7 @@ This page contains a few commonly occurring questions.
 
 ## Container keeps pending/ terminating
 
-1. Check the output of `kubectl get nodes`, whether the node is running healthy. Note that nodes in unreachable, offline status cannot complete graceful/soft pod deletion until they come back to normal.
+1. Check the output of `kubectl get nodes`
 2. Check the output of `kubectl describe pod <your-pod>`, whether the pod is scheduled successfully.
 3. Check the `edgecore` logs for any errors.
 4. Check the architecture of the node running `edgecore` and make sure that container image you are trying to run is of the same architecture.
