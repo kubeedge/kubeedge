@@ -116,8 +116,8 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
   ```bash
   iptables -t nat -A OUTPUT -p tcp --dport 10350 -j DNAT --to $CLOUDCOREIPS:10003
   ```
-  > Port 10003 and 10350 are the default ports for the CloudStream and edgecore,
-    use your own ports if you have changed them.
+  > Port 10003 and 10350 are the default ports for the CloudStream and edgecore, 
+    use your own ports if you have changed them. 
 
 
 5. Modify  `/etc/kubeedge/config/cloudcore.yaml` or `/etc/kubeedge/config/edgecore.yaml` of cloudcore and edgecore. Set `cloudStream` and `edgeStream`  to  `enable: true`.
@@ -128,7 +128,7 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
     cloudStream:
       enable: true
   ...
-
+  
   ...
   modules:
     edgeStream:
@@ -141,7 +141,7 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 ### Support Metrics-server in Cloud
 1. The realization of this function point reuses cloudstream and edgestream modules. So you also need to perform all steps of *Enable `kubectl logs` Feature*.
 
-2. Since the kubelet ports of edge nodes and cloud nodes are not the same, the current release version of metrics-server(0.3.x) does not support automatic port identification, so you need to manually compile the image yourself now.
+2. Since the kubelet ports of edge nodes and cloud nodes are not the same, the current release version of metrics-server(0.3.x) does not support automatic port identification, so you need to manually compile the image yourself now. 
 
 ```bash
 git clone https://github.com/kubernetes-sigs/metrics-server.git
