@@ -1,4 +1,4 @@
-# Upgrading KubeEdge
+# Upgradation
 
 Please refer to following guide to upgrade your KubeEdge cluster.
 
@@ -19,7 +19,7 @@ You can keep old config to save some custom changes as you wish.
 
 *Note*:
 
-After upgrading, some options may be deleted and some may be added, please don't use old config directly.
+After upgradation, some options may be deleted and some may be added, please don't use old config directly.
 
 ### Device related(Optional)
 

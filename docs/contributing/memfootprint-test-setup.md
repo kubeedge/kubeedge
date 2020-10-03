@@ -1,9 +1,10 @@
 # Measuring memory footprint of EdgeCore
 
-## Why measure memory footprint?
+## Why measuring memory footprint
 
-- This platform is designed for a light-weight edge computing deployment, capable of running on devices with few resources (for example, 256MB RAM)
-- It is important to know when deploying many pods that it showcases as little memory footprint as possible
+- This platform is also tagged for a light weighted edge computing deployment
+- To be able to be deployed over devices with less resources (for example, 256MB RAM)
+- It is required to know by deploying as many as possible pods, it showcases as much as less possible memory footprint
 
 ## KPI's measured
 
