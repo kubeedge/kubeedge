@@ -39,7 +39,7 @@ func (u *UbuntuOS) SetKubeEdgeVersion(version string) {
 
 //InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (u *UbuntuOS) InstallMQTT() error {
-	mqttRunning := "ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'"
+	mqttRunning := fmt.Sprintf("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
 	cmd := &Command{Cmd: exec.Command("sh", "-c", mqttRunning)}
 	cmd.ExecuteCommand()
 	stdout := cmd.GetStdOutput()
@@ -53,7 +53,7 @@ func (u *UbuntuOS) InstallMQTT() error {
 	}
 
 	//Install mqttInst
-	mqttInst := "apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto"
+	mqttInst := fmt.Sprintf("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
 	stdout, err := runCommandWithShell(mqttInst)
 	if err != nil {
 		return err

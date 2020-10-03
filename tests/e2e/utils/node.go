@@ -228,9 +228,9 @@ func TaintEdgeDeployedNode(toTaint bool, taintHandler string) error {
 	var temp map[string]interface{}
 	var body string
 	if toTaint {
-		body = `{"spec":{"taints":[{"effect":"NoSchedule","key":"key","value":"value"}]}}`
+		body = fmt.Sprintf(`{"spec":{"taints":[{"effect":"NoSchedule","key":"key","value":"value"}]}}`)
 	} else {
-		body = `{"spec":{"taints":null}}`
+		body = fmt.Sprintf(`{"spec":{"taints":null}}`)
 	}
 	err := json.Unmarshal([]byte(body), &temp)
 	if err != nil {

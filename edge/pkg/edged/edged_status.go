@@ -142,10 +142,12 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	nodeStatus.Status.Phase = e.getNodePhase()
 
 	devicePluginCapacity, _, removedDevicePlugins := e.getDevicePluginResourceCapacity()
-	for k, v := range devicePluginCapacity {
-		klog.Infof("Update capacity for %s to %d", k, v.Value())
-		nodeStatus.Status.Capacity[k] = v
-		nodeStatus.Status.Allocatable[k] = v
+	if devicePluginCapacity != nil {
+		for k, v := range devicePluginCapacity {
+			klog.Infof("Update capacity for %s to %d", k, v.Value())
+			nodeStatus.Status.Capacity[k] = v
+			nodeStatus.Status.Allocatable[k] = v
+		}
 	}
 
 	nameSet := sets.NewString(string(v1.ResourceCPU), string(v1.ResourceMemory), string(v1.ResourceStorage),

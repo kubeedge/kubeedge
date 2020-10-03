@@ -39,7 +39,7 @@ func (c *CentOS) SetKubeEdgeVersion(version string) {
 //Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (c *CentOS) InstallMQTT() error {
 	// check MQTT
-	mqttRunning := "ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'"
+	mqttRunning := fmt.Sprintf("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
 	result, err := runCommandWithStdout(mqttRunning)
 	if err != nil {
 		return err
