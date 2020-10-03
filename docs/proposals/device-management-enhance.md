@@ -6,7 +6,7 @@ approvers:
     - "@kevin-wangzefeng"
     - "@fisherxu"
 creation-date: 2020-05-13
-last-updated: 2020-08-13
+last-updated: 2020-07-31
 status: implementable
 ---
 
@@ -34,8 +34,8 @@ additional way to handle data which is collected from device.
 We propose below modifications on current design.
 * Move property visitors from device model to device instance.
 * Add collectCycle and reportCycle under property visitor.
-* Add data section in device spec.
-* Add customized protocol config in device CRD.
+* Add data section in twin spec.
+* Add customized protocol config in device model and device instance CRDs.
 * Add common part in protocol config section
 * Extract common part of Modbus protocol config into an independent common part.
 * Allow add any customized K-V in protocol config and property visitor section.
@@ -1111,7 +1111,7 @@ spec:
         "ON": [1]
         "OFF": [0]
   data:
-    dataTopic: "$ke/events/device/+/data/update"
+    dataTopic: "$ke/events/+/device/data/update"
     dataProperties:
       - propertyName: temperature-enable
         metadata:

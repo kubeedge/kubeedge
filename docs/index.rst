@@ -93,7 +93,7 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 1
    :caption: Developer Guide
 
-   Device Management <contributing/device_crd_guide>
+   Device Manager <contributing/device_crd_guide>
    contributing/message_topics
    Unit Test <contributing/unit_test_guide>
    Bluetooth Mapper E2E Test <contributing/bluetooth_mapper_e2e_guide>
