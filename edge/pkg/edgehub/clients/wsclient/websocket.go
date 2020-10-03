@@ -111,8 +111,8 @@ func (wsc *WebSocketClient) Send(message model.Message) error {
 //Receive reads the binary message through the connection
 func (wsc *WebSocketClient) Receive() (model.Message, error) {
 	message := model.Message{}
-	err := wsc.connection.ReadMessage(&message)
-	return message, err
+	wsc.connection.ReadMessage(&message)
+	return message, nil
 }
 
 //Notify logs info
