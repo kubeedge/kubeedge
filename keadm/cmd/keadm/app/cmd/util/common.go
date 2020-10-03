@@ -214,7 +214,7 @@ func IsCloudCore() (types.ModuleRunning, error) {
 		return types.NoneRunning, err
 	}
 
-	if edgeCoreRunning {
+	if false != edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
 	}
 
@@ -223,7 +223,7 @@ func IsCloudCore() (types.ModuleRunning, error) {
 		return types.NoneRunning, err
 	}
 
-	if edgeCoreRunning {
+	if false != edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
 	}
 
@@ -406,7 +406,9 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 		download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/ acc.
 	*/
 	if componentType == types.EdgeCore {
+
 		splittedVersion := strings.Split(version, ".")
+
 		strippedVersion := ""
 
 		if len(splittedVersion) < 2 {
@@ -583,7 +585,9 @@ func isKubeEdgeProcessRunning(proc string) (bool, error) {
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
+
 	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
+
 	stdout, err := runCommandWithStdout(serviceRunning)
 
 	if err != nil {
@@ -598,6 +602,7 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 
 //	check if systemd exist
 func hasSystemd() bool {
+
 	cmd := "file /sbin/init"
 
 	stdout, err := runCommandWithStdout(cmd)
