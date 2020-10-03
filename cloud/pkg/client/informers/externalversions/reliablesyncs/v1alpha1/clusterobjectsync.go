@@ -18,7 +18,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
 	time "time"
 
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
@@ -60,13 +59,13 @@ func NewFilteredClusterObjectSyncInformer(client versioned.Interface, resyncPeri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().List(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Watch(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Watch(options)
 			},
 		},
 		&reliablesyncsv1alpha1.ClusterObjectSync{},

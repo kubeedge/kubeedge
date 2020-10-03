@@ -37,14 +37,14 @@ type DeviceModelsGetter interface {
 
 // DeviceModelInterface has methods to work with DeviceModel resources.
 type DeviceModelInterface interface {
-	Create(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.CreateOptions) (*v1alpha2.DeviceModel, error)
-	Update(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.UpdateOptions) (*v1alpha2.DeviceModel, error)
-	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha2.DeviceModel, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha2.DeviceModelList, error)
-	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.DeviceModel, err error)
+	Create(*v1alpha2.DeviceModel) (*v1alpha2.DeviceModel, error)
+	Update(*v1alpha2.DeviceModel) (*v1alpha2.DeviceModel, error)
+	Delete(name string, options *v1.DeleteOptions) error
+	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
+	Get(name string, options v1.GetOptions) (*v1alpha2.DeviceModel, error)
+	List(opts v1.ListOptions) (*v1alpha2.DeviceModelList, error)
+	Watch(opts v1.ListOptions) (watch.Interface, error)
+	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha2.DeviceModel, err error)
 	DeviceModelExpansion
 }
 
@@ -63,20 +63,20 @@ func newDeviceModels(c *DevicesV1alpha2Client, namespace string) *deviceModels {
 }
 
 // Get takes name of the deviceModel, and returns the corresponding deviceModel object, and an error if there is any.
-func (c *deviceModels) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *deviceModels) Get(name string, options v1.GetOptions) (result *v1alpha2.DeviceModel, err error) {
 	result = &v1alpha2.DeviceModel{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("devicemodels").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
+		Do(context.Background()).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of DeviceModels that match those selectors.
-func (c *deviceModels) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha2.DeviceModelList, err error) {
+func (c *deviceModels) List(opts v1.ListOptions) (result *v1alpha2.DeviceModelList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -87,13 +87,13 @@ func (c *deviceModels) List(ctx context.Context, opts v1.ListOptions) (result *v
 		Resource("devicemodels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do(ctx).
+		Do(context.Background()).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested deviceModels.
-func (c *deviceModels) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+func (c *deviceModels) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -104,74 +104,71 @@ func (c *deviceModels) Watch(ctx context.Context, opts v1.ListOptions) (watch.In
 		Resource("devicemodels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch(ctx)
+		Watch(context.Background())
 }
 
 // Create takes the representation of a deviceModel and creates it.  Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *deviceModels) Create(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.CreateOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *deviceModels) Create(deviceModel *v1alpha2.DeviceModel) (result *v1alpha2.DeviceModel, err error) {
 	result = &v1alpha2.DeviceModel{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("devicemodels").
-		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(deviceModel).
-		Do(ctx).
+		Do(context.Background()).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a deviceModel and updates it. Returns the server's representation of the deviceModel, and an error, if there is any.
-func (c *deviceModels) Update(ctx context.Context, deviceModel *v1alpha2.DeviceModel, opts v1.UpdateOptions) (result *v1alpha2.DeviceModel, err error) {
+func (c *deviceModels) Update(deviceModel *v1alpha2.DeviceModel) (result *v1alpha2.DeviceModel, err error) {
 	result = &v1alpha2.DeviceModel{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("devicemodels").
 		Name(deviceModel.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(deviceModel).
-		Do(ctx).
+		Do(context.Background()).
 		Into(result)
 	return
 }
 
 // Delete takes name of the deviceModel and deletes it. Returns an error if one occurs.
-func (c *deviceModels) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+func (c *deviceModels) Delete(name string, options *v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("devicemodels").
 		Name(name).
-		Body(&opts).
-		Do(ctx).
+		Body(options).
+		Do(context.Background()).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *deviceModels) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+func (c *deviceModels) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("devicemodels").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
+		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
+		Body(options).
+		Do(context.Background()).
 		Error()
 }
 
 // Patch applies the patch and returns the patched deviceModel.
-func (c *deviceModels) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha2.DeviceModel, err error) {
+func (c *deviceModels) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha2.DeviceModel, err error) {
 	result = &v1alpha2.DeviceModel{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("devicemodels").
-		Name(name).
 		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
+		Name(name).
 		Body(data).
-		Do(ctx).
+		Do(context.Background()).
 		Into(result)
 	return
 }
