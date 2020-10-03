@@ -613,35 +613,35 @@ func TestUnmarshalDeviceTwinUpdate(t *testing.T) {
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongInput",
 			payload: []byte(""),
 			want:    &DeviceTwinUpdate{},
-			wantErr: ErrorUnmarshal,
+			wantErr: errors.New(ErrorUnmarshalInfo),
 		},
 		{
 			// Failure Case - correct input with empty twin
 			name:    "UnmarshalDeviceTwinUpdateTest-EmptyTwin",
 			payload: bytesEmptyTwin,
 			want:    &DeviceTwinUpdate{},
-			wantErr: ErrorUpdate,
+			wantErr: errors.New(ErrorUpdateInfo),
 		},
 		{
 			// Failure Case - wrong key format
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongKeyFormat",
 			payload: bytesTwinKeyError,
 			want:    &keyErrorTwinUpdate,
-			wantErr: ErrorKey,
+			wantErr: errors.New(ErrorKeyInfo),
 		},
 		{
 			// Failure Case - wrong expected value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongExpectedValue",
 			payload: bytesTwinKeyExpectedValueError,
 			want:    &keyTwinUpdateExpectedValueError,
-			wantErr: ErrorValue,
+			wantErr: errors.New(ErrorValueInfo),
 		},
 		{
 			// Failure Case - wrong actual value
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongActualValue",
 			payload: bytesTwinKeyActualValueError,
 			want:    &keyTwinUpdateActualValueError,
-			wantErr: ErrorValue,
+			wantErr: errors.New(ErrorValueInfo),
 		},
 		{
 			// Success Case
