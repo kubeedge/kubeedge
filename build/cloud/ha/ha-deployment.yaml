@@ -18,8 +18,6 @@ spec:
         k8s-app: kubeedge
         kubeedge: cloudcore
     spec:
-      nodeSelector: # configure the nodeSelector here to directly schedule pods to specific nodes
-        [key]: [value]
       hostNetwork: true
       readinessGates:
         - conditionType: "kubeedge.io/CloudCoreIsLeader"
@@ -41,14 +39,11 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: cloudcore
-          image: kubeedge/cloudcore:{tag}
+          image: kubeedge/cloudcore:v1.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 10000
               name: cloudhub
-              protocol: TCP
-            - containerPort: 10002
-              name: certAndReadyz
               protocol: TCP
           resources:
             limits:
@@ -60,6 +55,8 @@ spec:
           volumeMounts:
             - name: conf
               mountPath: /etc/kubeedge/config
+            - name: certs
+              mountPath: /etc/kubeedge
           env:
             - name: CLOUDCORE_POD_NAME
               valueFrom:
@@ -76,4 +73,13 @@ spec:
         - name: conf
           configMap:
             name: cloudcore
-
+        - name: certs
+          secret:
+            secretName: cloudcore
+            items:
+              - key: edge.crt
+                path: certs/edge.crt
+              - key: edge.key
+                path: certs/edge.key
+              - key: rootCA.crt
+                path: ca/rootCA.crt
