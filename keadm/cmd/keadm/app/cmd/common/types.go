@@ -42,7 +42,6 @@ type JoinOptions struct {
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
-	CGroupDriver          string
 }
 
 type ResetOptions struct {

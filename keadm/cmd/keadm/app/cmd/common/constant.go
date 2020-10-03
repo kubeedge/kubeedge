@@ -75,7 +75,4 @@ const (
 	TokenDataName = "tokendata"
 
 	DomainName = "domainname"
-
-	// CGroupDriver is type of edgecore Cgroup
-	CGroupDriver = "cgroupdriver"
 )

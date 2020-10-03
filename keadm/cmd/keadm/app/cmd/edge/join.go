@@ -88,9 +88,6 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.InterfaceName, types.InterfaceName, joinOptions.InterfaceName,
 		"KubeEdge Node interface name string, the default value is eth0")
 
-	cmd.Flags().StringVar(&joinOptions.CGroupDriver, types.CGroupDriver, joinOptions.CGroupDriver,
-		"KubeEdge Node CGroupDriver cgroupfs/systemd, the default value is cgroupfs")
-
 	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
 		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
 
@@ -164,7 +161,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 		Token:                 joinOptions.Token,
 		CertPort:              joinOptions.CertPort,
-		CGroupDriver:          joinOptions.CGroupDriver,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
