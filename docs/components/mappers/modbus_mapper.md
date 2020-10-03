@@ -25,10 +25,10 @@ make # or `make modbus_mapper`
 docker tag modbus_mapper:v1.0 <your_dockerhub_username>/modbus_mapper:v1.0
 docker push <your_dockerhub_username>/modbus_mapper:v1.0
 
-Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the following command to sign in
+Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the followig command to sign in
  docker login
  # Please enter your username and password when prompted
- ```
+```
 
 ### Deploying modbus mapper application
 
