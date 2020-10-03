@@ -1,7 +1,9 @@
 package edgehub
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"k8s.io/klog"
@@ -105,18 +107,23 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	return eh.sendToKeepChannel(message)
 }
 
-func (eh *EdgeHub) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(reconnectContext context.Context, errorNotifyOnce *sync.Once) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
+			return
+		case <-reconnectContext.Done():
+			klog.Info("routeToEdge stopped and is waiting for reconnection")
 			return
 		default:
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			errorNotifyOnce.Do(func() {
+				eh.errorNotifyChan <- struct{}{}
+			})
 			return
 		}
 
@@ -158,11 +165,14 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(reconnectContext context.Context, errorNotifyOnce *sync.Once) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToCloud stop")
+			return
+		case <-reconnectContext.Done():
+			klog.Info("routeToCloud stopped and is waiting for reconnection")
 			return
 		default:
 		}
@@ -177,17 +187,22 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
+			errorNotifyOnce.Do(func() {
+				eh.errorNotifyChan <- struct{}{}
+			})
 			return
 		}
 	}
 }
 
-func (eh *EdgeHub) keepalive() {
+func (eh *EdgeHub) keepalive(reconnectContext context.Context, errorNotifyOnce *sync.Once) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		case <-reconnectContext.Done():
+			klog.Info("keepalive stopped and is waiting for reconnection")
 			return
 		default:
 		}
@@ -199,7 +214,9 @@ func (eh *EdgeHub) keepalive() {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			errorNotifyOnce.Do(func() {
+				eh.errorNotifyChan <- struct{}{}
+			})
 			return
 		}
 

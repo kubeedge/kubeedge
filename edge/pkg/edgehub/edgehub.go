@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -25,19 +26,21 @@ var HasTLSTunnelCerts = make(chan bool, 1)
 
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
-	certManager   certificate.CertManager
-	chClient      clients.Adapter
-	reconnectChan chan struct{}
-	syncKeeper    map[string]chan model.Message
-	keeperLock    sync.RWMutex
-	enable        bool
+	certManager     certificate.CertManager
+	chClient        clients.Adapter
+	reconnectChan   chan struct{}
+	errorNotifyChan chan struct{}
+	syncKeeper      map[string]chan model.Message
+	keeperLock      sync.RWMutex
+	enable          bool
 }
 
 func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
-		reconnectChan: make(chan struct{}),
-		syncKeeper:    make(map[string]chan model.Message),
-		enable:        enable,
+		reconnectChan:   make(chan struct{}),
+		errorNotifyChan: make(chan struct{}),
+		syncKeeper:      make(map[string]chan model.Message),
+		enable:          enable,
 	}
 }
 
@@ -92,29 +95,25 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		go eh.routeToEdge()
-		go eh.routeToCloud()
-		go eh.keepalive()
+		reconnectContext, cancel := context.WithCancel(context.Background())
+		var errorNotifyOnce sync.Once
+		go eh.routeToEdge(reconnectContext, &errorNotifyOnce)
+		go eh.routeToCloud(reconnectContext, &errorNotifyOnce)
+		go eh.keepalive(reconnectContext, &errorNotifyOnce)
 
-		// wait the stop singal
+		// waiting for the reconncetion and error singal
 		// stop authinfo manager/websocket connection
-		<-eh.reconnectChan
+		select {
+		case <-eh.reconnectChan:
+		case <-eh.errorNotifyChan:
+		}
 		eh.chClient.Uninit()
+		cancel()
 
 		// execute hook fun after disconnect
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second * 2)
-
-		// clean channel
-	clean:
-		for {
-			select {
-			case <-eh.reconnectChan:
-			default:
-				break clean
-			}
-		}
+		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
 	}
 }
