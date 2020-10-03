@@ -89,7 +89,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 		"KubeEdge Node interface name string, the default value is eth0")
 
 	cmd.Flags().StringVar(&joinOptions.CGroupDriver, types.CGroupDriver, joinOptions.CGroupDriver,
-		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
+		"KubeEdge Node CGroupDriver cgroupfs/systemd, the default value is cgroupfs")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
 		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
