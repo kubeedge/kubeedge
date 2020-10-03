@@ -90,9 +90,7 @@ func GenerateToken() error {
 		for {
 			<-t.C
 			refreshedCaHashToken := refreshToken()
-			if err := CreateTokenSecret([]byte(refreshedCaHashToken)); err != nil {
-				klog.Fatalf("failed to create the ca token for edgecore register, err: %v", err)
-			}
+			CreateTokenSecret([]byte(refreshedCaHashToken))
 		}
 	}()
 	klog.Info("Succeed to creating token")

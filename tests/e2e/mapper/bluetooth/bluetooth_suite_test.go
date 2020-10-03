@@ -134,8 +134,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessful !!")
 
 		// Adding label to node
-		err = utils.ApplyLabelToNode(ctx.Cfg.K8SMasterForKubeEdge+nodeHandler+"/"+nodeName, "bluetooth", "true")
-		Expect(err).Should(BeNil())
+		utils.ApplyLabelToNode(ctx.Cfg.K8SMasterForKubeEdge+nodeHandler+"/"+nodeName, "bluetooth", "true")
 
 		// Changing the config yaml of bluetooth mapper
 		t = time.Now()
@@ -149,8 +148,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		//Building bluetooth mapper
 		curPath = getpwd()
 		newPath := path.Join(curPath, makeFilePath)
-		err = os.Chdir(newPath)
-		Expect(err).Should(BeNil())
+		os.Chdir(newPath)
 		cmd = exec.Command("make", "bluetooth_mapper_image")
 		err = utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())
@@ -204,8 +202,7 @@ func TestMapperCharacteristics(t *testing.T) {
 		//updating deployment file with edgenode name and dockerhubusername
 		curPath = getpwd()
 		newPath = path.Join(curPath, "../../")
-		err = os.Chdir(newPath)
-		Expect(err).Should(BeNil())
+		os.Chdir(newPath)
 		cmd = exec.Command("bash", "-x", "scripts/bluetoothconfig.sh", ctx.Cfg.DockerHubUserName, nodeName)
 		err = utils.PrintCombinedOutput(cmd)
 		Expect(err).Should(BeNil())

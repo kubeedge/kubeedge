@@ -150,25 +150,13 @@ func (p *Proxier) readAndCleanRule() {
 	for scan.Scan() {
 		serverString := scan.Text()
 		if strings.Contains(serverString, "-o") {
-			if err := p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainOutput, strings.Split(serverString, " ")...); err != nil {
-				klog.Errorf("[EdgeMesh] failed to delete iptables rule, err: %v", err)
-				return
-			}
+			p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainOutput, strings.Split(serverString, " ")...)
 		} else if strings.Contains(serverString, "-i") {
-			if err := p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainPrerouting, strings.Split(serverString, " ")...); err != nil {
-				klog.Errorf("[EdgeMesh] failed to delete iptables rule, err: %v", err)
-				return
-			}
+			p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainPrerouting, strings.Split(serverString, " ")...)
 		}
 	}
-	if err := p.iptables.FlushChain(utiliptables.TableNAT, meshChain); err != nil {
-		klog.Errorf("[EdgeMesh] failed to flush iptables chain, err: %v", err)
-		return
-	}
-	if err := p.iptables.DeleteChain(utiliptables.TableNAT, meshChain); err != nil {
-		klog.Errorf("[EdgeMesh] failed to delete iptables chain, err: %v", err)
-		return
-	}
+	p.iptables.FlushChain(utiliptables.TableNAT, meshChain)
+	p.iptables.DeleteChain(utiliptables.TableNAT, meshChain)
 }
 
 // ensureResolvForHost adds edgemesh dns server to the head of /etc/resolv.conf
@@ -182,9 +170,7 @@ func ensureResolvForHost() {
 	resolv := strings.Split(string(bs), "\n")
 	if resolv == nil {
 		nameserver := "nameserver " + config.Config.ListenIP.String()
-		if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
-			klog.Errorf("[EdgeMesh] write file %s err: %v", hostResolv, err)
-		}
+		ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
 		return
 	}
 
@@ -207,10 +193,7 @@ func ensureResolvForHost() {
 	if configured {
 		if dnsIdx != startIdx && dnsIdx > startIdx {
 			nameserver := sortNameserver(resolv, dnsIdx, startIdx)
-			if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
-				klog.Errorf("[EdgeMesh] failed to write file %s, err: %v", hostResolv, err)
-				return
-			}
+			ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
 		}
 		return
 	}
@@ -226,10 +209,7 @@ func ensureResolvForHost() {
 		idx++
 	}
 
-	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
-		klog.Errorf("[EdgeMesh] failed to write file %s, err: %v", hostResolv, err)
-		return
-	}
+	ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
 }
 
 func sortNameserver(resolv []string, dnsIdx, startIdx int) string {
@@ -252,9 +232,7 @@ func sortNameserver(resolv []string, dnsIdx, startIdx int) string {
 
 func Clean() {
 	proxier.readAndCleanRule()
-	if err := netlink.RouteDel(&route); err != nil {
-		klog.Warningf("[EdgeMesh] delete route err: %v", err)
-	}
+	netlink.RouteDel(&route)
 	bs, err := ioutil.ReadFile(hostResolv)
 	if err != nil {
 		klog.Warningf("[EdgeMesh] read file %s err: %v", hostResolv, err)
@@ -271,7 +249,5 @@ func Clean() {
 		}
 		nameserver = nameserver + item + "\n"
 	}
-	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
-		klog.Errorf("[EdgeMesh] failed to write nameserver to file %s, err: %v", hostResolv, err)
-	}
+	ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
 }

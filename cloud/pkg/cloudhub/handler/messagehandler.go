@@ -396,14 +396,10 @@ func (mh *MessageHandle) ListMessageWriteLoop(info *model.HubInfo, stopServe cha
 			continue
 		}
 
-		if err := mh.send(conn.(hubio.CloudHubIO), info, msg); err != nil {
-			klog.Errorf("failed to send to cloudhub, err: %v", err)
-		}
+		mh.send(conn.(hubio.CloudHubIO), info, msg)
 
 		// delete successfully sent events from the queue/store
-		if err := nodeListStore.Delete(msg); err != nil {
-			klog.Errorf("failed to delete msg from store, err: %v", err)
-		}
+		nodeListStore.Delete(msg)
 
 		nodeListQueue.Forget(key.(string))
 		nodeListQueue.Done(key)
@@ -510,17 +506,13 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceUID, err := channelq.GetMessageUID(*msg)
 		if err != nil {
-			klog.Errorf("failed to get message UID %v, err: %v", msg, err)
 			return
 		}
 
 		objectSyncName := synccontroller.BuildObjectSyncName(info.NodeID, resourceUID)
 
 		if msg.GetOperation() == beehiveModel.DeleteOperation {
-			if err := nodeStore.Delete(msg); err != nil {
-				klog.Errorf("failed to delete message %v, err: %v", msg, err)
-				return
-			}
+			nodeStore.Delete(msg)
 			mh.deleteSuccessPoint(resourceNamespace, objectSyncName)
 			return
 		}
@@ -555,9 +547,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
 			}
 			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			if _, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
-				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
-			}
+			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{})
 		}
 	}
 
@@ -568,9 +558,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 }
 
 func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
-	if err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0)); err != nil {
-		klog.Errorf("Delete Success Point failed with error: %v", err)
-	}
+	mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0))
 }
 
 func (mh *MessageHandle) getNodeConnection(nodeid string) (hubio.CloudHubIO, error) {
