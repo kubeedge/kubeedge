@@ -1,8 +1,0 @@
-# CHANGELOGs
-
-- [CHANGELOG-1.4.md](./CHANGELOG-1.4.md)
-- [CHANGELOG-1.3.md](./CHANGELOG-1.3.md)
-- [CHANGELOG-1.2.md](./CHANGELOG-1.2.md)
-- [CHANGELOG-1.1.md](./CHANGELOG-1.1.md)
-- [CHANGELOG-1.0.md](./CHANGELOG-1.0.md)
-- [CHANGELOG-before-1.0.md](./CHANGELOG-before-1.0.md)
