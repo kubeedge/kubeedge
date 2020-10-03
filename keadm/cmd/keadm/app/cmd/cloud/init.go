@@ -96,10 +96,7 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
 
 	cmd.Flags().StringVar(&initOpts.AdvertiseAddress, types.AdvertiseAddress, initOpts.AdvertiseAddress,
-		"Use this key to set IPs in cloudcore's certificate SubAltNames field. eg: 10.10.102.78,10.10.102.79")
-
-	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
-		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
+		"Use this key to set SANs in certificate of cloudcore. eg: 10.10.102.78,10.10.102.79")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.

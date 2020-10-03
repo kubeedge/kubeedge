@@ -73,6 +73,4 @@ const (
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"
-
-	DomainName = "domainname"
 )
