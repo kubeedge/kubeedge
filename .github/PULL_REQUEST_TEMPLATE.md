@@ -9,16 +9,17 @@
 
 <!--
 Add one of the following kinds:
-> /kind bug
-> /kind cleanup
-> /kind documentation
-> /kind feature
-> /kind test
-> /kind design
+/kind bug
+/kind cleanup
+/kind documentation
+/kind feature
+/kind test
+/kind design
 
 Optionally add one or more of the following kinds if applicable:
-> /kind api-change
-> /kind failing-test
+/kind api-change
+/kind failing-test
+/kind regression
 -->
 
 
