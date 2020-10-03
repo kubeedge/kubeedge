@@ -108,13 +108,11 @@ func newEndpointSliceTracker() *endpointSliceTracker {
 // newEndpointSliceInfo generates endpointSliceInfo from an EndpointSlice.
 func newEndpointSliceInfo(endpointSlice *discovery.EndpointSlice, remove bool) *endpointSliceInfo {
 	esInfo := &endpointSliceInfo{
-		Ports:     make([]discovery.EndpointPort, len(endpointSlice.Ports)),
+		Ports:     endpointSlice.Ports,
 		Endpoints: []*endpointInfo{},
 		Remove:    remove,
 	}
 
-	// copy here to avoid mutating shared EndpointSlice object.
-	copy(esInfo.Ports, endpointSlice.Ports)
 	sort.Sort(byPort(esInfo.Ports))
 
 	if !remove {

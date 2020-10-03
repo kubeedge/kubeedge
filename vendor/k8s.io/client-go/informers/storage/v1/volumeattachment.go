@@ -19,7 +19,6 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	time "time"
 
 	storagev1 "k8s.io/api/storage/v1"
@@ -61,13 +60,13 @@ func NewFilteredVolumeAttachmentInformer(client kubernetes.Interface, resyncPeri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1().VolumeAttachments().List(context.TODO(), options)
+				return client.StorageV1().VolumeAttachments().List(options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1().VolumeAttachments().Watch(context.TODO(), options)
+				return client.StorageV1().VolumeAttachments().Watch(options)
 			},
 		},
 		&storagev1.VolumeAttachment{},

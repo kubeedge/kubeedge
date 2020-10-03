@@ -19,7 +19,6 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	time "time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -62,13 +61,13 @@ func NewFilteredServiceInformer(client kubernetes.Interface, namespace string, r
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoreV1().Services(namespace).List(context.TODO(), options)
+				return client.CoreV1().Services(namespace).List(options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoreV1().Services(namespace).Watch(context.TODO(), options)
+				return client.CoreV1().Services(namespace).Watch(options)
 			},
 		},
 		&corev1.Service{},

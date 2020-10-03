@@ -49,9 +49,6 @@ type CustomArgs struct {
 	ClientsetOnly bool
 	// FakeClient determines if client-gen generates the fake clients.
 	FakeClient bool
-	// PluralExceptions specify list of exceptions used when pluralizing certain types.
-	// For example 'Endpoints:Endpoints', otherwise the pluralizer will generate 'Endpointes'.
-	PluralExceptions []string
 }
 
 func NewDefaults() (*args.GeneratorArgs, *CustomArgs) {
@@ -61,7 +58,6 @@ func NewDefaults() (*args.GeneratorArgs, *CustomArgs) {
 		ClientsetAPIPath: "/apis",
 		ClientsetOnly:    false,
 		FakeClient:       true,
-		PluralExceptions: []string{"Endpoints:Endpoints"},
 	}
 	genericArgs.CustomArgs = customArgs
 	genericArgs.InputDirs = DefaultInputDirs
@@ -82,8 +78,6 @@ func (ca *CustomArgs) AddFlags(fs *pflag.FlagSet, inputBase string) {
 	pflag.StringVarP(&ca.ClientsetAPIPath, "clientset-api-path", "", ca.ClientsetAPIPath, "the value of default API HTTP path, starting with / and without trailing /.")
 	pflag.BoolVar(&ca.ClientsetOnly, "clientset-only", ca.ClientsetOnly, "when set, client-gen only generates the clientset shell, without generating the individual typed clients")
 	pflag.BoolVar(&ca.FakeClient, "fake-clientset", ca.FakeClient, "when set, client-gen will generate the fake clientset that can be used in tests")
-
-	fs.StringSliceVar(&ca.PluralExceptions, "plural-exceptions", ca.PluralExceptions, "list of comma separated plural exception definitions in Type:PluralizedType form")
 
 	// support old flags
 	fs.SetNormalizeFunc(mapFlagName("clientset-path", "output-package", fs.GetNormalizeFunc()))

@@ -244,8 +244,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=networking.k8s.io, Version=v1beta1
 	case networkingv1beta1.SchemeGroupVersion.WithResource("ingresses"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1beta1().Ingresses().Informer()}, nil
-	case networkingv1beta1.SchemeGroupVersion.WithResource("ingressclasses"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1beta1().IngressClasses().Informer()}, nil
 
 		// Group=node.k8s.io, Version=v1alpha1
 	case nodev1alpha1.SchemeGroupVersion.WithResource("runtimeclasses"):
@@ -308,8 +306,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Settings().V1alpha1().PodPresets().Informer()}, nil
 
 		// Group=storage.k8s.io, Version=v1
-	case storagev1.SchemeGroupVersion.WithResource("csidrivers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Storage().V1().CSIDrivers().Informer()}, nil
 	case storagev1.SchemeGroupVersion.WithResource("csinodes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Storage().V1().CSINodes().Informer()}, nil
 	case storagev1.SchemeGroupVersion.WithResource("storageclasses"):

@@ -19,7 +19,6 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	time "time"
 
 	storagev1 "k8s.io/api/storage/v1"
@@ -61,13 +60,13 @@ func NewFilteredCSINodeInformer(client kubernetes.Interface, resyncPeriod time.D
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1().CSINodes().List(context.TODO(), options)
+				return client.StorageV1().CSINodes().List(options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1().CSINodes().Watch(context.TODO(), options)
+				return client.StorageV1().CSINodes().Watch(options)
 			},
 		},
 		&storagev1.CSINode{},

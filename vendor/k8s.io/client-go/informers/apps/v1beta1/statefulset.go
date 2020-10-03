@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
@@ -62,13 +61,13 @@ func NewFilteredStatefulSetInformer(client kubernetes.Interface, namespace strin
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1beta1().StatefulSets(namespace).List(context.TODO(), options)
+				return client.AppsV1beta1().StatefulSets(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1beta1().StatefulSets(namespace).Watch(context.TODO(), options)
+				return client.AppsV1beta1().StatefulSets(namespace).Watch(options)
 			},
 		},
 		&appsv1beta1.StatefulSet{},

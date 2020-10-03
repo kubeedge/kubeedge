@@ -53,6 +53,20 @@ var (
 		},
 		[]string{"transformation_type"},
 	)
+	deprecatedTransformerLatencies = metrics.NewHistogramVec(
+		&metrics.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "transformation_latencies_microseconds",
+			Help:      "Latencies in microseconds of value transformation operations.",
+			// In-process transformations (ex. AES CBC) complete on the order of 20 microseconds. However, when
+			// external KMS is involved latencies may climb into milliseconds.
+			Buckets:           metrics.ExponentialBuckets(5, 2, 14),
+			StabilityLevel:    metrics.ALPHA,
+			DeprecatedVersion: "1.14.0",
+		},
+		[]string{"transformation_type"},
+	)
 
 	transformerOperationsTotal = metrics.NewCounterVec(
 		&metrics.CounterOpts{
@@ -63,6 +77,18 @@ var (
 			StabilityLevel: metrics.ALPHA,
 		},
 		[]string{"transformation_type", "transformer_prefix", "status"},
+	)
+
+	deprecatedTransformerFailuresTotal = metrics.NewCounterVec(
+		&metrics.CounterOpts{
+			Namespace:         namespace,
+			Subsystem:         subsystem,
+			Name:              "transformation_failures_total",
+			Help:              "Total number of failed transformation operations.",
+			StabilityLevel:    metrics.ALPHA,
+			DeprecatedVersion: "1.15.0",
+		},
+		[]string{"transformation_type"},
 	)
 
 	envelopeTransformationCacheMissTotal = metrics.NewCounter(
@@ -85,7 +111,17 @@ var (
 			StabilityLevel: metrics.ALPHA,
 		},
 	)
-
+	deprecatedDataKeyGenerationLatencies = metrics.NewHistogram(
+		&metrics.HistogramOpts{
+			Namespace:         namespace,
+			Subsystem:         subsystem,
+			Name:              "data_key_generation_latencies_microseconds",
+			Help:              "Latencies in microseconds of data encryption key(DEK) generation operations.",
+			Buckets:           metrics.ExponentialBuckets(5, 2, 14),
+			StabilityLevel:    metrics.ALPHA,
+			DeprecatedVersion: "1.14.0",
+		},
+	)
 	dataKeyGenerationFailuresTotal = metrics.NewCounter(
 		&metrics.CounterOpts{
 			Namespace:      namespace,
@@ -102,9 +138,12 @@ var registerMetrics sync.Once
 func RegisterMetrics() {
 	registerMetrics.Do(func() {
 		legacyregistry.MustRegister(transformerLatencies)
+		legacyregistry.MustRegister(deprecatedTransformerLatencies)
 		legacyregistry.MustRegister(transformerOperationsTotal)
+		legacyregistry.MustRegister(deprecatedTransformerFailuresTotal)
 		legacyregistry.MustRegister(envelopeTransformationCacheMissTotal)
 		legacyregistry.MustRegister(dataKeyGenerationLatencies)
+		legacyregistry.MustRegister(deprecatedDataKeyGenerationLatencies)
 		legacyregistry.MustRegister(dataKeyGenerationFailuresTotal)
 	})
 }
@@ -117,6 +156,9 @@ func RecordTransformation(transformationType, transformerPrefix string, start ti
 	switch {
 	case err == nil:
 		transformerLatencies.WithLabelValues(transformationType).Observe(sinceInSeconds(start))
+		deprecatedTransformerLatencies.WithLabelValues(transformationType).Observe(sinceInMicroseconds(start))
+	default:
+		deprecatedTransformerFailuresTotal.WithLabelValues(transformationType).Inc()
 	}
 }
 
@@ -133,6 +175,12 @@ func RecordDataKeyGeneration(start time.Time, err error) {
 	}
 
 	dataKeyGenerationLatencies.Observe(sinceInSeconds(start))
+	deprecatedDataKeyGenerationLatencies.Observe(sinceInMicroseconds(start))
+}
+
+// sinceInMicroseconds gets the time since the specified start in microseconds.
+func sinceInMicroseconds(start time.Time) float64 {
+	return float64(time.Since(start).Nanoseconds() / time.Microsecond.Nanoseconds())
 }
 
 // sinceInSeconds gets the time since the specified start in seconds.

@@ -49,6 +49,16 @@ var (
 		},
 		[]string{"resource"},
 	)
+
+	deprecatedEtcdRequestLatenciesSummary = compbasemetrics.NewSummaryVec(
+		&compbasemetrics.SummaryOpts{
+			Name:              "etcd_request_latencies_summary",
+			Help:              "Etcd request latency summary in microseconds for each operation and object type.",
+			StabilityLevel:    compbasemetrics.ALPHA,
+			DeprecatedVersion: "1.14.0",
+		},
+		[]string{"operation", "type"},
+	)
 )
 
 var registerMetrics sync.Once
@@ -59,6 +69,9 @@ func Register() {
 	registerMetrics.Do(func() {
 		legacyregistry.MustRegister(etcdRequestLatency)
 		legacyregistry.MustRegister(objectCounts)
+
+		// TODO(danielqsj): Remove the following metrics, they are deprecated
+		legacyregistry.MustRegister(deprecatedEtcdRequestLatenciesSummary)
 	})
 }
 
@@ -70,11 +83,19 @@ func UpdateObjectCount(resourcePrefix string, count int64) {
 // RecordEtcdRequestLatency sets the etcd_request_duration_seconds metrics.
 func RecordEtcdRequestLatency(verb, resource string, startTime time.Time) {
 	etcdRequestLatency.WithLabelValues(verb, resource).Observe(sinceInSeconds(startTime))
+	deprecatedEtcdRequestLatenciesSummary.WithLabelValues(verb, resource).Observe(sinceInMicroseconds(startTime))
 }
 
 // Reset resets the etcd_request_duration_seconds metric.
 func Reset() {
 	etcdRequestLatency.Reset()
+
+	deprecatedEtcdRequestLatenciesSummary.Reset()
+}
+
+// sinceInMicroseconds gets the time since the specified start in microseconds.
+func sinceInMicroseconds(start time.Time) float64 {
+	return float64(time.Since(start).Nanoseconds() / time.Microsecond.Nanoseconds())
 }
 
 // sinceInSeconds gets the time since the specified start in seconds.

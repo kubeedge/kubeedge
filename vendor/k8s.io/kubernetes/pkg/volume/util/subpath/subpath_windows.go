@@ -267,7 +267,7 @@ func findExistingPrefix(base, pathname string) (string, []string, error) {
 
 	dirs := strings.Split(rel, string(filepath.Separator))
 
-	var parent string
+	parent := base
 	currentPath := base
 	for i, dir := range dirs {
 		parent = currentPath

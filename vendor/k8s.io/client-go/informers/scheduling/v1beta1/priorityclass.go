@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	schedulingv1beta1 "k8s.io/api/scheduling/v1beta1"
@@ -61,13 +60,13 @@ func NewFilteredPriorityClassInformer(client kubernetes.Interface, resyncPeriod 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SchedulingV1beta1().PriorityClasses().List(context.TODO(), options)
+				return client.SchedulingV1beta1().PriorityClasses().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SchedulingV1beta1().PriorityClasses().Watch(context.TODO(), options)
+				return client.SchedulingV1beta1().PriorityClasses().Watch(options)
 			},
 		},
 		&schedulingv1beta1.PriorityClass{},

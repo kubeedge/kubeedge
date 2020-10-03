@@ -384,6 +384,10 @@ func (h *UpgradeAwareHandler) tryUpgrade(w http.ResponseWriter, req *http.Reques
 	return true
 }
 
+func (h *UpgradeAwareHandler) Dial(req *http.Request) (net.Conn, error) {
+	return dial(req, h.Transport)
+}
+
 func (h *UpgradeAwareHandler) DialForUpgrade(req *http.Request) (net.Conn, error) {
 	if h.UpgradeTransport == nil {
 		return dial(req, h.Transport)
@@ -410,7 +414,7 @@ func getResponse(r io.Reader) (*http.Response, []byte, error) {
 
 // dial dials the backend at req.URL and writes req to it.
 func dial(req *http.Request, transport http.RoundTripper) (net.Conn, error) {
-	conn, err := dialURL(req.Context(), req.URL, transport)
+	conn, err := DialURL(req.Context(), req.URL, transport)
 	if err != nil {
 		return nil, fmt.Errorf("error dialing backend: %v", err)
 	}
@@ -422,6 +426,8 @@ func dial(req *http.Request, transport http.RoundTripper) (net.Conn, error) {
 
 	return conn, err
 }
+
+var _ utilnet.Dialer = &UpgradeAwareHandler{}
 
 func (h *UpgradeAwareHandler) defaultProxyTransport(url *url.URL, internalTransport http.RoundTripper) http.RoundTripper {
 	scheme := url.Scheme

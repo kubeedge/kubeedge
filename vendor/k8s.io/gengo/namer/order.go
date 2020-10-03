@@ -43,9 +43,6 @@ func (o *Orderer) OrderUniverse(u types.Universe) []*types.Type {
 		for _, v := range p.Variables {
 			list.types = append(list.types, v)
 		}
-		for _, v := range p.Constants {
-			list.types = append(list.types, v)
-		}
 	}
 	sort.Sort(list)
 	return list.types

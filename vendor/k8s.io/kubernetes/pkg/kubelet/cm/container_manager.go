@@ -25,6 +25,7 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	podresourcesapi "k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpuset"
+	"k8s.io/kubernetes/pkg/kubelet/cm/topologymanager"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	evictionapi "k8s.io/kubernetes/pkg/kubelet/eviction/api"
@@ -110,11 +111,8 @@ type ContainerManager interface {
 	// due to node recreation.
 	ShouldResetExtendedResourceCapacity() bool
 
-	// GetAllocateResourcesPodAdmitHandler returns an instance of a PodAdmitHandler responsible for allocating pod resources.
-	GetAllocateResourcesPodAdmitHandler() lifecycle.PodAdmitHandler
-
-	// UpdateAllocatedDevices frees any Devices that are bound to terminated pods.
-	UpdateAllocatedDevices()
+	// GetTopologyPodAdmitHandler returns an instance of the TopologyManager for Pod Admission
+	GetTopologyPodAdmitHandler() topologymanager.Manager
 }
 
 type NodeConfig struct {

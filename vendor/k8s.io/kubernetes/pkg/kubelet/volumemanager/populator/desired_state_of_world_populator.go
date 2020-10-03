@@ -21,7 +21,6 @@ caches in sync with the "ground truth".
 package populator
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -56,8 +55,8 @@ import (
 type DesiredStateOfWorldPopulator interface {
 	Run(sourcesReady config.SourcesReady, stopCh <-chan struct{})
 
-	// ReprocessPod sets value for the specified pod in processedPods
-	// to false, forcing it to be reprocessed. This is required to enable
+	// ReprocessPod removes the specified pod from the list of processedPods
+	// (if it exists) forcing it to be reprocessed. This is required to enable
 	// remounting volumes on pod updates (volumes like Downward API volumes
 	// depend on this behavior to ensure volume content is updated).
 	ReprocessPod(podName volumetypes.UniquePodName)
@@ -150,7 +149,7 @@ func (dswp *desiredStateOfWorldPopulator) Run(sourcesReady config.SourcesReady, 
 
 func (dswp *desiredStateOfWorldPopulator) ReprocessPod(
 	podName volumetypes.UniquePodName) {
-	dswp.markPodProcessingFailed(podName)
+	dswp.deleteProcessedPod(podName)
 }
 
 func (dswp *desiredStateOfWorldPopulator) HasAddedPods() bool {
@@ -362,12 +361,6 @@ func (dswp *desiredStateOfWorldPopulator) processPodVolumes(
 		dswp.actualStateOfWorld.MarkRemountRequired(uniquePodName)
 		// Remove any stored errors for the pod, everything went well in this processPodVolumes
 		dswp.desiredStateOfWorld.PopPodErrors(uniquePodName)
-	} else if dswp.podHasBeenSeenOnce(uniquePodName) {
-		// For the Pod which has been processed at least once, even though some volumes
-		// may not have been reprocessed successfully this round, we still mark it as processed to avoid
-		// processing it at a very high frequency. The pod will be reprocessed when volume manager calls
-		// ReprocessPod() which is triggered by SyncPod.
-		dswp.markPodProcessed(uniquePodName)
 	}
 
 }
@@ -440,32 +433,14 @@ func volumeRequiresFSResize(pvc *v1.PersistentVolumeClaim, pv *v1.PersistentVolu
 }
 
 // podPreviouslyProcessed returns true if the volumes for this pod have already
-// been processed/reprocessed by the populator. Otherwise, the volumes for this pod need to
-// be reprocessed.
+// been processed by the populator
 func (dswp *desiredStateOfWorldPopulator) podPreviouslyProcessed(
 	podName volumetypes.UniquePodName) bool {
 	dswp.pods.RLock()
 	defer dswp.pods.RUnlock()
 
-	return dswp.pods.processedPods[podName]
-}
-
-// markPodProcessingFailed marks the specified pod from processedPods as false to indicate that it failed processing
-func (dswp *desiredStateOfWorldPopulator) markPodProcessingFailed(
-	podName volumetypes.UniquePodName) {
-	dswp.pods.Lock()
-	dswp.pods.processedPods[podName] = false
-	dswp.pods.Unlock()
-}
-
-// podHasBeenSeenOnce returns true if the pod has been seen by the popoulator
-// at least once.
-func (dswp *desiredStateOfWorldPopulator) podHasBeenSeenOnce(
-	podName volumetypes.UniquePodName) bool {
-	dswp.pods.RLock()
-	_, exist := dswp.pods.processedPods[podName]
-	dswp.pods.RUnlock()
-	return exist
+	_, exists := dswp.pods.processedPods[podName]
+	return exists
 }
 
 // markPodProcessed records that the volumes for the specified pod have been
@@ -565,12 +540,14 @@ func (dswp *desiredStateOfWorldPopulator) createVolumeSpec(
 				podVolume.Name,
 				volumeMode)
 		}
-		// Error if a container has volumeDevices but the volumeMode of PVC isn't Block
-		if devices.Has(podVolume.Name) && volumeMode != v1.PersistentVolumeBlock {
-			return nil, nil, "", fmt.Errorf(
-				"volume %s has volumeMode %s, but is specified in volumeDevices",
-				podVolume.Name,
-				volumeMode)
+		if utilfeature.DefaultFeatureGate.Enabled(features.BlockVolume) {
+			// Error if a container has volumeDevices but the volumeMode of PVC isn't Block
+			if devices.Has(podVolume.Name) && volumeMode != v1.PersistentVolumeBlock {
+				return nil, nil, "", fmt.Errorf(
+					"volume %s has volumeMode %s, but is specified in volumeDevices",
+					podVolume.Name,
+					volumeMode)
+			}
 		}
 		return pvc, volumeSpec, volumeGidValue, nil
 	}
@@ -599,7 +576,7 @@ func (dswp *desiredStateOfWorldPopulator) createVolumeSpec(
 func (dswp *desiredStateOfWorldPopulator) getPVCExtractPV(
 	namespace string, claimName string) (*v1.PersistentVolumeClaim, error) {
 	pvc, err :=
-		dswp.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), claimName, metav1.GetOptions{})
+		dswp.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(claimName, metav1.GetOptions{})
 	if err != nil || pvc == nil {
 		return nil, fmt.Errorf("failed to fetch PVC from API server: %v", err)
 	}
@@ -635,7 +612,7 @@ func (dswp *desiredStateOfWorldPopulator) getPVSpec(
 	name string,
 	pvcReadOnly bool,
 	expectedClaimUID types.UID) (*volume.Spec, string, error) {
-	pv, err := dswp.kubeClient.CoreV1().PersistentVolumes().Get(context.TODO(), name, metav1.GetOptions{})
+	pv, err := dswp.kubeClient.CoreV1().PersistentVolumes().Get(name, metav1.GetOptions{})
 	if err != nil || pv == nil {
 		return nil, "", fmt.Errorf(
 			"failed to fetch PV %s from API server: %v", name, err)

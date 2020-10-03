@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	eventsv1beta1 "k8s.io/api/events/v1beta1"
@@ -62,13 +61,13 @@ func NewFilteredEventInformer(client kubernetes.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.EventsV1beta1().Events(namespace).List(context.TODO(), options)
+				return client.EventsV1beta1().Events(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.EventsV1beta1().Events(namespace).Watch(context.TODO(), options)
+				return client.EventsV1beta1().Events(namespace).Watch(options)
 			},
 		},
 		&eventsv1beta1.Event{},

@@ -19,7 +19,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
 	time "time"
 
 	auditregistrationv1alpha1 "k8s.io/api/auditregistration/v1alpha1"
@@ -61,13 +60,13 @@ func NewFilteredAuditSinkInformer(client kubernetes.Interface, resyncPeriod time
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuditregistrationV1alpha1().AuditSinks().List(context.TODO(), options)
+				return client.AuditregistrationV1alpha1().AuditSinks().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AuditregistrationV1alpha1().AuditSinks().Watch(context.TODO(), options)
+				return client.AuditregistrationV1alpha1().AuditSinks().Watch(options)
 			},
 		},
 		&auditregistrationv1alpha1.AuditSink{},

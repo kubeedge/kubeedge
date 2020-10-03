@@ -34,7 +34,10 @@ import (
 )
 
 // NameSystems returns the name system used by the generators in this package.
-func NameSystems(pluralExceptions map[string]string) namer.NameSystems {
+func NameSystems() namer.NameSystems {
+	pluralExceptions := map[string]string{
+		"Endpoints": "Endpoints",
+	}
 	return namer.NameSystems{
 		"public":             namer.NewPublicNamer(0),
 		"private":            namer.NewPrivateNamer(0),

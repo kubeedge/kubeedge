@@ -19,7 +19,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
 	time "time"
 
 	flowcontrolv1alpha1 "k8s.io/api/flowcontrol/v1alpha1"
@@ -61,13 +60,13 @@ func NewFilteredFlowSchemaInformer(client kubernetes.Interface, resyncPeriod tim
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlowcontrolV1alpha1().FlowSchemas().List(context.TODO(), options)
+				return client.FlowcontrolV1alpha1().FlowSchemas().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlowcontrolV1alpha1().FlowSchemas().Watch(context.TODO(), options)
+				return client.FlowcontrolV1alpha1().FlowSchemas().Watch(options)
 			},
 		},
 		&flowcontrolv1alpha1.FlowSchema{},

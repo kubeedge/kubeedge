@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	storagev1beta1 "k8s.io/api/storage/v1beta1"
@@ -61,13 +60,13 @@ func NewFilteredStorageClassInformer(client kubernetes.Interface, resyncPeriod t
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1beta1().StorageClasses().List(context.TODO(), options)
+				return client.StorageV1beta1().StorageClasses().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.StorageV1beta1().StorageClasses().Watch(context.TODO(), options)
+				return client.StorageV1beta1().StorageClasses().Watch(options)
 			},
 		},
 		&storagev1beta1.StorageClass{},

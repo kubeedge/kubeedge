@@ -19,7 +19,6 @@ limitations under the License.
 package v2beta1
 
 import (
-	"context"
 	time "time"
 
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
@@ -62,13 +61,13 @@ func NewFilteredHorizontalPodAutoscalerInformer(client kubernetes.Interface, nam
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AutoscalingV2beta1().HorizontalPodAutoscalers(namespace).List(context.TODO(), options)
+				return client.AutoscalingV2beta1().HorizontalPodAutoscalers(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AutoscalingV2beta1().HorizontalPodAutoscalers(namespace).Watch(context.TODO(), options)
+				return client.AutoscalingV2beta1().HorizontalPodAutoscalers(namespace).Watch(options)
 			},
 		},
 		&autoscalingv2beta1.HorizontalPodAutoscaler{},

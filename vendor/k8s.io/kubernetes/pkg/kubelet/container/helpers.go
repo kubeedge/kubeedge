@@ -25,6 +25,7 @@ import (
 	"k8s.io/klog"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -61,10 +62,6 @@ type RuntimeHelper interface {
 // ShouldContainerBeRestarted checks whether a container needs to be restarted.
 // TODO(yifan): Think about how to refactor this.
 func ShouldContainerBeRestarted(container *v1.Container, pod *v1.Pod, podStatus *PodStatus) bool {
-	// Once a pod has been marked deleted, it should not be restarted
-	if pod.DeletionTimestamp != nil {
-		return false
-	}
 	// Get latest container status.
 	status := podStatus.FindContainerStatusByName(container.Name)
 	// If the container was never started before, we should start it.
@@ -211,6 +208,12 @@ func (irecorder *innerEventRecorder) Eventf(object runtime.Object, eventtype, re
 		irecorder.recorder.Eventf(ref, eventtype, reason, messageFmt, args...)
 	}
 
+}
+
+func (irecorder *innerEventRecorder) PastEventf(object runtime.Object, timestamp metav1.Time, eventtype, reason, messageFmt string, args ...interface{}) {
+	if ref, ok := irecorder.shouldRecordEvent(object); ok {
+		irecorder.recorder.PastEventf(ref, timestamp, eventtype, reason, messageFmt, args...)
+	}
 }
 
 func (irecorder *innerEventRecorder) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventtype, reason, messageFmt string, args ...interface{}) {

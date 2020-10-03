@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	utilexec "k8s.io/utils/exec"
 )
@@ -85,6 +86,7 @@ type Interface interface {
 
 // runner implements Interface in terms of exec("ebtables").
 type runner struct {
+	mu   sync.Mutex
 	exec utilexec.Interface
 }
 

@@ -248,11 +248,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 		shouldCreateObjectDefaulterFn := func(t *types.Type) bool {
 			if defaults, ok := existingDefaulters[t]; ok && defaults.object != nil {
 				// A default generator is defined
-				baseTypeName := "<unknown>"
-				if defaults.base != nil {
-					baseTypeName = defaults.base.Name.String()
-				}
-				klog.V(5).Infof("  an object defaulter already exists as %s", baseTypeName)
+				klog.V(5).Infof("  an object defaulter already exists as %s", defaults.base.Name)
 				return false
 			}
 			// opt-out

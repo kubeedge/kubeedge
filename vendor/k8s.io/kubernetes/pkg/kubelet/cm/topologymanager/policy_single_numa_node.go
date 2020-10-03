@@ -17,7 +17,7 @@ limitations under the License.
 package topologymanager
 
 import (
-	"k8s.io/kubernetes/pkg/kubelet/cm/topologymanager/bitmask"
+	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 )
 
 type singleNumaNodePolicy struct {
@@ -39,42 +39,21 @@ func (p *singleNumaNodePolicy) Name() string {
 	return PolicySingleNumaNode
 }
 
-func (p *singleNumaNodePolicy) canAdmitPodResult(hint *TopologyHint) bool {
+func (p *singleNumaNodePolicy) canAdmitPodResult(hint *TopologyHint) lifecycle.PodAdmitResult {
 	if !hint.Preferred {
-		return false
-	}
-	return true
-}
-
-// Return hints that have valid bitmasks with exactly one bit set.
-func filterSingleNumaHints(allResourcesHints [][]TopologyHint) [][]TopologyHint {
-	var filteredResourcesHints [][]TopologyHint
-	for _, oneResourceHints := range allResourcesHints {
-		var filtered []TopologyHint
-		for _, hint := range oneResourceHints {
-			if hint.NUMANodeAffinity == nil && hint.Preferred == true {
-				filtered = append(filtered, hint)
-			}
-			if hint.NUMANodeAffinity != nil && hint.NUMANodeAffinity.Count() == 1 && hint.Preferred == true {
-				filtered = append(filtered, hint)
-			}
+		return lifecycle.PodAdmitResult{
+			Admit:   false,
+			Reason:  "Topology Affinity Error",
+			Message: "Resources cannot be allocated with Topology Locality",
 		}
-		filteredResourcesHints = append(filteredResourcesHints, filtered)
 	}
-	return filteredResourcesHints
+	return lifecycle.PodAdmitResult{
+		Admit: true,
+	}
 }
 
-func (p *singleNumaNodePolicy) Merge(providersHints []map[string][]TopologyHint) (TopologyHint, bool) {
-	filteredHints := filterProvidersHints(providersHints)
-	// Filter to only include don't cares and hints with a single NUMA node.
-	singleNumaHints := filterSingleNumaHints(filteredHints)
-	bestHint := mergeFilteredHints(p.numaNodes, singleNumaHints)
-
-	defaultAffinity, _ := bitmask.NewBitMask(p.numaNodes...)
-	if bestHint.NUMANodeAffinity.IsEqual(defaultAffinity) {
-		bestHint = TopologyHint{nil, bestHint.Preferred}
-	}
-
-	admit := p.canAdmitPodResult(&bestHint)
-	return bestHint, admit
+func (p *singleNumaNodePolicy) Merge(providersHints []map[string][]TopologyHint) (TopologyHint, lifecycle.PodAdmitResult) {
+	hint := mergeProvidersHints(p, p.numaNodes, providersHints)
+	admit := p.canAdmitPodResult(&hint)
+	return hint, admit
 }

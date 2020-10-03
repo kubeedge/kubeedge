@@ -18,6 +18,7 @@ go_library(
         "@io_bazel_rules_go//go/platform:android": [
             "//pkg/kubelet/cm:go_default_library",
             "//pkg/kubelet/dockershim/libdocker:go_default_library",
+            "//pkg/kubelet/qos:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/util/version:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/util/wait:go_default_library",
             "//vendor/github.com/opencontainers/runc/libcontainer/cgroups/fs:go_default_library",
@@ -39,6 +40,7 @@ go_library(
         "@io_bazel_rules_go//go/platform:linux": [
             "//pkg/kubelet/cm:go_default_library",
             "//pkg/kubelet/dockershim/libdocker:go_default_library",
+            "//pkg/kubelet/qos:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/util/version:go_default_library",
             "//staging/src/k8s.io/apimachinery/pkg/util/wait:go_default_library",
             "//vendor/github.com/opencontainers/runc/libcontainer/cgroups/fs:go_default_library",

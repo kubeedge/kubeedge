@@ -17,7 +17,6 @@ limitations under the License.
 package secret
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -63,7 +62,7 @@ func NewSimpleSecretManager(kubeClient clientset.Interface) Manager {
 }
 
 func (s *simpleSecretManager) GetSecret(namespace, name string) (*v1.Secret, error) {
-	return s.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	return s.kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 }
 
 func (s *simpleSecretManager) RegisterPod(pod *v1.Pod) {
@@ -122,7 +121,7 @@ const (
 //   value in cache; otherwise it is just fetched from cache
 func NewCachingSecretManager(kubeClient clientset.Interface, getTTL manager.GetObjectTTLFunc) Manager {
 	getSecret := func(namespace, name string, opts metav1.GetOptions) (runtime.Object, error) {
-		return kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), name, opts)
+		return kubeClient.CoreV1().Secrets(namespace).Get(name, opts)
 	}
 	secretStore := manager.NewObjectStore(getSecret, clock.RealClock{}, getTTL, defaultTTL)
 	return &secretManager{
@@ -138,22 +137,16 @@ func NewCachingSecretManager(kubeClient clientset.Interface, getTTL manager.GetO
 // - every GetObject() returns a value from local cache propagated via watches
 func NewWatchingSecretManager(kubeClient clientset.Interface) Manager {
 	listSecret := func(namespace string, opts metav1.ListOptions) (runtime.Object, error) {
-		return kubeClient.CoreV1().Secrets(namespace).List(context.TODO(), opts)
+		return kubeClient.CoreV1().Secrets(namespace).List(opts)
 	}
 	watchSecret := func(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-		return kubeClient.CoreV1().Secrets(namespace).Watch(context.TODO(), opts)
+		return kubeClient.CoreV1().Secrets(namespace).Watch(opts)
 	}
 	newSecret := func() runtime.Object {
 		return &v1.Secret{}
 	}
-	isImmutable := func(object runtime.Object) bool {
-		if secret, ok := object.(*v1.Secret); ok {
-			return secret.Immutable != nil && *secret.Immutable
-		}
-		return false
-	}
 	gr := corev1.Resource("secret")
 	return &secretManager{
-		manager: manager.NewWatchBasedManager(listSecret, watchSecret, newSecret, isImmutable, gr, getSecretNames),
+		manager: manager.NewWatchBasedManager(listSecret, watchSecret, newSecret, gr, getSecretNames),
 	}
 }

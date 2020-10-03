@@ -57,7 +57,7 @@ func main() {
 	}
 
 	if err := genericArgs.Execute(
-		generators.NameSystems(util.PluralExceptionListToMapOrDie(customArgs.PluralExceptions)),
+		generators.NameSystems(),
 		generators.DefaultNameSystem(),
 		generators.Packages,
 	); err != nil {

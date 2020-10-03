@@ -19,7 +19,6 @@ limitations under the License.
 package v2alpha1
 
 import (
-	"context"
 	time "time"
 
 	batchv2alpha1 "k8s.io/api/batch/v2alpha1"
@@ -62,13 +61,13 @@ func NewFilteredCronJobInformer(client kubernetes.Interface, namespace string, r
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BatchV2alpha1().CronJobs(namespace).List(context.TODO(), options)
+				return client.BatchV2alpha1().CronJobs(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BatchV2alpha1().CronJobs(namespace).Watch(context.TODO(), options)
+				return client.BatchV2alpha1().CronJobs(namespace).Watch(options)
 			},
 		},
 		&batchv2alpha1.CronJob{},

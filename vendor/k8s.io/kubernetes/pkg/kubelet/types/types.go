@@ -26,9 +26,7 @@ import (
 
 // TODO: Reconcile custom types in kubelet/types and this subpackage
 
-// HTTPGetter is an interface representing the ability to perform HTTP GET requests.
-type HTTPGetter interface {
-	// Get issues a GET to the specified URL.
+type HttpGetter interface {
 	Get(url string) (*http.Response, error)
 }
 

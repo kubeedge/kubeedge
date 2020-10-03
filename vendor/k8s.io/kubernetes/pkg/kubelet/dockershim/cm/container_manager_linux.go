@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog"
 	kubecm "k8s.io/kubernetes/pkg/kubelet/cm"
+	"k8s.io/kubernetes/pkg/kubelet/qos"
 
 	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
 )
@@ -44,10 +45,8 @@ const (
 	// The minimum memory limit allocated to docker container: 150Mi
 	minDockerMemoryLimit = 150 * 1024 * 1024
 
-	// The OOM score adjustment for the docker process (i.e. the docker
-	// daemon). Essentially, makes docker very unlikely to experience an oom
-	// kill.
-	dockerOOMScoreAdj = -999
+	// The Docker OOM score adjustment.
+	dockerOOMScoreAdj = qos.DockerOOMScoreAdj
 )
 
 var (

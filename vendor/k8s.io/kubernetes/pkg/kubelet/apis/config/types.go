@@ -335,15 +335,8 @@ type KubeletConfiguration struct {
 	// This provide a "static" CPU list rather than the "dynamic" list by system-reserved and kube-reserved.
 	// This option overwrites CPUs provided by system-reserved and kube-reserved.
 	ReservedSystemCPUs string
-	// The previous version for which you want to show hidden metrics.
-	// Only the previous minor version is meaningful, other values will not be allowed.
-	// The format is <major>.<minor>, e.g.: '1.16'.
-	// The purpose of this format is make sure you have the opportunity to notice if the next release hides additional metrics,
-	// rather than being surprised when they are permanently removed in the release after that.
-	ShowHiddenMetricsForVersion string
 }
 
-// KubeletAuthorizationMode denotes the authorization mode for the kubelet
 type KubeletAuthorizationMode string
 
 const (
@@ -353,7 +346,6 @@ const (
 	KubeletAuthorizationModeWebhook KubeletAuthorizationMode = "Webhook"
 )
 
-// KubeletAuthorization holds the state related to the authorization in the kublet.
 type KubeletAuthorization struct {
 	// mode is the authorization mode to apply to requests to the kubelet server.
 	// Valid values are AlwaysAllow and Webhook.
@@ -364,8 +356,6 @@ type KubeletAuthorization struct {
 	Webhook KubeletWebhookAuthorization
 }
 
-// KubeletWebhookAuthorization holds the state related to the Webhook
-// Authorization in the Kubelet.
 type KubeletWebhookAuthorization struct {
 	// cacheAuthorizedTTL is the duration to cache 'authorized' responses from the webhook authorizer.
 	CacheAuthorizedTTL metav1.Duration
@@ -373,7 +363,6 @@ type KubeletWebhookAuthorization struct {
 	CacheUnauthorizedTTL metav1.Duration
 }
 
-// KubeletAuthentication holds the Kubetlet Authentication setttings.
 type KubeletAuthentication struct {
 	// x509 contains settings related to x509 client certificate authentication
 	X509 KubeletX509Authentication
@@ -383,7 +372,6 @@ type KubeletAuthentication struct {
 	Anonymous KubeletAnonymousAuthentication
 }
 
-// KubeletX509Authentication contains settings related to x509 client certificate authentication
 type KubeletX509Authentication struct {
 	// clientCAFile is the path to a PEM-encoded certificate bundle. If set, any request presenting a client certificate
 	// signed by one of the authorities in the bundle is authenticated with a username corresponding to the CommonName,
@@ -391,7 +379,6 @@ type KubeletX509Authentication struct {
 	ClientCAFile string
 }
 
-// KubeletWebhookAuthentication contains settings related to webhook authentication
 type KubeletWebhookAuthentication struct {
 	// enabled allows bearer token authentication backed by the tokenreviews.authentication.k8s.io API
 	Enabled bool
@@ -399,7 +386,6 @@ type KubeletWebhookAuthentication struct {
 	CacheTTL metav1.Duration
 }
 
-// KubeletAnonymousAuthentication enables anonymous requests to the kubetlet server.
 type KubeletAnonymousAuthentication struct {
 	// enabled allows anonymous requests to the kubelet server.
 	// Requests that are not rejected by another authentication method are treated as anonymous requests.

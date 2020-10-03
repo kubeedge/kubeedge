@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -62,13 +61,13 @@ func NewFilteredReplicaSetInformer(client kubernetes.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ExtensionsV1beta1().ReplicaSets(namespace).List(context.TODO(), options)
+				return client.ExtensionsV1beta1().ReplicaSets(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ExtensionsV1beta1().ReplicaSets(namespace).Watch(context.TODO(), options)
+				return client.ExtensionsV1beta1().ReplicaSets(namespace).Watch(options)
 			},
 		},
 		&extensionsv1beta1.ReplicaSet{},

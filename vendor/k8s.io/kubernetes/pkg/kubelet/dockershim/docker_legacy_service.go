@@ -18,7 +18,6 @@ package dockershim
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -30,7 +29,6 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/klog"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
 
@@ -78,23 +76,12 @@ func (d *dockerService) GetContainerLogs(_ context.Context, pod *v1.Pod, contain
 		opts.Tail = strconv.FormatInt(*logOptions.TailLines, 10)
 	}
 
-	if logOptions.LimitBytes != nil {
-		// stdout and stderr share the total write limit
-		max := *logOptions.LimitBytes
-		stderr = sharedLimitWriter(stderr, &max)
-		stdout = sharedLimitWriter(stdout, &max)
-	}
 	sopts := libdocker.StreamOptions{
 		OutputStream: stdout,
 		ErrorStream:  stderr,
 		RawTerminal:  container.Config.Tty,
 	}
-	err = d.client.Logs(containerID.ID, opts, sopts)
-	if errors.Is(err, errMaximumWrite) {
-		klog.V(2).Infof("finished logs, hit byte limit %d", *logOptions.LimitBytes)
-		err = nil
-	}
-	return err
+	return d.client.Logs(containerID.ID, opts, sopts)
 }
 
 // GetContainerLogTail attempts to read up to MaxContainerTerminationMessageLogLength

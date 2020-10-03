@@ -24,7 +24,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
-	"regexp"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -32,11 +31,6 @@ import (
 	"k8s.io/utils/exec"
 
 	"k8s.io/klog"
-)
-
-var (
-	classShowMatcher      = regexp.MustCompile(`class htb (1:\d+)`)
-	classAndHandleMatcher = regexp.MustCompile(`filter parent 1:.*fh (\d+::\d+).*flowid (\d+:\d+)`)
 )
 
 // tcShaper provides an implementation of the Shaper interface on Linux using the 'tc' tool.
@@ -81,13 +75,13 @@ func (t *tcShaper) nextClassID() (int, error) {
 		if len(line) == 0 {
 			continue
 		}
+		parts := strings.Split(line, " ")
 		// expected tc line:
 		// class htb 1:1 root prio 0 rate 1000Kbit ceil 1000Kbit burst 1600b cburst 1600b
-		matches := classShowMatcher.FindStringSubmatch(line)
-		if len(matches) != 2 {
-			return -1, fmt.Errorf("unexpected output from tc: %s (%v)", scanner.Text(), matches)
+		if len(parts) != 14 {
+			return -1, fmt.Errorf("unexpected output from tc: %s (%v)", scanner.Text(), parts)
 		}
-		classes.Insert(matches[1])
+		classes.Insert(parts[2])
 	}
 
 	// Make sure it doesn't go forever
@@ -159,14 +153,13 @@ func (t *tcShaper) findCIDRClass(cidr string) (classAndHandleList [][]string, fo
 			continue
 		}
 		if strings.Contains(line, spec) {
+			parts := strings.Split(filter, " ")
 			// expected tc line:
-			// `filter parent 1: protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1` (old version) or
-			// `filter parent 1: protocol ip pref 1 u32 chain 0 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1 not_in_hw` (new version)
-			matches := classAndHandleMatcher.FindStringSubmatch(filter)
-			if len(matches) != 3 {
-				return classAndHandleList, false, fmt.Errorf("unexpected output from tc: %s %d (%v)", filter, len(matches), matches)
+			// filter parent 1: protocol ip pref 1 u32 fh 800::800 order 2048 key ht 800 bkt 0 flowid 1:1
+			if len(parts) != 19 {
+				return classAndHandleList, false, fmt.Errorf("unexpected output from tc: %s %d (%v)", filter, len(parts), parts)
 			}
-			resultTmp := []string{matches[2], matches[1]}
+			resultTmp := []string{parts[18], parts[9]}
 			classAndHandleList = append(classAndHandleList, resultTmp)
 		}
 	}
@@ -308,6 +301,7 @@ func (t *tcShaper) Reset(cidr string) error {
 		}
 	}
 	return nil
+
 }
 
 func (t *tcShaper) deleteInterface(class string) error {

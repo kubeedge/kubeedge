@@ -31,18 +31,13 @@ type CustomArgs struct {
 	InternalClientSetPackage  string
 	ListersPackage            string
 	SingleDirectory           bool
-
-	// PluralExceptions define a list of pluralizer exceptions in Type:PluralType format.
-	// The default list is "Endpoints:Endpoints"
-	PluralExceptions []string
 }
 
 // NewDefaults returns default arguments for the generator.
 func NewDefaults() (*args.GeneratorArgs, *CustomArgs) {
 	genericArgs := args.Default().WithoutDefaultFlagParsing()
 	customArgs := &CustomArgs{
-		SingleDirectory:  false,
-		PluralExceptions: []string{"Endpoints:Endpoints"},
+		SingleDirectory: false,
 	}
 	genericArgs.CustomArgs = customArgs
 
@@ -62,7 +57,6 @@ func (ca *CustomArgs) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&ca.VersionedClientSetPackage, "versioned-clientset-package", ca.VersionedClientSetPackage, "the full package name for the versioned clientset to use")
 	fs.StringVar(&ca.ListersPackage, "listers-package", ca.ListersPackage, "the full package name for the listers to use")
 	fs.BoolVar(&ca.SingleDirectory, "single-directory", ca.SingleDirectory, "if true, omit the intermediate \"internalversion\" and \"externalversions\" subdirectories")
-	fs.StringSliceVar(&ca.PluralExceptions, "plural-exceptions", ca.PluralExceptions, "list of comma separated plural exception definitions in Type:PluralizedType format")
 }
 
 // Validate checks the given arguments.

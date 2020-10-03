@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	coordinationv1beta1 "k8s.io/api/coordination/v1beta1"
@@ -62,13 +61,13 @@ func NewFilteredLeaseInformer(client kubernetes.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoordinationV1beta1().Leases(namespace).List(context.TODO(), options)
+				return client.CoordinationV1beta1().Leases(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.CoordinationV1beta1().Leases(namespace).Watch(context.TODO(), options)
+				return client.CoordinationV1beta1().Leases(namespace).Watch(options)
 			},
 		},
 		&coordinationv1beta1.Lease{},

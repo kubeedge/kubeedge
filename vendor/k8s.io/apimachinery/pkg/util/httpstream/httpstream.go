@@ -123,11 +123,15 @@ func negotiateProtocol(clientProtocols, serverProtocols []string) string {
 func Handshake(req *http.Request, w http.ResponseWriter, serverProtocols []string) (string, error) {
 	clientProtocols := req.Header[http.CanonicalHeaderKey(HeaderProtocolVersion)]
 	if len(clientProtocols) == 0 {
-		return "", fmt.Errorf("unable to upgrade: %s is required", HeaderProtocolVersion)
+		// Kube 1.0 clients didn't support subprotocol negotiation.
+		// TODO require clientProtocols once Kube 1.0 is no longer supported
+		return "", nil
 	}
 
 	if len(serverProtocols) == 0 {
-		panic(fmt.Errorf("unable to upgrade: serverProtocols is required"))
+		// Kube 1.0 servers didn't support subprotocol negotiation. This is mainly for testing.
+		// TODO require serverProtocols once Kube 1.0 is no longer supported
+		return "", nil
 	}
 
 	negotiatedProtocol := negotiateProtocol(clientProtocols, serverProtocols)

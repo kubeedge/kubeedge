@@ -19,7 +19,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
 	time "time"
 
 	flowcontrolv1alpha1 "k8s.io/api/flowcontrol/v1alpha1"
@@ -61,13 +60,13 @@ func NewFilteredPriorityLevelConfigurationInformer(client kubernetes.Interface, 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlowcontrolV1alpha1().PriorityLevelConfigurations().List(context.TODO(), options)
+				return client.FlowcontrolV1alpha1().PriorityLevelConfigurations().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FlowcontrolV1alpha1().PriorityLevelConfigurations().Watch(context.TODO(), options)
+				return client.FlowcontrolV1alpha1().PriorityLevelConfigurations().Watch(options)
 			},
 		},
 		&flowcontrolv1alpha1.PriorityLevelConfiguration{},

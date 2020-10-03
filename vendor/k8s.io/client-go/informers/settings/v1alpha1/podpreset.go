@@ -19,7 +19,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
 	time "time"
 
 	settingsv1alpha1 "k8s.io/api/settings/v1alpha1"
@@ -62,13 +61,13 @@ func NewFilteredPodPresetInformer(client kubernetes.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SettingsV1alpha1().PodPresets(namespace).List(context.TODO(), options)
+				return client.SettingsV1alpha1().PodPresets(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SettingsV1alpha1().PodPresets(namespace).Watch(context.TODO(), options)
+				return client.SettingsV1alpha1().PodPresets(namespace).Watch(options)
 			},
 		},
 		&settingsv1alpha1.PodPreset{},

@@ -16,6 +16,10 @@ limitations under the License.
 
 package topologymanager
 
+import (
+	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
+)
+
 type nonePolicy struct{}
 
 var _ Policy = &nonePolicy{}
@@ -32,10 +36,12 @@ func (p *nonePolicy) Name() string {
 	return PolicyNone
 }
 
-func (p *nonePolicy) canAdmitPodResult(hint *TopologyHint) bool {
-	return true
+func (p *nonePolicy) canAdmitPodResult(hint *TopologyHint) lifecycle.PodAdmitResult {
+	return lifecycle.PodAdmitResult{
+		Admit: true,
+	}
 }
 
-func (p *nonePolicy) Merge(providersHints []map[string][]TopologyHint) (TopologyHint, bool) {
+func (p *nonePolicy) Merge(providersHints []map[string][]TopologyHint) (TopologyHint, lifecycle.PodAdmitResult) {
 	return TopologyHint{}, p.canAdmitPodResult(nil)
 }

@@ -227,16 +227,12 @@ func (b *Builder) AddDirRecursive(dir string) error {
 		klog.Warningf("Ignoring directory %v: %v", dir, err)
 	}
 
-	// filepath.Walk does not follow symlinks. We therefore evaluate symlinks and use that with
-	// filepath.Walk.
-	realPath, err := filepath.EvalSymlinks(b.buildPackages[dir].Dir)
-	if err != nil {
-		return err
-	}
-
+	// filepath.Walk includes the root dir, but we already did that, so we'll
+	// remove that prefix and rebuild a package import path.
+	prefix := b.buildPackages[dir].Dir
 	fn := func(filePath string, info os.FileInfo, err error) error {
 		if info != nil && info.IsDir() {
-			rel := filepath.ToSlash(strings.TrimPrefix(filePath, realPath))
+			rel := filepath.ToSlash(strings.TrimPrefix(filePath, prefix))
 			if rel != "" {
 				// Make a pkg path.
 				pkg := path.Join(string(canonicalizeImportPath(b.buildPackages[dir].ImportPath)), rel)
@@ -249,7 +245,7 @@ func (b *Builder) AddDirRecursive(dir string) error {
 		}
 		return nil
 	}
-	if err := filepath.Walk(realPath, fn); err != nil {
+	if err := filepath.Walk(b.buildPackages[dir].Dir, fn); err != nil {
 		return err
 	}
 	return nil
@@ -548,10 +544,6 @@ func (b *Builder) findTypesIn(pkgPath importPathString, u *types.Universe) error
 		if ok && !tv.IsField() {
 			b.addVariable(*u, nil, tv)
 		}
-		tconst, ok := obj.(*tc.Const)
-		if ok {
-			b.addConstant(*u, nil, tconst)
-		}
 	}
 
 	importedPkgs := []string{}
@@ -782,10 +774,7 @@ func (b *Builder) walkType(u types.Universe, useName *types.Name, in tc.Type) *t
 				if out.Methods == nil {
 					out.Methods = map[string]*types.Type{}
 				}
-				method := t.Method(i)
-				mt := b.walkType(u, nil, method.Type())
-				mt.CommentLines = splitLines(b.priorCommentLines(method.Pos(), 1).Text())
-				out.Methods[method.Name()] = mt
+				out.Methods[t.Method(i).Name()] = b.walkType(u, nil, t.Method(i).Type())
 			}
 		}
 		return out
@@ -817,17 +806,6 @@ func (b *Builder) addVariable(u types.Universe, useName *types.Name, in *tc.Var)
 		name = *useName
 	}
 	out := u.Variable(name)
-	out.Kind = types.DeclarationOf
-	out.Underlying = b.walkType(u, nil, in.Type())
-	return out
-}
-
-func (b *Builder) addConstant(u types.Universe, useName *types.Name, in *tc.Const) *types.Type {
-	name := tcVarNameToName(in.String())
-	if useName != nil {
-		name = *useName
-	}
-	out := u.Constant(name)
 	out.Kind = types.DeclarationOf
 	out.Underlying = b.walkType(u, nil, in.Type())
 	return out

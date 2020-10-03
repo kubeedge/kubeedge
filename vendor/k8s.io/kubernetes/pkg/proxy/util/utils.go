@@ -123,25 +123,23 @@ func IsProxyableHostname(ctx context.Context, resolv Resolver, hostname string) 
 	return nil
 }
 
-// GetLocalAddrs returns a list of all network addresses on the local system
-func GetLocalAddrs() ([]net.IP, error) {
-	var localAddrs []net.IP
-
+// IsLocalIP checks if a given IP address is bound to an interface
+// on the local system
+func IsLocalIP(ip string) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
+	for i := range addrs {
+		intf, _, err := net.ParseCIDR(addrs[i].String())
 		if err != nil {
-			return nil, err
+			return false, err
 		}
-
-		localAddrs = append(localAddrs, ip)
+		if net.ParseIP(ip).Equal(intf) {
+			return true, nil
+		}
 	}
-
-	return localAddrs, nil
+	return false, nil
 }
 
 // ShouldSkipService checks if a given service should skip proxying

@@ -24,12 +24,12 @@ import (
 	"strings"
 	"time"
 
+	units "github.com/docker/go-units"
 	libcontainercgroups "github.com/opencontainers/runc/libcontainer/cgroups"
 	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
 	cgroupsystemd "github.com/opencontainers/runc/libcontainer/cgroups/systemd"
 	libcontainerconfigs "github.com/opencontainers/runc/libcontainer/configs"
 	"k8s.io/klog"
-	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -257,9 +257,6 @@ func (m *cgroupManagerImpl) Exists(name CgroupName) bool {
 	if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportPodPidsLimit) || utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportNodePidsLimit) {
 		whitelistControllers.Insert("pids")
 	}
-	if _, ok := m.subsystems.MountPoints["hugetlb"]; ok {
-		whitelistControllers.Insert("hugetlb")
-	}
 	var missingPaths []string
 	// If even one cgroup path doesn't exist, then the cgroup doesn't exist.
 	for controller, path := range cgroupPaths {
@@ -285,6 +282,7 @@ func (m *cgroupManagerImpl) Destroy(cgroupConfig *CgroupConfig) error {
 	start := time.Now()
 	defer func() {
 		metrics.CgroupManagerDuration.WithLabelValues("destroy").Observe(metrics.SinceInSeconds(start))
+		metrics.DeprecatedCgroupManagerLatency.WithLabelValues("destroy").Observe(metrics.SinceInMicroseconds(start))
 	}()
 
 	cgroupPaths := m.buildCgroupPaths(cgroupConfig.Name)
@@ -387,11 +385,7 @@ func (m *cgroupManagerImpl) toResources(resourceConfig *ResourceConfig) *libcont
 	// for each page size enumerated, set that value
 	pageSizes := sets.NewString()
 	for pageSize, limit := range resourceConfig.HugePageLimit {
-		sizeString, err := v1helper.HugePageUnitSizeFromByteSize(pageSize)
-		if err != nil {
-			klog.Warningf("pageSize is invalid: %v", err)
-			continue
-		}
+		sizeString := units.CustomSize("%g%s", float64(pageSize), 1024.0, libcontainercgroups.HugePageSizeUnitList)
 		resources.HugetlbLimit = append(resources.HugetlbLimit, &libcontainerconfigs.HugepageLimit{
 			Pagesize: sizeString,
 			Limit:    uint64(limit),
@@ -416,6 +410,7 @@ func (m *cgroupManagerImpl) Update(cgroupConfig *CgroupConfig) error {
 	start := time.Now()
 	defer func() {
 		metrics.CgroupManagerDuration.WithLabelValues("update").Observe(metrics.SinceInSeconds(start))
+		metrics.DeprecatedCgroupManagerLatency.WithLabelValues("update").Observe(metrics.SinceInMicroseconds(start))
 	}()
 
 	// Extract the cgroup resource parameters
@@ -451,6 +446,7 @@ func (m *cgroupManagerImpl) Create(cgroupConfig *CgroupConfig) error {
 	start := time.Now()
 	defer func() {
 		metrics.CgroupManagerDuration.WithLabelValues("create").Observe(metrics.SinceInSeconds(start))
+		metrics.DeprecatedCgroupManagerLatency.WithLabelValues("create").Observe(metrics.SinceInMicroseconds(start))
 	}()
 
 	resources := m.toResources(cgroupConfig.ResourceParameters)

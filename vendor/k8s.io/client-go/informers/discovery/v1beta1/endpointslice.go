@@ -19,7 +19,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
 	time "time"
 
 	discoveryv1beta1 "k8s.io/api/discovery/v1beta1"
@@ -62,13 +61,13 @@ func NewFilteredEndpointSliceInformer(client kubernetes.Interface, namespace str
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DiscoveryV1beta1().EndpointSlices(namespace).List(context.TODO(), options)
+				return client.DiscoveryV1beta1().EndpointSlices(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DiscoveryV1beta1().EndpointSlices(namespace).Watch(context.TODO(), options)
+				return client.DiscoveryV1beta1().EndpointSlices(namespace).Watch(options)
 			},
 		},
 		&discoveryv1beta1.EndpointSlice{},
