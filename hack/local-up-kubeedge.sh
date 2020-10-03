@@ -46,9 +46,6 @@ function uninstall_kubeedge {
 
   # delete data
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
-
-  # delete iptables rule
-  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
 }
 
 # clean up
@@ -93,15 +90,12 @@ function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
-  sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
-
-  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
 
   # ensure tokensecret is generated
   while true; do
@@ -115,7 +109,6 @@ function start_edgecore {
   EDGE_BIN=${KUBEEDGE_ROOT}/_output/local/bin/edgecore
   ${EDGE_BIN} --minconfig >  ${EDGE_CONFIGFILE}
 
-  sed -i '/modules:/a\  edgeStream:\n    enable: true\n    handshakeTimeout: 30\n    readDeadline: 15\n    server: 127.0.0.1:10004\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    writeDeadline: 15' ${EDGE_CONFIGFILE}
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
   sed -i -e "s|token: .*|token: ${token}|g" \
@@ -149,38 +142,6 @@ function healthcheck {
   fi
 }
 
-function generate_streamserver_cert {
-  CA_PATH=${CA_PATH:-/tmp/etc/kubeedge/ca}
-  CERT_PATH=${CERT_PATH:-/tmp/etc/kubeedge/certs}
-  STREAM_KEY_FILE=${CERT_PATH}/stream.key
-  STREAM_CSR_FILE=${CERT_PATH}/stream.csr
-  STREAM_CRT_FILE=${CERT_PATH}/stream.crt
-  K8SCA_FILE=/tmp/etc/kubernetes/pki/ca.crt
-  K8SCA_KEY_FILE=/tmp/etc/kubernetes/pki/ca.key
-  streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
-
-  if [[ ! -d /tmp/etc/kubernetes/pki ]] ; then
-    mkdir -p /tmp/etc/kubernetes/pki
-  fi
-  if [[ ! -d $CA_PATH ]] ; then
-	mkdir -p $CA_PATH
-  fi
-  if [[ ! -d $CERT_PATH ]] ; then
-	mkdir -p $CERT_PATH
-  fi
-
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
-  cp /tmp/etc/kubernetes/pki/ca.crt /tmp/etc/kubeedge/ca/streamCA.crt
-
-  SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
-  echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
-
-  openssl genrsa -out ${STREAM_KEY_FILE}  2048
-  openssl req -new -key ${STREAM_KEY_FILE} -subj ${streamsubject} -out ${STREAM_CSR_FILE}
-  openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
-}
-
 cleanup
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
@@ -205,8 +166,6 @@ kubectl create ns kubeedge
 
 create_device_crd
 create_objectsync_crd
-
-generate_streamserver_cert
 
 start_cloudcore
 
