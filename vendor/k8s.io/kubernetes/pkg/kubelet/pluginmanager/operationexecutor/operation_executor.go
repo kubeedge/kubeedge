@@ -49,7 +49,7 @@ type OperationExecutor interface {
 
 	// UnregisterPlugin deregisters the given plugin using a handler in the given plugin handler map.
 	// It then updates the actual state of the world to reflect that.
-	UnregisterPlugin(pluginInfo cache.PluginInfo, actualStateOfWorld ActualStateOfWorldUpdater) error
+	UnregisterPlugin(socketPath string, pluginHandlers map[string]cache.PluginHandler, actualStateOfWorld ActualStateOfWorldUpdater) error
 }
 
 // NewOperationExecutor returns a new instance of OperationExecutor.
@@ -105,11 +105,12 @@ func (oe *operationExecutor) RegisterPlugin(
 }
 
 func (oe *operationExecutor) UnregisterPlugin(
-	pluginInfo cache.PluginInfo,
+	socketPath string,
+	pluginHandlers map[string]cache.PluginHandler,
 	actualStateOfWorld ActualStateOfWorldUpdater) error {
 	generatedOperation :=
-		oe.operationGenerator.GenerateUnregisterPluginFunc(pluginInfo, actualStateOfWorld)
+		oe.operationGenerator.GenerateUnregisterPluginFunc(socketPath, pluginHandlers, actualStateOfWorld)
 
 	return oe.pendingOperations.Run(
-		pluginInfo.SocketPath, generatedOperation)
+		socketPath, generatedOperation)
 }

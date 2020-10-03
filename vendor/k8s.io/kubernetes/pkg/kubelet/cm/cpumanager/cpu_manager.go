@@ -212,9 +212,6 @@ func (m *manager) Start(activePods ActivePodsFunc, sourcesReady config.SourcesRe
 }
 
 func (m *manager) Allocate(p *v1.Pod, c *v1.Container) error {
-	// Garbage collect any stranded resources before allocating CPUs.
-	m.removeStaleState()
-
 	m.Lock()
 	defer m.Unlock()
 
@@ -387,14 +384,18 @@ func (m *manager) reconcileState() (success []reconciledContainer, failure []rec
 			}
 
 			if cstatus.State.Terminated != nil {
-				// The container is terminated but we can't call m.RemoveContainer()
-				// here because it could remove the allocated cpuset for the container
-				// which may be in the process of being restarted.  That would result
-				// in the container losing any exclusively-allocated CPUs that it
-				// was allocated.
+				// Since the container is terminated, we know it is safe to
+				// remove it without any reconciliation. Removing the container
+				// will also remove it from the `containerMap` so that this
+				// container will be skipped next time around the loop.
 				_, _, err := m.containerMap.GetContainerRef(containerID)
 				if err == nil {
-					klog.Warningf("[cpumanager] reconcileState: ignoring terminated container (pod: %s, container id: %s)", pod.Name, containerID)
+					klog.Warningf("[cpumanager] reconcileState: skipping container; already terminated (pod: %s, container id: %s)", pod.Name, containerID)
+					err := m.RemoveContainer(containerID)
+					if err != nil {
+						klog.Errorf("[cpumanager] reconcileState: failed to remove container (pod: %s, container id: %s, error: %v)", pod.Name, containerID, err)
+						failure = append(failure, reconciledContainer{pod.Name, container.Name, containerID})
+					}
 				}
 				continue
 			}

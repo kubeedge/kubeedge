@@ -67,7 +67,8 @@ type OperationGenerator interface {
 
 	// Generates the UnregisterPlugin function needed to perform the unregistration of a plugin
 	GenerateUnregisterPluginFunc(
-		pluginInfo cache.PluginInfo,
+		socketPath string,
+		pluginHandlers map[string]cache.PluginHandler,
 		actualStateOfWorldUpdater ActualStateOfWorldUpdater) func() error
 }
 
@@ -114,8 +115,6 @@ func (og *operationGenerator) GenerateRegisterPluginFunc(
 		err = actualStateOfWorldUpdater.AddPlugin(cache.PluginInfo{
 			SocketPath: socketPath,
 			Timestamp:  timestamp,
-			Handler:    handler,
-			Name:       infoResp.Name,
 		})
 		if err != nil {
 			klog.Errorf("RegisterPlugin error -- failed to add plugin at socket %s, err: %v", socketPath, err)
@@ -134,20 +133,35 @@ func (og *operationGenerator) GenerateRegisterPluginFunc(
 }
 
 func (og *operationGenerator) GenerateUnregisterPluginFunc(
-	pluginInfo cache.PluginInfo,
+	socketPath string,
+	pluginHandlers map[string]cache.PluginHandler,
 	actualStateOfWorldUpdater ActualStateOfWorldUpdater) func() error {
 
 	unregisterPluginFunc := func() error {
-		if pluginInfo.Handler == nil {
-			return fmt.Errorf("UnregisterPlugin error -- failed to get plugin handler for %s", pluginInfo.SocketPath)
+		client, conn, err := dial(socketPath, dialTimeoutDuration)
+		if err != nil {
+			return fmt.Errorf("UnregisterPlugin error -- dial failed at socket %s, err: %v", socketPath, err)
 		}
+		defer conn.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		infoResp, err := client.GetInfo(ctx, &registerapi.InfoRequest{})
+		if err != nil {
+			return fmt.Errorf("UnregisterPlugin error -- failed to get plugin info using RPC GetInfo at socket %s, err: %v", socketPath, err)
+		}
+
+		handler, ok := pluginHandlers[infoResp.Type]
+		if !ok {
+			return fmt.Errorf("UnregisterPlugin error -- no handler registered for plugin type: %s at socket %s", infoResp.Type, socketPath)
+		}
+
 		// We remove the plugin to the actual state of world cache before calling a plugin consumer's Unregister handle
 		// so that if we receive a register event during Register Plugin, we can process it as a Register call.
-		actualStateOfWorldUpdater.RemovePlugin(pluginInfo.SocketPath)
+		actualStateOfWorldUpdater.RemovePlugin(socketPath)
 
-		pluginInfo.Handler.DeRegisterPlugin(pluginInfo.Name)
-
-		klog.V(4).Infof("DeRegisterPlugin called for %s on %v", pluginInfo.Name, pluginInfo.Handler)
+		handler.DeRegisterPlugin(infoResp.Name)
 		return nil
 	}
 	return unregisterPluginFunc

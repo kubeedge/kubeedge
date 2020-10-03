@@ -79,8 +79,6 @@ var _ ActualStateOfWorld = &actualStateOfWorld{}
 type PluginInfo struct {
 	SocketPath string
 	Timestamp  time.Time
-	Handler    PluginHandler
-	Name       string
 }
 
 func (asw *actualStateOfWorld) AddPlugin(pluginInfo PluginInfo) error {
