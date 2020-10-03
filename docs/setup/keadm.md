@@ -102,7 +102,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
 1. Make sure you can find the kubernetes `ca.crt` and `ca.key` files. If you set up your kubernetes cluster by `kubeadm` , those files will be in `/etc/kubernetes/pki/` dir.
 
     ``` shell
-    ls /etc/kubernetes/pki/
+    ls /etc/kubernetes/pki/  
     ```
 
 2. Set `CLOUDCOREIPS` env. The environment variable is set to specify the IP address of cloudcore, or a VIP if you have a highly available cluster.
@@ -128,14 +128,14 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     ```shell
     cd /etc/kubeedge/
     ```
-    Generate certificates from **certgen.sh**
+    Generate certificates from **certgen.sh** 
     ```bash
     /etc/kubeedge/certgen.sh stream
     ```
 
 4. It is needed to set iptables on the host. (This command should be executed on every apiserver deployed node.)(In this case, this the master node, and execute this command by root.)
    Run the following command on the host on which each apiserver runs:
-
+   
     **Note:** You need to set the cloudcoreips variable first
 
     ```bash
@@ -143,7 +143,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     ```
     > Port 10003 and 10350 are the default ports for the CloudStream and edgecore,
       use your own ports if you have changed them.
-
+  
     If you are not sure if you have setting of iptables, and you want to clean all of them.
     (If you set up iptables wrongly, it will block you out of your `kubectl logs` feature)
     The following command can be used to clean up iptables:
@@ -156,7 +156,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     Open the YAML file in cloudcore:
     ```shell
     sudo nano /etc/kubeedge/config/cloudcore.yaml
-    ```
+    ``` 
 
     Modify the file in the following part (`enable: true`):
     ```yaml
@@ -177,7 +177,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     sudo nano /etc/kubeedge/config/edgecore.yaml
     ```
     Modify the file in the following part (`enable: true`), (`server: 192.168.0.193:10004`):
-    ``` yaml
+    ``` yaml  
     edgeStream:
       enable: true
       handshakeTimeout: 30
@@ -187,7 +187,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
       tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
       tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
       writeDeadline: 15
-    ```
+    ```  
 
 6. Restart all the cloudcore and edgecore.
 
@@ -223,7 +223,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
         ``` shell
         sudo vi /etc/kubeedge/edgecore.service
         ```
-
+    
         - Add the following line into the **edgecore.service** file:
 
         ``` shell
@@ -231,7 +231,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
         ```
 
          - The final file should look like this:
-
+    
         ```
         Description=edgecore.service
 
@@ -254,7 +254,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     ```bash
     git clone https://github.com/kubernetes-sigs/metrics-server.git
     ```
-
+   
     Go to the metrics server directory:
 
     ```bash
@@ -298,7 +298,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
     ``` shell
     kubectl taint nodes --all node-role.kubernetes.io/master-
     ```
-
+   
     Then, in the deployment.yaml file, it must be specified that metrics-server is deployed on master node.
     (The hostname is chosen as the marked label.)
     In **metrics-server-deployment.yaml**
