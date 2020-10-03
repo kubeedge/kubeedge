@@ -78,8 +78,8 @@ func (schedule *Schedule) ExecuteSchedule(actionManager []actionmanager.Action, 
 // performScheduleOperation is responsible for performing the operations associated with the schedule
 func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager.Action, dataConverter dataconverter.DataRead, deviceID string) {
 	var scheduleResult ScheduleResult
+	actionExists := false
 	for _, actionName := range schedule.Actions {
-		actionExists := false
 		for _, action := range actionManager {
 			if strings.EqualFold(action.Name, actionName) {
 				actionExists = true
@@ -95,8 +95,8 @@ func (schedule *Schedule) performScheduleOperation(actionManager []actionmanager
 			schedule.Interval = defaultEventFrequency
 		}
 		if !actionExists {
-			klog.Errorf("Action %s does not exist.", actionName)
-			continue
+			klog.Errorf("Action %s does not exist. Exiting from schedule !!!", actionName)
+			break
 		}
 		time.Sleep(time.Duration(time.Duration(schedule.Interval) * time.Millisecond))
 	}
