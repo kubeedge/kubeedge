@@ -138,28 +138,6 @@ KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 
 6. Restart all the cloudcore and edgecore.
 
-### Support Metrics-server in Cloud
-1. The realization of this function point reuses cloudstream and edgestream modules. So you also need to perform all steps of *Enable `kubectl logs` Feature*.
-
-2. Since the kubelet ports of edge nodes and cloud nodes are not the same, the current release version of metrics-server(0.3.x) does not support automatic port identification, so you need to manually compile the image yourself now. 
-
-```bash
-git clone https://github.com/kubernetes-sigs/metrics-server.git
-cd metrics-server
-make container
-docker images
-docker tag 2d9eb6e0d887 metrics-server-kubeedge:latest
-```
-
-3. Apply the deployment yaml. For specific deployment documents, you can refer to https://github.com/kubernetes-sigs/metrics-server/tree/master/manifests.
-
-**IMPORTANT NOTE:**
-1. Metrics-server needs to use hostnetwork network mode.
-
-2. Use the image compiled by yourself and set imagePullPolicy to IfNotPresent.
-
-3. Turn on the feature of --kubelet-use-node-status-port
-
 ## Reset KubeEdge Master and Worker nodes
 
 ### Master
