@@ -590,8 +590,8 @@ func createDevice() []*Device {
 // createMembershipGetResult is function to create MembershipGetResult with given base message.
 func createMembershipGetResult(message BaseMessage) MembershipGetResult {
 	attrs := createMessageAttribute()
-	var devices []Device
-	device := Device{
+	devices := []*Device{}
+	device := &Device{
 		ID:          "id1",
 		Name:        "SensorTag",
 		Description: "Sensor",
@@ -600,8 +600,17 @@ func createMembershipGetResult(message BaseMessage) MembershipGetResult {
 		Attributes:  attrs,
 	}
 	devices = append(devices, device)
-
-	memGetResult := MembershipGetResult{BaseMessage: message, Devices: devices}
+	wantDevice := []Device{}
+	wantDev := Device{
+		ID:          device.ID,
+		Name:        device.Name,
+		Description: device.Description,
+		State:       device.State,
+		LastOnline:  device.LastOnline,
+		Attributes:  device.Attributes,
+	}
+	wantDevice = append(wantDevice, wantDev)
+	memGetResult := MembershipGetResult{BaseMessage: message, Devices: wantDevice}
 	return memGetResult
 }
 
