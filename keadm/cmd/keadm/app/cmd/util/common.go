@@ -546,7 +546,7 @@ func killKubeEdgeBinary(proc string) error {
 			// remove the system service.
 			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload && systemctl reset-failed", serviceName, serviceName)
 		} else {
-			binExec = fmt.Sprintf("kill $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+			binExec = fmt.Sprintf("kill -9 $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
 		}
 	}
 	if _, err := runCommandWithStdout(binExec); err != nil {

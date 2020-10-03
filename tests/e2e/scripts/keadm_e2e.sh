@@ -19,8 +19,8 @@ WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
 function cleanup() {
-  ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill
-  ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill
+  ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill -9
+  ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill -9
   kind delete cluster --name test
 }
 
