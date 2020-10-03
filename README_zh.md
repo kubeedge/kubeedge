@@ -106,8 +106,9 @@ KubeEdge 由以下组件构成:
 
 ## 支持
 
-如果您需要支持，请从 [故障排除指南](./docs/troubleshooting.md) 开始，然后按照我们概述的流程进行操作。
-
+<!--
+如果您需要支持，请从 [故障排除指南] 开始，然后按照我们概述的流程进行操作。
+-->
 如果您有任何疑问，请以下方式与我们联系：
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)

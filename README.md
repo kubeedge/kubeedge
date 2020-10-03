@@ -90,8 +90,11 @@ Resources:
 
 ## Contact
 
-If you need support, start with the [troubleshooting guide](./docs/troubleshooting.md), and work your way through the process that we've outlined.
+<!--
+We don't have a troubleshooting guide yet.  When we do, uncomment the following and add the link.
+If you need support, start with the [troubleshooting guide], and work your way through the process that we've outlined.
 
+-->
 If you have questions, feel free to reach out to us in the following ways:
 
 - [mailing list](https://groups.google.com/forum/#!forum/kubeedge)
