@@ -6,8 +6,8 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -31,12 +31,12 @@ func Register(ec *v1alpha1.EdgeController, kubeAPIConfig *v1alpha1.KubeAPIConfig
 
 // Name of controller
 func (ec *EdgeController) Name() string {
-	return modules.EdgeControllerModuleName
+	return constants.EdgeControllerModuleName
 }
 
 // Group of controller
 func (ec *EdgeController) Group() string {
-	return modules.EdgeControllerGroupName
+	return constants.EdgeControllerGroupName
 }
 
 // Enable indicates whether enable this module

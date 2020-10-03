@@ -6,8 +6,8 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -30,12 +30,12 @@ func Register(dc *v1alpha1.DeviceController, kubeAPIConfig *v1alpha1.KubeAPIConf
 
 // Name of controller
 func (dc *DeviceController) Name() string {
-	return modules.DeviceControllerModuleName
+	return constants.DeviceControllerModuleName
 }
 
 // Group of controller
 func (dc *DeviceController) Group() string {
-	return modules.DeviceControllerModuleGroup
+	return constants.DeviceControllerModuleGroup
 }
 
 // Enable indicates whether enable this module

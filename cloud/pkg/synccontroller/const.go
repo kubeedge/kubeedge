@@ -2,6 +2,12 @@ package synccontroller
 
 // Service level constants
 const (
+	// module
+	SyncControllerModuleName     = "synccontroller"
+	CloudHubControllerModuleName = "cloudhub"
+
+	// group
+	SyncControllerModuleGroup = "synccontroller"
 
 	// kind
 	PodKind       = "Pod"
