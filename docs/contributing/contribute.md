@@ -18,10 +18,10 @@ The goal of the community is to develop a cloud native edge computing platform b
 
 |                         | Golang 1.11     | Golang 1.12     | Golang 1.13     | Golang 1.14     |
 |-------------------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.4            | ✗               | ✗               | ✗               | ✓               |
-| KubeEdge HEAD (master)  | ✗               | ✗               | ✗               | ✓               |
+| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓              |
+| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓              |
+| KubeEdge 1.4            | ✗               | ✗               | ✓               | ✓              |
+| KubeEdge HEAD (master)  | ✗               | ✗               | ✓               | ✓              |
 
 - Fork the repository on GitHub
 - Download the repository

@@ -71,10 +71,10 @@ KubeEdge 由以下组件构成:
 
 |                         | Golang 1.11     | Golang 1.12     | Golang 1.13     | Golang 1.14     |
 |-------------------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓               |
-| KubeEdge 1.4            | ✗               | ✗               | ✗               | ✓               |
-| KubeEdge HEAD (master)  | ✗               | ✗               | ✗               | ✓               |
+| KubeEdge 1.2            | ✗               | ✓               | ✓               | ✓              |
+| KubeEdge 1.3            | ✗               | ✓               | ✓               | ✓              |
+| KubeEdge 1.4            | ✗               | ✗               | ✓               | ✓              |
+| KubeEdge HEAD (master)  | ✗               | ✗               | ✓               | ✓              |
 
 ## 使用
 
