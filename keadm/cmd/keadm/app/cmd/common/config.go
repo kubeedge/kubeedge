@@ -34,7 +34,10 @@ func Write2File(path string, data interface{}) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, d, 0666)
+	if err = ioutil.WriteFile(path, d, 0666); err != nil {
+		return err
+	}
+	return nil
 }
 
 //WriteControllerYamlFile writes controller.yaml for cloud component
@@ -71,7 +74,10 @@ func WriteControllerYamlFile(path, kubeConfig string) error {
 				KubeConfig:  ""},
 		},
 	}
-	return Write2File(path, controllerData)
+	if err := Write2File(path, controllerData); err != nil {
+		return err
+	}
+	return nil
 }
 
 //WriteCloudModulesYamlFile writes modules.yaml for cloud component
@@ -85,7 +91,10 @@ func WriteCloudModulesYamlFile(path string) error {
 			},
 		},
 	}
-	return Write2File(path, modulesData)
+	if err := Write2File(path, modulesData); err != nil {
+		return err
+	}
+	return nil
 }
 
 //WriteEdgeModulesYamlFile writes modules.yaml for edge component
@@ -103,7 +112,10 @@ func WriteEdgeModulesYamlFile(path string) error {
 			},
 		},
 	}
-	return Write2File(path, modulesData)
+	if err := Write2File(path, modulesData); err != nil {
+		return err
+	}
+	return nil
 }
 
 //WriteEdgeYamlFile write conf/edge.yaml for edge component
@@ -174,5 +186,8 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 			},
 		},
 	}
-	return Write2File(path, edgeData)
+	if err := Write2File(path, edgeData); err != nil {
+		return err
+	}
+	return nil
 }

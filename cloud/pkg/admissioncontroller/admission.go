@@ -168,8 +168,11 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		},
 	}
 
-	return registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
-		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook})
+	if err := registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
+		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func registerValidateWebhook(client admissionregistrationv1beta1client.ValidatingWebhookConfigurationInterface,

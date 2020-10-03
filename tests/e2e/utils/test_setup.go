@@ -39,7 +39,10 @@ import (
 //GenerateCerts - Generates Cerificates for Edge and Cloud nodes copy to respective folders
 func GenerateCerts() error {
 	cmd := exec.Command("bash", "-x", "scripts/generate_cert.sh")
-	return PrintCombinedOutput(cmd)
+	if err := PrintCombinedOutput(cmd); err != nil {
+		return err
+	}
+	return nil
 }
 
 func StartCloudCore() error {
