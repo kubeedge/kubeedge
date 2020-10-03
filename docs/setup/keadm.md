@@ -1,6 +1,6 @@
 # Deploying using Keadm
 
-Keadm is used to install the cloud and edge components of KubeEdge. It is not responsible for installing K8s and runtime, so check dependences section in this [doc](../getting-started.md) first.
+Keadm is used to install the cloud and edge components of KubeEdge. It is not responsible for installing K8s and runtime, so check [dependences](../getting-started.md#Dependencies) first.
 
 Please refer [kubernetes-compatibility](https://github.com/kubeedge/kubeedge#kubernetes-compatibility) to get **Kubernetes compatibility** and determine what version of Kubernetes would be installed.
 
