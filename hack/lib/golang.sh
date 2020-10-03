@@ -371,9 +371,8 @@ kubeedge::golang::get_cloud_test_dirs() {
 kubeedge::golang::get_keadm_test_dirs() {
     cd ${KUBEEDGE_ROOT}
     findDirs=$(find -L ./keadm \
-	    -name '*_test.go' -print | xargs -n1 dirname | uniq)
-    dirArray=(${findDirs// /})
-    echo "${dirArray[@]}"
+	    -name '*_test.go' -print | xargs -0n1 dirname | uniq)
+    echo "${findDirs}"
 }
 
 kubeedge::golang::get_edge_test_dirs() {
