@@ -1206,10 +1206,6 @@ func (e *edged) handlePodListFromMetaManager(content []byte) (err error) {
 			return err
 		}
 		e.addPod(&pod)
-		if err = e.updatePodStatus(&pod); err != nil {
-			klog.Errorf("handlePodListFromMetaManager: update pod %s status error", pod.Name)
-			return err
-		}
 	}
 
 	return nil
