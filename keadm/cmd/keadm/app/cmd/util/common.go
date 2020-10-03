@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"k8s.io/klog"
 	"os"
 	"os/exec"
 	"regexp"
@@ -336,9 +335,9 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 		arch = "arm"
 	}
 
-	//Check if the same version exists, then skip the download and just checksum for it
-	//and if checksum failed,there will be a option to choose to continue to untar or quit.
-	//checksum available at download URL. So that both can be compared to see if
+	//Check if the same version exists, then skip the download and just untar and continue
+	//TODO: It is always better to have the checksum validation of the downloaded file
+	//and checksum available at download URL. So that both can be compared to see if
 	//proper download has happened and then only proceed further.
 	//Currently it is missing and once checksum is in place, checksum check required
 	//to be added here.
@@ -347,39 +346,49 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
 	filePath := fmt.Sprintf("%s%s", KubeEdgePath, filename)
 	if _, err = os.Stat(filePath); err == nil {
-		fmt.Printf("Expected or Default KubeEdge version %v is already downloaded and will checksum for it. \n", version)
-		if success, _ := checkSum(filename, checksumFilename, version); !success {
-			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
-			for {
-				result, err := ask4confirm()
-				if err != nil {
-					fmt.Println(err.Error())
-					continue
-				}
-				if result {
-					cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
-					if _, err := runCommandWithStdout(cmdStr); err != nil {
-						return err
-					}
-					klog.Infof("%v have been deleted and will try to download again", filename)
-					if err := retryDownload(filename, checksumFilename, version); err != nil {
-						return err
-					}
-				} else {
-					klog.Warningf("failed to checksum and will continue to install.")
-					break
-				}
-			}
-		} else {
-			klog.Infof("Expected or Default KubeEdge version %v is already downloaded and checksum successfully.", version)
-		}
+		fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded")
 	} else if !os.IsNotExist(err) {
 		return err
 	} else {
-		if err := retryDownload(filename, checksumFilename, version); err != nil {
-			return err
+		try := 0
+		for ; try < downloadRetryTimes; try++ {
+			//Download the tar from repo
+			dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
+				KubeEdgePath, KubeEdgeDownloadURL, version, filename)
+			if _, err := runCommandWithShell(dwnldURL); err != nil {
+				return err
+			}
+
+			//Verify the tar with checksum
+			fmt.Printf("%s checksum: \n", filename)
+			cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
+			desiredChecksum, err := runCommandWithStdout(cmdStr)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("%s content: \n", checksumFilename)
+			cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
+			actualChecksum, err := runCommandWithStdout(cmdStr)
+			if err != nil {
+				return err
+			}
+
+			if desiredChecksum == actualChecksum {
+				break
+			} else {
+				fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+				//Cleanup the downloaded files
+				cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
+				_, err := runCommandWithStdout(cmdStr)
+				if err != nil {
+					return err
+				}
+			}
 		}
-		return nil
+		if try == downloadRetryTimes {
+			return fmt.Errorf("failed to download %s", filename)
+		}
 	}
 
 	/*
@@ -585,91 +594,4 @@ func hasSystemd() bool {
 	}
 
 	return false
-}
-
-func checkSum(filename, checksumFilename string, version semver.Version) (bool, error) {
-	//Verify the tar with checksum
-	fmt.Printf("%s checksum: \n", filename)
-	cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
-	actualChecksum, err := runCommandWithStdout(cmdStr)
-	if err != nil {
-		return false, err
-	}
-
-	fmt.Printf("%s content: \n", checksumFilename)
-	cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
-	desiredChecksum, err := runCommandWithStdout(cmdStr)
-	if err != nil {
-		return false, err
-	}
-
-	if desiredChecksum != actualChecksum {
-		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-		//Cleanup the downloaded files
-		cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
-		_, err = runCommandWithStdout(cmdStr)
-		return false, err
-	}
-	return true, nil
-}
-
-func retryDownload(filename, checksumFilename string, version semver.Version) error {
-	try := 0
-	for ; try < downloadRetryTimes; try++ {
-		//Download the tar from repo
-		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
-			KubeEdgePath, KubeEdgeDownloadURL, version, filename)
-		if _, err := runCommandWithShell(dwnldURL); err != nil {
-			return err
-		}
-
-		//Verify the tar with checksum
-		fmt.Printf("%s checksum: \n", filename)
-		cmdStr := fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", KubeEdgePath, filename)
-		actualChecksum, err := runCommandWithStdout(cmdStr)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("%s content: \n", checksumFilename)
-		cmdStr = fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename)
-		desiredChecksum, err := runCommandWithStdout(cmdStr)
-		if err != nil {
-			return err
-		}
-
-		if desiredChecksum != actualChecksum {
-			fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-			//Cleanup the downloaded files
-			cmdStr = fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
-			if _, err := runCommandWithStdout(cmdStr); err != nil {
-				return err
-			}
-		} else {
-			break
-		}
-	}
-	if try == downloadRetryTimes {
-		return fmt.Errorf("failed to download %s", filename)
-	}
-	return nil
-}
-
-func ask4confirm() (bool, error) {
-	var s string
-
-	fmt.Println("[y/N]: ")
-	if _, err := fmt.Scan(&s); err != nil {
-		return false, err
-	}
-
-	s = strings.ToLower(strings.TrimSpace(s))
-
-	if s == "y" {
-		return true, nil
-	} else if s == "n" {
-		return false, nil
-	} else {
-		return false, fmt.Errorf("Invalid Input")
-	}
 }
