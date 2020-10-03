@@ -331,13 +331,6 @@ func (e *edged) Start() {
 	klog.Infof("starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 
-	// start the CPU manager in the clcm
-	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
-	if err != nil {
-		klog.Errorf("Failed to start container manager, err: %v", err)
-		return
-	}
-
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
@@ -703,6 +696,13 @@ func (e *edged) initializeModules() error {
 	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
+		return err
+	}
+
+	// start the CPU manager in the clcm
+	err = e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
+	if err != nil {
+		// klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
 	}
 
