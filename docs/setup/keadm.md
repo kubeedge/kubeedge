@@ -158,7 +158,7 @@ docker tag 2d9eb6e0d887 metrics-server-kubeedge:latest
 
 2. Use the image compiled by yourself and set imagePullPolicy to IfNotPresent.
 
-3. Enable the feature of --kubelet-use-node-status-port for Metrics-server
+3. Turn on the feature of --kubelet-use-node-status-port
 
 ## Reset KubeEdge Master and Worker nodes
 
