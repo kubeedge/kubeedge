@@ -176,8 +176,6 @@ function generate_streamserver_cert {
   SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
   echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
 
-  touch ~/.rnd
-
   openssl genrsa -out ${STREAM_KEY_FILE}  2048
   openssl req -new -key ${STREAM_KEY_FILE} -subj ${streamsubject} -out ${STREAM_CSR_FILE}
   openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
