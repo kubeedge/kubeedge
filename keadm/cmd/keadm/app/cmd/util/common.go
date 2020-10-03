@@ -44,7 +44,7 @@ const (
 	CentOSType     = "centos"
 
 	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
-	EdgeCoreServiceFileURL       = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
+	EdgecoreServiceFileURL       = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath                 = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath           = "/usr/local/bin"
 	KubeEdgeConfPath             = KubeEdgePath + "kubeedge/edge/conf"
@@ -425,7 +425,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version str
 				edgecoreServiceFileName = "edge.service"
 			}
 
-			urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
+			urlForServiceFile := fmt.Sprintf(EdgecoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
 			for ; try < downloadRetryTimes; try++ {
 				cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
 				_, err := runCommandWithStdout(cmdStr)
