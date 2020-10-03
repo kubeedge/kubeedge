@@ -17,7 +17,6 @@ limitations under the License.
 package util
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -86,10 +85,10 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), "kubeedge", metav1.GetOptions{})
+	_, err = client.CoreV1().Namespaces().Get("kubeedge", metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
+			_, err = client.CoreV1().Namespaces().Create(ns)
 			if err != nil {
 				return err
 			}
@@ -187,7 +186,7 @@ func createKubeEdgeCRD(clientset crdclient.Interface, crdFile string) error {
 		return fmt.Errorf("unmarshal tfjobCRD error: %v", err)
 	}
 
-	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
+	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(kubeEdgeCRD)
 
 	return err
 }

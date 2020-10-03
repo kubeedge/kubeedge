@@ -586,15 +586,14 @@ func newEdged(enable bool) (*edged, error) {
 	containerManager, err := cm.NewContainerManager(mount.New(""),
 		ed.cadvisor,
 		cm.NodeConfig{
-			CgroupDriver:                      edgedconfig.Config.CGroupDriver,
-			SystemCgroupsName:                 edgedconfig.Config.SystemCgroups,
-			KubeletCgroupsName:                edgedconfig.Config.EdgeCoreCgroups,
-			ContainerRuntime:                  edgedconfig.Config.RuntimeType,
-			CgroupsPerQOS:                     edgedconfig.Config.CgroupsPerQOS,
-			KubeletRootDir:                    DefaultRootDir,
-			ExperimentalCPUManagerPolicy:      string(cpumanager.PolicyNone),
-			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
-			ExperimentalTopologyManagerPolicy: "none",
+			CgroupDriver:                 edgedconfig.Config.CGroupDriver,
+			SystemCgroupsName:            edgedconfig.Config.SystemCgroups,
+			KubeletCgroupsName:           edgedconfig.Config.EdgeCoreCgroups,
+			ContainerRuntime:             edgedconfig.Config.RuntimeType,
+			CgroupsPerQOS:                edgedconfig.Config.CgroupsPerQOS,
+			KubeletRootDir:               DefaultRootDir,
+			ExperimentalCPUManagerPolicy: string(cpumanager.PolicyNone),
+			CgroupRoot:                   edgedconfig.Config.CgroupRoot,
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
@@ -696,13 +695,6 @@ func (e *edged) initializeModules() error {
 	err = e.containerManager.Start(node, e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
-		return err
-	}
-
-	// start the CPU manager in the clcm
-	err = e.clcm.StartCpuManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
-	if err != nil {
-		// klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
 	}
 

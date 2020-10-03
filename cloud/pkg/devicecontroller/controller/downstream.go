@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"reflect"
 	"strconv"
@@ -185,13 +184,13 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(context.Background(), nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
-			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(context.Background(), nodeConfigMap, metav1.CreateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Get(nodeConfigMap.Name, metav1.GetOptions{}); err != nil {
+			if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Create(nodeConfigMap); err != nil {
 				klog.Errorf("Failed to create config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 				return
 			}
 		}
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v, error %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
@@ -205,7 +204,7 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	dc.addDeviceProfile(device, nodeConfigMap)
 	// store new config map
 	dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+	if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
 		klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 		return
 	}
@@ -570,7 +569,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}
@@ -734,7 +733,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 		// 2. device instance created alone then removed, as Data[DeviceProfileJSON] is ""
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" || nodeConfigMap.Data[DeviceProfileJSON] == "" {
 			deleteOptions := &metav1.DeleteOptions{}
-			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(context.Background(), nodeConfigMap.Name, deleteOptions)
+			dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(nodeConfigMap.Name, deleteOptions)
 			// remove from cache
 			dc.configMapManager.ConfigMap.Delete(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 			return
@@ -742,7 +741,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha2.Device) {
 
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
-		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
+		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(nodeConfigMap); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
 			return
 		}

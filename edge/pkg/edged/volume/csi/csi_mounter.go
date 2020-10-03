@@ -399,7 +399,7 @@ func (c *csiMountMgr) applyFSGroup(fsType string, fsGroup *int64) error {
 			return nil
 		}
 
-		err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy)
+		err := volume.SetVolumeOwnership(c, fsGroup)
 		if err != nil {
 			return err
 		}
