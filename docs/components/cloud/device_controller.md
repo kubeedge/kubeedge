@@ -59,7 +59,7 @@ The downstream controller watches for device updates against the K8S API server.
 The idea behind using config map to store device properties and visitors is that these metadata are only required by the mapper applications running on the edge node in order to connect to the device and collect data.
 Mappers if run as containers can load these properties as config maps . Any additions , deletions or updates to properties , visitors etc in the cloud are watched upon by the downstream controller and config maps are updated in etcd.
 If the mapper wants to discover what properties a device supports, it can get the model information from the device instance.
-Also, it can get the protocol information to connect to the device from the device instance. Once it has access to the device model,
+Also, it can get the protocol information to connect to the device from the device instace. Once it has access to the device model,
 it can get the properties supported by the device. In order to access the property, the mapper needs to get the corresponding visitor information.
 This can be retrieved from the propertyVisitors list. Finally, using the visitorConfig, the mapper can read/write the data associated with the property.
 
