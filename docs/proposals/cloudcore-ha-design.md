@@ -15,7 +15,7 @@ status: Implemented
 ---
 # CloudCore High Availability Design
 ## Motivation
-KubeEdge is designed to serve hundreds of edgenodes, and ideally it should be high availability.
+Kubeedge is designed to serve hundreds of edgenodes, and ideally it should be high availability.
 #### Goal
 - Alpha
 
