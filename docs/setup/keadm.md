@@ -95,49 +95,6 @@ Host has mosquit+ already installed and running. Hence skipping the installation
 KubeEdge edgecore is running, For logs visit:  /var/log/kubeedge/edgecore.log
 ```
 
-### Enable `kubectl logs` Feature
-1. Make sure you can find the kubernetes `ca.crt` and `ca.key` files. If you set up your kubernetes cluster by `kubeadm` , those files will be in `/etc/kubernetes/pki/` dir.
-
-2. Set `CLOUDCOREIPS` env. The environment variable is set to specify the IP address of cloudcore, or a VIP if you have a highly available cluster.
-
-  ```bash
-  export CLOUDCOREIPS="192.168.0.1"
-  ```
-
-3. Generate the certificates used by `CloudStream` on the cloud node.
-
-  ```bash
-  /etc/kubeedge/certgen.sh stream
-  ```
-
-4. Run the following command on the host on which each apiserver runs:
-  ** Note: ** You need to set the cloudcoreips variable first
-
-  ```bash
-  iptables -t nat -A OUTPUT -p tcp --dport 10350 -j DNAT --to $CLOUDCOREIPS:10003
-  ```
-  > Port 10003 and 10350 are the default ports for the CloudStream and edgecore, 
-    use your own ports if you have changed them. 
-
-
-5. Modify  `/etc/kubeedge/config/cloudcore.yaml` or `/etc/kubeedge/config/edgecore.yaml` of cloudcore and edgecore. Set `cloudStream` and `edgeStream`  to  `enable: true`.
-
-  ```
-  ...
-  modules:
-    cloudStream:
-      enable: true
-  ...
-  
-  ...
-  modules:
-    edgeStream:
-      enable: true
-  ...
-  ```
-
-6. Restart all the cloudcore and edgecore.
-
 ## Reset KubeEdge Master and Worker nodes
 
 ### Master
