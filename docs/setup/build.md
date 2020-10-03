@@ -10,7 +10,7 @@ Clone KubeEdge
 # Build and run KubeEdge on an ARMv6 target device.
 
 git clone https://github.com/kubeedge/kubeedge.git $GOPATH/src/github.com/kubeedge/kubeedge
-cd $GOPATH/src/github.com/kubeedge/kubeedge/
+cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
 sudo apt-get install gcc-arm-linux-gnueabi
 export GOARCH=arm
 export GOOS="linux"
