@@ -337,7 +337,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 	}
 
 	//Check if the same version exists, then skip the download and just checksum for it
-	//and if checksum failed, there will be a option to choose to continue to untar or quit.
+	//and if checksum failed,there will be a option to choose to continue to untar or quit.
 	//checksum available at download URL. So that both can be compared to see if
 	//proper download has happened and then only proceed further.
 	//Currently it is missing and once checksum is in place, checksum check required
@@ -351,12 +351,12 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 		if success, _ := checkSum(filename, checksumFilename, version); !success {
 			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
 			for {
-				confirm, err := ask4confirm()
+				result, err := ask4confirm()
 				if err != nil {
 					fmt.Println(err.Error())
 					continue
 				}
-				if confirm {
+				if result {
 					cmdStr := fmt.Sprintf("cd %s && rm -f %s", KubeEdgePath, filename)
 					if _, err := runCommandWithStdout(cmdStr); err != nil {
 						return err
@@ -367,8 +367,8 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 					}
 				} else {
 					klog.Warningf("failed to checksum and will continue to install.")
+					break
 				}
-				break
 			}
 		} else {
 			klog.Infof("Expected or Default KubeEdge version %v is already downloaded and checksum successfully.", version)
