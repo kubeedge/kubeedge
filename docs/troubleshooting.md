@@ -5,19 +5,20 @@ This page contains a few commonly occurring questions.
 ## Container keeps pending/ terminating
 
 1. Check the output of `kubectl get nodes`
-2. Check the `edgecore` logs for any errors.
-3. Check the architecture of the node running `edgecore` and make sure that container image you are trying to run is of the same architecture.
+2. Check the output of `kubectl describe pod <your-pod>`
+3. Check the `edgecore` logs for any errors.
+4. Check the architecture of the node running `edgecore` and make sure that container image you are trying to run is of the same architecture.
    For example, if you are running `edgecore` on Raspberry Pi 4, which is of `arm64v8` architecture, the nginx image to be executed would be `arm64v8/nginx` from the docker hub.
 
-4. Also, check that the `podSandboxImage` is correctly set as defined in [Modification in edgecore.yaml](./configuration/kubeedge.md#modification-in-edgecoreyaml).
+5. Also, check that the `podSandboxImage` is correctly set as defined in [Modification in edgecore.yaml](./configuration/kubeedge.md#modification-in-edgecoreyaml).
 
-5. If all of the above is correctly set, login manually to your edge node and run your docker image manually by
+6. If all of the above is correctly set, login manually to your edge node and run your docker image manually by
 
    ```shell
     docker run <your-container-image>
    ```
 
-6. If the docker container image is not pulled from the docker hub, please check that there is enough space on the edge node.
+7. If the docker container image is not pulled from the docker hub, please check that there is enough space on the edge node.
 
 ## Where do we find cloudcore/edgecore logs
 
