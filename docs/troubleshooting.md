@@ -5,7 +5,7 @@ This page contains a few commonly occurring questions.
 ## Container keeps pending/ terminating
 
 1. Check the output of `kubectl get nodes`
-2. Check the output of `kubectl describe pod <your-pod>`, whether the pod is scheduled successfully.
+2. Use `kubectl describe pod <your-pod>` to check whether the pod is scheduled successfully.
 3. Check the `edgecore` logs for any errors.
 4. Check the architecture of the node running `edgecore` and make sure that container image you are trying to run is of the same architecture.
    For example, if you are running `edgecore` on Raspberry Pi 4, which is of `arm64v8` architecture, the nginx image to be executed would be `arm64v8/nginx` from the docker hub.
