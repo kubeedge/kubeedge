@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	api "k8s.io/kubernetes/pkg/apis/core"
+	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
 const (
@@ -30,7 +30,7 @@ type Container struct {
 	ID string `json:"id,omitempty"`
 	// Status of the container.
 	Status  api.ContainerState `json:"status,omitempty"`
-	StartAt time.Time                    `json:"startat,omitempty"`
+	StartAt time.Time          `json:"startat,omitempty"`
 }
 
 // Device specifies a host device to mount into a container.

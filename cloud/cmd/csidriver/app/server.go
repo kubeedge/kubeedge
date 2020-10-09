@@ -20,9 +20,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"k8s.io/component-base/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
+	"k8s.io/component-base/term"
 	"k8s.io/klog"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app/options"
