@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
+	"k8s.io/kubernetes/pkg/kubelet/logs"
 	"k8s.io/kubernetes/pkg/kubelet/runtimeclass"
 	"net"
 	"net/http"
@@ -249,6 +250,7 @@ type edged struct {
 	runner              kubecontainer.CommandRunner
 	podLastSyncTime     sync.Map
 	runtimeClassManager *runtimeclass.Manager
+	logManager          logs.ContainerLogManager
 }
 
 // Register register edged
@@ -281,6 +283,7 @@ func (e *edged) GetRequestedContainersInfo(containerName string, options cadviso
 }
 
 func (e *edged) Start() {
+	klog.Info("Starting edged...")
 	e.volumePluginMgr = NewInitializedVolumePluginMgr(e, ProbeVolumePlugins(""))
 
 	if err := e.initializeModules(); err != nil {
@@ -325,7 +328,6 @@ func (e *edged) Start() {
 	go e.server.ListenAndServe(e, e.resourceAnalyzer, true)
 
 	e.imageGCManager.Start()
-	e.StartGarbageCollection()
 
 	e.pluginManager = pluginmanager.NewPluginManager(
 		e.getPluginsRegistrationDir(), /* sockDir */
@@ -344,6 +346,7 @@ func (e *edged) Start() {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
 	}
+	e.StartGarbageCollection()
 
 	klog.Infof("starting syncPod")
 	e.syncPod()
@@ -574,6 +577,13 @@ func newEdged(enable bool) (*edged, error) {
 		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
 		ed.machineInfo = &machineInfo
 	}
+	//creat a log manager
+	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "1", 2)
+	if err != nil {
+		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
+	}
+
+	ed.logManager = logManager
 
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
@@ -596,7 +606,7 @@ func newEdged(enable bool) (*edged, error) {
 		imageService,
 		ed.clcm.InternalContainerLifecycle(),
 		nil,
-		nil,
+		ed.logManager,
 		ed.runtimeClassManager,
 	)
 	if err != nil {
@@ -678,7 +688,7 @@ func newEdged(enable bool) (*edged, error) {
 	ed.imageGCManager = imageGCManager
 
 	containerGCManager, err := kubecontainer.NewContainerGC(
-		containerRuntime,
+		ed.containerRuntime,
 		containerGCPolicy,
 		&containers.KubeSourcesReady{})
 	if err != nil {
@@ -686,7 +696,6 @@ func newEdged(enable bool) (*edged, error) {
 	}
 	ed.containerGCManager = containerGCManager
 	ed.server = server.NewServer(ed.podManager)
-
 	return ed, nil
 }
 
@@ -723,7 +732,9 @@ func (e *edged) initializeModules() error {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
 	}
-
+	e.logManager.Start()
+	stopChan := make(chan struct{})
+	e.runtimeClassManager.Start(stopChan)
 	return nil
 }
 

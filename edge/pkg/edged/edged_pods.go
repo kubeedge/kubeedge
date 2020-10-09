@@ -41,7 +41,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +49,6 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
-	api "k8s.io/kubernetes/pkg/apis/core"
 	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
 	"k8s.io/kubernetes/pkg/features"
@@ -948,14 +946,40 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	if e.containerRuntime != nil {
 		podStatusRemote, err = e.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
-			containerStatus := &api.ContainerStatus{}
+			containerStatus := &v1.ContainerStatus{
+				Name: pod.Name,
+				RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
+				ImageID: pod.Status.ContainerStatuses[0].ImageID,
+				Image: pod.Status.ContainerStatuses[0].Image,
+				ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
+				State: v1.ContainerState{
+					Waiting: &v1.ContainerStateWaiting{
+						Reason:  pod.Status.Reason,
+						Message: pod.Status.Message,
+					},
+				},
+			}
 			kubeStatus := toKubeContainerStatus(v1.PodUnknown, containerStatus)
 			podStatus = &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		} else {
 			if pod.DeletionTimestamp != nil {
-				containerStatus := &api.ContainerStatus{
-					//State: kubecontainer.ContainerStateExited,
-					//Reason: "Completed"
+				containerStatus := &v1.ContainerStatus{
+					Name: pod.Name,
+					RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
+					ImageID: pod.Status.ContainerStatuses[0].ImageID,
+					Image: pod.Status.ContainerStatuses[0].Image,
+					ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
+					State: v1.ContainerState{
+						Terminated: &v1.ContainerStateTerminated{
+							ExitCode:    0,
+							Signal:      0,
+							Reason:      "Completed",
+							Message:     "exited",
+							StartedAt:   metav1.Time{Time: pod.CreationTimestamp.Time},
+							FinishedAt:  metav1.Time{Time: pod.DeletionTimestamp.Time},
+							ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
+						},
+					},
 				}
 				kubeStatus := toKubeContainerStatus(v1.PodSucceeded, containerStatus)
 				podStatus = &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
@@ -996,7 +1020,7 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	return err
 }
 
-func toKubeContainerStatus(phase v1.PodPhase, status *api.ContainerStatus) v1.ContainerStatus {
+func toKubeContainerStatus(phase v1.PodPhase, status *v1.ContainerStatus) v1.ContainerStatus {
 	kubeStatus := v1.ContainerStatus{
 		Name:         status.Name,
 		RestartCount: status.RestartCount,
@@ -1004,6 +1028,7 @@ func toKubeContainerStatus(phase v1.PodPhase, status *api.ContainerStatus) v1.Co
 		Image:        status.Image,
 		ContainerID:  status.ContainerID,
 	}
+	klog.Infof("Container status: \n[$+v]\n", status)
 	switch phase {
 	case v1.PodRunning:
 		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: status.State.Running.StartedAt}
