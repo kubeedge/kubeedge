@@ -1,8 +1,10 @@
-= vendor/github.com/mattn/go-shellwords licensed under: =
+= vendor/github.com/cilium/ebpf licensed under: =
 
-The MIT License (MIT)
+MIT License
 
-Copyright (c) 2017 Yasuhiro Matsumoto
+Copyright (c) 2017 Nathan Sweet
+Copyright (c) 2018, 2019 Cloudflare
+Copyright (c) 2019 Authors of Cilium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +24,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-= vendor/github.com/mattn/go-shellwords/LICENSE e5116fc268f5118168ff06a271b50ef9
+= vendor/github.com/cilium/ebpf/LICENSE 011d5eef39494cc16bc0b1848fe42759

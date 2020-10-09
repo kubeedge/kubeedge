@@ -25,8 +25,10 @@ import (
 )
 
 // ObjectSyncLister helps list ObjectSyncs.
+// All objects returned here must be treated as read-only.
 type ObjectSyncLister interface {
 	// List lists all ObjectSyncs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error)
 	// ObjectSyncs returns an object that can list and get ObjectSyncs.
 	ObjectSyncs(namespace string) ObjectSyncNamespaceLister
@@ -57,10 +59,13 @@ func (s *objectSyncLister) ObjectSyncs(namespace string) ObjectSyncNamespaceList
 }
 
 // ObjectSyncNamespaceLister helps list and get ObjectSyncs.
+// All objects returned here must be treated as read-only.
 type ObjectSyncNamespaceLister interface {
 	// List lists all ObjectSyncs in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ObjectSync, err error)
 	// Get retrieves the ObjectSync from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.ObjectSync, error)
 	ObjectSyncNamespaceListerExpansion
 }
