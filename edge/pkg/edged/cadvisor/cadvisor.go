@@ -20,80 +20,80 @@ changes done are
 package cadvisor
 
 import (
-    "github.com/google/cadvisor/events"
-    cadvisorapi "github.com/google/cadvisor/info/v1"
-    cadvisorapi2 "github.com/google/cadvisor/info/v2"
-    "k8s.io/kubernetes/pkg/kubelet/cadvisor"
+	"github.com/google/cadvisor/events"
+	cadvisorapi "github.com/google/cadvisor/info/v1"
+	cadvisorapi2 "github.com/google/cadvisor/info/v2"
+	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 )
 
 type cadvisorClient struct {
-    rootPath string
+	rootPath string
 }
 
 // New creates new cadvisor client
 func New(rootPath string) (cadvisor.Interface, error) {
-    return &cadvisorClient{
-        rootPath: rootPath,
-    }, nil
+	return &cadvisorClient{
+		rootPath: rootPath,
+	}, nil
 }
 
 func (cadvisorClient) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
-    return nil, nil
+	return nil, nil
 }
 
 func (cadvisorClient) Start() error {
-    return nil
+	return nil
 }
 
 func (cadvisorClient) DockerContainer(name string, req *cadvisorapi.ContainerInfoRequest) (cadvisorapi.ContainerInfo, error) {
-    return cadvisorapi.ContainerInfo{}, nil
+	return cadvisorapi.ContainerInfo{}, nil
 }
 
 func (cadvisorClient) ContainerInfo(name string, req *cadvisorapi.ContainerInfoRequest) (*cadvisorapi.ContainerInfo, error) {
-    return nil, nil
+	return nil, nil
 }
 
 func (cadvisorClient) ContainerInfoV2(name string, options cadvisorapi2.RequestOptions) (map[string]cadvisorapi2.ContainerInfo, error) {
-    return nil, nil
+	return nil, nil
 }
 
 func (cadvisorClient) SubcontainerInfo(name string, req *cadvisorapi.ContainerInfoRequest) (map[string]*cadvisorapi.ContainerInfo, error) {
-    return nil, nil
+	return nil, nil
 }
 
 //MachineInfo implement by hard code, just for initing a cadvisor client, edged will not use this function to get machine info.
 func (cadvisorClient) MachineInfo() (*cadvisorapi.MachineInfo, error) {
-    return &cadvisorapi.MachineInfo{
-        NumCores:       4,
-        CpuFrequency:   3,
-        MemoryCapacity: 16000000,
-        HugePages:      []cadvisorapi.HugePagesInfo{{PageSize: 4096, NumPages: 1024}},
-        Filesystems:    []cadvisorapi.FsInfo{},
-        DiskMap:        make(map[string]cadvisorapi.DiskInfo),
-        NetworkDevices: []cadvisorapi.NetInfo{},
-        Topology:       []cadvisorapi.Node{},
-        CloudProvider:  cadvisorapi.UnknownProvider,
-        InstanceType:   cadvisorapi.UnknownInstance,
-        InstanceID:     cadvisorapi.UnNamedInstance,
-    }, nil
+	return &cadvisorapi.MachineInfo{
+		NumCores:       4,
+		CpuFrequency:   3,
+		MemoryCapacity: 16000000,
+		HugePages:      []cadvisorapi.HugePagesInfo{{PageSize: 4096, NumPages: 1024}},
+		Filesystems:    []cadvisorapi.FsInfo{},
+		DiskMap:        make(map[string]cadvisorapi.DiskInfo),
+		NetworkDevices: []cadvisorapi.NetInfo{},
+		Topology:       []cadvisorapi.Node{},
+		CloudProvider:  cadvisorapi.UnknownProvider,
+		InstanceType:   cadvisorapi.UnknownInstance,
+		InstanceID:     cadvisorapi.UnNamedInstance,
+	}, nil
 }
 
 func (cadvisorClient) VersionInfo() (*cadvisorapi.VersionInfo, error) {
-    return nil, nil
+	return nil, nil
 }
 
 func (cadvisorClient) ImagesFsInfo() (cadvisorapi2.FsInfo, error) {
-    return cadvisorapi2.FsInfo{}, nil
+	return cadvisorapi2.FsInfo{}, nil
 }
 
 func (cadvisorClient) RootFsInfo() (cadvisorapi2.FsInfo, error) {
-    return cadvisorapi2.FsInfo{}, nil
+	return cadvisorapi2.FsInfo{}, nil
 }
 
 func (cadvisorClient) WatchEvents(request *events.Request) (*events.EventChannel, error) {
-    return nil, nil
+	return nil, nil
 }
 
 func (cadvisorClient) GetDirFsInfo(path string) (cadvisorapi2.FsInfo, error) {
-    return cadvisorapi2.FsInfo{}, nil
+	return cadvisorapi2.FsInfo{}, nil
 }
