@@ -37,7 +37,7 @@ func New(rootPath string) (cadvisor.Interface, error) {
 	}, nil
 }
 
-func (cadvisorClient) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error){
+func (cadvisorClient) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
 	return nil, nil
 }
 

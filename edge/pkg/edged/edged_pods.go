@@ -50,15 +50,15 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
+	api "k8s.io/kubernetes/pkg/apis/core"
 	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/fieldpath"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	api "k8s.io/kubernetes/pkg/apis/core"
-	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/portforward"
 	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/remotecommand"
+	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
@@ -1006,7 +1006,7 @@ func toKubeContainerStatus(phase v1.PodPhase, status *api.ContainerStatus) v1.Co
 	}
 	switch phase {
 	case v1.PodRunning:
-		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt:  status.State.Running.StartedAt}
+		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: status.State.Running.StartedAt}
 		kubeStatus.Ready = true
 	case v1.PodFailed, v1.PodSucceeded:
 		kubeStatus.State.Terminated = &v1.ContainerStateTerminated{

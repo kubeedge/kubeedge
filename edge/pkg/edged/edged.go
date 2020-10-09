@@ -59,11 +59,13 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
 	klconfigmap "k8s.io/kubernetes/pkg/kubelet/configmap"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"k8s.io/kubernetes/pkg/kubelet/legacy"
+	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
 	"k8s.io/kubernetes/pkg/kubelet/images"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime"
+	"k8s.io/kubernetes/pkg/kubelet/legacy"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
 	kubedns "k8s.io/kubernetes/pkg/kubelet/network/dns"
 	"k8s.io/kubernetes/pkg/kubelet/pleg"
@@ -71,9 +73,7 @@ import (
 	plugincache "k8s.io/kubernetes/pkg/kubelet/pluginmanager/cache"
 	"k8s.io/kubernetes/pkg/kubelet/prober"
 	proberesults "k8s.io/kubernetes/pkg/kubelet/prober/results"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	serverstats "k8s.io/kubernetes/pkg/kubelet/server/stats"
-	"k8s.io/kubernetes/pkg/kubelet/cri/streaming"
 	"k8s.io/kubernetes/pkg/kubelet/stats"
 	kubestatus "k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
@@ -246,8 +246,8 @@ type edged struct {
 
 	dockerLegacyService legacy.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
-	runner          kubecontainer.CommandRunner
-	podLastSyncTime sync.Map
+	runner              kubecontainer.CommandRunner
+	podLastSyncTime     sync.Map
 	runtimeClassManager *runtimeclass.Manager
 }
 
@@ -276,8 +276,8 @@ func (e *edged) Enable() bool {
 	return e.enable
 }
 
-func (e  *edged) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
-	return e.cadvisor.GetRequestedContainersInfo(containerName,  options)
+func (e *edged) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
+	return e.cadvisor.GetRequestedContainersInfo(containerName, options)
 }
 
 func (e *edged) Start() {
@@ -378,7 +378,7 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 func (e *edged) cgroupRoots() []string {
 	var cgroupRoots []string
 
-	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot,edgedconfig.Config.CgroupsPerQOS ,edgedconfig.Config.CGroupDriver))
+	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot, edgedconfig.Config.CgroupsPerQOS, edgedconfig.Config.CGroupDriver))
 	kubeletCgroup, err := cm.GetKubeletContainer("")
 	if err != nil {
 		klog.Warningf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.", err)
