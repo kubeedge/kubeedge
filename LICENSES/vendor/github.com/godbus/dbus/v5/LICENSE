@@ -1,4 +1,4 @@
-= vendor/github.com/godbus/dbus licensed under: =
+= vendor/github.com/godbus/dbus/v5 licensed under: =
 
 Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
 All rights reserved.
@@ -26,4 +26,4 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-= vendor/github.com/godbus/dbus/LICENSE 09042bd5c6c96a2b9e45ddf1bc517eed
+= vendor/github.com/godbus/dbus/v5/LICENSE 09042bd5c6c96a2b9e45ddf1bc517eed
