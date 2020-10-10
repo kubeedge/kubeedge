@@ -99,8 +99,8 @@ Edged uses the MetaClient module to fetch ConfigMaps from MetaManager. If edged 
 
 The container garbage collector is an edged routine which wakes up every minute, collecting and removing dead containers using the specified container gc policy.
 The policy for garbage collecting containers is determined by three variables, which can be user-defined:
-+ `MinAge` is the minimum age at which a container can be garbage collected, zero for no limit. 
-+ `MaxPerPodContainer` is the maximum number of dead containers that any single pod (UID, container name) pair is allowed to have, less than zero for no limit. 
++ `MinAge` is the minimum age at which a container can be garbage collected, zero for no limit.
++ `MaxPerPodContainer` is the maximum number of dead containers that any single pod (UID, container name) pair is allowed to have, less than zero for no limit.
 + `MaxContainers` is the maximum number of total dead containers, less than zero for no limit. Generally, the oldest containers are removed first.
 
 ## Image GC
