@@ -5,7 +5,7 @@ We currently manage devices from the cloud and synchronize the device updates be
 
 ## Notice
 Device Management features are updated from v1alpha1 to v1alpha2 in release v1.4.
-It is **not** compatible for v1alpha1 and v1alpha2. 
+It is **not** compatible for v1alpha1 and v1alpha2.
 Details can be found [device-management-enhance](/docs/proposals/device-management-enhance.md)
 
 ## Device Model
