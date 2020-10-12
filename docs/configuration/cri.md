@@ -183,7 +183,7 @@ Make sure no libvirt is running on the worker nodes.
 
 ### Steps
 1. **Install CNI plugin:**
-    
+
 	Download CNI plugin release and extract it:
 
 	```bash

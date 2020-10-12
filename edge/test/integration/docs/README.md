@@ -24,7 +24,7 @@ Framework provides an environment for the automation test scripts to be executed
 
 ## Folder structure of Integration tests
 
-<img src="./integration_folder_structure.png">
+<img src="./images/integration_folder_structure.png">
 
    - **appdeployment:** appdeployment folder consists of tests related to application deployment on kubeedge node.
    - **device:** device folder consists of tests related to Device which are binded on kubeedge node.
@@ -113,7 +113,7 @@ image_url: Specify the docker Image Name/Image URL's for application deployments
 * Path : tmp/testcase.log
 
 ## Test Report
-<img src="./Integration_test_report.png">
+<img src="./images/Integration_test_report.png">
 
 ## References
 * See [Ginkgo](https://github.com/onsi/ginkgo) and [Gomega](https://github.com/onsi/gomega) for detailed info on framework usage.
