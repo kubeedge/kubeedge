@@ -40,7 +40,7 @@ keadm init
 
 - This command will download and install the default version of KubeEdge cloud component
 
-keadm init --kubeedge-version=1.2.1  --kube-config=/root/.kube/config
+keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
@@ -59,7 +59,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 		Use:     "init",
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
-		Example: cloudInitExample,
+		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
