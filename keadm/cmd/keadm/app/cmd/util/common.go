@@ -20,13 +20,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"k8s.io/klog"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+
+	"k8s.io/klog"
 
 	"github.com/blang/semver"
 	"github.com/spf13/pflag"
@@ -42,6 +43,7 @@ import (
 const (
 	UbuntuOSType   = "ubuntu"
 	RaspbianOSType = "raspbian"
+	DebianOSType   = "debian"
 	CentOSType     = "centos"
 
 	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
@@ -183,7 +185,7 @@ func GetOSVersion() string {
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
 	switch GetOSVersion() {
-	case UbuntuOSType, RaspbianOSType:
+	case UbuntuOSType, RaspbianOSType, DebianOSType:
 		return &UbuntuOS{}
 	case CentOSType:
 		return &CentOS{}
