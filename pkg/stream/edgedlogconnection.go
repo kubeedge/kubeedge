@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -68,7 +69,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		return err
 	}
 	defer resp.Body.Close()
-	scan := bufio.NewScanner(resp.Body)
+	reader := bufio.NewReader(resp.Body)
 	stop := make(chan struct{})
 
 	go func() {
@@ -92,21 +93,33 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	for scan.Scan() {
+	for {
 		select {
 		case <-stop:
 			klog.Infof("receive stop single, so stop logs scan ...")
 			return nil
 		default:
 		}
-		// 10 = \n
-		msg := NewMessage(l.MessID, MessageTypeData, append(scan.Bytes(), 10))
-		err := msg.WriteTo(tunnel)
+		data := make([]byte, 256)
+
+		n, err := reader.Read(data)
+		if err != nil {
+			if err != io.EOF {
+				klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
+			}
+			break
+		}
+		if n <= 0 {
+			continue
+		}
+		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
+
+		err = msg.WriteTo(tunnel)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
 			return err
 		}
-		klog.Infof("%v write logs %v", l.String(), string(scan.Bytes()))
+		klog.V(4).Infof("%v write logs %v", l.String(), string(data))
 	}
 	return nil
 }
