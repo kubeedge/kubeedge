@@ -4,6 +4,8 @@ Description=cloudcore.service
 [Service]
 Type=simple
 ExecStart=/etc/kubeedge/cloudcore
+Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
