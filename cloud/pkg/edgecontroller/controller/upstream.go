@@ -167,7 +167,7 @@ func (uc *UpstreamController) dispatchMessage() {
 			continue
 		}
 
-		klog.Infof("dispatch message ID: %s", msg.GetID())
+		klog.V(5).Infof("dispatch message ID: %s", msg.GetID())
 		klog.V(5).Infof("dispatch message content: %++v", msg)
 
 		resourceType, err := messagelayer.GetResourceType(msg)
@@ -175,7 +175,9 @@ func (uc *UpstreamController) dispatchMessage() {
 			klog.Warningf("parse message: %s resource type with error: %s", msg.GetID(), err)
 			continue
 		}
-		klog.Infof("message: %s, resource type is: %s", msg.GetID(), resourceType)
+
+		operationType := msg.GetOperation()
+		klog.V(5).Infof("message: %s, operation type is: %s", msg.GetID(), operationType)
 
 		switch resourceType {
 		case model.ResourceTypeNodeStatus:
@@ -224,7 +226,7 @@ func (uc *UpstreamController) updatePodStatus() {
 			klog.Warning("stop updatePodStatus")
 			return
 		case msg := <-uc.podStatusChan:
-			klog.Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			klog.V(5).Infof("message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
 			namespace, podStatuses := uc.unmarshalPodStatusMessage(msg)
 			switch msg.GetOperation() {
@@ -301,7 +303,7 @@ func (uc *UpstreamController) updatePodStatus() {
 					if updatedPod, err := uc.kubeClient.CoreV1().Pods(getPod.Namespace).UpdateStatus(context.Background(), getPod, metaV1.UpdateOptions{}); err != nil {
 						klog.Warningf("message: %s, update pod status failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getPod.Namespace, getPod.Name)
 					} else {
-						klog.Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
+						klog.V(5).Infof("message: %s, update pod status successfully, namespace: %s, name: %s", msg.GetID(), updatedPod.Namespace, updatedPod.Name)
 						if updatedPod.DeletionTimestamp != nil && (status.Phase == v1.PodSucceeded || status.Phase == v1.PodFailed) {
 							if uc.isPodNotRunning(status.ContainerStatuses) {
 								if err := uc.kubeClient.CoreV1().Pods(updatedPod.Namespace).Delete(context.Background(), updatedPod.Name, *metaV1.NewDeleteOptions(0)); err != nil {
@@ -334,7 +336,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 			klog.Warning("stop updateNodeStatus")
 			return
 		case msg := <-uc.nodeStatusChan:
-			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
 			var data []byte
 			switch msg.Content.(type) {
@@ -669,7 +671,7 @@ func (uc *UpstreamController) updateNode() {
 			klog.Warning("stop updateNode")
 			return
 		case msg := <-uc.updateNodeChan:
-			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			noderequest := &v1.Node{}
 
 			var data []byte
@@ -762,7 +764,7 @@ func (uc *UpstreamController) deletePod() {
 			klog.Warning("stop deletePod")
 			return
 		case msg := <-uc.podDeleteChan:
-			klog.Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
 			namespace, err := messagelayer.GetNamespace(msg)
 			if err != nil {
