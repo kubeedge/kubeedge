@@ -20,7 +20,7 @@ labels: kind/bug
 ```console
 $ kubelet --version
 # paste output here
-$ kubectl --version
+$ kubectl version
 # paste output here
 ```
 
@@ -38,7 +38,7 @@ $ cloudcore --version
 <details><summary>EdgeCore Version</summary>
 
 ```console
-$ cloudcore --version
+$ edgecore --version
 # paste output here
 ```
 
