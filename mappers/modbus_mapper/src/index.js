@@ -261,7 +261,7 @@ WatchFiles.watchChange(path.join(__dirname, 'dpl'), ()=>{
 logger.info('start to check devicetwin state');
 setInterval(()=>{
     let dt = new DeviceTwin(mqtt_client);
-    logger.info('chechking devicetwin state');
+    logger.info('checking devicetwin state');
     for (let instance of devIns) {
         if (devPro.has(instance[0])) {
             let protocol = devPro.get(instance[0]);
@@ -273,7 +273,45 @@ setInterval(()=>{
 
 // syncDeviceTwin check each property of each device according to the dpl configuration
 function syncDeviceTwin(dt, key, protocol, actuals) {
-    async.eachSeries(devMod.get(key).properties, (property, callback)=>{
+    // all-properties
+    dealDataProperties(dt, key, protocol, actuals)
+    // devicetwin
+    // async.eachSeries(devMod.get(key).properties, (property, callback)=>{
+    //     let visitor;
+    //     if (typeof(protocol) != 'undefined') {
+    //         modbusProtocolTransfer(protocol.protocol, (transferedProtocol)=>{
+    //             if (devIns.has(key) && modVistr.has(util.format('%s-%s-%s', devIns.get(key).model, property.name, transferedProtocol))) {
+    //                 visitor = modVistr.get(util.format('%s-%s-%s', devIns.get(key).model, property.name, transferedProtocol));
+    //             } else {
+    //                 logger.error('failed to match visitor');
+    //             }
+    //         });
+    //     }
+    //     if (typeof(protocol) != 'undefined' && typeof(visitor) != 'undefined') {
+    //         let modbus = new Modbus(protocol, visitor);
+    //         modbus.ModbusUpdate((err, data)=>{
+    //             if (err) {
+    //                 logger.error('failed to update devicetwin[%s] of device[%s], err: ', property.name, key, err);
+    //             } else {
+    //                 dt.transferType(visitor, property, data, (transData)=>{
+    //                     if (transData != null) {
+    //                         actuals.set(property.name, String(transData));
+    //                         dt.dealUpdate(transData, property, key, ActualVal);
+    //                     }
+    //                 });
+    //                 callback();
+    //             }
+    //         });
+    //     }
+    // },()=>{
+    //     dt.UpdateDirectActuals(devIns, key, actuals);
+    // });
+}
+
+function dealDataProperties(dt, key, protocol, actuals){
+    var idx = 0
+    for(let property of devMod.get(key).properties) {
+        idx++
         let visitor;
         if (typeof(protocol) != 'undefined') {
             modbusProtocolTransfer(protocol.protocol, (transferedProtocol)=>{
@@ -288,21 +326,21 @@ function syncDeviceTwin(dt, key, protocol, actuals) {
             let modbus = new Modbus(protocol, visitor);
             modbus.ModbusUpdate((err, data)=>{
                 if (err) {
-                    logger.error('failed to update devicetwin[%s] of device[%s], err: ', property.name, key, err);
+                    logger.error('failed to update dataProperties[%s] of device[%s], err: ', property.name, key, err);
                 } else {
                     dt.transferType(visitor, property, data, (transData)=>{
                         if (transData != null) {
                             actuals.set(property.name, String(transData));
-                            dt.dealUpdate(transData, property, key, ActualVal);
+                        }
+                        if (idx == devMod.get(key).properties.length) {
+                            dt.dealUpdateForNew(actuals, devMod.get(key).properties, key, ActualVal);
                         }
                     });
-                    callback();
                 }
             });
         }
-    },()=>{
-        dt.UpdateDirectActuals(devIns, key, actuals);
-    });
+    }
+
 }
 
 // dealDeltaMsg deal with the devicetwin delta msg

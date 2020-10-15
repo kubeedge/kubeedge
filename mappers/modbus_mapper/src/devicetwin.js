@@ -98,8 +98,8 @@ class DeviceTwin {
             event_id: "",
             timestamp: new Date().getTime()
         };
-        let twin = {};
-        twin[property.name] = {
+        let data = {};
+        data[property.name] = {
             actual: {
                 value: String(value),
                 metadata: {
@@ -107,10 +107,10 @@ class DeviceTwin {
                 }
             },
             metadata: {
-                tyep: property.dataType
+                type: property.dataType
             }
         };
-        reply_msg.twin = twin;
+        reply_msg.twin = data;
         this.mqttClient.publish(constant.defaultTopicPrefix + deviceID + constant.twinUpdateTopic, JSON.stringify(reply_msg));
     }
 
@@ -131,13 +131,72 @@ class DeviceTwin {
         }
     }
 
+    // updateActualForKuiper update actual value to edge mqtt
+    updateActualForKuiper(deviceID, properties, actualValues) {
+        let reply_msg = {
+            event_id: "",
+            timestamp: new Date().getTime()
+        };
+        let data = {};
+        let pubFlag = 0   //标记位，是否都获取每个属性的数据
+        for (let property of properties) {
+            if (!actualValues.has(property.name)){
+                pubFlag = 1
+            }
+            data[property.name] = {
+                value: String(actualValues.get(property.name)),
+                metadata: {
+                    timestamp: new Date().getTime(),
+                    type: property.dataType
+                }
+            };
+        }
+        reply_msg.data = data;
+        if (pubFlag < 1 ){
+            this.mqttClient.publish(constant.defaultDataTopicPrefix + deviceID + constant.dataUpdateTopic, JSON.stringify(reply_msg));
+        }
+    }
+
+    // dealUpdate set latest actual value of devicetwin into actualVal map
+    dealUpdateForNew(actualValues, properties, deviceID, actualVals) {
+        let changeFlag = false
+        for (let property of properties) {
+            if (!actualVals.has(util.format("%s-%s", deviceID, property.name))) {
+                changeFlag = true
+                if (String(actualValues.get(property.name)) != 'undefined'){
+                    actualVals.set(util.format("%s-%s", deviceID, property.name), String(actualValues.get(property.name)));
+                    logger.info("update dataProperties[%s] of device[%s] successfully", property.name, deviceID);
+                    // origin logic
+                    this.updateActual(deviceID, property, String(actualValues.get(property.name)))
+                }
+            } else {
+                if (String(actualValues.get(property.name)) == 'undefined'){
+                    continue
+                }
+                this.compareActuals(actualValues.get(property.name), actualVals.get(util.format("%s-%s", deviceID, property.name)), (changed)=>{
+                    if (changed) {
+                        changeFlag = true
+                        actualVals.set(util.format("%s-%s", deviceID, property.name), String(actualValues.get(property.name)));
+                        logger.info("update dataProperties[%s] of device[%s] successfully", property.name, deviceID);
+                        // origin logic
+                        this.updateActual(deviceID, property, String(actualValues.get(property.name)))
+                    }
+                });
+            }
+        }
+        // match the kuiper topic
+        if (changeFlag) {
+            this.updateActualForKuiper(deviceID, properties, actualValues);
+        }
+    }
+
     // getActuals publish get devicetwin msg to edge mqtt
     getActuals(deviceID) {
         let payload_msg = {
             event_id: "",
             timestamp: new Date().getTime()
         };
-        this.mqttClient.publish(constant.defaultTopicPrefix + deviceID + constant.twinGetTopic, JSON.stringify(payload_msg));
+        this.mqttClient.publish(constant.defaultDataTopicPrefix + deviceID + constant.twinGetTopic, JSON.stringify(payload_msg));
     }
 
     // setActuals set device property and actual value map

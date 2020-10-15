@@ -68,6 +68,7 @@ function processData(dplConfigs, callback) {
             }
         });
     }
+
     for (let i = 0; i < dplConfigs.deviceModels.length; i++) {
         for (let j = 0; j < dplConfigs.deviceModels[i].properties.length; j++){
             buildVisitorMaps(dplConfigs, i, j);
@@ -92,7 +93,7 @@ function buildMaps(dplConfigs, i) {
         return element.name === dplConfigs.deviceInstances[i].protocol;
     });
     if (foundPro != -1) {
-        devPro.set(dplConfigs.deviceInstances[i].id, dplConfigs.protocols[foundPro]);
+        devPro.set(dplConfigs.deviceInstances[i].id, dplConfigs.protocols[i]);
     } else {
         logger.error('failed to find protocol[%s] for deviceid', dplConfigs.deviceModels[i].protocol);
     }
@@ -100,14 +101,26 @@ function buildMaps(dplConfigs, i) {
 
 // buildVisitorMaps build map[model-property-protocol]propertyVisitor
 function buildVisitorMaps(dplConfigs, i, j) {
-    let foundVisitor = dplConfigs.propertyVisitors.findIndex((element)=>{
-        return element.modelName === dplConfigs.deviceModels[i].name && element.propertyName === dplConfigs.deviceModels[i].properties[j].name;
+    let foundVisitor = dplConfigs.deviceInstances.findIndex((element)=>{
+        return element.propertyVisitors[j].modelName === dplConfigs.deviceModels[i].name && element.propertyVisitors[j].propertyName === dplConfigs.deviceModels[i].properties[j].name;
     });
     if (foundVisitor != -1) {
-        modVisitr.set(util.format('%s-%s-%s', dplConfigs.propertyVisitors[foundVisitor].modelName, dplConfigs.propertyVisitors[foundVisitor].propertyName, dplConfigs.propertyVisitors[foundVisitor].protocol), dplConfigs.propertyVisitors[foundVisitor]);
+        modbusProtocolTransfer(dplConfigs.deviceInstances[i].propertyVisitors[j].protocol, (transferedProtocol)=> {
+            modVisitr.set(util.format('%s-%s-%s', dplConfigs.deviceInstances[i].propertyVisitors[j].modelName, dplConfigs.deviceInstances[i].propertyVisitors[j].propertyName,transferedProtocol ), dplConfigs.deviceInstances[i].propertyVisitors[j]);
+        });
     } else {
         logger.error('failed to find visitor for model[%s], property[%s]', dplConfigs.deviceModels[i].name, dplConfigs.deviceModels[i].properties[j].name);
     }
+}
+
+function modbusProtocolTransfer(protocol, callback) {
+    let transferedProtocol;
+    if (protocol === 'modbus-rtu' || protocol === 'modbus-tcp') {
+        transferedProtocol = 'modbus';
+    } else {
+        transferedProtocol = protocol;
+    }
+    callback(transferedProtocol)
 }
 
 module.exports = {watchChange, loadDpl, loadConfig};
