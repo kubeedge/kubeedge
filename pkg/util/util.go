@@ -27,11 +27,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"k8s.io/klog"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -469,52 +466,6 @@ func GetCurPath() string {
 	path, _ := filepath.Abs(file)
 	rst := filepath.Dir(path)
 	return rst
-}
-
-//ConvertStrToTime converts time string object to inbuilt time object
-func ConvertStrToTime(strTime string) (time.Time, error) {
-	loc, _ := time.LoadLocation("Local")
-	t, err := time.ParseInLocation("2006-01-02T15:04:05", strTime, loc)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return t, nil
-}
-
-//ParseTimeErrorCode is constant set to -1 to show error
-const ParseTimeErrorCode = -1
-
-//ParseTimestampStr2Int64 returns given string time into int64 type
-func ParseTimestampStr2Int64(s string) (int64, error) {
-	timeStamp, err := time.Parse(time.RFC3339Nano, s)
-	if err != nil {
-		return ParseTimeErrorCode, err
-	}
-	return timeStamp.Unix(), nil
-}
-
-//ParseTimestampInt64 returns given int64 type time into matav1 type time
-func ParseTimestampInt64(timestamp int64) metav1.Time {
-	if timestamp == ParseTimeErrorCode {
-		return metav1.Time{}
-	}
-	return metav1.NewTime(time.Unix(timestamp, 0))
-}
-
-// ReadDirNoStat returns a string of files/directories contained
-// in dirname without calling lstat on them.
-func ReadDirNoStat(dirname string) ([]string, error) {
-	if dirname == "" {
-		dirname = "."
-	}
-
-	f, err := os.Open(dirname)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return f.Readdirnames(-1)
 }
 
 func SpliceErrors(errors []error) string {
