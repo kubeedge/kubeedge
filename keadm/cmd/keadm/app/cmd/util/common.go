@@ -403,7 +403,7 @@ func installKubeEdge(componentType types.ComponentType, arch string, version sem
 
 			urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
 			for ; try < downloadRetryTimes; try++ {
-				cmdStr := fmt.Sprintf("cd %s && sudo wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
+				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
 				_, err := runCommandWithStdout(cmdStr)
 				if err != nil {
 					return err
