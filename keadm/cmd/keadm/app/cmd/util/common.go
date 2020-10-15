@@ -368,7 +368,7 @@ func runEdgeCore(version semver.Version) error {
 func killKubeEdgeBinary(proc string) error {
 	var binExec string
 	if proc == "cloudcore" {
-		binExec = fmt.Sprintf("kill -9 $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+		binExec = fmt.Sprintf("pkill %s", proc)
 	} else {
 		systemdExist := hasSystemd()
 
@@ -384,7 +384,7 @@ func killKubeEdgeBinary(proc string) error {
 			// remove the system service.
 			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload && systemctl reset-failed", serviceName, serviceName)
 		} else {
-			binExec = fmt.Sprintf("kill $(ps aux | grep '[%s]%s' | awk '{print $2}')", proc[0:1], proc[1:])
+			binExec = fmt.Sprintf("pkill %s", proc)
 		}
 	}
 	cmd := NewCommand(binExec)
@@ -398,13 +398,18 @@ func killKubeEdgeBinary(proc string) error {
 
 //isKubeEdgeProcessRunning checks if the given process is running or not
 func isKubeEdgeProcessRunning(proc string) (bool, error) {
-	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s' | awk '{print $2}'", proc[0:1], proc[1:])
+	procRunning := fmt.Sprintf("pidof %s 2&>1", proc)
 	cmd := NewCommand(procRunning)
-	if err := cmd.Exec(); err != nil || cmd.GetStdOut() != "" {
-		return true, err
+
+	err := cmd.Exec()
+
+	if cmd.ExitCode == 0 {
+		return true, nil
+	} else if cmd.ExitCode == 1 {
+		return false, nil
 	}
 
-	return false, nil
+	return false, err
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
