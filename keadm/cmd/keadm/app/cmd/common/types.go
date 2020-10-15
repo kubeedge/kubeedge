@@ -37,7 +37,6 @@ type JoinOptions struct {
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
-	InterfaceName         string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
@@ -231,7 +230,6 @@ type ControllerSt struct {
 type EdgeDSt struct {
 	RegisterNodeNamespace             string `yaml:"register-node-namespace"`
 	HostnameOverride                  string `yaml:"hostname-override"`
-	InterfaceName                     string `yaml:"interface-name"`
 	NodeStatusUpdateFrequency         uint16 `yaml:"node-status-update-frequency"`
 	DevicePluginEnabled               bool   `yaml:"device-plugin-enabled"`
 	GPUPluginEnabled                  bool   `yaml:"gpu-plugin-enabled"`

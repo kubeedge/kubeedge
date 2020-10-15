@@ -33,7 +33,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -69,6 +68,7 @@ import (
 	utilfile "k8s.io/utils/path"
 
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 const (
@@ -710,7 +710,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		hostIP, err := e.getHostIPByInterface()
+		hostIP, err := pkgutil.GetLocalIP(e.nodeName)
 		if err != nil {
 			return "", err
 		}
@@ -762,7 +762,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
 
-	hostIP, err := e.getHostIPByInterface()
+	hostIP, err := pkgutil.GetLocalIP(e.nodeName)
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -1132,31 +1132,6 @@ func getPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 		klog.Info("pod default case, pending")
 		return v1.PodPending
 	}
-}
-
-func (e *edged) getHostIPByInterface() (string, error) {
-	iface, err := net.InterfaceByName(e.interfaceName)
-	if err != nil {
-		return "", fmt.Errorf("failed to get network interface: %v err:%v", e.interfaceName, err)
-	}
-	if iface == nil {
-		return "", fmt.Errorf("input iface is nil")
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return "", err
-	}
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if ip.To4() != nil {
-			return ip.String(), nil
-		}
-	}
-	return "", fmt.Errorf("no ip and mask in this network card")
 }
 
 // findContainer finds and returns the container with the given pod ID, full name, and container name.
