@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
@@ -43,7 +42,7 @@ keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string a
   - For this command --cloudcore-ipport flag is a required option
   - This command will download and install the default version of pre-requisites and KubeEdge
 
-keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=1.2.1
+keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=%s
 `
 )
 
@@ -60,7 +59,7 @@ func NewEdgeJoin(out io.Writer, joinOptions *types.JoinOptions) *cobra.Command {
 		Use:     "join",
 		Short:   "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
 		Long:    edgeJoinLongDescription,
-		Example: edgeJoinExample,
+		Example: fmt.Sprintf(edgeJoinExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//Visit all the flags and store their values and default values.
 			checkFlags := func(f *pflag.Flag) {
@@ -92,7 +91,7 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, types.CertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", common.DefaultCertPath))
+		fmt.Sprintf("The certPath used by edgecore, the default value is %s", types.DefaultCertPath))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, types.CloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
