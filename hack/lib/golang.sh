@@ -140,7 +140,7 @@ kubeedge::check::env() {
   # check lenth of errors
   if [[ ${#errors[@]} -ne 0 ]] ; then
     local error
-    for error in ${errors[@]}; do
+    for error in "${errors[@]}"; do
       echo "Error: "$error
     done
     exit 1
