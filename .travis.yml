@@ -3,7 +3,7 @@ language: go
 git:
   depth: false
 
-sudo: required
+os: linux
 
 dist: bionic
 
