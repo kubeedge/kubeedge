@@ -43,6 +43,7 @@ import (
 const (
 	UbuntuOSType   = "ubuntu"
 	RaspbianOSType = "raspbian"
+	MintOsType     = "linuxmint"
 	DebianOSType   = "debian"
 	CentOSType     = "centos"
 
@@ -185,7 +186,7 @@ func GetOSVersion() string {
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
 	switch GetOSVersion() {
-	case UbuntuOSType, RaspbianOSType, DebianOSType:
+	case UbuntuOSType, RaspbianOSType, DebianOSType, MintOsType:
 		return &UbuntuOS{}
 	case CentOSType:
 		return &CentOS{}
