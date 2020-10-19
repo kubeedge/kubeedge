@@ -716,6 +716,15 @@ func NewCustomizedDeviceInstance(nodeSelector string) v1alpha2.Device {
 					ProtocolName: "CustomizedProtocol1",
 					ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
 				},
+				Common: &v1alpha2.ProtocolConfigCommon{
+					COM: &v1alpha2.ProtocolConfigCOM{
+						SerialPort: "/dev/ttyS0",
+						BaudRate:   9600,
+						DataBits:   8,
+						Parity:     "even",
+						StopBits:   1,
+					},
+				},
 			},
 			PropertyVisitors: propertyVisitors,
 		},
@@ -847,6 +856,20 @@ func UpdatedModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 								Values:   []string{nodeSelector},
 							},
 						},
+					},
+				},
+			},
+			Protocol: v1alpha2.ProtocolConfig{
+				Modbus: &v1alpha2.ProtocolConfigModbus{
+					SlaveID: 1,
+				},
+				Common: &v1alpha2.ProtocolConfigCommon{
+					COM: &v1alpha2.ProtocolConfigCOM{
+						SerialPort: "/dev/ttyS0",
+						BaudRate:   9600,
+						DataBits:   8,
+						Parity:     "even",
+						StopBits:   1,
 					},
 				},
 			},
@@ -1564,7 +1587,20 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 	}
 	deviceProfile.Protocols = []*types.Protocol{
 		{
-			ProtocolConfig: nil,
+			Name:     "modbus-sensor-tag-instance-02",
+			Protocol: "modbus",
+			ProtocolConfig: &v1alpha2.ProtocolConfigModbus{
+				SlaveID: 1,
+			},
+			ProtocolCommonConfig: &v1alpha2.ProtocolConfigCommon{
+				COM: &v1alpha2.ProtocolConfigCOM{
+					SerialPort: "/dev/ttyS0",
+					BaudRate:   9600,
+					DataBits:   8,
+					Parity:     "even",
+					StopBits:   1,
+				},
+			},
 		},
 	}
 
@@ -1670,6 +1706,15 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 			ProtocolConfig: &v1alpha2.ProtocolConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
 				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+			},
+			ProtocolCommonConfig: &v1alpha2.ProtocolConfigCommon{
+				COM: &v1alpha2.ProtocolConfigCOM{
+					SerialPort: "/dev/ttyS0",
+					BaudRate:   9600,
+					DataBits:   8,
+					Parity:     "even",
+					StopBits:   1,
+				},
 			},
 		},
 	}
