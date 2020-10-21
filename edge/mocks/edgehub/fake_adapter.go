@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/golang/mock/gomock"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
