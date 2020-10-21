@@ -611,6 +611,8 @@ go.etcd.io/etcd/etcdserver/etcdserverpb
 go.etcd.io/etcd/mvcc/mvccpb
 go.etcd.io/etcd/pkg/logutil
 go.etcd.io/etcd/pkg/systemd
+go.etcd.io/etcd/pkg/tlsutil
+go.etcd.io/etcd/pkg/transport
 go.etcd.io/etcd/pkg/types
 go.etcd.io/etcd/raft
 go.etcd.io/etcd/raft/confchange
@@ -658,6 +660,8 @@ golang.org/x/oauth2/internal
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
+golang.org/x/sys/windows/svc
+golang.org/x/sys/windows/svc/mgr
 # golang.org/x/text v0.3.2
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -902,10 +906,21 @@ k8s.io/apiserver/pkg/util/flowcontrol/metrics
 k8s.io/apiserver/pkg/util/flushwriter
 k8s.io/apiserver/pkg/util/term
 k8s.io/apiserver/pkg/util/wsstream
+# k8s.io/cli-runtime v0.18.6
+k8s.io/cli-runtime/pkg/kustomize
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/configmapandsecret
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/kunstruct
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/kv
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/transformer
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/transformer/hash
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/transformer/patch
+k8s.io/cli-runtime/pkg/kustomize/k8sdeps/validator
 # k8s.io/client-go v0.18.6
 ## explicit
 k8s.io/client-go/discovery
 k8s.io/client-go/discovery/fake
+k8s.io/client-go/dynamic
 k8s.io/client-go/informers
 k8s.io/client-go/informers/admissionregistration
 k8s.io/client-go/informers/admissionregistration/v1
@@ -1112,12 +1127,18 @@ k8s.io/client-go/util/exec
 k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
+k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider v0.18.6
 ## explicit
 k8s.io/cloud-provider
 k8s.io/cloud-provider/volume
 k8s.io/cloud-provider/volume/errors
+# k8s.io/cluster-bootstrap v0.18.6
+## explicit
+k8s.io/cluster-bootstrap/token/api
+k8s.io/cluster-bootstrap/token/util
+k8s.io/cluster-bootstrap/util/secrets
 # k8s.io/code-generator v0.18.6
 ## explicit
 k8s.io/code-generator/cmd/client-gen
@@ -1145,6 +1166,7 @@ k8s.io/code-generator/pkg/util
 k8s.io/component-base/cli/flag
 k8s.io/component-base/cli/globalflag
 k8s.io/component-base/config
+k8s.io/component-base/config/v1alpha1
 k8s.io/component-base/featuregate
 k8s.io/component-base/logs
 k8s.io/component-base/metrics
@@ -1183,15 +1205,42 @@ k8s.io/kube-openapi/pkg/handler
 k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/sets
+# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+k8s.io/kube-proxy/config/v1alpha1
 # k8s.io/kube-scheduler v0.18.6
 ## explicit
 k8s.io/kube-scheduler/extender/v1
 # k8s.io/kubelet v0.18.6
 ## explicit
+k8s.io/kubelet/config/v1beta1
 k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1
 k8s.io/kubelet/pkg/apis/pluginregistration/v1
 # k8s.io/kubernetes v1.18.6
 ## explicit
+k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm
+k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/scheme
+k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1
+k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2
+k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/validation
+k8s.io/kubernetes/cmd/kubeadm/app/cmd/options
+k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/reset
+k8s.io/kubernetes/cmd/kubeadm/app/cmd/phases/workflow
+k8s.io/kubernetes/cmd/kubeadm/app/componentconfigs
+k8s.io/kubernetes/cmd/kubeadm/app/constants
+k8s.io/kubernetes/cmd/kubeadm/app/features
+k8s.io/kubernetes/cmd/kubeadm/app/images
+k8s.io/kubernetes/cmd/kubeadm/app/phases/etcd
+k8s.io/kubernetes/cmd/kubeadm/app/phases/uploadconfig
+k8s.io/kubernetes/cmd/kubeadm/app/preflight
+k8s.io/kubernetes/cmd/kubeadm/app/util
+k8s.io/kubernetes/cmd/kubeadm/app/util/apiclient
+k8s.io/kubernetes/cmd/kubeadm/app/util/config
+k8s.io/kubernetes/cmd/kubeadm/app/util/config/strict
+k8s.io/kubernetes/cmd/kubeadm/app/util/etcd
+k8s.io/kubernetes/cmd/kubeadm/app/util/initsystem
+k8s.io/kubernetes/cmd/kubeadm/app/util/kustomize
+k8s.io/kubernetes/cmd/kubeadm/app/util/runtime
+k8s.io/kubernetes/cmd/kubeadm/app/util/staticpod
 k8s.io/kubernetes/pkg/api/legacyscheme
 k8s.io/kubernetes/pkg/api/service
 k8s.io/kubernetes/pkg/api/v1/pod
@@ -1372,6 +1421,8 @@ k8s.io/kubernetes/pkg/volume/util/types
 k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/third_party/forked/golang/expansion
+# k8s.io/system-validators v1.0.4
+k8s.io/system-validators/validators
 # k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 ## explicit
 k8s.io/utils/buffer
@@ -1388,6 +1439,29 @@ k8s.io/utils/path
 k8s.io/utils/pointer
 k8s.io/utils/strings
 k8s.io/utils/trace
+# sigs.k8s.io/kustomize v2.0.3+incompatible
+sigs.k8s.io/kustomize/pkg/commands/build
+sigs.k8s.io/kustomize/pkg/constants
+sigs.k8s.io/kustomize/pkg/expansion
+sigs.k8s.io/kustomize/pkg/factory
+sigs.k8s.io/kustomize/pkg/fs
+sigs.k8s.io/kustomize/pkg/git
+sigs.k8s.io/kustomize/pkg/gvk
+sigs.k8s.io/kustomize/pkg/ifc
+sigs.k8s.io/kustomize/pkg/ifc/transformer
+sigs.k8s.io/kustomize/pkg/image
+sigs.k8s.io/kustomize/pkg/internal/error
+sigs.k8s.io/kustomize/pkg/loader
+sigs.k8s.io/kustomize/pkg/patch
+sigs.k8s.io/kustomize/pkg/patch/transformer
+sigs.k8s.io/kustomize/pkg/resid
+sigs.k8s.io/kustomize/pkg/resmap
+sigs.k8s.io/kustomize/pkg/resource
+sigs.k8s.io/kustomize/pkg/target
+sigs.k8s.io/kustomize/pkg/transformers
+sigs.k8s.io/kustomize/pkg/transformers/config
+sigs.k8s.io/kustomize/pkg/transformers/config/defaultconfig
+sigs.k8s.io/kustomize/pkg/types
 # sigs.k8s.io/structured-merge-diff/v3 v3.0.0
 sigs.k8s.io/structured-merge-diff/v3/value
 # sigs.k8s.io/yaml v1.2.0
@@ -1419,7 +1493,6 @@ sigs.k8s.io/yaml
 # k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
 # k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
 # k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
-# k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
 # k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
 # k8s.io/kubectl => k8s.io/kubectl v0.18.6
 # k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
