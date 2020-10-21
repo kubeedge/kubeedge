@@ -16,7 +16,7 @@ class Modbus {
         let client = this.client;
         switch(protocol.protocol) {
             case 'modbus-tcp':
-                client.connectTCP(protocol.protocolConfig.ip, { port: parseInt(protocol.protocolConfig.port) }, ()=>{
+                client.connectTCP(protocol.protocolCommonConfig.tcp.ip, { port: parseInt(protocol.protocolCommonConfig.tcp.port) }, ()=>{
                     client.setTimeout(500);
                     client.setID(parseInt(protocol.protocolConfig.slaveID));
                     callback(client);
@@ -30,7 +30,7 @@ class Modbus {
                         }, 100);
                     },
                     function (callback) {
-                        client.connectRTUBuffered(protocol.protocolConfig.serialPort, { baudRate: parseInt(protocol.protocolConfig.baudRate) }, ()=>{
+                        client.connectRTUBuffered(protocol.protocolCommonConfig.rtu.serialPort, { baudRate: parseInt(protocol.protocolCommonConfig.rtu.baudRate) }, ()=>{
                             client.setTimeout(500);
                             client.setID(parseInt(protocol.protocolConfig.slaveID));
                             callback(null, client);

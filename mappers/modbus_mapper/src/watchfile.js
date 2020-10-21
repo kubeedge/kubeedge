@@ -54,6 +54,21 @@ function loadConfig(filename, callback) {
             logger.error('load config error: ', err);
         } else {
             let configs = JSON.parse(data);
+            if (process.env.CONNECTOR_MQTT_PORT != undefined) {
+                configs.mqtt_port = process.env.CONNECTOR_MQTT_PORT
+            }else {
+                configs.mqtt_port = 1883
+            }
+            if (process.env.CONNECTOR_MQTT_IP != undefined) {
+                configs.mqtt_ip = process.env.CONNECTOR_MQTT_IP
+            }else {
+                configs.mqtt_ip = "127.0.0.1"
+            }
+            if (process.env.CONNECTOR_DPL_NAME != undefined) {
+                configs.dpl_name = process.env.CONNECTOR_DPL_NAME
+            }else {
+                configs.dpl_name = "dpl/deviceProfile.json"
+            }
             callback(null, configs);
         }
     });
@@ -61,17 +76,20 @@ function loadConfig(filename, callback) {
 
 // processData parse dpl config for each deviceInstance
 function processData(dplConfigs, callback) {
-    for (let i = 0; i < dplConfigs.deviceInstances.length; i++) {
-        buildMaps(dplConfigs, i, (err)=>{
-            if (err) {
-                logger.error('build devIns maps error: ', err)
-            }
-        });
+    if (dplConfigs.deviceInstances != null ) {
+        for (let i = 0; i < dplConfigs.deviceInstances.length; i++) {
+            buildMaps(dplConfigs, i, (err) => {
+                if (err) {
+                    logger.error('build devIns maps error: ', err)
+                }
+            });
+        }
     }
-
-    for (let i = 0; i < dplConfigs.deviceModels.length; i++) {
-        for (let j = 0; j < dplConfigs.deviceModels[i].properties.length; j++){
-            buildVisitorMaps(dplConfigs, i, j);
+    if (dplConfigs.deviceModels != null ) {
+        for (let i = 0; i < dplConfigs.deviceModels.length; i++) {
+            for (let j = 0; j < dplConfigs.deviceModels[i].properties.length; j++) {
+                buildVisitorMaps(dplConfigs, i, j);
+            }
         }
     }
     callback(devIns, devMod, devPro, modVisitr);
