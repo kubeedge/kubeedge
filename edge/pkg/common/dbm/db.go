@@ -32,6 +32,7 @@ func InitDBConfig(driverName, dbName, dataSource string) {
 		}
 		// create orm
 		DBAccess = orm.NewOrm()
+		DBAccess.Raw("PRAGMA synchronous = OFF; ", 0, 0, 0).Exec()
 		if err := DBAccess.Using(dbName); err != nil {
 			klog.Errorf("Using db access error %v", err)
 		}
