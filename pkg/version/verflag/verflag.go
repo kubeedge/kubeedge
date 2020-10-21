@@ -23,9 +23,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/kubeedge/kubeedge/pkg/version"
-
 	flag "github.com/spf13/pflag"
+
+	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
 type VersionValue int

@@ -19,10 +19,9 @@ package metamanager
 import (
 	"testing"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
-
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
