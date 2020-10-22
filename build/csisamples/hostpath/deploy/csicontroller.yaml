@@ -105,6 +105,8 @@ spec:
         app: csi-hostpath-controller
     spec:
       serviceAccountName: csi-controller
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       containers:
         - name: csi-provisioner
           image: quay.io/k8scsi/csi-provisioner:v1.2.1
