@@ -17,6 +17,7 @@
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
+KIND_CONFIG="${KUBEEDGE_ROOT}/_output/local/bin/kind-config.yaml"
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
@@ -33,8 +34,20 @@ function check_prerequisites {
 
 # spin up cluster with kind command
 function kind_up_cluster {
+  mkdir -p /tmp/var/lib/kubeedge
+
+  cat > ${KIND_CONFIG} <<END
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: /tmp/var/lib/kubeedge
+    containerPath: /var/lib/kubeedge
+END
+
   echo "Running kind: [kind create cluster ${CLUSTER_CONTEXT}]"
-  kind create cluster ${CLUSTER_CONTEXT}
+  kind create cluster --config ${KIND_CONFIG} ${CLUSTER_CONTEXT}
 }
 
 function uninstall_kubeedge {
@@ -95,7 +108,7 @@ function start_cloudcore {
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
-    -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
+    -e "s|/etc/|/tmp/etc/|g" -e "s|/var/|/tmp/var/|" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
@@ -183,6 +196,30 @@ function generate_streamserver_cert {
   openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
 }
 
+function setup_csi_hostpath_driver {
+  CSI_PATH="/tmp/csi"
+  CSI_DRIVER_IMG="kubeedge/csidriver:dev"
+
+  echo "setup csi hostpath driver..."
+  mkdir -p ${CSI_PATH}
+  cp ${KUBEEDGE_ROOT}/build/csisamples/hostpath/deploy/csicontroller.yaml ${CSI_PATH}
+  cp ${KUBEEDGE_ROOT}/build/csisamples/hostpath/deploy/csinode.yaml ${CSI_PATH}
+
+  # build csidriver image
+  sed -i "s#kubeedge/csidriver:.*#${CSI_DRIVER_IMG}#g" ${CSI_PATH}/csicontroller.yaml
+  cp ${KUBEEDGE_ROOT}/build/csidriver/Dockerfile ${KUBEEDGE_ROOT}
+  docker build . -t ${CSI_DRIVER_IMG}
+
+  # load image into kind
+  kind load docker-image ${CSI_DRIVER_IMG} ${CLUSTER_CONTEXT}
+
+  # deploy csi hostpath stuff
+  kubectl apply -f ${CSI_PATH}/csicontroller.yaml
+  kubectl apply -f ${CSI_PATH}/csinode.yaml
+
+  rm -f ${KUBEEDGE_ROOT}/Dockerfile
+}
+
 cleanup
 
 source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
@@ -232,6 +269,8 @@ To start using your kubeedge, you can run:
   export KUBECONFIG=$HOME/.kube/config
   kubectl get nodes
 "
+
+setup_csi_hostpath_driver
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
   while true; do sleep 1; healthcheck; done
