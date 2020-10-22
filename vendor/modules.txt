@@ -301,8 +301,6 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/golangci/golangci-lint v1.24.0
-## explicit
 # github.com/google/cadvisor v0.37.0
 ## explicit
 github.com/google/cadvisor/accelerators
@@ -423,6 +421,8 @@ github.com/kubeedge/viaduct/pkg/utils
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
+# github.com/lib/pq v1.2.0
+## explicit
 # github.com/lithammer/dedent v1.1.0
 github.com/lithammer/dedent
 # github.com/lucas-clemente/aes12 v0.0.0-20171027163421-cd47fb39b79f
