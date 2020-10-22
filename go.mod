@@ -21,7 +21,6 @@ require (
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
-	github.com/golangci/golangci-lint v1.24.0 // indirect
 	github.com/google/cadvisor v0.37.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
@@ -33,6 +32,7 @@ require (
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
+	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/onsi/ginkgo v1.12.0
