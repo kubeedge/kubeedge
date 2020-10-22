@@ -21,6 +21,7 @@ require (
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
+	github.com/golangci/golangci-lint v1.24.0 // indirect
 	github.com/google/cadvisor v0.37.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
@@ -48,21 +49,22 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.19.2
-	k8s.io/apiextensions-apiserver v0.19.2
-	k8s.io/apimachinery v0.19.2
-	k8s.io/apiserver v0.19.2
-	k8s.io/client-go v0.19.2
-	k8s.io/cloud-provider v0.19.2
-	k8s.io/code-generator v0.19.2
-	k8s.io/component-base v0.19.2
-	k8s.io/cri-api v0.19.2
-	k8s.io/csi-translation-lib v0.19.2
+	k8s.io/api v0.19.3
+	k8s.io/apiextensions-apiserver v0.19.3
+	k8s.io/apimachinery v0.19.3
+	k8s.io/apiserver v0.19.3
+	k8s.io/client-go v0.19.3
+	k8s.io/cloud-provider v0.19.3
+	k8s.io/cluster-bootstrap v0.19.3 // indirect
+	k8s.io/code-generator v0.19.3
+	k8s.io/component-base v0.19.3
+	k8s.io/cri-api v0.19.3
+	k8s.io/csi-translation-lib v0.19.3
 	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
-	k8s.io/kube-scheduler v0.19.2 // indirect
-	k8s.io/kubelet v0.19.2
-	k8s.io/kubernetes v1.19.2
+	k8s.io/kube-scheduler v0.19.3 // indirect
+	k8s.io/kubelet v0.19.3
+	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 	sigs.k8s.io/yaml v1.2.0
 )
