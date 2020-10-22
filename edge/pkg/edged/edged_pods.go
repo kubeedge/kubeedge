@@ -947,11 +947,11 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 		podStatusRemote, err = e.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
 			containerStatus := &v1.ContainerStatus{
-				Name: pod.Name,
+				Name:         pod.Name,
 				RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
-				ImageID: pod.Status.ContainerStatuses[0].ImageID,
-				Image: pod.Status.ContainerStatuses[0].Image,
-				ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
+				ImageID:      pod.Status.ContainerStatuses[0].ImageID,
+				Image:        pod.Status.ContainerStatuses[0].Image,
+				ContainerID:  pod.Status.ContainerStatuses[0].ContainerID,
 				State: v1.ContainerState{
 					Waiting: &v1.ContainerStateWaiting{
 						Reason:  pod.Status.Reason,
@@ -964,11 +964,11 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 		} else {
 			if pod.DeletionTimestamp != nil {
 				containerStatus := &v1.ContainerStatus{
-					Name: pod.Name,
+					Name:         pod.Name,
 					RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
-					ImageID: pod.Status.ContainerStatuses[0].ImageID,
-					Image: pod.Status.ContainerStatuses[0].Image,
-					ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
+					ImageID:      pod.Status.ContainerStatuses[0].ImageID,
+					Image:        pod.Status.ContainerStatuses[0].Image,
+					ContainerID:  pod.Status.ContainerStatuses[0].ContainerID,
 					State: v1.ContainerState{
 						Terminated: &v1.ContainerStateTerminated{
 							ExitCode:    0,
@@ -1028,7 +1028,7 @@ func toKubeContainerStatus(phase v1.PodPhase, status *v1.ContainerStatus) v1.Con
 		Image:        status.Image,
 		ContainerID:  status.ContainerID,
 	}
-	klog.Infof("Container status: \n[$+v]\n", status)
+	klog.Infof("Container status: \n[$+%v]\n", status)
 	switch phase {
 	case v1.PodRunning:
 		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: status.State.Running.StartedAt}
