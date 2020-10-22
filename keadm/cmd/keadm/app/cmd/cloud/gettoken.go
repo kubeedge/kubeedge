@@ -20,7 +20,7 @@ A token can be used when a edge node is about to join the cluster. With this tok
 certificate request.
 `
 	gettokenExample = `
-keadm gettoken --kube-config = /root/.kube/config
+keadm gettoken --kube-config /root/.kube/config
 - kube-config is the absolute path of kubeconfig which used to build secure connectivity between keadm and kube-apiserver
 to get the token.
 `
