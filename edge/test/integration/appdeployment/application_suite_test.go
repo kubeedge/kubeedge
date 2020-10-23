@@ -48,6 +48,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("After Suite Execution....!")
+		utils.PrintEdgecoreLog()
 	})
 
 	RunSpecs(t, "kubeedge App Deploymet Suite")
