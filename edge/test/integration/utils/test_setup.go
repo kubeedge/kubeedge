@@ -73,7 +73,7 @@ func StartEdgeCore() error {
 	return nil
 }
 
-func PrintEdgecoreLog(){
+func PrintEdgecoreLog() {
 	catcmd := exec.Command("sh", "-c", CatEdgecoreLog)
 	fmt.Printf("===========> Executing: %s\n", strings.Join(catcmd.Args, " "))
 	bytes, _ := catcmd.CombinedOutput()
