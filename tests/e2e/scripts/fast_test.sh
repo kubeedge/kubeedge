@@ -43,16 +43,6 @@ cat >config.json<<END
 }
 END
 
-echo "Check port status beofore testing: "
-
-echo "Port 12345: $(lsof -i :12345)"
-echo "Port 10350: $(lsof -i :10350)"
-echo "Port 10256: $(lsof -i :10256)"
-
-echo "Edgecore status before tests"
-cat /tmp/edgecore.log
-
-echo "Start tests"
 
 if [ $# -eq 0 ]
   then
@@ -68,7 +58,3 @@ else
     ./$compilemodule/$compilemodule.test  $debugflag  $runtest 2>&1 | tee -a  /tmp/testcase.log
 fi
 fi
-
-
-echo "Edgecore status after tests"
-cat /tmp/edgecore.log

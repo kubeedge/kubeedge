@@ -47,6 +47,17 @@ kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin -
 
 :> /tmp/testcase.log
 
+echo "Check port status beofore testing: "
+
+echo "Port 12345: $(lsof -i :12345)"
+echo "Port 10350: $(lsof -i :10350)"
+echo "Port 10256: $(lsof -i :10256)"
+
+echo "Edgecore status before tests"
+cat ./_out/local/bin/edgecore.log
+
+echo "Start tests"
+
 bash -x ${E2E_DIR}/scripts/fast_test.sh $1
 
 #stop the edgecore after the test completion
@@ -59,6 +70,12 @@ echo "Number of Test cases PASSED = $passed"
 fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
 echo "Number of Test cases FAILED = $fail"
 echo "==================Result Summary======================="
+
+
+
+
+echo "Edgecore status after tests"
+cat ./_out/local/bin/edgecore.log
 
 if [ "$fail" != "0" ];then
     echo "Integration suite has failures, Please check !!"
