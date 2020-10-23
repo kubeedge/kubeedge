@@ -80,7 +80,6 @@ func PrintEdgecoreLog(){
 	fmt.Printf("edgecore log:\n %v", string(bytes))
 }
 
-
 // PrintCombinedOutput to show the os command injuction in combined format
 func PrintCombinedOutput(cmd *exec.Cmd) error {
 	fmt.Printf("===========> Executing: %s\n", strings.Join(cmd.Args, " "))

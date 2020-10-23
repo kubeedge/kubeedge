@@ -35,6 +35,26 @@ E2E_DIR=${curpath}/tests/e2e
 sudo rm -rf ${E2E_DIR}/deployment/deployment.test
 sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
 
+mkdir -p /etc/systemd/system.conf.d
+
+cat <<EOF >/etc/systemd/system.conf.d/kubernetes-accounting.conf
+
+[Manager]
+
+DefaultCPUAccounting=yes
+
+DefaultMemoryAccounting=yes
+
+EOF
+
+
+
+systemctl daemon-reload
+
+systemctl enable kubelet
+
+systemctl start kubelet
+
 # Specify the module name to compile in below command
 bash -x ${E2E_DIR}/scripts/compile.sh $1
 
