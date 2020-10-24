@@ -256,6 +256,7 @@ type edged struct {
 
 // Register register edged
 func Register(e *v1alpha1.Edged) {
+	fmt.Println("Initing new edged")
 	edgedconfig.InitConfigure(e)
 	edged, err := newEdged(e.Enable)
 	if err != nil {
@@ -263,7 +264,9 @@ func Register(e *v1alpha1.Edged) {
 		os.Exit(1)
 		return
 	}
+	fmt.Println("Edged inited, registering it")
 	core.Register(edged)
+	fmt.Println("Edged registered")
 }
 
 func (e *edged) Name() string {
@@ -284,6 +287,7 @@ func (e *edged) GetRequestedContainersInfo(containerName string, options cadviso
 }
 
 func (e *edged) Start() {
+	fmt.Println("Starting edged...")
 	klog.Info("Starting edged...")
 	e.volumePluginMgr = NewInitializedVolumePluginMgr(e, ProbeVolumePlugins(""))
 
@@ -294,7 +298,7 @@ func (e *edged) Start() {
 	e.hostUtil = hostutil.NewHostUtil()
 
 	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
-
+	fmt.Println("Edged creating volume manager")
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
 		types.NodeName(e.nodeName),
@@ -311,6 +315,7 @@ func (e *edged) Start() {
 		false,
 		volumepathhandler.NewBlockVolumePathHandler(),
 	)
+	fmt.Println("New volume manager created, try to start it...")
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
@@ -339,16 +344,18 @@ func (e *edged) Start() {
 	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csiplugin.PluginHandler))
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
+	fmt.Println("Starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
-
+	fmt.Println("Starting CPU manager")
 	// start the CPU manager in the clcm
 	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
 	}
+	fmt.Println("Starting garbage collection")
 	e.StartGarbageCollection()
-
+	fmt.Println("Starting sync pod.")
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
