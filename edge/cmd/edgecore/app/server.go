@@ -79,8 +79,9 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 					klog.Fatal(fmt.Errorf("Failed to check the running environment: %v", err))
 				}
 			}
-
+			fmt.Println("Registering edge modules")
 			registerModules(config)
+			fmt.Println("Registered edge modules")
 			// start all modules
 			core.Run()
 		},
