@@ -585,8 +585,13 @@ func newEdged(enable bool) (*edged, error) {
 		fmt.Println("Enable metrics")
 		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
 		fmt.Println("image fs info provider created")
+		fmt.Printf("Image FS Info Provider: [%+v]\n", imageFsInfoProvider)
+		fmt.Printf("Root dir: [%+v]\n", ed.rootDirectory)
+		fmt.Printf("ed.rootDirectory: [%+v]", ed.cgroupRoots())
+		fmt.Printf("User legacy cadvisor stats: [%+v]", useLegacyCadvisorStats)
 		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		fmt.Println("Cadvisor interface created")
