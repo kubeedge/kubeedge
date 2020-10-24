@@ -256,6 +256,7 @@ type edged struct {
 
 // Register register edged
 func Register(e *v1alpha1.Edged) {
+	fmt.Println("Initing new edged")
 	edgedconfig.InitConfigure(e)
 	edged, err := newEdged(e.Enable)
 	if err != nil {
@@ -263,7 +264,9 @@ func Register(e *v1alpha1.Edged) {
 		os.Exit(1)
 		return
 	}
+	fmt.Println("Edged inited, registering it")
 	core.Register(edged)
+	fmt.Println("Edged registered")
 }
 
 func (e *edged) Name() string {
@@ -284,6 +287,7 @@ func (e *edged) GetRequestedContainersInfo(containerName string, options cadviso
 }
 
 func (e *edged) Start() {
+	fmt.Println("Starting edged...")
 	klog.Info("Starting edged...")
 	e.volumePluginMgr = NewInitializedVolumePluginMgr(e, ProbeVolumePlugins(""))
 
@@ -294,7 +298,7 @@ func (e *edged) Start() {
 	e.hostUtil = hostutil.NewHostUtil()
 
 	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
-
+	fmt.Println("Edged creating volume manager")
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
 		types.NodeName(e.nodeName),
@@ -311,6 +315,7 @@ func (e *edged) Start() {
 		false,
 		volumepathhandler.NewBlockVolumePathHandler(),
 	)
+	fmt.Println("New volume manager created, try to start it...")
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
 
@@ -339,16 +344,18 @@ func (e *edged) Start() {
 	e.pluginManager.AddHandler(pluginwatcherapi.CSIPlugin, plugincache.PluginHandler(csiplugin.PluginHandler))
 	// Start the plugin manager
 	klog.Infof("starting plugin manager")
+	fmt.Println("Starting plugin manager")
 	go e.pluginManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
-
+	fmt.Println("Starting CPU manager")
 	// start the CPU manager in the clcm
 	err := e.clcm.StartCPUManager(e.GetActivePods, edgedutil.NewSourcesReady(e.isInitPodReady), e.statusManager, e.runtimeService)
 	if err != nil {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
 	}
+	fmt.Println("Starting garbage collection")
 	e.StartGarbageCollection()
-
+	fmt.Println("Starting sync pod.")
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
@@ -403,19 +410,22 @@ func (e *edged) cgroupRoots() []string {
 
 //newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
+	fmt.Println("In the newEdged function")
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
-
+	fmt.Println("backoff created")
 	podManager := podmanager.NewPodManager()
+	fmt.Println("Pod manager created")
 	policy := images.ImageGCPolicy{
 		HighThresholdPercent: int(edgedconfig.Config.ImageGCHighThreshold),
 		LowThresholdPercent:  int(edgedconfig.Config.ImageGCLowThreshold),
 		MinAge:               minAge,
 	}
+	fmt.Println("Image GC Policy created.")
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
-
+	fmt.Println("Event recorder created")
 	metaClient := client.New()
-
+	fmt.Println("Meta client created")
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
 		interfaceName:             edgedconfig.Config.InterfaceName,
@@ -444,45 +454,51 @@ func newEdged(enable bool) (*edged, error) {
 		recorder:                  recorder,
 		enable:                    enable,
 	}
+	fmt.Println("Edged skeleton created")
 	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
+	fmt.Println("Runtime class manager created")
 	err := ed.makePodDir()
 	if err != nil {
 		klog.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
 		os.Exit(1)
 	}
-
+	fmt.Println("Pod dir created")
 	ed.livenessManager = proberesults.NewManager()
+	fmt.Println("Liveness manager created")
 	ed.startupManager = proberesults.NewManager()
-
+	fmt.Println("Startup manager created")
 	nodeRef := &v1.ObjectReference{
 		Kind:      "Node",
 		Name:      string(ed.nodeName),
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
+	fmt.Println("Node reference created")
 	statsProvider := edgeimages.NewStatsProvider()
+	fmt.Println("Stats provider created")
 	containerGCPolicy := kubecontainer.GCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
 		MaxPerPodContainer: int(edgedconfig.Config.MaximumDeadContainersPerPod),
 	}
-
+	fmt.Println("Container GC Policy created")
 	//create and start the docker shim running as a grpc server
 	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
 		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+		fmt.Println("edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated ")
 		streamingConfig := &streaming.Config{
 			StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
 			SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
 			SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
 		}
-
+		fmt.Println("Streaming config created")
 		DockerClientConfig := &dockershim.ClientConfig{
 			DockerEndpoint:            edgedconfig.Config.DockerAddress,
 			ImagePullProgressDeadline: time.Duration(edgedconfig.Config.ImagePullProgressDeadline) * time.Second,
 			EnableSleep:               true,
 			WithTraceDisabled:         true,
 		}
-
+		fmt.Println("Docker client config created")
 		pluginConfigs := dockershim.NetworkPluginSettings{
 			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
 			NonMasqueradeCIDR:  NonMasqueradeCIDR,
@@ -492,7 +508,7 @@ func newEdged(enable bool) (*edged, error) {
 			PluginCacheDir:     edgedconfig.Config.CNICacheDir,
 			MTU:                int(edgedconfig.Config.NetworkPluginMTU),
 		}
-
+		fmt.Println("Plugin configs created")
 		// TODO(daixiang0): Support RedirectContainerStreaming
 		// from k8s getStreamingConfig()
 		streamingConfig.Addr = net.JoinHostPort("localhost", "0")
@@ -511,7 +527,7 @@ func newEdged(enable bool) (*edged, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		fmt.Println("New Docker service created")
 		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
 			edgedconfig.Config.RemoteRuntimeEndpoint, edgedconfig.Config.RemoteImageEndpoint)
 
@@ -520,25 +536,30 @@ func newEdged(enable bool) (*edged, error) {
 		if err := server.Start(); err != nil {
 			return nil, err
 		}
+		fmt.Println("New docker service created")
 		// Create dockerLegacyService when the logging driver is not supported.
 		supported, err := ds.IsCRISupportedLogDriver()
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Supported created")
 		if !supported {
 			ed.dockerLegacyService = ds
+			fmt.Println("ed.dockerLegacyService = ds")
 		}
 	}
 	ed.clusterDNS = convertStrToIP(edgedconfig.Config.ClusterDNS)
+	fmt.Println("Cluster DNS created")
 	ed.dnsConfigurer = kubedns.NewConfigurer(recorder,
 		nodeRef,
 		ed.nodeIP,
 		ed.clusterDNS,
 		edgedconfig.Config.ClusterDomain,
 		ResolvConfDefault)
-
+	fmt.Println("DNS configurer created")
 	//containerRefManager := kubecontainer.NewRefManager()
 	httpClient := &http.Client{}
+	fmt.Println("HTTP client created")
 	runtimeService, imageService, err := getRuntimeAndImageServices(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
 		edgedconfig.Config.RemoteImageEndpoint,
@@ -548,6 +569,7 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("runtime service and image service created")
 	if ed.os == nil {
 		ed.os = kubecontainer.RealOS{}
 	}
@@ -556,27 +578,35 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("Container lifecycle manager created")
 	useLegacyCadvisorStats := cadvisor.UsingLegacyCadvisorStats(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
+	fmt.Println("user legacy cadvisor stats created")
 	if edgedconfig.Config.EnableMetrics {
+		fmt.Println("Enable metrics")
 		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
+		fmt.Println("image fs info provider created")
 		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Cadvisor interface created")
 		ed.cadvisor = cadvisorInterface
 
 		machineInfo, err := ed.cadvisor.MachineInfo()
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Machine info created")
 		ed.machineInfo = machineInfo
 	} else {
 		cadvisorInterface, _ := edgecadvisor.New("")
+		fmt.Println("New cadvisor created")
 		ed.cadvisor = cadvisorInterface
 
 		var machineInfo cadvisorapi.MachineInfo
 		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
+		fmt.Println("machineInfo.MemoryCapacity is: ")
+		fmt.Println(machineInfo.MemoryCapacity)
 		ed.machineInfo = &machineInfo
 	}
 	//creat a log manager
@@ -584,7 +614,7 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
 	}
-
+	fmt.Println("Container log manager created")
 	ed.logManager = logManager
 
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
@@ -614,10 +644,12 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, fmt.Errorf("New generic runtime manager failed, err: %s", err.Error())
 	}
+	fmt.Println("New container runtime manager created")
 
 	if edgedconfig.Config.CgroupsPerQOS && edgedconfig.Config.CgroupRoot == "" {
 		klog.Info("--cgroups-per-qos enabled, but --cgroup-root was not specified.  defaulting to /")
 		edgedconfig.Config.CgroupRoot = "/"
+		fmt.Println("edgedconfig.Config.CgroupRoot = \"/\"")
 	}
 
 	containerManager, err := cm.NewContainerManager(mount.New(""),
@@ -639,24 +671,29 @@ func newEdged(enable bool) (*edged, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init container manager failed with error: %v", err)
 	}
-
+	fmt.Println("New container manager created")
 	ed.containerRuntime = containerRuntime
+	fmt.Println("container runtime set")
 	ed.streamingRuntime = containerRuntime
+	fmt.Println("Streaming runtime set")
 	ed.runner = containerRuntime
+	fmt.Println("Runner set")
 	ed.containerManager = containerManager
+	fmt.Println("Container manager set")
 	ed.runtimeService = runtimeService
-
+	fmt.Println("Runtime service set.")
 	runtimeCache, err := kubecontainer.NewRuntimeCache(ed.containerRuntime)
 	if err != nil {
 		return nil, err
 	}
 	ed.runtimeCache = runtimeCache
-
+	fmt.Println("Runtime cache created and set")
 	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod)
-
+	fmt.Println("Recource analyzer created and set.")
 	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, ed, ed.metaClient)
-
+	fmt.Println("Status manager created and set.")
 	if useLegacyCadvisorStats {
+		fmt.Println("userLegacyCadvisorStats")
 		ed.StatsProvider = stats.NewCadvisorStatsProvider(
 			ed.cadvisor,
 			ed.resourceAnalyzer,
@@ -664,6 +701,7 @@ func newEdged(enable bool) (*edged, error) {
 			ed.runtimeCache,
 			ed.containerRuntime,
 			ed.statusManager)
+		fmt.Println("New Cadvisor stats provider created and set.")
 	} else {
 		ed.StatsProvider = stats.NewCRIStatsProvider(
 			ed.cadvisor,
@@ -674,6 +712,7 @@ func newEdged(enable bool) (*edged, error) {
 			imageService,
 			stats.NewLogMetricsService(),
 			kubecontainer.RealOS{})
+		fmt.Println("New CRI stats provider created and set.")
 	}
 
 	imageGCManager, err := images.NewImageGCManager(
@@ -688,7 +727,7 @@ func newEdged(enable bool) (*edged, error) {
 		return nil, fmt.Errorf("failed to initialize image manager: %v", err)
 	}
 	ed.imageGCManager = imageGCManager
-
+	fmt.Println("Image GC manager created and set.")
 	containerGCManager, err := kubecontainer.NewContainerGC(
 		ed.containerRuntime,
 		containerGCPolicy,
@@ -697,7 +736,9 @@ func newEdged(enable bool) (*edged, error) {
 		return nil, fmt.Errorf("init Container GC Manager failed with error %s", err.Error())
 	}
 	ed.containerGCManager = containerGCManager
+	fmt.Println("New Container GC manager created and set.")
 	ed.server = server.NewServer(ed.podManager)
+	fmt.Println("ed.server created and set\nNew Edged is now created.")
 	return ed, nil
 }
 
