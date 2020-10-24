@@ -218,12 +218,13 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (tm *testManager) Start() {
+	klog.Info("Starting test manager")
 	http.HandleFunc("/pods", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
 	http.HandleFunc("/devices", tm.deviceHandler)
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
-		klog.Errorf("ListenAndServe: %v", err)
+		klog.Errorf("Test manager failed.\nListenAndServe: %v", err)
 	}
 }
