@@ -41,7 +41,7 @@ jobs:
         - export GOFLAGS=-mod=mod
         - sudo apt-get install jq -y
       script:
-        - make verify
+#        - make verify
         - make lint
 
     - stage: "Test on amd64"
