@@ -393,13 +393,13 @@ func (e *edged) cgroupRoots() []string {
 	fmt.Printf("cgroups per QOS: [%+v]\n", edgedconfig.Config.CgroupsPerQOS)
 	fmt.Printf("CGroupDriver: [%+v]\n", edgedconfig.Config.CGroupDriver)
 	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot, edgedconfig.Config.CgroupsPerQOS, edgedconfig.Config.CGroupDriver))
-	fmt.Printf("Got cgroup roots: [%+v]\n",cgroupRoots)
+	fmt.Printf("Got cgroup roots: [%+v]\n", cgroupRoots)
 	kubeletCgroup, err := cm.GetKubeletContainer("")
 	if err != nil {
 		fmt.Printf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.\n", err)
 		klog.Warningf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.", err)
 	} else if kubeletCgroup != "" {
-		fmt.Printf("Got kubelet cgroup: [%+v]\n",kubeletCgroup)
+		fmt.Printf("Got kubelet cgroup: [%+v]\n", kubeletCgroup)
 		cgroupRoots = append(cgroupRoots, kubeletCgroup)
 		fmt.Printf("kubelet cgroup isn't empty string, got cgroup roots: [%+v]\n", cgroupRoots)
 	}
