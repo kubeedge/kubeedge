@@ -87,7 +87,7 @@ func init() {
 // New creates a new cAdvisor Interface for linux systems.
 func New(imageFsInfoProvider ImageFsInfoProvider, rootPath string, cgroupRoots []string, usingLegacyStats bool) (Interface, error) {
 	sysFs := sysfs.NewRealSysFs()
-
+	fmt.Printf("SysFs: [%+v]\n", sysFs)
 	includedMetrics := cadvisormetrics.MetricSet{
 		cadvisormetrics.CpuUsageMetrics:         struct{}{},
 		cadvisormetrics.MemoryUsageMetrics:      struct{}{},
@@ -111,19 +111,22 @@ func New(imageFsInfoProvider ImageFsInfoProvider, rootPath string, cgroupRoots [
 	// Create the cAdvisor container manager.
 	m, err := manager.New(memory.New(statsCacheDuration, nil), sysFs, housekeepingConfig, includedMetrics, http.DefaultClient, cgroupRoots, "")
 	if err != nil {
+		fmt.Printf("Error when creating new cadvisor container manager: [%+v]\n",err)
 		return nil, err
 	}
-
+	fmt.Printf("Got new cadvisor container manager: [%+v]", m)
 	if _, err := os.Stat(rootPath); err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(path.Clean(rootPath), 0750); err != nil {
+				fmt.Printf("error creating root directory %q: %v\n", rootPath, err)
 				return nil, fmt.Errorf("error creating root directory %q: %v", rootPath, err)
 			}
 		} else {
+			fmt.Printf("failed to Stat %q: %v\n", rootPath, err)
 			return nil, fmt.Errorf("failed to Stat %q: %v", rootPath, err)
 		}
 	}
-
+	fmt.Printf("Going to return cadvisor interfacec for Linux system.")
 	return &cadvisorClient{
 		imageFsInfoProvider: imageFsInfoProvider,
 		rootPath:            rootPath,
