@@ -600,7 +600,8 @@ func newEdged(enable bool) (*edged, error) {
 		fmt.Printf("User legacy cadvisor stats: [%+v]", useLegacyCadvisorStats)
 		cgroupRoots := ed.cgroupRoots()
 		fmt.Printf("ed.rootDirectory: [%+v]", cgroupRoots)
-		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, cgroupRoots, useLegacyCadvisorStats)
+		//cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, cgroupRoots, useLegacyCadvisorStats)
+		cadvisorInterface, err := edgecadvisor.New("")
 		if err != nil {
 			fmt.Printf("error when creating new cadvisor interface: [%+v]", err)
 			return nil, err
