@@ -388,21 +388,31 @@ func getRuntimeAndImageServices(remoteRuntimeEndpoint string, remoteImageEndpoin
 
 func (e *edged) cgroupRoots() []string {
 	var cgroupRoots []string
-
+	fmt.Println("edged.cfroupRoots()")
+	fmt.Printf("cgroup root: [%+v]\n", edgedconfig.Config.CgroupRoot)
+	fmt.Printf("cgroups per QOS: [%+v]\n", edgedconfig.Config.CgroupsPerQOS)
+	fmt.Printf("CGroupDriver: [%+v]\n", edgedconfig.Config.CGroupDriver)
 	cgroupRoots = append(cgroupRoots, cm.NodeAllocatableRoot(edgedconfig.Config.CgroupRoot, edgedconfig.Config.CgroupsPerQOS, edgedconfig.Config.CGroupDriver))
+	fmt.Printf("Got cgroup roots: [%+v]\n",cgroupRoots)
 	kubeletCgroup, err := cm.GetKubeletContainer("")
 	if err != nil {
+		fmt.Printf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.\n", err)
 		klog.Warningf("failed to get the edged's cgroup: %v. Edged system container metrics may be missing.", err)
 	} else if kubeletCgroup != "" {
+		fmt.Printf("Got kubelet cgroup: [%+v]\n",kubeletCgroup)
 		cgroupRoots = append(cgroupRoots, kubeletCgroup)
+		fmt.Printf("kubelet cgroup isn't empty string, got cgroup roots: [%+v]\n", cgroupRoots)
 	}
 
 	runtimeCgroup, err := cm.GetRuntimeContainer(e.containerRuntimeName, "")
 	if err != nil {
+		fmt.Printf("failed to get the container runtime's cgroup: %v. Runtime system container metrics may be missing.\n", err)
 		klog.Warningf("failed to get the container runtime's cgroup: %v. Runtime system container metrics may be missing.", err)
 	} else if runtimeCgroup != "" {
+		fmt.Printf("Got not nil runtime cgroup: [%+v]\n", runtimeCgroup)
 		// RuntimeCgroups is optional, so ignore if it isn't specified
 		cgroupRoots = append(cgroupRoots, runtimeCgroup)
+		fmt.Printf("runtime cgroup isn't empty string, got cgroup roots: [%+v]\n", cgroupRoots)
 	}
 
 	return cgroupRoots
@@ -587,8 +597,8 @@ func newEdged(enable bool) (*edged, error) {
 		fmt.Println("image fs info provider created")
 		fmt.Printf("Image FS Info Provider: [%+v]\n", imageFsInfoProvider)
 		fmt.Printf("Root dir: [%+v]\n", ed.rootDirectory)
-		fmt.Printf("ed.rootDirectory: [%+v]", ed.cgroupRoots())
 		fmt.Printf("User legacy cadvisor stats: [%+v]", useLegacyCadvisorStats)
+		fmt.Printf("ed.rootDirectory: [%+v]", ed.cgroupRoots())
 		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
 		if err != nil {
 			fmt.Println(err)
