@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +27,7 @@ const (
 
 // TODO move this files into /edge/pkg/dbtest @kadisi
 func Register(t *v1alpha1.DBTest) {
+	fmt.Printf("Registering test manager with enable: [%+v]\n", t.Enable)
 	core.Register(&testManager{enable: t.Enable})
 }
 
@@ -88,6 +90,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 
 //Function to handle Get/Add/Delete deployment list.
 func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("pod handler got request [%+v]\n", req)
 	var operation string
 	var p v1.Pod
 	if req.Method == http.MethodGet {
@@ -128,6 +131,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 
 //Function to handle device addition and removal from the edgenode
 func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("device handler got request [%+v]\n", req)
 	var operation string
 	var Content interface{}
 
@@ -158,6 +162,8 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("secret handler got request [%+v]\n", req)
+
 	var operation string
 	var p v1.Secret
 	if req.Body != nil {
@@ -188,6 +194,7 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("configmap handler got request [%+v]\n", req)
 	var operation string
 	var p v1.ConfigMap
 	if req.Body != nil {
@@ -219,6 +226,7 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 
 func (tm *testManager) Start() {
 	klog.Info("Starting test manager")
+	fmt.Println("Starting test manager")
 	http.HandleFunc("/pods", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
@@ -226,5 +234,6 @@ func (tm *testManager) Start() {
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
 		klog.Errorf("Test manager failed.\nListenAndServe: %v", err)
+		fmt.Printf("Test manager failed.\nListenAndServe: %v\n", err)
 	}
 }
