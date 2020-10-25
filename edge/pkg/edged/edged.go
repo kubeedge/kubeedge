@@ -595,15 +595,15 @@ func getVersionInfo() (*cadvisorapi.VersionInfo, error) {
 	}, nil
 }
 
-var eventStorageAgeLimit = flag.String("event_storage_age_limit", "default=24h", "Max length of time for which to store events (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is a duration. Default is applied to all non-specified event types")
-var eventStorageEventLimit = flag.String("event_storage_event_limit", "default=100000", "Max number of events to store (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is an integer. Default is applied to all non-specified event types")
+var eventStorageAgeLimitTmp = flag.String("event_storage_age_limit", "default=24h", "Max length of time for which to store events (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is a duration. Default is applied to all non-specified event types")
+var eventStorageEventLimitTmp = flag.String("event_storage_event_limit", "default=100000", "Max number of events to store (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is an integer. Default is applied to all non-specified event types")
 
 // Parses the events StoragePolicy from the flags.
 func parseEventsStoragePolicy() events.StoragePolicy {
 	policy := events.DefaultStoragePolicy()
 
 	// Parse max age.
-	parts := strings.Split(*eventStorageAgeLimit, ",")
+	parts := strings.Split(*eventStorageAgeLimitTmp, ",")
 	for _, part := range parts {
 		items := strings.Split(part, "=")
 		if len(items) != 2 {
@@ -623,7 +623,7 @@ func parseEventsStoragePolicy() events.StoragePolicy {
 	}
 
 	// Parse max number.
-	parts = strings.Split(*eventStorageEventLimit, ",")
+	parts = strings.Split(*eventStorageEventLimitTmp, ",")
 	for _, part := range parts {
 		items := strings.Split(part, "=")
 		if len(items) != 2 {
