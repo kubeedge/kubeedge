@@ -147,7 +147,9 @@ type HouskeepingConfig = struct {
 
 // New takes a memory storage and returns a new manager.
 func New(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepingConfig HouskeepingConfig, includedMetricsSet container.MetricSet, collectorHTTPClient *http.Client, rawContainerCgroupPathPrefixWhiteList []string, perfEventsFile string) (Manager, error) {
+	fmt.Println("In cadvisor manager.New()")
 	if memoryCache == nil {
+		fmt.Println("Memory cache is nil")
 		return nil, fmt.Errorf("manager requires memory storage")
 	}
 
@@ -156,36 +158,42 @@ func New(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepingConfig
 	var err error
 	// Avoid using GetOwnCgroupPath on cgroup v2 as it is not supported by libcontainer
 	if cgroups.IsCgroup2UnifiedMode() {
+		fmt.Println("Cannot detect current cgroup on cgroup v2")
 		klog.Warningf("Cannot detect current cgroup on cgroup v2")
 	} else {
+		fmt.Println("Is NOT cgroup 2 unified mode")
 		selfContainer, err := cgroups.GetOwnCgroupPath("cpu")
 		if err != nil {
+			fmt.Printf("Error when creating selfContainer: [%+v]", err)
 			return nil, err
 		}
+		fmt.Printf("cAdvisor running in container: %q", selfContainer)
 		klog.V(2).Infof("cAdvisor running in container: %q", selfContainer)
 	}
 
 	context := fs.Context{}
-
+	fmt.Printf("Got empty context: [%+v]", context)
 	if err := container.InitializeFSContext(&context); err != nil {
+		fmt.Printf("Error when Initing FS context: [%+v]", err)
 		return nil, err
 	}
 
 	fsInfo, err := fs.NewFsInfo(context)
 	if err != nil {
+		fmt.Printf("Error when Creating new FS Info: [%+v]", err)
 		return nil, err
 	}
-
+	fmt.Printf("FS info: [%+v]", fsInfo)
 	// If cAdvisor was started with host's rootfs mounted, assume that its running
 	// in its own namespaces.
 	inHostNamespace := false
 	if _, err := os.Stat("/rootfs/proc"); os.IsNotExist(err) {
 		inHostNamespace = true
 	}
-
+	fmt.Printf("inHostNamespace: [%+v]", inHostNamespace)
 	// Register for new subcontainers.
 	eventsChannel := make(chan watcher.ContainerEvent, 16)
-
+	fmt.Printf("Created event channel: [%+v]", eventsChannel)
 	newManager := &manager{
 		containers:                            make(map[namespacedContainerName]*containerData),
 		quitChannels:                          make([]chan error, 0, 2),
@@ -204,31 +212,38 @@ func New(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepingConfig
 		nvidiaManager:                         accelerators.NewNvidiaManager(includedMetricsSet),
 		rawContainerCgroupPathPrefixWhiteList: rawContainerCgroupPathPrefixWhiteList,
 	}
-
+	fmt.Printf("Created cadvisor manager skeleton: [%+v]", newManager)
 	machineInfo, err := machine.Info(sysfs, fsInfo, inHostNamespace)
 	if err != nil {
+		fmt.Printf("Error when creating machine info: [%+v]", err)
 		return nil, err
 	}
 	newManager.machineInfo = *machineInfo
 	klog.V(1).Infof("Machine: %+v", newManager.machineInfo)
-
+	fmt.Printf("Machine: %+v", newManager.machineInfo)
 	newManager.perfManager, err = perf.NewManager(perfEventsFile, machineInfo.NumCores, machineInfo.Topology)
 	if err != nil {
+		fmt.Printf("Error when creating perf manager: [%+v]", err)
 		return nil, err
 	}
-
+	fmt.Printf("Created perfManager: [%+v]", newManager.perfManager)
 	newManager.resctrlManager, err = resctrl.NewManager(selfContainer)
 	if err != nil {
+		fmt.Printf("Error when creating resctrlManager perf manager: [%+v]", err)
 		klog.V(4).Infof("Cannot gather resctrl metrics: %v", err)
 	}
+	fmt.Printf("Created perfManager: [%+v]", newManager.resctrlManager)
 
 	versionInfo, err := getVersionInfo()
 	if err != nil {
+		fmt.Printf("Error when creating version info: [%+v]", err)
 		return nil, err
 	}
 	klog.V(1).Infof("Version: %+v", *versionInfo)
-
+	fmt.Printf("Version: %+v", *versionInfo)
 	newManager.eventHandler = events.NewEventManager(parseEventsStoragePolicy())
+	fmt.Printf("Event handler: [%+v]", newManager.eventHandler)
+	fmt.Printf("Returning this  manager: [%+v]", newManager)
 	return newManager, nil
 }
 
