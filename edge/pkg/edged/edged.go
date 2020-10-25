@@ -595,8 +595,8 @@ func getVersionInfo() (*cadvisorapi.VersionInfo, error) {
 	}, nil
 }
 
-var eventStorageAgeLimitTmp = flag.String("event_storage_age_limit", "default=24h", "Max length of time for which to store events (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is a duration. Default is applied to all non-specified event types")
-var eventStorageEventLimitTmp = flag.String("event_storage_event_limit", "default=100000", "Max number of events to store (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is an integer. Default is applied to all non-specified event types")
+var eventStorageAgeLimitTmp = flag.String("event_storage_age_limit_tmp", "default=24h", "Max length of time for which to store events (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is a duration. Default is applied to all non-specified event types")
+var eventStorageEventLimitTmp = flag.String("event_storage_event_limit_tmp", "default=100000", "Max number of events to store (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is an integer. Default is applied to all non-specified event types")
 
 // Parses the events StoragePolicy from the flags.
 func parseEventsStoragePolicy() events.StoragePolicy {
