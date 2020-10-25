@@ -27,12 +27,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/google/cadvisor/cache/memory"
+	cadvisormetrics "github.com/google/cadvisor/container"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
+	"github.com/google/cadvisor/manager"
+	"github.com/google/cadvisor/utils/sysfs"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	kubefeatures "k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/kubelet/logs"
 	"k8s.io/kubernetes/pkg/kubelet/runtimeclass"
+	"k8s.io/utils/pointer"
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -418,6 +426,52 @@ func (e *edged) cgroupRoots() []string {
 	return cgroupRoots
 }
 
+// New creates a new cAdvisor Interface for linux systems.
+func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgroupRoots []string, usingLegacyStats bool) (cadvisor.Interface, error) {
+	sysFs := sysfs.NewRealSysFs()
+	fmt.Printf("SysFs: [%+v]\n", sysFs)
+	includedMetrics := cadvisormetrics.MetricSet{
+		cadvisormetrics.CpuUsageMetrics:         struct{}{},
+		cadvisormetrics.MemoryUsageMetrics:      struct{}{},
+		cadvisormetrics.CpuLoadMetrics:          struct{}{},
+		cadvisormetrics.DiskIOMetrics:           struct{}{},
+		cadvisormetrics.NetworkUsageMetrics:     struct{}{},
+		cadvisormetrics.AcceleratorUsageMetrics: struct{}{},
+		cadvisormetrics.AppMetrics:              struct{}{},
+		cadvisormetrics.ProcessMetrics:          struct{}{},
+	}
+	if usingLegacyStats || utilfeature.DefaultFeatureGate.Enabled(kubefeatures.LocalStorageCapacityIsolation) {
+		includedMetrics[cadvisormetrics.DiskUsageMetrics] = struct{}{}
+	}
+
+	duration := 15 * time.Second
+	housekeepingConfig := manager.HouskeepingConfig{
+		Interval:     &duration,
+		AllowDynamic: pointer.BoolPtr(true),
+	}
+
+	// Create the cAdvisor container manager.
+	m, err := manager.New(memory.New(2*time.Minute, nil), sysFs, housekeepingConfig, includedMetrics, http.DefaultClient, cgroupRoots, "")
+	if err != nil {
+		fmt.Printf("Error when creating new cadvisor container manager: [%+v]\n", err)
+		return nil, err
+	}
+	fmt.Printf("Got new cadvisor container manager: [%+v]", m)
+	if _, err := os.Stat(rootPath); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(path.Clean(rootPath), 0750); err != nil {
+				fmt.Printf("error creating root directory %q: %v\n", rootPath, err)
+				return nil, fmt.Errorf("error creating root directory %q: %v", rootPath, err)
+			}
+		} else {
+			fmt.Printf("failed to Stat %q: %v\n", rootPath, err)
+			return nil, fmt.Errorf("failed to Stat %q: %v", rootPath, err)
+		}
+	}
+	fmt.Printf("Going to return cadvisor interfacec for Linux system but modified.")
+	return edgecadvisor.New("")
+}
+
 //newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
 	fmt.Println("In the newEdged function")
@@ -600,7 +654,7 @@ func newEdged(enable bool) (*edged, error) {
 		fmt.Printf("User legacy cadvisor stats: [%+v]", useLegacyCadvisorStats)
 		cgroupRoots := ed.cgroupRoots()
 		fmt.Printf("ed.rootDirectory: [%+v]", cgroupRoots)
-		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, cgroupRoots, useLegacyCadvisorStats)
+		cadvisorInterface, err := New(imageFsInfoProvider, ed.rootDirectory, cgroupRoots, useLegacyCadvisorStats)
 		//cadvisorInterface, err := edgecadvisor.New("")
 		if err != nil {
 			fmt.Printf("error when creating new cadvisor interface: [%+v]", err)
