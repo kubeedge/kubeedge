@@ -653,6 +653,7 @@ func InitializeFSContext(context *fs.Context) error {
 	fmt.Println("Inside Edged's InitializeFSContext")
 	pluginsLock.Lock()
 	defer pluginsLock.Unlock()
+	fmt.Printf("Plugins to init: [%+v]\n", plugins)
 	for name, plugin := range plugins {
 		fmt.Printf("Initializing for plugin with name: [%+v] and struct: [%+v]\n", name, plugin)
 		err := plugin.InitializeFSContext(context)
@@ -662,6 +663,7 @@ func InitializeFSContext(context *fs.Context) error {
 			return err
 		}
 	}
+	fmt.Println("Plugin init finished.")
 	return nil
 }
 
@@ -692,28 +694,28 @@ func NewManager(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepin
 	}
 
 	context := fs.Context{}
-	fmt.Printf("Got empty context: [%+v]", context)
+	fmt.Printf("Got empty context: [%+v]\n", context)
 	if err := InitializeFSContext(&context); err != nil {
-		fmt.Printf("Error when Initing FS context: [%+v]", err)
+		fmt.Printf("Error when Initing FS context: [%+v]\n", err)
 		return nil, err
 	}
 
 	fsInfo, err := fs.NewFsInfo(context)
 	if err != nil {
-		fmt.Printf("Error when Creating new FS Info: [%+v]", err)
+		fmt.Printf("Error when Creating new FS Info: [%+v]\n", err)
 		return nil, err
 	}
-	fmt.Printf("FS info: [%+v]", fsInfo)
+	fmt.Printf("FS info: [%+v]\n", fsInfo)
 	// If cAdvisor was started with host's rootfs mounted, assume that its running
 	// in its own namespaces.
 	inHostNamespace := false
 	if _, err := os.Stat("/rootfs/proc"); os.IsNotExist(err) {
 		inHostNamespace = true
 	}
-	fmt.Printf("inHostNamespace: [%+v]", inHostNamespace)
+	fmt.Printf("inHostNamespace: [%+v]\n", inHostNamespace)
 	// Register for new subcontainers.
 	eventsChannel := make(chan watcher.ContainerEvent, 16)
-	fmt.Printf("Created event channel: [%+v]", eventsChannel)
+	fmt.Printf("Created event channel: [%+v]\n", eventsChannel)
 	newManager := &cadmanager{
 		containers:                            make(map[namespacedContainerName]*containerData),
 		quitChannels:                          make([]chan error, 0, 2),
@@ -732,38 +734,38 @@ func NewManager(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepin
 		nvidiaManager:                         accelerators.NewNvidiaManager(includedMetricsSet),
 		rawContainerCgroupPathPrefixWhiteList: rawContainerCgroupPathPrefixWhiteList,
 	}
-	fmt.Printf("Created cadvisor manager skeleton: [%+v]", newManager)
+	fmt.Printf("Created cadvisor manager skeleton: [%+v]\n", newManager)
 	machineInfo, err := machine.Info(sysfs, fsInfo, inHostNamespace)
 	if err != nil {
-		fmt.Printf("Error when creating machine info: [%+v]", err)
+		fmt.Printf("Error when creating machine info: [%+v]\n", err)
 		return nil, err
 	}
 	newManager.machineInfo = *machineInfo
 	klog.V(1).Infof("Machine: %+v", newManager.machineInfo)
-	fmt.Printf("Machine: %+v", newManager.machineInfo)
+	fmt.Printf("Machine: %+v\n", newManager.machineInfo)
 	newManager.perfManager, err = perf.NewManager(perfEventsFile, machineInfo.NumCores, machineInfo.Topology)
 	if err != nil {
-		fmt.Printf("Error when creating perf manager: [%+v]", err)
+		fmt.Printf("Error when creating perf manager: [%+v]\n", err)
 		return nil, err
 	}
-	fmt.Printf("Created perfManager: [%+v]", newManager.perfManager)
+	fmt.Printf("Created perfManager: [%+v]\n", newManager.perfManager)
 	newManager.resctrlManager, err = resctrl.NewManager(selfContainer)
 	if err != nil {
-		fmt.Printf("Error when creating resctrlManager perf manager: [%+v]", err)
+		fmt.Printf("Error when creating resctrlManager perf manager: [%+v]\n", err)
 		klog.V(4).Infof("Cannot gather resctrl metrics: %v", err)
 	}
-	fmt.Printf("Created perfManager: [%+v]", newManager.resctrlManager)
+	fmt.Printf("Created resctrlManager: [%+v]\n", newManager.resctrlManager)
 
 	versionInfo, err := getVersionInfo()
 	if err != nil {
-		fmt.Printf("Error when creating version info: [%+v]", err)
+		fmt.Printf("Error when creating version info: [%+v]\n", err)
 		return nil, err
 	}
 	klog.V(1).Infof("Version: %+v", *versionInfo)
-	fmt.Printf("Version: %+v", *versionInfo)
+	fmt.Printf("Version: %+v\n", *versionInfo)
 	newManager.eventHandler = events.NewEventManager(parseEventsStoragePolicy())
-	fmt.Printf("Event handler: [%+v]", newManager.eventHandler)
-	fmt.Printf("Returning this  manager: [%+v]", newManager)
+	fmt.Printf("Event handler: [%+v]\n", newManager.eventHandler)
+	fmt.Printf("Returning this  manager: [%+v]\n", newManager)
 	return manager.New(memoryCache, sysfs, houskeepingConfig, includedMetricsSet, collectorHTTPClient, rawContainerCgroupPathPrefixWhiteList, perfEventsFile)
 }
 
