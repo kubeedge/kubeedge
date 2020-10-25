@@ -645,6 +645,26 @@ func parseEventsStoragePolicy() events.StoragePolicy {
 	return policy
 }
 
+// All registered auth provider plugins.
+var pluginsLock sync.Mutex
+var plugins = make(map[string]cadvisormetrics.Plugin)
+
+func InitializeFSContext(context *fs.Context) error {
+	fmt.Println("Inside Edged's InitializeFSContext")
+	pluginsLock.Lock()
+	defer pluginsLock.Unlock()
+	for name, plugin := range plugins {
+		fmt.Printf("Initializing for plugin with name: [%+v] and struct: [%+v]\n", name, plugin)
+		err := plugin.InitializeFSContext(context)
+		if err != nil {
+			fmt.Printf("FAILED to initializing for plugin with name: [%+v] and struct: [%+v]\n", name, plugin)
+			klog.V(5).Infof("Initialization of the %s context failed: %v", name, err)
+			return err
+		}
+	}
+	return nil
+}
+
 // New takes a memory storage and returns a new manager.
 func NewManager(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepingConfig manager.HouskeepingConfig, includedMetricsSet cadvisormetrics.MetricSet, collectorHTTPClient *http.Client, rawContainerCgroupPathPrefixWhiteList []string, perfEventsFile string) (manager.Manager, error) {
 	fmt.Println("In cadvisor manager.New()")
@@ -673,7 +693,7 @@ func NewManager(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepin
 
 	context := fs.Context{}
 	fmt.Printf("Got empty context: [%+v]", context)
-	if err := cadvisormetrics.InitializeFSContext(&context); err != nil {
+	if err := InitializeFSContext(&context); err != nil {
 		fmt.Printf("Error when Initing FS context: [%+v]", err)
 		return nil, err
 	}
