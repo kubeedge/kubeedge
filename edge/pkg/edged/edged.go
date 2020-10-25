@@ -441,8 +441,10 @@ func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgro
 		cadvisormetrics.AppMetrics:              struct{}{},
 		cadvisormetrics.ProcessMetrics:          struct{}{},
 	}
+	fmt.Printf("Created includeMetrics: [%+v]\n", includedMetrics)
 	if usingLegacyStats || utilfeature.DefaultFeatureGate.Enabled(kubefeatures.LocalStorageCapacityIsolation) {
 		includedMetrics[cadvisormetrics.DiskUsageMetrics] = struct{}{}
+		fmt.Printf("usingLegacyStats: [%+v]\nEnabled: [%+v]\nincludedMetrics[cadvisormetrics.DiskUsageMetrics]: [%+v]\n", usingLegacyStats, utilfeature.DefaultFeatureGate.Enabled(kubefeatures.LocalStorageCapacityIsolation), includedMetrics)
 	}
 
 	duration := 15 * time.Second
@@ -450,7 +452,7 @@ func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgro
 		Interval:     &duration,
 		AllowDynamic: pointer.BoolPtr(true),
 	}
-
+	fmt.Printf("Housekeeping config created: [%+v]", housekeepingConfig)
 	// Create the cAdvisor container manager.
 	m, err := manager.New(memory.New(2*time.Minute, nil), sysFs, housekeepingConfig, includedMetrics, http.DefaultClient, cgroupRoots, "")
 	if err != nil {
@@ -654,7 +656,7 @@ func newEdged(enable bool) (*edged, error) {
 		fmt.Printf("Root dir: [%+v]\n", ed.rootDirectory)
 		fmt.Printf("User legacy cadvisor stats: [%+v]", useLegacyCadvisorStats)
 		cgroupRoots := ed.cgroupRoots()
-		fmt.Printf("ed.rootDirectory: [%+v]", cgroupRoots)
+		fmt.Printf("ed.rootDirectory: [%+v]\n", cgroupRoots)
 		cadvisorInterface, err := New(imageFsInfoProvider, ed.rootDirectory, cgroupRoots, useLegacyCadvisorStats)
 		//cadvisorInterface, err := edgecadvisor.New("")
 		if err != nil {
