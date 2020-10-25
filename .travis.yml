@@ -64,9 +64,7 @@ jobs:
       arch: amd64
       before_script:
         - sudo apt-get update
-        - sudo apt-get install docker-ce -y
-        - sudo apt-get install docker-ce-cli -y
-        - sudo apt-get install containerd.io -y
+        - sudo apt-get install docker-ce docker-ce-cli containerd.io -y
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=mod
       script:
