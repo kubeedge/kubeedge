@@ -428,8 +428,9 @@ func (e *edged) cgroupRoots() []string {
 
 // New creates a new cAdvisor Interface for linux systems.
 func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgroupRoots []string, usingLegacyStats bool) (cadvisor.Interface, error) {
+	fmt.Println("Inside new cadvisor function, before new real sysFs")
 	sysFs := sysfs.NewRealSysFs()
-	fmt.Printf("SysFs: [%+v]\n", sysFs)
+	fmt.Printf("SysFs created successfully: [%+v]\n", sysFs)
 	includedMetrics := cadvisormetrics.MetricSet{
 		cadvisormetrics.CpuUsageMetrics:         struct{}{},
 		cadvisormetrics.MemoryUsageMetrics:      struct{}{},
