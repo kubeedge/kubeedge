@@ -26,12 +26,29 @@ package edged
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"github.com/google/cadvisor/accelerators"
 	"github.com/google/cadvisor/cache/memory"
+	"github.com/google/cadvisor/collector"
 	cadvisormetrics "github.com/google/cadvisor/container"
+	"github.com/google/cadvisor/container/docker"
+	"github.com/google/cadvisor/events"
+	"github.com/google/cadvisor/fs"
 	cadvisorapi2 "github.com/google/cadvisor/info/v2"
+	"github.com/google/cadvisor/machine"
 	"github.com/google/cadvisor/manager"
+	"github.com/google/cadvisor/perf"
+	"github.com/google/cadvisor/resctrl"
+	catvisorstats "github.com/google/cadvisor/stats"
+	"github.com/google/cadvisor/summary"
+	cadvisorversion "github.com/google/cadvisor/version"
+	"strconv"
+
+	"github.com/google/cadvisor/utils/cpuload"
 	"github.com/google/cadvisor/utils/sysfs"
+	"github.com/google/cadvisor/watcher"
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/kubelet/logs"
@@ -454,7 +471,7 @@ func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgro
 	}
 	fmt.Printf("Housekeeping config created: [%+v]", housekeepingConfig)
 	// Create the cAdvisor container manager.
-	m, err := manager.New(memory.New(2*time.Minute, nil), sysFs, housekeepingConfig, includedMetrics, http.DefaultClient, cgroupRoots, "")
+	m, err := NewManager(memory.New(2*time.Minute, nil), sysFs, housekeepingConfig, includedMetrics, http.DefaultClient, cgroupRoots, "")
 	if err != nil {
 		fmt.Printf("Error when creating new cadvisor container manager: [%+v]\n", err)
 		return nil, err
@@ -473,6 +490,261 @@ func New(imageFsInfoProvider cadvisor.ImageFsInfoProvider, rootPath string, cgro
 	}
 	fmt.Printf("Going to return cadvisor interfacec for Linux system but modified.")
 	return edgecadvisor.New("")
+}
+
+// A namespaced container name.
+type namespacedContainerName struct {
+	// The namespace of the container. Can be empty for the root namespace.
+	Namespace string
+
+	// The name of the container in this namespace.
+	Name string
+}
+type containerInfo struct {
+	cadvisorapi.ContainerReference
+	Subcontainers []cadvisorapi.ContainerReference
+	Spec          cadvisorapi.ContainerSpec
+}
+type containerData struct {
+	handler                  cadvisormetrics.ContainerHandler
+	info                     containerInfo
+	memoryCache              *memory.InMemoryCache
+	lock                     sync.Mutex
+	loadReader               cpuload.CpuLoadReader
+	summaryReader            *summary.StatsSummary
+	loadAvg                  float64 // smoothed load average seen so far.
+	housekeepingInterval     time.Duration
+	maxHousekeepingInterval  time.Duration
+	allowDynamicHousekeeping bool
+	infoLastUpdatedTime      time.Time
+	statsLastUpdatedTime     time.Time
+	lastErrorTime            time.Time
+	//  used to track time
+	clock clock.Clock
+
+	// Decay value used for load average smoothing. Interval length of 10 seconds is used.
+	loadDecay float64
+
+	// Whether to log the usage of this container when it is updated.
+	logUsage bool
+
+	// Tells the container to stop.
+	stop chan struct{}
+
+	// Tells the container to immediately collect stats
+	onDemandChan chan chan struct{}
+
+	// Runs custom metric collectors.
+	collectorManager collector.CollectorManager
+
+	// nvidiaCollector updates stats for Nvidia GPUs attached to the container.
+	nvidiaCollector catvisorstats.Collector
+
+	// perfCollector updates stats for perf_event cgroup controller.
+	perfCollector catvisorstats.Collector
+
+	// resctrlCollector updates stats for resctrl controller.
+	resctrlCollector catvisorstats.Collector
+}
+
+type cadmanager struct {
+	containers               map[namespacedContainerName]*containerData
+	containersLock           sync.RWMutex
+	memoryCache              *memory.InMemoryCache
+	fsInfo                   fs.FsInfo
+	sysFs                    sysfs.SysFs
+	machineMu                sync.RWMutex // protects machineInfo
+	machineInfo              cadvisorapi.MachineInfo
+	quitChannels             []chan error
+	cadvisorContainer        string
+	inHostNamespace          bool
+	eventHandler             events.EventManager
+	startupTime              time.Time
+	maxHousekeepingInterval  time.Duration
+	allowDynamicHousekeeping bool
+	includedMetrics          cadvisormetrics.MetricSet
+	containerWatchers        []watcher.ContainerWatcher
+	eventsChannel            chan watcher.ContainerEvent
+	collectorHTTPClient      *http.Client
+	nvidiaManager            catvisorstats.Manager
+	perfManager              catvisorstats.Manager
+	resctrlManager           catvisorstats.Manager
+	// List of raw container cgroup path prefix whitelist.
+	rawContainerCgroupPathPrefixWhiteList []string
+}
+
+func getVersionInfo() (*cadvisorapi.VersionInfo, error) {
+	kernelVersion := machine.KernelVersion()
+	osVersion := machine.ContainerOsVersion()
+	dockerVersion, err := docker.VersionString()
+	if err != nil {
+		return nil, err
+	}
+	dockerAPIVersion, err := docker.APIVersionString()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cadvisorapi.VersionInfo{
+		KernelVersion:      kernelVersion,
+		ContainerOsVersion: osVersion,
+		DockerVersion:      dockerVersion,
+		DockerAPIVersion:   dockerAPIVersion,
+		CadvisorVersion:    cadvisorversion.Info["version"],
+		CadvisorRevision:   cadvisorversion.Info["revision"],
+	}, nil
+}
+
+var eventStorageAgeLimit = flag.String("event_storage_age_limit", "default=24h", "Max length of time for which to store events (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is a duration. Default is applied to all non-specified event types")
+var eventStorageEventLimit = flag.String("event_storage_event_limit", "default=100000", "Max number of events to store (per type). Value is a comma separated list of key values, where the keys are event types (e.g.: creation, oom) or \"default\" and the value is an integer. Default is applied to all non-specified event types")
+
+// Parses the events StoragePolicy from the flags.
+func parseEventsStoragePolicy() events.StoragePolicy {
+	policy := events.DefaultStoragePolicy()
+
+	// Parse max age.
+	parts := strings.Split(*eventStorageAgeLimit, ",")
+	for _, part := range parts {
+		items := strings.Split(part, "=")
+		if len(items) != 2 {
+			klog.Warningf("Unknown event storage policy %q when parsing max age", part)
+			continue
+		}
+		dur, err := time.ParseDuration(items[1])
+		if err != nil {
+			klog.Warningf("Unable to parse event max age duration %q: %v", items[1], err)
+			continue
+		}
+		if items[0] == "default" {
+			policy.DefaultMaxAge = dur
+			continue
+		}
+		policy.PerTypeMaxAge[cadvisorapi.EventType(items[0])] = dur
+	}
+
+	// Parse max number.
+	parts = strings.Split(*eventStorageEventLimit, ",")
+	for _, part := range parts {
+		items := strings.Split(part, "=")
+		if len(items) != 2 {
+			klog.Warningf("Unknown event storage policy %q when parsing max event limit", part)
+			continue
+		}
+		val, err := strconv.Atoi(items[1])
+		if err != nil {
+			klog.Warningf("Unable to parse integer from %q: %v", items[1], err)
+			continue
+		}
+		if items[0] == "default" {
+			policy.DefaultMaxNumEvents = val
+			continue
+		}
+		policy.PerTypeMaxNumEvents[cadvisorapi.EventType(items[0])] = val
+	}
+
+	return policy
+}
+
+// New takes a memory storage and returns a new manager.
+func NewManager(memoryCache *memory.InMemoryCache, sysfs sysfs.SysFs, houskeepingConfig manager.HouskeepingConfig, includedMetricsSet cadvisormetrics.MetricSet, collectorHTTPClient *http.Client, rawContainerCgroupPathPrefixWhiteList []string, perfEventsFile string) (manager.Manager, error) {
+	fmt.Println("In cadvisor manager.New()")
+	if memoryCache == nil {
+		fmt.Println("Memory cache is nil")
+		return nil, fmt.Errorf("manager requires memory storage")
+	}
+
+	// Detect the container we are running on.
+	selfContainer := "/"
+	var err error
+	// Avoid using GetOwnCgroupPath on cgroup v2 as it is not supported by libcontainer
+	if cgroups.IsCgroup2UnifiedMode() {
+		fmt.Println("Cannot detect current cgroup on cgroup v2")
+		klog.Warningf("Cannot detect current cgroup on cgroup v2")
+	} else {
+		fmt.Println("Is NOT cgroup 2 unified mode")
+		selfContainer, err := cgroups.GetOwnCgroupPath("cpu")
+		if err != nil {
+			fmt.Printf("Error when creating selfContainer: [%+v]", err)
+			return nil, err
+		}
+		fmt.Printf("cAdvisor running in container: %q", selfContainer)
+		klog.V(2).Infof("cAdvisor running in container: %q", selfContainer)
+	}
+
+	context := fs.Context{}
+	fmt.Printf("Got empty context: [%+v]", context)
+	if err := cadvisormetrics.InitializeFSContext(&context); err != nil {
+		fmt.Printf("Error when Initing FS context: [%+v]", err)
+		return nil, err
+	}
+
+	fsInfo, err := fs.NewFsInfo(context)
+	if err != nil {
+		fmt.Printf("Error when Creating new FS Info: [%+v]", err)
+		return nil, err
+	}
+	fmt.Printf("FS info: [%+v]", fsInfo)
+	// If cAdvisor was started with host's rootfs mounted, assume that its running
+	// in its own namespaces.
+	inHostNamespace := false
+	if _, err := os.Stat("/rootfs/proc"); os.IsNotExist(err) {
+		inHostNamespace = true
+	}
+	fmt.Printf("inHostNamespace: [%+v]", inHostNamespace)
+	// Register for new subcontainers.
+	eventsChannel := make(chan watcher.ContainerEvent, 16)
+	fmt.Printf("Created event channel: [%+v]", eventsChannel)
+	newManager := &cadmanager{
+		containers:                            make(map[namespacedContainerName]*containerData),
+		quitChannels:                          make([]chan error, 0, 2),
+		memoryCache:                           memoryCache,
+		fsInfo:                                fsInfo,
+		sysFs:                                 sysfs,
+		cadvisorContainer:                     selfContainer,
+		inHostNamespace:                       inHostNamespace,
+		startupTime:                           time.Now(),
+		maxHousekeepingInterval:               *houskeepingConfig.Interval,
+		allowDynamicHousekeeping:              *houskeepingConfig.AllowDynamic,
+		includedMetrics:                       includedMetricsSet,
+		containerWatchers:                     []watcher.ContainerWatcher{},
+		eventsChannel:                         eventsChannel,
+		collectorHTTPClient:                   collectorHTTPClient,
+		nvidiaManager:                         accelerators.NewNvidiaManager(includedMetricsSet),
+		rawContainerCgroupPathPrefixWhiteList: rawContainerCgroupPathPrefixWhiteList,
+	}
+	fmt.Printf("Created cadvisor manager skeleton: [%+v]", newManager)
+	machineInfo, err := machine.Info(sysfs, fsInfo, inHostNamespace)
+	if err != nil {
+		fmt.Printf("Error when creating machine info: [%+v]", err)
+		return nil, err
+	}
+	newManager.machineInfo = *machineInfo
+	klog.V(1).Infof("Machine: %+v", newManager.machineInfo)
+	fmt.Printf("Machine: %+v", newManager.machineInfo)
+	newManager.perfManager, err = perf.NewManager(perfEventsFile, machineInfo.NumCores, machineInfo.Topology)
+	if err != nil {
+		fmt.Printf("Error when creating perf manager: [%+v]", err)
+		return nil, err
+	}
+	fmt.Printf("Created perfManager: [%+v]", newManager.perfManager)
+	newManager.resctrlManager, err = resctrl.NewManager(selfContainer)
+	if err != nil {
+		fmt.Printf("Error when creating resctrlManager perf manager: [%+v]", err)
+		klog.V(4).Infof("Cannot gather resctrl metrics: %v", err)
+	}
+	fmt.Printf("Created perfManager: [%+v]", newManager.resctrlManager)
+
+	versionInfo, err := getVersionInfo()
+	if err != nil {
+		fmt.Printf("Error when creating version info: [%+v]", err)
+		return nil, err
+	}
+	klog.V(1).Infof("Version: %+v", *versionInfo)
+	fmt.Printf("Version: %+v", *versionInfo)
+	newManager.eventHandler = events.NewEventManager(parseEventsStoragePolicy())
+	fmt.Printf("Event handler: [%+v]", newManager.eventHandler)
+	fmt.Printf("Returning this  manager: [%+v]", newManager)
+	return manager.New(memoryCache, sysfs, houskeepingConfig, includedMetricsSet, collectorHTTPClient, rawContainerCgroupPathPrefixWhiteList, perfEventsFile)
 }
 
 //newEdged creates new edged object and initialises it
