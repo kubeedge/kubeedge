@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package main
 
 import (
@@ -7,11 +23,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config is the modbus mapper configuration.
 type Config struct {
 	Mqtt      Mqtt   `yaml:"mqtt,omitempty"`
 	Configmap string `yaml:"configmap"`
 }
 
+// Mqtt is the Mqtt configuration.
 type Mqtt struct {
 	ServerAddress string `yaml:"server,omitempty"`
 	Username      string `yaml:"username,omitempty"`
@@ -19,25 +37,7 @@ type Mqtt struct {
 	Cert          string `yaml:"certification,omitempty"`
 }
 
-func NewDefaultConfig() *Config {
-	return &Config{
-		Mqtt: Mqtt{
-			ServerAddress: "tcp://127.0.0.1:1883",
-			Username:      "",
-			Password:      "",
-			Cert:          "",
-		},
-		Configmap: "/opt/kubeedge/deviceProfile.json",
-	}
-}
-
-func (c *Config) MustParse(configFile string) {
-	err := c.Parse(configFile)
-	if err != nil {
-		panic(err)
-	}
-}
-
+// Parse parse the configuration file. If failed, return error.
 func (c *Config) Parse(configFile string) error {
 	cf, err := ioutil.ReadFile(configFile)
 	if err != nil {

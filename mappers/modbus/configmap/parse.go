@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package configmap
 
 import (
@@ -10,22 +26,22 @@ import (
 	"k8s.io/klog"
 )
 
+// Parse parse the configmap.
 func Parse(path string,
 	devices map[string]*globals.ModbusDev,
 	dms map[string]mappercommon.DeviceModel,
 	protocols map[string]mappercommon.Protocol) error {
+	var deviceProfile mappercommon.DeviceProfile
+
 	jsonFile, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	var deviceProfile mappercommon.DeviceProfile
-	err = json.Unmarshal(jsonFile, &deviceProfile)
-	if err != nil {
+	if err = json.Unmarshal(jsonFile, &deviceProfile); err != nil {
 		return err
 	}
 
-	klog.Error("profile len:", len(deviceProfile.DeviceInstances))
 	for i := 0; i < len(deviceProfile.DeviceInstances); i++ {
 		instance := deviceProfile.DeviceInstances[i]
 		j := 0
@@ -35,7 +51,6 @@ func Parse(path string,
 				break
 			}
 		}
-		// Protocol not found
 		if j == len(deviceProfile.Protocols) {
 			err = errors.New("Protocol not found")
 			return err
@@ -66,7 +81,6 @@ func Parse(path string,
 					break
 				}
 			}
-
 			if l == len(deviceProfile.DeviceModels) {
 				err = errors.New("Device model not found")
 				return err
@@ -82,11 +96,11 @@ func Parse(path string,
 					break
 				}
 			}
-
 			if l == len(instance.PropertyVisitors) {
 				return errors.New("PropertyVisitor not found")
 			}
 		}
+
 		for k := 0; k < len(instance.Datas.Properties); k++ {
 			name := instance.Datas.Properties[k].PropertyName
 			l := 0
@@ -96,7 +110,6 @@ func Parse(path string,
 					break
 				}
 			}
-
 			if l == len(instance.PropertyVisitors) {
 				return errors.New("PropertyVisitor not found")
 			}
@@ -104,7 +117,7 @@ func Parse(path string,
 
 		devices[instance.ID] = new(globals.ModbusDev)
 		devices[instance.ID].Instance = instance
-		klog.Error("Instance id:", instance.ID)
+		klog.Info("Instance: ", instance.ID, instance)
 	}
 
 	for i := 0; i < len(deviceProfile.DeviceModels); i++ {

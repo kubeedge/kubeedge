@@ -81,7 +81,10 @@
 				"dataBits": 8,
 				"parity": "even",
 				"stopBits": 1
-			}
+			},
+            "customizedValues": {
+                "serialType": "RS485"
+            }
 		}
 	}]
 }

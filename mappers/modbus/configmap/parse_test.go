@@ -1,19 +1,39 @@
 package configmap
 
 import (
-	"fmt"
+	"encoding/json"
+	"testing"
 
-	"github.com/kubeedge/kubeedge/mappers/common"
-	"github.com/kubeedge/kubeedge/mappers/modbus/src/configmap"
+	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
+	. "github.com/kubeedge/kubeedge/mappers/modbus/globals"
+	"github.com/stretchr/testify/assert"
 )
 
-func test_parse() {
-	var dp common.DeviceProfile
+func TestParse(t *testing.T) {
+	var devices map[string]*ModbusDev
+	var models map[string]mappercommon.DeviceModel
+	var protocols map[string]mappercommon.Protocol
 
-	err := configmap.Parse("/home/wei/go/src/github.com/kubeedge/kubeedge/mappers/modbus/configmap/configmap_test.json", &dp)
-	if err != nil {
-		fmt.Print(err)
-	} else {
-		fmt.Printf("%+v\n", dp)
+	devices = make(map[string]*ModbusDev)
+	models = make(map[string]mappercommon.DeviceModel)
+	protocols = make(map[string]mappercommon.Protocol)
+
+	assert.Nil(t, Parse("./configmap_test.json", devices, models, protocols))
+	for _, device := range devices {
+		var pcc ModbusProtocolCommonConfig
+		assert.Nil(t, json.Unmarshal([]byte(device.Instance.PProtocol.ProtocolCommonConfig), &pcc))
+		assert.Equal(t, "RS485", pcc.CustomizedValues["serialType"])
 	}
+}
+
+func TestParseNeg(t *testing.T) {
+	var devices map[string]*ModbusDev
+	var models map[string]mappercommon.DeviceModel
+	var protocols map[string]mappercommon.Protocol
+
+	devices = make(map[string]*ModbusDev)
+	models = make(map[string]mappercommon.DeviceModel)
+	protocols = make(map[string]mappercommon.Protocol)
+
+	assert.NotNil(t, Parse("./configmap_negtest.json", devices, models, protocols))
 }

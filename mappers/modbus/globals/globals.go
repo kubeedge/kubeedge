@@ -1,37 +1,30 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package globals
 
 import (
-	"time"
-
-	"github.com/goburrow/modbus"
-
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
+	"github.com/kubeedge/kubeedge/mappers/modbus/driver"
 )
 
-type ModbusTcp struct {
-	SlaveId  byte
-	DeviceIp string
-	TcpPort  string
-}
-
-type ModbusRtu struct {
-	SlaveId    byte
-	SerialName string
-	BaudRate   int
-	DataBits   int
-	StopBits   int
-	Parity     string
-	Timeout    time.Duration
-}
-
-type ModbusClient struct {
-	Client  modbus.Client
-	Handler interface{}
-	Config  interface{}
-}
+// ModbusDev is the modbus device configuration and client information.
 type ModbusDev struct {
 	Instance     mappercommon.DeviceInstance
-	ModbusClient ModbusClient
+	ModbusClient driver.ModbusClient
 }
 
 var MqttClient mappercommon.MqttClient

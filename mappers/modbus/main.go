@@ -17,37 +17,34 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
-	"github.com/kubeedge/kubeedge/mappers/modbus/dev"
+	dev "github.com/kubeedge/kubeedge/mappers/modbus/device"
 	"github.com/kubeedge/kubeedge/mappers/modbus/globals"
 	"k8s.io/klog"
 )
 
 func main() {
 	var err error
-	var c Config
+	var config Config
 
-	err = c.Parse("./config.yaml")
-	if err != nil {
+	if err = config.Parse("./config.yaml"); err != nil {
 		klog.Error(err)
 		os.Exit(1)
 	}
-	fmt.Println(c.Configmap)
-	err = dev.DevInit(c.Configmap)
-	if err != nil {
+	klog.Info(config.Configmap)
+
+	globals.MqttClient = mappercommon.MqttClient{IP: config.Mqtt.ServerAddress,
+		User:   config.Mqtt.Username,
+		Passwd: config.Mqtt.Password,
+		Cert:   config.Mqtt.Cert}
+	if err = globals.MqttClient.Connect(); err != nil {
 		klog.Error(err)
 		os.Exit(1)
 	}
 
-	globals.MqttClient = mappercommon.MqttClient{IP: c.Mqtt.ServerAddress,
-		User:   c.Mqtt.Username,
-		Passwd: c.Mqtt.Password}
-	klog.Info("Mqtt: ", c.Mqtt.ServerAddress, c.Mqtt.Username, c.Mqtt.Password)
-	err = globals.MqttClient.Connect()
-	if err != nil {
+	if err = dev.DevInit(config.Configmap); err != nil {
 		klog.Error(err)
 		os.Exit(1)
 	}
