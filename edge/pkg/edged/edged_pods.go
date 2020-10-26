@@ -1028,7 +1028,6 @@ func toKubeContainerStatus(phase v1.PodPhase, status *v1.ContainerStatus) v1.Con
 		Image:        status.Image,
 		ContainerID:  status.ContainerID,
 	}
-	klog.Infof("Container status: \n[$+%v]\n", status)
 	switch phase {
 	case v1.PodRunning:
 		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: status.State.Running.StartedAt}

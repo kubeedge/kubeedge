@@ -346,7 +346,6 @@ func (e *edged) Start() {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
 	}
-	e.StartGarbageCollection()
 
 	klog.Infof("starting syncPod")
 	e.syncPod()
@@ -535,7 +534,6 @@ func newEdged(enable bool) (*edged, error) {
 		edgedconfig.Config.ClusterDomain,
 		ResolvConfDefault)
 
-	//containerRefManager := kubecontainer.NewRefManager()
 	httpClient := &http.Client{}
 	runtimeService, imageService, err := getRuntimeAndImageServices(
 		edgedconfig.Config.RemoteRuntimeEndpoint,
@@ -577,7 +575,7 @@ func newEdged(enable bool) (*edged, error) {
 		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
 		ed.machineInfo = &machineInfo
 	}
-	//creat a log manager
+	// creat a log manager
 	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "1", 2)
 	if err != nil {
 		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
@@ -590,7 +588,6 @@ func newEdged(enable bool) (*edged, error) {
 		ed.livenessManager,
 		ed.startupManager,
 		"",
-		//containerRefManager,
 		ed.machineInfo,
 		ed,
 		ed.os,
