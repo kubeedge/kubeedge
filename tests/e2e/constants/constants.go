@@ -24,4 +24,6 @@ const (
 	AppHandler        = "/api/v1/namespaces/default/pods"
 	NodeHandler       = "/api/v1/nodes"
 	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
+	ScHandler         = "/apis/storage.k8s.io/v1/storageclasses"
+	PvcHandler        = "/api/v1/namespaces/default/persistentvolumeclaims"
 )

@@ -193,5 +193,53 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			}
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 		})
+		It("E2E_POD_DEPLOYMENT_6: Create pod with csi-hostpath volume successfully", func() {
+			scName := "csi-hostpath-sc"
+			//Use hostpath driver for csi to test
+			provisioner := "csi-hostpath"
+			sc := utils.NewStorageClass(scName, provisioner)
+			IsScCreated := utils.CreateStorageClass(ctx.Cfg.K8SMasterForKubeEdge+constants.ScHandler, sc)
+			Expect(IsScCreated).Should(BeTrue())
+
+			//Generate the random string and assign as pvcName
+			pvcName := "csi-hostpath-pvc-" + utils.GetRandomString(5)
+			pvc := utils.NewPersistentVolumeClaim(pvcName, scName)
+			IsPvcCreated := utils.CreatePersistentVolumeClaim(ctx.Cfg.K8SMasterForKubeEdge+constants.PvcHandler, pvc)
+			Expect(IsPvcCreated).Should(BeTrue())
+
+			//Check all pvc in "Bound" state
+			pvclist, err := utils.GetPersistentVolumeClaims(ctx.Cfg.K8SMasterForKubeEdge + constants.PvcHandler)
+			Expect(err).To(BeNil())
+			utils.CheckPersistentVolumeClaimBindingState(ctx.Cfg.K8SMasterForKubeEdge+constants.PvcHandler, pvclist)
+
+			//Generate the random string and assign as podName
+			podName := "pod-app-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			pod.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{{
+				Name:      "csi-hp",
+				MountPath: "/csi-hp",
+			}}
+			pod.Spec.Volumes = []corev1.Volume{{
+				Name: "csi-hp",
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: pvcName},
+				},
+			}}
+
+			podlist := CreatePodTest(nodeName, podName, ctx, pod)
+			for _, pod := range podlist.Items {
+				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
+				Expect(StatusCode).Should(Equal(http.StatusOK))
+			}
+			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
+
+			statusCode := utils.DeletePersistentVolumeClaim(ctx.Cfg.K8SMasterForKubeEdge+constants.PvcHandler, pvcName)
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			utils.CheckPersistentVolumeClaimDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.PvcHandler, pvclist)
+
+			statusCode = utils.DeleteStorageClass(ctx.Cfg.K8SMasterForKubeEdge+constants.ScHandler, scName)
+			Expect(statusCode).Should(Equal(http.StatusOK))
+		})
 	})
 })

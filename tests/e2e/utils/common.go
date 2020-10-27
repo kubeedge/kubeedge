@@ -34,6 +34,7 @@ import (
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -294,6 +295,36 @@ func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 	return &pod
 }
 
+func NewStorageClass(scName, provisioner string) *storagev1.StorageClass {
+	sc := storagev1.StorageClass{
+		TypeMeta: metav1.TypeMeta{APIVersion: "storage.k8s.io/v1", Kind: "StorageClass"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: scName,
+		},
+		Provisioner: provisioner,
+	}
+	return &sc
+}
+
+func NewPersistentVolumeClaim(pvcName, scName string) *v1.PersistentVolumeClaim {
+	pvc := v1.PersistentVolumeClaim{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "PersistentVolumeClaim"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pvcName,
+		},
+		Spec: v1.PersistentVolumeClaimSpec{
+			AccessModes: []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					v1.ResourceName(v1.ResourceStorage): resource.MustParse("1Gi"),
+				},
+			},
+			StorageClassName: &scName,
+		},
+	}
+	return &pvc
+}
+
 // GetDeployments to get the deployments list
 func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
 	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
@@ -416,6 +447,196 @@ func DeleteDeployment(DeploymentAPI, deploymentname string) int {
 	defer resp.Body.Close()
 
 	return resp.StatusCode
+}
+
+func CreateStorageClass(apiserver string, sc *storagev1.StorageClass) bool {
+	var req *http.Request
+	var err error
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+	respBytes, err := json.Marshal(sc)
+	if err != nil {
+		Fatalf("Marshalling body failed: %v", err)
+	}
+	req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true
+}
+
+func DeleteStorageClass(apiserver, scName string) int {
+	resp, err := SendHTTPRequest(http.MethodDelete, apiserver+"/"+scName)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return -1
+	}
+
+	defer resp.Body.Close()
+
+	return resp.StatusCode
+}
+
+func GetStorageClasses(apiserver string) (storagev1.StorageClassList, error) {
+	var scs storagev1.StorageClassList
+	var resp *http.Response
+	var err error
+
+	resp, err = SendHTTPRequest(http.MethodGet, apiserver)
+	if err != nil {
+		Fatalf("Frame HTTP request failed: %v", err)
+		return scs, nil
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return scs, nil
+	}
+	err = json.Unmarshal(contents, &scs)
+	if err != nil {
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
+		return scs, nil
+	}
+	return scs, nil
+}
+
+func CreatePersistentVolumeClaim(apiserver string, pvc *v1.PersistentVolumeClaim) bool {
+	var req *http.Request
+	var err error
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+	respBytes, err := json.Marshal(pvc)
+	if err != nil {
+		Fatalf("Marshalling body failed: %v", err)
+	}
+	req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true
+}
+
+func DeletePersistentVolumeClaim(apiserver, pvcName string) int {
+	resp, err := SendHTTPRequest(http.MethodDelete, apiserver+"/"+pvcName)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return -1
+	}
+
+	defer resp.Body.Close()
+
+	return resp.StatusCode
+}
+
+func GetPersistentVolumeClaims(apiserver string) (v1.PersistentVolumeClaimList, error) {
+	var pvcs v1.PersistentVolumeClaimList
+	var resp *http.Response
+	var err error
+
+	resp, err = SendHTTPRequest(http.MethodGet, apiserver)
+	if err != nil {
+		Fatalf("Frame HTTP request failed: %v", err)
+		return pvcs, nil
+	}
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return pvcs, nil
+	}
+	err = json.Unmarshal(contents, &pvcs)
+	if err != nil {
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
+		return pvcs, nil
+	}
+	return pvcs, nil
+}
+
+func GetPersistentVolumeClaimState(apiserver string) (string, int) {
+	var pvc v1.PersistentVolumeClaim
+
+	resp, err := SendHTTPRequest(http.MethodGet, apiserver)
+	if err != nil {
+		Fatalf("GetPodState :SenHttpRequest failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			Fatalf("HTTP Response reading has failed: %v", err)
+		}
+		err = json.Unmarshal(contents, &pvc)
+		if err != nil {
+			Fatalf("Unmarshal HTTP Response has failed: %v", err)
+		}
+		return string(pvc.Status.Phase), resp.StatusCode
+	}
+
+	return "", resp.StatusCode
+}
+
+func CheckPersistentVolumeClaimBindingState(apiserver string, pvclist v1.PersistentVolumeClaimList) {
+	gomega.Eventually(func() int {
+		var count int
+		for _, pvc := range pvclist.Items {
+			state, _ := GetPersistentVolumeClaimState(apiserver + "/" + pvc.Name)
+			Infof("PvcName: %s PvcStatus: %s", pvc.Name, state)
+			if state == "Bound" {
+				count++
+			}
+		}
+		return count
+	}, "600s", "2s").Should(gomega.Equal(len(pvclist.Items)), "PersistentVolumeClaim bind is Unsuccessful, some have not come to Bound State")
+}
+
+func CheckPersistentVolumeClaimDeleteState(apiserver string, pvclist v1.PersistentVolumeClaimList) {
+	gomega.Eventually(func() int {
+		var count int
+		for _, pvc := range pvclist.Items {
+			status, statusCode := GetPersistentVolumeClaimState(apiserver + "/" + pvc.Name)
+			Infof("PvcName: %s status: %s StatusCode: %d", pvc.Name, status, statusCode)
+			if statusCode == 404 {
+				count++
+			}
+		}
+		return count
+	}, "600s", "4s").Should(gomega.Equal(len(pvclist.Items)), "Delete PersistentVolumeClaim is Unsuccessful, some are not deleted within the time")
 }
 
 // PrintCombinedOutput to show the os command injuction in combined format
