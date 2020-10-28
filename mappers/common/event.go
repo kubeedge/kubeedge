@@ -44,6 +44,8 @@ type MqttClient struct {
 	Client     mqtt.Client
 }
 
+// newTLSConfig new TLS configuration.
+// Only one side check. Mqtt broker check the cert from client.
 func newTLSConfig(certfile string, privateKey string) (*tls.Config, error) {
 	// Import client certificate/key pair
 	cert, err := tls.LoadX509KeyPair(certfile, privateKey)

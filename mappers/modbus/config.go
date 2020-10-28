@@ -39,6 +39,7 @@ type Mqtt struct {
 	PrivateKey    string `yaml:"privatekey,omitempty"`
 }
 
+// ErrConfigCert error of certification configuration.
 var ErrConfigCert = errors.New("Both certification and private key must be provided.")
 
 // Parse parse the configuration file. If failed, return error.
@@ -54,6 +55,7 @@ func (c *Config) Parse(configFile string) error {
 	return c.parseFlags()
 }
 
+// parseFlags parse flags. Certification and Private key must be provided at the same time.
 func (c *Config) parseFlags() error {
 	pflag.StringVar(&c.Mqtt.ServerAddress, "mqtt-address", c.Mqtt.ServerAddress, "MQTT broker address")
 	pflag.StringVar(&c.Mqtt.Username, "mqtt-username", c.Mqtt.Username, "username")
