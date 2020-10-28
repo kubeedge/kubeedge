@@ -1,0 +1,90 @@
+{
+	"deviceInstances": [{
+		"id": "sensor-tag-instance-01",
+		"name": "sensor-tag-instance-01",
+		"protocol": "modbus-sensor-tag-instance-01",
+		"model": "sensor-tag-model",
+		"twins": [{
+			"propertyName": "temperature-enable",
+			"desired": {
+				"value": "OFF",
+				"metadata": {
+					"timestamp": "1550049403598",
+					"type": "string"
+				}
+			},
+			"reported": {
+				"value": "OFF",
+				"metadata": {
+					"timestamp": "1550049403598",
+					"type": "string"
+				}
+			}
+		}],
+		"propertyVisitors": [{
+			"name": "temperature",
+			"propertyName": "temperature",
+			"modelName": "sensor-tag-model",
+			"protocol": "modbus",
+			"visitorConfig": {
+				"register": "CoilRegister",
+				"offset": 2,
+				"limit": 1,
+				"scale": 1,
+				"isSwap": true,
+				"isRegisterSwap": true
+			}
+		}, {
+			"name": "temperature-enable",
+			"propertyName": "temperature-enable",
+			"modelName": "sensor-tag-model",
+			"protocol": "modbus",
+			"visitorConfig": {
+				"register": "DiscreteInputRegister",
+				"offset": 3,
+				"limit": 1,
+				"scale": 1,
+				"isSwap": true,
+				"isRegisterSwap": true
+			}
+		}]
+	}],
+	"deviceModels": [{
+		"name": "sensor-tag-model",
+		"properties": [{
+			"name": "temperature",
+			"dataType": "int",
+			"description": "temperature in degree celsius",
+			"accessMode": "ReadWrite",
+			"defaultValue": 0,
+			"minimum": 0,
+			"maximum": 100,
+			"unit": "degree celsius"
+		}, {
+			"name": "temperature-enable",
+			"dataType": "string",
+			"description": "enable data collection of temperature sensor",
+			"accessMode": "ReadWrite",
+			"defaultValue": "OFF"
+		}]
+	}],
+	"protocols": [{
+		"name": "modbus-sensor-tag-instance-01",
+		"protocol": "modbus",
+		"protocolConfig": {
+			"slaveID": 1
+		},
+		"protocolCommonConfig": {
+			"com": {
+				"serialPort": "1",
+				"baudRate": 115200,
+				"dataBits": 8,
+				"parity": "even",
+				"stopBits": 1
+			},
+            "customizedValues": {
+                "serialType": "RS485"
+            }
+		}
+	}]
+}
