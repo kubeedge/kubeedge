@@ -35,9 +35,6 @@ const (
 	// KubeEdge Node unique idenfitcation string
 	EdgeNodeName = "edgenode-name"
 
-	// KubeEdge interface name string
-	InterfaceName = "interfacename"
-
 	// KubeEdge remote-runtime-endpoint string
 	RemoteRuntimeEndpoint = "remote-runtime-endpoint"
 

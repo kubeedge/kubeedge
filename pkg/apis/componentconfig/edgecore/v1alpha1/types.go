@@ -165,6 +165,7 @@ type Edged struct {
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
 	// InterfaceName indicates interface name
 	// default "eth0"
+	// DEPRECATED after v1.5
 	InterfaceName string `json:"interfaceName,omitempty"`
 	// ConcurrentConsumers indicates concurrent consumers for pod add or remove operation
 	// default 5
