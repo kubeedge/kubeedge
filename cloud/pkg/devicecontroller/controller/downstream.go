@@ -544,6 +544,8 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		} else {
 			klog.Warning("Unsupported device protocol")
 		}
+		// add protocol common
+		deviceProtocol.ProtocolCommonConfig = device.Spec.Protocol.Common
 
 		// update the twins, data and protocol in deviceInstance
 		for _, devInst := range deviceProfile.DeviceInstances {
