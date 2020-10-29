@@ -84,9 +84,6 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 		"Use this key to download and use the required KubeEdge version")
 	cmd.Flags().Lookup(types.KubeEdgeVersion).NoOptDefVal = joinOptions.KubeEdgeVersion
 
-	cmd.Flags().StringVar(&joinOptions.InterfaceName, types.InterfaceName, joinOptions.InterfaceName,
-		"KubeEdge Node interface name string, the default value is eth0")
-
 	cmd.Flags().StringVar(&joinOptions.CGroupDriver, types.CGroupDriver, joinOptions.CGroupDriver,
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
@@ -158,7 +155,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		CloudCoreIP:           joinOptions.CloudCoreIPPort,
 		EdgeNodeName:          joinOptions.EdgeNodeName,
 		RuntimeType:           joinOptions.RuntimeType,
-		InterfaceName:         joinOptions.InterfaceName,
 		CertPath:              joinOptions.CertPath,
 		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 		Token:                 joinOptions.Token,
