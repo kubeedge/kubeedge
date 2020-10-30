@@ -94,8 +94,12 @@ jobs:
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
         - sudo apt-get update
         - sudo apt-get install -y kubectl
+        - export RELEASE_VERSION=$(wget -qO - https://kubeedge.io/latestversion | cat)
+        - travis_retry sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt
+        - travis_retry sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz
+        - echo "$(cat /etc/kubeedge/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt) /etc/kubeedge/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz" | sha512sum -c || exit 1
       script:
-        - travis_retry make keadm_e2e
+        - make keadm_e2e
     - name: "build docker images on amd64"
       arch: amd64
       script:
