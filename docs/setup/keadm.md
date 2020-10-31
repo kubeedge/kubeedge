@@ -336,7 +336,7 @@ Before metrics-server deployed, `kubectl logs` feature must be activated:
           - name: metrics-server
             image: metrics-server-kubeedge:latest    #Make sure that the REPOSITORY and TAG are correct
             # Modified args to include --kubelet-insecure-tls for Docker Desktop (don't use this flag with a real k8s cluster!!)
-            imagePullPolicy: Never                   #Make sure that the delpoyment uses the image you built up
+            imagePullPolicy: Never                   #Make sure that the deployment uses the image you built up
             args:
               - --cert-dir=/tmp
               - --secure-port=4443
