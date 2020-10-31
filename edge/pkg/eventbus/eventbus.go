@@ -166,3 +166,15 @@ func (eb *eventbus) subscribe(topic string) {
 		mqttServer.SetTopic(topic)
 	}
 }
+
+func (eb *eventbus) unsubscribe(topic string) {
+	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
+		token := mqttBus.MQTTHub.SubCli.Unsubscribe(topic)
+		if rs, err := util.CheckClientToken(token); !rs {
+			klog.Errorf("Edge-hub-cli unsubscribe topic: %s, %v", topic, err)
+		}
+	}
+	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
+		mqttServer.RemoveTopic(topic)
+	}
+}
