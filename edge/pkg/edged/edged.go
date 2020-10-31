@@ -346,7 +346,9 @@ func (e *edged) Start() {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return
 	}
-
+	e.logManager.Start()
+	stopChan := make(chan struct{})
+	e.runtimeClassManager.Start(stopChan)
 	klog.Infof("starting syncPod")
 	e.syncPod()
 }
@@ -575,7 +577,7 @@ func newEdged(enable bool) (*edged, error) {
 		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
 		ed.machineInfo = &machineInfo
 	}
-	// creat a log manager
+	// create a log manager
 	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "1", 2)
 	if err != nil {
 		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
@@ -729,9 +731,7 @@ func (e *edged) initializeModules() error {
 		klog.Errorf("Failed to start container manager, err: %v", err)
 		return err
 	}
-	e.logManager.Start()
-	stopChan := make(chan struct{})
-	e.runtimeClassManager.Start(stopChan)
+
 	return nil
 }
 
