@@ -100,6 +100,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
 		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
+
+	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
+		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -143,6 +146,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		},
 		AdvertiseAddress: initOptions.AdvertiseAddress,
 		DNSName:          initOptions.DNS,
+		TarballPath:      initOptions.TarballPath,
 	}
 	return nil
 }
