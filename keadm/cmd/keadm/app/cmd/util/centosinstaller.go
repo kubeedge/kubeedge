@@ -75,7 +75,7 @@ func (c *CentOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 //InstallKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
-func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
+func (c *CentOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch := "amd64"
 	result, err := runCommandWithStdout("arch")
 	if err != nil {
@@ -93,7 +93,7 @@ func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
 		return fmt.Errorf("can't support this architecture of CentOS: %s", result)
 	}
 
-	return installKubeEdge(componentType, arch, c.KubeEdgeVersion)
+	return installKubeEdge(options, arch, c.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path

@@ -75,13 +75,13 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // InstallKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func (u *UbuntuOS) InstallKubeEdge(componentType types.ComponentType) error {
+func (u *UbuntuOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch, err := getSystemArch()
 	if err != nil {
 		return err
 	}
 
-	return installKubeEdge(componentType, arch, u.KubeEdgeVersion)
+	return installKubeEdge(options, arch, u.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path

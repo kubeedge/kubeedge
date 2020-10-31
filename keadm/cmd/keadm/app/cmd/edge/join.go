@@ -111,6 +111,9 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 	cmd.Flags().StringVarP(&joinOptions.CertPort, types.CertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
+
+	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
+		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
@@ -160,6 +163,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		Token:                 joinOptions.Token,
 		CertPort:              joinOptions.CertPort,
 		CGroupDriver:          joinOptions.CGroupDriver,
+		TarballPath:           joinOptions.TarballPath,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}
