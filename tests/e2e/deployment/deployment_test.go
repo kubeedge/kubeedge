@@ -18,6 +18,7 @@ package deployment
 
 import (
 	"net/http"
+	"runtime"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -80,6 +81,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 		It("E2E_APP_DEPLOYMENT_3: Create deployment and check deployment ctrler re-creating pods when user deletes the pods manually", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			replica := 3
 			//Generate the random string and assign as a UID
 			UID = "edgecore-depl-app-" + utils.GetRandomString(5)
@@ -122,6 +126,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 		It("E2E_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
@@ -130,6 +137,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 		})
 
 		It("E2E_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
@@ -142,6 +152,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 		})
 		It("E2E_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
@@ -156,6 +169,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			Expect(StatusCode).Should(Equal(http.StatusNotFound))
 		})
 		It("E2E_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			//Generate the random string and assign as a UID
 			for i := 0; i < 10; i++ {
 				//Generate the random string and assign as podName
@@ -171,6 +187,9 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			}
 		})
 		It("E2E_POD_DEPLOYMENT_5: Create pod with hostpath volume successfully", func() {
+			if runtime.GOARCH != "amd64" {
+				Skip("Skip test since only support on amd64 arch")
+			}
 			//Generate the random string and assign as podName
 			podName := "pod-app-" + utils.GetRandomString(5)
 			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)

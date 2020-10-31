@@ -25,7 +25,12 @@ debugflag="-test.v -ginkgo.v"
 #setup env
 cd ../
 
-export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
+if [[ "${ARCH}" = "x86_64" ]]; then
+  export MASTER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane):6443"
+else
+  export MASTER_IP="$(minikube ip):8443"
+fi
+
 export KUBECONFIG=$HOME/.kube/config
 
 export CHECK_EDGECORE_ENVIRONMENT="false"
@@ -35,7 +40,7 @@ export CHECK_EDGECORE_ENVIRONMENT="false"
 cat >config.json<<END
 {
         "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://$MASTER_IP:6443",
+        "k8smasterforkubeedge":"https://${MASTER_IP}",
         "dockerhubusername":"user",
         "dockerhubpassword":"password",
         "mqttendpoint":"tcp://127.0.0.1:1884",

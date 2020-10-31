@@ -21,7 +21,14 @@ E2E_DIR=$(realpath $(dirname $0)/..)
 function cleanup() {
   ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill
   ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill
-  kind delete cluster --name test
+
+  sudo rm -rf /etc/kubeedge /etc/systemd/system/edgecore.service
+
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    kind delete cluster --name test
+  else
+    minikube delete
+  fi
 }
 
 function build_keadm() {
@@ -30,16 +37,30 @@ function build_keadm() {
   ginkgo build -r keadm/
 }
 
-function prepare_cluster() {
+function prepare_kind_cluster() {
   kind create cluster --name test
 
   echo "wait the control-plane ready..."
   kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
 
-  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
-
   # edge side don't support kind cni now, delete kind cni plugin for workaround
   kubectl delete daemonset kindnet -nkube-system
+}
+
+function prepare_minikube_cluster() {
+  sudo minikube start --vm-driver=none --install-addons=false --kubernetes-version=v1.19.2 --wait=all
+
+  kubectl delete -n kube-system daemonsets.apps kube-proxy
+}
+
+function prepare_cluster() {
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    prepare_kind_cluster
+  else
+    prepare_minikube_cluster
+  fi
+
+  kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
 }
 
 function start_kubeedge() {
@@ -48,7 +69,12 @@ function start_kubeedge() {
   export KUBECONFIG=$HOME/.kube/config
 
   sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
-  export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
+
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    export MASTER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane):6443"
+  else
+    export MASTER_IP="$(minikube ip):8443"
+  fi
 
   # ensure tokensecret is generated
   while true; do
@@ -65,7 +91,7 @@ function start_kubeedge() {
   cat > $E2E_DIR/config.json <<END
 {
         "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://$MASTER_IP:6443",
+        "k8smasterforkubeedge":"https://${MASTER_IP}",
         "dockerhubusername":"user",
         "dockerhubpassword":"password",
         "mqttendpoint":"tcp://127.0.0.1:1884",

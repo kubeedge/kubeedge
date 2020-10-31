@@ -26,7 +26,13 @@ export CLUSTER_CONTEXT="--name ${CLUSTER_NAME}"
 
 function check_prerequisites {
   check_kubectl
-  check_kind
+
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    check_kind
+  else
+    check_minikube
+  fi
+
   verify_go_version
   verify_docker_installed
 }
@@ -35,6 +41,20 @@ function check_prerequisites {
 function kind_up_cluster {
   echo "Running kind: [kind create cluster ${CLUSTER_CONTEXT}]"
   kind create cluster ${CLUSTER_CONTEXT}
+
+  echo "wait the control-plane ready..."
+  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
+
+  # edge side don't support kind cni now, delete kind cni plugin for workaround
+  kubectl delete daemonset kindnet -nkube-system
+
+  kubectl create ns kubeedge
+}
+
+function minikube_up_cluster() {
+  sudo minikube start --vm-driver=none --install-addons=false --kubernetes-version=v1.19.2 --wait=all
+
+  kubectl delete -n kube-system daemonsets.apps kube-proxy
 }
 
 function uninstall_kubeedge {
@@ -56,8 +76,12 @@ function cleanup {
   echo "Cleaning up..."
   uninstall_kubeedge
 
-  echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
-  kind delete cluster ${CLUSTER_CONTEXT}
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    echo "Running kind: [kind delete cluster ${CLUSTER_CONTEXT}]"
+    kind delete cluster ${CLUSTER_CONTEXT}
+  else
+    minikube delete
+  fi
 }
 
 if [[ "${ENABLE_DAEMON}" = false ]]; then
@@ -131,11 +155,6 @@ function start_edgecore {
   EDGECORE_PID=$!
 }
 
-function check_control_plane_ready {
-  echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
-}
-
 # Check if all processes are still running. Prints a warning once each time
 # a process dies unexpectedly.
 function healthcheck {
@@ -159,19 +178,16 @@ function generate_streamserver_cert {
   K8SCA_KEY_FILE=/tmp/etc/kubernetes/pki/ca.key
   streamsubject=${SUBJECT:-/C=CN/ST=Zhejiang/L=Hangzhou/O=KubeEdge}
 
-  if [[ ! -d /tmp/etc/kubernetes/pki ]] ; then
-    mkdir -p /tmp/etc/kubernetes/pki
-  fi
-  if [[ ! -d $CA_PATH ]] ; then
-	mkdir -p $CA_PATH
-  fi
-  if [[ ! -d $CERT_PATH ]] ; then
-	mkdir -p $CERT_PATH
-  fi
+  mkdir -p /tmp/etc/kubernetes/pki $CA_PATH $CERT_PATH
 
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
-  cp /tmp/etc/kubernetes/pki/ca.crt /tmp/etc/kubeedge/ca/streamCA.crt
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
+    docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
+  else
+    cp $HOME/.minikube/ca.crt $K8SCA_FILE
+    cp $HOME/.minikube/ca.key $K8SCA_KEY_FILE
+  fi
+  cp $K8SCA_FILE /tmp/etc/kubeedge/ca/streamCA.crt
 
   SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
   echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
@@ -181,6 +197,14 @@ function generate_streamserver_cert {
   openssl genrsa -out ${STREAM_KEY_FILE}  2048
   openssl req -new -key ${STREAM_KEY_FILE} -subj ${streamsubject} -out ${STREAM_CSR_FILE}
   openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
+}
+
+function prepare_cluster() {
+  if [[ "${ARCH}" = "x86_64" ]]; then
+    kind_up_cluster
+  else
+    minikube_up_cluster
+  fi
 }
 
 cleanup
@@ -195,15 +219,10 @@ set -eE
 build_cloudcore
 build_edgecore
 
-kind_up_cluster
+prepare_cluster
 
 export KUBECONFIG=$HOME/.kube/config
 
-check_control_plane_ready
-
-# edge side don't support kind cni now, delete kind cni plugin for workaround
-kubectl delete daemonset kindnet -nkube-system
-kubectl create ns kubeedge
 
 create_device_crd
 create_objectsync_crd

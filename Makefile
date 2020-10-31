@@ -2,6 +2,9 @@ DESTDIR?=
 USR_DIR?=/usr/local
 INSTALL_DIR?=${DESTDIR}${USR_DIR}
 INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
+
+ARCH?=$(shell uname -m)
+
 # make all builds both cloud and edge binaries
 
 BINARIES=cloudcore \

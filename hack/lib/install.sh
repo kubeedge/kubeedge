@@ -47,6 +47,22 @@ function check_kind {
   fi
 }
 
+
+# check if minikube installed
+function check_minikube {
+  echo "checking minikube"
+  command -v minikube >/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    echo "installing minikube ."
+    eval $(go env)
+    curl -LO https://storage.googleapis.com/minikube/releases/v1.14.0/minikube-linux-${GOARCH} || exit 1
+    mv minikube-linux-${GOARCH} /usr/local/bin/minikube || exit 1
+    chmod +x /usr/local/bin/minikube || exit 1
+  else
+    echo -n "found minikube, version: " && minikube version
+  fi
+}
+
 verify_go_version(){
   if [[ -z "$(command -v go)" ]]; then
     echo "Can't find 'go' in PATH, please fix and retry.

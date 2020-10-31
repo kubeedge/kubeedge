@@ -14,7 +14,11 @@ go:
   - 1.14
 
 env:
-  - HOME=/home/travis
+  global:
+    - HOME=/home/travis
+    - MINIKUBE_IN_STYLE=false
+    - CHANGE_MINIKUBE_NONE_USER=true
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
 
 cache:
   directories:
@@ -111,7 +115,9 @@ jobs:
 
     - stage: "Test on arm64"
       name: "build, smallbuild"
-      arch: arm64
+      arch: arm64-graviton2
+      virt: vm
+      group: edge
       before_script:
         - export GOFLAGS=-mod=vendor
         - sudo apt-get install upx-ucl -y
@@ -122,6 +128,7 @@ jobs:
     - name: "unit test, integration test edge"
       arch: arm64-graviton2
       virt: vm
+      group: edge
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - export GOFLAGS=-mod=mod
@@ -131,35 +138,37 @@ jobs:
     - name: "e2e test"
       arch: arm64-graviton2
       virt: vm
+      group: edge
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
-        - go get sigs.k8s.io/kind@v0.7.0
         - go mod vendor
         - export GOFLAGS=-mod=vendor
-        - sudo apt-get update && sudo apt-get install -y apt-transport-https
-        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-        - sudo apt-get update
-        - sudo apt-get install -y kubectl
+        - sudo apt-get update && sudo apt-get install -y conntrack
+        - curl -LO https://storage.googleapis.com/minikube/releases/v1.14.2/minikube-linux-arm64 && sudo install minikube-linux-arm64 /usr/local/bin/minikube
+        - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
       script:
         - travis_retry make e2e
     - name: "keadm e2e test"
       arch: arm64-graviton2
       virt: vm
+      group: edge
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
-        - go get sigs.k8s.io/kind@v0.7.0
         - go mod vendor
         - export GOFLAGS=-mod=vendor
-        - sudo apt-get update && sudo apt-get install -y apt-transport-https
-        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-        - sudo apt-get update
-        - sudo apt-get install -y kubectl
+        - sudo apt-get update && sudo apt-get install -y conntrack
+        - curl -LO https://storage.googleapis.com/minikube/releases/v1.14.2/minikube-linux-arm64 && sudo install minikube-linux-arm64 /usr/local/bin/minikube
+        - curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+        - export RELEASE_VERSION=$(wget -qO - https://kubeedge.io/latestversion | cat)
+        - travis_retry sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/checksum_kubeedge-${RELEASE_VERSION}-linux-arm64.tar.gz.txt
+        - travis_retry sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/kubeedge-${RELEASE_VERSION}-linux-arm64.tar.gz
+        - echo "$(cat /etc/kubeedge/checksum_kubeedge-${RELEASE_VERSION}-linux-arm64.tar.gz.txt) /etc/kubeedge/kubeedge-${RELEASE_VERSION}-linux-arm64.tar.gz" | sha512sum -c || exit 1
       script:
         - travis_retry make keadm_e2e
     - name: "build docker images on arm64"
-      arch: arm64
+      arch: arm64-graviton2
+      virt: vm
+      group: edge
       script:
         - make cloudimage
         - make admissionimage
