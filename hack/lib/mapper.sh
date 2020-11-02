@@ -30,11 +30,11 @@ kubeedge::mapper::build_bluetoothdevice() {
 }
 
 kubeedge::mapper::build_modbusmapper() {
-  modbus_binary=${KUBEEDGE_GO_PACKAGE}/mappers/modbus
+  modbus_binary=${KUBEEDGE_GO_PACKAGE}/mappers/modbus-go
   name=modbus
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
   set -x
-  go build -o mappers/modbus $modbus_binary
+  go build -o mappers/modbus-go/${name} $modbus_binary
   set +x
 }

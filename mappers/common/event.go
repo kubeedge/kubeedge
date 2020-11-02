@@ -28,8 +28,8 @@ import (
 const (
 	TopicTwinUpdateDelta = "$hw/events/device/%s/twin/update/delta"
 	TopicTwinUpdate      = "$hw/events/device/%s/twin/update"
-	TopicDataUpdate      = "$ke/events/device/%s/data/update"
 	TopicStateUpdate     = "$hw/events/device/%s/state/update"
+	TopicDataUpdate      = "$ke/events/device/%s/data/update"
 )
 
 // MqttClient is parameters for Mqtt client.

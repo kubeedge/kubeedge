@@ -304,7 +304,7 @@ modbusmapper: clean
 	hack/make-rules/modbusmapper.sh
 .PHONY: modbusmapper_image
 modbusmapper_image:modbusmapper
-	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus 
+	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
 
 .PHONY: mappers
 mappers:bluetoothdevice modbusmapper
