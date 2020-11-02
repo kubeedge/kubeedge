@@ -1,8 +1,0 @@
-{
-        "image_url": ["nginx", "nginx"],
-        "k8smasterforkubeedge":"https://172.17.0.2:6443",
-        "dockerhubusername":"user",
-        "dockerhubpassword":"password",
-        "mqttendpoint":"tcp://127.0.0.1:1884",
-        "kubeconfigpath":"/home/ubuntu/.kube/config"
-}
