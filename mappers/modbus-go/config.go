@@ -41,7 +41,7 @@ type Mqtt struct {
 }
 
 // ErrConfigCert error of certification configuration.
-var ErrConfigCert = errors.New("Both certification and private key must be provided.")
+var ErrConfigCert = errors.New("Both certification and private key must be provided")
 
 var defaultConfigFile = "./config.yaml"
 

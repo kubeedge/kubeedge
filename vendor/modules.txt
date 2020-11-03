@@ -583,6 +583,12 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/sailorvii/modbus v0.1.1
+## explicit
+github.com/sailorvii/modbus
+# github.com/sailorvii/serial v0.1.0
+## explicit
+github.com/sailorvii/serial
 # github.com/satori/go.uuid v1.2.0
 ## explicit
 github.com/satori/go.uuid

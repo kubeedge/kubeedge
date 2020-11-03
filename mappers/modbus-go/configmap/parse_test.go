@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
-	. "github.com/kubeedge/kubeedge/mappers/modbus/globals"
+	. "github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -21,7 +21,7 @@ import (
 	"strconv"
 )
 
-// String to other types
+// Convert string to other types
 func Convert(valueType string, value string) (result interface{}, err error) {
 	switch valueType {
 	case "int":
