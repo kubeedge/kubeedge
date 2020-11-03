@@ -47,10 +47,10 @@ status:
       reported:
         metadata:
           timestamp: '1550049403598'
-          type: string
-        value: 'ON'
+          type: integer
+        value: "0"
       desired:
         metadata:
           timestamp: '1550049403598'
-          type: string
-        value: 'ON'
+          type: integer
+        value: "0"

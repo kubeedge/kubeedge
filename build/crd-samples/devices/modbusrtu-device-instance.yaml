@@ -51,10 +51,10 @@ status:
       reported:
         metadata:
           timestamp: '1550049403598'
-          type: string
-        value: 'OFF'
+          type: integer
+        value: "1"
       desired:
         metadata:
           timestamp: '1550049403598'
-          type: string
-        value: 'OFF'
+          type: integer
+        value: "1"
