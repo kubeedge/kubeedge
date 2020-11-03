@@ -89,25 +89,9 @@ const (
 	//CmdGetDiskSize      = "df -h |grep -ve \" /.\"|sed -n \"2p\"|awk '{print $2}'"
 	CmdGetDNSIP         = "cat /etc/resolv.conf |grep nameserver|grep -v ':'|awk '{print $2}'|sed -n '1p'"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
-	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $4}'"
+	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
 	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
 	CmdGetProcessNum    = "ps -A|wc -l"
-
-	AllowedValueCPU     = 1
-	AllowedValueMemory  = 256 * MB
-	AllowedValueDisk    = GB
-	AllowedValuePIDRate = 0.05
-
-	AllowedCurrentValueCPURate  = 0.9
-	AllowedCurrentValueMemRate  = 0.9
-	AllowedCurrentValueDiskRate = 0.9
-
-	AllowedCurrentValueMem  = 128 * MB
-	AllowedCurrentValueDisk = 512 * MB
-
-	KB = 1024
-	MB = KB * 1024
-	GB = MB * 1024
 
 	DefaultDomain = "www.github.com"
 
@@ -145,32 +129,6 @@ const (
 	CmdDockerImageInfo  = "docker images > %s/images"
 	PathDockerService   = "/lib/systemd/system/docker.service"
 
-	CmdGetArch       = "arch"
-	CmdGetCPUNum     = "cat /proc/cpuinfo  |grep processor| wc -l"
-	CmdGetMenorySize = "free -h |grep Mem|awk '{print $2}'"
-	// Use regular expressions to filter the ones that are not empty after "/"
-	CmdGetDiskSize      = "df -h |grep -ve \" /.\"|sed -n \"2p\"|awk '{print $2}'"
-	CmdGetDNSIP         = "cat /etc/resolv.conf |grep nameserver|grep -v ':'|awk '{print $2}'|sed -n '1p'"
-	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
-	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $4}'"
-	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
-	CmdGetProcessNum    = "ps -A|wc -l"
-
-	AllowedValueCPU     = "1"
-	AllowedValueMemory  = "256MB"
-	AllowedValueDisk    = "1GB"
-	AllowedValuePIDRate = 0.05
-
-	DefaultDomain = "www.github.com"
-
-	UnitCore = "core"
-	UnitMB   = "MB"
-	UnitGB   = "GB"
-
-	KB int = 1024
-	MB int = KB * 1024
-	GB int = MB * 1024
-
 	DescAll     = "Check all item"
 	DescArch    = "Check whether the architecture can work"
 	DescCPU     = "Check node CPU requirements"
@@ -206,6 +164,22 @@ const (
 	ArgCheckPID     = "pid"
 
 	DefaultRuntime = "docker"
+
+	KB = 1024
+	MB = KB * 1024
+	GB = MB * 1024
+
+	AllowedValueCPU     = 1
+	AllowedValueMemory  = 256 * MB
+	AllowedValueDisk    = GB
+	AllowedValuePIDRate = 0.05
+
+	AllowedCurrentValueCPURate  = 0.9
+	AllowedCurrentValueMemRate  = 0.9
+	AllowedCurrentValueDiskRate = 0.9
+
+	AllowedCurrentValueMem  = 128 * MB
+	AllowedCurrentValueDisk = 512 * MB
 )
 
 var (

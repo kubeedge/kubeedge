@@ -17,11 +17,10 @@ import (
 )
 
 var (
-	edgecollectLongDescription = `Obtain all the data of the current node, and then provide it to the operation
-and maintenance personnel to locate the problem
+	edgecollectLongDescription = `Collect all the data of the current node, and then Operations Engineer can use them to debug.
 `
 	edgecollectExample = `
-# Check all items and specified as the current directory
+# Collect all items and specified the output directory path
 keadm debug collect --output-path .
 `
 )
@@ -29,7 +28,7 @@ keadm debug collect --output-path .
 var pringDeatilFlag = false
 
 // NewEdgeJoin returns KubeEdge edge join command.
-func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.Command {
+func NewCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.Command {
 	if collectOptions == nil {
 		collectOptions = newCollectOptions()
 	}
@@ -51,7 +50,7 @@ func NewEdgeCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.
 	return cmd
 }
 
-// add flags
+// dd flags
 func addCollectOtherFlags(cmd *cobra.Command, collectOptions *types.ColletcOptions) {
 	cmd.Flags().StringVarP(&collectOptions.Config, types.EdgecoreConfig, "c", collectOptions.Config,
 		fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
@@ -128,13 +127,13 @@ func ExecuteCollect(collectOptions *types.ColletcOptions) error {
 	if err != nil {
 		return err
 	}
-	printDetail("compress data finish")
+	printDetail("Data compressed successfully")
 
 	// delete tmp direction
 	os.RemoveAll(tmpName)
 	printDetail("Remove tmp data finish")
 
-	fmt.Printf("collecting data finish, path: %s\n", zipName)
+	fmt.Printf("Data collected successfully, path: %s\n", zipName)
 	return nil
 }
 
