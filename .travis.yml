@@ -5,7 +5,7 @@ git:
 
 os: linux
 
-dist: bionic
+dist: focal
 
 services:
   - docker
