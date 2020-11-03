@@ -947,41 +947,13 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	if e.containerRuntime != nil {
 		podStatusRemote, err = e.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
-			containerStatus := &v1.ContainerStatus{
-				Name:         pod.Name,
-				RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
-				ImageID:      pod.Status.ContainerStatuses[0].ImageID,
-				Image:        pod.Status.ContainerStatuses[0].Image,
-				ContainerID:  pod.Status.ContainerStatuses[0].ContainerID,
-				State: v1.ContainerState{
-					Waiting: &v1.ContainerStateWaiting{
-						Reason:  pod.Status.Reason,
-						Message: pod.Status.Message,
-					},
-				},
-			}
+			containerStatus := &kubecontainer.Status{}
 			kubeStatus := toKubeContainerStatus(v1.PodUnknown, containerStatus)
 			podStatus = &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		} else {
 			if pod.DeletionTimestamp != nil {
-				containerStatus := &v1.ContainerStatus{
-					Name:         pod.Name,
-					RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
-					ImageID:      pod.Status.ContainerStatuses[0].ImageID,
-					Image:        pod.Status.ContainerStatuses[0].Image,
-					ContainerID:  pod.Status.ContainerStatuses[0].ContainerID,
-					State: v1.ContainerState{
-						Terminated: &v1.ContainerStateTerminated{
-							ExitCode:    0,
-							Signal:      0,
-							Reason:      "Completed",
-							Message:     "exited",
-							StartedAt:   metav1.Time{Time: pod.CreationTimestamp.Time},
-							FinishedAt:  metav1.Time{Time: pod.DeletionTimestamp.Time},
-							ContainerID: pod.Status.ContainerStatuses[0].ContainerID,
-						},
-					},
-				}
+				containerStatus := &kubecontainer.Status{State: kubecontainer.ContainerStateExited,
+					Reason: "Completed"}
 				kubeStatus := toKubeContainerStatus(v1.PodSucceeded, containerStatus)
 				podStatus = &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 			} else {
@@ -1002,7 +974,6 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 			}
 		}
 	}
-
 	newStatus = *podStatus.DeepCopy()
 
 	e.probeManager.UpdatePodStatus(pod.UID, &newStatus)
@@ -1021,31 +992,31 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	return err
 }
 
-func toKubeContainerStatus(phase v1.PodPhase, status *v1.ContainerStatus) v1.ContainerStatus {
+func toKubeContainerStatus(phase v1.PodPhase, status *kubecontainer.Status) v1.ContainerStatus {
 	kubeStatus := v1.ContainerStatus{
 		Name:         status.Name,
-		RestartCount: status.RestartCount,
+		RestartCount: int32(status.RestartCount),
 		ImageID:      status.ImageID,
 		Image:        status.Image,
-		ContainerID:  status.ContainerID,
+		ContainerID:  status.ID.ID,
 	}
 	switch phase {
 	case v1.PodRunning:
-		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: status.State.Running.StartedAt}
+		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.NewTime(status.StartedAt)}
 		kubeStatus.Ready = true
 	case v1.PodFailed, v1.PodSucceeded:
 		kubeStatus.State.Terminated = &v1.ContainerStateTerminated{
-			ExitCode:    status.State.Terminated.ExitCode,
-			Reason:      status.State.Terminated.Reason,
-			Message:     status.State.Terminated.Message,
-			StartedAt:   status.State.Terminated.StartedAt,
-			FinishedAt:  status.State.Terminated.FinishedAt,
-			ContainerID: status.ContainerID,
+			ExitCode:    int32(status.ExitCode),
+			Reason:      status.Reason,
+			Message:     status.Message,
+			StartedAt:   metav1.NewTime(status.StartedAt),
+			FinishedAt:  metav1.NewTime(status.FinishedAt),
+			ContainerID: status.ID.ID,
 		}
 	default:
 		kubeStatus.State.Waiting = &v1.ContainerStateWaiting{
-			Reason:  status.State.Waiting.Reason,
-			Message: status.State.Waiting.Message,
+			Reason:  status.Reason,
+			Message: status.Message,
 		}
 	}
 	return kubeStatus

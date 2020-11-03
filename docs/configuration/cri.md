@@ -1,11 +1,5 @@
 # KubeEdge runtime configuration
 
-## Docker
-
-KubeEdge release 1.4 and previous versions require Docker 18.09. KubeEdge release 1.5 requires Docker 19.03.
-
-To install Docker engine in the node, please refer to Docker document page https://docs.docker.com/engine/install/.
-
 ## containerd
 
 Docker 18.09 and up ship with `containerd`, so you should not need to install it manually. If you do not have `containerd`, you may install it by running the following:
