@@ -46,7 +46,7 @@ func (r *responder) Error(w http.ResponseWriter, req *http.Request, err error) {
 }
 
 func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
-	tripper := spdy.NewSpdyRoundTripper(nil, true, false)
+	tripper := spdy.NewRoundTripper(nil, true, false)
 	req, err := http.NewRequest(e.Method, e.URL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create exec request, err: %v", err)

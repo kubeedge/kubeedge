@@ -47,6 +47,14 @@ func initializeInfoCache() {
 	}
 }
 
+func EnableFileCache() {
+	fileCacheEnable = true
+}
+
+func EnableInfoCache() {
+	infoCacheEnable = true
+}
+
 func DisableFileCache() {
 	fileCacheEnable = false
 }
@@ -69,6 +77,26 @@ func RemoveFromInfoCache(filename string) {
 	}
 	initializeInfoCache()
 	delete(infoCache, filename)
+}
+
+func GetInfoCache() map[string]interface{} {
+	if infoCache == nil {
+		initializeInfoCache()
+	}
+	return infoCache
+}
+
+func ClearFileCache() {
+	fileCache = make(map[string][]byte, 0)
+}
+
+func ClearInfoCache() {
+	infoCache = make(map[string]interface{})
+}
+
+func ClearCaches() {
+	ClearFileCache()
+	ClearInfoCache()
 }
 
 // FetchFile gets a specified file from the local filesystem or a remote location.
@@ -168,7 +196,11 @@ func ReadInfoForRef(basefile string, ref string) (interface{}, error) {
 	parts := strings.Split(ref, "#")
 	var filename string
 	if parts[0] != "" {
-		filename = basedir + parts[0]
+		filename = parts[0]
+		if _, err := url.ParseRequestURI(parts[0]); err != nil {
+			// It is not an URL, so the file is local
+			filename = basedir + parts[0]
+		}
 	} else {
 		filename = basefile
 	}

@@ -2,7 +2,7 @@
 
 ## containerd
 
-Docker 18.09 ships with `containerd`, so you should not need to install it manually. If you do not have `containerd`, you may install it by running the following:
+Docker 18.09 and up ship with `containerd`, so you should not need to install it manually. If you do not have `containerd`, you may install it by running the following:
 
 ```bash
 # Install containerd

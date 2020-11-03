@@ -35,7 +35,7 @@ var (
 )
 
 func Init() {
-	protocol := utiliptables.ProtocolIpv4
+	protocol := utiliptables.ProtocolIPv4
 	exec := utilexec.New()
 	iptInterface := utiliptables.New(exec, protocol)
 	proxier = &Proxier{

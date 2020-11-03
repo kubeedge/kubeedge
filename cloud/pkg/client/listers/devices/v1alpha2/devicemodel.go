@@ -25,8 +25,10 @@ import (
 )
 
 // DeviceModelLister helps list DeviceModels.
+// All objects returned here must be treated as read-only.
 type DeviceModelLister interface {
 	// List lists all DeviceModels in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha2.DeviceModel, err error)
 	// DeviceModels returns an object that can list and get DeviceModels.
 	DeviceModels(namespace string) DeviceModelNamespaceLister
@@ -57,10 +59,13 @@ func (s *deviceModelLister) DeviceModels(namespace string) DeviceModelNamespaceL
 }
 
 // DeviceModelNamespaceLister helps list and get DeviceModels.
+// All objects returned here must be treated as read-only.
 type DeviceModelNamespaceLister interface {
 	// List lists all DeviceModels in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha2.DeviceModel, err error)
 	// Get retrieves the DeviceModel from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha2.DeviceModel, error)
 	DeviceModelNamespaceListerExpansion
 }
