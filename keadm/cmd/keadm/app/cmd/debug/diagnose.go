@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/astaxie/beego/orm"
 	kubeedgeTypes "github.com/kubeedge/kubeedge/common/types"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	constant "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -74,20 +72,20 @@ func NewSubDiagnose(out io.Writer, object Diagnose) *cobra.Command {
 		cmd.Flags().StringVarP(&do.CheckOptions.DNSIP, "dns-ip", "D", do.CheckOptions.DNSIP, "specify test dns server ip")
 		cmd.Flags().StringVarP(&do.CheckOptions.Domain, "domain", "d", do.CheckOptions.Domain, "specify test domain")
 		cmd.Flags().StringVarP(&do.CheckOptions.IP, "ip", "i", do.CheckOptions.IP, "specify test ip")
-		cmd.Flags().StringVarP(&do.CheckOptions.EdgeHubURL, "edge-hub-url", "e", do.CheckOptions.EdgeHubURL, "specify edgehub url,")
+		cmd.Flags().StringVarP(&do.CheckOptions.CloudHubServer, "cloud-hub-server", "s", do.CheckOptions.CloudHubServer, "specify cloudhub server")
 		cmd.Flags().StringVarP(&do.CheckOptions.Runtime, "runtime", "r", do.CheckOptions.Runtime, "specify the runtime")
 	}
 	return cmd
 }
 
-// add flags
+// Add flags
 func NewDiagnoseOptins() *types.DiagnoseOptions {
 	do := &types.DiagnoseOptions{}
 	do.Namespace = "default"
 	do.Config = types.EdgecoreConfigPath
 	do.CheckOptions = &types.CheckOptions{
 		IP:      "",
-		Timeout: 1,
+		Timeout: 3,
 		Runtime: types.DefaultRuntime,
 	}
 	return do
@@ -233,27 +231,6 @@ func DiagnosePod(ops *types.DiagnoseOptions, podName string) error {
 	return nil
 }
 
-// InitDB Init DB info
-func InitDB(driverName, dbName, dataSource string) error {
-	if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
-		return fmt.Errorf("Failed to register driver: %v ", err)
-	}
-	if err := orm.RegisterDataBase(
-		dbName,
-		driverName,
-		dataSource); err != nil {
-		return fmt.Errorf("Failed to register db: %v ", err)
-	}
-	orm.RegisterModel(new(dao.Meta))
-
-	// create orm
-	dbm.DBAccess = orm.NewOrm()
-	if err := dbm.DBAccess.Using(dbName); err != nil {
-		return fmt.Errorf("Using db access error %v ", err)
-	}
-	return nil
-}
-
 func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, error) {
 	conditionsPod := fmt.Sprintf("%v/pod/%v",
 		resNamePaces,
@@ -323,7 +300,7 @@ func DiagnoseInstall(ob *types.CheckOptions) error {
 		}
 	}
 
-	err = CheckNetWork(ob.IP, ob.Timeout, ob.EdgeHubURL)
+	err = CheckNetWork(ob.IP, ob.Timeout, ob.CloudHubServer, ob.EdgecoreServer, ob.Config)
 	if err != nil {
 		return err
 	}

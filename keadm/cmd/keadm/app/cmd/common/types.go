@@ -46,12 +46,14 @@ type JoinOptions struct {
 }
 
 type CheckOptions struct {
-	Domain     string
-	DNSIP      string
-	IP         string
-	Runtime    string
-	Timeout    int
-	EdgeHubURL string
+	Domain         string
+	DNSIP          string
+	IP             string
+	Runtime        string
+	Timeout        int
+	CloudHubServer string
+	EdgecoreServer string
+	Config         string
 }
 
 type CheckObject struct {
@@ -60,7 +62,7 @@ type CheckObject struct {
 	Cmd  string
 }
 
-//ColletcOptions has the kubeedge debug colletc information filled by CLI
+// ColletcOptions has the kubeedge debug colletc information filled by CLI
 type ColletcOptions struct {
 	Config     string
 	OutputPath string
