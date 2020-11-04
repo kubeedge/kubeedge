@@ -46,7 +46,7 @@ type KubeAPIConfig struct {
 	// Note: Can not use "omitempty" option,  It will affect the output of the default configuration file
 	Master string `json:"master"`
 	// ContentType indicates the ContentType of message transmission when interacting with k8s
-	// default application/vnd.kubernetes.protobuf
+	// default "application/vnd.kubernetes.protobuf"
 	ContentType string `json:"contentType,omitempty"`
 	// QPS to while talking with kubernetes apiserve
 	// default 100
@@ -265,7 +265,7 @@ type EdgeControllerLoad struct {
 	// default 1
 	UpdateNodeStatusWorkers int32 `json:"updateNodeStatusWorkers,omitempty"`
 	// QueryConfigMapWorkers indicates the load of query config map workers
-	// default 1
+	// default 4
 	QueryConfigMapWorkers int32 `json:"queryConfigMapWorkers,omitempty"`
 	// QuerySecretWorkers indicates the load of query secret workers
 	// default 4
@@ -358,10 +358,10 @@ type CloudStream struct {
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
 	// TLSTunnelCertFile indicates cert file path
-	// default /etc/kubeedge/certs/edge.crt
+	// default /etc/kubeedge/certs/server.crt
 	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
 	// TLSTunnelPrivateKeyFile indicates key file path
-	// default /etc/kubeedge/certs/edge.key
+	// default /etc/kubeedge/certs/server.key
 	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
 	// TunnelPort set open port for tunnel server
 	// default 10004
