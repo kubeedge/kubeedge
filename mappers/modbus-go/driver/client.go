@@ -107,12 +107,10 @@ func newRTUClient(config ModbusRTU) *ModbusClient {
 // NewClient allocate and return a modbus client.
 // Client type includes TCP and RTU.
 func NewClient(config interface{}) (*ModbusClient, error) {
-	switch config.(type) {
+	switch c := config.(type) {
 	case ModbusTCP:
-		c, _ := config.(ModbusTCP)
 		return newTCPClient(c), nil
 	case ModbusRTU:
-		c, _ := config.(ModbusRTU)
 		return newRTUClient(c), nil
 	default:
 		return &ModbusClient{}, errors.New("Wrong modbus type")

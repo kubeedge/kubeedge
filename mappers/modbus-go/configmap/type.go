@@ -28,8 +28,8 @@ type ModbusVisitorConfig struct {
 
 // ModbusProtocolCommonConfig is the modbus protocol configuration.
 type ModbusProtocolCommonConfig struct {
-	COM              COMStruct             `json:"com,omitempty"`
-	TCP              TCPStruct             `json:"tcp,omitempty"`
+	COM              COMStruct       `json:"com,omitempty"`
+	TCP              TCPStruct       `json:"tcp,omitempty"`
 	CustomizedValues CustomizedValue `json:"customizedValues,omitempty"`
 }
 

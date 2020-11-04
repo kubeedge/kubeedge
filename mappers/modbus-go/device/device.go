@@ -224,7 +224,7 @@ func initSubscribeMqtt(instanceID string) error {
 func initGetStatus(dev *globals.ModbusDev) {
 	getStatus := GetStatus{Client: dev.ModbusClient,
 		topic: fmt.Sprintf(mappercommon.TopicStateUpdate, dev.Instance.ID)}
-	timer := mappercommon.Timer{getStatus.Run, 1 * time.Second, 0}
+	timer := mappercommon.Timer{Function: getStatus.Run, Duration: 1 * time.Second, Times: 0}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
