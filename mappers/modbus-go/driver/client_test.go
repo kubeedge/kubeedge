@@ -32,7 +32,7 @@ func tdriver() {
 	modbusrtu.BaudRate = 9600
 	modbusrtu.DataBits = 8
 	modbusrtu.StopBits = 1
-	modbusrtu.SlaveId = 1
+	modbusrtu.SlaveID = 1
 	modbusrtu.Parity = "N"
 	modbusrtu.Timeout = 2 * time.Second
 
