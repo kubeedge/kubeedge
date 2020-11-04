@@ -28,16 +28,16 @@ type ModbusVisitorConfig struct {
 
 // ModbusProtocolCommonConfig is the modbus protocol configuration.
 type ModbusProtocolCommonConfig struct {
-	Com              COM             `json:"com,omitempty"`
-	Tcp              TCP             `json:"tcp,omitempty"`
+	COM              COMStruct             `json:"com,omitempty"`
+	TCP              TCPStruct             `json:"tcp,omitempty"`
 	CustomizedValues CustomizedValue `json:"customizedValues,omitempty"`
 }
 
 // CustomizedValue is the customized part for modbus protocol.
 type CustomizedValue map[string]interface{}
 
-// COM is the serial configuration.
-type COM struct {
+// COMStruct is the serial configuration.
+type COMStruct struct {
 	SerialPort string `json:"serialPort"`
 	BaudRate   int64  `json:"baudRate"`
 	DataBits   int64  `json:"dataBits"`
@@ -45,8 +45,8 @@ type COM struct {
 	StopBits   int64  `json:"stopBits"`
 }
 
-// TCP is the TCP configuation.
-type TCP struct {
-	Ip   string `json:"ip"`
+// TCPStruct is the TCP configuation.
+type TCPStruct struct {
+	IP   string `json:"ip"`
 	Port int64  `json:"port"`
 }

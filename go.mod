@@ -40,15 +40,9 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pborman/uuid v1.2.0
-<<<<<<< HEAD
 	github.com/pkg/errors v0.9.1
-=======
-	github.com/pkg/errors v0.9.0
-	github.com/prometheus/common v0.6.0 // indirect
-	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/sailorvii/modbus v0.1.1
 	github.com/sailorvii/serial v0.1.0 // indirect
->>>>>>> Fix verify and lint issues.
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5

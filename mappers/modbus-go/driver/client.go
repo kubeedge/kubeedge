@@ -25,17 +25,17 @@ import (
 	"k8s.io/klog"
 )
 
-// ModbusTcp is the configurations of modbus TCP.
-type ModbusTcp struct {
-	SlaveId  byte
-	DeviceIp string
-	TcpPort  string
+// ModbusTCP is the configurations of modbus TCP.
+type ModbusTCP struct {
+	SlaveID  byte
+	DeviceIP string
+	TCPPort  string
 	Timeout  time.Duration
 }
 
-// ModbusRtu is the configurations of modbus RTU.
-type ModbusRtu struct {
-	SlaveId      byte
+// ModbusRTU is the configurations of modbus RTU.
+type ModbusRTU struct {
+	SlaveID      byte
 	SerialName   string
 	BaudRate     int
 	DataBits     int
@@ -61,8 +61,8 @@ type ModbusClient struct {
  */
 var clients map[string]*ModbusClient
 
-func newTCPClient(config ModbusTcp) *ModbusClient {
-	addr := config.DeviceIp + ":" + config.TcpPort
+func newTCPClient(config ModbusTCP) *ModbusClient {
+	addr := config.DeviceIP + ":" + config.TCPPort
 
 	if client, ok := clients[addr]; ok {
 		return client
@@ -75,13 +75,13 @@ func newTCPClient(config ModbusTcp) *ModbusClient {
 	handler := modbus.NewTCPClientHandler(addr)
 	handler.Timeout = config.Timeout
 	handler.IdleTimeout = config.Timeout
-	handler.SlaveId = config.SlaveId
+	handler.SlaveId = config.SlaveID
 	client := ModbusClient{Client: modbus.NewClient(handler), Handler: handler, Config: config}
 	clients[addr] = &client
 	return &client
 }
 
-func newRTUClient(config ModbusRtu) *ModbusClient {
+func newRTUClient(config ModbusRTU) *ModbusClient {
 	if client, ok := clients[config.SerialName]; ok {
 		return client
 	}
@@ -95,7 +95,7 @@ func newRTUClient(config ModbusRtu) *ModbusClient {
 	handler.DataBits = config.DataBits
 	handler.Parity = parity(config.Parity)
 	handler.StopBits = config.StopBits
-	handler.SlaveId = config.SlaveId
+	handler.SlaveId = config.SlaveID
 	handler.Timeout = config.Timeout
 	handler.IdleTimeout = config.Timeout
 	handler.RS485.Enabled = config.RS485Enabled
@@ -108,11 +108,11 @@ func newRTUClient(config ModbusRtu) *ModbusClient {
 // Client type includes TCP and RTU.
 func NewClient(config interface{}) (*ModbusClient, error) {
 	switch config.(type) {
-	case ModbusTcp:
-		c, _ := config.(ModbusTcp)
+	case ModbusTCP:
+		c, _ := config.(ModbusTCP)
 		return newTCPClient(c), nil
-	case ModbusRtu:
-		c, _ := config.(ModbusRtu)
+	case ModbusRTU:
+		c, _ := config.(ModbusRTU)
 		return newRTUClient(c), nil
 	default:
 		return &ModbusClient{}, errors.New("Wrong modbus type")
@@ -128,9 +128,8 @@ func (c *ModbusClient) GetStatus() string {
 	err := c.Client.Connect()
 	if err == nil {
 		return DEVSTOK
-	} else {
-		return DEVSTDISCONN
 	}
+	return DEVSTDISCONN
 }
 
 // Get get register.

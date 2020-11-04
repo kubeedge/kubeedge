@@ -51,18 +51,20 @@ func (c *Config) Parse() error {
 	var loglevel string
 	var configFile string
 
-	pflag.StringVar(&loglevel, "v", loglevel, "log level")
+	pflag.StringVar(&loglevel, "v", "1", "log level")
 	pflag.StringVar(&configFile, "config-file", defaultConfigFile, "Config file name")
 	pflag.Parse()
 	cf, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(cf, c)
-	if err != nil {
+	if err = yaml.Unmarshal(cf, c); err != nil {
 		return err
 	}
-	level.Set(loglevel)
+	if err = level.Set(loglevel); err != nil {
+		return err
+	}
+
 	return c.parseFlags()
 }
 

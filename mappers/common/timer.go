@@ -35,6 +35,7 @@ func (t *Timer) Start() {
 			select {
 			case <-ticker.C:
 				t.Function()
+			default:
 			}
 		}
 	} else {
@@ -42,6 +43,7 @@ func (t *Timer) Start() {
 			select {
 			case <-ticker.C:
 				t.Function()
+			default:
 			}
 		}
 	}

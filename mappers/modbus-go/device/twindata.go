@@ -53,7 +53,6 @@ func (td *TwinData) Run() {
 			klog.Error("Create message twin update failed")
 			return
 		}
-
 	} else {
 		if payload, err = mappercommon.CreateMessageData(td.Name, td.Type, strconv.Itoa(int(td.Results[0]))); err != nil {
 			klog.Error("Create message data failed")

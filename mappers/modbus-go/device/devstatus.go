@@ -37,8 +37,11 @@ func (gs *GetStatus) Run() {
 	var payload []byte
 	var err error
 	if payload, err = mappercommon.CreateMessageState(gs.Status); err != nil {
-		klog.Error("Create message state failed")
+		klog.Error("Create message state failed: ", err)
 		return
 	}
-	globals.MqttClient.Publish(gs.topic, payload)
+	if err = globals.MqttClient.Publish(gs.topic, payload); err != nil {
+		klog.Error("Publish failed: ", err)
+		return
+	}
 }

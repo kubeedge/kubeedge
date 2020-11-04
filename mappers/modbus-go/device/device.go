@@ -131,23 +131,23 @@ func isRS485Enabled(customizedValue configmap.CustomizedValue) bool {
 
 // initModbus initialize modbus client
 func initModbus(protocolConfig configmap.ModbusProtocolCommonConfig, slaveID int16) (client *driver.ModbusClient, err error) {
-	if protocolConfig.Com.SerialPort != "" {
-		modbusRtu := driver.ModbusRtu{SlaveId: byte(slaveID),
-			SerialName:   protocolConfig.Com.SerialPort,
-			BaudRate:     int(protocolConfig.Com.BaudRate),
-			DataBits:     int(protocolConfig.Com.DataBits),
-			StopBits:     int(protocolConfig.Com.StopBits),
-			Parity:       protocolConfig.Com.Parity,
+	if protocolConfig.COM.SerialPort != "" {
+		modbusRTU := driver.ModbusRTU{SlaveID: byte(slaveID),
+			SerialName:   protocolConfig.COM.SerialPort,
+			BaudRate:     int(protocolConfig.COM.BaudRate),
+			DataBits:     int(protocolConfig.COM.DataBits),
+			StopBits:     int(protocolConfig.COM.StopBits),
+			Parity:       protocolConfig.COM.Parity,
 			RS485Enabled: isRS485Enabled(protocolConfig.CustomizedValues),
 			Timeout:      5 * time.Second}
-		client, _ = driver.NewClient(modbusRtu)
-	} else if protocolConfig.Tcp.Ip != "" {
-		modbusTcp := driver.ModbusTcp{
-			SlaveId:  byte(slaveID),
-			DeviceIp: protocolConfig.Tcp.Ip,
-			TcpPort:  strconv.FormatInt(protocolConfig.Tcp.Port, 10),
+		client, _ = driver.NewClient(modbusRTU)
+	} else if protocolConfig.TCP.IP != "" {
+		modbusTCP := driver.ModbusTCP{
+			SlaveID:  byte(slaveID),
+			DeviceIP: protocolConfig.TCP.IP,
+			TCPPort:  strconv.FormatInt(protocolConfig.TCP.Port, 10),
 			Timeout:  5 * time.Second}
-		client, _ = driver.NewClient(modbusTcp)
+		client, _ = driver.NewClient(modbusTCP)
 	} else {
 		return nil, errors.New("No protocol found")
 	}
@@ -176,7 +176,7 @@ func initTwin(dev *globals.ModbusDev) {
 		if collectCycle == 0 {
 			collectCycle = 1 * time.Second
 		}
-		timer := mappercommon.Timer{twinData.Run, collectCycle, 0}
+		timer := mappercommon.Timer{Function: twinData.Run, Duration: collectCycle, Times: 0}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -204,7 +204,7 @@ func initData(dev *globals.ModbusDev) {
 		if collectCycle == 0 {
 			collectCycle = 1 * time.Second
 		}
-		timer := mappercommon.Timer{twinData.Run, collectCycle, 0}
+		timer := mappercommon.Timer{Function: twinData.Run, Duration: collectCycle, Times: 0}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -213,7 +213,7 @@ func initData(dev *globals.ModbusDev) {
 	}
 }
 
-// initSubscribeMqtt subscirbe Mqtt topics.
+// initSubscribeMqtt subscribe Mqtt topics.
 func initSubscribeMqtt(instanceID string) error {
 	topic := fmt.Sprintf(mappercommon.TopicTwinUpdateDelta, instanceID)
 	klog.V(1).Info("Subscribe topic: ", topic)
@@ -240,12 +240,13 @@ func start(dev *globals.ModbusDev) {
 		return
 	}
 
-	if client, err := initModbus(protocolConfig, dev.Instance.PProtocol.ProtocolConfigs.SlaveID); err != nil {
+	client, err := initModbus(protocolConfig, dev.Instance.PProtocol.ProtocolConfigs.SlaveID)
+	if err != nil {
 		klog.Error(err)
 		return
-	} else {
-		dev.ModbusClient = client
 	}
+	dev.ModbusClient = client
+
 	initTwin(dev)
 	initData(dev)
 

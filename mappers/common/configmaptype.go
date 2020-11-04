@@ -64,7 +64,7 @@ type Protocol struct {
 	ProtocolCommonConfig json.RawMessage `json:"protocolCommonConfig,omitempty"`
 }
 
-// ProtocolConfig is the protocl configuration.
+// ProtocolConfig is the protocol configuration.
 type ProtocolConfig struct {
 	SlaveID int16 `json:"slaveID,omitempty"`
 }

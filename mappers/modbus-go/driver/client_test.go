@@ -23,12 +23,10 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	. "github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
 )
 
-func test_driver() {
-	var modbusrtu ModbusRtu
+func tdriver() {
+	var modbusrtu ModbusRTU
 
 	modbusrtu.SerialName = "/dev/ttyS0"
 	modbusrtu.BaudRate = 9600
@@ -48,17 +46,18 @@ func test_driver() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(results)
 	results, err = client.Set("CoilRegister", 2, 1)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(results)
 	os.Exit(0)
-
 }
 
 func main() {
 	/*
-		var modbustcp ModbusTcp
+		var modbustcp ModbusTCP
 
 		modbustcp.DeviceIp = "192.168.56.1"
 		modbustcp.TcpPort = "502"
@@ -77,6 +76,6 @@ func main() {
 		}
 		fmt.Println("result: ", results)
 	*/
-	test_driver()
+	tdriver()
 	os.Exit(0)
 }
