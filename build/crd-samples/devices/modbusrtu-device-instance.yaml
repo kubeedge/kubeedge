@@ -15,7 +15,7 @@ spec:
     common:
       com:
         serialPort: '/dev/ttyS0'
-        baudRate: 9600 
+        baudRate: 9600
         dataBits: 8
         parity: even
         stopBits: 1
@@ -27,7 +27,7 @@ spec:
       - key: ''
         operator: In
         values:
-        - test 
+        - test
   propertyVisitors:
     - propertyName: temperature
       modbus:
@@ -39,7 +39,7 @@ spec:
         isRegisterSwap: true
     - propertyName: temperature-enable
       modbus:
-        register: CoilRegister 
+        register: CoilRegister
         offset: 3
         limit: 1
         scale: 1.0

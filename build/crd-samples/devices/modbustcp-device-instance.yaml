@@ -22,7 +22,7 @@ spec:
       - key: ''
         operator: In
         values:
-        - test 
+        - test
   propertyVisitors:
     - propertyName: temperature
       modbus:
