@@ -50,9 +50,17 @@ func (ps *ProxyServer) Run() {
 }
 func (ps *ProxyServer) installPath() {
 	ps.mux.HandleFunc("/healthz", ps.healthz).Methods("GET")
+	if proxyconfig.Config.KubernetesServerVersion != "" {
+		ps.mux.HandleFunc("/version", ps.version)
+	}
 	ps.mux.PathPrefix("/").Handler(ps.handler)
 }
 func (ps *ProxyServer) healthz(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "ok")
+}
+
+func (ps *ProxyServer) version(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, proxyconfig.Config.KubernetesServerVersion)
 }
