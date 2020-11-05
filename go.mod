@@ -20,8 +20,8 @@ require (
 	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
-	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
