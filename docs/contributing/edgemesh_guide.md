@@ -1,6 +1,6 @@
 # EdgeMesh guide
 
-In case network issue betwwen cloud and edge side, we intergrate EdgeMesh to support DNS visit at any time.
+In case network issue between cloud and edge side, we intergrate EdgeMesh to support DNS visit at any time.
 
 Currently we only support HTTP1.x, more protocols like HTTPS and gRPC coming later.
 
