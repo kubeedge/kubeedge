@@ -94,7 +94,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	klog.Infof("OnSubMessageReceived receive msg from topic: %s", message.Topic())
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
-	// for topic, no need to base64 topic
+	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
 	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
