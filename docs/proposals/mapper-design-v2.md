@@ -11,7 +11,7 @@ creation-date: 2020-09-09
 last-updated: 
 ---
 
-# Mapper Re-design
+# Mapper Design V2
 ## Introduction
 
 The original description could refer to the doc [mapper-design.md](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/mapper-design.md "mapper-design.md").
