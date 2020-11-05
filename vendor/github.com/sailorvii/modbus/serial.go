@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sailorvii/serial"
+	"github.com/goburrow/serial"
 )
 
 const (
