@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/decoder"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/serializer"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/proxy"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/server"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -40,7 +40,7 @@ func (e *edgeProxy) Group() string {
 }
 
 func (e *edgeProxy) Start() {
-	decoderMgr := decoder.DefaultDecoderMgr
+	decoderMgr := serializer.DefaultDecoderMgr
 	cacheMgr := cache.NewCacheMgr(decoderMgr)
 	healthzChecker := checker.NewHealthzChecker(config.Config.RemoteAddr)
 	eph, err := proxy.NewEdgeProxyHandler(cacheMgr, healthzChecker)

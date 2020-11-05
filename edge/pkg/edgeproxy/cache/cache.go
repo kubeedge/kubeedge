@@ -15,7 +15,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	cachedao "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache/dao"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/decoder"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/serializer"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
 )
 
@@ -34,11 +34,11 @@ type Manager interface {
 }
 
 type Mgr struct {
-	decoderMgr        decoder.Manager
+	decoderMgr        serializer.Manager
 	backendSerializer runtime.Serializer
 }
 
-func NewCacheMgr(decoderMgr decoder.Manager) Manager {
+func NewCacheMgr(decoderMgr serializer.Manager) Manager {
 	backendSerializer := decoderMgr.GetBackendSerializer()
 	return &Mgr{
 		decoderMgr:        decoderMgr,

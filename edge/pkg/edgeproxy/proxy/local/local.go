@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"net/http"
 	"path"
 	"strconv"
@@ -129,8 +130,8 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	}
 	listobj, err := scheme.Scheme.New(gkv)
 	if err != nil {
-		p.Err(err, w, req)
-		return
+		listobj = &unstructured.UnstructuredList{}
+		listobj.GetObjectKind().SetGroupVersionKind(gkv)
 	}
 	// iterate objs to get the latest resourceversion
 	listRv := 0

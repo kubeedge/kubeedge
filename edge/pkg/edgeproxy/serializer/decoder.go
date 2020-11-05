@@ -1,4 +1,4 @@
-package decoder
+package serializer
 
 import (
 	"errors"
@@ -7,7 +7,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/runtime/serializer/streaming"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -20,12 +19,12 @@ type Manager interface {
 	GetDecoder(contentType string, gv schema.GroupVersion) (runtime.Decoder, error)
 	// generate watch decoder based on contentType, groupVersion and readCloser
 	GetStreamDecoder(contentType string, gv schema.GroupVersion, rc io.ReadCloser) (watch.Decoder, error)
-	// generate a serializer to decode and encode data in sqlite
+	// generate a serializer to decode and encode data in local cache
 	GetBackendSerializer() runtime.Serializer
 }
 
 var DefaultDecoderMgr = &mgr{
-	serializer: serializer.NewCodecFactory(scheme.Scheme).WithoutConversion(),
+	serializer: generalNegotiatedSerializer{},
 }
 
 type mgr struct {
@@ -62,6 +61,6 @@ func (dm *mgr) GetStreamDecoder(contentType string, gv schema.GroupVersion, rc i
 }
 
 func (dm *mgr) GetBackendSerializer() runtime.Serializer {
-	serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme.Scheme, scheme.Scheme, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false})
+	serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory, unstructuredCreater{nested: scheme.Scheme}, unstructuredTyper{nested: scheme.Scheme}, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false})
 	return serializer
 }
