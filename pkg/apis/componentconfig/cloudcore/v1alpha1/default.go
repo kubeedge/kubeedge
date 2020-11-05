@@ -99,6 +99,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					QueryAPIResource:           constants.DefaultQueryAPIResourceBuffer,
 				},
 				Context: &EdgeControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
@@ -118,6 +119,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					QueryAPIResourceWorkers:           constants.DefaultQueryAPIResourceWorkers,
 				},
 			},
 			DeviceController: &DeviceController{

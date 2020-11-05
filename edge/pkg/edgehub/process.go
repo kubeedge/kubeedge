@@ -92,6 +92,8 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		md = modules.MetaGroup
 	case messagepkg.UserGroupName:
 		md = modules.BusGroup
+	case messagepkg.EdgeProxyGroup:
+		md = modules.EdgeProxyGroup
 	default:
 		klog.Warningf("msg_group not found")
 		return fmt.Errorf("msg_group not found")

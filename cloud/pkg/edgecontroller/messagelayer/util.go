@@ -72,6 +72,7 @@ func GetResourceType(msg model.Message) (string, error) {
 	if config.Config.EdgeSiteEnable {
 		length = controller.EdgeSiteResourceResourceTypeIndex
 	}
+
 	if len(sli) <= length {
 		return "", fmt.Errorf("resource type not found")
 	}

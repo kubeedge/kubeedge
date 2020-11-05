@@ -6,8 +6,9 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/serializer"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/proxy"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/relation"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/serializer"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/server"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -19,6 +20,7 @@ func Register(ep *v1alpha1.EdgePorxy) {
 	epModule := newEdgeProxy(ep.Enable)
 	core.Register(epModule)
 	cache.InitDBTable(epModule)
+	relation.InitDBTable(epModule)
 }
 
 func newEdgeProxy(enable bool) *edgeProxy {
@@ -36,7 +38,7 @@ func (e *edgeProxy) Name() string {
 }
 
 func (e *edgeProxy) Group() string {
-	return modules.ProxyGroup
+	return modules.EdgeProxyGroup
 }
 
 func (e *edgeProxy) Start() {
@@ -51,6 +53,7 @@ func (e *edgeProxy) Start() {
 	if err != nil {
 		panic(err)
 	}
+	relation.Init()
 	svr.Run()
 }
 

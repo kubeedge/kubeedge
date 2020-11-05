@@ -136,7 +136,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 func getMsgKey(obj interface{}) (string, error) {
 	msg := obj.(*beehiveModel.Message)
 
-	if msg.GetGroup() == edgeconst.GroupResource {
+	if msg.GetGroup() == edgeconst.GroupResource || msg.GetGroup() == edgeconst.GroupEdgeProxy {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)
@@ -158,7 +158,8 @@ func isListResource(msg *beehiveModel.Message) bool {
 		strings.Contains(msgResource, commonconst.ResourceTypeServiceList) ||
 		strings.Contains(msgResource, commonconst.ResourceTypeEndpointsList) ||
 		strings.Contains(msgResource, "membership") ||
-		strings.Contains(msgResource, "twin/cloud_updated") {
+		strings.Contains(msgResource, "twin/cloud_updated") ||
+		strings.Contains(msgResource, "apiresource") {
 		return true
 	}
 

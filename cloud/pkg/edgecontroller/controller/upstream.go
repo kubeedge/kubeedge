@@ -28,9 +28,10 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"sort"
 	"time"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -93,6 +94,7 @@ type UpstreamController struct {
 	queryNodeChan             chan model.Message
 	updateNodeChan            chan model.Message
 	podDeleteChan             chan model.Message
+	queryAPIResourceChan      chan model.Message
 }
 
 // Start UpstreamController
@@ -111,6 +113,7 @@ func (uc *UpstreamController) Start() error {
 	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
 	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
+	uc.queryAPIResourceChan = make(chan model.Message, config.Config.Buffer.QueryAPIResource)
 
 	go uc.dispatchMessage()
 
@@ -150,6 +153,10 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(config.Config.Load.DeletePodWorkers); i++ {
 		go uc.deletePod()
 	}
+	for i := 0; i < int(config.Config.Load.QueryAPIResourceWorkers); i++ {
+		go uc.queryAPIResource()
+	}
+
 	return nil
 }
 
@@ -213,6 +220,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			} else {
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
+		case model.ResourceTypeAPIResource:
+			uc.queryAPIResourceChan <- msg
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
@@ -526,6 +535,13 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		node, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
+	case model.ResourceTypeAPIResource:
+		resourceLists, err := uc.kubeClient.Discovery().ServerResources()
+		if err != nil {
+			return resourceLists, "-1", err
+		}
+		bs, err := json.Marshal(resourceLists)
+		return string(bs), fmt.Sprintf("%d", time.Now().Unix()), nil
 	default:
 		err := stderrors.New("Wrong query type")
 		klog.Error(err)
@@ -568,7 +584,13 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 		if err != nil {
 			klog.Warningf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
 		}
-		resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+
+		switch queryType {
+		case model.ResourceTypeAPIResource:
+			resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupEdgeProxy, resource, model.ResponseOperation)
+		default:
+			resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+		}
 		err = uc.messageLayer.Response(*resMsg)
 		if err != nil {
 			klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
@@ -577,6 +599,17 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 		klog.V(4).Infof("message: %s process successfully", msg.GetID())
 	default:
 		klog.Warningf("message: %s process failure, operation: %s unsupported", msg.GetID(), msg.GetOperation())
+	}
+}
+
+func (uc *UpstreamController) queryAPIResource() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop queryAPIResource")
+		case msg := <-uc.queryAPIResourceChan:
+			queryInner(uc, msg, model.ResourceTypeAPIResource)
+		}
 	}
 }
 

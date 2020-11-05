@@ -14,6 +14,7 @@ const (
 	TwinGroupName     = "twin"
 	FuncGroupName     = "func"
 	UserGroupName     = "user"
+	EdgeProxyGroup    = "edgeproxy"
 )
 
 //BuildMsg returns message object with router and content details

@@ -244,6 +244,9 @@ type EdgeControllerBuffer struct {
 	// DeletePod indicates the buffer of delete pod message from edge
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
+	// QueryAPIResource indicates the buffer of query api resource
+	// default 1024
+	QueryAPIResource int32 `json:"queryAPIResource,omitempty"`
 }
 
 // EdgeControllerContext indicates the EdgeController context
@@ -294,6 +297,9 @@ type EdgeControllerLoad struct {
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
+	// QueryAPIResourceWorkers indicates the load of query api resource workers
+	// default 4
+	QueryAPIResourceWorkers int32 `json:"queryAPIResourceWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller
