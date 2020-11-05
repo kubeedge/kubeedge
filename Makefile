@@ -291,13 +291,23 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
+# Mappers
 .PHONY: bluetoothdevice
 bluetoothdevice: clean
 	hack/make-rules/bluetoothdevice.sh
-
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:bluetoothdevice
-	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+	sudo docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+
+.PHONY: modbusmapper
+modbusmapper: clean
+	hack/make-rules/modbusmapper.sh
+.PHONY: modbusmapper_image
+modbusmapper_image:modbusmapper
+	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
+
+.PHONY: mappers
+mappers:bluetoothdevice modbusmapper
 
 
 define INSTALL_HELP_INFO
