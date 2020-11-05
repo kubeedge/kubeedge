@@ -284,6 +284,9 @@ github.com/go-openapi/jsonreference
 github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.19.5
 github.com/go-openapi/swag
+# github.com/goburrow/serial v0.1.0
+## explicit
+github.com/goburrow/serial
 # github.com/godbus/dbus/v5 v5.0.3
 github.com/godbus/dbus/v5
 # github.com/gogo/protobuf v1.3.1
@@ -599,6 +602,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/sailorvii/modbus v0.1.2
+## explicit
+github.com/sailorvii/modbus
 # github.com/satori/go.uuid v1.2.0
 ## explicit
 github.com/satori/go.uuid

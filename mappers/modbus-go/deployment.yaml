@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modbus-mapper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: modbusmapper
+  template:
+    metadata:
+      labels:
+        app: modbusmapper
+    spec:
+      hostNetwork: true
+      containers:
+      - name: modbus-mapper-container
+        image: modbusmapper:v1.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: config-volume
+          mountPath: /opt/kubeedge/
+        - mountPath: /dev/ttyS0
+          name: modbus-dev0
+        - mountPath: /dev/ttyS1
+          name: modbus-dev1
+      nodeSelector:
+        modbus: "true"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: device-profile-config-test
+      - name: modbus-dev0
+        hostPath:
+          path: /dev/ttyS0
+      - name: modbus-dev1
+        hostPath:
+          path: /dev/ttyS1
+      restartPolicy: Always
