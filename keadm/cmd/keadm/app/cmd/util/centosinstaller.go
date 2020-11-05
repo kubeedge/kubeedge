@@ -111,3 +111,8 @@ func (c *CentOS) KillKubeEdgeBinary(proc string) error {
 func (c *CentOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
+
+//IsKubeEdgeProcessRunning checks if the given process is running or not
+func (c *CentOS) IsProcessRunning(proc string) (bool, error) {
+	return isKubeEdgeProcessRunning(proc)
+}

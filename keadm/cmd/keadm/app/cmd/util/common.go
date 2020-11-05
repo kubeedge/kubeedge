@@ -17,17 +17,18 @@ limitations under the License.
 package util
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
-
-	"k8s.io/klog"
 
 	"github.com/blang/semver"
 	"github.com/spf13/pflag"
@@ -35,8 +36,10 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 //Constants used by installers
@@ -75,6 +78,14 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
+
+	UnitCore = "core"
+	UnitMB   = "MB"
+	UnitGB   = "GB"
+
+	KB int = 1024
+	MB int = KB * 1024
+	GB int = MB * 1024
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
@@ -667,6 +678,98 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 	return nil
 }
 
+// Compressed folders or files
+func Compress(tarName string, paths []string) (err error) {
+	tarFile, err := os.Create(tarName)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = tarFile.Close()
+	}()
+
+	absTar, err := filepath.Abs(tarName)
+	if err != nil {
+		return err
+	}
+
+	// enable compression if file ends in .gz
+	tw := tar.NewWriter(tarFile)
+	if strings.HasSuffix(tarName, ".gz") || strings.HasSuffix(tarName, ".gzip") {
+		gz := gzip.NewWriter(tarFile)
+		defer gz.Close()
+		tw = tar.NewWriter(gz)
+	}
+	defer tw.Close()
+
+	// walk each specified path and add encountered file to tar
+	for _, path := range paths {
+		// validate path
+		path = filepath.Clean(path)
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		if absPath == absTar {
+			fmt.Printf("tar file %s cannot be the source\n", tarName)
+			continue
+		}
+		if absPath == filepath.Dir(absTar) {
+			fmt.Printf("tar file %s cannot be in source %s\n", tarName, absPath)
+			continue
+		}
+
+		walker := func(file string, finfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// fill in header info using func FileInfoHeader
+			hdr, err := tar.FileInfoHeader(finfo, finfo.Name())
+			if err != nil {
+				return err
+			}
+
+			relFilePath := file
+			if filepath.IsAbs(path) {
+				relFilePath, err = filepath.Rel(path, file)
+				if err != nil {
+					return err
+				}
+			}
+			// ensure header has relative file path
+			hdr.Name = relFilePath
+
+			if err := tw.WriteHeader(hdr); err != nil {
+				return err
+			}
+			// if path is a dir, dont continue
+			if finfo.Mode().IsDir() {
+				return nil
+			}
+
+			// add file to tar
+			srcFile, err := os.Open(file)
+			if err != nil {
+				return err
+			}
+			defer srcFile.Close()
+			_, err = io.Copy(tw, srcFile)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// build tar
+		if err := filepath.Walk(path, walker); err != nil {
+			fmt.Printf("failed to add %s to tar: %s\n", path, err)
+		}
+	}
+	return nil
+}
+
 func askForconfirm() (bool, error) {
 	var s string
 
@@ -684,4 +787,83 @@ func askForconfirm() (bool, error) {
 	} else {
 		return false, fmt.Errorf("Invalid Input")
 	}
+}
+
+// Execute shell script and filter
+func ExecShellFilter(c string) (string, error) {
+	cmd := exec.Command("sh", "-c", c)
+	o, err := cmd.Output()
+	str := strings.Replace(string(o), " ", "", -1)
+	str = strings.Replace(str, "\n", "", -1)
+	if err != nil {
+		return str, fmt.Errorf("exec fail: %s, %s", c, err)
+	}
+	return str, nil
+}
+
+func FileExists(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		return os.IsExist(err)
+	}
+	return true
+}
+
+func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) {
+	edgeCoreConfig := v1alpha1.NewDefaultEdgeCoreConfig()
+	if err := edgeCoreConfig.Parse(edgecorePath); err != nil {
+		return nil, err
+	}
+	return edgeCoreConfig, nil
+}
+
+// Determine if it is in the array
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}
+
+//print fail
+func PrintFail(cmd string, s string) {
+	v := fmt.Sprintf("|%s %s failed|", s, cmd)
+	printResult(v)
+}
+
+//print success
+func PrintSuccedd(cmd string, s string) {
+	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
+	printResult(v)
+}
+
+func printResult(s string) {
+	line := "|"
+	if len(s) > 2 {
+		for i := 0; i < len(s)-2; i++ {
+			line = line + "-"
+		}
+		line = line + "|"
+	}
+
+	fmt.Println("")
+	fmt.Println(line)
+	fmt.Println(s)
+	fmt.Println(line)
+}
+
+//IsKubeEdgeProcessRunning checks if the given process is running or not
+func IsProcessRunningWithFilter(proc string, filter string) (bool, error) {
+	procRunning := fmt.Sprintf("ps aux | grep '[%s]%s'|grep -v '%s' | awk '{print $2}'", proc[0:1], proc[1:], filter)
+	stdout, err := runCommandWithStdout(procRunning)
+	if err != nil {
+		return false, err
+	}
+	if stdout != "" {
+		return true, nil
+	}
+
+	return false, nil
 }
