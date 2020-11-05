@@ -191,10 +191,6 @@ var (
 			Desc: DescAll,
 		},
 		{
-			Use:  ArgCheckArch,
-			Desc: DescArch,
-		},
-		{
 			Use:  ArgCheckCPU,
 			Desc: DescCPU,
 		},

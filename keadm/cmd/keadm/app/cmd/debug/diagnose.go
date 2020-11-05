@@ -273,12 +273,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 }
 
 func DiagnoseInstall(ob *types.CheckOptions) error {
-	err := CheckArch()
-	if err != nil {
-		return err
-	}
-
-	err = CheckCPU()
+	err := CheckCPU()
 	if err != nil {
 		return err
 	}
