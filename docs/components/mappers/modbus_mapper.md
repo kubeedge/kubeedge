@@ -57,7 +57,7 @@ The modbus mapper consists of the following four major modules :-
 
  ### Modbus Manager
 
- Modbus Manager is a component which can perform an read or write action on modbus device. The following are the main responsibilities of this component:
+ Modbus Manager is a component which can perform a read or write action on modbus device. The following are the main responsibilities of this component:
  a) When controller receives message of expected devicetwin value, Modbus Manager will connect to the device and change the registers to make actual state equal to expected.
 
  b) When controller checks all the properties of devices, Modbus Manager will connect to the device and read the actual value in registers according to the dpl configuration.
