@@ -68,7 +68,7 @@ The flow diagram below explains the message flow.
 
 *Fig 7: Secret Message Handling at EdgeD*
 
-Edged uses the MetaClient module to fetch secrets from MetaManager. If edged queries for a new secret which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the secret, MetaManager stores it in a local database. Subsequent queries for the same secret key will be retrieved from the database, reducing latency. The flow diagram below shows how a secret is fetched from MetaManager and the Cloud. It also descibes how the secret is stored in MetaManager.
+Edged uses the MetaClient module to fetch secrets from MetaManager. If edged queries for a new secret which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the secret, MetaManager stores it in a local database. Subsequent queries for the same secret key will be retrieved from the database, reducing latency. The flow diagram below shows how a secret is fetched from MetaManager and the Cloud. It also describes how the secret is stored in MetaManager.
 
 ![Query Secret](../../images/edged/query-secret-from-edged.png)
 
@@ -89,7 +89,7 @@ The flow diagram below explains the message flow.
 
 *Fig 9: ConfigMap Message Handling at EdgeD*
 
-Edged uses the MetaClient module to fetch ConfigMaps from MetaManager. If edged queries for a new ConfigMap which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the ConfigMap, MetaManager stores it in a local database. Subsequent queries for the same ConfigMap key will be retrieved from the database, reducing latency. The flow diagram below shows how ConfigMaps are fetched from MetaManager and the Cloud. It also descibes how ConfigMaps are stored in MetaManager.
+Edged uses the MetaClient module to fetch ConfigMaps from MetaManager. If edged queries for a new ConfigMap which is not yet stored in MetaManager, the request is forwarded to the Cloud. Before sending the response containing the ConfigMap, MetaManager stores it in a local database. Subsequent queries for the same ConfigMap key will be retrieved from the database, reducing latency. The flow diagram below shows how ConfigMaps are fetched from MetaManager and the Cloud. It also describes how ConfigMaps are stored in MetaManager.
 
 ![Query Configmaps](../../images/edged/query-configmap-from-edged.png)
 
@@ -120,7 +120,7 @@ Status manager is an independent edge routine, which collects pods statuses ever
 
 Volume manager runs as an edge routine which brings out the information of which volume(s) are to be attached/mounted/unmounted/detached based on pods scheduled on the edge node.
 
-Before starting the pod, all the specified volumes referenced in pod specs are attached and mounted, Till then the flow is blocked and with it other operations.
+Before starting the pod, all the specified volumes referenced in pod specs are attached and mounted, Till then the flow is blocked and with its other operations.
 
 ## MetaClient
 

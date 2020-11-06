@@ -71,7 +71,7 @@ NOTE: since cri doesn't support multi-tenancy while `containerd` does, the names
 
 Follow the [CRI-O install guide](https://github.com/cri-o/cri-o/blob/master/tutorials/setup.md) to setup CRI-O.
 
-If your edge node is running on the ARM platform and your distro is ubuntu18.04, you might need to build the binaries form source and then install, since CRI-O packages are not available in the [Kubic](https://build.opensuse.org/project/show/devel:kubic:libcontainers:stable) repository for this combination.
+If your edge node is running on the ARM platform and your distro is ubuntu18.04, you might need to build the binaries from source and then install, since CRI-O packages are not available in the [Kubic](https://build.opensuse.org/project/show/devel:kubic:libcontainers:stable) repository for this combination.
 
 ```bash
 git clone https://github.com/cri-o/cri-o
