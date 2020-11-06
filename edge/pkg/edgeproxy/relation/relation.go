@@ -19,22 +19,16 @@ import (
 
 var mgr iRelationManager
 
-func Init() {
-	mgr := &relationManager{}
-	mgr.init()
-}
-
-func InitDBTable(module core.Module) {
+func Init(module core.Module) {
 	if !module.Enable() {
 		klog.Warningf("Module %s is disabled, relation cache for it will not be registered", module.Name())
 		return
 	}
-
 	orm.RegisterModel(new(Relation))
 }
 
 type iRelationManager interface {
-	init()
+	LoadCache()
 	updateRelation(*Relation) error
 	getRelation(string) IRelation
 }
@@ -44,7 +38,11 @@ type relationManager struct {
 	data sync.Map
 }
 
-func (m *relationManager) init() {
+func InitMgr() {
+	mgr = &relationManager{}
+	mgr.LoadCache()
+}
+func (m *relationManager) LoadCache() {
 	m.Do(func() {
 		relations, err := queryAll()
 		if err != nil {
@@ -56,8 +54,6 @@ func (m *relationManager) init() {
 			obj := relations[i]
 			m.data.Store(obj.GroupResource, obj)
 		}
-
-		m.syncRelationFromRemote()
 	})
 }
 
@@ -151,4 +147,13 @@ func (m *relationManager) syncRelationFromRemote() {
 			}
 		}
 	}
+}
+
+func GetRelation(gr string) IRelation {
+	obj := mgr.getRelation(gr)
+	if obj == nil {
+		klog.Warningf("get relation by %s failed.", gr)
+	}
+
+	return obj
 }

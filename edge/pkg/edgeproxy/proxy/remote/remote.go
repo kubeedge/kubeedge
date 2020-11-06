@@ -39,9 +39,6 @@ func (r *Proxy) modifyResponse(resp *http.Response) error {
 	req := resp.Request
 	ctx := req.Context()
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
-	if !util.CanCacheResource(reqInfo.Resource) {
-		return nil
-	}
 	// Store Resoponse Content-Type Header information to the context
 	// to support mime types with addition detail,such as application/vnd.kubernetes.protobuf;stream=watch
 	respContentType := resp.Header.Get("Content-Type")

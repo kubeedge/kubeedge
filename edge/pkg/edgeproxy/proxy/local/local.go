@@ -2,7 +2,6 @@ package local
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"net/http"
 	"path"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversionscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -39,10 +39,6 @@ type Proxy struct {
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
-	if !util.CanRespResource(reqInfo.Resource) {
-		p.forbidden(w, req)
-		return
-	}
 	klog.V(4).Infof("serve request %v from local server!", req)
 	switch reqInfo.Verb {
 	case "watch":
@@ -51,7 +47,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		p.list(w, req)
 	case "get":
 		p.get(w, req)
-	case "delete", "create", "deletecollection":
+	case "create", "delete", "deletecollection":
 		p.forbidden(w, req)
 	default:
 		p.get(w, req)
@@ -67,7 +63,7 @@ func (p *Proxy) forbidden(w http.ResponseWriter, req *http.Request) {
 		Group:    info.APIGroup,
 		Resource: info.Resource,
 	}
-	s := errors.NewForbidden(qualitiedResource, info.Name, fmt.Errorf("don't support delete opetion in local mode"))
+	s := errors.NewForbidden(qualitiedResource, info.Name, fmt.Errorf("don't support %s operation in local mode", info.Verb))
 	p.Err(s, w, req)
 }
 
@@ -115,21 +111,25 @@ func (p *Proxy) watch(w http.ResponseWriter, req *http.Request) {
 //Responding to client's list operation
 func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
-	listKind := util.GetReourceList(reqinfo.Resource)
+	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
+	gr := schema.GroupResource{
+		Group:    reqInfo.APIGroup,
+		Resource: reqInfo.Resource,
+	}.String()
+	listKind := util.GetReourceList(gr)
 	gkv := schema.GroupVersionKind{
-		Group:   reqinfo.APIGroup,
-		Version: reqinfo.APIVersion,
+		Group:   reqInfo.APIGroup,
+		Version: reqInfo.APIVersion,
 		Kind:    listKind,
 	}
 	ua, _ := util.GetAppUserAgent(ctx)
-	objs, err := p.cacheMgr.QueryList(ctx, ua, reqinfo.Resource, reqinfo.Namespace)
+	objs, err := p.cacheMgr.QueryList(ctx, ua, gr, reqInfo.Namespace)
 	if err != nil {
 		p.Err(err, w, req)
 		return
 	}
-	listobj, err := scheme.Scheme.New(gkv)
-	if err != nil {
+	var listobj runtime.Object
+	if listobj, err = scheme.Scheme.New(gkv); err != nil {
 		listobj = &unstructured.UnstructuredList{}
 		listobj.GetObjectKind().SetGroupVersionKind(gkv)
 	}
@@ -146,13 +146,13 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 	accessor.SetResourceVersion(listobj, strconv.Itoa(listRv))
 	// compute and set selflink of listobjs
 	clusterScoped := true
-	if reqinfo.Namespace != "" {
+	if reqInfo.Namespace != "" {
 		clusterScoped = false
 	}
-	prefix := "/" + path.Join(reqinfo.APIPrefix, reqinfo.APIGroup, reqinfo.APIVersion)
+	prefix := "/" + path.Join(reqInfo.APIPrefix, reqInfo.APIGroup, reqInfo.APIVersion)
 	namer := handlers.ContextBasedNaming{
 		SelfLinker:         runtime.SelfLinker(meta.NewAccessor()),
-		SelfLinkPathPrefix: path.Join(prefix, reqinfo.Resource) + "/",
+		SelfLinkPathPrefix: path.Join(prefix, reqInfo.Resource) + "/",
 		SelfLinkPathSuffix: "",
 		ClusterScoped:      clusterScoped,
 	}
@@ -162,10 +162,13 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 		p.Err(err, w, req)
 		return
 	}
+
 	if err := namer.SetSelfLink(listobj, uri); err != nil {
+		klog.Errorf("set list failed with error %+v", err)
 		p.Err(err, w, req)
 		return
 	}
+
 	meta.SetList(listobj, objs)
 	p.WriteObject(http.StatusOK, listobj, w, req)
 }
@@ -173,14 +176,18 @@ func (p *Proxy) list(w http.ResponseWriter, req *http.Request) {
 //Responding to client's get operation
 func (p *Proxy) get(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	reqinfo, _ := apirequest.RequestInfoFrom(ctx)
+	reqInfo, _ := apirequest.RequestInfoFrom(ctx)
 	ua, _ := util.GetAppUserAgent(ctx)
 	//TODO  cannot support create events craete operation。
-	if reqinfo.Resource == "events" {
+	if reqInfo.Resource == "events" {
 		p.forbidden(w, req)
 		return
 	}
-	obj, err := p.cacheMgr.QueryObj(ctx, ua, reqinfo.Resource, reqinfo.Namespace, reqinfo.Name)
+	gr := schema.GroupResource{
+		Group:    reqInfo.APIGroup,
+		Resource: reqInfo.Resource,
+	}.String()
+	obj, err := p.cacheMgr.QueryObj(ctx, ua, gr, reqInfo.Namespace, reqInfo.Name)
 	if err != nil {
 		p.Err(err, w, req)
 		return

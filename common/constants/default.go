@@ -29,6 +29,7 @@ const (
 	DefaultProxyCAFile   = "/etc/kubeedge/ca/proxyCA.crt"
 	DefaultProxyCertFile = "/etc/kubeedge/certs/proxy.crt"
 	DefaultProxyKeyFile  = "/etc/kubeedge/certs/proxy.key"
+	DefaultCacheDataPath = "/var/lib/kubeedge/cache"
 )
 
 const (

@@ -2,6 +2,10 @@ package util
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/relation"
+	"k8s.io/klog"
 )
 
 type EdgeProxyContextType int
@@ -49,41 +53,27 @@ func GetAppUserAgent(ctx context.Context) (string, bool) {
 	return ua, ok
 }
 
-var (
-	resourceToKind = map[string]string{
-		"nodes":      "Node",
-		"pods":       "Pod",
-		"services":   "Service",
-		"namespaces": "Namespace",
-		"endpoints":  "Endpoints",
-		"configmaps": "ConfigMap",
-		"secrets":    "Secret",
+func GetResourceKind(gr string) string {
+	o := relation.GetRelation(gr)
+	kind := o.GetKind()
+	if kind == "" {
+		klog.Warningf("can not find kind of %s", gr)
 	}
-	resourceToList = map[string]string{
-		"nodes":      "NodeList",
-		"pods":       "PodList",
-		"services":   "ServiceList",
-		"namespaces": "NamespaceList",
-		"endpoints":  "EndpointsList",
-		"configmaps": "ConfigMapList",
-		"secrets":    "SecretList",
+	return kind
+}
+
+func GetReourceList(gr string) string {
+	o := relation.GetRelation(gr)
+	list := o.GetList()
+	if list == "" {
+		klog.Warningf("can not find list kind of %s", gr)
 	}
-)
-
-func CanCacheResource(resource string) bool {
-	_, ok := resourceToKind[resource]
-	return ok
+	return list
 }
 
-func CanRespResource(resource string) bool {
-	_, ok := resourceToList[resource]
-	return ok
-}
-
-func GetResourceKind(resource string) string {
-	return resourceToKind[resource]
-}
-
-func GetReourceList(resource string) string {
-	return resourceToList[resource]
+func BuildGroupResource(resource, group string) string {
+	if group == "" {
+		return resource
+	}
+	return fmt.Sprintf("%s.%s", resource, group)
 }

@@ -168,6 +168,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				HealthzCheckInterval:   5,
 				HealthzCheckRetryTimes: 3,
 				HealthzCheckTimeout:    3,
+				CacheDataPath:          constants.DefaultCacheDataPath,
 			},
 		},
 	}

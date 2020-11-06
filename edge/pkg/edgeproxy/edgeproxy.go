@@ -19,8 +19,8 @@ func Register(ep *v1alpha1.EdgePorxy) {
 	config.InitConfigure(ep)
 	epModule := newEdgeProxy(ep.Enable)
 	core.Register(epModule)
-	cache.InitDBTable(epModule)
-	relation.InitDBTable(epModule)
+	relation.Init(epModule)
+	cache.InitCacheDataPathPrefix(ep.CacheDataPath)
 }
 
 func newEdgeProxy(enable bool) *edgeProxy {
@@ -53,7 +53,7 @@ func (e *edgeProxy) Start() {
 	if err != nil {
 		panic(err)
 	}
-	relation.Init()
+	relation.InitMgr()
 	svr.Run()
 }
 

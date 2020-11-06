@@ -13,12 +13,12 @@ import (
 
 func (p *Proxy) WriteObject(statusCode int, obj runtime.Object, w http.ResponseWriter, req *http.Request) {
 	gv := p.getRequestGroupVersion(req)
-	responsewriters.WriteObjectNegotiated(clientscheme.Codecs, negotiation.DefaultEndpointRestrictions, gv, w, req, statusCode, obj)
+	responsewriters.WriteObjectNegotiated(clientscheme.Codecs.WithoutConversion(), negotiation.DefaultEndpointRestrictions, gv, w, req, statusCode, obj)
 }
 
 func (p *Proxy) Err(err error, w http.ResponseWriter, req *http.Request) {
 	gv := p.getRequestGroupVersion(req)
-	responsewriters.ErrorNegotiated(err, clientscheme.Codecs, gv, w, req)
+	responsewriters.ErrorNegotiated(err, clientscheme.Codecs.WithoutConversion(), gv, w, req)
 }
 
 func (p *Proxy) getRequestGroupVersion(req *http.Request) schema.GroupVersion {
