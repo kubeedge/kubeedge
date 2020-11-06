@@ -78,6 +78,13 @@ func getCA(w http.ResponseWriter, r *http.Request) {
 //electionHandler returns the status whether the cloudcore is ready
 func electionHandler(w http.ResponseWriter, r *http.Request) {
 	checker := hubconfig.Config.Checker
+	if checker == nil {
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("Cloudcore is ready with no leaderelection")); err != nil {
+			klog.Errorf("failed to write http response, err: %v", err)
+		}
+		return
+	}
 	if checker.Check(r) != nil {
 		w.WriteHeader(http.StatusNotFound)
 		if _, err := w.Write([]byte("Cloudcore is not ready")); err != nil {
