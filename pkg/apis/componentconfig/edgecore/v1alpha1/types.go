@@ -105,7 +105,7 @@ type Modules struct {
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
 	// +Required
-	EdgePorxy *EdgePorxy `json:"edgeProxy,omitempty"`
+	LWPorxy *LWPorxy `json:"lwProxy,omitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -452,14 +452,14 @@ type EdgeStream struct {
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
 }
 
-type EdgePorxy struct {
+type LWPorxy struct {
 	// default false
 	Enable bool `json:"enable,omitempty"`
 	// default 10005
 	ListenPort int `json:"listenPort,omitempty"`
 	// cloud side apiserver access address
 	RemoteAddr string `json:"remoteAddr,omitempty"`
-	// edgeproxy ca file
+	// lwproxy ca file
 	// default /etc/kubeedge/ca/proxyca.crt
 	CAFile string `json:"caFile,omitempty"`
 	//  ServerCertFile indicates the file containing x509 Certificate for HTTPS

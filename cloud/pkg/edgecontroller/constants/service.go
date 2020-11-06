@@ -14,8 +14,8 @@ const (
 	ResourceNode = "node"
 
 	// Group
-	GroupResource  = "resource"
-	GroupEdgeProxy = "edgeproxy"
+	GroupResource = "resource"
+	GroupLWProxy  = "lwproxy"
 
 	// Nvidia Constants
 	// NvidiaGPUStatusAnnotationKey is the key of the node annotation for GPU status

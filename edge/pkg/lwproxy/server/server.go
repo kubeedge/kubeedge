@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
+	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/lwproxy/config"
 )
 
 func NewProxyServer(eph http.Handler) (*ProxyServer, error) {

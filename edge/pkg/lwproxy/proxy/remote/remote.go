@@ -10,8 +10,8 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/cache"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/util"
 )
 
 func NewRemoteProxy(remote *url.URL, cacheMgr cache.Manager) *Proxy {

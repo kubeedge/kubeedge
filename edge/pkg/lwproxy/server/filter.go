@@ -9,7 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/util"
 )
 
 // Store k8s requestInfo in the context of the request.

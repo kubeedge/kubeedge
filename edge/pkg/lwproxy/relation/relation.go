@@ -103,11 +103,11 @@ func (m *relationManager) syncRelationFromRemote() {
 	msg := model.
 		NewMessage("").
 		BuildRouter("", edgehub.ModuleNameEdgeHub, resource, model.QueryOperation).
-		FillBody("edgeproxy sync api resource")
+		FillBody("lwproxy sync api resource")
 
 	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 1*time.Minute)
 	if err != nil {
-		klog.Errorf("edgeproxy sync api resource failed with error: %+v. response: %+v", err, resp)
+		klog.Errorf("lwproxy sync api resource failed with error: %+v. response: %+v", err, resp)
 		return
 	}
 
@@ -115,7 +115,7 @@ func (m *relationManager) syncRelationFromRemote() {
 	resourcelists := make([]*v1.APIResourceList, 0)
 
 	if err = json.Unmarshal([]byte(content), &resourcelists); err != nil {
-		klog.Errorf("edgeproxy unmarshal response content failed with error: %+v. content: %s", err, content)
+		klog.Errorf("lwproxy unmarshal response content failed with error: %+v. content: %s", err, content)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (m *relationManager) syncRelationFromRemote() {
 			}
 
 			if err := m.updateRelation(obj); err != nil {
-				klog.Errorf("edgeproxy update relation failed with error %+v. object: %+v", err, obj)
+				klog.Errorf("lwproxy update relation failed with error %+v. object: %+v", err, obj)
 				continue
 			}
 		}

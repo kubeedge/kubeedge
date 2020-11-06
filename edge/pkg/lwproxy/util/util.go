@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/relation"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/relation"
 	"k8s.io/klog"
 )
 
-type EdgeProxyContextType int
+type LWProxyContextType int
 
 const (
-	RespContentType EdgeProxyContextType = iota
+	RespContentType LWProxyContextType = iota
 	ReqContentType
 	AppUserAgent
 	RespContentEncoding

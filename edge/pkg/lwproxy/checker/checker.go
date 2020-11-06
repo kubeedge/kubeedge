@@ -8,8 +8,8 @@ import (
 	"go.uber.org/atomic"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/util"
 )
 
 type Checker interface {

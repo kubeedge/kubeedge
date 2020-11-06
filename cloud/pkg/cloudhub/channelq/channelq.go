@@ -136,7 +136,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 func getMsgKey(obj interface{}) (string, error) {
 	msg := obj.(*beehiveModel.Message)
 
-	if msg.GetGroup() == edgeconst.GroupResource || msg.GetGroup() == edgeconst.GroupEdgeProxy {
+	if msg.GetGroup() == edgeconst.GroupResource || msg.GetGroup() == edgeconst.GroupLWProxy {
 		resourceType, _ := edgemessagelayer.GetResourceType(*msg)
 		resourceNamespace, _ := edgemessagelayer.GetNamespace(*msg)
 		resourceName, _ := edgemessagelayer.GetResourceName(*msg)

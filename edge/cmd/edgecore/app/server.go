@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
-
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -21,7 +18,9 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
@@ -156,7 +155,7 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	metamanager.Register(c.Modules.MetaManager)
 	servicebus.Register(c.Modules.ServiceBus)
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
-	edgeproxy.Register(c.Modules.EdgePorxy)
+	lwproxy.Register(c.Modules.LWPorxy)
 	test.Register(c.Modules.DBTest)
 	// Note: Need to put it to the end, and wait for all models to register before executing
 	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)

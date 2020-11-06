@@ -12,11 +12,11 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/serializer"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/serializer"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/util"
 )
 
-// Manager interface provides methods for EdgeProxy to cache http req/resp.
+// Manager interface provides methods for LWProxy to cache http req/resp.
 type Manager interface {
 	// intercept the list response result, split result into individual object and store them in cache table
 	CacheListObj(ctx context.Context, rc io.ReadCloser) error

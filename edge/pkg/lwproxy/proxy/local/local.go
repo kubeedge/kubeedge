@@ -21,10 +21,10 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/cache"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/checker"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/cache"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/checker"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/lwproxy/util"
 )
 
 func NewLocalProxy(cacheMgr cache.Manager, checker checker.Checker) *Proxy {

@@ -15,6 +15,6 @@ const (
 	UserGroup = "user"
 	// MeshGroup group
 	MeshGroup = "mesh"
-	// EdgeProxyGroup group
-	EdgeProxyGroup = "edgeproxy"
+	// LWProxyGroup group
+	LWProxyGroup = "lwproxy"
 )

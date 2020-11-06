@@ -586,7 +586,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 
 		switch queryType {
 		case model.ResourceTypeAPIResource:
-			resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupEdgeProxy, resource, model.ResponseOperation)
+			resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupLWProxy, resource, model.ResponseOperation)
 		default:
 			resMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
 		}

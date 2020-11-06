@@ -9,7 +9,7 @@ import (
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 
-	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/edgeproxy/config"
+	proxyconfig "github.com/kubeedge/kubeedge/edge/pkg/lwproxy/config"
 )
 
 func tlsConfig() *tls.Config {
