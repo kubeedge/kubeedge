@@ -51,6 +51,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vishvananda/netlink v1.1.0
+	go.uber.org/atomic v1.4.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.8

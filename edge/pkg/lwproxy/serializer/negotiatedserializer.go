@@ -25,8 +25,8 @@ func (s generalNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerI
 			PrettySerializer: json.NewSerializerWithOptions(json.DefaultMetaFactory, unstructuredCreater{basicScheme}, unstructuredTyper{basicScheme}, json.SerializerOptions{Yaml: false, Pretty: true, Strict: false}),
 			StreamSerializer: &runtime.StreamSerializerInfo{
 				EncodesAsText: true,
-				Serializer: json.NewSerializerWithOptions(json.DefaultMetaFactory, unstructuredCreater{basicScheme}, unstructuredTyper{basicScheme}, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false}),
-				Framer:     json.Framer,
+				Serializer:    json.NewSerializerWithOptions(json.DefaultMetaFactory, unstructuredCreater{basicScheme}, unstructuredTyper{basicScheme}, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false}),
+				Framer:        json.Framer,
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func (s generalNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerI
 			MediaTypeSubType: "yaml",
 			EncodesAsText:    true,
 			Serializer:       json.NewSerializerWithOptions(json.DefaultMetaFactory, basicScheme, basicScheme, json.SerializerOptions{Yaml: false, Pretty: false, Strict: false}),
-			},
+		},
 		{
 			MediaType:        "application/vnd.kubernetes.protobuf",
 			MediaTypeType:    "application",

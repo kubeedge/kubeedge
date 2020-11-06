@@ -95,19 +95,19 @@ func readFile(path string) (string, error) {
 
 func deleteCache(ua, resource, namespace, name string) {
 	path := buildDirPath(ua, resource, namespace)
+	path = path + name
 	if err := os.RemoveAll(path); err != nil {
 		klog.Errorf("delete cache data failed with error %+v", err)
 		return
 	}
 	klog.Infof("delete cache data from %s successful", path)
-	return
 }
 
 func insertOrUpdateCache(cache *Cache) error {
 	path := buildDirPath(cache.UA, cache.Resource, cache.Namespace)
 	if err := writeFile(path, cache.Name, cache.Value); err != nil {
 		klog.Errorf(
-			"insertOrUpdate %s/%s/s/%s failed.",
+			"insertOrUpdate %s/%s/%s/%s failed.",
 			cache.UA,
 			cache.Resource,
 			cache.Namespace,
