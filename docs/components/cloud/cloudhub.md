@@ -32,7 +32,7 @@ Event object is then passed through the channel.
 - TLS certificates are loaded through the path provided in the context object
 - HTTP server is started with TLS configurations
 - Then HTTP connection is upgraded to websocket connection receiving conn object.
-- ServeConn function the serves all the incoming connections
+- ServeConn function serves all the incoming connections
 
 ### Read message from edge:
 

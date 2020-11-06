@@ -23,7 +23,7 @@ A keep-alive message or heartbeat is sent to cloudHub after every heartbeatPerio
 
 ## Publish Client Info
 
-- The main responsibility of publish client info is to inform the other groups or modules regarding the status of connection to the cloud.
+- The main responsibility of publishing client info is to inform the other groups or modules regarding the status of connection to the cloud.
 
 - It sends a beehive message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
 

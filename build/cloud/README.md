@@ -26,7 +26,7 @@ cd build/cloud
 ```
 
 ### Configure IP addresses(Optional)
-From KubeEdge 1.3.0, we can configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `05-configmap.yaml`, which will be add to SANs in cert of cloudcore.
+From KubeEdge 1.3.0, we can configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `05-configmap.yaml`, which will be added to SANs in cert of cloudcore.
 
 ```
 modules:
