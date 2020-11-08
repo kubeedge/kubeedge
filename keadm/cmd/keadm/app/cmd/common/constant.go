@@ -59,6 +59,9 @@ const (
 	// DefaultKubeEdgeVersion is the default KubeEdge version
 	DefaultKubeEdgeVersion = "1.4.0"
 
+	// LastestKubeEdgeVersion specifies lastest KubeEdge (major.minor) version supported by keadm
+	LatestKubeEdgeVersion = "1.5.0"
+
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
 
