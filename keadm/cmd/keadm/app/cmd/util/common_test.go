@@ -151,7 +151,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	})
 
 	componentType = types.CloudCore
-	targetVersion, _ = semver.Make(types.LatestKubeEdgeVersion)
+	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
 	serviceFilePath = testTmpDir + "/" + CloudServiceFile
 	t.Run("test with reDownloading cloudcore service file if version = latest", func(t *testing.T) {
 		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
@@ -200,7 +200,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	})
 
 	componentType = types.EdgeCore
-	targetVersion, _ = semver.Make(types.LatestKubeEdgeVersion)
+	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
 	serviceFilePath = testTmpDir + "/" + EdgeServiceFile
 	t.Run("test with reDownloading edgecore service file if version = latest", func(t *testing.T) {
 		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
