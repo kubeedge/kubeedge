@@ -50,7 +50,10 @@ const (
 	CentOSType     = "centos"
 
 	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
-	EdgeCoreServiceFileURL       = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
+	OldEdgeServiceFile           = "edge.service"
+	EdgeServiceFile              = "edgecore.service"
+	CloudServiceFile             = "cloudcore.service"
+	ServiceFileURLFormat         = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
 	KubeEdgePath                 = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath           = "/usr/local/bin"
 	KubeEdgeConfPath             = KubeEdgePath + "kubeedge/edge/conf"
@@ -405,36 +408,8 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		return nil
 	}
 
-	/*
-		When installing edgecore, if the version is >= 1.1,
-		download the edgecore.service file from the KubeEdge/build/tools/ and place it in /etc/kubeedge/ acc.
-	*/
-	if options.ComponentType == types.EdgeCore {
-		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
-
-		//	No need to download if the version is less than 1.1 (or 1.1.0)
-		if version.GE(semver.MustParse("1.1.0")) {
-			try := 0
-
-			edgecoreServiceFileName := "edgecore.service"
-
-			if version.EQ(semver.MustParse("1.1.0")) {
-				edgecoreServiceFileName = "edge.service"
-			}
-
-			urlForServiceFile := fmt.Sprintf(EdgeCoreServiceFileURL, strippedVersion, edgecoreServiceFileName)
-			for ; try < downloadRetryTimes; try++ {
-				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -k --no-check-certificate %s", KubeEdgePath, urlForServiceFile)
-				_, err := runCommandWithStdout(cmdStr)
-				if err != nil {
-					return err
-				}
-				break
-			}
-			if try == downloadRetryTimes {
-				return fmt.Errorf("failed to download %s", edgecoreServiceFileName)
-			}
-		}
+	if err := downloadServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
+		return fmt.Errorf("fail to download service file,error:{%s}", err.Error())
 	}
 
 	// Compatible with 1.0.0
@@ -866,4 +841,47 @@ func IsProcessRunningWithFilter(proc string, filter string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func downloadServiceFile(componentType types.ComponentType, version semver.Version, storeDir string) error {
+	// No need to download if
+	// 1. the systemd not exists
+	// 2. the version is less than 1.1.0
+	// 3. the service file already exists
+	if hasSystemd() && version.GE(semver.MustParse("1.1.0")) {
+		var ServiceFileName string
+		switch componentType {
+		case types.CloudCore:
+			ServiceFileName = CloudServiceFile
+			if version.EQ(semver.MustParse("1.1.0")) {
+				fmt.Println("[Run as service]skip download service file for cloudcore-v1.1.0, not support")
+				return nil
+			}
+		case types.EdgeCore:
+			ServiceFileName = EdgeServiceFile
+			if version.EQ(semver.MustParse("1.1.0")) {
+				ServiceFileName = OldEdgeServiceFile
+			}
+		default:
+			return fmt.Errorf("component type %s not support", componentType)
+		}
+		ServiceFilePath := storeDir + "/" + ServiceFileName
+		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
+		ServiceFileURL := fmt.Sprintf(ServiceFileURLFormat, strippedVersion, ServiceFileName)
+		if _, err := os.Stat(ServiceFilePath); err != nil {
+			if os.IsNotExist(err) {
+				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -t %d -k --no-check-certificate %s", storeDir, RetryTimes, ServiceFileURL)
+				fmt.Printf("[Run as service] start to download service file for %s\n", componentType)
+				if _, err := runCommandWithStdout(cmdStr); err != nil {
+					return err
+				}
+				fmt.Printf("[Run as service] success to download service file for %s\n", componentType)
+			} else {
+				return err
+			}
+		} else {
+			fmt.Printf("[Run as service] service file already exisits in %s, skip download\n", ServiceFilePath)
+		}
+	}
+	return nil
 }
