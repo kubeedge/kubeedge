@@ -74,7 +74,7 @@ type DataBase struct {
 	// default "default"
 	AliasName string `json:"aliasName,omitempty"`
 	// DataSource indicates the data source path
-	// default "/var/lib/kubeedge/edge.db"
+	// default "/var/lib/kubeedge/edgecore.db"
 	DataSource string `json:"dataSource,omitempty"`
 }
 
@@ -255,10 +255,10 @@ type EdgeHub struct {
 	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSCAFile string `json:"tlsCaFile,omitempty"`
 	// TLSCertFile indicates the file containing x509 Certificate for HTTPS
-	// default "/etc/kubeedge/certs/edge.crt"
+	// default "/etc/kubeedge/certs/server.crt"
 	TLSCertFile string `json:"tlsCertFile,omitempty"`
 	// TLSPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
-	// default "/etc/kubeedge/certs/edge.key"
+	// default "/etc/kubeedge/certs/server.key"
 	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 	// Quic indicates quic config for EdgeHub module
 	// Optional if websocket is configured
@@ -278,7 +278,7 @@ type EdgeHub struct {
 // EdgeHubQUIC indicates the quic client config
 type EdgeHubQUIC struct {
 	// Enable indicates whether enable this protocol
-	// default true
+	// default false
 	Enable bool `json:"enable,omitempty"`
 	// HandshakeTimeout indicates hand shake timeout (second)
 	// default 30
@@ -376,6 +376,7 @@ type MetaManager struct {
 	// ContextSendModule indicates send module
 	ContextSendModule metaconfig.ModuleName `json:"contextSendModule,omitempty"`
 	// PodStatusSyncInterval indicates pod status sync
+	// default 60
 	PodStatusSyncInterval int32 `json:"podStatusSyncInterval,omitempty"`
 }
 
@@ -410,12 +411,16 @@ type EdgeMesh struct {
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// lbStrategy indicates load balance strategy name
+	// default "RoundRobin"
 	LBStrategy string `json:"lbStrategy,omitempty"`
 	// ListenInterface indicates the listen interface of EdgeMesh
+	// default "docker0"
 	ListenInterface string `json:"listenInterface,omitempty"`
 	// SubNet indicates the subnet of EdgeMesh
+	// default "9.251.0.0/16"
 	SubNet string `json:"subNet,omitempty"`
 	// ListenPort indicates the listen port of EdgeMesh
+	// default 40001
 	ListenPort int `json:"listenPort,omitempty"`
 }
 
@@ -430,10 +435,10 @@ type EdgeStream struct {
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
 
 	// TLSTunnelCertFile indicates the file containing x509 Certificate for HTTPS
-	// default /etc/kubeedge/certs/edge.crt
+	// default /etc/kubeedge/certs/server.crt
 	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
 	// TLSTunnelPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
-	// default /etc/kubeedge/certs/edge.key
+	// default /etc/kubeedge/certs/server.key
 	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
 
 	// HandshakeTimeout indicates handshake timeout (second)
