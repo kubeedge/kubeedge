@@ -24,6 +24,7 @@
 # KubeEdge Authors:
 # - File derived from kubernetes v1.19.0-beta.2
 # - Changed KUBE_ROOT value to use absolute path
+# - Stop echo "_out" to avoid long-winded output of license diff
 
 
 set -o errexit
@@ -61,6 +62,6 @@ LICENSE_ROOT="${_tmpdir}" "${KUBE_ROOT}/hack/update-vendor-licenses.sh"
 # Compare licenses
 if ! _out="$(diff -Naupr -x OWNERS "${KUBE_ROOT}/LICENSES" "${_tmpdir}/LICENSES")"; then
   echo "Your LICENSES tree is out of date. Run hack/update-vendor-licenses.sh and commit the results." >&2
-  echo "${_out}" >&2
+  #echo "${_out}" >&2
   exit 1
 fi

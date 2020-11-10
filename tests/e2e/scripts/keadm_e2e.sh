@@ -19,8 +19,8 @@ WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
 function cleanup() {
-  ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill -9
-  ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill -9
+  ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill
+  ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill
   kind delete cluster --name test
 }
 
@@ -45,6 +45,8 @@ function prepare_cluster() {
 function start_kubeedge() {
   sudo mkdir -p /var/lib/kubeedge
   cd $KUBEEDGE_ROOT
+  export KUBECONFIG=$HOME/.kube/config
+
   sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
@@ -54,7 +56,9 @@ function start_kubeedge() {
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
 
-  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG) --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
+  export TOKEN=$(sudo _output/local/bin/keadm gettoken --kube-config=$KUBECONFIG)
+  sudo systemctl set-environment CHECK_EDGECORE_ENVIRONMENT="false"
+  sudo -E CHECK_EDGECORE_ENVIRONMENT="false" _output/local/bin/keadm join --token=$TOKEN --cloudcore-ipport=127.0.0.1:10000 --edgenode-name=edge-node
 
   #Pre-configurations required for running the suite.
   #Any new config addition required corresponding code changes.

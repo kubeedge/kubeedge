@@ -16,7 +16,7 @@ import (
 const (
 	EdgeCoreConfigFile    = "/tmp/edgecore.yaml"
 	CatEdgeCoreConfigFile = "cat /tmp/edgecore.yaml"
-	RunEdgecore           = "sudo pkill -9 edgecore; cd ${KUBEEDGE_ROOT}/_output/local/bin/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
+	RunEdgecore           = "sudo pkill edgecore; cd ${KUBEEDGE_ROOT}/_output/local/bin/; sudo nohup ./edgecore --config=" + EdgeCoreConfigFile + " > edgecore.log 2>&1 &"
 	CheckEdgecore         = "sudo pgrep edgecore"
 	CatEdgecoreLog        = "cat ${KUBEEDGE_ROOT}/_output/local/bin/edgecore.log"
 	DBFile                = "/tmp/edgecore/edgecore.db"

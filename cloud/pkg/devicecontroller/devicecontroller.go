@@ -1,14 +1,13 @@
 package devicecontroller
 
 import (
-	"os"
 	"time"
 
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -31,12 +30,12 @@ func Register(dc *v1alpha1.DeviceController, kubeAPIConfig *v1alpha1.KubeAPIConf
 
 // Name of controller
 func (dc *DeviceController) Name() string {
-	return constants.DeviceControllerModuleName
+	return modules.DeviceControllerModuleName
 }
 
 // Group of controller
 func (dc *DeviceController) Group() string {
-	return constants.DeviceControllerModuleGroup
+	return modules.DeviceControllerModuleGroup
 }
 
 // Enable indicates whether enable this module
@@ -48,18 +47,20 @@ func (dc *DeviceController) Enable() bool {
 func (dc *DeviceController) Start() {
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		klog.Errorf("New downstream controller failed with error: %s", err)
-		os.Exit(1)
+		klog.Fatalf("New downstream controller failed with error: %s", err)
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		klog.Errorf("new upstream controller failed with error: %s", err)
-		os.Exit(1)
+		klog.Fatalf("new upstream controller failed with error: %s", err)
 	}
 
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Fatalf("start downstream failed with error: %s", err)
+	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
-	upstream.Start()
+	if err := upstream.Start(); err != nil {
+		klog.Fatalf("start upstream failed with error: %s", err)
+	}
 }

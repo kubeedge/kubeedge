@@ -19,6 +19,7 @@ package bitmask
 import (
 	"fmt"
 	"math/bits"
+	"strconv"
 )
 
 // BitMask interface allows hint providers to create BitMasks for TopologyHints
@@ -32,6 +33,7 @@ type BitMask interface {
 	IsEqual(mask BitMask) bool
 	IsEmpty() bool
 	IsSet(bit int) bool
+	AnySet(bits []int) bool
 	IsNarrowerThan(mask BitMask) bool
 	String() string
 	Count() int
@@ -119,6 +121,16 @@ func (s *bitMask) IsSet(bit int) bool {
 	return (*s & (1 << uint64(bit))) > 0
 }
 
+// AnySet checks bit in mask to see if any provided bit is set to one
+func (s *bitMask) AnySet(bits []int) bool {
+	for _, b := range bits {
+		if s.IsSet(b) {
+			return true
+		}
+	}
+	return false
+}
+
 // IsEqual checks if masks are equal
 func (s *bitMask) IsEqual(mask BitMask) bool {
 	return *s == *mask.(*bitMask)
@@ -140,7 +152,13 @@ func (s *bitMask) IsNarrowerThan(mask BitMask) bool {
 
 // String converts mask to string
 func (s *bitMask) String() string {
-	return fmt.Sprintf("%064b", *s)
+	grouping := 2
+	for shift := 64 - grouping; shift > 0; shift -= grouping {
+		if *s > (1 << uint(shift)) {
+			return fmt.Sprintf("%0"+strconv.Itoa(shift+grouping)+"b", *s)
+		}
+	}
+	return fmt.Sprintf("%0"+strconv.Itoa(grouping)+"b", *s)
 }
 
 // Count counts number of bits in mask set to one

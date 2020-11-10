@@ -27,6 +27,9 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog"
+
+	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 var clientOptions = MQTT.NewClientOptions()
@@ -62,6 +65,9 @@ func TestCheckKeyExist(t *testing.T) {
 
 //TestCheckClientToken checks client token received
 func TestCheckClientToken(t *testing.T) {
+	nodeName := "testEdge"
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	eventconfig.InitConfigure(cfg.Modules.EventBus, nodeName)
 	tests := []struct {
 		name          string
 		token         MQTT.Token

@@ -140,7 +140,7 @@ kubeedge::check::env() {
   # check lenth of errors
   if [[ ${#errors[@]} -ne 0 ]] ; then
     local error
-    for error in ${errors[@]}; do
+    for error in "${errors[@]}"; do
       echo "Error: "$error
     done
     exit 1
@@ -202,15 +202,17 @@ kubeedge::golang::build_binaries() {
   local -a binaries
   while IFS="" read -r binary; do binaries+=("$binary"); done < <(kubeedge::golang::binaries_from_targets "${targets[@]}")
 
-  local ldflags
-  read -r ldflags <<< "$(kubeedge::version::ldflags)"
+  local goldflags gogcflags
+  # If GOLDFLAGS is unset, then set it to the a default of "-s -w".
+  goldflags="${GOLDFLAGS=-s -w -buildid=} $(kubeedge::version::ldflags)"
+  gogcflags="${GOGCFLAGS:-}"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH}
   for bin in ${binaries[@]}; do
     echo "building $bin"
     local name="${bin##*/}"
     set -x
-    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -ldflags "$ldflags" $bin
+    go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
     set +x
   done
 
@@ -371,8 +373,9 @@ kubeedge::golang::get_cloud_test_dirs() {
 kubeedge::golang::get_keadm_test_dirs() {
     cd ${KUBEEDGE_ROOT}
     findDirs=$(find -L ./keadm \
-	    -name '*_test.go' -print | xargs -0n1 dirname | uniq)
-    echo "${findDirs}"
+	    -name '*_test.go' -print | xargs -n1 dirname | uniq)
+    dirArray=(${findDirs// /})
+    echo "${dirArray[@]}"
 }
 
 kubeedge::golang::get_edge_test_dirs() {

@@ -89,7 +89,7 @@ func (c *csiAttacher) waitForVolumeAttachment(volumeHandle, attachID string, tim
 
 	err := wait.PollImmediate(time.Second*5, time.Minute*5, func() (bool, error) {
 		klog.V(4).Info(log("probing VolumeAttachment [id=%v]", attachID))
-		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(attachID, meta.GetOptions{})
+		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(context.Background(), attachID, meta.GetOptions{})
 		if err != nil {
 			return false, fmt.Errorf("volume %v has GET error for volume attachment %v: %v", volumeHandle, attachID, err)
 		}
@@ -142,7 +142,7 @@ func (c *csiAttacher) VolumesAreAttached(specs []*volume.Spec, nodeName types.No
 
 		attachID := getAttachmentName(volumeHandle, driverName, string(nodeName))
 		klog.V(4).Info(log("probing attachment status for VolumeAttachment %v", attachID))
-		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(attachID, meta.GetOptions{})
+		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(context.Background(), attachID, meta.GetOptions{})
 		if err != nil {
 			attached[spec] = false
 			klog.Error(log("attacher.VolumesAreAttached failed for attach.ID=%v: %v", attachID, err))
@@ -297,7 +297,7 @@ func (c *csiAttacher) waitForVolumeDetachment(volumeHandle, attachID string) err
 
 	err := wait.PollImmediate(time.Second*5, c.waitSleepTime*10, func() (bool, error) {
 		klog.V(4).Info(log("probing VolumeAttachment [id=%v]", attachID))
-		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(attachID, meta.GetOptions{})
+		attach, err := c.k8s.StorageV1().VolumeAttachments().Get(context.Background(), attachID, meta.GetOptions{})
 		if err != nil {
 			if apierrs.IsNotFound(err) {
 				//object deleted or never existed, done
@@ -423,7 +423,7 @@ func getDriverAndVolNameFromDeviceMountPath(k8s kubernetes.Interface, deviceMoun
 	pvName := filepath.Base(dir)
 
 	// Get PV and check for errors
-	pv, err := k8s.CoreV1().PersistentVolumes().Get(pvName, meta.GetOptions{})
+	pv, err := k8s.CoreV1().PersistentVolumes().Get(context.Background(), pvName, meta.GetOptions{})
 	if err != nil {
 		return "", "", err
 	}

@@ -28,19 +28,22 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	utilexec "k8s.io/utils/exec"
 	utiltrace "k8s.io/utils/trace"
 )
 
+// RulePosition holds the -I/-A flags for iptable
 type RulePosition string
 
 const (
+	// Prepend is the insert flag for iptable
 	Prepend RulePosition = "-I"
-	Append  RulePosition = "-A"
+	// Append is the append flag for iptable
+	Append RulePosition = "-A"
 )
 
-// An injectable interface for running iptables commands.  Implementations must be goroutine-safe.
+// Interface is an injectable interface for running iptables commands.  Implementations must be goroutine-safe.
 type Interface interface {
 	// EnsureChain checks if the specified chain exists and, if not, creates it.  If the chain existed, return true.
 	EnsureChain(table Table, chain Chain) (bool, error)
@@ -52,8 +55,10 @@ type Interface interface {
 	EnsureRule(position RulePosition, table Table, chain Chain, args ...string) (bool, error)
 	// DeleteRule checks if the specified rule is present and, if so, deletes it.
 	DeleteRule(table Table, chain Chain, args ...string) error
-	// IsIpv6 returns true if this is managing ipv6 tables
-	IsIpv6() bool
+	// IsIPv6 returns true if this is managing ipv6 tables.
+	IsIPv6() bool
+	// Protocol returns the IP family this instance is managing,
+	Protocol() Protocol
 	// SaveInto calls `iptables-save` for table and stores result in a given buffer.
 	SaveInto(table Table, buffer *bytes.Buffer) error
 	// Restore runs `iptables-restore` passing data through []byte.
@@ -83,29 +88,42 @@ type Interface interface {
 	HasRandomFully() bool
 }
 
-type Protocol byte
+// Protocol defines the ip protocol either ipv4 or ipv6
+type Protocol string
 
 const (
-	ProtocolIpv4 Protocol = iota + 1
-	ProtocolIpv6
+	// ProtocolIPv4 represents ipv4 protocol in iptables
+	ProtocolIPv4 Protocol = "IPv4"
+	// ProtocolIPv6 represents ipv6 protocol in iptables
+	ProtocolIPv6 Protocol = "IPv6"
 )
 
+// Table represents different iptable like filter,nat, mangle and raw
 type Table string
 
 const (
-	TableNAT    Table = "nat"
+	// TableNAT represents the built-in nat table
+	TableNAT Table = "nat"
+	// TableFilter represents the built-in filter table
 	TableFilter Table = "filter"
+	// TableMangle represents the built-in mangle table
 	TableMangle Table = "mangle"
 )
 
+// Chain represents the different rules
 type Chain string
 
 const (
+	// ChainPostrouting used for source NAT in nat table
 	ChainPostrouting Chain = "POSTROUTING"
-	ChainPrerouting  Chain = "PREROUTING"
-	ChainOutput      Chain = "OUTPUT"
-	ChainInput       Chain = "INPUT"
-	ChainForward     Chain = "FORWARD"
+	// ChainPrerouting used for DNAT (destination NAT) in nat table
+	ChainPrerouting Chain = "PREROUTING"
+	// ChainOutput used for the packets going out from local
+	ChainOutput Chain = "OUTPUT"
+	// ChainInput used for incoming packets
+	ChainInput Chain = "INPUT"
+	// ChainForward used for the packets for another NIC
+	ChainForward Chain = "FORWARD"
 )
 
 const (
@@ -117,32 +135,58 @@ const (
 	cmdIP6Tables        string = "ip6tables"
 )
 
-// Option flag for Restore
+// RestoreCountersFlag is an option flag for Restore
 type RestoreCountersFlag bool
 
+// RestoreCounters a boolean true constant for the option flag RestoreCountersFlag
 const RestoreCounters RestoreCountersFlag = true
+
+// NoRestoreCounters a boolean false constant for the option flag RestoreCountersFlag
 const NoRestoreCounters RestoreCountersFlag = false
 
-// Option flag for Flush
+// FlushFlag an option flag for Flush
 type FlushFlag bool
 
+// FlushTables a boolean true constant for option flag FlushFlag
 const FlushTables FlushFlag = true
+
+// NoFlushTables a boolean false constant for option flag FlushFlag
 const NoFlushTables FlushFlag = false
 
+// MinCheckVersion minimum version to be checked
 // Versions of iptables less than this do not support the -C / --check flag
 // (test whether a rule exists).
 var MinCheckVersion = utilversion.MustParseGeneric("1.4.11")
 
+// RandomFullyMinVersion is the minimum version from which the --random-fully flag is supported,
+// used for port mapping to be fully randomized
 var RandomFullyMinVersion = utilversion.MustParseGeneric("1.6.2")
 
-// Minimum iptables versions supporting the -w and -w<seconds> flags
+// WaitMinVersion a minimum iptables versions supporting the -w and -w<seconds> flags
 var WaitMinVersion = utilversion.MustParseGeneric("1.4.20")
+
+// WaitIntervalMinVersion a minimum iptables versions supporting the wait interval useconds
+var WaitIntervalMinVersion = utilversion.MustParseGeneric("1.6.1")
+
+// WaitSecondsMinVersion a minimum iptables versions supporting the wait seconds
 var WaitSecondsMinVersion = utilversion.MustParseGeneric("1.4.22")
+
+// WaitRestoreMinVersion a minimum iptables versions supporting the wait restore seconds
 var WaitRestoreMinVersion = utilversion.MustParseGeneric("1.6.2")
 
+// WaitString a constant for specifying the wait flag
 const WaitString = "-w"
+
+// WaitSecondsValue a constant for specifying the default wait seconds
 const WaitSecondsValue = "5"
 
+// WaitIntervalString a constant for specifying the wait interval flag
+const WaitIntervalString = "-W"
+
+// WaitIntervalUsecondsValue a constant for specifying the default wait interval useconds
+const WaitIntervalUsecondsValue = "100000"
+
+// LockfilePath16x is the iptables lock file acquired by any process that's making any change in the iptable rule
 const LockfilePath16x = "/run/xtables.lock"
 
 // runner implements Interface in terms of exec("iptables").
@@ -277,8 +321,12 @@ func (runner *runner) DeleteRule(table Table, chain Chain, args ...string) error
 	return nil
 }
 
-func (runner *runner) IsIpv6() bool {
-	return runner.protocol == ProtocolIpv6
+func (runner *runner) IsIPv6() bool {
+	return runner.protocol == ProtocolIPv6
+}
+
+func (runner *runner) Protocol() Protocol {
+	return runner.protocol
 }
 
 // SaveInto is part of Interface.
@@ -368,14 +416,14 @@ func (runner *runner) restoreInternal(args []string, data []byte, flush FlushFla
 }
 
 func iptablesSaveCommand(protocol Protocol) string {
-	if protocol == ProtocolIpv6 {
+	if protocol == ProtocolIPv6 {
 		return cmdIP6TablesSave
 	}
 	return cmdIPTablesSave
 }
 
 func iptablesRestoreCommand(protocol Protocol) string {
-	if protocol == ProtocolIpv6 {
+	if protocol == ProtocolIPv6 {
 		return cmdIP6TablesRestore
 	}
 	return cmdIPTablesRestore
@@ -383,14 +431,14 @@ func iptablesRestoreCommand(protocol Protocol) string {
 }
 
 func iptablesCommand(protocol Protocol) string {
-	if protocol == ProtocolIpv6 {
+	if protocol == ProtocolIPv6 {
 		return cmdIP6Tables
 	}
 	return cmdIPTables
 }
 
 func (runner *runner) run(op operation, args []string) ([]byte, error) {
-	return runner.runContext(nil, op, args)
+	return runner.runContext(context.TODO(), op, args)
 }
 
 func (runner *runner) runContext(ctx context.Context, op operation, args []string) ([]byte, error) {
@@ -559,6 +607,9 @@ func (runner *runner) chainExists(table Table, chain Chain) (bool, error) {
 	runner.mu.Lock()
 	defer runner.mu.Unlock()
 
+	trace := utiltrace.New("iptables Monitor CANARY check")
+	defer trace.LogIfLong(2 * time.Second)
+
 	_, err := runner.run(opListChain, fullArgs)
 	return err == nil, err
 }
@@ -569,7 +620,7 @@ const (
 	opCreateChain operation = "-N"
 	opFlushChain  operation = "-F"
 	opDeleteChain operation = "-X"
-	opListChain   operation = "-L"
+	opListChain   operation = "-S"
 	opAppendRule  operation = "-A"
 	opCheckRule   operation = "-C"
 	opDeleteRule  operation = "-D"
@@ -605,6 +656,8 @@ func getIPTablesVersion(exec utilexec.Interface, protocol Protocol) (*utilversio
 // Checks if iptables version has a "wait" flag
 func getIPTablesWaitFlag(version *utilversion.Version) []string {
 	switch {
+	case version.AtLeast(WaitIntervalMinVersion):
+		return []string{WaitString, WaitSecondsValue, WaitIntervalString, WaitIntervalUsecondsValue}
 	case version.AtLeast(WaitSecondsMinVersion):
 		return []string{WaitString, WaitSecondsValue}
 	case version.AtLeast(WaitMinVersion):
@@ -617,7 +670,7 @@ func getIPTablesWaitFlag(version *utilversion.Version) []string {
 // Checks if iptables-restore has a "wait" flag
 func getIPTablesRestoreWaitFlag(version *utilversion.Version, exec utilexec.Interface, protocol Protocol) []string {
 	if version.AtLeast(WaitRestoreMinVersion) {
-		return []string{WaitString, WaitSecondsValue}
+		return []string{WaitString, WaitSecondsValue, WaitIntervalString, WaitIntervalUsecondsValue}
 	}
 
 	// Older versions may have backported features; if iptables-restore supports
@@ -706,7 +759,6 @@ const iptablesStatusResourceProblem = 4
 func isResourceError(err error) bool {
 	if ee, isExitError := err.(utilexec.ExitError); isExitError {
 		return ee.ExitStatus() == iptablesStatusResourceProblem
-	} else {
-		return false
 	}
+	return false
 }

@@ -39,7 +39,8 @@ func SignCerts() ([]byte, []byte, error) {
 		Organization: []string{"KubeEdge"},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		AltNames: certutil.AltNames{
-			IPs: getIps(hubconfig.Config.AdvertiseAddress),
+			DNSNames: hubconfig.Config.DNSNames,
+			IPs:      getIps(hubconfig.Config.AdvertiseAddress),
 		},
 	}
 
@@ -89,7 +90,9 @@ func GenerateToken() error {
 		for {
 			<-t.C
 			refreshedCaHashToken := refreshToken()
-			CreateTokenSecret([]byte(refreshedCaHashToken))
+			if err := CreateTokenSecret([]byte(refreshedCaHashToken)); err != nil {
+				klog.Fatalf("failed to create the ca token for edgecore register, err: %v", err)
+			}
 		}
 	}()
 	klog.Info("Succeed to creating token")

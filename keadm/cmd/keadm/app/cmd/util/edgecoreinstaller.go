@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/google/uuid"
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -35,10 +36,11 @@ type KubeEdgeInstTool struct {
 	CloudCoreIP           string
 	EdgeNodeName          string
 	RuntimeType           string
-	InterfaceName         string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+	CGroupDriver          string
+	TarballPath           string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -56,7 +58,12 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	err = ku.InstallKubeEdge(types.EdgeCore)
+	opts := &types.InstallOptions{
+		TarballPath:   ku.TarballPath,
+		ComponentType: types.EdgeCore,
+	}
+
+	err = ku.InstallKubeEdge(*opts)
 	if err != nil {
 		return err
 	}
@@ -74,7 +81,7 @@ func (ku *KubeEdgeInstTool) InstallTools() error {
 }
 
 func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
-	if ku.ToolVersion >= "1.2.0" {
+	if ku.ToolVersion.GE(semver.MustParse("1.2.0")) {
 		//This makes sure the path is created, if it already exists also it is fine
 		err := os.MkdirAll(KubeEdgeNewConfigDir, os.ModePerm)
 		if err != nil {
@@ -90,9 +97,17 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		if ku.RuntimeType != "" {
 			edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
 		}
-		if ku.InterfaceName != "" {
-			edgeCoreConfig.Modules.Edged.InterfaceName = ku.InterfaceName
+		if ku.CGroupDriver != "" {
+			switch ku.CGroupDriver {
+			case v1alpha1.CGroupDriverSystemd:
+				edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverSystemd
+			case v1alpha1.CGroupDriverCGroupFS:
+				edgeCoreConfig.Modules.Edged.CGroupDriver = v1alpha1.CGroupDriverCGroupFS
+			default:
+				return fmt.Errorf("unsupported CGroupDriver: %s", ku.CGroupDriver)
+			}
 		}
+
 		if ku.RemoteRuntimeEndpoint != "" {
 			edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
 			edgeCoreConfig.Modules.Edged.RemoteImageEndpoint = ku.RemoteRuntimeEndpoint
@@ -106,7 +121,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":10002"
 		}
 
-		if strings.HasPrefix(ku.ToolVersion, "1.2") {
+		if ku.ToolVersion.Major == 1 && ku.ToolVersion.Minor == 2 {
 			edgeCoreConfig.Modules.EdgeHub.TLSPrivateKeyFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.key"}, "")
 			edgeCoreConfig.Modules.EdgeHub.TLSCertFile = strings.Join([]string{KubeEdgeCloudDefaultCertPath, "server.crt"}, "")
 		}
@@ -135,7 +150,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 
 		url := fmt.Sprintf("wss://%s:10000/%s/%s/events", serverIPAddr, types.DefaultProjectID, edgeID)
 		edgeYaml := &types.EdgeYamlSt{EdgeHub: types.EdgeHubSt{WebSocket: types.WebSocketSt{URL: url}},
-			EdgeD: types.EdgeDSt{RuntimeType: ku.RuntimeType, InterfaceName: ku.InterfaceName}}
+			EdgeD: types.EdgeDSt{RuntimeType: ku.RuntimeType}}
 
 		if err = types.WriteEdgeYamlFile(KubeEdgeConfigEdgeYaml, edgeYaml); err != nil {
 			return err
@@ -155,7 +170,9 @@ func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
 	//Kill edge core process
-	ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
+	if err := ku.KillKubeEdgeBinary(KubeEdgeBinaryName); err != nil {
+		return err
+	}
 
 	return nil
 }

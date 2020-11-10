@@ -5,6 +5,11 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
+const (
+	httpScheme        = "http"
+	defaultServerHost = "127.0.0.1"
+)
+
 // APIServerConnection indicates a connection request originally made by kube-apiserver to kubelet
 // There are basically three types of connection requests : containersLogs, containerExec, Metric
 // Cloudstream module first intercepts the connection request and then sends the request data through the tunnel (websocket) to edgestream module

@@ -3,7 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
-        "container_map.go",
         "cpu_assignment.go",
         "cpu_manager.go",
         "fake_cpu_manager.go",
@@ -15,6 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/apis/core/v1/helper/qos:go_default_library",
+        "//pkg/kubelet/cm/containermap:go_default_library",
         "//pkg/kubelet/cm/cpumanager/state:go_default_library",
         "//pkg/kubelet/cm/cpumanager/topology:go_default_library",
         "//pkg/kubelet/cm/cpuset:go_default_library",
@@ -27,14 +27,13 @@ go_library(
         "//staging/src/k8s.io/apimachinery/pkg/util/wait:go_default_library",
         "//staging/src/k8s.io/cri-api/pkg/apis/runtime/v1alpha2:go_default_library",
         "//vendor/github.com/google/cadvisor/info/v1:go_default_library",
-        "//vendor/k8s.io/klog:go_default_library",
+        "//vendor/k8s.io/klog/v2:go_default_library",
     ],
 )
 
 go_test(
     name = "go_default_test",
     srcs = [
-        "container_map_test.go",
         "cpu_assignment_test.go",
         "cpu_manager_test.go",
         "policy_none_test.go",
@@ -44,6 +43,7 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = [
+        "//pkg/kubelet/cm/containermap:go_default_library",
         "//pkg/kubelet/cm/cpumanager/state:go_default_library",
         "//pkg/kubelet/cm/cpumanager/topology:go_default_library",
         "//pkg/kubelet/cm/cpuset:go_default_library",

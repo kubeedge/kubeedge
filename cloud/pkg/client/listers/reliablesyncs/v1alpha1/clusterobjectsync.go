@@ -25,10 +25,13 @@ import (
 )
 
 // ClusterObjectSyncLister helps list ClusterObjectSyncs.
+// All objects returned here must be treated as read-only.
 type ClusterObjectSyncLister interface {
 	// List lists all ClusterObjectSyncs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ClusterObjectSync, err error)
 	// Get retrieves the ClusterObjectSync from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.ClusterObjectSync, error)
 	ClusterObjectSyncListerExpansion
 }

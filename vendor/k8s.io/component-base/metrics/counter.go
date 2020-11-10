@@ -41,8 +41,16 @@ func NewCounter(opts *CounterOpts) *Counter {
 		lazyMetric:  lazyMetric{},
 	}
 	kc.setPrometheusCounter(noop)
-	kc.lazyInit(kc)
+	kc.lazyInit(kc, BuildFQName(opts.Namespace, opts.Subsystem, opts.Name))
 	return kc
+}
+
+// Reset resets the underlying prometheus Counter to start counting from 0 again
+func (c *Counter) Reset() {
+	if !c.IsCreated() {
+		return
+	}
+	c.setPrometheusCounter(prometheus.NewCounter(c.CounterOpts.toPromCounterOpts()))
 }
 
 // setPrometheusCounter sets the underlying CounterMetric object, i.e. the thing that does the measurement.
@@ -92,7 +100,7 @@ func NewCounterVec(opts *CounterOpts, labels []string) *CounterVec {
 		originalLabels: labels,
 		lazyMetric:     lazyMetric{},
 	}
-	cv.lazyInit(cv)
+	cv.lazyInit(cv, BuildFQName(opts.Namespace, opts.Subsystem, opts.Name))
 	return cv
 }
 

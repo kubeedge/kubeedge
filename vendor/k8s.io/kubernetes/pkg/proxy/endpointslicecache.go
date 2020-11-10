@@ -27,7 +27,7 @@ import (
 	discovery "k8s.io/api/discovery/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	utilproxy "k8s.io/kubernetes/pkg/proxy/util"
 	utilnet "k8s.io/utils/net"
 )
@@ -108,11 +108,13 @@ func newEndpointSliceTracker() *endpointSliceTracker {
 // newEndpointSliceInfo generates endpointSliceInfo from an EndpointSlice.
 func newEndpointSliceInfo(endpointSlice *discovery.EndpointSlice, remove bool) *endpointSliceInfo {
 	esInfo := &endpointSliceInfo{
-		Ports:     endpointSlice.Ports,
+		Ports:     make([]discovery.EndpointPort, len(endpointSlice.Ports)),
 		Endpoints: []*endpointInfo{},
 		Remove:    remove,
 	}
 
+	// copy here to avoid mutating shared EndpointSlice object.
+	copy(esInfo.Ports, endpointSlice.Ports)
 	sort.Sort(byPort(esInfo.Ports))
 
 	if !remove {

@@ -8,9 +8,9 @@
 
 The device controller makes use of device model and device instance to implement device management :
  - **Device Model**: A `device model` describes the device properties exposed by the device and property visitors to access these properties. A device model is like a reusable template using which many devices can be created and managed.
- Details on device model definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-model-type-definition).
+ Details on device model definition can be found [here](/docs/proposals/device-crd.md#device-model-type-definition).
  - **Device Instance**: A `device` instance represents an actual device object. It is like an instantiation of the `device model` and references properties defined in the model. The device spec is static while the device status contains dynamically changing data like the desired state of a device property and the state reported by the device.
- Details on device instance definition can be found [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/device-crd.md#device-instance-type-definition).
+ Details on device instance definition can be found [here](/docs/proposals/device-crd.md#device-instance-type-definition).
 
  **Note**: Sample device model and device instance for a few protocols can be found at $GOPATH/src/github.com/kubeedge/kubeedge/build/crd-samples/devices
 
@@ -59,7 +59,7 @@ The downstream controller watches for device updates against the K8S API server.
 The idea behind using config map to store device properties and visitors is that these metadata are only required by the mapper applications running on the edge node in order to connect to the device and collect data.
 Mappers if run as containers can load these properties as config maps . Any additions , deletions or updates to properties , visitors etc in the cloud are watched upon by the downstream controller and config maps are updated in etcd.
 If the mapper wants to discover what properties a device supports, it can get the model information from the device instance.
-Also, it can get the protocol information to connect to the device from the device instace. Once it has access to the device model,
+Also, it can get the protocol information to connect to the device from the device instance. Once it has access to the device model,
 it can get the properties supported by the device. In order to access the property, the mapper needs to get the corresponding visitor information.
 This can be retrieved from the propertyVisitors list. Finally, using the visitorConfig, the mapper can read/write the data associated with the property.
 

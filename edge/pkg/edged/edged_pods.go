@@ -33,7 +33,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -56,9 +55,9 @@ import (
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/fieldpath"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/portforward"
+	"k8s.io/kubernetes/pkg/kubelet/cri/streaming/remotecommand"
 	"k8s.io/kubernetes/pkg/kubelet/images"
-	"k8s.io/kubernetes/pkg/kubelet/server/portforward"
-	"k8s.io/kubernetes/pkg/kubelet/server/remotecommand"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
@@ -69,6 +68,7 @@ import (
 	utilfile "k8s.io/utils/path"
 
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 )
 
 const (
@@ -546,7 +546,7 @@ func (e *edged) IsPodDeleted(uid types.UID) bool {
 // removeOrphanedPodStatuses removes obsolete entries in podStatus where
 // the pod is no longer considered bound to this node.
 func (e *edged) removeOrphanedPodStatuses(pods []*v1.Pod) {
-	podUIDs := make(map[types.UID]bool)
+	podUIDs := make(map[types.UID]bool, len(pods))
 	for _, pod := range pods {
 		podUIDs[pod.UID] = true
 	}
@@ -710,7 +710,7 @@ func (e *edged) podFieldSelectorRuntimeValue(fs *v1.ObjectFieldSelector, pod *v1
 	case "spec.serviceAccountName":
 		return pod.Spec.ServiceAccountName, nil
 	case "status.hostIP":
-		hostIP, err := e.getHostIPByInterface()
+		hostIP, err := pkgutil.GetLocalIP(e.nodeName)
 		if err != nil {
 			return "", err
 		}
@@ -762,7 +762,7 @@ func (e *edged) makeBlockVolumes(pod *v1.Pod, container *v1.Container, podVolume
 func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.PodStatus) *v1.PodStatus {
 	var apiPodStatus v1.PodStatus
 
-	hostIP, err := e.getHostIPByInterface()
+	hostIP, err := pkgutil.GetLocalIP(e.nodeName)
 	if err != nil {
 		klog.Errorf("Failed to get host IP: %v", err)
 	} else {
@@ -812,7 +812,7 @@ func (e *edged) convertStatusToAPIStatus(pod *v1.Pod, podStatus *kubecontainer.P
 // convertToAPIContainerStatuses converts the given internal container
 // statuses into API container statuses.
 func (e *edged) convertToAPIContainerStatuses(pod *v1.Pod, podStatus *kubecontainer.PodStatus, previousStatus []v1.ContainerStatus, containers []v1.Container, hasInitContainers, isInitContainer bool) []v1.ContainerStatus {
-	convertContainerStatus := func(cs *kubecontainer.ContainerStatus) *v1.ContainerStatus {
+	convertContainerStatus := func(cs *kubecontainer.Status) *v1.ContainerStatus {
 		cid := cs.ID.String()
 		cstatus := &v1.ContainerStatus{
 			Name:         cs.Name,
@@ -947,12 +947,12 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	if e.containerRuntime != nil {
 		podStatusRemote, err = e.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
 		if err != nil {
-			containerStatus := &kubecontainer.ContainerStatus{}
+			containerStatus := &kubecontainer.Status{}
 			kubeStatus := toKubeContainerStatus(v1.PodUnknown, containerStatus)
 			podStatus = &v1.PodStatus{Phase: v1.PodUnknown, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
 		} else {
 			if pod.DeletionTimestamp != nil {
-				containerStatus := &kubecontainer.ContainerStatus{State: kubecontainer.ContainerStateExited,
+				containerStatus := &kubecontainer.Status{State: kubecontainer.ContainerStateExited,
 					Reason: "Completed"}
 				kubeStatus := toKubeContainerStatus(v1.PodSucceeded, containerStatus)
 				podStatus = &v1.PodStatus{Phase: v1.PodSucceeded, ContainerStatuses: []v1.ContainerStatus{kubeStatus}}
@@ -974,7 +974,6 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 			}
 		}
 	}
-
 	newStatus = *podStatus.DeepCopy()
 
 	e.probeManager.UpdatePodStatus(pod.UID, &newStatus)
@@ -993,7 +992,7 @@ func (e *edged) updatePodStatus(pod *v1.Pod) error {
 	return err
 }
 
-func toKubeContainerStatus(phase v1.PodPhase, status *kubecontainer.ContainerStatus) v1.ContainerStatus {
+func toKubeContainerStatus(phase v1.PodPhase, status *kubecontainer.Status) v1.ContainerStatus {
 	kubeStatus := v1.ContainerStatus{
 		Name:         status.Name,
 		RestartCount: int32(status.RestartCount),
@@ -1001,18 +1000,17 @@ func toKubeContainerStatus(phase v1.PodPhase, status *kubecontainer.ContainerSta
 		Image:        status.Image,
 		ContainerID:  status.ID.ID,
 	}
-
 	switch phase {
 	case v1.PodRunning:
-		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.Time{Time: status.StartedAt}}
+		kubeStatus.State.Running = &v1.ContainerStateRunning{StartedAt: metav1.NewTime(status.StartedAt)}
 		kubeStatus.Ready = true
 	case v1.PodFailed, v1.PodSucceeded:
 		kubeStatus.State.Terminated = &v1.ContainerStateTerminated{
 			ExitCode:    int32(status.ExitCode),
 			Reason:      status.Reason,
 			Message:     status.Message,
-			StartedAt:   metav1.Time{Time: status.StartedAt},
-			FinishedAt:  metav1.Time{Time: status.FinishedAt},
+			StartedAt:   metav1.NewTime(status.StartedAt),
+			FinishedAt:  metav1.NewTime(status.FinishedAt),
 			ContainerID: status.ID.ID,
 		}
 	default:
@@ -1132,31 +1130,6 @@ func getPhase(spec *v1.PodSpec, info []v1.ContainerStatus) v1.PodPhase {
 		klog.Info("pod default case, pending")
 		return v1.PodPending
 	}
-}
-
-func (e *edged) getHostIPByInterface() (string, error) {
-	iface, err := net.InterfaceByName(e.interfaceName)
-	if err != nil {
-		return "", fmt.Errorf("failed to get network interface: %v err:%v", e.interfaceName, err)
-	}
-	if iface == nil {
-		return "", fmt.Errorf("input iface is nil")
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return "", err
-	}
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if ip.To4() != nil {
-			return ip.String(), nil
-		}
-	}
-	return "", fmt.Errorf("no ip and mask in this network card")
 }
 
 // findContainer finds and returns the container with the given pod ID, full name, and container name.

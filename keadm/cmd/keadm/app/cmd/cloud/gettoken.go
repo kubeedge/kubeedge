@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -19,7 +20,7 @@ A token can be used when a edge node is about to join the cluster. With this tok
 certificate request.
 `
 	gettokenExample = `
-keadm gettoken --kube-config = /root/.kube/config
+keadm gettoken --kube-config /root/.kube/config
 - kube-config is the absolute path of kubeconfig which used to build secure connectivity between keadm and kube-apiserver
 to get the token.
 `
@@ -66,7 +67,7 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
-	secret, err := client.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  name: cloudcore
+  namespace: kubeedge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: kubeedge
+      kubeedge: cloudcore
+  template:
+    metadata:
+      labels:
+        k8s-app: kubeedge
+        kubeedge: cloudcore
+    spec:
+      nodeSelector: # configure the nodeSelector here to directly schedule pods to specific nodes
+        [key]: [value]
+      hostNetwork: true
+      readinessGates:
+        - conditionType: "kubeedge.io/CloudCoreIsLeader"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/edge
+                    operator: DoesNotExist
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: kubeedge
+                    operator: In
+                    values:
+                      - cloudcore
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: cloudcore
+          image: kubeedge/cloudcore:{tag}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10000
+              name: cloudhub
+              protocol: TCP
+            - containerPort: 10002
+              name: certandreadyz
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/kubeedge/config
+          env:
+            - name: CLOUDCORE_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CLOUDCORE_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      restartPolicy: Always
+      serviceAccount: cloudcore
+      serviceAccountName: cloudcore
+      volumes:
+        - name: conf
+          configMap:
+            name: cloudcore
+

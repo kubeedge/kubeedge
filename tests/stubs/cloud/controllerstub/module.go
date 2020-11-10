@@ -63,7 +63,10 @@ func (cs *ControllerStub) Start() {
 		klog.Errorf("New downstream controller failed with error: %v", err)
 		return
 	}
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Errorf("Start downstream controller failed with error: %v", err)
+		return
+	}
 
 	// Start upstream controller
 	upstream, err := NewUpstreamController(pm)
@@ -71,10 +74,17 @@ func (cs *ControllerStub) Start() {
 		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
-	upstream.Start()
+	if err := upstream.Start(); err != nil {
+		klog.Errorf("Start upstream controller failed with error: %v", err)
+		return
+	}
 
 	// Start http server
 	http.HandleFunc(constants.PodResource, pm.PodHandlerFunc)
 	klog.Info("Start http service")
-	go http.ListenAndServe(":54321", nil)
+	go func() {
+		if err := http.ListenAndServe(":54321", nil); err != nil {
+			klog.Errorf("Start http service failed with error: %v", err)
+		}
+	}()
 }

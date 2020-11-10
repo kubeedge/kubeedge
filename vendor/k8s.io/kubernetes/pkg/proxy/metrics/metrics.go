@@ -38,18 +38,6 @@ var (
 		},
 	)
 
-	// DeprecatedSyncProxyRulesLatency is the latency of one round of kube-proxy syncing proxy rules.
-	DeprecatedSyncProxyRulesLatency = metrics.NewHistogram(
-		&metrics.HistogramOpts{
-			Subsystem:         kubeProxySubsystem,
-			Name:              "sync_proxy_rules_latency_microseconds",
-			Help:              "SyncProxyRules latency in microseconds",
-			Buckets:           metrics.ExponentialBuckets(1000, 2, 15),
-			StabilityLevel:    metrics.ALPHA,
-			DeprecatedVersion: "1.14.0",
-		},
-	)
-
 	// SyncProxyRulesLastTimestamp is the timestamp proxy rules were last
 	// successfully synced.
 	SyncProxyRulesLastTimestamp = metrics.NewGauge(
@@ -137,6 +125,18 @@ var (
 			StabilityLevel: metrics.ALPHA,
 		},
 	)
+
+	// SyncProxyRulesLastQueuedTimestamp is the last time a proxy sync was
+	// requested. If this is much larger than
+	// kubeproxy_sync_proxy_rules_last_timestamp_seconds, then something is hung.
+	SyncProxyRulesLastQueuedTimestamp = metrics.NewGauge(
+		&metrics.GaugeOpts{
+			Subsystem:      kubeProxySubsystem,
+			Name:           "sync_proxy_rules_last_queued_timestamp_seconds",
+			Help:           "The last time a sync of proxy rules was queued",
+			StabilityLevel: metrics.ALPHA,
+		},
+	)
 )
 
 var registerMetricsOnce sync.Once
@@ -145,7 +145,6 @@ var registerMetricsOnce sync.Once
 func RegisterMetrics() {
 	registerMetricsOnce.Do(func() {
 		legacyregistry.MustRegister(SyncProxyRulesLatency)
-		legacyregistry.MustRegister(DeprecatedSyncProxyRulesLatency)
 		legacyregistry.MustRegister(SyncProxyRulesLastTimestamp)
 		legacyregistry.MustRegister(NetworkProgrammingLatency)
 		legacyregistry.MustRegister(EndpointChangesPending)
@@ -153,12 +152,8 @@ func RegisterMetrics() {
 		legacyregistry.MustRegister(ServiceChangesPending)
 		legacyregistry.MustRegister(ServiceChangesTotal)
 		legacyregistry.MustRegister(IptablesRestoreFailuresTotal)
+		legacyregistry.MustRegister(SyncProxyRulesLastQueuedTimestamp)
 	})
-}
-
-// SinceInMicroseconds gets the time since the specified start in microseconds.
-func SinceInMicroseconds(start time.Time) float64 {
-	return float64(time.Since(start).Nanoseconds() / time.Microsecond.Nanoseconds())
 }
 
 // SinceInSeconds gets the time since the specified start in seconds.

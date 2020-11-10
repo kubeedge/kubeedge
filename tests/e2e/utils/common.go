@@ -33,7 +33,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -861,6 +861,8 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
+	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
+	Infof("configMap.Data %v", configMap.Data)
 	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
 		return false
 	}
@@ -872,8 +874,8 @@ func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap)
 	deviceProfile := configMap.Data["deviceProfile.json"]
 	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
 	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
-	json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
-	json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
+	_ = json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
+	_ = json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
 	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 

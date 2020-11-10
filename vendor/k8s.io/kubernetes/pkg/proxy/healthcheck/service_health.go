@@ -24,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/lithammer/dedent"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -163,7 +163,7 @@ func (h hcHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	} else {
 		resp.WriteHeader(http.StatusOK)
 	}
-	fmt.Fprintf(resp, strings.Trim(dedent.Dedent(fmt.Sprintf(`
+	fmt.Fprint(resp, strings.Trim(dedent.Dedent(fmt.Sprintf(`
 		{
 			"service": {
 				"namespace": %q,

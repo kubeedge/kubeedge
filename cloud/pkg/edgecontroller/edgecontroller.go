@@ -6,8 +6,8 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
@@ -31,12 +31,12 @@ func Register(ec *v1alpha1.EdgeController, kubeAPIConfig *v1alpha1.KubeAPIConfig
 
 // Name of controller
 func (ec *EdgeController) Name() string {
-	return constants.EdgeControllerModuleName
+	return modules.EdgeControllerModuleName
 }
 
 // Group of controller
 func (ec *EdgeController) Group() string {
-	return constants.EdgeControllerModuleName
+	return modules.EdgeControllerGroupName
 }
 
 // Enable indicates whether enable this module
@@ -51,12 +51,17 @@ func (ec *EdgeController) Start() {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	upstream.Start()
+
+	if err := upstream.Start(); err != nil {
+		klog.Fatalf("start upstream failed with error: %s", err)
+	}
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
-		klog.Warningf("new downstream controller failed with error: %s", err)
-		os.Exit(1)
+		klog.Fatalf("new downstream controller failed with error: %s", err)
 	}
-	downstream.Start()
+
+	if err := downstream.Start(); err != nil {
+		klog.Fatalf("start downstream failed with error: %s", err)
+	}
 }

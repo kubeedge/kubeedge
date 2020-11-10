@@ -17,6 +17,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -38,11 +39,11 @@ func Register(hub *v1alpha1.CloudHub, kubeAPIConfig *v1alpha1.KubeAPIConfig) {
 }
 
 func (a *cloudHub) Name() string {
-	return "cloudhub"
+	return modules.CloudHubModuleName
 }
 
 func (a *cloudHub) Group() string {
-	return "cloudhub"
+	return modules.CloudHubModuleGroup
 }
 
 // Enable indicates whether enable this module

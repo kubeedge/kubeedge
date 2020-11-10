@@ -32,12 +32,13 @@ application orchestration capabilities to hosts at Edge.
 
    setup/keadm
    setup/local
+   setup/upgrade
 
 .. toctree::
    :maxdepth: 1
    :caption: Configuration
 
-   KuBeEdge <configuration/kubeedge>
+   KubeEdge <configuration/kubeedge>
    CRI <configuration/cri>
    Storage <configuration/storage>
 
@@ -93,7 +94,7 @@ application orchestration capabilities to hosts at Edge.
    :maxdepth: 1
    :caption: Developer Guide
 
-   Device Manager <contributing/device_crd_guide>
+   Device Management <contributing/device_crd_guide>
    contributing/message_topics
    Unit Test <contributing/unit_test_guide>
    Bluetooth Mapper E2E Test <contributing/bluetooth_mapper_e2e_guide>

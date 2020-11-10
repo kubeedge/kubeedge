@@ -60,6 +60,6 @@ Event object is then passed through the channel.
 
 The CloudHub can be configured in three ways as mentioned below :
 
-- **Start the websocket server only**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-websocket-server-only) to see the details.
-- **Start the quic server only**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-quic-server-only) to see the details.
-- **Start the websocket and quic server at the same time**: Click [here](https://github.com/kubeedge/kubeedge/blob/master/docs/proposals/quic-design.md#start-the-quic-server-only) to see the details
+- **Start the websocket server only**: Click [here](/docs/proposals/quic-design.md#start-the-websocket-server-only) to see the details.
+- **Start the quic server only**: Click [here](/docs/proposals/quic-design.md#start-the-quic-server-only) to see the details.
+- **Start the websocket and quic server at the same time**: Click [here](/docs/proposals/quic-design.md#start-the-websocket-and-quic-server-at-the-same-time) to see the details

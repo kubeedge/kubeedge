@@ -1,0 +1,60 @@
+apiVersion: devices.kubeedge.io/v1alpha2
+kind: Device
+metadata:
+  name: modbusrtu-device
+  labels:
+    description: TISimplelinkSensorTag
+    manufacturer: TexasInstruments
+    model: CC2650
+spec:
+  deviceModelRef:
+    name: modbus-sample-model
+  protocol:
+    modbus:
+      slaveID: 1
+    common:
+      com:
+        serialPort: '/dev/ttyS0'
+        baudRate: 9600
+        dataBits: 8
+        parity: even
+        stopBits: 1
+      customizedValues:
+        serialType: "RS232"
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: ''
+        operator: In
+        values:
+        - test
+  propertyVisitors:
+    - propertyName: temperature
+      modbus:
+        register: CoilRegister
+        offset: 2
+        limit: 1
+        scale: 1
+        isSwap: true
+        isRegisterSwap: true
+    - propertyName: temperature-enable
+      modbus:
+        register: CoilRegister
+        offset: 3
+        limit: 1
+        scale: 1.0
+        isSwap: true
+        isRegisterSwap: true
+status:
+  twins:
+    - propertyName: temperature-enable
+      reported:
+        metadata:
+          timestamp: '1550049403598'
+          type: integer
+        value: "1"
+      desired:
+        metadata:
+          timestamp: '1550049403598'
+          type: integer
+        value: "1"

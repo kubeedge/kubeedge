@@ -21,6 +21,10 @@ const (
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
+
+	DefaultMqttCAFile   = "/etc/kubeedge/ca/rootCA.crt"
+	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
+	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 )
 
 const (
@@ -40,7 +44,6 @@ const (
 	DefaultMaximumDeadContainersPerPod = 1
 	DefaultHostnameOverride            = "default-edge-node"
 	DefaultRegisterNodeNamespace       = "default"
-	DefaultInterfaceName               = "eth0"
 	DefaultCNIConfDir                  = "/etc/cni/net.d"
 	DefaultCNIBinDir                   = "/opt/cni/bin"
 	DefaultCNICacheDir                 = "/var/lib/cni/cache"
@@ -117,7 +120,7 @@ const (
 	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
 	CSISyncMsgRespTimeout                     = 1 * time.Minute
 
-	CurrentSupportK8sVersion = "v1.17.1"
+	CurrentSupportK8sVersion = "v1.19.3"
 )
 
 const (

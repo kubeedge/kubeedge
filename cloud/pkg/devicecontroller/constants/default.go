@@ -12,8 +12,4 @@ const (
 	DefaultKubeBurst       = 10
 
 	DefaultMessageLayer = "context"
-
-	DefaultContextSendModuleName     = CloudHubControllerModuleName
-	DefaultContextReceiveModuleName  = DeviceControllerModuleName
-	DefaultContextResponseModuleName = CloudHubControllerModuleName
 )

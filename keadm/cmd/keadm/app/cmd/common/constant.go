@@ -35,9 +35,6 @@ const (
 	// KubeEdge Node unique idenfitcation string
 	EdgeNodeName = "edgenode-name"
 
-	// KubeEdge interface name string
-	InterfaceName = "interfacename"
-
 	// KubeEdge remote-runtime-endpoint string
 	RemoteRuntimeEndpoint = "remote-runtime-endpoint"
 
@@ -60,7 +57,7 @@ const (
 	RuntimeType = "runtimetype"
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version
-	DefaultKubeEdgeVersion = "1.3.1"
+	DefaultKubeEdgeVersion = "1.5.0"
 
 	// Token sets the token used when edge applying for the certificate
 	Token = "token"
@@ -73,4 +70,168 @@ const (
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"
+
+	DomainName = "domainname"
+
+	// CGroupDriver is type of edgecore Cgroup
+	CGroupDriver = "cgroupdriver"
+
+	// TarballPath sets the temp directory path for KubeEdge tarball, if not exist, download it
+	// eg.  "/tmp/kubeedge" or "/etc/kubeedge" by default
+	TarballPath = "tarballpath"
+
+	StrCheck    = "check"
+	StrDiagnose = "diagnose"
+
+	CmdGetArch = "arch"
+	//CmdGetCPUNum     = "cat /proc/cpuinfo  |grep processor| wc -l"
+	//CmdGetMenorySize = "free -h |grep Mem|awk '{print $2}'"
+	//CmdGetDiskSize      = "df -h |grep -ve \" /.\"|sed -n \"2p\"|awk '{print $2}'"
+	CmdGetDNSIP         = "cat /etc/resolv.conf |grep nameserver|grep -v ':'|awk '{print $2}'|sed -n '1p'"
+	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
+	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
+	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
+	CmdGetProcessNum    = "ps -A|wc -l"
+
+	DefaultDomain = "www.github.com"
+
+	EdgecoreConfig = "config"
+
+	// Default edgecore config path
+	EdgecoreConfigPath = "/etc/kubeedge/config/edgecore.yaml"
+
+	// cmd to copy file
+	CmdCopyFile = "cp -r %s %s/"
+
+	/*system info*/
+	CmdDiskInfo    = "df -h > %s/disk"
+	CmdArchInfo    = "arch > %s/arch"
+	CmdProcessInfo = "ps -axu > %s/process"
+	CmdDateInfo    = "date > %s/date"
+	CmdUptimeInfo  = "uptime > %s/uptime"
+	CmdHistorynfo  = "history -a && cat ~/.bash_history  > %s/history"
+	CmdNetworkInfo = "netstat -pan > %s/network"
+
+	PathCpuinfo   = "/proc/cpuinfo"
+	PathMemory    = "/proc/meminfo"
+	PathHosts     = "/etc/hosts"
+	PathDNSResolv = "/etc/resolv.conf"
+
+	/*edgecore info*/
+	PathEdgecoreService = "/lib/systemd/system/edgecore.service"
+	CmdEdgecoreVersion  = "edgecore  --version > %s/version"
+
+	/*runtime info*/
+	CmdDockerVersion    = "docker version > %s/version"
+	CmdContainerInfo    = "docker ps -a > %s/containerInfo"
+	CmdContainerLogInfo = "journalctl -u docker  > %s/log"
+	CmdDockerInfo       = "docker info > %s/info"
+	CmdDockerImageInfo  = "docker images > %s/images"
+	PathDockerService   = "/lib/systemd/system/docker.service"
+
+	DescAll     = "Check all item"
+	DescArch    = "Check whether the architecture can work"
+	DescCPU     = "Check node CPU requirements"
+	DescMemory  = "Check node memory requirements"
+	Descdisk    = "Check node disk requirements"
+	DescDNS     = "Check whether DNS can work"
+	DescRuntime = "Check whether runtime can work"
+	DescNetwork = "Check whether the network is normal"
+	DescPID     = "Check node PID requirements"
+
+	/**Diagnose**/
+	ArgDiagnoseAll  = "all"
+	DescDiagnoseAll = "Diagnose all iteams"
+
+	ArgDiagnoseNode  = "node"
+	DescDiagnoseNode = "Diagnose edge node"
+
+	ArgDiagnosePod  = "pod"
+	DescDiagnosePod = "Diagnose pod"
+
+	ArgDiagnoseInstall  = "install"
+	DescDiagnoseInstall = "Diagnose install"
+	/****/
+
+	ArgCheckAll     = "all"
+	ArgCheckArch    = "arch"
+	ArgCheckCPU     = "cpu"
+	ArgCheckMemory  = "mem"
+	ArgCheckDisk    = "disk"
+	ArgCheckDNS     = "dns"
+	ArgCheckRuntime = "runtime"
+	ArgCheckNetwork = "network"
+	ArgCheckPID     = "pid"
+
+	DefaultRuntime = "docker"
+
+	KB = 1024
+	MB = KB * 1024
+	GB = MB * 1024
+
+	AllowedValueCPU     = 1
+	AllowedValueMemory  = 256 * MB
+	AllowedValueDisk    = GB
+	AllowedValuePIDRate = 0.05
+
+	AllowedCurrentValueCPURate  = 0.9
+	AllowedCurrentValueMemRate  = 0.9
+	AllowedCurrentValueDiskRate = 0.9
+
+	AllowedCurrentValueMem  = 128 * MB
+	AllowedCurrentValueDisk = 512 * MB
+)
+
+var (
+	AllowedValueArch = []string{"amd64", "arm64v8", "arm32v7", "i386", "s390x", "x86_64", "aarch64"}
+
+	CheckObjectMap = []CheckObject{
+		{
+			Use:  ArgCheckAll,
+			Desc: DescAll,
+		},
+		{
+			Use:  ArgCheckCPU,
+			Desc: DescCPU,
+		},
+		{
+			Use:  ArgCheckMemory,
+			Desc: DescMemory,
+		},
+		{
+			Use:  ArgCheckDisk,
+			Desc: Descdisk,
+		},
+		{
+			Use:  ArgCheckDNS,
+			Desc: DescDNS,
+		},
+		{
+			Use:  ArgCheckRuntime,
+			Desc: DescRuntime,
+		},
+		{
+			Use:  ArgCheckNetwork,
+			Desc: DescNetwork,
+		},
+		{
+			Use:  ArgCheckPID,
+			Desc: DescPID,
+		},
+	}
+
+	DiagnoseObjectMap = []DiagnoseObject{
+		{
+			Use:  ArgDiagnoseNode,
+			Desc: DescDiagnoseNode,
+		},
+		{
+			Use:  ArgDiagnosePod,
+			Desc: DescDiagnosePod,
+		},
+		{
+			Use:  ArgDiagnoseInstall,
+			Desc: DescDiagnoseInstall,
+		},
+	}
 )

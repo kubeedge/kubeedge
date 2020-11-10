@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
@@ -114,7 +113,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	klog.V(4).Infof("create volume result: %v", result)
 	data := result.GetContent().(string)
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("create volume with error: %s", data)
 		return nil, errors.New(data)
 	}
@@ -442,17 +441,17 @@ func (cs *controllerServer) ListVolumes(ctx context.Context, req *csi.ListVolume
 }
 
 func (cs *controllerServer) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, fmt.Sprintf("ControllerExpandVolume is not yet implemented"))
+	return nil, status.Error(codes.Unimplemented, "ControllerExpandVolume is not yet implemented")
 }
 
 func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, fmt.Sprintf("CreateSnapshot is not yet implemented"))
+	return nil, status.Error(codes.Unimplemented, "CreateSnapshot is not yet implemented")
 }
 
 func (cs *controllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, fmt.Sprintf("DeleteSnapshot is not yet implemented"))
+	return nil, status.Error(codes.Unimplemented, "DeleteSnapshot is not yet implemented")
 }
 
 func (cs *controllerServer) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsRequest) (*csi.ListSnapshotsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, fmt.Sprintf("ListSnapshots is not yet implemented"))
+	return nil, status.Error(codes.Unimplemented, "ListSnapshots is not yet implemented")
 }

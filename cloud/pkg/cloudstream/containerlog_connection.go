@@ -74,8 +74,8 @@ func (l *ContainerLogsConnection) SendConnection() (stream.EdgedConnection, erro
 		URL:    *l.r.Request.URL,
 		Header: l.r.Request.Header,
 	}
-	connector.URL.Scheme = "http"
-	connector.URL.Host = net.JoinHostPort("127.0.0.1", fmt.Sprintf("%v", constants.ServerPort))
+	connector.URL.Scheme = httpScheme
+	connector.URL.Host = net.JoinHostPort(defaultServerHost, fmt.Sprintf("%v", constants.ServerPort))
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
 		return nil, err

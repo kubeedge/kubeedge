@@ -19,6 +19,8 @@ package util
 import (
 	"fmt"
 
+	"github.com/blang/semver"
+
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -26,12 +28,12 @@ import (
 //on Hosts having CentOS OS.
 //It implements OSTypeInstaller interface
 type CentOS struct {
-	KubeEdgeVersion string
+	KubeEdgeVersion semver.Version
 	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
-func (c *CentOS) SetKubeEdgeVersion(version string) {
+func (c *CentOS) SetKubeEdgeVersion(version semver.Version) {
 	c.KubeEdgeVersion = version
 }
 
@@ -39,7 +41,7 @@ func (c *CentOS) SetKubeEdgeVersion(version string) {
 //Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (c *CentOS) InstallMQTT() error {
 	// check MQTT
-	mqttRunning := fmt.Sprintf("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	mqttRunning := "ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'"
 	result, err := runCommandWithStdout(mqttRunning)
 	if err != nil {
 		return err
@@ -73,22 +75,25 @@ func (c *CentOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 //InstallKubeEdge downloads the provided version of KubeEdge.
 //Untar's in the specified location /etc/kubeedge/ and then copies
 //the binary to excecutables' path (eg: /usr/local/bin)
-func (c *CentOS) InstallKubeEdge(componentType types.ComponentType) error {
+func (c *CentOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch := "amd64"
 	result, err := runCommandWithStdout("arch")
 	if err != nil {
 		return err
 	}
 
-	// TODO: may support more case
 	switch result {
+	case "armv7l":
+		arch = "arm"
+	case "aarch64":
+		arch = "arm64"
 	case "x86_64":
 		arch = "amd64"
 	default:
 		return fmt.Errorf("can't support this architecture of CentOS: %s", result)
 	}
 
-	return installKubeEdge(componentType, arch, c.KubeEdgeVersion)
+	return installKubeEdge(options, arch, c.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
@@ -104,5 +109,10 @@ func (c *CentOS) KillKubeEdgeBinary(proc string) error {
 
 //IsKubeEdgeProcessRunning checks if the given process is running or not
 func (c *CentOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
+	return isKubeEdgeProcessRunning(proc)
+}
+
+//IsKubeEdgeProcessRunning checks if the given process is running or not
+func (c *CentOS) IsProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }

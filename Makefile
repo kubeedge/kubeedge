@@ -1,3 +1,7 @@
+DESTDIR?=
+USR_DIR?=/usr/local
+INSTALL_DIR?=${DESTDIR}${USR_DIR}
+INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
 # make all builds both cloud and edge binaries
 
 BINARIES=cloudcore \
@@ -25,6 +29,12 @@ define ALL_HELP_INFO
 #   make all
 #   make all HELP=y
 #   make all WHAT=cloudcore
+#   make all WHAT=cloudcore GOLDFLAGS="" GOGCFLAGS="-N -l"
+#     Note: Specify GOLDFLAGS as an empty string for building unstripped binaries, specify GOGCFLAGS
+#     to "-N -l" to disable optimizations and inlining, this will be helpful when you want to
+#     use the debugging tools like delve. When GOLDFLAGS is unspecified, it defaults to "-s -w" which strips
+#     debug information, see https://golang.org/cmd/link for other flags.
+
 endef
 .PHONY: all
 ifeq ($(HELP),y)
@@ -281,10 +291,50 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
+# Mappers
 .PHONY: bluetoothdevice
 bluetoothdevice: clean
 	hack/make-rules/bluetoothdevice.sh
-
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:bluetoothdevice
-	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+	sudo docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+
+.PHONY: modbusmapper
+modbusmapper: clean
+	hack/make-rules/modbusmapper.sh
+.PHONY: modbusmapper_image
+modbusmapper_image:modbusmapper
+	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
+
+.PHONY: mappers
+mappers:bluetoothdevice modbusmapper
+
+
+define INSTALL_HELP_INFO
+# install
+#
+# Args:
+#   WHAT: Component names to be installed to $${INSTALL_BIN_DIR} (${INSTALL_BIN_DIR})
+#         If not specified, "everything" will be installed
+#
+##
+# Example:
+#   make install
+#   make install WHAT=edgecore
+#
+endef
+.PHONY: help
+ifeq ($(HELP),y)
+install:
+	@echo "$$INSTALL_HELP_INFO"
+else
+install: _output/local/bin
+	install -d "${INSTALL_BIN_DIR}"
+	if [ "" != "${WHAT}" ]; then \
+          install "$</${WHAT}"  "${INSTALL_BIN_DIR}" ;\
+        else \
+          for file in ${BINARIES} ; do \
+            install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
+          done ; \
+        fi
+endif
