@@ -16,11 +16,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
 
-var (
-	//IsDetail deal detail lock
-	IsDetail = false
-)
-
 //DTContext context for devicetwin
 type DTContext struct {
 	GroupID        string
