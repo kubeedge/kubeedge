@@ -41,7 +41,7 @@ Because of the above reasons,  Ingress object is not suitable to work at Edge. I
 
 1. Provide Gateway component as a container, user can deploy it wherever they want.
 2. Support HTTP/HTTPS/TCP as the external request.
-3. Provide external access to a deployment which include multiple pods within one edge location(means network connection available). The access router rule can be configured with Gateway/VirtualService definition.
+3. Provide external access to a deployment which include multiple pods within one edge location(means network connection available). The access router rule can be configured with Gateway/VirtualService/DestinationRule definition.
 
 
 
@@ -54,6 +54,8 @@ Because of the above reasons,  Ingress object is not suitable to work at Edge. I
 ## Design Details
 
 The idea is to reuse the [Gateway](https://istio.io/docs/reference/config/networking/gateway/)  and [VirtualService](https://istio.io/docs/reference/config/networking/virtual-service/) definition in istio to represent a ingress gateway. A new gateway component is introduced and work like a Envoy(work in istio-ingressgateway mode) to dispatch the external requests to internal PODs.
+
+The architecture diagram is shown below:
 
 ![gateway-arc](../images/gateway/gateway-arc.jpg)
 
@@ -179,9 +181,12 @@ spec:
                 - s390x
 ```
 
+The procedure of EdgeGateway issuing Envoy is shown below:
+
+![EdgeGateway-issued](../images/gateway/EdgeGateway-issued.png)
 
 
-2. User define Gateway to represent an ingress router rule to the selected EdgeGateway as well as VirtualService to represent a backend service dispatching rule. For example:
+2. User define Gateway to represent an ingress router rule to the selected EdgeGateway as well as VirtualService to represent a backend service dispatching rule.And configure Destination as the routing target rule. For example:
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -223,11 +228,73 @@ spec:
         host: productpage
         port:
           number: 9080
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: productpage
+spec:
+  host: productpage
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: ratings
+spec:
+  host: ratings
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v2-mysql
+    labels:
+      version: v2-mysql
+  - name: v2-mysql-vm
+    labels:
+      version: v2-mysql-vm
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: details
+spec:
+  host: details
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
 ```
 
+![EdgeGateway-issued](../images/gateway/EdgeGateway-issued.png)
 
-
-3. EdgeController get the definition of Gateway and VirtualService by list/watching the K8S master.
+3. EdgeController get the definition of Gateway/VirtualService/DestinationRule by list/watching the K8S master.
 
 4. Sending the definition to edge and stored in metaManager in EdgeCore.
 
