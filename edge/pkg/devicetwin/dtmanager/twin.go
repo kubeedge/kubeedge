@@ -29,7 +29,7 @@ const (
 	SyncTwinDeleteDealType = 3
 	//DealActual deal actual
 	DealActual = 1
-	//DealExpected deal exepected
+	//DealExpected deal expected
 	DealExpected = 0
 
 	stringType = "string"
