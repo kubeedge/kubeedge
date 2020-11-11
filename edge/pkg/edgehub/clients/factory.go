@@ -9,12 +9,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 )
 
-//constant for reference to web socket of client
-const (
-	ClientTypeWebSocket = "websocket"
-	ClientTypeQuic      = "quic"
-)
-
 //GetClient returns an Adapter object with new web socket
 func GetClient() (Adapter, error) {
 	config := config.Config
