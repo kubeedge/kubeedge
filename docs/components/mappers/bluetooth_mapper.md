@@ -25,7 +25,7 @@ make bluetooth_mapper_image
 docker tag bluetooth_mapper:v1.0 <your_dockerhub_username>/bluetooth_mapper:v1.0
 docker push <your_dockerhub_username>/bluetooth_mapper:v1.0
 
-Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the followig command to sign in
+Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the following command to sign in
  docker login
  # Please enter your username and password when prompted
 ```
@@ -74,7 +74,7 @@ the mapper like scheduler and watcher.
 
 2. Name of each action should be unique, it is using this name that the other modules like the scheduler or watcher can invoke which action to perform.
 
-3. Perform-immediately field of the action manager tells the action manager whether it is supposed to perform the action immediately or not, if it set to true then the action manger will
+3. Perform-immediately field of the action manager tells the action manager whether it is supposed to perform the action immediately or not, if it set to true then the action manager will
 perform the event once.
 
 4. Each action is associated with a device-property-name, which is the property-name defined in the device CRD, which in turn contains the implementation details required by the action.
@@ -100,7 +100,7 @@ perform the event once.
               - ......
                 ......
 
- 1. Multiple schedules can be defined by the user by providing an array as input though the configuration file.
+ 1. Multiple schedules can be defined by the user by providing an array as input through the configuration file.
 
  2. Name specifies the name of the schedule to be executed, each schedule must have a unique name as it is used as a method of identification by the scheduler.
 
@@ -145,7 +145,7 @@ perform the event once.
 
  The controller module is responsible for exposing MQTT APIs to perform CRUD operations on the watcher, scheduler and action manager. The controller is also responsible for starting the other modules like action manager, watcher and scheduler.
  The controller first connects the MQTT client to the broker (using the mqtt configurations, specified in the configuration file), it then initiates the watcher which will connect to the device (based on the configurations provided in the configuration file) and the
- watcher runs parallelly, after this it starts the action manger which executes all the actions that have been enabled in it, after which the scheduler is started to run parallelly as well. Given below is a guide to provide input to the
+ watcher runs parallelly, after this it starts the action manager which executes all the actions that have been enabled in it, after which the scheduler is started to run parallelly as well. Given below is a guide to provide input to the
  controller through the configuration file.
 
           mqtt:
