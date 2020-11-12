@@ -6,7 +6,24 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// Module name and group name
 const (
+	// SyncController
+	DefaultContextSendModuleName = "cloudhub"
+
+	// DeviceTwin
+	DeviceTwinModuleName = "twin"
+
+	// NodeName is for the clearer log of cloudcore.
+	NodeName = "NodeName"
+
+	KubeEdge          = "kubeedge"
+	KubeEdgeNameSpace = "kubeedge"
+)
+
+// Resources
+const (
+	// Certificates
 	DefaultConfigDir = "/etc/kubeedge/config/"
 	DefaultCAFile    = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultCAKeyFile = "/etc/kubeedge/ca/rootCA.key"
@@ -16,8 +33,6 @@ const (
 	DefaultCAURL   = "/ca.crt"
 	DefaultCertURL = "/edge.crt"
 
-	DefaultCloudCoreReadyCheckURL = "/readyz"
-
 	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
 	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
 	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
@@ -25,9 +40,11 @@ const (
 	DefaultMqttCAFile   = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
-)
 
-const (
+	// Election
+	DefaultCloudCoreReadyCheckURL = "/readyz"
+
+	// Edged
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"
 	DefaultRuntimeType                 = "docker"
 	DefaultEdgedMemoryCapacity         = 7852396000
@@ -52,13 +69,13 @@ const (
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
-)
-const (
-	DefaultPodStatusSyncInterval = 60
-)
 
-// Config
-const (
+	CurrentSupportK8sVersion = "v1.19.3"
+
+	// MetaManager
+	DefaultPodStatusSyncInterval = 60
+
+	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"
 	DefaultKubeConfig              = "/root/.kube/config"
 	DefaultKubeNamespace           = v1.NamespaceAll
@@ -66,6 +83,7 @@ const (
 	DefaultKubeBurst               = 200
 	DefaultKubeUpdateNodeFrequency = 20
 
+	// EdgeController
 	DefaultUpdatePodStatusWorkers            = 1
 	DefaultUpdateNodeStatusWorkers           = 1
 	DefaultQueryConfigMapWorkers             = 4
@@ -92,13 +110,17 @@ const (
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
 
-	DefaultContextSendModuleName = "cloudhub"
-
 	DefaultPodEventBuffer       = 1
 	DefaultConfigMapEventBuffer = 1
 	DefaultSecretEventBuffer    = 1
 	DefaultServiceEventBuffer   = 1
 	DefaultEndpointsEventBuffer = 1
+
+	// DeviceController
+	DefaultUpdateDeviceStatusBuffer  = 1024
+	DefaultDeviceEventBuffer         = 1
+	DefaultDeviceModelEventBuffer    = 1
+	DefaultUpdateDeviceStatusWorkers = 1
 
 	// Resource sep
 	ResourceSep = "/"
@@ -120,33 +142,7 @@ const (
 	CSIOperationTypeControllerUnpublishVolume = "controllerunpublishvolume"
 	CSISyncMsgRespTimeout                     = 1 * time.Minute
 
-	CurrentSupportK8sVersion = "v1.19.3"
-)
-
-const (
-	DefaultUpdateDeviceStatusBuffer  = 1024
-	DefaultDeviceEventBuffer         = 1
-	DefaultDeviceModelEventBuffer    = 1
-	DefaultUpdateDeviceStatusWorkers = 1
-)
-
-const (
-	// TODO put all modulename and group name together @kadisi
-	DeviceTwinModuleName = "twin"
-)
-
-const (
-	// NodeName is for the clearer log of cloudcore.
-	NodeName = "NodeName"
-)
-
-const (
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
 	ServerPort = 10350
-)
-
-const (
-	KubeEdge          = "kubeedge"
-	KubeEdgeNameSpace = "kubeedge"
 )
