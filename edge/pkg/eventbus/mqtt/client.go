@@ -60,7 +60,7 @@ type Client struct {
 	SubCli  MQTT.Client
 }
 
-// AccessInfo that deliever between edge-hub and cloud-hub
+// AccessInfo that deliver between edge-hub and cloud-hub
 type AccessInfo struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`

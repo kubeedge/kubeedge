@@ -266,7 +266,7 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 	}
 }
 
-// Publish sends message via the rchannel to Controllers
+// Publish sends message via the channel to Controllers
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
 	case model.ResTwin:
