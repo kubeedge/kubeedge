@@ -82,7 +82,7 @@ func (s *StreamServer) installDebugHandler() {
 		To(s.getMetrics))
 	s.container.Add(ws)
 
-	// metrics api is widely used for Promethus
+	// metrics api is widely used for Prometheus
 	ws = new(restful.WebService)
 	ws.Path("/metrics")
 	ws.Route(ws.GET("").

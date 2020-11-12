@@ -21,7 +21,7 @@ type APIServerConnection interface {
 	WriteToTunnel(m *stream.Message) error
 	// WriteToAPIServer indicates writing data to apiserver response
 	WriteToAPIServer(p []byte) (n int, err error)
-	// SetMessageID inidecates set messageid for it`s connection
+	// SetMessageID indicates set messageid for it`s connection
 	// Every APIServerConnection has his unique message id
 	SetMessageID(id uint64)
 	GetMessageID() uint64
