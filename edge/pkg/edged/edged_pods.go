@@ -568,7 +568,10 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 	if err != nil {
 		return nil, nil, err
 	}*/
-	opts := kubecontainer.RunContainerOptions{}
+	opts, err := e.containerManager.GetResources(pod, container)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	hostname, hostDomainName, err := e.GeneratePodHostNameAndDomain(pod)
 	if err != nil {
@@ -612,7 +615,7 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 		}
 	}
 
-	return &opts, nil, nil
+	return opts, nil, nil
 }
 
 // GetPodDNS returns DNS settings for the pod.
