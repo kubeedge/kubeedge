@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/klog"
 
+	"github.com/google/uuid"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
@@ -123,10 +124,9 @@ func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{})
 }
 
 func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
-	//todo eventid uuid
 	getDetail := dttype.GetDetailNode{
 		EventType: "group_membership_event",
-		EventID:   "123",
+		EventID:   uuid.New().String(),
 		Operation: "detail",
 		GroupID:   context.NodeName,
 		TimeStamp: time.Now().UnixNano() / 1000000}
