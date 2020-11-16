@@ -25,7 +25,7 @@ A keep-alive message or heartbeat is sent to cloudHub after every heartbeatPerio
 
 - The main responsibility of publishing client info is to inform the other groups or modules regarding the status of connection to the cloud.
 
-- It sends a [beehive](https://github.com/kandoo/beehive) message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
+- It sends a [beehive](https://github.com/kubeedge/beehive) message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
 
 
 ## Route To Cloud
