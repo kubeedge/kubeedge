@@ -155,3 +155,7 @@ Once we can retrive a whloe `Device` from cloud,  we can simplify the implementa
 
 ### Design Detail
 
+// TODO
+
+redefine Device CRD and refactor devicecontroller/devicetwin/mapper.
+
