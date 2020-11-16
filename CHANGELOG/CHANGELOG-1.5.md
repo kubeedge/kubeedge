@@ -45,7 +45,7 @@ Users are now able to develop mappers based on the new design standard.([#2147](
 
 **Modbus Mapper Golang Implementation**
 
-A new modbus mapper written in Golang based on new standards above. ([#2282](https://github.com/kubeedge/kubeedge/pull/2282), [@sailorvii](https://github.com/sailorvii)). 
+A new modbus mapper with Golang implementation is provided, based on new Device Mapper Standard. ([#2282](https://github.com/kubeedge/kubeedge/pull/2282), [@sailorvii](https://github.com/sailorvii)). 
 
 **Support Exec To Pod On Edge Node**
 
