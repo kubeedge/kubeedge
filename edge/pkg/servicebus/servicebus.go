@@ -44,7 +44,7 @@ func (*servicebus) Name() string {
 }
 
 func (*servicebus) Group() string {
-	return modules.BusGroup
+	return modules.UserGroup
 }
 
 func (sb *servicebus) Enable() bool {
