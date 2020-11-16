@@ -47,7 +47,7 @@ Users are now able to develop mappers based on the new design standard.([#2147](
 
 A new modbus mapper with Golang implementation is provided, based on new Device Mapper Standard. ([#2282](https://github.com/kubeedge/kubeedge/pull/2282), [@sailorvii](https://github.com/sailorvii)). 
 
-**Support Exec To Pod On Edge Node**
+**Support Remote Exec to Pods on Edge From Cloud**
 
 Users are now able to use `K8s exec api` or `kubectl exec` command to connect to pods on the edge node. ([#2075](https://github.com/kubeedge/kubeedge/pull/2075), [@daixiang0](https://github.com/daixiang0), [@kadisi](https://github.com/kadisi)).
 
