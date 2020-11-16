@@ -1,6 +1,16 @@
-| title              | authors | approvers | creation-date | last-updated | status          |
-| ------------------ | ------- | --------- | ------------- | ------------ | --------------- |
-| Device API at Edge | @kkBill |           | 2020-11-10    | 2020-11-10   | under designing |
+---
+title: Device API at Edge
+authors:
+    - "@kkBill"
+approvers:
+    - "@kevin-wangzefeng"
+    - "@fisherxu"
+creation-date: 2020-11-10
+last-updated: 2020-11-10
+status: under designing
+---
+
+
 
 # Device API at Edge(alpha)
 
