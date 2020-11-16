@@ -50,7 +50,7 @@ The major steps involved in this process are as follows :-
 ## Route To Edge
 
 The main responsibility of route to edge is to receive messages from the cloud (through the websocket connection) and
-send them to the required groups through the [beehive framework](https://github.com/kandoo/beehive).
+send them to the required groups through the [beehive framework](https://github.com/kubeedge/beehive).
 
 The major steps involved in this process are as follows :-
 
