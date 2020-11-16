@@ -33,15 +33,15 @@
 
 ### 1.5 What's New
 
-**Mapper Design V2**
+**Simplified Device Mapper reference architecture**
 
-New version of Mapper, simplify the function and extract the common code to SDK for Mappers, enhancement include:
+New version of Mapper reference architecture:
 
-- Simplify the structure
-- New Components include: Configmap parser, Driver, Event process, Timer
-- Extract SDK
+- Simplified Mapper code structure
+- Extracted common code into SDK
+- Added new building blocks: Configmap parser, Driver, Event process, Timer
 
-Users are now able to develop mappers based on the new design standards.([#2147](https://github.com/kubeedge/kubeedge/pull/2147), [@sailorvii](https://github.com/sailorvii), [@luogangyi](https://github.com/luogangyi)).
+Users are now able to develop mappers based on the new design standard.([#2147](https://github.com/kubeedge/kubeedge/pull/2147), [@sailorvii](https://github.com/sailorvii), [@luogangyi](https://github.com/luogangyi)).
 
 **Modbus Mapper Golang Implementation**
 
@@ -95,4 +95,3 @@ NA
 - fix a bug of device data type ([#2285](https://github.com/kubeedge/kubeedge/pull/2285), [@wuqihui0317](https://github.com/wuqihui0317))
 - fix cloudhub api /readyz panic ([#2304](https://github.com/kubeedge/kubeedge/pull/2304), [@gccio](https://github.com/gccio))
 - Bugfix:less verbose edge message output ([#2318](https://github.com/kubeedge/kubeedge/pull/2318), [@tangyanhan](https://github.com/tangyanhan))
-
