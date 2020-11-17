@@ -131,6 +131,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ContextSendGroup:      metaconfig.GroupNameHub,
 				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
+				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 			},
 			ServiceBus: &ServiceBus{
 				Enable: false,

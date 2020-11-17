@@ -74,6 +74,7 @@ const (
 
 	// MetaManager
 	DefaultPodStatusSyncInterval = 60
+	DefaultRemoteQueryTimeout    = 60
 
 	// Config
 	DefaultKubeContentType         = "application/vnd.kubernetes.protobuf"

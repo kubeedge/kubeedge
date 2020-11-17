@@ -125,6 +125,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				ContextSendGroup:      metaconfig.GroupNameEdgeController,
 				ContextSendModule:     metaconfig.ModuleNameEdgeController,
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
+				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 			},
 		},
 	}
