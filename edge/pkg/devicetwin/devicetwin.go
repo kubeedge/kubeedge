@@ -4,7 +4,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
@@ -39,7 +38,7 @@ func Register(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
 
 // Name get name of the module
 func (dt *DeviceTwin) Name() string {
-	return constants.DeviceTwinModuleName
+	return modules.DeviceTwinModuleName
 }
 
 // Group get group of the module

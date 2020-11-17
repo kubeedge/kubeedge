@@ -36,7 +36,7 @@ func Register(eventbus *v1alpha1.EventBus, nodeName string) {
 }
 
 func (*eventbus) Name() string {
-	return "eventbus"
+	return modules.EventBusModuleName
 }
 
 func (*eventbus) Group() string {
