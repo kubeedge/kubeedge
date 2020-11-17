@@ -11,9 +11,6 @@ const (
 	// SyncController
 	DefaultContextSendModuleName = "cloudhub"
 
-	// DeviceTwin
-	DeviceTwinModuleName = "twin"
-
 	// NodeName is for the clearer log of cloudcore.
 	NodeName = "NodeName"
 
