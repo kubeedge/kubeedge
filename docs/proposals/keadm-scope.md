@@ -123,6 +123,7 @@ Flags:
   -h, --help                                       help for init
       --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
       --kubernetes-version string[="1.14.1"]       Use this key to download and use the required Kubernetes version (default "1.14.1")
+      --tarballpath string                         Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it
 
 ```
 
@@ -188,6 +189,7 @@ Flags:
   -h, --help                                       help for join
   -k, --k8sserverip string                         IP:Port address of K8S API-Server
       --kubeedge-version string[="0.3.0-beta.0"]   Use this key to download and use the required KubeEdge version (default "0.3.0-beta.0")
+      --tarballpath string                         Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it
 
 ```
 
@@ -197,8 +199,9 @@ Flags:
 
 `keadm init`
   - What is it?
-     * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-
+     
+* This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
+     
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
