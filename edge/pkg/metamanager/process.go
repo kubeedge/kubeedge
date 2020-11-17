@@ -455,7 +455,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 		resp, err := beehiveContext.SendSync(
 			string(metaManagerConfig.Config.ContextSendModule),
 			message,
-			60*time.Second) // TODO: configurable
+			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
 		klog.Infof("########## process get: req[%+v], resp[%+v], err[%+v]", message, resp, err)
 		if err != nil {
 			klog.Errorf("remote query failed: %v", err)
