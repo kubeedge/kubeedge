@@ -40,7 +40,7 @@ func Register(s *v1alpha1.ServiceBus) {
 }
 
 func (*servicebus) Name() string {
-	return "servicebus"
+	return modules.ServiceBusModuleName
 }
 
 func (*servicebus) Group() string {
