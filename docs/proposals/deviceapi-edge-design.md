@@ -24,7 +24,7 @@ At present, we cannot use Device API at edge directly, which is inconvenient for
 
 ### Non-goals
 
-* ??
+* For the alpha version, we will not consider incorporating the List-Watch mechanism
 
 ## Proposal
 
