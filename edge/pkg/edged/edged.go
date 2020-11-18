@@ -248,10 +248,11 @@ type edged struct {
 
 	dockerLegacyService legacy.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
-	runner              kubecontainer.CommandRunner
-	podLastSyncTime     sync.Map
-	runtimeClassManager *runtimeclass.Manager
-	logManager          logs.ContainerLogManager
+	runner                           kubecontainer.CommandRunner
+	podLastSyncTime                  sync.Map
+	runtimeClassManager              *runtimeclass.Manager
+	logManager                       logs.ContainerLogManager
+	allocateResourcesPodAdmitHandler lifecycle.PodAdmitHandler
 }
 
 // Register register edged
@@ -674,6 +675,8 @@ func newEdged(enable bool) (*edged, error) {
 			kubecontainer.RealOS{})
 	}
 
+	ed.allocateResourcesPodAdmitHandler = ed.containerManager.GetAllocateResourcesPodAdmitHandler()
+
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
 		statsProvider,
@@ -941,6 +944,21 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	if !ok || pod.DeletionTimestamp != nil {
 		return apis.ErrPodNotFound
 	}
+
+	attrs := &lifecycle.PodAdmitAttributes{}
+	attrs.Pod = pod
+	otherpods := e.podManager.GetPods()
+	attrs.OtherPods = otherpods
+	admitResult := e.allocateResourcesPodAdmitHandler.Admit(attrs)
+	if !admitResult.Admit {
+		e.statusManager.SetPodStatus(pod, v1.PodStatus{
+			Phase:   v1.PodFailed,
+			Reason:  admitResult.Reason,
+			Message: "Pod " + admitResult.Message})
+		return fmt.Errorf("allocate resource error! reason: %s, message: %s", admitResult.Reason, admitResult.Message)
+	}
+	nodeInfo := schedulercache.NewNodeInfo(pod)
+	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
 
 	if err := e.makePodDataDirs(pod); err != nil {
 		klog.Errorf("Unable to make pod data directories for pod %q: %v", format.Pod(pod), err)
@@ -1258,12 +1276,6 @@ func (e *edged) handlePodListFromEdgeController(content []byte) (err error) {
 func (e *edged) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
 	klog.Infof("start sync addition for pod [%s]", pod.Name)
-	attrs := &lifecycle.PodAdmitAttributes{}
-	attrs.Pod = pod
-	otherpods := e.podManager.GetPods()
-	attrs.OtherPods = otherpods
-	nodeInfo := schedulercache.NewNodeInfo(pod)
-	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
 	key := types.NamespacedName{
 		Namespace: pod.Namespace,
 		Name:      pod.Name,
