@@ -378,6 +378,9 @@ type MetaManager struct {
 	// PodStatusSyncInterval indicates pod status sync
 	// default 60
 	PodStatusSyncInterval int32 `json:"podStatusSyncInterval,omitempty"`
+	// RemoteQueryTimeout indicates remote query timeout (second)
+	// default 60
+	RemoteQueryTimeout int32 `json:"remoteQueryTimeout,omitempty"`
 }
 
 // ServiceBus indicates the ServiceBus module config
