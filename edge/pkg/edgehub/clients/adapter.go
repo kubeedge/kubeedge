@@ -7,7 +7,7 @@ import (
 //Adapter is a web socket client interface
 type Adapter interface {
 	Init() error
-	Uninit()
+	UnInit()
 	// async mode
 	Send(message model.Message) error
 	Receive() (model.Message, error)

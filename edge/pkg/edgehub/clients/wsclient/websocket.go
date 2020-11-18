@@ -98,8 +98,8 @@ func (wsc *WebSocketClient) Init() error {
 	return errors.New("max retry count reached when connecting to cloud")
 }
 
-//Uninit closes the websocket connection
-func (wsc *WebSocketClient) Uninit() {
+//UnInit closes the websocket connection
+func (wsc *WebSocketClient) UnInit() {
 	wsc.connection.Close()
 }
 
