@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type EdgedLogsConnection struct {

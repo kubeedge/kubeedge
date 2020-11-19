@@ -31,7 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/configmap"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var devices map[string]*globals.ModbusDev

@@ -23,7 +23,7 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"

@@ -3,7 +3,7 @@ package smgr
 import (
 	"io"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/lucas-clemente/quic-go"

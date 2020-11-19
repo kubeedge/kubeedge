@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func DeepCopyHeader(header http.Header) http.Header {

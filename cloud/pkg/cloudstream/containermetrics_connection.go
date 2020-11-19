@@ -23,7 +23,7 @@ import (
 	"net"
 	"strings"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/emicklei/go-restful"
 	"github.com/kubeedge/kubeedge/pkg/stream"
