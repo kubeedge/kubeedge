@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app"
 )
