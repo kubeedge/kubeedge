@@ -7,7 +7,7 @@ import (
 
 	//Blank import to run only the init function
 	_ "github.com/mattn/go-sqlite3"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // DBAccess is Ormer object interface for all transaction processing and switching database

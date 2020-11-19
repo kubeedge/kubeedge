@@ -22,7 +22,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/pflag"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 

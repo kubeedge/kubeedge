@@ -3,7 +3,7 @@ package pkg
 import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	meshconfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"

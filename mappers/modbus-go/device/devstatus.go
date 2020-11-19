@@ -20,7 +20,7 @@ import (
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // GetStatus is the timer structure for getting device status.

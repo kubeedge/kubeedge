@@ -17,7 +17,7 @@ limitations under the License.
 package handlerstub
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"

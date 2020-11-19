@@ -10,7 +10,7 @@ import (
 	"io"
 	"math/big"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/viaduct/examples/chat/config"
 	"github.com/kubeedge/viaduct/pkg/api"
