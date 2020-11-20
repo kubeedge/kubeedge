@@ -576,9 +576,6 @@ github.com/paypal/gatt/linux/gioctl
 github.com/paypal/gatt/linux/socket
 github.com/paypal/gatt/linux/util
 github.com/paypal/gatt/xpc
-# github.com/pborman/uuid v1.2.0
-## explicit
-github.com/pborman/uuid
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 github.com/peterbourgon/diskv
 # github.com/pkg/errors v0.9.1
@@ -606,7 +603,6 @@ github.com/prometheus/procfs/internal/util
 ## explicit
 github.com/sailorvii/modbus
 # github.com/satori/go.uuid v1.2.0
-## explicit
 github.com/satori/go.uuid
 # github.com/seccomp/libseccomp-golang v0.9.1
 github.com/seccomp/libseccomp-golang
