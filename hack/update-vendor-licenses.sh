@@ -31,6 +31,7 @@
 # KubeEdge Authors:
 # - File derived from kubernetes v1.19.0-beta.2
 # - Changed KUBE_ROOT value to use absolute path
+# - skip license for k8s.io/klog
 
 
 set -o errexit
@@ -212,6 +213,13 @@ for PACKAGE in $(go list -m -json all | jq -r .Path | sort -f); do
   if [[ "${PACKAGE}" = "github.com/cespare/xxhash" ]]; then
     # there are 2 versions v1 and v2 under 2 folders indirectly used
     # so it can't be filtered by the previous rule
+    # temporarily treat this way until find out a better rule
+    echo "${PACKAGE}, temporarily skipping" >&2
+    continue
+  fi
+  if [[ "${PACKAGE}" = "k8s.io/klog" ]]; then
+    # this package doesn't use, but has v2 subdirectory as a different package
+    # so it can't be  filtered by the previous rule
     # temporarily treat this way until find out a better rule
     echo "${PACKAGE}, temporarily skipping" >&2
     continue
