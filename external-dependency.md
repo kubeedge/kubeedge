@@ -72,7 +72,6 @@
 |runc |Apache License 2.0 | https://github.com/opencontainers/runc
 |runtime-spec |Apache License 2.0 | https://github.com/opencontainers/runtime-spec
 |selinux |Apache License 2.0 | https://github.com/opencontainers/selinux
-|uuid |BSD-3-Clause | https://github.com/pborman/uuid
 |errors |BSD-2-Clause | https://github.com/pkg/errors
 |go-difflib | BSD-3-Clause | https://github.com/pmezard/go-difflib
 |prometheus/client_golang |Apache License 2.0 | https://github.com/prometheus/client_golang

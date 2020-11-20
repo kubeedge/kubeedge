@@ -42,10 +42,8 @@ require (
 	github.com/onsi/gomega v1.8.1
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
-	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/sailorvii/modbus v0.1.2
-	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
