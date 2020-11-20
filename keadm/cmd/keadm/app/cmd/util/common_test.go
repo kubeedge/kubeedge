@@ -115,6 +115,7 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir for testing:{%s}\n", err.Error())
 	}
+	defer os.RemoveAll(testTmpDir)
 
 	componentType = types.CloudCore
 	targetVersion = semver.Version{Major: 1, Minor: 0}
