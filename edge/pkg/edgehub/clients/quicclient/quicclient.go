@@ -83,8 +83,8 @@ func (qcc *QuicClient) Init() error {
 	return nil
 }
 
-//Uninit closes the quic connection
-func (qcc *QuicClient) Uninit() {
+//UnInit closes the quic connection
+func (qcc *QuicClient) UnInit() {
 	qcc.client.Close()
 }
 
