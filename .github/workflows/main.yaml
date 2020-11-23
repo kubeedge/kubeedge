@@ -11,14 +11,19 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     name: Verify vendor, licenses, do lint
+    env:
+      GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.14.x
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          path: ./src/github.com/${{ github.repository }}
 
       - uses: actions/cache@v2
         with:
@@ -28,13 +33,15 @@ jobs:
       - name: Install dependences
         run: |
           sudo apt-get install -y jq
-          curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.23.7
+          curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.30.0
 
       - name: Run verify test
         run: make verify
+        working-directory: ./src/github.com/${{ github.repository }}
 
       - name: Run lint test
         run: make lint
+        working-directory: ./src/github.com/${{ github.repository }}
   build:
     runs-on: ubuntu-latest
     name: Multiple build
@@ -52,7 +59,7 @@ jobs:
       - name: Install dependences
         run: sudo apt-get install -y upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross
 
-      - name: Checkout code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -87,7 +94,7 @@ jobs:
         run: |
           command -v ginkgo || go get github.com/onsi/ginkgo/ginkgo
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -118,7 +125,7 @@ jobs:
           command -v kind || go get sigs.k8s.io/kind@v0.9.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -151,7 +158,7 @@ jobs:
           sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz
           echo "$(cat /etc/kubeedge/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt) /etc/kubeedge/kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz" | sha512sum -c
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -172,7 +179,7 @@ jobs:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
