@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 )
 
@@ -55,6 +56,14 @@ const (
 	NodeID    = "node_id"
 )
 
+var cloudModuleArray = []string{
+	modules.CloudHubModuleName,
+	modules.CloudStreamModuleName,
+	modules.DeviceControllerModuleName,
+	modules.EdgeControllerModuleName,
+	modules.SyncControllerModuleName,
+}
+
 // HubInfo saves identifier information for edge hub
 type HubInfo struct {
 	ProjectID string
@@ -88,6 +97,12 @@ func IsNodeStopped(msg *model.Message) bool {
 
 // IsFromEdge judges if the event is sent from edge
 func IsFromEdge(msg *model.Message) bool {
+	source := msg.Router.Source
+	for _, item := range cloudModuleArray {
+		if source == item {
+			return false
+		}
+	}
 	return true
 }
 
