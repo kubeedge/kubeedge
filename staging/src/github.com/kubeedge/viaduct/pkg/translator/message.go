@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/kubeedge/beehive/pkg/core/model"

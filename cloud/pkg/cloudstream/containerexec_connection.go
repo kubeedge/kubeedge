@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/stream"
 
 	"github.com/emicklei/go-restful"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // ContainerExecConnection indicates the container exec request initiated by kube-apiserver

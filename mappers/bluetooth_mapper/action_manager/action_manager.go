@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/paypal/gatt"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 )

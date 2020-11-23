@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"io/ioutil"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 

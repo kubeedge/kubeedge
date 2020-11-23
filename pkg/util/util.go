@@ -26,7 +26,7 @@ import (
 	"strings"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
