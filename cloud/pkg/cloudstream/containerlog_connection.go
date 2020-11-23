@@ -22,9 +22,9 @@ import (
 	"io"
 	"net"
 
+	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
-	"github.com/emicklei/go-restful"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
