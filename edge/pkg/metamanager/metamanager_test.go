@@ -58,6 +58,7 @@ func TestNameAndGroup(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
+	core.Register(&metaManager{enable: true})
 	modules := core.GetModules()
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
@@ -65,7 +66,7 @@ func TestStart(t *testing.T) {
 			break
 		}
 	}
-	core.Register(&metaManager{enable: true})
+
 	if metaModule == nil {
 		t.Errorf("failed to register to beehive")
 	}
