@@ -39,8 +39,8 @@ func TestNewHttpClient(t *testing.T) {
 	}
 }
 
-//TestNewHTTPSclient() tests the creation of a new HTTPS client with proper values
-func TestNewHTTPSclient(t *testing.T) {
+//TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
+func TestNewHTTPSClient(t *testing.T) {
 	err := util.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
 	if err != nil {
 		t.Errorf("Error in generating fake certificates: %v", err)
@@ -62,7 +62,7 @@ func TestNewHTTPSclient(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "TestNewHTTPSclient: ",
+			name: "TestNewHTTPSClient: ",
 			args: args{
 				keyFile:  KeyFile,
 				certFile: CertFile,
@@ -94,13 +94,13 @@ func TestNewHTTPSclient(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewHTTPSclient(tt.args.certFile, tt.args.keyFile)
+			got, err := NewHTTPSClient(tt.args.certFile, tt.args.keyFile)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewHTTPSclient() error = %v, expectedError = %v", err, tt.wantErr)
+				t.Errorf("NewHTTPSClient() error = %v, expectedError = %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHTTPSclient() = %v, want %v", got, tt.want)
+				t.Errorf("NewHTTPSClient() = %v, want %v", got, tt.want)
 			}
 		})
 	}
