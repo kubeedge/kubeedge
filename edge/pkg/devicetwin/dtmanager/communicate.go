@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/google/uuid"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"

@@ -23,7 +23,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type MessageType uint64
