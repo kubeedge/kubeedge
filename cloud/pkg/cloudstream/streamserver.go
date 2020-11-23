@@ -27,7 +27,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/util/httpstream"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"

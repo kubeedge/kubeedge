@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/sailorvii/modbus"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // ModbusTCP is the configurations of modbus TCP.

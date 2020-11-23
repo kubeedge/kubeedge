@@ -48,7 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 	podshelper "k8s.io/kubernetes/pkg/apis/core/pods"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"

@@ -22,7 +22,7 @@ import (
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/device"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func main() {
