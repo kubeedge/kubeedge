@@ -1,4 +1,0 @@
-###### Requirements without Version Specifiers ######
-sphinx-markdown-tables==0.0.9
-recommonmark
-sphinx_rtd_theme

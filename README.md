@@ -41,18 +41,18 @@ KubeEdge consists of cloud part and edge part.
 </div>
 
 ### In the Cloud
-- [CloudHub](/docs/components/cloud/cloudhub.md): a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
-- [EdgeController](/docs/components/cloud/controller.md): an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.
-- [DeviceController](/docs/components/cloud/device_controller.md): an extended kubernetes controller which manages devices so that the device metadata/status data can be synced between edge and cloud.
+- [CloudHub](https://kubeedge.io/en/docs/architecture/cloud/cloudhub): a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
+- [EdgeController](https://kubeedge.io/en/docs/architecture/cloud/edge_controller): an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.
+- [DeviceController](https://kubeedge.io/en/docs/architecture/cloud/device_controller): an extended kubernetes controller which manages devices so that the device metadata/status data can be synced between edge and cloud.
 
 
 ### On the Edge
-- [EdgeHub](/docs/components/edge/edgehub.md): a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
-- [Edged](/docs/components/edge/edged.md): an agent that runs on edge nodes and manages containerized applications.
-- [EventBus](/docs/components/edge/eventbus.md): a MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
-- ServiceBus: a HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
-- [DeviceTwin](/docs/components/edge/devicetwin.md): responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
-- [MetaManager](/docs/components/edge/metamanager.md): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
+- [EdgeHub](https://kubeedge.io/en/docs/architecture/edge/edgehub): a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
+- [Edged](https://kubeedge.io/en/docs/architecture/edge/edged): an agent that runs on edge nodes and manages containerized applications.
+- [EventBus](https://kubeedge.io/en/docs/architecture/edge/eventbus): a MQTT client to interact with MQTT servers (mosquitto), offering publish and subscribe capabilities to other components.
+- [ServiceBus](https://kubeedge.io/en/docs/architecture/edge/servicebus): a HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
+- [DeviceTwin](https://kubeedge.io/en/docs/architecture/edge/devicetwin): responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
+- [MetaManager](https://kubeedge.io/en/docs/architecture/edge/metamanager): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
 
 ## Kubernetes compatibility
 
@@ -70,7 +70,7 @@ Key:
 
 ## Guides
 
-Get start with this [doc](./docs/getting-started.md).
+Get start with this [doc](https://kubeedge.io/en/docs).
 
 See our documentation on [kubeedge.io](https://kubeedge.io) for more details.
 
@@ -96,7 +96,7 @@ Resources:
 
 ## Contact
 
-If you need support, start with the [troubleshooting guide](./docs/troubleshooting.md), and work your way through the process that we've outlined.
+If you need support, start with the [troubleshooting guide](https://kubeedge.io/en/docs/developer/troubleshooting), and work your way through the process that we've outlined.
 
 If you have questions, feel free to reach out to us in the following ways:
 
@@ -107,7 +107,7 @@ If you have questions, feel free to reach out to us in the following ways:
 ## Contributing
 
 If you're interested in being a contributor and want to get involved in
-developing the KubeEdge code, please see [CONTRIBUTING](CONTRIBUTING.md) for
+developing the KubeEdge code, please see [CONTRIBUTING](./CONTRIBUTING.md) for
 details on submitting patches and the contribution workflow.
 
 ## License
