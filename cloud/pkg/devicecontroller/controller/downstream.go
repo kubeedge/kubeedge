@@ -489,6 +489,11 @@ func isDeviceDataUpdated(oldData *v1alpha2.DeviceData, newData *v1alpha2.DeviceD
 	return !reflect.DeepEqual(oldData, newData)
 }
 
+// isDevicePropertyVisitorsUpdated checks if DeviceProperyVisitors is updated
+func isDevicePropertyVisitorsUpdated(oldPropertyVisitors *[]v1alpha2.DevicePropertyVisitor, newPropertyVisitors *[]v1alpha2.DevicePropertyVisitor) bool {
+	return !reflect.DeepEqual(oldPropertyVisitors, newPropertyVisitors)
+}
+
 // updateConfigMap updates the protocol, twins and data in the deviceProfile in configmap
 func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
@@ -547,7 +552,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		// add protocol common
 		deviceProtocol.ProtocolCommonConfig = device.Spec.Protocol.Common
 
-		// update the twins, data and protocol in deviceInstance
+		// update the propertyVisitors, twins, data and protocol in deviceInstance
 		for _, devInst := range deviceProfile.DeviceInstances {
 			if device.Name == devInst.Name {
 				// update property visitors
@@ -567,14 +572,14 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 
 		bytes, err := json.Marshal(deviceProfile)
 		if err != nil {
-			klog.Errorf("Failed to marshal deviceprofile: %v", deviceProfile)
+			klog.Errorf("Failed to marshal deviceprofile: %v, error: %v", deviceProfile, err)
 			return
 		}
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
 		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
-			klog.Errorf("Failed to update config map %v in namespace %v", nodeConfigMap, device.Namespace)
+			klog.Errorf("Failed to update config map %v in namespace %v, error: %v", nodeConfigMap, device.Namespace, err)
 			return
 		}
 	}
@@ -610,7 +615,8 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 				// update config map if spec, data or twins changed
 				if isProtocolConfigUpdated(&cachedDevice.Spec.Protocol, &device.Spec.Protocol) ||
 					isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) ||
-					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) {
+					isDeviceDataUpdated(&cachedDevice.Spec.Data, &device.Spec.Data) ||
+					isDevicePropertyVisitorsUpdated(&cachedDevice.Spec.PropertyVisitors, &device.Spec.PropertyVisitors) {
 					dc.updateConfigMap(device)
 				}
 				// update twin properties
