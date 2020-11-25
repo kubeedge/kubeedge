@@ -41,13 +41,13 @@ func (c *CentOS) SetKubeEdgeVersion(version semver.Version) {
 //Information is used from https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-the-mosquitto-mqtt-messaging-broker-on-centos-7
 func (c *CentOS) InstallMQTT() error {
 	// check MQTT
-	mqttRunning := "ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'"
-	result, err := runCommandWithStdout(mqttRunning)
-	if err != nil {
+	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	if err := cmd.Exec(); err != nil {
 		return err
 	}
-	if result != "" {
-		fmt.Println("Host has", result, "already installed and running. Hence skipping the installation steps !!!")
+
+	if stdout := cmd.GetStdOut(); stdout != "" {
+		fmt.Println("Host has", stdout, "already installed and running. Hence skipping the installation steps !!!")
 		return nil
 	}
 
@@ -58,7 +58,8 @@ func (c *CentOS) InstallMQTT() error {
 		"systemctl start mosquitto",
 		"systemctl enable mosquitto",
 	} {
-		if _, err := runCommandWithShell(command); err != nil {
+		cmd := NewCommand(command)
+		if err := cmd.Exec(); err != nil {
 			return err
 		}
 	}
@@ -77,11 +78,11 @@ func (c *CentOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 //the binary to excecutables' path (eg: /usr/local/bin)
 func (c *CentOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch := "amd64"
-	result, err := runCommandWithStdout("arch")
-	if err != nil {
+	cmd := NewCommand("arch")
+	if err := cmd.Exec(); err != nil {
 		return err
 	}
-
+	result := cmd.GetStdOut()
 	switch result {
 	case "armv7l":
 		arch = "arm"

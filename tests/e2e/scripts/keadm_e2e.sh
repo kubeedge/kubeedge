@@ -22,6 +22,7 @@ function cleanup() {
   ps aux | grep '[e]dgecore' | awk '{print $2}' | xargs -r sudo kill
   ps aux | grep '[c]loudcore' | awk '{print $2}' | xargs -r sudo kill
   kind delete cluster --name test
+  sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service
 }
 
 function build_keadm() {
