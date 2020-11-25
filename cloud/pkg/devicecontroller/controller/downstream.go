@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -402,7 +402,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 		content := types.MembershipUpdate{AddDevices: []types.Device{
 			edgeDevice,
 		}}
-		content.EventID = uuid.NewV4().String()
+		content.EventID = uuid.New().String()
 		content.Timestamp = time.Now().UnixNano() / 1e6
 		msg.Content = content
 
@@ -628,7 +628,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 					}
 					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 					content := types.DeviceTwinUpdate{Twin: twin}
-					content.EventID = uuid.NewV4().String()
+					content.EventID = uuid.New().String()
 					content.Timestamp = time.Now().UnixNano() / 1e6
 					msg.Content = content
 
@@ -844,7 +844,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		content := types.MembershipUpdate{RemoveDevices: []types.Device{
 			edgeDevice,
 		}}
-		content.EventID = uuid.NewV4().String()
+		content.EventID = uuid.New().String()
 		content.Timestamp = time.Now().UnixNano() / 1e6
 		msg.Content = content
 		if err != nil {
