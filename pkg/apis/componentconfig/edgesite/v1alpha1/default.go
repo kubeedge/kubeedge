@@ -112,6 +112,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				RuntimeRequestTimeout:       constants.DefaultRuntimeRequestTimeout,
 				HostnameOverride:            hostnameOverride,
 				RegisterNode:                true,
+				ConcurrentConsumers:         constants.DefaultConcurrentConsumers,
 				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
 				DevicePluginEnabled:         false,
 				GPUPluginEnabled:            false,
