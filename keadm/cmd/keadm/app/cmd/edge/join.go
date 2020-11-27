@@ -103,6 +103,9 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVarP(&joinOptions.EdgeNodeName, types.EdgeNodeName, "i", joinOptions.EdgeNodeName,
 		"KubeEdge Node unique identification string, If flag not used then the command will generate a unique id on its own")
 
+	cmd.Flags().StringVarP(&joinOptions.EdgeNodeIP, types.EdgeNodeIP, "a", joinOptions.EdgeNodeIP,
+		"KubeEdge Node internal IP reported to K8s cluster, If not set then the command will use the IP address read from node network")
+
 	cmd.Flags().StringVarP(&joinOptions.RemoteRuntimeEndpoint, types.RemoteRuntimeEndpoint, "p", joinOptions.RemoteRuntimeEndpoint,
 		"KubeEdge Edge Node RemoteRuntimeEndpoint string, If flag not set, it will use unix:///var/run/dockershim.sock")
 
@@ -111,6 +114,12 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 	cmd.Flags().StringVarP(&joinOptions.CertPort, types.CertPort, "s", joinOptions.CertPort,
 		"The port where to apply for the edge certificate")
+
+	cmd.Flags().StringVarP(&joinOptions.QuicPort, types.QuicPort, "q", joinOptions.QuicPort,
+		"The port where to apply for the edge quic")
+
+	cmd.Flags().StringVarP(&joinOptions.TunnelPort, types.TunnelPort, "n", joinOptions.TunnelPort,
+		"The port where to apply for the edge stream connected tunnel")
 
 	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
@@ -157,11 +166,14 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		},
 		CloudCoreIP:           joinOptions.CloudCoreIPPort,
 		EdgeNodeName:          joinOptions.EdgeNodeName,
+		EdgeNodeIP:            joinOptions.EdgeNodeIP,
 		RuntimeType:           joinOptions.RuntimeType,
 		CertPath:              joinOptions.CertPath,
 		RemoteRuntimeEndpoint: joinOptions.RemoteRuntimeEndpoint,
 		Token:                 joinOptions.Token,
 		CertPort:              joinOptions.CertPort,
+		QuicPort:              joinOptions.QuicPort,
+		TunnelPort:            joinOptions.TunnelPort,
 		CGroupDriver:          joinOptions.CGroupDriver,
 		TarballPath:           joinOptions.TarballPath,
 	}

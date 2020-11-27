@@ -35,10 +35,13 @@ type KubeEdgeInstTool struct {
 	CertPath              string
 	CloudCoreIP           string
 	EdgeNodeName          string
+	EdgeNodeIP            string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+	QuicPort              string
+	TunnelPort            string
 	CGroupDriver          string
 	TarballPath           string
 }
@@ -93,6 +96,9 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	if ku.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = ku.EdgeNodeName
 	}
+	if ku.EdgeNodeIP != "" {
+		edgeCoreConfig.Modules.Edged.NodeIP = ku.EdgeNodeIP
+	}
 	if ku.RuntimeType != "" {
 		edgeCoreConfig.Modules.Edged.RuntimeType = ku.RuntimeType
 	}
@@ -106,6 +112,17 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 			return fmt.Errorf("unsupported CGroupDriver: %s", ku.CGroupDriver)
 		}
 	}
+	if ku.QuicPort != "" {
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = strings.Split(ku.CloudCoreIP, ":")[0] + ":" + ku.QuicPort
+	} else {
+		edgeCoreConfig.Modules.EdgeHub.Quic.Server = strings.Split(ku.CloudCoreIP, ":")[0] + ":10001"
+	}
+	if ku.TunnelPort != "" {
+		edgeCoreConfig.Modules.EdgeStream.TunnelServer = strings.Split(ku.CloudCoreIP, ":")[0] + ":" + ku.TunnelPort
+	} else {
+		edgeCoreConfig.Modules.EdgeStream.TunnelServer = strings.Split(ku.CloudCoreIP, ":")[0] + ":10004"
+	}
+	edgeCoreConfig.Modules.EdgeStream.Enable = true
 
 	if ku.RemoteRuntimeEndpoint != "" {
 		edgeCoreConfig.Modules.Edged.RemoteRuntimeEndpoint = ku.RemoteRuntimeEndpoint
