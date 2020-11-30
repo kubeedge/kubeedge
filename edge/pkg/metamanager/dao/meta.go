@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"github.com/astaxie/beego/orm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
@@ -22,10 +23,12 @@ type Meta struct {
 
 // SaveMeta save meta to db
 func SaveMeta(meta *Meta) error {
-	num, err := dbm.DBAccess.Insert(meta)
-	klog.V(4).Infof("Insert affected Num: %d, %v", num, err)
-	if err == nil || IsNonUniqueNameError(err) {
+	err := dbm.DBAccess.Read(meta)
+	if err == orm.ErrNoRows {
+		dbm.DBAccess.Insert(meta)
 		return nil
+	} else {
+		dbm.DBAccess.Update(meta)
 	}
 	return err
 }
@@ -56,7 +59,13 @@ func UpdateMeta(meta *Meta) error {
 
 // InsertOrUpdate insert or update meta
 func InsertOrUpdate(meta *Meta) error {
-	_, err := dbm.DBAccess.Raw("INSERT OR REPLACE INTO meta (key, type, value) VALUES (?,?,?)", meta.Key, meta.Type, meta.Value).Exec() // will update all field
+	err := dbm.DBAccess.Read(meta) // will update all field
+	if err == orm.ErrNoRows {
+		dbm.DBAccess.Insert(meta)
+		return nil
+	} else {
+		dbm.DBAccess.Update(meta)
+	}
 	klog.V(4).Infof("Update result %v", err)
 	return err
 }

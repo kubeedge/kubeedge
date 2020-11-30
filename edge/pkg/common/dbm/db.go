@@ -6,7 +6,9 @@ import (
 	"github.com/astaxie/beego/orm"
 
 	//Blank import to run only the init function
+
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 	"k8s.io/klog/v2"
 )
 
@@ -17,9 +19,15 @@ var once sync.Once
 // InitDBConfig Init DB info
 func InitDBConfig(driverName, dbName, dataSource string) {
 	once.Do(func() {
-		if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != nil {
-			klog.Fatalf("Failed to register driver: %v", err)
-		}
+		if driverName == "postgres"{
+			if err := orm.RegisterDriver(driverName, orm.DRPostgres); err !$
+					klog.Fatalf("Failed to register driver: %v", err)
+			}
+	} else if driverName == "sqlite3" {
+			if err := orm.RegisterDriver(driverName, orm.DRSqlite); err != $
+					klog.Fatalf("Failed to register driver: %v", err)
+			}
+	}
 		if err := orm.RegisterDataBase(
 			dbName,
 			driverName,
