@@ -14,6 +14,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	serviceConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -36,6 +37,7 @@ func newServicebus(enable bool) *servicebus {
 
 // Register register servicebus
 func Register(s *v1alpha1.ServiceBus) {
+	serviceConfig.InitConfigure(s)
 	core.Register(newServicebus(s.Enable))
 }
 
@@ -67,7 +69,7 @@ func (sb *servicebus) Start() {
 			return
 		default:
 		}
-		msg, err := beehiveContext.Receive("servicebus")
+		msg, err := beehiveContext.Receive(modules.ServiceBusModuleName)
 		if err != nil {
 			klog.Warningf("servicebus receive msg error %v", err)
 			continue
