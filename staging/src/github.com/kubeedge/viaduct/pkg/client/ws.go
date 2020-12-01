@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/gorilla/websocket"
 	"github.com/kubeedge/viaduct/pkg/api"

@@ -36,8 +36,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -388,7 +389,13 @@ func (e *edged) registerNode() error {
 
 	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
 	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
-	res, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	var res model.Message
+	if _, ok := core.GetModules()[edgehub.ModuleNameEdgeHub]; ok {
+		res, err = beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	} else {
+		res, err = beehiveContext.SendSync(EdgeController, *nodeInfoMsg, syncMsgRespTimeout)
+	}
+
 	if err != nil || res.Content != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
 		if res.Content != "OK" {
@@ -423,12 +430,9 @@ func (e *edged) syncNodeStatus() {
 			klog.Errorf("Register node failed: %v", err)
 			return
 		}
-		if err := e.updateNodeStatus(); err != nil {
-			klog.Errorf("Unable to update node status: %v", err)
-		}
-	} else {
-		if err := e.updateNodeStatus(); err != nil {
-			klog.Errorf("Unable to update node status: %v", err)
-		}
+	}
+
+	if err := e.updateNodeStatus(); err != nil {
+		klog.Errorf("Unable to update node status: %v", err)
 	}
 }

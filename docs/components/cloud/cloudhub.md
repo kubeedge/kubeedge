@@ -2,12 +2,12 @@
 
 ## CloudHub Overview
 
-CloudHub is one module of cloudcore and is the mediator between Controllers and the Edge side. It supports both web-socket based connection as well as a [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol access at the same time.
+CloudHub is one module of cloudcore and is the mediator between Controllers and the Edge side. It supports both websocket based connection as well as a [QUIC](https://quicwg.org/ops-drafts/draft-ietf-quic-applicability.html) protocol access at the same time.
 The edgehub can choose one of the protocols to access to the cloudhub. CloudHub's function is to enable the communication between edge and the Controllers.
 
 The connection to the edge(through EdgeHub module) is done through the HTTP over websocket connection.
 For internal communication it directly communicates with the Controllers.
-All the request send to CloudHub are of context object which are stored in channelQ along with the
+All the requests sent to CloudHub are of context object which are stored in channelQ along with the
 mapped channels of event object marked to its nodeID.
 
 
@@ -32,7 +32,7 @@ Event object is then passed through the channel.
 - TLS certificates are loaded through the path provided in the context object
 - HTTP server is started with TLS configurations
 - Then HTTP connection is upgraded to websocket connection receiving conn object.
-- ServeConn function the serves all the incoming connections
+- ServeConn function serves all the incoming connections
 
 ### Read message from edge:
 

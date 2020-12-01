@@ -108,7 +108,6 @@ func WriteEdgeModulesYamlFile(path string) error {
 
 //WriteEdgeYamlFile write conf/edge.yaml for edge component
 func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
-	iface := "eth0"
 	edgeID := "edge-node"
 	url := fmt.Sprintf("wss://0.0.0.0:10000/%s/edge-node/events", DefaultProjectID)
 	runtimeType := "docker"
@@ -120,9 +119,6 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 		}
 		if "" != modifiedEdgeYaml.EdgeD.RuntimeType {
 			runtimeType = modifiedEdgeYaml.EdgeD.RuntimeType
-		}
-		if "" != modifiedEdgeYaml.EdgeD.InterfaceName {
-			iface = modifiedEdgeYaml.EdgeD.InterfaceName
 		}
 	}
 
@@ -153,7 +149,6 @@ func WriteEdgeYamlFile(path string, modifiedEdgeYaml *EdgeYamlSt) error {
 		EdgeD: EdgeDSt{
 			RegisterNodeNamespace:             "default",
 			HostnameOverride:                  edgeID,
-			InterfaceName:                     iface,
 			NodeStatusUpdateFrequency:         10,
 			ConcurrentConsumers:               5,
 			DevicePluginEnabled:               false,

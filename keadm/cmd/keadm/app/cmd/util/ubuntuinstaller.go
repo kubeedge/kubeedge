@@ -17,7 +17,6 @@ package util
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/blang/semver"
 
@@ -41,26 +40,22 @@ func (u *UbuntuOS) SetKubeEdgeVersion(version semver.Version) {
 
 //InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (u *UbuntuOS) InstallMQTT() error {
-	mqttRunning := "ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'"
-	cmd := &Command{Cmd: exec.Command("sh", "-c", mqttRunning)}
-	cmd.ExecuteCommand()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if errout != "" {
-		return fmt.Errorf("%s", errout)
+	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
-	if stdout != "" {
+
+	if stdout := cmd.GetStdOut(); stdout != "" {
 		fmt.Println("Host has", stdout, "already installed and running. Hence skipping the installation steps !!!")
 		return nil
 	}
 
 	//Install mqttInst
-	mqttInst := "apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto"
-	stdout, err := runCommandWithShell(mqttInst)
-	if err != nil {
+	cmd = NewCommand("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
+	if err := cmd.Exec(); err != nil {
 		return err
 	}
-	fmt.Println(stdout)
+	fmt.Println(cmd.GetStdOut())
 
 	fmt.Println("MQTT is installed in this host")
 
@@ -75,13 +70,13 @@ func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 // InstallKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func (u *UbuntuOS) InstallKubeEdge(componentType types.ComponentType) error {
+func (u *UbuntuOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch, err := getSystemArch()
 	if err != nil {
 		return err
 	}
 
-	return installKubeEdge(componentType, arch, u.KubeEdgeVersion)
+	return installKubeEdge(options, arch, u.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
@@ -101,12 +96,14 @@ func (u *UbuntuOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 }
 
 func getSystemArch() (string, error) {
-	cmd := &Command{Cmd: exec.Command("sh", "-c", "dpkg --print-architecture")}
-	cmd.ExecuteCommand()
-	arch := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if errout != "" {
-		return "", fmt.Errorf("%s", errout)
+	cmd := NewCommand("dpkg --print-architecture")
+	if err := cmd.Exec(); err != nil {
+		return "", err
 	}
-	return arch, nil
+
+	return cmd.GetStdOut(), nil
+}
+
+func (u *UbuntuOS) IsProcessRunning(proc string) (bool, error) {
+	return isKubeEdgeProcessRunning(proc)
 }

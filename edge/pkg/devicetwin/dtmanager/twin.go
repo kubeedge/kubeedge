@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,7 +29,7 @@ const (
 	SyncTwinDeleteDealType = 3
 	//DealActual deal actual
 	DealActual = 1
-	//DealExpected deal exepected
+	//DealExpected deal expected
 	DealExpected = 0
 
 	stringType = "string"

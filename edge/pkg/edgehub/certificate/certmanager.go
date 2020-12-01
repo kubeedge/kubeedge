@@ -18,7 +18,7 @@ import (
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/common/certutil"
@@ -267,7 +267,7 @@ func (cm *CertManager) GetEdgeCert(url string, capem []byte, cert tls.Certificat
 		return nil, nil, fmt.Errorf("failed to create CSR: %v", err)
 	}
 
-	client, err := http.NewHTTPclientWithCA(capem, cert)
+	client, err := http.NewHTTPClientWithCA(capem, cert)
 	if err != nil {
 		return nil, nil, fmt.Errorf("falied to create http client:%v", err)
 	}

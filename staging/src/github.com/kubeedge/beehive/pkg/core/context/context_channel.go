@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
@@ -57,7 +57,7 @@ func (ctx *ChannelContext) Cleanup(module string) {
 
 // Send send msg to a module. Todo: do not stuck
 func (ctx *ChannelContext) Send(module string, message model.Message) {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
@@ -89,7 +89,7 @@ func getAnonChannelName(msgID string) string {
 
 // SendSync sends message in a sync way
 func (ctx *ChannelContext) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
@@ -160,7 +160,7 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 
 // SendToGroup send msg to modules. Todo: do not stuck
 func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
@@ -190,7 +190,7 @@ func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message)
 // SendToGroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
 func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {

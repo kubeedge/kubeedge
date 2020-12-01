@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -96,10 +96,10 @@ func (eh *EdgeHub) Start() {
 		go eh.routeToCloud()
 		go eh.keepalive()
 
-		// wait the stop singal
+		// wait the stop signal
 		// stop authinfo manager/websocket connection
 		<-eh.reconnectChan
-		eh.chClient.Uninit()
+		eh.chClient.UnInit()
 
 		// execute hook fun after disconnect
 		eh.pubConnectInfo(false)

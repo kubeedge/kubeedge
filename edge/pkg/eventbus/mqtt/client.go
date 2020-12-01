@@ -8,7 +8,7 @@ import (
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -60,7 +60,7 @@ type Client struct {
 	SubCli  MQTT.Client
 }
 
-// AccessInfo that deliever between edge-hub and cloud-hub
+// AccessInfo that deliver between edge-hub and cloud-hub
 type AccessInfo struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
@@ -83,7 +83,7 @@ func onSubConnect(client MQTT.Client) {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
-			return
+			continue
 		}
 		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}

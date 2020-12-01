@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -43,7 +43,7 @@ func (bs *BaseMessage) SetEventID(eventID string) {
 func BuildBaseMessage() BaseMessage {
 	now := time.Now().UnixNano() / 1e6
 	return BaseMessage{
-		EventID:   uuid.NewV4().String(),
+		EventID:   uuid.New().String(),
 		Timestamp: now}
 }
 

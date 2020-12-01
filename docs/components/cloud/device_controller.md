@@ -49,7 +49,7 @@ The downstream controller watches for device updates against the K8S API server.
 | Update Type                    | Action                                       |
 |-------------------------------|---------------------------------------------- |
 |New Device Model Created       |  NA                                           |
-|New Device Created             | The controller creates a new config map to store the device properties and visitors defined in the device model associated with the device.  This config map is stored in etcd. The existing config map sync mechanism in the edge controller is used to sync the config map to the egde. The mapper application running in a container can get the updated config map and use the property and visitor metadata to access the device. The device controller additionally reports the device twin metadata updates to the edge node.|
+|New Device Created             | The controller creates a new config map to store the device properties and visitors defined in the device model associated with the device.  This config map is stored in etcd. The existing config map sync mechanism in the edge controller is used to sync the config map to the edge. The mapper application running in a container can get the updated config map and use the property and visitor metadata to access the device. The device controller additionally reports the device twin metadata updates to the edge node.|
 |Device Node Membership Updated | The device controller sends a membership update event to the edge node.|
 |Device  Twin Desired State Updated | The device controller sends a twin update event to the edge node.|
 |Device Deleted                 | The controller sends the device twin delete event to delete all device twins associated with the device. It also deletes config maps associated with the device and this delete event is synced to the edge. The mapper application effectively stops operating on the device.|
@@ -59,7 +59,7 @@ The downstream controller watches for device updates against the K8S API server.
 The idea behind using config map to store device properties and visitors is that these metadata are only required by the mapper applications running on the edge node in order to connect to the device and collect data.
 Mappers if run as containers can load these properties as config maps . Any additions , deletions or updates to properties , visitors etc in the cloud are watched upon by the downstream controller and config maps are updated in etcd.
 If the mapper wants to discover what properties a device supports, it can get the model information from the device instance.
-Also, it can get the protocol information to connect to the device from the device instace. Once it has access to the device model,
+Also, it can get the protocol information to connect to the device from the device instance. Once it has access to the device model,
 it can get the properties supported by the device. In order to access the property, the mapper needs to get the corresponding visitor information.
 This can be retrieved from the propertyVisitors list. Finally, using the visitorConfig, the mapper can read/write the data associated with the property.
 

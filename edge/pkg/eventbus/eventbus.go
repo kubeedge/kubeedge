@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -36,7 +36,7 @@ func Register(eventbus *v1alpha1.EventBus, nodeName string) {
 }
 
 func (*eventbus) Name() string {
-	return "eventbus"
+	return modules.EventBusModuleName
 }
 
 func (*eventbus) Group() string {
@@ -110,7 +110,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
 				klog.Errorf("Message is not map type")
-				return
+				continue
 			}
 			message := body["message"].(map[string]interface{})
 			topic := message["topic"].(string)
@@ -129,7 +129,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		case "get_result":
 			if resource != "auth_info" {
 				klog.Info("Skip none auth_info get_result message")
-				return
+				continue
 			}
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, _ := json.Marshal(accessInfo.GetContent())

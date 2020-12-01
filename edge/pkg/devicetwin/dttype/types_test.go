@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 // TestSetEventID is function to test SetEventID().
@@ -34,7 +34,7 @@ func TestSetEventID(t *testing.T) {
 	}{
 		{
 			name:    "SetEventIDTest",
-			eventID: uuid.NewV4().String(),
+			eventID: uuid.New().String(),
 		},
 	}
 	for _, test := range tests {

@@ -79,7 +79,7 @@ In the cloudcore.yaml, modify the below settings.
 
     **Note:** If your KubeEdge version is before the v1.3, then just skip the step 3.
 
-3. Configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `advertiseAddress`, which will be add to SANs in cert of cloudcore.
+3. Configure all the IP addresses of CloudCore which are exposed to the edge nodes(like floating IP) in the `advertiseAddress`, which will be added to SANs in cert of cloudcore.
 
     ```yaml
     modules:

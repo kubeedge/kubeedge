@@ -10,15 +10,15 @@ EdgeSite helps running lightweight clusters at edge.
 
 ## Motivation
 
-There are scenarios user need to run a standalone Kubernetes cluster at edge to get full control and improve the offline scheduling capability. There are two scenarios user need to do that:
+There are scenarios users need to run a standalone Kubernetes cluster at edge to get full control and improve the offline scheduling capability. There are two scenarios users need to do that:
 
 * The edge cluster is in CDN instead of the user's site
 
   The CDN sites usually be large around the world and the network connectivity and quality cannot be guaranteed. Another factor is that the application deployed in CDN edge do not need to interact with center usually. For those deploy edge cluster in CDN resources, they need to make sure the cluster is workable without the connection with central cloud not only for the deployed applications but also the schedule capabilities. So that the CDN edge is manageable regardless the connection to one center.
 
-* User need to deploy an edge environment with limited resources and offline running for most of the time
+* Users need to deploy an edge environment with limited resources and offline running for most of the time
 
-  In some IOT scenarios, user need to deploy a full control edge environment and running offline.
+  In some IOT scenarios, users need to deploy a full control edge environment and running offline.
 
 For these use cases, a standalone, full controlled, light weight Edge cluster is required.
 By integrating KubeEdge and standard Kubernetes, this EdgeSite enables customers to run an efficient kubernetes cluster for Edge/IOT computing.
@@ -114,7 +114,7 @@ Click [here](https://github.com/kubeedge/kubeedge/releases) and download.
 
 #### Configuring EdgeSite
 
-Genarate edgesite config by `edgesite --minconfig` and update:
+Generate edgesite config by `edgesite --minconfig` and update:
 
 + Configure K8S (API Server)
 
