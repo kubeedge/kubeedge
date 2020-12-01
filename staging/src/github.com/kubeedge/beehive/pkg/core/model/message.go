@@ -35,7 +35,7 @@ type Message struct {
 type MessageRoute struct {
 	// where the message come from
 	Source string `json:"source,omitempty"`
-	// where the message will broadcasted to
+	// where the message will broadcast to
 	Group string `json:"group,omitempty"`
 
 	// what's the operation on resource

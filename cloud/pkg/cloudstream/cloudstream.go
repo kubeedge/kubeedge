@@ -57,7 +57,7 @@ func (s *cloudStream) Start() {
 		go ts.Start()
 
 		server := newStreamServer(ts)
-		// start stream server to accepet kube-apiserver connection
+		// start stream server to accept kube-apiserver connection
 		go server.Start()
 	}
 }

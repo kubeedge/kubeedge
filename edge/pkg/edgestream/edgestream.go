@@ -23,20 +23,15 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/stream"
-)
-
-//define edgestream module name
-const (
-	ModuleNameEdgeStream = "edgestream"
-	GroupNameEdgeStream  = "edgestream"
 )
 
 type edgestream struct {
@@ -60,11 +55,11 @@ func Register(s *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) {
 }
 
 func (e *edgestream) Name() string {
-	return ModuleNameEdgeStream
+	return modules.EdgeStreamModuleName
 }
 
 func (e *edgestream) Group() string {
-	return GroupNameEdgeStream
+	return modules.StreamGroup
 }
 
 func (e *edgestream) Enable() bool {

@@ -25,10 +25,10 @@ make # or `make modbus_mapper`
 docker tag modbus_mapper:v1.0 <your_dockerhub_username>/modbus_mapper:v1.0
 docker push <your_dockerhub_username>/modbus_mapper:v1.0
 
-Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the followig command to sign in
+Note: Before trying to push the docker image to the remote repository please ensure that you have signed into docker from your node, if not please type the following command to sign in
  docker login
  # Please enter your username and password when prompted
-```
+ ```
 
 ### Deploying modbus mapper application
 
@@ -57,7 +57,7 @@ The modbus mapper consists of the following four major modules :-
 
  ### Modbus Manager
 
- Modbus Manager is a component which can perform an read or write action on modbus device. The following are the main responsibilities of this component:
+ Modbus Manager is a component which can perform a read or write action on modbus device. The following are the main responsibilities of this component:
  a) When controller receives message of expected devicetwin value, Modbus Manager will connect to the device and change the registers to make actual state equal to expected.
 
  b) When controller checks all the properties of devices, Modbus Manager will connect to the device and read the actual value in registers according to the dpl configuration.

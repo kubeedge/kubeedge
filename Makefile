@@ -1,3 +1,9 @@
+DESTDIR?=
+USR_DIR?=/usr/local
+INSTALL_DIR?=${DESTDIR}${USR_DIR}
+INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
+GOPATH?=$(shell go env GOPATH)
+
 # make all builds both cloud and edge binaries
 
 BINARIES=cloudcore \
@@ -58,17 +64,17 @@ endif
 
 .PHONY: verify-golang
 verify-golang:
-	bash hack/verify-golang.sh
+	hack/verify-golang.sh
 
 .PHONY: verify-vendor
 verify-vendor:
-	bash hack/verify-vendor.sh
+	hack/verify-vendor.sh
 .PHONY: verify-codegen
 verify-codegen:
-	bash cloud/hack/verify-codegen.sh
+	cloud/hack/verify-codegen.sh
 .PHONY: verify-vendor-licenses
 verify-vendor-licenses:
-	bash hack/verify-vendor-licenses.sh
+	hack/verify-vendor-licenses.sh
 
 define TEST_HELP_INFO
 # run golang test case.
@@ -208,7 +214,7 @@ else
 e2e:
 #	bash tests/e2e/scripts/execute.sh device_crd
 #	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
-	bash tests/e2e/scripts/execute.sh
+	tests/e2e/scripts/execute.sh
 endif
 
 define KEADM_E2E_HELP_INFO
@@ -225,7 +231,7 @@ keadm_e2e:
 	@echo "KEADM_E2E_HELP_INFO"
 else
 keadm_e2e:
-	bash tests/e2e/scripts/keadm_e2e.sh
+	tests/e2e/scripts/keadm_e2e.sh
 endif
 
 define CLEAN_HELP_INFO
@@ -287,10 +293,50 @@ edgesiteimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
+# Mappers
 .PHONY: bluetoothdevice
 bluetoothdevice: clean
 	hack/make-rules/bluetoothdevice.sh
-
 .PHONY: bluetoothdevice_image
 bluetoothdevice_image:bluetoothdevice
-	docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+	sudo docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
+
+.PHONY: modbusmapper
+modbusmapper: clean
+	hack/make-rules/modbusmapper.sh
+.PHONY: modbusmapper_image
+modbusmapper_image:modbusmapper
+	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
+
+.PHONY: mappers
+mappers:bluetoothdevice modbusmapper
+
+
+define INSTALL_HELP_INFO
+# install
+#
+# Args:
+#   WHAT: Component names to be installed to $${INSTALL_BIN_DIR} (${INSTALL_BIN_DIR})
+#         If not specified, "everything" will be installed
+#
+##
+# Example:
+#   make install
+#   make install WHAT=edgecore
+#
+endef
+.PHONY: help
+ifeq ($(HELP),y)
+install:
+	@echo "$$INSTALL_HELP_INFO"
+else
+install: _output/local/bin
+	install -d "${INSTALL_BIN_DIR}"
+	if [ "" != "${WHAT}" ]; then \
+          install "$</${WHAT}"  "${INSTALL_BIN_DIR}" ;\
+        else \
+          for file in ${BINARIES} ; do \
+            install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
+          done ; \
+        fi
+endif

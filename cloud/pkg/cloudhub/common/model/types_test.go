@@ -131,21 +131,30 @@ func TestIsNodeStopped(t *testing.T) {
 
 // TestIsFromEdge is function to test IsFromEdge
 func TestIsFromEdge(t *testing.T) {
-	msg := modelMessage("", "", 0, "Source1", "", "", "", nil)
 	tests := []struct {
 		name      string
-		msg       *model.Message
+		msg       model.Message
 		errorWant bool
 	}{
 		{
 			name:      "TestIsFromEdge(): when the msg is sent from edge",
-			msg:       &msg,
+			msg:       modelMessage("", "", 0, "Source1", "", "", "", nil),
 			errorWant: true,
+		},
+		{
+			name:      "TestIsFromEdge(): when the msg is also sent from edge",
+			msg:       modelMessage("", "", 0, "edged", "", "", "", nil),
+			errorWant: true,
+		},
+		{
+			name:      "TestIsFromEdge(): when the msg is not sent from edge",
+			msg:       modelMessage("", "", 0, "edgecontroller", "", "", "", nil),
+			errorWant: false,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if errorWant := IsFromEdge(test.msg); !reflect.DeepEqual(errorWant, test.errorWant) {
+			if errorWant := IsFromEdge(&test.msg); !reflect.DeepEqual(errorWant, test.errorWant) {
 				t.Errorf("Model.TestIsFromEdge() case failed: got = %v, Want = %v", errorWant, test.errorWant)
 			}
 		})

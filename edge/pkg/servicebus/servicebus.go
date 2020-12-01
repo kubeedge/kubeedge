@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -40,11 +40,11 @@ func Register(s *v1alpha1.ServiceBus) {
 }
 
 func (*servicebus) Name() string {
-	return "servicebus"
+	return modules.ServiceBusModuleName
 }
 
 func (*servicebus) Group() string {
-	return modules.BusGroup
+	return modules.UserGroup
 }
 
 func (sb *servicebus) Enable() bool {

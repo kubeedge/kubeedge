@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type Writer struct {

@@ -67,7 +67,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				HostnameOverride:            hostnameOverride,
 				RegisterNodeNamespace:       constants.DefaultRegisterNodeNamespace,
 				RegisterNode:                true,
-				InterfaceName:               constants.DefaultInterfaceName,
 				DevicePluginEnabled:         false,
 				GPUPluginEnabled:            false,
 				ImageGCHighThreshold:        constants.DefaultImageGCHighThreshold,
@@ -132,6 +131,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				ContextSendGroup:      metaconfig.GroupNameHub,
 				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
+				RemoteQueryTimeout:    constants.DefaultRemoteQueryTimeout,
 			},
 			ServiceBus: &ServiceBus{
 				Enable: false,
@@ -189,7 +189,6 @@ func NewMinEdgeCoreConfig() *EdgeCoreConfig {
 				ClusterDomain:         "",
 				PodSandboxImage:       util.GetPodSandboxImage(),
 				HostnameOverride:      hostnameOverride,
-				InterfaceName:         constants.DefaultInterfaceName,
 				DevicePluginEnabled:   false,
 				GPUPluginEnabled:      false,
 				CGroupDriver:          CGroupDriverCGroupFS,

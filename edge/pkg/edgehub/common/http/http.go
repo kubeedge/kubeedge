@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -41,12 +41,12 @@ func NewHTTPClient() *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-// NewHTTPSclient create https client
-func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
+// NewHTTPSClient create https client
+func NewHTTPSClient(certFile, keyFile string) (*http.Client, error) {
 	pool := x509.NewCertPool()
 	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		klog.Errorf("Cannot create https client , Loadx509keypair err: %v", err)
+		klog.Errorf("Cannot create https client , Load x509 key pair err: %v", err)
 		return nil, err
 	}
 	tr := &http.Transport{
@@ -63,8 +63,8 @@ func NewHTTPSclient(certFile, keyFile string) (*http.Client, error) {
 	return client, nil
 }
 
-// NewHTTPclientWithCA create client without certificate
-func NewHTTPclientWithCA(capem []byte, certificate tls.Certificate) (*http.Client, error) {
+// NewHTTPClientWithCA create client without certificate
+func NewHTTPClientWithCA(capem []byte, certificate tls.Certificate) (*http.Client, error) {
 	pool := x509.NewCertPool()
 	if ok := pool.AppendCertsFromPEM(capem); !ok {
 		return nil, fmt.Errorf("cannot parse the certificates")

@@ -38,6 +38,8 @@ output:
   uniq-by-line: true
 
 linters-settings:
+  gci:
+    local-prefixes: github.com/kubeedge/kubeedge
   misspell:
     ignore-words:
       - mosquitto
@@ -45,6 +47,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - gci
     - goconst
     - errcheck
     - gofmt
@@ -60,4 +63,7 @@ issues:
       - path: edge
         linters:
           - errcheck
+      - path: cloud/pkg/client
+        linters:
+          - gci
 

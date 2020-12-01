@@ -19,11 +19,10 @@ package application_test
 import (
 	"testing"
 
-	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )

@@ -1,0 +1,21 @@
+apiVersion: devices.kubeedge.io/v1alpha2
+kind: DeviceModel
+metadata:
+ name: modbus-sample-model
+ namespace: default
+spec:
+ properties:
+  - name: temperature
+    description: temperature in degree celsius
+    type:
+     int:
+      accessMode: ReadWrite
+      maximum: 100
+      unit: degree celsius
+  - name: temperature-enable
+    description: enable data collection of temperature sensor
+    type:
+      int:
+        accessMode: ReadWrite
+        defaultValue: 1
+

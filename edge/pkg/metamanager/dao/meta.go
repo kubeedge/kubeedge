@@ -3,7 +3,7 @@ package dao
 import (
 	"strings"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -15,7 +15,6 @@ const (
 
 // Meta metadata object
 type Meta struct {
-	// ID    int64  `orm:"pk; auto; column(id)"`
 	Key   string `orm:"column(key); size(256); pk"`
 	Type  string `orm:"column(type); size(32)"`
 	Value string `orm:"column(value); null; type(text)"`

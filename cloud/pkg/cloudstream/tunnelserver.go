@@ -22,15 +22,15 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
@@ -82,6 +82,9 @@ func (s *TunnelServer) getSession(id string) (*Session, bool) {
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOveride)
 	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
+	if interalIP == "" {
+		interalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
+	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
 		return
@@ -134,7 +137,7 @@ func (s *TunnelServer) Start() {
 	}
 
 	tunnelServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.Config.TunnelPort),
+		Addr:    fmt.Sprintf(":%d", streamconfig.Config.TunnelPort),
 		Handler: s.container,
 		TLSConfig: &tls.Config{
 			ClientCAs:    pool,

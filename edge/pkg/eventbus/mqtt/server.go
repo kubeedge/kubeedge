@@ -25,7 +25,7 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"

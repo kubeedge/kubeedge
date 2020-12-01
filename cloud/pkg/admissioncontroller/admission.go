@@ -19,7 +19,7 @@ import (
 	admissionregistrationv1beta1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
@@ -44,19 +44,7 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme))
 	utilruntime.Must(admissionregistrationv1beta1.AddToScheme(scheme))
-	utilruntime.Must(addDeviceCrds(scheme))
-}
-
-// TODO: move this func to apis/devices/v1alpha2/register.go
-func addDeviceCrds(scheme *runtime.Scheme) error {
-	// Add Device
-	scheme.AddKnownTypes(v1alpha2.SchemeGroupVersion, &v1alpha2.Device{}, &v1alpha2.DeviceList{})
-	metav1.AddToGroupVersion(scheme, v1alpha2.SchemeGroupVersion)
-	// Add DeviceModel
-	scheme.AddKnownTypes(v1alpha2.SchemeGroupVersion, &v1alpha2.DeviceModel{}, &v1alpha2.DeviceModelList{})
-	metav1.AddToGroupVersion(scheme, v1alpha2.SchemeGroupVersion)
-
-	return nil
+	utilruntime.Must(v1alpha2.AddDeviceCrds(scheme))
 }
 
 // AdmissionController implements the admission webhook for validation of configuration.

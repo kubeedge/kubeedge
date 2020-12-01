@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -36,7 +36,7 @@ func Register(eventbus *v1alpha1.EventBus, nodeName string) {
 }
 
 func (*eventbus) Name() string {
-	return "eventbus"
+	return modules.EventBusModuleName
 }
 
 func (*eventbus) Group() string {

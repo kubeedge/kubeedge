@@ -48,7 +48,7 @@ spec:
               name: cloudhub
               protocol: TCP
             - containerPort: 10002
-              name: certAndReadyz
+              name: certandreadyz
               protocol: TCP
           resources:
             limits:
