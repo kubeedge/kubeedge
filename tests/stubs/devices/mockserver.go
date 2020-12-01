@@ -10,7 +10,7 @@ import (
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
 	"github.com/paypal/gatt/examples/service"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/tests/stubs/devices/services"
 )

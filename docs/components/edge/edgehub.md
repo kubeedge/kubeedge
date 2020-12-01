@@ -23,9 +23,9 @@ A keep-alive message or heartbeat is sent to cloudHub after every heartbeatPerio
 
 ## Publish Client Info
 
-- The main responsibility of publish client info is to inform the other groups or modules regarding the status of connection to the cloud.
+- The main responsibility of publishing client info is to inform the other groups or modules regarding the status of connection to the cloud.
 
-- It sends a beehive message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
+- It sends a [beehive](https://github.com/kubeedge/beehive) message to all groups (namely metaGroup, twinGroup and busGroup), informing them whether cloud is connected or disconnected.
 
 
 ## Route To Cloud
@@ -50,7 +50,7 @@ The major steps involved in this process are as follows :-
 ## Route To Edge
 
 The main responsibility of route to edge is to receive messages from the cloud (through the websocket connection) and
-send them to the required groups through the beehive framework.
+send them to the required groups through the [beehive](https://github.com/kubeedge/beehive) framework.
 
 The major steps involved in this process are as follows :-
 

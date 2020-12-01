@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kubeedge/beehive/pkg/core/model"
 	deviceconstants "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	constants "github.com/kubeedge/kubeedge/common/constants"
 )
@@ -37,4 +38,13 @@ func GetResourceType(resource string) (string, error) {
 		return deviceconstants.ResourceTypeTwinEdgeUpdated, nil
 	}
 	return "", errors.New("unknown resource")
+}
+
+// GetNodeID from "beehive/pkg/core/model".Message.Router.Resource
+func GetNodeID(msg model.Message) (string, error) {
+	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
+	if len(sli) <= deviceconstants.ResourceNodeIDIndex {
+		return "", fmt.Errorf("node id not found")
+	}
+	return sli[deviceconstants.ResourceNodeIDIndex], nil
 }

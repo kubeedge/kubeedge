@@ -106,7 +106,7 @@ deleted and also updates the devices that were already existing in the database 
 - The eventbus module receives the message that arrives on the subscribed topic,the message is then forwarded  to the
 devicetwin controller which further forwards it to the membership module.
 - The membership  module adds devices that are mentioned in the message, removes
-devices that that are not present in the cache.
+devices that are not present in the cache.
 - After updating the details of the devices a  message is sent to the communication module of the device twin.
 
   ![Membership Detail](../../images/devicetwin/membership-detail.png)

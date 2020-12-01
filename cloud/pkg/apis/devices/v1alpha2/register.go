@@ -71,3 +71,14 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }
+
+func AddDeviceCrds(scheme *runtime.Scheme) error {
+	// Add Device
+	scheme.AddKnownTypes(SchemeGroupVersion, &Device{}, &DeviceList{})
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	// Add DeviceModel
+	scheme.AddKnownTypes(SchemeGroupVersion, &DeviceModel{}, &DeviceModelList{})
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+
+	return nil
+}

@@ -12,7 +12,7 @@ const (
 
 	ResourceGroupName = "resource"
 	TwinGroupName     = "twin"
-	FuncGroupName     = "func"
+	BusGroupName      = "bus"
 	UserGroupName     = "user"
 )
 

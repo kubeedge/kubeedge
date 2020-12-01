@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -22,8 +22,8 @@ const (
 var groupMap = map[string]string{
 	"resource": modules.MetaGroup,
 	"twin":     modules.TwinGroup,
-	"func":     modules.MetaGroup,
-	"user":     modules.BusGroup,
+	"bus":      modules.BusGroup,
+	"user":     modules.UserGroup,
 }
 
 func (eh *EdgeHub) initial() (err error) {
@@ -88,10 +88,10 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		md = modules.MetaGroup
 	case messagepkg.TwinGroupName:
 		md = modules.TwinGroup
-	case messagepkg.FuncGroupName:
-		md = modules.MetaGroup
-	case messagepkg.UserGroupName:
+	case messagepkg.BusGroupName:
 		md = modules.BusGroup
+	case messagepkg.UserGroupName:
+		md = modules.UserGroup
 	default:
 		klog.Warningf("msg_group not found")
 		return fmt.Errorf("msg_group not found")
@@ -120,7 +120,7 @@ func (eh *EdgeHub) routeToEdge() {
 			return
 		}
 
-		klog.Infof("received msg from cloud-hub:%+v", message)
+		klog.V(4).Infof("received msg from cloud-hub:%+v", message)
 		err = eh.dispatch(message)
 		if err != nil {
 			klog.Errorf("failed to dispatch message, discard: %v", err)

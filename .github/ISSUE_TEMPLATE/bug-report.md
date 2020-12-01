@@ -15,19 +15,111 @@ labels: kind/bug
 **Anything else we need to know?**:
 
 **Environment**:
-- KubeEdge version(e.g. `cloudcore/edgecore --version`):  
+<details><summary>Kubernets Version</summary>
+
+```console
+$ kubelet --version
+# paste output here
+$ kubectl version
+# paste output here
+```
+
+</details>
+
+<details><summary>CloudCore Version</summary>
+
+```console
+$ cloudcore --version
+# paste output here
+```
+
+</details>
+
+<details><summary>EdgeCore Version</summary>
+
+```console
+$ edgecore --version
+# paste output here
+```
+
+</details>
 
 **CloudSide Environment**:
-- Hardware configuration (e.g. `lscpu`):
-- OS (e.g. `cat /etc/os-release`):
-- Kernel (e.g. `uname -a`):
-- Go version (e.g. `go version`): 
-- Others:
+<details><summary>Hardware configuration</summary>
+
+```console
+$ lscpu
+# paste output here
+```
+
+</details>
+
+<details><summary>OS</summary>
+
+```console
+$ cat /etc/os-release
+# paste output here
+```
+
+</details>
+
+<details><summary>Kernel</summary>
+
+```console
+$ uname -a
+# paste output here
+```
+
+</details>
+
+<details><summary>Go version</summary>
+
+```console
+$ go version
+# paste output here
+```
+
+</details>
+
+<details><summary>Others</summary>
+</details>
 
 **EdgeSide Environment**:
-- edgecore version (e.g. `edgecore --version`):
-- Hardware configuration (e.g. `lscpu`):
-- OS (e.g. `cat /etc/os-release`):
-- Kernel (e.g. `uname -a`):
-- Go version (e.g. `go version`): 
-- Others:
+<details><summary>Hardware configuration</summary>
+
+```console
+$ lscpu
+# paste output here
+```
+
+</details>
+
+<details><summary>OS</summary>
+
+```console
+$ cat /etc/os-release
+# paste output here
+```
+
+</details>
+
+<details><summary>Kernel</summary>
+
+```console
+$ uname -a
+# paste output here
+```
+
+</details>
+
+<details><summary>Go version</summary>
+
+```console
+$ go version
+# paste output here
+```
+
+</details>
+
+<details><summary>Others</summary>
+</details>

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -20,6 +19,7 @@ type KubeCloudInstTool struct {
 	Common
 	AdvertiseAddress string
 	DNSName          string
+	TarballPath      string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -28,7 +28,12 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	err := cu.InstallKubeEdge(types.CloudCore)
+	opts := &types.InstallOptions{
+		TarballPath:   cu.TarballPath,
+		ComponentType: types.CloudCore,
+	}
+
+	err := cu.InstallKubeEdge(*opts)
 	if err != nil {
 		return err
 	}
@@ -113,14 +118,13 @@ func (cu *KubeCloudInstTool) generateCertificates() error {
 		return err
 	}
 
-	cmd := &Command{Cmd: exec.Command("bash", "-x", KubeEdgeCloudCertGenPath, "genCertAndKey", "server")}
-	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", "certificates not installed")
+	command := fmt.Sprintf("%s genCertAndKey server", KubeEdgeCloudCertGenPath)
+	cmd := NewCommand(command)
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
-	fmt.Println(stdout)
+
+	fmt.Println(cmd.GetStdOut())
 	fmt.Println("Certificates got generated at:", KubeEdgePath, "ca and", KubeEdgePath, "certs")
 	return nil
 }
@@ -128,15 +132,13 @@ func (cu *KubeCloudInstTool) generateCertificates() error {
 //tarCertificates - certs will be tared at /etc/kubeedge/kubeedge/certificates/certs
 func (cu *KubeCloudInstTool) tarCertificates() error {
 	tarCmd := fmt.Sprintf("tar -cvzf %s %s", KubeEdgeEdgeCertsTarFileName, strings.Split(KubeEdgeEdgeCertsTarFileName, ".")[0])
-	cmd := &Command{Cmd: exec.Command("sh", "-c", tarCmd)}
+	cmd := NewCommand(tarCmd)
 	cmd.Cmd.Dir = KubeEdgePath
-	err := cmd.ExecuteCmdShowOutput()
-	stdout := cmd.GetStdOutput()
-	errout := cmd.GetStdErr()
-	if err != nil || errout != "" {
-		return fmt.Errorf("%s", "error in tarring the certificates")
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
-	fmt.Println(stdout)
+
+	fmt.Println(cmd.GetStdOut())
 	fmt.Println("Certificates got tared at:", KubeEdgePath, "path, Please copy it to desired edge node (at", KubeEdgePath, "path)")
 	return nil
 }
@@ -151,7 +153,8 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	// add +x for cloudcore
 	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeCloudBinaryName)
-	if _, err := runCommandWithShell(command); err != nil {
+	cmd := NewCommand(command)
+	if err := cmd.Exec(); err != nil {
 		return err
 	}
 
@@ -161,15 +164,17 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	} else {
 		command = fmt.Sprintf("%s > %skubeedge/cloud/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgePath, KubeCloudBinaryName)
 	}
-	cmd := &Command{Cmd: exec.Command("sh", "-c", command)}
+
+	cmd = NewCommand(command)
 	cmd.Cmd.Env = os.Environ()
 	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
 	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
-	cmd.ExecuteCommand()
-	if errout := cmd.GetStdErr(); errout != "" {
-		return fmt.Errorf("%s", errout)
+
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
-	fmt.Println(cmd.GetStdOutput())
+
+	fmt.Println(cmd.GetStdOut())
 
 	if cu.ToolVersion.GE(semver.MustParse("1.1.0")) {
 		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")

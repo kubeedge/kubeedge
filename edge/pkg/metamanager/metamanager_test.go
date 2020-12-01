@@ -19,10 +19,9 @@ package metamanager
 import (
 	"testing"
 
-	"github.com/kubeedge/beehive/pkg/core/model"
-
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -59,6 +58,7 @@ func TestNameAndGroup(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
+	core.Register(&metaManager{enable: true})
 	modules := core.GetModules()
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
@@ -66,7 +66,7 @@ func TestStart(t *testing.T) {
 			break
 		}
 	}
-	core.Register(&metaManager{enable: true})
+
 	if metaModule == nil {
 		t.Errorf("failed to register to beehive")
 	}

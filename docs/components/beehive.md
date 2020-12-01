@@ -42,7 +42,7 @@ Message has 3 parts
 
 ### (_Important for understanding beehive operations_)
 
-1. **channels:** channels is a map of string(key) which is name of module and chan(value) of message which will used to send message to the respective module.
+1. **channels:** channels is a map of string(key) which is name of module and chan(value) of message which will be used to send message to the respective module.
 2. **chsLock:** lock for channels map
 3. **typeChannels:** typeChannels is a map of string(key)which is group name and (map of string(key) to chan(value) of message ) (value) which is map of name of each module in the group to the channels of corresponding module.
 4. **typeChsLock:** lock for typeChannels map

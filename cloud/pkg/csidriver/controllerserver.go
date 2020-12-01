@@ -23,11 +23,11 @@ import (
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -63,7 +63,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities missing in request")
 	}
 
-	volumeID := uuid.NewUUID().String()
+	volumeID := uuid.New().String()
 
 	// Build message struct
 	msg := model.NewMessage("")

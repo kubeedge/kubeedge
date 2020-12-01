@@ -9,7 +9,7 @@ import (
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 )

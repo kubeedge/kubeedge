@@ -29,6 +29,7 @@ type InitOptions struct {
 	Master           string
 	AdvertiseAddress string
 	DNS              string
+	TarballPath      string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -37,19 +38,58 @@ type JoinOptions struct {
 	CertPath              string
 	CloudCoreIPPort       string
 	EdgeNodeName          string
-	InterfaceName         string
 	RuntimeType           string
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+	CGroupDriver          string
+}
+
+type CheckOptions struct {
+	Domain         string
+	DNSIP          string
+	IP             string
+	Runtime        string
+	Timeout        int
+	CloudHubServer string
+	EdgecoreServer string
+	Config         string
+}
+
+type CheckObject struct {
+	Use  string
+	Desc string
+	Cmd  string
+}
+
+// ColletcOptions has the kubeedge debug colletc information filled by CLI
+type ColletcOptions struct {
+	Config     string
+	OutputPath string
+	Detail     bool
+	LogPath    string
 }
 
 type ResetOptions struct {
 	Kubeconfig string
+	Force      bool
 }
 
 type GettokenOptions struct {
 	Kubeconfig string
+}
+
+type DiagnoseOptions struct {
+	Pod          string
+	Namespace    string
+	Config       string
+	CheckOptions *CheckOptions
+	DBPath       string
+}
+
+type DiagnoseObject struct {
+	Desc string
+	Use  string
 }
 
 //InstallState enum set used for verifying a tool version is installed in host
@@ -81,6 +121,12 @@ const (
 	EdgeCore  ComponentType = "edgecore"
 )
 
+// InstallOptions is defined to know the options for installing kubeedge
+type InstallOptions struct {
+	ComponentType ComponentType
+	TarballPath   string
+}
+
 //ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
@@ -91,11 +137,12 @@ type ToolsInstaller interface {
 type OSTypeInstaller interface {
 	InstallMQTT() error
 	IsK8SComponentInstalled(string, string) error
-	InstallKubeEdge(ComponentType) error
 	SetKubeEdgeVersion(version semver.Version)
+	InstallKubeEdge(InstallOptions) error
 	RunEdgeCore() error
 	KillKubeEdgeBinary(string) error
 	IsKubeEdgeProcessRunning(string) (bool, error)
+	IsProcessRunning(string) (bool, error)
 }
 
 //FlagData stores value and default value of the flags used in this command
@@ -230,7 +277,6 @@ type ControllerSt struct {
 type EdgeDSt struct {
 	RegisterNodeNamespace             string `yaml:"register-node-namespace"`
 	HostnameOverride                  string `yaml:"hostname-override"`
-	InterfaceName                     string `yaml:"interface-name"`
 	NodeStatusUpdateFrequency         uint16 `yaml:"node-status-update-frequency"`
 	DevicePluginEnabled               bool   `yaml:"device-plugin-enabled"`
 	GPUPluginEnabled                  bool   `yaml:"gpu-plugin-enabled"`

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -98,8 +98,8 @@ func (wsc *WebSocketClient) Init() error {
 	return errors.New("max retry count reached when connecting to cloud")
 }
 
-//Uninit closes the websocket connection
-func (wsc *WebSocketClient) Uninit() {
+//UnInit closes the websocket connection
+func (wsc *WebSocketClient) UnInit() {
 	wsc.connection.Close()
 }
 

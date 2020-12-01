@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -99,12 +100,10 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey cry
 		return nil, err
 	}
 	if len(cfg.CommonName) == 0 {
-		fmt.Println("must specify a CommonName")
-		return nil, err
+		return nil, errors.New("must specify a CommonName")
 	}
 	if len(cfg.Usages) == 0 {
-		fmt.Println("must specify at least one ExtKeyUsage")
-		return nil, err
+		return nil, errors.New("must specify at least one ExtKeyUsage")
 	}
 
 	certTmpl := x509.Certificate{

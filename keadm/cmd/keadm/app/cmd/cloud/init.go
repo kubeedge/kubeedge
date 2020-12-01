@@ -40,7 +40,7 @@ keadm init
 
 - This command will download and install the default version of KubeEdge cloud component
 
-keadm init --kubeedge-version=1.2.1  --kube-config=/root/.kube/config
+keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
 `
@@ -59,7 +59,7 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 		Use:     "init",
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
-		Example: cloudInitExample,
+		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			checkFlags := func(f *pflag.Flag) {
 				util.AddToolVals(f, flagVals)
@@ -100,6 +100,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.DNS, types.DomainName, initOpts.DNS,
 		"Use this key to set domain names in cloudcore's certificate SubAltNames field. eg: www.cloudcore.cn,www.kubeedge.cn")
+
+	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
+		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -143,6 +146,7 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		},
 		AdvertiseAddress: initOptions.AdvertiseAddress,
 		DNSName:          initOptions.DNS,
+		TarballPath:      initOptions.TarballPath,
 	}
 	return nil
 }

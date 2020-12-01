@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/golang/mock/gomock"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -81,12 +82,12 @@ func (mr *MockAdapterMockRecorder) Send(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Send", reflect.TypeOf((*MockAdapter)(nil).Send), arg0)
 }
 
-// Uninit mocks base method
-func (m *MockAdapter) Uninit() {
-	m.ctrl.Call(m, "Uninit")
+// UnInit mocks base method
+func (m *MockAdapter) UnInit() {
+	m.ctrl.Call(m, "UnInit")
 }
 
-// Uninit indicates an expected call of Uninit
-func (mr *MockAdapterMockRecorder) Uninit() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninit", reflect.TypeOf((*MockAdapter)(nil).Uninit))
+// UnInit indicates an expected call of UnInit
+func (mr *MockAdapterMockRecorder) UnInit() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnInit", reflect.TypeOf((*MockAdapter)(nil).UnInit))
 }
