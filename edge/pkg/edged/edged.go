@@ -809,7 +809,7 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 							break
 						}
 					}
-					klog.Errorf("sync loop get event container died, restart pod [%s]", pod.Name)
+					klog.Infof("sync loop get event container died, restart pod [%s]", pod.Name)
 					key := types.NamespacedName{
 						Namespace: pod.Namespace,
 						Name:      pod.Name,
