@@ -579,7 +579,7 @@ func newEdged(enable bool) (*edged, error) {
 		ed.machineInfo = &machineInfo
 	}
 	// create a log manager
-	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "1", 2)
+	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "10Mi", 5)
 	if err != nil {
 		return nil, fmt.Errorf("New container log manager failed, err: %s", err.Error())
 	}
