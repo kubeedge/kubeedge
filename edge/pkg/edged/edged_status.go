@@ -399,7 +399,7 @@ func (e *edged) registerNode() error {
 	if err != nil || res.Content != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
 		if res.Content != "OK" {
-			klog.Errorf("response from cloud core: %s", res.Content)
+			klog.Errorf("response from cloud core: %v", res.Content)
 		}
 		return err
 	}
