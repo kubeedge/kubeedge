@@ -89,12 +89,8 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		"node-role.kubernetes.io/agent": "",
 	}
 
-	ip, err := e.getIP()
-	if err != nil {
-		return nil, err
-	}
 	node.Status.Addresses = []v1.NodeAddress{
-		{Type: v1.NodeInternalIP, Address: ip},
+		{Type: v1.NodeInternalIP, Address: e.nodeIP.String()},
 		{Type: v1.NodeHostName, Address: hostname},
 	}
 
@@ -316,17 +312,6 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 
 	nodeStatus.ExtendResources[apis.NvidiaGPUResource] = gpuResources
 	return nil
-}
-
-func (e *edged) getIP() (string, error) {
-	if nodeIP := config.Config.NodeIP; nodeIP != "" {
-		return nodeIP, nil
-	}
-	hostName, _ := os.Hostname()
-	if hostName == "" {
-		hostName = e.nodeName
-	}
-	return util.GetLocalIP(hostName)
 }
 
 func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
