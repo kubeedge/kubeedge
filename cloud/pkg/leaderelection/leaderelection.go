@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"k8s.io/client-go/kubernetes"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/leaderelection"
@@ -201,7 +200,7 @@ func TriggerGracefulShutdown() {
 	}
 }
 
-func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
+func CreateNamespaceIfNeeded(cli *clientset.Clientset, ns string) error {
 	c := cli.CoreV1()
 	if _, err := c.Namespaces().Get(context.Background(), ns, metav1.GetOptions{}); err == nil {
 		// the namespace already exists

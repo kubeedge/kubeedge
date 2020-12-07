@@ -1,16 +1,16 @@
 package plugin
 
 import (
-	"k8s.io/klog/v2"
-
 	"github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-chassis/control"
 	"github.com/go-chassis/go-chassis/core/config"
 	"github.com/go-chassis/go-chassis/core/config/model"
 	"github.com/go-chassis/go-chassis/core/loadbalancer"
 	"github.com/go-chassis/go-chassis/core/registry"
+	"k8s.io/klog/v2"
 
 	meshConfig "github.com/kubeedge/kubeedge/edgemesh/pkg/config"
+
 	// Register panel to aviod panic error
 	_ "github.com/kubeedge/kubeedge/edgemesh/pkg/plugin/panel"
 	meshRegistry "github.com/kubeedge/kubeedge/edgemesh/pkg/plugin/registry"
