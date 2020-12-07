@@ -25,9 +25,9 @@ import (
 	"github.com/paypal/gatt/examples/option"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
+	actionmanager "github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/action_manager"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/configuration"
-	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
+	dataconverter "github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/data_converter"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/helper"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/scheduler"
 	"github.com/kubeedge/kubeedge/mappers/bluetooth_mapper/watcher"

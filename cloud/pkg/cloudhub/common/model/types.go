@@ -1,13 +1,13 @@
 package model
 
 import (
+
 	// Mapping value of json to struct member
 	_ "encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 )
@@ -85,7 +85,7 @@ func NewResource(resType, resID string, info *HubInfo) string {
 // IsNodeStopped indicates if the node is stopped or running
 func IsNodeStopped(msg *model.Message) bool {
 	resourceType, _ := edgemessagelayer.GetResourceType(*msg)
-	if resourceType != beehiveModel.ResourceTypeNode {
+	if resourceType != model.ResourceTypeNode {
 		return false
 	}
 

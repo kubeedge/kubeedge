@@ -5,9 +5,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -27,7 +25,7 @@ const (
 	CloudCoreKeyDataName string = "cloudcorekeydata"
 )
 
-func GetSecret(secretName string, ns string) (*v1.Secret, error) {
+func GetSecret(secretName string, ns string) (*corev1.Secret, error) {
 	cli, err := utils.KubeClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KubeClient, error: %s", err)
@@ -36,7 +34,7 @@ func GetSecret(secretName string, ns string) (*v1.Secret, error) {
 }
 
 // CreateSecret creates a secret
-func CreateSecret(secret *v1.Secret, ns string) error {
+func CreateSecret(secret *corev1.Secret, ns string) error {
 	cli, err := utils.KubeClient()
 	if err != nil {
 		return fmt.Errorf("failed to create KubeClient, error: %s", err)
@@ -45,7 +43,7 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 		return fmt.Errorf("failed to create Namespace kubeedge, error: %s", err)
 	}
 	if _, err := cli.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{}); err != nil {
-		if apierrors.IsAlreadyExists(err) {
+		if errors.IsAlreadyExists(err) {
 			if _, err := cli.CoreV1().Secrets(ns).Update(context.Background(), secret, metav1.UpdateOptions{}); err != nil {
 				return fmt.Errorf("failed to update the secret, namespace: %s, name: %s, err: %v", ns, secret.Name, err)
 			}
@@ -57,7 +55,7 @@ func CreateSecret(secret *v1.Secret, ns string) error {
 }
 
 func CreateTokenSecret(caHashAndToken []byte) error {
-	token := &v1.Secret{
+	token := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TokenSecretName,
@@ -73,7 +71,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 }
 
 func CreateCaSecret(certDER, key []byte) error {
-	caSecret := &v1.Secret{
+	caSecret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
@@ -90,7 +88,7 @@ func CreateCaSecret(certDER, key []byte) error {
 }
 
 func CreateCloudCoreSecret(certDER, key []byte) error {
-	cloudCoreCert := &v1.Secret{
+	cloudCoreCert := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CloudCoreSecretName,

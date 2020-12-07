@@ -26,12 +26,12 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
+	"k8s.io/klog/v2"
 
+	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/configmap"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
-	"k8s.io/klog/v2"
 )
 
 var devices map[string]*globals.ModbusDev
