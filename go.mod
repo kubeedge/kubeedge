@@ -16,9 +16,9 @@ require (
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
-	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -26,9 +26,7 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
-	github.com/golang/protobuf v1.3.2
-	github.com/google/cadvisor v0.35.0
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.4.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
@@ -45,9 +43,6 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
-	github.com/opencontainers/runc v1.0.0-rc9 // indirect
-	github.com/opencontainers/runtime-spec v1.0.1 // indirect
-	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pkg/errors v0.9.1
 	github.com/sailorvii/modbus v0.1.2
@@ -59,48 +54,27 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.19.3
+	k8s.io/api v0.19.4
 	k8s.io/apiextensions-apiserver v0.19.3
-	k8s.io/apimachinery v0.19.3
+	k8s.io/apimachinery v0.19.4
 	k8s.io/apiserver v0.19.3
-	k8s.io/cli-runtime v0.19.1
-	k8s.io/client-go v0.19.3
+	k8s.io/cli-runtime v0.19.3
+	k8s.io/client-go v0.19.4
 	k8s.io/cloud-provider v0.19.3
 	k8s.io/cluster-bootstrap v0.19.3 // indirect
 	k8s.io/code-generator v0.19.3
-	k8s.io/component-base v0.19.3
+	k8s.io/component-base v0.19.4
 	k8s.io/cri-api v0.19.3
 	k8s.io/csi-translation-lib v0.19.3
+	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.2.0
 	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
+	k8s.io/kube-proxy v0.19.3
 	k8s.io/kube-scheduler v0.19.3 // indirect
 	k8s.io/kubelet v0.19.3
 	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	k8s.io/api v0.18.6
-	k8s.io/apiextensions-apiserver v0.18.6
-	k8s.io/apimachinery v0.18.6
-	k8s.io/apiserver v0.18.6
-	k8s.io/client-go v0.18.6
-	k8s.io/cloud-provider v0.18.6
-	k8s.io/code-generator v0.18.6
-	k8s.io/component-base v0.18.6
-	k8s.io/cri-api v0.18.6
-	k8s.io/csi-translation-lib v0.18.6
-	k8s.io/klog v1.0.0
-	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
-	k8s.io/kube-proxy v0.0.0
-	k8s.io/kube-scheduler v0.18.6 // indirect
-	k8s.io/kubelet v0.18.6
-	k8s.io/kubernetes v1.18.6
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	sigs.k8s.io/yaml v1.2.0
-	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/kube-proxy v0.17.1
-	k8s.io/kubelet v0.17.1
-	k8s.io/kubernetes v1.17.1
-	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
-	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (
@@ -130,9 +104,9 @@ replace (
 	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
 	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
-	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.18.6
+	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.19.3
 	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
-	k8s.io/kubectl => k8s.io/kubectl v0.19.1
+	k8s.io/kubectl => k8s.io/kubectl v0.19.3
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
 	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.0.0-20190718190548-039b99e58dbd
 	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.0.0-20190718185242-1e1642704fe6

@@ -5,7 +5,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/edgemesh/pkg/proxier"
 	"os"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"

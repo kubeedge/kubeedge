@@ -18,6 +18,7 @@ CHANGELOG
 KubeEdge Authors:
 - Remove useless functions and adjust logic
 - Use MsgProcess replaced with informer
+
 */
 
 package proxier
@@ -31,7 +32,6 @@ import (
 	"os"
 	goruntime "runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -59,9 +59,10 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/record"
 	componentbaseconfig "k8s.io/component-base/config"
+	"k8s.io/component-base/configz"
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/component-base/version"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-proxy/config/v1alpha1"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	"k8s.io/kubernetes/pkg/features"
@@ -78,14 +79,12 @@ import (
 	"k8s.io/kubernetes/pkg/proxy/ipvs"
 	"k8s.io/kubernetes/pkg/proxy/userspace"
 	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
-	"k8s.io/kubernetes/pkg/util/configz"
 	"k8s.io/kubernetes/pkg/util/filesystem"
 	utilipset "k8s.io/kubernetes/pkg/util/ipset"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
 	utilipvs "k8s.io/kubernetes/pkg/util/ipvs"
 	"k8s.io/kubernetes/pkg/util/oom"
 	"k8s.io/utils/exec"
-	utilpointer "k8s.io/utils/pointer"
 )
 
 const (
@@ -141,29 +140,8 @@ type Options struct {
 
 // NewOptions returns initialized Options
 func NewOptions() *Options {
-	proxyConfig := new(kubeproxyconfig.KubeProxyConfiguration)
-
-	// use ipvs mode as default
-	proxyConfig.Mode = proxyModeIPVS
-
-	proxyConfig.BindAddress = "127.0.0.1"
-
-	// TODO: make it configurable
-	proxyConfig.IPTables = kubeproxyconfig.KubeProxyIPTablesConfiguration{
-		MasqueradeAll: true,
-		MasqueradeBit: utilpointer.Int32Ptr(17),
-		MinSyncPeriod: metav1.Duration{Duration: 10 * time.Second},
-		SyncPeriod:    metav1.Duration{Duration: 60 * time.Second},
-	}
-
-	// TODO: make it configurable
-	proxyConfig.IPVS = kubeproxyconfig.KubeProxyIPVSConfiguration{
-		MinSyncPeriod: metav1.Duration{Duration: 10 * time.Second},
-		SyncPeriod:    metav1.Duration{Duration: 60 * time.Second},
-	}
-
 	return &Options{
-		config:      proxyConfig,
+		config:      new(kubeproxyconfig.KubeProxyConfiguration),
 		healthzPort: ports.ProxyHealthzPort,
 		metricsPort: ports.ProxyStatusPort,
 		CleanupIPVS: true,
@@ -245,10 +223,7 @@ func (o *Options) processHostnameOverrideFlag() error {
 }
 
 // Validate validates all the required options.
-func (o *Options) Validate(args []string) error {
-	if len(args) != 0 {
-		return errors.New("no arguments are supported")
-	}
+func (o *Options) Validate() error {
 	if errs := validation.Validate(o.config); len(errs) != 0 {
 		return errs.ToAggregate()
 	}
@@ -365,6 +340,7 @@ func (o *Options) loadConfigFromFile(file string) (*kubeproxyconfig.KubeProxyCon
 
 // loadConfig decodes a serialized KubeProxyConfiguration to the internal type.
 func (o *Options) loadConfig(data []byte) (*kubeproxyconfig.KubeProxyConfiguration, error) {
+
 	configObj, gvk, err := proxyconfigscheme.Codecs.UniversalDecoder().Decode(data, nil, nil)
 	if err != nil {
 		// Try strict decoding first. If that fails decode with a lenient
@@ -434,13 +410,12 @@ type ProxyServer struct {
 	NodeRef                *v1.ObjectReference
 	CleanupIPVS            bool
 	MetricsBindAddress     string
+	BindAddressHardFail    bool
 	EnableProfiling        bool
 	UseEndpointSlices      bool
 	OOMScoreAdj            *int32
 	ConfigSyncPeriod       time.Duration
 	HealthzServer          healthcheck.ProxierHealthUpdater
-	servicesMap            sync.Map
-	endpointsMap           sync.Map
 }
 
 // createClients creates a kube client and an event client from the given config and masterOverride.
@@ -450,11 +425,8 @@ func createClients(config componentbaseconfig.ClientConnectionConfiguration, mas
 	var err error
 
 	if len(config.Kubeconfig) == 0 && len(masterOverride) == 0 {
-		klog.Info("Neither kubeconfig file nor master URL was specified. Falling back to default config.")
-		kubeConfig, err = clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
-		if err != nil {
-			return nil, nil, err
-		}
+		klog.Info("Neither kubeconfig file nor master URL was specified. Falling back to in-cluster config.")
+		kubeConfig, err = rest.InClusterConfig()
 	} else {
 		// This creates a client, first loading any specified kubeconfig
 		// file, and then overriding the Master flag, if non-empty.
@@ -484,6 +456,66 @@ func createClients(config componentbaseconfig.ClientConnectionConfiguration, mas
 	return client, eventClient.CoreV1(), nil
 }
 
+func serveHealthz(hz healthcheck.ProxierHealthUpdater, errCh chan error) {
+	if hz == nil {
+		return
+	}
+
+	fn := func() {
+		err := hz.Run()
+		if err != nil {
+			klog.Errorf("healthz server failed: %v", err)
+			if errCh != nil {
+				errCh <- fmt.Errorf("healthz server failed: %v", err)
+				// if in hardfail mode, never retry again
+				blockCh := make(chan error)
+				<-blockCh
+			}
+		} else {
+			klog.Errorf("healthz server returned without error")
+		}
+	}
+	go wait.Until(fn, 5*time.Second, wait.NeverStop)
+}
+
+func serveMetrics(bindAddress, proxyMode string, enableProfiling bool, errCh chan error) {
+	if len(bindAddress) == 0 {
+		return
+	}
+
+	proxyMux := mux.NewPathRecorderMux("kube-proxy")
+	healthz.InstallHandler(proxyMux)
+	proxyMux.HandleFunc("/proxyMode", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		fmt.Fprintf(w, "%s", proxyMode)
+	})
+
+	//lint:ignore SA1019 See the Metrics Stability Migration KEP
+	proxyMux.Handle("/metrics", legacyregistry.Handler())
+
+	if enableProfiling {
+		routes.Profiling{}.Install(proxyMux)
+	}
+
+	configz.InstallHandler(proxyMux)
+
+	fn := func() {
+		err := http.ListenAndServe(bindAddress, proxyMux)
+		if err != nil {
+			err = fmt.Errorf("starting metrics server failed: %v", err)
+			utilruntime.HandleError(err)
+			if errCh != nil {
+				errCh <- err
+				// if in hardfail mode, never retry again
+				blockCh := make(chan error)
+				<-blockCh
+			}
+		}
+	}
+	go wait.Until(fn, 5*time.Second, wait.NeverStop)
+}
+
 // Run runs the specified ProxyServer.  This should never exit (unless CleanupAndExit is set).
 // TODO: At the moment, Run() cannot return a nil error, otherwise it's caller will never exit. Update callers of Run to handle nil errors.
 func (s *ProxyServer) Run() error {
@@ -503,33 +535,18 @@ func (s *ProxyServer) Run() error {
 		s.Broadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: s.EventClient.Events("")})
 	}
 
-	// Start up a healthz server if requested
-	if s.HealthzServer != nil {
-		s.HealthzServer.Run()
+	// TODO(thockin): make it possible for healthz and metrics to be on the same port.
+
+	var errCh chan error
+	if s.BindAddressHardFail {
+		errCh = make(chan error)
 	}
 
+	// Start up a healthz server if requested
+	serveHealthz(s.HealthzServer, errCh)
+
 	// Start up a metrics server if requested
-	if len(s.MetricsBindAddress) > 0 {
-		proxyMux := mux.NewPathRecorderMux("kube-proxy")
-		healthz.InstallHandler(proxyMux)
-		proxyMux.HandleFunc("/proxyMode", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Header().Set("X-Content-Type-Options", "nosniff")
-			fmt.Fprintf(w, "%s", s.ProxyMode)
-		})
-		//lint:ignore SA1019 See the Metrics Stability Migration KEP
-		proxyMux.Handle("/metrics", legacyregistry.Handler())
-		if s.EnableProfiling {
-			routes.Profiling{}.Install(proxyMux)
-		}
-		configz.InstallHandler(proxyMux)
-		go wait.Until(func() {
-			err := http.ListenAndServe(s.MetricsBindAddress, proxyMux)
-			if err != nil {
-				utilruntime.HandleError(fmt.Errorf("starting metrics server failed: %v", err))
-			}
-		}, 5*time.Second, wait.NeverStop)
-	}
+	serveMetrics(s.MetricsBindAddress, s.ProxyMode, s.EnableProfiling, errCh)
 
 	// Tune conntrack, if requested
 	// Conntracker is always nil for windows
@@ -628,9 +645,9 @@ func (s *ProxyServer) Run() error {
 		currentNodeInformerFactory.Start(wait.NeverStop)
 	}
 
-	// Just loop forever for now...
-	s.Proxier.SyncLoop()
-	return nil
+	go s.Proxier.SyncLoop()
+
+	return <-errCh
 }
 
 func getConntrackMax(config kubeproxyconfig.KubeProxyConntrackConfiguration) (int, error) {

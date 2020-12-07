@@ -1,8 +1,5 @@
 // +build linux
 
-// Code and documentation copyright 2015 Docker, inc.
-// Code released under the Apache 2.0 license. Docs released under Creative commons.
-
 package ipvs
 
 import (
@@ -221,7 +218,7 @@ func execute(s *nl.NetlinkSocket, req *nl.NetlinkRequest, resType uint16) ([][]b
 
 done:
 	for {
-		msgs, err := s.Receive()
+		msgs, _, err := s.Receive()
 		if err != nil {
 			if s.GetFd() == -1 {
 				return nil, fmt.Errorf("Socket got closed on receive")
@@ -453,7 +450,7 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 			d.ActiveConnections = int(native.Uint16(attr.Value))
 		case ipvsDestAttrInactiveConnections:
 			d.InactiveConnections = int(native.Uint16(attr.Value))
-		case ipvsSvcAttrStats:
+		case ipvsDestAttrStats:
 			stats, err := assembleStats(attr.Value)
 			if err != nil {
 				return nil, err

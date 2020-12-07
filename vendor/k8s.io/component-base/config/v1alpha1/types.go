@@ -80,7 +80,6 @@ type ClientConnectionConfiguration struct {
 	// burst allows extra queries to accumulate when a client is exceeding its rate.
 	Burst int32 `json:"burst"`
 }
-<<<<<<< HEAD
 
 // LoggingConfiguration contains logging options
 type LoggingConfiguration struct {
@@ -89,5 +88,3 @@ type LoggingConfiguration struct {
 	// Refer [Logs Options](https://github.com/kubernetes/component-base/blob/master/logs/options.go) for more information.
 	Format string `json:"format,omitempty"`
 }
-=======
->>>>>>> update vendor
