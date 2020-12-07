@@ -425,18 +425,20 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		obj, exist, _ := nodeStore.GetByKey(key.(string))
 		if !exist {
 			klog.Errorf("nodeStore for node %s doesn't exist", info.NodeID)
+			nodeQueue.Done(key)
 			continue
 		}
 		msg := obj.(*beehiveModel.Message)
 
 		if !model.IsToEdge(msg) {
 			klog.Infof("skip only to cloud event for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
+			nodeQueue.Done(key)
 			continue
 		}
 		klog.V(4).Infof("event to send for node %s, %s, content %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 
 		copyMsg := deepcopy(msg)
-		trimMessage(msg)
+		trimMessage(copyMsg)
 
 		for {
 			conn, ok := mh.nodeConns.Load(info.NodeID)
@@ -444,10 +446,10 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 				time.Sleep(time.Second * 2)
 				continue
 			}
-			err := mh.sendMsg(conn.(hubio.CloudHubIO), info, msg, copyMsg, nodeStore)
+			err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)
 			if err != nil {
 				klog.Errorf("Failed to send event to node: %s, affected event: %s, err: %s",
-					info.NodeID, dumpMessageMetadata(msg), err.Error())
+					info.NodeID, dumpMessageMetadata(copyMsg), err.Error())
 				nodeQueue.AddRateLimited(key.(string))
 				time.Sleep(time.Second * 2)
 			}
@@ -459,9 +461,9 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 	}
 }
 
-func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, copyMsg *beehiveModel.Message, nodeStore cache.Store) error {
+func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, copyMsg, msg *beehiveModel.Message, nodeStore cache.Store) error {
 	ackChan := make(chan struct{})
-	mh.MessageAcks.Store(msg.GetID(), ackChan)
+	mh.MessageAcks.Store(copyMsg.GetID(), ackChan)
 
 	// initialize timer and retry count for sending message
 	var (
@@ -469,7 +471,7 @@ func (mh *MessageHandle) sendMsg(hi hubio.CloudHubIO, info *model.HubInfo, msg, 
 		retryInterval time.Duration = 5
 	)
 	ticker := time.NewTimer(retryInterval * time.Second)
-	err := mh.send(hi, info, msg)
+	err := mh.send(hi, info, copyMsg)
 	if err != nil {
 		return err
 	}
@@ -478,13 +480,13 @@ LOOP:
 	for {
 		select {
 		case <-ackChan:
-			mh.saveSuccessPoint(copyMsg, info, nodeStore)
+			mh.saveSuccessPoint(msg, info, nodeStore)
 			break LOOP
 		case <-ticker.C:
 			if retry == 4 {
 				break LOOP
 			}
-			err := mh.send(hi, info, msg)
+			err := mh.send(hi, info, copyMsg)
 			if err != nil {
 				return err
 			}
