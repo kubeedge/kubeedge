@@ -32,6 +32,7 @@ import (
 	"os"
 	goruntime "runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -416,6 +417,8 @@ type ProxyServer struct {
 	OOMScoreAdj            *int32
 	ConfigSyncPeriod       time.Duration
 	HealthzServer          healthcheck.ProxierHealthUpdater
+	servicesMap            sync.Map
+	endpointsMap           sync.Map
 }
 
 // createClients creates a kube client and an event client from the given config and masterOverride.
