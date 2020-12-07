@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
