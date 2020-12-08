@@ -50,6 +50,6 @@ func Install() {
 	}
 	// init archaius
 	if err := archaius.Init(); err != nil {
-		klog.Errorf("failed to init arahaius: %v", err)
+		klog.Errorf("failed to init archaius: %v", err)
 	}
 }
