@@ -30,10 +30,6 @@ const (
 	DefaultCAURL   = "/ca.crt"
 	DefaultCertURL = "/edge.crt"
 
-	DefaultStreamCAFile   = "/etc/kubeedge/ca/streamCA.crt"
-	DefaultStreamCertFile = "/etc/kubeedge/certs/stream.crt"
-	DefaultStreamKeyFile  = "/etc/kubeedge/certs/stream.key"
-
 	DefaultMqttCAFile   = "/etc/kubeedge/ca/rootCA.crt"
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
@@ -65,7 +61,6 @@ const (
 	DefaultConcurrentConsumers         = 5
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
-	DefaultTunnelPort                  = 10004
 
 	CurrentSupportK8sVersion = "v1.19.3"
 
@@ -145,4 +140,18 @@ const (
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
 	ServerPort = 10350
+
+	// Stream
+	DefaultSTREAMCAFile   = "/etc/kubeedge/ca/streamCA.crt"
+	DefaultSTREAMCertFile = "/etc/kubeedge/certs/stream.crt"
+	DefaultSTREAMKeyFile  = "/etc/kubeedge/certs/stream.key"
+	// probe the client every 10 seconds to ensure the connection is still active
+	GrpcKeepAliveTimeSec = 10
+	UDSFile              = "/var/lib/kubeedge/proxy.sock"
+	// set 1 if cloudcore is not HA
+	ServerAccount     = 1
+	DefaultTunnelPort = 10004
+	DefaultAgentPort  = 10003
+	SyncInterval      = 1
+	ProbeInterval     = 1
 )

@@ -365,30 +365,27 @@ type CloudStream struct {
 	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
-	// default /etc/kubeedge/ca/rootCA.crt
+	// default /etc/kubeedge/ca/streamCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
 	// TLSTunnelCertFile indicates cert file path
-	// default /etc/kubeedge/certs/server.crt
+	// default /etc/kubeedge/certs/stream.crt
 	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
 	// TLSTunnelPrivateKeyFile indicates key file path
-	// default /etc/kubeedge/certs/server.key
+	// default /etc/kubeedge/certs/stream.key
 	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
+
 	// TunnelPort set open port for tunnel server
 	// default 10004
 	TunnelPort uint32 `json:"tunnelPort,omitempty"`
-
-	// TLSStreamCAFile indicates kube-apiserver ca file path
-	// default /etc/kubeedge/ca/streamCA.crt
-	TLSStreamCAFile string `json:"tlsStreamCAFile,omitempty"`
-	// TLSStreamCertFile indicates cert file path
-	// default /etc/kubeedge/certs/stream.crt
-	TLSStreamCertFile string `json:"tlsStreamCertFile,omitempty"`
-	// TLSStreamPrivateKeyFile indicates key file path
-	// default /etc/kubeedge/certs/stream.key
-	TLSStreamPrivateKeyFile string `json:"tlsStreamPrivateKeyFile,omitempty"`
-	// StreamPort set open port for stream server
+	// AgentPort set open port for agent server
 	// default 10003
-	StreamPort uint32 `json:"streamPort,omitempty"`
+	AgentPort uint32 `json:"streamPort,omitempty"`
+	// UDSFile set unix socket file for proxy server
+	// default /var/lib/kubeedge/proxy.sock
+	UDSFile string `json:"udsFile,omitempty"`
+	// ServerAccount indicates the number of cloudcore
+	// default 1
+	ServerAccount int `json:"serverAccount,omitempty"`
 }
 
 type Router struct {

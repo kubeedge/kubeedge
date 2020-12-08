@@ -448,26 +448,25 @@ type EdgeStream struct {
 	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
-	// default /etc/kubeedge/ca/rootCA.crt
+	// default /etc/kubeedge/ca/streamCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
 
 	// TLSTunnelCertFile indicates the file containing x509 Certificate for HTTPS
-	// default /etc/kubeedge/certs/server.crt
+	// default /etc/kubeedge/certs/stream.crt
 	TLSTunnelCertFile string `json:"tlsTunnelCertFile,omitempty"`
 	// TLSTunnelPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
-	// default /etc/kubeedge/certs/server.key
+	// default /etc/kubeedge/certs/stream.key
 	TLSTunnelPrivateKeyFile string `json:"tlsTunnelPrivateKeyFile,omitempty"`
 
-	// HandshakeTimeout indicates handshake timeout (second)
-	// default  30
-	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
+	// SyncInterval indicates sync interval (second)
+	// default 1
+	SyncInterval int `json:"syncInterval,omitempty"`
 	// ReadDeadline indicates read dead line (second)
-	// default 15
-	ReadDeadline int32 `json:"readDeadline,omitempty"`
-	// TunnelServer indicates websocket server address (ip:port)
+	// default 1
+	ProbeInterval int `json:"readDeadline,omitempty"`
+	// AgentServer indicates agent server address (ip:port)
 	// +Required
-	TunnelServer string `json:"server,omitempty"`
-	// WriteDeadline indicates write dead line (second)
-	// default 15
-	WriteDeadline int32 `json:"writeDeadline,omitempty"`
+	AgentServer string `json:"server,omitempty"`
+	// ServerAccount indicates numbers of cloudcore
+	ServerAccount int `json:"serverAccount,omitempty"`
 }

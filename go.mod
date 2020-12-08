@@ -22,7 +22,7 @@ require (
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/goburrow/serial v0.1.0 // indirect
-	github.com/golang/mock v1.3.1
+	github.com/golang/mock v1.4.0
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
 	github.com/google/uuid v1.1.1
@@ -70,6 +70,7 @@ require (
 	k8s.io/kubelet v0.19.3
 	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+	sigs.k8s.io/apiserver-network-proxy v0.0.14
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -97,17 +98,18 @@ replace (
 	k8s.io/gengo v0.0.0 => k8s.io/gengo v0.19.3
 	k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1 // indirect
 	k8s.io/klog/v2 => k8s.io/klog/v2 v2.2.0
-	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.19.3
-	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.19.3
-	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.19.3
-	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.19.3
-	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.19.3
-	k8s.io/kubectl => k8s.io/kubectl v0.19.3
-	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.19.3
-	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.19.3
-	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.19.3
-	k8s.io/node-api v0.0.0 => k8s.io/node-api v0.19.3
-	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.19.3
-	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.19.3
-	k8s.io/utils v0.0.0 => k8s.io/utils v0.19.3
+	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
+	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
+	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
+	k8s.io/kube-proxy v0.0.0 => k8s.io/kube-proxy v0.0.0-20190718185641-5233cb7cb41e
+	k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
+	k8s.io/kubectl => k8s.io/kubectl v0.19.1
+	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
+	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.0.0-20190718190548-039b99e58dbd
+	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.0.0-20190718185242-1e1642704fe6
+	k8s.io/node-api v0.0.0 => k8s.io/node-api v0.0.0-20190717025432-9e6fdeee55cc // indirect
+	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.0.0-20181204233714-00fe14e3d1a3 // indirect
+	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.0.0-20190718184639-baafa86838c0
+	sigs.k8s.io/apiserver-network-proxy => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201215022657-cbbdbdaad9ce
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.14
 )

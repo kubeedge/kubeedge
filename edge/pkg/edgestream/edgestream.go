@@ -18,40 +18,35 @@ package edgestream
 
 import (
 	"crypto/tls"
-	"net/http"
-	"net/url"
 	"time"
 
-	"github.com/gorilla/websocket"
-	"k8s.io/klog/v2"
-
+	"github.com/google/uuid"
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	hubconfig "github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/kubeedge/kubeedge/pkg/stream"
+	"github.com/kubeedge/kubeedge/pkg/cert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"k8s.io/klog/v2"
+	"sigs.k8s.io/apiserver-network-proxy/pkg/agent"
 )
 
 type edgestream struct {
-	enable          bool
-	hostnameOveride string
-	nodeIP          string
+	enable bool
 }
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
+func newEdgeStream(enable bool) *edgestream {
 	return &edgestream{
-		enable:          enable,
-		hostnameOveride: hostnameOverride,
-		nodeIP:          nodeIP,
+		enable: enable,
 	}
 }
 
 // Register register edgestream
-func Register(s *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) {
-	config.InitConfigure(s)
-	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
+func Register(e *v1alpha1.EdgeStream) {
+	config.InitConfigure(e)
+	core.Register(newEdgeStream(e.Enable))
 }
 
 func (e *edgestream) Name() string {
@@ -67,53 +62,30 @@ func (e *edgestream) Enable() bool {
 }
 
 func (e *edgestream) Start() {
-	serverURL := url.URL{
-		Scheme: "wss",
-		Host:   config.Config.TunnelServer,
-		Path:   "/v1/kubeedge/connect",
-	}
-	// TODO: Will improve in the future
-	ok := <-edgehub.HasTLSTunnelCerts
-	if ok {
-		cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
-		if err != nil {
-			klog.Fatalf("Failed to load x509 key pair: %v", err)
-		}
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: true,
-			Certificates:       []tls.Certificate{cert},
-		}
-
-		for range time.NewTicker(time.Second * 2).C {
-			select {
-			case <-beehiveContext.Done():
-				return
-			default:
-			}
-			err := e.TLSClientConnect(serverURL, tlsConfig)
-			if err != nil {
-				klog.Errorf("TLSClientConnect error %v", err)
-			}
-		}
+	stopCh := make(chan struct{})
+	if err := e.runProxyConnection(stopCh); err != nil {
+		klog.Errorf("failed to run edgestream, err %v", err)
 	}
 }
 
-func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error {
-	klog.Info("Start a new tunnel stream connection ...")
-
-	dial := websocket.Dialer{
-		TLSClientConfig:  tlsConfig,
-		HandshakeTimeout: time.Duration(config.Config.HandshakeTimeout) * time.Second,
-	}
-	header := http.Header{}
-	header.Add(stream.SessionKeyHostNameOveride, e.hostnameOveride)
-	header.Add(stream.SessionKeyInternalIP, e.nodeIP)
-
-	con, _, err := dial.Dial(url.String(), header)
-	if err != nil {
-		klog.Errorf("dial %v error %v", url.String(), err)
+func (e *edgestream) runProxyConnection(stopCh <-chan struct{}) error {
+	var tlsConfig *tls.Config
+	var err error
+	if tlsConfig, err = cert.GetTLSConfig(hubconfig.Config.TLSCAFile, hubconfig.Config.TLSCertFile, hubconfig.Config.TLSPrivateKeyFile); err != nil {
 		return err
 	}
-	session := NewTunnelSession(con)
-	return session.Serve()
+
+	dialOption := grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+	cc := &agent.ClientSetConfig{
+		Address:                 config.Config.AgentServer,
+		AgentID:                 uuid.New().String(),
+		SyncInterval:            time.Duration(config.Config.SyncInterval) * time.Second,
+		ProbeInterval:           time.Duration(config.Config.ProbeInterval) * time.Second,
+		DialOptions:             []grpc.DialOption{dialOption},
+		ServiceAccountTokenPath: "",
+	}
+	cs := cc.NewAgentClientSet(stopCh)
+	cs.Serve()
+
+	return nil
 }

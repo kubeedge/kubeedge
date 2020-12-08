@@ -66,4 +66,7 @@ issues:
       - path: cloud/pkg/client
         linters:
           - gci
+      - path: cloud/pkg/cloudstream/wraphandler.go
+        linters:
+          - errcheck
 

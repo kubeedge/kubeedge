@@ -298,7 +298,7 @@ github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/types
 # github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
 github.com/golang/groupcache/lru
-# github.com/golang/mock v1.3.1
+# github.com/golang/mock v1.4.0
 ## explicit
 github.com/golang/mock/gomock
 # github.com/golang/protobuf v1.4.2
@@ -1702,8 +1702,21 @@ k8s.io/utils/path
 k8s.io/utils/pointer
 k8s.io/utils/strings
 k8s.io/utils/trace
+<<<<<<< HEAD
 # sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.9
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
+=======
+# sigs.k8s.io/apiserver-network-proxy v0.0.14 => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201215022657-cbbdbdaad9ce
+## explicit
+sigs.k8s.io/apiserver-network-proxy/pkg/agent
+sigs.k8s.io/apiserver-network-proxy/pkg/agent/metrics
+sigs.k8s.io/apiserver-network-proxy/pkg/server
+sigs.k8s.io/apiserver-network-proxy/pkg/server/metrics
+sigs.k8s.io/apiserver-network-proxy/pkg/util
+sigs.k8s.io/apiserver-network-proxy/proto/agent
+sigs.k8s.io/apiserver-network-proxy/proto/header
+# sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.9 => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.14
+>>>>>>> 2f9bf263... Stream: refactor with sigs.k8s.io/apiserver-network-proxy
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
 # sigs.k8s.io/kustomize v2.0.3+incompatible
 sigs.k8s.io/kustomize/pkg/commands/build
@@ -1760,6 +1773,7 @@ sigs.k8s.io/yaml
 # k8s.io/gengo v0.0.0 => k8s.io/gengo v0.19.3
 # k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1
 # k8s.io/klog/v2 => k8s.io/klog/v2 v2.2.0
+<<<<<<< HEAD
 # k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.19.3
 # k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.19.3
 # k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.19.3
@@ -1772,3 +1786,19 @@ sigs.k8s.io/yaml
 # k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.19.3
 # k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.19.3
 # k8s.io/utils v0.0.0 => k8s.io/utils v0.19.3
+=======
+# k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.0.0-20190718184434-a064d4d1ed7a
+# k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.0.0-20190718190030-ea930fedc880
+# k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886
+# k8s.io/kube-scheduler v0.0.0 => k8s.io/kube-scheduler v0.0.0-20190718185913-d5429d807831
+# k8s.io/kubectl => k8s.io/kubectl v0.19.1
+# k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.0.0-20190718185757-9b45f80d5747
+# k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.0.0-20190718190548-039b99e58dbd
+# k8s.io/metrics v0.0.0 => k8s.io/metrics v0.0.0-20190718185242-1e1642704fe6
+# k8s.io/node-api v0.0.0 => k8s.io/node-api v0.0.0-20190717025432-9e6fdeee55cc
+# k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.0.0-20181204233714-00fe14e3d1a3
+# k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.0.0-20190718184639-baafa86838c0
+# k8s.io/utils v0.0.0 => k8s.io/utils v0.0.0-20190712204705-3dccf664f023
+# sigs.k8s.io/apiserver-network-proxy => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201215022657-cbbdbdaad9ce
+# sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.14
+>>>>>>> 2f9bf263... Stream: refactor with sigs.k8s.io/apiserver-network-proxy
