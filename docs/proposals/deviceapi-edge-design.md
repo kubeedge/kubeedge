@@ -6,8 +6,8 @@ approvers:
     - "@kevin-wangzefeng"
     - "@fisherxu"
 creation-date: 2020-11-10
-last-updated: 2020-11-10
-status: under designing
+last-updated: 2020-12-8
+status: need review
 ---
 
 
@@ -151,6 +151,6 @@ Once we can retrive a whloe `Device` from cloud,  we can simplify the implementa
 
 ### Use Cases
 
-* Simplify the implementation for mapper components 
+* Simplify the implementation for mapper components for user
 
 
