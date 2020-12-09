@@ -145,22 +145,14 @@ func TestSendToKeepChannel(t *testing.T) {
 			expectedError:       fmt.Errorf("failed to get sync keeper channel, messageID:%+v", *message),
 		},
 		{
-			name: "Negative Test Case without syncKeeper Error ",
-			hub: &EdgeHub{
-				syncKeeper: make(map[string]chan model.Message),
-			},
-			message:             model.NewMessage("test_id"),
-			keepChannelParentID: "test_id",
-			expectedError:       fmt.Errorf("failed to send message to sync keep channel"),
-		},
-		{
 			name: "Send to keep channel with valid input",
 			hub: &EdgeHub{
 				syncKeeper: make(map[string]chan model.Message),
 			},
 			message:             model.NewMessage("test_id"),
 			keepChannelParentID: "test_id",
-			expectedError:       nil},
+			expectedError:       nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
