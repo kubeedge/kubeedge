@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"fmt"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -10,11 +11,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
+	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 const (
-	NamespaceSystem string = "kubeedge"
-
 	TokenSecretName      string = "tokensecret"
 	TokenDataName        string = "tokendata"
 	CaSecretName         string = "casecret"
@@ -24,6 +24,23 @@ const (
 	CloudCoreCertName    string = "cloudcoredata"
 	CloudCoreKeyDataName string = "cloudcorekeydata"
 )
+
+var NamespaceSystem string = constants.KubeEdgeNameSpace
+
+// set namesapce from env CLOUDCORE_POD_NAMESPACE
+func init() {
+	NamespaceSystem = setKubeedgeNamespce(os.Getenv("CLOUDCORE_POD_NAMESPACE"))
+}
+
+func setKubeedgeNamespce(kubeedgeNamespace string) string {
+	if kubeedgeNamespace != "" {
+		NamespaceSystem = kubeedgeNamespace
+	} else {
+		kubeedgeNamespace = constants.KubeEdgeNameSpace
+	}
+
+	return kubeedgeNamespace
+}
 
 func GetSecret(secretName string, ns string) (*corev1.Secret, error) {
 	cli, err := utils.KubeClient()

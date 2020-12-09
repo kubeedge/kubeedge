@@ -22,6 +22,11 @@ spec:
       - name: cloudcore
         image: kubeedge/cloudcore:v1.3.1
         imagePullPolicy: IfNotPresent
+        env:
+          - name: CLOUDCORE_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         ports:
         - containerPort: 10000
           name: cloudhub
@@ -55,4 +60,3 @@ spec:
         hostPath:
           path: /var/lib/kubeedge
           type: DirectoryOrCreate
-

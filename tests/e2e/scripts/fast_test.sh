@@ -47,6 +47,7 @@ if [ $# -eq 0 ]
   then
     #run testcase
     ./deployment/deployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
+    ./cloud/cloud.test $debugflag 2>&1 | tee -a /tmp/testcase.log
     # @kadisi
     #./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
 else

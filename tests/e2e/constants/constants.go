@@ -21,7 +21,9 @@ const (
 	CatEdgecoreLog  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; cat edgecore.log"
 	CatEdgeSiteLog  = "cd ${GOPATH}/src/github.com/kubeedge/kubeedge/_output/local/bin/; cat  edgesite.log"
 
-	AppHandler        = "/api/v1/namespaces/default/pods"
-	NodeHandler       = "/api/v1/nodes"
-	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
+	AppHandler              = "/api/v1/namespaces/default/pods"
+	NodeHandler             = "/api/v1/nodes"
+	DeploymentHandler       = "/apis/apps/v1/namespaces/default/deployments"
+	SecrettHandlerDefauleNS = "/api/v1/namespaces/default/secret"
+	SecrettHandler          = "/api/v1/namespaces/kubeedge/secret"
 )
