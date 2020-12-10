@@ -7,6 +7,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
@@ -23,6 +24,15 @@ func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
 	pod, err := sctl.podLister.Pods(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
+	if pod != nil {
+		syncObjUID := getObjectUID(sync.Name)
+		if syncObjUID != string(pod.GetUID()) {
+			err = apierrors.NewNotFound(schema.GroupResource{
+				Group:    "",
+				Resource: "pods",
+			}, sync.Spec.ObjectName)
+		}
+	}
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -45,6 +55,15 @@ func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
 	configmap, err := sctl.configMapLister.ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
+	if configmap != nil {
+		syncObjUID := getObjectUID(sync.Name)
+		if syncObjUID != string(configmap.GetUID()) {
+			err = apierrors.NewNotFound(schema.GroupResource{
+				Group:    "",
+				Resource: "configmaps",
+			}, sync.Spec.ObjectName)
+		}
+	}
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -68,6 +87,16 @@ func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 
 	nodeName := getNodeName(sync.Name)
 
+	if secret != nil {
+		syncObjUID := getObjectUID(sync.Name)
+		if syncObjUID != string(secret.GetUID()) {
+			err = apierrors.NewNotFound(schema.GroupResource{
+				Group:    "",
+				Resource: "secrets",
+			}, sync.Spec.ObjectName)
+		}
+	}
+
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			secret = &v1.Secret{
@@ -89,6 +118,15 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 	service, err := sctl.serviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
+	if service != nil {
+		syncObjUID := getObjectUID(sync.Name)
+		if syncObjUID != string(service.GetUID()) {
+			err = apierrors.NewNotFound(schema.GroupResource{
+				Group:    "",
+				Resource: "services",
+			}, sync.Spec.ObjectName)
+		}
+	}
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -111,6 +149,16 @@ func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
 	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
+	
+	if endpoint != nil {
+		syncObjUID := getObjectUID(sync.Name)
+		if syncObjUID != string(endpoint.GetUID()) {
+			err = apierrors.NewNotFound(schema.GroupResource{
+				Group:    "",
+				Resource: "endpoints",
+			}, sync.Spec.ObjectName)
+		}
+	}
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
