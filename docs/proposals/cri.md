@@ -94,7 +94,7 @@ type Config struct {
  ```
 ### Data structure modifications
 
-The edged data strcuture needs to include the remote runtime and runtime name. Also need to add os interface, pod cache and container life cycle manager parameters required for initializing and executing remote runtime.
+The edged data structure needs to include the remote runtime and runtime name. Also need to add os interface, pod cache and container life cycle manager parameters required for initializing and executing remote runtime.
 
 ```go
 //Define edged
@@ -201,7 +201,7 @@ func (e *edged) Start(c *context.Context) {
 
 ### Runtime dependent functional modifications
 
-The following functionalaties which are based on the docker runtime need to be modified to handle the CRI runtimes as well
+The following functionalities which are based on the docker runtime need to be modified to handle the CRI runtimes as well
 
 ```go
 func (e *edged) initializeModules() error {

@@ -20,7 +20,7 @@ Key features of QUIC:
 2. Improved congestion control
 3. [Multiplexing without head of line blocking](https://docs.google.com/document/d/1RNHkx_VvKWyWg6Lr8SZ-saqsQx7rFV-ev2jRFUoVD34/mobilebasic?pli=1)
 4. Forward error correction
-5. Connection migiation
+5. Connection migration
 
 <img src="../images/proposals/quic-tcp-udp.png">
 <img src="../images/proposals/quic-connection.png">

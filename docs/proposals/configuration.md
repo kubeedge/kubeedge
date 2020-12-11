@@ -82,7 +82,7 @@ We recommend referring to the kubernetes component config api design to redesign
 
 * **Forward compatibility**
 
-	For configuration file, support addition/deprecattion of some fields, **Modify field not allowed**.
+	For configuration file, support addition/depreciation of some fields, **Modify field not allowed**.
 	Configuration need a version field.
 
 

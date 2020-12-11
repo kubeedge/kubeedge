@@ -55,7 +55,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
 
 - DeviceController
 
-  Currently only `device` need to be sent to edge-node by DeviceController. The device-related event are all asigned to edge-nodes, and `device.Spec` is recoreding the information of dest-node. So DeviceController do not need a "LocationCache".
+  Currently only `device` need to be sent to edge-node by DeviceController. The device-related event are all assigned to edge-nodes, and `device.Spec` is recoreding the information of dest-node. So DeviceController do not need a "LocationCache".
 
 - SyncController
 
@@ -67,7 +67,7 @@ At present, CloudCore is essentially an edge-resource distribution center, which
   1. LocationCache
   2. sync-CRD in etcd
 
-  For the former, CloudCore will triger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Messages left out during crash will be re-sync when SyncController reruns.
+  For the former, CloudCore will trigger the initialization of LocationCache when restarts; For the latter, CloudCore crash does not affect information in etcd. Messages left out during crash will be re-sync when SyncController reruns.
 
 ### HA in hot standby mode
 #### The lifecycle of CloudCore
