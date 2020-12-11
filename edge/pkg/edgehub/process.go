@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 const (
@@ -204,6 +205,24 @@ func (eh *EdgeHub) keepalive() {
 		}
 
 		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
+	}
+}
+
+func (eh *EdgeHub) checkClientState() {
+	checkInterval := time.NewTicker(time.Duration(5) * time.Second)
+	defer checkInterval.Stop()
+	for {
+		select {
+		case <-checkInterval.C:
+			if eh.chClient.State().State == api.StatDisconnected {
+				klog.Warning("Edgehub checkClientState is discconnected, start to reconnect to cloudcore. ")
+				eh.reconnectChan <- struct{}{}
+				return
+			}
+		case <-beehiveContext.Done():
+			klog.Warning("EdgeHub CheckClientStatet stop")
+			return
+		}
 	}
 }
 

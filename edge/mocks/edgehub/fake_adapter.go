@@ -5,10 +5,13 @@
 package edgehub
 
 import (
+
 	"reflect"
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/kubeedge/viaduct/pkg/api"
+	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -50,6 +53,11 @@ func (mr *MockAdapterMockRecorder) Init() *gomock.Call {
 // Notify mocks base method
 func (m *MockAdapter) Notify(arg0 map[string]string) {
 	m.ctrl.Call(m, "Notify", arg0)
+}
+
+// State mock base method
+func (m *MockAdapter) State() conn.ConnectionState {
+	return conn.ConnectionState{State: api.StatConnected}
 }
 
 // Notify indicates an expected call of Notify

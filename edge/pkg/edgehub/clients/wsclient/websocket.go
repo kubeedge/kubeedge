@@ -119,3 +119,7 @@ func (wsc *WebSocketClient) Receive() (model.Message, error) {
 func (wsc *WebSocketClient) Notify(authInfo map[string]string) {
 	klog.Infof("no op")
 }
+
+func (wsc *WebSocketClient) State() conn.ConnectionState {
+	return wsc.connection.ConnectionState()
+}

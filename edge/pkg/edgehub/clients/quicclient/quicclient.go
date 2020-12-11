@@ -104,3 +104,7 @@ func (qcc *QuicClient) Receive() (model.Message, error) {
 func (qcc *QuicClient) Notify(authInfo map[string]string) {
 	klog.Infof("Don not care")
 }
+
+func (qcc *QuicClient) State() conn.ConnectionState {
+	return qcc.client.ConnectionState()
+}

@@ -2,6 +2,7 @@ package clients
 
 import (
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/viaduct/pkg/conn"
 )
 
 //Adapter is a web socket client interface
@@ -14,4 +15,6 @@ type Adapter interface {
 
 	// notify auth info
 	Notify(authInfo map[string]string)
+
+	State() conn.ConnectionState
 }

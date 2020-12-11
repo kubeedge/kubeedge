@@ -95,6 +95,7 @@ func (eh *EdgeHub) Start() {
 		go eh.routeToEdge()
 		go eh.routeToCloud()
 		go eh.keepalive()
+		go eh.checkClientState()
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
