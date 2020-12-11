@@ -149,7 +149,7 @@ func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
 	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
-	
+
 	if endpoint != nil {
 		syncObjUID := getObjectUID(sync.Name)
 		if syncObjUID != string(endpoint.GetUID()) {
