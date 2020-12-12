@@ -41,7 +41,7 @@ type Session struct {
 
 	// apiServerConn indicates a connection request made by multiple apiserver to one edgecore
 	apiServerConn map[uint64]APIServerConnection
-	apiConnlock   *sync.Mutex
+	apiConnlock   *sync.RWMutex
 }
 
 func (s *Session) WriteMessageToTunnel(m *stream.Message) error {
@@ -49,6 +49,8 @@ func (s *Session) WriteMessageToTunnel(m *stream.Message) error {
 }
 
 func (s *Session) Close() {
+	s.apiConnlock.Lock()
+	defer s.apiConnlock.Unlock()
 	for _, c := range s.apiServerConn {
 		c.SetEdgePeerDone()
 	}
@@ -84,6 +86,8 @@ func (s *Session) Serve() {
 }
 
 func (s *Session) ProxyTunnelMessageToApiserver(message *stream.Message) error {
+	s.apiConnlock.RLock()
+	defer s.apiConnlock.RUnlock()
 	kubeCon, ok := s.apiServerConn[message.ConnectID]
 	if !ok {
 		return fmt.Errorf("Can not find apiServer connection id %v in %v",

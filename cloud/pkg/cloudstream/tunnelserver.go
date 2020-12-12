@@ -94,7 +94,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	session := &Session{
 		tunnel:        stream.NewDefaultTunnel(con),
 		apiServerConn: make(map[uint64]APIServerConnection),
-		apiConnlock:   &sync.Mutex{},
+		apiConnlock:   &sync.RWMutex{},
 		sessionID:     hostNameOverride,
 	}
 
