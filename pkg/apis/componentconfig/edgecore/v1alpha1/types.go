@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"time"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -113,6 +114,12 @@ type Edged struct {
 	// if set to false (for debugging etc.), skip checking other edged configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
+	// Labels indicates current node labels
+	Labels map[string]string `json:"labels,omitempty"`
+	// Annotations indicates current node annotations
+	Annotations map[string]string `json:"annotations,omitempty"`
+	// Taints indicates current node taints
+	Taints []v1.Taint `json:"taints,omitempty"`
 	// NodeStatusUpdateFrequency indicates node status update frequency (second)
 	// default 10
 	NodeStatusUpdateFrequency int32 `json:"nodeStatusUpdateFrequency,omitempty"`
