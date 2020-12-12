@@ -88,6 +88,21 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		"node-role.kubernetes.io/edge":  "",
 		"node-role.kubernetes.io/agent": "",
 	}
+	for k, v := range config.Config.Labels {
+		node.Labels[k] = v
+	}
+
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	for k, v := range config.Config.Annotations {
+		node.Annotations[k] = v
+	}
+
+	if node.Spec.Taints == nil {
+		node.Spec.Taints = make([]v1.Taint, 0)
+	}
+	node.Spec.Taints = append(node.Spec.Taints, config.Config.Taints...)
 
 	node.Status.Addresses = []v1.NodeAddress{
 		{Type: v1.NodeInternalIP, Address: e.nodeIP.String()},
