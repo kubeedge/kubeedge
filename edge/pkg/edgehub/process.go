@@ -97,7 +97,7 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		return fmt.Errorf("msg_group not found")
 	}
 
-	isResponse := eh.isSyncResponse(message.GetParentID())
+	isResponse := eh.isSyncResponse(message.GetParentID()) || message.GetOperation() == model.ResponseOperation
 	if !isResponse {
 		beehiveContext.SendToGroup(md, message)
 		return nil
