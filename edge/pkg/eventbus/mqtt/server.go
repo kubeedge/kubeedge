@@ -133,7 +133,7 @@ func (m *Server) SetTopic(topic string) {
 	m.tree.Set(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
 
-// RemoveTopic remove the topic to internal mqtt broker.
+// RemoveTopic remove the topic from internal mqtt broker.
 func (m *Server) RemoveTopic(topic string) {
 	m.tree.Remove(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
