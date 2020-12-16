@@ -22,5 +22,10 @@ set -o pipefail
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/install.sh"
+
+set +e
+check_golangci-lint
+set -e
 
 kubeedge::lint::check "$@"
