@@ -122,11 +122,13 @@ func (b *BLEConfig) Load() error {
 	b.Mqtt = readConfigFile.Mqtt
 	b.Scheduler = readConfigFile.Scheduler
 	b.Watcher = readConfigFile.Watcher
+	propertyVisitors := make([]*PropertyVisitor, 0)
 	// Assign device information obtained from config file
 	for _, device := range readConfigMap.DeviceInstances {
 		if strings.EqualFold(device.Model, readConfigFile.DeviceModelName) {
 			b.Device.ID = device.ID
 			b.Device.Name = device.Model
+			propertyVisitors = device.PropertyVisitors
 		}
 	}
 	// Assign information required by action manager
@@ -135,7 +137,7 @@ func (b *BLEConfig) Load() error {
 		action.Name = actionConfig.Name
 		action.PerformImmediately = actionConfig.PerformImmediately
 
-		for _, propertyVisitor := range readConfigMap.PropertyVisitors {
+		for _, propertyVisitor := range propertyVisitors {
 			if strings.EqualFold(propertyVisitor.ModelName, b.Device.Name) && strings.EqualFold(propertyVisitor.PropertyName, actionConfig.PropertyName) && strings.ToUpper(propertyVisitor.Protocol) == ProtocolName {
 				propertyVisitorBytes, err := json.Marshal(propertyVisitor.VisitorConfig)
 				if err != nil {
