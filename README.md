@@ -17,6 +17,10 @@ With data processed at the Edge, the responsiveness is increased dramatically an
 
 KubeEdge is an incubation-level hosted project by the [Cloud Native Computing Foundation](https://cncf.io) (CNCF). KubeEdge incubation [announcement](https://www.cncf.io/blog/2020/09/16/toc-approves-kubeedge-as-incubating-project/) by CNCF.
 
+**Note**:
+
+The versions before *1.3* have not been supported, please try upgrade.
+
 ## Advantages
 
 - **Kubernetes-native support**: Managing edge applications and edge devices in the cloud with fully compatible Kubernetes APIs.

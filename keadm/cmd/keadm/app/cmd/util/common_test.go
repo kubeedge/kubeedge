@@ -17,7 +17,6 @@ limitations under the License.
 package util
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -118,40 +117,6 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 	defer os.RemoveAll(testTmpDir)
 
 	componentType = types.CloudCore
-	targetVersion = semver.Version{Major: 1, Minor: 0}
-	serviceFilePath = testTmpDir + "/" + CloudServiceFile
-	t.Run("test with downloading cloudcore service file if version < 1.1.0", func(t *testing.T) {
-		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
-		if err != nil {
-			t.Fatalf("download should not return an error:{%s}\n", err.Error())
-		}
-		if err = check(serviceFilePath); !os.IsNotExist(err) {
-			if err == nil {
-				err = errors.New("nil")
-			}
-			t.Fatalf("check should return error{%s} but not,error:{%s}\n", os.ErrNotExist, err.Error())
-		}
-		clean(testTmpDir)
-	})
-
-	componentType = types.CloudCore
-	targetVersion = semver.Version{Major: 1, Minor: 1}
-	serviceFilePath = testTmpDir + "/" + CloudServiceFile
-	t.Run("test with downloading cloudcore service file if version = 1.1.0", func(t *testing.T) {
-		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
-		if err != nil {
-			t.Fatalf("download should not return an error:{%s}\n", err.Error())
-		}
-		if err = check(serviceFilePath); !os.IsNotExist(err) {
-			if err == nil {
-				err = errors.New("nil")
-			}
-			t.Fatalf("check should return error{%s} but not,error:{%s}\n", os.ErrNotExist, err.Error())
-		}
-		clean(testTmpDir)
-	})
-
-	componentType = types.CloudCore
 	targetVersion, _ = semver.Make(types.DefaultKubeEdgeVersion)
 	serviceFilePath = testTmpDir + "/" + CloudServiceFile
 	t.Run("test with reDownloading cloudcore service file if version = latest", func(t *testing.T) {
@@ -162,37 +127,6 @@ func TestPrivateDownloadServiceFile(t *testing.T) {
 		err = downloadServiceFile(componentType, targetVersion, testTmpDir)
 		if err != nil {
 			t.Fatalf("second download should not return an error:{%s}\n", err.Error())
-		}
-		if err = check(serviceFilePath); err != nil {
-			t.Fatalf("check should not return an error{%s}\n", err.Error())
-		}
-		clean(testTmpDir)
-	})
-
-	componentType = types.EdgeCore
-	targetVersion = semver.Version{Major: 1, Minor: 0}
-	serviceFilePath = testTmpDir + "/" + EdgeServiceFile
-	t.Run("test with downloading edgecore service file if version < 1.1.0", func(t *testing.T) {
-		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
-		if err != nil {
-			t.Fatalf("download should not return an error:{%s}\n", err.Error())
-		}
-		if err = check(serviceFilePath); !os.IsNotExist(err) {
-			if err == nil {
-				err = errors.New("nil")
-			}
-			t.Fatalf("check should return error{%s} but not,error:{%s}\n", os.ErrNotExist, err.Error())
-		}
-		clean(testTmpDir)
-	})
-
-	componentType = types.EdgeCore
-	targetVersion = semver.Version{Major: 1, Minor: 1}
-	serviceFilePath = testTmpDir + "/" + OldEdgeServiceFile
-	t.Run("test with downloading edgecore service file if version = 1.1.0", func(t *testing.T) {
-		err := downloadServiceFile(componentType, targetVersion, testTmpDir)
-		if err != nil {
-			t.Fatalf("download should not return an error:{%s}\n", err.Error())
 		}
 		if err = check(serviceFilePath); err != nil {
 			t.Fatalf("check should not return an error{%s}\n", err.Error())
