@@ -43,6 +43,10 @@ keadm init
 keadm init --kubeedge-version=%s  --kube-config=/root/.kube/config
 
   - kube-config is the absolute path of kubeconfig which used to secure connectivity between cloudcore and kube-apiserver
+
+keadm init --checksum=false
+
+  - skip checksum verify if tarball exist at local
 `
 )
 
@@ -79,8 +83,10 @@ func NewCloudInit(out io.Writer, init *types.InitOptions) *cobra.Command {
 
 //newInitOptions will initialise new instance of options everytime
 func newInitOptions() *types.InitOptions {
-	opts := &types.InitOptions{}
-	opts.KubeConfig = types.DefaultKubeConfig
+	opts := &types.InitOptions{
+		KubeConfig: types.DefaultKubeConfig,
+		CheckSum:   true,
+	}
 	return opts
 }
 
@@ -103,17 +109,13 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+
+	cmd.Flags().BoolVar(&initOpts.CheckSum, types.CheckSum, initOpts.CheckSum,
+		"Use this key to enable verify the checksum of existed KubeEdge tarball")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
 func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string]types.FlagData, initOptions *types.InitOptions) error {
-	toolList["Kubernetes"] = &util.K8SInstTool{
-		Common: util.Common{
-			KubeConfig: initOptions.KubeConfig,
-			Master:     initOptions.Master,
-		},
-	}
-
 	var kubeVer string
 	flgData, ok := flagData[types.KubeEdgeVersion]
 	if ok {
@@ -138,15 +140,23 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 			kubeVer = types.DefaultKubeEdgeVersion
 		}
 	}
+
+	common := util.Common{
+		ToolVersion: semver.MustParse(kubeVer),
+		KubeConfig:  initOptions.KubeConfig,
+		Master:      initOptions.Master,
+		TarballPath: initOptions.TarballPath,
+		CheckSum:    initOptions.CheckSum,
+	}
+
 	toolList["Cloud"] = &util.KubeCloudInstTool{
-		Common: util.Common{
-			ToolVersion: semver.MustParse(kubeVer),
-			KubeConfig:  initOptions.KubeConfig,
-			Master:      initOptions.Master,
-		},
+		Common:           common,
 		AdvertiseAddress: initOptions.AdvertiseAddress,
 		DNSName:          initOptions.DNS,
-		TarballPath:      initOptions.TarballPath,
+	}
+
+	toolList["Kubernetes"] = &util.K8SInstTool{
+		Common: common,
 	}
 	return nil
 }

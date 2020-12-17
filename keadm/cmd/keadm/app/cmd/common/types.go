@@ -30,6 +30,7 @@ type InitOptions struct {
 	AdvertiseAddress string
 	DNS              string
 	TarballPath      string
+	CheckSum         bool
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -125,6 +126,7 @@ const (
 type InstallOptions struct {
 	ComponentType ComponentType
 	TarballPath   string
+	CheckSum      bool
 }
 
 //ToolsInstaller interface for tools with install and teardown methods.

@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -49,22 +50,18 @@ const (
 	KubeEdgePath         = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
-
-	KubeCloudBinaryName = "cloudcore"
+	KubeCloudBinaryName  = "cloudcore"
 
 	KubeEdgeConfigDir        = KubeEdgePath + "config/"
 	KubeEdgeCloudCoreNewYaml = KubeEdgeConfigDir + "cloudcore.yaml"
 	KubeEdgeEdgeCoreNewYaml  = KubeEdgeConfigDir + "edgecore.yaml"
 
 	KubeEdgeLogPath = "/var/log/kubeedge/"
-	KubeEdgeCrdPath = KubeEdgePath + "crds"
 
 	KubeEdgeSocketPath = "/var/lib/kubeedge/"
 
 	EdgeRootDir = "/var/lib/edged"
-
-	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
-
+	
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
 
@@ -97,6 +94,8 @@ type Common struct {
 	ToolVersion semver.Version
 	KubeConfig  string
 	Master      string
+	TarballPath string
+	CheckSum    bool
 }
 
 // SetOSInterface defines a method to set the implemtation of the OS interface
@@ -243,42 +242,42 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		arch = "arm"
 	}
 
-	//Check if the same version exists, then skip the download and just checksum for it
-	//and if checksum failed, there will be a option to choose to continue to untar or quit.
-	//checksum available at download URL. So that both can be compared to see if
-	//proper download has happened and then only proceed further.
-	//Currently it is missing and once checksum is in place, checksum check required
-	//to be added here.
-	dirname := fmt.Sprintf("kubeedge-v%s-linux-%s", version, arch)
+	// Check if the tarball exists, then skip the download and checksum for it if necessary
+	// If checksum failed, there is an ask for users to choose continue or quit
 	filename := fmt.Sprintf("kubeedge-v%s-linux-%s.tar.gz", version, arch)
 	checksumFilename := fmt.Sprintf("checksum_kubeedge-v%s-linux-%s.tar.gz.txt", version, arch)
 	filePath := fmt.Sprintf("%s/%s", options.TarballPath, filename)
 	if _, err = os.Stat(filePath); err == nil {
-		fmt.Printf("Expected or Default KubeEdge version %v is already downloaded and will checksum for it. \n", version)
-		if success, _ := checkSum(filename, checksumFilename, version, options.TarballPath); !success {
-			fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
-			for {
-				confirm, err := askForconfirm()
-				if err != nil {
-					fmt.Println(err.Error())
-					continue
-				}
-				if confirm {
-					cmdStr := fmt.Sprintf("cd %s && rm -f %s", options.TarballPath, filename)
-					if err := NewCommand(cmdStr).Exec(); err != nil {
-						return err
+		fmt.Printf("Expected or Default KubeEdge version %v is already downloaded!\n", version)
+		if options.CheckSum {
+			fmt.Printf("Detect CheckSum is %v, download checksum file to verify\n", options.CheckSum)
+			if success, _ := checkSum(filename, checksumFilename, version, options.TarballPath); !success {
+				fmt.Printf("%v in your path checksum failed and do you want to delete this file and try to download again? \n", filename)
+				for {
+					confirm, err := askForconfirm()
+					if err != nil {
+						fmt.Println(err.Error())
+						continue
 					}
-					klog.Infof("%v have been deleted and will try to download again", filename)
-					if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
-						return err
+					if confirm {
+						cmdStr := fmt.Sprintf("cd %s && rm -f %s", options.TarballPath, filename)
+						if err := NewCommand(cmdStr).Exec(); err != nil {
+							return err
+						}
+						klog.Infof("%v have been deleted and will try to download again", filename)
+						if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
+							return err
+						}
+					} else {
+						klog.Warningf("failed to checksum and will continue to install.")
 					}
-				} else {
-					klog.Warningf("failed to checksum and will continue to install.")
+					break
 				}
-				break
+			} else {
+				fmt.Println("CheckSum verified pass!")
 			}
 		} else {
-			fmt.Println("Expected or Default KubeEdge version", version, "is already downloaded")
+			fmt.Printf("Detect CheckSum is %v, skip verify\n", options.CheckSum)
 		}
 	} else if !os.IsNotExist(err) {
 		return err
@@ -288,11 +287,12 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		}
 	}
 
-	if err := downloadServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
-		return fmt.Errorf("fail to download service file,error:{%s}", err.Error())
+	if err := writeServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
+		return fmt.Errorf("fail to write service file, err: %v", err)
 	}
 
 	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
+	dirname := fmt.Sprintf("kubeedge-v%s-linux-%s", version, arch)
 
 	if options.ComponentType == types.CloudCore {
 		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
@@ -662,37 +662,30 @@ func printResult(s string) {
 	fmt.Println(line)
 }
 
-func downloadServiceFile(componentType types.ComponentType, version semver.Version, storeDir string) error {
-	// No need to download if
-	// 1. the systemd not exists
-	// 2. the service file already exists
-	if hasSystemd() {
-		var ServiceFileName string
-		switch componentType {
-		case types.CloudCore:
-			ServiceFileName = CloudServiceFile
-		case types.EdgeCore:
-			ServiceFileName = EdgeServiceFile
-		default:
-			return fmt.Errorf("component type %s not support", componentType)
-		}
-		ServiceFilePath := storeDir + "/" + ServiceFileName
-		strippedVersion := fmt.Sprintf("%d.%d", version.Major, version.Minor)
-		ServiceFileURL := fmt.Sprintf(ServiceFileURLFormat, strippedVersion, ServiceFileName)
-		if _, err := os.Stat(ServiceFilePath); err != nil {
-			if os.IsNotExist(err) {
-				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -t %d -k --no-check-certificate %s", storeDir, RetryTimes, ServiceFileURL)
-				fmt.Printf("[Run as service] start to download service file for %s\n", componentType)
-				if err := NewCommand(cmdStr).Exec(); err != nil {
-					return err
-				}
-				fmt.Printf("[Run as service] success to download service file for %s\n", componentType)
-			} else {
-				return err
-			}
-		} else {
-			fmt.Printf("[Run as service] service file already exisits in %s, skip download\n", ServiceFilePath)
-		}
+func writeServiceFile(componentType types.ComponentType, version semver.Version, storeDir string) error {
+	if !hasSystemd() {
+		return nil
 	}
+
+	var serviceFile string
+	switch componentType {
+	case types.CloudCore:
+		serviceFile = CloudServiceFile
+	case types.EdgeCore:
+		serviceFile = EdgeServiceFile
+	default:
+		return fmt.Errorf("component type %s not support", componentType)
+	}
+
+	data, err := types.Asset(fmt.Sprintf("%s/services/%s", version.String()[:3], serviceFile))
+	if err != nil {
+		return err
+	}
+
+	filePath := fmt.Sprintf("%s/%s", storeDir, serviceFile)
+	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
+		return err
+	}
+
 	return nil
 }

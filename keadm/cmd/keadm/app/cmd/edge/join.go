@@ -43,6 +43,10 @@ keadm join --cloudcore-ipport=<ip:port address> --edgenode-name=<unique string a
   - This command will download and install the default version of pre-requisites and KubeEdge
 
 keadm join --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --kubeedge-version=%s
+
+keadm --cloudcore-ipport=10.20.30.40:10000 --edgenode-name=testing123 --checksum=false
+
+  - skip checksum verify if tarball exist at local
 `
 )
 
@@ -114,13 +118,17 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 
 	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+
+	cmd.Flags().BoolVar(&joinOptions.CheckSum, types.CheckSum, joinOptions.CheckSum,
+		"Use this key to enable verify the checksum of existed KubeEdge tarball")
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
 func newJoinOptions() *types.JoinOptions {
-	opts := &types.JoinOptions{}
-	opts.CertPath = types.DefaultCertPath
-
+	opts := &types.JoinOptions{
+		CertPath: types.DefaultCertPath,
+	}
+	opts.CheckSum = true
 	return opts
 }
 
@@ -154,6 +162,8 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 	toolList["KubeEdge"] = &util.KubeEdgeInstTool{
 		Common: util.Common{
 			ToolVersion: semver.MustParse(kubeVer),
+			TarballPath: joinOptions.TarballPath,
+			CheckSum:    joinOptions.CheckSum,
 		},
 		CloudCoreIP:           joinOptions.CloudCoreIPPort,
 		EdgeNodeName:          joinOptions.EdgeNodeName,
@@ -163,7 +173,6 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		Token:                 joinOptions.Token,
 		CertPort:              joinOptions.CertPort,
 		CGroupDriver:          joinOptions.CGroupDriver,
-		TarballPath:           joinOptions.TarballPath,
 	}
 
 	toolList["MQTT"] = &util.MQTTInstTool{}

@@ -80,6 +80,8 @@ const (
 	// eg.  "/tmp/kubeedge" or "/etc/kubeedge" by default
 	TarballPath = "tarballpath"
 
+	CheckSum = "checksum"
+
 	StrCheck    = "check"
 	StrDiagnose = "diagnose"
 
