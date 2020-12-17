@@ -148,8 +148,6 @@ const (
 	// probe the client every 10 seconds to ensure the connection is still active
 	GrpcKeepAliveTimeSec = 10
 	UDSFile              = "/var/lib/kubeedge/proxy.sock"
-	// set 1 if cloudcore is not HA
-	ServerAccount     = 1
 	DefaultTunnelPort = 10004
 	DefaultAgentPort  = 10003
 	SyncInterval      = 1

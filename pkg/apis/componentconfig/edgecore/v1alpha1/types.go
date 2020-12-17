@@ -467,6 +467,4 @@ type EdgeStream struct {
 	// AgentServer indicates agent server address (ip:port)
 	// +Required
 	AgentServer string `json:"server,omitempty"`
-	// ServerAccount indicates numbers of cloudcore
-	ServerAccount int `json:"serverAccount,omitempty"`
 }

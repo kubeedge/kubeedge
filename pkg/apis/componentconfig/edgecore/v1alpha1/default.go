@@ -162,7 +162,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				TLSTunnelCAFile:         constants.DefaultSTREAMCAFile,
 				TLSTunnelCertFile:       constants.DefaultSTREAMCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultSTREAMKeyFile,
-				ServerAccount:           constants.ServerAccount,
 				SyncInterval:            constants.SyncInterval,
 				ProbeInterval:           constants.ProbeInterval,
 				AgentServer:             net.JoinHostPort("127.0.0.1", strconv.Itoa(constants.DefaultAgentPort)),
