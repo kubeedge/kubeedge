@@ -98,11 +98,17 @@ function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
+<<<<<<< HEAD
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/stream.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    udsFile: /tmp/proxy.sock' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
     -e "s|/etc/|/tmp/etc/|g" \
     -e '/router:/a\    enable: true' ${CLOUD_CONFIGFILE}
+=======
+  sed -i -e "/modules:/a\  cloudStream:\n    enable: true\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    udsFile: /tmp/proxy.sock" \
+    -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
+    -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
+>>>>>>> 1d230a19... 1
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
@@ -121,14 +127,21 @@ function start_edgecore {
   EDGE_BIN=${KUBEEDGE_ROOT}/_output/local/bin/edgecore
   ${EDGE_BIN} --minconfig >  ${EDGE_CONFIGFILE}
 
-  sed -i '/modules:/a\  edgeStream:\n    enable: true\n    handshakeTimeout: 30\n    readDeadline: 15\n    server: 127.0.0.1:10003\n    tlsTunnelCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/stream.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    writeDeadline: 15' ${EDGE_CONFIGFILE}
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
 
+<<<<<<< HEAD
   sed -i -e "s|token: .*|token: ${token}|g" \
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
       -e "s|/etc/|/tmp/etc/|g" \
       -e "s|/var/lib/kubeedge/|/tmp&|g" \
       -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
+=======
+  sed -i -e '/modules:/a\  edgeStream:\n    enable: true\n    server: 192.168.1.241:10003' \
+    -e "s|token: .*|token: ${token}|g" \
+    -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
+    -e "s|/etc/|/tmp/etc/|g" \
+    -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
+>>>>>>> 1d230a19... 1
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 

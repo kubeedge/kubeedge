@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	hubconfig "github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -62,6 +63,7 @@ func (e *edgestream) Enable() bool {
 }
 
 func (e *edgestream) Start() {
+	<-edgehub.HasTLSTunnelCerts
 	stopCh := make(chan struct{})
 	if err := e.runProxyConnection(stopCh); err != nil {
 		klog.Errorf("failed to run edgestream, err %v", err)
