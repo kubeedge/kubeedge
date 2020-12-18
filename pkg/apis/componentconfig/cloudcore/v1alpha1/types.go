@@ -226,6 +226,12 @@ type EdgeControllerBuffer struct {
 	// EndpointsEvent indicates the buffer of endpoint event
 	// default 1
 	EndpointsEvent int32 `json:"endpointsEvent,omitempty"`
+	// RulesEvent indicates the buffer of rule event
+	// default 1
+	RulesEvent int32 `json:"rulesEvent,omitempty"`
+	// RuleEndpointsEvent indicates the buffer of endpoint event
+	// default 1
+	RuleEndpointsEvent int32 `json:"ruleEndpointsEvent,omitempty"`
 	// QueryPersistentVolume indicates the buffer of query persistent volume
 	// default 1024
 	QueryPersistentVolume int32 `json:"queryPersistentVolume,omitempty"`
@@ -250,6 +256,8 @@ type EdgeControllerBuffer struct {
 type ControllerContext struct {
 	// SendModule indicates which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
+	// SendRouterModule indicates messages will send message to router module.
+	SendRouterModule metaconfig.ModuleName `json:"sendRouterModule,omitempty"`
 	// ReceiveModule indicates which module will receive message from
 	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
 	// ResponseModule indicates which module will response message to

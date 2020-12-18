@@ -108,11 +108,13 @@ const (
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
 
-	DefaultPodEventBuffer       = 1
-	DefaultConfigMapEventBuffer = 1
-	DefaultSecretEventBuffer    = 1
-	DefaultServiceEventBuffer   = 1
-	DefaultEndpointsEventBuffer = 1
+	DefaultPodEventBuffer           = 1
+	DefaultConfigMapEventBuffer     = 1
+	DefaultSecretEventBuffer        = 1
+	DefaultServiceEventBuffer       = 1
+	DefaultEndpointsEventBuffer     = 1
+	DefaultRulesEventBuffer         = 1
+	DefaultRuleEndpointsEventBuffer = 1
 
 	// DeviceController
 	DefaultUpdateDeviceStatusBuffer  = 1024
@@ -128,6 +130,9 @@ const (
 	ResourceTypeEndpoints     = "endpoints"
 	ResourceTypeEndpointsList = "endpointslist"
 	ResourceTypeListener      = "listener"
+
+	ResourceTypeRule = "rule"
+	ResourceTypeRuleEndpoint = "rule-endpoint"
 
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"

@@ -24,6 +24,8 @@ import (
 	fakedevicesv1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/typed/devices/v1alpha2/fake"
 	reliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1"
 	fakereliablesyncsv1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake"
+	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/typed/rules/v1"
+	fakerulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned/typed/rules/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -86,4 +88,9 @@ func (c *Clientset) DevicesV1alpha2() devicesv1alpha2.DevicesV1alpha2Interface {
 // ReliablesyncsV1alpha1 retrieves the ReliablesyncsV1alpha1Client
 func (c *Clientset) ReliablesyncsV1alpha1() reliablesyncsv1alpha1.ReliablesyncsV1alpha1Interface {
 	return &fakereliablesyncsv1alpha1.FakeReliablesyncsV1alpha1{Fake: &c.Fake}
+}
+
+// RulesV1 retrieves the RulesV1Client
+func (c *Clientset) RulesV1() rulesv1.RulesV1Interface {
+	return &fakerulesv1.FakeRulesV1{Fake: &c.Fake}
 }
