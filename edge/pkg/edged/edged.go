@@ -890,9 +890,9 @@ func (e *edged) podRemoveWorkerRun(consumers int) {
 				err := e.consumePodDeletion(&namespacedName)
 				if err != nil {
 					if err == apis.ErrContainerNotFound {
-						klog.Infof("pod [%s] is not exist, with container not found error", podName)
+						klog.Errorf("pod [%s] is not exist, with container not found error", podName)
 					} else if err == apis.ErrPodNotFound {
-						klog.Infof("pod [%s] is not found", podName)
+						klog.Errorf("pod [%s] is not found", podName)
 					} else {
 						go func(item interface{}) {
 							klog.Errorf("worker remove pod [%s] failed: %v", podName, err)
