@@ -490,9 +490,8 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	}
 
 	if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
-		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-		//Cleanup the downloaded files
-		return false, NewCommand(fmt.Sprintf("cd %s && rm -f %s", tarballPath, filename)).Exec()
+		fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+		return false, nil
 	}
 	return true, nil
 }
