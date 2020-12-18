@@ -80,6 +80,12 @@ function create_objectsync_crd {
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
 }
 
+function create_rule_crd {
+  echo "creating the rule crd..."
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/router/router_v1_rule.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/router/router_v1_ruleEndpoint.yaml
+}
+
 function build_cloudcore {
   echo "building the cloudcore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
@@ -210,6 +216,7 @@ kubectl create ns kubeedge
 
 create_device_crd
 create_objectsync_crd
+create_rule_crd
 
 generate_streamserver_cert
 

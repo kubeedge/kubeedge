@@ -93,6 +93,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					SecretEvent:                constants.DefaultSecretEventBuffer,
 					ServiceEvent:               constants.DefaultServiceEventBuffer,
 					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
+					RulesEvent:                 constants.DefaultRulesEventBuffer,
+					RuleEndpointsEvent:         constants.DefaultRuleEndpointsEventBuffer,
 					QueryPersistentVolume:      constants.DefaultQueryPersistentVolumeBuffer,
 					QueryPersistentVolumeClaim: constants.DefaultQueryPersistentVolumeClaimBuffer,
 					QueryVolumeAttachment:      constants.DefaultQueryVolumeAttachmentBuffer,
@@ -102,6 +104,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				},
 				Context: &ControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
+				    SendRouterModule: metaconfig.ModuleNameRouter,
 					ReceiveModule:  metaconfig.ModuleNameEdgeController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
 				},

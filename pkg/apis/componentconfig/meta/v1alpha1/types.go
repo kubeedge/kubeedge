@@ -24,6 +24,7 @@ const (
 	ModuleNameEdgeController   ModuleName = "edgecontroller"
 	ModuleNameDeviceController ModuleName = "devicecontroller"
 	ModuleNameCloudHub         ModuleName = "cloudhub"
+	ModuleNameRouter           ModuleName = "router"
 )
 
 // Available modules for EdgeCore

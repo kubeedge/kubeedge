@@ -23,6 +23,7 @@ import (
 
 	v1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	v1alpha1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -64,6 +65,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Reliablesyncs().V1alpha1().ClusterObjectSyncs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("objectsyncs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Reliablesyncs().V1alpha1().ObjectSyncs().Informer()}, nil
+
+		// Group=rules.kubeedge.io, Version=v1
+	case v1.SchemeGroupVersion.WithResource("rules"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().Rules().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("ruleendpoints"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Rules().V1().RuleEndpoints().Informer()}, nil
 
 	}
 

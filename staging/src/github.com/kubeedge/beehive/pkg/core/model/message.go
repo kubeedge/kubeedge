@@ -15,13 +15,15 @@ const (
 	ResponseOperation      = "response"
 	ResponseErrorOperation = "error"
 
-	ResourceTypePod        = "pod"
-	ResourceTypeConfigmap  = "configmap"
-	ResourceTypeSecret     = "secret"
-	ResourceTypeNode       = "node"
-	ResourceTypePodlist    = "podlist"
-	ResourceTypePodStatus  = "podstatus"
-	ResourceTypeNodeStatus = "nodestatus"
+	ResourceTypePod          = "pod"
+	ResourceTypeConfigmap    = "configmap"
+	ResourceTypeSecret       = "secret"
+	ResourceTypeNode         = "node"
+	ResourceTypePodlist      = "podlist"
+	ResourceTypePodStatus    = "podstatus"
+	ResourceTypeNodeStatus   = "nodestatus"
+	ResourceTypeRule         = "rule"
+	ResourceTypeRuleEndpoint = "rule-endpoint"
 )
 
 // Message struct
