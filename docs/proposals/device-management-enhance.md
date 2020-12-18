@@ -56,7 +56,7 @@ We propose below modifications on current design.
 * Deal various industrial protocols
   * Currently, only Modbus, OPC-UA and bluetooth are supported by KubeEdge. However there are thousands of industrial protocols. It is impossible to define all these protocols in KubeEdge. If users want to use these un-predefined protocols, we should provide a way to support.
 * Customized provided protocol
-  * If user want to add some special control value, such as bulk related collection, in provided protocol like Modbus, he can use the customized K-V features.
+  * If users want to add some special control value, such as bulk related collection, in provided protocol like Modbus, he can use the customized K-V features.
 
 ## Design Details
 

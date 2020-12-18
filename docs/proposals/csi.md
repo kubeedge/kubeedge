@@ -614,7 +614,7 @@ KubeEdge 1.3
 #### Graduation Criteria
 
 * Failure Recovery Mechanism for High Availability.
-* The User Guide is clear and easy for the users to use in the producation environment.
+* The User Guide is clear and easy for the users to use in the production environment.
 
 #### Release Plan
 
