@@ -23,7 +23,7 @@ last-updated: 2019-02-24
 * [Proposal](#proposal)
 
 ## Introduction
-Mapper is an application that is used to connect and and control devices. Following are the responsibilities of mapper:
+Mapper is an application that is used to connect and control devices. Following are the responsibilities of mapper:
 1) Scan and connect to the device.
 2) Report the actual state of twin-attributes of device.
 3) Map the expected state of device-twin to actual state of device-twin.
@@ -117,4 +117,4 @@ This can be an optional component as not all devices support health-checking. In
 
 **6) Controller**: Controller should expose API's for CRUD operations for managing Actions, Schedules, Watchers, Data-Converters, Health-Checkers.
 
-**7) Driver Interface**: Driver Interface is responsible for talking to the the actual device driver while performing an Action. Device drivers can be protocol specific or device specific depending on the type of the device. A corresponding interface should be present in the mapper to talk to the actual driver.
+**7) Driver Interface**: Driver Interface is responsible for talking to the actual device driver while performing an Action. Device drivers can be protocol specific or device specific depending on the type of the device. A corresponding interface should be present in the mapper to talk to the actual driver.
