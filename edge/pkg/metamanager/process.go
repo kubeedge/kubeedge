@@ -507,7 +507,7 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	}
 }
 
-func (m *metaManager) processSync(message model.Message) {
+func (m *metaManager) processSync() {
 	m.syncPodStatus()
 }
 
@@ -643,7 +643,7 @@ func (m *metaManager) process(message model.Message) {
 	case messagepkg.OperationNodeConnection:
 		m.processNodeConnection(message)
 	case OperationMetaSync:
-		m.processSync(message)
+		m.processSync()
 	case OperationFunctionAction:
 		m.processFunctionAction(message)
 	case OperationFunctionActionResult:
