@@ -9,6 +9,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
@@ -103,10 +104,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		operation := accessInfo.GetOperation()
 		resource := accessInfo.GetResource()
 		switch operation {
-		case "subscribe":
+		case messagepkg.OperationSubscribe:
 			eb.subscribe(resource)
 			klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
-		case "message":
+		case messagepkg.OperationMessage:
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
 				klog.Errorf("Message is not map type")
@@ -116,7 +117,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := message["topic"].(string)
 			payload, _ := json.Marshal(&message)
 			eb.publish(topic, payload)
-		case "publish":
+		case messagepkg.OperationPublish:
 			topic := resource
 			var ok bool
 			// cloud and edge will send different type of content, need to check
@@ -126,7 +127,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				payload = []byte(content)
 			}
 			eb.publish(topic, payload)
-		case "get_result":
+		case messagepkg.OperationGetResult:
 			if resource != "auth_info" {
 				klog.Info("Skip none auth_info get_result message")
 				return

@@ -45,7 +45,7 @@ returned from edge nodes to ensure the message delivery is in a reliable fashion
 - If cloudcore being restarted or offline for a while, whenever the cloudcore is back online,
 send the latest event to the edge node (if there is any update to be sent).
 - If edgenode being restarted or offline for a while, whenever the node is back online,
-cloudcore will sent the latest event to make it up to date.
+cloudcore will send the latest event to make it up to date.
 
 ## Design Details
 
@@ -89,9 +89,9 @@ to corresponding NodeMessageQueue according to the node name in message.
 then return an ACK message to the cloud.
 
 - If cloudhub does not receive an ACK message within the interval, it will keep resending the message 5 times.
-If all 5 retries fail, cloudhub will discard the event. SyncController will handling these failed events.
+If all 5 retries fail, cloudhub will discard the event. SyncController will handle these failed events.
 
-- Even if the edge node receives the message, the returned ACK message may lost during transmission.
+- Even if the edge node receives the message, the returned ACK message may be lost during transmission.
  In this case, cloudhub will send the message again and the edge can handle the duplicate message.
 
 ### SyncController
@@ -222,7 +222,7 @@ type ObjectSyncStatus struct {
 
 - When cloudcore restarts or starts normally, it will check the resourceVersion to avoid sending old messages.
 
-- During cloudcore restart, if some objects are deleted, the delete event may lost at this time.
+- During cloudcore restart, if some objects are deleted, the delete event may be lost at this time.
 The SyncController will handle this situation. The object GC mechanism is needed here to ensure the deletion:
 compare whether the objects stored in CRD exist in K8s. If not, then SyncController will generate & send a delete event
 to the edge and delete the object in CRD when ACK received.

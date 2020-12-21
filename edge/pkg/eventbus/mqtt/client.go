@@ -12,6 +12,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 )
@@ -107,7 +108,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
-		resource, "response").FillBody(string(message.Payload()))
+		resource, messagepkg.OperationResponse).FillBody(string(message.Payload()))
 	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *msg)
 }

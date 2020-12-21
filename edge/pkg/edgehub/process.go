@@ -41,7 +41,7 @@ func (eh *EdgeHub) addKeepChannel(msgID string) chan model.Message {
 	eh.keeperLock.Lock()
 	defer eh.keeperLock.Unlock()
 
-	tempChannel := make(chan model.Message)
+	tempChannel := make(chan model.Message, 1)
 	eh.syncKeeper[msgID] = tempChannel
 
 	return tempChannel
@@ -192,7 +192,7 @@ func (eh *EdgeHub) keepalive() {
 		default:
 		}
 		msg := model.NewMessage("").
-			BuildRouter(ModuleNameEdgeHub, "resource", "node", "keepalive").
+			BuildRouter(ModuleNameEdgeHub, "resource", "node", messagepkg.OperationKeepalive).
 			FillBody("ping")
 
 		// post message to cloud hub

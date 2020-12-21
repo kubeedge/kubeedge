@@ -39,7 +39,7 @@ output:
 
 linters-settings:
   gci:
-    local-prefixes: github.com/kubeedge/kubeedge
+    local-prefixes: github.com/kubeedge
   misspell:
     ignore-words:
       - mosquitto

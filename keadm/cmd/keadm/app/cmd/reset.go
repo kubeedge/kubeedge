@@ -30,7 +30,6 @@ import (
 	utilsexec "k8s.io/utils/exec"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -56,7 +55,7 @@ func newResetOptions() *common.ResetOptions {
 }
 
 // NewKubeEdgeReset represents the reset command
-func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
+func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command {
 	IsEdgeNode := false
 	if reset == nil {
 		reset = newResetOptions()
@@ -73,9 +72,9 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 				return err
 			}
 			switch whoRunning {
-			case types.KubeEdgeEdgeRunning:
+			case common.KubeEdgeEdgeRunning:
 				IsEdgeNode = true
-			case types.NoneRunning:
+			case common.NoneRunning:
 				return fmt.Errorf("None of KubeEdge components are running in this host")
 			}
 			return nil
@@ -122,7 +121,7 @@ func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
 func TearDownKubeEdge(isEdgeNode bool, kubeConfig string) error {
-	var ke types.ToolsInstaller
+	var ke common.ToolsInstaller
 	ke = &util.KubeCloudInstTool{Common: util.Common{KubeConfig: kubeConfig}}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
@@ -175,7 +174,7 @@ func cleanDirectories(isEdgeNode bool) error {
 	return nil
 }
 
-func addResetFlags(cmd *cobra.Command, resetOpts *types.ResetOptions) {
+func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 	cmd.Flags().StringVar(&resetOpts.Kubeconfig, common.KubeConfig, resetOpts.Kubeconfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,

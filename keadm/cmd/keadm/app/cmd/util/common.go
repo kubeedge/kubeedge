@@ -47,30 +47,18 @@ const (
 	DebianOSType   = "debian"
 	CentOSType     = "centos"
 
-	KubeEdgeDownloadURL          = "https://github.com/kubeedge/kubeedge/releases/download"
-	OldEdgeServiceFile           = "edge.service"
-	EdgeServiceFile              = "edgecore.service"
-	CloudServiceFile             = "cloudcore.service"
-	ServiceFileURLFormat         = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
-	KubeEdgePath                 = "/etc/kubeedge/"
-	KubeEdgeUsrBinPath           = "/usr/local/bin"
-	KubeEdgeConfPath             = KubeEdgePath + "kubeedge/edge/conf"
-	KubeEdgeBinaryName           = "edgecore"
-	KubeEdgeBinaryNamePre        = "edge_core"
-	KubeEdgeCloudDefaultCertPath = KubeEdgePath + "certs/"
-	KubeEdgeConfigEdgeYaml       = KubeEdgeConfPath + "/edge.yaml"
-	KubeEdgeConfigModulesYaml    = KubeEdgeConfPath + "/modules.yaml"
+	KubeEdgeDownloadURL  = "https://github.com/kubeedge/kubeedge/releases/download"
+	EdgeServiceFile      = "edgecore.service"
+	CloudServiceFile     = "cloudcore.service"
+	ServiceFileURLFormat = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/tools/%s"
+	KubeEdgePath         = "/etc/kubeedge/"
+	KubeEdgeUsrBinPath   = "/usr/local/bin"
+	KubeEdgeBinaryName   = "edgecore"
+	KubeCloudBinaryName  = "cloudcore"
 
-	KubeEdgeCloudCertGenPath     = KubeEdgePath + "certgen.sh"
-	KubeEdgeEdgeCertsTarFileName = "certs.tgz"
-	KubeEdgeCloudConfPath        = KubeEdgePath + "kubeedge/cloud/conf"
-	KubeEdgeCloudCoreYaml        = KubeEdgeCloudConfPath + "/controller.yaml"
-	KubeEdgeCloudCoreModulesYaml = KubeEdgeCloudConfPath + "/modules.yaml"
-	KubeCloudBinaryName          = "cloudcore"
-
-	KubeEdgeNewConfigDir     = KubeEdgePath + "config/"
-	KubeEdgeCloudCoreNewYaml = KubeEdgeNewConfigDir + "cloudcore.yaml"
-	KubeEdgeEdgeCoreNewYaml  = KubeEdgeNewConfigDir + "edgecore.yaml"
+	KubeEdgeConfigDir        = KubeEdgePath + "config/"
+	KubeEdgeCloudCoreNewYaml = KubeEdgeConfigDir + "cloudcore.yaml"
+	KubeEdgeEdgeCoreNewYaml  = KubeEdgeConfigDir + "edgecore.yaml"
 
 	KubeEdgeLogPath = "/var/log/kubeedge/"
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
@@ -79,14 +67,6 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
-
-	UnitCore = "core"
-	UnitMB   = "MB"
-	UnitGB   = "GB"
-
-	KB int = 1024
-	MB int = KB * 1024
-	GB int = MB * 1024
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
@@ -316,38 +296,27 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		return fmt.Errorf("fail to download service file,error:{%s}", err.Error())
 	}
 
-	// Compatible with 1.0.0
 	var untarFileAndMoveCloudCore, untarFileAndMoveEdgeCore string
-	if version.GE(semver.MustParse("1.1.0")) {
-		if options.ComponentType == types.CloudCore {
-			untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
-				options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
-		}
-		if options.ComponentType == types.EdgeCore {
-			untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/edge/%s %s/",
-				options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeEdgeBinaryName, KubeEdgePath)
-		}
-	} else {
-		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/kubeedge/edge/%s %s/.",
-			options.TarballPath, options.TarballPath, filename, options.TarballPath, KubeEdgeBinaryNamePre, KubeEdgePath)
-		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && cp %s/kubeedge/cloud/%s %s/.",
-			options.TarballPath, options.TarballPath, KubeCloudBinaryName, KubeEdgeUsrBinPath)
-	}
 
 	if options.ComponentType == types.CloudCore {
+		untarFileAndMoveCloudCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/cloud/cloudcore/%s %s/",
+			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeCloudBinaryName, KubeEdgeUsrBinPath)
+
 		cmd := NewCommand(untarFileAndMoveCloudCore)
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
 		fmt.Println(cmd.GetStdOut())
-	}
-	if options.ComponentType == types.EdgeCore {
+	} else if options.ComponentType == types.EdgeCore {
+		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/edge/%s %s/",
+			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeEdgeBinaryName, KubeEdgePath)
 		cmd := NewCommand(untarFileAndMoveEdgeCore)
 		if err := cmd.Exec(); err != nil {
 			return err
 		}
 		fmt.Println(cmd.GetStdOut())
 	}
+
 	return nil
 }
 
@@ -360,33 +329,16 @@ func runEdgeCore(version semver.Version) error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
-	var binaryName string
-
-	if version.GE(semver.MustParse("1.1.0")) {
-		binaryName = KubeEdgeBinaryName
-	} else {
-		binaryName = KubeEdgeBinaryNamePre
-		// add +x for edgecore
-		command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, binaryName)
-		cmd := NewCommand(command)
-		if err := cmd.Exec(); err != nil {
-			return err
-		}
-	}
-
 	var binExec string
 
 	systemdExist := hasSystemd()
 
 	edgecoreServiceName := "edgecore"
 
-	if version.GE(semver.MustParse("1.1.0")) && systemdExist {
-		if version.EQ(semver.MustParse("1.1.0")) {
-			edgecoreServiceName = "edge"
-		}
+	if systemdExist {
 		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
 	} else {
-		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, binaryName)
+		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	}
 
 	cmd := NewCommand(binExec)
@@ -399,14 +351,10 @@ func runEdgeCore(version semver.Version) error {
 
 	fmt.Println(cmd.GetStdOut())
 
-	if version.GE(semver.MustParse("1.1.0")) {
-		if systemdExist {
-			fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -b\n", edgecoreServiceName)
-		} else {
-			fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+binaryName+".log")
-		}
+	if systemdExist {
+		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -b\n", edgecoreServiceName)
 	} else {
-		fmt.Println("KubeEdge edgecore is running, For logs visit", KubeEdgePath+"kubeedge/edge/"+binaryName+".log")
+		fmt.Println("KubeEdge edgecore is running, For logs visit: ", KubeEdgeLogPath+KubeEdgeBinaryName+".log")
 	}
 
 	return nil
@@ -490,9 +438,8 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	}
 
 	if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
-		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-		//Cleanup the downloaded files
-		return false, NewCommand(fmt.Sprintf("cd %s && rm -f %s", tarballPath, filename)).Exec()
+		fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+		return false, nil
 	}
 	return true, nil
 }
@@ -713,22 +660,14 @@ func printResult(s string) {
 func downloadServiceFile(componentType types.ComponentType, version semver.Version, storeDir string) error {
 	// No need to download if
 	// 1. the systemd not exists
-	// 2. the version is less than 1.1.0
-	// 3. the service file already exists
-	if hasSystemd() && version.GE(semver.MustParse("1.1.0")) {
+	// 2. the service file already exists
+	if hasSystemd() {
 		var ServiceFileName string
 		switch componentType {
 		case types.CloudCore:
 			ServiceFileName = CloudServiceFile
-			if version.EQ(semver.MustParse("1.1.0")) {
-				fmt.Println("[Run as service]skip download service file for cloudcore-v1.1.0, not support")
-				return nil
-			}
 		case types.EdgeCore:
 			ServiceFileName = EdgeServiceFile
-			if version.EQ(semver.MustParse("1.1.0")) {
-				ServiceFileName = OldEdgeServiceFile
-			}
 		default:
 			return fmt.Errorf("component type %s not support", componentType)
 		}

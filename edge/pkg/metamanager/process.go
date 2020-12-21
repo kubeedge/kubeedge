@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/common/util"
@@ -507,7 +507,7 @@ func (m *metaManager) processNodeConnection(message model.Message) {
 	}
 }
 
-func (m *metaManager) processSync(message model.Message) {
+func (m *metaManager) processSync() {
 	m.syncPodStatus()
 }
 
@@ -643,7 +643,7 @@ func (m *metaManager) process(message model.Message) {
 	case messagepkg.OperationNodeConnection:
 		m.processNodeConnection(message)
 	case OperationMetaSync:
-		m.processSync(message)
+		m.processSync()
 	case OperationFunctionAction:
 		m.processFunctionAction(message)
 	case OperationFunctionActionResult:

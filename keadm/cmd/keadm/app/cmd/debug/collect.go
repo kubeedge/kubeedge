@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
-	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -27,8 +27,8 @@ keadm debug collect --output-path .
 
 var pringDeatilFlag = false
 
-// NewEdgeJoin returns KubeEdge edge join command.
-func NewCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.Command {
+// NewCollect returns KubeEdge collect command.
+func NewCollect(out io.Writer, collectOptions *common.CollectOptions) *cobra.Command {
 	if collectOptions == nil {
 		collectOptions = newCollectOptions()
 	}
@@ -51,8 +51,8 @@ func NewCollect(out io.Writer, collectOptions *types.ColletcOptions) *cobra.Comm
 }
 
 // dd flags
-func addCollectOtherFlags(cmd *cobra.Command, collectOptions *types.ColletcOptions) {
-	cmd.Flags().StringVarP(&collectOptions.Config, types.EdgecoreConfig, "c", collectOptions.Config,
+func addCollectOtherFlags(cmd *cobra.Command, collectOptions *common.CollectOptions) {
+	cmd.Flags().StringVarP(&collectOptions.Config, common.EdgecoreConfig, "c", collectOptions.Config,
 		fmt.Sprintf("Specify configuration file, defalut is %s", common.EdgecoreConfigPath))
 	cmd.Flags().BoolVarP(&collectOptions.Detail, "detail", "d", false,
 		"Whether to print internal log output")
@@ -65,17 +65,17 @@ func addCollectOtherFlags(cmd *cobra.Command, collectOptions *types.ColletcOptio
 }
 
 // newCollectOptions returns a struct ready for being used for creating cmd collect flags.
-func newCollectOptions() *types.ColletcOptions {
-	opts := &types.ColletcOptions{}
+func newCollectOptions() *common.CollectOptions {
+	opts := &common.CollectOptions{}
 
-	opts.Config = types.EdgecoreConfigPath
+	opts.Config = common.EdgecoreConfigPath
 	opts.OutputPath = "."
 	opts.Detail = false
 	return opts
 }
 
 //Start to collect data
-func ExecuteCollect(collectOptions *types.ColletcOptions) error {
+func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	//verification parameters
 	err := VerificationParameters(collectOptions)
 	if err != nil {
@@ -138,7 +138,7 @@ func ExecuteCollect(collectOptions *types.ColletcOptions) error {
 }
 
 // verification parameters for debug collect
-func VerificationParameters(collectOptions *types.ColletcOptions) error {
+func VerificationParameters(collectOptions *common.CollectOptions) error {
 	if !util.FileExists(collectOptions.Config) {
 		return fmt.Errorf("edgecore config %s does not exist", collectOptions.Config)
 	}
@@ -200,7 +200,7 @@ func collectSystemData(tmpPath string) error {
 }
 
 // collect edgecore data
-func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *types.ColletcOptions) error {
+func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *common.CollectOptions) error {
 	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
 	err := os.Mkdir(tmpPath, os.ModePerm)
 	if err != nil {

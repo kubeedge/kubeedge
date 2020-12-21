@@ -89,12 +89,8 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		"node-role.kubernetes.io/agent": "",
 	}
 
-	ip, err := e.getIP()
-	if err != nil {
-		return nil, err
-	}
 	node.Status.Addresses = []v1.NodeAddress{
-		{Type: v1.NodeInternalIP, Address: ip},
+		{Type: v1.NodeInternalIP, Address: e.nodeIP.String()},
 		{Type: v1.NodeHostName, Address: hostname},
 	}
 
@@ -318,17 +314,6 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (e *edged) getIP() (string, error) {
-	if nodeIP := config.Config.NodeIP; nodeIP != "" {
-		return nodeIP, nil
-	}
-	hostName, _ := os.Hostname()
-	if hostName == "" {
-		hostName = e.nodeName
-	}
-	return util.GetLocalIP(hostName)
-}
-
 func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
 	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
@@ -399,7 +384,7 @@ func (e *edged) registerNode() error {
 	if err != nil || res.Content != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
 		if res.Content != "OK" {
-			klog.Errorf("response from cloud core: %s", res.Content)
+			klog.Errorf("response from cloud core: %v", res.Content)
 		}
 		return err
 	}

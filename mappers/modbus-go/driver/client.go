@@ -170,7 +170,7 @@ func (c *ModbusClient) Set(registerType string, addr uint16, value uint16) (resu
 			return nil, errors.New("Wrong value")
 		}
 		results, err = c.Client.WriteSingleCoil(addr, valueSet)
-	case "DiscreteInputRegister":
+	case "HoldingRegister":
 		results, err = c.Client.WriteSingleRegister(addr, value)
 	default:
 		return nil, errors.New("Bad register type")

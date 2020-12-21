@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	. "github.com/kubeedge/kubeedge/mappers/modbus-go/globals"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestParse(t *testing.T) {

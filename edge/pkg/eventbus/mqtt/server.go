@@ -29,6 +29,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -115,7 +116,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
-		resource, "response").FillBody(string(msg.Payload))
+		resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *message)
 }
@@ -133,7 +134,7 @@ func (m *Server) SetTopic(topic string) {
 	m.tree.Set(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
 
-// RemoveTopic remove the topic to internal mqtt broker.
+// RemoveTopic remove the topic from internal mqtt broker.
 func (m *Server) RemoveTopic(topic string) {
 	m.tree.Remove(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
