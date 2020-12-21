@@ -107,6 +107,9 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		case messagepkg.OperationSubscribe:
 			eb.subscribe(resource)
 			klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
+		case messagepkg.OperationUnsubscribe:
+			eb.unsubscribe(resource)
+			klog.Infof("Edge-hub-cli unsubscribe topic to %s", resource)
 		case messagepkg.OperationMessage:
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
