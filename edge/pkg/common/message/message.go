@@ -10,6 +10,7 @@ const (
 	SourceNodeConnection       = "edgehub"
 	OperationNodeConnection    = "connect"
 	OperationSubscribe         = "subscribe"
+	OperationUnsubscribe       = "unsubscribe"
 	OperationMessage           = "message"
 	OperationPublish           = "publish"
 	OperationGetResult         = "get_result"
