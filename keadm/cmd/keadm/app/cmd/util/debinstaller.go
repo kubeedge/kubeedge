@@ -25,21 +25,21 @@ import (
 
 const downloadRetryTimes int = 3
 
-//UbuntuOS struct objects shall have information of the tools version to be installed
+//DebOS struct objects shall have information of the tools version to be installed
 //on Hosts having Ubuntu OS.
 //It implements OSTypeInstaller interface
-type UbuntuOS struct {
+type DebOS struct {
 	KubeEdgeVersion semver.Version
 	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
 //SetKubeEdgeVersion sets the KubeEdge version for the objects instance
-func (u *UbuntuOS) SetKubeEdgeVersion(version semver.Version) {
-	u.KubeEdgeVersion = version
+func (d *DebOS) SetKubeEdgeVersion(version semver.Version) {
+	d.KubeEdgeVersion = version
 }
 
 //InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
-func (u *UbuntuOS) InstallMQTT() error {
+func (d *DebOS) InstallMQTT() error {
 	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
 		return err
@@ -63,35 +63,35 @@ func (u *UbuntuOS) InstallMQTT() error {
 }
 
 // IsK8SComponentInstalled checks if said K8S version is already installed in the host
-func (u *UbuntuOS) IsK8SComponentInstalled(kubeConfig, master string) error {
+func (d *DebOS) IsK8SComponentInstalled(kubeConfig, master string) error {
 	return isK8SComponentInstalled(kubeConfig, master)
 }
 
 // InstallKubeEdge downloads the provided version of KubeEdge.
 // Untar's in the specified location /etc/kubeedge/ and then copies
 // the binary to excecutables' path (eg: /usr/local/bin)
-func (u *UbuntuOS) InstallKubeEdge(options types.InstallOptions) error {
+func (d *DebOS) InstallKubeEdge(options types.InstallOptions) error {
 	arch, err := getSystemArch()
 	if err != nil {
 		return err
 	}
 
-	return installKubeEdge(options, arch, u.KubeEdgeVersion)
+	return installKubeEdge(options, arch, d.KubeEdgeVersion)
 }
 
 //RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
 //and the starts edgecore with logs being captured
-func (u *UbuntuOS) RunEdgeCore() error {
-	return runEdgeCore(u.KubeEdgeVersion)
+func (d *DebOS) RunEdgeCore() error {
+	return runEdgeCore(d.KubeEdgeVersion)
 }
 
 //KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
-func (u *UbuntuOS) KillKubeEdgeBinary(proc string) error {
+func (d *DebOS) KillKubeEdgeBinary(proc string) error {
 	return killKubeEdgeBinary(proc)
 }
 
 //IsKubeEdgeProcessRunning checks if the given process is running or not
-func (u *UbuntuOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
+func (d *DebOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
 
@@ -104,6 +104,6 @@ func getSystemArch() (string, error) {
 	return cmd.GetStdOut(), nil
 }
 
-func (u *UbuntuOS) IsProcessRunning(proc string) (bool, error) {
+func (d *DebOS) IsProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
