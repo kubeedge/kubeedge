@@ -15,6 +15,7 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
 const UploadTopic = "SYS/dis/upload_records"
@@ -81,6 +82,23 @@ func onSubConnectionLost(client MQTT.Client, err error) {
 
 func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
+		token := client.Subscribe(t, 1, OnSubMessageReceived)
+		if rs, err := util.CheckClientToken(token); !rs {
+			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
+			return
+		}
+		klog.Infof("edge-hub-cli subscribe topic to %s", t)
+	}
+	topics, err := dao.QueryAllTopics()
+	if err != nil {
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		return
+	}
+	if len(*topics) <= 0 {
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		return
+	}
+	for _, t := range *topics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
