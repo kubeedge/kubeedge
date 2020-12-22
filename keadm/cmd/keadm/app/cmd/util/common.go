@@ -40,13 +40,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-//Constants used by installers
+// Constants used by installers
 const (
-	UbuntuOSType   = "ubuntu"
-	RaspbianOSType = "raspbian"
-	DebianOSType   = "debian"
-	CentOSType     = "centos"
-
 	KubeEdgeDownloadURL  = "https://github.com/kubeedge/kubeedge/releases/download"
 	EdgeServiceFile      = "edgecore.service"
 	CloudServiceFile     = "cloudcore.service"
@@ -54,7 +49,8 @@ const (
 	KubeEdgePath         = "/etc/kubeedge/"
 	KubeEdgeUsrBinPath   = "/usr/local/bin"
 	KubeEdgeBinaryName   = "edgecore"
-	KubeCloudBinaryName  = "cloudcore"
+
+	KubeCloudBinaryName = "cloudcore"
 
 	KubeEdgeConfigDir        = KubeEdgePath + "config/"
 	KubeEdgeCloudCoreNewYaml = KubeEdgeConfigDir + "cloudcore.yaml"
@@ -67,6 +63,9 @@ const (
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
+
+	APT string = "apt"
+	YUM string = "yum"
 )
 
 //AddToolVals gets the value and default values of each flags and collects them in temporary cache
@@ -96,28 +95,33 @@ func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 	co.OSTypeInstaller = intf
 }
 
-//GetOSVersion gets the OS name
-func GetOSVersion() string {
-	cmd := NewCommand("source /etc/os-release && echo $ID")
+//GetPackageManager get package manager of OS
+func GetPackageManager() string {
+	cmd := NewCommand("command -v apt || command -v yum")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
-
-	return cmd.GetStdOut()
+	if strings.HasSuffix(cmd.GetStdOut(), APT) {
+		return APT
+	} else if strings.HasSuffix(cmd.GetStdOut(), YUM) {
+		return YUM
+	} else {
+		return ""
+	}
 }
 
 //GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
-	switch GetOSVersion() {
-	case UbuntuOSType, RaspbianOSType, DebianOSType:
-		return &UbuntuOS{}
-	case CentOSType:
-		return &CentOS{}
+	switch GetPackageManager() {
+	case APT:
+		return &DebOS{}
+	case YUM:
+		return &RpmOS{}
 	default:
-		fmt.Printf("This OS version is currently un-supported by keadm, %s", GetOSVersion())
-		panic("This OS version is currently un-supported by keadm,")
+		fmt.Println("Failed to detect supported package manager command(apt, yum), exit")
+		panic("Failed to detect supported package manager command(apt, yum), exit")
 	}
 }
 
