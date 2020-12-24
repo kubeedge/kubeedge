@@ -97,12 +97,20 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		return fmt.Errorf("msg_group not found")
 	}
 
-	isResponse := eh.isSyncResponse(message.GetParentID()) || message.GetOperation() == model.ResponseOperation
-	if !isResponse {
+	//isResponse := eh.isSyncResponse(message.GetParentID()) || message.GetOperation() == model.ResponseOperation
+	//if !isResponse {
+	//	beehiveContext.SendToGroup(md, message)
+	//	return nil
+	//}
+	//return eh.sendToKeepChannel(message)
+
+	isSyncResp := message.GetOperation() == model.ResponseOperation
+	if !isSyncResp {
 		beehiveContext.SendToGroup(md, message)
-		return nil
+	} else {
+		beehiveContext.SendResp(message)
 	}
-	return eh.sendToKeepChannel(message)
+	return nil
 }
 
 func (eh *EdgeHub) routeToEdge() {
