@@ -598,14 +598,12 @@ func askForconfirm() (bool, error) {
 
 // Execute shell script and filter
 func ExecShellFilter(c string) (string, error) {
-	cmd := exec.Command("sh", "-c", c)
-	o, err := cmd.Output()
-	str := strings.Replace(string(o), " ", "", -1)
-	str = strings.Replace(str, "\n", "", -1)
-	if err != nil {
-		return str, fmt.Errorf("exec fail: %s, %s", c, err)
+	cmd := NewCommand(c)
+	if err := cmd.Exec(); err != nil {
+		return "", err
 	}
-	return str, nil
+
+	return cmd.GetStdOut(), nil
 }
 
 func FileExists(path string) bool {
