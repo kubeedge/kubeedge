@@ -1,12 +1,9 @@
 package manager
 
 import (
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
@@ -21,14 +18,11 @@ func (sm *EndpointsManager) Events() chan watch.Event {
 }
 
 // NewEndpointsManager create EndpointsManager by kube clientset and namespace
-func NewEndpointsManager(kubeClient *kubernetes.Clientset, namespace string) (*EndpointsManager, error) {
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "endpoints", namespace, fields.Everything())
+func NewEndpointsManager() (*EndpointsManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.EndpointsEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si := cache.NewSharedInformer(lw, &v1.Endpoints{}, 0)
+	si := informers.GetGlobalInformers().Endpoints()
 	si.AddEventHandler(rh)
-	stopNever := make(chan struct{})
-	go si.Run(stopNever)
 
 	return &EndpointsManager{events: events}, nil
 }

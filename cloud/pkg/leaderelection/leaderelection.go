@@ -24,7 +24,9 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -39,12 +41,8 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 	}
 
 	coreBroadcaster := record.NewBroadcaster()
-	cli, err := utils.KubeClient()
-	if err != nil {
-		klog.Warningf("Create kube client for leaderElection failed with error: %s", err)
-		return
-	}
-	if err = CreateNamespaceIfNeeded(cli, "kubeedge"); err != nil {
+	cli := client.GetKubeEdgeClient()
+	if err := CreateNamespaceIfNeeded(cli, "kubeedge"); err != nil {
 		klog.Warningf("Create Namespace kubeedge failed with error: %s", err)
 		return
 	}
@@ -59,6 +57,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 		OnStartedLeading: func(ctx context.Context) {
 			// Start all modules,
 			core.StartModules()
+			informers.GetGlobalInformers().Start(beehiveContext.Done())
 			// Patch PodReadinessGate if program run in pod
 			err := TryToPatchPodReadinessGate(corev1.ConditionTrue)
 			if err != nil {
@@ -200,7 +199,7 @@ func TriggerGracefulShutdown() {
 	}
 }
 
-func CreateNamespaceIfNeeded(cli *clientset.Clientset, ns string) error {
+func CreateNamespaceIfNeeded(cli client.KubeEdgeClient, ns string) error {
 	c := cli.CoreV1()
 	if _, err := c.Namespaces().Get(context.Background(), ns, metav1.GetOptions{}); err == nil {
 		// the namespace already exists

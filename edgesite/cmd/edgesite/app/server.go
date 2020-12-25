@@ -10,6 +10,9 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
@@ -53,10 +56,14 @@ runs on edge nodes and manages containerized applications.`,
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-
+			client.InitKubeEdgeClient(config.KubeAPIConfig)
+			gis := informers.GetGlobalInformers()
+			registerModules(config)
 			registerModules(config)
 			// start all modules
-			core.Run()
+			core.StartModules()
+			gis.Start(beehiveContext.Done())
+			core.GracefulShutdown()
 		},
 	}
 	fs := cmd.Flags()
@@ -85,7 +92,7 @@ runs on edge nodes and manages containerized applications.`,
 // registerModules register all the modules started in edgesite
 func registerModules(c *v1alpha1.EdgeSiteConfig) {
 	edged.Register(c.Modules.Edged)
-	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, c.Modules.Edged.HostnameOverride, true)
+	edgecontroller.Register(c.Modules.EdgeController, c.Modules.Edged.HostnameOverride, true)
 	metamanager.Register(c.Modules.MetaManager)
 	// Nodte: Need to put it to the end, and wait for all models to register before executing
 	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)

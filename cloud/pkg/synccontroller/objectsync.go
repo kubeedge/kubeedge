@@ -14,6 +14,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/listers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
@@ -21,7 +22,7 @@ import (
 )
 
 func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
-	pod, err := sctl.podLister.Pods(sync.Namespace).Get(sync.Spec.ObjectName)
+	pod, err := listers.GetListers().PodLister().Pods(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if pod != nil {
@@ -52,7 +53,7 @@ func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
-	configmap, err := sctl.configMapLister.ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
+	configmap, err := listers.GetListers().ConfigMapLister().ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if configmap != nil {
@@ -83,7 +84,7 @@ func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
-	secret, err := sctl.secretLister.Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
+	secret, err := listers.GetListers().SecretLister().Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 
@@ -115,7 +116,7 @@ func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
-	service, err := sctl.serviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
+	service, err := listers.GetListers().ServiceLister().Services(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if service != nil {
@@ -146,7 +147,7 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
-	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
+	endpoint, err := listers.GetListers().EndpointsLister().Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 

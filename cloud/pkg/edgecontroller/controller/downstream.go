@@ -10,23 +10,22 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
-	kubeClient   *kubernetes.Clientset
+	kubeClient   client.KubeEdgeClient
 	messageLayer messagelayer.MessageLayer
 
 	podManager *manager.PodManager
@@ -515,12 +514,6 @@ func (dc *DownstreamController) initLocating() error {
 func NewDownstreamController() (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
-	cli, err := utils.KubeClient()
-	if err != nil {
-		klog.Warningf("create kube client failed with error: %s", err)
-		return nil, err
-	}
-
 	var nodeName = ""
 	if config.Config.EdgeSiteEnable {
 		if config.Config.NodeName == "" {
@@ -529,44 +522,44 @@ func NewDownstreamController() (*DownstreamController, error) {
 		nodeName = config.Config.NodeName
 	}
 
-	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, nodeName)
+	podManager, err := manager.NewPodManager(nodeName)
 	if err != nil {
 		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
-	configMapManager, err := manager.NewConfigMapManager(cli, v1.NamespaceAll)
+	configMapManager, err := manager.NewConfigMapManager()
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
-	secretManager, err := manager.NewSecretManager(cli, v1.NamespaceAll)
+	secretManager, err := manager.NewSecretManager()
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
 	}
 
-	nodesManager, err := manager.NewNodesManager(cli, v1.NamespaceAll)
+	nodesManager, err := manager.NewNodesManager()
 	if err != nil {
 		klog.Warningf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
-	serviceManager, err := manager.NewServiceManager(cli, v1.NamespaceAll)
+	serviceManager, err := manager.NewServiceManager()
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
-	endpointsManager, err := manager.NewEndpointsManager(cli, v1.NamespaceAll)
+	endpointsManager, err := manager.NewEndpointsManager()
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
 	}
 
 	dc := &DownstreamController{
-		kubeClient:       cli,
+		kubeClient:       client.GetKubeEdgeClient(),
 		podManager:       podManager,
 		configmapManager: configMapManager,
 		secretManager:    secretManager,

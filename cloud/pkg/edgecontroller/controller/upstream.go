@@ -34,17 +34,16 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
@@ -77,7 +76,7 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	kubeClient   *kubernetes.Clientset
+	kubeClient   client.KubeEdgeClient
 	messageLayer messagelayer.MessageLayer
 
 	// message channel
@@ -941,13 +940,8 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 
 // NewUpstreamController create UpstreamController from config
 func NewUpstreamController() (*UpstreamController, error) {
-	cli, err := utils.KubeClient()
-	if err != nil {
-		klog.Warningf("create kube client failed with error: %s", err)
-		return nil, err
-	}
 	uc := &UpstreamController{
-		kubeClient:   cli,
+		kubeClient:   client.GetKubeEdgeClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
 	}
 	return uc, nil

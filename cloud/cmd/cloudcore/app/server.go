@@ -11,10 +11,13 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
@@ -57,7 +60,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
-
+			client.InitKubeEdgeClient(config.KubeAPIConfig)
+			gis := informers.GetGlobalInformers()
 			registerModules(config)
 
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.
@@ -69,7 +73,9 @@ kubernetes controller which manages devices so that the device metadata/status d
 			}
 
 			// Start all modules if disable leader election
-			core.Run()
+			core.StartModules()
+			gis.Start(beehiveContext.Done())
+			core.GracefulShutdown()
 		},
 	}
 	fs := cmd.Flags()
@@ -98,9 +104,9 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
-	cloudhub.Register(c.Modules.CloudHub, c.KubeAPIConfig)
-	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
+	cloudhub.Register(c.Modules.CloudHub)
+	edgecontroller.Register(c.Modules.EdgeController, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
-	synccontroller.Register(c.Modules.SyncController, c.KubeAPIConfig)
+	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream)
 }
