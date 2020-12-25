@@ -1,12 +1,9 @@
 package manager
 
 import (
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
@@ -21,14 +18,11 @@ func (sm *ServiceManager) Events() chan watch.Event {
 }
 
 // NewServiceManager create ServiceManager by kube clientset and namespace
-func NewServiceManager(kubeClient *kubernetes.Clientset, namespace string) (*ServiceManager, error) {
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "services", namespace, fields.Everything())
+func NewServiceManager() (*ServiceManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.ServiceEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si := cache.NewSharedInformer(lw, &v1.Service{}, 0)
+	si := informers.GetGlobalInformers().Service()
 	si.AddEventHandler(rh)
-	stopNever := make(chan struct{})
-	go si.Run(stopNever)
 
 	return &ServiceManager{events: events}, nil
 }
