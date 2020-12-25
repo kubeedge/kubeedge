@@ -209,19 +209,19 @@ func CheckCPU() error {
 }
 
 func CheckMemory() error {
-	mem, err := mem.VirtualMemory()
+	memoryInfo, err := mem.VirtualMemory()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Memory total: %.2f MB, Allowed > %v MB\n", float32(mem.Total)/common.MB, common.AllowedValueMemory/common.MB)
-	fmt.Printf("Memory Free total: %.2f MB, Allowed > %v MB\n", float32(mem.Free)/common.MB, common.AllowedCurrentValueMem/common.MB)
-	fmt.Printf("Memory usage rate: %.2f, Allowed rate < %v\n", mem.UsedPercent/100,
+	fmt.Printf("Memory total: %.2f MB, Allowed > %v MB\n", float32(memoryInfo.Total)/common.MB, common.AllowedValueMemory/common.MB)
+	fmt.Printf("Memory Free total: %.2f MB, Allowed > %v MB\n", float32(memoryInfo.Free)/common.MB, common.AllowedCurrentValueMem/common.MB)
+	fmt.Printf("Memory usage rate: %.2f, Allowed rate < %v\n", memoryInfo.UsedPercent/100,
 		common.AllowedCurrentValueMemRate)
 
-	if mem.Total < common.AllowedValueMemory ||
-		mem.Free < common.AllowedCurrentValueMem ||
-		mem.UsedPercent/100 > common.AllowedCurrentValueMemRate {
+	if memoryInfo.Total < common.AllowedValueMemory ||
+		memoryInfo.Free < common.AllowedCurrentValueMem ||
+		memoryInfo.UsedPercent/100 > common.AllowedCurrentValueMemRate {
 		return errors.New("memory check failed")
 	}
 
@@ -282,16 +282,16 @@ func CheckDNSSpecify(domain string, dns string) error {
 
 func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer string, config string) error {
 	if edgecoreServer == "" {
-		edgecoreServer = "127.0.0.1:10350"
+		edgecoreServer = common.EdgeCoreServer
 	}
 
 	if config != "" {
-		edgeconfig, err := util.ParseEdgecoreConfig(config)
+		edgeConfig, err := util.ParseEdgecoreConfig(config)
 		if err != nil {
 			err = fmt.Errorf("parse Edgecore config failed")
 		} else {
 			if cloudhubServer == "" {
-				cloudhubServer = edgeconfig.Modules.EdgeHub.WebSocket.Server
+				cloudhubServer = edgeConfig.Modules.EdgeHub.WebSocket.Server
 			}
 		}
 	}
