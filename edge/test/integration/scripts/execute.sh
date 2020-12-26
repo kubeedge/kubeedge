@@ -17,10 +17,10 @@
 TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
 
 function cleanup() {
-  sudo pkill edgecore || true
   while true; do
+    sudo pkill edgecore || true
     sleep 1
-    ps faux | grep -q [e]dgecore || break
+    pidof edgecore >/dev/null || break
   done
 
   sudo rm -rf $TEST_DIR/appdeployment/appdeployment.test $TEST_DIR/device/device.test
