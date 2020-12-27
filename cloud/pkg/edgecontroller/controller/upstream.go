@@ -329,6 +329,30 @@ func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, 
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
+// syncNode sync the edge node info to kubernetes
+func (uc *UpstreamController) syncNode(node *v1.Node, current *v1.Node) (*v1.Node, error) {
+	if node.Labels == nil {
+		node.Labels = make(map[string]string)
+	}
+	for k, v := range current.Labels {
+		if _, ok := node.Labels[k]; ok {
+			continue
+		}
+		node.Labels[k] = v
+	}
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	for k, v := range current.Annotations {
+		if _, ok := node.Annotations[k]; ok {
+			continue
+		}
+		node.Annotations[k] = v
+	}
+	node.Spec.Taints = append(node.Spec.Taints, current.Spec.Taints...)
+	return uc.kubeClient.CoreV1().Nodes().Update(context.Background(), node, metaV1.UpdateOptions{})
+}
+
 func (uc *UpstreamController) updateNodeStatus() {
 	for {
 		select {
@@ -364,14 +388,8 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 			switch msg.GetOperation() {
 			case model.InsertOperation:
-				_, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
-				if err == nil {
-					klog.Infof("node: %s already exists, do nothing", name)
-					uc.nodeMsgResponse(name, namespace, "OK", msg)
-					continue
-				}
-
-				if !errors.IsNotFound(err) {
+				currentNode, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
+				if err != nil && !errors.IsNotFound(err) {
 					errLog := fmt.Sprintf("get node %s info error: %v , register node failed", name, err)
 					klog.Error(errLog)
 					uc.nodeMsgResponse(name, namespace, errLog, msg)
@@ -384,6 +402,24 @@ func (uc *UpstreamController) updateNodeStatus() {
 					errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
 					klog.Error(errLog)
 					uc.nodeMsgResponse(name, namespace, errLog, msg)
+					continue
+				}
+
+				if err == nil {
+					// sync node info if edge-role-label-key not exits when node is register
+					if _, ok := currentNode.Labels[constants.EdgeNodeRoleLabelKey]; ok {
+						klog.Infof("node: %s already exists, do nothing", name)
+						uc.nodeMsgResponse(name, namespace, "OK", msg)
+						continue
+					}
+					if _, err = uc.syncNode(node, currentNode); err != nil {
+						errLog := fmt.Sprintf("sync node %s error: %v , register node failed", name, err)
+						klog.Error(errLog)
+						uc.nodeMsgResponse(name, namespace, errLog, msg)
+					} else {
+						klog.Infof("node: %s , sync info successful", name)
+						uc.nodeMsgResponse(name, namespace, "OK", msg)
+					}
 					continue
 				}
 
