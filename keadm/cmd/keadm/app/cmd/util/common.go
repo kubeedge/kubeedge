@@ -398,7 +398,7 @@ func killKubeEdgeBinary(proc string) error {
 
 //isKubeEdgeProcessRunning checks if the given process is running or not
 func isKubeEdgeProcessRunning(proc string) (bool, error) {
-	procRunning := fmt.Sprintf("pidof %s 2&>1", proc)
+	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
 	cmd := NewCommand(procRunning)
 
 	err := cmd.Exec()
