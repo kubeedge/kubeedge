@@ -45,83 +45,13 @@ type Message struct {
 }
 ```
 
-### (1) Pod and other built-in resource object
+#### (1) Pod and other built-in resource object
 
-Let's take [syncPod](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/edgecontroller/controller/downstream.go#L47) as an example, as follows:
+Let's take [syncPod](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/edgecontroller/controller/downstream.go#L47) as an example. Here we can see that cloud send a whole `Pod` to edge. Then we parse the Pod completely so that we can use the Pod API on the edge.
 
-```go
-func (dc *DownstreamController) syncPod() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("Stop edgecontroller downstream syncPod loop")
-			return
-		case e := <-dc.podManager.Events():
-			pod, ok := e.Object.(*v1.Pod)
-			...
-			msg := model.NewMessage("")
-			msg.SetResourceVersion(pod.ResourceVersion)
-			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
-			...
-			msg.Content = pod // send pod to edge
-			switch e.Type {
-			case watch.Added:
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
-				dc.lc.AddOrUpdatePod(*pod)
-			case watch.Deleted:
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
-			case watch.Modified:
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-				dc.lc.AddOrUpdatePod(*pod)
-			default:
-				klog.Warningf("pod event type: %s unsupported", e.Type)
-			}
-			if err := dc.messageLayer.Send(*msg); err != nil {
-				...
-			}
-		}
-	}
-}
-```
+#### (2) Device
 
-We send `Pod` to edge. Then we parse the Pod completely on the edge so that we can use the Pod API on the edge.
-
-### (2) Device
-
-Let's take [syncDevice](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/controller/downstream.go#L594) as an example, as follows:
-
-```go
-func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
-  			...
-				// update twin properties
-				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
-					// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
-					twin := make(map[string]*types.MsgTwin)
-					addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
-					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
-					msg := model.NewMessage("")
-
-					resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
-					if err != nil {
-						klog.Warningf("Built message resource failed with error: %s", err)
-						return
-					}
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-					content := types.DeviceTwinUpdate{Twin: twin} // send DeviceTwinUpdate to edge
-					content.EventID = uuid.NewV4().String()
-					content.Timestamp = time.Now().UnixNano() / 1e6
-					msg.Content = content
-
-					err = dc.messageLayer.Send(*msg)
-					if err != nil {
-						klog.Errorf("Failed to send deviceTwin message %v due to error %v", msg, err)
-					}
-				}
-  	...
-} 
-```
-
-We send `DeviceTwinUpdate` to edge when device twin updated. Since we **DON'T distribute the entire Device to the edge**, we cannot use the Device API as easily on the edge as we do on the cloud. In addition, in order to parse out the message sent by the cloud, additional data structure(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) is required, which increases the complexity of the code.
+Let's take [syncDevice](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/controller/downstream.go#L594) as an example. We send `DeviceTwinUpdate` to edge when device twin updated. Since we **DON'T distribute the entire Device to the edge**, we cannot use the Device API as easily on the edge as we do on the cloud. In addition, in order to parse out the message sent by the cloud, additional data structure(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) is required, which increases the complexity of the code.
 
 On the other hand, a ConfigMap is created to store the Device information when a new Device is created, which can also be optimized and simplified once we can use Device API on the edge.
 
@@ -143,7 +73,7 @@ Since we modify the `Device` object, then we need to modify device controller(bo
 * send a whole `Device` update to edge instead of `membership` update or `twin` update on downstream.
 * send a whole `Device` update to cloud instead of `twin` update on upstream.
 
-At present, device controller follows the design [here](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/device_controller.md#device-controller). 
+At present, device controller follows the [design](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/device_controller.md#device-controller). 
 
 * DeviceTwin & Mapper
 
@@ -151,6 +81,7 @@ Once we can retrive a whloe `Device` from cloud,  we can simplify the implementa
 
 ### Use Cases
 
+* Simplify device API sync logic, improve maintainability
 * Simplify the implementation for mapper components for user
 
 
