@@ -77,7 +77,22 @@ At present, device controller follows the [design](https://github.com/kubeedge/k
 
 * DeviceTwin & Mapper
 
-Once we can retrive a whloe `Device` from cloud,  we can simplify the implementation on the edge. For now, we have to defive some types(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) on the edge in order to unmarshal/marshal device info. Once we can use Device API on the edge, it can be optimized.
+Once we can retrieve a whole `Device` from cloud,  we can simplify the implementation on the edge. For now, we have to defive some types(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) on the edge in order to unmarshal/marshal device info. Once we can use Device API on the edge, it can be optimized.
+
+We split this into the following stages:
+
+* alpha
+
+Discard struct like `DeviceTwinUpdate`, make device API available both at cloud and edge side.
+
+* beta
+
+Discard configmaps store device info, make apps call device API directly.
+
+* graduated
+
+Call list/watch to sync device API at cloud and edge side.
+
 
 ### Use Cases
 
