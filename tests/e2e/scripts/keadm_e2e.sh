@@ -19,8 +19,8 @@ WORKDIR=$(dirname $0)
 E2E_DIR=$(realpath $(dirname $0)/..)
 
 function cleanup() {
-  sudo pkill edgecore
-  sudo pkill cloudcore
+  sudo pkill edgecore || true
+  sudo pkill cloudcore || true
   kind delete cluster --name test
   sudo rm -rf /var/log/kubeedge /etc/kubeedge /etc/systemd/system/edgecore.service
 }
