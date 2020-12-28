@@ -39,6 +39,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/listers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -494,19 +495,19 @@ func (uc *UpstreamController) updateNodeStatus() {
 func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.kubeClient.CoreV1().ConfigMaps(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		configMap, err := listers.GetListers().ConfigMapLister().ConfigMaps(namespace).Get(name)
 		resourceVersion := configMap.ResourceVersion
 		return configMap, resourceVersion, err
 	case model.ResourceTypeSecret:
-		secret, err := uc.kubeClient.CoreV1().Secrets(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		secret, err := listers.GetListers().SecretLister().Secrets(namespace).Get(name)
 		resourceVersion := secret.ResourceVersion
 		return secret, resourceVersion, err
 	case common.ResourceTypeService:
-		svc, err := uc.kubeClient.CoreV1().Services(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		svc, err := listers.GetListers().ServiceLister().Services(namespace).Get(name)
 		resourceVersion := svc.ResourceVersion
 		return svc, resourceVersion, err
 	case common.ResourceTypeEndpoints:
-		eps, err := uc.kubeClient.CoreV1().Endpoints(namespace).Get(context.Background(), name, metaV1.GetOptions{})
+		eps, err := listers.GetListers().EndpointsLister().Endpoints(namespace).Get(name)
 		resourceVersion := eps.ResourceVersion
 		return eps, resourceVersion, err
 	case common.ResourceTypePersistentVolume:
@@ -522,7 +523,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		resourceVersion := va.ResourceVersion
 		return va, resourceVersion, err
 	case model.ResourceTypeNode:
-		node, err := uc.kubeClient.CoreV1().Nodes().Get(context.Background(), name, metaV1.GetOptions{})
+		node, err := listers.GetListers().EdgeNodeLister().Get(name)
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
 	default:

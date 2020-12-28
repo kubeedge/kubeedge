@@ -27,6 +27,7 @@ type Lister interface {
 	ServiceLister() v1.ServiceLister
 	EndpointsLister() v1.EndpointsLister
 	NodeLister() v1.NodeLister
+	EdgeNodeLister() v1.NodeLister
 	ClusterObjectSyncLister() v1alpha1.ClusterObjectSyncLister
 	ObjectSyncLister() v1alpha1.ObjectSyncLister
 	DeviceLister() v1alpha2.DeviceLister
@@ -45,6 +46,8 @@ type listers struct {
 	eplister  v1.EndpointsLister
 	noinit    sync.Once
 	nolister  v1.NodeLister
+	enoinit   sync.Once
+	enolister v1.NodeLister
 	cosinit   sync.Once
 	coslister v1alpha1.ClusterObjectSyncLister
 	osinit    sync.Once
@@ -99,6 +102,13 @@ func (l *listers) NodeLister() v1.NodeLister {
 		l.nolister = v1.NewNodeLister(informers.GetGlobalInformers().Node().GetIndexer())
 	})
 	return l.nolister
+}
+
+func (l *listers) EdgeNodeLister() v1.NodeLister {
+	l.enoinit.Do(func() {
+		l.enolister = v1.NewNodeLister(informers.GetGlobalInformers().Node().GetIndexer())
+	})
+	return l.enolister
 }
 
 func (l *listers) ClusterObjectSyncLister() v1alpha1.ClusterObjectSyncLister {
