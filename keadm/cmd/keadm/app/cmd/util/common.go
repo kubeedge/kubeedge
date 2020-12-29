@@ -334,8 +334,7 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 	return nil
 }
 
-// runEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
-// and the starts edgecore with logs being captured
+// runEdgeCore starts edgecore with logs being captured
 func runEdgeCore(version semver.Version) error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
@@ -356,9 +355,6 @@ func runEdgeCore(version semver.Version) error {
 	}
 
 	cmd := NewCommand(binExec)
-	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
-	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
