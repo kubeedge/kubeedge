@@ -146,7 +146,7 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 		fmt.Println(err)
 		util.PrintFail(use, common.StrCheck)
 	} else {
-		util.PrintSuccedd(use, common.StrCheck)
+		util.PrintSucceed(use, common.StrCheck)
 	}
 }
 
