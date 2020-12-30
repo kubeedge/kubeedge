@@ -406,7 +406,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 
 				if err == nil {
-					// sync node info if edge-role-label-key not exits when node is register
+					// sync node info if edge-role-label-key not exits when the edge node is registered
 					if _, ok := currentNode.Labels[constants.EdgeNodeRoleLabelKey]; ok {
 						klog.Infof("node: %s already exists, do nothing", name)
 						uc.nodeMsgResponse(name, namespace, "OK", msg)
