@@ -646,7 +646,7 @@ func PrintFail(cmd string, s string) {
 }
 
 //print success
-func PrintSuccedd(cmd string, s string) {
+func PrintSucceed(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
 	printResult(v)
 }
