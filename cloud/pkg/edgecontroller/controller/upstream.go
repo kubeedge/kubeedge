@@ -397,9 +397,8 @@ func (uc *UpstreamController) updateNodeStatus() {
 				}
 
 				node := &v1.Node{}
-				err = json.Unmarshal(data, node)
-				if err != nil {
-					errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+				if marshalErr := json.Unmarshal(data, node); marshalErr != nil {
+					errLog := fmt.Sprintf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), marshalErr)
 					klog.Error(errLog)
 					uc.nodeMsgResponse(name, namespace, errLog, msg)
 					continue
