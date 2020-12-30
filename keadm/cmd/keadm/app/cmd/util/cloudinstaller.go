@@ -89,9 +89,6 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
 
 	cmd = NewCommand(command)
-	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
-	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 
 	if err := cmd.Exec(); err != nil {
 		return err

@@ -79,8 +79,7 @@ func (d *DebOS) InstallKubeEdge(options types.InstallOptions) error {
 	return installKubeEdge(options, arch, d.KubeEdgeVersion)
 }
 
-// RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
-// and the starts edgecore with logs being captured
+// RunEdgeCore starts edgecore with logs being captured
 func (d *DebOS) RunEdgeCore() error {
 	return runEdgeCore(d.KubeEdgeVersion)
 }

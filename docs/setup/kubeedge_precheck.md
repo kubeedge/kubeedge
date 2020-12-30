@@ -69,7 +69,6 @@ sudo crictl exec -ti <containerid> /bin/bash
  To run unit tests of a package individually.
 
  ```shell
- export GOARCHAIUS_CONFIG_PATH=$GOPATH/src/github.com/kubeedge/kubeedge
  cd <path to package to be tested>
  go test -v
  ```
