@@ -89,6 +89,10 @@ func (s *StreamServer) installDebugHandler() {
 		To(s.getMetrics))
 	ws.Route(ws.GET("/cadvisor").
 		To(s.getMetrics))
+	ws.Route(ws.GET("/probes").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/resource").
+		To(s.getMetrics))
 	s.container.Add(ws)
 }
 
