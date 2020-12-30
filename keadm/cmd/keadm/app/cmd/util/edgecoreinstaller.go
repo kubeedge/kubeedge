@@ -18,12 +18,12 @@ package util
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/common/constants"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
