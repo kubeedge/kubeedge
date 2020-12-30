@@ -112,7 +112,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 		fmt.Println(err.Error())
 		util.PrintFail(use, common.StrDiagnose)
 	} else {
-		util.PrintSuccedd(use, common.StrDiagnose)
+		util.PrintSucceed(use, common.StrDiagnose)
 	}
 }
 
