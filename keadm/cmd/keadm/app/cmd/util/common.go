@@ -303,7 +303,6 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
 			return err
 		}
-		return nil
 	}
 
 	if err := downloadServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
