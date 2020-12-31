@@ -18,9 +18,12 @@ package util
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -111,11 +114,13 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	if ku.Token != "" {
 		edgeCoreConfig.Modules.EdgeHub.Token = ku.Token
 	}
+	cloudCoreIP := strings.Split(ku.CloudCoreIP, ":")[0]
 	if ku.CertPort != "" {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":" + ku.CertPort
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":" + ku.CertPort
 	} else {
-		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + strings.Split(ku.CloudCoreIP, ":")[0] + ":10002"
+		edgeCoreConfig.Modules.EdgeHub.HTTPServer = "https://" + cloudCoreIP + ":10002"
 	}
+	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
 
 	if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
 		return err
