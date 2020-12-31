@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
 //Server serve as an internal mqtt broker.
@@ -126,6 +127,19 @@ func (m *Server) InitInternalTopics() {
 	for _, v := range SubTopics {
 		m.tree.Set(v, packet.Subscription{Topic: v, QOS: packet.QOS(m.qos)})
 		klog.Infof("Subscribe internal topic to %s", v)
+	}
+	topics, err := dao.QueryAllTopics()
+	if err != nil {
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		return
+	}
+	if len(*topics) <= 0 {
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		return
+	}
+	for _, t := range *topics {
+		m.tree.Set(t, packet.Subscription{Topic: t, QOS: packet.QOS(m.qos)})
+		klog.Infof("Subscribe internal topic to %s", t)
 	}
 }
 
