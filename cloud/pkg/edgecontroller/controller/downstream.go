@@ -2,15 +2,15 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	clientgov1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -43,6 +43,10 @@ type DownstreamController struct {
 	endpointsManager *manager.EndpointsManager
 
 	lc *manager.LocationCache
+
+	svcLister clientgov1.ServiceLister
+
+	podLister clientgov1.PodLister
 }
 
 func (dc *DownstreamController) syncPod() {
@@ -225,7 +229,8 @@ func (dc *DownstreamController) syncEdgeNodes() {
 								break
 							}
 							msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-							svcs := dc.lc.GetAllServices()
+
+							svcs, _ := dc.svcLister.Services(v1.NamespaceAll).List(labels.Everything())
 							msg.Content = svcs
 							if err := dc.messageLayer.Send(*msg); err != nil {
 								klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -234,21 +239,30 @@ func (dc *DownstreamController) syncEdgeNodes() {
 							}
 
 							for _, svc := range svcs {
-								pods, ok := dc.lc.GetServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name))
-								if ok {
-									msg := model.NewMessage("")
-									resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
-									if err != nil {
-										klog.Warningf("Built message resource failed with error: %v", err)
-										continue
-									}
-									msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-									msg.Content = pods
-									if err := dc.messageLayer.Send(*msg); err != nil {
-										klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-									} else {
-										klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-									}
+								namespace := svc.GetNamespace()
+								selector := labels.NewSelector()
+								for k, v := range svc.Spec.Selector {
+									r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
+									selector.Add(*r)
+								}
+
+								pods, err := dc.podLister.Pods(namespace).List(selector)
+								if err != nil {
+									continue
+								}
+
+								msg := model.NewMessage("")
+								resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
+								if err != nil {
+									klog.Warningf("Built message resource failed with error: %v", err)
+									continue
+								}
+								msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+								msg.Content = pods
+								if err := dc.messageLayer.Send(*msg); err != nil {
+									klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+								} else {
+									klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 								}
 							}
 
@@ -310,13 +324,10 @@ func (dc *DownstreamController) syncService() {
 			}
 			switch e.Type {
 			case watch.Added:
-				dc.lc.AddOrUpdateService(*svc)
 				operation = model.InsertOperation
 			case watch.Modified:
-				dc.lc.AddOrUpdateService(*svc)
 				operation = model.UpdateOperation
 			case watch.Deleted:
-				dc.lc.DeleteService(*svc)
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
@@ -376,7 +387,6 @@ func (dc *DownstreamController) syncEndpoints() {
 				operation = model.UpdateOperation
 			case watch.Deleted:
 				dc.lc.DeleteEndpoints(*eps)
-				dc.lc.DeleteServicePods(*eps)
 				operation = model.DeleteOperation
 			default:
 				// unsupported operation, no need to send to any node
@@ -385,25 +395,22 @@ func (dc *DownstreamController) syncEndpoints() {
 			}
 			// send to all nodes
 			if ok {
-				var listOptions metav1.ListOptions
-				var pods *v1.PodList
-				var err error
-				svc, ok := dc.lc.GetService(fmt.Sprintf("%s/%s", eps.Namespace, eps.Name))
-				if ok {
-					labelSelectorString := ""
-					for key, value := range svc.Spec.Selector {
-						labelSelectorString = labelSelectorString + key + "=" + value + ","
+				var (
+					pods       []*v1.Pod
+					hasService bool = false
+				)
+
+				namespace, name := eps.GetNamespace(), eps.GetName()
+				if svc, err := dc.svcLister.Services(namespace).Get(name); err == nil {
+					hasService = true
+					selector := labels.NewSelector()
+					for k, v := range svc.Spec.Selector {
+						r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
+						selector.Add(*r)
 					}
-					labelSelectorString = strings.TrimSuffix(labelSelectorString, ",")
-					listOptions = metav1.ListOptions{
-						LabelSelector: labelSelectorString,
-						Limit:         100,
-					}
-					pods, err = dc.kubeClient.CoreV1().Pods(svc.Namespace).List(context.Background(), listOptions)
-					if err == nil {
-						dc.lc.AddOrUpdateServicePods(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name), pods.Items)
-					}
+					pods, _ = dc.podLister.Pods(svc.GetNamespace()).List(selector)
 				}
+
 				dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
 					nodeName, check := key.(string)
 					if !check {
@@ -424,15 +431,15 @@ func (dc *DownstreamController) syncEndpoints() {
 					} else {
 						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 					}
-					if operation != model.DeleteOperation && ok {
+					if operation != model.DeleteOperation && hasService {
 						msg := model.NewMessage("")
-						resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, model.ResourceTypePodlist, svc.Name)
+						resource, err := messagelayer.BuildResource(nodeName, namespace, model.ResourceTypePodlist, name)
 						if err != nil {
 							klog.Warningf("Built message resource failed with error: %v", err)
 							return true
 						}
 						msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-						msg.Content = pods.Items
+						msg.Content = pods
 						if err := dc.messageLayer.Send(*msg); err != nil {
 							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 						} else {
@@ -506,22 +513,22 @@ func (dc *DownstreamController) initLocating() error {
 func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
-	podInformer := k8sInformerFactory.Core().V1().Pods().Informer()
-	podManager, err := manager.NewPodManager(podInformer)
+	podInformer := k8sInformerFactory.Core().V1().Pods()
+	podManager, err := manager.NewPodManager(podInformer.Informer())
 	if err != nil {
 		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
-	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps().Informer()
-	configMapManager, err := manager.NewConfigMapManager(configMapInformer)
+	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps()
+	configMapManager, err := manager.NewConfigMapManager(configMapInformer.Informer())
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
-	secretInformer := k8sInformerFactory.Core().V1().Secrets().Informer()
-	secretManager, err := manager.NewSecretManager(secretInformer)
+	secretInformer := k8sInformerFactory.Core().V1().Secrets()
+	secretManager, err := manager.NewSecretManager(secretInformer.Informer())
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
@@ -533,15 +540,15 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		return nil, err
 	}
 
-	serviceInformer := k8sInformerFactory.Core().V1().Services().Informer()
-	serviceManager, err := manager.NewServiceManager(serviceInformer)
+	svcInformer := k8sInformerFactory.Core().V1().Services()
+	serviceManager, err := manager.NewServiceManager(svcInformer.Informer())
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
-	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints().Informer()
-	endpointsManager, err := manager.NewEndpointsManager(endpointsInformer)
+	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints()
+	endpointsManager, err := manager.NewEndpointsManager(endpointsInformer.Informer())
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
@@ -557,6 +564,8 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		endpointsManager: endpointsManager,
 		messageLayer:     messagelayer.NewContextMessageLayer(),
 		lc:               lc,
+		svcLister:        svcInformer.Lister(),
+		podLister:        podInformer.Lister(),
 	}
 	if err := dc.initLocating(); err != nil {
 		return nil, err
