@@ -2,6 +2,7 @@ package edgehub
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -128,11 +129,47 @@ func (eh *EdgeHub) routeToEdge() {
 	}
 }
 
+var (
+	msgStoreLock sync.Mutex
+	msgStore     = map[string][]*model.Message{}
+)
+
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
-	eh.keeperLock.Lock()
-	err := eh.chClient.Send(message)
-	eh.keeperLock.Unlock()
+	var (
+		err             error
+		resource        = message.GetResource()
+		operation       = message.GetOperation()
+		isQuery         = operation == model.QueryOperation
+		needSendSyncMsg = true
+	)
+
+	if isQuery {
+		msgStoreLock.Lock()
+		cmobj, ok := msgStore[resource]
+		if !ok {
+			klog.V(4).Infof("send this msg to query %s: %v", resource, message)
+			msgStore[resource] = []*model.Message{&message}
+
+			eh.keeperLock.Lock()
+			err = eh.chClient.Send(message)
+			eh.keeperLock.Unlock()
+		} else {
+			needSendSyncMsg = false
+			cmobj = append(cmobj, &message)
+			msgStore[resource] = cmobj
+			klog.V(4).Infof("store same resource %s query request. current store length is %v.", resource, len(cmobj))
+		}
+		msgStoreLock.Unlock()
+	} else {
+		eh.keeperLock.Lock()
+		err = eh.chClient.Send(message)
+		eh.keeperLock.Unlock()
+	}
+
 	if err != nil {
+		msgStoreLock.Lock()
+		delete(msgStore, resource)
+		msgStoreLock.Unlock()
 		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
 	}
@@ -143,7 +180,23 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 		select {
 		case response := <-tempChannel:
 			sendTimer.Stop()
-			beehiveContext.SendResp(response)
+			if isQuery {
+				msgStoreLock.Lock()
+				cmobj := msgStore[resource]
+				for i := 0; i < len(cmobj); i++ {
+					msg := cmobj[i]
+					resp := model.NewMessage(msg.GetID()).
+						SetResourceOperation(response.GetResource(), response.GetOperation()).
+						SetResourceVersion(response.GetResourceVersion()).
+						SetRoute(response.GetSource(), response.GetGroup())
+					resp.Content = response.GetContent()
+					beehiveContext.SendResp(*resp)
+				}
+				delete(msgStore, resource)
+				msgStoreLock.Unlock()
+			} else {
+				beehiveContext.SendResp(response)
+			}
 			eh.deleteKeepChannel(response.GetParentID())
 		case <-sendTimer.C:
 			klog.Warningf("timeout to receive response for message: %+v", message)
@@ -151,7 +204,7 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 		}
 	}
 
-	if message.IsSync() {
+	if message.IsSync() && needSendSyncMsg {
 		go syncKeep(message)
 	}
 
