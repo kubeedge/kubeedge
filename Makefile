@@ -1,7 +1,11 @@
+project?=kubeedge
 DESTDIR?=
 USR_DIR?=/usr/local
 INSTALL_DIR?=${DESTDIR}${USR_DIR}
 INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
+INSTALL_EXT_DIR?=${INSTALL_DIR}/lib/${project}
+INSTALL_SHARE_DIR?=${INSTALL_DIR}/share/${project}
+INSTALL_ETC_DIR?=${DESTDIR}/etc/${project}
 GOPATH?=$(shell go env GOPATH)
 
 # make all builds both cloud and edge binaries
@@ -293,7 +297,7 @@ edgesite-server-image:
 edgesite-agent-image:
 	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
 
-define INSTALL_HELP_INFO
+define INSTALL_BINARIES_HELP_INFO
 # install
 #
 # Args:
@@ -302,16 +306,16 @@ define INSTALL_HELP_INFO
 #
 ##
 # Example:
-#   make install
-#   make install WHAT=edgecore
+#   make install-binaries
+#   make install-binaries WHAT=edgecore
 #
 endef
 .PHONY: help
 ifeq ($(HELP),y)
-install:
-	@echo "$$INSTALL_HELP_INFO"
+install-binaries:
+	@echo "$$INSTALL_BINARIES_HELP_INFO"
 else
-install: _output/local/bin
+install-binaries: _output/local/bin
 	install -d "${INSTALL_BIN_DIR}"
 	if [ "" != "${WHAT}" ]; then \
           install "$</${WHAT}"  "${INSTALL_BIN_DIR}" ;\
@@ -320,4 +324,39 @@ install: _output/local/bin
             install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
           done ; \
         fi
+endif
+
+install-share: build
+	cd $< && find . -type f -iname "*.yaml" | while read file; do \
+	  install -d ${INSTALL_SHARE_DIR}/$${file}.tmp ; \
+	  rmdir ${INSTALL_SHARE_DIR}/$${file}.tmp ; \
+	  install -v -m 644 $${file} ${INSTALL_SHARE_DIR}/$${file} ; \
+	done
+
+install-scripts: build/tools/certgen.sh
+	install -d ${INSTALL_EXT_DIR}/bin
+	install $< ${INSTALL_EXT_DIR}/bin/
+
+install-links:
+	install -d ${INSTALL_ETC_DIR}
+	ln -fs /usr/lib/${project}/certgen.sh ${INSTALL_ETC_DIR}/
+	ln -fs /usr/share/${project}/cloud ${INSTALL_ETC_DIR}/
+	ln -fs /usr/share/${project}/edge ${INSTALL_ETC_DIR}/
+
+define INSTALL_HELP_INFO
+# install
+#
+##
+# Example:
+#   make install
+#   make install-binaries WHAT=edgecore
+#
+endef
+.PHONY: help
+ifeq ($(HELP),y)
+install:
+	@echo "$$INSTALL_HELP_INFO"
+else
+install: install-binaries install-share install-scripts install-links
+	-sync
 endif
