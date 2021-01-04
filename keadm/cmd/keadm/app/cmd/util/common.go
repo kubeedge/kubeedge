@@ -135,44 +135,23 @@ func GetOSInterface() types.OSTypeInstaller {
 	}
 }
 
-// IsCloudCore identifies if the node is having cloudcore already running.
-// If so, then return true, else it can used as edge node and initialise it.
-func IsCloudCore() (types.ModuleRunning, error) {
+// RunningModule identifies cloudcore/edgecore running or not.
+func RunningModule() (types.ModuleRunning, error) {
 	osType := GetOSInterface()
 	cloudCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
-	if err != nil {
-		return types.NoneRunning, err
-	}
 
 	if cloudCoreRunning {
 		return types.KubeEdgeCloudRunning, nil
+	} else if err != nil {
+		return types.NoneRunning, err
 	}
-	// check the process, and then check the service
+
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
-	if err != nil {
-		return types.NoneRunning, err
-	}
 
 	if edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
-	}
-
-	edgeCoreRunning, err = isEdgeCoreServiceRunning("edge")
-	if err != nil {
+	} else if err != nil {
 		return types.NoneRunning, err
-	}
-
-	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
-	}
-
-	edgeCoreRunning, err = isEdgeCoreServiceRunning("edgecore")
-	if err != nil {
-		return types.NoneRunning, err
-	}
-
-	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
 	}
 
 	return types.NoneRunning, nil
@@ -385,9 +364,9 @@ func killKubeEdgeBinary(proc string) error {
 			serviceName = "edgecore"
 		}
 
-		if systemdExist {
+		if systemdExist && serviceName != "" {
 			// remove the system service.
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload && systemctl reset-failed", serviceName, serviceName)
+			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload", serviceName, serviceName, serviceName)
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
@@ -397,7 +376,7 @@ func killKubeEdgeBinary(proc string) error {
 		return err
 	}
 
-	fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath+proc+".log")
+	fmt.Println(proc, "is stopped")
 	return nil
 }
 
@@ -419,11 +398,16 @@ func isKubeEdgeProcessRunning(proc string) (bool, error) {
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
-	if err := NewCommand(serviceRunning).Exec(); err != nil {
-		return false, err
+	cmd := NewCommand(serviceRunning)
+	err := cmd.Exec()
+
+	if cmd.ExitCode == 0 {
+		return true, nil
+	} else if cmd.ExitCode == 1 {
+		return false, nil
 	}
 
-	return true, nil
+	return false, err
 }
 
 // check if systemd exist
