@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"sort"
 	"time"
 
@@ -406,7 +407,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				if err == nil {
 					// sync node info if edge-role-label-key not exits when the edge node is registered
-					if _, ok := currentNode.Labels[constants.EdgeNodeRoleLabelKey]; ok {
+					if _, ok := currentNode.Labels[manager.NodeRoleKey]; ok {
 						klog.Infof("node: %s already exists, do nothing", name)
 						uc.nodeMsgResponse(name, namespace, "OK", msg)
 						continue

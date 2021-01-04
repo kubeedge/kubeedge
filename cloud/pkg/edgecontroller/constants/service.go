@@ -21,6 +21,4 @@ const (
 	NvidiaGPUStatusAnnotationKey = "huawei.com/gpu-status"
 	// NvidiaGPUScalarResourceName is the device plugin resource name used for special handling
 	NvidiaGPUScalarResourceName = "nvidia.com/gpu"
-
-	EdgeNodeRoleLabelKey = "node-role.kubernetes.io/edge"
 )
