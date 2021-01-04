@@ -67,7 +67,7 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.IsCloudCore()
+			whoRunning, err := util.RunningModule()
 			if err != nil {
 				return err
 			}
@@ -75,7 +75,8 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 			case common.KubeEdgeEdgeRunning:
 				IsEdgeNode = true
 			case common.NoneRunning:
-				return fmt.Errorf("None of KubeEdge components are running in this host")
+				fmt.Println("None of KubeEdge components are running in this host, exit")
+				os.Exit(0)
 			}
 			return nil
 		},

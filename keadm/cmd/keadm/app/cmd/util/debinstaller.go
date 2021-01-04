@@ -25,20 +25,20 @@ import (
 
 const downloadRetryTimes int = 3
 
-//DebOS struct objects shall have information of the tools version to be installed
-//on Hosts having Ubuntu OS.
-//It implements OSTypeInstaller interface
+// DebOS struct objects shall have information of the tools version to be installed
+// on Hosts having Ubuntu OS.
+// It implements OSTypeInstaller interface
 type DebOS struct {
 	KubeEdgeVersion semver.Version
 	IsEdgeNode      bool //True - Edgenode False - Cloudnode
 }
 
-//SetKubeEdgeVersion sets the KubeEdge version for the objects instance
+// SetKubeEdgeVersion sets the KubeEdge version for the objects instance
 func (d *DebOS) SetKubeEdgeVersion(version semver.Version) {
 	d.KubeEdgeVersion = version
 }
 
-//InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
+// InstallMQTT checks if MQTT is already installed and running, if not then install it from OS repo
 func (d *DebOS) InstallMQTT() error {
 	cmd := NewCommand("ps aux |awk '/mosquitto/ {print $1}' | awk '/mosquit/ {print}'")
 	if err := cmd.Exec(); err != nil {
@@ -79,18 +79,17 @@ func (d *DebOS) InstallKubeEdge(options types.InstallOptions) error {
 	return installKubeEdge(options, arch, d.KubeEdgeVersion)
 }
 
-//RunEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
-//and the starts edgecore with logs being captured
+// RunEdgeCore starts edgecore with logs being captured
 func (d *DebOS) RunEdgeCore() error {
 	return runEdgeCore(d.KubeEdgeVersion)
 }
 
-//KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
+// KillKubeEdgeBinary will search for KubeEdge process and forcefully kill it
 func (d *DebOS) KillKubeEdgeBinary(proc string) error {
 	return killKubeEdgeBinary(proc)
 }
 
-//IsKubeEdgeProcessRunning checks if the given process is running or not
+// IsKubeEdgeProcessRunning checks if the given process is running or not
 func (d *DebOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }

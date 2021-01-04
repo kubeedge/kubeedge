@@ -64,16 +64,21 @@ const (
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
 
-	APT string = "apt"
-	YUM string = "yum"
+	OSArchAMD64 string = "amd64"
+	OSArchARM64 string = "arm64"
+	OSArchARM32 string = "arm"
+
+	APT    string = "apt"
+	YUM    string = "yum"
+	PACMAN string = "pacman"
 )
 
-//AddToolVals gets the value and default values of each flags and collects them in temporary cache
+// AddToolVals gets the value and default values of each flags and collects them in temporary cache
 func AddToolVals(f *pflag.Flag, flagData map[string]types.FlagData) {
 	flagData[f.Name] = types.FlagData{Val: f.Value.String(), DefVal: f.DefValue}
 }
 
-//CheckIfAvailable checks is val of a flag is empty then return the default value
+// CheckIfAvailable checks is val of a flag is empty then return the default value
 func CheckIfAvailable(val, defval string) string {
 	if val == "" {
 		return defval
@@ -81,7 +86,7 @@ func CheckIfAvailable(val, defval string) string {
 	return val
 }
 
-//Common struct contains OS and Tool version properties and also embeds OS interface
+// Common struct contains OS and Tool version properties and also embeds OS interface
 type Common struct {
 	types.OSTypeInstaller
 	OSVersion   string
@@ -90,79 +95,63 @@ type Common struct {
 	Master      string
 }
 
-//SetOSInterface defines a method to set the implemtation of the OS interface
+// SetOSInterface defines a method to set the implemtation of the OS interface
 func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 	co.OSTypeInstaller = intf
 }
 
-//GetPackageManager get package manager of OS
+// GetPackageManager get package manager of OS
 func GetPackageManager() string {
-	cmd := NewCommand("command -v apt || command -v yum")
+	cmd := NewCommand("command -v apt || command -v yum || command -v pacman")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
+
 	if strings.HasSuffix(cmd.GetStdOut(), APT) {
 		return APT
 	} else if strings.HasSuffix(cmd.GetStdOut(), YUM) {
 		return YUM
+	} else if strings.HasSuffix(cmd.GetStdOut(), PACMAN) {
+		return PACMAN
 	} else {
 		return ""
 	}
 }
 
-//GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
+// GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
 	switch GetPackageManager() {
 	case APT:
 		return &DebOS{}
 	case YUM:
 		return &RpmOS{}
+	case PACMAN:
+		return &PacmanOS{}
 	default:
-		fmt.Println("Failed to detect supported package manager command(apt, yum), exit")
-		panic("Failed to detect supported package manager command(apt, yum), exit")
+		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
+		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
 	}
 }
 
-// IsCloudCore identifies if the node is having cloudcore already running.
-// If so, then return true, else it can used as edge node and initialise it.
-func IsCloudCore() (types.ModuleRunning, error) {
+// RunningModule identifies cloudcore/edgecore running or not.
+func RunningModule() (types.ModuleRunning, error) {
 	osType := GetOSInterface()
 	cloudCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
-	if err != nil {
-		return types.NoneRunning, err
-	}
 
 	if cloudCoreRunning {
 		return types.KubeEdgeCloudRunning, nil
+	} else if err != nil {
+		return types.NoneRunning, err
 	}
-	// check the process, and then check the service
+
 	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
-	if err != nil {
-		return types.NoneRunning, err
-	}
 
 	if edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
-	}
-
-	edgeCoreRunning, err = isEdgeCoreServiceRunning("edge")
-	if err != nil {
+	} else if err != nil {
 		return types.NoneRunning, err
-	}
-
-	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
-	}
-
-	edgeCoreRunning, err = isEdgeCoreServiceRunning("edgecore")
-	if err != nil {
-		return types.NoneRunning, err
-	}
-
-	if edgeCoreRunning {
-		return types.KubeEdgeEdgeRunning, nil
 	}
 
 	return types.NoneRunning, nil
@@ -227,9 +216,9 @@ func checkKubernetesVersion(serverVersion *version.Info) error {
 	return fmt.Errorf("Your minor version of K8s is lower than %d, please reinstall newer version", types.DefaultK8SMinimumVersion)
 }
 
-//installKubeEdge downloads the provided version of KubeEdge.
-//Untar's in the specified location /etc/kubeedge/ and then copies
-//the binary to excecutables' path (eg: /usr/local/bin)
+// installKubeEdge downloads the provided version of KubeEdge.
+// Untar's in the specified location /etc/kubeedge/ and then copies
+// the binary to excecutables' path (eg: /usr/local/bin)
 func installKubeEdge(options types.InstallOptions, arch string, version semver.Version) error {
 	// create the storage path of the kubeedge installation packages
 	if options.TarballPath == "" {
@@ -293,7 +282,6 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		if err := retryDownload(filename, checksumFilename, version, options.TarballPath); err != nil {
 			return err
 		}
-		return nil
 	}
 
 	if err := downloadServiceFile(options.ComponentType, version, KubeEdgePath); err != nil {
@@ -324,8 +312,7 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 	return nil
 }
 
-//runEdgeCore sets the environment variable GOARCHAIUS_CONFIG_PATH for the configuration path
-//and the starts edgecore with logs being captured
+// runEdgeCore starts edgecore with logs being captured
 func runEdgeCore(version semver.Version) error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
@@ -342,13 +329,10 @@ func runEdgeCore(version semver.Version) error {
 	if systemdExist {
 		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", edgecoreServiceName, edgecoreServiceName, edgecoreServiceName, edgecoreServiceName)
 	} else {
-		binExec = fmt.Sprintf("%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
+		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeEdgeBinaryName, KubeEdgePath, KubeEdgeBinaryName)
 	}
 
 	cmd := NewCommand(binExec)
-	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/edge", KubeEdgePath)
-	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
@@ -380,9 +364,9 @@ func killKubeEdgeBinary(proc string) error {
 			serviceName = "edgecore"
 		}
 
-		if systemdExist {
+		if systemdExist && serviceName != "" {
 			// remove the system service.
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload && systemctl reset-failed", serviceName, serviceName)
+			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload", serviceName, serviceName, serviceName)
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
@@ -392,13 +376,13 @@ func killKubeEdgeBinary(proc string) error {
 		return err
 	}
 
-	fmt.Println("KubeEdge", proc, "is stopped, For logs visit: ", KubeEdgeLogPath+proc+".log")
+	fmt.Println(proc, "is stopped")
 	return nil
 }
 
-//isKubeEdgeProcessRunning checks if the given process is running or not
+// isKubeEdgeProcessRunning checks if the given process is running or not
 func isKubeEdgeProcessRunning(proc string) (bool, error) {
-	procRunning := fmt.Sprintf("pidof %s 2&>1", proc)
+	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
 	cmd := NewCommand(procRunning)
 
 	err := cmd.Exec()
@@ -414,14 +398,19 @@ func isKubeEdgeProcessRunning(proc string) (bool, error) {
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
-	if err := NewCommand(serviceRunning).Exec(); err != nil {
-		return false, err
+	cmd := NewCommand(serviceRunning)
+	err := cmd.Exec()
+
+	if cmd.ExitCode == 0 {
+		return true, nil
+	} else if cmd.ExitCode == 1 {
+		return false, nil
 	}
 
-	return true, nil
+	return false, err
 }
 
-//	check if systemd exist
+// check if systemd exist
 func hasSystemd() bool {
 	cmd := "file /sbin/init"
 
@@ -639,14 +628,14 @@ func IsContain(items []string, item string) bool {
 	return false
 }
 
-//print fail
+// print fail
 func PrintFail(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s failed|", s, cmd)
 	printResult(v)
 }
 
 //print success
-func PrintSuccedd(cmd string, s string) {
+func PrintSucceed(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
 	printResult(v)
 }

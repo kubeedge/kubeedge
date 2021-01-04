@@ -3,7 +3,7 @@ Description=edgecore.service
 
 [Service]
 Type=simple
-ExecStart=/etc/kubeedge/edgecore
+ExecStart=/usr/local/bin/edgecore
 Restart=always
 RestartSec=10
 

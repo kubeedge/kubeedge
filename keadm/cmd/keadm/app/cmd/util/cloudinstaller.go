@@ -78,6 +78,10 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
 	}
 
+	if err := os.MkdirAll(KubeEdgeUsrBinPath, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create %s folder path", KubeEdgeUsrBinPath)
+	}
+
 	// add +x for cloudcore
 	command := fmt.Sprintf("chmod +x %s/%s", KubeEdgeUsrBinPath, KubeCloudBinaryName)
 	cmd := NewCommand(command)
@@ -86,12 +90,9 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 
 	// start cloudcore
-	command = fmt.Sprintf(" %s > %s/%s.log 2>&1 &", KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
 
 	cmd = NewCommand(command)
-	cmd.Cmd.Env = os.Environ()
-	env := fmt.Sprintf("GOARCHAIUS_CONFIG_PATH=%skubeedge/cloud", KubeEdgePath)
-	cmd.Cmd.Env = append(cmd.Cmd.Env, env)
 
 	if err := cmd.Exec(); err != nil {
 		return err
