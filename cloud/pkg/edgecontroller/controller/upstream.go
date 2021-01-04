@@ -28,7 +28,6 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"sort"
 	"time"
 
@@ -43,6 +42,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
