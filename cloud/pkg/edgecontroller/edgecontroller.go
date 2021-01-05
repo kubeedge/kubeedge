@@ -6,6 +6,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
@@ -20,12 +21,12 @@ type EdgeController struct {
 }
 
 func newEdgeController(enable bool) *EdgeController {
-	upstream, err := controller.NewUpstreamController()
+	upstream, err := controller.NewUpstreamController(informers.GetInformersManager().GetK8sInformerFactory())
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	downstream, err := controller.NewDownstreamController()
+	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager())
 	if err != nil {
 		klog.Fatalf("new downstream controller failed with error: %s", err)
 	}

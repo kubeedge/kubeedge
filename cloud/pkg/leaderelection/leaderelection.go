@@ -57,7 +57,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 		OnStartedLeading: func(ctx context.Context) {
 			// Start all modules,
 			core.StartModules()
-			informers.GetGlobalInformers().Start(beehiveContext.Done())
+			informers.GetInformersManager().Start(beehiveContext.Done())
 			// Patch PodReadinessGate if program run in pod
 			err := TryToPatchPodReadinessGate(corev1.ConditionTrue)
 			if err != nil {

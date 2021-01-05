@@ -7,7 +7,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/listers"
 	edgemgr "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
@@ -23,7 +22,7 @@ func (sctl *SyncController) manageCreateFailedObject() {
 }
 
 func (sctl *SyncController) manageCreateFailedCoreObject() {
-	allPods, err := listers.GetListers().PodLister().List(labels.Everything())
+	allPods, err := sctl.podLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the pods: %v", err)
 		return
@@ -31,7 +30,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 
 	set := labels.Set{edgemgr.NodeRoleKey: edgemgr.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
-	allEdgeNodes, err := listers.GetListers().NodeLister().List(selector)
+	allEdgeNodes, err := sctl.noLister.List(selector)
 	if err != nil {
 		klog.Errorf("Filed to list all the edge nodes: %v", err)
 		return
@@ -42,7 +41,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 			continue
 		}
 		// Check whether the pod is successfully persisted to edge
-		_, err := listers.GetListers().ObjectSyncLister().ObjectSyncs(pod.Namespace).Get(BuildObjectSyncName(pod.Spec.NodeName, string(pod.UID)))
+		_, err := sctl.osLister.ObjectSyncs(pod.Namespace).Get(BuildObjectSyncName(pod.Spec.NodeName, string(pod.UID)))
 		if err != nil && apierrors.IsNotFound(err) {
 			msg := buildEdgeControllerMessage(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name, model.InsertOperation, pod)
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
@@ -83,7 +82,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 }
 
 func (sctl *SyncController) manageCreateFailedDevice() {
-	allDevices, err := listers.GetListers().DeviceLister().List(labels.Everything())
+	allDevices, err := sctl.devLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the devices: %v", err)
 		return
@@ -93,7 +92,7 @@ func (sctl *SyncController) manageCreateFailedDevice() {
 		// Check whether the device is successfully persisted to edge
 		// TODO: refactor the nodeselector of the device
 		nodeName := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-		_, err := listers.GetListers().ObjectSyncLister().ObjectSyncs(device.Namespace).Get(BuildObjectSyncName(nodeName, string(device.UID)))
+		_, err := sctl.osLister.ObjectSyncs(device.Namespace).Get(BuildObjectSyncName(nodeName, string(device.UID)))
 		if err != nil && apierrors.IsNotFound(err) {
 			msg := buildEdgeControllerMessage(nodeName, device.Namespace, commonconst.ResourceTypeService, device.Name, model.InsertOperation, device)
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)

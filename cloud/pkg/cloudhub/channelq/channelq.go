@@ -13,8 +13,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	reliablesyncsv1alpha1listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/listers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
@@ -29,11 +29,17 @@ type ChannelMessageQueue struct {
 
 	listQueuePool sync.Map
 	listStorePool sync.Map
+
+	osLister  reliablesyncsv1alpha1listers.ObjectSyncLister
+	cosLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue() *ChannelMessageQueue {
-	return &ChannelMessageQueue{}
+func NewChannelMessageQueue(osLister reliablesyncsv1alpha1listers.ObjectSyncLister, cosLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister) *ChannelMessageQueue {
+	return &ChannelMessageQueue{
+		osLister:  osLister,
+		cosLister: cosLister,
+	}
 }
 
 // DispatchMessage gets the message from the cloud, extracts the
@@ -105,7 +111,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
 				return
 			}
-			objectSync, err := listers.GetListers().ObjectSyncLister().ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
+			objectSync, err := q.osLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
 			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
 				return
 			}

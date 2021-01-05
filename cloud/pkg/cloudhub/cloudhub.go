@@ -21,16 +21,24 @@ import (
 var DoneTLSTunnelCerts = make(chan bool, 1)
 
 type cloudHub struct {
-	enable bool
+	enable               bool
+	informersSyncedFuncs []cache.InformerSynced
+	messageq             *channelq.ChannelMessageQueue
 }
 
 func newCloudHub(enable bool) *cloudHub {
+	crdFactory := informers.GetInformersManager().GetCRDInformerFactory()
 	// declare used informer
-	_ = informers.GetGlobalInformers().ClusterObjectSync()
-	_ = informers.GetGlobalInformers().ObjectSync()
-	return &cloudHub{
-		enable: enable,
+	cosInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+	osInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
+	messageq := channelq.NewChannelMessageQueue(osInformer.Lister(), cosInformer.Lister())
+	ch := &cloudHub{
+		enable:   enable,
+		messageq: messageq,
 	}
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, cosInformer.Informer().HasSynced)
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, osInformer.Informer().HasSynced)
+	return ch
 }
 
 func Register(hub *v1alpha1.CloudHub) {
@@ -52,19 +60,13 @@ func (a *cloudHub) Enable() bool {
 }
 
 func (a *cloudHub) Start() {
-	gis := informers.GetGlobalInformers()
-	if !cache.WaitForCacheSync(beehiveContext.Done(),
-		gis.ClusterObjectSync().HasSynced,
-		gis.ObjectSync().HasSynced,
-	) {
+	if !cache.WaitForCacheSync(beehiveContext.Done(), a.informersSyncedFuncs...) {
 		klog.Errorf("unable to sync caches for objectSyncController")
 		os.Exit(1)
 	}
 
-	messageq := channelq.NewChannelMessageQueue()
-
 	// start dispatch message from the cloud to edge node
-	go messageq.DispatchMessage()
+	go a.messageq.DispatchMessage()
 
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
@@ -83,7 +85,7 @@ func (a *cloudHub) Start() {
 	// HttpServer mainly used to issue certificates for the edge
 	go httpserver.StartHTTPServer()
 
-	servers.StartCloudHub(messageq)
+	servers.StartCloudHub(a.messageq)
 
 	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.

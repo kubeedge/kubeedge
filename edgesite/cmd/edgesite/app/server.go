@@ -57,7 +57,7 @@ runs on edge nodes and manages containerized applications.`,
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 			client.InitKubeEdgeClient(config.KubeAPIConfig)
-			gis := informers.GetGlobalInformers()
+			gis := informers.GetInformersManager()
 			registerModules(config)
 			registerModules(config)
 			// start all modules

@@ -2,8 +2,8 @@ package manager
 
 import (
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
@@ -18,10 +18,9 @@ func (cmm *ConfigMapManager) Events() chan watch.Event {
 }
 
 // NewConfigMapManager create ConfigMapManager by kube clientset and namespace
-func NewConfigMapManager() (*ConfigMapManager, error) {
+func NewConfigMapManager(si cache.SharedIndexInformer) (*ConfigMapManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.ConfigMapEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si := informers.GetGlobalInformers().ConfigMap()
 	si.AddEventHandler(rh)
 
 	return &ConfigMapManager{events: events}, nil

@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
+	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -17,9 +18,11 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
+	devicesv1alpha2listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
+	reliablesyncsv1alpha1listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/listers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
@@ -29,27 +32,64 @@ import (
 // SyncController use beehive context message layer
 type SyncController struct {
 	enable bool
+	//client
+	crdclient crdClientset.Interface
+	// lister
+	podLister            corev1listers.PodLister
+	cmLister             corev1listers.ConfigMapLister
+	secLister            corev1listers.SecretLister
+	svcLister            corev1listers.ServiceLister
+	epLister             corev1listers.EndpointsLister
+	noLister             corev1listers.NodeLister
+	osLister             reliablesyncsv1alpha1listers.ObjectSyncLister
+	cosLister            reliablesyncsv1alpha1listers.ClusterObjectSyncLister
+	devLister            devicesv1alpha2listers.DeviceLister
+	informersSyncedFuncs []cache.InformerSynced
 }
 
 func newSyncController(enable bool) *SyncController {
-	sctl := &SyncController{
-		enable: enable,
+	var sctl = &SyncController{
+		enable:    enable,
+		crdclient: keclient.GetKubeEdgeClient(),
 	}
-	// declared used informer
-	_ = informers.GetGlobalInformers().Pod()
-	_ = informers.GetGlobalInformers().ConfigMap()
-	_ = informers.GetGlobalInformers().Secrets()
-	_ = informers.GetGlobalInformers().Service()
-	_ = informers.GetGlobalInformers().Endpoints()
-	_ = informers.GetGlobalInformers().Node()
-	_ = informers.GetGlobalInformers().Device()
-	_ = informers.GetGlobalInformers().ClusterObjectSync()
-	_ = informers.GetGlobalInformers().ObjectSync()
-	informers.GetGlobalInformers().Node().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	// informer factory
+	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()
+	crdInformerFactory := informers.GetInformersManager().GetCRDInformerFactory()
+	// informer
+	podInformer := k8sInformerFactory.Core().V1().Pods()
+	cmInformer := k8sInformerFactory.Core().V1().ConfigMaps()
+	secInformer := k8sInformerFactory.Core().V1().Secrets()
+	svcInformer := k8sInformerFactory.Core().V1().Services()
+	epInformer := k8sInformerFactory.Core().V1().Endpoints()
+	devicesInformer := crdInformerFactory.Devices().V1alpha2().Devices()
+	objectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+	nodesInformer := k8sInformerFactory.Core().V1().Nodes()
+	nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			sctl.deleteObjectSyncs()
 		},
 	})
+	// lister
+	sctl.noLister = nodesInformer.Lister()
+	sctl.podLister = podInformer.Lister()
+	sctl.cmLister = cmInformer.Lister()
+	sctl.secLister = secInformer.Lister()
+	sctl.svcLister = svcInformer.Lister()
+	sctl.epLister = epInformer.Lister()
+	sctl.devLister = devicesInformer.Lister()
+	sctl.osLister = objectSyncsInformer.Lister()
+	sctl.cosLister = clusterObjectSyncsInformer.Lister()
+	// InformerSynced
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, podInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, cmInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, secInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, svcInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, epInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, devicesInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, objectSyncsInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, clusterObjectSyncsInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, nodesInformer.Informer().HasSynced)
 
 	return sctl
 }
@@ -76,17 +116,7 @@ func (sctl *SyncController) Enable() bool {
 
 // Start controller
 func (sctl *SyncController) Start() {
-	if !cache.WaitForCacheSync(beehiveContext.Done(),
-		informers.GetGlobalInformers().Pod().HasSynced,
-		informers.GetGlobalInformers().ConfigMap().HasSynced,
-		informers.GetGlobalInformers().Secrets().HasSynced,
-		informers.GetGlobalInformers().Service().HasSynced,
-		informers.GetGlobalInformers().Endpoints().HasSynced,
-		informers.GetGlobalInformers().Node().HasSynced,
-		informers.GetGlobalInformers().Device().HasSynced,
-		informers.GetGlobalInformers().ClusterObjectSync().HasSynced,
-		informers.GetGlobalInformers().ObjectSync().HasSynced,
-	) {
+	if !cache.WaitForCacheSync(beehiveContext.Done(), sctl.informersSyncedFuncs...) {
 		klog.Errorf("unable to sync caches for sync controller")
 		return
 	}
@@ -97,13 +127,13 @@ func (sctl *SyncController) Start() {
 }
 
 func (sctl *SyncController) reconcile() {
-	allClusterObjectSyncs, err := listers.GetListers().ClusterObjectSyncLister().List(labels.Everything())
+	allClusterObjectSyncs, err := sctl.cosLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the ClusterObjectSyncs: %v", err)
 	}
 	sctl.manageClusterObjectSync(allClusterObjectSyncs)
 
-	allObjectSyncs, err := listers.GetListers().ObjectSyncLister().List(labels.Everything())
+	allObjectSyncs, err := sctl.osLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
@@ -141,7 +171,7 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) deleteObjectSyncs() {
-	syncs, err := listers.GetListers().ObjectSyncLister().List(labels.Everything())
+	syncs, err := sctl.osLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
@@ -153,7 +183,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 		}
 		if isGarbage {
 			klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
-			err = keclient.GetKubeEdgeClient().ObjectSync(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
+			err = sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
 			if err != nil {
 				klog.Errorf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
 			}
@@ -164,7 +194,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 // checkObjectSync checks whether objectSync is outdated
 func (sctl *SyncController) checkObjectSync(sync *v1alpha1.ObjectSync) (bool, error) {
 	nodeName := getNodeName(sync.Name)
-	_, err := listers.GetListers().NodeLister().Get(nodeName)
+	_, err := sctl.noLister.Get(nodeName)
 	if errors.IsNotFound(err) {
 		return true, nil
 	}

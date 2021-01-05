@@ -61,7 +61,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 			client.InitKubeEdgeClient(config.KubeAPIConfig)
-			gis := informers.GetGlobalInformers()
+			gis := informers.GetInformersManager()
 			registerModules(config)
 
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.

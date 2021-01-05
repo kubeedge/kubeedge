@@ -8,52 +8,61 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	crdinformers "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 )
 
 type newInformer func() cache.SharedIndexInformer
 
-type Informers interface {
+type KubeEdgeCustomeInformer interface {
 	EdgeSitePod(nodeName string) cache.SharedIndexInformer
-	Pod() cache.SharedIndexInformer
-	ConfigMap() cache.SharedIndexInformer
-	Secrets() cache.SharedIndexInformer
-	Service() cache.SharedIndexInformer
-	Endpoints() cache.SharedIndexInformer
-	Node() cache.SharedIndexInformer
 	EdgeNode() cache.SharedIndexInformer
-	ClusterObjectSync() cache.SharedIndexInformer
-	ObjectSync() cache.SharedIndexInformer
-	Device() cache.SharedIndexInformer
+}
+
+type Manager interface {
+	GetK8sInformerFactory() k8sinformer.SharedInformerFactory
+	GetCRDInformerFactory() crdinformers.SharedInformerFactory
+	KubeEdgeCustomeInformer
 	Start(stopCh <-chan struct{})
 }
 
-var globalInformers Informers
+var globalInformers Manager
 var once sync.Once
 
-func GetGlobalInformers() Informers {
+func GetInformersManager() Manager {
 	once.Do(func() {
 		globalInformers = &informers{
-			defaultResync:    0,
-			keClient:         client.GetKubeEdgeClient(),
-			informers:        make(map[string]cache.SharedIndexInformer),
-			startedInformers: make(map[string]bool),
+			defaultResync:            0,
+			keClient:                 client.GetKubeEdgeClient(),
+			informers:                make(map[string]cache.SharedIndexInformer),
+			startedInformers:         make(map[string]bool),
+			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
+			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
 		}
 	})
 	return globalInformers
 }
 
 type informers struct {
-	defaultResync    time.Duration
-	keClient         client.KubeEdgeClient
-	lock             sync.Mutex
-	informers        map[string]cache.SharedIndexInformer
-	startedInformers map[string]bool
+	defaultResync            time.Duration
+	keClient                 client.KubeEdgeClient
+	lock                     sync.Mutex
+	informers                map[string]cache.SharedIndexInformer
+	startedInformers         map[string]bool
+	crdSharedInformerFactory crdinformers.SharedInformerFactory
+	k8sSharedInformerFactory k8sinformer.SharedInformerFactory
+}
+
+func (ifs *informers) GetK8sInformerFactory() k8sinformer.SharedInformerFactory {
+	return ifs.k8sSharedInformerFactory
+}
+
+func (ifs *informers) GetCRDInformerFactory() crdinformers.SharedInformerFactory {
+	return ifs.crdSharedInformerFactory
 }
 
 func (ifs *informers) EdgeSitePod(nodeName string) cache.SharedIndexInformer {
@@ -61,41 +70,6 @@ func (ifs *informers) EdgeSitePod(nodeName string) cache.SharedIndexInformer {
 		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
 		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "pods", v1.NamespaceAll, selector)
 		return cache.NewSharedIndexInformer(lw, &v1.Pod{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Pod() cache.SharedIndexInformer {
-	return ifs.getInformer("podinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "pods", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.Pod{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) ConfigMap() cache.SharedIndexInformer {
-	return ifs.getInformer("configmapinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "configmaps", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.ConfigMap{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Secrets() cache.SharedIndexInformer {
-	return ifs.getInformer("secretsinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "secrets", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.Secret{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Service() cache.SharedIndexInformer {
-	return ifs.getInformer("serviceinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "services", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.Service{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Endpoints() cache.SharedIndexInformer {
-	return ifs.getInformer("endpointsinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "endpoints", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.Endpoints{}, ifs.defaultResync, cache.Indexers{})
 	})
 }
 
@@ -108,34 +82,6 @@ func (ifs *informers) EdgeNode() cache.SharedIndexInformer {
 		}
 		lw := cache.NewFilteredListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "nodes", v1.NamespaceAll, optionModifier)
 		return cache.NewSharedIndexInformer(lw, &v1.Node{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Node() cache.SharedIndexInformer {
-	return ifs.getInformer("nodesinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "nodes", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1.Node{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) ClusterObjectSync() cache.SharedIndexInformer {
-	return ifs.getInformer("clusterbojectsyncinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.ReliablesyncsRestClient(), "clusterobjectsyncs", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1alpha1.ClusterObjectSync{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) ObjectSync() cache.SharedIndexInformer {
-	return ifs.getInformer("objectsyncinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.ReliablesyncsRestClient(), "objectsyncs", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1alpha1.ObjectSync{}, ifs.defaultResync, cache.Indexers{})
-	})
-}
-
-func (ifs *informers) Device() cache.SharedIndexInformer {
-	return ifs.getInformer("devicesinformer", func() cache.SharedIndexInformer {
-		lw := cache.NewListWatchFromClient(ifs.keClient.DevicesRestClient(), "devices", v1.NamespaceAll, fields.Everything())
-		return cache.NewSharedIndexInformer(lw, &v1alpha2.Device{}, ifs.defaultResync, cache.Indexers{})
 	})
 }
 
@@ -152,6 +98,8 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 		go informer.Run(stopCh)
 		ifs.startedInformers[name] = true
 	}
+	ifs.k8sSharedInformerFactory.Start(stopCh)
+	ifs.crdSharedInformerFactory.Start(stopCh)
 }
 
 func (ifs *informers) getInformer(name string, newFunc newInformer) cache.SharedIndexInformer {

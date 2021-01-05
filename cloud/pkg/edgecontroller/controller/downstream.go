@@ -10,11 +10,14 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
+	k8sinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -511,7 +514,7 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController() (*DownstreamController, error) {
+func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
 	var nodeName = ""
@@ -521,38 +524,47 @@ func NewDownstreamController() (*DownstreamController, error) {
 		}
 		nodeName = config.Config.NodeName
 	}
-
-	podManager, err := manager.NewPodManager(nodeName)
+	var podInformer cache.SharedIndexInformer
+	if nodeName == "" {
+		podInformer = k8sInformerFactory.Core().V1().Pods().Informer()
+	} else {
+		podInformer = keInformerFactory.EdgeSitePod(nodeName)
+	}
+	podManager, err := manager.NewPodManager(podInformer)
 	if err != nil {
 		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
-	configMapManager, err := manager.NewConfigMapManager()
+	cmInformer := k8sInformerFactory.Core().V1().ConfigMaps().Informer()
+	configMapManager, err := manager.NewConfigMapManager(cmInformer)
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
-	secretManager, err := manager.NewSecretManager()
+	secInformer := k8sInformerFactory.Core().V1().Secrets().Informer()
+	secretManager, err := manager.NewSecretManager(secInformer)
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
 	}
-
-	nodesManager, err := manager.NewNodesManager()
+	noInformer := keInformerFactory.EdgeNode()
+	nodesManager, err := manager.NewNodesManager(noInformer)
 	if err != nil {
 		klog.Warningf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
-	serviceManager, err := manager.NewServiceManager()
+	svcInformer := k8sInformerFactory.Core().V1().Services().Informer()
+	serviceManager, err := manager.NewServiceManager(svcInformer)
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
-	endpointsManager, err := manager.NewEndpointsManager()
+	epInformer := k8sInformerFactory.Core().V1().Endpoints().Informer()
+	endpointsManager, err := manager.NewEndpointsManager(epInformer)
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
