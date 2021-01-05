@@ -1,5 +1,5 @@
 ---
-title: Device API on the Edge
+title: Device API at edge
 authors:
     - "@kkBill"
 approvers:
@@ -12,15 +12,15 @@ status: need review
 
 
 
-# Device API on the Edge(alpha)
+# Device API at edge(alpha)
 
 ## Motivation
 
-At present, we cannot use Device API on the edge directly, which is inconvenient for developing IoT applications. This proposal addresses this problem thus facilitates the development of IoT applications and simplifies the code of edge components(such as Mapper and DeviceTwin).
+At present, we cannot use Device API at edge directly, which is inconvenient for developing IoT applications. This proposal addresses this problem thus facilitates the development of IoT applications and simplifies the code of edge components(such as Mapper and DeviceTwin).
 
 ### Goals
 
-* Use Device API on the edge directly
+* Get Device API at edge directly
 
 ### Non-goals
 
@@ -30,73 +30,136 @@ At present, we cannot use Device API on the edge directly, which is inconvenient
 
 ### Background
 
-A brief introduction of how we use Device(or get device info) on the edge **currently**.
+A brief introduction of how we synchronize the Device to edge currently.
 
-Device management in KubeEdge is implemented by making use of Kubernetes Custom Resource Definitions (CRDs) to describe device metadata/status and device controller to synchronize these device updates between edge and cloud. Our focus is on message delivery between cloud and edge.
+Device management in KubeEdge is implemented by making use of Kubernetes Custom Resource Definitions (CRDs) to describe device metadata/status and device controller to synchronize these device updates between edge and cloud. 
 
-First of all, we all know that cloud and edge communicates via CloudHub and EdgeHub. Or, more specifically, they store the information to be transmitted in `Message.Content`, see below:
+Currently, we define device info in [device_instance_types.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/apis/devices/v1alpha2/device_instance_types.go#L360)(which is a standard Kubernetes-Style API) and [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4)(which is used for message transfer between cloud and edge) respectively. When a user creates a new device instance or updates device's status, devicecontroller send the device(defined in  [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4))  instead of a complete Device API to edge. More specifically, we call [createDevice()](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/controller/downstream.go#L417) to create a device from Device API. In short, we cannot get the complete Device API at edge. And **this proposal(aplha version) focuses on how to synchronize the Device API to edge**.
 
-```go
-// Message struct
-type Message struct {
-	Header  MessageHeader `json:"header"`
-	Router  MessageRoute  `json:"route,omitempty"`
-	Content interface{}   `json:"content"`
-}
-```
+Here are two examples to help us understand the difference between custom resources and built-in resources in message transfer between cloud and edge：
 
-#### (1) Pod and other built-in resource object
+* Built-in Resource
 
-Let's take [syncPod](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/edgecontroller/controller/downstream.go#L47) as an example. Here we can see that cloud send a whole `Pod` to edge. Then we parse the Pod completely so that we can use the Pod API on the edge.
+Let's take [syncPod](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/edgecontroller/controller/downstream.go#L47) as an example. Here we can see that cloud send a whole `Pod` to edge. Then we parse the Pod completely so that we can use the Pod API at edge.
 
-#### (2) Device
+* Device
 
-Let's take [syncDevice](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/controller/downstream.go#L594) as an example. We send `DeviceTwinUpdate` to edge when device twin updated. Since we **DON'T distribute the entire Device to the edge**, we cannot use the Device API as easily on the edge as we do on the cloud. In addition, in order to parse out the message sent by the cloud, additional data structure(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) is required, which increases the complexity of the code.
-
-On the other hand, a ConfigMap is created to store the Device information when a new Device is created, which can also be optimized and simplified once we can use Device API on the edge.
+Let's take [syncDevice](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/controller/downstream.go#L148) as an example. When a user creates a new device Instance,  `deviceAdded()` was called, then devicecontroller will send a `MembershipUpdate` to edge instead of a standard Device API, which is different from other built-in resource objects like Pod. Therefore, users cannot get a  complete Device API at edge.
 
 ### Design Detail
 
-* Device CRD
-
-Currently, we have defined Device in [device_instance_types.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/apis/devices/v1alpha2/device_instance_types.go#L360) and [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4) respectively, some fields have the same meaning but different names, which is ambiguous. 
-
-When the device status is updated, the "update message" is sent to the edge through the structure defined in  [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4) . The example mentioned in the background section shows that when device status is updated, we send `DeviceTwinUpdate` to the edge rather than a completed `Device` object, which is different from built-in resource objects (such as Pod). It is suggested to move `DeviceTwinUpdate`, `MembershipUpdate` and other structures in  [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4) to  [device_instance_types.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/apis/devices/v1alpha2/device_instance_types.go#L360) and re-define `DeviceSpec` and `DeviceStatus` , then **we send the whole `Device` object to edge like `Pod` do**. Once we get a whole `Device` on the edge, then we can store device info on the edge and use Device API on the edge. And **this is the key of this proposal**.
-
-* DeviceController
+* Cloud 
 
 The device controller is the cloud component of KubeEdge which is responsible for device management, and **it is responsible for synchronizing device updates between edge and cloud.** It starts two separate goroutines called `upstream controller` and `downstream controller`(these are not separate controllers as such but named here for clarity). 
 
-Since we modify the `Device` object, then we need to modify device controller(both `downstream` and `upstream` ). The changes are as follows:
+We start a new goroutine to sync Device CRD in `downstream`. 
 
-* discard configmap when new device created since we store the device properties and visitors etc in device_instance.
-* send a whole `Device` update to edge instead of `membership` update or `twin` update on downstream.
-* send a whole `Device` update to cloud instead of `twin` update on upstream.
+```go
+// Start DownstreamController
+func (dc *DownstreamController) Start() error {
+	klog.Info("Start downstream devicecontroller")
+	go dc.syncDeviceModel()
+	time.Sleep(1 * time.Second)
+	go dc.syncDevice()
+  
+  // added function here
+	go dc.syncDeviceCRD() // sync Device API to edge
 
-At present, device controller follows the [design](https://github.com/kubeedge/kubeedge/blob/master/docs/components/cloud/device_controller.md#device-controller). 
+	return nil
+}
+```
 
-* DeviceTwin & Mapper
+`syncDeviceCRD()` is as follows, the logic behind it is the same as `syncDevice()`. It uses a new resourceType ("device_crd") to build message's router and `devicetwin` at edge will classify message according to the resourceType.
 
-Once we can retrieve a whole `Device` from cloud,  we can simplify the implementation on the edge. For now, we have to defive some types(e.g.  [dttype](https://github.com/kubeedge/kubeedge/tree/master/edge/pkg/devicetwin/dttype) and [mapper type](https://github.com/kubeedge/kubeedge/blob/master/mappers/common/configmaptype.go)) on the edge in order to unmarshal/marshal device info. Once we can use Device API on the edge, it can be optimized.
+```go
+// syncDeviceCRD is used to get device events from informer and sync a whole Device CRD to edge
+func (dc *DownstreamController) syncDeviceCRD() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Info("Stop device controller downstream syncDeviceCRD loop")
+			return
+		case e := <-dc.deviceManager.Events():
+			device, ok := e.Object.(*v1alpha2.Device)
+			if !ok {
+				klog.Warningf("Object type: %T unsupported", device)
+				continue
+			}
+
+			if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 &&
+				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 &&
+				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+				msg := model.NewMessage("")
+				msg.SetResourceVersion(device.ResourceVersion)
+				msg.Content = device
+
+				edgeNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+				resourceType := "device_crd"
+				resource, err := messagelayer.BuildResource(edgeNode, resourceType, "")
+				if err != nil {
+					klog.Warningf("Build message resource failed with error: %s", err)
+					return
+				}
+				switch e.Type {
+				case watch.Added:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.InsertOperation)
+				case watch.Deleted:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.DeleteOperation)
+				case watch.Modified:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+				default:
+					klog.Warningf("Device event type: %s unsupported", e.Type)
+				}
+				err = dc.messageLayer.Send(*msg)
+				if err != nil {
+					klog.Errorf("Failed to send device %v due to error %v", msg, err)
+				}
+			}
+		}
+	}
+}
+```
+
+
+
+* Edge
+
+We define a new table("DeviceMeta") at egde to store Device API metadata, which is similar to [Meta](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/dao/meta.go#L17) defined in `metamanager`.
+
+```go
+type DeviceMeta struct {
+	Key   string `orm:"column(key); size(256); pk"`
+	Value string `orm:"column(value); null; type(text)"`
+}
+```
+
+The edge side will identify the message according to `Msg.Router.Resource` and specify the callback function to execute based on operation type of the message.
+
+
 
 We split this into the following stages:
 
 * alpha
 
-Discard struct like `DeviceTwinUpdate`, make device API available both at cloud and edge side.
+Make device API available both at cloud and edge side.
 
 * beta
 
-Discard configmaps store device info, make apps call device API directly.
+Discard configmaps store device info, make apps call Device API directly.
 
 * graduated
 
-Call list/watch to sync device API at cloud and edge side.
+Call list/watch to sync Device API at cloud and edge side.
 
 
 ### Use Cases
 
-* Simplify device API sync logic, improve maintainability
-* Simplify the implementation for mapper components for user
+* Provide Device API at edge.
+* Simplify the implementation for mapper components for users.
 
+### Open Question
+
+* Currently, we define device info in [device_instance_types.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/apis/devices/v1alpha2/device_instance_types.go#L360) and [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4) respectively, some fields have the same meaning but different names, which is ambiguous; and some fields in [device.go](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/types/device.go#L4) don't exist in Device CRD. Do we need to reconsider the Device CRD design?
+* Since we cannot get a complete Device API at edge at present, we divide the processing of the device into three parts, namely Device, Device's Twin and Device's Attr. Once we can get the complete Device API, do we need to reconsider this part?
+* For mapper, it gets device info by configmap. Here's the logic: when one creates/updates a device at cloud, it will creates/updates relevant configmap, then `edgecontroller` watch  configmap's event and sync the configmap to edge, mapper gets it finally. If we can get a complete Device API at edge, shall we consider discarding ConfigMap？
 
