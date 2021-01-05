@@ -41,6 +41,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 			Country:      []string{"test"},
 			Organization: []string{"testor"},
 		},
+		DNSNames:    []string{"localhost"},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(5, 5, 5),
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
