@@ -39,7 +39,8 @@ type TunnelServer struct {
 	container *restful.Container
 	upgrader  websocket.Upgrader
 	sync.Mutex
-	sessions map[string]*Session
+	sessions   map[string]*Session
+	nodeNameIP sync.Map
 }
 
 func newTunnelServer() *TunnelServer {
@@ -79,6 +80,18 @@ func (s *TunnelServer) getSession(id string) (*Session, bool) {
 	return sess, ok
 }
 
+func (s *TunnelServer) addNodeIP(node, ip string) {
+	s.nodeNameIP.Store(node, ip)
+}
+
+func (s *TunnelServer) getNodeIP(node string) (string, bool) {
+	ip, ok := s.nodeNameIP.Load(node)
+	if !ok {
+		return "", ok
+	}
+	return ip.(string), ok
+}
+
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOveride)
 	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
@@ -100,6 +113,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 
 	s.addSession(hostNameOverride, session)
 	s.addSession(interalIP, session)
+	s.addNodeIP(hostNameOverride, interalIP)
 	session.Serve()
 }
 
