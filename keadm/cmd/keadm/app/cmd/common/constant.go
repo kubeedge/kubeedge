@@ -83,19 +83,15 @@ const (
 	StrCheck    = "check"
 	StrDiagnose = "diagnose"
 
-	CmdGetArch = "arch"
-	//CmdGetCPUNum     = "cat /proc/cpuinfo  |grep processor| wc -l"
-	//CmdGetMenorySize = "free -h |grep Mem|awk '{print $2}'"
-	//CmdGetDiskSize      = "df -h |grep -ve \" /.\"|sed -n \"2p\"|awk '{print $2}'"
-	CmdGetDNSIP         = "cat /etc/resolv.conf |grep nameserver|grep -v ':'|awk '{print $2}'|sed -n '1p'"
+	CmdGetDNSIP         = "cat /etc/resolv.conf | grep nameserver | grep -v -E ':|#' | awk '{print $2}' | head -n1"
 	CmdGetStatusDocker  = "systemctl status docker |grep Active | awk '{print $2}'"
 	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
 	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
 	CmdGetProcessNum    = "ps -A|wc -l"
 
-	DefaultDomain = "www.github.com"
-
 	EdgecoreConfig = "config"
+
+	EdgeCoreServer = "127.0.0.1:10350"
 
 	// Default edgecore config path
 	EdgecoreConfigPath = "/etc/kubeedge/config/edgecore.yaml"
