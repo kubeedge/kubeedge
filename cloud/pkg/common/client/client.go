@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
@@ -18,12 +17,7 @@ import (
 
 type KubeEdgeClient interface {
 	kubernetes.Interface
-	ClusterObjectSync() syncv1alpha1.ClusterObjectSyncInterface
-	ObjectSync(namespace string) syncv1alpha1.ObjectSyncInterface
-	Device(namespace string) devicev1alpha2.DeviceInterface
-	DeviceModel(namespace string) devicev1alpha2.DeviceModelInterface
-	ReliablesyncsRestClient() restclient.Interface
-	DevicesRestClient() restclient.Interface
+	crdClientset.Interface
 }
 
 var keClient KubeEdgeClient
@@ -58,26 +52,10 @@ type kubeedgeClient struct {
 	crdClient *crdClientset.Clientset
 }
 
-func (kec *kubeedgeClient) ReliablesyncsRestClient() restclient.Interface {
-	return kec.crdClient.ReliablesyncsV1alpha1().RESTClient()
+func (kec *kubeedgeClient) DevicesV1alpha2() devicev1alpha2.DevicesV1alpha2Interface {
+	return kec.crdClient.DevicesV1alpha2()
 }
 
-func (kec *kubeedgeClient) DevicesRestClient() restclient.Interface {
-	return kec.crdClient.DevicesV1alpha2().RESTClient()
-}
-
-func (kec *kubeedgeClient) ClusterObjectSync() syncv1alpha1.ClusterObjectSyncInterface {
-	return kec.crdClient.ReliablesyncsV1alpha1().ClusterObjectSyncs()
-}
-
-func (kec *kubeedgeClient) ObjectSync(namespace string) syncv1alpha1.ObjectSyncInterface {
-	return kec.crdClient.ReliablesyncsV1alpha1().ObjectSyncs(namespace)
-}
-
-func (kec *kubeedgeClient) Device(namespace string) devicev1alpha2.DeviceInterface {
-	return kec.crdClient.DevicesV1alpha2().Devices(namespace)
-}
-
-func (kec *kubeedgeClient) DeviceModel(namespace string) devicev1alpha2.DeviceModelInterface {
-	return kec.crdClient.DevicesV1alpha2().DeviceModels(namespace)
+func (kec *kubeedgeClient) ReliablesyncsV1alpha1() syncv1alpha1.ReliablesyncsV1alpha1Interface {
+	return kec.crdClient.ReliablesyncsV1alpha1()
 }

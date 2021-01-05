@@ -2,8 +2,8 @@ package manager
 
 import (
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
@@ -18,10 +18,9 @@ func (sm *SecretManager) Events() chan watch.Event {
 }
 
 // NewSecretManager create SecretManager by kube clientset and namespace
-func NewSecretManager() (*SecretManager, error) {
+func NewSecretManager(si cache.SharedIndexInformer) (*SecretManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.SecretEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si := informers.GetGlobalInformers().Secrets()
 	si.AddEventHandler(rh)
 
 	return &SecretManager{events: events}, nil

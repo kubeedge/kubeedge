@@ -10,7 +10,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
@@ -79,13 +78,7 @@ func (pm *PodManager) Events() chan watch.Event {
 }
 
 // NewPodManager create PodManager from config
-func NewPodManager(nodeName string) (*PodManager, error) {
-	var si cache.SharedInformer
-	if "" == nodeName {
-		si = informers.GetGlobalInformers().Pod()
-	} else {
-		si = informers.GetGlobalInformers().EdgeSitePod(nodeName)
-	}
+func NewPodManager(si cache.SharedIndexInformer) (*PodManager, error) {
 	realEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
 	mergedEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents)

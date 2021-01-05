@@ -528,10 +528,10 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 			return
 		}
 
-		objectSync, err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
+		objectSync, err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
 		if err == nil {
 			objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			_, err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
+			_, err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
 			if err != nil {
 				klog.Errorf("Failed to update objectSync: %v, resourceType: %s, resourceNamespace: %s, resourceName: %s",
 					err, resourceType, resourceNamespace, resourceName)
@@ -547,18 +547,18 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					ObjectName:       resourceName,
 				},
 			}
-			_, err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).Create(context.Background(), objectSync, metav1.CreateOptions{})
+			_, err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Create(context.Background(), objectSync, metav1.CreateOptions{})
 			if err != nil {
 				klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
 				return
 			}
 
-			objectSyncStatus, err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
+			objectSyncStatus, err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Get(context.Background(), objectSyncName, metav1.GetOptions{})
 			if err != nil {
 				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
 			}
 			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			if _, err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
+			if _, err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{}); err != nil {
 				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
 			}
 		}
@@ -571,7 +571,7 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 }
 
 func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
-	if err := client.GetKubeEdgeClient().ObjectSync(resourceNamespace).Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0)); err != nil {
+	if err := client.GetKubeEdgeClient().ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(context.Background(), objectSyncName, *metav1.NewDeleteOptions(0)); err != nil {
 		klog.Errorf("Delete Success Point failed with error: %v", err)
 	}
 }
