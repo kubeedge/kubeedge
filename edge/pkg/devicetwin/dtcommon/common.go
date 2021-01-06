@@ -61,6 +61,11 @@ const (
 	// MemUpdated membership updated
 	MemUpdated = "MemUpdated"
 
+	// Device CRD action
+	MemDeviceCRDInsert = "DeviceInsert"
+	MemDeviceCRDDelete = "DeviceDelete"
+	MemDeviceCRDUpdate = "DeviceUpdate"
+
 	// TwinGet get twin
 	TwinGet = "TwinGet"
 	// TwinUpdate twin update

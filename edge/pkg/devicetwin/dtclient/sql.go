@@ -14,6 +14,8 @@ const (
 	DeviceAttrTableName = "device_attr"
 	//DeviceTwinTableName device table
 	DeviceTwinTableName = "device_twin"
+	//DeviceMetaTableName device table
+	DeviceMetaTableName = "device_meta"
 )
 
 // InitDBTable create table
@@ -27,4 +29,5 @@ func InitDBTable(module core.Module) {
 	orm.RegisterModel(new(Device))
 	orm.RegisterModel(new(DeviceAttr))
 	orm.RegisterModel(new(DeviceTwin))
+	orm.RegisterModel(new(DeviceMeta))
 }

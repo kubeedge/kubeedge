@@ -96,6 +96,9 @@ func initActionModuleMap() {
 	ActionModuleMap[dtcommon.MemDetailResult] = dtcommon.MemModule
 	ActionModuleMap[dtcommon.MemGet] = dtcommon.MemModule
 	ActionModuleMap[dtcommon.MemUpdated] = dtcommon.MemModule
+	ActionModuleMap[dtcommon.MemDeviceCRDInsert] = dtcommon.MemModule
+	ActionModuleMap[dtcommon.MemDeviceCRDDelete] = dtcommon.MemModule
+	ActionModuleMap[dtcommon.MemDeviceCRDUpdate] = dtcommon.MemModule
 	ActionModuleMap[dtcommon.TwinGet] = dtcommon.TwinModule
 	ActionModuleMap[dtcommon.TwinUpdate] = dtcommon.TwinModule
 	ActionModuleMap[dtcommon.TwinCloudSync] = dtcommon.TwinModule
@@ -234,7 +237,20 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			}
 			message.Msg.Content = content
 		}
-		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
+		if strings.Contains(message.Msg.Router.Resource, "device_crd") {//sync Device CRD
+			operation := message.Msg.GetOperation()
+			action := ""
+			switch operation {
+			case model.InsertOperation:
+				action = dtcommon.MemDeviceCRDInsert
+			case model.DeleteOperation:
+				action = dtcommon.MemDeviceCRDDelete
+			case model.UpdateOperation:
+				action = dtcommon.MemDeviceCRDUpdate
+			}
+			message.Action = action
+			return true
+		} else if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
 			message.Action = dtcommon.MemDetailResult
 			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "membership") {
@@ -243,7 +259,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		} else if strings.Contains(message.Msg.Router.Resource, "twin/cloud_updated") {
 			message.Action = dtcommon.TwinCloudSync
 			resources := strings.Split(message.Msg.Router.Resource, "/")
-			message.Identity = resources[1]
+			message.Identity = resources[1]//nodeID
 			return true
 		} else if strings.Contains(message.Msg.Router.Operation, "updated") {
 			resources := strings.Split(message.Msg.Router.Resource, "/")
@@ -278,7 +294,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 				return
 			default:
 			}
-			if msg, ok := beehiveContext.Receive("twin"); ok == nil {
+			if msg, err := beehiveContext.Receive(dt.Name()); err == nil {
 				klog.Info("DeviceTwin receive msg")
 				err := dt.distributeMsg(msg)
 				if err != nil {

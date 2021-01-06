@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
@@ -65,7 +66,96 @@ func initMemActionCallBack() {
 	memActionCallBack[dtcommon.MemGet] = dealMembershipGet
 	memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdate
 	memActionCallBack[dtcommon.MemDetailResult] = dealMembershipDetail
+	memActionCallBack[dtcommon.MemDeviceCRDInsert] = dealDeviceCrdInsert
+	memActionCallBack[dtcommon.MemDeviceCRDDelete] = dealDeviceCrdDelete
+	memActionCallBack[dtcommon.MemDeviceCRDUpdate] = dealDeviceCrdUpdate
 }
+
+func dealDeviceCrdInsert(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+	klog.Infof("Membership event")
+	message, ok := msg.(*model.Message)
+	if !ok {
+		return nil, errors.New("assertion failed, msg is not Message type")
+	}
+	device, ok := message.Content.(*v1alpha2.Device)
+	if !ok {
+		return nil, errors.New("assertion failed, msg.Content is not Device type")
+	}
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("assertion failed")
+	}
+	devicemeta := dtclient.DeviceMeta{
+		Key:   fmt.Sprintf("%s%s", device.Namespace, device.Name),
+		Value: string(content),
+	}
+	devicemetas := make([]dtclient.DeviceMeta, 0)
+	devicemetas = append(devicemetas, devicemeta)
+
+	defer context.UnlockAll()
+	context.LockAll()
+	err := dtclient.AddDeviceMetaTrans(devicemetas)
+	if err != nil {
+		klog.Errorf("Save device meta failed, %v", device.Name)
+		return nil, err
+	}
+	return nil, nil
+}
+
+func dealDeviceCrdDelete(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+	klog.Infof("Membership event")
+	message, ok := msg.(*model.Message)
+	if !ok {
+		return nil, errors.New("assertion failed, msg is not Message type")
+	}
+	device, ok := message.Content.(*v1alpha2.Device)
+	if !ok {
+		return nil, errors.New("assertion failed, msg.Content is not Device type")
+	}
+	deviceKeys := make([]string, 0)
+	key := fmt.Sprintf("%s%s", device.Namespace, device.Name)
+	deviceKeys = append(deviceKeys, key)
+
+	defer context.UnlockAll()
+	context.LockAll()
+	err := dtclient.DeleteDeviceMetaTrans(deviceKeys)
+	if err != nil {
+		klog.Errorf("Delete device meta failed, %v", device.Name)
+		return nil, err
+	}
+	return nil, nil
+}
+
+func dealDeviceCrdUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+	klog.Infof("Membership event")
+	message, ok := msg.(*model.Message)
+	if !ok {
+		return nil, errors.New("assertion failed, msg is not Message type")
+	}
+	device, ok := message.Content.(*v1alpha2.Device)
+	if !ok {
+		return nil, errors.New("assertion failed, msg.Content is not Device type")
+	}
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return nil, errors.New("assertion failed")
+	}
+	devicemeta := dtclient.DeviceMeta{
+		Key:   fmt.Sprintf("%s%s", device.Namespace, device.Name),
+		Value: string(content),
+	}
+	defer context.UnlockAll()
+	//TODO: lock strategy need more discussion
+	context.LockAll()
+
+	err := dtclient.InsertOrUpdate(&devicemeta)
+	if err != nil {
+		klog.Errorf("Update device meta failed, %v", device.Name)
+		return nil, err
+	}
+	return nil, nil
+}
+
 func getRemoveList(context *dtcontext.DTContext, devices []dttype.Device) []dttype.Device {
 	var toRemove []dttype.Device
 	context.DeviceList.Range(func(key interface{}, value interface{}) bool {
