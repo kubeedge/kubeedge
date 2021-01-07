@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
@@ -32,11 +33,13 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 	}
 	kubeConfig.QPS = float32(config.QPS)
 	kubeConfig.Burst = int(config.Burst)
-	kubeConfig.ContentType = runtime.ContentTypeJSON
+	kubeConfig.ContentType = runtime.ContentTypeProtobuf
 	kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
-	crdClient := crdClientset.NewForConfigOrDie(kubeConfig)
+	crdKubeConfig := rest.CopyConfig(kubeConfig)
+	crdKubeConfig.ContentType = runtime.ContentTypeJSON
+	crdClient := crdClientset.NewForConfigOrDie(crdKubeConfig)
 	once.Do(func() {
-		keClient = &kubeedgeClient{
+		keClient = &kubeEdgeClient{
 			Clientset: kubeClient,
 			crdClient: crdClient,
 		}
@@ -47,15 +50,15 @@ func GetKubeEdgeClient() KubeEdgeClient {
 	return keClient
 }
 
-type kubeedgeClient struct {
+type kubeEdgeClient struct {
 	*kubernetes.Clientset
 	crdClient *crdClientset.Clientset
 }
 
-func (kec *kubeedgeClient) DevicesV1alpha2() devicev1alpha2.DevicesV1alpha2Interface {
+func (kec *kubeEdgeClient) DevicesV1alpha2() devicev1alpha2.DevicesV1alpha2Interface {
 	return kec.crdClient.DevicesV1alpha2()
 }
 
-func (kec *kubeedgeClient) ReliablesyncsV1alpha1() syncv1alpha1.ReliablesyncsV1alpha1Interface {
+func (kec *kubeEdgeClient) ReliablesyncsV1alpha1() syncv1alpha1.ReliablesyncsV1alpha1Interface {
 	return kec.crdClient.ReliablesyncsV1alpha1()
 }

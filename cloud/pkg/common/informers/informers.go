@@ -6,7 +6,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
@@ -19,7 +18,6 @@ import (
 type newInformer func() cache.SharedIndexInformer
 
 type KubeEdgeCustomeInformer interface {
-	EdgeSitePod(nodeName string) cache.SharedIndexInformer
 	EdgeNode() cache.SharedIndexInformer
 }
 
@@ -63,14 +61,6 @@ func (ifs *informers) GetK8sInformerFactory() k8sinformer.SharedInformerFactory 
 
 func (ifs *informers) GetCRDInformerFactory() crdinformers.SharedInformerFactory {
 	return ifs.crdSharedInformerFactory
-}
-
-func (ifs *informers) EdgeSitePod(nodeName string) cache.SharedIndexInformer {
-	return ifs.getInformer("edgesitepodinformer", func() cache.SharedIndexInformer {
-		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
-		lw := cache.NewListWatchFromClient(ifs.keClient.CoreV1().RESTClient(), "pods", v1.NamespaceAll, selector)
-		return cache.NewSharedIndexInformer(lw, &v1.Pod{}, ifs.defaultResync, cache.Indexers{})
-	})
 }
 
 func (ifs *informers) EdgeNode() cache.SharedIndexInformer {
