@@ -17,17 +17,17 @@ limitations under the License.
 package manager
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -63,24 +63,27 @@ func TestNodesManager_Events(t *testing.T) {
 
 func TestNewNodesManager(t *testing.T) {
 	type args struct {
-		kubeClient *kubernetes.Clientset
-		namespace  string
+		informer cache.SharedIndexInformer
 	}
-	config.Config.KubeAPIConfig = v1alpha1.KubeAPIConfig{
-		KubeConfig:  fmt.Sprintf("%s/.kube/config", os.Getenv("HOME")),
-		QPS:         100,
-		Burst:       200,
-		ContentType: "application/vnd.kubernetes.protobuf",
-	}
+
 	config.Config.Buffer = &v1alpha1.EdgeControllerBuffer{
 		ConfigMapEvent: 1024,
 	}
 
-	cli, err := utils.KubeClient()
+	tmpfile, err := ioutil.TempFile("", "kubeconfig")
 	if err != nil {
-		t.Skip("No k8s cluster config file in $HOME/.kube/config, skip it.")
-		return
+		t.Error(err)
 	}
+	defer os.Remove(tmpfile.Name())
+	if err := ioutil.WriteFile(tmpfile.Name(), []byte(mockKubeConfigContent), 0666); err != nil {
+		t.Error(err)
+	}
+	client.InitKubeEdgeClient(&v1alpha1.KubeAPIConfig{
+		KubeConfig:  tmpfile.Name(),
+		QPS:         100,
+		Burst:       200,
+		ContentType: "application/vnd.kubernetes.protobuf",
+	})
 
 	tests := []struct {
 		name string
@@ -89,14 +92,13 @@ func TestNewNodesManager(t *testing.T) {
 		{
 			"TestNewNodesManager(): Case 1",
 			args{
-				cli,
-				v1.NamespaceAll,
+				informers.GetInformersManager().EdgeNode(),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewNodesManager(tt.args.kubeClient, tt.args.namespace)
+			NewNodesManager(tt.args.informer)
 		})
 	}
 }
