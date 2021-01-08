@@ -72,6 +72,8 @@ type Modules struct {
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
+	// Router indicates router module config
+	Router *Router `json:"router,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -377,4 +379,12 @@ type CloudStream struct {
 	// StreamPort set open port for stream server
 	// default 10003
 	StreamPort uint32 `json:"streamPort,omitempty"`
+}
+
+type Router struct{
+	// default true
+	Enable bool `json:"enable"`
+	Address string `json:"address"`
+	Port uint32 `json:"port"`
+	RestTimeout uint32 `json:"rest_timeout"`
 }

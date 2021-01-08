@@ -153,6 +153,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
 				StreamPort:              10003,
 			},
+			Router: &Router{
+				Enable: true,
+				Address: "0.0.0.0",
+				Port: 9443,
+				RestTimeout: 60,
+			},
 		},
 		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
 			LeaderElect:       false,
@@ -202,6 +208,12 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Port:    10002,
 					Address: "0.0.0.0",
 				},
+			},
+			Router: &Router{
+				Enable: true,
+				Address: "0.0.0.0",
+				Port: 9443,
+				RestTimeout: 60,
 			},
 		},
 		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
