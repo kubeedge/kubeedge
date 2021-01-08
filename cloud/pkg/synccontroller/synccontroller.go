@@ -35,16 +35,16 @@ type SyncController struct {
 	//client
 	crdclient crdClientset.Interface
 	// lister
-	podLister            corev1listers.PodLister
-	cmLister             corev1listers.ConfigMapLister
-	secLister            corev1listers.SecretLister
-	svcLister            corev1listers.ServiceLister
-	epLister             corev1listers.EndpointsLister
-	noLister             corev1listers.NodeLister
-	osLister             reliablesyncsv1alpha1listers.ObjectSyncLister
-	cosLister            reliablesyncsv1alpha1listers.ClusterObjectSyncLister
-	devLister            devicesv1alpha2listers.DeviceLister
-	informersSyncedFuncs []cache.InformerSynced
+	podLister               corev1listers.PodLister
+	configMapLister         corev1listers.ConfigMapLister
+	secretLister            corev1listers.SecretLister
+	seviceLister            corev1listers.ServiceLister
+	endpointsLister         corev1listers.EndpointsLister
+	nodeLister              corev1listers.NodeLister
+	objectSyncLister        reliablesyncsv1alpha1listers.ObjectSyncLister
+	clusterObjectSyncLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister
+	deviceLister            devicesv1alpha2listers.DeviceLister
+	informersSyncedFuncs    []cache.InformerSynced
 }
 
 func newSyncController(enable bool) *SyncController {
@@ -57,10 +57,10 @@ func newSyncController(enable bool) *SyncController {
 	crdInformerFactory := informers.GetInformersManager().GetCRDInformerFactory()
 	// informer
 	podInformer := k8sInformerFactory.Core().V1().Pods()
-	cmInformer := k8sInformerFactory.Core().V1().ConfigMaps()
-	secInformer := k8sInformerFactory.Core().V1().Secrets()
-	svcInformer := k8sInformerFactory.Core().V1().Services()
-	epInformer := k8sInformerFactory.Core().V1().Endpoints()
+	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps()
+	secretInformer := k8sInformerFactory.Core().V1().Secrets()
+	serviceInformer := k8sInformerFactory.Core().V1().Services()
+	endpointInformer := k8sInformerFactory.Core().V1().Endpoints()
 	devicesInformer := crdInformerFactory.Devices().V1alpha2().Devices()
 	objectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
@@ -71,21 +71,21 @@ func newSyncController(enable bool) *SyncController {
 		},
 	})
 	// lister
-	sctl.noLister = nodesInformer.Lister()
+	sctl.nodeLister = nodesInformer.Lister()
 	sctl.podLister = podInformer.Lister()
-	sctl.cmLister = cmInformer.Lister()
-	sctl.secLister = secInformer.Lister()
-	sctl.svcLister = svcInformer.Lister()
-	sctl.epLister = epInformer.Lister()
-	sctl.devLister = devicesInformer.Lister()
-	sctl.osLister = objectSyncsInformer.Lister()
-	sctl.cosLister = clusterObjectSyncsInformer.Lister()
+	sctl.configMapLister = configMapInformer.Lister()
+	sctl.secretLister = secretInformer.Lister()
+	sctl.seviceLister = serviceInformer.Lister()
+	sctl.endpointsLister = endpointInformer.Lister()
+	sctl.deviceLister = devicesInformer.Lister()
+	sctl.objectSyncLister = objectSyncsInformer.Lister()
+	sctl.clusterObjectSyncLister = clusterObjectSyncsInformer.Lister()
 	// InformerSynced
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, podInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, cmInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, secInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, svcInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, epInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, configMapInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, secretInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, serviceInformer.Informer().HasSynced)
+	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, endpointInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, devicesInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, objectSyncsInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, clusterObjectSyncsInformer.Informer().HasSynced)
@@ -127,13 +127,13 @@ func (sctl *SyncController) Start() {
 }
 
 func (sctl *SyncController) reconcile() {
-	allClusterObjectSyncs, err := sctl.cosLister.List(labels.Everything())
+	allClusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the ClusterObjectSyncs: %v", err)
 	}
 	sctl.manageClusterObjectSync(allClusterObjectSyncs)
 
-	allObjectSyncs, err := sctl.osLister.List(labels.Everything())
+	allObjectSyncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
@@ -171,7 +171,7 @@ func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) deleteObjectSyncs() {
-	syncs, err := sctl.osLister.List(labels.Everything())
+	syncs, err := sctl.objectSyncLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
 	}
@@ -194,7 +194,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 // checkObjectSync checks whether objectSync is outdated
 func (sctl *SyncController) checkObjectSync(sync *v1alpha1.ObjectSync) (bool, error) {
 	nodeName := getNodeName(sync.Name)
-	_, err := sctl.noLister.Get(nodeName)
+	_, err := sctl.nodeLister.Get(nodeName)
 	if errors.IsNotFound(err) {
 		return true, nil
 	}
