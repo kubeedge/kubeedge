@@ -366,7 +366,12 @@ func killKubeEdgeBinary(proc string) error {
 
 		if systemdExist && serviceName != "" {
 			// remove the system service.
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service && sudo rm /etc/systemd/system/%s.service && sudo systemctl daemon-reload", serviceName, serviceName, serviceName)
+			serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", serviceName)
+			serviceFileRemoveExec := fmt.Sprintf("&& sudo rm %s", serviceFilePath)
+			if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
+				serviceFileRemoveExec = ""
+			}
+			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service %s && sudo systemctl daemon-reload", serviceName, serviceName, serviceFileRemoveExec)
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
