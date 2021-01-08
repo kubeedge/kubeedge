@@ -52,7 +52,7 @@ func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
-	configmap, err := sctl.cmLister.ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
+	configmap, err := sctl.configMapLister.ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if configmap != nil {
@@ -83,7 +83,7 @@ func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
-	secret, err := sctl.secLister.Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
+	secret, err := sctl.secretLister.Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 
@@ -115,7 +115,7 @@ func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
-	service, err := sctl.svcLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
+	service, err := sctl.seviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if service != nil {
@@ -146,7 +146,7 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
-	endpoint, err := sctl.epLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
+	endpoint, err := sctl.endpointsLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 

@@ -30,7 +30,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 
 	set := labels.Set{edgemgr.NodeRoleKey: edgemgr.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
-	allEdgeNodes, err := sctl.noLister.List(selector)
+	allEdgeNodes, err := sctl.nodeLister.List(selector)
 	if err != nil {
 		klog.Errorf("Filed to list all the edge nodes: %v", err)
 		return
@@ -41,7 +41,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 			continue
 		}
 		// Check whether the pod is successfully persisted to edge
-		_, err := sctl.osLister.ObjectSyncs(pod.Namespace).Get(BuildObjectSyncName(pod.Spec.NodeName, string(pod.UID)))
+		_, err := sctl.objectSyncLister.ObjectSyncs(pod.Namespace).Get(BuildObjectSyncName(pod.Spec.NodeName, string(pod.UID)))
 		if err != nil && apierrors.IsNotFound(err) {
 			msg := buildEdgeControllerMessage(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name, model.InsertOperation, pod)
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
@@ -82,7 +82,7 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 }
 
 func (sctl *SyncController) manageCreateFailedDevice() {
-	allDevices, err := sctl.devLister.List(labels.Everything())
+	allDevices, err := sctl.deviceLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Filed to list all the devices: %v", err)
 		return
@@ -92,7 +92,7 @@ func (sctl *SyncController) manageCreateFailedDevice() {
 		// Check whether the device is successfully persisted to edge
 		// TODO: refactor the nodeselector of the device
 		nodeName := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-		_, err := sctl.osLister.ObjectSyncs(device.Namespace).Get(BuildObjectSyncName(nodeName, string(device.UID)))
+		_, err := sctl.objectSyncLister.ObjectSyncs(device.Namespace).Get(BuildObjectSyncName(nodeName, string(device.UID)))
 		if err != nil && apierrors.IsNotFound(err) {
 			msg := buildEdgeControllerMessage(nodeName, device.Namespace, commonconst.ResourceTypeService, device.Name, model.InsertOperation, device)
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
