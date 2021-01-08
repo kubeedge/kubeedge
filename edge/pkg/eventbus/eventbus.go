@@ -167,7 +167,7 @@ func (eb *eventbus) subscribe(topic string) {
 
 	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
 		// subscribe topic to external mqtt broker.
-		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
+		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubUserMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
 			return

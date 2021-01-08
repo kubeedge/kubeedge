@@ -114,8 +114,8 @@ func (conn *WSConnection) handleRawData() {
 }
 
 func (conn *WSConnection) handleMessage() {
-	msg := &model.Message{}
 	for {
+		msg := &model.Message{}
 		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
 		if err != nil {
 			if err != io.EOF {
