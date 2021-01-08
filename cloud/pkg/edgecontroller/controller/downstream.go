@@ -511,35 +511,35 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		return nil, err
 	}
 
-	cmInformer := k8sInformerFactory.Core().V1().ConfigMaps().Informer()
-	configMapManager, err := manager.NewConfigMapManager(cmInformer)
+	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps().Informer()
+	configMapManager, err := manager.NewConfigMapManager(configMapInformer)
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
-	secInformer := k8sInformerFactory.Core().V1().Secrets().Informer()
-	secretManager, err := manager.NewSecretManager(secInformer)
+	secretInformer := k8sInformerFactory.Core().V1().Secrets().Informer()
+	secretManager, err := manager.NewSecretManager(secretInformer)
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
 	}
-	noInformer := keInformerFactory.EdgeNode()
-	nodesManager, err := manager.NewNodesManager(noInformer)
+	nodeInformer := keInformerFactory.EdgeNode()
+	nodesManager, err := manager.NewNodesManager(nodeInformer)
 	if err != nil {
 		klog.Warningf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
-	svcInformer := k8sInformerFactory.Core().V1().Services().Informer()
-	serviceManager, err := manager.NewServiceManager(svcInformer)
+	serviceInformer := k8sInformerFactory.Core().V1().Services().Informer()
+	serviceManager, err := manager.NewServiceManager(serviceInformer)
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
-	epInformer := k8sInformerFactory.Core().V1().Endpoints().Informer()
-	endpointsManager, err := manager.NewEndpointsManager(epInformer)
+	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints().Informer()
+	endpointsManager, err := manager.NewEndpointsManager(endpointsInformer)
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err

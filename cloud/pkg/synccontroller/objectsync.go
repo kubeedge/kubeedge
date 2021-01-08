@@ -115,7 +115,7 @@ func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
-	service, err := sctl.seviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
+	service, err := sctl.serviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 	if service != nil {
@@ -146,7 +146,7 @@ func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
 }
 
 func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
-	endpoint, err := sctl.endpointsLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
+	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
 

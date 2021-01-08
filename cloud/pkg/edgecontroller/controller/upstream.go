@@ -35,7 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sinformer "k8s.io/client-go/informers"
-	corev1listers "k8s.io/client-go/listers/core/v1"
+	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -96,12 +96,12 @@ type UpstreamController struct {
 	podDeleteChan             chan model.Message
 
 	// lister
-	podLister corev1listers.PodLister
-	cmLister  corev1listers.ConfigMapLister
-	secLister corev1listers.SecretLister
-	svcLister corev1listers.ServiceLister
-	epLister  corev1listers.EndpointsLister
-	noLister  corev1listers.NodeLister
+	podLister       corelisters.PodLister
+	configMapLister corelisters.ConfigMapLister
+	secretLister    corelisters.SecretLister
+	serviceLister   corelisters.ServiceLister
+	endpointLister  corelisters.EndpointsLister
+	nodeLister      corelisters.NodeLister
 }
 
 // Start UpstreamController
@@ -504,19 +504,19 @@ func (uc *UpstreamController) updateNodeStatus() {
 func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.cmLister.ConfigMaps(namespace).Get(name)
+		configMap, err := uc.configMapLister.ConfigMaps(namespace).Get(name)
 		resourceVersion := configMap.ResourceVersion
 		return configMap, resourceVersion, err
 	case model.ResourceTypeSecret:
-		secret, err := uc.secLister.Secrets(namespace).Get(name)
+		secret, err := uc.secretLister.Secrets(namespace).Get(name)
 		resourceVersion := secret.ResourceVersion
 		return secret, resourceVersion, err
 	case common.ResourceTypeService:
-		svc, err := uc.svcLister.Services(namespace).Get(name)
+		svc, err := uc.serviceLister.Services(namespace).Get(name)
 		resourceVersion := svc.ResourceVersion
 		return svc, resourceVersion, err
 	case common.ResourceTypeEndpoints:
-		eps, err := uc.epLister.Endpoints(namespace).Get(name)
+		eps, err := uc.endpointLister.Endpoints(namespace).Get(name)
 		resourceVersion := eps.ResourceVersion
 		return eps, resourceVersion, err
 	case common.ResourceTypePersistentVolume:
@@ -532,7 +532,7 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		resourceVersion := va.ResourceVersion
 		return va, resourceVersion, err
 	case model.ResourceTypeNode:
-		node, err := uc.noLister.Get(name)
+		node, err := uc.nodeLister.Get(name)
 		resourceVersion := node.ResourceVersion
 		return node, resourceVersion, err
 	default:
@@ -954,11 +954,11 @@ func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*Upstream
 		kubeClient:   client.GetKubeEdgeClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
 	}
-	uc.noLister = factory.Core().V1().Nodes().Lister()
-	uc.epLister = factory.Core().V1().Endpoints().Lister()
-	uc.svcLister = factory.Core().V1().Services().Lister()
+	uc.nodeLister = factory.Core().V1().Nodes().Lister()
+	uc.endpointLister = factory.Core().V1().Endpoints().Lister()
+	uc.serviceLister = factory.Core().V1().Services().Lister()
 	uc.podLister = factory.Core().V1().Pods().Lister()
-	uc.cmLister = factory.Core().V1().ConfigMaps().Lister()
-	uc.secLister = factory.Core().V1().Secrets().Lister()
+	uc.configMapLister = factory.Core().V1().ConfigMaps().Lister()
+	uc.secretLister = factory.Core().V1().Secrets().Lister()
 	return uc, nil
 }
