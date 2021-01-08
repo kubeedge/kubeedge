@@ -31,7 +31,7 @@ func BuildResourceForRouter(resourceType, resourceID string) (resource string, e
 		err = fmt.Errorf("required parameter are not set (resourceID or resource type)")
 		return
 	}
-	resource = fmt.Sprintf("%s%s%s", constants.ResourceTypeRule, constants.ResourceSep, resourceID)
+	resource = fmt.Sprintf("%s%s%s", resourceType, constants.ResourceSep, resourceID)
 	return
 }
 
