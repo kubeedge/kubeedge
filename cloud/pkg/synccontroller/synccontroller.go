@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
-	corev1listers "k8s.io/client-go/listers/core/v1"
+	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -19,8 +19,8 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
-	devicesv1alpha2listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
-	reliablesyncsv1alpha1listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
+	deviceslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
+	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -35,15 +35,15 @@ type SyncController struct {
 	//client
 	crdclient crdClientset.Interface
 	// lister
-	podLister               corev1listers.PodLister
-	configMapLister         corev1listers.ConfigMapLister
-	secretLister            corev1listers.SecretLister
-	seviceLister            corev1listers.ServiceLister
-	endpointsLister         corev1listers.EndpointsLister
-	nodeLister              corev1listers.NodeLister
-	objectSyncLister        reliablesyncsv1alpha1listers.ObjectSyncLister
-	clusterObjectSyncLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister
-	deviceLister            devicesv1alpha2listers.DeviceLister
+	podLister               corelisters.PodLister
+	configMapLister         corelisters.ConfigMapLister
+	secretLister            corelisters.SecretLister
+	serviceLister           corelisters.ServiceLister
+	endpointLister          corelisters.EndpointsLister
+	nodeLister              corelisters.NodeLister
+	objectSyncLister        reliablesyncslisters.ObjectSyncLister
+	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
+	deviceLister            deviceslisters.DeviceLister
 	informersSyncedFuncs    []cache.InformerSynced
 }
 
@@ -75,8 +75,8 @@ func newSyncController(enable bool) *SyncController {
 	sctl.podLister = podInformer.Lister()
 	sctl.configMapLister = configMapInformer.Lister()
 	sctl.secretLister = secretInformer.Lister()
-	sctl.seviceLister = serviceInformer.Lister()
-	sctl.endpointsLister = endpointInformer.Lister()
+	sctl.serviceLister = serviceInformer.Lister()
+	sctl.endpointLister = endpointInformer.Lister()
 	sctl.deviceLister = devicesInformer.Lister()
 	sctl.objectSyncLister = objectSyncsInformer.Lister()
 	sctl.clusterObjectSyncLister = clusterObjectSyncsInformer.Lister()

@@ -29,15 +29,15 @@ type cloudHub struct {
 func newCloudHub(enable bool) *cloudHub {
 	crdFactory := informers.GetInformersManager().GetCRDInformerFactory()
 	// declare used informer
-	cosInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
-	osInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
-	messageq := channelq.NewChannelMessageQueue(osInformer.Lister(), cosInformer.Lister())
+	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
+	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister())
 	ch := &cloudHub{
 		enable:   enable,
 		messageq: messageq,
 	}
-	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, cosInformer.Informer().HasSynced)
-	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, osInformer.Informer().HasSynced)
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, clusterObjectSyncInformer.Informer().HasSynced)
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, objectSyncInformer.Informer().HasSynced)
 	return ch
 }
 

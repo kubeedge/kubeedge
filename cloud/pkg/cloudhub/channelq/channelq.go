@@ -13,7 +13,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
-	reliablesyncsv1alpha1listers "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
+	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -30,15 +30,15 @@ type ChannelMessageQueue struct {
 	listQueuePool sync.Map
 	listStorePool sync.Map
 
-	osLister  reliablesyncsv1alpha1listers.ObjectSyncLister
-	cosLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister
+	objectSyncLister        reliablesyncslisters.ObjectSyncLister
+	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue(osLister reliablesyncsv1alpha1listers.ObjectSyncLister, cosLister reliablesyncsv1alpha1listers.ClusterObjectSyncLister) *ChannelMessageQueue {
+func NewChannelMessageQueue(objectSyncLister reliablesyncslisters.ObjectSyncLister, clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister) *ChannelMessageQueue {
 	return &ChannelMessageQueue{
-		osLister:  osLister,
-		cosLister: cosLister,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
 	}
 }
 
@@ -111,7 +111,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
 				return
 			}
-			objectSync, err := q.osLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
+			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
 			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
 				return
 			}
