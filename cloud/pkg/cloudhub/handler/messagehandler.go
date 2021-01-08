@@ -136,12 +136,15 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 			mh.MessageAcks.Delete(container.Message.Header.ParentID)
 		}
 		return
-	}
-
-	err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
-	if err != nil {
-		// if err, we should stop node, write data to edgehub, stop nodify
-		klog.Errorf("Failed to serve handle with error: %s", err.Error())
+	} else if container.Message.GetOperation() == "upload" && container.Message.GetGroup() == "user" {
+		container.Message.Router.Resource = fmt.Sprintf("node/%s/%s", nodeID, container.Message.Router.Resource)
+		beehiveContext.Send("router", *container.Message)
+	} else {
+		err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+		if err != nil {
+			// if err, we should stop node, write data to edgehub, stop nodify
+			klog.Errorf("Failed to serve handle with error: %s", err.Error())
+		}
 	}
 }
 
