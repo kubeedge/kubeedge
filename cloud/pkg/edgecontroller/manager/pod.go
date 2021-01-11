@@ -6,9 +6,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -80,25 +78,12 @@ func (pm *PodManager) Events() chan watch.Event {
 }
 
 // NewPodManager create PodManager from config
-func NewPodManager(kubeClient *kubernetes.Clientset, namespace, nodeName string) (*PodManager, error) {
-	var lw *cache.ListWatch
-	if "" == nodeName {
-		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, fields.Everything())
-	} else {
-		selector := fields.OneTermEqualSelector("spec.nodeName", nodeName)
-		lw = cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", namespace, selector)
-	}
+func NewPodManager(si cache.SharedIndexInformer) (*PodManager, error) {
 	realEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
 	mergedEvents := make(chan watch.Event, config.Config.Buffer.PodEvent)
 	rh := NewCommonResourceEventHandler(realEvents)
-	si := cache.NewSharedInformer(lw, &v1.Pod{}, 0)
 	si.AddEventHandler(rh)
-
 	pm := &PodManager{realEvents: realEvents, mergedEvents: mergedEvents}
-
-	stopNever := make(chan struct{})
-	go si.Run(stopNever)
 	go pm.merge()
-
 	return pm, nil
 }

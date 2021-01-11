@@ -7,26 +7,27 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
+	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
-	kubeClient   *kubernetes.Clientset
+	kubeClient kubernetes.Interface
+
 	messageLayer messagelayer.MessageLayer
 
 	podManager *manager.PodManager
@@ -471,11 +472,6 @@ func (dc *DownstreamController) Start() error {
 
 // initLocating to know configmap and secret should send to which nodes
 func (dc *DownstreamController) initLocating() error {
-	var (
-		pods *v1.PodList
-		err  error
-	)
-
 	set := labels.Set{manager.NodeRoleKey: manager.NodeRoleValue}
 	selector := labels.SelectorFromSet(set)
 	nodes, err := dc.kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
@@ -493,12 +489,7 @@ func (dc *DownstreamController) initLocating() error {
 		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
 	}
 
-	if !config.Config.EdgeSiteEnable {
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
-	} else {
-		selector := fields.OneTermEqualSelector("spec.nodeName", config.Config.NodeName).String()
-		pods, err = dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{FieldSelector: selector})
-	}
+	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -512,61 +503,52 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController() (*DownstreamController, error) {
+func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
-	cli, err := utils.KubeClient()
-	if err != nil {
-		klog.Warningf("create kube client failed with error: %s", err)
-		return nil, err
-	}
-
-	var nodeName = ""
-	if config.Config.EdgeSiteEnable {
-		if config.Config.NodeName == "" {
-			return nil, fmt.Errorf("kubeEdge node name is not provided in edgesite controller configuration")
-		}
-		nodeName = config.Config.NodeName
-	}
-
-	podManager, err := manager.NewPodManager(cli, v1.NamespaceAll, nodeName)
+	podInformer := k8sInformerFactory.Core().V1().Pods().Informer()
+	podManager, err := manager.NewPodManager(podInformer)
 	if err != nil {
 		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
-	configMapManager, err := manager.NewConfigMapManager(cli, v1.NamespaceAll)
+	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps().Informer()
+	configMapManager, err := manager.NewConfigMapManager(configMapInformer)
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
-	secretManager, err := manager.NewSecretManager(cli, v1.NamespaceAll)
+	secretInformer := k8sInformerFactory.Core().V1().Secrets().Informer()
+	secretManager, err := manager.NewSecretManager(secretInformer)
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
 	}
-
-	nodesManager, err := manager.NewNodesManager(cli, v1.NamespaceAll)
+	nodeInformer := keInformerFactory.EdgeNode()
+	nodesManager, err := manager.NewNodesManager(nodeInformer)
 	if err != nil {
 		klog.Warningf("Create nodes manager failed with error: %s", err)
 		return nil, err
 	}
 
-	serviceManager, err := manager.NewServiceManager(cli, v1.NamespaceAll)
+	serviceInformer := k8sInformerFactory.Core().V1().Services().Informer()
+	serviceManager, err := manager.NewServiceManager(serviceInformer)
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
-	endpointsManager, err := manager.NewEndpointsManager(cli, v1.NamespaceAll)
+	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints().Informer()
+	endpointsManager, err := manager.NewEndpointsManager(endpointsInformer)
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
 	}
 
 	dc := &DownstreamController{
-		kubeClient:       cli,
+		kubeClient:       client.GetKubeClient(),
 		podManager:       podManager,
 		configmapManager: configMapManager,
 		secretManager:    secretManager,
