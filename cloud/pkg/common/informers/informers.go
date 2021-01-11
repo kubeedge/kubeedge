@@ -37,7 +37,6 @@ func GetInformersManager() Manager {
 			defaultResync:            0,
 			keClient:                 client.GetKubeEdgeClient(),
 			informers:                make(map[string]cache.SharedIndexInformer),
-			startedInformers:         make(map[string]bool),
 			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
 			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
 		}
@@ -50,7 +49,6 @@ type informers struct {
 	keClient                 client.KubeEdgeClient
 	lock                     sync.Mutex
 	informers                map[string]cache.SharedIndexInformer
-	startedInformers         map[string]bool
 	crdSharedInformerFactory crdinformers.SharedInformerFactory
 	k8sSharedInformerFactory k8sinformer.SharedInformerFactory
 }
@@ -80,13 +78,8 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 	defer ifs.lock.Unlock()
 
 	for name, informer := range ifs.informers {
-		if ifs.startedInformers[name] {
-			klog.V(5).Infof("informer %s has being started, skip", name)
-			continue
-		}
 		klog.V(5).Infof("start informer %s", name)
 		go informer.Run(stopCh)
-		ifs.startedInformers[name] = true
 	}
 	ifs.k8sSharedInformerFactory.Start(stopCh)
 	ifs.crdSharedInformerFactory.Start(stopCh)
