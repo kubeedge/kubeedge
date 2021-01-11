@@ -25,14 +25,12 @@ import (
 
 func TestInitConfigure(t *testing.T) {
 	type args struct {
-		ec            *v1alpha1.EdgeController
-		kubeAPIConfig *v1alpha1.KubeAPIConfig
-		nodeName      string
-		edgesite      bool
+		ec       *v1alpha1.EdgeController
+		nodeName string
+		edgesite bool
 	}
 
 	ec := &v1alpha1.EdgeController{}
-	kac := &v1alpha1.KubeAPIConfig{}
 	nodeName := "NodeA"
 
 	tests := []struct {
@@ -42,18 +40,17 @@ func TestInitConfigure(t *testing.T) {
 		{
 			"TestInitCnofigure() Caes 1: init configurae",
 			args{
-				ec:            ec,
-				kubeAPIConfig: kac,
-				nodeName:      nodeName,
-				edgesite:      true,
+				ec:       ec,
+				nodeName: nodeName,
+				edgesite: true,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			InitConfigure(tt.args.ec, tt.args.kubeAPIConfig, tt.args.nodeName, tt.args.edgesite)
-			if !reflect.DeepEqual(*tt.args.ec, Config.EdgeController) || !reflect.DeepEqual(*tt.args.kubeAPIConfig, Config.KubeAPIConfig) || tt.args.nodeName != Config.NodeName || tt.args.edgesite != Config.EdgeSiteEnable {
-				t.Errorf("TestInitCnofigure() failed. got: %v/%v/%v/%v want: %v/%v/%v/%v", Config.EdgeController, Config.KubeAPIConfig, Config.NodeName, Config.EdgeSiteEnable, *tt.args.ec, *tt.args.kubeAPIConfig, tt.args.nodeName, tt.args.edgesite)
+			InitConfigure(tt.args.ec, tt.args.nodeName, tt.args.edgesite)
+			if !reflect.DeepEqual(*tt.args.ec, Config.EdgeController) || tt.args.nodeName != Config.NodeName || tt.args.edgesite != Config.EdgeSiteEnable {
+				t.Errorf("TestInitCnofigure() failed. got: %v/%v/%v want: %v/%v/%v", Config.EdgeController, Config.NodeName, Config.EdgeSiteEnable, *tt.args.ec, tt.args.nodeName, tt.args.edgesite)
 			}
 		})
 	}

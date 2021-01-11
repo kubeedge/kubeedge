@@ -13,8 +13,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
@@ -30,13 +30,15 @@ type ChannelMessageQueue struct {
 	listQueuePool sync.Map
 	listStorePool sync.Map
 
-	ObjectSyncController *hubconfig.ObjectSyncController
+	objectSyncLister        reliablesyncslisters.ObjectSyncLister
+	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
 }
 
 // NewChannelMessageQueue initializes a new ChannelMessageQueue
-func NewChannelMessageQueue(objectSyncController *hubconfig.ObjectSyncController) *ChannelMessageQueue {
+func NewChannelMessageQueue(objectSyncLister reliablesyncslisters.ObjectSyncLister, clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister) *ChannelMessageQueue {
 	return &ChannelMessageQueue{
-		ObjectSyncController: objectSyncController,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
 	}
 }
 
@@ -109,8 +111,7 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 				klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
 				return
 			}
-
-			objectSync, err := q.ObjectSyncController.ObjectSyncLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
+			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
 			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
 				return
 			}
