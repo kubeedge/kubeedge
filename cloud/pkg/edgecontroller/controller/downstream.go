@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -25,7 +26,8 @@ import (
 
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
-	kubeClient   client.KubeEdgeClient
+	kubeClient kubernetes.Interface
+
 	messageLayer messagelayer.MessageLayer
 
 	podManager *manager.PodManager
@@ -546,7 +548,7 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 	}
 
 	dc := &DownstreamController{
-		kubeClient:       client.GetKubeEdgeClient(),
+		kubeClient:       client.GetKubeClient(),
 		podManager:       podManager,
 		configmapManager: configMapManager,
 		secretManager:    secretManager,

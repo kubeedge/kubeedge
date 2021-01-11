@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	k8sinformer "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -51,10 +52,10 @@ func GetInformersManager() Manager {
 	once.Do(func() {
 		globalInformers = &informers{
 			defaultResync:            0,
-			keClient:                 client.GetKubeEdgeClient(),
+			keClient:                 client.GetKubeClient(),
 			informers:                make(map[string]cache.SharedIndexInformer),
-			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
-			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeEdgeClient(), 0),
+			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeCRDClient(), 0),
+			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeClient(), 0),
 		}
 	})
 	return globalInformers
@@ -62,7 +63,7 @@ func GetInformersManager() Manager {
 
 type informers struct {
 	defaultResync            time.Duration
-	keClient                 client.KubeEdgeClient
+	keClient                 kubernetes.Interface
 	lock                     sync.Mutex
 	informers                map[string]cache.SharedIndexInformer
 	crdSharedInformerFactory crdinformers.SharedInformerFactory
