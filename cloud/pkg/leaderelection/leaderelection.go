@@ -41,7 +41,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 	}
 
 	coreBroadcaster := record.NewBroadcaster()
-	cli := client.GetKubeEdgeClient()
+	cli := client.GetKubeClient()
 	if err := CreateNamespaceIfNeeded(cli, "kubeedge"); err != nil {
 		klog.Warningf("Create Namespace kubeedge failed with error: %s", err)
 		return
@@ -199,7 +199,7 @@ func TriggerGracefulShutdown() {
 	}
 }
 
-func CreateNamespaceIfNeeded(cli client.KubeEdgeClient, ns string) error {
+func CreateNamespaceIfNeeded(cli clientset.Interface, ns string) error {
 	c := cli.CoreV1()
 	if _, err := c.Namespaces().Get(context.Background(), ns, metav1.GetOptions{}); err == nil {
 		// the namespace already exists

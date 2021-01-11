@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sinformer "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 
@@ -78,7 +79,7 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	kubeClient   client.KubeEdgeClient
+	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
 
 	// message channel
@@ -951,7 +952,7 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 // NewUpstreamController create UpstreamController from config
 func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
 	uc := &UpstreamController{
-		kubeClient:   client.GetKubeEdgeClient(),
+		kubeClient:   client.GetKubeClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
