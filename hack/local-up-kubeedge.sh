@@ -135,7 +135,7 @@ function start_edgecore {
 
 function check_control_plane_ready {
   echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
+  kubectl wait --for=condition=Ready node/${CLUSTER_NAME}-control-plane --timeout=60s
 }
 
 # Check if all processes are still running. Prints a warning once each time
