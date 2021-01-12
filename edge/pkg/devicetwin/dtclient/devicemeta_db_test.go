@@ -63,7 +63,7 @@ func TestSaveDeviceMeta(t *testing.T) {
 		returnErr: errFailedDBOperation,
 	},
 	}
-	
+
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
