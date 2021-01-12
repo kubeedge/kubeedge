@@ -237,7 +237,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			}
 			message.Msg.Content = content
 		}
-		if strings.Contains(message.Msg.Router.Resource, "device_crd") {//sync Device CRD
+		if strings.Contains(message.Msg.Router.Resource, "device_crd") { //sync Device CRD
 			operation := message.Msg.GetOperation()
 			action := ""
 			switch operation {
@@ -259,7 +259,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		} else if strings.Contains(message.Msg.Router.Resource, "twin/cloud_updated") {
 			message.Action = dtcommon.TwinCloudSync
 			resources := strings.Split(message.Msg.Router.Resource, "/")
-			message.Identity = resources[1]//nodeID
+			message.Identity = resources[1] //nodeID
 			return true
 		} else if strings.Contains(message.Msg.Router.Operation, "updated") {
 			resources := strings.Split(message.Msg.Router.Resource, "/")
