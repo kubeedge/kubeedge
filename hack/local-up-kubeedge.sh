@@ -95,6 +95,7 @@ function start_cloudcore {
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
+    -e "s|/var/lib/kubeedge/|/tmp&|g" \
     -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
@@ -121,6 +122,7 @@ function start_edgecore {
   sed -i -e "s|token: .*|token: ${token}|g" \
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
       -e "s|/etc/|/tmp/etc/|g" \
+      -e "s|/var/lib/kubeedge/|/tmp&|g" \
       -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
