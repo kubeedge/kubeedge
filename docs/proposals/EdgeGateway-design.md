@@ -52,7 +52,7 @@ This design document deals with enabling users to leverage powerful machines at 
 
 #### Architecture
 
-![image-20201215231206476](C:\Users\fee\AppData\Roaming\Typora\typora-user-images\image-20201215231206476.png)
+![edgegateway-arc](..\images\gateway\edgegateway-arc.png)
 
 In the current design the communication between external users and the services are handled by the nginx ingress controller. The communication between the services and their respective application pods will be handled by the edge mesh feature of KubeEdge. 
 
