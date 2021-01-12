@@ -17,6 +17,7 @@
 KUBEEDGE_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/..
 ENABLE_DAEMON=${ENABLE_DAEMON:-false}
 LOG_DIR=${LOG_DIR:-"/tmp"}
+TIMEOUT=${TIMEOUT:-60}s
 
 if [[ "${CLUSTER_NAME}x" == "x" ]];then
     CLUSTER_NAME="test"
@@ -135,7 +136,7 @@ function start_edgecore {
 
 function check_control_plane_ready {
   echo "wait the control-plane ready..."
-  kubectl wait --for=condition=Ready node/${CLUSTER_NAME}-control-plane --timeout=60s
+  kubectl wait --for=condition=Ready node/${CLUSTER_NAME}-control-plane --timeout=${TIMEOUT}
 }
 
 # Check if all processes are still running. Prints a warning once each time
