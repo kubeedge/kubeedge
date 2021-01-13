@@ -16,15 +16,9 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/test"
-	edgemesh "github.com/kubeedge/kubeedge/edgemesh/pkg"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
@@ -157,14 +151,14 @@ func environmentCheck() error {
 
 // registerModules register all the modules started in edgecore
 func registerModules(c *v1alpha1.EdgeCoreConfig) {
-	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
-	edged.Register(c.Modules.Edged)
+	//devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
+	//edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
-	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
-	edgemesh.Register(c.Modules.EdgeMesh)
+	//eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
+	//edgemesh.Register(c.Modules.EdgeMesh)
 	metamanager.Register(c.Modules.MetaManager)
-	servicebus.Register(c.Modules.ServiceBus)
-	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
+	//servicebus.Register(c.Modules.ServiceBus)
+	//edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
 	test.Register(c.Modules.DBTest)
 	// Note: Need to put it to the end, and wait for all models to register before executing
 	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)

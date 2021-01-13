@@ -1,6 +1,8 @@
 package synccontroller
 
 import (
+	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
+	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
@@ -193,6 +195,10 @@ func (sctl *SyncController) manageDevice(sync *v1alpha1.ObjectSync) {
 
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
+	runtimeObj := obj.(runtime.Object)
+	if err:= util.SetMetaType(runtimeObj);err!=nil{
+		klog.Error(err)
+	}
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event
 		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)

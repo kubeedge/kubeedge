@@ -3,6 +3,7 @@ package metamanager
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite/kubernetes/storage/sqlite/imitator"
 	"strings"
 	"time"
 
@@ -58,6 +59,8 @@ func sendToEdged(message *model.Message, sync bool) {
 }
 
 func sendToEdgeMesh(message *model.Message, sync bool) {
+	//[apiserver-lite]help for test
+	return
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
@@ -138,6 +141,7 @@ func (m *metaManager) processInsert(message model.Message) {
 			return
 		}
 	}
+	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
 	switch resType {
 	case constants.ResourceTypeServiceList:
@@ -211,6 +215,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			return
 		}
 	}
+	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
 	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
@@ -377,6 +382,7 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
+	imitator.DefaultV2Client.Inject(message)
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
