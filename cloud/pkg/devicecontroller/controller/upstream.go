@@ -21,18 +21,18 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
+	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 )
 
 // DeviceStatus is structure to patch device status
@@ -49,7 +49,7 @@ const (
 
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
-	crdClient    *rest.RESTClient
+	crdClient    crdClientset.Interface
 	messageLayer messagelayer.MessageLayer
 	// message channel
 	deviceStatusChan chan model.Message
@@ -159,9 +159,9 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Errorf("Failed to marshal device status %v", deviceStatus)
 				continue
 			}
-			result := uc.crdClient.Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do(context.Background())
-			if result.Error() != nil {
-				klog.Errorf("Failed to patch device status %v of device %v in namespace %v", deviceStatus, deviceID, cacheDevice.Namespace)
+			err = uc.crdClient.DevicesV1alpha2().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do(context.Background()).Error()
+			if err != nil {
+				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
 				continue
 			}
 			//send confirm message to edge twin
@@ -209,20 +209,8 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 
 // NewUpstreamController create UpstreamController from config
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
-	config, err := utils.KubeConfig()
-	if err != nil {
-		klog.Warningf("Failed to create kube client: %s", err)
-		return nil, err
-	}
-
-	crdcli, err := utils.NewCRDClient(config)
-	if err != nil {
-		klog.Warningf("Failed to create crd client: %s", err)
-		return nil, err
-	}
-
 	uc := &UpstreamController{
-		crdClient:    crdcli,
+		crdClient:    keclient.GetKubeEdgeCRDClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
 		dc:           dc,
 	}
