@@ -1,6 +1,7 @@
 package synccontroller
 
 import (
+	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/klog/v2"
@@ -43,6 +44,10 @@ func (sctl *SyncController) manageCreateFailedCoreObject() {
 		// Check whether the pod is successfully persisted to edge
 		_, err := sctl.objectSyncLister.ObjectSyncs(pod.Namespace).Get(BuildObjectSyncName(pod.Spec.NodeName, string(pod.UID)))
 		if err != nil && apierrors.IsNotFound(err) {
+			if err := util.SetMetaType(pod);err!=nil{
+				klog.Error(err)
+				continue
+			}
 			msg := buildEdgeControllerMessage(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name, model.InsertOperation, pod)
 			beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 		}

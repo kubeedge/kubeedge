@@ -1,6 +1,9 @@
 package metamanager
 
 import (
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -44,6 +47,7 @@ func initDBTable(module core.Module) {
 		return
 	}
 	orm.RegisterModel(new(dao.Meta))
+	orm.RegisterModel(new(v2.MetaV2))
 }
 
 func (*metaManager) Name() string {
@@ -59,6 +63,8 @@ func (m *metaManager) Enable() bool {
 }
 
 func (m *metaManager) Start() {
+	imitator.StorageInit()
+	go apiserver_lite.NewLiteServer().Start(beehiveContext.Done())
 	go func() {
 		period := getSyncInterval()
 		timer := time.NewTimer(period)

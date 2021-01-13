@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
@@ -16,12 +17,21 @@ type CommonResourceEventHandler struct {
 	events chan watch.Event
 }
 
+
 func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{}) {
 	eventObj, ok := obj.(runtime.Object)
 	if !ok {
 		klog.Warningf("unknown type: %T, ignore", obj)
 		return
 	}
+	// All obj from client has been removed the information of apiversion/kind called MetaType,
+	// it is fatal to decode the obj as unstructured.Unstructure or unstructured.UnstructureList at edge.
+	err := util.SetMetaType(eventObj)
+	if err !=nil{
+		klog.Warningf("failed to set metatype :%v", err)
+		return
+	}
+
 	c.events <- watch.Event{Type: t, Object: eventObj}
 }
 
