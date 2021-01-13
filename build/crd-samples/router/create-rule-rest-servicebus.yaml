@@ -1,0 +1,15 @@
+apiVersion: rules.kubeedge.io/v1
+kind: Rule
+metadata:
+  name: my-rule-rest-servicebus
+  labels:
+    description: test
+spec:
+  source: "my-rest"
+  sourceResource: {"path":"/a"}
+  target: "my-servicebus"
+  targetResource: {"path":"/b"}
+status:
+  successMessages: 0
+  failMessages: 0
+  errors: []
