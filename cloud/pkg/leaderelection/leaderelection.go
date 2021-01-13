@@ -26,7 +26,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -135,13 +134,10 @@ func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
 		namespace := os.Getenv("CLOUDCORE_POD_NAMESPACE")
 		klog.Infof("CloudCore is running in pod %v/%v, try to patch PodReadinessGate", namespace, podname)
 		//TODO: use specific clients
-		cli, err := utils.KubeClient()
-		if err != nil {
-			return fmt.Errorf("create kube client for patching podReadinessGate failed with error: %v", err)
-		}
+		client := client.GetKubeClient()
 
 		//Creat patchBytes
-		getPod, err := cli.CoreV1().Pods(namespace).Get(context.Background(), podname, metav1.GetOptions{})
+		getPod, err := client.CoreV1().Pods(namespace).Get(context.Background(), podname, metav1.GetOptions{})
 		originalJSON, err := json.Marshal(getPod)
 		if err != nil {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
@@ -158,7 +154,7 @@ func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
 		var maxRetries = 3
 		var isPatchSuccess = false
 		for i := 1; i <= maxRetries; i++ {
-			_, err = cli.CoreV1().Pods(namespace).Patch(context.Background(), podname, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}, "status")
+			_, err = client.CoreV1().Pods(namespace).Patch(context.Background(), podname, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}, "status")
 			if err == nil {
 				isPatchSuccess = true
 				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
