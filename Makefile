@@ -16,7 +16,7 @@ COMPONENTS=cloud \
 	edge
 
 .EXPORT_ALL_VARIABLES:
-OUT_DIR ?= _output
+OUT_DIR ?= _output/local
 
 define ALL_HELP_INFO
 # Build code.
@@ -44,7 +44,7 @@ all: clean
 	@echo "$$ALL_HELP_INFO"
 else
 all: verify-golang
-	hack/make-rules/build.sh $(WHAT)
+	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
 
