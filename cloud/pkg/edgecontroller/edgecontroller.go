@@ -26,7 +26,7 @@ func newEdgeController(enable bool) *EdgeController {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager())
+	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
 		klog.Fatalf("new downstream controller failed with error: %s", err)
 	}

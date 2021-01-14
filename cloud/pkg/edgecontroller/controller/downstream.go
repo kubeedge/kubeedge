@@ -2,9 +2,7 @@ package controller
 
 import (
 	"context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
 
-	routerv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -17,6 +15,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	routerv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	crdinformers "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -604,7 +604,8 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer) (*DownstreamController, error) {
+func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer,
+	crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
 	podInformer := k8sInformerFactory.Core().V1().Pods()
@@ -648,24 +649,15 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		return nil, err
 	}
 
-	config, err := utils.KubeConfig()
-	if err != nil {
-		klog.Warningf("Get kubeConfig error: %v", err)
-		return nil, err
-	}
-	crdCli, err := utils.NewCRDClient(config)
-	if err != nil {
-		klog.Warningf("Failed to create crd client: %s", err)
-		return nil, err
-	}
-
-	rulesManager, err := manager.NewRuleManager(crdCli, v1.NamespaceAll)
+    rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
+	rulesManager, err := manager.NewRuleManager(rulesInformer)
 	if err != nil {
 		klog.Warningf("Create rulesManager failed with error: %s", err)
 		return nil, err
 	}
 
-	ruleEndpointsManager, err := manager.NewRuleEndpointManager(crdCli, v1.NamespaceAll)
+	ruleEndpointsInformer := crdInformerFactory.Rules().V1().RuleEndpoints().Informer()
+	ruleEndpointsManager, err := manager.NewRuleEndpointManager(ruleEndpointsInformer)
 	if err != nil {
 		klog.Warningf("Create ruleEndpointsManager failed with error: %s", err)
 		return nil, err
