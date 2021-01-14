@@ -1,7 +1,7 @@
 ---
 name: Question
 about: Question relating to KubeEdge.
-labels: question
+labels: kind/question
 
 ---
 
