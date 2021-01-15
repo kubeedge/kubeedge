@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -22,6 +21,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"

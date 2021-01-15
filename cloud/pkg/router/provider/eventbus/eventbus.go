@@ -3,17 +3,19 @@ package eventbus
 import (
 	"errors"
 	"fmt"
+	"strings"
+
+	"k8s.io/klog/v2"
+
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	"k8s.io/klog/v2"
-	"strings"
 )
 
-type EventBusFactory struct{}
+type eventbusFactory struct{}
 
 type EventBus struct {
 	pubTopic  string
@@ -23,17 +25,16 @@ type EventBus struct {
 }
 
 func init() {
-	factory := &EventBusFactory{}
+	factory := &eventbusFactory{}
 	provider.RegisterSource(factory)
 	provider.RegisterTarget(factory)
 }
 
-func (factory *EventBusFactory) Type() string {
+func (factory *eventbusFactory) Type() string {
 	return "eventbus"
 }
 
-func (factory *EventBusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
-
+func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
 	subTopic, exist := sourceResource["topic"]
 	if !exist {
 		klog.Errorf("source resource attributes \"topic\" does not exist")
@@ -70,7 +71,7 @@ func (eb *EventBus) UnregisterListener() {
 	listener.MessageHandlerInstance.RemoveListener(fmt.Sprintf("%s/node/%s/%s/%s", "bus", eb.nodeName, eb.namespace, eb.subTopic))
 }
 
-func (factory *EventBusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
+func (factory *eventbusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
 	pubTopic, exist := targetResource["topic"]
 	if !exist {
 		klog.Errorf("target resource attributes \"topic\" does not exist")
@@ -106,7 +107,7 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 
 func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	var response *model.Message
-	messageId, ok := data["messageID"].(string)
+	messageID, ok := data["messageID"].(string)
 	body, ok := data["data"].([]byte)
 	param, ok := data["param"].(string)
 	nodeName, ok := data["nodeName"].(string)
@@ -116,7 +117,7 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 		return nil, err
 	}
 	msg := model.NewMessage("")
-	msg.BuildHeader(messageId, "", msg.GetTimestamp())
+	msg.BuildHeader(messageID, "", msg.GetTimestamp())
 	resource := "node/" + nodeName + "/"
 	if !ok || param == "" {
 		resource = resource + eb.pubTopic
@@ -128,14 +129,12 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.SetRoute("router_eventbus", "user")
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
-		listener.MessageHandlerInstance.SetCallback(messageId, func(message *model.Message) {
+		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
 			response = message
 			stop <- struct{}{}
 		})
-		select {
-		case <-stop:
-			listener.MessageHandlerInstance.DelCallback(messageId)
-		}
+		<-stop
+		listener.MessageHandlerInstance.DelCallback(messageID)
 	}
 	return response, nil
 }

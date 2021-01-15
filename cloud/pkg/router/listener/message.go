@@ -3,11 +3,13 @@ package listener
 import (
 	"errors"
 	"fmt"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"k8s.io/klog/v2"
 	"strings"
 	"sync"
+
+	"k8s.io/klog/v2"
+
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
 var MessageHandlerInstance = &MessageHandler{}
@@ -45,7 +47,7 @@ func (mh *MessageHandler) getHandler(source string, resource string) (Handle, er
 	}
 	handle, ok := v.(Handle)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("Handler invalid, key is %s", key))
+		return nil, fmt.Errorf("Handler invalid, key is %s", key)
 	}
 	return handle, nil
 }
@@ -74,7 +76,13 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 		klog.Errorf("No handler for message.msgID: %s, source: %s, resource %s can't find candidate", message.GetID(), message.GetSource(), message.GetResource())
 		return err
 	}
-	go han(message)
+	go func(message *model.Message) {
+		_, err := han(message)
+		if err != nil {
+			klog.Errorf("handle message occur error.msgID: %s, reson: %s", message.GetID(), err.Error())
+		}
+	}(message)
+
 	return nil
 }
 

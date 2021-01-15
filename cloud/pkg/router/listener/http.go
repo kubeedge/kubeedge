@@ -2,15 +2,17 @@ package listener
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	routerConfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 	"io/ioutil"
-	"k8s.io/klog/v2"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"k8s.io/klog/v2"
+
+	routerConfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 )
 
 var (
@@ -74,33 +76,33 @@ func (rh *RestHandler) RemoveListener(key interface{}) {
 }
 
 func (rh *RestHandler) matchedPath(uri string) (string, bool) {
-
 	var candidateRes string
 	rh.handlers.Range(func(key, value interface{}) bool {
 		pathReg := key.(string)
 		if match := utils.IsMatch(pathReg, uri); match {
 			if candidateRes != "" && utils.RuleContains(strings.Split(pathReg, "/"), strings.Split(candidateRes, "/")) {
 				return true
-			} else {
-				candidateRes = pathReg
 			}
+			candidateRes = pathReg
 		}
 		return true
 	})
 	if candidateRes == "" {
 		return "", false
-	} else {
-		return candidateRes, true
 	}
+	return candidateRes, true
 }
 
 func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	uriSections := strings.Split(r.RequestURI, "/")
 	if len(uriSections) < 2 {
 		//URL format incorrect
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Request error"))
 		klog.Warningf("URL format incorrect: %s", r.RequestURI)
+		w.WriteHeader(http.StatusNotFound)
+		_, err := w.Write([]byte("Request error"))
+		if err != nil {
+			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
+		}
 		return
 	}
 
@@ -108,7 +110,10 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	if !exist {
 		klog.Warningf("URL format incorrect: %s", r.RequestURI)
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Request error"))
+		_, err := w.Write([]byte("Request error"))
+		if err != nil {
+			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
+		}
 		return
 	}
 	v, ok := rh.handlers.Load(matchPath)
@@ -125,7 +130,8 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		klog.Errorf("request error, write result: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Request error,body is null"))
+		_, err = w.Write([]byte("Request error,body is null"))
+		klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
 		return
 	}
 
@@ -153,8 +159,11 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 		w.WriteHeader(response.StatusCode)
-		w.Write(body)
-		klog.Infof("response to client, msg id: %s, write result: %v", msgID, "success")
+		_, err = w.Write(body)
+		if err != nil {
+			klog.Errorf("response body write error, msg id: %s, reason: %s", msgID, err.Error())
+		}
+		klog.Infof("response to client, msg id: %s, write result: success", msgID)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		_, err = w.Write([]byte("No rule match"))
@@ -172,13 +181,9 @@ func (rh *RestHandler) IsMatch(key interface{}, message interface{}) bool {
 		return false
 	}
 	return utils.IsMatch(res, uri)
-
 }
 
+//TODO: check node name
 func isNodeName(str string) bool {
-	//if isOk, _ := regexp.MatchString("[-a-z0-9]{36}", str); isOk {
-	//	return true
-	//}
-	//return false
 	return true
 }

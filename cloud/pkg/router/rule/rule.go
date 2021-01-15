@@ -2,14 +2,16 @@ package rule
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 	routerv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	"k8s.io/klog/v2"
-	"sync"
-	"time"
 )
 
 var rules sync.Map
@@ -138,7 +140,6 @@ func addRule(rule *routerv1.Rule) error {
 	rules.Store(getKey(rule.Namespace, rule.Name), rule)
 	klog.Infof("add rule success: %+v", rule)
 	return nil
-
 }
 
 // DelRule delete rule by rule id

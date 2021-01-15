@@ -649,7 +649,7 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		return nil, err
 	}
 
-    rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
+	rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
 	rulesManager, err := manager.NewRuleManager(rulesInformer)
 	if err != nil {
 		klog.Warningf("Create rulesManager failed with error: %s", err)

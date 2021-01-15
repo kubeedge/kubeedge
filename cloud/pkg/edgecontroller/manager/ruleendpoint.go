@@ -1,9 +1,10 @@
 package manager
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
 // RuleEndpointManager manage all events of rule by SharedInformer

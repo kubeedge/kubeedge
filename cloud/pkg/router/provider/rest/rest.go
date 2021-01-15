@@ -4,40 +4,42 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	httpUtils "github.com/kubeedge/kubeedge/cloud/pkg/router/utils/http"
 	"io/ioutil"
-	"k8s.io/klog/v2"
 	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"k8s.io/klog/v2"
+
+	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
+	httpUtils "github.com/kubeedge/kubeedge/cloud/pkg/router/utils/http"
 )
 
 var inited int32
 
-type RestFactory struct {
+type restFactory struct {
 }
 
 type Rest struct {
-	Endpoint  string "target"
-	Path      string `source`
+	Endpoint  string
+	Path      string
 	Namespace string
 }
 
 func init() {
-	factory := &RestFactory{}
+	factory := &restFactory{}
 	provider.RegisterSource(factory)
 	provider.RegisterTarget(factory)
 }
 
-func (factory *RestFactory) Type() string {
+func (factory *restFactory) Type() string {
 	return "rest"
 }
 
-func (*RestFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
+func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
 	path, exist := sourceResource["path"]
 	if !exist {
 		klog.Errorf("source resource attributes \"path\" does not exist")
@@ -52,7 +54,7 @@ func (*RestFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]str
 	return cli
 }
 
-func (*RestFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
+func (*restFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
 	endpoint, exist := targetResource["resource"]
 	if !exist {
 		klog.Errorf("target resource attributes \"resource\" does not exist")
@@ -146,14 +148,14 @@ func (*Rest) Forward(target provider.Target, data interface{}) (response interfa
 		stop <- struct{}{}
 		httpResponse.StatusCode = http.StatusRequestTimeout
 		respBody = err.Error()
-		klog.Warningf("operation timeout, msg id: %s, write result: %s", messageID, "get response timeout")
+		klog.Warningf("operation timeout, msg id: %s, write result: get response timeout", messageID)
 	case _, ok := <-request.Context().Done():
 		if !ok {
 			klog.Error("failed to get request close channel")
 		}
 		timer.Stop()
 		err = errors.New("client disconnected for handling resource")
-		klog.Warningf("Client disconnected for handling resource %s, msg id: %s", messageID)
+		klog.Warningf("Client disconnected for handling resource, msg id: %s", messageID)
 		stop <- struct{}{}
 		return
 	}
