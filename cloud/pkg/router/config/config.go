@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"sync"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 var Config Configure
@@ -14,10 +15,8 @@ type Configure struct {
 
 func InitConfigure(router *v1alpha1.Router) {
 	once.Do(func() {
-
 		Config = Configure{
 			Router: *router,
 		}
-
 	})
 }

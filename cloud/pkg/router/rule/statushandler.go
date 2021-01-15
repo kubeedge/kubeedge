@@ -1,15 +1,16 @@
 package rule
 
 import (
-	"k8s.io/klog/v2"
 	"time"
+
+	"k8s.io/klog/v2"
 )
 
 type ExecResult struct {
-	RuleID        string
-	ProjectID     string
-	Status        string
-	Error         ErrorMsg
+	RuleID    string
+	ProjectID string
+	Status    string
+	Error     ErrorMsg
 }
 
 type ErrorMsg struct {

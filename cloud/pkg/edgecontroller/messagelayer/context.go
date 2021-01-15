@@ -18,10 +18,10 @@ type MessageLayer interface {
 
 // ContextMessageLayer build on context
 type ContextMessageLayer struct {
-	SendModuleName     string
-	SendRouterModuleName     string
-	ReceiveModuleName  string
-	ResponseModuleName string
+	SendModuleName       string
+	SendRouterModuleName string
+	ReceiveModuleName    string
+	ResponseModuleName   string
 }
 
 // Send message
@@ -57,9 +57,9 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 // NewContextMessageLayer create a ContextMessageLayer
 func NewContextMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
-		SendModuleName:     string(config.Config.Context.SendModule),
+		SendModuleName:       string(config.Config.Context.SendModule),
 		SendRouterModuleName: string(config.Config.Context.SendRouterModule),
-		ReceiveModuleName:  string(config.Config.Context.ReceiveModule),
-		ResponseModuleName: string(config.Config.Context.ResponseModule),
+		ReceiveModuleName:    string(config.Config.Context.ReceiveModule),
+		ResponseModuleName:   string(config.Config.Context.ResponseModule),
 	}
 }

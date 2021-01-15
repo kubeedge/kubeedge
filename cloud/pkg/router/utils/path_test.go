@@ -25,27 +25,21 @@ func TestPathMatch(t *testing.T) {
 	AssertTrue(t, IsMatch(rule, req), "1")
 
 	rule = "/a/{sdsd}"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, IsMatch(rule, req), "2")
 
 	rule = "/a/{sdsd}/{dddd}"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, IsMatch(rule, req), "3")
 
 	rule = "/a/"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, IsMatch(rule, req), "4")
 
 	rule = "/a"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, IsMatch(rule, req), "5")
 
 	rule = "/a/b/c"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, IsMatch(rule, req), "6")
 
 	rule = "/a/b/d"
-	req = "/fakenodeid/a/b/c"
 	AssertTrue(t, !IsMatch(rule, req), "7")
 }
 

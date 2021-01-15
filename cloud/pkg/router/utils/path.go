@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"k8s.io/klog/v2"
 	"regexp"
 	"strings"
+
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -29,7 +30,7 @@ func IsMatch(reg, path string) bool {
 		klog.Errorf("failed to validate res %s and reqPath %s, err: %v", reg, path, err)
 		return false
 	}
-	if match{
+	if match {
 		return true
 	}
 	return false

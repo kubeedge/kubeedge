@@ -381,10 +381,10 @@ type CloudStream struct {
 	StreamPort uint32 `json:"streamPort,omitempty"`
 }
 
-type Router struct{
+type Router struct {
 	// default true
-	Enable bool `json:"enable"`
-	Address string `json:"address"`
-	Port uint32 `json:"port"`
+	Enable      bool   `json:"enable"`
+	Address     string `json:"address"`
+	Port        uint32 `json:"port"`
 	RestTimeout uint32 `json:"rest_timeout"`
 }

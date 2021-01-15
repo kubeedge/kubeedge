@@ -1,8 +1,9 @@
 package provider
 
 import (
-	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"k8s.io/klog/v2"
+
+	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 )
 
 type TargetFactory interface {
@@ -31,7 +32,7 @@ func RegisterTarget(t TargetFactory) {
 }
 
 // get source map
-func GetTargetFactory(name string) (TargetFactory, bool)  {
+func GetTargetFactory(name string) (TargetFactory, bool) {
 	target, exist := targets[name]
 	return target, exist
 }
