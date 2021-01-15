@@ -34,12 +34,13 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	crdinformers "github.com/kubeedge/kubeedge/cloud/pkg/client/informers/externalversions"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/utils"
 )
 
 // Constants for protocol, datatype, configmap, deviceProfile
@@ -66,7 +67,7 @@ const (
 
 // DownstreamController watch kubernetes api server and send change to edge
 type DownstreamController struct {
-	kubeClient   *kubernetes.Clientset
+	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
 
 	deviceManager      *manager.DeviceManager
@@ -879,38 +880,21 @@ func (dc *DownstreamController) Start() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController() (*DownstreamController, error) {
-	cli, err := utils.KubeClient()
-	if err != nil {
-		klog.Warningf("Create kube client failed with error: %s", err)
-		return nil, err
-	}
-
-	config, err := utils.KubeConfig()
-	if err != nil {
-		klog.Warningf("Get kubeConfig error: %v", err)
-		return nil, err
-	}
-
-	crdcli, err := utils.NewCRDClient(config)
-	if err != nil {
-		klog.Warningf("Failed to create crd client: %s", err)
-		return nil, err
-	}
-	deviceManager, err := manager.NewDeviceManager(crdcli, v1.NamespaceAll)
+func NewDownstreamController(crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
+	deviceManager, err := manager.NewDeviceManager(crdInformerFactory.Devices().V1alpha2().Devices().Informer())
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
-	deviceModelManager, err := manager.NewDeviceModelManager(crdcli, v1.NamespaceAll)
+	deviceModelManager, err := manager.NewDeviceModelManager(crdInformerFactory.Devices().V1alpha2().DeviceModels().Informer())
 	if err != nil {
 		klog.Warningf("Create device manager failed with error: %s", err)
 		return nil, err
 	}
 
 	dc := &DownstreamController{
-		kubeClient:         cli,
+		kubeClient:         client.GetKubeClient(),
 		deviceManager:      deviceManager,
 		deviceModelManager: deviceModelManager,
 		messageLayer:       messagelayer.NewContextMessageLayer(),
