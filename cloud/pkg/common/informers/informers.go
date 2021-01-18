@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -41,8 +42,19 @@ type KubeEdgeCustomeInformer interface {
 type Manager interface {
 	GetK8sInformerFactory() k8sinformer.SharedInformerFactory
 	GetCRDInformerFactory() crdinformers.SharedInformerFactory
+	GetDynamicSharedInformerFactory() dynamicinformer.DynamicSharedInformerFactory
 	KubeEdgeCustomeInformer
 	Start(stopCh <-chan struct{})
+}
+
+type informers struct {
+	defaultResync                time.Duration
+	keClient                     kubernetes.Interface
+	lock                         sync.Mutex
+	informers                    map[string]cache.SharedIndexInformer
+	crdSharedInformerFactory     crdinformers.SharedInformerFactory
+	k8sSharedInformerFactory     k8sinformer.SharedInformerFactory
+	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
 }
 
 var globalInformers Manager
@@ -51,23 +63,15 @@ var once sync.Once
 func GetInformersManager() Manager {
 	once.Do(func() {
 		globalInformers = &informers{
-			defaultResync:            0,
-			keClient:                 client.GetKubeClient(),
-			informers:                make(map[string]cache.SharedIndexInformer),
-			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeCRDClient(), 0),
-			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeClient(), 0),
+			defaultResync:                0,
+			keClient:                     client.GetKubeClient(),
+			informers:                    make(map[string]cache.SharedIndexInformer),
+			crdSharedInformerFactory:     crdinformers.NewSharedInformerFactory(client.GetCRDClient(), 0),
+			k8sSharedInformerFactory:     k8sinformer.NewSharedInformerFactory(client.GetKubeClient(), 0),
+			dynamicSharedInformerFactory: dynamicinformer.NewFilteredDynamicSharedInformerFactory(client.GetDynamicClient(), 0, v1.NamespaceAll, nil),
 		}
 	})
 	return globalInformers
-}
-
-type informers struct {
-	defaultResync            time.Duration
-	keClient                 kubernetes.Interface
-	lock                     sync.Mutex
-	informers                map[string]cache.SharedIndexInformer
-	crdSharedInformerFactory crdinformers.SharedInformerFactory
-	k8sSharedInformerFactory k8sinformer.SharedInformerFactory
 }
 
 func (ifs *informers) GetK8sInformerFactory() k8sinformer.SharedInformerFactory {
@@ -76,6 +80,10 @@ func (ifs *informers) GetK8sInformerFactory() k8sinformer.SharedInformerFactory 
 
 func (ifs *informers) GetCRDInformerFactory() crdinformers.SharedInformerFactory {
 	return ifs.crdSharedInformerFactory
+}
+
+func (ifs *informers) GetDynamicSharedInformerFactory() dynamicinformer.DynamicSharedInformerFactory {
+	return ifs.dynamicSharedInformerFactory
 }
 
 func (ifs *informers) EdgeNode() cache.SharedIndexInformer {
@@ -100,6 +108,7 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 	}
 	ifs.k8sSharedInformerFactory.Start(stopCh)
 	ifs.crdSharedInformerFactory.Start(stopCh)
+	ifs.dynamicSharedInformerFactory.Start(stopCh)
 }
 
 func (ifs *informers) getInformer(name string, newFunc newInformer) cache.SharedIndexInformer {
