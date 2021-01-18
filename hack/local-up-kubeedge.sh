@@ -49,7 +49,7 @@ function uninstall_kubeedge {
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 
   # delete iptables rule
-  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
+  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003 || true
 }
 
 # clean up
