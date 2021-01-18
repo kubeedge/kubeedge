@@ -130,7 +130,7 @@ function start_edgecore {
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
       -e "s|/etc/|/tmp/etc/|g" \
       -e "s|/var/lib/kubeedge/|/tmp&|g" \
-      -e "s|mqttMode: .*|mqttMode: 1|g" ${EDGE_CONFIGFILE}
+      -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 
