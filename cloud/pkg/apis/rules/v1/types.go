@@ -54,7 +54,7 @@ type RuleList struct {
 
 // RuleEndpointSpec, defines endpoint of rule.
 type RuleEndpointSpec struct {
-	// RuleEndpointType, defines type: servicebus, api
+	// RuleEndpointType, defines type: servicebus, rest
 	RuleEndpointType string `json:"ruleEndpointType"`
 	// Properties: properties of endpoint. for example:
 	// servicebus:
