@@ -106,16 +106,19 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
-	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
+	var message *model.Message
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
 		target = modules.TwinGroup
+		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
+		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
 	} else {
 		target = modules.HubGroup
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+			msg.Topic, "upload").FillBody(string(msg.Payload))
 	}
-	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
-		resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
-	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
 	beehiveContext.SendToGroup(target, *message)
 }
 
