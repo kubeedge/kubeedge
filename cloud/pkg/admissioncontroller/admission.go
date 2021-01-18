@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	ValidateDeviceModelConfigName  = "validate-devicemodel"
-	ValidateDeviceModelWebhookName = "validatedevicemodel.kubeedge.io"
+	ValidateDeviceModelConfigName   = "validate-devicemodel"
+	ValidateDeviceModelWebhookName  = "validatedevicemodel.kubeedge.io"
+	ValidateRuleWebhookName         = "validatedrule.kubeedge.io"
+	ValidateRuleEndpointWebhookName = "validatedruleendpoint.kubeedge.io"
 )
 
 var scheme = runtime.NewScheme()
@@ -82,6 +84,8 @@ func Run(opt *options.AdmissionOptions) {
 	}
 
 	http.HandleFunc("/devicemodels", serveDeviceModel)
+	http.HandleFunc("/rules", serveRule)
+	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
 
 	server := &http.Server{
 		Addr:      fmt.Sprintf(":%v", opt.Port),
@@ -126,6 +130,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 // registerWebhooks registers the admission webhook.
 func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
 	ignorePolicy := admissionregistrationv1beta1.Ignore
+	FailPolicy := admissionregistrationv1beta1.Fail
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ValidateDeviceModelConfigName,
@@ -154,6 +159,54 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 					CABundle: cabundle,
 				},
 				FailurePolicy: &ignorePolicy,
+			},
+			{
+				Name: ValidateRuleWebhookName,
+				Rules: []admissionregistrationv1beta1.RuleWithOperations{{
+					Operations: []admissionregistrationv1beta1.OperationType{
+						admissionregistrationv1beta1.Create,
+						admissionregistrationv1beta1.Update,
+					},
+					Rule: admissionregistrationv1beta1.Rule{
+						APIGroups:   []string{"rules.kubeedge.io"},
+						APIVersions: []string{"v1"},
+						Resources:   []string{"rules"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1beta1.WebhookClientConfig{
+					Service: &admissionregistrationv1beta1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/rules"),
+						Port:      &opt.Port,
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy: &FailPolicy,
+			},
+			{
+				Name: ValidateRuleEndpointWebhookName,
+				Rules: []admissionregistrationv1beta1.RuleWithOperations{{
+					Operations: []admissionregistrationv1beta1.OperationType{
+						admissionregistrationv1beta1.Create,
+						admissionregistrationv1beta1.Update,
+					},
+					Rule: admissionregistrationv1beta1.Rule{
+						APIGroups:   []string{"rules.kubeedge.io"},
+						APIVersions: []string{"v1"},
+						Resources:   []string{"ruleendpoints"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1beta1.WebhookClientConfig{
+					Service: &admissionregistrationv1beta1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/ruleendpoints"),
+						Port:      &opt.Port,
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy: &FailPolicy,
 			},
 		},
 	}
