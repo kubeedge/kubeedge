@@ -36,7 +36,7 @@ func buildCrdClient(t *testing.T) crdClientset.Interface {
 
 	client.InitKubeEdgeClient(&cloudcoreConfig.KubeAPIConfig{KubeConfig: kubeConfigPath, Master: kubeAPIServerURL})
 
-	return client.GetKubeEdgeCRDClient()
+	return client.GetCRDClient()
 }
 
 func TestValidDeviceModel(t *testing.T) {

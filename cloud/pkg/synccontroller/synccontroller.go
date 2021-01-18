@@ -50,7 +50,7 @@ type SyncController struct {
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
 		enable:    enable,
-		crdclient: keclient.GetKubeEdgeCRDClient(),
+		crdclient: keclient.GetCRDClient(),
 	}
 	// informer factory
 	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()

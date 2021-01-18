@@ -54,7 +54,7 @@ func GetInformersManager() Manager {
 			defaultResync:            0,
 			keClient:                 client.GetKubeClient(),
 			informers:                make(map[string]cache.SharedIndexInformer),
-			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetKubeEdgeCRDClient(), 0),
+			crdSharedInformerFactory: crdinformers.NewSharedInformerFactory(client.GetCRDClient(), 0),
 			k8sSharedInformerFactory: k8sinformer.NewSharedInformerFactory(client.GetKubeClient(), 0),
 		}
 	})

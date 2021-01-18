@@ -210,7 +210,7 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 // NewUpstreamController create UpstreamController from config
 func NewUpstreamController(dc *DownstreamController) (*UpstreamController, error) {
 	uc := &UpstreamController{
-		crdClient:    keclient.GetKubeEdgeCRDClient(),
+		crdClient:    keclient.GetCRDClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
 		dc:           dc,
 	}

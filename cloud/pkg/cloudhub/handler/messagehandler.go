@@ -83,7 +83,7 @@ func InitHandler(eventq *channelq.ChannelMessageQueue) {
 			WriteTimeout:      int(hubconfig.Config.WriteTimeout),
 			MessageQueue:      eventq,
 			NodeLimit:         int(hubconfig.Config.NodeLimit),
-			crdClient:         client.GetKubeEdgeCRDClient(),
+			crdClient:         client.GetCRDClient(),
 		}
 
 		CloudhubHandler.Handlers = []HandleFunc{
