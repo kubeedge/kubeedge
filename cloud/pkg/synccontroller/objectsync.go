@@ -4,11 +4,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
+	"strings"
 
-	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
@@ -16,181 +17,56 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
 
-func (sctl *SyncController) managePod(sync *v1alpha1.ObjectSync) {
-	pod, err := sctl.podLister.Pods(sync.Namespace).Get(sync.Spec.ObjectName)
+func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
+	var object metav1.Object
+
+	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)
+	if err != nil {
+		return
+	}
+	gvr := schema.GroupVersionResource{
+		Group:    gv.Group,
+		Version:  gv.Version,
+		Resource: strings.ToLower(sync.Spec.ObjectKind),
+	}
+
+	ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 
 	nodeName := getNodeName(sync.Name)
-	if pod != nil {
+	if ret != nil {
+		object, err = meta.Accessor(ret)
+		if err != nil {
+			return
+		}
+
 		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(pod.GetUID()) {
+		if syncObjUID != string(object.GetUID()) {
 			err = apierrors.NewNotFound(schema.GroupResource{
 				Group:    "",
-				Resource: "pods",
+				Resource: sync.Spec.ObjectKind,
 			}, sync.Spec.ObjectName)
 		}
 	}
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			pod = &v1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      sync.Spec.ObjectName,
-					Namespace: sync.Namespace,
-					UID:       types.UID(getObjectUID(sync.Name)),
-				},
-			}
+			obj := &unstructured.Unstructured{}
+			obj.SetName(sync.Spec.ObjectName)
+			obj.SetUID(types.UID(getObjectUID(sync.Name)))
+			obj.SetNamespace(sync.Namespace)
 		} else {
 			klog.Errorf("Failed to manage pod sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
 			return
 		}
 	}
-	sendEvents(err, nodeName, sync, model.ResourceTypePod, pod.ResourceVersion, pod)
-}
-
-func (sctl *SyncController) manageConfigMap(sync *v1alpha1.ObjectSync) {
-	configmap, err := sctl.configMapLister.ConfigMaps(sync.Namespace).Get(sync.Spec.ObjectName)
-
-	nodeName := getNodeName(sync.Name)
-	if configmap != nil {
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(configmap.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: "configmaps",
-			}, sync.Spec.ObjectName)
-		}
-	}
-
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			configmap = &v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      sync.Spec.ObjectName,
-					Namespace: sync.Namespace,
-					UID:       types.UID(getObjectUID(sync.Name)),
-				},
-			}
-		} else {
-			klog.Errorf("Failed to manage configMap sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
-	}
-	sendEvents(err, nodeName, sync, model.ResourceTypeConfigmap, configmap.ResourceVersion, configmap)
-}
-
-func (sctl *SyncController) manageSecret(sync *v1alpha1.ObjectSync) {
-	secret, err := sctl.secretLister.Secrets(sync.Namespace).Get(sync.Spec.ObjectName)
-
-	nodeName := getNodeName(sync.Name)
-
-	if secret != nil {
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(secret.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: "secrets",
-			}, sync.Spec.ObjectName)
-		}
-	}
-
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			secret = &v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      sync.Spec.ObjectName,
-					Namespace: sync.Namespace,
-					UID:       types.UID(getObjectUID(sync.Name)),
-				},
-			}
-		} else {
-			klog.Errorf("Failed to manage secret sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
-	}
-	sendEvents(err, nodeName, sync, model.ResourceTypeSecret, secret.ResourceVersion, secret)
-}
-
-func (sctl *SyncController) manageService(sync *v1alpha1.ObjectSync) {
-	service, err := sctl.serviceLister.Services(sync.Namespace).Get(sync.Spec.ObjectName)
-
-	nodeName := getNodeName(sync.Name)
-	if service != nil {
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(service.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: "services",
-			}, sync.Spec.ObjectName)
-		}
-	}
-
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			service = &v1.Service{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      sync.Spec.ObjectName,
-					Namespace: sync.Namespace,
-					UID:       types.UID(getObjectUID(sync.Name)),
-				},
-			}
-		} else {
-			klog.Errorf("Failed to manage service sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
-	}
-	sendEvents(err, nodeName, sync, commonconst.ResourceTypeService, service.ResourceVersion, service)
-}
-
-func (sctl *SyncController) manageEndpoint(sync *v1alpha1.ObjectSync) {
-	endpoint, err := sctl.endpointLister.Endpoints(sync.Namespace).Get(sync.Spec.ObjectName)
-
-	nodeName := getNodeName(sync.Name)
-
-	if endpoint != nil {
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(endpoint.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: "endpoints",
-			}, sync.Spec.ObjectName)
-		}
-	}
-
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			endpoint = &v1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      sync.Spec.ObjectName,
-					Namespace: sync.Namespace,
-					UID:       types.UID(getObjectUID(sync.Name)),
-				},
-			}
-		} else {
-			klog.Errorf("Failed to manage endpoint sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
-	}
-	sendEvents(err, nodeName, sync, commonconst.ResourceTypeEndpoints, endpoint.ResourceVersion, endpoint)
-}
-
-// todo: add events for devices
-func (sctl *SyncController) manageDevice(sync *v1alpha1.ObjectSync) {
-	//pod, err := sctl.deviceLister.Devices(sync.Namespace).Get(sync.Spec.ObjectName)
-
-	//
-	//if err != nil && apierrors.IsNotFound(err) {
-	//trigger the delete event
-	//}
-
-	//if pod.ResourceVersion > sync.Status.ObjectResourceVersion {
-	// trigger the update event
-	//}
+	sendEvents(err, nodeName, sync, sync.Spec.ObjectKind, object.GetResourceVersion(), object)
 }
 
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
