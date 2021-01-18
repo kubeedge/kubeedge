@@ -111,9 +111,6 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
-		if msg.Topic == "SYS/dis/upload_records" {
-			resource = "SYS/dis/upload_records"
-		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
