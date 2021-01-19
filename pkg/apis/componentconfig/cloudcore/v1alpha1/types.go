@@ -186,7 +186,7 @@ type EdgeController struct {
 	// Buffer indicates k8s resource buffer
 	Buffer *EdgeControllerBuffer `json:"buffer,omitempty"`
 	// Context indicates send,receive,response modules for EdgeController module
-	Context *EdgeControllerContext `json:"context,omitempty"`
+	Context *ControllerContext `json:"context,omitempty"`
 	// Load indicates EdgeController load
 	Load *EdgeControllerLoad `json:"load,omitempty"`
 }
@@ -246,8 +246,8 @@ type EdgeControllerBuffer struct {
 	DeletePod int32 `json:"deletePod,omitempty"`
 }
 
-// EdgeControllerContext indicates the EdgeController context
-type EdgeControllerContext struct {
+// ControllerContext indicates the message layer context for all controllers
+type ControllerContext struct {
 	// SendModule indicates which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
 	// ReceiveModule indicates which module will receive message from
@@ -303,21 +303,11 @@ type DeviceController struct {
 	// default true
 	Enable bool `json:"enable,omitempty"`
 	// Context indicates send,receive,response modules for deviceController module
-	Context *DeviceControllerContext `json:"context,omitempty"`
+	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
 	Buffer *DeviceControllerBuffer `json:"buffer,omitempty"`
 	// Load indicates DeviceController Load
 	Load *DeviceControllerLoad `json:"load,omitempty"`
-}
-
-// DeviceControllerContext indicates the device controller context
-type DeviceControllerContext struct {
-	// SendModule indicates which module will send message to
-	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
-	// ReceiveModule indicates which module will receive message from
-	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
-	// ResponseModule indicates which module will response message to
-	ResponseModule metaconfig.ModuleName `json:"responseModule,omitempty"`
 }
 
 // DeviceControllerBuffer indicates deviceController buffer
