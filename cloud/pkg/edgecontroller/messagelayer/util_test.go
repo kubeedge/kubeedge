@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 )
 
 const (
@@ -37,7 +36,6 @@ func TestBuildResource(t *testing.T) {
 		namespace    string
 		resourceType string
 		resourceID   string
-		isEdgeSite   bool
 	}
 	tests := []struct {
 		name         string
@@ -46,45 +44,19 @@ func TestBuildResource(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			"TestBuildResource(): Case 1: not edgesite, no node ID, no namespace.",
+			"TestBuildResource(): Case 1: no node ID, no namespace.",
 			args{
 				nodeID:       "",
 				namespace:    "",
 				resourceType: ResourceType,
 				resourceID:   ResourceID,
-				isEdgeSite:   false,
 			},
 			"",
 			fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
 		},
-		{
-			"TestBuildResource(): Case 2: is edgesite, no node ID, no namespace ",
-			args{
-				nodeID:       "",
-				namespace:    "",
-				resourceType: ResourceType,
-				resourceID:   ResourceID,
-				isEdgeSite:   true,
-			},
-			"",
-			fmt.Errorf("required parameter are not set (namespace or resource type)"),
-		},
-		{
-			"TestBuildResource(): Case 3: is edgesite, has nodeID, namespace",
-			args{
-				nodeID:       NodeID,
-				namespace:    Namespace,
-				resourceType: ResourceType,
-				resourceID:   ResourceID,
-				isEdgeSite:   true,
-			},
-			fmt.Sprintf("%s/%s/%s", Namespace, ResourceType, ResourceID),
-			nil,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.Config.EdgeSiteEnable = tt.args.isEdgeSite
 			gotResource, err := BuildResource(tt.args.nodeID, tt.args.namespace, tt.args.resourceType, tt.args.resourceID)
 			if err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("BuildResource() error = %v, wantErr %v", err, tt.wantErr)
@@ -142,8 +114,7 @@ func TestGetNodeID(t *testing.T) {
 
 func TestGetNamespace(t *testing.T) {
 	type args struct {
-		msg        model.Message
-		isEdgeSite bool
+		msg model.Message
 	}
 
 	tests := []struct {
@@ -153,45 +124,21 @@ func TestGetNamespace(t *testing.T) {
 		wantErr error
 	}{
 		{
-			"TestGetNodeID() Case 1: is not edgesite, has namespace",
+			"TestGetNodeID() Case 1: has namespace",
 			args{
 				msg: model.Message{
 					Router: model.MessageRoute{
 						Resource: fmt.Sprintf("node/%s/%s/%s/%s", NodeID, Namespace, ResourceType, ResourceID),
 					},
 				},
-				isEdgeSite: false,
 			},
 			Namespace,
 			nil,
 		},
 		{
-			"TestGetNodeID() Case 2: is edgesite, has namespace",
+			"TestGetNodeID() Case 2: no namespace",
 			args{
-				msg: model.Message{
-					Router: model.MessageRoute{
-						Resource: fmt.Sprintf("%s/%s/%s", Namespace, ResourceType, ResourceID),
-					},
-				},
-				isEdgeSite: true,
-			},
-			Namespace,
-			nil,
-		},
-		{
-			"TestGetNodeID() Case 3: is edgesite, no namespace",
-			args{
-				msg:        model.Message{},
-				isEdgeSite: true,
-			},
-			"",
-			fmt.Errorf("namespace not found"),
-		},
-		{
-			"TestGetNodeID() Case 4: not edgesite, no namespace",
-			args{
-				msg:        model.Message{},
-				isEdgeSite: false,
+				msg: model.Message{},
 			},
 			"",
 			fmt.Errorf("namespace not found"),
@@ -199,7 +146,6 @@ func TestGetNamespace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.Config.EdgeSiteEnable = tt.args.isEdgeSite
 			got, err := GetNamespace(tt.args.msg)
 			if err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("GetNamespace() error = %v, wantErr %v", err, tt.wantErr)
@@ -214,8 +160,7 @@ func TestGetNamespace(t *testing.T) {
 
 func TestGetResourceType(t *testing.T) {
 	type args struct {
-		msg        model.Message
-		isEdgeSite bool
+		msg model.Message
 	}
 	tests := []struct {
 		name    string
@@ -224,36 +169,21 @@ func TestGetResourceType(t *testing.T) {
 		wantErr error
 	}{
 		{
-			"TestGetNodeID() Case 1: is not edgesite, has resourceType",
+			"TestGetNodeID() Case 1: has resourceType",
 			args{
 				msg: model.Message{
 					Router: model.MessageRoute{
 						Resource: fmt.Sprintf("node/%s/%s/%s/%s", NodeID, Namespace, ResourceType, ResourceID),
 					},
 				},
-				isEdgeSite: false,
 			},
 			ResourceType,
 			nil,
 		},
 		{
-			"TestGetNodeID() Case 2: is edgesite, has resourceType",
+			"TestGetNodeID() Case 2: no resourceType",
 			args{
-				msg: model.Message{
-					Router: model.MessageRoute{
-						Resource: fmt.Sprintf("%s/%s/%s", Namespace, ResourceType, ResourceID),
-					},
-				},
-				isEdgeSite: true,
-			},
-			ResourceType,
-			nil,
-		},
-		{
-			"TestGetNodeID() Case 3: no resourceType",
-			args{
-				msg:        model.Message{},
-				isEdgeSite: true,
+				msg: model.Message{},
 			},
 			"",
 			fmt.Errorf("resource type not found"),
@@ -261,7 +191,6 @@ func TestGetResourceType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.Config.EdgeSiteEnable = tt.args.isEdgeSite
 			got, err := GetResourceType(tt.args.msg)
 			if err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("GetResourceType() error = %v, wantErr %v", err, tt.wantErr)
@@ -276,8 +205,7 @@ func TestGetResourceType(t *testing.T) {
 
 func TestGetResourceName(t *testing.T) {
 	type args struct {
-		msg        model.Message
-		isEdgeSite bool
+		msg model.Message
 	}
 
 	tests := []struct {
@@ -287,27 +215,13 @@ func TestGetResourceName(t *testing.T) {
 		wantErr error
 	}{
 		{
-			"TestGetNodeID() Case 1: is not edgesite, has resourceName",
+			"TestGetNodeID() Case 1: has resourceName",
 			args{
 				msg: model.Message{
 					Router: model.MessageRoute{
 						Resource: fmt.Sprintf("node/%s/%s/%s/%s", NodeID, Namespace, ResourceType, ResourceID),
 					},
 				},
-				isEdgeSite: false,
-			},
-			ResourceID,
-			nil,
-		},
-		{
-			"TestGetNodeID() Case 2: is edgesite, has resourceName",
-			args{
-				msg: model.Message{
-					Router: model.MessageRoute{
-						Resource: fmt.Sprintf("%s/%s/%s", Namespace, ResourceType, ResourceID),
-					},
-				},
-				isEdgeSite: true,
 			},
 			ResourceID,
 			nil,
@@ -315,8 +229,7 @@ func TestGetResourceName(t *testing.T) {
 		{
 			"TestGetNodeID() Case 3: no resourceName",
 			args{
-				msg:        model.Message{},
-				isEdgeSite: true,
+				msg: model.Message{},
 			},
 			"",
 			fmt.Errorf("resource name not found"),
@@ -324,7 +237,6 @@ func TestGetResourceName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.Config.EdgeSiteEnable = tt.args.isEdgeSite
 			got, err := GetResourceName(tt.args.msg)
 			if err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("GetResourceName() error = %v, wantErr %v", err, tt.wantErr)

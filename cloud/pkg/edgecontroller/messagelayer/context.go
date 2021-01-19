@@ -33,11 +33,7 @@ func (cml *ContextMessageLayer) Receive() (model.Message, error) {
 
 // Response message
 func (cml *ContextMessageLayer) Response(message model.Message) error {
-	if !config.Config.EdgeSiteEnable {
-		beehiveContext.Send(cml.ResponseModuleName, message)
-	} else {
-		beehiveContext.SendResp(message)
-	}
+	beehiveContext.Send(cml.ResponseModuleName, message)
 	return nil
 }
 

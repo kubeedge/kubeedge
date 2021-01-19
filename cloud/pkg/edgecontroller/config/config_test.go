@@ -25,13 +25,10 @@ import (
 
 func TestInitConfigure(t *testing.T) {
 	type args struct {
-		ec       *v1alpha1.EdgeController
-		nodeName string
-		edgesite bool
+		ec *v1alpha1.EdgeController
 	}
 
 	ec := &v1alpha1.EdgeController{}
-	nodeName := "NodeA"
 
 	tests := []struct {
 		name string
@@ -40,17 +37,15 @@ func TestInitConfigure(t *testing.T) {
 		{
 			"TestInitCnofigure() Caes 1: init configurae",
 			args{
-				ec:       ec,
-				nodeName: nodeName,
-				edgesite: true,
+				ec: ec,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			InitConfigure(tt.args.ec, tt.args.nodeName, tt.args.edgesite)
-			if !reflect.DeepEqual(*tt.args.ec, Config.EdgeController) || tt.args.nodeName != Config.NodeName || tt.args.edgesite != Config.EdgeSiteEnable {
-				t.Errorf("TestInitCnofigure() failed. got: %v/%v/%v want: %v/%v/%v", Config.EdgeController, Config.NodeName, Config.EdgeSiteEnable, *tt.args.ec, tt.args.nodeName, tt.args.edgesite)
+			InitConfigure(tt.args.ec)
+			if !reflect.DeepEqual(*tt.args.ec, Config.EdgeController) {
+				t.Errorf("TestInitCnofigure() failed. got: %v want: %v", Config.EdgeController, *tt.args.ec)
 			}
 		})
 	}
