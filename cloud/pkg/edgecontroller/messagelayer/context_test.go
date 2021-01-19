@@ -37,7 +37,7 @@ func init() {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(receiveModuleName)
 	beehiveContext.AddModuleGroup(receiveModuleName, receiveModuleName)
-	config.Config.Context = &v1alpha1.EdgeControllerContext{
+	config.Config.Context = &v1alpha1.ControllerContext{
 		SendModule:     sendModuleName,
 		ReceiveModule:  receiveModuleName,
 		ResponseModule: responseModuleName,
