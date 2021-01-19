@@ -37,9 +37,9 @@ func newEdgeController(enable bool) *EdgeController {
 	}
 }
 
-func Register(ec *v1alpha1.EdgeController, nodeName string, edgesite bool) {
+func Register(ec *v1alpha1.EdgeController) {
 	// TODO move module config into EdgeController struct @kadisi
-	config.InitConfigure(ec, nodeName, edgesite)
+	config.InitConfigure(ec)
 	core.Register(newEdgeController(ec.Enable))
 }
 

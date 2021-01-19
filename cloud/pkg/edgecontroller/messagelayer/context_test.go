@@ -46,8 +46,7 @@ func init() {
 
 func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 	type args struct {
-		message  model.Message
-		edgesite bool
+		message model.Message
 	}
 	tests := []struct {
 		name    string
@@ -55,7 +54,7 @@ func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"TestContextMessageLayer_Send_Receive_Response(): Case 1: is edgesite",
+			"TestContextMessageLayer_Send_Receive_Response()",
 			args{
 				model.Message{
 					Router: model.MessageRoute{
@@ -64,21 +63,6 @@ func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 					},
 					Content: "Hello Kubeedge",
 				},
-				true,
-			},
-			false,
-		},
-		{
-			"TestContextMessageLayer_Send_Receive_Response(): Case 2: is not edgesite",
-			args{
-				model.Message{
-					Router: model.MessageRoute{
-						Source: sendModuleName,
-						Group:  receiveModuleName,
-					},
-					Content: "Hello Kubeedge",
-				},
-				false,
 			},
 			false,
 		},
@@ -104,7 +88,6 @@ func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 				t.Errorf("ContextMessageLayer.Receive() failed. got: %v, want:%v", got, tt.args.message)
 			}
 
-			config.Config.EdgeSiteEnable = tt.args.edgesite
 			cml.Response(got)
 		})
 	}
