@@ -168,6 +168,36 @@ func (dc *DownstreamController) syncDevice() {
 			default:
 				klog.Warningf("Device event type: %s unsupported", e.Type)
 			}
+
+			// sync a complete device api to edge
+			msg := model.NewMessage("")
+			msg.SetResourceVersion(device.ResourceVersion)
+			msg.Content = device
+			if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 &&
+				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 &&
+				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+				edgeNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
+				resourceType := "device_crd"
+				resource, err := messagelayer.BuildResource(edgeNode, resourceType, "")
+				if err != nil {
+					klog.Warningf("Build message resource failed with error: %s", err)
+					return
+				}
+				switch e.Type {
+				case watch.Added:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.InsertOperation)
+				case watch.Deleted:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.DeleteOperation)
+				case watch.Modified:
+					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
+				default:
+					klog.Warningf("Device event type: %s unsupported", e.Type)
+				}
+				err = dc.messageLayer.Send(*msg)
+				if err != nil {
+					klog.Errorf("Failed to send device api %v due to error %v", msg, err)
+				}
+			}
 		}
 	}
 }
@@ -876,56 +906,7 @@ func (dc *DownstreamController) Start() error {
 	time.Sleep(1 * time.Second)
 	go dc.syncDevice()
 
-	go dc.syncDeviceCRD()
-
 	return nil
-}
-
-// syncDeviceCRD is used to get device events from informer and sync a whole Device CRD to edge
-func (dc *DownstreamController) syncDeviceCRD() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Info("Stop device controller downstream syncDeviceCRD loop")
-			return
-		case e := <-dc.deviceManager.Events():
-			device, ok := e.Object.(*v1alpha2.Device)
-			if !ok {
-				klog.Warningf("Object type: %T unsupported", device)
-				continue
-			}
-
-			if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 &&
-				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 &&
-				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-				msg := model.NewMessage("")
-				msg.SetResourceVersion(device.ResourceVersion)
-				msg.Content = device
-
-				edgeNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
-				resourceType := "device_crd"
-				resource, err := messagelayer.BuildResource(edgeNode, resourceType, "")
-				if err != nil {
-					klog.Warningf("Build message resource failed with error: %s", err)
-					return
-				}
-				switch e.Type {
-				case watch.Added:
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.InsertOperation)
-				case watch.Deleted:
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.DeleteOperation)
-				case watch.Modified:
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-				default:
-					klog.Warningf("Device event type: %s unsupported", e.Type)
-				}
-				err = dc.messageLayer.Send(*msg)
-				if err != nil {
-					klog.Errorf("Failed to send device %v due to error %v", msg, err)
-				}
-			}
-		}
-	}
 }
 
 // NewDownstreamController create a DownstreamController from config
