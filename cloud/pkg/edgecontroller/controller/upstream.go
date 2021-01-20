@@ -427,15 +427,13 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				// TODO: comment below for test failure. Needs to decide whether to keep post troubleshoot
 				// In case the status stored at metadata service is outdated, update the heartbeat automatically
-				if !config.Config.EdgeSiteEnable {
-					for i := range nodeStatusRequest.Status.Conditions {
-						if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
-							nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
-						}
+				for i := range nodeStatusRequest.Status.Conditions {
+					if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
+						nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
+					}
 
-						if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
-							nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
-						}
+					if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
+						nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
 					}
 				}
 
