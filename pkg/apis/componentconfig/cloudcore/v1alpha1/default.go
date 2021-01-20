@@ -100,7 +100,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
 				},
-				Context: &EdgeControllerContext{
+				Context: &ControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameEdgeController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
@@ -122,7 +122,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			},
 			DeviceController: &DeviceController{
 				Enable: true,
-				Context: &DeviceControllerContext{
+				Context: &ControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameDeviceController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
