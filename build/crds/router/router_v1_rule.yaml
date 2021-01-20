@@ -16,24 +16,29 @@ spec:
               type: object
               properties:
                 source:
-                  description: 'source is a string value representing where the messages come from. Its
-                    value is the same with rule-endpoint name. For example, my-rest or my-eventbus.'
+                  description: |
+                    source is a string value representing where the messages come from. Its
+                    value is the same with rule-endpoint name. For example, my-rest or my-eventbus.
                   type: string
                 sourceResource:
-                  description: 'sourceResource is a map representing the resource info of source. For rest
+                  description: |
+                    sourceResource is a map representing the resource info of source. For rest
                     rule-endpoint type its value is {"path":"/a/b"}. For eventbus rule-endpoint type its
-                    value is {"topic":"<user define string>","node_name":"xxxx"}'
+                    value is {"topic":"<user define string>","node_name":"xxxx"}
                   type: object
                   additionalProperties:
                     type: string
                 target:
-                  description: 'target is a string value representing where the messages go to. its value is
-                     the same with rule-endpoint name. For example, my-eventbus or my-rest or my-servicebus.'
+                  description: |
+                    target is a string value representing where the messages go to. its value is
+                    the same with rule-endpoint name. For example, my-eventbus or my-rest or my-servicebus.
                   type: string
                 targetResource:
-                  description: 'targetResource is a map representing the resource info of target. For rest
+                  description: |
+                    targetResource is a map representing the resource info of target. For rest
                     rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus rule-endpoint
-                    type its value is {"topic":"/xxxx"}. For servicebus rule-endpoint type its value is {"path":"/request_path"}.'
+                    type its value is {"topic":"/xxxx"}. For servicebus rule-endpoint type its value is
+                    {"path":"/request_path"}.
                   type: object
                   additionalProperties:
                     type: string
@@ -53,14 +58,8 @@ spec:
                   items:
                     type: string
                   type: array
-              required:
-                - successMessages
-                - failMessages
-                - errors
   scope: Namespaced
   names:
     plural: rules
     singular: rule
     kind: Rule
-    shortNames:
-      - rule

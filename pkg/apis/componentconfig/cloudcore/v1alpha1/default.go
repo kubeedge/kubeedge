@@ -103,10 +103,10 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					DeletePod:                  constants.DefaultDeletePodBuffer,
 				},
 				Context: &ControllerContext{
-					SendModule:     metaconfig.ModuleNameCloudHub,
-				    SendRouterModule: metaconfig.ModuleNameRouter,
-					ReceiveModule:  metaconfig.ModuleNameEdgeController,
-					ResponseModule: metaconfig.ModuleNameCloudHub,
+					SendModule:       metaconfig.ModuleNameCloudHub,
+					SendRouterModule: metaconfig.ModuleNameRouter,
+					ReceiveModule:    metaconfig.ModuleNameEdgeController,
+					ResponseModule:   metaconfig.ModuleNameCloudHub,
 				},
 				Load: &EdgeControllerLoad{
 					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
