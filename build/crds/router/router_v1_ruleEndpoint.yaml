@@ -16,11 +16,15 @@ spec:
               type: object
               properties:
                 ruleEndpointType:
-                  description: 'ruleEndpointType is a string value representing rule-endpoint type. its value is one of rest/eventbus/servicebus.'
+                  description: |
+                    ruleEndpointType is a string value representing rule-endpoint type. its value is
+                    one of rest/eventbus/servicebus.
                   type: string
                 properties:
-                  description: 'properties is not required except for servicebus rule-endpoint type. It is a map value representing rule-endpoint properties.
-                    when ruleEndpointType is servicebus, its value is {"service_port":"8080"}.'
+                  description: |
+                    properties is not required except for servicebus rule-endpoint type. It is a map
+                    value representing rule-endpoint properties.when ruleEndpointType is servicebus,
+                    its value is {"service_port":"8080"}.
                   type: object
                   additionalProperties:
                     type: string

@@ -9,7 +9,3 @@ spec:
   sourceResource: {"path":"/a"}
   target: "my-eventbus"
   targetResource: {"topic":"test"}
-status:
-  successMessages: 0
-  failMessages: 0
-  errors: []

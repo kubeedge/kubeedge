@@ -664,17 +664,17 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 	}
 
 	dc := &DownstreamController{
-		kubeClient:       client.GetKubeClient(),
-		podManager:       podManager,
-		configmapManager: configMapManager,
-		secretManager:    secretManager,
-		nodeManager:      nodesManager,
-		serviceManager:   serviceManager,
-		endpointsManager: endpointsManager,
-		messageLayer:     messagelayer.NewContextMessageLayer(),
-		lc:               lc,
-		svcLister:        svcInformer.Lister(),
-		podLister:        podInformer.Lister(),
+		kubeClient:           client.GetKubeClient(),
+		podManager:           podManager,
+		configmapManager:     configMapManager,
+		secretManager:        secretManager,
+		nodeManager:          nodesManager,
+		serviceManager:       serviceManager,
+		endpointsManager:     endpointsManager,
+		messageLayer:         messagelayer.NewContextMessageLayer(),
+		lc:                   lc,
+		svcLister:            svcInformer.Lister(),
+		podLister:            podInformer.Lister(),
 		rulesManager:         rulesManager,
 		ruleEndpointsManager: ruleEndpointsManager,
 	}
