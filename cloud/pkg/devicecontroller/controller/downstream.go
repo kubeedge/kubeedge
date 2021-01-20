@@ -170,12 +170,12 @@ func (dc *DownstreamController) syncDevice() {
 			}
 
 			// sync a complete device api to edge
-			msg := model.NewMessage("")
-			msg.SetResourceVersion(device.ResourceVersion)
-			msg.Content = device
 			if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 &&
 				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 &&
 				len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
+				msg := model.NewMessage("")
+				msg.SetResourceVersion(device.ResourceVersion)
+				msg.Content = device
 				edgeNode := device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
 				resourceType := "device_crd"
 				resource, err := messagelayer.BuildResource(edgeNode, resourceType, "")
