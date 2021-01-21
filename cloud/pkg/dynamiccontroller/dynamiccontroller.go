@@ -19,7 +19,6 @@ package dynamiccontroller
 import (
 	"reflect"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -28,7 +27,7 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
@@ -71,8 +70,6 @@ func (dctl *DynamicController) Enable() bool {
 
 // Start controller
 func (dctl *DynamicController) Start() {
-	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
-
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
 			klog.Fatalf("unable to sync caches for: %s", gvr.String())
@@ -87,14 +84,10 @@ func (dctl *DynamicController) Start() {
 }
 
 func newDynamicController(enable bool) *DynamicController {
-	// Create a factory object that we can say "hey, I need to watch this resource"
-	// and it will give us back an informer for it
-	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client.GetDynamicClient(), 0, v1.NamespaceAll, nil)
-
 	var dctl = &DynamicController{
 		enable:                       enable,
 		messageLayer:                 messagelayer.NewContextMessageLayer(),
-		dynamicSharedInformerFactory: factory,
+		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
 		resourceToNode:               make(map[schema.GroupVersionResource][]nodeFilter),
 		eventHandler:                 make(map[schema.GroupVersionResource]CommonResourceEventHandler),
 	}
@@ -103,7 +96,7 @@ func newDynamicController(enable bool) *DynamicController {
 		// Retrieve a "GroupVersionResource" type that we need when generating our informer from our dynamic factory
 		//gvr, _ := schema.ParseResourceArg("deployments.v1.apps")
 		// Finally, create our informer for deployments!
-		factory.ForResource(gvr)
+		dctl.dynamicSharedInformerFactory.ForResource(gvr)
 
 		dctl.eventHandler[gvr] = CommonResourceEventHandler{
 			events:       make(chan watch.Event, 100),
