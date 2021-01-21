@@ -69,9 +69,20 @@ func (c *CommonResourceEventHandler) dispatchEvents() {
 			}
 
 			for _, listener := range c.listeners {
+				// todo: add filter here
 				listener.sendObj(event, c.resourceType, c.messageLayer)
 			}
 		}
+	}
+}
+
+func (nf *nodeFilter) sendAllObjects(rets []runtime.Object, resourceType string, messageLayer messagelayer.MessageLayer) {
+	for _, ret := range rets {
+		event := watch.Event{
+			Type:   watch.Added,
+			Object: ret,
+		}
+		nf.sendObj(event, resourceType, messageLayer)
 	}
 }
 

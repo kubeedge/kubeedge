@@ -151,7 +151,13 @@ func (dctl *DynamicController) receiveMessage() {
 		if create {
 			if !isNodeFilterExist(dctl.resourceToNode[gvr], nodefilter) {
 				dctl.resourceToNode[gvr] = append(dctl.resourceToNode[gvr], nodefilter)
+
 				dctl.eventHandler[gvr].addProcessListener(nodefilter)
+				rets, err := dctl.dynamicSharedInformerFactory.ForResource(gvr).Lister().List(nodefilter.filter)
+				if err != nil {
+
+				}
+				nodefilter.sendAllObjects(rets, gvr.Resource, dctl.eventHandler[gvr].messageLayer)
 			}
 		}
 
