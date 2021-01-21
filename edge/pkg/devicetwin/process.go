@@ -239,16 +239,14 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		}
 		if strings.Contains(message.Msg.Router.Resource, "device_crd") { //sync Device CRD
 			operation := message.Msg.GetOperation()
-			action := ""
 			switch operation {
 			case model.InsertOperation:
-				action = dtcommon.MemDeviceCRDInsert
+				message.Action = dtcommon.MemDeviceCRDInsert
 			case model.DeleteOperation:
-				action = dtcommon.MemDeviceCRDDelete
+				message.Action = dtcommon.MemDeviceCRDDelete
 			case model.UpdateOperation:
-				action = dtcommon.MemDeviceCRDUpdate
+				message.Action = dtcommon.MemDeviceCRDUpdate
 			}
-			message.Action = action
 			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
 			message.Action = dtcommon.MemDetailResult
