@@ -114,7 +114,7 @@ func installCRDs(kubeConfig, master string) error {
 
 	// Todo: need to add the crds ro release package
 	// create the dir for kubeedge crd
-	deviceCrdPath := KubeEdgeCrdPath+"/devices"
+	deviceCrdPath := KubeEdgeCrdPath + "/devices"
 	err = os.MkdirAll(deviceCrdPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", deviceCrdPath)
@@ -145,7 +145,7 @@ func installCRDs(kubeConfig, master string) error {
 
 	// Todo: need to add the crds ro release package
 	// create the dir for kubeedge crd
-	reliablesyncCrdPath := KubeEdgeCrdPath+"/reliablesyncs"
+	reliablesyncCrdPath := KubeEdgeCrdPath + "/reliablesyncs"
 	err = os.MkdirAll(reliablesyncCrdPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", reliablesyncCrdPath)
