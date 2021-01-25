@@ -145,9 +145,10 @@ func installCRDs(kubeConfig, master string) error {
 
 	// Todo: need to add the crds ro release package
 	// create the dir for kubeedge crd
-	err = os.MkdirAll(KubeEdgeCrdPath+"/reliablesyncs", os.ModePerm)
+	reliablesyncCrdPath := KubeEdgeCrdPath+"/reliablesyncs"
+	err = os.MkdirAll(reliablesyncCrdPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", reliablesyncCrdPath)
 	}
 	for _, crdFile := range []string{"reliablesyncs/cluster_objectsync_v1alpha1.yaml",
 		"reliablesyncs/objectsync_v1alpha1.yaml"} {
