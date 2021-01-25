@@ -114,9 +114,10 @@ func installCRDs(kubeConfig, master string) error {
 
 	// Todo: need to add the crds ro release package
 	// create the dir for kubeedge crd
-	err = os.MkdirAll(KubeEdgeCrdPath+"/devices", os.ModePerm)
+	deviceCrdPath := KubeEdgeCrdPath+"/devices"
+	err = os.MkdirAll(deviceCrdPath, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", KubeEdgeLogPath)
+		return fmt.Errorf("not able to create %s folder path", deviceCrdPath)
 	}
 	for _, crdFile := range []string{"devices/devices_v1alpha2_device.yaml",
 		"devices/devices_v1alpha2_devicemodel.yaml"} {
