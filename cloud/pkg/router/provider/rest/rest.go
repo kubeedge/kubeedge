@@ -13,6 +13,7 @@ import (
 	"k8s.io/klog/v2"
 
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
 	httpUtils "github.com/kubeedge/kubeedge/cloud/pkg/router/utils/http"
@@ -36,7 +37,7 @@ func init() {
 }
 
 func (factory *restFactory) Type() string {
-	return "rest"
+	return constants.RestEndpoint
 }
 
 func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
@@ -68,7 +69,7 @@ func (*restFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]str
 }
 
 func (*Rest) Name() string {
-	return "rest"
+	return constants.RestProvider
 }
 
 func (r *Rest) RegisterListener(handle listener.Handle) error {
@@ -109,11 +110,6 @@ func (*Rest) Forward(target provider.Target, data interface{}) (response interfa
 	respch := make(chan interface{})
 	errch := make(chan error)
 	go func() {
-		//resp, err := target.GoToTarget(res, stop)
-		//if err != nil {
-		//	errch <- err
-		//	return
-		//}
 		resp, err := target.GoToTarget(res, nil)
 		if err != nil {
 			errch <- err
@@ -165,7 +161,7 @@ func (*Rest) Forward(target provider.Target, data interface{}) (response interfa
 }
 
 func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
-	//No need to send ACK in the moment
+	//TODO: need to get ACK
 	v, exist := data["data"]
 	if !exist {
 		return nil, errors.New("input data does not exist value \"data\"")

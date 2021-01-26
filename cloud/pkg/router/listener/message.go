@@ -36,7 +36,6 @@ func (mh *MessageHandler) RemoveListener(key interface{}) {
 
 func (mh *MessageHandler) getHandler(source string, resource string) (Handle, error) {
 	rs := strings.Split(resource, "/")
-	//todo： check eventbus to router
 	if len(rs) >= 2 && (rs[0] == "rule-endpoint" || rs[0] == "rule") {
 		resource = rs[0]
 	}
@@ -71,13 +70,13 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 		mh.callback(message)
 		return nil
 	}
-	han, err := mh.getHandler(message.GetSource(), message.GetResource())
+	handler, err := mh.getHandler(message.GetSource(), message.GetResource())
 	if err != nil {
 		klog.Errorf("No handler for message.msgID: %s, source: %s, resource %s can't find candidate", message.GetID(), message.GetSource(), message.GetResource())
 		return err
 	}
 	go func(message *model.Message) {
-		_, err := han(message)
+		_, err := handler(message)
 		if err != nil {
 			klog.Errorf("handle message occur error.msgID: %s, reson: %s", message.GetID(), err.Error())
 		}

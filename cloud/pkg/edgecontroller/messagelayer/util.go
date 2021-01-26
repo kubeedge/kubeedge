@@ -26,13 +26,11 @@ func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource
 }
 
 // BuildResourceForRouter return a string as "beehive/pkg/core/model".Message.Router.Resource
-func BuildResourceForRouter(resourceType, resourceID string) (resource string, err error) {
+func BuildResourceForRouter(resourceType, resourceID string) (string, error) {
 	if resourceID == "" || resourceType == "" {
-		err = fmt.Errorf("required parameter are not set (resourceID or resource type)")
-		return
+		return "", fmt.Errorf("required parameter are not set (resourceID or resource type)")
 	}
-	resource = fmt.Sprintf("%s%s%s", resourceType, constants.ResourceSep, resourceID)
-	return
+	return fmt.Sprintf("%s%s%s", resourceType, constants.ResourceSep, resourceID), nil
 }
 
 // GetNodeID from "beehive/pkg/core/model".Message.Router.Resource
