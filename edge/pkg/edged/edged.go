@@ -86,6 +86,8 @@ import (
 	"k8s.io/kubernetes/pkg/volume/downwardapi"
 	"k8s.io/kubernetes/pkg/volume/emptydir"
 	"k8s.io/kubernetes/pkg/volume/hostpath"
+	"k8s.io/kubernetes/pkg/volume/local"
+	"k8s.io/kubernetes/pkg/volume/nfs"
 	"k8s.io/kubernetes/pkg/volume/projected"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
@@ -1387,14 +1389,17 @@ func (e *edged) handleSecret(op string, content []byte) (err error) {
 // volume plugins.
 func ProbeVolumePlugins(pluginDir string) []volume.VolumePlugin {
 	allPlugins := []volume.VolumePlugin{}
-	hostPathConfig := volume.VolumeConfig{}
+	commonVolumeConfig := volume.VolumeConfig{}
 	allPlugins = append(allPlugins, configmap.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, emptydir.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, secretvolume.ProbeVolumePlugins()...)
-	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(hostPathConfig)...)
+	allPlugins = append(allPlugins, hostpath.ProbeVolumePlugins(commonVolumeConfig)...)
 	allPlugins = append(allPlugins, csiplugin.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, downwardapi.ProbeVolumePlugins()...)
 	allPlugins = append(allPlugins, projected.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, local.ProbeVolumePlugins()...)
+	allPlugins = append(allPlugins, nfs.ProbeVolumePlugins(commonVolumeConfig)...)
+
 	return allPlugins
 }
 
