@@ -176,7 +176,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 		}
 	}
 	// user data
-	if msg.GetGroup() == "user" {
+	if msg.GetGroup() == modules.UserGroup {
 		return true
 	}
 

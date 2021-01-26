@@ -4,6 +4,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	routerconfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 
@@ -34,11 +35,11 @@ func Register(router *v1alpha1.Router) {
 }
 
 func (r *router) Name() string {
-	return "router"
+	return modules.RouterModuleName
 }
 
 func (r *router) Group() string {
-	return "router"
+	return modules.RouterGroupName
 }
 
 func (r *router) Enable() bool {

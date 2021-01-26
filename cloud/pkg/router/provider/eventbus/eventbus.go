@@ -11,8 +11,13 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
+)
+
+const (
+	publishOperation = "publish"
 )
 
 type eventbusFactory struct{}
@@ -31,7 +36,7 @@ func init() {
 }
 
 func (factory *eventbusFactory) Type() string {
-	return "eventbus"
+	return constants.EventbusEndpoint
 }
 
 func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
@@ -58,7 +63,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("%s/node/%s/%s/%s", "bus", eb.nodeName, eb.namespace, eb.subTopic), handle)
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s/%s", eb.nodeName, eb.namespace, eb.subTopic), "subscribe")
-	msg.SetRoute("router_eventbus", "user")
+	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
 }
@@ -66,7 +71,7 @@ func (eb *EventBus) RegisterListener(handle listener.Handle) error {
 func (eb *EventBus) UnregisterListener() {
 	msg := model.NewMessage("")
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s/%s", eb.nodeName, eb.namespace, eb.subTopic), "unsubscribe")
-	msg.SetRoute("router_eventbus", "user")
+	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	listener.MessageHandlerInstance.RemoveListener(fmt.Sprintf("%s/node/%s/%s/%s", "bus", eb.nodeName, eb.namespace, eb.subTopic))
 }
@@ -85,7 +90,7 @@ func (factory *eventbusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource ma
 }
 
 func (eb *EventBus) Name() string {
-	return "eventbus"
+	return constants.EventbusProvider
 }
 
 func (*EventBus) Forward(target provider.Target, data interface{}) (response interface{}, err error) {
@@ -124,9 +129,9 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	} else {
 		resource = resource + strings.TrimSuffix(eb.pubTopic, "/") + "/" + strings.TrimPrefix(param, "/")
 	}
-	msg.SetResourceOperation(resource, "publish")
+	msg.SetResourceOperation(resource, publishOperation)
 	msg.FillBody(string(body))
-	msg.SetRoute("router_eventbus", "user")
+	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
 		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {

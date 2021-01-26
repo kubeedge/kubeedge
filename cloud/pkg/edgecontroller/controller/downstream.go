@@ -466,13 +466,13 @@ func (dc *DownstreamController) syncRule() {
 			klog.Warning("Stop edgecontroller downstream syncRule loop")
 			return
 		case e := <-dc.rulesManager.Events():
-			klog.Infof("Get rule events: event type: %s.", e.Type)
+			klog.V(4).Infof("Get rule events: event type: %s.", e.Type)
 			rule, ok := e.Object.(*routerv1.Rule)
 			if !ok {
 				klog.Warningf("object type: %T unsupported", rule)
 				continue
 			}
-			klog.Infof("Get rule events: rule object: %+v.", rule)
+			klog.V(4).Infof("Get rule events: rule object: %+v.", rule)
 			msg := model.NewMessage("")
 			msg.SetResourceVersion(rule.ResourceVersion)
 			resource, err := messagelayer.BuildResourceForRouter(model.ResourceTypeRule, rule.Name)
@@ -507,13 +507,13 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 			klog.Warning("Stop edgecontroller downstream syncRuleEndpoint loop")
 			return
 		case e := <-dc.ruleEndpointsManager.Events():
-			klog.Infof("Get ruleEndpoint events: event type: %s.", e.Type)
+			klog.V(4).Infof("Get ruleEndpoint events: event type: %s.", e.Type)
 			ruleEndpoint, ok := e.Object.(*routerv1.RuleEndpoint)
 			if !ok {
 				klog.Warningf("object type: %T unsupported", ruleEndpoint)
 				continue
 			}
-			klog.Infof("Get ruleEndpoint events: ruleEndpoint object: %+v.", ruleEndpoint)
+			klog.V(4).Infof("Get ruleEndpoint events: ruleEndpoint object: %+v.", ruleEndpoint)
 			msg := model.NewMessage("")
 			msg.SetResourceVersion(ruleEndpoint.ResourceVersion)
 			resource, err := messagelayer.BuildResourceForRouter(model.ResourceTypeRuleEndpoint, ruleEndpoint.Name)

@@ -121,27 +121,17 @@ func OnSubMessageReceived(client MQTT.Client, msg MQTT.Message) {
 		target = modules.TwinGroup
 		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic()))
 		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-		message = model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
 			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload()))
 	} else {
 		target = modules.HubGroup
-		message = model.NewMessage("").BuildRouter(modules.BusGroup, "user",
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
 			msg.Topic(), "upload").FillBody(string(msg.Payload()))
 	}
 
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
 	beehiveContext.SendToGroup(target, *message)
 }
-
-//// OnSubUserMessageReceived msg received callback
-//func OnSubUserMessageReceived(client MQTT.Client, message MQTT.Message) {
-//	klog.Infof("OnSubUserMessageReceived receive msg from topic: %s", message.Topic())
-//	msg := model.NewMessage("").BuildRouter(modules.BusGroup,
-//		"user",
-//		message.Topic(), "upload").FillBody(string(message.Payload()))
-//	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with msgID %s, resource %s", modules.HubGroup, msg.GetID(), msg.GetResource()))
-//	beehiveContext.SendToGroup(modules.HubGroup, *msg)
-//}
 
 // InitSubClient init sub client
 func (mq *Client) InitSubClient() {

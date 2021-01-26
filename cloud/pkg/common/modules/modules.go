@@ -15,4 +15,9 @@ const (
 
 	CloudStreamModuleName = "cloudStream"
 	CloudStreamGroupName  = "cloudStream"
+
+	RouterModuleName = "router"
+	RouterGroupName  = "router"
+
+	UserGroup = "user"
 )
