@@ -1581,6 +1581,8 @@ k8s.io/kubernetes/pkg/volume/csimigration
 k8s.io/kubernetes/pkg/volume/downwardapi
 k8s.io/kubernetes/pkg/volume/emptydir
 k8s.io/kubernetes/pkg/volume/hostpath
+k8s.io/kubernetes/pkg/volume/local
+k8s.io/kubernetes/pkg/volume/nfs
 k8s.io/kubernetes/pkg/volume/projected
 k8s.io/kubernetes/pkg/volume/secret
 k8s.io/kubernetes/pkg/volume/util
