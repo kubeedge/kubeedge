@@ -22,6 +22,10 @@ var (
 	ActionCallBack map[string]CallBack
 )
 
+func init() {
+	initActionCallBack()
+}
+
 //CommWorker deal app response event
 type CommWorker struct {
 	Worker
@@ -30,7 +34,6 @@ type CommWorker struct {
 
 //Start worker
 func (cw CommWorker) Start() {
-	initActionCallBack()
 	for {
 		select {
 		case msg, ok := <-cw.ReceiverChan:
