@@ -94,33 +94,23 @@ The services then forward the request to the respective application pods through
 
 The Ingress resource is the kubernetes resource based on which the ingress controller decides where to forward the incoming traffic. It is basically used to set rules based on which the ingress controller can take action. An example ingress resource is shown below :
 
-`apiVersion: networking.k8s.io/v1beta1` 
+```
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+	metadata:  
+		name: test-ingress        # name of the ingress resource
+		annotations:   
+			nginx.ingress.kubernetes.io/rewrite-target: /
+		spec:
+			rules: 
+			- http:  
+			    paths:
+				- path: /testpath   # the path specified in the API based on which the controller will route traffic
+				    backend:      
+						serviceName: test   # the kubernetes service name to which the incoming request needs to be forwarded   
+						servicePort: 80
+```
 
-`kind: Ingress` 
-
-​	`metadata:`  
-
-​		`name: test-ingress        # name of the ingress resource`  
-
-​		`annotations:`   
-
-​			`nginx.ingress.kubernetes.io/rewrite-target: /` 
-
-​		`spec:`  
-
-​			`rules:`  
-
-​			`- http:`    
-
-​			    `paths:`    
-
-​				`- path: /testpath   # the path specified in the API based on which the controller will route traffic`
-
-​				    `backend:`      
-
-​						`serviceName: test   # the kubernetes service name to which the incoming request needs to be forwarded`      
-
-​						`servicePort: 80`
 The ingress contains the information, which is required to configure a reverse proxy or a load balancer to forward requests to the server. It is also possible to set up the TLS negotiation in the ingress resource. It contains the rules against which all incoming requests are matched. Currently, ingress only supports rules for redirecting HTTP traffic.
 
 

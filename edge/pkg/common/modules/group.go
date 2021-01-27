@@ -17,4 +17,6 @@ const (
 	MeshGroup = "mesh"
 	// StreamGroup group
 	StreamGroup = "edgestream"
+	// GatewayGroup group
+	GatewayGroup = "edgegateway"
 )

@@ -53,6 +53,7 @@ const (
 
 type ProtocolName string
 type MqttMode int
+type ProxyMode int
 
 // EdgeCoreConfig indicates the EdgeCore config which read from EdgeCore config file
 type EdgeCoreConfig struct {
@@ -104,6 +105,9 @@ type Modules struct {
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
+	// EdgeGateway indicates edgegateway module config
+	// +Required
+	EdgeGateway *EdgeGateway `json:"edgeGateway,omitempty"`
 }
 
 // Edged indicates the config fo edged module
@@ -456,4 +460,16 @@ type EdgeStream struct {
 	// WriteDeadline indicates write dead line (second)
 	// default 15
 	WriteDeadline int32 `json:"writeDeadline,omitempty"`
+}
+
+// EdgeGateway indicates the edge gateway controller
+type EdgeGateway struct {
+	// Enable indicates whether edgegateway is enabled, if set to false (for debugging etc.), skip checking other configs.
+	// default true
+	Enable bool `json:"enable"`
+	// ProxyMode indicates which proxy type will be choose
+	// 0: nginx ingress controller enable only.
+	// +Required
+	// default: 0
+	//ProxyMode ProxyMode `json:"proxyMode"`
 }
