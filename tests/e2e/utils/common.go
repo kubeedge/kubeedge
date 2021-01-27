@@ -18,8 +18,10 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -39,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
@@ -891,4 +894,239 @@ func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*
 		}
 	}
 	return true
+}
+
+// GetRuleList to get the rule list and verify whether the contents of the rule matches with what is expected
+func GetRuleList(list *rulesv1.RuleList, getRuleAPI string, expectedRule *rulesv1.Rule) ([]rulesv1.Rule, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getRuleAPI)
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return nil, err
+	}
+	err = json.Unmarshal(contents, &list)
+	if err != nil {
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
+		return nil, err
+	}
+	if expectedRule != nil {
+		modelExists := false
+		for _, rule := range list.Items {
+			if expectedRule.ObjectMeta.Name == rule.ObjectMeta.Name {
+				modelExists = true
+				if !reflect.DeepEqual(expectedRule.TypeMeta, rule.TypeMeta) ||
+					expectedRule.ObjectMeta.Namespace != rule.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedRule.Spec, rule.Spec) {
+					return nil, errors.New("The rule is not matching with what was expected")
+				}
+			}
+		}
+		if !modelExists {
+			return nil, errors.New("The requested rule is not found")
+		}
+	}
+	return list.Items, nil
+}
+
+// HandleRule to handle rule.
+func HandleRule(operation, apiserver, UID, sourceType, targetType string) (bool, int) {
+	var req *http.Request
+	var err error
+	var body io.Reader
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
+	switch operation {
+	case http.MethodPost:
+		body := NewRule(sourceType, targetType)
+		respBytes, err := json.Marshal(body)
+		if err != nil {
+			Fatalf("Marshalling body failed: %v", err)
+		}
+		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+		req.Header.Set("Content-Type", "application/json")
+	case http.MethodDelete:
+		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false, 0
+	}
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false, 0
+	}
+	contents, err := ioutil.ReadAll(resp.Body)
+	Infof("%s %s %v  %v in %v", req.Method, req.URL, resp.Status, string(contents), time.Since(t))
+	return true, resp.StatusCode
+}
+
+// HandleRuleEndpoint to handle ruleendpoint.
+func HandleRuleEndpoint(operation string, apiserver string, UID string, endpointType string) (bool, int) {
+	var req *http.Request
+	var err error
+	var body io.Reader
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
+	switch operation {
+	case http.MethodPost:
+		body := NewRuleEndpoint(endpointType)
+		respBytes, err := json.Marshal(body)
+		if err != nil {
+			Fatalf("Marshalling body failed: %v", err)
+		}
+		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
+		req.Header.Set("Content-Type", "application/json")
+	case http.MethodDelete:
+		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false, 0
+	}
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false, 0
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true, resp.StatusCode
+}
+
+// GetRuleEndpointList to get the rule endpoint list and verify whether the contents of the ruleendpoint matches with what is expected
+func GetRuleEndpointList(list *rulesv1.RuleEndpointList, getRuleEndpointAPI string, expectedRule *rulesv1.RuleEndpoint) ([]rulesv1.RuleEndpoint, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getRuleEndpointAPI)
+	defer resp.Body.Close()
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		Fatalf("HTTP Response reading has failed: %v", err)
+		return nil, err
+	}
+	err = json.Unmarshal(contents, &list)
+	if err != nil {
+		Fatalf("Unmarshal HTTP Response has failed: %v", err)
+		return nil, err
+	}
+	if expectedRule != nil {
+		exists := false
+		for _, ruleEndpoint := range list.Items {
+			if expectedRule.ObjectMeta.Name == ruleEndpoint.ObjectMeta.Name {
+				exists = true
+				if !reflect.DeepEqual(expectedRule.TypeMeta, ruleEndpoint.TypeMeta) ||
+					expectedRule.ObjectMeta.Namespace != ruleEndpoint.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedRule.Spec, ruleEndpoint.Spec) {
+					return nil, errors.New("The ruleendpoint is not matching with what was expected")
+				}
+			}
+		}
+		if !exists {
+			return nil, errors.New("The requested ruleendpoint is not found")
+		}
+	}
+	return list.Items, nil
+}
+
+func SendMsg(url string, message []byte) (bool, int) {
+	var req *http.Request
+	var err error
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+	req, err = http.NewRequest(http.MethodPost, url, bytes.NewBuffer(message))
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed: %v", err)
+		return false, 0
+	}
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed :%v", err)
+		return false, 0
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true, resp.StatusCode
+}
+
+func StartEchoServer() (string, error) {
+	r := make(chan string)
+	echo := func(response http.ResponseWriter, request *http.Request) {
+		b, _ := ioutil.ReadAll(request.Body)
+		r <- string(b)
+		if _, err := response.Write([]byte("Hello World")); err != nil {
+			Errorf("Echo server write failed. reason: %s", err.Error())
+		}
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/echo", echo)
+	server := &http.Server{Addr: "0.0.0.0:9000", Handler: mux}
+	go func() {
+		err := server.ListenAndServe()
+		Errorf("Echo server stop. reason: %s", err.Error())
+	}()
+	t := time.NewTimer(time.Second * 30)
+	select {
+	case resp := <-r:
+		err := server.Shutdown(context.TODO())
+		return resp, err
+	case <-t.C:
+		err := server.Shutdown(context.TODO())
+		close(r)
+		return "", err
+	}
+}
+
+// subscribe function subscribes  the device twin information through the MQTT broker
+func SubscribeMqtt(topic string) (string, error) {
+	r := make(chan string)
+	TokenClient = Client.Subscribe(topic, 0, func(client MQTT.Client, message MQTT.Message) {
+		r <- string(message.Payload())
+	})
+	if TokenClient.Wait() && TokenClient.Error() != nil {
+		return "", fmt.Errorf("subscribe() Error in topic %s. reason: %s", topic, TokenClient.Error().Error())
+	}
+	t := time.NewTimer(time.Second * 30)
+	select {
+	case result := <-r:
+		Infof("subscribe topic %s to get result: %s", topic, result)
+		return result, nil
+	case <-t.C:
+		close(r)
+		return "", errors.New("Wait for MQTT message time out. ")
+	}
+}
+
+func PublishMqtt(topic, message string) error {
+	TokenClient = Client.Publish(topic, 0, false, message)
+	if TokenClient.Wait() && TokenClient.Error() != nil {
+		return fmt.Errorf("client.publish() Error in topic %s. reason: %s. ", topic, TokenClient.Error().Error())
+	}
+	Infof("publish topic %s message %s", topic, message)
+	return nil
 }
