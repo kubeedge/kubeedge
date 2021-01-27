@@ -1,6 +1,7 @@
 package admissioncontroller
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -13,9 +14,7 @@ import (
 
 func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
 	reviewResponse := admissionv1beta1.AdmissionResponse{}
-	reviewResponse.Allowed = true
 	var msg string
-
 	switch review.Request.Operation {
 	case admissionv1beta1.Create:
 		raw := review.Request.Object.Raw
@@ -23,16 +22,21 @@ func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.Admiss
 		deserializer := codecs.UniversalDeserializer()
 		if _, _, err := deserializer.Decode(raw, nil, &rule); err != nil {
 			klog.Errorf("validation failed with error: %v", err)
-			return toAdmissionResponse(err)
+			msg = err.Error()
+			break
 		}
-		msg = validateRule(&rule, &reviewResponse)
+		err := validateRule(&rule)
+		if err != nil {
+			msg = err.Error()
+			break
+		}
+		reviewResponse.Allowed = true
 	case admissionv1beta1.Delete, admissionv1beta1.Connect:
 		//no rule defined for above operations, greenlight for all of above.
 		reviewResponse.Allowed = true
 		klog.Info("admission validation passed!")
 	default:
 		klog.Infof("Unsupported webhook operation %v", review.Request.Operation)
-		reviewResponse.Allowed = false
 		msg = msg + "Unsupported webhook operation!"
 	}
 	if !reviewResponse.Allowed {
@@ -41,10 +45,84 @@ func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.Admiss
 	return &reviewResponse
 }
 
-func validateRule(rule *rulesv1.Rule, response *admissionv1beta1.AdmissionResponse) string {
-	var msg string
-	// todo: check source/target rule-endpoint whether exist. check whether sourceResource is unique. check target type whether valid.
-	return msg
+func validateRule(rule *rulesv1.Rule) error {
+	sourceKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Source)
+	sourceEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Source)
+	if err != nil {
+		return fmt.Errorf("cant get source ruleEndpoint %s. reason: %s", sourceKey, err.Error())
+	} else if sourceEndpoint == nil {
+		return fmt.Errorf("source ruleEndpoint %s has not been created. ", sourceKey)
+	}
+	if err = validateSourceRuleEndpoint(sourceEndpoint, rule.Spec.SourceResource); err != nil {
+		return err
+	}
+	targetKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Target)
+	targetEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Target)
+	if err != nil {
+		return fmt.Errorf("cant get target ruleEndpoint %s. reason: %s", targetKey, err.Error())
+	} else if targetEndpoint == nil {
+		return fmt.Errorf("target ruleEndpoint %s has not been created. ", targetKey)
+	}
+	if targetEndpoint.Spec.RuleEndpointType == sourceEndpoint.Spec.RuleEndpointType {
+		return fmt.Errorf("target ruleEndpoint type %s can not be the same with source ruleEndpoint type ", targetEndpoint.Spec.RuleEndpointType)
+	}
+	if err = validateTargetRuleEndpoint(targetEndpoint, rule.Spec.TargetResource); err != nil {
+		return err
+	}
+	return nil
+}
+func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
+	switch ruleEndpoint.Spec.RuleEndpointType {
+	case "rest":
+		_, exist := sourceResource["path"]
+		if !exist {
+			return fmt.Errorf("source properties do not find \"path\". ")
+		}
+		rules, err := controller.listRule(ruleEndpoint.Namespace)
+		if err != nil {
+			return err
+		}
+		for _, r := range rules {
+			if sourceResource["path"] == r.Spec.SourceResource["path"] {
+				return fmt.Errorf("source properties exist. path: %s", sourceResource["path"])
+			}
+		}
+	case "eventbus":
+		_, exist := sourceResource["topic"]
+		if !exist {
+			return fmt.Errorf("source properties do not find \"topic\". ")
+		}
+		_, exist = sourceResource["node_name"]
+		if !exist {
+			return fmt.Errorf("source properties do not find \"node_name\". ")
+		}
+		rules, err := controller.listRule(ruleEndpoint.Namespace)
+		if err != nil {
+			return err
+		}
+		for _, r := range rules {
+			if sourceResource["topic"] == r.Spec.SourceResource["topic"] && sourceResource["node_name"] == r.Spec.SourceResource["node_name"] {
+				return fmt.Errorf("source properties exist. node_name: %s, topic: %s", sourceResource["node_name"], sourceResource["topic"])
+			}
+		}
+	}
+	return nil
+}
+
+func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResource map[string]string) error {
+	switch ruleEndpoint.Spec.RuleEndpointType {
+	case "rest":
+		_, exist := targetResource["resource"]
+		if !exist {
+			return fmt.Errorf("target properties do not find \"resource\". ")
+		}
+	case "eventbus":
+		_, exist := targetResource["topic"]
+		if !exist {
+			return fmt.Errorf("target properties do not find \"topic\". ")
+		}
+	}
+	return nil
 }
 
 func serveRule(w http.ResponseWriter, r *http.Request) {

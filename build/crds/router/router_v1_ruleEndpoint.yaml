@@ -20,6 +20,9 @@ spec:
                     ruleEndpointType is a string value representing rule-endpoint type. its value is
                     one of rest/eventbus/servicebus.
                   type: string
+                  enum:
+                    - rest
+                    - eventbus
                 properties:
                   description: |
                     properties is not required except for servicebus rule-endpoint type. It is a map

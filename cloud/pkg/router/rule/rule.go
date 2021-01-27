@@ -62,12 +62,12 @@ func registerListener() {
 
 func addRuleEndpoint(ruleEndpoint *routerv1.RuleEndpoint) {
 	ruleEndpoints.Store(getKey(ruleEndpoint.Namespace, ruleEndpoint.Name), ruleEndpoint)
-	klog.Info("add rule-endpoint.")
+	klog.Infof("add rule-endpoint %s/%s success.", ruleEndpoint.Namespace, ruleEndpoint.Name)
 }
 
 func deleteRuleEndpoint(namespace, name string) {
 	ruleEndpoints.Delete(getKey(namespace, name))
-	klog.Info("delete rule-endpoint.")
+	klog.Infof("delete rule-endpoint %s/%s success.", namespace, name)
 }
 
 // AddRule add rule
@@ -100,7 +100,6 @@ func addRule(rule *routerv1.Rule) error {
 	}
 	source := sf.GetSource(sourceEp, rule.Spec.SourceResource)
 	if source == nil {
-		// TODO: record error info
 		err := fmt.Errorf("can't get source: %+v", rule.Spec.Source)
 		klog.Error(err.Error())
 		return err
@@ -115,7 +114,6 @@ func addRule(rule *routerv1.Rule) error {
 
 	err := source.RegisterListener(func(d interface{}) (interface{}, error) {
 		//TODO Use goroutine pool later
-
 		resp, err := source.Forward(target, d)
 		var execResult ExecResult
 		if err != nil {
@@ -147,13 +145,14 @@ func delRule(namespace, name string) {
 	key := getKey(namespace, name)
 	v, exist := rules.Load(key)
 	if !exist {
-		klog.Infof("rule %s not exist", name)
+		klog.Warningf("rule %s does not exist", key)
 		return
 	}
 	rule := v.(*routerv1.Rule)
 	v, exist = ruleEndpoints.Load(getKey(namespace, rule.Spec.Source))
 	if !exist {
-
+		klog.Warningf("ruleEndpoint does not exist. namespace: %s, sourceType: %s", namespace, rule.Spec.Source)
+		return
 	}
 	sourceEp := v.(*routerv1.RuleEndpoint)
 	// source UnregisterListener
@@ -164,11 +163,12 @@ func delRule(namespace, name string) {
 	}
 	source := sf.GetSource(sourceEp, rule.Spec.SourceResource)
 	if source == nil {
+		klog.Errorf("can't get source: %s", rule.Spec.Source)
 		return
 	}
 	source.UnregisterListener()
-
 	rules.Delete(key)
+	klog.Infof("delete rule success: %s", key)
 }
 
 func getKey(namespace, name string) string {
