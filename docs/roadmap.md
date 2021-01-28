@@ -4,37 +4,106 @@ This document defines a high level roadmap for KubeEdge development.
 
 The [milestones defined in GitHub](https://github.com/kubeedge/kubeedge/milestones) represent the most up-to-date plans.
 
-KubeEdge 1.3 is our current stable branch. The roadmap below outlines new features that will be added to KubeEdge.
+The roadmap below outlines new features that will be added to KubeEdge.
 
-## 2020 Q2 Roadmap
+## 2021 H1
 
-- Support metrics-server in the cloud.
-- Support Kubernetes exec API for edge application.
-- Upgrade Kubernetes dependency to 1.18.
-- Support edgenode certificate rotation.
-- Upgrade golang to 1.14.
-- Support ingress/gateway at edge.
-- Device CRD improvement, support device protocol extension.
-- Edge nodes cross subnet communication.
-- Support list-watch from edgecore for applications on the edge.
-- Collect data information sent from the edge side from CloudHub
-- Improve KubeEdge installation experience
-- Add more docs and move docs out of main repo
+### Core framework
+
+#### Edge side list-watch
+- Support list-watch interface at edge
+
+#### Custom message transmission between cloud and edge
+- Support transmission of custom message between cloud and edge
+
+#### Support multi-instance cloudcore
+
+#### Integration and verification of third-party CNI
+- Flannel, Calico, etc.
+
+#### Integration and verification of third-party CSI
+- Rook, OpenEBS, etc.
+
+#### Support managing clusters at edge from cloud (aka. EdgeSite)
+
+#### Support ingress/gateway at edge.
+
+### Maintainability
+
+#### Deployment optimization
+- Easier deployment
+- Admission controller automated deployment
+
+#### Automatic configuration of edge application offline migration time
+- Modify Default tolerationSeconds Automatically
+
+### IOT Device management
+
+#### Device Mapper framework standard and framework generator
+- Formulate mapper framework standard
+
+#### Support mappers of more protocols
+- OPC-UA mapper
+- ONVIF mapper
+
+### Security
+
+#### Complete security vulnerability scanning
 
 
-## Future
+### Test
 
-- Improve contributor experience by defining project governance policies, release process, membership rules etc.
-- Improve the performance and e2e tests with more metrics and scenarios.
-- Add protobuf support for data exchange format between cloud and edge
-- Finish scalability test and publish report
-- Support managing clusters at edge from cloud (aka. EdgeSite)
-- Enhance performance and reliability of KubeEdge infrastructure.
-- Support edge-cloud communication using edgemesh.
-- Istio-based service mesh across Edge and Cloud where micro-services can communicate freely in the mesh.
-- Enable function as a service at the Edge.
-- Evaluate and enable much larger scale Edge clusters with thousands of Edge nodes and millions of devices.
-- Enable intelligent scheduling of applications to large scale Edge clusters.
+#### Improve the performance and e2e tests with more metrics and scenarios.
+
+
+### Edge-cloud synergy AI
+
+#### Supports KubeFlow/ONNX/Pytorch/Mindspore
+
+#### Edge-cloud synergy training and inference
+
+
+### MEC
+
+#### Cross-edge cloud service discovery
+
+#### 5G network capability exposure
+
+
+## 2021 H2
+
+### Core framework
+
+#### Custom message transmission between cloud and edge
+- Support CloudEvent protocol
+
+#### Cross subnet communication of Data plane 
+- Edge-edge cross subnet 
+- Edge-cloud cross subnet
+
+#### Unified Service Mesh support (Integrate with Istio/OSM etc.)
+
+#### Cloud-edge synergy monitoring
+- Provide support with prometheus push-gateway mode
 - Data management with support for ingestion of telemetry data and analytics at the edge.
-- Security at the edge.
-- Evaluate gRPC for cloud to edge communication.
+
+### IOT Device management
+
+#### Device Mapper framework standard and framework generator
+- Develop mapper framework generator
+
+#### Support mappers of more protocols
+- GB/T 28181 mapper
+
+### Edge-cloud synergy AI
+
+#### Intelligent edge benchmark
+
+
+### MEC
+
+#### Cloud-network convergence
+
+#### Service catalog
+
+#### Cross-edge cloud application roaming
