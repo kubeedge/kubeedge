@@ -78,7 +78,7 @@ To learn deeply about KubeEdge, try some examples on [examples](https://github.c
 
 ## Roadmap
 
-* [2020 Q2 Roadmap](./docs/roadmap.md#2020-q2-roadmap)
+* [2021 Roadmap](./docs/roadmap.md#roadmap)
 
 ## Meeting
 
