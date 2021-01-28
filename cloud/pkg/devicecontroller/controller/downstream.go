@@ -177,8 +177,6 @@ func (dc *DownstreamController) addToConfigMap(device *v1alpha2.Device) {
 	configMap, ok := dc.configMapManager.ConfigMap.Load(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0])
 	if !ok {
 		nodeConfigMap := &v1.ConfigMap{}
-		nodeConfigMap.Kind = ConfigMapKind
-		nodeConfigMap.APIVersion = ConfigMapVersion
 		nodeConfigMap.Name = DeviceProfileConfigPrefix + device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0]
 		nodeConfigMap.Namespace = device.Namespace
 		nodeConfigMap.Data = make(map[string]string)
