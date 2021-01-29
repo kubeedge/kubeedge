@@ -161,10 +161,10 @@ func RemoveContainers(isEdgeNode bool, execer utilsexec.Interface) error {
 
 func cleanDirectories(isEdgeNode bool) error {
 	var dirToClean = []string{
-		"/var/lib/edged",
-		"/etc/kubeedge",
-		"/var/lib/kubeedge",
-		"/var/log/kubeedge",
+		util.KubeEdgePath,
+		util.KubeEdgeLogPath,
+		util.KubeEdgeSocketPath,
+		util.EdgeRootDir,
 	}
 
 	if isEdgeNode {
