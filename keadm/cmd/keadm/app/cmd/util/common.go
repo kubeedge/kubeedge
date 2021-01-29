@@ -59,6 +59,10 @@ const (
 	KubeEdgeLogPath = "/var/log/kubeedge/"
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
 
+	KubeEdgeSocketPath = "/var/lib/kubeedge/"
+
+	EdgeRootDir = "/var/lib/edged"
+
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
