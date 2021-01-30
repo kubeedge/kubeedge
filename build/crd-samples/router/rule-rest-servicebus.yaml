@@ -3,9 +3,9 @@ kind: Rule
 metadata:
   name: my-rule-rest-servicebus
   labels:
-    description: test
+    description: restToServicebus
 spec:
   source: "my-rest"
-  sourceResource: {"path":"/a"}
+  sourceResource: {"path":"/source"}
   target: "my-servicebus"
-  targetResource: {"path":"/b"}
+  targetResource: {"path":"/target"}

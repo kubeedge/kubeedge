@@ -40,7 +40,7 @@ type Rule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RuleSpec   `json:"spec,omitempty"`
+	Spec   RuleSpec   `json:"spec"`
 	Status RuleStatus `json:"status,omitempty"`
 }
 
@@ -71,7 +71,7 @@ type RuleEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec RuleEndpointSpec `json:"spec,omitempty"`
+	Spec RuleEndpointSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
