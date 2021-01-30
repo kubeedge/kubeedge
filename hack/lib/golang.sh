@@ -137,7 +137,7 @@ kubeedge::check::env() {
 
   # check other env
 
-  # check lenth of errors
+  # check length of errors
   if [[ ${#errors[@]} -ne 0 ]] ; then
     local error
     for error in "${errors[@]}"; do
@@ -176,16 +176,16 @@ kubeedge::golang::get_all_targets() {
   echo ${targets[@]}
 }
 
-kubeedge::golang::get_all_binares() {
-  local -a binares
+kubeedge::golang::get_all_binaries() {
+  local -a binaries
   for bt in "${ALL_BINARIES_AND_TARGETS[@]}" ; do
-    binares+=("${bt%%:*}")
+    binaries+=("${bt%%:*}")
   done
-  echo ${binares[@]}
+  echo ${binaries[@]}
 }
 
 IFS=" " read -ra KUBEEDGE_ALL_TARGETS <<< "$(kubeedge::golang::get_all_targets)"
-IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binares)"
+IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binaries)"
 
 kubeedge::golang::build_binaries() {
   kubeedge::check::env
