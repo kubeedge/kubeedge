@@ -1,0 +1,12 @@
+{
+  "replacementPatterns": [
+    {
+      "pattern": "^/",
+      "replacement": "/github/workspace/"
+    }
+  ],
+  "aliveStatusCodes": [
+    429,
+    200
+  ]
+}
