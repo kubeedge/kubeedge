@@ -1,9 +1,9 @@
 apiVersion: rules.kubeedge.io/v1
 kind: RuleEndpoint
 metadata:
-  name: my-rest
+  name: my-eventbus
   labels:
-    description: test
+    description: eventbus
 spec:
-  ruleEndpointType: "rest"
+  ruleEndpointType: "eventbus"
   properties: {}

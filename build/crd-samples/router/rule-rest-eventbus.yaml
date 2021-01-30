@@ -3,9 +3,9 @@ kind: Rule
 metadata:
   name: my-rule
   labels:
-    description: test
+    description: restToEventbus
 spec:
   source: "my-rest"
-  sourceResource: {"path":"/a"}
+  sourceResource: {"path":"/test"}
   target: "my-eventbus"
   targetResource: {"topic":"test"}

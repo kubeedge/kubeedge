@@ -23,8 +23,8 @@ spec:
                 sourceResource:
                   description: |
                     sourceResource is a map representing the resource info of source. For rest
-                    rule-endpoint type its value is {"path":"/a/b"}. For eventbus rule-endpoint type its
-                    value is {"topic":"<user define string>","node_name":"xxxx"}
+                    rule-endpoint type its value is {"path":"/test"}. For eventbus rule-endpoint type its
+                    value is {"topic":"<user define string>","node_name":"edge-node"}
                   type: object
                   additionalProperties:
                     type: string
@@ -37,7 +37,7 @@ spec:
                   description: |
                     targetResource is a map representing the resource info of target. For rest
                     rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus rule-endpoint
-                    type its value is {"topic":"/xxxx"}. For servicebus rule-endpoint type its value is
+                    type its value is {"topic":"/test"}. For servicebus rule-endpoint type its value is
                     {"path":"/request_path"}.
                   type: object
                   additionalProperties:

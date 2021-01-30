@@ -3,7 +3,7 @@ kind: RuleEndpoint
 metadata:
   name: my-servicebus
   labels:
-    description: test
+    description: servicebus
 spec:
   ruleEndpointType: "servicebus"
   properties: {"service_port":"6666"}
