@@ -19,7 +19,6 @@ package mqtt
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"strings"
 
 	"github.com/256dpi/gomqtt/broker"
