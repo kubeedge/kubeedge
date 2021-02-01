@@ -108,7 +108,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
-	if strings.HasPrefix(msg.Topic, dtcommon.DeviceETPrefix) || strings.HasPrefix(msg.Topic, dtcommon.MemETPrefix) {
+	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
