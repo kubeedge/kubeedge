@@ -98,11 +98,10 @@ func keyTwinUpdateFunc() dttype.DeviceTwinUpdate {
 }
 
 // twinWorkerFunc returns a new TwinWorker
-func twinWorkerFunc(receiverChannel chan interface{}, confirmChannel chan interface{}, heartBeatChannel chan interface{}, context dtcontext.DTContext, group string) TwinWorker {
+func twinWorkerFunc(receiverChannel chan interface{}, heartBeatChannel chan interface{}, context dtcontext.DTContext, group string) TwinWorker {
 	return TwinWorker{
 		Worker{
 			receiverChannel,
-			confirmChannel,
 			heartBeatChannel,
 			&context,
 		},
@@ -191,29 +190,29 @@ func TestStart(t *testing.T) {
 	}{
 		{
 			name:        "TestStart(): Case 1: ReceiverChan case when error is nil",
-			tw:          twinWorkerFunc(receiverChannel, nil, nil, context, ""),
+			tw:          twinWorkerFunc(receiverChannel, nil, context, ""),
 			actionType:  dtcommon.TwinGet,
 			contentType: contentKeyTwin,
 		},
 		{
 			name:        "TestStart(): Case 2: ReceiverChan case error log; TwinModule deal event failed, not found callback",
-			tw:          twinWorkerFunc(receiverChannel, nil, nil, context, ""),
+			tw:          twinWorkerFunc(receiverChannel, nil, context, ""),
 			actionType:  dtcommon.SendToEdge,
 			contentType: contentKeyTwin,
 		},
 		{
 			name:       "TestStart(): Case 3: ReceiverChan case error log; TwinModule deal event failed",
-			tw:         twinWorkerFunc(receiverChannel, nil, nil, context, ""),
+			tw:         twinWorkerFunc(receiverChannel, nil, context, ""),
 			actionType: dtcommon.TwinGet,
 		},
 		{
 			name:    "TestStart(): Case 4: HeartBeatChan case when error is nil",
-			tw:      twinWorkerFunc(nil, nil, heartbeatChannel, context, "Group1"),
+			tw:      twinWorkerFunc(nil, heartbeatChannel, context, "Group1"),
 			msgType: msgHeartPing,
 		},
 		{
 			name:    "TestStart(): Case 5: HeartBeatChan case when error is not nil",
-			tw:      twinWorkerFunc(nil, nil, heartbeatChannel, context, "Group1"),
+			tw:      twinWorkerFunc(nil, heartbeatChannel, context, "Group1"),
 			msgType: msgHeartStop,
 		},
 	}

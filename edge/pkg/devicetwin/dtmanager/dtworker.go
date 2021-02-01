@@ -10,7 +10,6 @@ type DTWorker interface {
 //Worker actual
 type Worker struct {
 	ReceiverChan  chan interface{}
-	ConfirmChan   chan interface{}
 	HeartBeatChan chan interface{}
 	DTContexts    *dtcontext.DTContext
 }

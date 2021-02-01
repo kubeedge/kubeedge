@@ -33,40 +33,36 @@ var _ = Describe("Dtmodule", func() {
 		Context("Testing for InitWorker", func() {
 			It("NameMemModule", func() {
 				dtModule.Name = "MemModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
+				dtModule.InitWorker(testChan, testChan, dtContext)
 				want := MemWorker{Group: "MemModule",
 					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
 						HeartBeatChan: testChan,
 						DTContexts:    dtContext}}
 				Expect(dtModule.Worker).To(Equal(want))
 			})
 			It("NameTwinModule", func() {
 				dtModule.Name = "TwinModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
+				dtModule.InitWorker(testChan, testChan, dtContext)
 				want := TwinWorker{Group: "TwinModule",
 					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
 						HeartBeatChan: testChan,
 						DTContexts:    dtContext}}
 				Expect(dtModule.Worker).To(Equal(want))
 			})
 			It("NameDeviceModule", func() {
 				dtModule.Name = "DeviceModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
+				dtModule.InitWorker(testChan, testChan, dtContext)
 				want := DeviceWorker{Group: "DeviceModule",
 					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
 						HeartBeatChan: testChan,
 						DTContexts:    dtContext}}
 				Expect(dtModule.Worker).To(Equal(want))
 			})
 			It("NameCommModule", func() {
 				dtModule.Name = "CommModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
+				dtModule.InitWorker(testChan, testChan, dtContext)
 				want := CommWorker{Group: "CommModule",
 					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
 						HeartBeatChan: testChan,
 						DTContexts:    dtContext}}
 				Expect(dtModule.Worker).To(Equal(want))

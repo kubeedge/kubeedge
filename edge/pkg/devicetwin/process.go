@@ -34,8 +34,7 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 
 	dt.DTContexts.CommChan[name] = make(chan interface{}, 128)
 	dt.HeartBeatToModule[name] = make(chan interface{}, 128)
-	module.InitWorker(dt.DTContexts.CommChan[name], dt.DTContexts.ConfirmChan,
-		dt.HeartBeatToModule[name], dt.DTContexts)
+	module.InitWorker(dt.DTContexts.CommChan[name], dt.HeartBeatToModule[name], dt.DTContexts)
 	dt.DTModules[name] = module
 }
 

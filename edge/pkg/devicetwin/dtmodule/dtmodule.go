@@ -15,14 +15,13 @@ type DTModule struct {
 }
 
 // InitWorker init worker
-func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, heartBeat chan interface{}, dtContext *dtcontext.DTContext) {
+func (dm *DTModule) InitWorker(recv chan interface{}, heartBeat chan interface{}, dtContext *dtcontext.DTContext) {
 	switch dm.Name {
 	case dtcommon.MemModule:
 		dm.Worker = dtmanager.MemWorker{
 			Group: dtcommon.MemModule,
 			Worker: dtmanager.Worker{
 				ReceiverChan:  recv,
-				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext,
 			},
@@ -32,7 +31,6 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 			Group: dtcommon.TwinModule,
 			Worker: dtmanager.Worker{
 				ReceiverChan:  recv,
-				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext,
 			},
@@ -42,7 +40,6 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 			Group: dtcommon.DeviceModule,
 			Worker: dtmanager.Worker{
 				ReceiverChan:  recv,
-				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext,
 			},
@@ -52,7 +49,6 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 			Group: dtcommon.CommModule,
 			Worker: dtmanager.Worker{
 				ReceiverChan:  recv,
-				ConfirmChan:   confirm,
 				HeartBeatChan: heartBeat,
 				DTContexts:    dtContext,
 			},

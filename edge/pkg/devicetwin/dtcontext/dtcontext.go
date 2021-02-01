@@ -21,7 +21,6 @@ type DTContext struct {
 	GroupID        string
 	NodeName       string
 	CommChan       map[string]chan interface{}
-	ConfirmChan    chan interface{}
 	ConfirmMap     *sync.Map
 	ModulesHealth  *sync.Map
 	ModulesContext *context.Context
@@ -38,7 +37,6 @@ func InitDTContext() (*DTContext, error) {
 		GroupID:       "",
 		NodeName:      deviceconfig.Config.NodeName,
 		CommChan:      make(map[string]chan interface{}),
-		ConfirmChan:   make(chan interface{}, 1000),
 		ConfirmMap:    &sync.Map{},
 		ModulesHealth: &sync.Map{},
 		DeviceList:    &sync.Map{},
