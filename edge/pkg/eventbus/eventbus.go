@@ -142,7 +142,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			payload, _ := json.Marshal(accessInfo.GetContent())
 			eb.publish(topic, payload)
 		default:
-			klog.Warningf("Action not found")
+			klog.Warningf("Action not found, operation is %s", operation)
 		}
 	}
 }
