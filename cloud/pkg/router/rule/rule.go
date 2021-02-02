@@ -62,12 +62,12 @@ func registerListener() {
 
 func addRuleEndpoint(ruleEndpoint *routerv1.RuleEndpoint) {
 	ruleEndpoints.Store(getKey(ruleEndpoint.Namespace, ruleEndpoint.Name), ruleEndpoint)
-	klog.Infof("add rule-endpoint %s/%s success.", ruleEndpoint.Namespace, ruleEndpoint.Name)
+	klog.Infof("add ruleendpoint %s/%s success.", ruleEndpoint.Namespace, ruleEndpoint.Name)
 }
 
 func deleteRuleEndpoint(namespace, name string) {
 	ruleEndpoints.Delete(getKey(namespace, name))
-	klog.Infof("delete rule-endpoint %s/%s success.", namespace, name)
+	klog.Infof("delete ruleendpoint %s/%s success.", namespace, name)
 }
 
 // AddRule add rule

@@ -8,15 +8,15 @@ import (
 func TestURLToURLRegex(t *testing.T) {
 	uri := "/aaa/bbb/ccc/ddd"
 	uriReg := URLToURLRegex(uri)
-	AssertStringEqual(t, uri+"/{0,1}", uriReg, "1")
+	AssertStringEqual(t, uri+tailRegex, uriReg, "1")
 
 	uri = "/aaa/bbb/{sssss}/ddd"
 	uriReg = URLToURLRegex(uri)
-	AssertStringEqual(t, "/aaa/bbb/[-A-Za-z0-9+&@#%?=~_|!:,.;]+/ddd/{0,1}", uriReg, "2")
+	AssertStringEqual(t, "/aaa/bbb/"+pathRegex+"/ddd"+tailRegex, uriReg, "2")
 
 	uri = "/aaa/{ddddd}/{sssss}/ddd"
 	uriReg = URLToURLRegex(uri)
-	AssertStringEqual(t, "/aaa/[-A-Za-z0-9+&@#%?=~_|!:,.;]+/[-A-Za-z0-9+&@#%?=~_|!:,.;]+/ddd/{0,1}", uriReg, "3")
+	AssertStringEqual(t, "/aaa/"+pathRegex+"/"+pathRegex+"/ddd"+tailRegex, uriReg, "3")
 }
 
 func TestPathMatch(t *testing.T) {

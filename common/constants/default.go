@@ -131,9 +131,6 @@ const (
 	ResourceTypeEndpointsList = "endpointslist"
 	ResourceTypeListener      = "listener"
 
-	ResourceTypeRule         = "rule"
-	ResourceTypeRuleEndpoint = "rule-endpoint"
-
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"
 	ResourceTypeVolumeAttachment      = "volumeattachment"

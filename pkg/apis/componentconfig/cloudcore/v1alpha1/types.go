@@ -258,7 +258,7 @@ type EdgeControllerBuffer struct {
 type ControllerContext struct {
 	// SendModule indicates which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
-	// SendRouterModule indicates messages will send message to router module.
+	// SendRouterModule indicates which module will send router message to
 	SendRouterModule metaconfig.ModuleName `json:"sendRouterModule,omitempty"`
 	// ReceiveModule indicates which module will receive message from
 	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
@@ -383,8 +383,8 @@ type CloudStream struct {
 
 type Router struct {
 	// default true
-	Enable      bool   `json:"enable"`
-	Address     string `json:"address"`
-	Port        uint32 `json:"port"`
-	RestTimeout uint32 `json:"rest_timeout"`
+	Enable      bool   `json:"enable,omitempty"`
+	Address     string `json:"address,omitempty"`
+	Port        uint32 `json:"port,omitempty"`
+	RestTimeout uint32 `json:"restTimeout,omitempty"`
 }

@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
@@ -20,7 +20,7 @@ const (
 var _ = Describe("Rule Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
 	var testDescription GinkgoTestDescription
-	Context("Test rule and rule-endpoint Creation and deletion", func() {
+	Context("Test rule and ruleendpoint Creation and deletion", func() {
 		BeforeEach(func() {
 			// Delete any pre-existing rules
 			var ruleList v1.RuleList

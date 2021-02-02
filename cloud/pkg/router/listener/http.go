@@ -47,10 +47,9 @@ func (rh *RestHandler) Serve() {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
 		Handler: mux,
-		//TLSConfig: rc.GetTLSServerConfig(),
-		//ErrorLog:  llog.New(&common.FilterWriter{}, "", llog.LstdFlags),
+		// TODO: add tls for router
 	}
-	klog.Infof("listening in %d...", rh.port)
+	klog.Infof("router server listening in %d...", rh.port)
 	//err := server.ListenAndServeTLS("", "")
 	err := server.ListenAndServe()
 	if err != nil {
@@ -80,7 +79,7 @@ func (rh *RestHandler) matchedPath(uri string) (string, bool) {
 	rh.handlers.Range(func(key, value interface{}) bool {
 		pathReg := key.(string)
 		if match := utils.IsMatch(pathReg, uri); match {
-			if candidateRes != "" && utils.RuleContains(strings.Split(pathReg, "/"), strings.Split(candidateRes, "/")) {
+			if candidateRes != "" && utils.RuleContains(pathReg, candidateRes) {
 				return true
 			}
 			candidateRes = pathReg
@@ -96,8 +95,8 @@ func (rh *RestHandler) matchedPath(uri string) (string, bool) {
 func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	uriSections := strings.Split(r.RequestURI, "/")
 	if len(uriSections) < 2 {
-		//URL format incorrect
-		klog.Warningf("URL format incorrect: %s", r.RequestURI)
+		// URL format incorrect
+		klog.Warningf("url format incorrect: %s", r.URL.String())
 		w.WriteHeader(http.StatusNotFound)
 		_, err := w.Write([]byte("Request error"))
 		if err != nil {
@@ -123,7 +122,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	handle, ok := v.(Handle)
 	if !ok {
-		klog.Errorf("invalid conver to Handl. mathch path: %s", matchPath)
+		klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
 		return
 	}
 	b, err := ioutil.ReadAll(r.Body)
@@ -152,16 +151,19 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		response, ok := v.(*http.Response)
 		if !ok {
-
+			klog.Errorf("response convert error, msg id: %s, reason: %v", msgID, err)
+			return
 		}
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-
+			klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
+			return
 		}
 		w.WriteHeader(response.StatusCode)
 		_, err = w.Write(body)
 		if err != nil {
-			klog.Errorf("response body write error, msg id: %s, reason: %s", msgID, err.Error())
+			klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
+			return
 		}
 		klog.Infof("response to client, msg id: %s, write result: success", msgID)
 	} else {
@@ -183,7 +185,7 @@ func (rh *RestHandler) IsMatch(key interface{}, message interface{}) bool {
 	return utils.IsMatch(res, uri)
 }
 
-//TODO: check node name
+// TODO: check node name
 func isNodeName(str string) bool {
 	return true
 }
