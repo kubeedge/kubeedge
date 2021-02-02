@@ -31,7 +31,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
@@ -108,7 +107,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
-	if strings.HasPrefix(msg.Topic, dtcommon.DeviceETPrefix) || strings.HasPrefix(msg.Topic, dtcommon.MemETPrefix) {
+	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup

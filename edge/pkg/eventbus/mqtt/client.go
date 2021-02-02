@@ -14,7 +14,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
@@ -117,7 +116,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
-	if strings.HasPrefix(message.Topic(), dtcommon.DeviceETPrefix) || strings.HasPrefix(message.Topic(), dtcommon.MemETPrefix) {
+	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
