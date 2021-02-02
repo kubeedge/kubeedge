@@ -3,7 +3,7 @@ package metamanager
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"strings"
 	"time"
 
@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
@@ -59,7 +60,7 @@ func sendToEdged(message *model.Message, sync bool) {
 }
 
 func sendToEdgeMesh(message *model.Message, sync bool) {
-	//[apiserver-lite]help for test
+	//[metaserver]help for test
 	return
 	if sync {
 		beehiveContext.SendResp(*message)
@@ -324,7 +325,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case CloudControlerModel:
+	case cloudmodules.EdgeControllerModuleName,cloudmodules.DynamicControllerModuleName:
 		if isEdgeMeshResource(resType) {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {

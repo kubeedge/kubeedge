@@ -26,7 +26,7 @@ const (
 type MetaV2 struct {
 	// Key is the primary key of a line record, format like k8s obj key in etcd:
 	// /Group/Version/Resources/Namespace/Name
-	// /0  /1   /2 /3         /4          /5   / 6
+	//0/1   /2 /3   /4           /5
 	// /core/v1/pods/{namespaces}/{name}									normal obj
 	// /core/v1/pods/{namespaces} 											List obj
 	// /extensions/v1beta1/ingresses/{namespaces}/{name}				 	normal obj

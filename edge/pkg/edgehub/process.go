@@ -120,7 +120,7 @@ func (eh *EdgeHub) routeToEdge() {
 			return
 		}
 
-		klog.V(4).Infof("received msg from cloud-hub:%+v", message)
+		klog.V(4).Infof("[edgehub/routeToEdge] receive from cloud, msg: %+v", message)
 		err = eh.dispatch(message)
 		if err != nil {
 			klog.Errorf("failed to dispatch message, discard: %v", err)
@@ -130,6 +130,7 @@ func (eh *EdgeHub) routeToEdge() {
 
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	eh.keeperLock.Lock()
+	klog.V(4).Infof("[edgehub/sendToCloud] send msg to cloud, msg: %+v", message)
 	err := eh.chClient.Send(message)
 	eh.keeperLock.Unlock()
 	if err != nil {

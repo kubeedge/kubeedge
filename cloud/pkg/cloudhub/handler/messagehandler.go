@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"regexp"
 	"strings"
 	"sync"
@@ -112,6 +113,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		return
 	}
 
+	klog.V(10).Infof("[cloudhub/HandlerServer] get msg from edge: %+v", container.Message)
 	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.V(4).Infof("Keepalive message received from node: %s", nodeID)
 
@@ -549,8 +551,8 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 					Name: objectSyncName,
 				},
 				Spec: v1alpha1.ObjectSyncSpec{
-					ObjectAPIVersion: "",
-					ObjectKind:       resourceType,
+					ObjectAPIVersion: util.GetMessageAPIVerison(msg),
+					ObjectKind:       util.GetMessageResourceType(msg),
 					ObjectName:       resourceName,
 				},
 			}

@@ -17,6 +17,7 @@ limitations under the License.
 package informers
 
 import (
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"sync"
 	"time"
 
@@ -109,8 +110,25 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 	ifs.k8sSharedInformerFactory.Start(stopCh)
 	ifs.crdSharedInformerFactory.Start(stopCh)
 	ifs.dynamicSharedInformerFactory.Start(stopCh)
+
+	for gvr, cacheSync := range ifs.k8sSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
+		if !cacheSync {
+			klog.Fatalf("unable to sync caches for: %s", gvr.String())
+		}
+	}
+	for gvr, cacheSync := range ifs.crdSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
+		if !cacheSync {
+			klog.Fatalf("unable to sync caches for: %s", gvr.String())
+		}
+	}
+	for gvr, cacheSync := range ifs.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
+		if !cacheSync {
+			klog.Fatalf("unable to sync caches for: %s", gvr.String())
+		}
+	}
 }
 
+// getInformer get a informer named "name" or store a informer got by "newFunc" as key "name"
 func (ifs *informers) getInformer(name string, newFunc newInformer) cache.SharedIndexInformer {
 	ifs.lock.Lock()
 	defer ifs.lock.Unlock()

@@ -17,12 +17,9 @@ limitations under the License.
 package dynamiccontroller
 
 import (
-	"reflect"
-
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -44,8 +41,7 @@ type DynamicController struct {
 	enable                       bool
 	messageLayer                 messagelayer.MessageLayer
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
-	resourceToNode               map[schema.GroupVersionResource][]nodeFilter
-	eventHandler                 map[schema.GroupVersionResource]CommonResourceEventHandler
+	applicationCenter            *application.ApplicationCenter
 }
 
 func Register(dc *configv1alpha1.DynamicController) {
@@ -70,14 +66,11 @@ func (dctl *DynamicController) Enable() bool {
 
 // Start controller
 func (dctl *DynamicController) Start() {
+	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {
 			klog.Fatalf("unable to sync caches for: %s", gvr.String())
 		}
-	}
-
-	for _, gvr := range gvrs {
-		go dctl.eventHandler[gvr].dispatchEvents()
 	}
 
 	go dctl.receiveMessage()
@@ -88,37 +81,8 @@ func newDynamicController(enable bool) *DynamicController {
 		enable:                       enable,
 		messageLayer:                 messagelayer.NewContextMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
-		resourceToNode:               make(map[schema.GroupVersionResource][]nodeFilter),
-		eventHandler:                 make(map[schema.GroupVersionResource]CommonResourceEventHandler),
 	}
-
-	for _, gvr := range gvrs {
-		// Retrieve a "GroupVersionResource" type that we need when generating our informer from our dynamic factory
-		//gvr, _ := schema.ParseResourceArg("deployments.v1.apps")
-		// Finally, create our informer for deployments!
-		dctl.dynamicSharedInformerFactory.ForResource(gvr)
-
-		dctl.eventHandler[gvr] = CommonResourceEventHandler{
-			events:       make(chan watch.Event, 100),
-			listeners:    make(map[string]nodeFilter),
-			messageLayer: dctl.messageLayer,
-			resourceType: gvr.Resource,
-		}
-
-		dctl.dynamicSharedInformerFactory.ForResource(gvr).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				dctl.eventHandler[gvr].objToEvent(watch.Added, obj)
-			},
-			UpdateFunc: func(oldObj, obj interface{}) {
-				dctl.eventHandler[gvr].objToEvent(watch.Modified, obj)
-			},
-			DeleteFunc: func(obj interface{}) {
-				dctl.eventHandler[gvr].objToEvent(watch.Deleted, obj)
-			},
-		})
-
-		dctl.resourceToNode[gvr] = []nodeFilter{}
-	}
+	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
 
 	return dctl
 }
@@ -131,45 +95,13 @@ func (dctl *DynamicController) receiveMessage() {
 			return
 		default:
 		}
-		_, err := dctl.messageLayer.Receive()
+		msg, err := dctl.messageLayer.Receive()
 		if err != nil {
 			klog.Warningf("receive message failed, %s", err)
 			continue
 		}
+		dctl.applicationCenter.Process(msg)
 
-		// 动态调整map 添加
-		gvr := schema.GroupVersionResource{}
-		nodefilter := nodeFilter{}
-		create := true
-		if create {
-			if !isNodeFilterExist(dctl.resourceToNode[gvr], nodefilter) {
-				dctl.resourceToNode[gvr] = append(dctl.resourceToNode[gvr], nodefilter)
-
-				dctl.eventHandler[gvr].addProcessListener(nodefilter)
-				rets, err := dctl.dynamicSharedInformerFactory.ForResource(gvr).Lister().List(nodefilter.filter)
-				if err != nil {
-
-				}
-				nodefilter.sendAllObjects(rets, gvr.Resource, dctl.eventHandler[gvr].messageLayer)
-			}
-		}
-
-		// 动态调整 删除
-		delete := true
-		if delete {
-			if isNodeFilterExist(dctl.resourceToNode[gvr], nodefilter) {
-				dctl.eventHandler[gvr].removeProcessListener(nodefilter)
-			}
-		}
 
 	}
-}
-
-func isNodeFilterExist(nodefilters []nodeFilter, nodefilter nodeFilter) bool {
-	for _, nf := range nodefilters {
-		if reflect.DeepEqual(nf, nodefilter) {
-			return true
-		}
-	}
-	return false
 }

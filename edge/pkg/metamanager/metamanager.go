@@ -1,9 +1,9 @@
 package metamanager
 
 import (
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/apiserver-lite/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -64,7 +64,7 @@ func (m *metaManager) Enable() bool {
 
 func (m *metaManager) Start() {
 	imitator.StorageInit()
-	go apiserver_lite.NewLiteServer().Start(beehiveContext.Done())
+	go metaserver.NewLiteServer().Start(beehiveContext.Done())
 	go func() {
 		period := getSyncInterval()
 		timer := time.NewTimer(period)

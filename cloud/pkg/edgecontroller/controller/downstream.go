@@ -595,7 +595,7 @@ func (dc *DownstreamController) initLocating() error {
 		}
 		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
 	}
-	// test apiserver-lite
+	// test metaserver
 	dc.lc.UpdateEdgeNode("xiaomi","")
 	//
 

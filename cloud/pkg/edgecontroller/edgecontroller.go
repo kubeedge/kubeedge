@@ -21,6 +21,9 @@ type EdgeController struct {
 }
 
 func newEdgeController(enable bool) *EdgeController {
+	if !enable {
+		return &EdgeController{}
+	}
 	upstream, err := controller.NewUpstreamController(informers.GetInformersManager().GetK8sInformerFactory())
 	if err != nil {
 		klog.Errorf("new upstream controller failed with error: %s", err)
