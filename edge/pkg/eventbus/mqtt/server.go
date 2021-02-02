@@ -112,7 +112,7 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
-		if msg.Topic() == UploadTopic {
+		if msg.Topic == UploadTopic {
 			resource = UploadTopic
 		}
 	}
