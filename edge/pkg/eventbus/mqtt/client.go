@@ -84,10 +84,10 @@ func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			klog.Errorf("Edge-hub-cli subscribe topic: %s failed, err: %v", t, err)
+			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
 			return
 		}
-		klog.Infof("Edge-hub-cli subscribe topic: %s successfully", t)
+		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
 	topics, err := dao.QueryAllTopics()
 	if err != nil {
@@ -95,16 +95,16 @@ func onSubConnect(client MQTT.Client) {
 		return
 	}
 	if len(*topics) <= 0 {
-		klog.Infof("List edge-hub-cli-topics status, no record, skip sync")
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
 		return
 	}
 	for _, t := range *topics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			klog.Errorf("Edge-hub-cli subscribe topic: %s failed, err: %v", t, err)
+			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
 			return
 		}
-		klog.Infof("Edge-hub-cli subscribe topic %s successfully", t)
+		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
 }
 
@@ -127,7 +127,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, messagepkg.OperationResponse).FillBody(string(message.Payload()))
-	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
+	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *msg)
 }
 
@@ -145,7 +145,7 @@ func (mq *Client) InitSubClient() {
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
 	util.LoopConnect(subID, mq.SubCli)
-	klog.Info("Finish hub-client sub")
+	klog.Info("finish hub-client sub")
 }
 
 // InitPubClient init pub client
@@ -161,5 +161,5 @@ func (mq *Client) InitPubClient() {
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
 	util.LoopConnect(pubID, mq.PubCli)
-	klog.Info("Finish hub-client pub")
+	klog.Info("finish hub-client pub")
 }

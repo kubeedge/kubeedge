@@ -85,7 +85,7 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 		tlsConfig = &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	}
 	opts.SetTLSConfig(tlsConfig)
-	klog.V(4).Infof("Set TLS configuration for MQTT client successfully")
+	klog.V(4).Infof("set TLS configuration for MQTT client successfully")
 
 	return opts
 }
@@ -93,11 +93,11 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 // LoopConnect connect to mqtt server
 func LoopConnect(clientID string, client MQTT.Client) {
 	for {
-		klog.Infof("Start connect to mqtt server with client id: %s", clientID)
+		klog.Infof("start connect to mqtt server with client id: %s", clientID)
 		token := client.Connect()
-		klog.Infof("Client %s is connected: %v", clientID, client.IsConnected())
+		klog.Infof("client %s is connected: %v", clientID, client.IsConnected())
 		if rs, err := CheckClientToken(token); !rs {
-			klog.Errorf("Connect error: %v", err)
+			klog.Errorf("connect error: %v", err)
 		} else {
 			return
 		}

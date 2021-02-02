@@ -148,7 +148,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				eb.publish(topic, payload)
 			}
 		default:
-			klog.Warningf("Action not found, operation is %s", operation)
+			klog.Warningf("Action not found")
 		}
 	}
 }

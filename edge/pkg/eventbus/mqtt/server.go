@@ -130,16 +130,16 @@ func (m *Server) InitInternalTopics() {
 	}
 	topics, err := dao.QueryAllTopics()
 	if err != nil {
-		klog.Errorf("List edge-hub-cli-topics failed: %v", err)
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
 		return
 	}
 	if len(*topics) <= 0 {
-		klog.Infof("List edge-hub-cli-topics status, no record, skip sync")
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
 		return
 	}
 	for _, t := range *topics {
 		m.tree.Set(t, packet.Subscription{Topic: t, QOS: packet.QOS(m.qos)})
-		klog.Infof("Subscribe internal topic %s", t)
+		klog.Infof("Subscribe internal topic to %s", t)
 	}
 }
 
