@@ -37,7 +37,7 @@ func (cml *ContextMessageLayer) Send(message model.Message) error {
 
 func isRouterMsg(message model.Message) bool {
 	resourceArray := strings.Split(message.GetResource(), constants.ResourceSep)
-	if len(resourceArray) == 2 && (resourceArray[0] == constants.ResourceTypeRule || resourceArray[0] == constants.ResourceTypeRuleEndpoint) {
+	if len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint) {
 		return true
 	}
 	return false

@@ -23,7 +23,7 @@ const (
 	ResourceTypePodStatus    = "podstatus"
 	ResourceTypeNodeStatus   = "nodestatus"
 	ResourceTypeRule         = "rule"
-	ResourceTypeRuleEndpoint = "rule-endpoint"
+	ResourceTypeRuleEndpoint = "ruleendpoint"
 )
 
 // Message struct

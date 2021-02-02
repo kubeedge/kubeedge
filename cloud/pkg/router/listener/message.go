@@ -36,17 +36,17 @@ func (mh *MessageHandler) RemoveListener(key interface{}) {
 
 func (mh *MessageHandler) getHandler(source string, resource string) (Handle, error) {
 	rs := strings.Split(resource, "/")
-	if len(rs) >= 2 && (rs[0] == "rule-endpoint" || rs[0] == "rule") {
+	if len(rs) >= 2 && (rs[0] == model.ResourceTypeRuleEndpoint || rs[0] == model.ResourceTypeRule) {
 		resource = rs[0]
 	}
 	key := fmt.Sprintf("%s/%s", source, resource)
 	v, exist := mh.handlers.Load(key)
 	if !exist {
-		return nil, errors.New("No handler for message")
+		return nil, errors.New("no handler for message")
 	}
 	handle, ok := v.(Handle)
 	if !ok {
-		return nil, fmt.Errorf("Handler invalid, key is %s", key)
+		return nil, fmt.Errorf("handler invalid, key is %s", key)
 	}
 	return handle, nil
 }
@@ -78,7 +78,7 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 	go func(message *model.Message) {
 		_, err := handler(message)
 		if err != nil {
-			klog.Errorf("handle message occur error.msgID: %s, reson: %s", message.GetID(), err.Error())
+			klog.Errorf("handle message occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
 		}
 	}(message)
 

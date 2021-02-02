@@ -55,8 +55,8 @@ func addToScheme(scheme *runtime.Scheme) {
 
 // AdmissionController implements the admission webhook for validation of configuration.
 type AdmissionController struct {
-	Client          *kubernetes.Clientset
-	VersionedClient *versioned.Clientset
+	Client    *kubernetes.Clientset
+	CrdClient *versioned.Clientset
 }
 
 func strPtr(s string) *string { return &s }
@@ -79,7 +79,7 @@ func Run(opt *options.AdmissionOptions) {
 	}
 
 	controller.Client = cli
-	controller.VersionedClient = vcli
+	controller.CrdClient = vcli
 
 	caBundle, err := ioutil.ReadFile(opt.CaCertFile)
 	if err != nil {
@@ -139,7 +139,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) *tl
 // registerWebhooks registers the admission webhook.
 func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, cabundle []byte) error {
 	ignorePolicy := admissionregistrationv1beta1.Ignore
-	FailPolicy := admissionregistrationv1beta1.Fail
+	failPolicy := admissionregistrationv1beta1.Fail
 	deviceModelCRDWebhook := admissionregistrationv1beta1.ValidatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ValidateDeviceModelConfigName,
@@ -192,7 +192,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 					},
 					CABundle: cabundle,
 				},
-				FailurePolicy: &FailPolicy,
+				FailurePolicy: &failPolicy,
 			},
 			{
 				Name: ValidateRuleEndpointWebhookName,
@@ -217,7 +217,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 					},
 					CABundle: cabundle,
 				},
-				FailurePolicy: &FailPolicy,
+				FailurePolicy: &failPolicy,
 			},
 		},
 	}
@@ -250,11 +250,11 @@ func registerValidateWebhook(client admissionregistrationv1beta1client.Validatin
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {
-	return ac.VersionedClient.RulesV1().RuleEndpoints(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	return ac.CrdClient.RulesV1().RuleEndpoints(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (ac *AdmissionController) listRule(namespace string) ([]v1.Rule, error) {
-	rules, err := ac.VersionedClient.RulesV1().Rules(namespace).List(context.TODO(), metav1.ListOptions{})
+	rules, err := ac.CrdClient.RulesV1().Rules(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func (ac *AdmissionController) listRule(namespace string) ([]v1.Rule, error) {
 }
 
 func (ac *AdmissionController) listRuleEndpoint(namespace string) ([]v1.RuleEndpoint, error) {
-	rules, err := ac.VersionedClient.RulesV1().RuleEndpoints(namespace).List(context.TODO(), metav1.ListOptions{})
+	rules, err := ac.CrdClient.RulesV1().RuleEndpoints(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

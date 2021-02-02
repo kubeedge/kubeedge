@@ -4,31 +4,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RuleSpec, defines rule of message delivery.
+// RuleSpec defines rule of message delivery.
 type RuleSpec struct {
-	// Source, representing where the messages come from. Its value is the same with rule-endpoint name.
+	// Source represents where the messages come from. Its value is the same with ruleendpoint name.
 	// For example, rest or eventbus.
 	Source string `json:"source"`
 	// SourceResource is a map representing the resource info of source. For rest
-	// rule-endpoint type its value is {"path":"/a/b"}. For eventbus rule-endpoint type its
+	// ruleendpoint type its value is {"path":"/a/b"}. For eventbus ruleendpoint type its
 	// value is {"topic":"<user define string>","node_name":"xxxx"}
 	SourceResource map[string]string `json:"sourceResource"`
-	// Target, representing where the messages go to. its value is the same with rule-endpoint name.
+	// Target represents where the messages go to. its value is the same with ruleendpoint name.
 	// For example, eventbus or api or servicebus.
 	Target string `json:"target"`
 	// targetResource is a map representing the resource info of target. For api
-	// rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus rule-endpoint
-	// type its value is {"topic":"/xxxx"}. For servicebus rule-endpoint type its value is {"path":"/request_path"}.
+	// ruleendpoint type its value is {"resource":"http://a.com"}. For eventbus ruleendpoint
+	// type its value is {"topic":"/xxxx"}. For servicebus ruleendpoint type its value is {"path":"/request_path"}.
 	TargetResource map[string]string `json:"targetResource"`
 }
 
-// RuleStatus, defines status of message delivery.
+// RuleStatus defines status of message delivery.
 type RuleStatus struct {
-	// SuccessMessages, success count of message delivery of rule.
+	// SuccessMessages represents success count of message delivery of rule.
 	SuccessMessages int64 `json:"successMessages"`
-	// FailMessages, failed count of message delivery of rule.
+	// FailMessages represents failed count of message delivery of rule.
 	FailMessages int64 `json:"failMessages"`
-	// Errors, failed reasons of message delivery of rule.
+	// Errors represents failed reasons of message delivery of rule.
 	Errors []string `json:"errors"`
 }
 
@@ -52,9 +52,9 @@ type RuleList struct {
 	Items           []Rule `json:"items"`
 }
 
-// RuleEndpointSpec, defines endpoint of rule.
+// RuleEndpointSpec defines endpoint of rule.
 type RuleEndpointSpec struct {
-	// RuleEndpointType, defines type: servicebus, rest
+	// RuleEndpointType defines type: servicebus, rest
 	RuleEndpointType string `json:"ruleEndpointType"`
 	// Properties: properties of endpoint. for example:
 	// servicebus:
@@ -65,7 +65,7 @@ type RuleEndpointSpec struct {
 // +genclient
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// RuleEndpoint is the Schema for the rule-endpoints API
+// RuleEndpoint is the Schema for the ruleendpoints API
 // +k8s:openapi-gen=true
 type RuleEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`

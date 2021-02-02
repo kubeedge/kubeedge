@@ -154,7 +154,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				StreamPort:              10003,
 			},
 			Router: &Router{
-				Enable:      true,
+				Enable:      false,
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,
@@ -210,7 +210,7 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 			Router: &Router{
-				Enable:      true,
+				Enable:      false,
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,

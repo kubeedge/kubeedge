@@ -18,12 +18,12 @@ spec:
                 source:
                   description: |
                     source is a string value representing where the messages come from. Its
-                    value is the same with rule-endpoint name. For example, my-rest or my-eventbus.
+                    value is the same with ruleendpoint name. For example, my-rest or my-eventbus.
                   type: string
                 sourceResource:
                   description: |
                     sourceResource is a map representing the resource info of source. For rest
-                    rule-endpoint type its value is {"path":"/test"}. For eventbus rule-endpoint type its
+                    rule-endpoint type its value is {"path":"/test"}. For eventbus ruleendpoint type its
                     value is {"topic":"<user define string>","node_name":"edge-node"}
                   type: object
                   additionalProperties:
@@ -31,12 +31,12 @@ spec:
                 target:
                   description: |
                     target is a string value representing where the messages go to. its value is
-                    the same with rule-endpoint name. For example, my-eventbus or my-rest or my-servicebus.
+                    the same with ruleendpoint name. For example, my-eventbus or my-rest or my-servicebus.
                   type: string
                 targetResource:
                   description: |
                     targetResource is a map representing the resource info of target. For rest
-                    rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus rule-endpoint
+                    rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus ruleendpoint
                     type its value is {"topic":"/test"}. For servicebus rule-endpoint type its value is
                     {"path":"/request_path"}.
                   type: object

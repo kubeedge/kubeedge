@@ -1,6 +1,7 @@
 package admissioncontroller
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -31,8 +32,8 @@ func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta
 		reviewResponse.Allowed = true
 		klog.Info("admission validation passed!")
 	default:
-		klog.Infof("Unsupported webhook operation %v", review.Request.Operation)
-		msg = msg + "Unsupported webhook operation!"
+		msg = fmt.Sprintf("Unsupported webhook operation %v", review.Request.Operation)
+		klog.Warning(msg)
 	}
 	if !reviewResponse.Allowed {
 		reviewResponse.Result = &metav1.Status{Message: strings.TrimSpace(msg)}

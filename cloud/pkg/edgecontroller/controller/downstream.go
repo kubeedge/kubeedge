@@ -469,7 +469,7 @@ func (dc *DownstreamController) syncRule() {
 			klog.V(4).Infof("Get rule events: event type: %s.", e.Type)
 			rule, ok := e.Object.(*routerv1.Rule)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", rule)
+				klog.Warningf("object type: %T unsupported", e)
 				continue
 			}
 			klog.V(4).Infof("Get rule events: rule object: %+v.", rule)
@@ -488,11 +488,13 @@ func (dc *DownstreamController) syncRule() {
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
 			case watch.Modified:
 				klog.Warningf("rule event type: %s unsupported", e.Type)
+				continue
 			default:
 				klog.Warningf("rule event type: %s unsupported", e.Type)
+				continue
 			}
 			if err := dc.messageLayer.Send(*msg); err != nil {
-				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s. Reason: %v", err, msg.GetOperation(), msg.GetResource(), err)
 			} else {
 				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
@@ -529,8 +531,10 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
 			case watch.Modified:
 				klog.Warningf("ruleEndpoint event type: %s unsupported", e.Type)
+				continue
 			default:
 				klog.Warningf("ruleEndpoint event type: %s unsupported", e.Type)
+				continue
 			}
 			if err := dc.messageLayer.Send(*msg); err != nil {
 				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -565,7 +569,7 @@ func (dc *DownstreamController) Start() error {
 	// rule
 	go dc.syncRule()
 
-	// rule-endpoint
+	// ruleendpoint
 	go dc.syncRuleEndpoint()
 
 	return nil

@@ -49,9 +49,9 @@ func validateRule(rule *rulesv1.Rule) error {
 	sourceKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Source)
 	sourceEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Source)
 	if err != nil {
-		return fmt.Errorf("cant get source ruleEndpoint %s. reason: %s", sourceKey, err.Error())
+		return fmt.Errorf("cant get source ruleEndpoint %s. Reason: %w", sourceKey, err)
 	} else if sourceEndpoint == nil {
-		return fmt.Errorf("source ruleEndpoint %s has not been created. ", sourceKey)
+		return fmt.Errorf("source ruleEndpoint %s has not been created", sourceKey)
 	}
 	if err = validateSourceRuleEndpoint(sourceEndpoint, rule.Spec.SourceResource); err != nil {
 		return err
@@ -59,12 +59,13 @@ func validateRule(rule *rulesv1.Rule) error {
 	targetKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Target)
 	targetEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Target)
 	if err != nil {
-		return fmt.Errorf("cant get target ruleEndpoint %s. reason: %s", targetKey, err.Error())
+		return fmt.Errorf("cant get target ruleEndpoint %s. Reason: %w", targetKey, err)
 	} else if targetEndpoint == nil {
-		return fmt.Errorf("target ruleEndpoint %s has not been created. ", targetKey)
+		return fmt.Errorf("target ruleEndpoint %s has not been created", targetKey)
 	}
+	// TODO: check rule endpoint type whether is cloud or edge
 	if targetEndpoint.Spec.RuleEndpointType == sourceEndpoint.Spec.RuleEndpointType {
-		return fmt.Errorf("target ruleEndpoint type %s can not be the same with source ruleEndpoint type ", targetEndpoint.Spec.RuleEndpointType)
+		return fmt.Errorf("target ruleEndpoint type %s can not be the same with source ruleEndpoint type", targetEndpoint.Spec.RuleEndpointType)
 	}
 	if err = validateTargetRuleEndpoint(targetEndpoint, rule.Spec.TargetResource); err != nil {
 		return err
@@ -76,7 +77,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 	case "rest":
 		_, exist := sourceResource["path"]
 		if !exist {
-			return fmt.Errorf("source properties do not find \"path\". ")
+			return fmt.Errorf("\"path\" property missed in sourceResource when ruleEndpoint is \"rest\"")
 		}
 		rules, err := controller.listRule(ruleEndpoint.Namespace)
 		if err != nil {
@@ -84,17 +85,17 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 		}
 		for _, r := range rules {
 			if sourceResource["path"] == r.Spec.SourceResource["path"] {
-				return fmt.Errorf("source properties exist. path: %s", sourceResource["path"])
+				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource["path"])
 			}
 		}
 	case "eventbus":
 		_, exist := sourceResource["topic"]
 		if !exist {
-			return fmt.Errorf("source properties do not find \"topic\". ")
+			return fmt.Errorf("\"topic\" property missed in sourceResource when ruleEndpoint is \"eventbus\"")
 		}
 		_, exist = sourceResource["node_name"]
 		if !exist {
-			return fmt.Errorf("source properties do not find \"node_name\". ")
+			return fmt.Errorf("eventbus")
 		}
 		rules, err := controller.listRule(ruleEndpoint.Namespace)
 		if err != nil {
@@ -102,7 +103,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 		}
 		for _, r := range rules {
 			if sourceResource["topic"] == r.Spec.SourceResource["topic"] && sourceResource["node_name"] == r.Spec.SourceResource["node_name"] {
-				return fmt.Errorf("source properties exist. node_name: %s, topic: %s", sourceResource["node_name"], sourceResource["topic"])
+				return fmt.Errorf("source properties exist in Rule %s/%s. Node_name: %s, topic: %s", r.Namespace, r.Name, sourceResource["node_name"], sourceResource["topic"])
 			}
 		}
 	}
@@ -114,12 +115,12 @@ func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResour
 	case "rest":
 		_, exist := targetResource["resource"]
 		if !exist {
-			return fmt.Errorf("target properties do not find \"resource\". ")
+			return fmt.Errorf("\"resource\" property missed in targetResource when ruleEndpoint is \"rest\"")
 		}
 	case "eventbus":
 		_, exist := targetResource["topic"]
 		if !exist {
-			return fmt.Errorf("target properties do not find \"topic\". ")
+			return fmt.Errorf("\"topic\" property missed in targetResource when ruleEndpoint is \"eventbus\"")
 		}
 	}
 	return nil
