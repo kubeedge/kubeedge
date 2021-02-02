@@ -117,30 +117,36 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
 				klog.Errorf("Message is not map type")
-				return
+				continue
 			}
 			message := body["message"].(map[string]interface{})
 			topic := message["topic"].(string)
-			payload, _ := json.Marshal(&message)
-			eb.publish(topic, payload)
+			payload, err := json.Marshal(&message)
+			if err != nil {
+				eb.publish(topic, payload)
+			}
 		case messagepkg.OperationPublish:
 			topic := resource
-			var ok bool
 			// cloud and edge will send different type of content, need to check
 			payload, ok := accessInfo.GetContent().([]byte)
 			if !ok {
-				content := accessInfo.GetContent().(string)
+				content, okInner := accessInfo.GetContent().(string)
+				if !okInner {
+					continue
+				}
 				payload = []byte(content)
 			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationGetResult:
 			if resource != "auth_info" {
 				klog.Info("Skip none auth_info get_result message")
-				return
+				continue
 			}
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
-			payload, _ := json.Marshal(accessInfo.GetContent())
-			eb.publish(topic, payload)
+			payload, err := json.Marshal(accessInfo.GetContent())
+			if err != nil {
+				eb.publish(topic, payload)
+			}
 		default:
 			klog.Warningf("Action not found, operation is %s", operation)
 		}

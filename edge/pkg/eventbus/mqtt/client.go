@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
@@ -84,27 +85,27 @@ func onSubConnect(client MQTT.Client) {
 	for _, t := range SubTopics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
+			klog.Errorf("Edge-hub-cli subscribe topic: %s failed, err: %v", t, err)
 			return
 		}
-		klog.Infof("edge-hub-cli subscribe topic to %s", t)
+		klog.Infof("Edge-hub-cli subscribe topic: %s successfully", t)
 	}
 	topics, err := dao.QueryAllTopics()
 	if err != nil {
-		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		klog.Errorf("List edge-hub-cli-topics failed: %v", err)
 		return
 	}
 	if len(*topics) <= 0 {
-		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		klog.Infof("List edge-hub-cli-topics status, no record, skip sync")
 		return
 	}
 	for _, t := range *topics {
 		token := client.Subscribe(t, 1, OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
-			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
+			klog.Errorf("Edge-hub-cli subscribe topic: %s failed, err: %v", t, err)
 			return
 		}
-		klog.Infof("edge-hub-cli subscribe topic to %s", t)
+		klog.Infof("Edge-hub-cli subscribe topic %s successfully", t)
 	}
 }
 
@@ -116,7 +117,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
-	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
+	if strings.HasPrefix(message.Topic(), dtcommon.DeviceETPrefix) || strings.HasPrefix(message.Topic(), dtcommon.MemETPrefix) {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
@@ -127,7 +128,7 @@ func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
 		resource, messagepkg.OperationResponse).FillBody(string(message.Payload()))
-	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
 	beehiveContext.SendToGroup(target, *msg)
 }
 
@@ -145,7 +146,7 @@ func (mq *Client) InitSubClient() {
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
 	util.LoopConnect(subID, mq.SubCli)
-	klog.Info("finish hub-client sub")
+	klog.Info("Finish hub-client sub")
 }
 
 // InitPubClient init pub client
@@ -161,5 +162,5 @@ func (mq *Client) InitPubClient() {
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
 	util.LoopConnect(pubID, mq.PubCli)
-	klog.Info("finish hub-client pub")
+	klog.Info("Finish hub-client pub")
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
@@ -107,10 +108,13 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
 	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
-	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
+	if strings.HasPrefix(msg.Topic, dtcommon.DeviceETPrefix) || strings.HasPrefix(msg.Topic, dtcommon.MemETPrefix) {
 		target = modules.TwinGroup
 	} else {
 		target = modules.HubGroup
+		if msg.Topic() == UploadTopic {
+			resource = UploadTopic
+		}
 	}
 	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
@@ -127,16 +131,16 @@ func (m *Server) InitInternalTopics() {
 	}
 	topics, err := dao.QueryAllTopics()
 	if err != nil {
-		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		klog.Errorf("List edge-hub-cli-topics failed: %v", err)
 		return
 	}
 	if len(*topics) <= 0 {
-		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		klog.Infof("List edge-hub-cli-topics status, no record, skip sync")
 		return
 	}
 	for _, t := range *topics {
 		m.tree.Set(t, packet.Subscription{Topic: t, QOS: packet.QOS(m.qos)})
-		klog.Infof("Subscribe internal topic to %s", t)
+		klog.Infof("Subscribe internal topic %s", t)
 	}
 }
 
