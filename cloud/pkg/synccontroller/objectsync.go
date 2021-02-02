@@ -1,28 +1,35 @@
 package synccontroller
 
 import (
-	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
-	"k8s.io/apimachinery/pkg/runtime"
-	"strconv"
-	"strings"
-
+	"context"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
+	"strconv"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
+
+var forceSet = map[string]string{
+	"pod":       "pods",
+	"configmap": "configmaps",
+	"secret":    "secrets",
+	"service":   "services",
+	"endpoint":  "endpoints",
+	"node":      "nodes",
+}
 
 func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	var object metav1.Object
@@ -31,13 +38,17 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	if err != nil {
 		return
 	}
-	gvr := schema.GroupVersionResource{
-		Group:    gv.Group,
-		Version:  gv.Version,
-		Resource: strings.ToLower(sync.Spec.ObjectKind),
+	resource := sync.Spec.ObjectKind // In fact, ObjdctKind is Object resources like "pods"
+	if v, ok := forceSet[resource]; ok {
+		resource = v
 	}
-
-	ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
+	gvr := gv.WithResource(resource)
+	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
+	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
+	if err != nil {
+		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
+		return
+	}
 
 	nodeName := getNodeName(sync.Name)
 	if ret != nil {
@@ -72,7 +83,7 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
 	runtimeObj := obj.(runtime.Object)
-	if err:= util.SetMetaType(runtimeObj);err!=nil{
+	if err := util.SetMetaType(runtimeObj); err != nil {
 		klog.Error(err)
 	}
 	if err != nil && apierrors.IsNotFound(err) {

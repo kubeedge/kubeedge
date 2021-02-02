@@ -2,6 +2,7 @@ package synccontroller
 
 import (
 	"context"
+	"k8s.io/client-go/dynamic"
 	"strings"
 	"time"
 
@@ -35,13 +36,16 @@ type SyncController struct {
 	objectSyncLister        reliablesyncslisters.ObjectSyncLister
 	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
 
+	kubeclient dynamic.Interface
+
 	informersSyncedFuncs []cache.InformerSynced
 }
 
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
-		enable:    enable,
-		crdclient: keclient.GetCRDClient(),
+		enable:     enable,
+		crdclient:  keclient.GetCRDClient(),
+		kubeclient: keclient.GetDynamicClient(),
 	}
 	// informer factory
 	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()
@@ -95,9 +99,8 @@ func (sctl *SyncController) Start() {
 		return
 	}
 
+	sctl.deleteObjectSyncs() //check outdate sync before start to reconcile
 	go wait.Until(sctl.reconcile, 5*time.Second, beehiveContext.Done())
-
-	sctl.deleteObjectSyncs()
 }
 
 func (sctl *SyncController) reconcile() {

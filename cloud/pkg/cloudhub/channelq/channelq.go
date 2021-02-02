@@ -2,6 +2,7 @@ package channelq
 
 import (
 	"fmt"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"strings"
 	"sync"
 
@@ -54,6 +55,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 		default:
 		}
 		msg, err := beehiveContext.Receive(model.SrcCloudHub)
+		klog.Infof("[cloudhub] dispatchMessage to edge: %+v", msg)
 		if err != nil {
 			klog.Info("receive not Message format message")
 			continue
@@ -63,7 +65,10 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
-
+		if msg.Router.Operation == application.ApplicationResp {
+			q.addListMessageToQueue(nodeID, &msg)
+			continue
+		}
 		if isListResource(&msg) {
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
@@ -273,6 +278,8 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 // Publish sends message via the channel to Controllers
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
+	case application.MetaServerSource:
+		beehiveContext.Send(modules.DynamicControllerModuleName, *msg)
 	case model.ResTwin:
 		beehiveContext.SendToGroup(model.SrcDeviceController, *msg)
 	default:

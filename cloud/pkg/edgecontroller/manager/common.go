@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"github.com/kubeedge/kubeedge/pkg/apiserverlite/util"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
