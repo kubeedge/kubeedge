@@ -91,7 +91,7 @@ func onSubConnect(client MQTT.Client) {
 	}
 	topics, err := dao.QueryAllTopics()
 	if err != nil {
-		klog.Errorf("List edge-hub-cli-topics failed: %v", err)
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
 		return
 	}
 	if len(*topics) <= 0 {
