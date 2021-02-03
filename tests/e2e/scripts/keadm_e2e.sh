@@ -54,6 +54,7 @@ function start_kubeedge() {
   # ensure tokensecret is generated
   while true; do
       sleep 3
+      kubectl get secret -nkubeedge
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
 
