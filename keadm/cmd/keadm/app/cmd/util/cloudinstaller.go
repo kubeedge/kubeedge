@@ -90,18 +90,30 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	}
 
 	// start cloudcore
-	command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	systemdExist := hasSystemd()
+	if systemdExist {
+		command = ""
+		serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", KubeCloudBinaryName)
+		if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {
+			command += fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && ", KubeCloudBinaryName, KubeCloudBinaryName)
+		}
+		command += fmt.Sprintf("sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s", KubeCloudBinaryName, KubeCloudBinaryName)
+	} else {
+		command = fmt.Sprintf("%s/%s > %s/%s.log 2>&1 &", KubeEdgeUsrBinPath, KubeCloudBinaryName, KubeEdgeLogPath, KubeCloudBinaryName)
+	}
 
 	cmd = NewCommand(command)
-
 	if err := cmd.Exec(); err != nil {
 		return err
 	}
 
 	fmt.Println(cmd.GetStdOut())
 
-	fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
-
+	if systemdExist {
+		fmt.Println("KubeEdge cloudcore is running, For logs visit: journalctl -u cloudcore.service -b")
+	} else {
+		fmt.Println("KubeEdge cloudcore is running, For logs visit: ", KubeEdgeLogPath+KubeCloudBinaryName+".log")
+	}
 	return nil
 }
 
