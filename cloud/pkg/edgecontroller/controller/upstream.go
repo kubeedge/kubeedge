@@ -504,35 +504,59 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 	switch queryType {
 	case model.ResourceTypeConfigmap:
 		configMap, err := uc.configMapLister.ConfigMaps(namespace).Get(name)
-		resourceVersion := configMap.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = configMap.ResourceVersion
+		}
 		return configMap, resourceVersion, err
 	case model.ResourceTypeSecret:
 		secret, err := uc.secretLister.Secrets(namespace).Get(name)
-		resourceVersion := secret.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = secret.ResourceVersion
+		}
 		return secret, resourceVersion, err
 	case common.ResourceTypeService:
 		svc, err := uc.serviceLister.Services(namespace).Get(name)
-		resourceVersion := svc.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = svc.ResourceVersion
+		}
 		return svc, resourceVersion, err
 	case common.ResourceTypeEndpoints:
 		eps, err := uc.endpointLister.Endpoints(namespace).Get(name)
-		resourceVersion := eps.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = eps.ResourceVersion
+		}
 		return eps, resourceVersion, err
 	case common.ResourceTypePersistentVolume:
 		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := pv.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = pv.ResourceVersion
+		}
 		return pv, resourceVersion, err
 	case common.ResourceTypePersistentVolumeClaim:
 		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := pvc.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = pvc.ResourceVersion
+		}
 		return pvc, resourceVersion, err
 	case common.ResourceTypeVolumeAttachment:
 		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := va.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = va.ResourceVersion
+		}
 		return va, resourceVersion, err
 	case model.ResourceTypeNode:
 		node, err := uc.nodeLister.Get(name)
-		resourceVersion := node.ResourceVersion
+		resourceVersion := ""
+		if err == nil {
+			resourceVersion = node.ResourceVersion
+		}
 		return node, resourceVersion, err
 	default:
 		err := stderrors.New("Wrong query type")
