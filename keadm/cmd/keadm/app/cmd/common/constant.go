@@ -80,6 +80,9 @@ const (
 	// eg.  "/tmp/kubeedge" or "/etc/kubeedge" by default
 	TarballPath = "tarballpath"
 
+	// AutoSystemd sets the program deployment in systemd
+	AutoSystemd = "autoSystemd"
+
 	StrCheck    = "check"
 	StrDiagnose = "diagnose"
 

@@ -16,6 +16,7 @@ type KubeCloudInstTool struct {
 	AdvertiseAddress string
 	DNSName          string
 	TarballPath      string
+	AutoSystemd      bool
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -91,7 +92,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 
 	// start cloudcore
 	systemdExist := hasSystemd()
-	if systemdExist {
+	if systemdExist && cu.AutoSystemd {
 		command = ""
 		serviceFilePath := fmt.Sprintf("/etc/systemd/system/%s.service", KubeCloudBinaryName)
 		if _, err := os.Stat(serviceFilePath); err != nil && os.IsNotExist(err) {

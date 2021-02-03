@@ -30,6 +30,7 @@ type InitOptions struct {
 	AdvertiseAddress string
 	DNS              string
 	TarballPath      string
+	AutoSystemd      bool
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI

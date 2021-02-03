@@ -48,13 +48,12 @@ function start_kubeedge() {
   cd $KUBEEDGE_ROOT
   export KUBECONFIG=$HOME/.kube/config
 
-  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1
+  sudo -E _output/local/bin/keadm init --kube-config=$KUBECONFIG --advertise-address=127.0.0.1 --autoSystemd=false
   export MASTER_IP=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' test-control-plane`
 
   # ensure tokensecret is generated
   while true; do
       sleep 3
-      systemctl status cloudcore
       kubectl get secret -nkubeedge 2>/dev/null | grep -q tokensecret && break
   done
 
