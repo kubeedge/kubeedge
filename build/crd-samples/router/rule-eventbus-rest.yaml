@@ -1,0 +1,11 @@
+apiVersion: rules.kubeedge.io/v1
+kind: Rule
+metadata:
+  name: my-rule-eventbus-rest
+  labels:
+    description: eventbusToRest
+spec:
+  source: "my-eventbus"
+  sourceResource: {"topic":"test","node_name":"edge-node"}
+  target: "my-rest"
+  targetResource: {"resource":"http://a.com"}

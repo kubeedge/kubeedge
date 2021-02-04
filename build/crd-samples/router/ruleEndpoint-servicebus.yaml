@@ -1,0 +1,9 @@
+apiVersion: rules.kubeedge.io/v1
+kind: RuleEndpoint
+metadata:
+  name: my-servicebus
+  labels:
+    description: servicebus
+spec:
+  ruleEndpointType: "servicebus"
+  properties: {"service_port":"6666"}

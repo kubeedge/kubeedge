@@ -80,6 +80,12 @@ function create_objectsync_crd {
   kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/reliablesyncs/objectsync_v1alpha1.yaml
 }
 
+function create_rule_crd {
+  echo "creating the rule crd..."
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/router/router_v1_rule.yaml
+  kubectl apply -f ${KUBEEDGE_ROOT}/build/crds/router/router_v1_ruleEndpoint.yaml
+}
+
 function build_cloudcore {
   echo "building the cloudcore..."
   make -C "${KUBEEDGE_ROOT}" WHAT="cloudcore"
@@ -97,7 +103,8 @@ function start_cloudcore {
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
-    -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
+    -e "s|/etc/|/tmp/etc/|g" \
+    -e '/router:/a\    enable: true' ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
@@ -210,6 +217,7 @@ kubectl create ns kubeedge
 
 create_device_crd
 create_objectsync_crd
+create_rule_crd
 
 generate_streamserver_cert
 
