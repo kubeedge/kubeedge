@@ -452,8 +452,8 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 }
 
 func retryDownload(filename, checksumFilename string, version semver.Version, tarballPath string) error {
-	try := 0
-	for ; try < downloadRetryTimes; try++ {
+	filePath := filepath.Join(tarballPath, filename)
+	for try := 0; try < downloadRetryTimes; try++ {
 		//Download the tar from repo
 		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
 			tarballPath, KubeEdgeDownloadURL, version, filename)
@@ -462,30 +462,20 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 
 		//Verify the tar with checksum
-		fmt.Printf("%s checksum: \n", filename)
-		getActualCheckSum := NewCommand(fmt.Sprintf("cd %s && sha512sum %s | awk '{split($0,a,\"[ ]\"); print a[1]}'", tarballPath, filename))
-		if err := getActualCheckSum.Exec(); err != nil {
+		success, err := checkSum(filename, checksumFilename, version, tarballPath)
+		if err != nil {
 			return err
 		}
-
-		fmt.Printf("%s content: \n", checksumFilename)
-		getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-		if err := getDesiredCheckSum.Exec(); err != nil {
+		if success {
+			return nil
+		}
+		fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
+		//Cleanup the downloaded files
+		if err = NewCommand(fmt.Sprintf("rm -f %s", filePath)).Exec(); err != nil {
 			return err
 		}
-
-		if getActualCheckSum.GetStdOut() == getDesiredCheckSum.GetStdOut() {
-			break
-		} else {
-			fmt.Printf("Failed to verify the checksum of %s, try to download it again ... \n\n", filename)
-			//Cleanup the downloaded files
-			return NewCommand(fmt.Sprintf("cd %s && rm -f %s", tarballPath, filename)).Exec()
-		}
 	}
-	if try == downloadRetryTimes {
-		return fmt.Errorf("failed to download %s", filename)
-	}
-	return nil
+	return fmt.Errorf("failed to download %s", filename)
 }
 
 // Compressed folders or files
