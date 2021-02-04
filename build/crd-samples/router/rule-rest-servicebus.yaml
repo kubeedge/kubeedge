@@ -1,0 +1,11 @@
+apiVersion: rules.kubeedge.io/v1
+kind: Rule
+metadata:
+  name: my-rule-rest-servicebus
+  labels:
+    description: restToServicebus
+spec:
+  source: "my-rest"
+  sourceResource: {"path":"/source"}
+  target: "my-servicebus"
+  targetResource: {"path":"/target"}

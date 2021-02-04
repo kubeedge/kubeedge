@@ -23,6 +23,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
@@ -136,12 +137,15 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 			mh.MessageAcks.Delete(container.Message.Header.ParentID)
 		}
 		return
-	}
-
-	err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
-	if err != nil {
-		// if err, we should stop node, write data to edgehub, stop nodify
-		klog.Errorf("Failed to serve handle with error: %s", err.Error())
+	} else if container.Message.GetOperation() == "upload" && container.Message.GetGroup() == modules.UserGroup {
+		container.Message.Router.Resource = fmt.Sprintf("node/%s/%s", nodeID, container.Message.Router.Resource)
+		beehiveContext.Send(modules.RouterModuleName, *container.Message)
+	} else {
+		err := mh.PubToController(&model.HubInfo{ProjectID: projectID, NodeID: nodeID}, container.Message)
+		if err != nil {
+			// if err, we should stop node, write data to edgehub, stop nodify
+			klog.Errorf("Failed to serve handle with error: %s", err.Error())
+		}
 	}
 }
 

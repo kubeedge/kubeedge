@@ -1,0 +1,43 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ruleendpoints.rules.kubeedge.io
+spec:
+  group: rules.kubeedge.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                ruleEndpointType:
+                  description: |
+                    ruleEndpointType is a string value representing rule-endpoint type. its value is
+                    one of rest/eventbus/servicebus.
+                  type: string
+                  enum:
+                    - rest
+                    - eventbus
+                    - servicebus
+                properties:
+                  description: |
+                    properties is not required except for servicebus rule-endpoint type. It is a map
+                    value representing rule-endpoint properties. When ruleEndpointType is servicebus,
+                    its value is {"service_port":"8080"}.
+                  type: object
+                  additionalProperties:
+                    type: string
+              required:
+                - ruleEndpointType
+  scope: Namespaced
+  names:
+    plural: ruleendpoints
+    singular: ruleendpoint
+    kind: RuleEndpoint
+    shortNames:
+      - re

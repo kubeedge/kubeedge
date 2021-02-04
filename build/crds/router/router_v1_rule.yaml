@@ -1,0 +1,65 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rules.rules.kubeedge.io
+spec:
+  group: rules.kubeedge.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                source:
+                  description: |
+                    source is a string value representing where the messages come from. Its
+                    value is the same with ruleendpoint name. For example, my-rest or my-eventbus.
+                  type: string
+                sourceResource:
+                  description: |
+                    sourceResource is a map representing the resource info of source. For rest
+                    rule-endpoint type its value is {"path":"/test"}. For eventbus ruleendpoint type its
+                    value is {"topic":"<user define string>","node_name":"edge-node"}
+                  type: object
+                  additionalProperties:
+                    type: string
+                target:
+                  description: |
+                    target is a string value representing where the messages go to. its value is
+                    the same with ruleendpoint name. For example, my-eventbus or my-rest or my-servicebus.
+                  type: string
+                targetResource:
+                  description: |
+                    targetResource is a map representing the resource info of target. For rest
+                    rule-endpoint type its value is {"resource":"http://a.com"}. For eventbus ruleendpoint
+                    type its value is {"topic":"/test"}. For servicebus rule-endpoint type its value is
+                    {"path":"/request_path"}.
+                  type: object
+                  additionalProperties:
+                    type: string
+              required:
+                - source
+                - sourceResource
+                - target
+                - targetResource
+            status:
+              type: object
+              properties:
+                successMessages:
+                  type: integer
+                failMessages:
+                  type: integer
+                errors:
+                  items:
+                    type: string
+                  type: array
+  scope: Namespaced
+  names:
+    plural: rules
+    singular: rule
+    kind: Rule

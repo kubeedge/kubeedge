@@ -72,6 +72,8 @@ type Modules struct {
 	SyncController *SyncController `json:"syncController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
+	// Router indicates router module config
+	Router *Router `json:"router,omitempty"`
 }
 
 // CloudHub indicates the config of CloudHub module.
@@ -226,6 +228,12 @@ type EdgeControllerBuffer struct {
 	// EndpointsEvent indicates the buffer of endpoint event
 	// default 1
 	EndpointsEvent int32 `json:"endpointsEvent,omitempty"`
+	// RulesEvent indicates the buffer of rule event
+	// default 1
+	RulesEvent int32 `json:"rulesEvent,omitempty"`
+	// RuleEndpointsEvent indicates the buffer of endpoint event
+	// default 1
+	RuleEndpointsEvent int32 `json:"ruleEndpointsEvent,omitempty"`
 	// QueryPersistentVolume indicates the buffer of query persistent volume
 	// default 1024
 	QueryPersistentVolume int32 `json:"queryPersistentVolume,omitempty"`
@@ -250,6 +258,8 @@ type EdgeControllerBuffer struct {
 type ControllerContext struct {
 	// SendModule indicates which module will send message to
 	SendModule metaconfig.ModuleName `json:"sendModule,omitempty"`
+	// SendRouterModule indicates which module will send router message to
+	SendRouterModule metaconfig.ModuleName `json:"sendRouterModule,omitempty"`
 	// ReceiveModule indicates which module will receive message from
 	ReceiveModule metaconfig.ModuleName `json:"receiveModule,omitempty"`
 	// ResponseModule indicates which module will response message to
@@ -369,4 +379,12 @@ type CloudStream struct {
 	// StreamPort set open port for stream server
 	// default 10003
 	StreamPort uint32 `json:"streamPort,omitempty"`
+}
+
+type Router struct {
+	// default true
+	Enable      bool   `json:"enable,omitempty"`
+	Address     string `json:"address,omitempty"`
+	Port        uint32 `json:"port,omitempty"`
+	RestTimeout uint32 `json:"restTimeout,omitempty"`
 }
