@@ -10,13 +10,11 @@ import (
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
-	admissionregistrationv1beta1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
@@ -32,6 +30,10 @@ const (
 	ValidateDeviceModelWebhookName  = "validatedevicemodel.kubeedge.io"
 	ValidateRuleWebhookName         = "validatedrule.kubeedge.io"
 	ValidateRuleEndpointWebhookName = "validatedruleendpoint.kubeedge.io"
+	OfflineMigrationConfigName      = "mutate-offlinemigration"
+	OfflineMigrationWebhookName     = "mutateofflinemigration.kubeedge.io"
+
+	AutonomyLabel = "app-offline.kubeedge.io=autonomy"
 )
 
 var scheme = runtime.NewScheme()
@@ -95,6 +97,7 @@ func Run(opt *options.AdmissionOptions) {
 	http.HandleFunc("/devicemodels", serveDeviceModel)
 	http.HandleFunc("/rules", serveRule)
 	http.HandleFunc("/ruleendpoints", serveRuleEndpoint)
+	http.HandleFunc("/offlinemigration", serveOfflineMigration)
 
 	server := &http.Server{
 		Addr:      fmt.Sprintf(":%v", opt.Port),
@@ -222,31 +225,49 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 		},
 	}
 
-	return registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
-		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook})
-}
-
-func registerValidateWebhook(client admissionregistrationv1beta1client.ValidatingWebhookConfigurationInterface,
-	webhooks []admissionregistrationv1beta1.ValidatingWebhookConfiguration) error {
-	for _, hook := range webhooks {
-		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err == nil && existing != nil {
-			existing.Webhooks = hook.Webhooks
-			klog.Infof("Updating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
-				return err
-			}
-		} else {
-			klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
-				return err
-			}
-		}
+	objectSelector, err := metav1.ParseToLabelSelector(AutonomyLabel)
+	if err != nil {
+		return err
 	}
-	return nil
+	offlineMigrationWebhook := admissionregistrationv1beta1.MutatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: OfflineMigrationConfigName,
+		},
+		Webhooks: []admissionregistrationv1beta1.MutatingWebhook{
+			{
+				Name:           OfflineMigrationWebhookName,
+				ObjectSelector: objectSelector,
+				Rules: []admissionregistrationv1beta1.RuleWithOperations{{
+					Operations: []admissionregistrationv1beta1.OperationType{
+						admissionregistrationv1beta1.Create,
+						admissionregistrationv1beta1.Update,
+					},
+					Rule: admissionregistrationv1beta1.Rule{
+						APIGroups:   []string{""},
+						APIVersions: []string{"v1"},
+						Resources:   []string{"pods"},
+					},
+				}},
+				ClientConfig: admissionregistrationv1beta1.WebhookClientConfig{
+					Service: &admissionregistrationv1beta1.ServiceReference{
+						Namespace: opt.AdmissionServiceNamespace,
+						Name:      opt.AdmissionServiceName,
+						Path:      strPtr("/offlinemigration"),
+						Port:      &opt.Port,
+					},
+					CABundle: cabundle,
+				},
+				FailurePolicy: &ignorePolicy,
+			},
+		},
+	}
+
+	if err := registerValidateWebhook(ac.Client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations(),
+		[]admissionregistrationv1beta1.ValidatingWebhookConfiguration{deviceModelCRDWebhook}); err != nil {
+		return err
+	}
+	return registerMutatingWebhook(ac.Client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations(),
+		[]admissionregistrationv1beta1.MutatingWebhookConfiguration{offlineMigrationWebhook})
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {

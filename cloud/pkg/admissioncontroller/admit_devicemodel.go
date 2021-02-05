@@ -1,8 +1,6 @@
 package admissioncontroller
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -12,51 +10,6 @@ import (
 
 	devicesv1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
-
-// admitFunc is the type we use for all of our validators and mutators
-type admitFunc func(admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse
-
-func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
-	var body []byte
-	if r.Body != nil {
-		if data, err := ioutil.ReadAll(r.Body); err == nil {
-			body = data
-		}
-	}
-
-	// verify the content type is accurate
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		klog.Fatalf("contentType=%s, expect application/json", contentType)
-		return
-	}
-
-	// The AdmissionReview that was sent to the webhook
-	requestedAdmissionReview := admissionv1beta1.AdmissionReview{}
-
-	// The AdmissionReview that will be returned
-	responseAdmissionReview := admissionv1beta1.AdmissionReview{}
-
-	deserializer := codecs.UniversalDeserializer()
-	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
-		klog.Fatalf("decode failed with error: %v", err)
-		responseAdmissionReview.Response = toAdmissionResponse(err)
-	} else {
-		responseAdmissionReview.Response = admit(requestedAdmissionReview)
-	}
-
-	// Return the same UID
-	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
-	klog.Infof("sending response: %v", responseAdmissionReview.Response)
-
-	respBytes, err := json.Marshal(responseAdmissionReview)
-	if err != nil {
-		klog.Fatalf("cannot marshal to a valid response %v", err)
-	}
-	if _, err := w.Write(respBytes); err != nil {
-		klog.Fatalf("cannot write response %v", err)
-	}
-}
 
 func admitDeviceModel(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
 	reviewResponse := admissionv1beta1.AdmissionResponse{}

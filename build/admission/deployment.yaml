@@ -15,6 +15,13 @@ spec:
       labels:
         app: kubeedge-admission
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
       serviceAccount: kubeedge-admission
       containers:
         - args:
