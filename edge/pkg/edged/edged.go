@@ -330,6 +330,7 @@ func (e *edged) Start() {
 	go e.server.ListenAndServe(e, e.resourceAnalyzer, true)
 
 	e.imageGCManager.Start()
+	e.StartGarbageCollection()
 
 	e.pluginManager = pluginmanager.NewPluginManager(
 		e.getPluginsRegistrationDir(), /* sockDir */
