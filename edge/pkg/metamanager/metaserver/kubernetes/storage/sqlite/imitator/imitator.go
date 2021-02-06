@@ -5,21 +5,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"strconv"
+	"strings"
+	"sync"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
-	"strconv"
-	"strings"
-	"sync"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 // imitator is a storage based on metav2 that imitate the behavior of etcd
@@ -56,7 +58,6 @@ func (s *imitator) Inject(msg model.Message) {
 		// TODO: move Trigger inside InsertOrUpdateObj and DeleteObj
 		watchhook.Trigger(e)
 	}
-
 }
 
 //TODO: filter out insert or update req that the obj's rev is smaller than the stored
@@ -97,7 +98,6 @@ func (s *imitator) InsertOrUpdateObj(ctx context.Context, obj runtime.Object) er
 	s.lock.Unlock()
 	klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", key)
 	return nil
-
 }
 func (s *imitator) Delete(ctx context.Context, key string) error {
 	m := v2.MetaV2{
@@ -150,7 +150,6 @@ func (s *imitator) List(ctx context.Context, key string) (Resp, error) {
 	}
 	if len(*results) == 0 {
 		return Resp{}, fmt.Errorf("the server could not find the requested resource")
-
 	}
 	resp.Kvs = results
 	return resp, nil
@@ -185,7 +184,6 @@ func (s *imitator) Watch(ctx context.Context, key string, rev uint64) <-chan wat
 	go func() {
 		<-ctx.Done()
 		wh.Stop()
-		return
 	}()
 	return wch
 }
@@ -203,9 +201,9 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	var err error
 	var body = msg.GetContent()
 	// convert body to bytes
-	switch body.(type) {
+	switch body := body.(type) {
 	case []byte:
-		bytes = body.([]byte)
+		bytes = body
 	default:
 		bytes, err = json.Marshal(body)
 		utilruntime.Must(err)

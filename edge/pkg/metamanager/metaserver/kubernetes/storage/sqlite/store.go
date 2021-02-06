@@ -3,10 +3,9 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	"reflect"
+	"strconv"
 
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -14,24 +13,20 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
-	"reflect"
-	"strconv"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 /*
-	TODO:
-	此文件旨在将imitator封装成store.Interface
-	借用imitator.DefaultV2Client问后端sqlite
+	This file is designed to encapsulate the Imitator as Store.Interface,
 */
 type store struct {
-	//GsssC struct field
 	client    imitator.Client
 	versioner storage.Versioner
-	// to co/decoder obj
-	codec   runtime.Codec
-	watcher *watcher
-
-	//Shao struct field
+	codec     runtime.Codec
+	watcher   *watcher
 }
 
 func (s *store) Versioner() storage.Versioner {
@@ -63,14 +58,13 @@ func (s *store) watch(ctx context.Context, key string, opts storage.ListOptions,
 
 //TODO:@rachel-Shao
 func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-
 	resp, err := s.client.Get(context.TODO(), key)
 	if err != nil || len(*resp.Kvs) == 0 {
 		klog.Error(err)
 		return err
 	}
 	unstrObj := objPtr.(*unstructured.Unstructured)
-	if err := runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj) ; err != nil{
+	if err := runtime.DecodeInto(s.codec, []byte((*resp.Kvs)[0].Value), unstrObj); err != nil {
 		return err
 	}
 	return nil
@@ -133,7 +127,7 @@ func newStore() *store {
 	s := store{
 		client:    client,
 		versioner: imitator.Versioner,
-		watcher:   NewWatcher(client, codec),
+		watcher:   newWatcher(client, codec),
 		codec:     codec,
 	}
 	return &s

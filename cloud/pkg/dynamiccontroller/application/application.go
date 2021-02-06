@@ -5,14 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"strings"
+	"sync"
+	"time"
+
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -23,15 +19,21 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
-	"strings"
-	"sync"
-	"time"
+
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 // used to set Message.Route
 const (
 	MetaServerSource    = "metaserver"
-	ApplicationResource = "application"
+	ApplicationResource = "Application"
 	ApplicationResp     = "applicationResponse"
 	Ignore              = "ignore"
 )
@@ -65,9 +67,9 @@ const (
 )
 
 // record the resources that are in applying for requesting to be transferred down from the cloud, please:
-// 0.use ApplicationAgent.Generate to generate application
-// 1.use ApplicationAgent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
-type application struct {
+// 0.use Agent.Generate to generate application
+// 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
+type Application struct {
 	Key      string // group version resource namespaces name
 	Verb     applicationVerb
 	Nodename string
@@ -83,7 +85,7 @@ type application struct {
 	//TODO: add lock
 }
 
-func newApplication(key string, verb applicationVerb, nodename string, option interface{}, selector LabelFieldSelector, reqBody interface{}) *application {
+func newApplication(key string, verb applicationVerb, nodename string, option interface{}, selector LabelFieldSelector, reqBody interface{}) *Application {
 	var v1 metav1.ListOptions
 	if internal, ok := option.(metainternalversion.ListOptions); ok {
 		err := metainternalversion.Convert_internalversion_ListOptions_To_v1_ListOptions(&internal, &v1, nil)
@@ -92,7 +94,7 @@ func newApplication(key string, verb applicationVerb, nodename string, option in
 			klog.Errorf("failed to transfer internalListOption to v1ListOption, force set to empty")
 		}
 	}
-	app := &application{
+	app := &Application{
 		Key:      key,
 		Verb:     verb,
 		Nodename: nodename,
@@ -104,18 +106,18 @@ func newApplication(key string, verb applicationVerb, nodename string, option in
 	return app
 }
 
-func (a *application) String() string {
+func (a *Application) String() string {
 	split := ";"
 	return strings.Join([]string{a.Nodename, a.Key, string(a.Verb), a.selector.String()}, split)
 }
-func (a *application) ReqContent() interface{} {
+func (a *Application) ReqContent() interface{} {
 	return a.ReqBody
 }
-func (a *application) RespContent() interface{} {
+func (a *Application) RespContent() interface{} {
 	return a.RespBody
 }
 
-func (a *application) ToListener(option metav1.ListOptions) *SelectorListener {
+func (a *Application) ToListener(option metav1.ListOptions) *SelectorListener {
 	gvr, namespace, _ := metaserver.ParseKey(a.Key)
 	selector := NewSelector(option.LabelSelector, option.FieldSelector)
 	if namespace != "" {
@@ -126,7 +128,7 @@ func (a *application) ToListener(option metav1.ListOptions) *SelectorListener {
 }
 
 // remember i must be a pointer to the initialized variable
-func (a *application) OptionTo(i interface{}) error {
+func (a *Application) OptionTo(i interface{}) error {
 	err := json.Unmarshal(a.Option, i)
 	if err != nil {
 		return fmt.Errorf("failed to prase Option bytes, %v", err)
@@ -134,7 +136,7 @@ func (a *application) OptionTo(i interface{}) error {
 	return nil
 }
 
-func (a *application) ReqBodyTo(i interface{}) error {
+func (a *Application) ReqBodyTo(i interface{}) error {
 	err := json.Unmarshal(a.ReqBody, i)
 	if err != nil {
 		return fmt.Errorf("failed to parse ReqBody bytes, %v", err)
@@ -142,7 +144,7 @@ func (a *application) ReqBodyTo(i interface{}) error {
 	return nil
 }
 
-func (a *application) RespBodyTo(i interface{}) error {
+func (a *Application) RespBodyTo(i interface{}) error {
 	err := json.Unmarshal(a.RespBody, i)
 	if err != nil {
 		return fmt.Errorf("failed to parse RespBody bytes, %v", err)
@@ -151,82 +153,79 @@ func (a *application) RespBodyTo(i interface{}) error {
 }
 
 //
-func (a *application) GVR() schema.GroupVersionResource {
+func (a *Application) GVR() schema.GroupVersionResource {
 	gvr, _, _ := metaserver.ParseKey(a.Key)
 	return gvr
 }
-func (a *application) Namespace() string {
+func (a *Application) Namespace() string {
 	_, ns, _ := metaserver.ParseKey(a.Key)
 	return ns
 }
 
-func (a *application) Labels() labels.Selector {
+func (a *Application) Labels() labels.Selector {
 	return a.selector.Labels()
 }
 
-func (a *application) Fields() fields.Selector {
+func (a *Application) Fields() fields.Selector {
 	return a.selector.Fields()
 }
 
-func (a *application) Call() {
+func (a *Application) Call() {
 	if a.cancel != nil {
 		a.cancel()
 	}
-	return
 }
 
-func (a *application) getStatus() applicationStatus {
+func (a *Application) getStatus() applicationStatus {
 	return a.Status
 }
 
 // Wait the result of application after it is applied by application agent
-func (a *application) Wait() applicationStatus {
+func (a *Application) Wait() {
 	if a.ctx != nil {
 		<-a.ctx.Done()
 	}
-	return a.getStatus()
 }
 
 // Close must be called by who generated this application or GC()
-func (a *application) Close() {
+func (a *Application) Close() {
 	a.Status = Completed
 }
 
 // used for generating application and do apply
-type ApplicationAgent struct {
+type Agent struct {
 	Applications sync.Map //store struct application
 	nodeName     string
 }
 
 // edged config.Config.HostnameOverride
-func NewApplicationAgent(nodeName string) *ApplicationAgent {
-	return &ApplicationAgent{nodeName: nodeName}
+func NewApplicationAgent(nodeName string) *Agent {
+	return &Agent{nodeName: nodeName}
 }
 
-func (a *ApplicationAgent) Generate(ctx context.Context, verb applicationVerb, option interface{}, lf LabelFieldSelector, obj runtime.Object) *application {
+func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, lf LabelFieldSelector, obj runtime.Object) *Application {
 	key, err := metaserver.KeyFuncReq(ctx, "")
 	if err != nil {
 		klog.Errorf("%v", err)
-		return &application{}
+		return &Application{}
 	}
 	app := newApplication(key, verb, a.nodeName, option, lf, obj)
 	store, ok := a.Applications.LoadOrStore(app.String(), app)
 	if ok {
-		return store.(*application)
+		return store.(*Application)
 	}
 	return app
 }
 
-func (a *ApplicationAgent) Apply(app *application) error {
+func (a *Agent) Apply(app *Application) error {
 	store, ok := a.Applications.Load(app.String())
 	if !ok {
-		return fmt.Errorf("application %v has not been registered to agent", app.String())
+		return fmt.Errorf("Application %v has not been registered to agent", app.String())
 	}
-	app = store.(*application)
+	app = store.(*Application)
 	switch app.getStatus() {
 	case PreApplying, Completed:
-		ctx, cancle := context.WithCancel(beehiveContext.GetContext())
-		go a.doApply(app, ctx, cancle)
+		go a.doApply(app)
 	case Rejected, Failed:
 		return errors.New(app.Reason)
 	case Approved:
@@ -234,13 +233,14 @@ func (a *ApplicationAgent) Apply(app *application) error {
 	case InApplying:
 		//continue
 	}
-	if status := app.Wait(); status != Approved {
+	app.Wait()
+	if app.getStatus() != Approved {
 		return errors.New(app.Reason)
 	}
 	return nil
 }
 
-func (a *ApplicationAgent) doApply(app *application, ctx context.Context, cancelFunc context.CancelFunc) {
+func (a *Agent) doApply(app *Application) {
 	// for reusing application, make sure last context done, or return
 	if app.ctx != nil && app.ctx.Err() == nil {
 		return
@@ -248,8 +248,7 @@ func (a *ApplicationAgent) doApply(app *application, ctx context.Context, cancel
 	// clean and reset
 	app.Reason = ""
 	app.RespBody = []byte{}
-	app.ctx = ctx
-	app.cancel = cancelFunc
+	app.ctx, app.cancel = context.WithCancel(beehiveContext.GetContext())
 	defer app.Call()
 
 	// encapsulate as a message
@@ -259,14 +258,14 @@ func (a *ApplicationAgent) doApply(app *application, ctx context.Context, cancel
 	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
 	if err != nil {
 		app.Status = Failed
-		app.Reason = fmt.Sprintf("failed to access cloud application center: %v", err)
+		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
 		return
 	}
 
 	retApp, err := msgToApplication(resp)
 	if err != nil {
 		app.Status = Failed
-		app.Reason = fmt.Sprintf("failed to get application from resp msg: %v", err)
+		app.Reason = fmt.Sprintf("failed to get Application from resp msg: %v", err)
 		return
 	}
 
@@ -276,25 +275,24 @@ func (a *ApplicationAgent) doApply(app *application, ctx context.Context, cancel
 	app.RespBody = retApp.RespBody
 }
 
-func (a *ApplicationAgent) GC() {
+func (a *Agent) GC() {
 
 }
 
-type ApplicationCenter struct {
+type Center struct {
 	Applications sync.Map
 	HandlerCenter
 	messageLayer messagelayer.MessageLayer
 	kubeclient   dynamic.Interface
 }
 
-func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *ApplicationCenter {
-	a := &ApplicationCenter{
+func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
+	a := &Center{
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
 		kubeclient:    client.GetDynamicClient(),
 		messageLayer:  messagelayer.NewContextMessageLayer(),
 	}
 	return a
-
 }
 
 func toBytes(i interface{}) []byte {
@@ -303,9 +301,9 @@ func toBytes(i interface{}) []byte {
 	}
 	var bytes []byte
 	var err error
-	switch i.(type) {
+	switch i := i.(type) {
 	case []byte:
-		bytes = i.([]byte)
+		bytes = i
 	default:
 		bytes, err = json.Marshal(i)
 		if err != nil {
@@ -316,10 +314,9 @@ func toBytes(i interface{}) []byte {
 }
 
 // extract application in message's Content
-func msgToApplication(msg model.Message) (*application, error) {
-	var app = new(application)
-	var err error
-	err = json.Unmarshal(toBytes(msg.Content), app)
+func msgToApplication(msg model.Message) (*Application, error) {
+	var app = new(Application)
+	err := json.Unmarshal(toBytes(msg.Content), app)
 	if err != nil {
 		//klog.Errorf("%v", err)
 		return nil, err
@@ -329,13 +326,13 @@ func msgToApplication(msg model.Message) (*application, error) {
 
 // TODO: upgrade to parallel process
 // Process translate msg to application , process and send resp to edge
-func (c *ApplicationCenter) Process(msg model.Message) {
+func (c *Center) Process(msg model.Message) {
 	app, err := msgToApplication(msg)
 	if err != nil {
-		klog.Errorf("failed to translate msg to application: %v", err)
+		klog.Errorf("failed to translate msg to Application: %v", err)
 		return
 	}
-	klog.Infof("[metaserver/ApplicationCenter] get a application %v", app.String())
+	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
 	gvr, ns, name := metaserver.ParseKey(app.Key)
 	err = func() error {
 		app.Status = InProcessing
@@ -351,7 +348,7 @@ func (c *ApplicationCenter) Process(msg model.Message) {
 			}
 			list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
 			if err != nil {
-				return fmt.Errorf("successfuly to add listener but failed to get current list, %v", err)
+				return fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
 			}
 			c.Response(app, msg.GetID(), Approved, "", list)
 		case Watch:
@@ -417,18 +414,18 @@ func (c *ApplicationCenter) Process(msg model.Message) {
 			}
 			c.Response(app, msg.GetID(), Approved, "", retObj)
 		default:
-			return fmt.Errorf("unsupported application Verb type :%v", app.Verb)
+			return fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
 		}
 		return nil
 	}()
 	if err != nil {
 		c.Response(app, msg.GetID(), Rejected, app.Reason, nil)
-		klog.Errorf("[metaserver/applicationCenter]failed to process application(%v), %v", *app, err)
+		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%v), %v", *app, err)
 	}
 }
 
 // Response update application, generate and send resp message to edge
-func (c *ApplicationCenter) Response(app *application, parentID string, status applicationStatus, reason string, respContent interface{}) {
+func (c *Center) Response(app *Application, parentID string, status applicationStatus, reason string, respContent interface{}) {
 	app.Status = status
 	app.Reason = reason
 	if respContent != nil {
@@ -448,9 +445,8 @@ func (c *ApplicationCenter) Response(app *application, parentID string, status a
 	} else {
 		klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 	}
-
 }
 
-func (c *ApplicationCenter) GC() {
+func (c *Center) GC() {
 
 }

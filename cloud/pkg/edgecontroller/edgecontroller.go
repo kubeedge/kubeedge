@@ -22,7 +22,7 @@ type EdgeController struct {
 
 func newEdgeController(enable bool) *EdgeController {
 	if !enable {
-		return &EdgeController{}
+		return &EdgeController{enable: false}
 	}
 	upstream, err := controller.NewUpstreamController(informers.GetInformersManager().GetK8sInformerFactory())
 	if err != nil {

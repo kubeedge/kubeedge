@@ -2,7 +2,6 @@ package channelq
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"strings"
 	"sync"
 
@@ -17,6 +16,7 @@ import (
 	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -55,7 +55,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 		default:
 		}
 		msg, err := beehiveContext.Receive(model.SrcCloudHub)
-		klog.Infof("[cloudhub] dispatchMessage to edge: %+v", msg)
+		klog.V(4).Infof("[cloudhub] dispatchMessage to edge: %+v", msg)
 		if err != nil {
 			klog.Info("receive not Message format message")
 			continue

@@ -400,7 +400,6 @@ func (dc *DownstreamController) syncEndpoints() {
 				continue
 			}
 			// send to all nodes
-			ok = true
 			if ok {
 				var (
 					pods       []*v1.Pod
@@ -455,7 +454,6 @@ func (dc *DownstreamController) syncEndpoints() {
 					}
 					return true
 				})
-
 			}
 		}
 	}
@@ -595,9 +593,6 @@ func (dc *DownstreamController) initLocating() error {
 		}
 		dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, status)
 	}
-	// test metaserver
-	dc.lc.UpdateEdgeNode("xiaomi","")
-	//
 
 	pods, err := dc.kubeClient.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
 	if err != nil {

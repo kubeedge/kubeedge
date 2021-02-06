@@ -2,15 +2,16 @@ package application
 
 import (
 	"github.com/google/uuid"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 )
 
 type SelectorListener struct {
@@ -37,7 +38,7 @@ func (l *SelectorListener) sendAllObjects(rets []runtime.Object, messageLayer me
 
 func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.MessageLayer) {
 	accessor, _ := meta.Accessor(event.Object)
-	klog.V(4).Infof("[metaserver/selectorListener] listener(%v) is sending obj %v", *l, accessor.GetName())
+	klog.V(4).Infof("[dynamiccontroller/selectorListener] listener(%v) is sending obj %v", *l, accessor.GetName())
 	// do not send obj if obj does not match listener's selector
 	if !l.selector.MatchObj(event.Object) {
 		return

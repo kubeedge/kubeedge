@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -20,6 +19,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
 	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"

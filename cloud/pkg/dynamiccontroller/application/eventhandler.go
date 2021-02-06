@@ -18,9 +18,7 @@ package application
 
 import (
 	"fmt"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -28,6 +26,10 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
+
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // HandlerCenter is used to prepare corresponding CommonResourceEventHandler for listener
@@ -79,7 +81,7 @@ func (c *handlerCenter) DeleteListener(s *SelectorListener) {
 // CommonResourceEventHandler can be used by configmapManager and podManager
 type CommonResourceEventHandler struct {
 	events chan watch.Event
-	//TODO: num of listners is proportional to the number of request, need reduce.
+	//TODO: num of listeners is proportional to the number of request, need reduce.
 	listeners    map[string]*SelectorListener
 	messageLayer messagelayer.MessageLayer
 	gvr          schema.GroupVersionResource
@@ -131,7 +133,6 @@ func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface
 	err := util.SetMetaType(eventObj)
 	if err != nil {
 		klog.Warningf("failed to set metatype :%v", err)
-		return
 	}
 	c.events <- watch.Event{Type: t, Object: eventObj}
 }
@@ -152,17 +153,11 @@ func (c *CommonResourceEventHandler) DeleteListener(s *SelectorListener) {
 }
 
 func (c *CommonResourceEventHandler) dispatchEvents() {
-	for {
-		select {
-		case event, ok := <-c.events:
-			if !ok {
-				klog.Warningf("[metaserver/resourceEventHandler] handler(%v) stopped!", c.gvr.String())
-				return
-			}
-			klog.V(4).Infof("[metaserver/resourceEventHandler] handler(%v), send obj event{%v/%v} to listeners", c.gvr, event.Type, event.Object.GetObjectKind().GroupVersionKind().String())
-			for _, listener := range c.listeners {
-				listener.sendObj(event, c.messageLayer)
-			}
+	for event := range c.events {
+		klog.V(4).Infof("[metaserver/resourceEventHandler] handler(%v), send obj event{%v/%v} to listeners", c.gvr, event.Type, event.Object.GetObjectKind().GroupVersionKind().String())
+		for _, listener := range c.listeners {
+			listener.sendObj(event, c.messageLayer)
 		}
 	}
+	klog.Warningf("[metaserver/resourceEventHandler] handler(%v) stopped!", c.gvr.String())
 }

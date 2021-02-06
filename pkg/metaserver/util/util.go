@@ -2,7 +2,8 @@ package util
 
 import (
 	"fmt"
-	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
@@ -11,7 +12,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
-	"strings"
+
+	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 )
 
 const (
@@ -86,7 +88,6 @@ func UnsafeKindToResource(k string) string {
 	}
 
 	return r + "s"
-
 }
 
 func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {

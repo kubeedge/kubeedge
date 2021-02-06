@@ -1,13 +1,14 @@
 package scope
 
 import (
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 )
 
 func NewRequestScope() *handlers.RequestScope {
@@ -19,9 +20,9 @@ func NewRequestScope() *handlers.RequestScope {
 			SelfLinkPathSuffix: "",
 		},
 
-		Serializer:      serializer.NewNegotiatedSerializer(),
-		ParameterCodec:  scheme.ParameterCodec,
-		Creater:         nil,
+		Serializer:     serializer.NewNegotiatedSerializer(),
+		ParameterCodec: scheme.ParameterCodec,
+		//Creater:         nil,
 		Convertor:       &fakeObjectConvertor{},
 		Defaulter:       nil,
 		Typer:           nil,

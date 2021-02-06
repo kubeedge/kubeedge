@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"regexp"
 	"strings"
 	"sync"
@@ -30,6 +29,7 @@ import (
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 )
@@ -113,7 +113,7 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 		return
 	}
 
-	klog.V(10).Infof("[cloudhub/HandlerServer] get msg from edge: %+v", container.Message)
+	klog.V(4).Infof("[cloudhub/HandlerServer] get msg from edge(%v): %+v", nodeID, container.Message)
 	if container.Message.GetOperation() == model.OpKeepalive {
 		klog.V(4).Infof("Keepalive message received from node: %s", nodeID)
 
@@ -251,7 +251,6 @@ func constructConnectMessage(info *model.HubInfo, isConnected bool) *beehiveMode
 
 func (mh *MessageHandle) PubToController(info *model.HubInfo, msg *beehiveModel.Message) error {
 	msg.SetResourceOperation(fmt.Sprintf("node/%s/%s", info.NodeID, msg.GetResource()), msg.GetOperation())
-	klog.V(4).Infof("event received for node %s %s, content: %s", info.NodeID, dumpMessageMetadata(msg), msg.Content)
 	if model.IsFromEdge(msg) {
 		err := mh.MessageQueue.Publish(msg)
 		if err != nil {

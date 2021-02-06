@@ -17,8 +17,6 @@ limitations under the License.
 package dynamiccontroller
 
 import (
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
@@ -26,22 +24,18 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
-
-var gvrs = []schema.GroupVersionResource{
-	{"", "v1", "pod"},
-	{"", "v1", "configmap"},
-}
 
 // DynamicController use dynamicSharedInformer to dispatch messages
 type DynamicController struct {
 	enable                       bool
 	messageLayer                 messagelayer.MessageLayer
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
-	applicationCenter            *application.ApplicationCenter
+	applicationCenter            *application.Center
 }
 
 func Register(dc *configv1alpha1.DynamicController) {
@@ -101,7 +95,5 @@ func (dctl *DynamicController) receiveMessage() {
 			continue
 		}
 		dctl.applicationCenter.Process(msg)
-
-
 	}
 }
