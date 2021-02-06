@@ -1,11 +1,18 @@
 package handlerfactory
 
+/*
+
 import (
 	"context"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
+	goruntime "runtime"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,10 +24,6 @@ import (
 	"k8s.io/apiserver/pkg/features"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/klog/v2"
-	"net/http"
-	"net/url"
-	goruntime "runtime"
-	"time"
 )
 
 // responder implements rest.Responder for assisting a connector in writing objects or errors.
@@ -275,3 +278,4 @@ func isDryRun(url *url.URL) bool {
 //	}
 //	return false
 //}
+*/

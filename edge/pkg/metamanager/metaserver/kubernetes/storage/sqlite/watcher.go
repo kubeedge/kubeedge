@@ -1,20 +1,41 @@
+/*
+Copyright 2016 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-----------------------------------------------------------------------------
+CHANGELOG
+KubeEdge Authors:
+- This File is drive from kubernetes/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go
+- Refactor to adapter imitator
+*/
 package sqlite
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"strings"
+	"sync"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
-	"strings"
-	"sync"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 const (
@@ -22,16 +43,6 @@ const (
 	incomingBufSize = 100
 	outgoingBufSize = 100
 )
-
-// errTestingDecode is the only error that testingDeferOnDecodeError catches during a panic
-var errTestingDecode = errors.New("sentinel error only used during testing to indicate watch decoding error")
-
-// testingDeferOnDecodeError is used during testing to recover from a panic caused by errTestingDecode, all other values continue to panic
-func testingDeferOnDecodeError() {
-	if r := recover(); r != nil && r != errTestingDecode {
-		panic(r)
-	}
-}
 
 type watcher struct {
 	client imitator.Client
@@ -54,7 +65,7 @@ type watchChan struct {
 	errChan    chan error
 }
 
-func NewWatcher(client imitator.Client, codec runtime.Codec) *watcher {
+func newWatcher(client imitator.Client, codec runtime.Codec) *watcher {
 	return &watcher{
 		client: client,
 		codec:  codec,
@@ -77,7 +88,7 @@ func (wc *watchChan) Receive(e watch.Event) error {
 func (w *watcher) Watch(ctx context.Context, key string, rev int64, recursive bool, pred storage.SelectionPredicate) (watch.Interface, error) {
 	// TODO: support rev != 0
 	if rev != 0 {
-		klog.Warning("base storage now only support rev == 0, but get rev == %v, force set to 0!", rev)
+		klog.Warningf("base storage now only support rev == 0, but get rev == %v, force set to 0!", rev)
 		rev = 0
 	}
 	wc := w.createWatchChan(ctx, key, rev, recursive, pred)
@@ -228,7 +239,7 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 				continue
 			}
 			hasBeenAdded := wc.added[key]
-			matched := wc.filter(e.Object)
+			matched := wc.filter(e.Object) //drop if not matched
 			switch {
 			case hasBeenAdded && !matched:
 				// stop to watch this obj because it's field or label are no longer meet the internalPred
@@ -237,13 +248,13 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 					Object: e.Object,
 				}
 			case hasBeenAdded && matched:
-				//添加过，且没被过滤，继续
+				//It has been added and is not dropped. Continue
 			case !hasBeenAdded && !matched:
-				//没添加过，被过滤了
-				klog.V(4).Infof("[apiservelite-watchChan]filter event: %v", e)
+				//It has been added and is not dropped. Continue
+				klog.V(4).Infof("[apiservelite-watchChan]drop event: %v", e)
 				continue
 			case !hasBeenAdded && matched && res.Type == watch.Modified:
-				//没添加过，没被过滤，但是事件时modified
+				//It has not been added but event is modified, force set to add.
 				res = &watch.Event{
 					Type:   watch.Added,
 					Object: e.Object,

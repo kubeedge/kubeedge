@@ -3,12 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
-	edgehubconfig "github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/cacher"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,12 +19,19 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/cacher"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // REST implements a RESTStorage for all resource against imitator.
 type REST struct {
 	*genericregistry.Store
-	*application.ApplicationAgent
+	*application.Agent
 }
 
 // NewREST returns a RESTStorage object that will work against all resources
@@ -62,7 +64,7 @@ func NewREST() (*REST, error) {
 	store.Storage.Storage = Storage
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
-	return &REST{store, application.NewApplicationAgent(edgehubconfig.Config.NodeName)}, nil
+	return &REST{store, application.NewApplicationAgent(metaserverconfig.Config.NodeName)}, nil
 }
 
 // Deprecated: use REST.List to set list's gvk.
@@ -84,8 +86,8 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	path := info.Path
 	// try remote
 	obj, err := func() (runtime.Object, error) {
-		app := r.ApplicationAgent.Generate(ctx, application.Get, *options, application.LabelFieldSelector{}, nil)
-		err := r.ApplicationAgent.Apply(app)
+		app := r.Agent.Generate(ctx, application.Get, *options, application.LabelFieldSelector{}, nil)
+		err := r.Agent.Apply(app)
 		defer app.Close()
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to get obj from cloud, %v", err)
@@ -117,8 +119,8 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 	// try remote
 	list, err := func() (runtime.Object, error) {
 		selector := application.LabelFieldSelector{Label: options.LabelSelector, Field: options.FieldSelector}
-		app := r.ApplicationAgent.Generate(ctx, application.List, *options, selector, nil)
-		err := r.ApplicationAgent.Apply(app)
+		app := r.Agent.Generate(ctx, application.List, *options, selector, nil)
+		err := r.Agent.Apply(app)
 		defer app.Close()
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to list obj from cloud, %v", err)
@@ -163,8 +165,8 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 	// try remote
 	_, err := func() (runtime.Object, error) {
 		selector := application.LabelFieldSelector{Label: options.LabelSelector, Field: options.FieldSelector}
-		app := r.ApplicationAgent.Generate(ctx, application.Watch, *options, selector, nil)
-		err := r.ApplicationAgent.Apply(app)
+		app := r.Agent.Generate(ctx, application.Watch, *options, selector, nil)
+		err := r.Agent.Apply(app)
 		defer app.Close()
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to apply for a watch listener from cloud, %v", err)
@@ -182,8 +184,8 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 }
 
 func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	app := r.ApplicationAgent.Generate(ctx, "delete", *options, application.LabelFieldSelector{}, nil)
-	if err := r.ApplicationAgent.Apply(app); err != nil {
+	app := r.Agent.Generate(ctx, "delete", *options, application.LabelFieldSelector{}, nil)
+	if err := r.Agent.Apply(app); err != nil {
 		return nil, err
 	}
 
@@ -195,8 +197,8 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 }
 
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	app := r.ApplicationAgent.Generate(ctx, "delete", *options, application.LabelFieldSelector{}, nil)
-	if err := r.ApplicationAgent.Apply(app); err != nil {
+	app := r.Agent.Generate(ctx, "delete", *options, application.LabelFieldSelector{}, nil)
+	if err := r.Agent.Apply(app); err != nil {
 		return nil, false, err
 	}
 
@@ -212,8 +214,8 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	if err != nil {
 		return nil, false, err
 	}
-	app := r.ApplicationAgent.Generate(ctx, "get", *options, application.LabelFieldSelector{}, obj)
-	if err := r.ApplicationAgent.Apply(app); err != nil {
+	app := r.Agent.Generate(ctx, "get", *options, application.LabelFieldSelector{}, obj)
+	if err := r.Agent.Apply(app); err != nil {
 		return nil, false, err
 	}
 	retObj := new(unstructured.Unstructured)

@@ -1,13 +1,15 @@
 package watchhook
 
 import (
+	"sync"
+
 	"github.com/google/uuid"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
-	"sync"
+
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 type WatchHook struct {

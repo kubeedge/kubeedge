@@ -120,7 +120,7 @@ func (eh *EdgeHub) routeToEdge() {
 			return
 		}
 
-		klog.V(4).Infof("[edgehub/routeToEdge] receive from cloud, msg: %+v", message)
+		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg:% +v", message)
 		err = eh.dispatch(message)
 		if err != nil {
 			klog.Errorf("failed to dispatch message, discard: %v", err)

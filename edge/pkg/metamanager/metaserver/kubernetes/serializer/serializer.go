@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"io"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured/unstructuredscheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -78,18 +79,19 @@ func (s *SetVersionEncoder) Encode(obj runtime.Object, w io.Writer) error {
 	return s.encoder.Encode(obj, w)
 }
 
-type AdapterDecoder struct{
+type AdapterDecoder struct {
 	runtime.Decoder
 }
 
 // sometimes
-func (d *AdapterDecoder) Decode(data []byte, defaults *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error){
-	out, gvk, err := d.Decoder.Decode(data,defaults,into)
-	if err != nil && gvk != nil{
+func (d *AdapterDecoder) Decode(data []byte, defaults *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
+	out, gvk, err := d.Decoder.Decode(data, defaults, into)
+	if err != nil && gvk != nil {
 		*defaults = *gvk
 	}
-	return out, gvk,err
+	return out, gvk, err
 }
+
 // WithKindGroupVersioner always return embedded gvk when we call KindForGroupVersionKinds
 type WithKindGroupVersioner struct {
 	gvk schema.GroupVersionKind
@@ -97,7 +99,6 @@ type WithKindGroupVersioner struct {
 
 func (s *WithKindGroupVersioner) KindForGroupVersionKinds(kinds []schema.GroupVersionKind) (target schema.GroupVersionKind, ok bool) {
 	return s.gvk, true
-
 }
 func (s *WithKindGroupVersioner) Identifier() string {
 	return s.gvk.String()

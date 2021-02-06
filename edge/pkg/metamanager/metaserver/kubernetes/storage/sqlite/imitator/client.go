@@ -2,20 +2,22 @@ package imitator
 
 import (
 	"context"
-	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"sync"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage/etcd3"
-	"sync"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
-// In fact it is default and the only one client. Because of v2Client
-// maintainers the revision and message cache, so we do not see multi-client
-// call InsertOrUpdateObj.
+// DefaultV2Client is the only one client. Because of v2Client
+// maintainers the revision and message cache(todo), so we do not see
+// there are multi-clients.
 var DefaultV2Client = newV2Client()
 var Versioner = etcd3.Versioner
 

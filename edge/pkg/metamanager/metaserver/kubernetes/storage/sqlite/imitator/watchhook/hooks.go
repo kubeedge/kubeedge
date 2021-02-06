@@ -2,13 +2,15 @@ package watchhook
 
 import (
 	"fmt"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"sync"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage/etcd3"
 	"k8s.io/klog/v2"
-	"sync"
+
+	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
 var (

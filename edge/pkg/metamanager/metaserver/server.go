@@ -1,134 +1,52 @@
 package metaserver
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
-	"github.com/kubeedge/kubeedge/pkg/metaserver"
-	"io"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"errors"
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
-	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/server"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
-	"net"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"time"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 )
 
 const (
 	// TODO: make addrs configurable
-	httpaddr      = "0.0.0.0:10010"
-	apiserverAddr = "https://10.10.102.81:6443"
+	httpaddr = "127.0.0.1:10010"
 )
 
-// TODO: is it necessary to construct a new struct rather than server.GenericAPIServer ?
-// LiteServer is simplification of server.GenericAPIServer
-type LiteServer struct {
+// MetaServer is simplification of server.GenericAPIServer
+type MetaServer struct {
 	HandlerChainWaitGroup *utilwaitgroup.SafeWaitGroup
 	LongRunningFunc       apirequest.LongRunningRequestCheck
 	RequestTimeout        time.Duration
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
 	Factory               handlerfactory.Factory
-	// TODO delete it , rest storage will replace it
-	reverseProxy          *httputil.ReverseProxy
 }
 
-func NewLiteServer() *LiteServer {
-	apiserverURL, err := url.Parse(apiserverAddr)
-	utilruntime.Must(err)
-
-	// TODO: make kubeConfig configurable
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", "kubeconfig")
-	utilruntime.Must(err)
-	reverseProxy := httputil.NewSingleHostReverseProxy(apiserverURL)
-	ls := LiteServer{
+func NewMetaServer() *MetaServer {
+	ls := MetaServer{
 		HandlerChainWaitGroup: new(utilwaitgroup.SafeWaitGroup),
 		LongRunningFunc:       genericfilters.BasicLongRunningRequestCheck(sets.NewString("watch"), sets.NewString()),
 		NegotiatedSerializer:  serializer.NewNegotiatedSerializer(),
 		Factory:               handlerfactory.NewFactory(),
-		reverseProxy:          reverseProxy,
 	}
-	transport, err := rest.TransportFor(kubeConfig)
-	reverseProxy.Transport = transport
-	reverseProxy.FlushInterval = -1
-	reverseProxy.ModifyResponse = ls.CacheGetResp
 	return &ls
 }
-func (ls *LiteServer) CacheGetResp(resp *http.Response) error {
-	if resp == nil || resp.Request == nil {
-		klog.V(4).Infof("[metaserver]cache resp, no resp or request info in response, skip cache get response")
-		return nil
-	}
-	req := resp.Request
-	ctx := req.Context()
-	reqInfo, ok := apirequest.RequestInfoFrom(ctx)
-	if !ok {
-		klog.V(4).Infof("[metaserver]cache resp, no req info in req context, skip")
-		return nil
-	}
-	klog.V(4).Infof("[metaserver]cache resp, req header: %v ; resp header: %v.", req.Header, resp.Header)
-	if reqInfo.Subresource == "status" {
-		klog.V(4).Infof("[metaserver]cache resp, no req info in req context, skip")
-	}
-	if reqInfo.IsResourceRequest && (reqInfo.Verb == "get" || reqInfo.Verb == "update" || reqInfo.Verb == "insert" || reqInfo.Verb == "patch") {
-		var buf bytes.Buffer
-		n, err := buf.ReadFrom(resp.Body)
-		if err != nil || n == 0 {
-			return err
-		}
-		reader, writer := io.Pipe()
-		resp.Body = reader
-		go func() {
-			_, err = writer.Write(buf.Bytes())
-			if err != nil {
-				klog.Errorf("%v", err)
-			}
-			err = writer.Close()
-			if err != nil {
-				klog.Errorf("%v", err)
-			}
-		}()
-		mediaType, ok := negotiation.NegotiateMediaTypeOptions(resp.Header.Get("Accept"), ls.NegotiatedSerializer.SupportedMediaTypes(), negotiation.DefaultEndpointRestrictions)
-		if !ok {
-			return fmt.Errorf("cache resp, failed to negotiate")
-		}
-		serializerInfo := mediaType.Accepted
-		var unstrObj unstructured.Unstructured
-		_, _, err = serializerInfo.Serializer.Decode(buf.Bytes(), nil, &unstrObj)
-		if err != nil {
-			return err
-		}
-		err = imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), &unstrObj)
-		if err != nil {
-			return err
-		}
-	} else {
-		klog.V(4).Infof("[metaserver]no need to cache resp", req.URL)
-		return nil
-	}
-	klog.V(4).Infof("[metaserver]successfully cache resp %v", req.URL)
-	return nil
 
-}
-
-func (ls *LiteServer) Start(stopChan <-chan struct{}) {
+func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
@@ -139,100 +57,33 @@ func (ls *LiteServer) Start(stopChan <-chan struct{}) {
 	<-stopChan
 }
 
-func (ls *LiteServer) BuildBasicHandler() http.Handler {
+func (ls *MetaServer) BuildBasicHandler() http.Handler {
 	listHandler := ls.Factory.List()
 	getHandler := ls.Factory.Get()
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		reqInfo, ok := apirequest.RequestInfoFrom(ctx)
-		klog.Infof("[metaserver]get a req(%v):%+v \nreq:%+v", reqInfo.Path, reqInfo, req)
+		klog.Infof("[metaserver]get a req(%v)(%v)", req.URL.RawPath, req.URL.RawQuery)
 		if ok && reqInfo.IsResourceRequest {
-			// try local, also transport req to remote apiserver if req type is not read opration.
 			switch {
 			case reqInfo.Verb == "get":
-				// TODO: @rachel-shao, replace with getHandler.ServerHttp
-				getHandler.ServeHTTP(w,req)
+				getHandler.ServeHTTP(w, req)
 			case reqInfo.Verb == "list":
 				listHandler.ServeHTTP(w, req)
 			case reqInfo.Verb == "watch":
 				listHandler.ServeHTTP(w, req)
 			default:
-				// temporarily force set to json
-				req.Header.Set("Accept", "application/json")
-				ls.reverseProxy.ServeHTTP(w, req)
+				responsewriters.ErrorNegotiated(errors.New("unsupport req verb"), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+				return
 			}
 		} else {
-			ls.reverseProxy.ServeHTTP(w, req)
+			responsewriters.ErrorNegotiated(errors.New("not a resource req"), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 		}
-
 	})
 	return h
 }
 
-func (ls *LiteServer) tryRemote(w http.ResponseWriter, req *http.Request) error {
-	conn, err := net.DialTimeout("tcp", "10.10.102.81:6443", 3*time.Second)
-	if err == nil && conn != nil {
-		// transport to apiserver
-		// temporarily force set to json
-		req.Header.Set("Accept", "application/json")
-		ls.reverseProxy.ServeHTTP(w, req)
-		return nil
-	}
-	return fmt.Errorf("failed to transport req to remote, %v", err)
-}
-
-func (ls *LiteServer) processRead(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	info, _ := apirequest.RequestInfoFrom(ctx)
-	key, err := metaserver.KeyFuncReq(ctx, "")
-	if err != nil {
-		responsewriters.InternalError(w, req, err)
-		return
-	}
-	resp, err := imitator.DefaultV2Client.Get(context.TODO(), key)
-	gv := schema.GroupVersion{
-		Group:   info.APIGroup,
-		Version: info.APIVersion,
-	}
-	if err != nil || len(*resp.Kvs) == 0 {
-		responsewriters.ErrorNegotiated(err, ls.NegotiatedSerializer, gv, w, req)
-		//responsewriters.InternalError(w,req,err)
-		klog.Error(err)
-		return
-	}
-	mdeiaType, _, err := negotiation.NegotiateOutputMediaType(req, ls.NegotiatedSerializer, negotiation.DefaultEndpointRestrictions)
-	if err != nil {
-		responsewriters.ErrorNegotiated(err, ls.NegotiatedSerializer, gv, w, req)
-		return
-	}
-	meta := (*resp.Kvs)[0]
-	b := []byte(meta.Value)
-	switch mdeiaType.Accepted.MediaType {
-	case "application/json":
-		writeRaw(http.StatusOK, b, w)
-	case "application/yaml": //convert to yaml format
-		var unstrObj unstructured.Unstructured
-		_, _, err = unstructured.UnstructuredJSONScheme.Decode(b, nil, &unstrObj)
-		if err != nil {
-			responsewriters.InternalError(w, req, err)
-		}
-		responsewriters.WriteObjectNegotiated(ls.NegotiatedSerializer, negotiation.DefaultEndpointRestrictions, gv, w, req, http.StatusOK, &unstrObj)
-	default:
-		klog.Errorf("do not support this, %v", mdeiaType.Accepted.MediaType)
-	}
-	return
-}
-func writeRaw(statusCode int, bytes []byte, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	w.Write(bytes)
-}
-
-func (ls *LiteServer) processFail(w http.ResponseWriter, req *http.Request) {
-	//TODO: transfer to remote true apiserver
-
-}
-func BuildHandlerChain(handler http.Handler, ls *LiteServer) http.Handler {
+func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 	cfg := &server.Config{
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}

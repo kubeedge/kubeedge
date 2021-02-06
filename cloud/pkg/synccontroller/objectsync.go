@@ -2,7 +2,8 @@ package synccontroller
 
 import (
 	"context"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	"strconv"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	"strconv"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -20,6 +20,7 @@ import (
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 var forceSet = map[string]string{
@@ -84,7 +85,7 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 	objectResourceVersion string, obj interface{}) {
 	runtimeObj := obj.(runtime.Object)
 	if err := util.SetMetaType(runtimeObj); err != nil {
-		klog.Error(err)
+		klog.Warningf("failed to set metatype :%v", err)
 	}
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event

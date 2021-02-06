@@ -2,47 +2,48 @@ package metaserver
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"net/http"
-	"testing"
 )
 
-func TestKeyFuncObj(t *testing.T){
+func TestKeyFuncObj(t *testing.T) {
 	cases := []struct {
 		// group version kind namespace name
-		attr []string
+		attr      []string
 		stdResult string
 	}{
 		{
-			attr: []string{"","v1","Pod","default","pods-foo"},
+			attr:      []string{"", "v1", "Pod", "default", "pods-foo"},
 			stdResult: "/core/v1/pods/default/pods-foo",
 		},
 		{
-			attr: []string{"","v1","Endpoints","default","pods-foo"},
+			attr:      []string{"", "v1", "Endpoints", "default", "pods-foo"},
 			stdResult: "/core/v1/endpoints/default/pods-foo",
 		},
 		{
-			attr: []string{"","v1","Configmap","default","pods-foo"},
+			attr:      []string{"", "v1", "Configmap", "default", "pods-foo"},
 			stdResult: "/core/v1/configmaps/default/pods-foo",
 		},
 		{
-			attr: []string{"","v1","KindFoo","ns-bar","name-whatever"},
+			attr:      []string{"", "v1", "KindFoo", "ns-bar", "name-whatever"},
 			stdResult: "/core/v1/kindfoos/ns-bar/name-whatever",
 		},
 		{
-			attr: []string{"apps","v1","Deployment","ns-bar","name-whatever"},
+			attr:      []string{"apps", "v1", "Deployment", "ns-bar", "name-whatever"},
 			stdResult: "/apps/v1/deployments/ns-bar/name-whatever",
 		},
 		{
-			attr: []string{"","v1","KindFoo","","name-whatever"},
+			attr:      []string{"", "v1", "KindFoo", "", "name-whatever"},
 			stdResult: "/core/v1/kindfoos/null/name-whatever",
 		},
 		{
-			attr: []string{"","v1","KindFoo","","name-whatever"},
+			attr:      []string{"", "v1", "KindFoo", "", "name-whatever"},
 			stdResult: "/core/v1/kindfoos/null/name-whatever",
 		},
 	}
@@ -50,20 +51,20 @@ func TestKeyFuncObj(t *testing.T){
 		t.Run("parseKey", func(t *testing.T) {
 			var obj unstructured.Unstructured
 			gvk := schema.GroupVersionKind{
-				Group: test.attr[0],
+				Group:   test.attr[0],
 				Version: test.attr[1],
-				Kind: test.attr[2],
+				Kind:    test.attr[2],
 			}
 			obj.SetGroupVersionKind(gvk)
 			obj.SetNamespace(test.attr[3])
 			obj.SetName(test.attr[4])
 
-			key,err := KeyFuncObj(&obj)
+			key, err := KeyFuncObj(&obj)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			if test.stdResult != key{
-				t.Errorf("KeyFuncObj Case failed,wanted result:%+v,acctual result:%+v",test.stdResult,key)
+			if test.stdResult != key {
+				t.Errorf("KeyFuncObj Case failed,wanted result:%+v,acctual result:%+v", test.stdResult, key)
 			}
 		})
 	}
@@ -71,7 +72,7 @@ func TestKeyFuncObj(t *testing.T){
 
 func TestKeyFuncReq(t *testing.T) {
 	namespaceAll := metav1.NamespaceAll
-	Cases := []struct {//copy by requestinfo_test.go
+	Cases := []struct { //copy by requestinfo_test.go
 		method              string
 		url                 string
 		expectedVerb        string
@@ -151,7 +152,7 @@ func TestKeyFuncReq(t *testing.T) {
 		"/extensions/v1beta3/pods/other",
 	}
 	resolver := newTestRequestInfoResolver()
-	for k,v:=range Cases{
+	for k, v := range Cases {
 		t.Run("parseKey", func(t *testing.T) {
 			req, err := http.NewRequest(v.method, v.url, nil)
 			if err != nil {
@@ -169,11 +170,8 @@ func TestKeyFuncReq(t *testing.T) {
 			if key != stdResult[k] {
 				t.Errorf("failed to parse req context, wanted(%v),get(%v)", stdResult[k], key)
 			}
-
 		})
-
 	}
-
 }
 func newTestRequestInfoResolver() *request.RequestInfoFactory {
 	return &request.RequestInfoFactory{
@@ -181,108 +179,109 @@ func newTestRequestInfoResolver() *request.RequestInfoFactory {
 		GrouplessAPIPrefixes: sets.NewString("api"),
 	}
 }
+
 // TestSaveMeta is function to initialize all global variable and test SaveMeta
 func TestParseKey(t *testing.T) {
-	type result struct{
-		gvr schema.GroupVersionResource
+	type result struct {
+		gvr       schema.GroupVersionResource
 		namespace string
-		name string
+		name      string
 	}
 	cases := []struct {
-		key string
+		key       string
 		stdResult result
 	}{
 		{
 			// Success Case
-			key:"/core/v1/pods/default/pod-foo",
-			stdResult: result {
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+			key: "/core/v1/pods/default/pod-foo",
+			stdResult: result{
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "pods",
 				},
-				namespace:"default",
-				name: "pod-foo",
+				namespace: "default",
+				name:      "pod-foo",
 			},
 		},
 		{
 			// Success Case
-			key:"/core/v1/endpoints",
+			key: "/core/v1/endpoints",
 			stdResult: result{
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "endpoints",
 				},
 				namespace: "",
-				name: "",
+				name:      "",
 			},
 		},
 		{
 			// Success Case
-			key:"/core/v1/endpoints/",
+			key: "/core/v1/endpoints/",
 			stdResult: result{
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "endpoints",
 				},
 				namespace: "",
-				name: "",
+				name:      "",
 			},
 		},
 		{
 			// Success test
-			key:"/core/v1/endpoints/default",
+			key: "/core/v1/endpoints/default",
 			stdResult: result{
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "endpoints",
 				},
 				namespace: "default",
-				name: "",
+				name:      "",
 			},
 		},
 		{
 			// Success test
-			key:"/core/v1/endpoints/null/null",
+			key: "/core/v1/endpoints/null/null",
 			stdResult: result{
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "endpoints",
 				},
 				namespace: "",
-				name: "",
+				name:      "",
 			},
 		},
 		{
 			// Fail test
-			key:"/",
+			key:       "/",
 			stdResult: result{},
 		},
 		{
 			// Fail test
-			key:"abc",
+			key:       "abc",
 			stdResult: result{},
 		},
 		{
 			// Fail test
-			key:"///////",
+			key:       "///////",
 			stdResult: result{},
 		},
 		{
 			// Specially success test, ParseKey is not responsible for verifying the validity of the content
-			key:"/core/v1/endpoints",
+			key: "/core/v1/endpoints",
 			stdResult: result{
-				gvr:schema.GroupVersionResource{
-					Group: "",
-					Version: "v1",
+				gvr: schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
 					Resource: "endpoints",
 				},
 				namespace: "",
-				name: "",
+				name:      "",
 			},
 		},
 	}
@@ -290,10 +289,10 @@ func TestParseKey(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run("parseKey", func(t *testing.T) {
-			gvr,ns,name := ParseKey(test.key)
-			parseResult := result{gvr,ns,name}
-			if test.stdResult != parseResult{
-				t.Errorf("ParseKey Case failed, key:%v,wanted result:%+v,acctual result:%+v",test.key,test.stdResult,parseResult)
+			gvr, ns, name := ParseKey(test.key)
+			parseResult := result{gvr, ns, name}
+			if test.stdResult != parseResult {
+				t.Errorf("ParseKey Case failed, key:%v,wanted result:%+v,acctual result:%+v", test.key, test.stdResult, parseResult)
 			}
 		})
 	}
