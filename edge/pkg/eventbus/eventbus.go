@@ -123,8 +123,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := message["topic"].(string)
 			payload, err := json.Marshal(&message)
 			if err != nil {
-				eb.publish(topic, payload)
+				klog.Errorf("Fail to marshal: %v", err)
+				continue
 			}
+			eb.publish(topic, payload)
 		case messagepkg.OperationPublish:
 			topic := resource
 			// cloud and edge will send different type of content, need to check
@@ -145,8 +147,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, err := json.Marshal(accessInfo.GetContent())
 			if err != nil {
-				eb.publish(topic, payload)
+				klog.Errorf("Fail to marshal: %v", err)
+				continue
 			}
+			eb.publish(topic, payload)
 		default:
 			klog.Warningf("Action not found")
 		}
