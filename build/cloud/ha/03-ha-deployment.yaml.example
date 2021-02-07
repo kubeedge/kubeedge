@@ -60,6 +60,8 @@ spec:
           volumeMounts:
             - name: conf
               mountPath: /etc/kubeedge/config
+            - name: certs  # mount the cloudstream certificate directory for cloudcore
+              mountPath: /etc/kubeedge
           env:
             - name: CLOUDCORE_POD_NAME
               valueFrom:
@@ -76,4 +78,8 @@ spec:
         - name: conf
           configMap:
             name: cloudcore
+        - name: certs
+          hostPath:
+            path: "/etc/kubeedge"
+            type: DirectoryOrCreate
 
