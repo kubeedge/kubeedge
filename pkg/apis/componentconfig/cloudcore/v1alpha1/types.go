@@ -70,6 +70,8 @@ type Modules struct {
 	DeviceController *DeviceController `json:"deviceController,omitempty"`
 	// SyncController indicates SyncController module config
 	SyncController *SyncController `json:"syncController,omitempty"`
+	// DynamicController indicates DynamicController module config
+	DynamicController *DynamicController `json:"dynamicController,omitempty"`
 	// CloudStream indicates cloudstream module config
 	CloudStream *CloudStream `json:"cloudStream,omitempty"`
 	// Router indicates router module config
@@ -344,6 +346,14 @@ type DeviceControllerLoad struct {
 type SyncController struct {
 	// Enable indicates whether syncController is enabled,
 	// if set to false (for debugging etc.), skip checking other syncController configs.
+	// default true
+	Enable bool `json:"enable,omitempty"`
+}
+
+// DynamicController indicates the dynamic controller
+type DynamicController struct {
+	// Enable indicates whether dynamicController is enabled,
+	// if set to false (for debugging etc.), skip checking other dynamicController configs.
 	// default true
 	Enable bool `json:"enable,omitempty"`
 }
