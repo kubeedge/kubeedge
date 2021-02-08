@@ -56,7 +56,6 @@ func (s *store) watch(ctx context.Context, key string, opts storage.ListOptions,
 	return s.watcher.Watch(ctx, key, int64(rev), recursive, opts.Predicate)
 }
 
-//TODO:@rachel-Shao
 func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	resp, err := s.client.Get(context.TODO(), key)
 	if err != nil || len(*resp.Kvs) == 0 {
@@ -70,12 +69,11 @@ func (s *store) Get(ctx context.Context, key string, opts storage.GetOptions, ob
 	return nil
 }
 
-//TODO:@rachel-Shao
+//TODO: implement it
 func (s *store) GetToList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	panic("GetToList implement me")
 }
 
-//TODO:@rachel-Shao
 func (s *store) List(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	klog.Infof("get a list req, key=%v", key)
 	listPtr, err := meta.GetItemsPtr(listObj)

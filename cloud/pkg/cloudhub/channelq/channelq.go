@@ -65,10 +65,6 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
-		if msg.Router.Operation == application.ApplicationResp {
-			q.addListMessageToQueue(nodeID, &msg)
-			continue
-		}
 		if isListResource(&msg) {
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
@@ -167,6 +163,9 @@ func isListResource(msg *beehiveModel.Message) bool {
 		return true
 	}
 
+	if msg.Router.Operation == application.ApplicationResp {
+		return true
+	}
 	if msg.GetOperation() == beehiveModel.ResponseOperation {
 		content, ok := msg.Content.(string)
 		if ok && content == "OK" {

@@ -84,7 +84,7 @@ func decorator(obj runtime.Object) error {
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	path := info.Path
-	// try remote
+	// try remote cloud
 	obj, err := func() (runtime.Object, error) {
 		app := r.Agent.Generate(ctx, application.Get, *options, application.LabelFieldSelector{}, nil)
 		err := r.Agent.Apply(app)
@@ -116,7 +116,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 func (r *REST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	path := info.Path
-	// try remote
+	// try remote cloud
 	list, err := func() (runtime.Object, error) {
 		selector := application.LabelFieldSelector{Label: options.LabelSelector, Field: options.FieldSelector}
 		app := r.Agent.Generate(ctx, application.List, *options, selector, nil)
@@ -162,7 +162,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
 	path := info.Path
-	// try remote
+	// try remote cloud
 	_, err := func() (runtime.Object, error) {
 		selector := application.LabelFieldSelector{Label: options.LabelSelector, Field: options.FieldSelector}
 		app := r.Agent.Generate(ctx, application.Watch, *options, selector, nil)

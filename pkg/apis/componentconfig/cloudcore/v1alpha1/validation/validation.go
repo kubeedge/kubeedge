@@ -34,7 +34,7 @@ import (
 // ValidateCloudCoreConfiguration validates `c` and returns an errorList if it is invalid
 func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	//allErrs = append(allErrs, ValidateKubeAPIConfig(*c.KubeAPIConfig)...)
+	allErrs = append(allErrs, ValidateKubeAPIConfig(*c.KubeAPIConfig)...)
 	allErrs = append(allErrs, ValidateModuleCloudHub(*c.Modules.CloudHub)...)
 	allErrs = append(allErrs, ValidateModuleEdgeController(*c.Modules.EdgeController)...)
 	allErrs = append(allErrs, ValidateModuleDeviceController(*c.Modules.DeviceController)...)
