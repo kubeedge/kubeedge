@@ -12,12 +12,14 @@ import (
 	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 )
 
 //Constants to check metamanager processes
@@ -138,6 +140,7 @@ func (m *metaManager) processInsert(message model.Message) {
 			return
 		}
 	}
+	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
 	switch resType {
 	case constants.ResourceTypeServiceList:
@@ -211,6 +214,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			return
 		}
 	}
+	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
 	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
@@ -319,7 +323,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case CloudControlerModel:
+	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
 		if isEdgeMeshResource(resType) {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
@@ -377,6 +381,7 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
+	imitator.DefaultV2Client.Inject(message)
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
