@@ -23,6 +23,6 @@ func InitConfigure(m *v1alpha1.MetaManager) {
 		Config = Configure{
 			MetaManager: *m,
 		}
-		metaserverconfig.InitConfigure(&Config.MetaServer)
+		metaserverconfig.InitConfigure(Config.MetaServer)
 	})
 }
