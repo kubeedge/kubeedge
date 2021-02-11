@@ -33,7 +33,7 @@ const (
 	CertFile = "/tmp/kubeedge/testData/edge.crt"
 	KeyFile  = "/tmp/kubeedge/testData/edge.key"
 	Method   = "GET"
-	Url      = "kubeedge.io"
+	URL      = "kubeedge.io"
 )
 
 //TestNewHttpClient() tests the creation of a new HTTP client
@@ -189,7 +189,7 @@ func TestBuildRequest(t *testing.T) {
 	token := "token"
 	nodeName := "name"
 
-	req, err := http.NewRequest(Method, Url, reader)
+	req, err := http.NewRequest(Method, URL, reader)
 	if err != nil {
 		t.Errorf("Error in creating new http request message: %v", err)
 		return
@@ -214,7 +214,7 @@ func TestBuildRequest(t *testing.T) {
 			name: "TestBuildRequest: ",
 			args: args{
 				method:   Method,
-				urlStr:   Url,
+				urlStr:   URL,
 				body:     reader,
 				token:    token,
 				nodeName: nodeName,
@@ -226,7 +226,7 @@ func TestBuildRequest(t *testing.T) {
 			name: "NewRequest failure causes BuildRequest failure: ",
 			args: args{
 				method:   "INVALID\n",
-				urlStr:   Url,
+				urlStr:   URL,
 				body:     reader,
 				token:    token,
 				nodeName: nodeName,
@@ -263,7 +263,7 @@ func TestSendRequestFailure(t *testing.T) {
 		t.Fatal("Failed to build HTTP client")
 	}
 
-	req, err := http.NewRequest(Method, Url, bytes.NewReader([]byte{}))
+	req, err := http.NewRequest(Method, URL, bytes.NewReader([]byte{}))
 	if err != nil {
 		t.Errorf("Error in creating new http request message: %v", err)
 		return
