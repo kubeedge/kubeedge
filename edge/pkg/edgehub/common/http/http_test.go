@@ -30,13 +30,15 @@ import (
 )
 
 const (
-	CertFile = "/tmp/kubeedge/testData/edge.crt"
-	KeyFile  = "/tmp/kubeedge/testData/edge.key"
+	Path     = "/tmp/kubeedge/testData/"
+	BaseName = "edge"
+	CertFile = Path + BaseName + ".crt"
+	KeyFile  = Path + BaseName + ".key"
 	Method   = "GET"
 	URL      = "kubeedge.io"
 )
 
-//TestNewHttpClient() tests the creation of a new HTTP client
+// TestNewHttpClient() tests the creation of a new HTTP client
 func TestNewHttpClient(t *testing.T) {
 	httpClient := NewHTTPClient()
 	if httpClient == nil {
@@ -44,16 +46,16 @@ func TestNewHttpClient(t *testing.T) {
 	}
 }
 
-//TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
+// TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
 func TestNewHTTPSClient(t *testing.T) {
-	err := util.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
+	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
 	if err != nil {
-		t.Errorf("Error in generating fake certificates: %v", err)
+		t.Errorf("Error in generating fake certificates: %w", err)
 		return
 	}
 	certificate, err := tls.LoadX509KeyPair(CertFile, KeyFile)
 	if err != nil {
-		t.Errorf("Error in loading key pair: %v", err)
+		t.Errorf("Error in loading key pair: %w", err)
 		return
 	}
 	type args struct {
@@ -111,16 +113,16 @@ func TestNewHTTPSClient(t *testing.T) {
 	}
 }
 
-//TestNewHTTPClientWithCA() tests the creation of a new HTTP using filled capem
+// TestNewHTTPClientWithCA() tests the creation of a new HTTP using filled capem
 func TestNewHTTPClientWithCA(t *testing.T) {
-	err := util.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
+	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
 	if err != nil {
-		t.Errorf("Error in generating fake certificates: %v", err)
+		t.Errorf("Error in generating fake certificates: %w", err)
 		return
 	}
 	capem, err := ioutil.ReadFile(CertFile)
 	if err != nil {
-		t.Errorf("Error in loading Cert file: %v", err)
+		t.Errorf("Error in loading Cert file: %w", err)
 		return
 	}
 	certificate := tls.Certificate{}
@@ -173,7 +175,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewHTTPClientWithCA(tt.args.capem, tt.args.certificate)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewHTTPClientWithCA() error = %v, expectedError = %v", err, tt.wantErr)
+				t.Errorf("NewHTTPClientWithCA() error = %w, expectedError = %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -183,7 +185,7 @@ func TestNewHTTPClientWithCA(t *testing.T) {
 	}
 }
 
-//TestBuildRequest() tests the process of message building
+// TestBuildRequest() tests the process of message building
 func TestBuildRequest(t *testing.T) {
 	reader := bytes.NewReader([]byte{})
 	token := "token"
@@ -191,7 +193,7 @@ func TestBuildRequest(t *testing.T) {
 
 	req, err := http.NewRequest(Method, URL, reader)
 	if err != nil {
-		t.Errorf("Error in creating new http request message: %v", err)
+		t.Errorf("Error in creating new http request message: %w", err)
 		return
 	}
 	req.Header.Add("Authorization", "Bearer "+token)
@@ -239,7 +241,7 @@ func TestBuildRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := BuildRequest(tt.args.method, tt.args.urlStr, tt.args.body, tt.args.token, tt.args.nodeName)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildRequest() error = %v, expectedError = %v", err, tt.wantErr)
+				t.Errorf("BuildRequest() error = %w, expectedError = %v", err, tt.wantErr)
 				return
 			}
 			//needed to handle failure testcase because can't deep compare field in nil
@@ -256,7 +258,7 @@ func TestBuildRequest(t *testing.T) {
 	}
 }
 
-//TestSendRequestFailure() uses fake data and expects function to fail
+// TestSendRequestFailure() uses fake data and expects function to fail
 func TestSendRequestFailure(t *testing.T) {
 	httpClient := NewHTTPClient()
 	if httpClient == nil {
@@ -265,13 +267,12 @@ func TestSendRequestFailure(t *testing.T) {
 
 	req, err := http.NewRequest(Method, URL, bytes.NewReader([]byte{}))
 	if err != nil {
-		t.Errorf("Error in creating new http request message: %v", err)
+		t.Errorf("Error in creating new http request message: %w", err)
 		return
 	}
 
 	resp, respErr := SendRequest(req, httpClient)
 	if resp != nil && respErr == nil {
 		t.Errorf("Error, response should not come as data is not valid")
-		return
 	}
 }
