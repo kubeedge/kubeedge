@@ -17,8 +17,11 @@ limitations under the License.
 package http
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"testing"
@@ -27,11 +30,15 @@ import (
 )
 
 const (
-	CertFile = "/tmp/kubeedge/testData/edge.crt"
-	KeyFile  = "/tmp/kubeedge/testData/edge.key"
+	Path     = "/tmp/kubeedge/testData/"
+	BaseName = "edge"
+	CertFile = Path + BaseName + ".crt"
+	KeyFile  = Path + BaseName + ".key"
+	Method   = "GET"
+	URL      = "kubeedge.io"
 )
 
-//TestNewHttpClient() tests the creation of a new HTTP client
+// TestNewHttpClient() tests the creation of a new HTTP client
 func TestNewHttpClient(t *testing.T) {
 	httpClient := NewHTTPClient()
 	if httpClient == nil {
@@ -39,16 +46,16 @@ func TestNewHttpClient(t *testing.T) {
 	}
 }
 
-//TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
+// TestNewHTTPSClient() tests the creation of a new HTTPS client with proper values
 func TestNewHTTPSClient(t *testing.T) {
-	err := util.GenerateTestCertificate("/tmp/kubeedge/testData/", "edge", "edge")
+	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
 	if err != nil {
-		t.Errorf("Error in generating fake certificates: %v", err)
+		t.Errorf("Error in generating fake certificates: %w", err)
 		return
 	}
 	certificate, err := tls.LoadX509KeyPair(CertFile, KeyFile)
 	if err != nil {
-		t.Errorf("Error in loading key pair: %v", err)
+		t.Errorf("Error in loading key pair: %w", err)
 		return
 	}
 	type args struct {
@@ -103,5 +110,169 @@ func TestNewHTTPSClient(t *testing.T) {
 				t.Errorf("NewHTTPSClient() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// TestNewHTTPClientWithCA() tests the creation of a new HTTP using filled capem
+func TestNewHTTPClientWithCA(t *testing.T) {
+	err := util.GenerateTestCertificate(Path, BaseName, BaseName)
+	if err != nil {
+		t.Errorf("Error in generating fake certificates: %w", err)
+		return
+	}
+	capem, err := ioutil.ReadFile(CertFile)
+	if err != nil {
+		t.Errorf("Error in loading Cert file: %w", err)
+		return
+	}
+	certificate := tls.Certificate{}
+
+	testPool := x509.NewCertPool()
+	if ok := testPool.AppendCertsFromPEM(capem); !ok {
+		t.Errorf("cannot parse the certificates")
+		return
+	}
+
+	type args struct {
+		capem       []byte
+		certificate tls.Certificate
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *http.Client
+		wantErr bool
+	}{
+		{
+			name: "TestNewHTTPClientWithCA: ",
+			args: args{
+				capem:       capem,
+				certificate: certificate,
+			},
+			want: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						RootCAs:            testPool,
+						InsecureSkipVerify: false,
+						Certificates:       []tls.Certificate{certificate},
+					},
+				},
+				Timeout: connectTimeout,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Wrong certifcate given when getting HTTP client",
+			args: args{
+				capem:       []byte{},
+				certificate: certificate,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewHTTPClientWithCA(tt.args.capem, tt.args.certificate)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewHTTPClientWithCA() error = %w, expectedError = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewHTTPClientWithCA() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestBuildRequest() tests the process of message building
+func TestBuildRequest(t *testing.T) {
+	reader := bytes.NewReader([]byte{})
+	token := "token"
+	nodeName := "name"
+
+	req, err := http.NewRequest(Method, URL, reader)
+	if err != nil {
+		t.Errorf("Error in creating new http request message: %w", err)
+		return
+	}
+	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("NodeName", nodeName)
+
+	type args struct {
+		method   string
+		urlStr   string
+		body     io.Reader
+		token    string
+		nodeName string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *http.Request
+		wantErr bool
+	}{
+		{
+			name: "TestBuildRequest: ",
+			args: args{
+				method:   Method,
+				urlStr:   URL,
+				body:     reader,
+				token:    token,
+				nodeName: nodeName,
+			},
+			want:    req,
+			wantErr: false,
+		},
+		{
+			name: "NewRequest failure causes BuildRequest failure: ",
+			args: args{
+				method:   "INVALID\n",
+				urlStr:   URL,
+				body:     reader,
+				token:    token,
+				nodeName: nodeName,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := BuildRequest(tt.args.method, tt.args.urlStr, tt.args.body, tt.args.token, tt.args.nodeName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BuildRequest() error = %w, expectedError = %v", err, tt.wantErr)
+				return
+			}
+			//needed to handle failure testcase because can't deep compare field in nil
+			if got == tt.want && err != nil && tt.wantErr == true {
+				return
+			}
+			if !reflect.DeepEqual(got.Header, tt.want.Header) {
+				t.Errorf("BuildRequest() Header = %v, want %v", got, tt.want.Header)
+			}
+			if !reflect.DeepEqual(got.Body, tt.want.Body) {
+				t.Errorf("BuildRequest() Body = %v, want %v", got, tt.want.Body)
+			}
+		})
+	}
+}
+
+// TestSendRequestFailure() uses fake data and expects function to fail
+func TestSendRequestFailure(t *testing.T) {
+	httpClient := NewHTTPClient()
+	if httpClient == nil {
+		t.Fatal("Failed to build HTTP client")
+	}
+
+	req, err := http.NewRequest(Method, URL, bytes.NewReader([]byte{}))
+	if err != nil {
+		t.Errorf("Error in creating new http request message: %w", err)
+		return
+	}
+
+	resp, respErr := SendRequest(req, httpClient)
+	if resp != nil && respErr == nil {
+		t.Errorf("Error, response should not come as data is not valid")
 	}
 }
