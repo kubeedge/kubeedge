@@ -23,15 +23,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
-var forceSet = map[string]string{
-	"pod":       "pods",
-	"configmap": "configmaps",
-	"secret":    "secrets",
-	"service":   "services",
-	"endpoint":  "endpoints",
-	"node":      "nodes",
-}
-
 func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	var object metav1.Object
 
@@ -39,11 +30,8 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	if err != nil {
 		return
 	}
-	resource := sync.Spec.ObjectKind // In fact, ObjdctKind is Object resources like "pods"
-	if v, ok := forceSet[resource]; ok {
-		resource = v
-	}
-	gvr := gv.WithResource(resource)
+	gvr := gv.WithResource(sync.Spec.ObjectKind)
+
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
 	if err != nil {
