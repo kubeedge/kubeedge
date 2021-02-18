@@ -99,7 +99,7 @@ function build_edgecore {
 function start_cloudcore {
   CLOUD_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore.yaml
   CLOUD_BIN=${KUBEEDGE_ROOT}/_output/local/bin/cloudcore
-  ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
+  ${CLOUD_BIN} --defaultconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
@@ -122,7 +122,7 @@ function start_cloudcore {
 function start_edgecore {
   EDGE_CONFIGFILE=${KUBEEDGE_ROOT}/_output/local/bin/edgecore.yaml
   EDGE_BIN=${KUBEEDGE_ROOT}/_output/local/bin/edgecore
-  ${EDGE_BIN} --minconfig >  ${EDGE_CONFIGFILE}
+  ${EDGE_BIN} --defaultconfig >  ${EDGE_CONFIGFILE}
 
   sed -i '/modules:/a\  edgeStream:\n    enable: true\n    handshakeTimeout: 30\n    readDeadline: 15\n    server: 127.0.0.1:10004\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    writeDeadline: 15' ${EDGE_CONFIGFILE}
   token=`kubectl get secret -nkubeedge tokensecret -o=jsonpath='{.data.tokendata}' | base64 -d`
