@@ -11,6 +11,9 @@ import (
 	// init eventbus
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/eventbus"
 
+	// init servicebus
+	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/servicebus"
+
 	// init rest
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/rest"
 
