@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
+	"k8s.io/apiextensions-apiserver/pkg/crdserverscheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,11 +25,11 @@ func NewRequestScope() *handlers.RequestScope {
 		Serializer:     serializer.NewNegotiatedSerializer(),
 		ParameterCodec: scheme.ParameterCodec,
 		//Creater:         nil,
-		Convertor:       &fakeObjectConvertor{},
-		Defaulter:       nil,
-		Typer:           nil,
-		UnsafeConvertor: nil,
-		Authorizer:      nil,
+		Convertor: fakers.NewFakeObjectConvertor(),
+		Defaulter: fakers.NewFakeObjectDefaulter(),
+		Typer:     crdserverscheme.NewUnstructuredObjectTyper(),
+		//UnsafeConvertor: nil,
+		Authorizer: fakers.NewAlwaysAllowAuthorizer(),
 
 		EquivalentResourceMapper: runtime.NewEquivalentResourceRegistry(),
 
@@ -44,18 +46,4 @@ func NewRequestScope() *handlers.RequestScope {
 		MaxRequestBodyBytes: int64(3 * 1024 * 1024),
 	}
 	return &requestScope
-}
-
-type fakeObjectConvertor struct{}
-
-func (c *fakeObjectConvertor) Convert(in, out, context interface{}) error {
-	return nil
-}
-
-func (c *fakeObjectConvertor) ConvertToVersion(in runtime.Object, _ runtime.GroupVersioner) (runtime.Object, error) {
-	return in, nil
-}
-
-func (c *fakeObjectConvertor) ConvertFieldLabel(_ schema.GroupVersionKind, label, field string) (string, string, error) {
-	return label, field, nil
 }
