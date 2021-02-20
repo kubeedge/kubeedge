@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -186,7 +187,7 @@ func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
 // ValidateKubeAPIConfig validates `k` and returns an errorList if it is invalid
 func ValidateKubeAPIConfig(k v1alpha1.KubeAPIConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if k.KubeConfig != "" && !path.IsAbs(k.KubeConfig) {
+	if k.KubeConfig != "" && !filepath.IsAbs(k.KubeConfig) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("kubeconfig"), k.KubeConfig, "kubeconfig need abs path"))
 	}
 	if k.KubeConfig != "" && !utilvalidation.FileIsExist(k.KubeConfig) {

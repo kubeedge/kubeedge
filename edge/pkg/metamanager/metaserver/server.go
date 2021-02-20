@@ -1,7 +1,8 @@
 package metaserver
 
 import (
-	"errors"
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"time"
 
@@ -23,7 +24,7 @@ import (
 
 const (
 	// TODO: make addrs configurable
-	httpaddr = "127.0.0.1:10010"
+	Httpaddr = "0.0.0.0:10010"
 )
 
 // MetaServer is simplification of server.GenericAPIServer
@@ -50,34 +51,42 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:    httpaddr,
+		Addr:    Httpaddr,
 		Handler: h,
 	}
 	utilruntime.HandleError(s.ListenAndServe())
+	klog.Infof("[metaserver]start to listen and server at %v", Httpaddr)
 	<-stopChan
 }
 
 func (ls *MetaServer) BuildBasicHandler() http.Handler {
-	listHandler := ls.Factory.List()
-	getHandler := ls.Factory.Get()
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		reqInfo, ok := apirequest.RequestInfoFrom(ctx)
-		klog.Infof("[metaserver]get a req(%v)(%v)", req.URL.RawPath, req.URL.RawQuery)
+		//klog.Infof("[metaserver]get a req(%v)(%v)", reqInfo.Path, reqInfo.Verb)
+		//klog.Infof("[metaserver]get a req(\nPath:%v; \nVerb:%v; \nHeader:%+v)", reqInfo.Path, reqInfo.Verb, req.Header)
 		if ok && reqInfo.IsResourceRequest {
 			switch {
 			case reqInfo.Verb == "get":
-				getHandler.ServeHTTP(w, req)
-			case reqInfo.Verb == "list":
-				listHandler.ServeHTTP(w, req)
-			case reqInfo.Verb == "watch":
-				listHandler.ServeHTTP(w, req)
+				ls.Factory.Get().ServeHTTP(w, req)
+			case reqInfo.Verb == "list", reqInfo.Verb == "watch":
+				ls.Factory.List().ServeHTTP(w, req)
+			case reqInfo.Verb == "create":
+				ls.Factory.Create(reqInfo).ServeHTTP(w, req)
+			case reqInfo.Verb == "delete":
+				ls.Factory.Delete().ServeHTTP(w, req)
+			case reqInfo.Verb == "update":
+				ls.Factory.Update(reqInfo).ServeHTTP(w, req)
+			case reqInfo.Verb == "patch":
+				ls.Factory.Patch(reqInfo).ServeHTTP(w, req)
 			default:
-				responsewriters.ErrorNegotiated(errors.New("unsupport req verb"), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+				err := fmt.Errorf("unsupported req verb")
+				responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 				return
 			}
 		} else {
-			responsewriters.ErrorNegotiated(errors.New("not a resource req"), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
+			err := fmt.Errorf("not a resource req")
+			responsewriters.ErrorNegotiated(errors.NewInternalError(err), ls.NegotiatedSerializer, schema.GroupVersion{}, w, req)
 		}
 	})
 	return h

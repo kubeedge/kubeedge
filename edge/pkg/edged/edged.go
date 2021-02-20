@@ -257,6 +257,9 @@ type edged struct {
 
 // Register register edged
 func Register(e *v1alpha1.Edged) {
+	if !e.Enable {
+		core.Register(&edged{enable: false})
+	}
 	edgedconfig.InitConfigure(e)
 	edged, err := newEdged(e.Enable)
 	if err != nil {
