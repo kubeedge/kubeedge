@@ -50,7 +50,7 @@ if [ $# -eq 0 ]
     # @kadisi
     #./edgesite/edgesite.test $debugflag 2>&1 | tee -a /tmp/testcase.log
 else
-if compilemodule=="bluetooth"
+if [[ $compilemodule = "bluetooth" ]]
 then
     ./mapper/bluetooth/bluetooth.test  $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
 else
