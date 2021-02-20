@@ -2,10 +2,10 @@ package application
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -13,9 +13,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -58,18 +58,29 @@ const (
 type applicationVerb string
 
 const (
-	Get    applicationVerb = "get"
-	List   applicationVerb = "list"
-	Watch  applicationVerb = "watch"
-	Create applicationVerb = "create"
-	Delete applicationVerb = "delete"
-	Update applicationVerb = "update"
+	Get          applicationVerb = "get"
+	List         applicationVerb = "list"
+	Watch        applicationVerb = "watch"
+	Create       applicationVerb = "create"
+	Delete       applicationVerb = "delete"
+	Update       applicationVerb = "update"
+	UpdateStatus applicationVerb = "updatestatus"
+	Patch        applicationVerb = "patch"
 )
+
+type PatchInfo struct {
+	Name         string
+	PatchType    types.PatchType
+	Data         []byte
+	Options      metav1.PatchOptions
+	Subresources []string
+}
 
 // record the resources that are in applying for requesting to be transferred down from the cloud, please:
 // 0.use Agent.Generate to generate application
 // 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
 type Application struct {
+	Id       string
 	Key      string // group version resource namespaces name
 	Verb     applicationVerb
 	Nodename string
@@ -79,13 +90,15 @@ type Application struct {
 	ReqBody  []byte // better a k8s api instance
 	RespBody []byte
 
-	selector LabelFieldSelector // if verb == list, option
-	ctx      context.Context    // to end app.Wait
-	cancel   context.CancelFunc
+	ctx    context.Context // to end app.Wait
+	cancel context.CancelFunc
+
+	count     uint64 // count the number of current citations
+	countLock sync.Mutex
 	//TODO: add lock
 }
 
-func newApplication(key string, verb applicationVerb, nodename string, option interface{}, selector LabelFieldSelector, reqBody interface{}) *Application {
+func newApplication(ctx context.Context, key string, verb applicationVerb, nodename string, option interface{}, reqBody interface{}) *Application {
 	var v1 metav1.ListOptions
 	if internal, ok := option.(metainternalversion.ListOptions); ok {
 		err := metainternalversion.Convert_internalversion_ListOptions_To_v1_ListOptions(&internal, &v1, nil)
@@ -93,22 +106,39 @@ func newApplication(key string, verb applicationVerb, nodename string, option in
 			// error here won't happen, log in case
 			klog.Errorf("failed to transfer internalListOption to v1ListOption, force set to empty")
 		}
+		option = v1
 	}
+	ctx2, cancel := context.WithCancel(ctx)
 	app := &Application{
-		Key:      key,
-		Verb:     verb,
-		Nodename: nodename,
-		selector: selector,
-		Status:   PreApplying,
-		Option:   toBytes(v1),
-		ReqBody:  toBytes(reqBody),
+		Key:       key,
+		Verb:      verb,
+		Nodename:  nodename,
+		Status:    PreApplying,
+		Option:    toBytes(option),
+		ReqBody:   toBytes(reqBody),
+		ctx:       ctx2,
+		cancel:    cancel,
+		count:     0,
+		countLock: sync.Mutex{},
 	}
+	app.add()
 	return app
 }
 
+func (a *Application) Identifier() string {
+	if a.Id != "" {
+		return a.Id
+	}
+	b := []byte(a.Nodename)
+	b = append(b, []byte(a.Key)...)
+	b = append(b, []byte(a.Verb)...)
+	b = append(b, a.Option...)
+	b = append(b, a.ReqBody...)
+	a.Id = fmt.Sprintf("%x", md5.Sum(b))
+	return a.Id
+}
 func (a *Application) String() string {
-	split := ";"
-	return strings.Join([]string{a.Nodename, a.Key, string(a.Verb), a.selector.String()}, split)
+	return fmt.Sprintf("(NodeName=%v;Key=%v;Verb=%v;Status=%v;Reason=%v)", a.Nodename, a.Key, a.Verb, a.Status, a.Reason)
 }
 func (a *Application) ReqContent() interface{} {
 	return a.ReqBody
@@ -162,14 +192,6 @@ func (a *Application) Namespace() string {
 	return ns
 }
 
-func (a *Application) Labels() labels.Selector {
-	return a.selector.Labels()
-}
-
-func (a *Application) Fields() fields.Selector {
-	return a.selector.Fields()
-}
-
 func (a *Application) Call() {
 	if a.cancel != nil {
 		a.cancel()
@@ -187,9 +209,36 @@ func (a *Application) Wait() {
 	}
 }
 
-// Close must be called by who generated this application or GC()
+func (a *Application) Reset() {
+	if a.ctx != nil && a.cancel != nil {
+		a.cancel()
+	}
+	a.ctx, a.cancel = context.WithCancel(beehiveContext.GetContext())
+	a.Reason = ""
+	a.RespBody = []byte{}
+}
+
+func (a *Application) add() {
+	a.countLock.Lock()
+	a.count++
+	a.countLock.Unlock()
+}
+
+func (a *Application) getCount() uint64 {
+	a.countLock.Lock()
+	c := a.count
+	a.countLock.Unlock()
+	return c
+}
+
+// Close must be called when applicant no longer using application
 func (a *Application) Close() {
-	a.Status = Completed
+	a.countLock.Lock()
+	a.count--
+	if a.count == 0 {
+		a.Status = Completed
+	}
+	a.countLock.Unlock()
 }
 
 // used for generating application and do apply
@@ -203,28 +252,33 @@ func NewApplicationAgent(nodeName string) *Agent {
 	return &Agent{nodeName: nodeName}
 }
 
-func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, lf LabelFieldSelector, obj runtime.Object) *Application {
+func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
 	key, err := metaserver.KeyFuncReq(ctx, "")
 	if err != nil {
 		klog.Errorf("%v", err)
 		return &Application{}
 	}
-	app := newApplication(key, verb, a.nodeName, option, lf, obj)
-	store, ok := a.Applications.LoadOrStore(app.String(), app)
+	app := newApplication(ctx, key, verb, a.nodeName, option, obj)
+	store, ok := a.Applications.LoadOrStore(app.Identifier(), app)
 	if ok {
-		return store.(*Application)
+		app = store.(*Application)
+		app.add()
+		return app
 	}
 	return app
 }
 
 func (a *Agent) Apply(app *Application) error {
-	store, ok := a.Applications.Load(app.String())
+	store, ok := a.Applications.Load(app.Identifier())
 	if !ok {
 		return fmt.Errorf("Application %v has not been registered to agent", app.String())
 	}
 	app = store.(*Application)
 	switch app.getStatus() {
-	case PreApplying, Completed:
+	case PreApplying:
+		go a.doApply(app)
+	case Completed:
+		app.Reset()
 		go a.doApply(app)
 	case Rejected, Failed:
 		return errors.New(app.Reason)
@@ -241,20 +295,12 @@ func (a *Agent) Apply(app *Application) error {
 }
 
 func (a *Agent) doApply(app *Application) {
-	// for reusing application, make sure last context done, or return
-	if app.ctx != nil && app.ctx.Err() == nil {
-		return
-	}
-	// clean and reset
-	app.Reason = ""
-	app.RespBody = []byte{}
-	app.ctx, app.cancel = context.WithCancel(beehiveContext.GetContext())
 	defer app.Call()
 
 	// encapsulate as a message
+	app.Status = InApplying
 	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(*app)
 	msg.SetResourceOperation("null", "null")
-	app.Status = InApplying
 	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
 	if err != nil {
 		app.Status = Failed
@@ -318,7 +364,6 @@ func msgToApplication(msg model.Message) (*Application, error) {
 	var app = new(Application)
 	err := json.Unmarshal(toBytes(msg.Content), app)
 	if err != nil {
-		//klog.Errorf("%v", err)
 		return nil, err
 	}
 	return app, nil
@@ -390,10 +435,6 @@ func (c *Center) Process(msg model.Message) {
 			if err := app.OptionTo(&option); err != nil {
 				return err
 			}
-			var obj = new(unstructured.Unstructured)
-			if err := app.ReqBodyTo(obj); err != nil {
-				return err
-			}
 			err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option)
 			if err != nil {
 				return err
@@ -413,15 +454,40 @@ func (c *Center) Process(msg model.Message) {
 				return err
 			}
 			c.Response(app, msg.GetID(), Approved, "", retObj)
+		case UpdateStatus:
+			var option = new(metav1.UpdateOptions)
+			if err := app.OptionTo(option); err != nil {
+				return err
+			}
+			var obj = new(unstructured.Unstructured)
+			if err := app.ReqBodyTo(obj); err != nil {
+				return err
+			}
+			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+			if err != nil {
+				return err
+			}
+			c.Response(app, msg.GetID(), Approved, "", retObj)
+		case Patch:
+			var pi = new(PatchInfo)
+			if err := app.OptionTo(pi); err != nil {
+				return err
+			}
+			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+			if err != nil {
+				return err
+			}
+			c.Response(app, msg.GetID(), Approved, "", retObj)
 		default:
 			return fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
 		}
 		return nil
 	}()
 	if err != nil {
-		c.Response(app, msg.GetID(), Rejected, app.Reason, nil)
-		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%v), %v", *app, err)
+		c.Response(app, msg.GetID(), Rejected, err.Error(), nil)
+		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%+v), %v", app, err)
 	}
+	klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
 }
 
 // Response update application, generate and send resp message to edge
