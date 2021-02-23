@@ -2,6 +2,11 @@ package servicebus
 
 import (
 	"errors"
+	"net/http"
+	"strings"
+
+	"k8s.io/klog/v2"
+
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
@@ -9,19 +14,18 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
-	"k8s.io/klog/v2"
-	"strings"
+	commonType "github.com/kubeedge/kubeedge/common/types"
 )
 
 type servicebusFactory struct{}
 
 type ServiceBus struct {
-	targetPath string
-	namespace string
+	targetPath  string
+	namespace   string
 	servicePort string
 }
 
-func init()  {
+func init() {
 	factory := &servicebusFactory{}
 	provider.RegisterTarget(factory)
 }
@@ -37,8 +41,8 @@ func (factory *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource 
 		return nil
 	}
 	cli := &ServiceBus{
-		targetPath: targetPath,
-		namespace: ep.Namespace,
+		targetPath:  targetPath,
+		namespace:   ep.Namespace,
 		servicePort: ep.Spec.Properties["service_port"],
 	}
 	return cli
@@ -51,10 +55,12 @@ func (eb *ServiceBus) Name() string {
 func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	var response *model.Message
 	messageID, ok := data["messageID"].(string)
-	body, ok := data["data"].([]byte)
 	param, ok := data["param"].(string)
 	nodeName, ok := data["nodeName"].(string)
-	operation, ok := data["operation"].(string)
+	request := commonType.HTTPRequest{}
+	request.Method, ok = data["method"].(string)
+	request.Header, ok = data["header"].(http.Header)
+	request.Body, ok = data["data"].([]byte)
 	if !ok {
 		err := errors.New("data transform failed")
 		klog.Error(err.Error())
@@ -62,15 +68,15 @@ func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 	}
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
-	resource := "node/" + nodeName + "/"+eb.servicePort+":"
+	resource := "node/" + nodeName + "/" + eb.servicePort + ":"
 	if !ok || param == "" {
 		resource = resource + eb.targetPath
 	} else {
 		resource = resource + strings.TrimSuffix(eb.targetPath, "/") + "/" + strings.TrimPrefix(param, "/")
 	}
-	msg.SetResourceOperation(resource, operation)
-	msg.FillBody(string(body))
-	msg.SetRoute("router_eventbus", modules.UserGroup)
+	msg.SetResourceOperation(resource, request.Method)
+	msg.FillBody(request)
+	msg.SetRoute("router_servicebus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
 		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
@@ -82,5 +88,3 @@ func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 	}
 	return response, nil
 }
-
-

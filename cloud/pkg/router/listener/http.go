@@ -144,9 +144,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 
 		v, err := handle(params)
 		if err != nil {
-			//w.WriteHeader(http.StatusInternalServerError)
-			//_, err := w.Write([]byte(err.Error()))
-			//klog.Warningf("operation timeout, msg id: %s, write result: %v", msgID, err)
+			klog.Errorf("handle request error, msg id: %s, err: %v", msgID, err)
 			return
 		}
 		response, ok := v.(*http.Response)

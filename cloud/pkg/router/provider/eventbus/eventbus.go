@@ -111,7 +111,6 @@ func (*EventBus) Forward(target provider.Target, data interface{}) (response int
 }
 
 func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
-	var response *model.Message
 	messageID, ok := data["messageID"].(string)
 	body, ok := data["data"].([]byte)
 	param, ok := data["param"].(string)
@@ -133,13 +132,5 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 	msg.FillBody(string(body))
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
-	if stop != nil {
-		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
-			response = message
-			stop <- struct{}{}
-		})
-		<-stop
-		listener.MessageHandlerInstance.DelCallback(messageID)
-	}
-	return response, nil
+	return nil, nil
 }
