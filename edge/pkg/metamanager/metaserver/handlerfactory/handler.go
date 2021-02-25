@@ -10,12 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
-	. "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversionscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +21,12 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
+	. "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 type Factory struct {

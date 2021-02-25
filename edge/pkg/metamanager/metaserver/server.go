@@ -2,10 +2,10 @@ package metaserver
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -24,7 +24,7 @@ import (
 
 const (
 	// TODO: make addrs configurable
-	Httpaddr = "0.0.0.0:10010"
+	Httpaddr = "127.0.0.1:10550"
 )
 
 // MetaServer is simplification of server.GenericAPIServer

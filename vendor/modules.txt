@@ -910,6 +910,7 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
+k8s.io/apiextensions-apiserver/pkg/crdserverscheme
 # k8s.io/apimachinery v0.19.3
 ## explicit
 k8s.io/apimachinery/pkg/api/equality
@@ -1682,7 +1683,6 @@ k8s.io/kubernetes/pkg/volume/util/subpath
 k8s.io/kubernetes/pkg/volume/util/types
 k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
-k8s.io/kubernetes/plugin/pkg/admission/admit
 k8s.io/kubernetes/third_party/forked/golang/expansion
 # k8s.io/system-validators v1.1.2
 k8s.io/system-validators/validators
