@@ -1,7 +1,6 @@
 package scope
 
 import (
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
 	"k8s.io/apiextensions-apiserver/pkg/crdserverscheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 )
 

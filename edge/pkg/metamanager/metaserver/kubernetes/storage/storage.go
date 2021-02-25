@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -22,7 +21,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/cacher"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -59,9 +58,8 @@ func NewREST() (*REST, error) {
 			GetAttrs: util.UnstructuredAttr,
 		}
 	}
-	Storage, err := cacher.NewCacher()
-	utilruntime.Must(err)
-	store.Storage.Storage = Storage
+
+	store.Storage.Storage = sqlite.New()
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
 	return &REST{store, application.NewApplicationAgent(metaserverconfig.Config.NodeName)}, nil
@@ -90,12 +88,12 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		defer app.Close()
 		if err != nil {
 			klog.Errorf("[metaserver/reststorage] failed to get obj from cloud, %v", err)
-			return nil, errors.NewInternalError(err)
+			return nil, err
 		}
 		var obj = new(unstructured.Unstructured)
 		err = json.Unmarshal(app.RespBody, obj)
 		if err != nil {
-			return nil, errors.NewInternalError(err)
+			return nil, err
 		}
 		// save to local, ignore error
 		imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), obj)
@@ -106,7 +104,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	if err != nil {
 		obj, err = r.Store.Get(ctx, "", options) // name is needless, we get all key information from ctx
 		if err != nil {
-			return nil, errors.NewInternalError(err)
+			return nil, errors.NewNotFound(schema.GroupResource{info.APIGroup, info.Resource}, info.Name)
 		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", path)
 	}

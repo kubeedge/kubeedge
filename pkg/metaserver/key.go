@@ -3,7 +3,6 @@ package metaserver
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -77,18 +76,18 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 		}
 		key += info.APIVersion + "/"
 		key += info.Resource + "/"
+
 		if info.Namespace != "" {
 			key += info.Namespace + "/"
+		} else {
+			key += v2.NullNamespace + "/"
 		}
+
 		if info.Name != "" {
-			if info.Namespace == "" {
-				key += v2.NullNamespace + "/"
-			}
 			key += info.Name
 		} else {
-			if info.Verb == "create" {
-				key += fmt.Sprintf("create(%v)", uuid.New().String())
-			}
+			key += v2.NullName
+
 		}
 	} else {
 		return "", fmt.Errorf("no request info in context")
