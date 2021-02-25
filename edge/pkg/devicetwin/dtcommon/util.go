@@ -48,7 +48,7 @@ func ValidateTwinKey(key string) bool {
 
 //ValidateTwinValue validate twin value
 func ValidateTwinValue(value string) bool {
-	pattern := "^[a-zA-Z0-9-_.,:/@#]{1,512}$"
+	pattern := "^[a-zA-Z0-9-_.\"{}, :/@#]{1,512}$"
 	match, _ := regexp.MatchString(pattern, value)
 	return match
 }
