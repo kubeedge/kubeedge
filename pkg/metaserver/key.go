@@ -87,7 +87,6 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 			key += info.Name
 		} else {
 			key += v2.NullName
-
 		}
 	} else {
 		return "", fmt.Errorf("no request info in context")

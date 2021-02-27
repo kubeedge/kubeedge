@@ -104,7 +104,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	if err != nil {
 		obj, err = r.Store.Get(ctx, "", options) // name is needless, we get all key information from ctx
 		if err != nil {
-			return nil, errors.NewNotFound(schema.GroupResource{info.APIGroup, info.Resource}, info.Name)
+			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
 		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", path)
 	}
