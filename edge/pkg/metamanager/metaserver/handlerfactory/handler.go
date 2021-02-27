@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"k8s.io/klog/v2"
 	"net/http"
 	"strings"
 	"time"
@@ -20,11 +19,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
-	. "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
@@ -41,7 +40,7 @@ func NewFactory() Factory {
 	utilruntime.Must(err)
 	f := Factory{
 		storage:           s,
-		scope:             NewRequestScope(),
+		scope:             scope.NewRequestScope(),
 		MinRequestTimeout: 1800 * time.Second,
 		handlers:          make(map[string]http.Handler),
 	}
@@ -65,7 +64,7 @@ func (f *Factory) List() http.Handler {
 }
 
 func (f *Factory) Create(req *request.RequestInfo) http.Handler {
-	s := NewRequestScope()
+	s := scope.NewRequestScope()
 	s.Kind = schema.GroupVersionKind{
 		Group:   req.APIGroup,
 		Version: req.APIVersion,
@@ -85,7 +84,7 @@ func (f *Factory) Delete() http.Handler {
 }
 
 func (f *Factory) Update(req *request.RequestInfo) http.Handler {
-	s := NewRequestScope()
+	s := scope.NewRequestScope()
 	s.Kind = schema.GroupVersionKind{
 		Group:   req.APIGroup,
 		Version: req.APIVersion,
@@ -96,7 +95,7 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 }
 
 func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
-	scope := wrapScope{RequestScope: NewRequestScope()}
+	scope := wrapScope{RequestScope: scope.NewRequestScope()}
 	scope.Kind = schema.GroupVersionKind{
 		Group:   reqInfo.APIGroup,
 		Version: reqInfo.APIVersion,
@@ -147,7 +146,7 @@ func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 		}
 		options.TypeMeta.SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("PatchOptions"))
 
-		reqInfo, _ := apirequest.RequestInfoFrom(req.Context())
+		reqInfo, _ := request.RequestInfoFrom(req.Context())
 		pi := application.PatchInfo{
 			Name:         name,
 			PatchType:    patchType,

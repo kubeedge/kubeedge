@@ -5,7 +5,7 @@ import (
 
 	cloudconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	edgeconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
-	"github.com/kubeedge/kubeedge/tests/intergration/framework"
+	"github.com/kubeedge/kubeedge/tests/integration/framework"
 )
 
 func TestMain(m *testing.M) {

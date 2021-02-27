@@ -26,7 +26,6 @@ func RunCloud(cfgModifyFn func(config *v1alpha1.CloudCoreConfig)) CloseFunc {
 }
 
 func RunCloudCore(cfg *v1alpha1.CloudCoreConfig) CloseFunc {
-
 	client.InitKubeEdgeClient(cfg.KubeAPIConfig)
 	gis := informers.GetInformersManager()
 	registerModules(cfg)
@@ -37,7 +36,7 @@ func RunCloudCore(cfg *v1alpha1.CloudCoreConfig) CloseFunc {
 
 	closeFn := func() {
 		beehiveContext.Cancel()
-		for name, _ := range core.GetModules() {
+		for name := range core.GetModules() {
 			beehiveContext.Cleanup(name)
 		}
 	}
