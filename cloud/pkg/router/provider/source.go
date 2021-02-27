@@ -31,7 +31,7 @@ func init() {
 // RegisterSource register module
 func RegisterSource(s SourceFactory) {
 	sources[s.Type()] = s
-	klog.Info("source " + s.Type() + " registered")
+	klog.V(4).Info("source " + s.Type() + " registered")
 }
 
 // get source map

@@ -76,14 +76,17 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 		}
 		key += info.APIVersion + "/"
 		key += info.Resource + "/"
+
 		if info.Namespace != "" {
 			key += info.Namespace + "/"
+		} else {
+			key += v2.NullNamespace + "/"
 		}
+
 		if info.Name != "" {
-			if info.Namespace == "" {
-				key += v2.NullNamespace + "/"
-			}
 			key += info.Name
+		} else {
+			key += v2.NullName
 		}
 	} else {
 		return "", fmt.Errorf("no request info in context")
