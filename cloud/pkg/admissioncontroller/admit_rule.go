@@ -10,6 +10,13 @@ import (
 	"k8s.io/klog/v2"
 
 	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
+)
+
+var (
+	soureceToTarget = [][2]string{{constants.RestEndpoint, constants.EventbusEndpoint},
+		{constants.RestEndpoint, constants.ServicebusEndpoint},
+		{constants.EventbusEndpoint, constants.RestEndpoint}}
 )
 
 func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
@@ -63,18 +70,24 @@ func validateRule(rule *rulesv1.Rule) error {
 	} else if targetEndpoint == nil {
 		return fmt.Errorf("target ruleEndpoint %s has not been created", targetKey)
 	}
-	// TODO: check rule endpoint type whether is cloud or edge
-	if targetEndpoint.Spec.RuleEndpointType == sourceEndpoint.Spec.RuleEndpointType {
-		return fmt.Errorf("target ruleEndpoint type %s can not be the same with source ruleEndpoint type", targetEndpoint.Spec.RuleEndpointType)
-	}
 	if err = validateTargetRuleEndpoint(targetEndpoint, rule.Spec.TargetResource); err != nil {
 		return err
+	}
+	var exist bool
+	for _, s2t := range soureceToTarget {
+		if s2t[0] == sourceEndpoint.Spec.RuleEndpointType && s2t[1] == targetEndpoint.Spec.RuleEndpointType {
+			exist = true
+		}
+	}
+	if !exist {
+		return fmt.Errorf("The rule which is from source ruleEndpoint type %s to target ruleEndpoint type %s is not validate ",
+			sourceEndpoint.Spec.RuleEndpointType, targetEndpoint.Spec.RuleEndpointType)
 	}
 	return nil
 }
 func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
-	case "rest":
+	case constants.RestEndpoint:
 		_, exist := sourceResource["path"]
 		if !exist {
 			return fmt.Errorf("\"path\" property missed in sourceResource when ruleEndpoint is \"rest\"")
@@ -88,7 +101,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource["path"])
 			}
 		}
-	case "eventbus":
+	case constants.EventbusEndpoint:
 		_, exist := sourceResource["topic"]
 		if !exist {
 			return fmt.Errorf("\"topic\" property missed in sourceResource when ruleEndpoint is \"eventbus\"")
@@ -112,15 +125,20 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 
 func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
-	case "rest":
+	case constants.RestEndpoint:
 		_, exist := targetResource["resource"]
 		if !exist {
 			return fmt.Errorf("\"resource\" property missed in targetResource when ruleEndpoint is \"rest\"")
 		}
-	case "eventbus":
+	case constants.EventbusEndpoint:
 		_, exist := targetResource["topic"]
 		if !exist {
 			return fmt.Errorf("\"topic\" property missed in targetResource when ruleEndpoint is \"eventbus\"")
+		}
+	case constants.ServicebusEndpoint:
+		_, exist := targetResource["path"]
+		if !exist {
+			return fmt.Errorf("\"path\" property missed in targetResource when ruleEndpoint is \"servicebus\"")
 		}
 	}
 	return nil
