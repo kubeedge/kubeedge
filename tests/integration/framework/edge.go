@@ -23,7 +23,7 @@ func RunEdgeCore(config *v1alpha1.EdgeCoreConfig) CloseFunc {
 
 	closeFn := func() {
 		beehiveContext.Cancel()
-		for name, _ := range core.GetModules() {
+		for name := range core.GetModules() {
 			beehiveContext.Cleanup(name)
 		}
 	}

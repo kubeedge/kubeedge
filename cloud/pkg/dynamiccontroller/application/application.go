@@ -80,7 +80,7 @@ type PatchInfo struct {
 // 0.use Agent.Generate to generate application
 // 1.use Agent.Apply to apply application( generate msg and send it to cloud dynamiccontroller)
 type Application struct {
-	Id       string
+	ID       string
 	Key      string // group version resource namespaces name
 	Verb     applicationVerb
 	Nodename string
@@ -126,16 +126,16 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 }
 
 func (a *Application) Identifier() string {
-	if a.Id != "" {
-		return a.Id
+	if a.ID != "" {
+		return a.ID
 	}
 	b := []byte(a.Nodename)
 	b = append(b, []byte(a.Key)...)
 	b = append(b, []byte(a.Verb)...)
 	b = append(b, a.Option...)
 	b = append(b, a.ReqBody...)
-	a.Id = fmt.Sprintf("%x", md5.Sum(b))
-	return a.Id
+	a.ID = fmt.Sprintf("%x", md5.Sum(b))
+	return a.ID
 }
 func (a *Application) String() string {
 	return fmt.Sprintf("(NodeName=%v;Key=%v;Verb=%v;Status=%v;Reason=%v)", a.Nodename, a.Key, a.Verb, a.Status, a.Reason)
@@ -299,7 +299,7 @@ func (a *Agent) doApply(app *Application) {
 
 	// encapsulate as a message
 	app.Status = InApplying
-	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(*app)
+	msg := model.NewMessage("").SetRoute(MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
 	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
 	if err != nil {
@@ -499,7 +499,7 @@ func (c *Center) Response(app *Application, parentID string, status applicationS
 	}
 
 	msg := model.NewMessage(parentID)
-	msg.Content = *app
+	msg.Content = app
 	resource, err := messagelayer.BuildResource(app.Nodename, Ignore, ApplicationResource, Ignore)
 	if err != nil {
 		klog.Warningf("built message resource failed with error: %s", err)
