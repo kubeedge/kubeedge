@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog/v2"
 
 	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 )
 
 func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
@@ -22,6 +23,11 @@ func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta
 		deserializer := codecs.UniversalDeserializer()
 		if _, _, err := deserializer.Decode(raw, nil, &ruleEndpoint); err != nil {
 			klog.Errorf("validation failed with error: %v", err)
+			msg = err.Error()
+			break
+		}
+		err := validateRuleEndpoint(&ruleEndpoint)
+		if err != nil {
 			msg = err.Error()
 			break
 		}
@@ -39,6 +45,17 @@ func admitRuleEndpoint(review admissionv1beta1.AdmissionReview) *admissionv1beta
 		reviewResponse.Result = &metav1.Status{Message: strings.TrimSpace(msg)}
 	}
 	return &reviewResponse
+}
+
+func validateRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint) error {
+	switch ruleEndpoint.Spec.RuleEndpointType {
+	case constants.ServicebusEndpoint:
+		_, exist := ruleEndpoint.Spec.Properties["service_port"]
+		if !exist {
+			return fmt.Errorf("\"service_port\" property missed in property when ruleEndpoint is \"servicebus\"")
+		}
+	}
+	return nil
 }
 
 func serveRuleEndpoint(w http.ResponseWriter, r *http.Request) {
