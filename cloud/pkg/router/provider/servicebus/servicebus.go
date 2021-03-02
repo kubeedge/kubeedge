@@ -66,6 +66,7 @@ func (eb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 		klog.Error(err.Error())
 		return nil, err
 	}
+
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
 	resource := "node/" + nodeName + "/" + eb.servicePort + ":"
