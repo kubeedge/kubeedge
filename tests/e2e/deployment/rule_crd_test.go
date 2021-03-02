@@ -2,10 +2,11 @@ package deployment
 
 import (
 	"bytes"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	v1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
@@ -19,6 +20,7 @@ const (
 var _ = Describe("Rule Management test in E2E scenario", func() {
 	var testTimer *utils.TestTimer
 	var testDescription GinkgoTestDescription
+	msg := "Hello World!"
 	Context("Test rule and ruleendpoint Creation and deletion", func() {
 		BeforeEach(func() {
 			// Delete any pre-existing rules
@@ -87,7 +89,6 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			newRule := utils.NewRule(utils.RestType, utils.EventbusType)
 			_, err := utils.GetRuleList(&ruleList, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, newRule)
 			Expect(err).To(BeNil())
-			msg := "Hello World!"
 			b := new(bytes.Buffer)
 			go func() {
 				recieveMsg, err := utils.SubscribeMqtt("topic-test")
@@ -118,7 +119,6 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			IsRuleCreated, statusCode := utils.HandleRule(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, "", utils.EventbusType, utils.RestType)
 			Expect(IsRuleCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
-			msg := "Hello World!"
 			b := new(bytes.Buffer)
 			go func() {
 				recieveMsg, err := utils.StartEchoServer()
@@ -152,7 +152,6 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			newRule := utils.NewRule(utils.RestType, utils.ServicebusType)
 			_, err := utils.GetRuleList(&ruleList, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, newRule)
 			Expect(err).To(BeNil())
-			msg := "Hello World!"
 			msgHeader := map[string]string{
 				"user":   "I am user",
 				"passwd": "I am passwd",

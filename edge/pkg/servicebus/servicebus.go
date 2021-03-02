@@ -155,7 +155,6 @@ func processMessage(msg *model.Message) {
 	beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
 }
 
-
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {
 	responseMsg := model.NewMessage(parentID)
 	h := http.Header{}
