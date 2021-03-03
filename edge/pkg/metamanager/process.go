@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/common/util"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -60,6 +61,10 @@ func sendToEdged(message *model.Message, sync bool) {
 }
 
 func sendToEdgeMesh(message *model.Message, sync bool) {
+	//if edgeMesh module disabled, then return
+	if _, ok := core.GetModules()[modules.EdgeMeshModuleName]; !ok {
+		return
+	}
 	if sync {
 		beehiveContext.SendResp(*message)
 	} else {
