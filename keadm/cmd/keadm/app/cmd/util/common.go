@@ -305,7 +305,7 @@ func installKubeEdge(options types.InstallOptions, arch string, version semver.V
 		fmt.Println(cmd.GetStdOut())
 	} else if options.ComponentType == types.EdgeCore {
 		untarFileAndMoveEdgeCore = fmt.Sprintf("cd %s && tar -C %s -xvzf %s && cp %s/%s/edge/%s %s/",
-			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeEdgeBinaryName, KubeEdgePath)
+			options.TarballPath, options.TarballPath, filename, options.TarballPath, dirname, KubeEdgeBinaryName, KubeEdgeUsrBinPath)
 		cmd := NewCommand(untarFileAndMoveEdgeCore)
 		if err := cmd.Exec(); err != nil {
 			return err
