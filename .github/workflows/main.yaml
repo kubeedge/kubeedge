@@ -10,6 +10,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
       GOPATH: /home/runner/work/${{ github.repository }}
@@ -43,6 +44,7 @@ jobs:
         working-directory: ./src/github.com/${{ github.repository }}
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Multiple build
     steps:
       - name: Install Go
@@ -75,6 +77,7 @@ jobs:
 
   basic_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Unit test, integration test edge
     env:
       GO111MODULE: on
@@ -104,6 +107,7 @@ jobs:
 
   e2e_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: E2e test
     env:
       GO111MODULE: on
@@ -133,6 +137,7 @@ jobs:
 
   keadm_e2e_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Keadm e2e test
     env:
       GO111MODULE: on
@@ -166,6 +171,7 @@ jobs:
 
   docker_build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Multiple docker image build
     steps:
       - name: Install Go
