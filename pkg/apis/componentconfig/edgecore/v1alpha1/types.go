@@ -113,7 +113,7 @@ type Edged struct {
 	// Enable indicates whether edged is enabled,
 	// if set to false (for debugging etc.), skip checking other edged configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Labels indicates current node labels
 	Labels map[string]string `json:"labels,omitempty"`
 	// Annotations indicates current node annotations
@@ -251,7 +251,7 @@ type EdgeHub struct {
 	// Enable indicates whether EdgeHub is enabled,
 	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Heartbeat indicates heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
@@ -286,7 +286,7 @@ type EdgeHub struct {
 type EdgeHubQUIC struct {
 	// Enable indicates whether enable this protocol
 	// default false
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// HandshakeTimeout indicates hand shake timeout (second)
 	// default 30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
@@ -305,7 +305,7 @@ type EdgeHubQUIC struct {
 type EdgeHubWebSocket struct {
 	// Enable indicates whether enable this protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// HandshakeTimeout indicates handshake timeout (second)
 	// default  30
 	HandshakeTimeout int32 `json:"handshakeTimeout,omitempty"`
@@ -325,7 +325,7 @@ type EventBus struct {
 	// Enable indicates whether EventBus is enabled, if set to false (for debugging etc.),
 	// skip checking other EventBus configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// MqttQOS indicates mqtt qos
 	// 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce
 	// default 0
@@ -360,7 +360,7 @@ type EventBus struct {
 type EventBusTLS struct {
 	// Enable indicates whether enable tls connection
 	// default false
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// TLSMqttCAFile sets ca file path
 	// default "/etc/kubeedge/ca/rootCA.crt"
 	TLSMqttCAFile string `json:"tlsMqttCAFile,omitempty"`
@@ -377,7 +377,7 @@ type MetaManager struct {
 	// Enable indicates whether MetaManager is enabled,
 	// if set to false (for debugging etc.), skip checking other MetaManager configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// ContextSendGroup indicates send group
 	ContextSendGroup metaconfig.GroupName `json:"contextSendGroup,omitempty"`
 	// ContextSendModule indicates send module
@@ -393,7 +393,7 @@ type MetaManager struct {
 }
 
 type MetaServer struct {
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	Debug  bool `json:"debug,omitempty"`
 }
 
@@ -410,7 +410,7 @@ type DeviceTwin struct {
 	// Enable indicates whether DeviceTwin is enabled,
 	// if set to false (for debugging etc.), skip checking other DeviceTwin configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 }
 
 // DBTest indicates the DBTest module config
@@ -426,7 +426,7 @@ type EdgeMesh struct {
 	// Enable indicates whether EdgeMesh is enabled,
 	// if set to false (for debugging etc.), skip checking other EdgeMesh configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// lbStrategy indicates load balance strategy name
 	// default "RoundRobin"
 	LBStrategy string `json:"lbStrategy,omitempty"`
