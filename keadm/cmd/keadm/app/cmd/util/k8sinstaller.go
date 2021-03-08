@@ -174,6 +174,37 @@ func installCRDs(kubeConfig, master string) error {
 		}
 	}
 
+	// Todo: need to add the crds ro release package
+	// create the dir for kubeedge crd
+	routerCrdPath := KubeEdgeCrdPath + "/router"
+	err = os.MkdirAll(routerCrdPath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("not able to create %s folder path", routerCrdPath)
+	}
+	for _, crdFile := range []string{"router/router_v1_rule.yaml",
+		"router/router_v1_ruleEndpoint.yaml"} {
+		//check it first, do not download when it exists
+		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
+		if err != nil {
+			if os.IsNotExist(err) {
+				//Download the tar from repo
+				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/router", KubeEdgeCRDDownloadURL, crdFile)
+				cmd := NewCommand(downloadURL)
+				if err := cmd.Exec(); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+
+		// not found err, create crd from crd file
+		err = createKubeEdgeCRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
+		if err != nil && !apierrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+
 	return nil
 }
 
