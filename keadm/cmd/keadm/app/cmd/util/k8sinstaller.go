@@ -24,6 +24,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -137,7 +138,7 @@ func installCRDs(kubeConfig, master string) error {
 		}
 
 		// not found err, create crd from crd file
-		err = createKubeEdgeCRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
+		err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			return err
 		}
@@ -168,7 +169,7 @@ func installCRDs(kubeConfig, master string) error {
 		}
 
 		// not found err, create crd from crd file
-		err = createKubeEdgeCRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
+		err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			return err
 		}
@@ -199,7 +200,7 @@ func installCRDs(kubeConfig, master string) error {
 		}
 
 		// not found err, create crd from crd file
-		err = createKubeEdgeCRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
+		err = createKubeEdgeV1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			return err
 		}
@@ -208,7 +209,7 @@ func installCRDs(kubeConfig, master string) error {
 	return nil
 }
 
-func createKubeEdgeCRD(clientset crdclient.Interface, crdFile string) error {
+func createKubeEdgeV1beta1CRD(clientset crdclient.Interface, crdFile string) error {
 	content, err := ioutil.ReadFile(crdFile)
 	if err != nil {
 		return fmt.Errorf("read crd yaml error: %v", err)
@@ -221,6 +222,23 @@ func createKubeEdgeCRD(clientset crdclient.Interface, crdFile string) error {
 	}
 
 	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
+
+	return err
+}
+
+func createKubeEdgeV1CRD(clientset crdclient.Interface, crdFile string) error {
+	content, err := ioutil.ReadFile(crdFile)
+	if err != nil {
+		return fmt.Errorf("read crd yaml error: %v", err)
+	}
+
+	kubeEdgeCRD := &apiextensionsv1.CustomResourceDefinition{}
+	err = yaml.Unmarshal(content, kubeEdgeCRD)
+	if err != nil {
+		return fmt.Errorf("unmarshal tfjobCRD error: %v", err)
+	}
+
+	_, err = clientset.ApiextensionsV1().CustomResourceDefinitions().Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
 
 	return err
 }
