@@ -49,7 +49,7 @@ const (
 	DeviceETUpdatedSuffix = "/updated"
 	// DeviceETStateUpdateSuffix the topic suffix for device state update event
 	DeviceETStateUpdateSuffix = "/state/update"
-	// DeviceETStateGetSuffix the topipc suffix for device state get event
+	// DeviceETStateGetSuffix the topic suffix for device state get event
 	DeviceETStateGetSuffix = "/state/get"
 
 	// MemDetailResult membership detail result
