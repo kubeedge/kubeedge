@@ -8,7 +8,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -28,7 +27,6 @@ type EdgeHub struct {
 	certManager   certificate.CertManager
 	chClient      clients.Adapter
 	reconnectChan chan struct{}
-	syncKeeper    map[string]chan model.Message
 	keeperLock    sync.RWMutex
 	enable        bool
 }
@@ -36,7 +34,6 @@ type EdgeHub struct {
 func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),
-		syncKeeper:    make(map[string]chan model.Message),
 		enable:        enable,
 	}
 }
