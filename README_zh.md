@@ -36,7 +36,7 @@ KubeEdge 是一个开源的系统，可将本机容器化应用编排和管理�
 KubeEdge 由以下组件构成:
 
 ### 云上部分
-- [CloudHub](/docs/components/cloud/cloudhub.md): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化, 缓存并发送消息到 EdgeHub。
+- [CloudHub](/docs/components/cloud/cloudhub_zh.md): CloudHub 是一个 Web Socket 服务端，负责监听云端的变化, 缓存并发送消息到 EdgeHub。
 - [EdgeController](/docs/components/cloud/controller.md): EdgeController 是一个扩展的 Kubernetes 控制器，管理边缘节点和 Pods 的元数据确保数据能够传递到指定的边缘节点。
 - [DeviceController](/docs/components/cloud/device_controller.md): DeviceController 是一个扩展的 Kubernetes 控制器，管理边缘设备，确保设备信息、设备状态的云边同步。
 
