@@ -1,38 +1,132 @@
 # Roadmap
 
-该文档描述了KubeEdge的开发计划
+该文档描述了KubeEdge开发的路线图
 
-[milestones defined in GitHub](https://github.com/kubeedge/kubeedge/milestones) 包含了最新的开发进度
+[在GitHub中定义的里程碑](https://github.com/kubeedge/kubeedge/milestones)代表了最新的计划。
 
-KubeEdge 1.3 版本是我们目前的稳定版本， 在2020年Q2将添加如下的新特性。
+下面的路线图概述了KubeEdge将要添加的新功能。
 
-## 2020 Q2 Roadmap
+## 2021 H1
 
-- 云上支持Metrics-Server
-- 支持Kubernetes的exec API，支持从云上进入边缘容器
-- 升级Kubernetes的依赖版本到1.18
-- 支持边缘节点证书轮转
-- 升级Go语言依赖到1.14
-- 支持边缘应用网关，对外暴露边缘服务
-- Device CRD升级改进，支持用户扩展自定义设备协议
-- 边缘节点跨Subnet通信
-- 支持边缘节点上的应用通过edgecore进行List-Watch操作
-- 支持从CloudHub端直接收集来自边缘侧的数据
-- 提升KubeEdge的安装、使用体验
-- 添加更多的文档，将文档从主库移到Website库
+### 核心框架
 
-## Future
+#### 边缘List-Watch
 
-- 提升贡献者体验，提供治理策略、Release计划、社区成员角色管理等
-- 支持在云端管理边缘集群（EdgeSite等）
-- 云边通信使用protobuf编码方式
-- 完成性能、规模测试，并输出测试报告
-- 添加更多的文档，将文档从主库移到Website库
-- 支持边缘应用的Ingress访问
-- 集成基于Istio的服务网格，进行云边、边边通信
-- 支持云边应用通过edgemesh通信
-- 在边缘端提供函数即服务（Function as a Service，FaaS）
-- 评估并启用具有数千个边缘节点和数百万设备的超大规模边缘集群
-- 启用应用的智能调度，扩大边缘节点的规模
-- 提升边缘端的安全能力
-- 评估使用gRPC协议进行云边通信
+- 边缘端支持List-Watch接口，方便边缘组件接入。
+
+#### 云边自定义消息通道
+
+- 支持云端和边缘端之间的自定义消息传输
+
+#### 稳定支持CloudCore多活
+
+- 支持多个CloudCore实例同时稳定运行
+
+#### 第三方CNI集成支持
+
+- 提供flannel、calico等CNI插件的官方集成支持
+
+#### 第三方CSI集成支持
+
+- 提供Rook、OpenEBS等CSI插件的官方集成支持
+
+#### 支持云端管理边缘群集 (aka. EdgeSite)
+
+#### 在边缘端支持 ingress/网关
+
+
+### 可维护性
+
+#### 部署优化
+
+- 更加简单、便捷的部署（最好一键部署，支持中国镜像）
+- Admission Controller自动部署
+
+#### 边缘应用离线迁移时间自动化配置
+
+- 一键修改Default tolerationSeconds
+
+#### 体验良好的中文文档
+
+
+### IOT 设备管理
+
+#### 设备Mapper框架标准以及框架生成器
+
+- 制定边缘设备Mapper的实施标准
+
+#### 支持更多协议的mapper
+
+- OPC-UA mapper
+- ONVIF mapper
+
+
+### 安全
+
+#### 完成安全漏洞扫描
+
+
+### 测试
+
+#### 使用更多的度量和场景改进性能和e2e测试
+
+
+### 边云协同AI
+
+#### 支持 KubeFlow/ONNX/Pytorch/Mindspore等
+
+#### 边云协同训练与推理
+
+
+### MEC
+
+#### 跨边云服务发现
+
+#### 5G网络能力开放
+
+
+
+## 2021 H2
+
+### 核心框架
+
+#### 云边自定义消息通道
+
+- 云边支持CloudEvent消息协议
+
+#### 数据面跨网络通信
+
+- 边缘-边缘 跨网络通信
+- 边缘-中心云 跨网络通信
+
+#### 使用标准的istio进行服务治理控制
+
+#### 云边协同监控
+
+- 支持prometheus push gateway
+- 数据管理，支持接收遥测数据和边缘分析。
+
+
+### IOT 设备管理
+
+#### 设备Mapper框架标准以及框架生成器
+
+- 开发Mapper基本框架生成器
+
+#### 支持更多协议的mapper
+
+- GB/T 28181 mapper
+
+
+### 边云协同AI
+
+#### 边缘智能benchmark
+
+
+### MEC
+
+#### 云网融合
+
+#### service catalog
+
+#### 应用漫游
