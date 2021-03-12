@@ -16,6 +16,7 @@ import (
 	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
@@ -54,6 +55,7 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 		default:
 		}
 		msg, err := beehiveContext.Receive(model.SrcCloudHub)
+		klog.V(4).Infof("[cloudhub] dispatchMessage to edge: %+v", msg)
 		if err != nil {
 			klog.Info("receive not Message format message")
 			continue
@@ -63,7 +65,6 @@ func (q *ChannelMessageQueue) DispatchMessage() {
 			klog.Warning("node id is not found in the message")
 			continue
 		}
-
 		if isListResource(&msg) {
 			q.addListMessageToQueue(nodeID, &msg)
 		} else {
@@ -162,6 +163,9 @@ func isListResource(msg *beehiveModel.Message) bool {
 		return true
 	}
 
+	if msg.Router.Operation == application.ApplicationResp {
+		return true
+	}
 	if msg.GetOperation() == beehiveModel.ResponseOperation {
 		content, ok := msg.Content.(string)
 		if ok && content == "OK" {
@@ -273,6 +277,8 @@ func (q *ChannelMessageQueue) Close(info *model.HubInfo) {
 // Publish sends message via the channel to Controllers
 func (q *ChannelMessageQueue) Publish(msg *beehiveModel.Message) error {
 	switch msg.Router.Source {
+	case application.MetaServerSource:
+		beehiveContext.Send(modules.DynamicControllerModuleName, *msg)
 	case model.ResTwin:
 		beehiveContext.SendToGroup(model.SrcDeviceController, *msg)
 	default:

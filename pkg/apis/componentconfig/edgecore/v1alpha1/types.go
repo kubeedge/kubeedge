@@ -388,6 +388,13 @@ type MetaManager struct {
 	// RemoteQueryTimeout indicates remote query timeout (second)
 	// default 60
 	RemoteQueryTimeout int32 `json:"remoteQueryTimeout,omitempty"`
+	// The config of MetaServer
+	MetaServer *MetaServer `json:"metaServer,omitempty"`
+}
+
+type MetaServer struct {
+	Enable bool `json:"enable,omitempty"`
+	Debug  bool `json:"debug,omitempty"`
 }
 
 // ServiceBus indicates the ServiceBus module config

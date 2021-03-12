@@ -5,27 +5,24 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
-	deviceslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/devices/v1alpha2"
 	reliablesyncslisters "github.com/kubeedge/kubeedge/cloud/pkg/client/listers/reliablesyncs/v1alpha1"
 	keclient "github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
-	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -35,33 +32,25 @@ type SyncController struct {
 	//client
 	crdclient crdClientset.Interface
 	// lister
-	podLister               corelisters.PodLister
-	configMapLister         corelisters.ConfigMapLister
-	secretLister            corelisters.SecretLister
-	serviceLister           corelisters.ServiceLister
-	endpointLister          corelisters.EndpointsLister
 	nodeLister              corelisters.NodeLister
 	objectSyncLister        reliablesyncslisters.ObjectSyncLister
 	clusterObjectSyncLister reliablesyncslisters.ClusterObjectSyncLister
-	deviceLister            deviceslisters.DeviceLister
-	informersSyncedFuncs    []cache.InformerSynced
+
+	kubeclient dynamic.Interface
+
+	informersSyncedFuncs []cache.InformerSynced
 }
 
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
-		enable:    enable,
-		crdclient: keclient.GetKubeEdgeCRDClient(),
+		enable:     enable,
+		crdclient:  keclient.GetCRDClient(),
+		kubeclient: keclient.GetDynamicClient(),
 	}
 	// informer factory
 	k8sInformerFactory := informers.GetInformersManager().GetK8sInformerFactory()
 	crdInformerFactory := informers.GetInformersManager().GetCRDInformerFactory()
-	// informer
-	podInformer := k8sInformerFactory.Core().V1().Pods()
-	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps()
-	secretInformer := k8sInformerFactory.Core().V1().Secrets()
-	serviceInformer := k8sInformerFactory.Core().V1().Services()
-	endpointInformer := k8sInformerFactory.Core().V1().Endpoints()
-	devicesInformer := crdInformerFactory.Devices().V1alpha2().Devices()
+
 	objectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	nodesInformer := k8sInformerFactory.Core().V1().Nodes()
@@ -72,21 +61,10 @@ func newSyncController(enable bool) *SyncController {
 	})
 	// lister
 	sctl.nodeLister = nodesInformer.Lister()
-	sctl.podLister = podInformer.Lister()
-	sctl.configMapLister = configMapInformer.Lister()
-	sctl.secretLister = secretInformer.Lister()
-	sctl.serviceLister = serviceInformer.Lister()
-	sctl.endpointLister = endpointInformer.Lister()
-	sctl.deviceLister = devicesInformer.Lister()
+
 	sctl.objectSyncLister = objectSyncsInformer.Lister()
 	sctl.clusterObjectSyncLister = clusterObjectSyncsInformer.Lister()
 	// InformerSynced
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, podInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, configMapInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, secretInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, serviceInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, endpointInformer.Informer().HasSynced)
-	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, devicesInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, objectSyncsInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, clusterObjectSyncsInformer.Informer().HasSynced)
 	sctl.informersSyncedFuncs = append(sctl.informersSyncedFuncs, nodesInformer.Informer().HasSynced)
@@ -121,9 +99,8 @@ func (sctl *SyncController) Start() {
 		return
 	}
 
+	sctl.deleteObjectSyncs() //check outdate sync before start to reconcile
 	go wait.Until(sctl.reconcile, 5*time.Second, beehiveContext.Done())
-
-	sctl.deleteObjectSyncs()
 }
 
 func (sctl *SyncController) reconcile() {
@@ -152,21 +129,7 @@ func (sctl *SyncController) manageClusterObjectSync(syncs []*v1alpha1.ClusterObj
 // and generate update and delete events to the edge
 func (sctl *SyncController) manageObjectSync(syncs []*v1alpha1.ObjectSync) {
 	for _, sync := range syncs {
-		switch sync.Spec.ObjectKind {
-		case model.ResourceTypePod:
-			sctl.managePod(sync)
-		case model.ResourceTypeConfigmap:
-			sctl.manageConfigMap(sync)
-		case model.ResourceTypeSecret:
-			sctl.manageSecret(sync)
-		case commonconst.ResourceTypeService:
-			sctl.manageService(sync)
-		case commonconst.ResourceTypeEndpoints:
-			sctl.manageEndpoint(sync)
-		// TODO: add device here
-		default:
-			klog.Errorf("Unsupported object kind: %v", sync.Spec.ObjectKind)
-		}
+		sctl.manageObject(sync)
 	}
 }
 
@@ -214,13 +177,4 @@ func getNodeName(syncName string) string {
 func getObjectUID(syncName string) string {
 	tmps := strings.Split(syncName, ".")
 	return tmps[len(tmps)-1]
-}
-
-func isFromEdgeNode(nodes []*v1.Node, nodeName string) bool {
-	for _, node := range nodes {
-		if node.Name == nodeName {
-			return true
-		}
-	}
-	return false
 }

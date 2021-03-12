@@ -21,6 +21,7 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -42,15 +43,21 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
 	}
 	kubeConfig.QPS = float32(config.QPS)
 	kubeConfig.Burst = int(config.Burst)
+
+	dynamicClient := dynamic.NewForConfigOrDie(kubeConfig)
+
 	kubeConfig.ContentType = runtime.ContentTypeProtobuf
 	kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
+
 	crdKubeConfig := rest.CopyConfig(kubeConfig)
 	crdKubeConfig.ContentType = runtime.ContentTypeJSON
 	crdClient := crdClientset.NewForConfigOrDie(crdKubeConfig)
+
 	once.Do(func() {
 		keClient = &kubeEdgeClient{
-			kubeClient: kubeClient,
-			crdClient:  crdClient,
+			kubeClient:    kubeClient,
+			crdClient:     crdClient,
+			dynamicClient: dynamicClient,
 		}
 	})
 }
@@ -59,11 +66,16 @@ func GetKubeClient() kubernetes.Interface {
 	return keClient.kubeClient
 }
 
-func GetKubeEdgeCRDClient() crdClientset.Interface {
+func GetCRDClient() crdClientset.Interface {
 	return keClient.crdClient
 }
 
+func GetDynamicClient() dynamic.Interface {
+	return keClient.dynamicClient
+}
+
 type kubeEdgeClient struct {
-	kubeClient *kubernetes.Clientset
-	crdClient  *crdClientset.Clientset
+	kubeClient    *kubernetes.Clientset
+	crdClient     *crdClientset.Clientset
+	dynamicClient dynamic.Interface
 }

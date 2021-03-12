@@ -58,11 +58,10 @@ runs on edge nodes and manages containerized applications.`,
 			klog.Infof("Version: %+v", version.Get())
 			client.InitKubeEdgeClient(config.KubeAPIConfig)
 			gis := informers.GetInformersManager()
-			registerModules(config)
+			gis.Start(beehiveContext.Done())
 			registerModules(config)
 			// start all modules
 			core.StartModules()
-			gis.Start(beehiveContext.Done())
 			core.GracefulShutdown()
 		},
 	}
