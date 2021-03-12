@@ -11,7 +11,7 @@ Then go to KubeEdge git repo and build as following:
 
 ```bash
 $ cd $GOPATH/src/github.com/kubeedge/kubeedge
-$ make build WHAT=keadm
+$ make all WHAT=keadm
 ```
 
 In most of the cases, when you are trying to compile KubeEdge edgecore on Raspberry Pi or any other device, you may run out of memory, in that case, it is advisable to cross-compile the Edgecore binary and transfer it to your edge device.
