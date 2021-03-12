@@ -124,14 +124,12 @@ func installCRDs(kubeConfig, master string) error {
 		//check it first, do not download when it exists
 		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
 		if err != nil {
-			if os.IsNotExist(err) {
-				//Download the tar from repo
-				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", KubeEdgeCRDDownloadURL, crdFile)
-				cmd := NewCommand(downloadURL)
-				if err := cmd.Exec(); err != nil {
-					return err
-				}
-			} else {
+			if !os.IsNotExist(err) {
+				return err
+			}
+			//Download the tar from repo
+			crdFileDownloadURL := KubeEdgeCRDDownloadURL + "/" + crdFile
+			if err := download(crdFileDownloadURL, KubeEdgeCrdPath+"/devices"); err != nil {
 				return err
 			}
 		}
@@ -155,14 +153,12 @@ func installCRDs(kubeConfig, master string) error {
 		//check it first, do not download when it exists
 		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
 		if err != nil {
-			if os.IsNotExist(err) {
-				//Download the tar from repo
-				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", KubeEdgeCRDDownloadURL, crdFile)
-				cmd := NewCommand(downloadURL)
-				if err := cmd.Exec(); err != nil {
-					return err
-				}
-			} else {
+			if !os.IsNotExist(err) {
+				return err
+			}
+			//Download the tar from repo
+			crdFileDownloadURL := KubeEdgeCRDDownloadURL + "/" + crdFile
+			if err := download(crdFileDownloadURL, KubeEdgeCrdPath+"/reliablesyncs"); err != nil {
 				return err
 			}
 		}

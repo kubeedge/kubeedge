@@ -44,12 +44,14 @@ require (
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pkg/errors v0.9.1
 	github.com/sailorvii/modbus v0.1.2
+	github.com/schollz/progressbar/v3 v3.7.5
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/vishvananda/netlink v1.1.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
 	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.19.3

@@ -21,6 +21,8 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
@@ -439,12 +442,14 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	}
 
 	fmt.Printf("%s content: \n", checksumFilename)
-	getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-	if err := getDesiredCheckSum.Exec(); err != nil {
+	actualSum := getActualCheckSum.GetStdOut()
+	checksumFileDownloadURL := KubeEdgeDownloadURL + "/v" + version.String() + "/" + checksumFilename
+	data, err := downloadWithData(checksumFileDownloadURL)
+	if err != nil {
 		return false, err
 	}
-
-	if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
+	desiredSum := strings.TrimSpace(string(data))
+	if desiredSum != actualSum {
 		fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
 		return false, nil
 	}
@@ -455,9 +460,8 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 	filePath := filepath.Join(tarballPath, filename)
 	for try := 0; try < downloadRetryTimes; try++ {
 		//Download the tar from repo
-		dwnldURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/v%s/%s",
-			tarballPath, KubeEdgeDownloadURL, version, filename)
-		if err := NewCommand(dwnldURL).Exec(); err != nil {
+		downloadURL := KubeEdgeDownloadURL + "/v" + version.String() + "/" + filename
+		if err := download(downloadURL, tarballPath); err != nil {
 			return err
 		}
 
@@ -476,6 +480,47 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 		}
 	}
 	return fmt.Errorf("failed to download %s", filename)
+}
+
+func download(downloadURL, targetPath string) error {
+	name := filepath.Base(downloadURL)
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if targetPath != "" {
+		_, err = os.Stat(targetPath)
+		if err != nil {
+			mkErr := os.MkdirAll(targetPath, os.ModePerm)
+			if mkErr != nil {
+				return mkErr
+			}
+		}
+	}
+	fullPath := filepath.Join(targetPath, name)
+	f, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	bar := progressbar.DefaultBytes(
+		resp.ContentLength,
+		name,
+	)
+	_, err = io.Copy(io.MultiWriter(f, bar), resp.Body)
+	return err
+}
+
+func downloadWithData(downloadURL string) ([]byte, error) {
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
 }
 
 // Compressed folders or files
@@ -671,9 +716,8 @@ func downloadServiceFile(componentType types.ComponentType, version semver.Versi
 		ServiceFileURL := fmt.Sprintf(ServiceFileURLFormat, strippedVersion, ServiceFileName)
 		if _, err := os.Stat(ServiceFilePath); err != nil {
 			if os.IsNotExist(err) {
-				cmdStr := fmt.Sprintf("cd %s && sudo -E wget -t %d -k --no-check-certificate %s", storeDir, RetryTimes, ServiceFileURL)
 				fmt.Printf("[Run as service] start to download service file for %s\n", componentType)
-				if err := NewCommand(cmdStr).Exec(); err != nil {
+				if err := download(ServiceFileURL, storeDir); err != nil {
 					return err
 				}
 				fmt.Printf("[Run as service] success to download service file for %s\n", componentType)
