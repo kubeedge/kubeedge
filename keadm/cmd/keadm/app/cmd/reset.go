@@ -67,6 +67,16 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check whether the cloudcore default configuration file exists
+			if _, err := os.Stat(util.KubeEdgeCloudCoreNewYaml); err == nil {
+				return nil
+			}
+			// Check whether the edgecore default configuration file exists
+			if _, err := os.Stat(util.KubeEdgeEdgeCoreNewYaml); err == nil {
+				IsEdgeNode = true
+				return nil
+			}
+			// Check the running module
 			whoRunning, err := util.RunningModule()
 			if err != nil {
 				return err
