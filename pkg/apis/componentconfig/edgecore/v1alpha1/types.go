@@ -244,6 +244,10 @@ type Edged struct {
 	// EnableMetrics indicates whether enable the metrics
 	// default true
 	EnableMetrics bool `json:"enableMetrics,omitempty"`
+	// EnableSendEvents indicates whether enable sending events to kube-apiserver
+	// dynamicController in CloudCore Config also needs to be enabled.
+	// default false
+	EnableSendEvents bool `json:"enableSendEvents,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config

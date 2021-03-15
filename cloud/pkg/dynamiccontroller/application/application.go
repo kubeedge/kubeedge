@@ -252,12 +252,7 @@ func NewApplicationAgent(nodeName string) *Agent {
 	return &Agent{nodeName: nodeName}
 }
 
-func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
-	key, err := metaserver.KeyFuncReq(ctx, "")
-	if err != nil {
-		klog.Errorf("%v", err)
-		return &Application{}
-	}
+func (a *Agent) GenerateWithKey(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object, key string) *Application {
 	app := newApplication(ctx, key, verb, a.nodeName, option, obj)
 	store, ok := a.Applications.LoadOrStore(app.Identifier(), app)
 	if ok {
@@ -266,6 +261,15 @@ func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option inter
 		return app
 	}
 	return app
+}
+
+func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
+	key, err := metaserver.KeyFuncReq(ctx, "")
+	if err != nil {
+		klog.Errorf("%v", err)
+		return &Application{}
+	}
+	return a.GenerateWithKey(ctx, verb, option, obj, key)
 }
 
 func (a *Agent) Apply(app *Application) error {

@@ -52,6 +52,7 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/klog/v2"
 	pluginwatcherapi "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
+	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	kubeletinternalconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 	"k8s.io/kubernetes/pkg/kubelet/cm"
@@ -308,7 +309,7 @@ func (e *edged) Start() {
 		e.mounter,
 		e.hostUtil,
 		e.getPodsDir(),
-		record.NewEventRecorder(),
+		e.recorder,
 		false,
 		false,
 		volumepathhandler.NewBlockVolumePathHandler(),
@@ -320,7 +321,7 @@ func (e *edged) Start() {
 	// handled by pod workers).
 	go utilwait.Until(e.podKiller.PerformPodKillingWork, 5*time.Second, utilwait.NeverStop)
 
-	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, record.NewEventRecorder())
+	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, e.recorder)
 	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
 	e.statusManager.Start()
 	e.pleg.Start()
@@ -419,8 +420,6 @@ func newEdged(enable bool) (*edged, error) {
 		LowThresholdPercent:  int(edgedconfig.Config.ImageGCLowThreshold),
 		MinAge:               minAge,
 	}
-	// build new object to match interface
-	recorder := record.NewEventRecorder()
 
 	metaClient := client.New()
 
@@ -448,9 +447,19 @@ func newEdged(enable bool) (*edged, error) {
 		configMapStore:            cache.NewStore(cache.MetaNamespaceKeyFunc),
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(edgedconfig.Config.NodeIP),
-		recorder:                  recorder,
 		enable:                    enable,
 	}
+
+	eventBroadcaster := recordtools.NewBroadcaster()
+	recorder := eventBroadcaster.NewRecorder(legacyscheme.Scheme, v1.EventSource{Component: v1alpha1.Kind, Host: ed.nodeName})
+	ed.recorder = recorder
+	eventBroadcaster.StartStructuredLogging(3)
+	if edgedconfig.Config.EnableSendEvents {
+		eventBroadcaster.StartRecordingToSink(record.NewSimpleEventSink(ed.nodeName))
+	} else {
+		klog.Infoln("no events will be sent to API server.")
+	}
+
 	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
 	err := ed.makePodDir()
 	if err != nil {
