@@ -12,6 +12,7 @@ import (
 	"k8s.io/klog/v2"
 
 	routerConfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 )
 
@@ -122,7 +123,8 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
 		return
 	}
-	b, err := ioutil.ReadAll(r.Body)
+	aReaderCloser := http.MaxBytesReader(w, r.Body, constants.MaxmMessageBytes)
+	b, err := ioutil.ReadAll(aReaderCloser)
 	if err != nil {
 		klog.Errorf("request error, write result: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
