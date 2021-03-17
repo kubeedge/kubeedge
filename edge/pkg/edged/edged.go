@@ -126,9 +126,9 @@ const (
 	MaxContainerBackOff = 300 * time.Second
 	enqueueDuration     = 10 * time.Second
 	// ImageGCPeriod is the period for performing image garbage collection.
-	ImageGCPeriod = 5 * time.Second
+	ImageGCPeriod = 5 * time.Minute
 	// ContainerGCPeriod is the period for performing container garbage collection.
-	ContainerGCPeriod = 60 * time.Second
+	ContainerGCPeriod = time.Minute
 	// Period for performing global cleanup tasks.
 	housekeepingPeriod   = time.Second * 2
 	syncWorkQueuePeriod  = time.Second * 2
