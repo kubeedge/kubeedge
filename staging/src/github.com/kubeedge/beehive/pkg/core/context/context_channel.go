@@ -146,16 +146,27 @@ func (ctx *ChannelContext) SendSync(module string, message model.Message, timeou
 
 // SendResp send resp for this message when using sync mode
 func (ctx *ChannelContext) SendResp(message model.Message) {
+	// avoid exception because of channel closing
+	// TODO: need reconstruction
+	defer func() {
+		if exception := recover(); exception != nil {
+			klog.Warningf("Recover when sendResp message, exception: %+v", exception)
+		}
+	}()
+
 	anonName := getAnonChannelName(message.GetParentID())
 
 	ctx.anonChsLock.RLock()
-	defer ctx.anonChsLock.RUnlock()
-	if channel, exist := ctx.anonChannels[anonName]; exist {
-		channel <- message
+	channel, exist := ctx.anonChannels[anonName]
+	if !exist {
+		ctx.anonChsLock.RUnlock()
+		klog.V(4).Infof("Get bad anonName:%s when sendresp message, do nothing", anonName)
 		return
 	}
+	ctx.anonChsLock.RUnlock()
 
-	klog.V(4).Infof("Get bad anonName:%s when sendresp message, do nothing", anonName)
+	channel <- message
+	return
 }
 
 // SendToGroup send msg to modules. Todo: do not stuck
