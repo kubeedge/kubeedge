@@ -106,7 +106,6 @@ import (
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
-	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
@@ -462,7 +461,7 @@ func newEdged(enable bool) (*edged, error) {
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
-	statsProvider := edgeimages.NewStatsProvider()
+
 	containerGCPolicy := kubecontainer.GCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
@@ -678,7 +677,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
-		statsProvider,
+		ed.StatsProvider,
 		recorder,
 		nodeRef,
 		policy,
