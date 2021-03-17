@@ -308,13 +308,12 @@ func (ctx *ChannelContext) addChannel(module string, moduleCh chan model.Message
 func (ctx *ChannelContext) delChannel(module string) {
 	// delete module channel from channels map
 	ctx.chsLock.Lock()
-	_, exist := ctx.channels[module]
-	if !exist {
+	if _, exist := ctx.channels[module]; !exist {
+		ctx.chsLock.Unlock()
 		klog.Warningf("Failed to get channel, module:%s", module)
 		return
 	}
 	delete(ctx.channels, module)
-
 	ctx.chsLock.Unlock()
 
 	// delete module channel from typechannels map
