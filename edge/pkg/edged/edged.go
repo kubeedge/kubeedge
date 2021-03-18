@@ -104,7 +104,6 @@ import (
 	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
@@ -692,7 +691,7 @@ func newEdged(enable bool) (*edged, error) {
 	containerGCManager, err := kubecontainer.NewContainerGC(
 		ed.containerRuntime,
 		containerGCPolicy,
-		&containers.KubeSourcesReady{})
+		edgedutil.NewSourcesReady(ed.isInitPodReady))
 	if err != nil {
 		return nil, fmt.Errorf("init Container GC Manager failed with error %s", err.Error())
 	}
