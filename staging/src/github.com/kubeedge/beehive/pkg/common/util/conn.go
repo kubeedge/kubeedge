@@ -15,13 +15,12 @@ type UnixSocket struct {
 }
 
 // NewUnixSocket create new socket
-func NewUnixSocket(filename string, size ...int) *UnixSocket {
-	size1 := 10480
-	if size != nil {
-		size1 = size[0]
+func NewUnixSocket(filename string, sizes ...int) *UnixSocket {
+	size := 10480
+	if len(sizes) != 0 {
+		size = sizes[0]
 	}
-	us := UnixSocket{filename: filename, bufsize: size1}
-	return &us
+	return &UnixSocket{filename: filename, bufsize: size}
 }
 
 func (us *UnixSocket) createServer() {
