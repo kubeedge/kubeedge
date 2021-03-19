@@ -99,7 +99,6 @@ func (s *StreamServer) installDebugHandler() {
 
 func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -140,7 +139,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 		klog.Infof("Delete %s from %s", logConnection.String(), session.String())
 	}()
 
-	if err := logConnection.Serve(); err != nil {
+	if err = logConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			logConnection.String(), session.String(), err)
 		return
@@ -149,7 +148,6 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 
 func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -191,7 +189,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
 	}()
 
-	if err := metricsConnection.Serve(); err != nil {
+	if err = metricsConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			metricsConnection.String(), session.String(), err)
 		return
@@ -200,7 +198,6 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 
 func (s *StreamServer) getExec(request *restful.Request, response *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
@@ -253,7 +250,7 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 		klog.Infof("Delete %s from %s", execConnection.String(), session.String())
 	}()
 
-	if err := execConnection.Serve(); err != nil {
+	if err = execConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			execConnection.String(), session.String(), err)
 		return
