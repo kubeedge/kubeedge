@@ -310,8 +310,7 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	if err != nil {
 		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
 		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
-		err = hi.Close()
-		if err != nil {
+		if err := hi.Close(); err != nil {
 			klog.Errorf("fail to close connection, reason: %s", err.Error())
 		}
 		return err
