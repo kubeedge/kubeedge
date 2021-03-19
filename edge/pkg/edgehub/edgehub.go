@@ -81,10 +81,13 @@ func (eh *EdgeHub) Start() {
 			klog.Fatalf("failed to init controller: %v", err)
 			return
 		}
+
+		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
+
 		err = eh.chClient.Init()
 		if err != nil {
-			klog.Errorf("connection error, try again after 60s: %v", err)
-			time.Sleep(waitConnectionPeriod)
+			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
+			time.Sleep(waitTime)
 			continue
 		}
 		// execute hook func after connect
@@ -102,7 +105,8 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second * 2)
+		klog.Warningf("connection is broken, will reconnect after %s", waitTime.String())
+		time.Sleep(waitTime)
 
 		// clean channel
 	clean:
