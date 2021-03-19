@@ -105,7 +105,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
-	edgeimages "github.com/kubeedge/kubeedge/edge/pkg/edged/images"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
@@ -126,9 +125,9 @@ const (
 	MaxContainerBackOff = 300 * time.Second
 	enqueueDuration     = 10 * time.Second
 	// ImageGCPeriod is the period for performing image garbage collection.
-	ImageGCPeriod = 5 * time.Second
+	ImageGCPeriod = 5 * time.Minute
 	// ContainerGCPeriod is the period for performing container garbage collection.
-	ContainerGCPeriod = 60 * time.Second
+	ContainerGCPeriod = time.Minute
 	// Period for performing global cleanup tasks.
 	housekeepingPeriod   = time.Second * 2
 	syncWorkQueuePeriod  = time.Second * 2
@@ -468,7 +467,7 @@ func newEdged(enable bool) (*edged, error) {
 		UID:       types.UID(ed.nodeName),
 		Namespace: "",
 	}
-	statsProvider := edgeimages.NewStatsProvider()
+
 	containerGCPolicy := kubecontainer.GCPolicy{
 		MinAge:             minAge,
 		MaxContainers:      -1,
@@ -684,7 +683,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
-		statsProvider,
+		ed.StatsProvider,
 		recorder,
 		nodeRef,
 		policy,
