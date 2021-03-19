@@ -104,7 +104,6 @@ import (
 	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/containers"
 	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
@@ -252,6 +251,9 @@ type edged struct {
 	podLastSyncTime     sync.Map
 	runtimeClassManager *runtimeclass.Manager
 	logManager          logs.ContainerLogManager
+
+	// Pod killer handles pods to be killed
+	podKiller PodKiller
 }
 
 // Register register edged
@@ -313,6 +315,10 @@ func (e *edged) Start() {
 	)
 	go e.volumeManager.Run(edgedutil.NewSourcesReady(e.isInitPodReady), utilwait.NeverStop)
 	go utilwait.Until(e.syncNodeStatus, e.nodeStatusUpdateFrequency, utilwait.NeverStop)
+
+	// Start a goroutine responsible for killing pods (that are not properly
+	// handled by pod workers).
+	go utilwait.Until(e.podKiller.PerformPodKillingWork, 5*time.Second, utilwait.NeverStop)
 
 	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, record.NewEventRecorder())
 	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
@@ -691,11 +697,14 @@ func newEdged(enable bool) (*edged, error) {
 	containerGCManager, err := kubecontainer.NewContainerGC(
 		ed.containerRuntime,
 		containerGCPolicy,
-		&containers.KubeSourcesReady{})
+		edgedutil.NewSourcesReady(ed.isInitPodReady))
 	if err != nil {
 		return nil, fmt.Errorf("init Container GC Manager failed with error %s", err.Error())
 	}
 	ed.containerGCManager = containerGCManager
+
+	ed.podKiller = NewPodKiller(ed)
+
 	ed.server = server.NewServer(ed.podManager)
 	return ed, nil
 }
@@ -1408,6 +1417,36 @@ func (e *edged) HandlePodCleanups() error {
 		return nil
 	}
 	pods := e.podManager.GetPods()
+
+	// Pod phase progresses monotonically. Once a pod has reached a final state,
+	// it should never leave regardless of the restart policy. The statuses
+	// of such pods should not be changed, and there is no need to sync them.
+	// TODO: the logic here does not handle two cases:
+	//   1. If the containers were removed immediately after they died, kubelet
+	//      may fail to generate correct statuses, let alone filtering correctly.
+	//   2. If kubelet restarted before writing the terminated status for a pod
+	//      to the apiserver, it could still restart the terminated pod (even
+	//      though the pod was not considered terminated by the apiserver).
+	// These two conditions could be alleviated by checkpointing kubelet.
+	activePods := e.filterOutTerminatedPods(pods)
+
+	desiredPods := make(map[types.UID]sets.Empty)
+	for _, pod := range activePods {
+		desiredPods[pod.UID] = sets.Empty{}
+	}
+
+	runningPods, err := e.runtimeCache.GetPods()
+	if err != nil {
+		klog.Errorf("Error listing containers: %#v", err)
+		return err
+	}
+
+	for _, pod := range runningPods {
+		if _, found := desiredPods[pod.ID]; !found {
+			e.podKiller.KillPod(&kubecontainer.PodPair{APIPod: nil, RunningPod: pod})
+		}
+	}
+
 	containerRunningPods, err := e.containerRuntime.GetPods(false)
 	if err != nil {
 		return err
