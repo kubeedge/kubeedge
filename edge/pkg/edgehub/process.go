@@ -37,47 +37,8 @@ func (eh *EdgeHub) initial() (err error) {
 	return nil
 }
 
-func (eh *EdgeHub) addKeepChannel(msgID string) chan model.Message {
-	eh.keeperLock.Lock()
-	defer eh.keeperLock.Unlock()
-
-	tempChannel := make(chan model.Message, 1)
-	eh.syncKeeper[msgID] = tempChannel
-
-	return tempChannel
-}
-
-func (eh *EdgeHub) deleteKeepChannel(msgID string) {
-	eh.keeperLock.Lock()
-	defer eh.keeperLock.Unlock()
-
-	delete(eh.syncKeeper, msgID)
-}
-
 func (eh *EdgeHub) isSyncResponse(msgID string) bool {
-	eh.keeperLock.RLock()
-	defer eh.keeperLock.RUnlock()
-
-	_, exist := eh.syncKeeper[msgID]
-	return exist
-}
-
-func (eh *EdgeHub) sendToKeepChannel(message model.Message) error {
-	eh.keeperLock.RLock()
-	defer eh.keeperLock.RUnlock()
-	channel, exist := eh.syncKeeper[message.GetParentID()]
-	if !exist {
-		klog.Errorf("failed to get sync keeper channel, messageID:%+v", message)
-		return fmt.Errorf("failed to get sync keeper channel, messageID:%+v", message)
-	}
-	// send response into synckeep channel
-	select {
-	case channel <- message:
-	default:
-		klog.Errorf("failed to send message to sync keep channel")
-		return fmt.Errorf("failed to send message to sync keep channel")
-	}
-	return nil
+	return msgID != ""
 }
 
 func (eh *EdgeHub) dispatch(message model.Message) error {
@@ -98,11 +59,13 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	}
 
 	isResponse := eh.isSyncResponse(message.GetParentID())
-	if !isResponse {
-		beehiveContext.SendToGroup(md, message)
+	if isResponse {
+		beehiveContext.SendResp(message)
 		return nil
 	}
-	return eh.sendToKeepChannel(message)
+
+	beehiveContext.SendToGroup(md, message)
+	return nil
 }
 
 func (eh *EdgeHub) routeToEdge() {
@@ -136,24 +99,6 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	if err != nil {
 		klog.Errorf("failed to send message: %v", err)
 		return fmt.Errorf("failed to send message, error: %v", err)
-	}
-
-	syncKeep := func(message model.Message) {
-		tempChannel := eh.addKeepChannel(message.GetID())
-		sendTimer := time.NewTimer(time.Duration(config.Config.Heartbeat) * time.Second)
-		select {
-		case response := <-tempChannel:
-			sendTimer.Stop()
-			beehiveContext.SendResp(response)
-			eh.deleteKeepChannel(response.GetParentID())
-		case <-sendTimer.C:
-			klog.Warningf("timeout to receive response for message: %+v", message)
-			eh.deleteKeepChannel(message.GetID())
-		}
-	}
-
-	if message.IsSync() {
-		go syncKeep(message)
 	}
 
 	return nil

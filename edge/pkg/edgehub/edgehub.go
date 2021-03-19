@@ -8,7 +8,6 @@ import (
 
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -28,7 +27,6 @@ type EdgeHub struct {
 	certManager   certificate.CertManager
 	chClient      clients.Adapter
 	reconnectChan chan struct{}
-	syncKeeper    map[string]chan model.Message
 	keeperLock    sync.RWMutex
 	enable        bool
 }
@@ -36,7 +34,6 @@ type EdgeHub struct {
 func newEdgeHub(enable bool) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),
-		syncKeeper:    make(map[string]chan model.Message),
 		enable:        enable,
 	}
 }
@@ -84,10 +81,13 @@ func (eh *EdgeHub) Start() {
 			klog.Fatalf("failed to init controller: %v", err)
 			return
 		}
+
+		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
+
 		err = eh.chClient.Init()
 		if err != nil {
-			klog.Errorf("connection error, try again after 60s: %v", err)
-			time.Sleep(waitConnectionPeriod)
+			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
+			time.Sleep(waitTime)
 			continue
 		}
 		// execute hook func after connect
@@ -105,7 +105,8 @@ func (eh *EdgeHub) Start() {
 		eh.pubConnectInfo(false)
 
 		// sleep one period of heartbeat, then try to connect cloud hub again
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second * 2)
+		klog.Warningf("connection is broken, will reconnect after %s", waitTime.String())
+		time.Sleep(waitTime)
 
 		// clean channel
 	clean:
