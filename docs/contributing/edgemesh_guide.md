@@ -20,7 +20,7 @@ Modify `/etc/nsswitch.conf`, make sure `dns` is first order, like below:
 
 ```
 $ grep hosts /etc/nsswitch.conf
-hosts:          dns file mdns4_minimal [NOTFOUND=return]
+hosts:          dns files mdns4_minimal [NOTFOUND=return]
 ```
 
 ### IP Forward Setting
