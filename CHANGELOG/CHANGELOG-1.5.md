@@ -17,16 +17,25 @@
 ### KubeEdge Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [kubeedge-v1.5.0-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/kubeedge-v1.5.0-linux-arm64.tar.gz) |  79.3 MB | 2dc2f4e6a0d79a68321c8a9159e063223a1822bcc56084e99222d5660a2187356b11d0124d05d12ad2b6e536d013d0e016f07d12d2ef42ab703e1fba18ce8805 |
+| [kubeedge-v1.5.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/kubeedge-v1.5.0-linux-arm.tar.gz) | 78 MB | 8392850dc4b186ac90720f463977ae55b356cfbf889125d86f344283e514f65414d93505c1f21a5f9dc9633cc0e6bdb16fe68cc6b8d8055c880d82b641c97db8 |
+| [kubeedge-v1.5.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/kubeedge-v1.5.0-linux-amd64.tar.gz) | 45.7 MB | 3b006f32bfbccc7f4c12759dd560faa37655bdcb16bcb590574d9f5ed2fe6dd06e5e1a5dd8e7bb3fdf248794eacd8b13e7c8a3edfadb17597f7bf35620cf3159 |
 
 
 ### Installer Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [keadm-v1.5.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/keadm-v1.5.0-linux-arm64.tar.gz) |  20.1 MB | 24b80603891c8a6f23ef593fde084d2b6629e1c0d7a33d8770ba4002d7083b6c4c8bfce6a1975ca1a94ff19402a8dbbcd5954cd399312e3fb2958afcf9878461 |
+| [keadm-v1.5.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/keadm-v1.5.0-linux-arm.tar.gz) |  19.8 MB | 0b76b72bd1fb74b57d9b8b4edc350f59e7935ad2a07cf225fc5103a5552fbc1b0ee0cd8db7e5afd1c0eab06af4dcc7a0879ea5e3b16073acec0efeecfb429bec |
+| [keadm-v1.5.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/keadm-v1.5.0-linux-amd64.tar.gz) |  11.7 MB | 650122a02f0973785c0e65988bdc493be17597e8fb159028edbcdbc0355801772a90bdf4b822f8fb905f626958c0549137e2f39d07ccca0a2f611b7d7941e627 |
 
 
 ### EdgeSite Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+| [edgesite-v1.5.0-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/edgesite-v1.5.0-linux-arm64.tar.gz) | 28.1 MB | 95f6e946dc7172ecd94a2607a7bdc8d39046e513c975c8bd3c88652c5800df3465fb620e5ac2558b22c861ec95bdad7842333d4d95e53e5ab27bcf96039ae054 |
+| [edgesite-v1.5.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/edgesite-v1.5.0-linux-arm.tar.gz) | 27.7 MB | 94043bc337a5dda70811dc6fd1e7800e418abf31ec6a442980182c5767ab86886acbbc12e34951f580be0bcd750e3b35ac69211af48379ea9325a18c25326654 |
+| [edgesite-v1.5.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.5.0/edgesite-v1.5.0-linux-amd64.tar.gz) | 16.5 MB | e9eff446996c1df7020d161cf0945ed4bd378f23fadf5e3c77c84c3b0b7d6255fbb55482dcb23a6bf2e74ff3f953b901c42cf28e5a6fb9adf3e6e4651c9e6832 |
 
 
 ## KubeEdge v1.5 Release Notes
