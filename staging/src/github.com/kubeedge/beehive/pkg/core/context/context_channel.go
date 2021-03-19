@@ -160,22 +160,19 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 
 // SendToGroup send msg to modules. Todo: do not stuck
 func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
-	// avoid exception because of channel closing
-	// TODO: need reconstruction
-	defer func() {
-		if exception := recover(); exception != nil {
-			klog.Warningf("Recover when sendToGroup message, exception: %+v", exception)
-		}
-	}()
-
 	send := func(ch chan model.Message) {
+		// avoid exception because of channel closing
+		// TODO: need reconstruction
+		defer func() {
+			if exception := recover(); exception != nil {
+				klog.Warningf("Recover when sendToGroup message, exception: %+v", exception)
+			}
+		}()
 		select {
 		case ch <- message:
 		default:
 			klog.Warningf("the message channel is full, message: %+v", message)
-			select {
-			case ch <- message:
-			}
+			ch <- message
 		}
 	}
 	if channelList := ctx.getTypeChannel(moduleType); channelList != nil {
@@ -190,14 +187,6 @@ func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message)
 // SendToGroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
 func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	// avoid exception because of channel closing
-	// TODO: need reconstruction
-	defer func() {
-		if exception := recover(); exception != nil {
-			klog.Warningf("Recover when sendToGroupsync message, exception: %+v", exception)
-		}
-	}()
-
 	if timeout <= 0 {
 		timeout = MessageTimeoutDefault
 	}
@@ -242,6 +231,13 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 
 	var timeoutCounter int32
 	send := func(ch chan model.Message) {
+		// avoid exception because of channel closing
+		// TODO: need reconstruction
+		defer func() {
+			if exception := recover(); exception != nil {
+				klog.Warningf("Recover when sendToGroupsync message, exception: %+v", exception)
+			}
+		}()
 		sendTimer := time.NewTimer(time.Until(deadline))
 		select {
 		case ch <- message:
