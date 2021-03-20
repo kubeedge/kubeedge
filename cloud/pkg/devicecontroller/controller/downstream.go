@@ -87,7 +87,7 @@ func (dc *DownstreamController) syncDeviceModel() {
 		case e := <-dc.deviceModelManager.Events():
 			deviceModel, ok := e.Object.(*v1alpha2.DeviceModel)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", deviceModel)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			switch e.Type {
@@ -155,7 +155,7 @@ func (dc *DownstreamController) syncDevice() {
 		case e := <-dc.deviceManager.Events():
 			device, ok := e.Object.(*v1alpha2.Device)
 			if !ok {
-				klog.Warningf("Object type: %T unsupported", device)
+				klog.Warningf("Object type: %T unsupported", e.Object)
 				continue
 			}
 			switch e.Type {
