@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -85,7 +85,7 @@ type Application struct {
 	Verb     applicationVerb
 	Nodename string
 	Status   applicationStatus
-	Reason   string // why in this status
+	Reason   []byte // why in this status
 	Option   []byte //
 	ReqBody  []byte // better a k8s api instance
 	RespBody []byte
@@ -138,7 +138,7 @@ func (a *Application) Identifier() string {
 	return a.ID
 }
 func (a *Application) String() string {
-	return fmt.Sprintf("(NodeName=%v;Key=%v;Verb=%v;Status=%v;Reason=%v)", a.Nodename, a.Key, a.Verb, a.Status, a.Reason)
+	return fmt.Sprintf("(NodeName=%v;Key=%v;Verb=%v;Status=%v;Reason=%v)", a.Nodename, a.Key, a.Verb, a.Status, a.getReason())
 }
 func (a *Application) ReqContent() interface{} {
 	return a.ReqBody
@@ -202,6 +202,29 @@ func (a *Application) getStatus() applicationStatus {
 	return a.Status
 }
 
+func (a *Application) getReason() (reason error) {
+	if len(a.Reason) == 0 {
+		return nil
+	}
+	interErr := new(apierrors.StatusError)
+	_ = json.Unmarshal(a.Reason, interErr)
+	return interErr
+}
+
+func (a *Application) setReason(reason error) {
+	if reason == nil {
+		a.Reason = []byte{}
+		return
+	}
+	interErr := new(apierrors.StatusError)
+	if err, ok := reason.(*apierrors.StatusError); ok {
+		interErr = err
+	} else {
+		interErr = apierrors.NewInternalError(reason)
+	}
+	a.Reason = toBytes(*interErr)
+}
+
 // Wait the result of application after it is applied by application agent
 func (a *Application) Wait() {
 	if a.ctx != nil {
@@ -214,7 +237,7 @@ func (a *Application) Reset() {
 		a.cancel()
 	}
 	a.ctx, a.cancel = context.WithCancel(beehiveContext.GetContext())
-	a.Reason = ""
+	a.setReason(nil)
 	a.RespBody = []byte{}
 }
 
@@ -281,7 +304,7 @@ func (a *Agent) Apply(app *Application) error {
 		app.Reset()
 		go a.doApply(app)
 	case Rejected, Failed:
-		return errors.New(app.Reason)
+		return app.getReason()
 	case Approved:
 		return nil
 	case InApplying:
@@ -289,7 +312,7 @@ func (a *Agent) Apply(app *Application) error {
 	}
 	app.Wait()
 	if app.getStatus() != Approved {
-		return errors.New(app.Reason)
+		return app.getReason()
 	}
 	return nil
 }
@@ -304,14 +327,14 @@ func (a *Agent) doApply(app *Application) {
 	resp, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *msg, 10*time.Second)
 	if err != nil {
 		app.Status = Failed
-		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
+		app.setReason(fmt.Errorf("failed to access cloud Application center: %w", err))
 		return
 	}
 
 	retApp, err := msgToApplication(resp)
 	if err != nil {
 		app.Status = Failed
-		app.Reason = fmt.Sprintf("failed to get Application from resp msg: %v", err)
+		app.setReason(fmt.Errorf("failed to get Application from resp msg: %w", err))
 		return
 	}
 
@@ -395,7 +418,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
 			}
-			c.Response(app, msg.GetID(), Approved, "", list)
+			c.Response(app, msg.GetID(), Approved, nil, list)
 		case Watch:
 			var option = new(metav1.ListOptions)
 			if err := app.OptionTo(option); err != nil {
@@ -405,7 +428,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return fmt.Errorf("failed to add listener, %v", err)
 			}
-			c.Response(app, msg.GetID(), Approved, "", nil)
+			c.Response(app, msg.GetID(), Approved, nil, nil)
 		case Get:
 			var option = new(metav1.GetOptions)
 			if err := app.OptionTo(option); err != nil {
@@ -415,7 +438,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
+			c.Response(app, msg.GetID(), Approved, nil, retObj)
 		case Create:
 			var option = new(metav1.CreateOptions)
 			if err := app.OptionTo(option); err != nil {
@@ -429,7 +452,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
+			c.Response(app, msg.GetID(), Approved, nil, retObj)
 		case Delete:
 			var option = new(metav1.DeleteOptions)
 			if err := app.OptionTo(&option); err != nil {
@@ -439,7 +462,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", nil)
+			c.Response(app, msg.GetID(), Approved, nil, nil)
 		case Update:
 			var option = new(metav1.UpdateOptions)
 			if err := app.OptionTo(option); err != nil {
@@ -453,7 +476,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
+			c.Response(app, msg.GetID(), Approved, nil, retObj)
 		case UpdateStatus:
 			var option = new(metav1.UpdateOptions)
 			if err := app.OptionTo(option); err != nil {
@@ -467,7 +490,7 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
+			c.Response(app, msg.GetID(), Approved, nil, retObj)
 		case Patch:
 			var pi = new(PatchInfo)
 			if err := app.OptionTo(pi); err != nil {
@@ -477,23 +500,23 @@ func (c *Center) Process(msg model.Message) {
 			if err != nil {
 				return err
 			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
+			c.Response(app, msg.GetID(), Approved, nil, retObj)
 		default:
 			return fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
 		}
 		return nil
 	}()
 	if err != nil {
-		c.Response(app, msg.GetID(), Rejected, err.Error(), nil)
+		c.Response(app, msg.GetID(), Rejected, err, nil)
 		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%+v), %v", app, err)
 	}
 	klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
 }
 
 // Response update application, generate and send resp message to edge
-func (c *Center) Response(app *Application, parentID string, status applicationStatus, reason string, respContent interface{}) {
+func (c *Center) Response(app *Application, parentID string, status applicationStatus, reason error, respContent interface{}) {
 	app.Status = status
-	app.Reason = reason
+	app.setReason(reason)
 	if respContent != nil {
 		app.RespBody = toBytes(respContent)
 	}
