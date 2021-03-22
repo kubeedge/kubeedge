@@ -18,86 +18,81 @@ type ErrorMsg struct {
 	Timestamp time.Time
 }
 
-var ResultChannel chan ExecResult
-var StopChan chan bool
+var (
+	StopC         = make(chan struct{})
+	ResultChannel = make(chan ExecResult, 1024)
+)
 
 func init() {
-	StopChan = make(chan bool)
-	go do(StopChan)
+	go handleResult(ResultChannel, StopC)
 }
 
-func do(stop chan bool) {
-	ResultChannel = make(chan ExecResult, 1024)
+func handleResult(resultReceiver <-chan ExecResult, stopC chan struct{}) {
 	ruleStatus := make(map[string][2]int)
-	errorMsgs := []ExecResult{}
+	errResults := []ExecResult{}
 	timer := time.NewTimer(30 * time.Second)
 	defer timer.Stop()
 
+	handleStatusAndReset := func() {
+		if !timer.Stop() {
+			<-timer.C
+		}
+		timer.Reset(30 * time.Second)
+
+		go handleStatus(ruleStatus, errResults)
+
+		ruleStatus = make(map[string][2]int)
+		errResults = []ExecResult{}
+	}
+
 	for {
 		select {
-		case r := <-ResultChannel:
+		case <-stopC:
+			return
+		case <-timer.C:
+			// handle status once time is up
+			handleStatusAndReset()
+		case r, ok := <-resultReceiver:
+			if !ok {
+				klog.Info("result recevier is closed")
+				return
+			}
+
 			stat, exist := ruleStatus[r.RuleID]
 			if !exist {
 				stat = [2]int{0, 0}
 			}
 
-			if r.Status == "SUCCESS" {
+			switch r.Status {
+			case "SUCCESS":
 				stat[0]++
-			} else if r.Status == "FAIL" {
+			case "FAIL":
 				stat[1]++
-				errorMsgs = append(errorMsgs, r)
+				errResults = append(errResults, r)
 			}
+
 			ruleStatus[r.RuleID] = stat
-			//Commit to DB if we have got enough error messages
-			if len(errorMsgs) >= 50 {
-				timer.Reset(30 * time.Second)
-				rs := ruleStatus
-				er := errorMsgs
 
-				go handleStatus(rs, er)
-
-				//cleanMap(ruleStatus)
-				ruleStatus = make(map[string][2]int)
-				errorMsgs = []ExecResult{}
+			// handle status if we have got enough error messages
+			if len(errResults) >= 50 {
+				handleStatusAndReset()
 			}
-		case <-timer.C:
-			//Record to DB once time is up
-			timer.Reset(30 * time.Second)
-			rs := ruleStatus
-			er := errorMsgs
-
-			go handleStatus(rs, er)
-
-			//cleanMap(ruleStatus)
-			ruleStatus = make(map[string][2]int)
-			errorMsgs = []ExecResult{}
-		case _, ok := <-stop:
-			if !ok {
-				klog.Warningf("do stop channel is closed")
-			}
-			return
 		}
 	}
 }
 
-func handleStatus(ruleStatus map[string][2]int, msg []ExecResult) {
+func handleStatus(ruleStatus map[string][2]int, errResults []ExecResult) {
 	for k, v := range ruleStatus {
 		recordStatus(k, v[0], v[1])
 	}
-	recordErrorMsg(msg)
+	recordErrorResults(errResults)
 }
 
 func recordStatus(rule string, succCount int, failCount int) {
 
 }
 
-func recordErrorMsg(results []ExecResult) {
+func recordErrorResults(results []ExecResult) {
 	//Check total error msg number for this rule
 
-}
-
-func cleanMap(m map[string][2]int) {
-	for k := range m {
-		delete(m, k)
-	}
 }
