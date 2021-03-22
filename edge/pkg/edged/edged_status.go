@@ -284,16 +284,17 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	var result string
-
+	smiCommand := "nvidia-smi"
 	_, err := os.Stat(IEFGPUInfoQueryTool)
 	if err == nil {
-		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", IEFGPUInfoQueryTool)})
+		smiCommand = IEFGPUInfoQueryTool
+		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", smiCommand)})
 	} else {
-		result, err = util.Command("sh", []string{"-c", "nvidia-smi"})
+		result, err = util.Command("sh", []string{"-c", smiCommand})
 	}
 
 	if err != nil {
-		return fmt.Errorf("can not get file in path: %s, err: %v", IEFGPUInfoQueryTool, err)
+		return fmt.Errorf("nvidia-smi run failed in path: %s, err: %v", smiCommand, err)
 	}
 
 	nodeStatus.ExtendResources = make(map[v1.ResourceName][]edgeapi.ExtendResource)
@@ -310,7 +311,7 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 		}
 		gpuName := params[1]
 		gpuType := params[2]
-		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", IEFGPUInfoQueryTool, gpuName)})
+		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -i %s -a|grep -A 3 \"FB Memory Usage\"| grep Total", smiCommand, gpuName)})
 		if err != nil {
 			klog.Errorf("get gpu(%v) memory failed, err: %v", gpuName, err)
 			continue
