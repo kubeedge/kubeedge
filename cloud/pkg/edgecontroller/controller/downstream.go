@@ -89,6 +89,7 @@ func (dc *DownstreamController) syncPod() {
 				dc.lc.AddOrUpdatePod(*pod)
 			default:
 				klog.Warningf("pod event type: %s unsupported", e.Type)
+				continue
 			}
 			if err := dc.messageLayer.Send(*msg); err != nil {
 				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
