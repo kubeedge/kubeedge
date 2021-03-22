@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -120,27 +122,40 @@ func (msg *Message) GetID() string {
 	return msg.Header.ID
 }
 
-//GetParentID returns message parent id
+// GetParentID returns message parent id
 func (msg *Message) GetParentID() string {
 	return msg.Header.ParentID
 }
 
-//GetTimestamp returns message timestamp
+// GetTimestamp returns message timestamp
 func (msg *Message) GetTimestamp() int64 {
 	return msg.Header.Timestamp
 }
 
-//GetContent returns message content
+// GetContent returns message content
 func (msg *Message) GetContent() interface{} {
 	return msg.Content
 }
 
-//GetResourceVersion returns message resource version
+// GetContentData returns message content data
+func (msg *Message) GetContentData() ([]byte, error) {
+	if data, ok := msg.Content.([]byte); ok {
+		return data, nil
+	}
+
+	data, err := json.Marshal(msg.Content)
+	if err != nil {
+		return nil, fmt.Errorf("marshal message content failed: %s", err)
+	}
+	return data, nil
+}
+
+// GetResourceVersion returns message resource version
 func (msg *Message) GetResourceVersion() string {
 	return msg.Header.ResourceVersion
 }
 
-//UpdateID returns message object updating its ID
+// UpdateID returns message object updating its ID
 func (msg *Message) UpdateID() *Message {
 	msg.Header.ID = uuid.NewV4().String()
 	return msg
