@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -32,13 +33,15 @@ func NewUnixDomainSocket(filename string, buffersize ...int) *UnixDomainSocket {
 
 // parseEndpoint parses endpoint
 func parseEndpoint(ep string) (string, string, error) {
-	if strings.HasPrefix(strings.ToLower(ep), "unix://") || strings.HasPrefix(strings.ToLower(ep), "tcp://") {
+	lep := strings.ToLower(ep)
+	if strings.HasPrefix(lep, "unix://") || strings.HasPrefix(lep, "tcp://") {
 		s := strings.SplitN(ep, "://", 2)
-		if s[1] != "" {
-			return s[0], s[1], nil
+		proto, path := strings.ToLower(s[0]), strings.TrimSpace(s[1])
+		if path != "" {
+			return proto, path, nil
 		}
 	}
-	return "", "", fmt.Errorf("invalid endpoint: %v", ep)
+	return "", "", fmt.Errorf("invalid endpoint: %s", ep)
 }
 
 // SetContextHandler set handler for server
@@ -54,11 +57,12 @@ func (us *UnixDomainSocket) StartServer() error {
 		return err
 	}
 	if proto == "unix" {
-		addr = "/" + addr
-		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) { //nolint: vetshadow
-			klog.Errorf("failed to remove addr: %v", err)
+		addr = filepath.Join("/" + addr)
+		if err := checkUnixSocket(addr); err != nil {
+			klog.Errorf("failed to check unix socket addr: %v", err)
 			return err
 		}
+		defer os.Remove(addr)
 	}
 
 	// Listen
@@ -102,4 +106,33 @@ func (us *UnixDomainSocket) handleServerContext(context string) string {
 		return us.handler(context)
 	}
 	return ""
+}
+
+func checkUnixSocket(addr string) error {
+	fileInfo, err := os.Stat(addr)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// ensure parent directory is created
+			if err := os.MkdirAll(filepath.Dir(addr), 0770); err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+
+	// addr cannot be a directory
+	if fileInfo.IsDir() {
+		return fmt.Errorf("%s is dir", addr)
+	}
+
+	if fileInfo.Mode()&os.ModeSocket == 0 {
+		return fmt.Errorf("%s already is existed, but not unix socket", addr)
+	}
+
+	// addr already is existed and it is unix socket, remove it
+	if err := os.Remove(addr); err != nil {
+		return fmt.Errorf("failed to remove addr: %v", err)
+	}
+	return nil
 }
