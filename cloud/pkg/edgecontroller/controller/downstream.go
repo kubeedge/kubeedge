@@ -70,14 +70,14 @@ func (dc *DownstreamController) syncPod() {
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
 				continue
 			}
-			msg := model.NewMessage("")
-			msg.SetResourceVersion(pod.ResourceVersion)
 			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
 			if err != nil {
 				klog.Warningf("built message resource failed with error: %s", err)
 				continue
 			}
-			msg.Content = pod
+			msg := model.NewMessage("").
+				SetResourceVersion(pod.ResourceVersion).
+				FillBody(pod)
 			switch e.Type {
 			case watch.Added:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
@@ -132,15 +132,15 @@ func (dc *DownstreamController) syncConfigMap() {
 			}
 			klog.V(4).Infof("there are %d nodes need to sync config map, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
-				msg := model.NewMessage("")
-				msg.SetResourceVersion(configMap.ResourceVersion)
 				resource, err := messagelayer.BuildResource(n, configMap.Namespace, model.ResourceTypeConfigmap, configMap.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
 					continue
 				}
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation)
-				msg.Content = configMap
+				msg := model.NewMessage("").
+					SetResourceVersion(configMap.ResourceVersion).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation).
+					FillBody(configMap)
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
 					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -185,15 +185,15 @@ func (dc *DownstreamController) syncSecret() {
 			}
 			klog.V(4).Infof("there are %d nodes need to sync secret, operation: %s", len(nodes), e.Type)
 			for _, n := range nodes {
-				msg := model.NewMessage("")
-				msg.SetResourceVersion(secret.ResourceVersion)
 				resource, err := messagelayer.BuildResource(n, secret.Namespace, model.ResourceTypeSecret, secret.Name)
 				if err != nil {
 					klog.Warningf("build message resource failed with error: %s", err)
 					continue
 				}
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation)
-				msg.Content = secret
+				msg := model.NewMessage("").
+					SetResourceVersion(secret.ResourceVersion).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation).
+					FillBody(secret)
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
 					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -223,85 +223,96 @@ func (dc *DownstreamController) syncEdgeNodes() {
 			case watch.Modified:
 				// When node comes to running, send all the service/endpoints/pods information to edge
 				for _, nsc := range node.Status.Conditions {
-					if nsc.Type == "Ready" {
-						status, ok := dc.lc.GetNodeStatus(node.ObjectMeta.Name)
-						dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, string(nsc.Status))
-						if nsc.Status == "True" && (!ok || status != "True") {
-							// send all services to edge
-							msg := model.NewMessage("")
-							// TODO: what should in place of namespace and service when we are sending service list ?
-							resource, err := messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeServiceList, "service")
-							if err != nil {
-								klog.Warningf("Built message resource failed with error: %s", err)
-								break
-							}
-							msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
+					if nsc.Type != v1.NodeReady {
+						continue
+					}
+					nstatus := string(nsc.Status)
+					status, _ := dc.lc.GetNodeStatus(node.ObjectMeta.Name)
+					dc.lc.UpdateEdgeNode(node.ObjectMeta.Name, nstatus)
+					if nsc.Status != v1.ConditionTrue || status == nstatus {
+						continue
+					}
+					// send all services to edge
+					msg := model.NewMessage("").SetRoute(modules.EdgeControllerModuleName, constants.GroupResource)
 
-							svcs, _ := dc.svcLister.Services(v1.NamespaceAll).List(labels.Everything())
-							msg.Content = svcs
-							if err := dc.messageLayer.Send(*msg); err != nil {
-								klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-							} else {
-								klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-							}
-
-							for _, svc := range svcs {
-								namespace := svc.GetNamespace()
-								selector := labels.NewSelector()
-								for k, v := range svc.Spec.Selector {
-									r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
-									selector.Add(*r)
-								}
-
-								pods, err := dc.podLister.Pods(namespace).List(selector)
-								if err != nil {
-									continue
-								}
-
-								msg := model.NewMessage("")
-								resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
-								if err != nil {
-									klog.Warningf("Built message resource failed with error: %v", err)
-									continue
-								}
-								msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-								msg.Content = pods
-								if err := dc.messageLayer.Send(*msg); err != nil {
-									klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-								} else {
-									klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-								}
-							}
-
-							// send all endpoints to edge
-							msg = model.NewMessage("")
-							// TODO: what should in place of namespace and endpoints when we are sending endpoints list ?
-							resource, err = messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeEndpointsList, "endpoints")
-							if err != nil {
-								klog.Warningf("Built message resource failed with error: %s", err)
-								break
-							}
-							msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-							msg.Content = dc.lc.GetAllEndpoints()
-							if err := dc.messageLayer.Send(*msg); err != nil {
-								klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-							} else {
-								klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-							}
-						}
+					// TODO: what should in place of namespace and service when we are sending service list ?
+					resource, err := messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeServiceList, common.ResourceTypeService)
+					if err != nil {
+						klog.Warningf("Built message resource failed with error: %s", err)
 						break
 					}
+
+					svcs, err := dc.svcLister.Services(v1.NamespaceAll).List(labels.Everything())
+					if err != nil {
+						klog.Warningf("Send message failed with list service error: %s", err)
+						break
+					}
+					svcMsg := msg.Clone(msg).
+						SetResourceOperation(resource, model.UpdateOperation).
+						FillBody(svcs)
+					if err := dc.messageLayer.Send(*svcMsg); err != nil {
+						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					} else {
+						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					}
+
+					// send all pods to edge
+					for _, svc := range svcs {
+						namespace := svc.GetNamespace()
+						selector := labels.NewSelector()
+						for k, v := range svc.Spec.Selector {
+							r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
+							selector.Add(*r)
+						}
+
+						pods, err := dc.podLister.Pods(namespace).List(selector)
+						if err != nil {
+							continue
+						}
+
+						resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
+						if err != nil {
+							klog.Warningf("Built message resource failed with error: %v", err)
+							continue
+						}
+						podsMsg := msg.Clone(msg).
+							SetResourceOperation(resource, model.UpdateOperation).
+							FillBody(pods)
+						if err := dc.messageLayer.Send(*podsMsg); err != nil {
+							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+						} else {
+							klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+						}
+					}
+
+					// send all endpoints to edge
+					// TODO: what should in place of namespace and endpoints when we are sending endpoints list ?
+					resource, err = messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeEndpointsList, common.ResourceTypeEndpoints)
+					if err != nil {
+						klog.Warningf("Built message resource failed with error: %s", err)
+						break
+					}
+					endpoints := dc.lc.GetAllEndpoints()
+					epsMsg := msg.Clone(msg).
+						SetResourceOperation(resource, model.UpdateOperation).
+						FillBody(endpoints)
+					if err := dc.messageLayer.Send(*epsMsg); err != nil {
+						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+					} else {
+						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+					}
+					break
 				}
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
 
-				msg := model.NewMessage("")
 				resource, err := messagelayer.BuildResource(node.Name, "namespace", constants.ResourceNode, node.Name)
 				if err != nil {
 					klog.Warningf("Built message resource failed with error: %s", err)
 					break
 				}
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+				msg := model.NewMessage("").
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
 				err = dc.messageLayer.Send(*msg)
 				if err != nil {
 					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -349,15 +360,16 @@ func (dc *DownstreamController) syncService() {
 					klog.Warning("Failed to assert key to sting")
 					return true
 				}
-				msg := model.NewMessage("")
-				msg.SetResourceVersion(svc.ResourceVersion)
+
 				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
 				if err != nil {
 					klog.Warningf("Built message resource failed with error: %v", err)
 					return true
 				}
-				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation)
-				msg.Content = svc
+				msg := model.NewMessage("").
+					SetResourceVersion(svc.ResourceVersion).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation).
+					FillBody(svc)
 				if err := dc.messageLayer.Send(*msg); err != nil {
 					klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 				} else {
@@ -424,30 +436,31 @@ func (dc *DownstreamController) syncEndpoints() {
 						klog.Warning("Failed to assert key to sting")
 						return true
 					}
-					msg := model.NewMessage("")
-					msg.SetResourceVersion(eps.ResourceVersion)
 					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
 					if err != nil {
 						klog.Warningf("Built message resource failed with error: %s", err)
 						return true
 					}
-					msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation)
-					msg.Content = eps
-					if err := dc.messageLayer.Send(*msg); err != nil {
+					msg := model.NewMessage("").
+						SetRoute(modules.EdgeControllerModuleName, constants.GroupResource)
+					epsMsg := msg.Clone(msg).SetResourceVersion(eps.ResourceVersion).
+						SetResourceOperation(resource, operation).
+						FillBody(eps)
+					if err := dc.messageLayer.Send(*epsMsg); err != nil {
 						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 					} else {
 						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 					}
 					if operation != model.DeleteOperation && hasService {
-						msg := model.NewMessage("")
 						resource, err := messagelayer.BuildResource(nodeName, namespace, model.ResourceTypePodlist, name)
 						if err != nil {
 							klog.Warningf("Built message resource failed with error: %v", err)
 							return true
 						}
-						msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
-						msg.Content = pods
-						if err := dc.messageLayer.Send(*msg); err != nil {
+						podsMsg := msg.Clone(msg).
+							SetResourceOperation(resource, model.UpdateOperation).
+							FillBody(pods)
+						if err := dc.messageLayer.Send(*podsMsg); err != nil {
 							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
 						} else {
 							klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
@@ -474,14 +487,15 @@ func (dc *DownstreamController) syncRule() {
 				continue
 			}
 			klog.V(4).Infof("Get rule events: rule object: %+v.", rule)
-			msg := model.NewMessage("")
-			msg.SetResourceVersion(rule.ResourceVersion)
+
 			resource, err := messagelayer.BuildResourceForRouter(model.ResourceTypeRule, rule.Name)
 			if err != nil {
 				klog.Warningf("built message resource failed with error: %s", err)
 				continue
 			}
-			msg.Content = rule
+			msg := model.NewMessage("").
+				SetResourceVersion(rule.ResourceVersion).
+				FillBody(rule)
 			switch e.Type {
 			case watch.Added:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
@@ -517,14 +531,15 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 				continue
 			}
 			klog.V(4).Infof("Get ruleEndpoint events: ruleEndpoint object: %+v.", ruleEndpoint)
-			msg := model.NewMessage("")
-			msg.SetResourceVersion(ruleEndpoint.ResourceVersion)
+
 			resource, err := messagelayer.BuildResourceForRouter(model.ResourceTypeRuleEndpoint, ruleEndpoint.Name)
 			if err != nil {
 				klog.Warningf("built message resource failed with error: %s", err)
 				continue
 			}
-			msg.Content = ruleEndpoint
+			msg := model.NewMessage("").
+				SetResourceVersion(ruleEndpoint.ResourceVersion).
+				FillBody(ruleEndpoint)
 			switch e.Type {
 			case watch.Added:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.InsertOperation)
