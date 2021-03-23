@@ -21,6 +21,7 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 3. normalizePodStatus
 4. isPodNotRunning
 */
+
 package controller
 
 import (
@@ -326,7 +327,8 @@ func (uc *UpstreamController) updatePodStatus() {
 				}
 
 			default:
-				klog.Warningf("pod status operation: %s unsupported", msg.GetOperation())
+				klog.Warningf("message: %s process failure, pod status operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
@@ -487,6 +489,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 			default:
 				klog.Warningf("message: %s process failure, node status operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
@@ -768,6 +771,7 @@ func (uc *UpstreamController) updateNode() {
 				klog.V(4).Infof("message: %s, update node successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
 			default:
 				klog.Warningf("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
