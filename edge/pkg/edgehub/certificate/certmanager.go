@@ -18,6 +18,7 @@ import (
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -138,15 +139,15 @@ func (cm *CertManager) applyCerts() error {
 	}
 
 	// get the edge.crt
-	caPem := pem.EncodeToMemory(&pem.Block{Bytes: cacert, Type: "CERTIFICATE"})
+	caPem := pem.EncodeToMemory(&pem.Block{Bytes: cacert, Type: cert.CertificateBlockType})
 	pk, edgeCert, err := cm.GetEdgeCert(cm.certURL, caPem, tls.Certificate{}, strings.Join(tokenParts[1:], "."))
 	if err != nil {
 		return fmt.Errorf("failed to get edge certificate from the cloudcore, error: %v", err)
 	}
 
 	// save the edge.crt to the file
-	cert, _ := x509.ParseCertificate(edgeCert)
-	if err = certutil.WriteKeyAndCert(cm.keyFile, cm.certFile, pk, cert); err != nil {
+	crt, _ := x509.ParseCertificate(edgeCert)
+	if err = certutil.WriteKeyAndCert(cm.keyFile, cm.certFile, pk, crt); err != nil {
 		return fmt.Errorf("failed to save the edge key and certificate to file: %s, error: %v", cm.certFile, err)
 	}
 
