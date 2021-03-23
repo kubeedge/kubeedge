@@ -288,7 +288,7 @@ func (mh *MessageHandle) ServeConn(info *model.HubInfo) {
 	}
 
 	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
-	exitServe := make(chan ExitCode, 3)
+	exitServe := make(chan ExitCode, len(mh.Handlers))
 
 	for _, handle := range mh.Handlers {
 		go handle(info, exitServe)
