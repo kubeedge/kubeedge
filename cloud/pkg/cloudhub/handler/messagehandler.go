@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -64,7 +65,8 @@ type MessageHandle struct {
 	nodeRegistered    sync.Map
 	MessageQueue      *channelq.ChannelMessageQueue
 	Handlers          []HandleFunc
-	NodeLimit         int
+	NodeNumber        int32
+	NodeLimit         int32
 	KeepaliveChannel  sync.Map
 	MessageAcks       sync.Map
 	crdClient         crdClientset.Interface
@@ -84,7 +86,7 @@ func InitHandler(eventq *channelq.ChannelMessageQueue) {
 			KeepaliveInterval: int(hubconfig.Config.KeepaliveInterval),
 			WriteTimeout:      int(hubconfig.Config.WriteTimeout),
 			MessageQueue:      eventq,
-			NodeLimit:         int(hubconfig.Config.NodeLimit),
+			NodeLimit:         hubconfig.Config.NodeLimit,
 			crdClient:         client.GetCRDClient(),
 		}
 
@@ -108,7 +110,8 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
-	if mh.GetNodeCount() >= mh.NodeLimit {
+	// TODO(iceber): check node limits at registration
+	if atomic.LoadInt32(&mh.NodeNumber) >= mh.NodeLimit {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
 		return
 	}
@@ -319,6 +322,7 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
 	mh.Nodes.Store(info.NodeID, true)
 	mh.nodeRegistered.Store(info.NodeID, true)
+	atomic.AddInt32(&mh.NodeNumber, 1)
 	return nil
 }
 
@@ -346,6 +350,7 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	}
 
 	mh.Nodes.Delete(info.NodeID)
+	atomic.AddInt32(&mh.NodeNumber, -1)
 
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
@@ -355,17 +360,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	if code == nodeStop {
 		mh.MessageQueue.Close(info)
 	}
-}
-
-// GetNodeCount returns the number of connected Nodes
-func (mh *MessageHandle) GetNodeCount() int {
-	var num int
-	iter := func(key, value interface{}) bool {
-		num++
-		return true
-	}
-	mh.Nodes.Range(iter)
-	return num
 }
 
 // ListMessageWriteLoop processes all list type resource write requests
