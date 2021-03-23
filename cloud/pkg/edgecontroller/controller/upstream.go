@@ -496,69 +496,32 @@ func (uc *UpstreamController) updateNodeStatus() {
 	}
 }
 
-func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
+func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (metaV1.Object, error) {
+	var obj metaV1.Object
+	var err error
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.configMapLister.ConfigMaps(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = configMap.ResourceVersion
-		}
-		return configMap, resourceVersion, err
+		obj, err = uc.configMapLister.ConfigMaps(namespace).Get(name)
 	case model.ResourceTypeSecret:
-		secret, err := uc.secretLister.Secrets(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = secret.ResourceVersion
-		}
-		return secret, resourceVersion, err
+		obj, err = uc.secretLister.Secrets(namespace).Get(name)
 	case common.ResourceTypeService:
-		svc, err := uc.serviceLister.Services(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = svc.ResourceVersion
-		}
-		return svc, resourceVersion, err
+		obj, err = uc.serviceLister.Services(namespace).Get(name)
 	case common.ResourceTypeEndpoints:
-		eps, err := uc.endpointLister.Endpoints(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = eps.ResourceVersion
-		}
-		return eps, resourceVersion, err
+		obj, err = uc.endpointLister.Endpoints(namespace).Get(name)
 	case common.ResourceTypePersistentVolume:
-		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = pv.ResourceVersion
-		}
-		return pv, resourceVersion, err
+		obj, err = uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
 	case common.ResourceTypePersistentVolumeClaim:
-		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = pvc.ResourceVersion
-		}
-		return pvc, resourceVersion, err
+		obj, err = uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	case common.ResourceTypeVolumeAttachment:
-		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = va.ResourceVersion
-		}
-		return va, resourceVersion, err
+		obj, err = uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
 	case model.ResourceTypeNode:
-		node, err := uc.nodeLister.Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = node.ResourceVersion
-		}
-		return node, resourceVersion, err
+		obj, err = uc.nodeLister.Get(name)
 	default:
 		err := stderrors.New("Wrong query type")
 		klog.Error(err)
-		return nil, "", err
+		return nil, err
 	}
+	return obj, err
 }
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
@@ -576,7 +539,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 
 	switch msg.GetOperation() {
 	case model.QueryOperation:
-		object, resourceVersion, err := kubeClientGet(uc, namespace, name, queryType)
+		object, err := kubeClientGet(uc, namespace, name, queryType)
 		if errors.IsNotFound(err) {
 			klog.Warningf("message: %s process failure, resource not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 			return
@@ -586,7 +549,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 			return
 		}
 		resMsg := model.NewMessage(msg.GetID())
-		resMsg.SetResourceVersion(resourceVersion)
+		resMsg.SetResourceVersion(object.GetResourceVersion())
 		resMsg.Content = object
 		nodeID, err := messagelayer.GetNodeID(msg)
 		if err != nil {
