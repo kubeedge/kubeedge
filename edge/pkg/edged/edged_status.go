@@ -51,8 +51,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
-//IEFGPUInfoQueryTool sets information monitoring tool location for GPU
-var IEFGPUInfoQueryTool = "/var/IEF/nvidia/bin/nvidia-smi"
 var initNode v1.Node
 var reservationMemory = resource.MustParse(fmt.Sprintf("%dMi", 100))
 
@@ -283,18 +281,10 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 }
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
-	var result string
 	smiCommand := "nvidia-smi"
-	_, err := os.Stat(IEFGPUInfoQueryTool)
-	if err == nil {
-		smiCommand = IEFGPUInfoQueryTool
-		result, err = util.Command("sh", []string{"-c", fmt.Sprintf("%s -L", smiCommand)})
-	} else {
-		result, err = util.Command("sh", []string{"-c", smiCommand})
-	}
-
+	result, err := util.Command("sh", []string{"-c", smiCommand})
 	if err != nil {
-		return fmt.Errorf("nvidia-smi run failed in path: %s, err: %v", smiCommand, err)
+		return fmt.Errorf("nvidia-smi run failed: %s", err)
 	}
 
 	nodeStatus.ExtendResources = make(map[v1.ResourceName][]edgeapi.ExtendResource)
