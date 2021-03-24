@@ -234,11 +234,15 @@ func (a *Application) getCount() uint64 {
 // Close must be called when applicant no longer using application
 func (a *Application) Close() {
 	a.countLock.Lock()
+	defer a.countLock.Unlock()
+	if a.count == 0 {
+		return
+	}
+
 	a.count--
 	if a.count == 0 {
 		a.Status = Completed
 	}
-	a.countLock.Unlock()
 }
 
 // used for generating application and do apply
