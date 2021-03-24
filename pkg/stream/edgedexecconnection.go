@@ -93,6 +93,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
+	var data [256]byte
 	for {
 		select {
 		case <-stop:
@@ -100,9 +101,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 			return nil
 		default:
 		}
-		data := make([]byte, 256)
-
-		n, err := con.Read(data)
+		n, err := con.Read(data[:])
 		if err != nil {
 			if err != io.EOF {
 				klog.Errorf("%v failed to write exec data, err:%v", e.String(), err)
