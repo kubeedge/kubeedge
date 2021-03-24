@@ -67,10 +67,6 @@ func NewMessage(id uint64, messType MessageType, data []byte) *Message {
 	}
 }
 
-func (m *Message) WriteTo(tunneler SafeWriteTunneler) error {
-	return tunneler.WriteMessage(m)
-}
-
 func (m *Message) Bytes() []byte {
 	// connectID + MessageType + Data
 	buf, offset := make([]byte, 16), 0
