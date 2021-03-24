@@ -421,7 +421,7 @@ func (h *dnsHeader) getByteFromDNSHeader() (rspHead []byte) {
 
 	idxTransactionID := unsafe.Sizeof(h.id)
 	idxFlags := unsafe.Sizeof(h.flags) + idxTransactionID
-	idxQDCount := unsafe.Sizeof(h.anCount) + idxFlags
+	idxQDCount := unsafe.Sizeof(h.qdCount) + idxFlags
 	idxANCount := unsafe.Sizeof(h.anCount) + idxQDCount
 	idxNSCount := unsafe.Sizeof(h.nsCount) + idxANCount
 	idxARCount := unsafe.Sizeof(h.arCount) + idxNSCount
