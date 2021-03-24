@@ -345,22 +345,20 @@ func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSh
 	return a
 }
 
-func toBytes(i interface{}) []byte {
+func toBytes(i interface{}) (bytes []byte) {
 	if i == nil {
-		return []byte{}
+		return
 	}
-	var bytes []byte
+
+	if bytes, ok := i.([]byte); ok {
+		return bytes
+	}
+
 	var err error
-	switch i := i.(type) {
-	case []byte:
-		bytes = i
-	default:
-		bytes, err = json.Marshal(i)
-		if err != nil {
-			klog.Fatalf("marshal content to []byte failed, err: %v", err)
-		}
+	if bytes, err = json.Marshal(i); err != nil {
+		klog.Errorf("marshal content to []byte failed, err: %v", err)
 	}
-	return bytes
+	return
 }
 
 // extract application in message's Content
