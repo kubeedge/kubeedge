@@ -26,21 +26,18 @@ type ContextMessageLayer struct {
 
 // Send message
 func (cml *ContextMessageLayer) Send(message model.Message) error {
+	module := cml.SendModuleName
 	// if message is rule/ruleendpoint type, send to router module.
 	if isRouterMsg(message) {
-		beehiveContext.Send(cml.SendRouterModuleName, message)
-		return nil
+		module = cml.SendRouterModuleName
 	}
-	beehiveContext.Send(cml.SendModuleName, message)
+	beehiveContext.Send(module, message)
 	return nil
 }
 
 func isRouterMsg(message model.Message) bool {
 	resourceArray := strings.Split(message.GetResource(), constants.ResourceSep)
-	if len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint) {
-		return true
-	}
-	return false
+	return len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint)
 }
 
 // Receive message
