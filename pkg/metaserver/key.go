@@ -60,38 +60,34 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 // KeyFuncReq generate key from req context
 func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	info, ok := apirequest.RequestInfoFrom(ctx)
-	var key string
-	if ok && info.IsResourceRequest {
-		key = "/"
-		switch info.APIPrefix {
-		case "api":
-			key += v2.GroupCore + "/"
-		case "apis":
-			if info.APIGroup == "" {
-				return "", fmt.Errorf("failed to get key from request info")
-			}
-			key += info.APIGroup + "/"
-		default:
-			return "", fmt.Errorf("failed to get key from request info")
-		}
-		key += info.APIVersion + "/"
-		key += info.Resource + "/"
-
-		if info.Namespace != "" {
-			key += info.Namespace + "/"
-		} else {
-			key += v2.NullNamespace + "/"
-		}
-
-		if info.Name != "" {
-			key += info.Name
-		} else {
-			key += v2.NullName
-		}
-	} else {
+	if !ok || !info.IsResourceRequest {
 		return "", fmt.Errorf("no request info in context")
 	}
-	key = strings.TrimSuffix(key, "/")
+
+	group := ""
+	switch info.APIPrefix {
+	case "api":
+		group = v2.GroupCore
+	case "apis":
+		if info.APIGroup == "" {
+			return "", fmt.Errorf("failed to get key from request info")
+		}
+		group = info.APIGroup
+	default:
+		return "", fmt.Errorf("failed to get key from request info")
+	}
+	version := info.APIVersion
+	resource := info.Resource
+	namespaces := info.Namespace
+	name := info.Name
+	if namespaces == "" {
+		namespaces = v2.NullNamespace
+	}
+	if name == "" {
+		name = v2.NullName
+	}
+
+	key := "/" + group + "/" + version + "/" + resource + "/" + namespaces + "/" + name
 	return key, nil
 }
 
