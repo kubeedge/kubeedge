@@ -396,8 +396,6 @@ func modifyRspPrefix(que *dnsQuestion) (pre []byte) {
 func (h *dnsHeader) convertQueryRsp(isRsp bool) {
 	if isRsp {
 		h.flags |= dnsQR
-	} else {
-		h.flags |= dnsQR
 	}
 }
 
