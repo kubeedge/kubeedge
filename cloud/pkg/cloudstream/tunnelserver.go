@@ -28,6 +28,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
+	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
@@ -132,7 +133,7 @@ func (s *TunnelServer) Start() {
 	}
 
 	pool := x509.NewCertPool()
-	pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: data}))
+	pool.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: data}))
 
 	if streamconfig.Config.Key != nil && streamconfig.Config.Cert != nil {
 		cert = streamconfig.Config.Cert
@@ -144,7 +145,7 @@ func (s *TunnelServer) Start() {
 		klog.Info("Succeed in loading TunnelCert and Key from CloudHub")
 	}
 
-	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+	certificate, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
 	if err != nil {
 		klog.Error("Failed to load TLSTunnelCert and Key")
 		panic(err)

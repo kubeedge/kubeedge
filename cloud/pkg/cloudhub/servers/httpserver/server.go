@@ -37,10 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-const (
-	certificateBlockType = "CERTIFICATE"
-)
-
 // StartHTTPServer starts the http service
 func StartHTTPServer() {
 	router := mux.NewRouter()
@@ -50,7 +46,7 @@ func StartHTTPServer() {
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
-	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
+	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
 	if err != nil {
 		klog.Fatal(err)
@@ -101,7 +97,7 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 // EncodeCertPEM returns PEM-endcoded certificate data
 func EncodeCertPEM(cert *x509.Certificate) []byte {
 	block := pem.Block{
-		Type:  certificateBlockType,
+		Type:  certutil.CertificateBlockType,
 		Bytes: cert.Raw,
 	}
 	return pem.EncodeToMemory(&block)
@@ -131,7 +127,7 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 // verifyCert verifies the edge certificate by CA certificate when edge certificates rotate.
 func verifyCert(cert *x509.Certificate) error {
 	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certificateBlockType, Bytes: hubconfig.Config.Ca}))
+	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca}))
 	if !ok {
 		return fmt.Errorf("failed to parse root certificate")
 	}
