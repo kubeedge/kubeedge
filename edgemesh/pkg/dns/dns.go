@@ -231,28 +231,23 @@ func (q *dnsQuestion) getQuestion(req []byte, offset uint16, head *dnsHeader) {
 }
 
 // getAnswer generates answer for the dns question
-func (da *dnsAnswer) getAnswer() (answer []byte) {
-	answer = make([]byte, 0)
-
+func (da *dnsAnswer) getAnswer() []byte {
 	if da.qType == aRecord {
-		answer = append(answer, 0xc0)
-		answer = append(answer, 0x0c)
-
-		tmp16 := make([]byte, 2)
-		tmp32 := make([]byte, 4)
-
-		binary.BigEndian.PutUint16(tmp16, da.qType)
-		answer = append(answer, tmp16...)
-		binary.BigEndian.PutUint16(tmp16, da.qClass)
-		answer = append(answer, tmp16...)
-		binary.BigEndian.PutUint32(tmp32, da.ttl)
-		answer = append(answer, tmp32...)
-		binary.BigEndian.PutUint16(tmp16, da.dataLen)
-		answer = append(answer, tmp16...)
+		answer := make([]byte, 0, 12+len(da.addr))
+		answer = append(answer, 0xc0, 0x0c)
+		var tmp [4]byte
+		binary.BigEndian.PutUint16(tmp[:2], da.qType)
+		answer = append(answer, tmp[:2]...)
+		binary.BigEndian.PutUint16(tmp[:2], da.qClass)
+		answer = append(answer, tmp[:2]...)
+		binary.BigEndian.PutUint32(tmp[:4], da.ttl)
+		answer = append(answer, tmp[:4]...)
+		binary.BigEndian.PutUint16(tmp[:2], da.dataLen)
+		answer = append(answer, tmp[:2]...)
 		answer = append(answer, da.addr...)
+		return answer
 	}
-
-	return answer
+	return []byte{}
 }
 
 // getQName gets dns question qName
