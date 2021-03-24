@@ -345,6 +345,7 @@ var _ volume.Unmounter = &csiMountMgr{}
 func (c *csiMountMgr) TearDown() error {
 	return c.TearDownAt(c.GetPath())
 }
+
 func (c *csiMountMgr) TearDownAt(dir string) error {
 	klog.V(4).Infof(log("Unmounter.TearDown(%s)", dir))
 
@@ -379,34 +380,33 @@ func (c *csiMountMgr) TearDownAt(dir string) error {
 // 2) if fstype is provided and pv.AccessMode == ReadWriteOnly and !c.spec.ReadOnly then apply fsgroup
 func (c *csiMountMgr) applyFSGroup(fsType string, fsGroup *int64) error {
 	if fsGroup != nil {
-		if fsType == "" {
-			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, fsType not provided"))
-			return nil
-		}
-
-		accessModes := c.spec.PersistentVolume.Spec.AccessModes
-		if c.spec.PersistentVolume.Spec.AccessModes == nil {
-			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, access modes not provided"))
-			return nil
-		}
-		if !hasReadWriteOnce(accessModes) {
-			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, only support ReadWriteOnce access mode"))
-			return nil
-		}
-
-		if c.readOnly {
-			klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, volume is readOnly"))
-			return nil
-		}
-
-		err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy)
-		if err != nil {
-			return err
-		}
-
-		klog.V(4).Info(log("mounter.SetupAt fsGroup [%d] applied successfully to %s", *fsGroup, c.volumeID))
+		return nil
+	}
+	if fsType == "" {
+		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, fsType not provided"))
+		return nil
 	}
 
+	accessModes := c.spec.PersistentVolume.Spec.AccessModes
+	if c.spec.PersistentVolume.Spec.AccessModes == nil {
+		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, access modes not provided"))
+		return nil
+	}
+	if !hasReadWriteOnce(accessModes) {
+		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, only support ReadWriteOnce access mode"))
+		return nil
+	}
+
+	if c.readOnly {
+		klog.V(4).Info(log("mounter.SetupAt WARNING: skipping fsGroup, volume is readOnly"))
+		return nil
+	}
+
+	if err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy); err != nil {
+		return err
+	}
+
+	klog.V(4).Info(log("mounter.SetupAt fsGroup [%d] applied successfully to %s", *fsGroup, c.volumeID))
 	return nil
 }
 
@@ -429,26 +429,30 @@ func removeMountDir(plug *csiPlugin, mountPath string) error {
 	if err != nil {
 		return err
 	}
-	if !mnt {
-		klog.V(4).Info(log("dir not mounted, deleting it [%s]", mountPath))
-		if err := os.Remove(mountPath); err != nil && !os.IsNotExist(err) {
-			klog.Error(log("failed to remove dir [%s]: %v", mountPath, err))
-			return err
-		}
-		// remove volume data file as well
-		volPath := path.Dir(mountPath)
-		dataFile := filepath.Join(volPath, volDataFileName)
-		klog.V(4).Info(log("also deleting volume info data file [%s]", dataFile))
-		if err := os.Remove(dataFile); err != nil && !os.IsNotExist(err) {
-			klog.Error(log("failed to delete volume data file [%s]: %v", dataFile, err))
-			return err
-		}
-		// remove volume path
-		klog.V(4).Info(log("deleting volume path [%s]", volPath))
-		if err := os.Remove(volPath); err != nil && !os.IsNotExist(err) {
-			klog.Error(log("failed to delete volume path [%s]: %v", volPath, err))
-			return err
-		}
+	if mnt {
+		return nil
+	}
+
+	klog.V(4).Info(log("dir not mounted, deleting it [%s]", mountPath))
+	if err := os.Remove(mountPath); err != nil && !os.IsNotExist(err) {
+		klog.Error(log("failed to remove dir [%s]: %v", mountPath, err))
+		return err
+	}
+
+	// remove volume data file as well
+	volPath := path.Dir(mountPath)
+	dataFile := filepath.Join(volPath, volDataFileName)
+	klog.V(4).Info(log("also deleting volume info data file [%s]", dataFile))
+	if err := os.Remove(dataFile); err != nil && !os.IsNotExist(err) {
+		klog.Error(log("failed to delete volume data file [%s]: %v", dataFile, err))
+		return err
+	}
+
+	// remove volume path
+	klog.V(4).Info(log("deleting volume path [%s]", volPath))
+	if err := os.Remove(volPath); err != nil && !os.IsNotExist(err) {
+		klog.Error(log("failed to delete volume path [%s]: %v", volPath, err))
+		return err
 	}
 	return nil
 }
