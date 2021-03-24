@@ -46,6 +46,7 @@ func NewFactory() Factory {
 	}
 	return f
 }
+
 func (f *Factory) Get() http.Handler {
 	if h, ok := f.handlers["get"]; ok {
 		return h
@@ -54,6 +55,7 @@ func (f *Factory) Get() http.Handler {
 	f.handlers["get"] = h
 	return h
 }
+
 func (f *Factory) List() http.Handler {
 	if h, ok := f.handlers["list"]; ok {
 		return h

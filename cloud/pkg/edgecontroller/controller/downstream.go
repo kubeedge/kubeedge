@@ -64,7 +64,7 @@ func (dc *DownstreamController) syncPod() {
 		case e := <-dc.podManager.Events():
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", pod)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
@@ -89,6 +89,7 @@ func (dc *DownstreamController) syncPod() {
 				dc.lc.AddOrUpdatePod(*pod)
 			default:
 				klog.Warningf("pod event type: %s unsupported", e.Type)
+				continue
 			}
 			if err := dc.messageLayer.Send(*msg); err != nil {
 				klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
@@ -108,7 +109,7 @@ func (dc *DownstreamController) syncConfigMap() {
 		case e := <-dc.configmapManager.Events():
 			configMap, ok := e.Object.(*v1.ConfigMap)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", configMap)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			var operation string
@@ -160,7 +161,7 @@ func (dc *DownstreamController) syncSecret() {
 		case e := <-dc.secretManager.Events():
 			secret, ok := e.Object.(*v1.Secret)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", secret)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			var operation string
@@ -213,7 +214,7 @@ func (dc *DownstreamController) syncEdgeNodes() {
 		case e := <-dc.nodeManager.Events():
 			node, ok := e.Object.(*v1.Node)
 			if !ok {
-				klog.Warningf("Object type: %T unsupported", node)
+				klog.Warningf("Object type: %T unsupported", e.Object)
 				continue
 			}
 			switch e.Type {
@@ -325,7 +326,7 @@ func (dc *DownstreamController) syncService() {
 		case e := <-dc.serviceManager.Events():
 			svc, ok := e.Object.(*v1.Service)
 			if !ok {
-				klog.Warningf("Object type: %T unsupported", svc)
+				klog.Warningf("Object type: %T unsupported", e.Object)
 				continue
 			}
 			switch e.Type {
@@ -378,7 +379,7 @@ func (dc *DownstreamController) syncEndpoints() {
 		case e := <-dc.endpointsManager.Events():
 			eps, ok := e.Object.(*v1.Endpoints)
 			if !ok {
-				klog.Warningf("Object type: %T unsupported", eps)
+				klog.Warningf("Object type: %T unsupported", e.Object)
 				continue
 			}
 
@@ -469,7 +470,7 @@ func (dc *DownstreamController) syncRule() {
 			klog.V(4).Infof("Get rule events: event type: %s.", e.Type)
 			rule, ok := e.Object.(*routerv1.Rule)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", e)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			klog.V(4).Infof("Get rule events: rule object: %+v.", rule)
@@ -512,7 +513,7 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 			klog.V(4).Infof("Get ruleEndpoint events: event type: %s.", e.Type)
 			ruleEndpoint, ok := e.Object.(*routerv1.RuleEndpoint)
 			if !ok {
-				klog.Warningf("object type: %T unsupported", ruleEndpoint)
+				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
 			klog.V(4).Infof("Get ruleEndpoint events: ruleEndpoint object: %+v.", ruleEndpoint)

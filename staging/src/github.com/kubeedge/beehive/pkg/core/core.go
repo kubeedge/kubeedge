@@ -16,9 +16,9 @@ func StartModules() {
 
 	modules := GetModules()
 	for name, module := range modules {
-		//Init the module
+		// Init the module
 		beehiveContext.AddModule(name)
-		//Assemble typeChannels for sendToGroup
+		// Assemble typeChannels for sendToGroup
 		beehiveContext.AddModuleGroup(name, module.Group())
 		go module.Start()
 		klog.Infof("Starting module %v", name)
@@ -30,16 +30,15 @@ func GracefulShutdown() {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
-	select {
-	case s := <-c:
-		klog.Infof("Get os signal %v", s.String())
-		//Cleanup each modules
-		beehiveContext.Cancel()
-		modules := GetModules()
-		for name, _ := range modules {
-			klog.Infof("Cleanup module %v", name)
-			beehiveContext.Cleanup(name)
-		}
+	s := <-c
+	klog.Infof("Get os signal %v", s.String())
+
+	// Cleanup each modules
+	beehiveContext.Cancel()
+	modules := GetModules()
+	for name := range modules {
+		klog.Infof("Cleanup module %v", name)
+		beehiveContext.Cleanup(name)
 	}
 }
 

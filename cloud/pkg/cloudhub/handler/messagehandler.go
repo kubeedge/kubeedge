@@ -176,7 +176,11 @@ func (mh *MessageHandle) OnRegister(connection conn.Connection) {
 // KeepaliveCheckLoop checks whether the edge node is still alive
 func (mh *MessageHandle) KeepaliveCheckLoop(info *model.HubInfo, stopServe chan ExitCode) {
 	keepaliveTicker := time.NewTimer(time.Duration(mh.KeepaliveInterval) * time.Second)
-	nodeKeepaliveChannel, _ := mh.KeepaliveChannel.Load(info.NodeID)
+	nodeKeepaliveChannel, ok := mh.KeepaliveChannel.Load(info.NodeID)
+	if !ok {
+		klog.Errorf("fail to load node %s", info.NodeID)
+		return
+	}
 
 	for {
 		select {
@@ -284,7 +288,7 @@ func (mh *MessageHandle) ServeConn(info *model.HubInfo) {
 	}
 
 	klog.Infof("edge node %s for project %s connected", info.NodeID, info.ProjectID)
-	exitServe := make(chan ExitCode, 3)
+	exitServe := make(chan ExitCode, len(mh.Handlers))
 
 	for _, handle := range mh.Handlers {
 		go handle(info, exitServe)
@@ -306,8 +310,7 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	if err != nil {
 		klog.Errorf("fail to publish node connect event for node %s, reason %s", info.NodeID, err.Error())
 		notifyEventQueueError(hi, messageQueueDisconnect, info.NodeID)
-		err = hi.Close()
-		if err != nil {
+		if err := hi.Close(); err != nil {
 			klog.Errorf("fail to close connection, reason: %s", err.Error())
 		}
 		return err

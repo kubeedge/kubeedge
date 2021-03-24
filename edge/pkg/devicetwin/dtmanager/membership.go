@@ -73,6 +73,7 @@ func getRemoveList(context *dtcontext.DTContext, devices []dttype.Device) []dtty
 		for _, v := range devices {
 			if strings.Compare(v.ID, key.(string)) == 0 {
 				isExist = true
+				break
 			}
 		}
 		if !isExist {

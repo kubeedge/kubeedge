@@ -12,6 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 )
 
 type SelectorListener struct {
@@ -52,7 +53,11 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	}
 
 	msg.SetResourceVersion(accessor.GetResourceVersion())
-	resource, err := messagelayer.BuildResource(l.nodeName, accessor.GetNamespace(), l.gvr.Resource, accessor.GetName())
+	namespace := accessor.GetNamespace()
+	if namespace == "" {
+		namespace = v2.NullNamespace
+	}
+	resource, err := messagelayer.BuildResource(l.nodeName, namespace, l.gvr.Resource, accessor.GetName())
 	if err != nil {
 		klog.Warningf("built message resource failed with error: %s", err)
 		return
