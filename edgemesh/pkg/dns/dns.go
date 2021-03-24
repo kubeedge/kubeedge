@@ -104,9 +104,10 @@ func startDNS() {
 	}
 	defer udpConn.Close()
 	dnsConn = udpConn
+
+	var req [bufSize]byte
 	for {
-		req := make([]byte, bufSize)
-		n, from, err := dnsConn.ReadFromUDP(req)
+		n, from, err := dnsConn.ReadFromUDP(req[:])
 		if err != nil || n <= 0 {
 			klog.Errorf("[EdgeMesh] dns server read from udp error: %v", err)
 			continue
@@ -119,8 +120,7 @@ func startDNS() {
 
 		que.from = from
 
-		rsp := make([]byte, 0)
-		rsp, err = recordHandle(que, req[:n])
+		rsp, err := recordHandle(que, req[:n])
 		if err != nil {
 			klog.Warningf("[EdgeMesh] failed to resolve dns: %v", err)
 			continue
