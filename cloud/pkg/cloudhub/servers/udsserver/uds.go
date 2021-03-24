@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -54,11 +55,19 @@ func (us *UnixDomainSocket) StartServer() error {
 		return err
 	}
 	if proto == "unix" {
-		addr = "/" + addr
-		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) { //nolint: vetshadow
-			klog.Errorf("failed to remove addr: %v", err)
-			return err
+		fi, err := os.Stat(addr)
+		if err == nil {
+			if fi.IsDir() {
+				err := fmt.Errorf("%v is a directory, already exists", addr)
+				klog.Errorf("failed to remove: %v", err)
+				return err
+			}
+			if err := os.Remove(addr); err != nil {
+				klog.Errorf("failed to remove file: %v", err)
+				return err
+			}
 		}
+		os.MkdirAll(filepath.Dir(addr), 0755)
 	}
 
 	// Listen
