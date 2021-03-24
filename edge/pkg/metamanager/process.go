@@ -116,7 +116,7 @@ func isConnected() bool {
 	return metaManagerConfig.Connected
 }
 
-func msgDebugInfo(message *model.Message) string {
+func msgDebugInfo(message model.Message) string {
 	return fmt.Sprintf("msgID[%s] resource[%s]", message.GetID(), message.GetResource())
 }
 
@@ -132,19 +132,13 @@ func resourceUnchanged(resType string, resKey string, content []byte) bool {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("%s: %s", msgDebugInfo(message), err)
+		feedbackError(err, "Error to get message content", message)
+		return
 	}
+
 	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
 	switch resType {
@@ -152,7 +146,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		var svcList []v1.Service
 		err = json.Unmarshal(content, &svcList)
 		if err != nil {
-			klog.Errorf("Unmarshal insert message content failed, %s", msgDebugInfo(&message))
+			klog.Errorf("Unmarshal insert message content failed, %s", msgDebugInfo(message))
 			feedbackError(err, "Error to unmarshal", message)
 			return
 		}
@@ -180,7 +174,7 @@ func (m *metaManager) processInsert(message model.Message) {
 			Value: string(content)}
 		err = dao.SaveMeta(meta)
 		if err != nil {
-			klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+			klog.Errorf("save meta failed, %s: %v", msgDebugInfo(message), err)
 			feedbackError(err, "Error to save meta to DB", message)
 			return
 		}
@@ -206,19 +200,13 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("%s: %s", msgDebugInfo(message), err)
+		feedbackError(err, "Error to get message content", message)
+		return
 	}
+
 	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -228,7 +216,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			var epsList []v1.Endpoints
 			err = json.Unmarshal(content, &epsList)
 			if err != nil {
-				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
+				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(message))
 				feedbackError(err, "Error to unmarshal", message)
 				return
 			}
@@ -257,7 +245,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 			var svcList []v1.Service
 			err = json.Unmarshal(content, &svcList)
 			if err != nil {
-				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
+				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(message))
 				feedbackError(err, "Error to unmarshal", message)
 				return
 			}
@@ -289,7 +277,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 				Value: string(content)}
 			err = dao.InsertOrUpdate(meta)
 			if err != nil {
-				klog.Errorf("Update meta failed, %s", msgDebugInfo(&message))
+				klog.Errorf("Update meta failed, %s", msgDebugInfo(message))
 				feedbackError(err, "Error to update meta to DB", message)
 				return
 			}
@@ -316,7 +304,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		Value: string(content)}
 	err = dao.InsertOrUpdate(meta)
 	if err != nil {
-		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
+		klog.Errorf("update meta failed, %s", msgDebugInfo(message))
 		feedbackError(err, "Error to update meta to DB", message)
 		return
 	}
@@ -346,18 +334,11 @@ func (m *metaManager) processUpdate(message model.Message) {
 }
 
 func (m *metaManager) processResponse(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("%s: %s", msgDebugInfo(message), err)
+		feedbackError(err, "Error to get message content", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -367,7 +348,7 @@ func (m *metaManager) processResponse(message model.Message) {
 		Value: string(content)}
 	err = dao.InsertOrUpdate(meta)
 	if err != nil {
-		klog.Errorf("update meta failed, %s", msgDebugInfo(&message))
+		klog.Errorf("update meta failed, %s", msgDebugInfo(message))
 		feedbackError(err, "Error to update meta to DB", message)
 		return
 	}
@@ -389,7 +370,7 @@ func (m *metaManager) processDelete(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
-		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
+		klog.Errorf("delete meta failed, %s", msgDebugInfo(message))
 		feedbackError(err, "Error to delete meta to DB", message)
 		return
 	}
@@ -444,7 +425,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		metas, err = dao.QueryMeta("key", resKey)
 	}
 	if err != nil {
-		klog.Errorf("query meta failed, %s", msgDebugInfo(&message))
+		klog.Errorf("query meta failed, %s", msgDebugInfo(message))
 		feedbackError(err, "Error to query meta in DB", message)
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
@@ -473,17 +454,11 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			return
 		}
 
-		var content []byte
-		switch resp.GetContent().(type) {
-		case []uint8:
-			content = resp.GetContent().([]byte)
-		default:
-			content, err = json.Marshal(resp.GetContent())
-			if err != nil {
-				klog.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
-				feedbackError(err, "Error to marshal message content", message)
-				return
-			}
+		content, err := message.GetContentData()
+		if err != nil {
+			klog.Errorf("%s: %s", msgDebugInfo(message), err)
+			feedbackError(err, "Error to get message content", message)
+			return
 		}
 
 		resKey, resType, _ := parseResource(message.GetResource())
@@ -493,7 +468,7 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			Value: string(content)}
 		err = dao.InsertOrUpdate(meta)
 		if err != nil {
-			klog.Errorf("update meta failed, %s", msgDebugInfo(&resp))
+			klog.Errorf("update meta failed, %s", msgDebugInfo(resp))
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
 		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
@@ -560,23 +535,16 @@ func (m *metaManager) syncPodStatus() {
 	for namespace, content := range contents {
 		msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
 		sendToCloud(msg)
-		klog.V(3).Infof("sync pod status successfully for namespaces %s, %s", namespace, msgDebugInfo(msg))
+		klog.V(3).Infof("sync pod status successfully for namespaces %s, %s", namespace, msgDebugInfo(*msg))
 	}
 }
 
 func (m *metaManager) processFunctionAction(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("%s: %s", msgDebugInfo(message), err)
+		feedbackError(err, "Error to get message content", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -586,7 +554,7 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 		Value: string(content)}
 	err = dao.SaveMeta(meta)
 	if err != nil {
-		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(message), err)
 		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}
@@ -595,18 +563,11 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 }
 
 func (m *metaManager) processFunctionActionResult(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("%s: %s", msgDebugInfo(message), err)
+		feedbackError(err, "Error to get message content", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -616,7 +577,7 @@ func (m *metaManager) processFunctionActionResult(message model.Message) {
 		Value: string(content)}
 	err = dao.SaveMeta(meta)
 	if err != nil {
-		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(message), err)
 		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}

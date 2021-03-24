@@ -47,7 +47,7 @@ const (
 	// ModuleNameController is the name of the controller module
 	ModuleNameController = "edgecontroller"
 	// MarshalErroris common jsonMarshall error
-	MarshalError = "Error to marshal message content: json: unsupported type: chan int"
+	MarshalError = "Error to get message content: marshal message content failed: json: unsupported type: chan int"
 	// OperationNodeConnection is message with operation publish
 	OperationNodeConnection = "publish"
 )
