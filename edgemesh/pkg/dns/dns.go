@@ -293,7 +293,6 @@ func lookupFromMetaManager(serviceURL string) (exist bool, ip string) {
 
 // getFromRealDNS returns a dns response from real dns servers
 func getFromRealDNS(req []byte, from *net.UDPAddr) {
-	rsp := make([]byte, 0)
 	ips, err := parseNameServer()
 	if err != nil {
 		klog.Errorf("[EdgeMesh] parse nameserver err: %v", err)
@@ -304,40 +303,40 @@ func getFromRealDNS(req []byte, from *net.UDPAddr) {
 		IP:   net.IPv4zero,
 		Port: 0,
 	}
+	conn, err := net.ListenUDP("udp", laddr)
+	if err != nil {
+		klog.Errorf("[EdgeMesh] Listen UDP err: %v", err)
+		return
+	}
+	defer conn.Close()
 
+	var buf [bufSize]byte
 	// get from real dns servers
 	for _, ip := range ips {
-		raddr := &net.UDPAddr{
+		_, err := conn.WriteToUDP(req, &net.UDPAddr{
 			IP:   ip,
 			Port: 53,
-		}
-		conn, err := net.DialUDP("udp", laddr, raddr)
-		if err != nil {
-			continue
-		}
-		defer conn.Close()
-		_, err = conn.Write(req)
+		})
 		if err != nil {
 			continue
 		}
 		if err = conn.SetReadDeadline(time.Now().Add(time.Minute)); err != nil {
 			continue
 		}
-		var n int
-		buf := make([]byte, bufSize)
-		n, err = conn.Read(buf)
+
+		n, _, err := conn.ReadFromUDP(buf[:])
 		if err != nil {
 			continue
 		}
-
-		if n > 0 {
-			rsp = append(rsp, buf[:n]...)
-			if _, err = dnsConn.WriteToUDP(rsp, from); err != nil {
-				klog.Errorf("[EdgeMesh] failed to wirte to udp, err: %v", err)
-				continue
-			}
-			break
+		if n == 0 {
+			continue
 		}
+
+		if _, err = dnsConn.WriteToUDP(buf[:n], from); err != nil {
+			klog.Errorf("[EdgeMesh] failed to write to udp, err: %v", err)
+			continue
+		}
+		break
 	}
 }
 
