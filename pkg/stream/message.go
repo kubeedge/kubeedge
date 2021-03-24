@@ -73,10 +73,11 @@ func (m *Message) WriteTo(tunneler SafeWriteTunneler) error {
 
 func (m *Message) Bytes() []byte {
 	// connectID + MessageType + Data
-	buf, offset := make([]byte, 16), 0
+	length := 16 + len(m.Data)
+	buf, offset := make([]byte, length), 0
 	offset += binary.PutUvarint(buf[offset:], m.ConnectID)
 	offset += binary.PutUvarint(buf[offset:], uint64(m.MessageType))
-	return append(buf[0:offset], m.Data...)
+	return append(buf[0:offset:length], m.Data...)
 }
 
 func (m *Message) String() string {
