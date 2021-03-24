@@ -85,7 +85,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
 			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
-			if err := msg.WriteTo(tunnel); err != nil {
+			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
 			} else {
 				break
@@ -113,7 +113,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
 
-		err = msg.WriteTo(tunnel)
+		err = tunnel.WriteMessage(msg)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
 			return err
