@@ -52,8 +52,4 @@ jobs:
     - name: "build docker images on arm64"
       arch: arm64
       script:
-        - make cloudimage
-        - make admissionimage
-        - make edgeimage ARCH="arm64v8"
-        - make edgesiteimage ARCH="arm64v8"
-        - make bluetoothdevice_image
+        - make image

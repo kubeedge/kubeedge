@@ -4,8 +4,6 @@ ARG RUN_FROM=docker:dind
 FROM ${BUILD_FROM} AS builder
 
 ARG GO_LDFLAGS
-ARG QEMU_ARCH=x86_64
-COPY ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
 COPY . /go/src/github.com/kubeedge/kubeedge
 
 RUN apk --no-cache update && \
@@ -15,8 +13,6 @@ CGO_ENABLED=1 go build -v -o /usr/local/bin/edgesite -ldflags="${GO_LDFLAGS} -w 
 github.com/kubeedge/kubeedge/edgesite/cmd/edgesite
 
 FROM ${RUN_FROM}
-
-COPY --from=builder /usr/bin/qemu* /usr/bin/
 
 COPY --from=builder /usr/local/bin/edgesite /usr/local/bin/edgesite
 
