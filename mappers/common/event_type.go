@@ -56,8 +56,9 @@ type MsgTwin struct {
 
 // DeviceTwinUpdate the structure of device twin update.
 type DeviceTwinUpdate struct {
-	BaseMessage
-	Twin map[string]*MsgTwin `json:"twin"`
+	//BaseMessage
+	//Twin map[string]*MsgTwin `json:"twin"`
+	//v1alpha2.Twin
 }
 
 // DeviceTwinResult device get result.
@@ -67,11 +68,11 @@ type DeviceTwinResult struct {
 }
 
 // DeviceTwinDelta twin delta.
-type DeviceTwinDelta struct {
-	BaseMessage
-	Twin  map[string]*MsgTwin `json:"twin"`
-	Delta map[string]string   `json:"delta"`
-}
+//type DeviceTwinDelta struct {
+//	BaseMessage
+//	Twin  map[string]*MsgTwin `json:"twin"`
+//	Delta map[string]string   `json:"delta"`
+//}
 
 // DataMetadata data metadata.
 type DataMetadata struct {
@@ -87,9 +88,11 @@ type DataValue struct {
 
 // DeviceData device data structure.
 type DeviceData struct {
-	BaseMessage
-	Data map[string]*DataValue `json:"data"`
+	//BaseMessage
+	//Data map[string]*DataValue `json:"data"`
 }
+
+//type DeviceData v1alpha2.Device
 
 //MsgAttr the struct of device attr
 type MsgAttr struct {

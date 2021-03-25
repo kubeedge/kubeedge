@@ -32,17 +32,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
 
 //DeviceUpdate device update
-type DeviceUpdate struct {
-	State      string                     `json:"state,omitempty"`
-	Attributes map[string]*dttype.MsgAttr `json:"attributes"`
-}
+//type DeviceUpdate struct {
+//	State      string                     `json:"state,omitempty"`
+//	Attributes map[string]*dttype.MsgAttr `json:"attributes"`
+//}
 
 //Device the struct of device
 type Device struct {
@@ -67,19 +67,14 @@ type Attribute struct {
 
 //Twin Structure to read data from DB (Should match with the DB-table 'device_twin' schema)
 type TwinAttribute struct {
-	ID           string `json:"id,omitempty"`
-	DeviceID     string `json:"deviceid,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Description  string `json:"description,omitempty"`
-	Expected     string `json:"expected,omitempty"`
-	Actual       string `json:"actual,omitempty"`
-	ExpectedMeta string `json:"expected_meta,omitempty"`
-	ActualMeta   string `json:"actual_meta,omitempty"`
-	ExpectedVer  string `json:"expected_version,omitempty"`
-	ActualVer    string `json:"actual_version,omitempty"`
-	Optional     bool   `json:"optional,omitempty"`
-	Type         string `json:"attr_type,omitempty"`
-	MetaData     string `json:"metadata,omitempty"`
+	ID              int64  `json:"id,omitempty"`
+	DeviceName      string `json:"device_name,omitempty"`
+	DeviceNamespace string `json:"device_namespace,omitempty"`
+	PropertyName    string `json:"property_name,omitempty"`
+	Expected        string `json:"expected,omitempty"`
+	Actual          string `json:"actual,omitempty"`
+	ExpectedMeta    string `json:"expected_meta,omitempty"`
+	ActualMeta      string `json:"actual_meta,omitempty"`
 }
 
 func GenerateDeviceID(deviceSuffix string) string {
@@ -87,43 +82,46 @@ func GenerateDeviceID(deviceSuffix string) string {
 }
 
 //Function to Generate Device
-func CreateDevice(deviceID string, deviceName string, deviceState string) dttype.Device {
-	device := dttype.Device{
-		ID:          deviceID,
-		Name:        deviceName,
-		Description: "IntegrationTest",
-		State:       deviceState,
-		Attributes:  make(map[string]*dttype.MsgAttr),
-		Twin:        make(map[string]*dttype.MsgTwin),
+func CreateDevice(deviceID string, deviceName string, deviceState string) v1alpha2.Device {
+	device := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deviceID,
+			Namespace: "default",
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: make([]v1alpha2.Twin, 0),
+		},
 	}
 	return device
 }
 
 //Function to add Device attribute to existing device
-func AddDeviceAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
-	var optional = true
-	var typeMeta = dttype.TypeMetadata{Type: attributeType}
-	var attribute = dttype.MsgAttr{Value: attributeValue, Optional: &optional, Metadata: &typeMeta}
-	device.Attributes[attributeName] = &attribute
-}
+//func AddDeviceAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
+//	var optional = true
+//	var typeMeta = dttype.TypeMetadata{Type: attributeType}
+//	var attribute = dttype.MsgAttr{Value: attributeValue, Optional: &optional, Metadata: &typeMeta}
+//	device.Attributes[attributeName] = &attribute
+//}
 
 //Function to add Twin attribute to existing device
-func AddTwinAttribute(device dttype.Device, attributeName string, attributeValue string, attributeType string) {
-	value := attributeValue
-	optional := true
-	valueMeta := dttype.ValueMetadata{Timestamp: time.Now().Unix()}
-	typeMeta := dttype.TypeMetadata{Type: attributeType}
-	twinVersion := dttype.TwinVersion{CloudVersion: 1.0, EdgeVersion: 1.0}
-	twinValue := dttype.TwinValue{Value: &value, Metadata: &valueMeta}
-	msgTwin := dttype.MsgTwin{Expected: &twinValue,
-		Actual:          &twinValue,
-		Optional:        &optional,
-		Metadata:        &typeMeta,
-		ExpectedVersion: &twinVersion,
-		ActualVersion:   &twinVersion,
+func AddTwinAttribute(device *v1alpha2.Device, attributeName string, attributeValue string, attributeType string) {
+	twin := v1alpha2.Twin{
+		PropertyName: attributeName,
+		Reported: v1alpha2.TwinProperty{
+			Value:    attributeValue,
+			Metadata: map[string]string{
+				"type": attributeType,
+			},
+		},
+		Desired: v1alpha2.TwinProperty{
+			Value:    attributeValue,
+			Metadata: map[string]string{
+				"type": attributeType,
+			},
+		},
 	}
 
-	device.Twin[attributeName] = &msgTwin
+	device.Status.Twins = append(device.Status.Twins, twin)
 }
 
 //Function to access the edgecore DB and return the device state.
@@ -161,25 +159,22 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	row, err := db.Query("SELECT * FROM device_twin")
 	defer row.Close()
 
+	common.Infof("AAAAAAAAAAAAAAAAAAAAAA")
 	for row.Next() {
 		err = row.Scan(&twinAttribute.ID,
-			&twinAttribute.DeviceID,
-			&twinAttribute.Name,
-			&twinAttribute.Description,
+			&twinAttribute.DeviceName,
+			&twinAttribute.DeviceNamespace,
+			&twinAttribute.PropertyName,
 			&twinAttribute.Expected,
 			&twinAttribute.Actual,
 			&twinAttribute.ExpectedMeta,
-			&twinAttribute.ActualMeta,
-			&twinAttribute.ExpectedVer,
-			&twinAttribute.ActualVer,
-			&twinAttribute.Optional,
-			&twinAttribute.Type,
-			&twinAttribute.MetaData)
+			&twinAttribute.ActualMeta)
 
+		common.Infof("device twin is %v", twinAttribute)
 		if err != nil {
 			common.Fatalf("Failed to scan DB rows: %v", err)
 		}
-		if string(twinAttribute.DeviceID) == deviceID && twinAttribute.Name == Name {
+		if twinAttribute.DeviceName == deviceID && twinAttribute.PropertyName == Name {
 			break
 		}
 	}
@@ -224,20 +219,16 @@ func HubClientInit(server, clientID, username, password string) *MQTT.ClientOpti
 }
 
 //function to handle device addition and deletion.
-func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.Device) bool {
+func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device v1alpha2.Device) bool {
 	var httpMethod string
-	var payload dttype.MembershipUpdate
+	var payload v1alpha2.Device
 	switch operation {
 	case "PUT":
 		httpMethod = http.MethodPut
-		payload = dttype.MembershipUpdate{AddDevices: []dttype.Device{
-			device,
-		}}
+		payload = device
 	case "DELETE":
 		httpMethod = http.MethodDelete
-		payload = dttype.MembershipUpdate{RemoveDevices: []dttype.Device{
-			device,
-		}}
+		payload = device
 	default:
 		common.Fatalf("operation %q is invalid", operation)
 		return false

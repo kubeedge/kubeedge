@@ -17,13 +17,15 @@ limitations under the License.
 package globals
 
 import (
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
 )
 
 // ModbusDev is the modbus device configuration and client information.
 type ModbusDev struct {
-	Instance     mappercommon.DeviceInstance
+	Instance v1alpha2.Device
+	// Instance     mappercommon.DeviceInstance
 	ModbusClient *driver.ModbusClient
 }
 

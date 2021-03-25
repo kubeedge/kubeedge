@@ -51,7 +51,7 @@ var (
 	//deviceupload topic
 	DeviceUpload = "$hw/events/upload/#"
 	//device status update topic "$hw/events/device/+/state/update"
-	DevicestatusUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceETStateUpdateSuffix
+	//DevicestatusUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceETStateUpdateSuffix
 	//device twin update topic "$hw/events/device/+/twin/+"
 	DeviceTwinUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceTwinModule + "/+"
 	//device membership update topic "$hw/events/node/+/membership/get"
@@ -83,9 +83,9 @@ func TestEdgecoreEventBus(t *testing.T) {
 			ctx.Cfg.TestManager+Devicehandler, DeviceN)
 		Expect(IsDeviceDeleted).Should(BeTrue())
 
-		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete,
-			ctx.Cfg.TestManager+Devicehandler, DeviceATT)
-		Expect(IsDeviceDeleted).Should(BeTrue())
+		//IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete,
+		//	ctx.Cfg.TestManager+Devicehandler, DeviceATT)
+		//Expect(IsDeviceDeleted).Should(BeTrue())
 
 		IsDeviceDeleted = helpers.HandleAddAndDeleteDevice(http.MethodDelete,
 			ctx.Cfg.TestManager+Devicehandler, DeviceTW)

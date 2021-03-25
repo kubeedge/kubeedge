@@ -244,7 +244,7 @@ var _ = Describe("Application deployment test in E2E scenario", func() {
 			// Create and publish scheduler run time data
 			watchAttribute := watcher.Attribute{Name: "io-data", Actions: []string{"IOData"}}
 			devTwinAtt := []watcher.Attribute{watchAttribute}
-			expectedWatchAttribute = watcher.Watcher{DeviceTwinAttributes: devTwinAtt}
+			expectedWatchAttribute = watcher.Watcher{DeviceTwinPropertyNames: devTwinAtt}
 			// Subscribing to topic where scheduler publishes the data
 			ClientOpts = helpers.HubClientInit(ctx.Cfg.MqttEndpoint, "bluetoothmapper", "", "")
 			Client = MQTT.NewClient(ClientOpts)

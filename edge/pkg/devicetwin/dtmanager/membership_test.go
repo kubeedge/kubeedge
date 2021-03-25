@@ -26,119 +26,18 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
 
-func TestGetRemoveList(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-	}
+const (
+	defaultString = "default"
+	DeviceAString = "DeviceA"
+)
 
-	var device dttype.Device
-	dtc.DeviceList.Store("DeviceB", &device)
-	dArray := []dttype.Device{}
-	d := dttype.Device{
-		ID: "123",
-	}
-	dArray = append(dArray, d)
-	value := getRemoveList(dtc, dArray)
-	for i := range value {
-		assert.Equal(t, "DeviceB", value[i].ID)
-	}
-}
-
-func TestGetRemoveListProperDevideID(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-	}
-	var device dttype.Device
-	dtc.DeviceList.Store("123", &device)
-	dArray := []dttype.Device{}
-	d := dttype.Device{
-		ID: "123",
-	}
-	dArray = append(dArray, d)
-	value := getRemoveList(dtc, dArray)
-	for i := range value {
-		assert.Equal(t, "123", value[i].ID)
-	}
-}
-
-func TestDealMembershipDetailInvalidEmptyMessage(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-		GroupID:    "1",
-	}
-	value, err := dealMembershipDetail(dtc, "t", "invalid")
-	assert.Error(t, err)
-	assert.Equal(t, nil, value)
-}
-
-func TestDealMembershipDetailInvalidMsg(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-		GroupID:    "1",
-	}
-
-	var m = &model.Message{
-		Content: "invalidmsg",
-	}
-
-	value, err := dealMembershipDetail(dtc, "t", m)
-	assert.Error(t, err)
-	assert.Equal(t, errors.New("assertion failed"), err)
-	assert.Equal(t, nil, value)
-}
-
-func TestDealMembershipDetailInvalidContent(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-		GroupID:    "1",
-	}
-	var cnt []uint8
-	cnt = append(cnt, 1)
-	var m = &model.Message{
-		Content: cnt,
-	}
-
-	value, err := dealMembershipDetail(dtc, "t", m)
-	assert.Error(t, err)
-	assert.Equal(t, nil, value)
-}
-
-func TestDealMembershipDetailValid(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-		Mutex:      &sync.RWMutex{},
-		GroupID:    "1",
-	}
-
-	payload := dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router",
-		State: "unknown"}}, BaseMessage: dttype.BaseMessage{EventID: "eventid"}}
-	content, _ := json.Marshal(payload)
-	var m = &model.Message{
-		Content: content,
-	}
-	value, err := dealMembershipDetail(dtc, "t", m)
-	assert.NoError(t, err)
-	assert.Equal(t, nil, value)
-}
-
-func TestDealMembershipUpdateEmptyMessage(t *testing.T) {
-	dtc := &dtcontext.DTContext{
-		DeviceList: &sync.Map{},
-		GroupID:    "1",
-	}
-	value, err := dealMembershipDetail(dtc, "t", "invalid")
-	assert.Error(t, err)
-	assert.Equal(t, errors.New("msg not Message type"), err)
-	assert.Equal(t, nil, value)
-}
-
-func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
+func TestDealMembershipAddInvalidMsg(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -148,12 +47,29 @@ func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
 		Content: "invalidmessage",
 	}
 
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	value, err := dealMembershipAdd(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
 	assert.Equal(t, nil, value)
 }
-func TestDealMembershipUpdateInvalidContent(t *testing.T) {
+
+func TestDealMembershipDeleteInvalidMsg(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList: &sync.Map{},
+		GroupID:    "1",
+	}
+
+	var m = &model.Message{
+		Content: "invalidmessage",
+	}
+
+	value, err := dealMembershipDelete(dtc, "t", m)
+	assert.Error(t, err)
+	assert.Equal(t, errors.New("assertion failed"), err)
+	assert.Equal(t, nil, value)
+}
+
+func TestDealMembershipAddInvalidContent(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
@@ -165,12 +81,29 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 		Content: cnt,
 	}
 
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	value, err := dealMembershipAdd(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
+func TestDealMembershipDeleteInvalidContent(t *testing.T) {
+	dtc := &dtcontext.DTContext{
+		DeviceList: &sync.Map{},
+		GroupID:    "1",
+	}
+
+	var cnt []uint8
+	cnt = append(cnt, 1)
+	var m = &model.Message{
+		Content: cnt,
+	}
+
+	value, err := dealMembershipDelete(dtc, "t", m)
+	assert.Error(t, err)
+	assert.Equal(t, nil, value)
+}
+
+func TestDealMembershipAddValid(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 
 	mockCtrl := gomock.NewController(t)
@@ -178,9 +111,7 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	ormerMock = beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	ormerMock.EXPECT().Begin().Return(nil)
 	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
-	ormerMock.EXPECT().Commit().Return(nil)
 
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
@@ -189,28 +120,20 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-		BaseMessage: dttype.BaseMessage{
-			EventID: "eventid",
-		},
-	}
+	payload := v1alpha2.Device{}
+	payload.Namespace = defaultString
+	payload.Name = DeviceAString
+
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	value, err := dealMembershipAdd(dtc, "t", m)
 	assert.NoError(t, err)
 	assert.Equal(t, nil, value)
 }
 
-func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
+func TestDealMembershipDeleteValid(t *testing.T) {
 	dtc := &dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
@@ -218,23 +141,14 @@ func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	payload := dttype.MembershipUpdate{
-		RemoveDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-		BaseMessage: dttype.BaseMessage{
-			EventID: "eventid",
-		},
-	}
+	payload := v1alpha2.Device{}
+	payload.Namespace = defaultString
+	payload.Name = DeviceAString
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	value, err := dealMembershipDelete(dtc, "t", m)
 	assert.NoError(t, err)
 	assert.Equal(t, nil, value)
 }
@@ -274,18 +188,10 @@ func TestDealMembershipGetValid(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-		BaseMessage: dttype.BaseMessage{
-			EventID: "eventid",
-		},
-	}
+	payload := v1alpha2.Device{}
+	payload.Namespace = defaultString
+	payload.Name = DeviceAString
+
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
 		Content: content,
@@ -302,21 +208,7 @@ func TestDealMembershipGetInnerValid(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
-		},
-		BaseMessage: dttype.BaseMessage{
-			EventID: "eventid",
-		},
-	}
-	content, _ := json.Marshal(payload)
-
-	err := dealMembershipGetInner(dtc, content)
+	err := dealMembershipGetInner(dtc)
 	assert.NoError(t, err)
 }
 
@@ -328,7 +220,7 @@ func TestDealMembershipGetInnerInValid(t *testing.T) {
 		GroupID:     "1",
 	}
 
-	err := dealMembershipGetInner(dtc, []byte("invalid"))
+	err := dealMembershipGetInner(dtc)
 	assert.NoError(t, err)
 }
 
@@ -342,7 +234,7 @@ func TestAdded(t *testing.T) {
 		GroupID:     "1",
 	}
 	var d = []dttype.Device{{
-		ID:    "DeviceA",
+		ID:    DeviceAString,
 		Name:  "Router",
 		State: "unknown",
 	}}
@@ -368,9 +260,9 @@ func TestRemoved(t *testing.T) {
 		GroupID:     "1",
 	}
 	var device dttype.Device
-	dtc.DeviceList.Store("DeviceA", &device)
+	dtc.DeviceList.Store(DeviceAString, &device)
 	var d = []dttype.Device{{
-		ID:    "DeviceA",
+		ID:    DeviceAString,
 		Name:  "Router",
 		State: "unknown",
 	}}

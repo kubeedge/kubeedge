@@ -20,10 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -217,7 +215,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 	dp, ok := configMap.Data[DeviceProfileJSON]
 	if !ok {
 		// create deviceProfileStruct
-		deviceProfile.DeviceInstances = make([]*types.DeviceInstance, 0)
+		deviceProfile.DeviceInstances = make([]*v1alpha2.Device, 0)
 		deviceProfile.DeviceModels = make([]*types.DeviceModel, 0)
 		//deviceProfile.PropertyVisitors = make([]*types.PropertyVisitor, 0)
 		//deviceProfile.Protocols = make([]*types.Protocol, 0)
@@ -257,6 +255,7 @@ func (dc *DownstreamController) addDeviceProfile(device *v1alpha2.Device, config
 
 // addDeviceModelAndVisitors adds deviceModels and deviceVisitors in configMap
 func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile *types.DeviceProfile) {
+	// todo: model should support namespace, device refactor introduced
 	model := &types.DeviceModel{}
 	model.Name = deviceModel.Name
 	model.Properties = make([]*types.Property, 0, len(deviceModel.Spec.Properties))
@@ -302,70 +301,33 @@ func addDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfile 
 	deviceProfile.DeviceModels = append(deviceProfile.DeviceModels, model)
 }
 
-// add PropertyVisitors to DeviceInstance in configmap
-func addPropertyVisitorsToDeviceInstance(device *v1alpha2.Device, deviceInstance *types.DeviceInstance) {
-	// clear old PropertyVisitors
-	deviceInstance.PropertyVisitors = make([]*types.PropertyVisitor, 0, len(device.Spec.PropertyVisitors))
-	// add new PropertyVisitors
-	for _, pptv := range device.Spec.PropertyVisitors {
-		propertyVisitor := &types.PropertyVisitor{}
-		propertyVisitor.Name = pptv.PropertyName
-		propertyVisitor.PropertyName = pptv.PropertyName
-		propertyVisitor.ModelName = device.Spec.DeviceModelRef.Name
-		propertyVisitor.ReportCycle = pptv.ReportCycle
-		propertyVisitor.CollectCycle = pptv.CollectCycle
-		if pptv.Modbus != nil {
-			propertyVisitor.Protocol = Modbus
-			propertyVisitor.VisitorConfig = pptv.Modbus
-		} else if pptv.OpcUA != nil {
-			propertyVisitor.Protocol = OPCUA
-			propertyVisitor.VisitorConfig = pptv.OpcUA
-		} else if pptv.Bluetooth != nil {
-			propertyVisitor.Protocol = Bluetooth
-			propertyVisitor.VisitorConfig = pptv.Bluetooth
-		} else if pptv.CustomizedProtocol != nil {
-			propertyVisitor.Protocol = CustomizedProtocol
-			propertyVisitor.VisitorConfig = pptv.CustomizedProtocol
-		}
-		if pptv.CustomizedValues != nil {
-			propertyVisitor.CustomizedValues = pptv.CustomizedValues
-		}
-		deviceInstance.PropertyVisitors = append(deviceInstance.PropertyVisitors, propertyVisitor)
-	}
-}
-
 // addDeviceInstanceAndProtocol adds deviceInstance and protocol in configMap
 func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.DeviceProfile) {
-	deviceInstance := &types.DeviceInstance{}
 	deviceProtocol := &types.Protocol{}
-	deviceInstance.ID = device.Name
-	deviceInstance.Name = device.Name
-	deviceInstance.Model = device.Spec.DeviceModelRef.Name
+
 	if device.Spec.Protocol.Common != nil {
 		deviceProtocol.ProtocolCommonConfig = device.Spec.Protocol.Common
 	}
 	var protocol string
 	if device.Spec.Protocol.OpcUA != nil {
-		protocol = OPCUA + "-" + device.Name
-		deviceInstance.Protocol = protocol
+		// todo: need use namespace
+		protocol = OPCUA + "-" + device.Namespace + "/" + device.Name
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = OPCUA
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.OpcUA
 	} else if device.Spec.Protocol.Modbus != nil {
-		protocol = Modbus + "-" + device.Name
-		deviceInstance.Protocol = protocol
+		protocol = Modbus + "-" + device.Namespace + "/" + device.Name
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = Modbus
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Modbus
 	} else if device.Spec.Protocol.Bluetooth != nil {
-		protocol = Bluetooth + "-" + device.Name
-		deviceInstance.Protocol = protocol
+		protocol = Bluetooth + "-" + device.Namespace + "/" + device.Name
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = Bluetooth
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
 	} else if device.Spec.Protocol.CustomizedProtocol != nil {
-		protocol = CustomizedProtocol + "-" + device.Name
-		deviceInstance.Protocol = protocol
+		protocol = CustomizedProtocol + "-" + device.Namespace + "/" + device.Name
+
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = CustomizedProtocol
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.CustomizedProtocol
@@ -373,90 +335,37 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 		klog.Warning("Device doesn't support valid protocol")
 	}
 
-	deviceInstance.Twins = device.Status.Twins
-	deviceInstance.DataProperties = device.Spec.Data.DataProperties
-	deviceInstance.DataTopic = device.Spec.Data.DataTopic
-
-	addPropertyVisitorsToDeviceInstance(device, deviceInstance)
-
-	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, deviceInstance)
+	deviceProfile.DeviceInstances = append(deviceProfile.DeviceInstances, device)
 	deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
+}
+
+// generateDeviceKey generate a device key using namespace, name and separator "/"
+func generateDeviceKey(device *v1alpha2.Device) string {
+	return device.Namespace + "/" + device.Name
 }
 
 // deviceAdded creates a device, adds in deviceManagers map, send a message to edge node if node selector is present.
 func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
-	dc.deviceManager.Device.Store(device.Name, device)
+	// use device namespace+name as primary key
+	uniqueKey := generateDeviceKey(device)
+	dc.deviceManager.Device.Store(uniqueKey, device)
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
-		edgeDevice := createDevice(device)
-		msg := model.NewMessage("")
 
-		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
+		// use membership/added as resource type
+		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership/added", "")
 		if err != nil {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
-		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-		content := types.MembershipUpdate{AddDevices: []types.Device{
-			edgeDevice,
-		}}
-		content.EventID = uuid.New().String()
-		content.Timestamp = time.Now().UnixNano() / 1e6
-		msg.Content = content
+		msg := model.NewMessage("").BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation).FillBody(*device)
 
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
 		}
 	}
-}
-
-// createDevice creates a device from CRD
-func createDevice(device *v1alpha2.Device) types.Device {
-	edgeDevice := types.Device{
-		// ID and name can be used as ID as we are using CRD and name(key in ETCD) will always be unique
-		ID:   device.Name,
-		Name: device.Name,
-	}
-
-	description, ok := device.Labels["description"]
-	if ok {
-		edgeDevice.Description = description
-	}
-
-	// TODO: optional is Always false, currently not present in CRD definition, need to add or remove from deviceTwin @ Edge
-	opt := false
-	optional := &opt
-	twin := make(map[string]*types.MsgTwin, len(device.Status.Twins))
-	for i, dtwin := range device.Status.Twins {
-		expected := &types.TwinValue{}
-		expected.Value = &device.Status.Twins[i].Desired.Value
-		metadataType, ok := device.Status.Twins[i].Desired.Metadata["type"]
-		if !ok {
-			metadataType = "string"
-		}
-		timestamp := time.Now().UnixNano() / 1e6
-
-		metadata := &types.ValueMetadata{Timestamp: timestamp}
-		expected.Metadata = metadata
-
-		// TODO: how to manage versioning ??
-		cloudVersion, err := strconv.ParseInt(device.ResourceVersion, 10, 64)
-		if err != nil {
-			klog.Warningf("Failed to parse cloud version due to error %v", err)
-		}
-		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-		msgTwin := &types.MsgTwin{
-			Expected:        expected,
-			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: metadataType},
-			ExpectedVersion: twinVersion,
-		}
-		twin[dtwin.PropertyName] = msgTwin
-	}
-	edgeDevice.Twin = twin
-	return edgeDevice
 }
 
 // isDeviceUpdated checks if device is actually updated
@@ -522,7 +431,7 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		var oldProtocol string
 		for _, devInst := range deviceProfile.DeviceInstances {
 			if device.Name == devInst.Name {
-				oldProtocol = devInst.Protocol
+				oldProtocol = devInst.Spec.DeviceModelRef.Name
 				break
 			}
 		}
@@ -550,23 +459,6 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		}
 		// add protocol common
 		deviceProtocol.ProtocolCommonConfig = device.Spec.Protocol.Common
-
-		// update the propertyVisitors, twins, data and protocol in deviceInstance
-		for _, devInst := range deviceProfile.DeviceInstances {
-			if device.Name == devInst.Name {
-				// update property visitors
-				addPropertyVisitorsToDeviceInstance(device, devInst)
-				// update twins
-				devInst.Twins = device.Status.Twins
-				// update data
-				devInst.DataProperties = device.Spec.Data.DataProperties
-				// update data topic
-				devInst.DataTopic = device.Spec.Data.DataTopic
-				// update protocol
-				devInst.Protocol = deviceProtocol.Name
-				break
-			}
-		}
 		deviceProfile.Protocols = append(deviceProfile.Protocols, deviceProtocol)
 
 		bytes, err := json.Marshal(deviceProfile)
@@ -575,7 +467,6 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 			return
 		}
 		nodeConfigMap.Data[DeviceProfileJSON] = string(bytes)
-		// store new config map
 		dc.configMapManager.ConfigMap.Store(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], nodeConfigMap)
 		if _, err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Update(context.Background(), nodeConfigMap, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update config map %v in namespace %v, error: %v", nodeConfigMap, device.Namespace, err)
@@ -596,8 +487,9 @@ func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}
 // If nodeSelector is updated, call add device for newNode, deleteDevice for old Node.
 // If twin is updated, send twin update message to edge
 func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
-	value, ok := dc.deviceManager.Device.Load(device.Name)
-	dc.deviceManager.Device.Store(device.Name, device)
+	uniqueKey := generateDeviceKey(device)
+	value, ok := dc.deviceManager.Device.Load(uniqueKey)
+	dc.deviceManager.Device.Store(uniqueKey, device)
 	if ok {
 		cachedDevice := value.(*v1alpha2.Device)
 		if isDeviceUpdated(cachedDevice, device) {
@@ -607,7 +499,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 				deletedDevice := &v1alpha2.Device{ObjectMeta: cachedDevice.ObjectMeta,
 					Spec:     cachedDevice.Spec,
 					Status:   cachedDevice.Status,
-					TypeMeta: device.TypeMeta,
+					TypeMeta: cachedDevice.TypeMeta,
 				}
 				dc.deviceDeleted(deletedDevice)
 			} else {
@@ -621,21 +513,20 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 				// update twin properties
 				if isDeviceStatusUpdated(&cachedDevice.Status, &device.Status) {
 					// TODO: add an else if condition to check if DeviceModelReference has changed, if yes whether deviceModelReference exists
-					twin := make(map[string]*types.MsgTwin)
-					addUpdatedTwins(device.Status.Twins, twin, device.ResourceVersion)
-					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, twin, device.ResourceVersion)
-					msg := model.NewMessage("")
-
-					resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+device.Name+"/twin/cloud_updated", "")
+					sendTwin := make([]v1alpha2.Twin, 0)
+					// TODO: do not consider version factor
+					addUpdatedTwins(device.Status.Twins, &sendTwin)
+					addDeletedTwins(cachedDevice.Status.Twins, device.Status.Twins, &sendTwin)
+					updatedDevice := v1alpha2.Device{}
+					updatedDevice.Namespace = device.Namespace
+					updatedDevice.Name = device.Name
+					updatedDevice.Status.Twins = sendTwin
+					resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "device/"+uniqueKey+"/twin/cloud_updated", "")
 					if err != nil {
 						klog.Warningf("Built message resource failed with error: %s", err)
 						return
 					}
-					msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-					content := types.DeviceTwinUpdate{Twin: twin}
-					content.EventID = uuid.New().String()
-					content.Timestamp = time.Now().UnixNano() / 1e6
-					msg.Content = content
+					msg := model.NewMessage("").BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation).FillBody(updatedDevice)
 
 					err = dc.messageLayer.Send(*msg)
 					if err != nil {
@@ -651,31 +542,12 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 }
 
 // addDeletedTwins add deleted twins in the message
-func addDeletedTwins(oldTwin []v1alpha2.Twin, newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, version string) {
-	opt := false
-	optional := &opt
-	for i, dtwin := range oldTwin {
+func addDeletedTwins(oldTwin []v1alpha2.Twin, newTwin []v1alpha2.Twin, twin *[]v1alpha2.Twin) {
+	for _, dtwin := range oldTwin {
 		if !ifTwinPresent(dtwin, newTwin) {
-			expected := &types.TwinValue{}
-			expected.Value = &oldTwin[i].Desired.Value
-			timestamp := time.Now().UnixNano() / 1e6
-
-			metadata := &types.ValueMetadata{Timestamp: timestamp}
-			expected.Metadata = metadata
-
-			// TODO: how to manage versioning ??
-			cloudVersion, err := strconv.ParseInt(version, 10, 64)
-			if err != nil {
-				klog.Warningf("Failed to parse cloud version due to error %v", err)
-			}
-			twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-			msgTwin := &types.MsgTwin{
-				Expected:        expected,
-				Optional:        optional,
-				Metadata:        &types.TypeMetadata{Type: "deleted"},
-				ExpectedVersion: twinVersion,
-			}
-			twin[dtwin.PropertyName] = msgTwin
+			deletedTwin := dtwin
+			deletedTwin.Desired.Metadata["type"] = "deleted"
+			*twin = append(*twin, deletedTwin)
 		}
 	}
 }
@@ -691,34 +563,10 @@ func ifTwinPresent(twin v1alpha2.Twin, newTwins []v1alpha2.Twin) bool {
 }
 
 // addUpdatedTwins is function of add updated twins to send to edge
-func addUpdatedTwins(newTwin []v1alpha2.Twin, twin map[string]*types.MsgTwin, version string) {
-	opt := false
-	optional := &opt
-	for i, dtwin := range newTwin {
-		expected := &types.TwinValue{}
-		expected.Value = &newTwin[i].Desired.Value
-		metadataType, ok := newTwin[i].Desired.Metadata["type"]
-		if !ok {
-			metadataType = "string"
-		}
-		timestamp := time.Now().UnixNano() / 1e6
-
-		metadata := &types.ValueMetadata{Timestamp: timestamp}
-		expected.Metadata = metadata
-
-		// TODO: how to manage versioning ??
-		cloudVersion, err := strconv.ParseInt(version, 10, 64)
-		if err != nil {
-			klog.Warningf("Failed to parse cloud version due to error %v", err)
-		}
-		twinVersion := &types.TwinVersion{CloudVersion: cloudVersion, EdgeVersion: 0}
-		msgTwin := &types.MsgTwin{
-			Expected:        expected,
-			Optional:        optional,
-			Metadata:        &types.TypeMetadata{Type: metadataType},
-			ExpectedVersion: twinVersion,
-		}
-		twin[dtwin.PropertyName] = msgTwin
+func addUpdatedTwins(newTwin []v1alpha2.Twin, twin *[]v1alpha2.Twin) {
+	for _, dtwin := range newTwin {
+		updatedTwin := dtwin
+		*twin = append(*twin, updatedTwin)
 	}
 }
 
@@ -786,7 +634,8 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha2.Device,
 	// if model referenced by other devices, no need to delete the model
 	checkModelReferenced := false
 	for _, dvc := range deviceProfile.DeviceInstances {
-		if dvc.Model == deviceModel.Name {
+		// todo: devicemodel should also support namespace, device refactoring introduced
+		if dvc.Spec.DeviceModelRef.Name == deviceModel.Name {
 			checkModelReferenced = true
 			break
 		}
@@ -806,8 +655,17 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha2.Device,
 func deleteDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.DeviceProfile) {
 	var protocol string
 	for i, devInst := range deviceProfile.DeviceInstances {
-		if device.Name == devInst.Name {
-			protocol = devInst.Protocol
+		// using namespace+name confirm device
+		if device.Name == devInst.Name && device.Namespace == devInst.Namespace {
+			if devInst.Spec.Protocol.Modbus != nil {
+				protocol = Modbus
+			} else if devInst.Spec.Protocol.OpcUA != nil {
+				protocol = OPCUA
+			} else if devInst.Spec.Protocol.Bluetooth != nil {
+				protocol = Bluetooth
+			} else if devInst.Spec.Protocol.CustomizedProtocol != nil {
+				protocol = CustomizedProtocol
+			}
 			deviceProfile.DeviceInstances[i] = deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1]
 			deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1] = nil
 			deviceProfile.DeviceInstances = deviceProfile.DeviceInstances[:len(deviceProfile.DeviceInstances)-1]
@@ -839,25 +697,20 @@ func deleteDeviceModelAndVisitors(deviceModel *v1alpha2.DeviceModel, deviceProfi
 
 // deviceDeleted send a deleted message to the edgeNode and deletes the device from the deviceManager.Device map
 func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
-	dc.deviceManager.Device.Delete(device.Name)
+	uniqueKey := generateDeviceKey(device)
+	dc.deviceManager.Device.Delete(uniqueKey)
 	dc.deleteFromConfigMap(device)
-	edgeDevice := createDevice(device)
-	msg := model.NewMessage("")
 
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
-		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
-		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
-
-		content := types.MembershipUpdate{RemoveDevices: []types.Device{
-			edgeDevice,
-		}}
-		content.EventID = uuid.New().String()
-		content.Timestamp = time.Now().UnixNano() / 1e6
-		msg.Content = content
+		// use membership/deleted as resource type
+		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership/deleted", "")
 		if err != nil {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
+		// why use UpdateOperation but not InsertOperation
+		msg := model.NewMessage("").BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation).FillBody(*device)
+
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)

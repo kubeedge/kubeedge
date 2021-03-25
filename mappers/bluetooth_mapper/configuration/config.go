@@ -127,10 +127,12 @@ func (b *BLEConfig) Load() error {
 	propertyVisitors := make([]*types.PropertyVisitor, 0)
 	// Assign device information obtained from config file
 	for _, device := range readConfigMap.DeviceInstances {
-		if strings.EqualFold(device.Model, readConfigFile.DeviceModelName) {
-			b.Device.ID = device.ID
-			b.Device.Name = device.Model
-			propertyVisitors = device.PropertyVisitors
+		if strings.EqualFold(device.Spec.DeviceModelRef.Name, readConfigFile.DeviceModelName) {
+			b.Device.ID = device.Namespace + "/" + device.Name
+			b.Device.Name = device.Name
+			// TODO: 这个地方需要仔细研究下
+			//vistor :=
+			//propertyVisitors = device.Spec.PropertyVisitors
 		}
 	}
 	// Assign information required by action manager

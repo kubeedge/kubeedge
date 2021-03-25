@@ -24,7 +24,9 @@ func InitDBTable(module core.Module) {
 		klog.Infof("Module %s is disabled, DB meta for it will not be registered", module.Name())
 		return
 	}
+	klog.Infof("Begin to register Device table")
 	orm.RegisterModel(new(Device))
-	orm.RegisterModel(new(DeviceAttr))
+	// orm.RegisterModel(new(DeviceAttr))
+	klog.Infof("Begin to register Device Twin table")
 	orm.RegisterModel(new(DeviceTwin))
 }

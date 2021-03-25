@@ -20,15 +20,18 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
@@ -38,9 +41,9 @@ import (
 )
 
 var (
-	deviceA = "DeviceA"
-	deviceB = "DeviceB"
-	deviceC = "DeviceC"
+	deviceA = "default/DeviceA"
+	deviceB = "default/DeviceB"
+	deviceC = "default/DeviceC"
 	event1  = "Event1"
 	key1    = "key1"
 
@@ -74,27 +77,26 @@ func receiveMsg(commChannel chan interface{}, message *dttype.DTMessage) {
 }
 
 // twinValueFunc returns a new TwinValue
-func twinValueFunc() *dttype.TwinValue {
-	var twinValue dttype.TwinValue
+func twinValueFunc() v1alpha2.TwinProperty {
+	var twinValue v1alpha2.TwinProperty
 	value := valueType
-	valueMetaData := &dttype.ValueMetadata{Timestamp: time.Now().UnixNano() / 1e6}
-	twinValue.Value = &value
-	twinValue.Metadata = valueMetaData
-	return &twinValue
+	twinValue.Value = value
+	twinValue.Metadata = make(map[string]string)
+	twinValue.Metadata["timestamp"] = strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+	return twinValue
 }
 
 // keyTwinUpdateFunc returns a new DeviceTwinUpdate
-func keyTwinUpdateFunc() dttype.DeviceTwinUpdate {
-	var keyTwinUpdate dttype.DeviceTwinUpdate
-	twinKey := make(map[string]*dttype.MsgTwin)
-	twinKey[key1] = &dttype.MsgTwin{
-		Expected: twinValueFunc(),
-		Actual:   twinValueFunc(),
-		Metadata: &dttype.TypeMetadata{Type: "nil"},
+func keyTwinUpdateFunc() v1alpha2.Device {
+	var device v1alpha2.Device
+	device.Status.Twins = make([]v1alpha2.Twin, 0)
+	twin := v1alpha2.Twin{
+		PropertyName: key1,
+		Desired:      twinValueFunc(),
+		Reported:     twinValueFunc(),
 	}
-	keyTwinUpdate.Twin = twinKey
-	keyTwinUpdate.BaseMessage = dttype.BaseMessage{EventID: event1}
-	return keyTwinUpdate
+	device.Status.Twins = append(device.Status.Twins, twin)
+	return device
 }
 
 // twinWorkerFunc returns a new TwinWorker
@@ -119,7 +121,7 @@ func contextFunc(deviceID string) dtcontext.DTContext {
 	}
 	var testMutex sync.Mutex
 	context.DeviceMutex.Store(deviceID, &testMutex)
-	var device dttype.Device
+	var device v1alpha2.Device
 	context.DeviceList.Store(deviceID, &device)
 	return context
 }
@@ -149,13 +151,12 @@ func TestStart(t *testing.T) {
 	}
 	var testMutex sync.Mutex
 	context.DeviceMutex.Store(deviceB, &testMutex)
-	msgAttr := make(map[string]*dttype.MsgAttr)
-	device := dttype.Device{
-		ID:         "id1",
-		Name:       deviceB,
-		Attributes: msgAttr,
-		Twin:       keyTwinUpdate.Twin,
-	}
+
+	device := v1alpha2.Device{}
+	device.Namespace = "default"
+	device.Name = deviceB
+	device.Status.Twins = keyTwinUpdate.Status.Twins
+
 	context.DeviceList.Store(deviceB, &device)
 
 	msg := &dttype.DTMessage{
@@ -237,7 +238,13 @@ func TestStart(t *testing.T) {
 
 // TestDealTwinSync is function to test dealTwinSync
 func TestDealTwinSync(t *testing.T) {
-	content, _ := json.Marshal(dttype.DeviceTwinUpdate{BaseMessage: dttype.BaseMessage{EventID: event1}})
+	var ormerMock *beego.MockOrmer
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	content, _ := json.Marshal(v1alpha2.Device{})
 	contentKeyTwin, _ := json.Marshal(keyTwinUpdateFunc())
 	context := contextFunc(deviceB)
 
@@ -276,8 +283,13 @@ func TestDealTwinSync(t *testing.T) {
 			err:      nil,
 		},
 	}
-	for _, test := range tests {
+	for index, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if index == 3 {
+				ormerMock.EXPECT().Begin().Return(nil)
+				ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
+				ormerMock.EXPECT().Commit().Return(nil)
+			}
 			if _, err := dealTwinSync(test.context, test.resource, test.msg); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinSync() case failed: got = %v, Want = %v", err, test.err)
 			}
@@ -337,7 +349,13 @@ func TestDealTwinGet(t *testing.T) {
 
 // TestDealTwinUpdate is function to test dealTwinUpdate
 func TestDealTwinUpdate(t *testing.T) {
-	content, _ := json.Marshal(dttype.DeviceTwinUpdate{BaseMessage: dttype.BaseMessage{EventID: event1}})
+	var ormerMock *beego.MockOrmer
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	content, _ := json.Marshal(v1alpha2.Device{})
 	contentKeyTwin, _ := json.Marshal(keyTwinUpdateFunc())
 	context := contextFunc(deviceB)
 
@@ -347,6 +365,7 @@ func TestDealTwinUpdate(t *testing.T) {
 		resource string
 		msg      interface{}
 		err      error
+		times    int
 	}{
 		{
 			name:    "TestDealTwinUpdate(): Case 1: msg not Message type",
@@ -372,13 +391,19 @@ func TestDealTwinUpdate(t *testing.T) {
 		{
 			name:     "TestDealTwinUpdate(): Case 4: Success; Begin to update twin of the device in Updated()",
 			context:  &context,
-			resource: deviceA,
+			resource: deviceB,
 			msg:      msgTypeFunc(contentKeyTwin),
 			err:      nil,
+			times:    3,
 		},
 	}
-	for _, test := range tests {
+	for index, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if index == 3 {
+				ormerMock.EXPECT().Begin().Return(nil)
+				ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
+				ormerMock.EXPECT().Commit().Return(nil)
+			}
 			if _, err := dealTwinUpdate(test.context, test.resource, test.msg); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinUpdate() case failed: got = %v, Want = %v", err, test.err)
 			}
@@ -397,26 +422,29 @@ func TestDealDeviceTwin(t *testing.T) {
 	dbm.DBAccess = mockOrmer
 
 	str := typeString
-	optionTrue := true
-	msgTwin := make(map[string]*dttype.MsgTwin)
-	msgTwin[key1] = &dttype.MsgTwin{
-		Expected: twinValueFunc(),
-		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
-		},
+
+	msgTwin := make([]v1alpha2.Twin, 1)
+	msgTwin[0] = v1alpha2.Twin{
+		PropertyName: key1,
+		Desired:      twinValueFunc(),
 	}
+	msgTwin[0].Desired.Metadata["type"] = typeDeleted
+
 	contextDeviceB := contextFunc(deviceB)
-	twinDeviceB := make(map[string]*dttype.MsgTwin)
-	twinDeviceB[deviceB] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &str,
+	twinDeviceB := make([]v1alpha2.Twin, 1)
+	twinDeviceB[0] = v1alpha2.Twin{
+		PropertyName: deviceB,
+		Desired: v1alpha2.TwinProperty{
+			Value: str,
 		},
-		Optional: &optionTrue,
 	}
-	deviceBTwin := dttype.Device{
-		Twin: twinDeviceB,
+
+	b := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: twinDeviceB,
+		},
 	}
-	contextDeviceB.DeviceList.Store(deviceB, &deviceBTwin)
+	contextDeviceB.DeviceList.Store(deviceB, &b)
 
 	contextDeviceC := dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
@@ -425,15 +453,19 @@ func TestDealDeviceTwin(t *testing.T) {
 	}
 	var testMutex sync.Mutex
 	contextDeviceC.DeviceMutex.Store(deviceC, &testMutex)
-	twinDeviceC := make(map[string]*dttype.MsgTwin)
-
-	twinDeviceC[deviceC] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &str,
+	twinDeviceC := make([]v1alpha2.Twin, 1)
+	twinDeviceC[0] = v1alpha2.Twin{
+		PropertyName: deviceC,
+		Desired: v1alpha2.TwinProperty{
+			Value: str,
 		},
-		Optional: &optionTrue,
 	}
-	deviceCTwin := dttype.Device{Twin: twinDeviceC}
+
+	deviceCTwin := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: twinDeviceC,
+		},
+	}
 	contextDeviceC.DeviceList.Store(deviceC, &deviceCTwin)
 
 	tests := []struct {
@@ -441,7 +473,7 @@ func TestDealDeviceTwin(t *testing.T) {
 		context          *dtcontext.DTContext
 		deviceID         string
 		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
+		msgTwin          []v1alpha2.Twin
 		dealType         int
 		err              error
 		filterReturn     orm.QuerySeter
@@ -505,7 +537,7 @@ func TestDealDeviceTwin(t *testing.T) {
 			mockQuerySeter.EXPECT().Delete().Return(test.allReturnInt, test.allReturnErr).Times(test.deleteNums)
 			mockQuerySeter.EXPECT().Update(gomock.Any()).Return(test.allReturnInt, test.allReturnErr).Times(test.updateNums)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryNums)
-			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			if err := DealDeviceTwin(test.context, test.deviceID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwin() case failed: got = %v, Want = %v", err, test.err)
 			}
 		})
@@ -523,30 +555,45 @@ func TestDealDeviceTwinResult(t *testing.T) {
 	dbm.DBAccess = mockOrmer
 
 	str := typeString
-	optionTrue := true
+	//optionTrue := true
 	value := valueType
-	msgTwinValue := make(map[string]*dttype.MsgTwin)
-	msgTwinValue[deviceB] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{Value: &value},
-		Metadata: &dttype.TypeMetadata{Type: "nil"},
+	msgTwinValue := make([]v1alpha2.Twin, 1)
+	msgTwinValue[0] = v1alpha2.Twin{
+		PropertyName: deviceB,
+		Desired: v1alpha2.TwinProperty{
+			Value:    value,
+			Metadata: make(map[string]string),
+		},
 	}
+	msgTwinValue[0].Desired.Metadata["type"] = "nil"
+
 	contextDeviceA := contextFunc(deviceB)
-	twinDeviceA := make(map[string]*dttype.MsgTwin)
-	twinDeviceA[deviceA] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{Value: &str},
-		Actual:   &dttype.TwinValue{Value: &str},
-		Optional: &optionTrue,
-		Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+	twinDeviceA := make([]v1alpha2.Twin, 1)
+	twinDeviceA[0] = v1alpha2.Twin{
+		PropertyName: deviceA,
+		Desired: v1alpha2.TwinProperty{
+			Value:    str,
+			Metadata: make(map[string]string),
+		},
+		Reported: v1alpha2.TwinProperty{
+			Value: str,
+		},
 	}
-	deviceATwin := dttype.Device{Twin: twinDeviceA}
-	contextDeviceA.DeviceList.Store(deviceA, &deviceATwin)
+	twinDeviceA[0].Desired.Metadata["type"] = typeDeleted
+
+	deviceATwin := &v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: twinDeviceA,
+		},
+	}
+	contextDeviceA.DeviceList.Store(deviceA, deviceATwin)
 
 	tests := []struct {
 		name             string
 		context          *dtcontext.DTContext
 		deviceID         string
 		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
+		msgTwin          []v1alpha2.Twin
 		dealType         int
 		err              error
 		filterReturn     orm.QuerySeter
@@ -560,7 +607,7 @@ func TestDealDeviceTwinResult(t *testing.T) {
 			deviceID:         deviceB,
 			msgTwin:          msgTwinValue,
 			dealType:         RestDealType,
-			err:              errors.New("the value type is not allowed"),
+			err:              nil,
 			filterReturn:     mockQuerySeter,
 			allReturnInt:     int64(1),
 			allReturnErr:     nil,
@@ -570,31 +617,26 @@ func TestDealDeviceTwinResult(t *testing.T) {
 
 	fakeDevice := new([]dtclient.Device)
 	fakeDeviceArray := make([]dtclient.Device, 1)
-	fakeDeviceArray[0] = dtclient.Device{ID: deviceB}
+	fakeDeviceArray[0] = dtclient.Device{Name: "DeviceB", Namespace: "default"}
 	fakeDevice = &fakeDeviceArray
-
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
-	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
-	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: deviceB}
-	fakeDeviceAttr = &fakeDeviceAttrArray
 
 	fakeDeviceTwin := new([]dtclient.DeviceTwin)
 	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: deviceB}
+	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceName: "DeviceB", DeviceNamespace: "default"}
 	fakeDeviceTwin = &fakeDeviceTwinArray
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(0)
+			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(0)
+			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(0)
+			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(0)
+			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(0)
+			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(0)
+			mockOrmer.EXPECT().Begin().Return(nil)
+			mockOrmer.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
+			mockOrmer.EXPECT().Commit().Return(nil)
+			if err := DealDeviceTwin(test.context, test.deviceID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwinResult() case failed: got = %v, Want = %v", err, test.err)
 			}
 		})
@@ -612,24 +654,27 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 	dbm.DBAccess = mockOrmer
 
 	str := typeString
-	optionTrue := true
-	msgTwin := make(map[string]*dttype.MsgTwin)
-	msgTwin[key1] = &dttype.MsgTwin{
-		Expected: twinValueFunc(),
-		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
-		},
+	//optionTrue := true
+	msgTwin := make([]v1alpha2.Twin, 1)
+	msgTwin[0] = v1alpha2.Twin{
+		PropertyName: key1,
+		Desired:      twinValueFunc(),
 	}
+	msgTwin[0].Desired.Metadata["type"] = typeDeleted
 
 	contextDeviceB := contextFunc(deviceB)
-	twinDeviceB := make(map[string]*dttype.MsgTwin)
-	twinDeviceB[deviceB] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &str,
+	twinDeviceB := make([]v1alpha2.Twin, 1)
+	twinDeviceB[0] = v1alpha2.Twin{
+		PropertyName: deviceB,
+		Desired: v1alpha2.TwinProperty{
+			Value: str,
 		},
-		Optional: &optionTrue,
 	}
-	deviceBTwin := dttype.Device{Twin: twinDeviceB}
+	deviceBTwin := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: twinDeviceB,
+		},
+	}
 	contextDeviceB.DeviceList.Store(deviceB, &deviceBTwin)
 
 	tests := []struct {
@@ -637,7 +682,7 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 		context          *dtcontext.DTContext
 		deviceID         string
 		eventID          string
-		msgTwin          map[string]*dttype.MsgTwin
+		msgTwin          []v1alpha2.Twin
 		dealType         int
 		err              error
 		filterReturn     orm.QuerySeter
@@ -673,17 +718,12 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 
 	fakeDevice := new([]dtclient.Device)
 	fakeDeviceArray := make([]dtclient.Device, 1)
-	fakeDeviceArray[0] = dtclient.Device{ID: deviceB}
+	fakeDeviceArray[0] = dtclient.Device{Name: "DeviceB", Namespace: "default"}
 	fakeDevice = &fakeDeviceArray
-
-	fakeDeviceAttr := new([]dtclient.DeviceAttr)
-	fakeDeviceAttrArray := make([]dtclient.DeviceAttr, 1)
-	fakeDeviceAttrArray[0] = dtclient.DeviceAttr{DeviceID: deviceB}
-	fakeDeviceAttr = &fakeDeviceAttrArray
 
 	fakeDeviceTwin := new([]dtclient.DeviceTwin)
 	fakeDeviceTwinArray := make([]dtclient.DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceID: deviceB}
+	fakeDeviceTwinArray[0] = dtclient.DeviceTwin{DeviceName: "DeviceB", DeviceNamespace: "default"}
 	fakeDeviceTwin = &fakeDeviceTwinArray
 
 	for _, test := range tests {
@@ -695,16 +735,15 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 			mockOrmer.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(5)
 			mockQuerySeter.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(0)
 			mockQuerySeter.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(0)
+
 			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceAttr).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
-			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
+
 			mockQuerySeter.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			mockQuerySeter.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			mockOrmer.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			if err := DealDeviceTwin(test.context, test.deviceID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwinTrans() case failed: got = %v, Want = %v", err, test.err)
 			}
 		})
@@ -762,193 +801,112 @@ func TestDealVersion(t *testing.T) {
 
 // TestDealTwinDelete is function to test dealTwinDelete
 func TestDealTwinDelete(t *testing.T) {
-	optionTrue := true
-	optionFalse := false
 	str := typeString
-	doc := make(map[string]*dttype.TwinDoc)
-	doc[key1] = &dttype.TwinDoc{}
-	sync := make(map[string]*dttype.MsgTwin)
-	sync[key1] = &dttype.MsgTwin{
-		Expected:        twinValueFunc(),
-		Actual:          twinValueFunc(),
-		Optional:        &optionTrue,
-		Metadata:        &dttype.TypeMetadata{Type: typeDeleted},
-		ExpectedVersion: &dttype.TwinVersion{},
-		ActualVersion:   &dttype.TwinVersion{},
+
+	sync := v1alpha2.Device{}
+	sync.Status.Twins = make([]v1alpha2.Twin, 1)
+	sync.Status.Twins[0] = v1alpha2.Twin{
+		PropertyName: key1,
+		Desired:      twinValueFunc(),
+		Reported:     twinValueFunc(),
 	}
-	result := make(map[string]*dttype.MsgTwin)
-	result[key1] = &dttype.MsgTwin{}
+	sync.Status.Twins[0].Desired.Metadata["type"] = typeDeleted
+	result := v1alpha2.Device{}
+	result.Status.Twins = make([]v1alpha2.Twin, 1)
+	result.Status.Twins[0] = v1alpha2.Twin{
+		PropertyName: key1,
+	}
+
+	msgTwin := &v1alpha2.Twin{
+		Desired: v1alpha2.TwinProperty{
+			Value:    str,
+			Metadata: make(map[string]string),
+		},
+		Reported: v1alpha2.TwinProperty{
+			Value: str,
+		},
+	}
+	msgTwin.Desired.Metadata["type"] = typeDeleted
+
+	context := contextFunc(deviceB)
+	twin := make([]v1alpha2.Twin, 1)
+	twin[0] = v1alpha2.Twin{
+		PropertyName: deviceA,
+		Desired: v1alpha2.TwinProperty{
+			Value: str,
+		},
+		Reported: v1alpha2.TwinProperty{
+			Value: str,
+		},
+	}
+	device := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: twin,
+		},
+	}
+	context.DeviceList.Store(deviceA, &device)
+
+	typeStringMap := make(map[string]string)
+	typeStringMap["type"] = typeString
 
 	tests := []struct {
+		Context      *dtcontext.DTContext
 		name         string
 		returnResult *dttype.DealTwinResult
 		deviceID     string
-		key          string
-		twin         *dttype.MsgTwin
-		msgTwin      *dttype.MsgTwin
-		dealType     int
-		err          error
+		//key          string
+		//twin         v1alpha2.Twin
+		cacheTwin *[]v1alpha2.Twin
+		msgTwin   *v1alpha2.Twin
+		dealType  int
+		err       error
 	}{
 		{
-			name: "TestDealTwinDelete(): Case 1: msgTwin is not nil; isChange is false",
+			Context: &context,
+			name:    "TestDealTwinDelete(): Case 1: msgTwin is not nil; isChange is false",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
 			deviceID: deviceA,
-			key:      key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Metadata: typeStringMap,
+					},
 				},
-				ExpectedVersion: &dttype.TwinVersion{},
 			},
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
-				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeString,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
+			msgTwin:  msgTwin,
 			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name: "TestDealTwinDelete(): Case 2: hasTwinExpected is true; dealVersion() returns false",
+			Context: &context,
+			name:    "TestDealTwinDelete(): Case 5: hasTwinExpected is true; hasTwinActual is false",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
 			deviceID: deviceA,
-			key:      key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeString,
-				},
-				ExpectedVersion: &dttype.TwinVersion{
-					CloudVersion: 1,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Metadata: typeStringMap,
+					},
 				},
 			},
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
-				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ExpectedVersion: &dttype.TwinVersion{
-					CloudVersion: 0,
-				},
-				ActualVersion: &dttype.TwinVersion{},
-			},
-			dealType: SyncDealType,
-			err:      nil,
-		},
-		{
-			name: "TestDealTwinDelete(): Case 3: hasTwinActual is true; dealVersion() returns false",
-			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
-				SyncResult: sync,
-				Result:     result,
-			},
-			deviceID: deviceA,
-			key:      key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeString,
-				},
-				ActualVersion: &dttype.TwinVersion{
-					CloudVersion: 1,
-				},
-			},
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
-				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion: &dttype.TwinVersion{
-					CloudVersion: 0,
-				},
-			},
-			dealType: SyncDealType,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinDelete(): Case 4: hasTwinExpected is true; hasTwinActual is true",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeString,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
-			dealType: RestDealType,
-			err:      nil,
-		},
-		{
-			name: "TestDealTwinDelete(): Case 5: hasTwinExpected is true; hasTwinActual is false",
-			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
-				SyncResult: sync,
-				Result:     result,
-			},
-			deviceID: deviceA,
-			key:      key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeString,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-			},
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
-				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
+			msgTwin:  msgTwin,
 			dealType: SyncDealType,
 			err:      nil,
 		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := dealTwinDelete(test.returnResult, test.deviceID, test.key, test.twin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			// 如何构造context
+			if err := dealTwinDelete(test.returnResult, test.deviceID, test.cacheTwin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinDelete() case failed: got = %+v, Want = %+v", err, test.err)
 			}
 		})
@@ -957,135 +915,165 @@ func TestDealTwinDelete(t *testing.T) {
 
 // TestDealTwinCompare is function to test dealTwinCompare
 func TestDealTwinCompare(t *testing.T) {
-	optionTrue := true
-	optionFalse := false
 	str := typeString
-	doc := make(map[string]*dttype.TwinDoc)
-	doc[key1] = &dttype.TwinDoc{}
-	sync := make(map[string]*dttype.MsgTwin)
-	sync[key1] = &dttype.MsgTwin{
-		Expected:        twinValueFunc(),
-		Actual:          twinValueFunc(),
-		Optional:        &optionTrue,
-		Metadata:        &dttype.TypeMetadata{Type: typeDeleted},
-		ExpectedVersion: &dttype.TwinVersion{},
-		ActualVersion:   &dttype.TwinVersion{},
+
+	syncResult := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired:      twinValueFunc(),
+					Reported:     twinValueFunc(),
+				},
+			},
+		},
 	}
-	result := make(map[string]*dttype.MsgTwin)
-	result[key1] = &dttype.MsgTwin{}
+	syncResult.Status.Twins[0].Desired.Metadata["type"] = typeDeleted
+
+	typeIntMap := make(map[string]string)
+	typeIntMap["type"] = typeInt
+
+	typeStringMap := make(map[string]string)
+	typeStringMap["type"] = typeString
+
+	typeDeletedMap := make(map[string]string)
+	typeStringMap["type"] = typeDeleted
 
 	tests := []struct {
 		name         string
 		returnResult *dttype.DealTwinResult
 		deviceID     string
-		key          string
-		twin         *dttype.MsgTwin
-		msgTwin      *dttype.MsgTwin
+		cacheTwin    *[]v1alpha2.Twin
+		msgTwin      *v1alpha2.Twin
 		dealType     int
 		err          error
 	}{
 		{
-			name:         "TestDealTwinCompare(): Case 1: msgTwin nil",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+			name: "TestDealTwinCompare(): Case 1: msgTwin nil",
+			returnResult: &dttype.DealTwinResult{
+				SyncResult: syncResult,
+			},
+			deviceID: deviceA,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Metadata: typeDeletedMap,
+					},
+				},
 			},
 			dealType: RestDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 2: actualOk is false; actualErr is not nil",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{Value: &str},
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+			name: "TestDealTwinCompare(): Case 3: expectedOk is true; dealVersion() returns false",
+			returnResult: &dttype.DealTwinResult{
+				SyncResult: syncResult,
+				//Result: result,
 			},
-			msgTwin: &dttype.MsgTwin{
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{Type: typeInt},
+			deviceID: deviceA,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Value:    str,
+						Metadata: typeStringMap,
+					},
+					Reported: v1alpha2.TwinProperty{
+						Value: str,
+					},
+				},
 			},
-			dealType: RestDealType,
-			err:      errors.New("the value is not int"),
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
+				},
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeIntMap,
+				},
+			},
+
+			dealType: SyncDealType,
+			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 3: expectedOk is true; dealVersion() returns false",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{Value: &str},
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeString},
+			name: "TestDealTwinCompare(): Case 4: actualOk is true; dealVersion() returns false",
+			returnResult: &dttype.DealTwinResult{
+				SyncResult: syncResult,
+				//Result: result,
 			},
-			msgTwin: &dttype.MsgTwin{
-				Expected:      &dttype.TwinValue{Value: &str},
-				Actual:        &dttype.TwinValue{Value: &str},
-				Optional:      &optionFalse,
-				Metadata:      &dttype.TypeMetadata{Type: typeInt},
-				ActualVersion: &dttype.TwinVersion{},
+			deviceID: deviceA,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Value:    str,
+						Metadata: typeDeletedMap,
+					},
+					Reported: v1alpha2.TwinProperty{
+						Value: str,
+					},
+				},
+			},
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
+				},
+				Desired: v1alpha2.TwinProperty{
+					Metadata: typeStringMap,
+				},
 			},
 			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 4: actualOk is true; dealVersion() returns false",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{Value: &str},
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+			name: "TestDealTwinCompare(): Case 5: expectedOk is true; actualOk is true",
+			returnResult: &dttype.DealTwinResult{
+				SyncResult: syncResult,
+				//Result: result,
 			},
-			msgTwin: &dttype.MsgTwin{
-				Actual:   &dttype.TwinValue{Value: &str},
-				Optional: &optionFalse,
-				Metadata: &dttype.TypeMetadata{Type: typeString},
+			deviceID: deviceA,
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Metadata: typeDeletedMap,
+					},
+				},
 			},
-			dealType: SyncDealType,
-			err:      nil,
-		},
-		{
-			name:         "TestDealTwinCompare(): Case 5: expectedOk is true; actualOk is true",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
-			},
-			msgTwin: &dttype.MsgTwin{
-				Expected:      &dttype.TwinValue{Value: &str},
-				Actual:        &dttype.TwinValue{Value: &str},
-				Optional:      &optionFalse,
-				Metadata:      &dttype.TypeMetadata{Type: typeString},
-				ActualVersion: &dttype.TwinVersion{},
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
+				},
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeStringMap,
+				},
 			},
 			dealType: RestDealType,
 			err:      nil,
 		},
 		{
-			name:         "TestDealTwinCompare(): Case 6: expectedOk is false; actualOk is false",
-			returnResult: &dttype.DealTwinResult{Document: doc, SyncResult: sync, Result: result},
-			deviceID:     deviceA,
-			key:          key1,
-			twin: &dttype.MsgTwin{
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{Type: typeDeleted},
+			name: "TestDealTwinCompare(): Case 6: expectedOk is false; actualOk is false",
+			returnResult: &dttype.DealTwinResult{
+				SyncResult: syncResult,
+				//Result: result,
 			},
-			msgTwin: &dttype.MsgTwin{
-				Optional:      &optionFalse,
-				ActualVersion: &dttype.TwinVersion{},
+			deviceID: deviceA,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+			},
+			cacheTwin: &[]v1alpha2.Twin{
+				{
+					PropertyName: key1,
+					Desired: v1alpha2.TwinProperty{
+						Metadata: typeDeletedMap,
+					},
+				},
 			},
 			dealType: SyncDealType,
 			err:      nil,
@@ -1093,7 +1081,7 @@ func TestDealTwinCompare(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := dealTwinCompare(test.returnResult, test.deviceID, test.key, test.twin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			if err := dealTwinCompare(test.returnResult, test.deviceID, test.cacheTwin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinCompare() case failed: got = %+v, Want = %+v", err, test.err)
 			}
 		})
@@ -1102,72 +1090,78 @@ func TestDealTwinCompare(t *testing.T) {
 
 // TestDealTwinAdd is function to test dealTwinAdd
 func TestDealTwinAdd(t *testing.T) {
-	optionTrue := true
 	str := typeString
-	doc := make(map[string]*dttype.TwinDoc)
-	doc[key1] = &dttype.TwinDoc{}
-	sync := make(map[string]*dttype.MsgTwin)
-	sync[key1] = &dttype.MsgTwin{}
-	result := make(map[string]*dttype.MsgTwin)
-	result[key1] = &dttype.MsgTwin{}
+	typeDeletedMap := make(map[string]string)
+	typeDeletedMap["type"] = typeDeleted
 
-	twinDelete := make(map[string]*dttype.MsgTwin)
-	twinDelete[key1] = &dttype.MsgTwin{
-		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+	typeIntMap := make(map[string]string)
+	typeIntMap["type"] = typeInt
+
+	sync := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
+				{
+					PropertyName: key1,
+				},
+			},
 		},
 	}
-	twinInt := make(map[string]*dttype.MsgTwin)
-	twinInt[key1] = &dttype.MsgTwin{
-		Metadata: &dttype.TypeMetadata{
-			Type: typeInt,
+
+	twinDelete := &[]v1alpha2.Twin{
+		{
+			PropertyName: key1,
+			Desired: v1alpha2.TwinProperty{
+				Metadata: typeDeletedMap,
+			},
+		},
+	}
+
+	twinInt := &[]v1alpha2.Twin{
+		{
+			PropertyName: key1,
+			Desired: v1alpha2.TwinProperty{
+				Metadata: typeIntMap,
+			},
 		},
 	}
 
 	tests := []struct {
 		name         string
+		Context      *dtcontext.DTContext
 		returnResult *dttype.DealTwinResult
 		deviceID     string
-		key          string
-		twins        map[string]*dttype.MsgTwin
-		msgTwin      *dttype.MsgTwin
+		cacheTwin    *[]v1alpha2.Twin
+		msgTwin      *v1alpha2.Twin
 		dealType     int
 		err          error
 	}{
 		{
 			name: "TestDealTwinAdd(): Case 1: msgTwin nil",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
 			deviceID: deviceA,
-			key:      key1,
 			dealType: RestDealType,
 			err:      errors.New("The request body is wrong"),
 		},
 		{
 			name: "TestDealTwinAdd(): Case 2: msgTwin.Expected is not nil; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
+			deviceID:  deviceA,
+			cacheTwin: twinDelete,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeDeletedMap,
 				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
 				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ActualVersion: &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
 			err:      nil,
@@ -1175,25 +1169,20 @@ func TestDealTwinAdd(t *testing.T) {
 		{
 			name: "TestDealTwinAdd(): Case 3: msgTwin.Expected is not nil; ValidateValue() returns error",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
+			deviceID:  deviceA,
+			cacheTwin: twinDelete,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeIntMap,
 				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
 				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeInt,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
 			err:      nil,
@@ -1201,73 +1190,40 @@ func TestDealTwinAdd(t *testing.T) {
 		{
 			name: "TestDealTwinAdd(): Case 4: msgTwin.Actual is not nil; dealVersion() returns false",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
+			deviceID:  deviceA,
+			cacheTwin: twinDelete,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeDeletedMap,
 				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
 				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
 			err:      nil,
 		},
 		{
-			name: "TestDealTwinAdd(): Case 5: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=0",
-			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
-				SyncResult: sync,
-				Result:     result,
-			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeInt,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
-			dealType: RestDealType,
-			err:      errors.New("the value is not int"),
-		},
-		{
 			name: "TestDealTwinAdd(): Case 6: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=1",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Actual: &dttype.TwinValue{
-					Value: &str,
+			deviceID:  deviceA,
+			cacheTwin: twinDelete,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Desired: v1alpha2.TwinProperty{
+					Metadata: typeIntMap,
 				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeInt,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
 				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
 			err:      nil,
@@ -1275,16 +1231,13 @@ func TestDealTwinAdd(t *testing.T) {
 		{
 			name: "TestDealTwinAdd(): Case 7: msgTwin.Expected is nil; msgTwin.Actual is nil",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinInt,
-			msgTwin: &dttype.MsgTwin{
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
+			deviceID:  deviceA,
+			cacheTwin: twinInt,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
 			},
 			dealType: RestDealType,
 			err:      nil,
@@ -1292,26 +1245,20 @@ func TestDealTwinAdd(t *testing.T) {
 		{
 			name: "TestDealTwinAdd(): Case 8: msgTwin.Expected is not nil; msgTwin.Actual is not nil",
 			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
 				SyncResult: sync,
-				Result:     result,
+				//Result:     result,
 			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Expected: &dttype.TwinValue{
-					Value: &str,
+			deviceID:  deviceA,
+			cacheTwin: twinDelete,
+			msgTwin: &v1alpha2.Twin{
+				PropertyName: key1,
+				Desired: v1alpha2.TwinProperty{
+					Value:    str,
+					Metadata: typeDeletedMap,
 				},
-				Actual: &dttype.TwinValue{
-					Value: &str,
+				Reported: v1alpha2.TwinProperty{
+					Value: str,
 				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeDeleted,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: SyncDealType,
 			err:      nil,
@@ -1319,7 +1266,7 @@ func TestDealTwinAdd(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := dealTwinAdd(test.returnResult, test.deviceID, test.key, test.twins, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
+			if err := dealTwinAdd(test.returnResult, test.deviceID, test.cacheTwin, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealTwinAdd() case failed: got = %+v, Want = %+v", err, test.err)
 			}
 		})
@@ -1330,82 +1277,75 @@ func TestDealTwinAdd(t *testing.T) {
 func TestDealMsgTwin(t *testing.T) {
 	value := valueType
 	str := typeString
-	optionTrue := true
-	optionFalse := false
+
 	add := make([]dtclient.DeviceTwin, 0)
-	deletes := make([]dtclient.DeviceDelete, 0)
+	deletes := make([]dtclient.DeviceTwinPrimaryKey, 0)
 	update := make([]dtclient.DeviceTwinUpdate, 0)
-	result := make(map[string]*dttype.MsgTwin)
-	syncResult := make(map[string]*dttype.MsgTwin)
-	syncResultDevice := make(map[string]*dttype.MsgTwin)
-	syncResultDevice[deviceA] = &dttype.MsgTwin{}
-	document := make(map[string]*dttype.TwinDoc)
-	documentDevice := make(map[string]*dttype.TwinDoc)
-	documentDevice[deviceA] = &dttype.TwinDoc{LastState: nil}
-	documentDeviceTwin := make(map[string]*dttype.TwinDoc)
-	documentDeviceTwin[deviceA] = &dttype.TwinDoc{
-		LastState: &dttype.MsgTwin{
-			Expected: &dttype.TwinValue{
-				Value: &str,
-			},
-			Actual: &dttype.TwinValue{
-				Value: &str,
-			},
-			Optional: &optionTrue,
-			Metadata: &dttype.TypeMetadata{
-				Type: typeDeleted,
+
+	syncResult := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "DeviceC",
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: make([]v1alpha2.Twin, 0),
+		},
+	}
+	syncResultDevice := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "DeviceA",
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: make([]v1alpha2.Twin, 0),
+		},
+	}
+
+	msgTwin := []*v1alpha2.Twin{
+		{
+			PropertyName: deviceB,
+			Desired: v1alpha2.TwinProperty{
+				Value: value,
 			},
 		},
 	}
 
-	msgTwin := make(map[string]*dttype.MsgTwin)
-	msgTwin[deviceB] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &value,
-		},
-		Metadata: &dttype.TypeMetadata{
-			Type: "nil",
+	msgTwinDevice := []*v1alpha2.Twin{
+		{
+			PropertyName: deviceA,
 		},
 	}
-	msgTwinDevice := make(map[string]*dttype.MsgTwin)
-	msgTwinDevice[deviceA] = nil
-	msgTwinDeviceTwin := make(map[string]*dttype.MsgTwin)
-	msgTwinDeviceTwin[deviceA] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &str,
-		},
-		Actual: &dttype.TwinValue{
-			Value: &str,
-		},
-		Optional: &optionFalse,
-		Metadata: &dttype.TypeMetadata{
-			Type: typeInt,
-		},
-		ActualVersion: &dttype.TwinVersion{},
-	}
+
+	typeIntMap := make(map[string]string)
+	typeIntMap["type"] = typeInt
+
+	typeDeletedMap := make(map[string]string)
+	typeDeletedMap["type"] = typeDeleted
 
 	context := contextFunc(deviceB)
-	twin := make(map[string]*dttype.MsgTwin)
-	twin[deviceA] = &dttype.MsgTwin{
-		Expected: &dttype.TwinValue{
-			Value: &str,
-		},
-		Actual: &dttype.TwinValue{
-			Value: &str,
-		},
-		Optional: &optionTrue,
-		Metadata: &dttype.TypeMetadata{
-			Type: typeDeleted,
+	device := v1alpha2.Device{
+		Status: v1alpha2.DeviceStatus{
+			Twins: []v1alpha2.Twin{
+				{
+					PropertyName: deviceA,
+					Desired: v1alpha2.TwinProperty{
+						Value:    str,
+						Metadata: typeDeletedMap,
+					},
+					Reported: v1alpha2.TwinProperty{
+						Value: str,
+					},
+				},
+			},
 		},
 	}
-	device := dttype.Device{Twin: twin}
 	context.DeviceList.Store(deviceA, &device)
 
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
 		deviceID string
-		msgTwins map[string]*dttype.MsgTwin
+		msgTwins []*v1alpha2.Twin
 		dealType int
 		want     dttype.DealTwinResult
 	}{
@@ -1416,29 +1356,12 @@ func TestDealMsgTwin(t *testing.T) {
 			msgTwins: msgTwin,
 			dealType: RestDealType,
 			want: dttype.DealTwinResult{
-				Add:        add,
-				Delete:     deletes,
-				Update:     update,
-				Result:     result,
+				Add:    add,
+				Delete: deletes,
+				Update: update,
+				//Result:     deviceCResult,
 				SyncResult: syncResult,
-				Document:   document,
 				Err:        errors.New("invalid device id"),
-			},
-		},
-		{
-			name:     "TestDealMsgTwin(): Case 2: dealTwinCompare error",
-			context:  &context,
-			deviceID: deviceA,
-			msgTwins: msgTwinDeviceTwin,
-			dealType: RestDealType,
-			want: dttype.DealTwinResult{
-				Add:        add,
-				Delete:     deletes,
-				Update:     update,
-				Result:     result,
-				SyncResult: syncResultDevice,
-				Document:   documentDevice,
-				Err:        errors.New("the value is not int"),
 			},
 		},
 		{
@@ -1448,19 +1371,21 @@ func TestDealMsgTwin(t *testing.T) {
 			msgTwins: msgTwinDevice,
 			dealType: RestDealType,
 			want: dttype.DealTwinResult{
-				Add:        add,
-				Delete:     deletes,
-				Update:     update,
-				Result:     result,
+				Add:    add,
+				Delete: deletes,
+				Update: update,
+				//Result:     result,
 				SyncResult: syncResultDevice,
-				Document:   documentDeviceTwin,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := DealMsgTwin(tt.context, tt.deviceID, tt.msgTwins, tt.dealType); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DTManager.DealMsgTwin() case failed: got = %+v, want = %+v", got, tt.want)
+			got := DealMsgTwin(tt.context, tt.deviceID, tt.msgTwins, tt.dealType)
+			gotByte, _ := json.Marshal(got)
+			wantByte, _ := json.Marshal(tt.want)
+			if string(gotByte) != string(wantByte) {
+				t.Errorf("DTManager.DealMsgTwin() case failed: got = %+v, want = %+v", string(gotByte), string(wantByte))
 			}
 		})
 	}

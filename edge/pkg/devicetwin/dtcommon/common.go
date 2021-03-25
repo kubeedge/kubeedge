@@ -1,6 +1,11 @@
 package dtcommon
 
-import "time"
+import (
+	"time"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
+)
 
 const (
 	// RetryTimes for retry times
@@ -15,8 +20,10 @@ const (
 
 	// MemETPrefix the topic prefix for membership event
 	MemETPrefix = "$hw/events/node/"
-	// MemETUpdateSuffix the topic suffix for membership updated event
-	MemETUpdateSuffix = "/membership/updated"
+	// MemETAddSuffix the topic suffix for membership added event
+	MemETAddSuffix = "/membership/added"
+	// MemETDeleteSuffix the topic suffix for membership deleted event
+	MemETDeleteSuffix = "/membership/deleted"
 	// MemETDetailSuffix the topic suffix for membership detail
 	MemETDetailSuffix = "/membership/detail"
 	// MemETDetailResultSuffix the topic suffix for membership detail event
@@ -45,21 +52,14 @@ const (
 	// TwinETDocumentSuffix the topic suffix for twin document event
 	TwinETDocumentSuffix = "/twin/update/document"
 
-	// DeviceETUpdatedSuffix the topic suffix for device updated event
-	DeviceETUpdatedSuffix = "/updated"
-	// DeviceETStateUpdateSuffix the topic suffix for device state update event
-	DeviceETStateUpdateSuffix = "/state/update"
-	// DeviceETStateGetSuffix the topic suffix for device state get event
-	DeviceETStateGetSuffix = "/state/get"
-
-	// MemDetailResult membership detail result
-	MemDetailResult = "MemDetailResult"
 	// MemDetail membership detail
 	MemDetail = "MemDetail"
 	// MemGet get
 	MemGet = "MemGet"
-	// MemUpdated membership updated
-	MemUpdated = "MemUpdated"
+	// MemAdded membership added
+	MemAdded = "MemAdded"
+	// MemDeleted membership deleted
+	MemDeleted = "MemDeleted"
 
 	// TwinGet get twin
 	TwinGet = "TwinGet"
@@ -69,13 +69,6 @@ const (
 	TwinCloudSync = "TwinCloudSync"
 	// TwinEdgeSync twin edge sync
 	TwinEdgeSync = "TwinEdgeSync"
-
-	// DeviceUpdated device attributes update
-	DeviceUpdated = "DeviceUpdated"
-	// DeviceStateGet device state get
-	DeviceStateGet = "DeviceStateGet"
-	// DeviceStateUpdate device state update
-	DeviceStateUpdate = "DeviceStateUpdate"
 
 	// SendToEdge send info to edge
 	SendToEdge = "SendToEdge"
@@ -92,8 +85,6 @@ const (
 
 	// CommModule communicate module
 	CommModule = "CommModule"
-	// DeviceModule device module
-	DeviceModule = "DeviceModule"
 	// MemModule membership module
 	MemModule = "MemModule"
 	// TwinModule twin module
@@ -114,3 +105,8 @@ const (
 	// InternalErrorCode server internal error
 	InternalErrorCode = 500
 )
+
+// generateDeviceID use name + namespace as unique key
+func GenerateDeviceID(device *v1alpha2.Device) string {
+	return device.Namespace + constants.DeviceUniqueKeySeperator + device.Name
+}

@@ -123,10 +123,6 @@ func TestStart(t *testing.T) {
 			moduleName: dtcommon.TwinModule,
 		},
 		{
-			name:       "DeviceModuleHealthCheck",
-			moduleName: dtcommon.DeviceModule,
-		},
-		{
 			name:       "CommModuleHealthCheck",
 			moduleName: dtcommon.CommModule,
 		},

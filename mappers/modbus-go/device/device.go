@@ -28,6 +28,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	mappercommon "github.com/kubeedge/kubeedge/mappers/common"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/configmap"
 	"github.com/kubeedge/kubeedge/mappers/modbus-go/driver"
@@ -64,6 +65,7 @@ func setVisitor(visitorConfig *configmap.ModbusVisitorConfig, twin *mappercommon
 // getDeviceID extract the device ID from Mqtt topic.
 func getDeviceID(topic string) (id string) {
 	re := regexp.MustCompile(`hw/events/device/(.+)/twin/update/delta`)
+	// TODO：这个咋处理，如何获取namespace+name，这个获取到的应该就是namespace+name吧
 	return re.FindStringSubmatch(topic)[1]
 }
 
@@ -86,32 +88,39 @@ func onMessage(client mqtt.Client, message mqtt.Message) {
 	}
 
 	// Get twin map key as the propertyName
-	var delta mappercommon.DeviceTwinDelta
+	//var delta mappercommon.DeviceTwinDelta
+	var delta []v1alpha2.Twin
 	if err := json.Unmarshal(message.Payload(), &delta); err != nil {
 		klog.Error("Unmarshal message failed: ", err)
 		return
 	}
-	for twinName, twinValue := range delta.Delta {
+	for _, twin := range delta {
 		i := 0
-		for i = 0; i < len(dev.Instance.Twins); i++ {
-			if twinName == dev.Instance.Twins[i].PropertyName {
+		twinName := twin.PropertyName
+		isExist := false
+		for i = 0; i < len(dev.Instance.Status.Twins); i++ {
+			if twinName == dev.Instance.Status.Twins[i].PropertyName {
+				isExist = true
 				break
 			}
 		}
-		if i == len(dev.Instance.Twins) {
+		if !isExist {
 			klog.Error("Twin not found: ", twinName)
 			continue
 		}
 		// Desired value is not changed.
-		if dev.Instance.Twins[i].Desired.Value == twinValue {
+		if dev.Instance.Status.Twins[i].Desired.Value == twin.Desired.Value {
 			continue
 		}
-		dev.Instance.Twins[i].Desired.Value = twinValue
+		dev.Instance.Status.Twins[i].Desired.Value = twin.Desired.Value
 		var visitorConfig configmap.ModbusVisitorConfig
-		if err := json.Unmarshal([]byte(dev.Instance.Twins[i].PVisitor.VisitorConfig), &visitorConfig); err != nil {
+		mapperTwin := convertFromTwinToModbusTwin(&dev.Instance.Status.Twins[i])
+
+		if err := json.Unmarshal([]byte(mapperTwin.PVisitor.VisitorConfig), &visitorConfig); err != nil {
 			klog.Error("Unmarshal visitor config failed")
 		}
-		setVisitor(&visitorConfig, &dev.Instance.Twins[i], dev.ModbusClient)
+
+		setVisitor(&visitorConfig, mapperTwin, dev.ModbusClient)
 	}
 }
 
@@ -154,28 +163,57 @@ func initModbus(protocolConfig configmap.ModbusProtocolCommonConfig, slaveID int
 	return client, nil
 }
 
+// todo: consider mapper use the same structure with cloud
+func convertFromTwinToModbusTwin(twin *v1alpha2.Twin) *mappercommon.Twin {
+	result := &mappercommon.Twin{
+		PropertyName: twin.PropertyName,
+		// TODO: 这个vistor如何添加，正常会给赋值的？？？？？
+		PVisitor: &mappercommon.PropertyVisitor{},
+		Desired: mappercommon.DesiredData{
+			Value: twin.Desired.Value,
+			Metadatas: mappercommon.Metadata{
+				Timestamp: twin.Desired.Metadata["timestamp"],
+				Type:      twin.Desired.Metadata["type"],
+			},
+		},
+		Reported: mappercommon.ReportedData{
+			Value: twin.Reported.Value,
+			Metadatas: mappercommon.Metadata{
+				Timestamp: twin.Reported.Metadata["timestamp"],
+				Type:      twin.Reported.Metadata["type"],
+			},
+		},
+	}
+	return result
+}
+
 // initTwin initialize the timer to get twin value.
 func initTwin(dev *globals.ModbusDev) {
-	for i := 0; i < len(dev.Instance.Twins); i++ {
+	for i := 0; i < len(dev.Instance.Status.Twins); i++ {
+		twin := convertFromTwinToModbusTwin(&dev.Instance.Status.Twins[i])
+
 		var visitorConfig configmap.ModbusVisitorConfig
-		if err := json.Unmarshal([]byte(dev.Instance.Twins[i].PVisitor.VisitorConfig), &visitorConfig); err != nil {
+		if err := json.Unmarshal([]byte(twin.PVisitor.VisitorConfig), &visitorConfig); err != nil {
 			klog.Error(err)
 			continue
 		}
-		setVisitor(&visitorConfig, &dev.Instance.Twins[i], dev.ModbusClient)
+
+		setVisitor(&visitorConfig, twin, dev.ModbusClient)
 
 		twinData := TwinData{Client: dev.ModbusClient,
-			Name:         dev.Instance.Twins[i].PropertyName,
-			Type:         dev.Instance.Twins[i].Desired.Metadatas.Type,
+			Name:         twin.PropertyName,
+			Type:         twin.Desired.Metadatas.Type,
 			RegisterType: visitorConfig.Register,
 			Address:      visitorConfig.Offset,
 			Quantity:     uint16(visitorConfig.Limit),
-			Topic:        fmt.Sprintf(mappercommon.TopicTwinUpdate, dev.Instance.ID)}
-		collectCycle := time.Duration(dev.Instance.Twins[i].PVisitor.CollectCycle)
+			Topic:        fmt.Sprintf(mappercommon.TopicTwinUpdate, dev.Instance.Namespace+"/"+dev.Instance.Name)}
+		collectCycle := time.Duration(twin.PVisitor.CollectCycle)
 		// If the collect cycle is not set, set it to 1 second.
 		if collectCycle == 0 {
 			collectCycle = 1 * time.Second
 		}
+		// TODO: 这里是每个twin都会发一个mqtt消息，需要把所有的twin一块报上去，而不仅仅是一个twin
+		// TODO: 所以从这里可以猜测，设备报上去twin也不一定是全部的，所以没报上去的也不能删除掉
 		timer := mappercommon.Timer{Function: twinData.Run, Duration: collectCycle, Times: 0}
 		wg.Add(1)
 		go func() {
@@ -185,21 +223,36 @@ func initTwin(dev *globals.ModbusDev) {
 	}
 }
 
+func convertFromK8sToMapperDataProperty(data *v1alpha2.DataProperty) *mappercommon.DataProperty {
+	timeStamp, _ := strconv.Atoi(data.Metadata["timestamp"])
+	result := &mappercommon.DataProperty{
+		PropertyName: data.PropertyName,
+		Metadatas: mappercommon.DataMetadata{
+			Type:      data.Metadata["type"],
+			Timestamp: int64(timeStamp),
+		},
+		PVisitor: &mappercommon.PropertyVisitor{},
+	}
+	return result
+}
+
 // initData initialize the timer to get data.
 func initData(dev *globals.ModbusDev) {
-	for i := 0; i < len(dev.Instance.Datas.Properties); i++ {
+	for i := 0; i < len(dev.Instance.Spec.Data.DataProperties); i++ {
+		property := convertFromK8sToMapperDataProperty(&dev.Instance.Spec.Data.DataProperties[i])
+
 		var visitorConfig configmap.ModbusVisitorConfig
-		if err := json.Unmarshal([]byte(dev.Instance.Datas.Properties[i].PVisitor.VisitorConfig), &visitorConfig); err != nil {
+		if err := json.Unmarshal([]byte(property.PVisitor.VisitorConfig), &visitorConfig); err != nil {
 			klog.Error("Unmarshal visitor config failed")
 		}
 		twinData := TwinData{Client: dev.ModbusClient,
-			Name:         dev.Instance.Datas.Properties[i].PropertyName,
-			Type:         dev.Instance.Datas.Properties[i].Metadatas.Type,
+			Name:         property.PropertyName,
+			Type:         property.Metadatas.Type,
 			RegisterType: visitorConfig.Register,
 			Address:      visitorConfig.Offset,
 			Quantity:     uint16(visitorConfig.Limit),
-			Topic:        fmt.Sprintf(mappercommon.TopicDataUpdate, dev.Instance.ID)}
-		collectCycle := time.Duration(dev.Instance.Datas.Properties[i].PVisitor.CollectCycle)
+			Topic:        fmt.Sprintf(mappercommon.TopicDataUpdate, dev.Instance.Namespace+"/"+dev.Instance.Name)}
+		collectCycle := time.Duration(property.PVisitor.CollectCycle)
 		// If the collect cycle is not set, set it to 1 second.
 		if collectCycle == 0 {
 			collectCycle = 1 * time.Second
@@ -223,7 +276,7 @@ func initSubscribeMqtt(instanceID string) error {
 // initGetStatus start timer to get device status and send to eventbus.
 func initGetStatus(dev *globals.ModbusDev) {
 	getStatus := GetStatus{Client: dev.ModbusClient,
-		topic: fmt.Sprintf(mappercommon.TopicStateUpdate, dev.Instance.ID)}
+		topic: fmt.Sprintf(mappercommon.TopicStateUpdate, dev.Instance.Namespace+"/"+dev.Instance.Name)}
 	timer := mappercommon.Timer{Function: getStatus.Run, Duration: 1 * time.Second, Times: 0}
 	wg.Add(1)
 	go func() {
@@ -234,13 +287,25 @@ func initGetStatus(dev *globals.ModbusDev) {
 
 // start start the device.
 func start(dev *globals.ModbusDev) {
-	var protocolConfig configmap.ModbusProtocolCommonConfig
-	if err := json.Unmarshal([]byte(dev.Instance.PProtocol.ProtocolCommonConfig), &protocolConfig); err != nil {
-		klog.Error(err)
-		return
+	configProtocol := dev.Instance.Spec.Protocol
+
+	modBusConfig := configmap.ModbusProtocolCommonConfig{}
+	modBusConfig.COM = configmap.COMStruct{
+		SerialPort: configProtocol.Common.COM.SerialPort,
+		BaudRate:   configProtocol.Common.COM.BaudRate,
+		DataBits:   configProtocol.Common.COM.DataBits,
+		Parity:     configProtocol.Common.COM.Parity,
+		StopBits:   configProtocol.Common.COM.StopBits,
+	}
+	modBusConfig.TCP = configmap.TCPStruct{
+		IP:   configProtocol.Common.TCP.IP,
+		Port: configProtocol.Common.TCP.Port,
+	}
+	for k, v := range *configProtocol.CustomizedProtocol.ConfigData {
+		modBusConfig.CustomizedValues[k] = v
 	}
 
-	client, err := initModbus(protocolConfig, dev.Instance.PProtocol.ProtocolConfigs.SlaveID)
+	client, err := initModbus(modBusConfig, int16(configProtocol.Modbus.SlaveID))
 	if err != nil {
 		klog.Error(err)
 		return
@@ -250,7 +315,7 @@ func start(dev *globals.ModbusDev) {
 	initTwin(dev)
 	initData(dev)
 
-	if err := initSubscribeMqtt(dev.Instance.ID); err != nil {
+	if err := initSubscribeMqtt(dev.Instance.Namespace + "/" + dev.Instance.Name); err != nil {
 		klog.Error(err)
 		return
 	}

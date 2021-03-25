@@ -55,6 +55,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	}
 	if !classifyMsg(&message) {
+		klog.Errorf("Not found action, msg key info is: source: %s, resource: %s, operation: %s", message.Msg.GetSource(), message.Msg.Router.Resource, message.Msg.Router.Operation)
 		return errors.New("Not found action")
 	}
 	if ActionModuleMap == nil {
@@ -68,7 +69,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 			return err
 		}
 	} else {
-		klog.Info("Not found deal module for msg")
+		klog.Infof("Not found deal module for msg, msg action is %s", message.Action)
 		return errors.New("Not found deal module for msg")
 	}
 
@@ -79,13 +80,11 @@ func initEventActionMap() {
 	EventActionMap = make(map[string]map[string]string)
 	EventActionMap[dtcommon.MemETPrefix] = make(map[string]string)
 	EventActionMap[dtcommon.DeviceETPrefix] = make(map[string]string)
-	EventActionMap[dtcommon.MemETPrefix][dtcommon.MemETDetailResultSuffix] = dtcommon.MemDetailResult
-	EventActionMap[dtcommon.MemETPrefix][dtcommon.MemETUpdateSuffix] = dtcommon.MemUpdated
 	EventActionMap[dtcommon.MemETPrefix][dtcommon.MemETGetSuffix] = dtcommon.MemGet
-	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.DeviceETStateGetSuffix] = dtcommon.DeviceStateGet
-	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.DeviceETUpdatedSuffix] = dtcommon.DeviceUpdated
-	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.DeviceETStateUpdateSuffix] = dtcommon.DeviceStateUpdate
-	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.TwinETUpdateSuffix] = dtcommon.TwinUpdate
+	EventActionMap[dtcommon.MemETPrefix][dtcommon.MemETAddSuffix] = dtcommon.MemAdded
+	EventActionMap[dtcommon.MemETPrefix][dtcommon.MemETDeleteSuffix] = dtcommon.MemDeleted
+
+	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.TwinETUpdateSuffix] = dtcommon.TwinUpdate // device side will send this topic
 	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.TwinETCloudSyncSuffix] = dtcommon.TwinCloudSync
 	EventActionMap[dtcommon.DeviceETPrefix][dtcommon.TwinETGetSuffix] = dtcommon.TwinGet
 }
@@ -93,15 +92,14 @@ func initEventActionMap() {
 func initActionModuleMap() {
 	ActionModuleMap = make(map[string]string)
 	//membership twin device event , not lifecycle event
-	ActionModuleMap[dtcommon.MemDetailResult] = dtcommon.MemModule
 	ActionModuleMap[dtcommon.MemGet] = dtcommon.MemModule
-	ActionModuleMap[dtcommon.MemUpdated] = dtcommon.MemModule
+	ActionModuleMap[dtcommon.MemAdded] = dtcommon.MemModule
+	ActionModuleMap[dtcommon.MemDeleted] = dtcommon.MemModule
+
 	ActionModuleMap[dtcommon.TwinGet] = dtcommon.TwinModule
 	ActionModuleMap[dtcommon.TwinUpdate] = dtcommon.TwinModule
 	ActionModuleMap[dtcommon.TwinCloudSync] = dtcommon.TwinModule
-	ActionModuleMap[dtcommon.DeviceUpdated] = dtcommon.DeviceModule
-	ActionModuleMap[dtcommon.DeviceStateGet] = dtcommon.DeviceModule
-	ActionModuleMap[dtcommon.DeviceStateUpdate] = dtcommon.DeviceModule
+
 	ActionModuleMap[dtcommon.Connected] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.Disconnected] = dtcommon.CommModule
 	ActionModuleMap[dtcommon.LifeCycle] = dtcommon.CommModule
@@ -121,7 +119,11 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 		return nil
 	}
 	for _, device := range *rows {
-		err := SyncDeviceFromSqlite(context, device.ID)
+		deviceKey := &dtclient.DevicePrimaryKey{
+			Name:      device.Name,
+			Namespace: device.Namespace,
+		}
+		err := SyncDeviceFromSqlite(context, deviceKey)
 		if err != nil {
 			continue
 		}
@@ -130,7 +132,8 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 }
 
 //SyncDeviceFromSqlite sync device from sqlite
-func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
+func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceKey *dtclient.DevicePrimaryKey) error {
+	deviceID := deviceKey.Namespace + "/" + deviceKey.Name
 	klog.Infof("Sync device detail info from DB of device %s", deviceID)
 	_, exist := context.GetDevice(deviceID)
 	if !exist {
@@ -141,7 +144,7 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	defer context.Unlock(deviceID)
 	context.Lock(deviceID)
 
-	devices, err := dtclient.QueryDevice("id", deviceID)
+	devices, err := dtclient.QueryDeviceByKey(*deviceKey)
 	if err != nil {
 		klog.Errorf("query device failed: %v", err)
 		return err
@@ -149,32 +152,20 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	if len(*devices) <= 0 {
 		return errors.New("Not found device from db")
 	}
-	device := (*devices)[0]
 
-	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
-	if err != nil {
-		klog.Errorf("query device attr failed: %v", err)
-		return err
+	deviceTwinPrimaryKey := dtclient.DeviceTwinPrimaryKey{
+		DeviceName:      deviceKey.Name,
+		DeviceNamespace: deviceKey.Namespace,
 	}
-	attributes := make([]dtclient.DeviceAttr, 0)
-	attributes = append(attributes, *deviceAttr...)
 
-	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := dtclient.QueryDeviceTwin(&deviceTwinPrimaryKey)
 	if err != nil {
 		klog.Errorf("query device twin failed: %v", err)
 		return err
 	}
-	twins := make([]dtclient.DeviceTwin, 0)
-	twins = append(twins, *deviceTwin...)
 
-	context.DeviceList.Store(deviceID, &dttype.Device{
-		ID:          deviceID,
-		Name:        device.Name,
-		Description: device.Description,
-		State:       device.State,
-		LastOnline:  device.LastOnline,
-		Attributes:  dttype.DeviceAttrToMsgAttr(attributes),
-		Twin:        dttype.DeviceTwinToMsgTwin(twins)})
+	cacheDevice := dtclient.GetK8sDeviceFromDeviceTwin(*deviceTwin)
+	context.DeviceList.Store(deviceID, cacheDevice)
 
 	return nil
 }
@@ -194,8 +185,6 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			return false
 		}
 		topic = string(topicByte)
-
-		klog.Infof("classify the msg with the topic %s", topic)
 		splitString := strings.Split(topic, "/")
 		if len(splitString) == 4 {
 			if strings.HasPrefix(topic, dtcommon.LifeCycleConnectETPrefix) {
@@ -206,12 +195,18 @@ func classifyMsg(message *dttype.DTMessage) bool {
 				return false
 			}
 		} else {
-			identity = splitString[idLoc]
+			// device use namespace+name as device ID
+			if splitString[0] == "$hw" && splitString[1] == "events" && splitString[2] == "device" {
+				identity = splitString[idLoc] + "/" + splitString[idLoc+1]
+			} else {
+				identity = splitString[idLoc]
+			}
+
 			loc := strings.Index(topic, identity)
 			nextLoc := loc + len(identity)
 			prefix := topic[0:loc]
 			suffix := topic[nextLoc:]
-			klog.Infof("%s %s", prefix, suffix)
+
 			if v, exist := EventActionMap[prefix][suffix]; exist {
 				action = v
 			} else {
@@ -234,22 +229,19 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			}
 			message.Msg.Content = content
 		}
-		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
-			message.Action = dtcommon.MemDetailResult
+		if strings.Contains(message.Msg.Router.Resource, "membership/added") {
+			// add device
+			message.Action = dtcommon.MemAdded
 			return true
-		} else if strings.Contains(message.Msg.Router.Resource, "membership") {
-			message.Action = dtcommon.MemUpdated
+		} else if strings.Contains(message.Msg.Router.Resource, "membership/deleted") {
+			// delete device
+			message.Action = dtcommon.MemDeleted
 			return true
 		} else if strings.Contains(message.Msg.Router.Resource, "twin/cloud_updated") {
 			message.Action = dtcommon.TwinCloudSync
 			resources := strings.Split(message.Msg.Router.Resource, "/")
-			message.Identity = resources[1]
-			return true
-		} else if strings.Contains(message.Msg.Router.Operation, "updated") {
-			resources := strings.Split(message.Msg.Router.Resource, "/")
-			if len(resources) == 2 && strings.Compare(resources[0], "device") == 0 {
-				message.Action = dtcommon.DeviceUpdated
-				message.Identity = resources[1]
+			if len(resources) > 2 {
+				message.Identity = resources[1] + "/" + resources[2]
 			}
 			return true
 		}
@@ -265,7 +257,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 }
 
 func (dt *DeviceTwin) runDeviceTwin() {
-	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.DeviceModule, dtcommon.CommModule}
+	moduleNames := []string{dtcommon.MemModule, dtcommon.TwinModule, dtcommon.CommModule}
 	for _, v := range moduleNames {
 		dt.RegisterDTModule(v)
 		go dt.DTModules[v].Start()

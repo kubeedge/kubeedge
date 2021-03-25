@@ -19,11 +19,15 @@ package helper
 import (
 	"crypto/tls"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
 
 var (
@@ -35,10 +39,10 @@ var (
 	TwinETGetResultSuffix     = "/twin/get/result"
 )
 
-var TwinResult DeviceTwinResult
+var TwinResult v1alpha2.Device
 var Wg sync.WaitGroup
 var ControllerWg sync.WaitGroup
-var TwinAttributes []string
+var TwinPropertyNames []string
 
 var TokenClient Token
 var ClientOpts *MQTT.ClientOptions
@@ -95,16 +99,16 @@ type MsgTwin struct {
 }
 
 //DeviceTwinUpdate the struct of device twin update
-type DeviceTwinUpdate struct {
-	BaseMessage
-	Twin map[string]*MsgTwin `json:"twin"`
-}
+//type DeviceTwinUpdate struct {
+//	BaseMessage
+//	Twin map[string]*MsgTwin `json:"twin"`
+//}
 
 //DeviceTwinResult device get result
-type DeviceTwinResult struct {
-	BaseMessage
-	Twin map[string]*MsgTwin `json:"twin"`
-}
+//type DeviceTwinResult struct {
+//	BaseMessage
+//	Twin map[string]*MsgTwin `json:"twin"`
+//}
 
 // HubclientInit create mqtt client config
 func HubClientInit(server, clientID, username, password string) *MQTT.ClientOptions {
@@ -135,8 +139,19 @@ func MqttConnect(mqttMode int, mqttInternalServer, mqttServer string) {
 }
 
 //ChangeTwinValue sends the updated twin value to the edge through the MQTT broker
-func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) {
-	twinUpdateBody, err := json.Marshal(updateMessage)
+func ChangeTwinValue(updateMessage []v1alpha2.Twin, deviceID string) {
+	s := strings.Split(deviceID, "/")
+	deviceInfo := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: s[0],
+			Name:      s[1],
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: updateMessage,
+		},
+	}
+	// 使用K8s CRD结构体
+	twinUpdateBody, err := json.Marshal(deviceInfo)
 	if err != nil {
 		klog.Errorf("Error in marshalling: %s", err)
 	}
@@ -148,9 +163,20 @@ func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) {
 }
 
 //SyncToCloud function syncs the updated device twin information to the cloud
-func SyncToCloud(updateMessage DeviceTwinUpdate, deviceID string) {
+// TODO: 感觉不需要这个，ChangeTwinValue这个函数也会报上消息到云端的
+func SyncToCloud(updateMessage []v1alpha2.Twin, deviceID string) {
+	s := strings.Split(deviceID, "/")
+	deviceInfo := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: s[0],
+			Name:      s[1],
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: updateMessage,
+		},
+	}
 	deviceTwinResultUpdate := DeviceETPrefix + deviceID + TwinETCloudSyncSuffix
-	twinUpdateBody, err := json.Marshal(updateMessage)
+	twinUpdateBody, err := json.Marshal(deviceInfo)
 	if err != nil {
 		klog.Errorf("Error in marshalling: %s", err)
 	}
@@ -161,9 +187,20 @@ func SyncToCloud(updateMessage DeviceTwinUpdate, deviceID string) {
 }
 
 //GetTwin function is used to get the device twin details from the edge
-func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) {
+func GetTwin(updateMessage []v1alpha2.Twin, deviceID string) {
+	s := strings.Split(deviceID, "/")
+	deviceInfo := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: s[0],
+			Name:      s[1],
+		},
+		Status: v1alpha2.DeviceStatus{
+			Twins: updateMessage,
+		},
+	}
+	// 这个地方也使用K8s CRD统一结构体
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
-	twinUpdateBody, err := json.Marshal(updateMessage)
+	twinUpdateBody, err := json.Marshal(deviceInfo)
 	if err != nil {
 		klog.Errorf("Error in marshalling: %s", err)
 	}
@@ -182,9 +219,9 @@ func TwinSubscribe(deviceID string) {
 	}
 	for {
 		time.Sleep(1 * time.Second)
-		if TwinResult.Twin != nil {
-			for k := range TwinResult.Twin {
-				TwinAttributes = append(TwinAttributes, k)
+		if TwinResult.Status.Twins != nil {
+			for _, twin := range TwinResult.Status.Twins {
+				TwinPropertyNames = append(TwinPropertyNames, twin.PropertyName)
 			}
 			Wg.Done()
 			break
@@ -201,14 +238,24 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 }
 
 //CreateActualUpdateMessage function is used to create the device twin update message
-func CreateActualUpdateMessage(updatedTwinAttributes map[string]string) DeviceTwinUpdate {
-	var deviceTwinUpdateMessage DeviceTwinUpdate
-	deviceTwinUpdateMessage.Twin = map[string]*MsgTwin{}
-	for _, twinAttribute := range TwinAttributes {
-		if actualValue, ok := updatedTwinAttributes[twinAttribute]; ok {
-			deviceTwinUpdateMessage.Twin[twinAttribute] = &MsgTwin{}
-			deviceTwinUpdateMessage.Twin[twinAttribute].Actual = &TwinValue{Value: &actualValue}
-			deviceTwinUpdateMessage.Twin[twinAttribute].Metadata = &TypeMetadata{Type: "Updated"}
+// 这个入参是propertyname和实际值的映射map
+func CreateActualUpdateMessage(updatedTwinPropertyNames map[string]string) []v1alpha2.Twin {
+	deviceTwinUpdateMessage := make([]v1alpha2.Twin, 0)
+
+	for _, propertyName := range TwinPropertyNames {
+		if actualValue, ok := updatedTwinPropertyNames[propertyName]; ok {
+			updatedTwin := v1alpha2.Twin{
+				PropertyName: propertyName,
+				Reported: v1alpha2.TwinProperty{
+					Value:    actualValue,
+					Metadata: make(map[string]string),
+				},
+			}
+			updatedTwin.Reported.Metadata["type"] = "updated"
+			//deviceTwinUpdateMessage.Twin[propertyName] = &MsgTwin{}
+			//deviceTwinUpdateMessage.Twin[propertyName].Actual = &TwinValue{Value: &actualValue}
+			//deviceTwinUpdateMessage.Twin[propertyName].Metadata = &TypeMetadata{Type: "Updated"}
+			deviceTwinUpdateMessage = append(deviceTwinUpdateMessage, updatedTwin)
 		}
 	}
 	return deviceTwinUpdateMessage

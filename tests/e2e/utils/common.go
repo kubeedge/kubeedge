@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
@@ -865,7 +866,16 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
 	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
 	Infof("configMap.Data %v", configMap.Data)
-	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
+	Infof("TypeMeta: %v, %v", expectedConfigMap.TypeMeta, configMap.TypeMeta)
+	Infof("Namespace: %v, %v", expectedConfigMap.ObjectMeta.Namespace, configMap.ObjectMeta.Namespace)
+	configMapByte, _ := json.Marshal(configMap.Data["deviceProfile.json"])
+	deviceInstance := &types.DeviceProfile{}
+	json.Unmarshal(configMapByte, deviceInstance)
+
+	expectedConfigMapByte, _ := json.Marshal(expectedConfigMap.Data["deviceProfile.json"])
+	expectedDeviceInstance := &types.DeviceProfile{}
+	json.Unmarshal(expectedConfigMapByte, &expectedDeviceInstance)
+	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedDeviceInstance.DeviceModels, deviceInstance.DeviceModels) || !reflect.DeepEqual(expectedDeviceInstance.Protocols, deviceInstance.Protocols) || !reflect.DeepEqual(expectedDeviceInstance.DeviceInstances[0].Status, deviceInstance.DeviceInstances[0].Status) {
 		return false
 	}
 	return true

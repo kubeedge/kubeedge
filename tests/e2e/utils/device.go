@@ -1104,27 +1104,36 @@ func NewConfigMapLED(nodeSelector string) v12.ConfigMap {
 	configMap.Data = make(map[string]string)
 
 	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+	deviceProfile.DeviceInstances = []*v1alpha2.Device{
 		{
-			Name:  "led-light-instance-01",
-			ID:    "led-light-instance-01",
-			Model: "led-light",
-			Twins: []v1alpha2.Twin{
-				{
-					PropertyName: "power-status",
-					Desired: v1alpha2.TwinProperty{
-						Value: "ON",
-						Metadata: map[string]string{
-							"type": "string",
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "led-light-instance-01",
+			},
+			Spec: v1alpha2.DeviceSpec{
+				DeviceModelRef: &v12.LocalObjectReference{
+					Name: "led-light",
+				},
+			},
+			Status: v1alpha2.DeviceStatus{
+				Twins: []v1alpha2.Twin{
+					{
+						PropertyName: "power-status",
+						Desired: v1alpha2.TwinProperty{
+							Value: "ON",
+							Metadata: map[string]string{
+								"type": "string",
+							},
 						},
-					},
-					Reported: v1alpha2.TwinProperty{
-						Value: "unknown",
+						Reported: v1alpha2.TwinProperty{
+							Value: "unknown",
+						},
 					},
 				},
 			},
 		},
 	}
+
 	deviceProfile.DeviceModels = []*types.DeviceModel{
 		{
 			Name: "led-light",
@@ -1176,128 +1185,144 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
-	propertyVisitors := []*types.PropertyVisitor{
-		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0104514000b000000000000000",
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					OrderOfOperations: []v1alpha2.BluetoothOperations{
-						{
-							BluetoothOperationType:  "Multiply",
-							BluetoothOperationValue: 0.03125,
-						},
-					},
-					ShiftRight: 2,
-					StartIndex: 2,
-					EndIndex:   1,
-				},
-			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa0204514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"ON":  {1},
-					"OFF": {0},
-				},
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-		{
-			Name:         "io-config-initialize",
-			PropertyName: "io-config-initialize",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-		{
-			Name:         "io-data-initialize",
-			PropertyName: "io-data-initialize",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-		{
-			Name:         "io-config",
-			PropertyName: "io-config",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6604514000b000000000000000",
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-		{
-			Name:         "io-data",
-			PropertyName: "io-data",
-			ModelName:    "cc2650-sensortag",
-			Protocol:     "bluetooth",
-			VisitorConfig: v1alpha2.VisitorConfigBluetooth{
-				CharacteristicUUID: "f000aa6504514000b000000000000000",
-				DataWriteToBluetooth: map[string][]byte{
-					"Red":            {1},
-					"Green":          {2},
-					"RedGreen":       {3},
-					"Buzzer":         {4},
-					"BuzzerRed":      {5},
-					"BuzzerGreen":    {6},
-					"BuzzerRedGreen": {7},
-				},
-				BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
-					StartIndex: 1,
-					EndIndex:   1,
-				},
-			},
-		},
-	}
+	//propertyVisitors := []*types.PropertyVisitor{
+	//	{
+	//		Name:         "temperature",
+	//		PropertyName: "temperature",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa0104514000b000000000000000",
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				OrderOfOperations: []v1alpha2.BluetoothOperations{
+	//					{
+	//						BluetoothOperationType:  "Multiply",
+	//						BluetoothOperationValue: 0.03125,
+	//					},
+	//				},
+	//				ShiftRight: 2,
+	//				StartIndex: 2,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//	{
+	//		Name:         "temperature-enable",
+	//		PropertyName: "temperature-enable",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa0204514000b000000000000000",
+	//			DataWriteToBluetooth: map[string][]byte{
+	//				"ON":  {1},
+	//				"OFF": {0},
+	//			},
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				StartIndex: 1,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//	{
+	//		Name:         "io-config-initialize",
+	//		PropertyName: "io-config-initialize",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa6604514000b000000000000000",
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				StartIndex: 1,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//	{
+	//		Name:         "io-data-initialize",
+	//		PropertyName: "io-data-initialize",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa6504514000b000000000000000",
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				StartIndex: 1,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//	{
+	//		Name:         "io-config",
+	//		PropertyName: "io-config",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa6604514000b000000000000000",
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				StartIndex: 1,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//	{
+	//		Name:         "io-data",
+	//		PropertyName: "io-data",
+	//		ModelName:    "cc2650-sensortag",
+	//		Protocol:     "bluetooth",
+	//		VisitorConfig: v1alpha2.VisitorConfigBluetooth{
+	//			CharacteristicUUID: "f000aa6504514000b000000000000000",
+	//			DataWriteToBluetooth: map[string][]byte{
+	//				"Red":            {1},
+	//				"Green":          {2},
+	//				"RedGreen":       {3},
+	//				"Buzzer":         {4},
+	//				"BuzzerRed":      {5},
+	//				"BuzzerGreen":    {6},
+	//				"BuzzerRedGreen": {7},
+	//			},
+	//			BluetoothDataConverter: v1alpha2.BluetoothReadConverter{
+	//				StartIndex: 1,
+	//				EndIndex:   1,
+	//			},
+	//		},
+	//	},
+	//}
 	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+
+	deviceProfile.DeviceInstances = []*v1alpha2.Device{
 		{
-			Name:     "sensor-tag-instance-01",
-			ID:       "sensor-tag-instance-01",
-			Protocol: "bluetooth-sensor-tag-instance-01",
-			Model:    "cc2650-sensortag",
-			Twins: []v1alpha2.Twin{
-				{
-					PropertyName: "io-data",
-					Desired: v1alpha2.TwinProperty{
-						Value: "1",
-						Metadata: map[string]string{
-							"type": "int",
-						},
-					},
-					Reported: v1alpha2.TwinProperty{
-						Value: "unknown",
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sensor-tag-instance-01",
+			},
+			Spec: v1alpha2.DeviceSpec{
+				DeviceModelRef: &v12.LocalObjectReference{
+					Name: "cc2650-sensortag",
+				},
+				Protocol: v1alpha2.ProtocolConfig{
+					//Protocol: "bluetooth-sensor-tag-instance-01"
+					Bluetooth: &v1alpha2.ProtocolConfigBluetooth{},
+				},
+				PropertyVisitors: []v1alpha2.DevicePropertyVisitor{
+					{
+						// 需要保存propertyVisitors这个参数
 					},
 				},
 			},
-			PropertyVisitors: propertyVisitors,
+			Status: v1alpha2.DeviceStatus{
+				Twins: []v1alpha2.Twin{
+					{
+						PropertyName: "io-data",
+						Desired: v1alpha2.TwinProperty{
+							Value: "1",
+							Metadata: map[string]string{
+								"type": "int",
+							},
+						},
+						Reported: v1alpha2.TwinProperty{
+							Value: "unknown",
+						},
+					},
+				},
+			},
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
@@ -1391,59 +1416,72 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
-	propertyVisitors := []*types.PropertyVisitor{
-		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha2.VisitorConfigModbus{
-				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha2.VisitorConfigModbus{
-				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
-			},
-		},
-	}
+	//propertyVisitors := []*types.PropertyVisitor{
+	//	{
+	//		Name:         "temperature",
+	//		PropertyName: "temperature",
+	//		ModelName:    "sensor-tag-model",
+	//		Protocol:     "modbus",
+	//		VisitorConfig: v1alpha2.VisitorConfigModbus{
+	//			Register:       "CoilRegister",
+	//			Offset:         2,
+	//			Limit:          1,
+	//			Scale:          1,
+	//			IsSwap:         true,
+	//			IsRegisterSwap: true,
+	//		},
+	//	},
+	//	{
+	//		Name:         "temperature-enable",
+	//		PropertyName: "temperature-enable",
+	//		ModelName:    "sensor-tag-model",
+	//		Protocol:     "modbus",
+	//		VisitorConfig: v1alpha2.VisitorConfigModbus{
+	//			Register:       "DiscreteInputRegister",
+	//			Offset:         3,
+	//			Limit:          1,
+	//			Scale:          1,
+	//			IsSwap:         true,
+	//			IsRegisterSwap: true,
+	//		},
+	//	},
+	//}
 	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+	deviceProfile.DeviceInstances = []*v1alpha2.Device{
 		{
-			Name:  "sensor-tag-instance-02",
-			ID:    "sensor-tag-instance-02",
-			Model: "sensor-tag-model",
-			Twins: []v1alpha2.Twin{
-				{
-					PropertyName: "temperature-enable",
-					Desired: v1alpha2.TwinProperty{
-						Value: "OFF",
-						Metadata: map[string]string{
-							"type": "string",
-						},
-					},
-					Reported: v1alpha2.TwinProperty{
-						Value: "unknown",
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sensor-tag-instance-02",
+			},
+			Spec: v1alpha2.DeviceSpec{
+				DeviceModelRef: &v12.LocalObjectReference{
+					Name: "sensor-tag-model",
+				},
+				PropertyVisitors: []v1alpha2.DevicePropertyVisitor{
+					{
+						// 需要保存propertyVisitors这个参数
 					},
 				},
 			},
-			PropertyVisitors: propertyVisitors,
+			Status: v1alpha2.DeviceStatus{
+				Twins: []v1alpha2.Twin{
+					{
+						PropertyName: "io-data",
+						Desired: v1alpha2.TwinProperty{
+							Value: "off",
+							Metadata: map[string]string{
+								"type": "string",
+							},
+						},
+						Reported: v1alpha2.TwinProperty{
+							Value: "unknown",
+						},
+					},
+				},
+			},
 		},
 	}
+
 	deviceProfile.DeviceModels = []*types.DeviceModel{
 		{
 			Name: "sensor-tag-model",
@@ -1497,69 +1535,74 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
-	propertyVisitors := []*types.PropertyVisitor{
+	//propertyVisitors := []*types.PropertyVisitor{
+	//	{
+	//		Name:         "temperature",
+	//		PropertyName: "temperature",
+	//		ModelName:    "sensor-tag-model",
+	//		Protocol:     "modbus",
+	//		VisitorConfig: v1alpha2.VisitorConfigModbus{
+	//			Register:       "CoilRegister",
+	//			Offset:         2,
+	//			Limit:          1,
+	//			Scale:          1,
+	//			IsSwap:         true,
+	//			IsRegisterSwap: true,
+	//		},
+	//	},
+	//	{
+	//		Name:         "temperature-enable",
+	//		PropertyName: "temperature-enable",
+	//		ModelName:    "sensor-tag-model",
+	//		Protocol:     "modbus",
+	//		VisitorConfig: v1alpha2.VisitorConfigModbus{
+	//			Register:       "DiscreteInputRegister",
+	//			Offset:         3,
+	//			Limit:          1,
+	//			Scale:          1,
+	//			IsSwap:         true,
+	//			IsRegisterSwap: true,
+	//		},
+	//	},
+	//}
+
+	deviceProfile := &types.DeviceProfile{}
+
+	deviceProfile.DeviceInstances = []*v1alpha2.Device{
 		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha2.VisitorConfigModbus{
-				Register:       "CoilRegister",
-				Offset:         2,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sensor-tag-instance-02",
 			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "sensor-tag-model",
-			Protocol:     "modbus",
-			VisitorConfig: v1alpha2.VisitorConfigModbus{
-				Register:       "DiscreteInputRegister",
-				Offset:         3,
-				Limit:          1,
-				Scale:          1,
-				IsSwap:         true,
-				IsRegisterSwap: true,
+			Spec: v1alpha2.DeviceSpec{
+				DeviceModelRef: &v12.LocalObjectReference{
+					Name: "sensor-tag-model",
+				},
+				PropertyVisitors: []v1alpha2.DevicePropertyVisitor{
+					{
+						// 需要保存propertyVisitors这个参数
+					},
+				},
+			},
+			Status: v1alpha2.DeviceStatus{
+				Twins: []v1alpha2.Twin{
+					{
+						PropertyName: "temperature-enable",
+						Desired: v1alpha2.TwinProperty{
+							Value: "ON",
+							Metadata: map[string]string{
+								"type": "string",
+							},
+						},
+						Reported: v1alpha2.TwinProperty{
+							Value: "unknown",
+						},
+					},
+				},
 			},
 		},
 	}
 
-	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
-		{
-			Name:  "sensor-tag-instance-02",
-			ID:    "sensor-tag-instance-02",
-			Model: "sensor-tag-model",
-			Twins: []v1alpha2.Twin{
-				{
-					PropertyName: "temperature-enable",
-					Desired: v1alpha2.TwinProperty{
-						Value: "ON",
-						Metadata: map[string]string{
-							"type": "string",
-						},
-					},
-					Reported: v1alpha2.TwinProperty{
-						Value: "unknown",
-					},
-				},
-			},
-			DataProperties: []v1alpha2.DataProperty{
-				{
-					PropertyName: "temperature",
-					Metadata: map[string]string{
-						"type": "string",
-					},
-				},
-			},
-			DataTopic:        "$ke/events/+/device/customized/update",
-			PropertyVisitors: propertyVisitors,
-		},
-	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{
 		{
 			Name: "sensor-tag-model",
@@ -1626,52 +1669,66 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 	}
 	configMap.Data = make(map[string]string)
 
-	propertyVisitors := []*types.PropertyVisitor{
-		{
-			Name:         "temperature",
-			PropertyName: "temperature",
-			ModelName:    "sensor-tag-customized-model",
-			Protocol:     "customized-protocol",
-
-			VisitorConfig: v1alpha2.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
-			},
-		},
-		{
-			Name:         "temperature-enable",
-			PropertyName: "temperature-enable",
-			ModelName:    "sensor-tag-customized-model",
-			Protocol:     "customized-protocol",
-			VisitorConfig: v1alpha2.VisitorConfigCustomized{
-				ProtocolName: "CustomizedProtocol1",
-				ConfigData:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
-			},
-		},
-	}
+	//propertyVisitors := []*types.PropertyVisitor{
+	//	{
+	//		Name:         "temperature",
+	//		PropertyName: "temperature",
+	//		ModelName:    "sensor-tag-customized-model",
+	//		Protocol:     "customized-protocol",
+	//
+	//		VisitorConfig: v1alpha2.VisitorConfigCustomized{
+	//			ProtocolName: "CustomizedProtocol1",
+	//			ConfigData:   &v1alpha2.CustomizedValue{"config1": "config-val1", "config2": "config-val2"},
+	//		},
+	//	},
+	//	{
+	//		Name:         "temperature-enable",
+	//		PropertyName: "temperature-enable",
+	//		ModelName:    "sensor-tag-customized-model",
+	//		Protocol:     "customized-protocol",
+	//		VisitorConfig: v1alpha2.VisitorConfigCustomized{
+	//			ProtocolName: "CustomizedProtocol1",
+	//			ConfigData:   &v1alpha2.CustomizedValue{"config3": "config-val3", "config4": "config-val4"},
+	//		},
+	//	},
+	//}
 
 	deviceProfile := &types.DeviceProfile{}
-	deviceProfile.DeviceInstances = []*types.DeviceInstance{
+	deviceProfile.DeviceInstances = []*v1alpha2.Device{
 		{
-			Name:     "sensor-tag-customized-instance-01",
-			ID:       "sensor-tag-customized-instance-01",
-			Model:    "sensor-tag-customized-model",
-			Protocol: "customized-protocol-sensor-tag-customized-instance-01",
-			Twins: []v1alpha2.Twin{
-				{
-					PropertyName: "temperature-enable",
-					Desired: v1alpha2.TwinProperty{
-						Value: "OFF",
-						Metadata: map[string]string{
-							"type": "string",
-						},
-					},
-					Reported: v1alpha2.TwinProperty{
-						Value: "unknown",
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sensor-tag-customized-instance-01",
+			},
+			Spec: v1alpha2.DeviceSpec{
+				DeviceModelRef: &v12.LocalObjectReference{
+					Name: "sensor-tag-customized-model",
+				},
+				Protocol: v1alpha2.ProtocolConfig{
+					CustomizedProtocol: &v1alpha2.ProtocolConfigCustomized{},
+				},
+				PropertyVisitors: []v1alpha2.DevicePropertyVisitor{
+					{
+						// 需要保存propertyVisitors这个参数
 					},
 				},
 			},
-			PropertyVisitors: propertyVisitors,
+			Status: v1alpha2.DeviceStatus{
+				Twins: []v1alpha2.Twin{
+					{
+						PropertyName: "temperature-enable",
+						Desired: v1alpha2.TwinProperty{
+							Value: "OFF",
+							Metadata: map[string]string{
+								"type": "string",
+							},
+						},
+						Reported: v1alpha2.TwinProperty{
+							Value: "unknown",
+						},
+					},
+				},
+			},
 		},
 	}
 	deviceProfile.DeviceModels = []*types.DeviceModel{

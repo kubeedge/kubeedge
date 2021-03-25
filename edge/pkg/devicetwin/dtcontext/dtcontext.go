@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	deviceV1alpha2 "github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -122,10 +123,10 @@ func (dtc *DTContext) IsDeviceExist(deviceID string) bool {
 }
 
 //GetDevice get device
-func (dtc *DTContext) GetDevice(deviceID string) (*dttype.Device, bool) {
+func (dtc *DTContext) GetDevice(deviceID string) (*deviceV1alpha2.Device, bool) {
 	d, ok := dtc.DeviceList.Load(deviceID)
 	if ok {
-		if device, isDevice := d.(*dttype.Device); isDevice {
+		if device, isDevice := d.(*deviceV1alpha2.Device); isDevice {
 			return device, true
 		}
 		return nil, false

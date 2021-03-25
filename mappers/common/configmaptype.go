@@ -16,26 +16,31 @@ limitations under the License.
 
 package mappercommon
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+)
 
 // DeviceProfile is structure to store in configMap.
 type DeviceProfile struct {
-	DeviceInstances []DeviceInstance `json:"deviceInstances,omitempty"`
-	DeviceModels    []DeviceModel    `json:"deviceModels,omitempty"`
-	Protocols       []Protocol       `json:"protocols,omitempty"`
+	DeviceInstances []v1alpha2.Device `json:"deviceInstances,omitempty"`
+	DeviceModels    []DeviceModel     `json:"deviceModels,omitempty"`
+	Protocols       []Protocol        `json:"protocols,omitempty"`
 }
 
+// DeviceProfile的DeviceInstances使用K8s的CRD结构体，需要删除
 // DeviceInstance is structure to store device in deviceProfile.json in configmap.
-type DeviceInstance struct {
-	ID               string `json:"id,omitempty"`
-	Name             string `json:"name,omitempty"`
-	ProtocolName     string `json:"protocol,omitempty"`
-	PProtocol        Protocol
-	Model            string            `json:"model,omitempty"`
-	Twins            []Twin            `json:"twins,omitempty"`
-	Datas            Data              `json:"data,omitempty"`
-	PropertyVisitors []PropertyVisitor `json:"propertyVisitors,omitempty"`
-}
+//type DeviceInstance struct {
+//	ID               string `json:"id,omitempty"`
+//	Name             string `json:"name,omitempty"`
+//	ProtocolName     string `json:"protocol,omitempty"`
+//	PProtocol        Protocol
+//	Model            string            `json:"model,omitempty"`
+//	Twins            []Twin            `json:"twins,omitempty"`
+//	Datas            Data              `json:"data,omitempty"`
+//	PropertyVisitors []PropertyVisitor `json:"propertyVisitors,omitempty"`
+//}
 
 // DeviceModel is structure to store deviceModel in deviceProfile.json in configmap.
 type DeviceModel struct {

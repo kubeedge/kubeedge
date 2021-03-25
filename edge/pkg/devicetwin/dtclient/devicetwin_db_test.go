@@ -112,10 +112,14 @@ func TestDeleteDeviceTwinByDeviceID(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceTwinByDeviceID("test")
+			deviceKey := &DevicePrimaryKey{
+				Name:      "test",
+				Namespace: "default",
+			}
+			err := DeleteDeviceTwinByDeviceID(deviceKey)
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwinByDeviceID Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
 			}
@@ -167,10 +171,14 @@ func TestDeleteDeviceTwin(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(3)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceTwin("test", "test")
+			twinKey := DeviceTwinPrimaryKey{
+				DeviceNamespace: "default",
+				DeviceName:      "test",
+			}
+			err := DeleteDeviceTwin(&twinKey)
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceTwin Case failed: wanted error %v and got error %v", test.deleteReturnErr, err)
 			}
@@ -222,10 +230,15 @@ func TestUpdateDeviceTwinField(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(3)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceTwinField("test", "test", "test", "test")
+			twinKey := DeviceTwinPrimaryKey{
+				PropertyName:    "test",
+				DeviceNamespace: "default",
+				DeviceName:      "test",
+			}
+			err := UpdateDeviceTwinField(&twinKey, "test", "test")
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceTwinField Case failed: wanted error %v and got error %v", test.updateReturnErr, err)
 			}
@@ -277,10 +290,15 @@ func TestUpdateDeviceTwinFields(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(3)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceTwinFields("test", "test", make(map[string]interface{}))
+			deviceTwinPrimaryKey := DeviceTwinPrimaryKey{
+				PropertyName:    "test",
+				DeviceNamespace: "default",
+				DeviceName:      "test",
+			}
+			err := UpdateDeviceTwinFields(&deviceTwinPrimaryKey, make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceTwinFields Case failed: wanted error %v and got error %v", test.updateReturnErr, err)
 			}
@@ -332,16 +350,21 @@ func TestQueryDeviceTwin(t *testing.T) {
 	// fakeDeviceTwin is used to set the argument of All function
 	fakeDeviceTwin := new([]DeviceTwin)
 	fakeDeviceTwinArray := make([]DeviceTwin, 1)
-	fakeDeviceTwinArray[0] = DeviceTwin{DeviceID: "Test"}
+	fakeDeviceTwinArray[0] = DeviceTwin{DeviceName: "Test", DeviceNamespace: "default"}
 	fakeDeviceTwin = &fakeDeviceTwinArray
 
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDeviceTwin).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			device, err := QueryDeviceTwin("test", "test")
+			deviceTwinPrimaryKey := DeviceTwinPrimaryKey{
+				PropertyName:    "test",
+				DeviceName:      "test",
+				DeviceNamespace: "default",
+			}
+			device, err := QueryDeviceTwin(&deviceTwinPrimaryKey)
 			if test.allReturnErr != err {
 				t.Errorf("QueryDeviceTwin Case failed: wanted error %v and got error %v", test.allReturnErr, err)
 			}
@@ -398,12 +421,12 @@ func TestUpdateDeviceTwinMulti(t *testing.T) {
 
 	// updateDevice is argument to UpdateDeviceTwinMulti function
 	updateDevice := make([]DeviceTwinUpdate, 0)
-	updateDevice = append(updateDevice, DeviceTwinUpdate{DeviceID: "test"})
+	updateDevice = append(updateDevice, DeviceTwinUpdate{DeviceName: "test", DeviceNamespace: "default"})
 
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(3)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			err := UpdateDeviceTwinMulti(updateDevice)
@@ -491,7 +514,7 @@ func TestDeviceTwinTrans(t *testing.T) {
 		commitTimes:      0,
 		beginTimes:       1,
 		filterReturn:     querySeterMock,
-		filterTimes:      2,
+		filterTimes:      3,
 		insertReturnInt:  int64(1),
 		insertReturnErr:  nil,
 		insertTimes:      1,
@@ -511,7 +534,7 @@ func TestDeviceTwinTrans(t *testing.T) {
 		commitTimes:      0,
 		beginTimes:       1,
 		filterReturn:     querySeterMock,
-		filterTimes:      4,
+		filterTimes:      6,
 		insertReturnInt:  int64(1),
 		insertReturnErr:  nil,
 		insertTimes:      1,
@@ -531,7 +554,7 @@ func TestDeviceTwinTrans(t *testing.T) {
 		commitTimes:      1,
 		beginTimes:       1,
 		filterReturn:     querySeterMock,
-		filterTimes:      4,
+		filterTimes:      6,
 		insertReturnInt:  int64(1),
 		insertReturnErr:  nil,
 		insertTimes:      1,
@@ -550,12 +573,12 @@ func TestDeviceTwinTrans(t *testing.T) {
 	// adds is fake DeviceTwin used as argument
 	adds := make([]DeviceTwin, 0)
 	// deletes is fake DeviceDelete used as argument
-	deletes := make([]DeviceDelete, 0)
+	deletes := make([]DeviceTwinPrimaryKey, 0)
 	// updates is fake DeviceTwinUpdate used as argument
 	updates := make([]DeviceTwinUpdate, 0)
-	adds = append(adds, DeviceTwin{DeviceID: "Test"})
-	deletes = append(deletes, DeviceDelete{DeviceID: "test", Name: "test"})
-	updates = append(updates, DeviceTwinUpdate{DeviceID: "test", Name: "test", Cols: make(map[string]interface{})})
+	adds = append(adds, DeviceTwin{DeviceName: "Test", DeviceNamespace: "default"})
+	deletes = append(deletes, DeviceTwinPrimaryKey{PropertyName: "test", DeviceName: "test", DeviceNamespace: "default"})
+	updates = append(updates, DeviceTwinUpdate{DeviceName: "test", DeviceNamespace: "default", PropertyName: "test", Cols: make(map[string]interface{})})
 
 	// run the test cases
 	for _, test := range cases {
