@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
@@ -39,14 +40,16 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 		klog.Errorf("Error init pod readinessGate: %v", err)
 	}
 
-	coreBroadcaster := record.NewBroadcaster()
 	cli := client.GetKubeClient()
 	if err := CreateNamespaceIfNeeded(cli, "kubeedge"); err != nil {
 		klog.Warningf("Create Namespace kubeedge failed with error: %s", err)
 		return
 	}
 
+	coreBroadcaster := record.NewBroadcaster()
+	coreBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: cli.CoreV1().Events("")})
 	coreRecorder := coreBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "CloudCore"})
+
 	leaderElectionConfig, err := makeLeaderElectionConfig(*cfg.LeaderElection, cli, coreRecorder)
 	if err != nil {
 		klog.Errorf("couldn't create leaderElectorConfig: %v", err)
