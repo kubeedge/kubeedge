@@ -94,6 +94,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 				},
 			},
 			Edged: &edgecoreconfig.Edged{

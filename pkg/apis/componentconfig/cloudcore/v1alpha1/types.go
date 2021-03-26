@@ -309,6 +309,8 @@ type EdgeControllerLoad struct {
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
+
+	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller
