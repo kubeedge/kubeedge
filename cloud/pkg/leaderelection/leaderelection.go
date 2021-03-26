@@ -138,6 +138,9 @@ func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
 
 		//Creat patchBytes
 		getPod, err := client.CoreV1().Pods(namespace).Get(context.Background(), podname, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get pod %q: %v", podname, err)
+		}
 		originalJSON, err := json.Marshal(getPod)
 		if err != nil {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
@@ -146,6 +149,9 @@ func TryToPatchPodReadinessGate(status corev1.ConditionStatus) error {
 		condition := corev1.PodCondition{Type: "kubeedge.io/CloudCoreIsLeader", Status: status}
 		podutil.UpdatePodCondition(&getPod.Status, &condition)
 		newJSON, err := json.Marshal(getPod)
+		if err != nil {
+			return fmt.Errorf("failed to marshal pod %q into JSON: %v", podname, err)
+		}
 		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalJSON, newJSON, corev1.Pod{})
 		if err != nil {
 			return fmt.Errorf("failed to create two way merge patch: %v", err)
