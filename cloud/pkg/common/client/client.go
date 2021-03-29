@@ -31,29 +31,31 @@ import (
 	cloudcoreConfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
-var keClient *kubeEdgeClient
-var once sync.Once
+var (
+	initOnce sync.Once
+	keClient *kubeEdgeClient
+)
 
 func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master,
-		config.KubeConfig)
-	if err != nil {
-		klog.Errorf("Failed to build config, err: %v", err)
-		os.Exit(1)
-	}
-	kubeConfig.QPS = float32(config.QPS)
-	kubeConfig.Burst = int(config.Burst)
+	initOnce.Do(func() {
+		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
+		if err != nil {
+			klog.Errorf("Failed to build config, err: %v", err)
+			os.Exit(1)
+		}
 
-	dynamicClient := dynamic.NewForConfigOrDie(kubeConfig)
+		kubeConfig.QPS = float32(config.QPS)
+		kubeConfig.Burst = int(config.Burst)
 
-	kubeConfig.ContentType = runtime.ContentTypeProtobuf
-	kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
+		dynamicClient := dynamic.NewForConfigOrDie(kubeConfig)
 
-	crdKubeConfig := rest.CopyConfig(kubeConfig)
-	crdKubeConfig.ContentType = runtime.ContentTypeJSON
-	crdClient := crdClientset.NewForConfigOrDie(crdKubeConfig)
+		kubeConfig.ContentType = runtime.ContentTypeProtobuf
+		kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
 
-	once.Do(func() {
+		crdKubeConfig := rest.CopyConfig(kubeConfig)
+		crdKubeConfig.ContentType = runtime.ContentTypeJSON
+		crdClient := crdClientset.NewForConfigOrDie(crdKubeConfig)
+
 		keClient = &kubeEdgeClient{
 			kubeClient:    kubeClient,
 			crdClient:     crdClient,
