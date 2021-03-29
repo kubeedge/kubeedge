@@ -30,68 +30,60 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var key string
-	key += "/"
-	gvk := obj.GetObjectKind()
-	if gvk.GroupVersionKind().Empty() {
+
+	objKind := obj.GetObjectKind()
+	gvk := objKind.GroupVersionKind()
+	if gvk.Empty() {
 		return "", fmt.Errorf("could not get group/version/kind information in obj")
 	}
-	group := gvk.GroupVersionKind().Group
-	version := gvk.GroupVersionKind().Version
-	resources := util.UnsafeKindToResource(gvk.GroupVersionKind().Kind)
-	namespaces := accessor.GetNamespace()
+	group := gvk.Group
+	version := gvk.Version
+	resource := util.UnsafeKindToResource(gvk.Kind)
+	namespace := accessor.GetNamespace()
 	name := accessor.GetName()
 
 	if group == "" {
 		group = v2.GroupCore
 	}
-
-	key += group + "/" + version + "/" + resources + "/"
-	if namespaces != "" {
-		key += namespaces + "/"
-	} else {
-		key += v2.NullNamespace + "/"
+	if namespace == "" {
+		namespace = v2.NullNamespace
 	}
-	key += name
-	key = strings.TrimSuffix(key, "/")
+
+	key := fmt.Sprintf("/%s/%s/%s/%s/%s", group, version, resource, namespace, name)
 	return key, nil
 }
 
 // KeyFuncReq generate key from req context
 func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 	info, ok := apirequest.RequestInfoFrom(ctx)
-	var key string
-	if ok && info.IsResourceRequest {
-		key = "/"
-		switch info.APIPrefix {
-		case "api":
-			key += v2.GroupCore + "/"
-		case "apis":
-			if info.APIGroup == "" {
-				return "", fmt.Errorf("failed to get key from request info")
-			}
-			key += info.APIGroup + "/"
-		default:
-			return "", fmt.Errorf("failed to get key from request info")
-		}
-		key += info.APIVersion + "/"
-		key += info.Resource + "/"
-
-		if info.Namespace != "" {
-			key += info.Namespace + "/"
-		} else {
-			key += v2.NullNamespace + "/"
-		}
-
-		if info.Name != "" {
-			key += info.Name
-		} else {
-			key += v2.NullName
-		}
-	} else {
+	if !ok || !info.IsResourceRequest {
 		return "", fmt.Errorf("no request info in context")
 	}
-	key = strings.TrimSuffix(key, "/")
+
+	group := ""
+	switch info.APIPrefix {
+	case "api":
+		group = v2.GroupCore
+	case "apis":
+		if info.APIGroup == "" {
+			return "", fmt.Errorf("failed to get key from request info")
+		}
+		group = info.APIGroup
+	default:
+		return "", fmt.Errorf("failed to get key from request info")
+	}
+	version := info.APIVersion
+	resource := info.Resource
+	namespace := info.Namespace
+	name := info.Name
+	if namespace == "" {
+		namespace = v2.NullNamespace
+	}
+	if name == "" {
+		name = v2.NullName
+	}
+
+	key := fmt.Sprintf("/%s/%s/%s/%s/%s", group, version, resource, namespace, name)
 	return key, nil
 }
 
