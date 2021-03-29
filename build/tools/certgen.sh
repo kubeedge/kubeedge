@@ -57,8 +57,8 @@ stream() {
     readonly K8SCA_FILE=/etc/kubernetes/pki/ca.crt
     readonly K8SCA_KEY_FILE=/etc/kubernetes/pki/ca.key
 
-    if [ -z ${CLOUDCOREIPS} ]; then
-        echo "You must set CLOUDCOREIPS Env,The environment variable is set to specify the IP addresses of all cloudcore"
+    if [ -z ${CLOUDCOREIPS} -a -z ${CLOUDCOREDOMAIN} ]; then
+        echo "You must set CLOUDCOREIPS or CLOUDCOREDOMAIN Env,The environment variable is set to specify the IP/DOMAIN addresses of all cloudcore"
         echo "If there are more than one IP need to be separated with space."
         exit 1
     fi
@@ -70,6 +70,19 @@ stream() {
         index=$(($index+1))
         SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
     done
+
+
+    if [ -n "${CLOUDCOREDOMAIN}" ]; then
+        index=0
+        SUBJECTALTNAME="subjectAltName = "
+        for domain in ${CLOUDCOREDOMAIN}; do
+            if [ ${index} -gt 0 ];then
+                SUBJECTALTNAME="${SUBJECTALTNAME},"
+            fi
+            index=$(($index+1))
+            SUBJECTALTNAME="${SUBJECTALTNAME}DNS.${index}:${domain}"
+        done
+    fi
 
     cp /etc/kubernetes/pki/ca.crt ${caPath}/streamCA.crt
     echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
