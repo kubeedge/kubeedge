@@ -82,6 +82,7 @@ func (c *ContainerExecConnection) Serve() error {
 		return err
 	}
 
+	var data [256]byte
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -102,8 +103,7 @@ func (c *ContainerExecConnection) Serve() error {
 		default:
 		}
 		for {
-			data := make([]byte, 256)
-			n, err := c.Conn.Read(data)
+			n, err := c.Conn.Read(data[:])
 			if err != nil {
 				if err != io.EOF {
 					klog.Errorf("%s failed to read from client: %v", c.String(), err)
