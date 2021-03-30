@@ -106,7 +106,7 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 		HandshakeTimeout: time.Duration(config.Config.HandshakeTimeout) * time.Second,
 	}
 	header := http.Header{}
-	header.Add(stream.SessionKeyHostNameOveride, e.hostnameOveride)
+	header.Add(stream.SessionKeyHostNameOverride, e.hostnameOveride)
 	header.Add(stream.SessionKeyInternalIP, e.nodeIP)
 
 	con, _, err := dial.Dial(url.String(), header)

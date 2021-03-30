@@ -1,6 +1,6 @@
 package stream
 
 const (
-	SessionKeyHostNameOveride = "SessionHostNameOveride"
-	SessionKeyInternalIP      = "SessionInternalIP"
+	SessionKeyHostNameOverride = "SessionHostNameOverride"
+	SessionKeyInternalIP       = "SessionInternalIP"
 )

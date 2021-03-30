@@ -94,7 +94,7 @@ func (s *TunnelServer) getNodeIP(node string) (string, bool) {
 }
 
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
-	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOveride)
+	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOverride)
 	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
 	if interalIP == "" {
 		interalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
