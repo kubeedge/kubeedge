@@ -53,7 +53,14 @@ func setVisitor(visitorConfig *configmap.ModbusVisitorConfig, twin *mappercommon
 		return
 	}
 
-	valueInt, _ := value.(int64)
+	var valueInt int64
+	if visitorConfig.Register == "CoilRegister" {
+		if value == true { valueInt = 1 }
+		if value == false { valueInt = 0 }
+	} else {
+		valueInt, _ = value.(int64)
+	}
+	
 	_, err = client.Set(visitorConfig.Register, visitorConfig.Offset, uint16(valueInt))
 	if err != nil {
 		klog.Error(err, visitorConfig)
