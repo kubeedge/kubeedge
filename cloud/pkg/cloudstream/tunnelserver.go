@@ -95,15 +95,15 @@ func (s *TunnelServer) getNodeIP(node string) (string, bool) {
 
 func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOverride)
-	interalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
-	if interalIP == "" {
-		interalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
+	internalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
+	if internalIP == "" {
+		internalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
 	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
 		return
 	}
-	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, interalIP)
+	klog.Infof("get a new tunnel agent hostname %v, internalIP %v", hostNameOverride, internalIP)
 
 	session := &Session{
 		tunnel:        stream.NewDefaultTunnel(con),
