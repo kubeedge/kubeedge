@@ -109,6 +109,9 @@ func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error 
 	header.Add(stream.SessionKeyHostNameOverride, e.hostnameOveride)
 	header.Add(stream.SessionKeyInternalIP, e.nodeIP)
 
+	// TODO: Fix SessionHostNameOverride typo, remove this in v1.7.x
+	header.Add(stream.SessionKeyHostNameOverrideOld, e.hostnameOveride)
+
 	con, _, err := dial.Dial(url.String(), header)
 	if err != nil {
 		klog.Errorf("dial %v error %v", url.String(), err)
