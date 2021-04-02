@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -32,6 +33,8 @@ const (
 var (
 	proxier *Proxier
 	route   netlink.Route
+	// used to parse nameserver ip
+	parser = regexp.MustCompile(`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}`)
 )
 
 func Init() {
@@ -179,9 +182,10 @@ func ensureResolvForHost() {
 		return
 	}
 
-	resolv := strings.Split(string(bs), "\n")
-	if resolv == nil {
-		nameserver := "nameserver " + config.Config.ListenIP.String()
+	ip := config.Config.ListenIP.String()
+	// if resolv.conf is empty, then append nameserver directly and return
+	if string(bs) == "" {
+		nameserver := "nameserver " + ip
 		if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
 			klog.Errorf("[EdgeMesh] write file %s err: %v", hostResolv, err)
 		}
@@ -191,8 +195,9 @@ func ensureResolvForHost() {
 	configured := false
 	dnsIdx := 0
 	startIdx := 0
+	resolv := strings.Split(string(bs), "\n")
 	for idx, item := range resolv {
-		if strings.Contains(item, config.Config.ListenIP.String()) {
+		if strings.Contains(item, ip) && parser.FindString(item) == ip {
 			configured = true
 			dnsIdx = idx
 			break
@@ -219,13 +224,15 @@ func ensureResolvForHost() {
 	for idx := 0; idx < len(resolv); {
 		if idx == startIdx {
 			startIdx = -1
-			nameserver = nameserver + "nameserver " + config.Config.ListenIP.String() + "\n"
+			nameserver = nameserver + "nameserver " + ip + "\n"
 			continue
 		}
 		nameserver = nameserver + resolv[idx] + "\n"
 		idx++
 	}
 
+	// trim last one '\n', if not will append a space line
+	nameserver = strings.TrimRight(nameserver, "\n")
 	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
 		klog.Errorf("[EdgeMesh] failed to write file %s, err: %v", hostResolv, err)
 		return
@@ -247,7 +254,8 @@ func sortNameserver(resolv []string, dnsIdx, startIdx int) string {
 		nameserver = nameserver + resolv[idx] + "\n"
 	}
 
-	return nameserver
+	// trim last one '\n'
+	return strings.TrimRight(nameserver, "\n")
 }
 
 func Clean() {
@@ -259,18 +267,22 @@ func Clean() {
 	if err != nil {
 		klog.Warningf("[EdgeMesh] read file %s err: %v", hostResolv, err)
 	}
-
-	resolv := strings.Split(string(bs), "\n")
-	if resolv == nil {
+	// if file is empty nothing to do
+	if string(bs) == "" {
 		return
 	}
 	nameserver := ""
+	ip := config.Config.ListenIP.String()
+	resolv := strings.Split(string(bs), "\n")
 	for _, item := range resolv {
-		if strings.Contains(item, config.Config.ListenIP.String()) {
+		if strings.Contains(item, ip) && parser.FindString(item) == ip {
 			continue
 		}
 		nameserver = nameserver + item + "\n"
 	}
+
+	// trim last one '\n'
+	nameserver = strings.TrimRight(nameserver, "\n")
 	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
 		klog.Errorf("[EdgeMesh] failed to write nameserver to file %s, err: %v", hostResolv, err)
 	}
