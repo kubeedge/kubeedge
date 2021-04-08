@@ -90,7 +90,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
 			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
-			if err := msg.WriteTo(tunnel); err != nil {
+			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
 			} else {
 				break
@@ -107,7 +107,7 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 		// 10 = \n
 		msg := NewMessage(ms.MessID, MessageTypeData, append(scan.Bytes(), 10))
-		err := msg.WriteTo(tunnel)
+		err := tunnel.WriteMessage(msg)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
 			return err

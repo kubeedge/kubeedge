@@ -61,8 +61,7 @@ runs on edge nodes and manages containerized applications.`,
 			gis.Start(beehiveContext.Done())
 			registerModules(config)
 			// start all modules
-			core.StartModules()
-			core.GracefulShutdown()
+			core.Run()
 		},
 	}
 	fs := cmd.Flags()

@@ -189,19 +189,13 @@ func (uc *UpstreamController) updateDeviceStatus() {
 }
 
 func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {
-	content := msg.GetContent()
-	twinUpdate := &types.DeviceTwinUpdate{}
-	var contentData []byte
-	var err error
-	contentData, ok := content.([]byte)
-	if !ok {
-		contentData, err = json.Marshal(content)
-		if err != nil {
-			return nil, err
-		}
-	}
-	err = json.Unmarshal(contentData, twinUpdate)
+	contentData, err := msg.GetContentData()
 	if err != nil {
+		return nil, err
+	}
+
+	twinUpdate := &types.DeviceTwinUpdate{}
+	if err := json.Unmarshal(contentData, twinUpdate); err != nil {
 		return nil, err
 	}
 	return twinUpdate, nil

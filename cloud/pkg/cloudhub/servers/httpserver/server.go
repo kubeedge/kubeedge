@@ -37,10 +37,6 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
-const (
-	certificateBlockType = "CERTIFICATE"
-)
-
 // StartHTTPServer starts the http service
 func StartHTTPServer() {
 	router := mux.NewRouter()
@@ -50,7 +46,7 @@ func StartHTTPServer() {
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
-	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
+	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
 	if err != nil {
 		klog.Fatal(err)
@@ -101,7 +97,7 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 // EncodeCertPEM returns PEM-endcoded certificate data
 func EncodeCertPEM(cert *x509.Certificate) []byte {
 	block := pem.Block{
-		Type:  certificateBlockType,
+		Type:  certutil.CertificateBlockType,
 		Bytes: cert.Raw,
 	}
 	return pem.EncodeToMemory(&block)
@@ -131,7 +127,7 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 // verifyCert verifies the edge certificate by CA certificate when edge certificates rotate.
 func verifyCert(cert *x509.Certificate) error {
 	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certificateBlockType, Bytes: hubconfig.Config.Ca}))
+	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca}))
 	if !ok {
 		return fmt.Errorf("failed to parse root certificate")
 	}
@@ -174,12 +170,13 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
 			if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-				klog.Errorf("Wrire body error %v", err)
+				klog.Errorf("Write body error %v", err)
 			}
+			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-			klog.Errorf("Wrire body error %v", err)
+			klog.Errorf("Write body error %v", err)
 		}
 
 		return false
@@ -187,7 +184,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-			klog.Errorf("Wrire body error %v", err)
+			klog.Errorf("Write body error %v", err)
 		}
 		return false
 	}
@@ -211,7 +208,7 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := w.Write(clientCertDER); err != nil {
-		klog.Errorf("wrire error %v", err)
+		klog.Errorf("write error %v", err)
 	}
 }
 
@@ -303,10 +300,7 @@ func PrepareAllCerts() error {
 		}
 	} else {
 		// HubConfig has been initialized
-		ca := hubconfig.Config.Ca
-		caKey := hubconfig.Config.CaKey
-		err := CreateCaSecret(ca, caKey)
-		if err != nil {
+		if err := CreateCaSecret(hubconfig.Config.Ca, hubconfig.Config.CaKey); err != nil {
 			klog.Errorf("failed to save ca and key to the secret, error: %v", err)
 			return err
 		}
@@ -345,10 +339,7 @@ func PrepareAllCerts() error {
 		}
 	} else {
 		// HubConfig has been initialized
-		cert := hubconfig.Config.Cert
-		key := hubconfig.Config.Key
-		err := CreateCloudCoreSecret(cert, key)
-		if err != nil {
+		if err := CreateCloudCoreSecret(hubconfig.Config.Cert, hubconfig.Config.Key); err != nil {
 			klog.Errorf("failed to save CloudCore cert to secret, error: %v", err)
 			return err
 		}

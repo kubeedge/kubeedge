@@ -217,8 +217,6 @@ func (c *csiDriverClient) NodeGetInfo(ctx context.Context) (
 		var getNodeInfoError error
 		if c.nodeV1ClientCreator != nil {
 			nodeID, maxVolumePerNode, accessibleTopology, getNodeInfoError = c.nodeGetInfoV1(ctx)
-		} else if c.nodeV1ClientCreator != nil {
-			nodeID, maxVolumePerNode, accessibleTopology, getNodeInfoError = c.nodeGetInfoV0(ctx)
 		}
 		if nodeID != "" {
 			return true, nil

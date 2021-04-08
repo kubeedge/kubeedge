@@ -112,7 +112,7 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 	return msg
 }
 
-// GetMessageUID returns the resourceVersion of the object in message
+// GetObjectResourceVersion returns the resourceVersion of the object in message
 func GetObjectResourceVersion(obj interface{}) string {
 	if obj == nil {
 		klog.Error("object is nil")

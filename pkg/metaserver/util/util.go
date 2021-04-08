@@ -97,7 +97,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		setMap := make(map[string]string)
+		setMap := make(fields.Set)
 		if metadata.GetName() != "" {
 			setMap["metadata.name"] = metadata.GetName()
 		}
@@ -111,7 +111,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 				setMap["spec.nodeName"] = value
 			}
 		}
-		return labels.Set(metadata.GetLabels()), fields.Set(setMap), nil
+		return metadata.GetLabels(), setMap, nil
 	default:
 		return storage.DefaultNamespaceScopedAttr(obj)
 	}

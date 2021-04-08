@@ -51,8 +51,7 @@ func (rh *RestHandler) Serve() {
 	}
 	klog.Infof("router server listening in %d...", rh.port)
 	//err := server.ListenAndServeTLS("", "")
-	err := server.ListenAndServe()
-	if err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		klog.Errorf("start rest endpoint failed, err: %v", err)
 	}
 }
@@ -98,8 +97,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		// URL format incorrect
 		klog.Warningf("url format incorrect: %s", r.URL.String())
 		w.WriteHeader(http.StatusNotFound)
-		_, err := w.Write([]byte("Request error"))
-		if err != nil {
+		if _, err := w.Write([]byte("Request error")); err != nil {
 			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
 		}
 		return
@@ -109,8 +107,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	if !exist {
 		klog.Warningf("URL format incorrect: %s", r.RequestURI)
 		w.WriteHeader(http.StatusNotFound)
-		_, err := w.Write([]byte("Request error"))
-		if err != nil {
+		if _, err := w.Write([]byte("Request error")); err != nil {
 			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
 		}
 		return
@@ -129,8 +126,9 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		klog.Errorf("request error, write result: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte("Request error,body is null"))
-		klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
+		if _, err = w.Write([]byte("Request error,body is null")); err != nil {
+			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
+		}
 		return
 	}
 
@@ -160,8 +158,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(response.StatusCode)
-		_, err = w.Write(body)
-		if err != nil {
+		if _, err = w.Write(body); err != nil {
 			klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
 			return
 		}

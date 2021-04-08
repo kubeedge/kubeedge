@@ -45,7 +45,7 @@ type Session struct {
 }
 
 func (s *Session) WriteMessageToTunnel(m *stream.Message) error {
-	return m.WriteTo(s.tunnel)
+	return s.tunnel.WriteMessage(m)
 }
 
 func (s *Session) Close() {

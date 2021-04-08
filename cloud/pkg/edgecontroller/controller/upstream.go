@@ -21,6 +21,7 @@ we grab some functions from `kubelet/status/status_manager.go and do some modifi
 3. normalizePodStatus
 4. isPodNotRunning
 */
+
 package controller
 
 import (
@@ -326,7 +327,8 @@ func (uc *UpstreamController) updatePodStatus() {
 				}
 
 			default:
-				klog.Warningf("pod status operation: %s unsupported", msg.GetOperation())
+				klog.Warningf("message: %s process failure, pod status operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
@@ -348,17 +350,10 @@ func (uc *UpstreamController) updateNodeStatus() {
 		case msg := <-uc.nodeStatusChan:
 			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 
-			var data []byte
-			switch msg.Content.(type) {
-			case []byte:
-				data = msg.GetContent().([]byte)
-			default:
-				var err error
-				data, err = json.Marshal(msg.GetContent())
-				if err != nil {
-					klog.Warningf("message: %s process failure, marshal message content with error: %s", msg.GetID(), err)
-					continue
-				}
+			data, err := msg.GetContentData()
+			if err != nil {
+				klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+				continue
 			}
 
 			namespace, err := messagelayer.GetNamespace(msg)
@@ -494,75 +489,39 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 			default:
 				klog.Warningf("message: %s process failure, node status operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
 	}
 }
 
-func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (interface{}, string, error) {
+func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (metaV1.Object, error) {
+	var obj metaV1.Object
+	var err error
 	switch queryType {
 	case model.ResourceTypeConfigmap:
-		configMap, err := uc.configMapLister.ConfigMaps(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = configMap.ResourceVersion
-		}
-		return configMap, resourceVersion, err
+		obj, err = uc.configMapLister.ConfigMaps(namespace).Get(name)
 	case model.ResourceTypeSecret:
-		secret, err := uc.secretLister.Secrets(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = secret.ResourceVersion
-		}
-		return secret, resourceVersion, err
+		obj, err = uc.secretLister.Secrets(namespace).Get(name)
 	case common.ResourceTypeService:
-		svc, err := uc.serviceLister.Services(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = svc.ResourceVersion
-		}
-		return svc, resourceVersion, err
+		obj, err = uc.serviceLister.Services(namespace).Get(name)
 	case common.ResourceTypeEndpoints:
-		eps, err := uc.endpointLister.Endpoints(namespace).Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = eps.ResourceVersion
-		}
-		return eps, resourceVersion, err
+		obj, err = uc.endpointLister.Endpoints(namespace).Get(name)
 	case common.ResourceTypePersistentVolume:
-		pv, err := uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = pv.ResourceVersion
-		}
-		return pv, resourceVersion, err
+		obj, err = uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
 	case common.ResourceTypePersistentVolumeClaim:
-		pvc, err := uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = pvc.ResourceVersion
-		}
-		return pvc, resourceVersion, err
+		obj, err = uc.kubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.Background(), name, metaV1.GetOptions{})
 	case common.ResourceTypeVolumeAttachment:
-		va, err := uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = va.ResourceVersion
-		}
-		return va, resourceVersion, err
+		obj, err = uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
 	case model.ResourceTypeNode:
-		node, err := uc.nodeLister.Get(name)
-		resourceVersion := ""
-		if err == nil {
-			resourceVersion = node.ResourceVersion
-		}
-		return node, resourceVersion, err
+		obj, err = uc.nodeLister.Get(name)
 	default:
 		err := stderrors.New("Wrong query type")
 		klog.Error(err)
-		return nil, "", err
+		return nil, err
 	}
+	return obj, err
 }
 
 func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
@@ -580,7 +539,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 
 	switch msg.GetOperation() {
 	case model.QueryOperation:
-		object, resourceVersion, err := kubeClientGet(uc, namespace, name, queryType)
+		object, err := kubeClientGet(uc, namespace, name, queryType)
 		if errors.IsNotFound(err) {
 			klog.Warningf("message: %s process failure, resource not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 			return
@@ -590,7 +549,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 			return
 		}
 		resMsg := model.NewMessage(msg.GetID())
-		resMsg.SetResourceVersion(resourceVersion)
+		resMsg.SetResourceVersion(object.GetResourceVersion())
 		resMsg.Content = object
 		nodeID, err := messagelayer.GetNodeID(msg)
 		if err != nil {
@@ -706,22 +665,14 @@ func (uc *UpstreamController) updateNode() {
 			klog.V(5).Infof("message: %s, operation is: %s, and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
 			noderequest := &v1.Node{}
 
-			var data []byte
-			switch msg.Content.(type) {
-			case []byte:
-				data = msg.GetContent().([]byte)
-			default:
-				var err error
-				data, err = json.Marshal(msg.GetContent())
-				if err != nil {
-					klog.Warningf("message: %s process failure, marshal message content with error: %s", msg.GetID(), err)
-					continue
-				}
+			data, err := msg.GetContentData()
+			if err != nil {
+				klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+				continue
 			}
 
-			err := json.Unmarshal(data, noderequest)
-			if err != nil {
-				klog.Warningf("message: %s process failure, unmarshal marshaled message content with error: %s", msg.GetID(), err)
+			if err := json.Unmarshal(data, noderequest); err != nil {
+				klog.Warningf("message: %s process failure, unmarshal message content data with error: %s", msg.GetID(), err)
 				continue
 			}
 
@@ -783,6 +734,7 @@ func (uc *UpstreamController) updateNode() {
 				klog.V(4).Infof("message: %s, update node successfully, namespace: %s, name: %s", msg.GetID(), getNode.Namespace, getNode.Name)
 			default:
 				klog.Warningf("message: %s process failure, node operation: %s unsupported", msg.GetID(), msg.GetOperation())
+				continue
 			}
 			klog.V(4).Infof("message: %s process successfully", msg.GetID())
 		}
@@ -846,35 +798,25 @@ func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns s
 		klog.Warningf("message: %s process failure, get namespace with error: %s", msg.GetID(), err)
 		return
 	}
-	name, _ := messagelayer.GetResourceName(msg)
 
-	var data []byte
-	switch msg.Content.(type) {
-	case []byte:
-		data = msg.GetContent().([]byte)
-	default:
-		var err error
-		data, err = json.Marshal(msg.GetContent())
-		if err != nil {
-			klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-			return
-		}
+	data, err := msg.GetContentData()
+	if err != nil {
+		klog.Warningf("message: %s process failure, get content data failed with error: %s", msg.GetID(), err)
+		return
 	}
 
-	if name == "" {
+	if name, _ := messagelayer.GetResourceName(msg); name == "" {
 		// multi pod status in one message
-		err = json.Unmarshal(data, &podStatuses)
-		if err != nil {
-			return
-		}
-	} else {
-		// one pod status per message
-		var status edgeapi.PodStatusRequest
-		if err := json.Unmarshal(data, &status); err != nil {
-			return
-		}
-		podStatuses = append(podStatuses, status)
+		_ = json.Unmarshal(data, &podStatuses)
+		return
 	}
+
+	// one pod status per message
+	var status edgeapi.PodStatusRequest
+	if err := json.Unmarshal(data, &status); err != nil {
+		return
+	}
+	podStatuses = append(podStatuses, status)
 	return
 }
 

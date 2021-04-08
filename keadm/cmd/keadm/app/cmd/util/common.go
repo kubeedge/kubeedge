@@ -63,6 +63,8 @@ const (
 
 	EdgeRootDir = "/var/lib/edged"
 
+	SystemdBootPath = "/run/systemd/system"
+
 	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
@@ -420,14 +422,20 @@ func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
 }
 
 // check if systemd exist
+// if command run failed, then check it by sd_booted
 func hasSystemd() bool {
 	cmd := "file /sbin/init"
 
-	if err := NewCommand(cmd).Exec(); err != nil {
+	if err := NewCommand(cmd).Exec(); err == nil {
+		return true
+	}
+	// checks whether `SystemdBootPath` exists and is a directory
+	// reference http://www.freedesktop.org/software/systemd/man/sd_booted.html
+	fi, err := os.Lstat(SystemdBootPath)
+	if err != nil {
 		return false
 	}
-
-	return true
+	return fi.IsDir()
 }
 
 func checkSum(filename, checksumFilename string, version semver.Version, tarballPath string) (bool, error) {

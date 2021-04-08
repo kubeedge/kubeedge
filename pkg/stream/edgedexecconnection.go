@@ -85,7 +85,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
 			msg := NewMessage(e.MessID, MessageTypeRemoveConnect, nil)
-			if err := msg.WriteTo(tunnel); err != nil {
+			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", e, msg.MessageType, err)
 			} else {
 				break
@@ -93,6 +93,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
+	var data [256]byte
 	for {
 		select {
 		case <-stop:
@@ -100,9 +101,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 			return nil
 		default:
 		}
-		data := make([]byte, 256)
-
-		n, err := con.Read(data)
+		n, err := con.Read(data[:])
 		if err != nil {
 			if err != io.EOF {
 				klog.Errorf("%v failed to write exec data, err:%v", e.String(), err)
@@ -113,7 +112,7 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 			continue
 		}
 		msg := NewMessage(e.MessID, MessageTypeData, data[:n])
-		if err := msg.WriteTo(tunnel); err != nil {
+		if err := tunnel.WriteMessage(msg); err != nil {
 			klog.Errorf("%v failed to write to tunnel, msg: %+v, err: %v", e.String(), msg, err)
 			return err
 		}

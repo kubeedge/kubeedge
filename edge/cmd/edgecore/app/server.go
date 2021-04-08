@@ -119,37 +119,23 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	return cmd
 }
 
-// findProcess find a running process by name
-func findProcess(name string) (bool, error) {
-	processes, err := ps.Processes()
-	if err != nil {
-		return false, err
-	}
-
-	for _, process := range processes {
-		if process.Executable() == name {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 // environmentCheck check the environment before edgecore start
 // if Check failed,  return errors
 func environmentCheck() error {
-	// if kubelet is running, return error
-	if find, err := findProcess("kubelet"); err != nil {
+	processes, err := ps.Processes()
+	if err != nil {
 		return err
-	} else if find {
-		return errors.New("Kubelet should not running on edge node when running edgecore")
 	}
 
-	// if kube-proxy is running, return error
-	if find, err := findProcess("kube-proxy"); err != nil {
-		return err
-	} else if find {
-		return errors.New("Kube-proxy should not running on edge node when running edgecore")
+	for _, process := range processes {
+		// if kubelet is running, return error
+		if process.Executable() == "kubelet" {
+			return errors.New("kubelet should not running on edge node when running edgecore")
+		}
+		// if kube-proxy is running, return error
+		if process.Executable() == "kube-proxy" {
+			return errors.New("kube-proxy should not running on edge node when running edgecore")
+		}
 	}
 
 	return nil

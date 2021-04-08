@@ -6,7 +6,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-var Config Configure
+var config Configure
 var once sync.Once
 
 type Configure struct {
@@ -16,7 +16,7 @@ type Configure struct {
 
 func InitConfigure(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
 	once.Do(func() {
-		Config = Configure{
+		config = Configure{
 			DeviceTwin: *deviceTwin,
 			NodeName:   nodeName,
 		}
@@ -24,5 +24,5 @@ func InitConfigure(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
 }
 
 func Get() *Configure {
-	return &Config
+	return &config
 }

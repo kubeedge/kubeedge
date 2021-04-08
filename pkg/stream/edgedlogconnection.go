@@ -85,7 +85,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
 			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
-			if err := msg.WriteTo(tunnel); err != nil {
+			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
 			} else {
 				break
@@ -93,6 +93,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
+	var data [256]byte
 	for {
 		select {
 		case <-stop:
@@ -100,9 +101,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 			return nil
 		default:
 		}
-		data := make([]byte, 256)
-
-		n, err := reader.Read(data)
+		n, err := reader.Read(data[:])
 		if err != nil {
 			if err != io.EOF {
 				klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
@@ -114,12 +113,12 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
 
-		err = msg.WriteTo(tunnel)
+		err = tunnel.WriteMessage(msg)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
 			return err
 		}
-		klog.V(4).Infof("%v write logs %v", l.String(), string(data))
+		klog.V(4).Infof("%v write logs %v", l.String(), string(data[:n]))
 	}
 	return nil
 }

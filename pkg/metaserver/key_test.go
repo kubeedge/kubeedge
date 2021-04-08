@@ -121,35 +121,35 @@ func TestKeyFuncReq(t *testing.T) {
 		{"POST", "/apis/extensions/v1beta3/namespaces/other/pods", "create", "api", "extensions", "v1beta3", "other", "pods", "", "", []string{"pods"}},
 	}
 	stdResult := []string{
-		"/core/v1/namespaces",
+		"/core/v1/namespaces/null/null",
 		"/core/v1/namespaces/other/other", //a namespace called other
 
-		"/core/v1/pods/other",
+		"/core/v1/pods/other/null",
 		"/core/v1/pods/other/foo",
 		"/core/v1/pods/other/foo",
-		"/core/v1/pods",
-		"/core/v1/pods",
+		"/core/v1/pods/null/null",
+		"/core/v1/pods/null/null",
 		"/core/v1/pods/other/foo",
-		"/core/v1/pods/other",
+		"/core/v1/pods/other/null",
 
 		"/core/v1/pods/other/foo",
 		"/core/v1/pods/other/foo",
-		"/core/v1/pods",
-		"/core/v1/pods",
-		"/core/v1/pods",
-		"/core/v1/pods/other",
-		"/core/v1/pods/other",
-		"/core/v1/pods/other",
+		"/core/v1/pods/null/null",
+		"/core/v1/pods/null/null",
+		"/core/v1/pods/null/null",
+		"/core/v1/pods/other/null",
+		"/core/v1/pods/other/null",
+		"/core/v1/pods/other/null",
 
-		"/core/v1/nodes",
+		"/core/v1/nodes/null/null",
 		"/core/v1/nodes/null/node-foo",
-		"/core/v1/namespaces",
-		"/core/v1/pods/other",
-		"/extensions/v1/pods/other",
+		"/core/v1/namespaces/null/null",
+		"/core/v1/pods/other/null",
+		"/extensions/v1/pods/other/null",
 
-		"/extensions/v1/pods/other",
+		"/extensions/v1/pods/other/null",
 
-		"/extensions/v1beta3/pods/other",
+		"/extensions/v1beta3/pods/other/null",
 	}
 	resolver := newTestRequestInfoResolver()
 	for k, v := range Cases {
