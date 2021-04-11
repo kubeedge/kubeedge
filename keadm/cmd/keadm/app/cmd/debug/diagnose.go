@@ -118,12 +118,12 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 
 func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	osType := util.GetOSInterface()
-	isEdgeRuning, err := osType.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
+	isEdgeRunning, err := osType.IsKubeEdgeProcessRunning(util.KubeEdgeBinaryName)
 	if err != nil {
 		return fmt.Errorf("get edgecore status fail")
 	}
 
-	if !isEdgeRuning {
+	if !isEdgeRunning {
 		return fmt.Errorf("edgecore is not running")
 	}
 	fmt.Println("edgecore is running")

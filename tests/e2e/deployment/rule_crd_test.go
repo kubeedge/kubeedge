@@ -91,11 +91,11 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			msg := "Hello World!"
 			b := new(bytes.Buffer)
 			go func() {
-				recieveMsg, err := utils.SubscribeMqtt("topic-test")
+				receiveMsg, err := utils.SubscribeMqtt("topic-test")
 				if err != nil {
 					utils.Fatalf("subscribe topic-test fail. reason: %s. ", err.Error())
 				}
-				b.WriteString(recieveMsg)
+				b.WriteString(receiveMsg)
 			}()
 			time.Sleep(3 * time.Second)
 			// call rest api to send message to edge.
