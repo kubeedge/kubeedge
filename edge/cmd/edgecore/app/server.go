@@ -73,6 +73,10 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 
 			// Check the running environment by default
 			checkEnv := os.Getenv("CHECK_EDGECORE_ENVIRONMENT")
+			// Force skip check if enable metaserver
+			if config.Modules.MetaManager.MetaServer.Enable {
+				checkEnv = "false"
+			}
 			if checkEnv != "false" {
 				// Check running environment before run edge core
 				if err := environmentCheck(); err != nil {
