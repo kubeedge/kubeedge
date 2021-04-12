@@ -23,7 +23,7 @@ func TestMessageTranslator_Encode(t1 *testing.T) {
 					Header: model.MessageHeader{
 						ID: "1",
 					},
-					Content: "msg",
+					Content: model.NewContent("msg"),
 				},
 			},
 			want: []byte("\n\x03\n\x011\x12\x00\x1a\x03msg"),
@@ -34,7 +34,7 @@ func TestMessageTranslator_Encode(t1 *testing.T) {
 					Header: model.MessageHeader{
 						ID: "1",
 					},
-					Content: []byte("msg"),
+					Content: model.NewContent([]byte("msg")),
 				},
 			},
 			want: []byte("\n\x03\n\x011\x12\x00\x1a\x03msg"),
@@ -75,7 +75,7 @@ func TestMessageTranslator_Decode(t1 *testing.T) {
 				Header: model.MessageHeader{
 					ID: "1",
 				},
-				Content: []byte("msg"),
+				Content: model.NewContent([]byte("msg")),
 			},
 		},
 	}
