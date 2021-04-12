@@ -411,6 +411,12 @@ func (e *edged) cgroupRoots() []string {
 
 //newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
+	// skip init edged if disabled
+	if !enable {
+		return &edged{
+			enable: enable,
+		}, nil
+	}
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
 	podManager := podmanager.NewPodManager()
