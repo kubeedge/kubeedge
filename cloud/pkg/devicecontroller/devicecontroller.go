@@ -21,6 +21,9 @@ type DeviceController struct {
 }
 
 func newDeviceController(enable bool) *DeviceController {
+	if !enable {
+		return &DeviceController{enable: enable}
+	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
 		klog.Fatalf("New downstream controller failed with error: %s", err)
