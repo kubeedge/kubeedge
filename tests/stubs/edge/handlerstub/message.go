@@ -77,16 +77,10 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		klog.V(4).Infof("Message content: %v", msg)
 
 		// Marshal message content
-		var data []byte
-		switch msg.Content.(type) {
-		case []byte:
-			data = msg.GetContent().([]byte)
-		default:
-			data, err = json.Marshal(msg.GetContent())
-			if err != nil {
-				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-				return
-			}
+		data, err := msg.GetContentData()
+		if err != nil {
+			klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+			return
 		}
 
 		// Get pod
@@ -100,7 +94,7 @@ func (hs *HandlerStub) ProcessInsert(msg model.Message) {
 		pod.Status = constants.PodRunning
 		respMessage := model.NewMessage("")
 		resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
-		respMessage.Content = pod
+		respMessage.FillBody(pod)
 		respMessage.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
 
 		hs.SendToCloud(respMessage)
@@ -124,17 +118,10 @@ func (hs *HandlerStub) ProcessDelete(msg model.Message) {
 		klog.V(4).Infof("Message content: %v", msg)
 
 		// Marshal message content
-		var data []byte
-		switch msg.Content.(type) {
-		case []byte:
-			data = msg.GetContent().([]byte)
-		default:
-			var err error
-			data, err = json.Marshal(msg.GetContent())
-			if err != nil {
-				klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-				return
-			}
+		data, err := msg.GetContentData()
+		if err != nil {
+			klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
+			return
 		}
 
 		// Get pod

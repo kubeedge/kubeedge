@@ -117,7 +117,7 @@ func StartServer(cfg *config.Config) error {
 
 		message := model.NewMessage("").
 			BuildRouter("server", "", "viaduct_message", "update").
-			FillBody([]byte(inputData))
+			FillBody(inputData)
 
 		for _, conn := range conns {
 			err = conn.WriteMessageAsync(message)

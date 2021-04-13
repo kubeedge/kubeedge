@@ -95,7 +95,7 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 		return nil, errors.New("msg not Message type")
 	}
 	result := []byte("")
-	content, ok := message.Content.([]byte)
+	content, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("invalid message content")
 	}
@@ -123,7 +123,7 @@ func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{})
 		return nil, errors.New("msg not Message type")
 	}
 
-	content, ok := message.Content.([]byte)
+	content, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("invalid message content")
 	}
@@ -139,7 +139,7 @@ func dealTwinUpdate(context *dtcontext.DTContext, resource string, msg interface
 		return nil, errors.New("msg not Message type")
 	}
 
-	content, ok := message.Content.([]byte)
+	content, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("invalid message content")
 	}

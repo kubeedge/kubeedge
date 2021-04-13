@@ -12,7 +12,7 @@ func TestSendSync(t *testing.T) {
 	InitContext(MsgCtxTypeChannel)
 	AddModule("test_src")
 	messsage := model.NewMessage("")
-	messsage.Content = "hello"
+	messsage.FillBody("hello")
 
 	go func() {
 		resp, err := SendSync("test_dest", *messsage, 5*time.Second)

@@ -104,7 +104,7 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 		return nil
 	}
 	msg.BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
-	msg.Content = obj
+	msg.FillBody(obj)
 
 	resourceVersion := GetObjectResourceVersion(obj)
 	msg.SetResourceVersion(resourceVersion)

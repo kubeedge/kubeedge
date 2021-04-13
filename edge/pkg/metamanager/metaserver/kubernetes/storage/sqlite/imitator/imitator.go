@@ -3,7 +3,6 @@ package imitator
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -197,17 +196,10 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		klog.V(4).Infof("skip status messages")
 		return []watch.Event{}
 	}
-	var bytes []byte
-	var err error
-	var body = msg.GetContent()
-	// convert body to bytes
-	switch body := body.(type) {
-	case []byte:
-		bytes = body
-	default:
-		bytes, err = json.Marshal(body)
-		utilruntime.Must(err)
-	}
+
+	bytes, err := msg.GetContentData()
+	utilruntime.Must(err)
+
 	var op watch.EventType
 	switch msg.Router.Operation {
 	case model.InsertOperation:

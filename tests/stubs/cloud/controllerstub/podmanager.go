@@ -151,7 +151,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			}
 			return
 		}
-		msg.Content = p
+		msg.FillBody(p)
 		msg.BuildRouter(constants.ControllerStub, constants.GroupResource, resource, model.InsertOperation)
 
 		// Add pod in cache
@@ -184,7 +184,7 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			}
 			return
 		}
-		msg.Content = pm.GetPod(ns + "/" + name)
+		msg.FillBody(pm.GetPod(ns + "/" + name))
 		msg.BuildRouter(constants.ControllerStub, constants.GroupResource, resource, model.DeleteOperation)
 
 		// Delete pod in cache

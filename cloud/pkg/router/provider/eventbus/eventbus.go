@@ -96,7 +96,7 @@ func (eb *EventBus) Name() string {
 func (*EventBus) Forward(target provider.Target, data interface{}) (response interface{}, err error) {
 	message := data.(*model.Message)
 	res := make(map[string]interface{})
-	v, ok := message.Content.(string)
+	v, ok := message.GetContent().GetString()
 	if !ok {
 		return nil, errors.New("message content invalid convert to string")
 	}
@@ -130,7 +130,7 @@ func (eb *EventBus) GoToTarget(data map[string]interface{}, stop chan struct{}) 
 		resource = resource + strings.TrimSuffix(eb.pubTopic, "/") + "/" + strings.TrimPrefix(param, "/")
 	}
 	msg.SetResourceOperation(resource, publishOperation)
-	msg.FillBody(string(body))
+	msg.FillBody(body)
 	msg.SetRoute("router_eventbus", modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {

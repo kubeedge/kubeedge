@@ -55,7 +55,7 @@ var (
 func (tw TwinWorker) sendMsg(msg *dttype.DTMessage, msgHeart string, actionType string, contentType interface{}) {
 	if tw.ReceiverChan != nil {
 		msg.Action = actionType
-		msg.Msg.Content = contentType
+		msg.Msg.Content = model.NewContent(contentType)
 		tw.ReceiverChan <- msg
 	}
 	if tw.HeartBeatChan != nil {
@@ -127,7 +127,7 @@ func contextFunc(deviceID string) dtcontext.DTContext {
 // msgTypeFunc returns a new Message
 func msgTypeFunc(content interface{}) *model.Message {
 	return &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 }
 
@@ -172,7 +172,7 @@ func TestStart(t *testing.T) {
 				Group:     "group",
 				Operation: "op",
 			},
-			Content: contentKeyTwin,
+			Content: model.NewContent(contentKeyTwin),
 		},
 		Action: dtcommon.TwinGet,
 		Type:   dtcommon.CommModule,
@@ -252,7 +252,7 @@ func TestDealTwinSync(t *testing.T) {
 			name:    "TestDealTwinSync(): Case 1: msg not Message type",
 			context: &dtcontext.DTContext{},
 			msg: model.Message{
-				Content: dttype.BaseMessage{EventID: event1},
+				Content: model.NewContent(dttype.BaseMessage{EventID: event1}),
 			},
 			err: errors.New("msg not Message type"),
 		},
@@ -301,7 +301,7 @@ func TestDealTwinGet(t *testing.T) {
 			name:    "TestDealTwinGet(): Case 1: msg not Message type",
 			context: &dtcontext.DTContext{},
 			msg: model.Message{
-				Content: dttype.BaseMessage{EventID: event1},
+				Content: model.NewContent(dttype.BaseMessage{EventID: event1}),
 			},
 			err: errors.New("msg not Message type"),
 		},
@@ -352,7 +352,7 @@ func TestDealTwinUpdate(t *testing.T) {
 			name:    "TestDealTwinUpdate(): Case 1: msg not Message type",
 			context: &dtcontext.DTContext{},
 			msg: model.Message{
-				Content: dttype.BaseMessage{EventID: event1},
+				Content: model.NewContent(dttype.BaseMessage{EventID: event1}),
 			},
 			err: errors.New("msg not Message type"),
 		},

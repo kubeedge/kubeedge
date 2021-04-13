@@ -46,7 +46,7 @@ func TestNewQuicLane(t *testing.T) {
 
 // TestQuicLaneReadMessage is function to test ReadMessage().
 func TestQuicLaneReadMessage(t *testing.T) {
-	var msg = model.Message{Content: "message"}
+	var msg = model.Message{Content: model.NewContent("message")}
 	bytesMsg, _ := translator.NewTran().Encode(&msg)
 	header := packer.PackageHeader{Version: 0011, PayloadLen: (uint32(len(bytesMsg)))}
 	headerBuffer := make([]byte, 0)
@@ -71,7 +71,7 @@ func TestQuicLaneReadMessage(t *testing.T) {
 		{
 			name:         "Test-SuccessCase",
 			stream:       mockStream,
-			msg:          &model.Message{Content: "message"},
+			msg:          &model.Message{Content: model.NewContent("message")},
 			wantErr:      nil,
 			successTimes: 1,
 			failureTimes: 0,
@@ -103,7 +103,7 @@ func TestQuicLaneWriteMessage(t *testing.T) {
 		{
 			name:    "WriteMessageTest",
 			stream:  mockStream,
-			msg:     &model.Message{Content: "message"},
+			msg:     &model.Message{Content: model.NewContent("message")},
 			wantErr: false,
 		},
 	}

@@ -167,7 +167,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 		return true
 	}
 	if msg.GetOperation() == beehiveModel.ResponseOperation {
-		content, ok := msg.Content.(string)
+		content, ok := msg.GetContent().GetString()
 		if ok && content == "OK" {
 			return true
 		}
@@ -345,7 +345,7 @@ func (q *ChannelMessageQueue) GetNodeListStore(nodeID string) cache.Store {
 
 // GetMessageUID returns the UID of the object in message
 func GetMessageUID(msg beehiveModel.Message) (string, error) {
-	accessor, err := meta.Accessor(msg.Content)
+	accessor, err := meta.Accessor(msg.GetContent().Raw())
 	if err != nil {
 		return "", err
 	}
@@ -355,7 +355,7 @@ func GetMessageUID(msg beehiveModel.Message) (string, error) {
 
 // GetMessageDeletionTimestamp returns the deletionTimestamp of the object in message
 func GetMessageDeletionTimestamp(msg *beehiveModel.Message) (*metav1.Time, error) {
-	accessor, err := meta.Accessor(msg.Content)
+	accessor, err := meta.Accessor(msg.GetContent().Raw())
 	if err != nil {
 		return nil, err
 	}

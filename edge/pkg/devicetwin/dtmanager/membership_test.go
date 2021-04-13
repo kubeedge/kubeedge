@@ -84,7 +84,7 @@ func TestDealMembershipDetailInvalidMsg(t *testing.T) {
 	}
 
 	var m = &model.Message{
-		Content: "invalidmsg",
+		Content: model.NewContent(0 /* invalid message */),
 	}
 
 	value, err := dealMembershipDetail(dtc, "t", m)
@@ -101,7 +101,7 @@ func TestDealMembershipDetailInvalidContent(t *testing.T) {
 	var cnt []uint8
 	cnt = append(cnt, 1)
 	var m = &model.Message{
-		Content: cnt,
+		Content: model.NewContent(cnt),
 	}
 
 	value, err := dealMembershipDetail(dtc, "t", m)
@@ -120,7 +120,7 @@ func TestDealMembershipDetailValid(t *testing.T) {
 		State: "unknown"}}, BaseMessage: dttype.BaseMessage{EventID: "eventid"}}
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 	value, err := dealMembershipDetail(dtc, "t", m)
 	assert.NoError(t, err)
@@ -145,7 +145,7 @@ func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
 	}
 
 	var m = &model.Message{
-		Content: "invalidmessage",
+		Content: model.NewContent(0 /* invalid message */),
 	}
 
 	value, err := dealMembershipUpdate(dtc, "t", m)
@@ -162,7 +162,7 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 	var cnt []uint8
 	cnt = append(cnt, 1)
 	var m = &model.Message{
-		Content: cnt,
+		Content: model.NewContent(cnt),
 	}
 
 	value, err := dealMembershipUpdate(dtc, "t", m)
@@ -203,7 +203,7 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	}
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
@@ -232,7 +232,7 @@ func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
 	}
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 	value, err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
@@ -257,7 +257,7 @@ func TestDealMembershipGetInvalidMsg(t *testing.T) {
 	}
 
 	var m = &model.Message{
-		Content: "hello",
+		Content: model.NewContent(0 /* invalid message */),
 	}
 
 	value, err := dealMembershipGet(dtc, "t", m)
@@ -288,7 +288,7 @@ func TestDealMembershipGetValid(t *testing.T) {
 	}
 	content, _ := json.Marshal(payload)
 	var m = &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 	_, err := dealMembershipGet(dtc, "t", m)
 	assert.NoError(t, err)

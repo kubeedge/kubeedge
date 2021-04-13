@@ -403,7 +403,7 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 		}}
 		content.EventID = uuid.New().String()
 		content.Timestamp = time.Now().UnixNano() / 1e6
-		msg.Content = content
+		msg.FillBody(content)
 
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
@@ -635,7 +635,7 @@ func (dc *DownstreamController) deviceUpdated(device *v1alpha2.Device) {
 					content := types.DeviceTwinUpdate{Twin: twin}
 					content.EventID = uuid.New().String()
 					content.Timestamp = time.Now().UnixNano() / 1e6
-					msg.Content = content
+					msg.FillBody(content)
 
 					err = dc.messageLayer.Send(*msg)
 					if err != nil {
@@ -853,7 +853,7 @@ func (dc *DownstreamController) deviceDeleted(device *v1alpha2.Device) {
 		}}
 		content.EventID = uuid.New().String()
 		content.Timestamp = time.Now().UnixNano() / 1e6
-		msg.Content = content
+		msg.FillBody(content)
 		if err != nil {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return

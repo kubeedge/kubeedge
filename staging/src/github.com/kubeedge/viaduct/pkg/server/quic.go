@@ -82,7 +82,8 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 	// process control message
 	result := comm.RespTypeAck
 	headers := make(http.Header)
-	err = json.Unmarshal(msg.GetContent().([]byte), &headers)
+	content, _ := msg.GetContent().GetBytes()
+	err = json.Unmarshal(content, &headers)
 	if err != nil {
 		klog.Errorf("failed to unmarshal header, error: %+v", err)
 		result = comm.RespTypeNack

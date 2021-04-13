@@ -177,7 +177,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				continue
 			}
 			resMsg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.ResponseOperation)
-			resMsg.Content = "OK"
+			resMsg.FillBody("OK")
 			err = uc.messageLayer.Response(*resMsg)
 			if err != nil {
 				klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)

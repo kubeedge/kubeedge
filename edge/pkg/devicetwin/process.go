@@ -2,7 +2,6 @@ package devicetwin
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"strings"
 	"sync"
@@ -218,21 +217,20 @@ func classifyMsg(message *dttype.DTMessage) bool {
 				return false
 			}
 		}
-		message.Msg.Content = []byte((message.Msg.Content).(string))
 		message.Identity = identity
 		message.Action = action
 		klog.Infof("Classify the msg to action %s", action)
 		return true
 	} else if (strings.Compare(msgSource, "edgemgr") == 0) || (strings.Compare(msgSource, "devicecontroller") == 0) {
-		switch message.Msg.Content.(type) {
-		case []byte:
+		_, ok := message.Msg.GetContent().GetBytes()
+		if ok {
 			klog.Info("Message content type is []byte, no need to marshal again")
-		default:
-			content, err := json.Marshal(message.Msg.Content)
+		} else {
+			data, err := message.Msg.GetContentData()
 			if err != nil {
 				return false
 			}
-			message.Msg.Content = content
+			message.Msg.FillBody(data)
 		}
 		if strings.Contains(message.Msg.Router.Resource, "membership/detail") {
 			message.Action = dtcommon.MemDetailResult

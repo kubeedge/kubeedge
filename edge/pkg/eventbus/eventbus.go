@@ -114,7 +114,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			eb.unsubscribe(resource)
 			klog.Infof("Edge-hub-cli unsubscribe topic to %s", resource)
 		case messagepkg.OperationMessage:
-			body, ok := accessInfo.GetContent().(map[string]interface{})
+			body, ok := accessInfo.GetContent().Raw().(map[string]interface{})
 			if !ok {
 				klog.Errorf("Message is not map type")
 				continue
@@ -126,14 +126,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		case messagepkg.OperationPublish:
 			topic := resource
 			// cloud and edge will send different type of content, need to check
-			payload, ok := accessInfo.GetContent().([]byte)
+			payload, ok := accessInfo.GetContent().GetBytes()
 			if !ok {
-				content, ok := accessInfo.GetContent().(string)
-				if !ok {
-					klog.Errorf("Message is not []byte or string")
-					continue
-				}
-				payload = []byte(content)
+				klog.Errorf("Message is not []byte or string")
+				continue
 			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationGetResult:
