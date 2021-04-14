@@ -21,7 +21,6 @@ require (
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/goburrow/serial v0.1.0 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
@@ -43,7 +42,6 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pkg/errors v0.9.1
-	github.com/sailorvii/modbus v0.1.2
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
