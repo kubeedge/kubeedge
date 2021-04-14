@@ -1,14 +1,14 @@
 | title        | authors     | approvers                  | creation-date | last-updated | status    |
 | ------------ | ----------- | -------------------------- | ------------- | ------------ | --------- |
-| Edge Cluster | @WintonChan@liufen90 | @kevin-wangzefeng@fisherxu | 2020-03-17    | 2020-03-25   | Designing |
+| Edge Cluster | @WintonChan@liufen90@MesaCrush | @kevin-wangzefeng@fisherxu | 2020-03-17    | 2020-04-14 | Implementing |
 
 # Edge cluster
 
 ## Motivation
 
 Under scenarios of edge computing, there are multiple Kubernetes clusters deployed at the edge. Administrators/users hope to manage edge clusters on the cloud centrally and take advantages of more cloud-native capability on the edge.
-​    
-​Currently, KubeEdge only supports management of edge nodes and does not support the management of edge clusters. In order to provide unified management and scheduling, and expand the cloud native capabilities of edge nodes, we plan to support edge cluster management.
+    <img src="../images/proposals/edgecluster0.jpg">
+Currently, KubeEdge only supports management of edge nodes and does not support the management of edge clusters. In order to provide unified management and scheduling, and expand the cloud native capabilities of edge nodes, we plan to support edge cluster management.
 
 This design doc is to enable customers manage edge clusters on the cloud.
 
@@ -28,34 +28,51 @@ This design doc is to enable customers manage edge clusters on the cloud.
 
 ### Use case
 
-​    User calls the native API of the edge K8s cluster on the cloud
-
-1. User needs to deploy the Tunnel Agent application on the edge cluster
-2. The user calls the API of the edge cluster through the control plane IP of the edge cluster
+- Users access and manage edge K8s clusters on the cloud
+  1. Users need to deploy proxy-agent application in edge cluster with the configuration of  the address of kube-apiserver and proxy server .
+  2. In the external network, users can use kubectl or go-client to access  edge cluster  by adding proxy address to kubeconfig.
 
 ## Design Details
 
 <img src="../images/proposals/edgecluster.PNG">
 
-We implement a tunnel crossing cloud and edge to deliver the request to edge. 
+**Alpha**: Realize network intercommunication between edge and cloud
 
-the tunnel agent initiates a websocket to tunnel server.
-1. User makes a request to the tunnel server
-2. the request is sent to tunnel agent on edge
-3. finally, the request is sent to apiserver on edge.
+Referencing [apiserver-network-proxy](https://github.com/kubernetes-sigs/apiserver-network-proxy), we proposes a Layer 7 proxy solution for different network plane of cloud and edge cluster. The specific process is as follows:
 
-In the future, we will manage multi-cluster by karmada. Karmada is a project for management multi-cluster.
+- Cluster registration process
+  1. Deploy proxy-agent application configured with  the access address of kube-apisever in edge k8s cluster. 
+  2. Proxy-agent initiates a connection to the proxy server to register the cluster.
+
+- Client access edge API cluster process
+  1. Clients configure KUBECONFIG by adding proxy-url:  http://<proxy-server_ip>:<proxy-server_port>/
+  2. When clients send a request,  flow is transmitted to proxy-server.
+  3. After the proxy-server listens to the request, it forwards it to the corresponding proxy-agent according to the destination address of the request.
+  4. The request obtained by the proxy-agent is directly forwarded to kube-apisever.
+
+Note:  Clients accessing the cluster on the cloud need to support HTTP proxy.
+
+### Future development tasks
+
+- For the management and scheduling of multiple clusters, the plan references the official federal management scheme.
+- Support Layer 4 .
 
 ### Discussion
 
-1. What is the logical relationship between edge clusters and edge nodes?
+1. Is kubeedge managing the lifecycle of edge cluster, or is cluster federation responsible for it? If kubeedge is responsible, there are two options:
 
-2. How do we manage edge clusters on the cloud? What other capabilities are needed in addition to supporting state synchronization?
+   (1) Providing users with cluster deployment and update tools on the edge.
 
-3. Do the applications on the edge node need to communicate with the applications on the edge cluster?
+   (2) Issuing the command of cluster installation and upgrade on the  cloud.
+
+3. What is the logical relationship between edge clusters and edge nodes?
+
+4. Do the applications on the edge node need to communicate with the applications on the edge cluster? 
 
 ## Implementation plan
-- Alpha: 1.7 or 1.8
+- Alpha: v1.7
+- Beta: TBD
+- GA: TBD
 
 
 
