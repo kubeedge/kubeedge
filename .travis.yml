@@ -41,7 +41,6 @@ jobs:
         - sudo apt-get install upx-ucl -y
       script:
         - make
-        - make bluetoothdevice
         - make smallbuild
     - name: "unit test, integration test edge"
       arch: arm64
@@ -56,4 +55,3 @@ jobs:
         - make admissionimage
         - make edgeimage ARCH="arm64v8"
         - make edgesiteimage ARCH="arm64v8"
-        - make bluetoothdevice_image
