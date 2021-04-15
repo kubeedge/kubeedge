@@ -52,7 +52,8 @@ type UpstreamController struct {
 	crdClient    crdClientset.Interface
 	messageLayer messagelayer.MessageLayer
 	// message channel
-	deviceStatusChan chan model.Message
+	deviceTwinChan  chan model.Message
+	deviceStateChan chan model.Message
 
 	// downstream controller to update device status in cache
 	dc *DownstreamController
@@ -62,11 +63,16 @@ type UpstreamController struct {
 func (uc *UpstreamController) Start() error {
 	klog.Info("Start upstream devicecontroller")
 
-	uc.deviceStatusChan = make(chan model.Message, config.Config.Buffer.UpdateDeviceStatus)
+	uc.deviceTwinChan = make(chan model.Message, config.Config.Buffer.UpdateDeviceStatus)
+	uc.deviceStateChan = make(chan model.Message, config.Config.Buffer.UpdateDeviceStatus/2)
+
 	go uc.dispatchMessage()
 
 	for i := 0; i < int(config.Config.Buffer.UpdateDeviceStatus); i++ {
-		go uc.updateDeviceStatus()
+		go uc.updateDeviceTwin()
+	}
+	for i := 0; i < int(config.Config.Buffer.UpdateDeviceStatus)/2; i++ {
+		go uc.updateDeviceState()
 	}
 	return nil
 }
@@ -96,22 +102,24 @@ func (uc *UpstreamController) dispatchMessage() {
 
 		switch resourceType {
 		case constants.ResourceTypeTwinEdgeUpdated:
-			uc.deviceStatusChan <- msg
+			uc.deviceTwinChan <- msg
+		case constants.ResourceTypeStateEdgeUpdated:
+			uc.deviceStateChan <- msg
 		default:
 			klog.Warningf("Message: %s, with resource type: %s not intended for device controller", msg.GetID(), resourceType)
 		}
 	}
 }
 
-func (uc *UpstreamController) updateDeviceStatus() {
+func (uc *UpstreamController) updateDeviceTwin() {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Info("Stop updateDeviceStatus")
 			return
-		case msg := <-uc.deviceStatusChan:
+		case msg := <-uc.deviceTwinChan:
 			klog.Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
-			msgTwin, err := uc.unmarshalDeviceStatusMessage(msg)
+			msgTwin, err := uc.unmarshalDeviceTwinMessage(msg)
 			if err != nil {
 				klog.Warningf("Unmarshall failed due to error %v", err)
 				continue
@@ -188,7 +196,7 @@ func (uc *UpstreamController) updateDeviceStatus() {
 	}
 }
 
-func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {
+func (uc *UpstreamController) unmarshalDeviceTwinMessage(msg model.Message) (*types.DeviceTwinUpdate, error) {
 	contentData, err := msg.GetContentData()
 	if err != nil {
 		return nil, err
@@ -199,6 +207,69 @@ func (uc *UpstreamController) unmarshalDeviceStatusMessage(msg model.Message) (*
 		return nil, err
 	}
 	return twinUpdate, nil
+}
+
+func (uc *UpstreamController) updateDeviceState() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Info("Stop updateDeviceState")
+			return
+		case msg := <-uc.deviceStateChan:
+			klog.Infof("Message: %s, operation is: %s, and resource is: %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			deviceState, err := uc.unmarshalDeviceStateMessage(msg)
+			if err != nil {
+				klog.Warningf("Unmarshall failed due to error %v", err)
+				continue
+			}
+			deviceID, err := messagelayer.GetDeviceID(msg.GetResource())
+			if err != nil {
+				klog.Warning("Failed to get device id")
+				continue
+			}
+			device, ok := uc.dc.deviceManager.Device.Load(deviceID)
+			if !ok {
+				klog.Warningf("Device %s does not exist in downstream controller", deviceID)
+				continue
+			}
+			cacheDevice, ok := device.(*v1alpha2.Device)
+			if !ok {
+				klog.Warning("Failed to assert to CacheDevice type")
+				continue
+			}
+			deviceStatus := &DeviceStatus{Status: cacheDevice.Status}
+			deviceStatus.Status.State = deviceState.Device.State
+			deviceStatus.Status.LastOnline = deviceState.Device.LastOnline
+
+			// Store the status in cache so that when update is received by informer, it is not processed by downstream controller
+			cacheDevice.Status = deviceStatus.Status
+			uc.dc.deviceManager.Device.Store(deviceID, cacheDevice)
+
+			body, err := json.Marshal(deviceStatus)
+			if err != nil {
+				klog.Errorf("Failed to marshal device status %v", deviceStatus)
+				continue
+			}
+			err = uc.crdClient.DevicesV1alpha2().RESTClient().Patch(MergePatchType).Namespace(cacheDevice.Namespace).Resource(ResourceTypeDevices).Name(deviceID).Body(body).Do(context.Background()).Error()
+			if err != nil {
+				klog.Errorf("Failed to patch device status %v of device %v in namespace %v, err: %v", deviceStatus, deviceID, cacheDevice.Namespace, err)
+				continue
+			}
+
+			klog.Infof("Message: %s process successfully", msg.GetID())
+		}
+	}
+}
+
+func (uc *UpstreamController) unmarshalDeviceStateMessage(msg model.Message) (*types.DeviceMsg, error) {
+	content := msg.GetContent()
+	contentData := []byte(content.(string))
+	deviceState := &types.DeviceMsg{}
+
+	if err := json.Unmarshal(contentData, deviceState); err != nil {
+		return nil, err
+	}
+	return deviceState, nil
 }
 
 // NewUpstreamController create UpstreamController from config

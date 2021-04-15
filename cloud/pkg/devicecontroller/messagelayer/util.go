@@ -36,6 +36,8 @@ func GetDeviceID(resource string) (string, error) {
 func GetResourceType(resource string) (string, error) {
 	if strings.Contains(resource, deviceconstants.ResourceTypeTwinEdgeUpdated) {
 		return deviceconstants.ResourceTypeTwinEdgeUpdated, nil
+	} else if strings.Contains(resource, deviceconstants.ResourceTypeStateEdgeUpdated) {
+		return deviceconstants.ResourceTypeStateEdgeUpdated, nil
 	}
 	return "", errors.New("unknown resource")
 }

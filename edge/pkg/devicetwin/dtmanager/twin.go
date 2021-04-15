@@ -169,12 +169,14 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	klog.Infof("Begin to deal device twin of the device %s", deviceID)
 	now := time.Now().UnixNano() / 1e6
 	result := []byte("")
+
 	device, isExist := context.GetDevice(deviceID)
 	if !isExist {
 		klog.Errorf("Update twin rejected due to the device %s is not existed", deviceID)
 		dealUpdateResult(context, deviceID, eventID, dtcommon.NotFoundCode, errors.New("Update rejected due to the device is not existed"), result)
 		return errors.New("Update rejected due to the device is not existed")
 	}
+
 	content := msgTwin
 	var err error
 	if content == nil {
@@ -183,16 +185,18 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		dealUpdateResult(context, deviceID, eventID, dtcommon.BadRequestCode, err, result)
 		return err
 	}
-	dealTwinResult := DealMsgTwin(context, deviceID, content, dealType)
 
+	dealTwinResult := DealMsgTwin(context, deviceID, content, dealType)
 	add, deletes, update := dealTwinResult.Add, dealTwinResult.Delete, dealTwinResult.Update
 	if dealType == RestDealType && dealTwinResult.Err != nil {
+		klog.Errorf("Deal message twin error: %#v", dealTwinResult.Err)
 		SyncDeviceFromSqlite(context, deviceID)
 		err = dealTwinResult.Err
 		updateResult, _ := dttype.BuildDeviceTwinResult(dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Result, 0)
 		dealUpdateResult(context, deviceID, eventID, dtcommon.BadRequestCode, err, updateResult)
 		return err
 	}
+
 	if len(add) != 0 || len(deletes) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
 			err = dtclient.DeviceTwinTrans(add, deletes, update)
@@ -206,20 +210,22 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 			klog.Errorf("Update device twin failed due to writing sql error: %v", err)
 		}
 	}
-
 	if err != nil && dealType == RestDealType {
 		updateResult, _ := dttype.BuildDeviceTwinResult(dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Result, dealType)
 		dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, err, updateResult)
 		return err
 	}
+
+	// Messge from mqtt.
 	if dealType == RestDealType {
 		updateResult, _ := dttype.BuildDeviceTwinResult(dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Result, dealType)
 		dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, nil, updateResult)
-	}
-	if len(dealTwinResult.Document) > 0 {
-		dealDocument(context, deviceID, dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Document)
-	}
 
+		if len(dealTwinResult.Document) > 0 {
+			dealDocument(context, deviceID, dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Document)
+		}
+	}
+	// Create twin-delta message when messge from cloud arrives or updated value from mqtt doesn't match expected.
 	delta, ok := dttype.BuildDeviceTwinDelta(dttype.BuildBaseMessage(), device.Twin)
 	if ok {
 		dealDelta(context, deviceID, delta)
@@ -228,6 +234,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	if len(dealTwinResult.SyncResult) > 0 {
 		dealSyncResult(context, deviceID, dttype.BuildBaseMessage(), dealTwinResult.SyncResult)
 	}
+
 	return nil
 }
 
@@ -273,7 +280,7 @@ func dealDelta(context *dtcontext.DTContext, deviceID string, payload []byte) er
 // dealSyncResult build and send sync result, is delta update
 func dealSyncResult(context *dtcontext.DTContext, deviceID string, baseMessage dttype.BaseMessage, twin map[string]*dttype.MsgTwin) error {
 	klog.Infof("Deal sync result of device %s: sync with cloud", deviceID)
-	resource := "device/" + deviceID + "/twin/edge_updated"
+	resource := "device/" + deviceID + dtcommon.TwinETEdgeSyncSuffix
 	return context.Send("",
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,

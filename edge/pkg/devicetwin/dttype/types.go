@@ -305,3 +305,9 @@ type DealAttrResult struct {
 	Result map[string]*MsgAttr
 	Err    error
 }
+
+//DeviceMsg the struct of device state msg.
+type DeviceMsg struct {
+	BaseMessage
+	Device Device `json:"device"`
+}
