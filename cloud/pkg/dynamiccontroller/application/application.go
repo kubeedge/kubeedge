@@ -371,8 +371,8 @@ func msgToApplication(msg model.Message) (*Application, error) {
 	return app, nil
 }
 
-// TODO: upgrade to parallel process
 // Process translate msg to application , process and send resp to edge
+// TODO: upgrade to parallel process
 func (c *Center) Process(msg model.Message) {
 	app, err := msgToApplication(msg)
 	if err != nil {
@@ -380,139 +380,146 @@ func (c *Center) Process(msg model.Message) {
 		return
 	}
 	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
-	gvr, ns, name := metaserver.ParseKey(app.Key)
-	err = func() error {
-		app.Status = InProcessing
-		switch app.Verb {
-		case List:
-			var option = new(metav1.ListOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			err := c.HandlerCenter.AddListener(app.ToListener(*option))
-			if err != nil {
-				return fmt.Errorf("failed to add listener, %v", err)
-			}
-			list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
-			if err != nil {
-				return fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
-			}
-			c.Response(app, msg.GetID(), Approved, "", list)
-		case Watch:
-			var option = new(metav1.ListOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			err := c.HandlerCenter.AddListener(app.ToListener(*option))
-			if err != nil {
-				return fmt.Errorf("failed to add listener, %v", err)
-			}
-			c.Response(app, msg.GetID(), Approved, "", nil)
-		case Get:
-			var option = new(metav1.GetOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
-		case Create:
-			var option = new(metav1.CreateOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			var obj = new(unstructured.Unstructured)
-			if err := app.ReqBodyTo(obj); err != nil {
-				return err
-			}
-			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
-		case Delete:
-			var option = new(metav1.DeleteOptions)
-			if err := app.OptionTo(&option); err != nil {
-				return err
-			}
-			err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", nil)
-		case Update:
-			var option = new(metav1.UpdateOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			var obj = new(unstructured.Unstructured)
-			if err := app.ReqBodyTo(obj); err != nil {
-				return err
-			}
-			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
-		case UpdateStatus:
-			var option = new(metav1.UpdateOptions)
-			if err := app.OptionTo(option); err != nil {
-				return err
-			}
-			var obj = new(unstructured.Unstructured)
-			if err := app.ReqBodyTo(obj); err != nil {
-				return err
-			}
-			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
-		case Patch:
-			var pi = new(PatchInfo)
-			if err := app.OptionTo(pi); err != nil {
-				return err
-			}
-			retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
-			if err != nil {
-				return err
-			}
-			c.Response(app, msg.GetID(), Approved, "", retObj)
-		default:
-			return fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
-		}
-		return nil
-	}()
+
+	resp, err := c.ProcessApplication(app)
 	if err != nil {
 		c.Response(app, msg.GetID(), Rejected, err.Error(), nil)
 		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%+v), %v", app, err)
+		return
 	}
+	c.Response(app, msg.GetID(), Approved, "", resp)
 	klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
+}
+
+// ProcessApplication processes application by re-translating it to kube-api request with kube client,
+// which will be processed and responced by apiserver eventually.
+// Specially if app.verb == watch, it transform app to a listener and register it to HandlerCenter, rather
+// then requetes to apiserver directly. Listener will then continuously listen kube-api change events and
+// push them to edge node.
+func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
+	app.Status = InProcessing
+
+	gvr, ns, name := metaserver.ParseKey(app.Key)
+	switch app.Verb {
+	case List:
+		var option = new(metav1.ListOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		if err := c.HandlerCenter.AddListener(app.ToListener(*option)); err != nil {
+			return nil, fmt.Errorf("failed to add listener, %v", err)
+		}
+		list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
+		if err != nil {
+			return nil, fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
+		}
+		return list, nil
+	case Watch:
+		var option = new(metav1.ListOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		if err := c.HandlerCenter.AddListener(app.ToListener(*option)); err != nil {
+			return nil, fmt.Errorf("failed to add listener, %v", err)
+		}
+		return nil, nil
+	case Get:
+		var option = new(metav1.GetOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
+		if err != nil {
+			return nil, err
+		}
+		return retObj, nil
+	case Create:
+		var option = new(metav1.CreateOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		var obj = new(unstructured.Unstructured)
+		if err := app.ReqBodyTo(obj); err != nil {
+			return nil, err
+		}
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Create(context.TODO(), obj, *option)
+		if err != nil {
+			return nil, err
+		}
+		return retObj, err
+	case Delete:
+		var option = new(metav1.DeleteOptions)
+		if err := app.OptionTo(&option); err != nil {
+			return nil, err
+		}
+		if err := c.kubeclient.Resource(gvr).Namespace(ns).Delete(context.TODO(), name, *option); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	case Update:
+		var option = new(metav1.UpdateOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		var obj = new(unstructured.Unstructured)
+		if err := app.ReqBodyTo(obj); err != nil {
+			return nil, err
+		}
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Update(context.TODO(), obj, *option)
+		if err != nil {
+			return nil, err
+		}
+		return retObj, nil
+	case UpdateStatus:
+		var option = new(metav1.UpdateOptions)
+		if err := app.OptionTo(option); err != nil {
+			return nil, err
+		}
+		var obj = new(unstructured.Unstructured)
+		if err := app.ReqBodyTo(obj); err != nil {
+			return nil, err
+		}
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).UpdateStatus(context.TODO(), obj, *option)
+		if err != nil {
+			return nil, err
+		}
+		return retObj, nil
+	case Patch:
+		var pi = new(PatchInfo)
+		if err := app.OptionTo(pi); err != nil {
+			return nil, err
+		}
+		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Patch(context.TODO(), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		if err != nil {
+			return nil, err
+		}
+		return retObj, nil
+	default:
+		return nil, fmt.Errorf("unsupported Application Verb type :%v", app.Verb)
+	}
 }
 
 // Response update application, generate and send resp message to edge
 func (c *Center) Response(app *Application, parentID string, status applicationStatus, reason string, respContent interface{}) {
-	app.Status = status
-	app.Reason = reason
+	app.Status, app.Reason = status, reason
 	if respContent != nil {
 		app.RespBody = toBytes(respContent)
 	}
 
-	msg := model.NewMessage(parentID)
-	msg.Content = app
 	resource, err := messagelayer.BuildResource(app.Nodename, Ignore, ApplicationResource, Ignore)
 	if err != nil {
 		klog.Warningf("built message resource failed with error: %s", err)
 		return
 	}
-	msg.BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, resource, ApplicationResp)
+	msg := model.NewMessage(parentID).
+		BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, resource, ApplicationResp).
+		FillBody(app)
+
 	if err := c.messageLayer.Response(*msg); err != nil {
 		klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-	} else {
-		klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+		return
 	}
+	klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 }
 
 func (c *Center) GC() {
