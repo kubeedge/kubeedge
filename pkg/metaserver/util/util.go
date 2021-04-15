@@ -14,6 +14,7 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/metarequset"
 )
 
 const (
@@ -50,9 +51,13 @@ func UnsafeResourceToKind(r string) string {
 		return r
 	}
 	unusualResourceToKind := map[string]string{
-		"endpoints": "Endpoints",
-		"nodes":     "Node",
-		"services":  "Service",
+		"endpoints":                         "Endpoints",
+		"nodes":                             "Node",
+		"services":                          "Service",
+		metarequset.APIVersionsResource:     metarequset.APIVersionsKind,
+		metarequset.APIGroupListResource:    metarequset.APIGroupListKind,
+		metarequset.APIGroupResource:        metarequset.APIGroupKind,
+		metarequset.APIResourceListResource: metarequset.APIResourceListKind,
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
@@ -74,7 +79,8 @@ func UnsafeKindToResource(k string) string {
 		return k
 	}
 	unusualKindToResource := map[string]string{
-		"Endpoints": "endpoints",
+		"Endpoints":                 "endpoints",
+		metarequset.APIVersionsKind: metarequset.APIVersionsResource,
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
 		return v

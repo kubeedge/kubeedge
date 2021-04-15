@@ -28,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/metarequset"
 )
 
 // used to set Message.Route
@@ -424,15 +425,16 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		}
 		return nil, nil
 	case Get:
-		var option = new(metav1.GetOptions)
-		if err := app.OptionTo(option); err != nil {
-			return nil, err
+		switch gvr.Group {
+		case "meta":
+			return processMetaGet(gvr, name)
+		default:
+			var option = new(metav1.GetOptions)
+			if err := app.OptionTo(option); err != nil {
+				return nil, err
+			}
+			return c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
 		}
-		retObj, err := c.kubeclient.Resource(gvr).Namespace(ns).Get(context.TODO(), name, *option)
-		if err != nil {
-			return nil, err
-		}
-		return retObj, nil
 	case Create:
 		var option = new(metav1.CreateOptions)
 		if err := app.OptionTo(option); err != nil {
@@ -524,4 +526,55 @@ func (c *Center) Response(app *Application, parentID string, status applicationS
 
 func (c *Center) GC() {
 
+}
+
+// processMetaGet transforms meta get request to HTTP request(/api, /apis, etc.)
+func processMetaGet(gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
+	var absPath string
+	var metadata metav1.ObjectMeta
+	var err error
+	metadata.Name = name
+
+	switch gvr {
+	case metarequset.APIVersions:
+		v := &metav1.APIVersions{}
+		absPath = "/api"
+		err = client.GetKubeClient().Discovery().RESTClient().Get().AbsPath(absPath).Do(context.TODO()).Into(v)
+		if err != nil {
+			return nil, err
+		}
+		return &metarequset.NamedAPIVersions{APIVersions: *v, ObjectMeta: metadata}, nil
+	case metarequset.APIGroupLists:
+		v := &metav1.APIGroupList{}
+		absPath = "/apis"
+		err = client.GetKubeClient().Discovery().RESTClient().Get().AbsPath(absPath).Do(context.TODO()).Into(v)
+		if err != nil {
+			return nil, err
+		}
+		return &metarequset.NamedAPIGroupList{APIGroupList: *v, ObjectMeta: metadata}, nil
+	case metarequset.APIGroups:
+		v := &metav1.APIGroup{}
+		absPath = "/apis/" + name
+		err = client.GetKubeClient().Discovery().RESTClient().Get().AbsPath(absPath).Do(context.TODO()).Into(v)
+		if err != nil {
+			return nil, err
+		}
+		return &metarequset.NamedAPIGroup{APIGroup: *v, ObjectMeta: metadata}, nil
+	case metarequset.APIResourceLists:
+		v := &metav1.APIResourceList{}
+		gv := metarequset.ResourceListNameParser.Parse(name)
+		switch {
+		case gv.Group == "":
+			absPath = "/api/" + gv.Version
+		default:
+			absPath = "/apis/" + gv.Group + "/" + gv.Version
+		}
+		err = client.GetKubeClient().Discovery().RESTClient().Get().AbsPath(absPath).Do(context.TODO()).Into(v)
+		if err != nil {
+			return nil, err
+		}
+		return &metarequset.NamedAPIResourceList{APIResourceList: *v, ObjectMeta: metadata}, nil
+	default:
+		return nil, fmt.Errorf("unsupprot meta get gvr(%v),name(%v)", gvr.String(), name)
+	}
 }

@@ -20,6 +20,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/metarequset"
 )
 
 const (
@@ -97,6 +98,7 @@ func BuildHandlerChain(handler http.Handler, ls *MetaServer) http.Handler {
 		LegacyAPIGroupPrefixes: sets.NewString(server.DefaultLegacyAPIPrefix),
 	}
 	handler = genericfilters.WithWaitGroup(handler, ls.LongRunningFunc, ls.HandlerChainWaitGroup)
+	handler = metarequset.DecorateMetaRequest(handler)
 	handler = genericapifilters.WithRequestInfo(handler, server.NewRequestInfoResolver(cfg))
 	handler = genericfilters.WithPanicRecovery(handler)
 	return handler
