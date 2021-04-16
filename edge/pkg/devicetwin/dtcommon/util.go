@@ -36,7 +36,7 @@ func ValidateValue(valueType string, value string) error {
 	case "deleted":
 		return nil
 	default:
-		return fmt.Errorf("the value type is not allowed %s", valueType)
+		return fmt.Errorf("the value type is not allowed: %s", valueType)
 	}
 }
 
