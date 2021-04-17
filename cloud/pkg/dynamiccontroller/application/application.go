@@ -406,9 +406,6 @@ func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		if err := c.HandlerCenter.AddListener(app.ToListener(*option)); err != nil {
-			return nil, fmt.Errorf("failed to add listener, %v", err)
-		}
 		list, err := c.kubeclient.Resource(app.GVR()).Namespace(app.Namespace()).List(context.TODO(), *option)
 		if err != nil {
 			return nil, fmt.Errorf("successfully to add listener but failed to get current list, %v", err)
