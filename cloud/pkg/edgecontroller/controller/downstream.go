@@ -262,7 +262,7 @@ func (dc *DownstreamController) syncEdgeNodes() {
 						selector := labels.NewSelector()
 						for k, v := range svc.Spec.Selector {
 							r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
-							selector.Add(*r)
+							selector = selector.Add(*r)
 						}
 
 						pods, err := dc.podLister.Pods(namespace).List(selector)
@@ -425,7 +425,7 @@ func (dc *DownstreamController) syncEndpoints() {
 					selector := labels.NewSelector()
 					for k, v := range svc.Spec.Selector {
 						r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
-						selector.Add(*r)
+						selector = selector.Add(*r)
 					}
 					pods, _ = dc.podLister.Pods(svc.GetNamespace()).List(selector)
 				}
