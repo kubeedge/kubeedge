@@ -66,11 +66,12 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 	stop := make(chan struct{})
 
 	go func() {
+		defer close(stop)
+
 		for message := range e.ReadChan {
 			switch message.MessageType {
 			case MessageTypeRemoveConnect:
 				klog.V(6).Infof("%s receive remove client id %v", e.String(), message.ConnectID)
-				close(stop)
 				return
 			case MessageTypeData:
 				_, err := con.Write(message.Data)
@@ -93,31 +94,29 @@ func (e *EdgedExecConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	var data [256]byte
-	for {
-		select {
-		case <-stop:
-			klog.V(6).Infof("receive stop single, so stop exec scan ...")
-			return nil
-		default:
-		}
-		n, err := con.Read(data[:])
-		if err != nil {
-			if err != io.EOF {
-				klog.Errorf("%v failed to write exec data, err:%v", e.String(), err)
+	go func() {
+		defer close(e.ReadChan)
+
+		var data [256]byte
+		for {
+			n, err := con.Read(data[:])
+			if err != nil {
+				if err != io.EOF {
+					klog.Errorf("%v failed to write exec data, err:%v", e.String(), err)
+				}
+				return
 			}
-			break
+			msg := NewMessage(e.MessID, MessageTypeData, data[:n])
+			if err := tunnel.WriteMessage(msg); err != nil {
+				klog.Errorf("%v failed to write to tunnel, msg: %+v, err: %v", e.String(), msg, err)
+				return
+			}
+			klog.V(6).Infof("%v write exec data %v", e.String(), data[:n])
 		}
-		if n <= 0 {
-			continue
-		}
-		msg := NewMessage(e.MessID, MessageTypeData, data[:n])
-		if err := tunnel.WriteMessage(msg); err != nil {
-			klog.Errorf("%v failed to write to tunnel, msg: %+v, err: %v", e.String(), msg, err)
-			return err
-		}
-		klog.V(6).Infof("%v write exec data %v", e.String(), data[:n])
-	}
+	}()
+
+	<-stop
+	klog.V(6).Infof("receive stop single, so stop exec scan ...")
 	return nil
 }
 
