@@ -3,6 +3,7 @@ package listener
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -76,9 +77,14 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 		return err
 	}
 	go func(message *model.Message) {
-		_, err := handler(message)
+		resp, err := handler(message)
 		if err != nil {
 			klog.Errorf("handle message occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
+		}
+		if resp != nil {
+			if err = resp.(*http.Response).Body.Close(); err != nil {
+				klog.Errorf("close response occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
+			}
 		}
 	}(message)
 
