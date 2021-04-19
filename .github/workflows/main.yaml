@@ -67,8 +67,6 @@ jobs:
 
       - run: make
 
-      - run: make bluetoothdevice
-
       - run: make smallbuild
 
       - run: make crossbuild
@@ -196,5 +194,3 @@ jobs:
       - run: make edgeimage ARCH="amd64"
 
       - run: make edgesiteimage ARCH="amd64"
-
-      - run: make bluetoothdevice_image
