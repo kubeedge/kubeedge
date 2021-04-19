@@ -1,6 +1,9 @@
 package status
 
 import (
+	"context"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -12,9 +15,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/status"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 
-	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
 
 // manager as status manager, embedded a k8s.io/kubernetes/pkg/kubelet/status.Manager
@@ -24,16 +25,14 @@ type manager struct {
 	// TODO: consider need lock?
 	podManager        podmanager.Manager
 	apiStatusVersions map[types.UID]*v1.PodStatus
-	metaClient        client.CoreInterface
 	podDeletionSafety status.PodDeletionSafetyProvider
 }
 
 //NewManager creates and returns a new manager object
-func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider, metaClient client.CoreInterface) status.Manager {
+func NewManager(kubeClient clientset.Interface, podManager podmanager.Manager, podDeletionSafety status.PodDeletionSafetyProvider) status.Manager {
 	kubeManager := status.NewManager(kubeClient, podManager, podDeletionSafety)
 	return &manager{
 		Manager:           kubeManager,
-		metaClient:        metaClient,
 		podManager:        podManager,
 		apiStatusVersions: make(map[types.UID]*v1.PodStatus),
 		podDeletionSafety: podDeletionSafety,
@@ -64,7 +63,7 @@ func (m *manager) updatePodStatus() {
 		if !ok {
 			// We don't handle graceful deletion of mirror pods.
 			if m.canBeDeleted(pod, podStatus) {
-				err := m.metaClient.Pods(pod.Namespace).Delete(pod.Name, string(pod.UID))
+				err := client.GetKubeClient().CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metaV1.DeleteOptions{})
 				if err != nil {
 					klog.Warningf("Failed to delete status for pod %q: %v", format.Pod(pod), err)
 				} else {
@@ -109,7 +108,9 @@ func (m *manager) updatePodStatus() {
 			}
 		}
 
-		err := m.metaClient.PodStatus(pod.Namespace).Update(pod.Name, edgeapi.PodStatusRequest{UID: pod.UID, Name: pod.Name, Status: s})
+		updatePod := pod.DeepCopy()
+		updatePod.Status = s
+		_, err := client.GetKubeClient().CoreV1().Pods(pod.Namespace).UpdateStatus(context.TODO(), updatePod, metaV1.UpdateOptions{})
 		if err != nil {
 			klog.Errorf("Update pod status failed err :%v", err)
 		}

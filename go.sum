@@ -1026,6 +1026,7 @@ gopkg.in/mcuadros/go-syslog.v2 v2.2.1/go.mod h1:l5LPIyOOyIdQquNg+oU6Z3524YwrcqEm
 gopkg.in/natefinch/lumberjack.v2 v2.0.0 h1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=
 gopkg.in/natefinch/lumberjack.v2 v2.0.0/go.mod h1:l0ndWWf7gzL7RNwBG7wST/UCcT4T24xpD6X8LsfU/+k=
 gopkg.in/resty.v1 v1.12.0/go.mod h1:mDo4pnntr5jdWRML875a/NmxYqAlA73dVijT2AXvQQo=
+gopkg.in/square/go-jose.v2 v2.2.2 h1:orlkJ3myw8CN1nVQHBFfloD+L3egixIa4FvUP6RosSA=
 gopkg.in/square/go-jose.v2 v2.2.2/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76mk0e1AI=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
@@ -1088,6 +1089,7 @@ k8s.io/kube-proxy v0.19.3 h1:SOuYg04vobQ89pL9UuSzadaCF18H4gtltekL4aRXkiQ=
 k8s.io/kube-proxy v0.19.3/go.mod h1:ZM9t3p+YkwOt/D8gnXOeu9MeVVgbzE0JGnqSnNmwsPY=
 k8s.io/kube-scheduler v0.19.3 h1:BG/Yo76YG5cZNgNGMX7dDDtI9couQbsWe6YUQJNgvM8=
 k8s.io/kube-scheduler v0.19.3/go.mod h1:E/JO0m9xwbbo2qqo13OZupXOvHTrbOFscLSnOMC5TBM=
+k8s.io/kubectl v0.19.3 h1:T8IHHpg+uRIfn34wqJ8wHG5bbH+VV5FNPtJ+jKcho1U=
 k8s.io/kubectl v0.19.3/go.mod h1:t5cscfrAuHUvEGNyNJjPKt+rGlaJzk8jrKYHXxEsANE=
 k8s.io/kubelet v0.19.3 h1:mSo/inwQWEqsGjFjgTCknBmmDrjqx/5y1ATSE/ddpOI=
 k8s.io/kubelet v0.19.3/go.mod h1:gRjfQnN+WlckrkPU1s2wGyFE/sV9hmI/ejeQ8XqlhS4=

@@ -25,8 +25,10 @@ package edged
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/kubernetes/test/e2e/framework"
 	"net"
 	"net/http"
 	"os"
@@ -44,7 +46,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
-	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	recordtools "k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/flowcontrol"
@@ -94,25 +95,21 @@ import (
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
 	"k8s.io/utils/mount"
 
-	"github.com/kubeedge/beehive/pkg/common/util"
 	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	edgecadvisor "github.com/kubeedge/kubeedge/edge/pkg/edged/cadvisor"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/clcm"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	fakekube "github.com/kubeedge/kubeedge/edge/pkg/edged/fake"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/podmanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/server"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/status"
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -194,7 +191,6 @@ type edged struct {
 	podManager         podmanager.Manager
 	pleg               pleg.PodLifecycleEventGenerator
 	statusManager      kubestatus.Manager
-	kubeClient         clientset.Interface
 	probeManager       prober.Manager
 	livenessManager    proberesults.Manager
 	startupManager     proberesults.Manager
@@ -205,7 +201,6 @@ type edged struct {
 	podDeletionBackoff *flowcontrol.Backoff
 	imageGCManager     images.ImageGCManager
 	containerGCManager kubecontainer.GC
-	metaClient         client.CoreInterface
 	volumePluginMgr    *volume.VolumePluginMgr
 	mounter            mount.Interface
 	hostUtil           hostutil.HostUtils
@@ -295,14 +290,14 @@ func (e *edged) Start() {
 	}
 	e.hostUtil = hostutil.NewHostUtil()
 
-	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(e.kubeClient)
+	e.configMapManager = klconfigmap.NewSimpleConfigMapManager(client.GetKubeClient())
 
 	e.volumeManager = volumemanager.NewVolumeManager(
 		true,
 		types.NodeName(e.nodeName),
 		e.podManager,
 		e.statusManager,
-		e.kubeClient,
+		client.GetKubeClient(),
 		e.volumePluginMgr,
 		e.containerRuntime,
 		e.mounter,
@@ -357,7 +352,6 @@ func (e *edged) Start() {
 	e.logManager.Start()
 	stopChan := make(chan struct{})
 	e.runtimeClassManager.Start(stopChan)
-	klog.Infof("starting syncPod")
 	e.syncPod()
 }
 
@@ -428,8 +422,6 @@ func newEdged(enable bool) (*edged, error) {
 	// build new object to match interface
 	recorder := record.NewEventRecorder()
 
-	metaClient := client.New()
-
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
@@ -443,8 +435,6 @@ func newEdged(enable bool) (*edged, error) {
 		podAdditionBackoff:        backoff,
 		podDeletionQueue:          workqueue.New(),
 		podDeletionBackoff:        backoff,
-		metaClient:                metaClient,
-		kubeClient:                fakekube.NewSimpleClientset(metaClient),
 		nodeStatusUpdateFrequency: time.Duration(edgedconfig.Config.NodeStatusUpdateFrequency) * time.Second,
 		mounter:                   mount.New(""),
 		uid:                       types.UID("38796d14-1df3-11e8-8e5a-286ed488f209"),
@@ -457,7 +447,8 @@ func newEdged(enable bool) (*edged, error) {
 		recorder:                  recorder,
 		enable:                    enable,
 	}
-	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
+	ed.runtimeClassManager = runtimeclass.NewManager(client.GetKubeClient())
+
 	err := ed.makePodDir()
 	if err != nil {
 		klog.Errorf("create pod dir [%s] failed: %v", ed.getPodsDir(), err)
@@ -665,7 +656,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod)
 
-	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, ed, ed.metaClient)
+	ed.statusManager = status.NewManager(client.GetKubeClient(), ed.podManager, ed)
 
 	if useLegacyCadvisorStats {
 		ed.StatsProvider = stats.NewCadvisorStatsProvider(
@@ -1037,101 +1028,173 @@ func (e *edged) consumePodDeletion(namespacedName *types.NamespacedName) error {
 func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
-	//when starting, send msg to metamanager once to get existing pods
-	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
-		model.QueryOperation)
-	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("Sync pod stop")
-			return
-		default:
-		}
-		result, err := beehiveContext.Receive(e.Name())
-		if err != nil {
-			klog.Errorf("failed to get pod: %v", err)
-			continue
-		}
+	//start to sync resources: pod, configmap, secret, volume
+	//sync pod
+	err := e.initPod()
+	if err != nil {
+		klog.Errorf("failed to init pod: %v", err)
+	}
+	podWatch, err :=client.GetKubeClient().CoreV1().Pods(e.namespace).Watch(context.TODO(), metav1.ListOptions{Watch: true})
+	if err != nil {
+		klog.Errorf("failed to watch pod: %v", err)
+		return
+	}
+	e.syncProcess(podWatch, model.ResourceTypePod)
 
-		_, resType, resID, err := util.ParseResourceEdge(result.GetResource(), result.GetOperation())
-		if err != nil {
-			klog.Errorf("failed to parse the Resource: %v", err)
-			continue
-		}
-		op := result.GetOperation()
+	//sync configmap
+	configmapWatch, err := client.GetKubeClient().CoreV1().ConfigMaps(e.namespace).Watch(context.TODO(), metav1.ListOptions{Watch: true})
+	if err != nil {
+		klog.Errorf("failed to watch configMap: %v", err)
+		return
+	}
+	e.syncProcess(configmapWatch, model.ResourceTypeConfigmap)
 
-		var content []byte
+	//sync secret
+	secretWatch, err := client.GetKubeClient().CoreV1().Secrets(e.namespace).Watch(context.TODO(), metav1.ListOptions{Watch: true})
+	if err != nil {
+		klog.Errorf("failed to watch secret: %v", err)
+		return
+	}
+	e.syncProcess(secretWatch, model.ResourceTypeSecret)
 
-		switch result.Content.(type) {
-		case []byte:
-			content = result.GetContent().([]byte)
-		default:
-			content, err = json.Marshal(result.Content)
-			if err != nil {
-				klog.Errorf("marshal message content failed: %v", err)
-				continue
-			}
+	//sync volume
+	// TODO:
+
+}
+
+func (e *edged)initPod() error{
+	pods, err := client.GetKubeClient().CoreV1().Pods(e.namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, p := range pods.Items {
+		if e.IsEdgeNode(p.Spec.NodeName) {
+			e.addPod(&p)
 		}
-		klog.Infof("result content is %s", result.Content)
-		switch resType {
-		case model.ResourceTypePod:
-			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
-				err := e.handlePodListFromMetaManager(content)
-				if err != nil {
-					klog.Errorf("handle podList failed: %v", err)
-					continue
-				}
-				e.setInitPodReady(true)
-			} else if op == model.ResponseOperation && resID == "" && result.GetSource() == EdgeController {
-				err := e.handlePodListFromEdgeController(content)
-				if err != nil {
-					klog.Errorf("handle controllerPodList failed: %v", err)
-					continue
-				}
-				e.setInitPodReady(true)
-			} else {
-				err := e.handlePod(op, content)
-				if err != nil {
-					klog.Errorf("handle pod failed: %v", err)
-					continue
-				}
-			}
-		case model.ResourceTypeConfigmap:
-			if op != model.ResponseOperation {
-				err := e.handleConfigMap(op, content)
-				if err != nil {
-					klog.Errorf("handle configMap failed: %v", err)
-				}
-			} else {
-				klog.Infof("skip to handle configMap with type response")
-				continue
-			}
-		case model.ResourceTypeSecret:
-			if op != model.ResponseOperation {
-				err := e.handleSecret(op, content)
-				if err != nil {
-					klog.Errorf("handle secret failed: %v", err)
-				}
-			} else {
-				klog.Infof("skip to handle secret with type response")
-				continue
-			}
-		case constants.CSIResourceTypeVolume:
-			klog.Infof("volume operation type: %s", op)
-			res, err := e.handleVolume(op, content)
-			if err != nil {
-				klog.Errorf("handle volume failed: %v", err)
-			} else {
-				resp := result.NewRespByMessage(&result, res)
-				beehiveContext.SendResp(*resp)
-			}
-		default:
-			klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
-			continue
+		if err = e.updatePodStatus(&p); err != nil {
+			klog.Errorf("update pod %s status error", p.Name)
+			return err
 		}
 	}
+	e.setInitPodReady(true)
+	return nil
 }
+
+func (e *edged)IsEdgeNode(name string) bool {
+	if name == e.nodeName {
+		return true
+	}else {
+		return false
+	}
+}
+
+func (e *edged)syncProcess(w watch.Interface, resType string)  {
+	switch resType {
+	case model.ResourceTypePod:
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+		for {
+			select {
+			case event := <-w.ResultChan():
+				op := event.Type
+				pod, ok := event.Object.(*v1.Pod)
+				if !ok {
+					framework.Failf("Expect event Object to be a pod")
+				}
+				klog.Infof("receive a pod event, podName: %s, option: %s", pod.Name, op)
+				switch op {
+				case watch.Added:
+					e.addPod(pod)
+				case watch.Modified:
+					e.updatePod(pod)
+				case watch.Deleted:
+					if delPod, ok := e.podManager.GetPodByName(pod.Namespace, pod.Name); ok {
+						e.deletePod(delPod)
+					}
+				}
+			case <-stopCh:
+				return
+			}
+		}
+	case model.ResourceTypeConfigmap:
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+		for {
+			select {
+			case event := <-w.ResultChan():
+				op := event.Type
+				configMap, ok := event.Object.(*v1.ConfigMap)
+				if !ok {
+					framework.Failf("Expect event Object to be a configmap")
+				}
+				_, exists, err := e.configMapStore.Get(&configMap)
+
+				klog.Infof("receive a configmap event, comfigmapName: %s, option: %s", configMap.Name, op)
+				switch op {
+				case watch.Added:
+					err = e.configMapStore.Add(configMap)
+				case watch.Modified:
+					if exists {
+						err = e.configMapStore.Update(configMap)
+					}
+				case watch.Deleted:
+					if exists {
+						err = e.configMapStore.Delete(configMap)
+					}
+				}
+				if err == nil {
+					klog.Infof("%s configMap [%s] for cache success.", op, configMap.Name)
+				}
+
+			case <-stopCh:
+				return
+			}
+		}
+
+	case model.ResourceTypeSecret:
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+		for {
+			select {
+			case event := <-w.ResultChan():
+				op := event.Type
+				podSecret, ok := event.Object.(*v1.Secret)
+				if !ok {
+					framework.Failf("Expect event Object to be a secret")
+				}
+				_, exists, err := e.secretStore.Get(podSecret)
+
+				klog.Infof("receive a secret event, secretName: %s, option: %s", podSecret.Name, op)
+				switch op {
+				case watch.Added:
+					err = e.configMapStore.Add(podSecret)
+				case watch.Modified:
+					if exists {
+						err = e.secretStore.Update(podSecret)
+					}
+				case watch.Deleted:
+					if exists {
+						err = e.secretStore.Delete(podSecret)
+					}
+				}
+				if err == nil {
+					klog.Infof("%s secret [%s] for cache success.", op, podSecret.Name)
+				}
+
+			case <-stopCh:
+				return
+			}
+		}
+
+	case constants.CSIResourceTypeVolume:
+		// TODO:
+
+	default:
+		klog.Errorf("resType is not pod or configmap or secret or volume: esType is %s", resType)
+
+	}
+}
+
 
 func (e *edged) handleVolume(op string, content []byte) (interface{}, error) {
 	switch op {
@@ -1220,62 +1283,6 @@ func (e *edged) controllerUnpublishVolume(content []byte) (interface{}, error) {
 	return res, nil
 }
 
-func (e *edged) handlePod(op string, content []byte) (err error) {
-	var pod v1.Pod
-	err = json.Unmarshal(content, &pod)
-	if err != nil {
-		return err
-	}
-
-	switch op {
-	case model.InsertOperation:
-		e.addPod(&pod)
-	case model.UpdateOperation:
-		e.updatePod(&pod)
-	case model.DeleteOperation:
-		if delPod, ok := e.podManager.GetPodByName(pod.Namespace, pod.Name); ok {
-			e.deletePod(delPod)
-		}
-	}
-	return nil
-}
-
-func (e *edged) handlePodListFromMetaManager(content []byte) (err error) {
-	var lists []string
-	err = json.Unmarshal([]byte(content), &lists)
-	if err != nil {
-		return err
-	}
-
-	for _, list := range lists {
-		var pod v1.Pod
-		err = json.Unmarshal([]byte(list), &pod)
-		if err != nil {
-			return err
-		}
-		e.addPod(&pod)
-		if err = e.updatePodStatus(&pod); err != nil {
-			klog.Errorf("handlePodListFromMetaManager: update pod %s status error", pod.Name)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (e *edged) handlePodListFromEdgeController(content []byte) (err error) {
-	var lists []v1.Pod
-	if err := json.Unmarshal(content, &lists); err != nil {
-		return err
-	}
-
-	for _, list := range lists {
-		e.addPod(&list)
-	}
-
-	return nil
-}
-
 func (e *edged) addPod(obj interface{}) {
 	pod := obj.(*v1.Pod)
 	klog.Infof("start sync addition for pod [%s]", pod.Name)
@@ -1324,7 +1331,7 @@ func (e *edged) deletePod(obj interface{}) {
 func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
 	var secrets []v1.Secret
 	for _, imagePullSecret := range pod.Spec.ImagePullSecrets {
-		secret, err := e.metaClient.Secrets(pod.Namespace).Get(imagePullSecret.Name)
+		secret, err := client.GetKubeClient().CoreV1().Secrets(pod.Namespace).Get(context.TODO(), imagePullSecret.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -1352,56 +1359,6 @@ func (e *edged) getPodsToSync() []*v1.Pod {
 		}
 	}
 	return podsToSync
-}
-
-func (e *edged) handleConfigMap(op string, content []byte) (err error) {
-	var configMap v1.ConfigMap
-	err = json.Unmarshal(content, &configMap)
-	if err != nil {
-		return
-	}
-	_, exists, _ := e.configMapStore.Get(&configMap)
-	switch op {
-	case model.InsertOperation:
-		err = e.configMapStore.Add(&configMap)
-	case model.UpdateOperation:
-		if exists {
-			err = e.configMapStore.Update(&configMap)
-		}
-	case model.DeleteOperation:
-		if exists {
-			err = e.configMapStore.Delete(&configMap)
-		}
-	}
-	if err == nil {
-		klog.Infof("%s configMap [%s] for cache success.", op, configMap.Name)
-	}
-	return
-}
-
-func (e *edged) handleSecret(op string, content []byte) (err error) {
-	var podSecret v1.Secret
-	err = json.Unmarshal(content, &podSecret)
-	if err != nil {
-		return
-	}
-	_, exists, _ := e.secretStore.Get(&podSecret)
-	switch op {
-	case model.InsertOperation:
-		err = e.secretStore.Add(&podSecret)
-	case model.UpdateOperation:
-		if exists {
-			err = e.secretStore.Update(&podSecret)
-		}
-	case model.DeleteOperation:
-		if exists {
-			err = e.secretStore.Delete(&podSecret)
-		}
-	}
-	if err == nil {
-		klog.Infof("%s secret [%s] for cache success.", op, podSecret.Name)
-	}
-	return
 }
 
 // ProbeVolumePlugins collects all volume plugins into an easy to use list.

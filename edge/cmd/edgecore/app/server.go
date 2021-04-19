@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"os"
 
 	"github.com/mitchellh/go-ps"
@@ -94,6 +95,7 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 				config.Modules.Edged.NodeIP = localIP
 			}
 
+			client.InitKubeEdgeClient()
 			registerModules(config)
 			// start all modules
 			core.Run()

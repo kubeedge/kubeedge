@@ -23,7 +23,9 @@ Changes done are
 package edged
 
 import (
+	"context"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -417,7 +419,9 @@ func (e *edged) updateNodeStatus() error {
 		return err
 	}
 
-	err = e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *nodeStatus)
+	node, err := client.GetKubeClient().CoreV1().Nodes().Get(context.TODO(), e.nodeName, metav1.GetOptions{})
+	node.Status = nodeStatus.Status
+	_, err = client.GetKubeClient().CoreV1().Nodes().UpdateStatus(context.TODO(), node, metav1.UpdateOptions{})
 	if err != nil {
 		klog.Errorf("update node failed, error: %v", err)
 	}
