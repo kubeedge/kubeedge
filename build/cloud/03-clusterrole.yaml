@@ -27,3 +27,6 @@ rules:
 - apiGroups: ["reliablesyncs.kubeedge.io"]
   resources: ["objectsyncs", "clusterobjectsyncs", "objectsyncs/status", "clusterobjectsyncs/status"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["rules.kubeedge.io"]
+  resources: ["rules", "ruleendpoints", "rules/status", "ruleendpoints/status"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

@@ -411,6 +411,12 @@ func (e *edged) cgroupRoots() []string {
 
 //newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
+	// skip init edged if disabled
+	if !enable {
+		return &edged{
+			enable: enable,
+		}, nil
+	}
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
 
 	podManager := podmanager.NewPodManager()
@@ -748,13 +754,6 @@ func (e *edged) initializeModules() error {
 
 func (e *edged) StartGarbageCollection() {
 	go utilwait.Until(func() {
-		err := e.imageGCManager.GarbageCollect()
-		if err != nil {
-			klog.Errorf("Image garbage collection failed: %v", err)
-		}
-	}, ImageGCPeriod, utilwait.NeverStop)
-
-	go utilwait.Until(func() {
 		if e.isInitPodReady() {
 			err := e.containerGCManager.GarbageCollect()
 			if err != nil {
@@ -762,6 +761,18 @@ func (e *edged) StartGarbageCollection() {
 			}
 		}
 	}, ContainerGCPeriod, utilwait.NeverStop)
+
+	if edgedconfig.Config.ImageGCHighThreshold == 100 {
+		klog.Infof("ImageGCHighThreshold is set 100, Disable image GC")
+		return
+	}
+
+	go utilwait.Until(func() {
+		err := e.imageGCManager.GarbageCollect()
+		if err != nil {
+			klog.Errorf("Image garbage collection failed: %v", err)
+		}
+	}, ImageGCPeriod, utilwait.NeverStop)
 }
 
 func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, housekeepingCh <-chan time.Time, syncWorkQueueCh <-chan time.Time) {

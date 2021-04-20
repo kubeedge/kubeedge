@@ -33,54 +33,51 @@ func BuildResourceForRouter(resourceType, resourceID string) (string, error) {
 	return fmt.Sprintf("%s%s%s", resourceType, constants.ResourceSep, resourceID), nil
 }
 
+// getElementByIndex returns a string from "beehive/pkg/core/model".Message.Router.Resource by index
+func getElementByIndex(msg model.Message, index int) string {
+	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
+	if len(sli) <= index {
+		return ""
+	}
+	return sli[index]
+}
+
 // GetNodeID from "beehive/pkg/core/model".Message.Router.Resource
 func GetNodeID(msg model.Message) (string, error) {
-	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= controller.ResourceNodeIDIndex {
+	res := getElementByIndex(msg, controller.ResourceNodeIDIndex)
+	if res == "" {
 		return "", fmt.Errorf("node id not found")
 	}
-	return sli[controller.ResourceNodeIDIndex], nil
+	klog.V(4).Infof("The node id %s, %d", res, controller.ResourceNodeIDIndex)
+	return res, nil
 }
 
 // GetNamespace from "beehive/pkg/core/model".Model.Router.Resource
 func GetNamespace(msg model.Message) (string, error) {
-	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= controller.ResourceNamespaceIndex {
+	res := getElementByIndex(msg, controller.ResourceNamespaceIndex)
+	if res == "" {
 		return "", fmt.Errorf("namespace not found")
 	}
-
-	res := sli[controller.ResourceNamespaceIndex]
-	index := controller.ResourceNamespaceIndex
-
-	klog.V(4).Infof("The namespace is %s, %d", res, index)
+	klog.V(4).Infof("The namespace %s, %d", res, controller.ResourceNamespaceIndex)
 	return res, nil
 }
 
 // GetResourceType from "beehive/pkg/core/model".Model.Router.Resource
 func GetResourceType(msg model.Message) (string, error) {
-	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-	if len(sli) <= controller.ResourceResourceTypeIndex {
+	res := getElementByIndex(msg, controller.ResourceResourceTypeIndex)
+	if res == "" {
 		return "", fmt.Errorf("resource type not found")
 	}
-
-	res := sli[controller.ResourceResourceTypeIndex]
-	index := controller.ResourceResourceTypeIndex
-
-	klog.V(4).Infof("The resource type is %s, %d", res, index)
+	klog.V(4).Infof("The resource type is %s, %d", res, controller.ResourceResourceTypeIndex)
 	return res, nil
 }
 
 // GetResourceName from "beehive/pkg/core/model".Model.Router.Resource
 func GetResourceName(msg model.Message) (string, error) {
-	sli := strings.Split(msg.GetResource(), constants.ResourceSep)
-
-	if len(sli) <= controller.ResourceResourceNameIndex {
+	res := getElementByIndex(msg, controller.ResourceResourceNameIndex)
+	if res == "" {
 		return "", fmt.Errorf("resource name not found")
 	}
-
-	res := sli[controller.ResourceResourceNameIndex]
-	index := controller.ResourceResourceNameIndex
-
-	klog.V(4).Infof("The resource name is %s, %d", res, index)
+	klog.V(4).Infof("The resource name is %s, %d", res, controller.ResourceResourceNameIndex)
 	return res, nil
 }

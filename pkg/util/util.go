@@ -33,10 +33,11 @@ import (
 
 func GetLocalIP(hostName string) (string, error) {
 	var ipAddr net.IP
-	addrs, err := net.LookupIP(hostName)
-	if err != nil {
-		return "", err
-	}
+	var err error
+
+	// If looks up host failed, will use utilnet.ChooseHostInterface() below,
+	// So ignore the error here
+	addrs, _ := net.LookupIP(hostName)
 	for _, addr := range addrs {
 		if err := ValidateNodeIP(addr); err != nil {
 			continue
@@ -49,6 +50,7 @@ func GetLocalIP(hostName string) (string, error) {
 			ipAddr = addr
 		}
 	}
+
 	if ipAddr == nil {
 		ipAddr, err = utilnet.ChooseHostInterface()
 		if err != nil {

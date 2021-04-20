@@ -53,7 +53,7 @@ func (dctl *DynamicController) Group() string {
 	return modules.DynamicControllerModuleGroup
 }
 
-// Group of controller
+// Enable of controller
 func (dctl *DynamicController) Enable() bool {
 	return dctl.enable
 }
