@@ -15,6 +15,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
@@ -138,22 +139,27 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte("read request body error"))
 		}
 		klog.Infof("request body is %s\n", string(body))
+		common.Infof("request body is %s", string(body))
 		err = json.Unmarshal(body, &Content)
 		if err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
 			w.Write([]byte("unmarshal request body error"))
 		}
+		resource := "membership"
 		switch req.Method {
 		case http.MethodPost:
 			operation = model.InsertOperation
 		case http.MethodDelete:
-			operation = model.DeleteOperation
+			operation = model.DeleteOperation // 修改
+			resource = "membership/deleted"
 		case http.MethodPut:
 			operation = model.UpdateOperation
+			resource = "membership/added"
 		}
-		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
+		msgReq := message.BuildMsg("edgehub", "", "edgemgr", resource, operation, Content)
 		beehiveContext.Send("twin", *msgReq)
-		klog.Infof("send message to twingrp is %+v\n", msgReq)
+		common.Infof("send message to twin group succeed")
+		klog.Infof("send message to twin group is %+v\n", msgReq)
 	}
 }
 

@@ -18,6 +18,7 @@ package device_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -373,6 +374,7 @@ var _ = Describe("Event Bus Testing", func() {
 			//Add twin attribute
 			AddTwinAttribute(&device, "Temperature", "50.50", "float")
 
+			fmt.Printf("HHHHHHHHHHHHHHHHHHHHHHH test test")
 			IsDeviceAdded := HandleAddAndDeleteDevice(http.MethodPut, ctx.Cfg.TestManager+Devicehandler, device)
 			Expect(IsDeviceAdded).Should(BeTrue())
 

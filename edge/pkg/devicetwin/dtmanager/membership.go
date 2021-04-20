@@ -3,6 +3,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -70,6 +71,7 @@ func initMemActionCallBack() {
 }
 
 func dealMembershipAdd(context *dtcontext.DTContext, identity string, msg interface{}) (interface{}, error) {
+	fmt.Printf("receive add device message")
 	klog.Infof("Membership event")
 	message, ok := msg.(*model.Message)
 	if !ok {
@@ -139,6 +141,7 @@ func dealMembershipGet(context *dtcontext.DTContext, identity string, msg interf
 func addDevice(context *dtcontext.DTContext, device v1alpha2.Device) {
 	klog.Infof("Add devices to edge group")
 	dealType := SyncDealType
+	fmt.Printf("############################## device is %v", device)
 
 	uniqueKey := dtcommon.GenerateDeviceID(&device)
 	_, isDeviceExist := context.GetDevice(uniqueKey)

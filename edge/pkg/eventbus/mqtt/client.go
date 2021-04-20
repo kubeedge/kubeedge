@@ -49,8 +49,7 @@ var (
 	SubTopics = []string{
 		"$hw/events/upload/#",
 		"$hw/events/device/+/state/update", //设备状态，这个地方也应该加上namespace，下面这个topic也同样需要
-		"$hw/events/device/+/twin/+",
-		"$hw/events/device/+/+/twin/+", // 携带namespace的topic
+		"$hw/events/device/+/+/twin/+",     // 携带namespace的topic
 		"$hw/events/node/+/membership/get",
 		UploadTopic,
 		"+/user/#",

@@ -108,13 +108,13 @@ func AddTwinAttribute(device *v1alpha2.Device, attributeName string, attributeVa
 	twin := v1alpha2.Twin{
 		PropertyName: attributeName,
 		Reported: v1alpha2.TwinProperty{
-			Value:    attributeValue,
+			Value: attributeValue,
 			Metadata: map[string]string{
 				"type": attributeType,
 			},
 		},
 		Desired: v1alpha2.TwinProperty{
-			Value:    attributeValue,
+			Value: attributeValue,
 			Metadata: map[string]string{
 				"type": attributeType,
 			},
@@ -159,7 +159,6 @@ func GetTwinAttributesFromDB(deviceID string, Name string) TwinAttribute {
 	row, err := db.Query("SELECT * FROM device_twin")
 	defer row.Close()
 
-	common.Infof("AAAAAAAAAAAAAAAAAAAAAA")
 	for row.Next() {
 		err = row.Scan(&twinAttribute.ID,
 			&twinAttribute.DeviceName,

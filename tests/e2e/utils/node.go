@@ -208,7 +208,7 @@ func GetConfigmap(apiConfigMap string) (int, []byte) {
 		Fatalf("Sending SenHttpRequest failed: %v", err)
 		return -1, nil
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	return resp.StatusCode, body
 }

@@ -485,6 +485,11 @@ func NewModbusDeviceInstance(nodeSelector string) v1alpha2.Device {
 					},
 				},
 			},
+			Protocol: v1alpha2.ProtocolConfig{
+				Modbus: &v1alpha2.ProtocolConfigModbus{
+					SlaveID: 1,
+				},
+			},
 			PropertyVisitors: propertyVisitors,
 		},
 		Status: v1alpha2.DeviceStatus{
@@ -1386,7 +1391,7 @@ func NewConfigMapBluetooth(nodeSelector string) v12.ConfigMap {
 	}
 	deviceProfile.Protocols = []*types.Protocol{
 		{
-			Name:     "bluetooth-sensor-tag-instance-01",
+			Name:     "bluetooth-default/sensor-tag-instance-01",
 			Protocol: "bluetooth",
 			ProtocolConfig: v1alpha2.ProtocolConfigBluetooth{
 				MACAddress: "BC:6A:29:AE:CC:96",
@@ -1462,13 +1467,18 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 						// 需要保存propertyVisitors这个参数
 					},
 				},
+				Protocol: v1alpha2.ProtocolConfig{
+					Modbus: &v1alpha2.ProtocolConfigModbus{
+						SlaveID: 1,
+					},
+				},
 			},
 			Status: v1alpha2.DeviceStatus{
 				Twins: []v1alpha2.Twin{
 					{
-						PropertyName: "io-data",
+						PropertyName: "temperature-enable",
 						Desired: v1alpha2.TwinProperty{
-							Value: "off",
+							Value: "OFF",
 							Metadata: map[string]string{
 								"type": "string",
 							},
@@ -1509,7 +1519,12 @@ func NewConfigMapModbus(nodeSelector string) v12.ConfigMap {
 	}
 	deviceProfile.Protocols = []*types.Protocol{
 		{
-			ProtocolConfig: nil,
+			Name:     "modbus-default/sensor-tag-instance-02",
+			Protocol: "modbus",
+			ProtocolConfig: &v1alpha2.ProtocolConfigModbus{
+				SlaveID: 1,
+			},
+			ProtocolCommonConfig: nil,
 		},
 	}
 
@@ -1758,7 +1773,7 @@ func NewConfigMapCustomized(nodeSelector string) v12.ConfigMap {
 	}
 	deviceProfile.Protocols = []*types.Protocol{
 		{
-			Name:     "customized-protocol-sensor-tag-customized-instance-01",
+			Name:     "customized-protocol-default/sensor-tag-customized-instance-01",
 			Protocol: "customized-protocol",
 			ProtocolConfig: &v1alpha2.ProtocolConfigCustomized{
 				ProtocolName: "CustomizedProtocol1",
