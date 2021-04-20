@@ -522,11 +522,10 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins []*v1al
 			Err:        errors.New("invalid device id")}
 	}
 
-	twins := device.Status.Twins
-	if twins == nil {
+	if device.Status.Twins == nil {
 		device.Status.Twins = make([]v1alpha2.Twin, 0)
-		twins = device.Status.Twins
 	}
+	twins := &device.Status.Twins
 
 	var err error
 
@@ -539,18 +538,18 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins []*v1al
 				klog.Infof("Not found metadata of twin")
 			}
 			if dealType >= SyncDealType && strings.Compare(msgTwin.Desired.Metadata["type"], "deleted") == 0 {
-				err = dealTwinDelete(&returnResult, deviceID, &twins, msgTwin, dealType)
+				err = dealTwinDelete(&returnResult, deviceID, twins, msgTwin, dealType)
 				if err != nil {
 					return returnResult
 				}
 				continue
 			}
-			err = dealTwinCompare(&returnResult, deviceID, &twins, msgTwin, dealType)
+			err = dealTwinCompare(&returnResult, deviceID, twins, msgTwin, dealType)
 			if err != nil {
 				return returnResult
 			}
 		} else {
-			err = dealTwinAdd(&returnResult, deviceID, &twins, msgTwin, dealType)
+			err = dealTwinAdd(&returnResult, deviceID, twins, msgTwin, dealType)
 			if err != nil {
 				return returnResult
 			}
@@ -560,8 +559,8 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins []*v1al
 	return returnResult
 }
 
-func isExist(propertyName string, twins []v1alpha2.Twin) (bool, *v1alpha2.Twin) {
-	for _, value := range twins {
+func isExist(propertyName string, twins *[]v1alpha2.Twin) (bool, *v1alpha2.Twin) {
+	for _, value := range *twins {
 		if value.PropertyName == propertyName {
 			return true, &value
 		}

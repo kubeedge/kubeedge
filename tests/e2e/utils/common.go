@@ -43,6 +43,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
 
@@ -68,7 +69,7 @@ var (
 var TokenClient Token
 var ClientOpts *MQTT.ClientOptions
 var Client MQTT.Client
-var TwinResult DeviceTwinResult
+var TwinResult v1alpha2.Device
 
 // Token interface to validate the MQTT connection.
 type Token interface {
@@ -807,7 +808,7 @@ func MqttConnect() error {
 }
 
 // ChangeTwinValue sends the updated twin value to the edge through the MQTT broker
-func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
+func ChangeTwinValue(updateMessage v1alpha2.Device, deviceID string) error {
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
 		return errors.New("Error in marshalling: %s" + err.Error())
@@ -821,7 +822,7 @@ func ChangeTwinValue(updateMessage DeviceTwinUpdate, deviceID string) error {
 }
 
 // GetTwin function is used to get the device twin details from the edge
-func GetTwin(updateMessage DeviceTwinUpdate, deviceID string) error {
+func GetTwin(updateMessage v1alpha2.Device, deviceID string) error {
 	getTwin := DeviceETPrefix + deviceID + TwinETGetSuffix
 	twinUpdateBody, err := json.Marshal(updateMessage)
 	if err != nil {
@@ -840,15 +841,17 @@ func TwinSubscribe(deviceID string) {
 	TokenClient = Client.Subscribe(getTwinResult, 0, OnTwinMessageReceived)
 	if TokenClient.Wait() && TokenClient.Error() != nil {
 		Errorf("subscribe() Error in device twin result get  is %v", TokenClient.Error().Error())
+		common.Infof("subscribe() Error in device twin result get  is %v", TokenClient.Error().Error())
 	}
 	for {
-		twin := DeviceTwinUpdate{}
+		twin := v1alpha2.Device{}
 		err := GetTwin(twin, deviceID)
 		if err != nil {
 			Errorf("Error in getting device twin: %v", err.Error())
+			common.Infof("Error in getting device twin: %v", err.Error())
 		}
 		time.Sleep(1 * time.Second)
-		if TwinResult.Twin != nil {
+		if TwinResult.Status.Twins != nil {
 			break
 		}
 	}
@@ -858,24 +861,30 @@ func TwinSubscribe(deviceID string) {
 func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 	err := json.Unmarshal(message.Payload(), &TwinResult)
 	if err != nil {
-		Errorf("Error in unmarshalling: %v", err.Error())
+		Errorf("Error in unmarshalling: %v, message is %v", err.Error(), string(message.Payload()))
 	}
 }
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
-	Infof("configMap.Data %v", configMap.Data)
-	Infof("TypeMeta: %v, %v", expectedConfigMap.TypeMeta, configMap.TypeMeta)
-	Infof("Namespace: %v, %v", expectedConfigMap.ObjectMeta.Namespace, configMap.ObjectMeta.Namespace)
-	configMapByte, _ := json.Marshal(configMap.Data["deviceProfile.json"])
 	deviceInstance := &types.DeviceProfile{}
-	json.Unmarshal(configMapByte, deviceInstance)
+	if err := json.Unmarshal([]byte(configMap.Data["deviceProfile.json"]), deviceInstance); err != nil {
+		return false
+	}
 
-	expectedConfigMapByte, _ := json.Marshal(expectedConfigMap.Data["deviceProfile.json"])
 	expectedDeviceInstance := &types.DeviceProfile{}
-	json.Unmarshal(expectedConfigMapByte, &expectedDeviceInstance)
-	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedDeviceInstance.DeviceModels, deviceInstance.DeviceModels) || !reflect.DeepEqual(expectedDeviceInstance.Protocols, deviceInstance.Protocols) || !reflect.DeepEqual(expectedDeviceInstance.DeviceInstances[0].Status, deviceInstance.DeviceInstances[0].Status) {
+	if err := json.Unmarshal([]byte(expectedConfigMap.Data["deviceProfile.json"]), expectedDeviceInstance); err != nil {
+		return false
+	}
+	if expectedDeviceInstance.DeviceInstances != nil && len(expectedDeviceInstance.DeviceInstances) != 0 && deviceInstance.DeviceInstances != nil && len(deviceInstance.DeviceInstances) != 0 {
+		if expectedDeviceInstance.DeviceInstances[0] != nil && deviceInstance.DeviceInstances[0] != nil {
+			if !reflect.DeepEqual(expectedDeviceInstance.DeviceInstances[0].Status, deviceInstance.DeviceInstances[0].Status) {
+				return false
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedDeviceInstance.DeviceModels, deviceInstance.DeviceModels) || !reflect.DeepEqual(expectedDeviceInstance.Protocols, deviceInstance.Protocols) {
 		return false
 	}
 	return true
@@ -891,14 +900,21 @@ func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap)
 	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 
+func getTwin(propertyName string, deviceTwin []v1alpha2.Twin) v1alpha2.Twin {
+	for _, twin := range deviceTwin {
+		if twin.PropertyName == propertyName {
+			result := twin.DeepCopy()
+			return *result
+		}
+	}
+	return v1alpha2.Twin{}
+}
+
 // CompareTwin is used to compare 2 device Twins
-func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*MsgTwin) bool {
-	for key := range expectedDeviceTwin {
-		if deviceTwin[key].Metadata != nil && deviceTwin[key].Expected.Value != nil {
-			if *deviceTwin[key].Metadata != *expectedDeviceTwin[key].Metadata || *deviceTwin[key].Expected.Value != *expectedDeviceTwin[key].Expected.Value {
-				return false
-			}
-		} else {
+func CompareTwin(deviceTwin []v1alpha2.Twin, expectedDeviceTwin []v1alpha2.Twin) bool {
+	for _, expectedTwin := range expectedDeviceTwin {
+		twin := getTwin(expectedTwin.PropertyName, deviceTwin)
+		if !reflect.DeepEqual(twin, expectedTwin) {
 			return false
 		}
 	}

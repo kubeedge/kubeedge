@@ -327,7 +327,6 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.Bluetooth
 	} else if device.Spec.Protocol.CustomizedProtocol != nil {
 		protocol = CustomizedProtocol + "-" + device.Namespace + "/" + device.Name
-
 		deviceProtocol.Name = protocol
 		deviceProtocol.Protocol = CustomizedProtocol
 		deviceProtocol.ProtocolConfig = device.Spec.Protocol.CustomizedProtocol
@@ -430,8 +429,18 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		}
 		var oldProtocol string
 		for _, devInst := range deviceProfile.DeviceInstances {
-			if device.Name == devInst.Name {
-				oldProtocol = devInst.Spec.DeviceModelRef.Name
+			if device.Name == devInst.Name && device.Namespace == devInst.Namespace {
+				if devInst.Spec.Protocol.OpcUA != nil {
+					oldProtocol = OPCUA + "-" + device.Namespace + "/" + device.Name
+				} else if devInst.Spec.Protocol.Modbus != nil {
+					oldProtocol = Modbus + "-" + device.Namespace + "/" + device.Name
+				} else if devInst.Spec.Protocol.Bluetooth != nil {
+					oldProtocol = Bluetooth + "-" + device.Namespace + "/" + device.Name
+				} else if devInst.Spec.Protocol.CustomizedProtocol != nil {
+					oldProtocol = CustomizedProtocol + "-" + device.Namespace + "/" + device.Name
+				} else {
+					klog.Warning("Device doesn't support valid protocol")
+				}
 				break
 			}
 		}
@@ -447,13 +456,13 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 		// add new protocol
 		deviceProtocol := &types.Protocol{}
 		if device.Spec.Protocol.OpcUA != nil {
-			deviceProtocol = buildDeviceProtocol(OPCUA, device.Name, device.Spec.Protocol.OpcUA)
+			deviceProtocol = buildDeviceProtocol(OPCUA, device.Namespace, device.Name, device.Spec.Protocol.OpcUA)
 		} else if device.Spec.Protocol.Modbus != nil {
-			deviceProtocol = buildDeviceProtocol(Modbus, device.Name, device.Spec.Protocol.Modbus)
+			deviceProtocol = buildDeviceProtocol(Modbus, device.Namespace, device.Name, device.Spec.Protocol.Modbus)
 		} else if device.Spec.Protocol.Bluetooth != nil {
-			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Name, device.Spec.Protocol.Bluetooth)
+			deviceProtocol = buildDeviceProtocol(Bluetooth, device.Namespace, device.Name, device.Spec.Protocol.Bluetooth)
 		} else if device.Spec.Protocol.CustomizedProtocol != nil {
-			deviceProtocol = buildDeviceProtocol(CustomizedProtocol, device.Name, device.Spec.Protocol.CustomizedProtocol)
+			deviceProtocol = buildDeviceProtocol(CustomizedProtocol, device.Namespace, device.Name, device.Spec.Protocol.CustomizedProtocol)
 		} else {
 			klog.Warning("Unsupported device protocol")
 		}
@@ -475,9 +484,10 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 	}
 }
 
-func buildDeviceProtocol(protocol, deviceName string, ProtocolConfig interface{}) *types.Protocol {
+// todo: should use namespace
+func buildDeviceProtocol(protocol, deviceNamespace string, deviceName string, ProtocolConfig interface{}) *types.Protocol {
 	var deviceProtocol types.Protocol
-	deviceProtocol.Name = protocol + "-" + deviceName
+	deviceProtocol.Name = protocol + "-" + deviceNamespace + "/" + deviceName
 	deviceProtocol.Protocol = protocol
 	deviceProtocol.ProtocolConfig = ProtocolConfig
 	return &deviceProtocol
@@ -623,6 +633,7 @@ func (dc *DownstreamController) deleteFromDeviceProfile(device *v1alpha2.Device,
 		klog.Errorf("Failed to Unmarshal deviceprofile: %v", deviceProfile)
 		return
 	}
+
 	deleteDeviceInstanceAndProtocol(device, deviceProfile)
 
 	dm, ok := dc.deviceModelManager.DeviceModel.Load(device.Spec.DeviceModelRef.Name)
@@ -658,13 +669,13 @@ func deleteDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *typ
 		// using namespace+name confirm device
 		if device.Name == devInst.Name && device.Namespace == devInst.Namespace {
 			if devInst.Spec.Protocol.Modbus != nil {
-				protocol = Modbus
+				protocol = Modbus + "-" + device.Namespace + "/" + device.Name
 			} else if devInst.Spec.Protocol.OpcUA != nil {
-				protocol = OPCUA
+				protocol = OPCUA + "-" + device.Namespace + "/" + device.Name
 			} else if devInst.Spec.Protocol.Bluetooth != nil {
-				protocol = Bluetooth
+				protocol = Bluetooth + "-" + device.Namespace + "/" + device.Name
 			} else if devInst.Spec.Protocol.CustomizedProtocol != nil {
-				protocol = CustomizedProtocol
+				protocol = CustomizedProtocol + "-" + device.Namespace + "/" + device.Name
 			}
 			deviceProfile.DeviceInstances[i] = deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1]
 			deviceProfile.DeviceInstances[len(deviceProfile.DeviceInstances)-1] = nil
@@ -674,6 +685,7 @@ func deleteDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *typ
 	}
 
 	for i, ptcl := range deviceProfile.Protocols {
+		klog.Infof("protocol name is %v , %v", ptcl.Name, protocol)
 		if ptcl.Name == protocol {
 			deviceProfile.Protocols[i] = deviceProfile.Protocols[len(deviceProfile.Protocols)-1]
 			deviceProfile.Protocols[len(deviceProfile.Protocols)-1] = nil

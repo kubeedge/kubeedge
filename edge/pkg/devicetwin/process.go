@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -219,6 +220,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 		klog.Infof("Classify the msg to action %s", action)
 		return true
 	} else if (strings.Compare(msgSource, "edgemgr") == 0) || (strings.Compare(msgSource, "devicecontroller") == 0) {
+		fmt.Printf("receive message AAAAAAAAAAAAAAA, resource is %v", message.Msg.Router.Resource)
 		switch message.Msg.Content.(type) {
 		case []byte:
 			klog.Info("Message content type is []byte, no need to marshal again")
