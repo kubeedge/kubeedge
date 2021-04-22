@@ -108,6 +108,10 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 					c.UnixSocket.Address, path.Dir(s[1]), err)))
 		}
 	}
+	if c.TokenRefreshDuration <= 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("TokenRefreshDuration"),
+			c.TokenRefreshDuration, "TokenRefreshDuration must be positive"))
+	}
 	return allErrs
 }
 
