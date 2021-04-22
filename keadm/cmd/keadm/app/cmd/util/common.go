@@ -77,7 +77,13 @@ const (
 	KubeEdgeLogPath = "/var/log/kubeedge/"
 	KubeEdgeCrdPath = KubeEdgePath + "crds"
 
-	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
+	KubeEdgeSocketPath = "/var/lib/kubeedge/"
+
+	EdgeRootDir = "/var/lib/edged"
+
+	SystemdBootPath = "/run/systemd/system"
+
+	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/crds"
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
