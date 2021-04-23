@@ -155,3 +155,12 @@ func GetHostname() string {
 	}
 	return hostnameOverride
 }
+
+func IsExist(source []string, msgSource string) bool {
+	for _, s := range source {
+		if s == msgSource {
+			return true
+		}
+	}
+	return false
+}

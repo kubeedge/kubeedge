@@ -21,6 +21,7 @@ import (
 	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // ChannelMessageQueue is the channel implementation of MessageQueue
@@ -114,15 +115,26 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 				return
 			}
 			objectSync, err := q.objectSyncLister.ObjectSyncs(resourceNamespace).Get(synccontroller.BuildObjectSyncName(nodeID, resourceUID))
-			if err == nil && objectSync.Status.ObjectResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) <= 0 {
-				return
+			if err == nil && objectSync.Status.ObjectResourceVersion != "" {
+				cmpValue := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion)
+				if cmpValue < 0 {
+					return
+				}
+
+				if cmpValue == 0 {
+					source := strings.Split(objectSync.Labels["source"], ",")
+					if util.IsExist(source, msg.GetSource()) {
+						return
+					}
+				}
 			}
 		}
 
 		// Check if message is older than already in store, if it is, discard it directly
 		if exist {
 			msgInStore := item.(*beehiveModel.Message)
-			if isDeleteMessage(msgInStore) || synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
+			if isDeleteMessage(msgInStore) || synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) < 0 ||
+				synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) == 0 && msg.GetSource() == msgInStore.GetSource() {
 				return
 			}
 		}

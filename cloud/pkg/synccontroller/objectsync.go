@@ -3,6 +3,7 @@ package synccontroller
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -15,10 +16,12 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	dynamicctrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectrmessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	metautil "github.com/kubeedge/kubeedge/pkg/metaserver/util"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
@@ -58,14 +61,25 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
 	runtimeObj := obj.(runtime.Object)
-	if err := util.SetMetaType(runtimeObj); err != nil {
+	if err := metautil.SetMetaType(runtimeObj); err != nil {
 		klog.Warningf("failed to set metatype :%v", err)
 	}
 	if err != nil && apierrors.IsNotFound(err) {
 		//trigger the delete event
 		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		source := strings.Split(sync.Labels["source"], ",")
+		if util.IsExist(source, modules.DynamicControllerModuleName) {
+			msg := buildDynamicControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj)
+			if msg != nil {
+				beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+			}
+		}
+		if util.IsExist(source, modules.EdgeControllerModuleName) {
+			msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj)
+			if msg != nil {
+				beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+			}
+		}
 		return
 	}
 
@@ -77,8 +91,19 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		source := strings.Split(sync.Labels["source"], ",")
+		if util.IsExist(source, modules.DynamicControllerModuleName) {
+			msg := buildDynamicControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+			if msg != nil {
+				beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+			}
+		}
+		if util.IsExist(source, modules.EdgeControllerModuleName) {
+			msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+			if msg != nil {
+				beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+			}
+		}
 	}
 }
 
@@ -95,6 +120,22 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 		BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType).
 		FillBody(obj).
 		SetResourceVersion(resourceVersion)
+
+	return msg
+}
+
+func buildDynamicControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
+	msg := model.NewMessage("")
+	resource, err := dynamicctrmessagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
+	if err != nil {
+		klog.Warningf("build message resource failed with error: %s", err)
+		return nil
+	}
+	msg.BuildRouter(modules.DynamicControllerModuleName, edgectrconst.GroupResource, resource, operationType)
+	msg.Content = obj
+
+	resourceVersion := GetObjectResourceVersion(obj)
+	msg.SetResourceVersion(resourceVersion)
 
 	return msg
 }

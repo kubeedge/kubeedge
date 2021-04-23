@@ -117,7 +117,6 @@ func (m *metaManager) processInsert(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
 
 	meta := &dao.Meta{
@@ -146,8 +145,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 		return
 	}
 
-	imitator.DefaultV2Client.Inject(message)
-
 	resKey, resType, _ := parseResource(message.GetResource())
 
 	if resourceUnchanged(resType, resKey, content) {
@@ -175,7 +172,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
+	case cloudmodules.EdgeControllerModuleName:
 		sendToEdged(&message, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
@@ -218,7 +215,6 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
-	imitator.DefaultV2Client.Inject(message)
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
@@ -428,7 +424,7 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 
-func (m *metaManager) process(message model.Message) {
+func (m *metaManager) processMeta(message model.Message) {
 	operation := message.GetOperation()
 	switch operation {
 	case model.InsertOperation:
@@ -459,6 +455,12 @@ func (m *metaManager) process(message model.Message) {
 	}
 }
 
+func (m *metaManager) processMetaV2(message model.Message) {
+	imitator.DefaultV2Client.Inject(message)
+	resp := message.NewRespByMessage(&message, OK)
+	sendToCloud(resp)
+}
+
 func (m *metaManager) runMetaManager() {
 	go func() {
 		for {
@@ -468,13 +470,17 @@ func (m *metaManager) runMetaManager() {
 				return
 			default:
 			}
-			msg, err := beehiveContext.Receive(m.Name())
-			if err != nil {
+			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
+				klog.V(2).Infof("get a message %+v", msg)
+				if msg.GetSource() == cloudmodules.DynamicControllerModuleName {
+					m.processMetaV2(msg)
+				} else {
+					m.processMeta(msg)
+				}
+			} else {
 				klog.Errorf("get a message %+v: %v", msg, err)
 				continue
 			}
-			klog.V(2).Infof("get a message %+v", msg)
-			m.process(msg)
 		}
 	}()
 }
