@@ -36,58 +36,59 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
 	if err != nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
+		sendFailEvents(sync, err)
 		return
 	}
 
-	nodeName := getNodeName(sync.Name)
-	if ret != nil {
-		object, err = meta.Accessor(ret)
-		if err != nil {
-			return
-		}
-
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(object.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: sync.Spec.ObjectKind,
-			}, sync.Spec.ObjectName)
-		}
-	}
-
+	object, err = meta.Accessor(ret)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			obj := &unstructured.Unstructured{}
-			obj.SetName(sync.Spec.ObjectName)
-			obj.SetUID(types.UID(getObjectUID(sync.Name)))
-			obj.SetNamespace(sync.Namespace)
-		} else {
-			klog.Errorf("Failed to manage pod sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
+		klog.Errorf("failed to get obj with meta (gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
+		sendFailEvents(sync, err)
+		return
 	}
-	sendEvents(err, nodeName, sync, sync.Spec.ObjectKind, object.GetResourceVersion(), object)
+	syncObjUID := getObjectUID(sync.Name)
+	if syncObjUID != string(object.GetUID()) {
+		err = apierrors.NewNotFound(schema.GroupResource{
+			Group:    "",
+			Resource: sync.Spec.ObjectKind,
+		}, sync.Spec.ObjectName)
+		sendFailEvents(sync, err)
+		return
+	}
+	sendEvents(sync, object.GetResourceVersion(), object)
 }
 
-func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
-	objectResourceVersion string, obj interface{}) {
+func sendFailEvents(sync *v1alpha1.ObjectSync, err error) {
+	if err == nil {
+		return
+	}
+	nodeName := getNodeName(sync.Name)
+	if apierrors.IsNotFound(err) {
+		// build default obj
+		obj := &unstructured.Unstructured{}
+		obj.SetName(sync.Spec.ObjectName)
+		obj.SetUID(types.UID(getObjectUID(sync.Name)))
+		obj.SetNamespace(sync.Namespace)
+
+		//trigger the delete event
+		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", sync.Spec.ObjectKind, sync.Spec.ObjectName)
+		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, sync.Spec.ObjectKind, sync.Spec.ObjectName, model.DeleteOperation, obj)
+		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+	}
+	// TODO Other error handling methods
+}
+
+func sendEvents(sync *v1alpha1.ObjectSync, objectResourceVersion string, obj interface{}) {
+	nodeName := getNodeName(sync.Name)
+	resourceType := sync.Spec.ObjectKind
 	runtimeObj := obj.(runtime.Object)
 	if err := util.SetMetaType(runtimeObj); err != nil {
 		klog.Warningf("failed to set metatype :%v", err)
 	}
-	if err != nil && apierrors.IsNotFound(err) {
-		//trigger the delete event
-		klog.Infof("%s: %s has been deleted in K8s, send the delete event to edge", resourceType, sync.Spec.ObjectName)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
-		return
-	}
-
 	if sync.Status.ObjectResourceVersion == "" {
 		klog.Errorf("The ObjectResourceVersion is empty in status of objectsync: %s", sync.Name)
 		return
 	}
-
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
