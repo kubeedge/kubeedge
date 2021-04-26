@@ -374,6 +374,8 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
+// +kubebuilder:validation:XPreserveUnknownFields
+// +kubebuilder:validation:Type=object
 type CustomizedValue map[string]interface{}
 
 func (in *CustomizedValue) DeepCopyInto(out *CustomizedValue) {
