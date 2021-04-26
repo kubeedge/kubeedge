@@ -148,9 +148,6 @@ func (s *imitator) List(ctx context.Context, key string) (Resp, error) {
 	if err != nil {
 		return Resp{}, err
 	}
-	if len(*results) == 0 {
-		return Resp{}, fmt.Errorf("the server could not find the requested resource")
-	}
 	resp.Kvs = results
 	return resp, nil
 }
