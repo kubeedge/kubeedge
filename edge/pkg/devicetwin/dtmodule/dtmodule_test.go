@@ -17,61 +17,143 @@ limitations under the License.
 package dtmodule_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmanager"
 	. "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 )
 
-var _ = Describe("Dtmodule", func() {
-	Describe("Unit Test for dtmodule.go", func() {
-		testChan := make(chan interface{})
-		var dtContext *dtcontext.DTContext
-		var dtModule DTModule
-		Context("Testing for InitWorker", func() {
-			It("NameMemModule", func() {
-				dtModule.Name = "MemModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
-				want := MemWorker{Group: "MemModule",
-					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
-						HeartBeatChan: testChan,
-						DTContexts:    dtContext}}
-				Expect(dtModule.Worker).To(Equal(want))
-			})
-			It("NameTwinModule", func() {
-				dtModule.Name = "TwinModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
-				want := TwinWorker{Group: "TwinModule",
-					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
-						HeartBeatChan: testChan,
-						DTContexts:    dtContext}}
-				Expect(dtModule.Worker).To(Equal(want))
-			})
-			It("NameDeviceModule", func() {
-				dtModule.Name = "DeviceModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
-				want := DeviceWorker{Group: "DeviceModule",
-					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
-						HeartBeatChan: testChan,
-						DTContexts:    dtContext}}
-				Expect(dtModule.Worker).To(Equal(want))
-			})
-			It("NameCommModule", func() {
-				dtModule.Name = "CommModule"
-				dtModule.InitWorker(testChan, testChan, testChan, dtContext)
-				want := CommWorker{Group: "CommModule",
-					Worker: Worker{ReceiverChan: testChan,
-						ConfirmChan:   testChan,
-						HeartBeatChan: testChan,
-						DTContexts:    dtContext}}
-				Expect(dtModule.Worker).To(Equal(want))
-			})
-
+func TestDTModule_InitWorker(t *testing.T) {
+	type fields struct {
+		Name string
+	}
+	ctx, err := dtcontext.InitDTContext()
+	assert.Nil(t, err)
+	recvCh, confirmCh, heartBearCh := make(chan interface{}), make(chan interface{}), make(chan interface{})
+	tests := []struct {
+		name   string
+		fields fields
+		want   DTWorker
+	}{
+		{
+			name: dtcommon.MemModule,
+			fields: fields{
+				Name: dtcommon.MemModule,
+			},
+			want: MemWorker{
+				Worker: Worker{
+					ReceiverChan:  recvCh,
+					ConfirmChan:   confirmCh,
+					HeartBeatChan: heartBearCh,
+					DTContexts:    ctx,
+				},
+				Group: dtcommon.MemModule,
+			},
+		},
+		{
+			name: dtcommon.TwinModule,
+			fields: fields{
+				Name: dtcommon.TwinModule,
+			},
+			want: TwinWorker{
+				Worker: Worker{
+					ReceiverChan:  recvCh,
+					ConfirmChan:   confirmCh,
+					HeartBeatChan: heartBearCh,
+					DTContexts:    ctx,
+				},
+				Group: dtcommon.TwinModule,
+			},
+		},
+		{
+			name: dtcommon.DeviceModule,
+			fields: fields{
+				Name: dtcommon.DeviceModule,
+			},
+			want: DeviceWorker{
+				Worker: Worker{
+					ReceiverChan:  recvCh,
+					ConfirmChan:   confirmCh,
+					HeartBeatChan: heartBearCh,
+					DTContexts:    ctx,
+				},
+				Group: dtcommon.DeviceModule,
+			},
+		},
+		{
+			name: dtcommon.CommModule,
+			fields: fields{
+				Name: dtcommon.CommModule,
+			},
+			want: CommWorker{
+				Worker: Worker{
+					ReceiverChan:  recvCh,
+					ConfirmChan:   confirmCh,
+					HeartBeatChan: heartBearCh,
+					DTContexts:    ctx,
+				},
+				Group: dtcommon.CommModule,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dm := &DTModule{
+				Name: tt.fields.Name,
+			}
+			dm.InitWorker(recvCh, confirmCh, heartBearCh, ctx)
+			assert.Equal(t, tt.want, dm.Worker)
 		})
-	})
-})
+	}
+}
+
+func TestDTModule_Start(t *testing.T) {
+	type fields struct {
+		Name        string
+		RecvCh      chan interface{}
+		ConfirmCh   chan interface{}
+		HeartBeatCh chan interface{}
+		Ctx         *dtcontext.DTContext
+	}
+	ctx, err := dtcontext.InitDTContext()
+	assert.Nil(t, err)
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "test heart beat",
+			fields: fields{
+				Name:        dtcommon.MemModule,
+				RecvCh:      make(chan interface{}),
+				ConfirmCh:   make(chan interface{}),
+				HeartBeatCh: make(chan interface{}),
+				Ctx:         ctx,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dm := DTModule{
+				Name: tt.fields.Name,
+			}
+			dm.InitWorker(tt.fields.RecvCh, tt.fields.ConfirmCh, tt.fields.HeartBeatCh, tt.fields.Ctx)
+			_, ok := ctx.ModulesHealth.Load(dtcommon.MemModule)
+			assert.False(t, ok)
+			go dm.Start()
+			ping := "ping"
+			tt.fields.HeartBeatCh <- ping
+			tt.fields.HeartBeatCh <- ping
+			lastTime, ok := ctx.ModulesHealth.Load(dtcommon.MemModule)
+			assert.True(t, ok)
+			healthTime, ok := lastTime.(int64)
+			if assert.True(t, ok) {
+				t.Logf("last health time: %d", healthTime)
+			}
+		})
+	}
+}
