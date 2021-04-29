@@ -46,3 +46,65 @@ data:
          tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
          tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
          tunnelPort: 10004
+      deviceController:
+        buffer:
+          deviceEvent: 1
+          deviceModelEvent: 1
+          updateDeviceStatus: 1024
+        context:
+          receiveModule: devicecontroller
+          responseModule: cloudhub
+          sendModule: cloudhub
+        enable: true
+        load:
+          updateDeviceStatusWorkers: 1
+      dynamicController: 
+        enable: false      
+      edgeController:
+        buffer:
+          configMapEvent: 1
+          deletePod: 1024
+          endpointsEvent: 1
+          podEvent: 1
+          queryConfigMap: 1024
+          queryEndpoints: 1024
+          queryNode: 1024
+          queryPersistentVolume: 1024
+          queryPersistentVolumeClaim: 1024
+          querySecret: 1024
+          queryService: 1024
+          queryVolumeAttachment: 1024
+          ruleEndpointsEvent: 1
+          rulesEvent: 1
+          secretEvent: 1
+          serviceEvent: 1
+          updateNode: 1024
+          updateNodeStatus: 1024
+          updatePodStatus: 1024
+        context:
+          receiveModule: edgecontroller
+          responseModule: cloudhub
+          sendModule: cloudhub
+          sendRouterModule: router
+        enable: true
+        load:
+          deletePodWorkers: 4
+          queryConfigMapWorkers: 4
+          queryEndpointsWorkers: 4
+          queryNodeWorkers: 4
+          queryPersistentVolumeClaimWorkers: 4
+          queryPersistentVolumeWorkers: 4
+          querySecretWorkers: 4
+          queryServiceWorkers: 4
+          queryVolumeAttachmentWorkers: 4
+          updateNodeStatusWorkers: 1
+          updateNodeWorkers: 4
+          updatePodStatusWorkers: 1
+        nodeUpdateFrequency: 10
+      router:
+        address: 0.0.0.0
+        port: 9443
+        restTimeout: 60
+        enable: true
+      syncController:
+        enable: true
