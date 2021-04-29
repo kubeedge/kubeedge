@@ -1,16 +1,20 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
@@ -19,6 +23,36 @@ import (
 const (
 	EmptyString = ""
 )
+
+var (
+	CRDResourceToKind map[string]string
+	CRDKindToResource map[string]string
+)
+
+func InitCrdMap() error {
+	CRDResourceToKind = make(map[string]string)
+	CRDKindToResource = make(map[string]string)
+
+	config, err := clientcmd.BuildConfigFromFlags("127.0.0.1:10550", "")
+	if err != nil {
+		klog.Errorf("Failed to build config, err: %v", err)
+		return err
+	}
+	config.ContentType = runtime.ContentTypeJSON
+	apiExtensionClient, err := clientset.NewForConfig(config)
+	list, err := apiExtensionClient.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, crd := range list.Items {
+		kind := crd.Spec.Names.Kind
+		plural := crd.Spec.Names.Plural
+		CRDResourceToKind[plural] = kind
+		CRDKindToResource[kind] = plural
+	}
+	klog.Infof("CRD Resource-Kind map initialization finished.")
+	return nil
+}
 
 // MetaType is generally consisted of apiversion, kind like:
 // {
@@ -57,6 +91,9 @@ func UnsafeResourceToKind(r string) string {
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
 	}
+	if v, isCRD := CRDResourceToKind[r]; isCRD {
+		return v
+	}
 	k := strings.Title(r)
 	switch {
 	case strings.HasSuffix(k, "ies"):
@@ -75,9 +112,11 @@ func UnsafeKindToResource(k string) string {
 	}
 	unusualKindToResource := map[string]string{
 		"Endpoints": "endpoints",
-		"Gateway":   "gateways",
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
+		return v
+	}
+	if v, isCRD := CRDKindToResource[k]; isCRD {
 		return v
 	}
 	r := strings.ToLower(k)

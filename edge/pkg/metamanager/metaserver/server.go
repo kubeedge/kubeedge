@@ -20,6 +20,7 @@ import (
 
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 const (
@@ -56,6 +57,11 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 	}
 	utilruntime.HandleError(s.ListenAndServe())
 	klog.Infof("[metaserver]start to listen and server at %v", Httpaddr)
+	err := util.InitCrdMap()
+	if err != nil {
+		klog.Warningf("CRD Resource-Kind Map initialization failed: %s", err)
+	}
+
 	<-stopChan
 }
 
