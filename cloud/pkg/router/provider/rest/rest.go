@@ -94,7 +94,10 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	if !ok {
 		return nil, errors.New("invalid convert to http.Request")
 	}
-
+	uri := strings.SplitN(request.RequestURI, "/", 4)
+	if len(uri) < 4 {
+		return nil, errors.New("invalid format of http.Request")
+	}
 	v, exist = d["timeout"]
 	if !exist {
 		return nil, errors.New("input data does not exist value \"timeout\"")
@@ -106,7 +109,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	res := make(map[string]interface{})
 	messageID := d["messageID"].(string)
 	res["messageID"] = messageID
-	res["param"] = strings.TrimLeft(strings.SplitN(request.RequestURI, "/", 4)[3], r.Path)
+	res["param"] = strings.TrimLeft(uri[3], r.Path)
 	res["data"] = d["data"]
 	res["nodeName"] = strings.Split(request.RequestURI, "/")[1]
 	res["header"] = request.Header
