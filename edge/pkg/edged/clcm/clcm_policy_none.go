@@ -55,7 +55,6 @@ func NewContainerLifecycleManager(kubeletRootDir string) (ContainerLifecycleMana
 		PolicyNone,
 		reconcilePeriod,
 		nil,
-		nil,
 		cpuset.NewCPUSet(),
 		result,
 		kubeletRootDir,
