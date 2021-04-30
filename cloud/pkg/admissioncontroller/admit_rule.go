@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	soureceToTarget = [][2]string{{constants.RestEndpoint, constants.EventbusEndpoint},
+	sourceToTarget = [][2]string{{constants.RestEndpoint, constants.EventbusEndpoint},
 		{constants.RestEndpoint, constants.ServicebusEndpoint},
 		{constants.EventbusEndpoint, constants.RestEndpoint}}
 )
@@ -74,7 +74,7 @@ func validateRule(rule *rulesv1.Rule) error {
 		return err
 	}
 	var exist bool
-	for _, s2t := range soureceToTarget {
+	for _, s2t := range sourceToTarget {
 		if s2t[0] == sourceEndpoint.Spec.RuleEndpointType && s2t[1] == targetEndpoint.Spec.RuleEndpointType {
 			exist = true
 		}
