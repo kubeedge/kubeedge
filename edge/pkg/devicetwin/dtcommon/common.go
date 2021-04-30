@@ -85,6 +85,8 @@ const (
 
 	// CommModule communicate module
 	CommModule = "CommModule"
+	// DeviceModule device module
+	DeviceModule = "DeviceModule"
 	// MemModule membership module
 	MemModule = "MemModule"
 	// TwinModule twin module

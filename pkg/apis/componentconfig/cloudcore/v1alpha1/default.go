@@ -57,6 +57,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				AdvertiseAddress:        []string{advertiseAddress.String()},
 				DNSNames:                []string{""},
 				EdgeCertSigningDuration: 365,
+				TokenRefreshDuration:    12,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
 					Address:            "0.0.0.0",

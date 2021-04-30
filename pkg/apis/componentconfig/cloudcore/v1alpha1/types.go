@@ -124,6 +124,9 @@ type CloudHub struct {
 	// EdgeCertSigningDuration indicates the validity period of edge certificate
 	// default 365d
 	EdgeCertSigningDuration time.Duration `json:"edgeCertSigningDuration,omitempty"`
+	// TokenRefreshDuration indicates the interval of cloudcore token refresh, unit is hour
+	// default 12h
+	TokenRefreshDuration time.Duration `json:"tokenRefreshDuration,omitempty"`
 }
 
 // CloudHubQUIC indicates the quic server config
