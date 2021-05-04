@@ -6,7 +6,6 @@ import (
 
 	api "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -29,13 +28,11 @@ type ConfigMapsInterface interface {
 
 type configMaps struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newConfigMaps(namespace string, c *context.Context, s SendInterface) *configMaps {
+func newConfigMaps(namespace string, s SendInterface) *configMaps {
 	return &configMaps{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}
@@ -54,7 +51,6 @@ func (c *configMaps) Delete(name string) error {
 }
 
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
-
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
 	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(configMapMsg)
@@ -77,7 +73,6 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		return handleConfigMapFromMetaDB(content)
 	}
 	return handleConfigMapFromMetaManager(content)
-
 }
 
 func handleConfigMapFromMetaDB(content []byte) (*api.ConfigMap, error) {

@@ -16,80 +16,33 @@
 
 setuptype=$1
 
-kill_edgecore() {
-   sudo pkill edgecore
-    #kill the edgecore process if it exists.
-    sleep 5s
-    if pgrep edgecore >/dev/null
-    then
-        echo "Failed to kill edgecore process !!"
-        exit 1
-    else
-        echo "edgecore is successfully killed !!"
+kill_component() {
+    local component=$1
+    if pgrep "$component" &>/dev/null; then
+        # edgesite process is found, kill the process.
+        sudo pkill $component &>/dev/null
+        if [[ "$?" == "0" ]]; then
+            echo "$component is successfully killed !!"
+        else
+            echo "Failed to kill $component process !!"
+            exit 1
+        fi
     fi
 }
 
-kill_cloudcore() {
-    sudo pkill cloudcore
-    #kill the cloudcore process if it exists.
-    sleep 5s
-    if pgrep cloudcore >/dev/null
-    then
-        echo "Failed to kill the cloudcore !!"
-        exit 1
-    else
-        echo "cloudcore is successfully killed !!"
-    fi
-}
-
-kill_edgesite() {
-    exit 0
-    sudo pkill edgesite
-    #kill the edgecore process if it exists.
-    sleep 5s
-    if pgrep edgesite >/dev/null
-    then
-        echo "Failed to kill edgesite process !!"
-        exit 1
-    else
-        echo "edgesite is successfully killed !!"
-    fi
+kill_all_components() {
+    local components="cloudcore edgecore edgesite"
+    for component in $components; do
+        kill_component "$component"
+    done
 }
 
 cleanup_files(){
-    workdir=$GOPATH/src/github.com/kubeedge/kubeedge
-    cd $workdir
-
-    sudo rm -rf cloud/cloudcore
-    sudo rm -rf cloud/tmp/
-    sudo rm -rf edge/edge.db
-    sudo rm -rf edge/edgecore
-    sudo rm -rf edge/tmp/
-    sudo rm -rf tests/e2e/kubeedge.crt
-    sudo rm -rf tests/e2e/kubeedge.csr
-    sudo rm -rf tests/e2e/kubeedge.key
-    sudo rm -rf tests/e2e/rootCA.crt
-    sudo rm -rf tests/e2e/rootCA.key
-    sudo rm -rf tests/e2e/rootCA.srl
+    sudo rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
+    sudo rm -f tests/e2e/config.json
+    find -name "*.test" | xargs sudo rm -f
 }
 
-if [ "deployment" = ${setuptype} ]; then
-    kill_edgecore
-    kill_cloudcore
-    sudo rm -rf tests/e2e/deployment/deployment.test
-fi
-
-if [ "device_crd" = ${setuptype} ]; then
-    kill_edgecore
-    kill_cloudcore
-    sudo rm -rf tests/e2e/device_crd/device_crd.test
-fi
-
-if [ "edgesite" = ${setuptype} ]; then
-    kill_edgesite
-    sudo rm -rf tests/e2e/edgesite/edgesite.test
-    sudo rm -rf tests/e2e/config.json
-
-fi
+kill_all_components
 
 cleanup_files

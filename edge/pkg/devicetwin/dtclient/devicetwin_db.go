@@ -1,7 +1,7 @@
 package dtclient
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -74,7 +74,6 @@ func QueryDeviceTwin(key string, condition string) (*[]DeviceTwin, error) {
 		return nil, err
 	}
 	return twin, nil
-
 }
 
 //DeviceTwinUpdate the struct for updating device twin

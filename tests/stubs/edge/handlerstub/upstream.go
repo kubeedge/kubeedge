@@ -19,51 +19,41 @@ package handlerstub
 import (
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
 // NewUpstreamController creates a upstream controller
-func NewUpstreamController(context *context.Context, pm *PodManager) (*UpstreamController, error) {
+func NewUpstreamController(pm *PodManager) (*UpstreamController, error) {
 	// New upstream controller
-	dc := &UpstreamController{context: context, podManager: pm}
+	dc := &UpstreamController{podManager: pm}
 	return dc, nil
 }
 
 // UpstreamController sends message to edghub
 type UpstreamController struct {
-	context    *context.Context
 	podManager *PodManager
-	podStop    chan struct{}
 }
 
 // Start upstream
 func (dc *UpstreamController) Start() error {
 	klog.Infof("Start upstream controller")
-	dc.podStop = make(chan struct{})
-	go dc.SyncPods(dc.podStop)
-	return nil
-}
-
-// Stop UpstreamController
-func (dc *UpstreamController) Stop() error {
-	klog.Infof("Stop upstream controller")
-	dc.podStop <- struct{}{}
+	go dc.SyncPods()
 	return nil
 }
 
 // SyncPods is used to send simulation messages to edgehub periodically
-func (dc *UpstreamController) SyncPods(stop chan struct{}) {
-	running := true
-	go func() {
-		<-stop
-		klog.Infof("Stop sync pods")
-		running = false
-	}()
-	for running {
+func (dc *UpstreamController) SyncPods() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Infof("Stop sync pods")
+			return
+		default:
+		}
 		pods := dc.podManager.ListPods()
 		klog.V(4).Infof("Current pods number is: %v", len(pods))
 		for _, pod := range pods {
@@ -74,7 +64,7 @@ func (dc *UpstreamController) SyncPods(stop chan struct{}) {
 			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
 
 			klog.V(4).Infof("Begin to sync message: %v", *msg)
-			dc.context.Send2Group(constants.HubGroup, *msg)
+			beehiveContext.SendToGroup(constants.HubGroup, *msg)
 			klog.V(4).Infof("End to sync message: %v", *msg)
 		}
 		time.Sleep(5 * time.Second)

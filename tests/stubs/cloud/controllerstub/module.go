@@ -19,10 +19,9 @@ package controllerstub
 import (
 	"net/http"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 )
 
@@ -33,8 +32,10 @@ func init() {
 
 // HandlerStub definition
 type ControllerStub struct {
-	context  *context.Context
-	stopChan chan bool
+}
+
+func (*ControllerStub) Enable() bool {
+	return true
 }
 
 // Return module name
@@ -48,10 +49,7 @@ func (*ControllerStub) Group() string {
 }
 
 // Start controller hub
-func (cs *ControllerStub) Start(c *context.Context) {
-	cs.context = c
-	cs.stopChan = make(chan bool)
-
+func (cs *ControllerStub) Start() {
 	// New pod manager
 	pm, err := NewPodManager()
 	if err != nil {
@@ -60,34 +58,33 @@ func (cs *ControllerStub) Start(c *context.Context) {
 	}
 
 	// Start downstream controller
-	downstream, err := NewDownstreamController(cs.context, pm)
+	downstream, err := NewDownstreamController(pm)
 	if err != nil {
 		klog.Errorf("New downstream controller failed with error: %v", err)
 		return
 	}
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Errorf("Start downstream controller failed with error: %v", err)
+		return
+	}
 
 	// Start upstream controller
-	upstream, err := NewUpstreamController(cs.context, pm)
+	upstream, err := NewUpstreamController(pm)
 	if err != nil {
 		klog.Errorf("New upstream controller failed with error: %v", err)
 		return
 	}
-	upstream.Start()
+	if err := upstream.Start(); err != nil {
+		klog.Errorf("Start upstream controller failed with error: %v", err)
+		return
+	}
 
 	// Start http server
 	http.HandleFunc(constants.PodResource, pm.PodHandlerFunc)
-	go http.ListenAndServe(":54321", nil)
 	klog.Info("Start http service")
-
-	// Receive stop signal
-	<-cs.stopChan
-	upstream.Stop()
-	downstream.Stop()
-}
-
-// Cleanup resources
-func (cs *ControllerStub) Cleanup() {
-	cs.stopChan <- true
-	cs.context.Cleanup(cs.Name())
+	go func() {
+		if err := http.ListenAndServe(":54321", nil); err != nil {
+			klog.Errorf("Start http service failed with error: %v", err)
+		}
+	}()
 }

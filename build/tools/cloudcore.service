@@ -1,0 +1,11 @@
+[Unit]
+Description=cloudcore.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cloudcore
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

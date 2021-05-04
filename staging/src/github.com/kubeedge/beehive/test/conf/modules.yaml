@@ -1,2 +1,0 @@
-modules:
-    enabled: [destination_module, sourcemodule]

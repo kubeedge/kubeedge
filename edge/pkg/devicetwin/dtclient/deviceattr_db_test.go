@@ -21,12 +21,21 @@ import (
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
+
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
 // TestSaveDeviceAttr is function to test SaveDeviceAttr
 func TestSaveDeviceAttr(t *testing.T) {
 	//Initialize Global Variables (Mocks)
-	initMocks(t)
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	cases := []struct {
 		// name is name of the testcase
@@ -62,6 +71,17 @@ func TestSaveDeviceAttr(t *testing.T) {
 
 // TestDeleteDeviceAttrByDeviceID is function to test DeleteDeviceAttrByDeviceID
 func TestDeleteDeviceAttrByDeviceID(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -106,6 +126,17 @@ func TestDeleteDeviceAttrByDeviceID(t *testing.T) {
 
 // TestDeleteDeviceAttr is function to test DeleteDeviceAttr
 func TestDeleteDeviceAttr(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -150,6 +181,17 @@ func TestDeleteDeviceAttr(t *testing.T) {
 
 // TestUpdateDeviceAttrField is function to test UpdateDeviceAttrField
 func TestUpdateDeviceAttrField(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -194,6 +236,17 @@ func TestUpdateDeviceAttrField(t *testing.T) {
 
 // TestUpdateDeviceAttrFields is function to test UpdateDeviceAttrFields
 func TestUpdateDeviceAttrFields(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -238,6 +291,17 @@ func TestUpdateDeviceAttrFields(t *testing.T) {
 
 // TestQueryDeviceAttr is function to test QueryDeviceAttr
 func TestQueryDeviceAttr(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -294,6 +358,17 @@ func TestQueryDeviceAttr(t *testing.T) {
 
 // TestUpdateDeviceAttrMulti is function to test UpdateDeviceAttrMulti
 func TestUpdateDeviceAttrMulti(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -342,6 +417,17 @@ func TestUpdateDeviceAttrMulti(t *testing.T) {
 
 // TestDeviceAttrTrans is function to test DeviceAttrTrans
 func TestDeviceAttrTrans(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -446,7 +532,7 @@ func TestDeviceAttrTrans(t *testing.T) {
 		commitTimes:      1,
 		beginTimes:       1,
 		filterReturn:     querySeterMock,
-		filterTimes:      6,
+		filterTimes:      4,
 		insertReturnInt:  int64(1),
 		insertReturnErr:  nil,
 		insertTimes:      1,
@@ -478,11 +564,12 @@ func TestDeviceAttrTrans(t *testing.T) {
 			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
 			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
 			ormerMock.EXPECT().Begin().Return(nil).Times(test.beginTimes)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
 			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.insertReturnInt, test.insertReturnErr).Times(test.insertTimes)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
+
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.filterTimes)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(test.deleteTimes)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.updateTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
 			err := DeviceAttrTrans(adds, deletes, updates)
 			if test.wantErr != err {
 				t.Errorf("TestDeviceAttrTrans Case failed: wanted error %v and got error %v", test.wantErr, err)

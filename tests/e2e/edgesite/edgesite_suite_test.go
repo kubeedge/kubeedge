@@ -35,7 +35,7 @@ var (
 )
 
 //Function to run the Ginkgo Test
-func TestEdgecoreAppDeployment(t *testing.T) {
+func TestEdgeSiteAppDeployment(t *testing.T) {
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
 		utils.Infof("Before Suite Execution")
@@ -54,8 +54,7 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 			status := utils.CheckNodeReadyStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
 			utils.Infof("Node Name: %v, Node Status: %v", nodeName, status)
 			return status
-		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessfull !!")
-
+		}, "60s", "4s").Should(Equal("Running"), "Node register to the k8s master is unsuccessful !!")
 	})
 
 	AfterSuite(func() {
@@ -67,12 +66,12 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
 			utils.Infof("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
 			return statuscode
-		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessfull !!")
+		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessful !!")
 
 		//Run the Cleanup steps to kill edgecore and cloudcore binaries
 		Expect(utils.CleanUp("edgesite")).Should(BeNil())
 		//time.Sleep(2 * time.Second)
-		utils.Infof("Cleanup is Successfull !!")
+		utils.Infof("Cleanup is Successful !!")
 	})
 
 	RunSpecs(t, "kubeedge App Deploymet Suite with EdgeSite")

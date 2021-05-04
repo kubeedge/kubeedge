@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/gorilla/websocket"
 	"github.com/kubeedge/viaduct/pkg/api"
@@ -68,13 +68,12 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 	var respMsg string
 	if resp != nil {
 		body, errRead := ioutil.ReadAll(resp.Body)
-		if errRead != nil {
+		if errRead == nil {
 			respMsg = fmt.Sprintf("response code: %d, response body: %s", resp.StatusCode, string(body))
 		} else {
 			respMsg = fmt.Sprintf("response code: %d", resp.StatusCode)
 		}
 		resp.Body.Close()
-		return nil, err
 	}
 	klog.Errorf("dial websocket error(%+v), response message: %s", err, respMsg)
 

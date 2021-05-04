@@ -40,7 +40,7 @@ func UnmarshalBaseMessage(payload []byte) (*BaseMessage, error) {
 
 //DeviceAttrToMsgAttr  deviceattr to msgattr
 func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr {
-	msgAttrs := make(map[string]*MsgAttr)
+	msgAttrs := make(map[string]*MsgAttr, len(deviceAttrs))
 	for _, attr := range deviceAttrs {
 		optional := attr.Optional
 		msgAttrs[attr.Name] = &MsgAttr{
@@ -53,7 +53,7 @@ func DeviceAttrToMsgAttr(deviceAttrs []dtclient.DeviceAttr) map[string]*MsgAttr 
 
 //DeviceTwinToMsgTwin  devicetwin contains meta and version to msgtwin,
 func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin {
-	msgTwins := make(map[string]*MsgTwin)
+	msgTwins := make(map[string]*MsgTwin, len(deviceTwins))
 	for _, twin := range deviceTwins {
 		var expectedMeta ValueMetadata
 		var actualMeta ValueMetadata
@@ -194,7 +194,7 @@ type MembershipGetResult struct {
 
 //BuildMembershipGetResult build memebership
 func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byte, error) {
-	result := make([]Device, 0)
+	result := make([]Device, 0, len(devices))
 	for _, v := range devices {
 		result = append(result, Device{
 			ID:          v.ID,
@@ -209,7 +209,6 @@ func BuildMembershipGetResult(baseMessage BaseMessage, devices []*Device) ([]byt
 		return []byte(""), err
 	}
 	return payload, nil
-
 }
 
 //DeviceTwinResult device get result
@@ -235,7 +234,6 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 			twin.ActualVersion = nil
 			twin.ExpectedVersion = nil
 			result[k] = &twin
-
 		}
 	} else {
 		result = twins
@@ -246,7 +244,6 @@ func BuildDeviceTwinResult(baseMessage BaseMessage, twins map[string]*MsgTwin, d
 		return []byte(""), err
 	}
 	return payload, nil
-
 }
 
 // BuildErrorResult build error result
@@ -260,7 +257,6 @@ func BuildErrorResult(para Parameter) ([]byte, error) {
 		return []byte(""), err
 	}
 	return errorResult, nil
-
 }
 
 //DeviceUpdate device update
@@ -289,7 +285,7 @@ type DeviceTwinDelta struct {
 
 //BuildDeviceTwinDelta  build device twin delta
 func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([]byte, bool) {
-	result := make(map[string]*MsgTwin)
+	result := make(map[string]*MsgTwin, len(twins))
 	delta := make(map[string]string)
 	for k, v := range twins {
 		if v.Metadata != nil && strings.Compare(v.Metadata.Type, "deleted") == 0 {
@@ -316,7 +312,6 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 					value := expectedValue
 					delta[k] = value
 				}
-
 			}
 		} else {
 			continue
@@ -340,7 +335,6 @@ func BuildDeviceTwinDelta(baseMessage BaseMessage, twins map[string]*MsgTwin) ([
 
 //BuildDeviceTwinDocument  build device twin document
 func BuildDeviceTwinDocument(baseMessage BaseMessage, twins map[string]*TwinDoc) ([]byte, bool) {
-
 	payload, err := json.Marshal(DeviceTwinDocument{BaseMessage: baseMessage, Twin: twins})
 	if err != nil {
 		return []byte(""), false

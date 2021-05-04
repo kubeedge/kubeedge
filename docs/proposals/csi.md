@@ -25,7 +25,7 @@ status: implementable
     * [Workflow](#workflow)
     * [Deployment](#deployment)
     * [Example](#example)
-  * [Graduation Criterias](#graduation-criterias)
+  * [Graduation Criteria](#graduation-criteria)
     * [Alpha](#alpha)
     * [Beta](#beta)
     * [GA](#ga)
@@ -40,7 +40,7 @@ Currently KubeEdge only supports the following in-tree volumes which are based o
 * [secret](https://kubernetes.io/docs/concepts/storage/volumes/#secret)
 
 That is not enough for the users who are using KubeEdge.
-Running applications with persistant data store at edge is common.
+Running applications with persistent data store at edge is common.
 For example, in a system which collects video data and makes analysis,
 one application stores the video data into a shared storage,
 and another application reads the data from the storage to make analysis.
@@ -372,7 +372,7 @@ The `DaemonSet` includes:
 
   * `csi-hostpath-driver` container
 
-    developped by the vendor.
+    developed by the vendor.
 
 * The following volumes:
 
@@ -544,7 +544,7 @@ spec:
 `claimName: csi-hostpath-pvc` is the name of PersistentVolumeClaim.
 Before the pod starts up, the volume will be attached to the edge node, and then mounted inside the pod.
 
-## Graduation Criterias
+## Graduation Criteria
 
 ### Alpha
 
@@ -592,12 +592,12 @@ KubeEdge 1.1
 * Support Cross-Host communication between CloudHub and CSI Driver from KubeEdge.
 * Edge Node Election in CSI Driver from KubeEdge.
 * Unit Tests for CSI Support.
-* Intergration Tests for CSI Support.
+* Integration Tests for CSI Support.
 * E2E Tests for CSI Support.
 
 #### Graduation Criteria
 
-* All of the tests are done and passed including Unit Tests, Intergration Tests and E2E Tests.
+* All of the tests are done and passed including Unit Tests, Integration Tests and E2E Tests.
 * All of the limitations existing in Alpha are solved.
 
 #### Release Plan
@@ -614,7 +614,7 @@ KubeEdge 1.3
 #### Graduation Criteria
 
 * Failure Recovery Mechanism for High Availability.
-* The User Guide is clear and easy for the users to use in the producation environment.
+* The User Guide is clear and easy for the users to use in the production environment.
 
 #### Release Plan
 

@@ -24,10 +24,11 @@ package edged
 
 import (
 	"fmt"
-	"net"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,11 +36,19 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
-	"github.com/kubeedge/kubeedge/edge/pkg/edged/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 //GPUInfoQueryTool sets information monitoring tool location for GPU
@@ -63,14 +72,40 @@ func (e *edged) initialNode() (*v1.Node, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		klog.Errorf("couldn't determine hostname: %v", err)
-	}
-
-	ip, err := e.getIP()
-	if err != nil {
 		return nil, err
 	}
+	if len(e.nodeName) != 0 {
+		hostname = e.nodeName
+	}
+
+	node.Labels = map[string]string{
+		// Kubernetes built-in labels
+		v1.LabelHostname:   hostname,
+		v1.LabelOSStable:   runtime.GOOS,
+		v1.LabelArchStable: runtime.GOARCH,
+
+		// KubeEdge specific labels
+		"node-role.kubernetes.io/edge":  "",
+		"node-role.kubernetes.io/agent": "",
+	}
+	for k, v := range config.Config.Labels {
+		node.Labels[k] = v
+	}
+
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	for k, v := range config.Config.Annotations {
+		node.Annotations[k] = v
+	}
+
+	if node.Spec.Taints == nil {
+		node.Spec.Taints = make([]v1.Taint, 0)
+	}
+	node.Spec.Taints = append(node.Spec.Taints, config.Config.Taints...)
+
 	node.Status.Addresses = []v1.NodeAddress{
-		{Type: v1.NodeInternalIP, Address: ip},
+		{Type: v1.NodeInternalIP, Address: e.nodeIP.String()},
 		{Type: v1.NodeHostName, Address: hostname},
 	}
 
@@ -119,12 +154,10 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	nodeStatus.Status.Phase = e.getNodePhase()
 
 	devicePluginCapacity, _, removedDevicePlugins := e.getDevicePluginResourceCapacity()
-	if devicePluginCapacity != nil {
-		for k, v := range devicePluginCapacity {
-			klog.Infof("Update capacity for %s to %d", k, v.Value())
-			nodeStatus.Status.Capacity[k] = v
-			nodeStatus.Status.Allocatable[k] = v
-		}
+	for k, v := range devicePluginCapacity {
+		klog.Infof("Update capacity for %s to %d", k, v.Value())
+		nodeStatus.Status.Capacity[k] = v
+		nodeStatus.Status.Allocatable[k] = v
 	}
 
 	nameSet := sets.NewString(string(v1.ResourceCPU), string(v1.ResourceMemory), string(v1.ResourceStorage),
@@ -146,7 +179,7 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 		klog.Infof("Remove capacity for %s", removedResource)
 		delete(node.Status.Capacity, v1.ResourceName(removedResource))
 	}
-
+	e.setNodeStatusDaemonEndpoints(nodeStatus)
 	e.setNodeStatusConditions(nodeStatus)
 	if e.gpuPluginEnabled {
 		err := e.setGPUInfo(nodeStatus)
@@ -163,6 +196,14 @@ func (e *edged) getNodeStatusRequest(node *v1.Node) (*edgeapi.NodeStatusRequest,
 	klog.Infof("Sync VolumesInUse: %v", node.Status.VolumesInUse)
 
 	return nodeStatus, nil
+}
+
+func (e *edged) setNodeStatusDaemonEndpoints(node *edgeapi.NodeStatusRequest) {
+	node.Status.DaemonEndpoints = v1.NodeDaemonEndpoints{
+		KubeletEndpoint: v1.DaemonEndpoint{
+			Port: constants.ServerPort,
+		},
+	}
 }
 
 func (e *edged) setNodeStatusConditions(node *edgeapi.NodeStatusRequest) {
@@ -212,7 +253,6 @@ func (e *edged) setNodeReadyCondition(node *edgeapi.NodeStatusRequest) {
 		newNodeReadyCondition.LastTransitionTime = currentTime
 		node.Status.Conditions = append(node.Status.Conditions, newNodeReadyCondition)
 	}
-
 }
 
 func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
@@ -231,17 +271,15 @@ func (e *edged) getNodeInfo() (v1.NodeSystemInfo, error) {
 	if err != nil {
 		return nodeInfo, err
 	}
-	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("remote://%s", runtimeVersion.String())
+	nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("%s://%s", e.containerRuntimeName, runtimeVersion.String())
 
 	nodeInfo.KernelVersion = kernel
 	nodeInfo.OperatingSystem = runtime.GOOS
 	nodeInfo.Architecture = runtime.GOARCH
 	nodeInfo.KubeletVersion = e.version
 	nodeInfo.OSImage = prettyName
-	//nodeInfo.ContainerRuntimeVersion = fmt.Sprintf("docker://%s", runtimeVersion.String())
 
 	return nodeInfo, nil
-
 }
 
 func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
@@ -291,43 +329,21 @@ func (e *edged) setGPUInfo(nodeStatus *edgeapi.NodeStatusRequest) error {
 	return nil
 }
 
-func (e *edged) getIP() (string, error) {
-	var ipAddr net.IP
-	var err error
-	hostName, _ := os.Hostname()
-	if hostName == "" {
-		hostName = e.nodeName
-	}
-	addrs, _ := net.LookupIP(hostName)
-	for _, addr := range addrs {
-		if err := util.ValidateNodeIP(addr); err == nil {
-			if addr.To4() != nil {
-				ipAddr = addr
-				break
-			}
-			if addr.To16() != nil && ipAddr == nil {
-				ipAddr = addr
-			}
-		}
-	}
-
-	if ipAddr == nil {
-		ipAddr, err = util.ChooseHostInterface()
-	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return ipAddr.String(), nil
-}
-
 func (e *edged) setMemInfo(total, allocated v1.ResourceList) error {
-	totalMem, err := util.Command("/bin/sh", []string{"-c", `free -m | grep Mem | awk '{print$2}'`})
+	out, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
 		return err
 	}
-	mem := resource.MustParse(totalMem + "Mi")
+	matches := regexp.MustCompile(`MemTotal:\s*([0-9]+) kB`).FindSubmatch(out)
+	if len(matches) != 2 {
+		return fmt.Errorf("failed to match regexp in output: %q", string(out))
+	}
+	m, err := strconv.ParseInt(string(matches[1]), 10, 64)
+	if err != nil {
+		return err
+	}
+	totalMem := m / 1024
+	mem := resource.MustParse(strconv.FormatInt(totalMem, 10) + "Mi")
 	total[v1.ResourceMemory] = mem.DeepCopy()
 
 	if mem.Cmp(reservationMemory) > 0 {
@@ -353,46 +369,45 @@ func (e *edged) getNodePhase() v1.NodePhase {
 	return v1.NodeRunning
 }
 
-func (e *edged) registerNode() {
-	step := 100 * time.Millisecond
-
-	for {
-		time.Sleep(step)
-		step = step * 2
-		if step >= 7*time.Second {
-			step = 7 * time.Second
-		}
-
-		node, err := e.initialNode()
-		if err != nil {
-			klog.Errorf("Unable to construct v1.Node object for edge: %v", err)
-			continue
-		}
-
-		e.setInitNode(node)
-
-		nodeStatus, err := e.getNodeStatusRequest(node)
-		if err != nil {
-			klog.Errorf("Unable to construct api.NodeStatusRequest object for edge: %v", err)
-			continue
-		}
-
-		klog.Infof("Attempting to register node %s", e.nodeName)
-		registered := e.tryRegisterToMeta(nodeStatus)
-		if registered {
-			klog.Infof("Successfully registered node %s", e.nodeName)
-			e.registrationCompleted = true
-			return
-		}
-	}
-}
-
-func (e *edged) tryRegisterToMeta(node *edgeapi.NodeStatusRequest) bool {
-	err := e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *node)
+func (e *edged) registerNode() error {
+	node, err := e.initialNode()
 	if err != nil {
-		klog.Errorf("register node failed, error: %v", err)
+		klog.Errorf("Unable to construct v1.Node object for edge: %v", err)
+		return err
 	}
-	return true
+
+	e.setInitNode(node)
+
+	if !config.Config.RegisterNode {
+		//when register-node set to false, do not auto register node
+		klog.Infof("register-node is set to false")
+		e.registrationCompleted = true
+		return nil
+	}
+
+	klog.Infof("Attempting to register node %s", e.nodeName)
+
+	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
+	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
+	var res model.Message
+	if _, ok := core.GetModules()[edgehub.ModuleNameEdgeHub]; ok {
+		res, err = beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	} else {
+		res, err = beehiveContext.SendSync(EdgeController, *nodeInfoMsg, syncMsgRespTimeout)
+	}
+
+	if err != nil || res.Content != "OK" {
+		klog.Errorf("register node failed, error: %v", err)
+		if res.Content != "OK" {
+			klog.Errorf("response from cloud core: %v", res.Content)
+		}
+		return err
+	}
+
+	klog.Infof("Successfully registered node %s", e.nodeName)
+	e.registrationCompleted = true
+
+	return nil
 }
 
 func (e *edged) updateNodeStatus() error {
@@ -411,9 +426,12 @@ func (e *edged) updateNodeStatus() error {
 
 func (e *edged) syncNodeStatus() {
 	if !e.registrationCompleted {
-		// This will exit immediately if it doesn't need to do anything.
-		e.registerNode()
+		if err := e.registerNode(); err != nil {
+			klog.Errorf("Register node failed: %v", err)
+			return
+		}
 	}
+
 	if err := e.updateNodeStatus(); err != nil {
 		klog.Errorf("Unable to update node status: %v", err)
 	}

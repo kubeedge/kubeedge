@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
 )
@@ -40,6 +41,9 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 		common.Infof("Before Suite Execution")
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
+
+		Expect(utils.CreateEdgeCoreConfigFile(cfg.NodeID)).Should(BeNil())
+		Expect(utils.StartEdgeCore()).Should(BeNil())
 	})
 	AfterSuite(func() {
 		By("After Suite Execution....!")

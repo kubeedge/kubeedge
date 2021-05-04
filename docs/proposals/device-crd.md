@@ -21,7 +21,7 @@ status: implementable
     * [Non\-goals](#non-goals)
   * [Proposal](#proposal)
     * [Use Cases](#use-cases)
-  * [Design Details](#design-details)  
+  * [Design Details](#design-details)
     * [CRD API Group and Version](#crd-api-group-and-version)
     * [Device model CRD](#device-model-crd)
     * [Device model type definition](#device-model-type-definition)
@@ -718,7 +718,7 @@ data:
 ```
 
 If the mapper wants to discover what properties a device supports, it can get the model information from the device instance.
-Also , it can get the protocol information to connect to the device from the device instace. Once it has access to the device model ,
+Also , it can get the protocol information to connect to the device from the device instance. Once it has access to the device model ,
 it can get the properties supported by the device. In order to access the property , the mapper needs to get the corresponding visitor information.
 This can be retrieved from the propertyVisitors list. Finally , using the visitorConfig, the mapper can read/write the data associated with the property.
 
@@ -740,7 +740,7 @@ The following factors need to be evaluated in order to analyze issues with scale
 - The detailed design of device controller watching against cloud and edge and the tree structure of device data stored at cloud and edge.
   - A detailed design for the device controller is provided in earlier section. The device model and the device instance would be stored in etcd in the cloud. The device twin updates are stored at the edge. The device property and visitors , protocol config are stored in config-maps and consumed by mappers.
 - How are we going to use the device data at cloud ? This can help evaluate item 1
-  - This is desribed in the device controller design.
+  - This is described in the device controller design.
 - Currently, we have only one config map per node which stores all the device instances, device models, protocols and visitors for all the devices connected to the edge node. Mappers running on an edge node managing different devices now need to access one global configmap in order to extract information about the device properties and visitors. What should be the best way to partition a monolithic config map into smaller config maps ? Should the partitioning be based on the protocol type or based on device model ?
 
 ## Device Lifecycle Management
@@ -748,7 +748,7 @@ IoT device lifecycle management comprises of several steps listed below
 - Device onboarding / provisioning
   - The device needs to be registered (via authorization or admission control mechanism). This is currently not in scope of this design.
 - Device configuration
-  - The device needs to be reconfigured many a times during it's lifecycle. No new capabilities are added.
+  - The device needs to be reconfigured many times during its lifecycle. No new capabilities are added.
   The device CRD has device twins which contain desired values for control properties. By changing the desired value of a control property , we can re-configure the device behaviour.
 - Device Updates
   - Firmware updates or some bug fixes need to be applied to the device. This can be a scheduled or ad-hoc update.

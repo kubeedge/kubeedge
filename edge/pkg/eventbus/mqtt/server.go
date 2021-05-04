@@ -25,10 +25,13 @@ import (
 	"github.com/256dpi/gomqtt/packet"
 	"github.com/256dpi/gomqtt/topic"
 	"github.com/256dpi/gomqtt/transport"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
 //Server serve as an internal mqtt broker.
@@ -103,20 +106,20 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
-	resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
+	var message *model.Message
 	if strings.HasPrefix(msg.Topic, "$hw/events/device") || strings.HasPrefix(msg.Topic, "$hw/events/node") {
 		target = modules.TwinGroup
+		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
+		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
 	} else {
 		target = modules.HubGroup
-		if msg.Topic == "SYS/dis/upload_records" {
-			resource = "SYS/dis/upload_records"
-		}
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+			msg.Topic, "upload").FillBody(string(msg.Payload))
 	}
-	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	message := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
-		resource, "response").FillBody(string(msg.Payload))
-	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	ModuleContext.Send2Group(target, *message)
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
+	beehiveContext.SendToGroup(target, *message)
 }
 
 // InitInternalTopics sets internal topics to server by default.
@@ -125,11 +128,29 @@ func (m *Server) InitInternalTopics() {
 		m.tree.Set(v, packet.Subscription{Topic: v, QOS: packet.QOS(m.qos)})
 		klog.Infof("Subscribe internal topic to %s", v)
 	}
+	topics, err := dao.QueryAllTopics()
+	if err != nil {
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		return
+	}
+	if len(*topics) <= 0 {
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		return
+	}
+	for _, t := range *topics {
+		m.tree.Set(t, packet.Subscription{Topic: t, QOS: packet.QOS(m.qos)})
+		klog.Infof("Subscribe internal topic to %s", t)
+	}
 }
 
 // SetTopic set the topic to internal mqtt broker.
 func (m *Server) SetTopic(topic string) {
 	m.tree.Set(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
+}
+
+// RemoveTopic remove the topic from internal mqtt broker.
+func (m *Server) RemoveTopic(topic string) {
+	m.tree.Remove(topic, packet.Subscription{Topic: topic, QOS: packet.QOSAtMostOnce})
 }
 
 // Publish will dispatch topic msg to its subscribers directly.

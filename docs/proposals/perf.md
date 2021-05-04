@@ -69,7 +69,7 @@ to deploy KubeEdge Cloud Part pod in **KubeEdge Cluster**
 and KubeEdge Edge Node pods in **K8S Cluster** respectively,
 and then launches performance test against **KubeEdge Cluster** for KubeEdge.
 
-Before runing the KubeEdge Performance Test, the developer is responsible for creating 1~3 above.
+Before running the KubeEdge Performance Test, the developer is responsible for creating 1~3 above.
 Test Client uses the deployment object to deploy KubeEdge Cloud Part pod in **KubeEdge Cluster**
 and KubeEdge Edge Node pods in **K8S Cluster**,
 and waits until all the pods come up and **Running**.
@@ -129,7 +129,7 @@ That means the applications deployed by KubeEdge will be running in the KubeEdge
 Our pod takes up resources as below:
 - 1 pod : 0.10 vCPU & 250MB RAM
 
-With KubeEdge pod deployment we can accomodate 10 pods/1vCPU approximately.
+With KubeEdge pod deployment we can accommodate 10 pods/1vCPU approximately.
 Base on the above K8S Nodes flavor, the CPU and RAM are 32vCPU and 128GB respectively.
 Per K8S Node we should be able to deploy 320 pods(KubeEdge Edge Nodes)/32vCPU
 and RAM consumption would be around 80GB. If we have 5 K8S Nodes with the similar flavor,
@@ -245,7 +245,7 @@ Measure how many devices can be handled per Edge Node.
 
 Different protocols are considered to test between KubeEdge Edge Part and devices.
 E.g. Bluetooth, MQTT, ZigBee, BACnet and Modbus and so on.
-Currenly less than 20ms latency can be accepted in Edge IoT scenario.
+Currently less than 20ms latency can be accepted in Edge IoT scenario.
 Two kinds of test cases can be adopted: emulators of different devices and actual devices.
 
 #### 4. Application Deployment from Cloud to Edge
@@ -300,7 +300,7 @@ These test cases should be run in both system idle and under heavy load.
 This scenario is expected to measure the performance of KubeEdge between CloudHub to EdgeHub.
 Actually this is not an E2E Test scenario for KubeEdge,
 but the message delivery channel between CloudHub to EdgeHub may be our bottleneck.
-Currently we are using web socket as the communication protocal between Cloud and Edge.
+Currently we are using web socket as the communication protocol between Cloud and Edge.
 In the following test cases, we need to mock the behaviors of CloudHub and EdgeHub,
 and the simulation messages of adding pod will be sent to EdgeHub,
 and the simulation messages of pod status will be sent back to CloudHub.

@@ -29,13 +29,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/kubelet/container"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/removeall"
 	"k8s.io/kubernetes/pkg/volume"
 	volumetypes "k8s.io/kubernetes/pkg/volume/util/types"
 	utilio "k8s.io/utils/io"
+	"k8s.io/utils/mount"
 )
 
 // newVolumeMounterFromPlugins attempts to find a plugin by volume spec, pod
@@ -58,7 +58,6 @@ func (e *edged) newVolumeMounterFromPlugins(spec *volume.Spec, pod *api.Pod, opt
 // cleanupOrphanedPodDirs removes the volumes of pods that should not be
 // running and that have no containers running.
 func (e *edged) cleanupOrphanedPodDirs(pods []*api.Pod, containerRunningPods []*container.Pod) error {
-
 	allPods := sets.NewString()
 	for _, pod := range pods {
 		allPods.Insert(string(pod.UID))

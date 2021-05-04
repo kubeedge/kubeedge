@@ -7,7 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
 	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
@@ -21,39 +21,6 @@ const (
 	//DeviceTwinModuleName is name of twin
 	DeviceTwinModuleName = "twin"
 )
-
-// ormerMock is mocked Ormer implementation.
-var ormerMock *beego.MockOrmer
-
-// querySeterMock is mocked QuerySeter implementation.
-var querySeterMock *beego.MockQuerySeter
-
-// fakeModule is mocked implementation of TestModule.
-var fakeModule *beehive.MockModule
-
-// mainContext is beehive context used for communication between modules.
-var mainContext *context.Context
-
-//test is for sending test messages from devicetwin module.
-var test model.Message
-
-// initMocks is function to initialize mocks.
-func initMocks(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	ormerMock = beego.NewMockOrmer(mockCtrl)
-	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
-	fakeModule = beehive.NewMockModule(mockCtrl)
-	dbm.DBAccess = ormerMock
-}
-
-// registerFakeModule is fuction to register all mock modules used.
-func registerFakeModule() {
-	fakeModule.EXPECT().Name().Return(TestModule).Times(3)
-	core.Register(fakeModule)
-	mainContext = context.GetContext(context.MsgCtxTypeChannel)
-	mainContext.AddModule(TestModule)
-}
 
 // TestName is function to test Name().
 func TestName(t *testing.T) {
@@ -99,26 +66,49 @@ func TestGroup(t *testing.T) {
 
 // TestStart is function to test Start().
 func TestStart(t *testing.T) {
-	initMocks(t)
-	registerFakeModule()
-	core.Register(&DeviceTwin{})
-	dt := DeviceTwin{}
-	mainContext.AddModule(dt.Name())
-	mainContext.AddModuleGroup(dt.Name(), dt.Group())
-	dt.context = mainContext
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	//test is for sending test messages from devicetwin module.
+	var test model.Message
+	// ormerMock is mocked Ormer implementation.
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation.
+	var querySeterMock *beego.MockQuerySeter
+	// fakeModule is mocked implementation of TestModule.
+	var fakeModule *beehive.MockModule
+
+	const delay = 10 * time.Millisecond
+	const maxRetries = 5
+	retry := 0
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	fakeModule = beehive.NewMockModule(mockCtrl)
+	dbm.DBAccess = ormerMock
+
+	fakeModule.EXPECT().Enable().Return(true).Times(1)
+	fakeModule.EXPECT().Name().Return(TestModule).MaxTimes(5)
+
+	core.Register(fakeModule)
+	beehiveContext.AddModule(TestModule)
+	dt := newDeviceTwin(true)
+	core.Register(dt)
+	beehiveContext.AddModule(dt.Name())
+	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)
-	go dt.Start(mainContext)
-	time.Sleep(1 * time.Millisecond)
+	go dt.Start()
+	time.Sleep(delay)
+	retry++
 	// Sending a message from devicetwin module to the created fake module(TestModule) to check context is initialized properly.
-	dt.context.Send(TestModule, test)
-	_, err := mainContext.Receive(TestModule)
-	t.Run("MessagePingTest", func(t *testing.T) {
-		if err != nil {
-			t.Errorf("Error while receiving message: %v", err)
-			return
-		}
-	})
+	beehiveContext.Send(TestModule, test)
+	_, err := beehiveContext.Receive(TestModule)
+	if err != nil {
+		t.Errorf("Error while receiving message: %v", err)
+		return
+	}
 	//Checking whether Mem,Twin,Device and Comm modules are registered and started successfully.
 	tests := []struct {
 		name       string
@@ -144,44 +134,27 @@ func TestStart(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			moduleCheck := false
-			for _, module := range dt.dtcontroller.DTModules {
-				if test.moduleName == module.Name {
-					moduleCheck = true
-					err := dt.dtcontroller.DTContexts.HeartBeat(test.moduleName, "ping")
-					if err != nil {
-						t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
+			for retry < maxRetries {
+				for _, module := range dt.DTModules {
+					if test.moduleName == module.Name {
+						moduleCheck = true
+						err := dt.DTContexts.HeartBeat(test.moduleName, "ping")
+						if err != nil {
+							t.Errorf("Heartbeat of module %v is expired and dtcontroller will start it again", test.moduleName)
+						}
+						break
 					}
+				}
+				if moduleCheck {
 					break
+				} else {
+					time.Sleep(delay)
+					retry++
 				}
 			}
-			if moduleCheck == false {
+			if retry >= maxRetries {
 				t.Errorf("Registration of module %v failed", test.moduleName)
 			}
 		})
 	}
-}
-
-// TestCleanup is function to test Cleanup().
-func TestCleanup(t *testing.T) {
-	deviceTwin := DeviceTwin{
-		context: mainContext,
-		dtcontroller: &DTController{
-			Stop: make(chan bool, 1),
-		},
-	}
-	deviceTwin.Cleanup()
-	//Testing the value of stop channel in dtcontroller
-	t.Run("CleanUpTestStopChanTest", func(t *testing.T) {
-		if <-deviceTwin.dtcontroller.Stop == false {
-			t.Errorf("Want %v on StopChan Got %v", true, false)
-		}
-	})
-	//Send message to avoid deadlock if channel deletion has failed after cleanup
-	go mainContext.Send(DeviceTwinModuleName, test)
-	_, err := mainContext.Receive(DeviceTwinModuleName)
-	t.Run("CheckCleanUp", func(t *testing.T) {
-		if err == nil {
-			t.Errorf("DeviceTwin Module still has channel after cleanup")
-		}
-	})
 }

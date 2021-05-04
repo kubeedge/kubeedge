@@ -36,7 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/volume"
 	utilstrings "k8s.io/utils/strings"
@@ -63,18 +63,20 @@ var (
 
 type csiMountMgr struct {
 	csiClientGetter
-	k8s            kubernetes.Interface
-	plugin         *csiPlugin
-	driverName     csiDriverName
-	driverMode     driverMode
-	volumeID       string
-	specVolumeID   string
-	readOnly       bool
-	spec           *volume.Spec
-	pod            *api.Pod
-	podUID         types.UID
-	options        volume.VolumeOptions
-	publishContext map[string]string
+	k8s             kubernetes.Interface
+	plugin          *csiPlugin
+	driverName      csiDriverName
+	driverMode      driverMode
+	volumeID        string
+	specVolumeID    string
+	readOnly        bool
+	supportsSELinux bool
+	spec            *volume.Spec
+	pod             *api.Pod
+	podUID          types.UID
+	options         volume.VolumeOptions
+	publishContext  map[string]string
+	kubeVolHost     volume.KubeletVolumeHost
 	volume.MetricsProvider
 }
 
@@ -228,7 +230,6 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 			return fmt.Errorf("fetching NodePublishSecretRef %s/%s failed: %v",
 				secretRef.Namespace, secretRef.Name, err)
 		}
-
 	}
 
 	err = csi.NodePublishVolume(
@@ -251,6 +252,11 @@ func (c *csiMountMgr) SetUpAt(dir string, mounterArgs volume.MounterArgs) error 
 			klog.Error(log("mounter.SetupAt failed to remove mount dir after a NodePublish() error [%s]: %v", dir, removeMountDirErr))
 		}
 		return err
+	}
+
+	c.supportsSELinux, err = c.kubeVolHost.GetHostUtil().GetSELinuxSupport(dir)
+	if err != nil {
+		klog.V(2).Info(log("error checking for SELinux support: %s", err))
 	}
 
 	// apply volume ownership
@@ -302,7 +308,7 @@ func (c *csiMountMgr) podAttributes() (map[string]string, error) {
 	}
 
 	// if PodInfoOnMount is not set or false we do not set pod attributes
-	if csiDriver.Spec.PodInfoOnMount == nil || *csiDriver.Spec.PodInfoOnMount == false {
+	if csiDriver.Spec.PodInfoOnMount == nil || !*csiDriver.Spec.PodInfoOnMount {
 		klog.V(4).Infof(log("CSIDriver %q does not require pod information", c.driverName))
 		return nil, nil
 	}
@@ -318,14 +324,14 @@ func (c *csiMountMgr) podAttributes() (map[string]string, error) {
 }
 
 func (c *csiMountMgr) GetAttributes() volume.Attributes {
-	mounter := c.plugin.host.GetMounter(c.plugin.GetPluginName())
 	path := c.GetPath()
-	supportSelinux, err := mounter.GetSELinuxSupport(path)
+	supportSelinux, err := c.kubeVolHost.GetHostUtil().GetSELinuxSupport(path)
 	if err != nil {
 		klog.V(2).Info(log("error checking for SELinux support: %s", err))
 		// Best guess
 		supportSelinux = false
 	}
+
 	return volume.Attributes{
 		ReadOnly:        c.readOnly,
 		Managed:         !c.readOnly,
@@ -393,7 +399,7 @@ func (c *csiMountMgr) applyFSGroup(fsType string, fsGroup *int64) error {
 			return nil
 		}
 
-		err := volume.SetVolumeOwnership(c, fsGroup)
+		err := volume.SetVolumeOwnership(c, fsGroup, api.PodSecurityContext{}.FSGroupChangePolicy)
 		if err != nil {
 			return err
 		}

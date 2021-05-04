@@ -17,38 +17,10 @@ spec:
         k8s-app: kubeedge
         kubeedge: cloudcore
     spec:
-      initContainers:
-      - name: kubeconfig
-        image: alpine:3.9
-        volumeMounts:
-        - name: kubeconfig
-          mountPath: /etc/kubeedge/cloud
-          subPath: kubeconfig.yaml
-        command:
-        - /bin/sh
-        - -c
-        - |
-          apk --no-cache add coreutils && cat | tee /etc/kubeedge/cloud/kubeconfig.yaml <<EOF
-          apiVersion: v1
-          kind: Config
-          clusters:
-          - name: kubeedge
-            cluster:
-              certificate-authority-data: $(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt | base64 -w 0)
-          users:
-          - name: kubeedge
-            user:
-              token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-          contexts:
-          - name: kubeedge
-            context:
-              cluster: kubeedge
-              user: kubeedge
-          current-context: kubeedge
-          EOF
+      hostNetwork: true
       containers:
       - name: cloudcore
-        image: kubeedge/cloudcore:v1.0.0
+        image: kubeedge/cloudcore:v1.3.1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 10000
@@ -63,12 +35,11 @@ spec:
             memory: 512Mi
         volumeMounts:
         - name: conf
-          mountPath: /etc/kubeedge/cloud/conf
+          mountPath: /etc/kubeedge/config
         - name: certs
-          mountPath: /etc/kubeedge/certs
-        - name: kubeconfig
-          mountPath: /etc/kubeedge/cloud
-          subPath: kubeconfig.yaml
+          mountPath: /etc/kubeedge
+        - name: sock
+          mountPath: /var/lib/kubeedge
       restartPolicy: Always
       serviceAccount: cloudcore
       serviceAccountName: cloudcore
@@ -77,7 +48,11 @@ spec:
         configMap:
           name: cloudcore
       - name: certs
-        secret:
-          secretName: cloudcore
-      - name: kubeconfig
-        emptyDir: {}
+        hostPath:
+          path: /etc/kubeedge
+          type: DirectoryOrCreate
+      - name: sock
+        hostPath:
+          path: /var/lib/kubeedge
+          type: DirectoryOrCreate
+

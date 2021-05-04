@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	api "k8s.io/kubernetes/pkg/apis/core"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 )
 
@@ -28,8 +29,8 @@ type Container struct {
 	// ID of the container.
 	ID string `json:"id,omitempty"`
 	// Status of the container.
-	Status  kubecontainer.ContainerState `json:"status,omitempty"`
-	StartAt time.Time                    `json:"startat,omitempty"`
+	Status  api.ContainerState `json:"status,omitempty"`
+	StartAt time.Time          `json:"startat,omitempty"`
 }
 
 // Device specifies a host device to mount into a container.
@@ -59,7 +60,7 @@ type ContainerInspect struct {
 
 // ContainerStatus represents the status of a container.
 type ContainerStatus struct {
-	kubecontainer.ContainerStatus
+	api.ContainerStatus
 	// Reference to the image in use. For most runtimes, this should be an
 	// image ID
 	ImageRef string `json:"image_ref,omitempty"`
@@ -74,7 +75,6 @@ type ContainerStatus struct {
 var (
 	ErrPodNotFound       = errors.New("PodNotFound")
 	ErrContainerNotFound = errors.New("ContainerNotFound")
-	ErrPodStartBackOff   = errors.New("PodStartBackOff")
 )
 
 // RuntimeService is docker runtime service
@@ -88,9 +88,3 @@ type RuntimeService interface {
 	ContainerStatus(containerID string) (*ContainerStatus, error)
 	InspectContainer(containerID string) (*ContainerInspect, error)
 }
-
-// constants for defining prefix in docker
-const (
-	DockerPrefix         = "docker://"
-	DockerPullablePrefix = "docker-pullable://"
-)

@@ -5,17 +5,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 
-	"k8s.io/api/core/v1"
-	"k8s.io/klog"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 const (
@@ -24,17 +24,13 @@ const (
 	EdgedPodHandler = "/pods"
 )
 
-func Register() {
-	core.Register(&testManager{})
+// TODO move this files into /edge/pkg/dbtest @kadisi
+func Register(t *v1alpha1.DBTest) {
+	core.Register(&testManager{enable: t.Enable})
 }
 
 type testManager struct {
-	context    *context.Context
-	moduleWait *sync.WaitGroup
-}
-
-type meta struct {
-	UID string `json:"uid"`
+	enable bool
 }
 
 func (tm *testManager) Name() string {
@@ -44,6 +40,10 @@ func (tm *testManager) Name() string {
 func (tm *testManager) Group() string {
 	//return core.MetaGroup
 	return modules.MetaGroup
+}
+
+func (tm *testManager) Enable() bool {
+	return tm.enable
 }
 
 //Function to get the pods from Edged
@@ -63,7 +63,7 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 		klog.Errorf("Sending HTTP request failed: %v", err)
 		return err
 	}
-	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	klog.Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -108,11 +108,11 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
@@ -121,7 +121,7 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 			ns = p.Namespace
 		}
 		msgReq := message.BuildMsg("resource", string(p.UID), "edgecontroller", ns+"/pod/"+string(p.Name), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -144,15 +144,15 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 			w.Write([]byte("unmarshal request body error"))
 		}
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 		msgReq := message.BuildMsg("edgehub", "", "edgemgr", "membership", operation, Content)
-		tm.context.Send("twin", *msgReq)
+		beehiveContext.Send("twin", *msgReq)
 		klog.Infof("send message to twingrp is %+v\n", msgReq)
 	}
 }
@@ -173,16 +173,16 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/secret/"+string(p.UID), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
@@ -203,24 +203,21 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 		}
 
 		switch req.Method {
-		case "POST":
+		case http.MethodPost:
 			operation = model.InsertOperation
-		case "DELETE":
+		case http.MethodDelete:
 			operation = model.DeleteOperation
-		case "PUT":
+		case http.MethodPut:
 			operation = model.UpdateOperation
 		}
 
 		msgReq := message.BuildMsg("edgehub", string(p.UID), "test", "fakeNamespace/configmap/"+string(p.UID), operation, p)
-		tm.context.Send("metaManager", *msgReq)
+		beehiveContext.Send("metaManager", *msgReq)
 		klog.Infof("send message to metaManager is %+v\n", msgReq)
 	}
 }
 
-func (tm *testManager) Start(c *context.Context) {
-	tm.context = c
-	defer tm.Cleanup()
-
+func (tm *testManager) Start() {
 	http.HandleFunc("/pods", tm.podHandler)
 	http.HandleFunc("/configmap", tm.configmapHandler)
 	http.HandleFunc("/secret", tm.secretHandler)
@@ -229,8 +226,4 @@ func (tm *testManager) Start(c *context.Context) {
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
-}
-
-func (tm *testManager) Cleanup() {
-	tm.context.Cleanup(tm.Name())
 }

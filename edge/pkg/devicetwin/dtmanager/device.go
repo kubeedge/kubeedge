@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
@@ -59,7 +60,7 @@ func (dw DeviceWorker) Start() {
 
 func initDeviceActionCallBack() {
 	deviceActionCallBack = make(map[string]CallBack)
-	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceUpdated
+	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceAttrUpdate
 	deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
 }
 
@@ -69,7 +70,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return nil, errors.New("msg not Message type")
 	}
 
-	updateDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
@@ -85,12 +86,12 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if !ok {
 		return nil, nil
 	}
-	if strings.Compare("online", updateDevice.State) != 0 && strings.Compare("offline", updateDevice.State) != 0 && strings.Compare("unknown", updateDevice.State) != 0 {
+	if strings.Compare("online", updatedDevice.State) != 0 && strings.Compare("offline", updatedDevice.State) != 0 && strings.Compare("unknown", updatedDevice.State) != 0 {
 		return nil, nil
 	}
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dtclient.UpdateDeviceField(device.ID, "state", updateDevice.State)
+		err = dtclient.UpdateDeviceField(device.ID, "state", updatedDevice.State)
 		err = dtclient.UpdateDeviceField(device.ID, "last_online", lastOnline)
 		if err == nil {
 			break
@@ -100,7 +101,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if err != nil {
 
 	}
-	device.State = updateDevice.State
+	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
@@ -110,23 +111,23 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 
 	msgResource := "device/" + device.ID + "/state"
 	context.Send(deviceID,
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
-		context.BuildModelMessage("resource", "", msgResource, "update", string(payload)))
+		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload)))
 	return nil, nil
 }
 
-func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
 
-	updateDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
@@ -135,13 +136,13 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 	deviceID := resource
 
 	context.Lock(deviceID)
-	DeviceUpdated(context, deviceID, updateDevice.Attributes, dttype.BaseMessage{EventID: updateDevice.EventID}, 0)
+	UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes, dttype.BaseMessage{EventID: updatedDevice.EventID}, 0)
 	context.Unlock(deviceID)
 	return nil, nil
 }
 
-//DeviceUpdated update device attributes
-func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map[string]*dttype.MsgAttr, baseMessage dttype.BaseMessage, dealType int) (interface{}, error) {
+//UpdateDeviceAttr update device attributes
+func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes map[string]*dttype.MsgAttr, baseMessage dttype.BaseMessage, dealType int) (interface{}, error) {
 	klog.Infof("Begin to update attributes of the device %s", deviceID)
 	var err error
 	doc, docExist := context.DeviceList.Load(deviceID)
@@ -168,7 +169,6 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 		if err != nil {
 			SyncDeviceFromSqlite(context, deviceID)
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
-
 		} else {
 			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
 			payload, err := dttype.BuildDeviceAttrUpdate(baseMessage, result)
@@ -177,10 +177,8 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 				klog.Errorf("Build device attribute update failed: %v", err)
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
-			context.Send(deviceID,
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+			context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
+				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 		}
 	}
 
@@ -189,14 +187,14 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 
 //DealMsgAttr get diff,0:update, 1:detail
 func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[string]*dttype.MsgAttr, dealType int) dttype.DealAttrResult {
-	deviceModel, ok := context.GetDevice(deviceID)
+	device, ok := context.GetDevice(deviceID)
 	if !ok {
 
 	}
-	attrs := deviceModel.Attributes
+	attrs := device.Attributes
 	if attrs == nil {
-		deviceModel.Attributes = make(map[string]*dttype.MsgAttr)
-		attrs = deviceModel.Attributes
+		device.Attributes = make(map[string]*dttype.MsgAttr)
+		attrs = device.Attributes
 	}
 	add := make([]dtclient.DeviceAttr, 0)
 	deletes := make([]dtclient.DeviceDelete, 0)
@@ -204,7 +202,6 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 	result := make(map[string]*dttype.MsgAttr)
 
 	for key, msgAttr := range msgAttrs {
-
 		if attr, exist := attrs[key]; exist {
 			if msgAttr == nil && dealType == 0 {
 				if *attr.Optional {
@@ -254,9 +251,7 @@ func DealMsgAttr(context *dtcontext.DTContext, deviceID string, msgAttrs map[str
 			} else {
 				delete(result, key)
 			}
-
 		} else {
-
 			deviceAttr := dttype.MsgAttrToDeviceAttr(key, msgAttr)
 			deviceAttr.DeviceID = deviceID
 			deviceAttr.Value = msgAttr.Value

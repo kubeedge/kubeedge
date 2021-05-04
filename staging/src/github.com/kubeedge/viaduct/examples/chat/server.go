@@ -11,7 +11,7 @@ import (
 	"math/big"
 	"os"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/viaduct/examples/chat/config"

@@ -24,7 +24,8 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 function kubeedge::git::check_status() {
-	echo $( git status --short 2>/dev/null | wc -l)
+	# check if there's any uncommitted changes on go.mod, go.sum or vendor/
+	echo $( git status --short 2>/dev/null | grep -E "go.mod|go.sum|vendor/" |wc -l)
 }
 
 ${KUBEEDGE_ROOT}/hack/update-vendor.sh

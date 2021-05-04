@@ -7,38 +7,22 @@ metadata:
     k8s-app: kubeedge
     kubeedge: cloudcore
 data:
-  controller.yaml: |
-    controller:
-      kube:
-        master: https://kubernetes.default.svc.cluster.local:443
-        kubeconfig: /etc/kubeedge/cloud/kubeconfig.yaml
-        namespace: ""
-        content_type: "application/vnd.kubernetes.protobuf"
-        qps: 5
-        burst: 10
-        node_update_frequency: 10
-    cloudhub:
-      address: 0.0.0.0
-      port: 10000
-      ca: /etc/kubeedge/certs/rootCA.crt
-      cert: /etc/kubeedge/certs/edge.crt
-      key: /etc/kubeedge/certs/edge.key
-      keepalive-interval: 30
-      write-timeout: 30
-      node-limit: 10
-    devicecontroller:
-       kube:
-         master: https://kubernetes.default.svc.cluster.local:443
-         namespace: ""
-         content_type: "application/vnd.kubernetes.protobuf"
-         qps: 5
-         burst: 10
-         kubeconfig: "/etc/kubeedge/cloud/kubeconfig.yaml"
-  logging.yaml: |
-    loggerLevel: "INFO"
-    enableRsyslog: false
-    logFormatText: true
-    writers: [stdout]
-  modules.yaml: |
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha2
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
     modules:
-      enabled: [devicecontroller, edgecontroller, cloudhub]
+      cloudHub:
+        nodeLimit: 10
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/edge.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000

@@ -3,9 +3,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -26,13 +24,11 @@ type PodStatusInterface interface {
 
 type podStatus struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newPodStatus(namespace string, c *context.Context, s SendInterface) *podStatus {
+func newPodStatus(namespace string, s SendInterface) *podStatus {
 	return &podStatus{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}

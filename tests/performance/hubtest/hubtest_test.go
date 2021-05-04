@@ -40,7 +40,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 			// Create Edge Nodes
 			numOfEdgeNodes = 10
 			podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
-				ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, numOfEdgeNodes)
+				ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, numOfEdgeNodes)
 		})
 
 		AfterEach(func() {
@@ -79,7 +79,7 @@ var _ = Describe("KubeEdge hub performance test", func() {
 				for i := 0; i < numOfPodsPerEdgeNode; i++ {
 					// Loop for Edge Node Numbers
 					for nodeName := range NodeInfo {
-						// Contruct fake pods
+						// Construct fake pods
 						var pod types.FakePod
 						pod.Name = nodeName + "-fakepod-" + utils.GetRandomString(10)
 						pod.Namespace = constants.NamespaceDefault

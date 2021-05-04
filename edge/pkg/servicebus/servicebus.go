@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	serviceConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 const (
@@ -24,26 +26,35 @@ const (
 
 // servicebus struct
 type servicebus struct {
-	context *context.Context
+	enable bool
+}
+
+func newServicebus(enable bool) *servicebus {
+	return &servicebus{
+		enable: enable,
+	}
 }
 
 // Register register servicebus
-func Register() {
-	edgeServiceBusModule := servicebus{}
-	core.Register(&edgeServiceBusModule)
+func Register(s *v1alpha1.ServiceBus) {
+	serviceConfig.InitConfigure(s)
+	core.Register(newServicebus(s.Enable))
 }
 
 func (*servicebus) Name() string {
-	return "servicebus"
+	return modules.ServiceBusModuleName
 }
 
 func (*servicebus) Group() string {
-	return modules.BusGroup
+	return modules.UserGroup
 }
 
-func (sb *servicebus) Start(c *context.Context) {
+func (sb *servicebus) Enable() bool {
+	return sb.enable
+}
+
+func (sb *servicebus) Start() {
 	// no need to call TopicInit now, we have fixed topic
-	sb.context = c
 	var htc = new(http.Client)
 	htc.Timeout = time.Second * 10
 
@@ -52,83 +63,88 @@ func (sb *servicebus) Start(c *context.Context) {
 
 	//Get message from channel
 	for {
-		if msg, ok := sb.context.Receive("servicebus"); ok == nil {
-			go func() {
-				klog.Infof("ServiceBus receive msg")
-				source := msg.GetSource()
-				if source != sourceType {
-					return
-				}
-				resource := msg.GetResource()
-				r := strings.Split(resource, ":")
-				if len(r) != 2 {
-					m := "the format of resource " + resource + " is incorrect"
-					klog.Warningf(m)
-					code := http.StatusBadRequest
-					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
-					}
-					return
-				}
-				content, err := json.Marshal(msg.GetContent())
-				if err != nil {
-					klog.Errorf("marshall message content failed %v", err)
-					m := "error to marshal request msg content"
-					code := http.StatusBadRequest
-					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
-					}
-					return
-				}
-				var httpRequest util.HTTPRequest
-				if err := json.Unmarshal(content, &httpRequest); err != nil {
-					m := "error to parse http request"
-					code := http.StatusBadRequest
-					klog.Errorf(m, err)
-					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
-					}
-					return
-				}
-				operation := msg.GetOperation()
-				targetURL := "http://127.0.0.1:" + r[0] + "/" + r[1]
-				resp, err := uc.HTTPDo(operation, targetURL, httpRequest.Header, httpRequest.Body)
-				if err != nil {
-					m := "error to call service"
-					code := http.StatusNotFound
-					klog.Errorf(m, err)
-					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
-					}
-					return
-				}
-				resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
-				resBody, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					if err.Error() == "http: request body too large" {
-						err = fmt.Errorf("response body too large")
-					}
-					m := "error to receive response, err: " + err.Error()
-					code := http.StatusInternalServerError
-					klog.Errorf(m, err)
-					if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
-						sb.context.Send2Group(modules.HubGroup, response)
-					}
-					return
-				}
-
-				response := util.HTTPResponse{Header: resp.Header, StatusCode: resp.StatusCode, Body: resBody}
-				responseMsg := model.NewMessage(msg.GetID())
-				responseMsg.Content = response
-				responseMsg.SetRoute("servicebus", modules.UserGroup)
-				sb.context.Send2Group(modules.HubGroup, *responseMsg)
-			}()
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("ServiceBus stop")
+			return
+		default:
 		}
-	}
-}
+		msg, err := beehiveContext.Receive(modules.ServiceBusModuleName)
+		if err != nil {
+			klog.Warningf("servicebus receive msg error %v", err)
+			continue
+		}
+		go func() {
+			klog.Infof("ServiceBus receive msg")
+			source := msg.GetSource()
+			if source != sourceType {
+				return
+			}
+			resource := msg.GetResource()
+			r := strings.Split(resource, ":")
+			if len(r) != 2 {
+				m := "the format of resource " + resource + " is incorrect"
+				klog.Warningf(m)
+				code := http.StatusBadRequest
+				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
+					beehiveContext.SendToGroup(modules.HubGroup, response)
+				}
+				return
+			}
+			content, err := json.Marshal(msg.GetContent())
+			if err != nil {
+				klog.Errorf("marshall message content failed %v", err)
+				m := "error to marshal request msg content"
+				code := http.StatusBadRequest
+				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
+					beehiveContext.SendToGroup(modules.HubGroup, response)
+				}
+				return
+			}
+			var httpRequest util.HTTPRequest
+			if err := json.Unmarshal(content, &httpRequest); err != nil {
+				m := "error to parse http request"
+				code := http.StatusBadRequest
+				klog.Errorf(m, err)
+				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
+					beehiveContext.SendToGroup(modules.HubGroup, response)
+				}
+				return
+			}
+			operation := msg.GetOperation()
+			targetURL := "http://127.0.0.1:" + r[0] + "/" + r[1]
+			resp, err := uc.HTTPDo(operation, targetURL, httpRequest.Header, httpRequest.Body)
+			if err != nil {
+				m := "error to call service"
+				code := http.StatusNotFound
+				klog.Errorf(m, err)
+				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
+					beehiveContext.SendToGroup(modules.HubGroup, response)
+				}
+				return
+			}
+			resp.Body = http.MaxBytesReader(nil, resp.Body, maxBodySize)
+			resBody, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				if err.Error() == "http: request body too large" {
+					err = fmt.Errorf("response body too large")
+				}
+				m := "error to receive response, err: " + err.Error()
+				code := http.StatusInternalServerError
+				klog.Errorf(m, err)
+				if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
+					beehiveContext.SendToGroup(modules.HubGroup, response)
+				}
+				return
+			}
 
-func (sb *servicebus) Cleanup() {
-	sb.context.Cleanup(sb.Name())
+			response := util.HTTPResponse{Header: resp.Header, StatusCode: resp.StatusCode, Body: resBody}
+			responseMsg := model.NewMessage(msg.GetID())
+			responseMsg.Content = response
+			responseMsg.SetRoute("servicebus", modules.UserGroup)
+			beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
+		}()
+	}
 }
 
 func buildErrorResponse(parentID string, content string, statusCode int) (model.Message, error) {

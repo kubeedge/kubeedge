@@ -1,0 +1,11 @@
+[Unit]
+Description=edgecore.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/edgecore
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

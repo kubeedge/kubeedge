@@ -20,14 +20,11 @@ import (
 	"context"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"k8s.io/klog"
-
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
+	"k8s.io/klog/v2"
 )
 
 type Controller struct {
-	metaClient client.CoreInterface
-	csiClient  csiClient
+	csiClient csiClient
 }
 
 func (c *Controller) CreateVolume(req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {

@@ -1,90 +1,57 @@
 language: go
 
-sudo: required
+git:
+  depth: false
+
+os: linux
+
+dist: focal
 
 services:
   - docker
 
 go:
-  - 1.12
+  - 1.14
+
+env:
+  - HOME=/home/travis
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
 
 before_install:
   - |
-      if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md)|(\.png)|(\.pdf)|(\.html)|^(LICENSE)|^(docs)'
+      if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md)|(\.png)|(\.pdf)|(\.html)|^(LICENSE)|^(docs)|^(OWNERS)|^(MAINTAINERS)'
       then
         echo "Only doc files were updated, skip running the CI."
-        exit
+        travis_terminate 0
       fi
 
-before_script:
-  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -d -b $(go env GOPATH)/bin v1.16.0
-  - mkdir -p $HOME/gopath/src/github.com/kubeedge/kubeedge
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kubeedge/kubeedge/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kubeedge/kubeedgee
-  - go get github.com/onsi/ginkgo/ginkgo
-  - export GO111MODULE=on
-  - export GOFLAGS=-mod=vendor
-  - cd $HOME/gopath/src/github.com/kubeedge/kubeedge
-  - sudo apt-get install build-essential
-  - sudo apt-get install gcc-arm-linux-gnueabi
-  - sudo apt-get install upx-ucl
-
-install: true
+install: skip
 
 jobs:
   include:
-    - stage: "Verify vendor"
-      script: make verify
-      name: "check if the vendor is up to date"
-
-    - stage: "Test lint"
-      script: make cloud_lint
-      name: "cloud_lint"     # names the eighth Tests stage job
-    - script: make bluetoothdevice_lint
-      name: "bluetooth_device_lint"
-    - script: make keadm_lint
-      name: "keadm_lint"
-    - script: make edge_lint
-      name: "edge_lint"
-
-    - stage: "Test Build"                # naming the Tests stage
-      script: make 
-      name: "builds cloud and edge components"            # names the first Tests stage job
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script: make bluetoothdevice
-      name: "build bluetooth_device"
-    - script: make edge_small_build
-      name: "build small edge version"
-    - script: make edge_cross_build
-      name: "cross build edge"     # names the fifth Tests stage job
-    - script: make edge_cross_build_v7
-      name: "cross build edge for armv7"     # names the fifth Tests stage job
-    - script: make edgesite_cross_build
-      name: "cross build edgesite"    # names the fifth Tests stage job
-    - script: make edgesite_cross_build_v7
-      name: "cross build edgeitefor armv7"     # names the fifth Tests stage job
-
-    - stage: "unit tests"
-      script: make edge_test
-      name: "unit test edge"     # names the third Tests stage job
-    - script: make edge_integration_test
-      name: "integration test edge"     # names the fourth Tests stage job
-    - script: make cloud_test
-      name: "unit test cloud" 
-
-    - stage: "e2e tests"
-      script: make e2e_test
-      name: "e2e_test"     # names the seventh Tests stage job
-
-    - stage: "build docker images"
-      script: make cloudimage
-      name: "build cloudimage"
-    - script: make admissionimage
-      name: "build admission image"
-    - script: make edgeimage
-      name: "build edge image"
-    - script: make edgesiteimage
-      name: "build edgesite image"
-    - script: make bluetoothdevice_image
-      name: "build bluetoothdevice image"
+    - stage: "Test on arm64"
+      name: "build, smallbuild"
+      arch: arm64
+      before_script:
+        - export GOFLAGS=-mod=vendor
+        - sudo apt-get install upx-ucl -y
+      script:
+        - make
+        - make smallbuild
+    - name: "unit test, integration test edge"
+      arch: arm64
+      before_script:
+        - export GOFLAGS=-mod=mod
+      script:
+        - make test
+    - name: "build docker images on arm64"
+      arch: arm64
+      script:
+        - make cloudimage
+        - make admissionimage
+        - make edgeimage ARCH="arm64v8"
+        - make edgesiteimage ARCH="arm64v8"

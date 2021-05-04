@@ -28,4 +28,4 @@ docker build -t ${imageRepo}/edgecore:latest -f ${SRC_DIR}/build/edge/Dockerfile
 
 docker push ${imageRepo}/edgecore:latest
 
-echo "edgecore image successully built and pushed to repository !!"
+echo "edgecore image successfully built and pushed to repository !!"

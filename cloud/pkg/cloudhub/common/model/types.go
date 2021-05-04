@@ -1,14 +1,15 @@
 package model
 
 import (
+
 	// Mapping value of json to struct member
 	_ "encoding/json"
 	"fmt"
 	"strings"
 
-	"k8s.io/klog"
-
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	edgemessagelayer "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 )
 
 // constants for resource types
@@ -55,52 +56,18 @@ const (
 	NodeID    = "node_id"
 )
 
+var cloudModuleArray = []string{
+	modules.CloudHubModuleName,
+	modules.CloudStreamModuleName,
+	modules.DeviceControllerModuleName,
+	modules.EdgeControllerModuleName,
+	modules.SyncControllerModuleName,
+}
+
 // HubInfo saves identifier information for edge hub
 type HubInfo struct {
 	ProjectID string
 	NodeID    string
-}
-
-// UserGroupInfo struct
-type UserGroupInfo struct {
-	Resource  string `json:"resource"`
-	Operation string `json:"operation"`
-}
-
-// Event represents message communicated between cloud hub and edge hub
-type Event struct {
-	Group     string        `json:"msg_group"`
-	Source    string        `json:"source"`
-	UserGroup UserGroupInfo `json:"user_group"`
-	ID        string        `json:"msg_id"`
-	ParentID  string        `json:"parent_msg_id"`
-	Timestamp int64         `json:"timestamp"`
-	Content   interface{}   `json:"content"`
-}
-
-// EventToMessage converts an event to a model message
-func EventToMessage(event *Event) model.Message {
-	var msg model.Message
-	msg.BuildHeader(event.ID, event.ParentID, event.Timestamp)
-	msg.BuildRouter(event.Source, event.Group, event.UserGroup.Resource, event.UserGroup.Operation)
-	msg.FillBody(event.Content)
-	return msg
-}
-
-// MessageToEvent converts a model message to an event
-func MessageToEvent(msg *model.Message) Event {
-	var event Event
-	event.ID = msg.GetID()
-	event.ParentID = msg.GetParentID()
-	event.Timestamp = msg.GetTimestamp()
-	event.Source = msg.GetSource()
-	event.Group = msg.GetGroup()
-	event.Content = msg.GetContent()
-	event.UserGroup = UserGroupInfo{
-		Resource:  msg.GetResource(),
-		Operation: msg.GetOperation(),
-	}
-	return event
 }
 
 // NewResource constructs a resource field using resource type and ID
@@ -116,42 +83,35 @@ func NewResource(resType, resID string, info *HubInfo) string {
 }
 
 // IsNodeStopped indicates if the node is stopped or running
-func (event *Event) IsNodeStopped() bool {
-	tokens := strings.Split(event.UserGroup.Resource, "/")
-	if len(tokens) != 2 || tokens[0] != ResNode {
+func IsNodeStopped(msg *model.Message) bool {
+	resourceType, _ := edgemessagelayer.GetResourceType(*msg)
+	if resourceType != model.ResourceTypeNode {
 		return false
 	}
-	if event.UserGroup.Operation == OpDelete {
+
+	if msg.Router.Operation == model.DeleteOperation {
 		return true
 	}
-	if event.UserGroup.Operation != OpUpdate || event.Content == nil {
-		return false
-	}
-	body, ok := event.Content.(map[string]interface{})
-	if !ok {
-		klog.Errorf("fail to decode node update message: %s, type is %T", event.GetContent(), event.Content)
-		// it can't be determined if the node has stopped
-		return false
-	}
-	// trust struct of json body
-	action, ok := body["action"]
-	if !ok || action.(string) != "stop" {
-		return false
-	}
-	return true
+	return false
 }
 
 // IsFromEdge judges if the event is sent from edge
-func (event *Event) IsFromEdge() bool {
+func IsFromEdge(msg *model.Message) bool {
+	source := msg.Router.Source
+	for _, item := range cloudModuleArray {
+		if source == item {
+			return false
+		}
+	}
 	return true
 }
 
 // IsToEdge judges if the vent should be sent to edge
-func (event *Event) IsToEdge() bool {
-	if event.Source != SrcManager {
+func IsToEdge(msg *model.Message) bool {
+	if msg.Router.Source != SrcManager {
 		return true
 	}
-	resource := event.UserGroup.Resource
+	resource := msg.Router.Resource
 	if strings.HasPrefix(resource, ResNode) {
 		tokens := strings.Split(resource, "/")
 		if len(tokens) >= 3 {
@@ -168,7 +128,7 @@ func (event *Event) IsToEdge() bool {
 	}
 	for res, ops := range resOpMap {
 		for _, op := range ops {
-			if event.UserGroup.Operation == op && strings.Contains(resource, res) {
+			if msg.Router.Operation == op && strings.Contains(resource, res) {
 				return false
 			}
 		}
@@ -177,6 +137,6 @@ func (event *Event) IsToEdge() bool {
 }
 
 // GetContent dumps the content to string
-func (event *Event) GetContent() string {
-	return fmt.Sprintf("%v", event.Content)
+func GetContent(msg *model.Message) string {
+	return fmt.Sprintf("%v", msg.Content)
 }

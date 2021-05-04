@@ -5,18 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
-	ctx "github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	hubmodel "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
 // StartServer serves
-func StartServer(config *util.Config, c *ctx.Context) {
-	uds := NewUnixDomainSocket(config.UDSAddress)
+func StartServer(address string) {
+	uds := NewUnixDomainSocket(address)
 	uds.SetContextHandler(func(context string) string {
 		// receive message from client
 		klog.Infof("uds server receives context: %s", context)
@@ -27,7 +26,7 @@ func StartServer(config *util.Config, c *ctx.Context) {
 		}
 
 		// Send message to edge
-		resp, err := c.SendSync(hubmodel.SrcCloudHub, *msg, constants.CSISyncMsgRespTimeout)
+		resp, err := beehiveContext.SendSync(hubmodel.SrcCloudHub, *msg, constants.CSISyncMsgRespTimeout)
 		if err != nil {
 			klog.Errorf("failed to send message to edge: %v", err)
 			return feedbackError(err, msg)
@@ -43,7 +42,10 @@ func StartServer(config *util.Config, c *ctx.Context) {
 	})
 
 	klog.Info("start unix domain socket server")
-	uds.StartServer()
+	if err := uds.StartServer(); err != nil {
+		klog.Fatalf("failed to start uds server: %v", err)
+		return
+	}
 }
 
 // ExtractMessage extracts message from clients

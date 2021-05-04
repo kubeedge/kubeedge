@@ -71,7 +71,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 			ctx.Cfg.K8SMasterForKubeEdge,
 			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler,
 			ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-			ctx.Cfg.CloudImageUrl,
+			ctx.Cfg.CloudImageURL,
 			ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)

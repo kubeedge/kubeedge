@@ -16,6 +16,8 @@ limitations under the License.
 package loadtest
 
 import (
+	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -64,7 +66,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP
@@ -74,8 +76,8 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
 				cloudCoreHostIP = pod.Status.HostIP
 				cloudCoreNodeName = pod.Spec.NodeName
+				break
 			}
-			break
 		}
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
@@ -86,14 +88,17 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		wsPort, quicPort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		wsNodePort := strconv.FormatInt(int64(wsPort), 10)
 		quicNodePort := strconv.FormatInt(int64(quicPort), 10)
-		quiccloudHubURL = cloudCoreHostIP + ":" + quicNodePort
+		quiccloudHubURL = net.JoinHostPort(cloudCoreHostIP, quicNodePort)
 		cloudHubURL = quiccloudHubURL
-		wsscloudHubURL = "wss://" + cloudCoreHostIP + ":" + wsNodePort
+		wsscloudHubURL = (&url.URL{
+			Scheme: "wss",
+			Host:   net.JoinHostPort(cloudCoreHostIP, wsNodePort),
+		}).String()
 		cloudHubURL = wsscloudHubURL
 
 		//Deploye edgecore as a k8s resource to cluster-2
 		podlist = HandleEdgeDeployment(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler,
-			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageUrl, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
 
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
 		ToTaint = true
@@ -110,8 +115,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
-
 	})
 
-	RunSpecs(t, "kubeedge Performace Load test Suite")
+	RunSpecs(t, "kubeedge Performance Load test Suite")
 }

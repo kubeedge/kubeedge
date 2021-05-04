@@ -3,7 +3,9 @@ package manager
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // Manager define the interface of a Manager, configmapManager and podManager implement it
@@ -22,6 +24,13 @@ func (c *CommonResourceEventHandler) obj2Event(t watch.EventType, obj interface{
 		klog.Warningf("unknown type: %T, ignore", obj)
 		return
 	}
+	// All obj from client has been removed the information of apiversion/kind called MetaType,
+	// it is fatal to decode the obj as unstructured.Unstructure or unstructured.UnstructureList at edge.
+	err := util.SetMetaType(eventObj)
+	if err != nil {
+		klog.Warningf("failed to set meta type :%v", err)
+	}
+
 	c.events <- watch.Event{Type: t, Object: eventObj}
 }
 

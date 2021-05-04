@@ -29,7 +29,7 @@ import (
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -77,7 +77,6 @@ func (s *nonBlockingGRPCServer) ForceStop() {
 }
 
 func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) error {
-
 	proto, addr, err := parseEndpoint(endpoint)
 	if err != nil {
 		klog.Errorf(err.Error())
@@ -127,13 +126,13 @@ func parseEndpoint(ep string) (string, string, error) {
 }
 
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	klog.Infof("gprc call: %s", info.FullMethod)
-	klog.Infof("gprc request: %+v", protosanitizer.StripSecrets(req))
+	klog.Infof("grpc call: %s", info.FullMethod)
+	klog.Infof("grpc request: %+v", protosanitizer.StripSecrets(req))
 	resp, err := handler(ctx, req)
 	if err != nil {
-		klog.Errorf("gprc error: %v", err)
+		klog.Errorf("grpc error: %v", err)
 	} else {
-		klog.Infof("gprc response: %+v", protosanitizer.StripSecrets(resp))
+		klog.Infof("grpc response: %+v", protosanitizer.StripSecrets(resp))
 	}
 	return resp, err
 }

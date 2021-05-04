@@ -1,77 +1,94 @@
 package context
 
 import (
+	gocontext "context"
 	"sync"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//define channel type
+// define channel type
 const (
 	MsgCtxTypeChannel = "channel"
 )
 
 var (
 	// singleton
-	context *Context
+	context *beehiveContext
 	once    sync.Once
 )
 
-// GetContext gets global context instance
-func GetContext(contextType string) *Context {
+// InitContext gets global context instance
+func InitContext(contextType string) {
 	once.Do(func() {
-		context = &Context{}
+		ctx, cancel := gocontext.WithCancel(gocontext.Background())
+		context = &beehiveContext{
+			ctx:    ctx,
+			cancel: cancel,
+		}
 		switch contextType {
 		case MsgCtxTypeChannel:
 			channelContext := NewChannelContext()
 			context.messageContext = channelContext
 			context.moduleContext = channelContext
 		default:
-			log.LOGGER.Warnf("do not support context type(%s)", contextType)
+			klog.Fatalf("Do not support context type:%s", contextType)
 		}
 	})
-	return context
+}
+
+func GetContext() gocontext.Context {
+	return context.ctx
+}
+func Done() <-chan struct{} {
+	return context.ctx.Done()
 }
 
 // AddModule adds module into module context
-func (ctx *Context) AddModule(module string) {
-	ctx.moduleContext.AddModule(module)
+func AddModule(module string) {
+	context.moduleContext.AddModule(module)
 }
 
 // AddModuleGroup adds module into module context group
-func (ctx *Context) AddModuleGroup(module, group string) {
-	ctx.moduleContext.AddModuleGroup(module, group)
+func AddModuleGroup(module, group string) {
+	context.moduleContext.AddModuleGroup(module, group)
+}
+
+// Cancel function
+func Cancel() {
+	context.cancel()
 }
 
 // Cleanup cleans up module
-func (ctx *Context) Cleanup(module string) {
-	ctx.moduleContext.Cleanup(module)
+func Cleanup(module string) {
+	context.moduleContext.Cleanup(module)
 }
 
 // Send the message
-func (ctx *Context) Send(module string, message model.Message) {
-	ctx.messageContext.Send(module, message)
+func Send(module string, message model.Message) {
+	context.messageContext.Send(module, message)
 }
 
 // Receive the message
 // module : local module name
-func (ctx *Context) Receive(module string) (model.Message, error) {
-	message, err := ctx.messageContext.Receive(module)
+func Receive(module string) (model.Message, error) {
+	message, err := context.messageContext.Receive(module)
 	if err == nil {
 		return message, nil
 	}
-	log.LOGGER.Warnf("failed to receive message")
+	klog.Warningf("Receive: failed to receive message, error:%v", err)
 	return message, err
 }
 
 // SendSync sends message in sync mode
 // module: the destination of the message
 // timeout: if <= 0 using default value(30s)
-func (ctx *Context) SendSync(module string,
+func SendSync(module string,
 	message model.Message, timeout time.Duration) (model.Message, error) {
-	resp, err := ctx.messageContext.SendSync(module, message, timeout)
+	resp, err := context.messageContext.SendSync(module, message, timeout)
 	if err == nil {
 		return resp, nil
 	}
@@ -80,16 +97,16 @@ func (ctx *Context) SendSync(module string,
 
 // SendResp sends response
 // please get resp message using model.NewRespByMessage
-func (ctx *Context) SendResp(resp model.Message) {
-	ctx.messageContext.SendResp(resp)
+func SendResp(resp model.Message) {
+	context.messageContext.SendResp(resp)
 }
 
-// Send2Group broadcasts the message to all of group members
-func (ctx *Context) Send2Group(moduleType string, message model.Message) {
-	ctx.messageContext.Send2Group(moduleType, message)
+// SendToGroup broadcasts the message to all of group members
+func SendToGroup(moduleType string, message model.Message) {
+	context.messageContext.SendToGroup(moduleType, message)
 }
 
-// send2GroupSync broadcasts the message to all of group members in sync mode
-func (ctx *Context) send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	return ctx.messageContext.Send2GroupSync(moduleType, message, timeout)
+// sendToGroupSync broadcasts the message to all of group members in sync mode
+func sendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
+	return context.messageContext.SendToGroupSync(moduleType, message, timeout)
 }

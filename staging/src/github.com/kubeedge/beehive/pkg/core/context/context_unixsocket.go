@@ -20,7 +20,7 @@ var (
 	usOnce    sync.Once
 )
 
-//GetUnixSocketContext defines and returns unix socket context object
+// GetUnixSocketContext defines and returns unix socket context object
 func GetUnixSocketContext() *UnixSocketContext {
 	usOnce.Do(func() {
 		usContext = &UnixSocketContext{}
@@ -28,17 +28,17 @@ func GetUnixSocketContext() *UnixSocketContext {
 	return usContext
 }
 
-//AddModule adds module to context
+// AddModule adds module to context
 func (ctx *UnixSocketContext) AddModule(module string) {
 
 }
 
-//AddModuleGroup adds module to module context group
+// AddModuleGroup adds module to module context group
 func (ctx *UnixSocketContext) AddModuleGroup(module, group string) {
 
 }
 
-//Cleanup cleans up module
+// Cleanup cleans up module
 func (ctx *UnixSocketContext) Cleanup(module string) {
 
 }
@@ -65,7 +65,7 @@ func (ctx *UnixSocketContext) SendResp(messageID string, content interface{}) {
 
 }
 
-// Send2Group broadcasts the message to all of group members
-func (ctx *UnixSocketContext) Send2Group(moduleType string, content interface{}) {
+// SendToGroup broadcasts the message to all of group members
+func (ctx *UnixSocketContext) SendToGroup(moduleType string, content interface{}) {
 
 }

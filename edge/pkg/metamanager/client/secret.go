@@ -6,7 +6,6 @@ import (
 
 	api "k8s.io/api/core/v1"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -28,13 +27,11 @@ type SecretsInterface interface {
 
 type secrets struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newSecrets(namespace string, c *context.Context, s SendInterface) *secrets {
+func newSecrets(namespace string, s SendInterface) *secrets {
 	return &secrets{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}
@@ -53,7 +50,6 @@ func (c *secrets) Delete(name string) error {
 }
 
 func (c *secrets) Get(name string) (*api.Secret, error) {
-
 	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
 	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(secretMsg)
@@ -78,7 +74,6 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	}
 	//else
 	return handleSecretFromMetaManager(content)
-
 }
 
 func handleSecretFromMetaDB(content []byte) (*api.Secret, error) {

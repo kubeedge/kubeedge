@@ -18,8 +18,10 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -30,15 +32,16 @@ import (
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha1"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/viaduct/pkg/api"
 )
 
@@ -48,6 +51,12 @@ const (
 	TwinETUpdateSuffix    = "/twin/update"
 	TwinETGetSuffix       = "/twin/get"
 	TwinETGetResultSuffix = "/twin/get/result"
+
+	BlueTooth         = "bluetooth"
+	ModBus            = "modbus"
+	Led               = "led"
+	IncorrectInstance = "incorrect-instance"
+	Customized        = "customized"
 )
 
 var (
@@ -118,7 +127,7 @@ type DeviceTwinResult struct {
 }
 
 // Function to get nginx deployment spec
-func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.DeploymentSpec {
+func nginxDeploymentSpec(imgURL, selector string, replicas int) *apps.DeploymentSpec {
 	var nodeselector map[string]string
 	if selector == "" {
 		nodeselector = map[string]string{}
@@ -136,7 +145,7 @@ func nginxDeploymentSpec(imgUrl, selector string, replicas int) *apps.Deployment
 				Containers: []v1.Container{
 					{
 						Name:  "nginx",
-						Image: imgUrl,
+						Image: imgURL,
 					},
 				},
 				NodeSelector: nodeselector,
@@ -240,18 +249,18 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 	return &deplObj
 }
 
-func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configmap string, replicas int) *apps.Deployment {
+func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configmap string, replicas int) *apps.Deployment {
 	var depObj *apps.DeploymentSpec
 	var namespace string
 
-	if edgecore == true {
-		depObj = edgecoreDeploymentSpec(imgUrl, configmap, replicas)
+	if edgecore {
+		depObj = edgecoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
-	} else if cloudcore == true {
-		depObj = cloudcoreDeploymentSpec(imgUrl, configmap, replicas)
+	} else if cloudcore {
+		depObj = cloudcoreDeploymentSpec(imgURL, configmap, replicas)
 		namespace = Namespace
 	} else {
-		depObj = nginxDeploymentSpec(imgUrl, nodeselector, replicas)
+		depObj = nginxDeploymentSpec(imgURL, nodeselector, replicas)
 		namespace = Namespace
 	}
 
@@ -259,7 +268,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configm
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Labels:    map[string]string{"app": "kubeedge"},
+			Labels:    map[string]string{"app": constants.KubeEdge},
 			Namespace: namespace,
 		},
 		Spec: *depObj,
@@ -267,7 +276,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgUrl, nodeselector, configm
 	return &deployment
 }
 
-func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
+func NewPodObj(podName, imgURL, nodeselector string) *v1.Pod {
 	pod := v1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -278,8 +287,7 @@ func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 			Containers: []v1.Container{
 				{
 					Name:  "nginx",
-					Image: imgUrl,
-					Ports: []v1.ContainerPort{{HostPort: 80, ContainerPort: 80}},
+					Image: imgURL,
 				},
 			},
 			NodeSelector: map[string]string{"disktype": nodeselector},
@@ -289,9 +297,8 @@ func newPodObj(podName, imgUrl, nodeselector string) *v1.Pod {
 }
 
 // GetDeployments to get the deployments list
-func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
-
-	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
+func GetDeployments(list *apps.DeploymentList, getDeploymentAPI string) error {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -304,33 +311,37 @@ func GetDeployments(list *apps.DeploymentList, getDeploymentApi string) error {
 		return err
 	}
 	return nil
-
 }
-func VerifyDeleteDeployment(getDeploymentApi string) int {
-	err, resp := SendHttpRequest(http.MethodGet, getDeploymentApi)
+func VerifyDeleteDeployment(getDeploymentAPI string) int {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeploymentAPI)
 	if err != nil {
-		Fatalf("SendHttpRequest is failed: %v", err)
+		Fatalf("SendHTTPRequest is failed: %v", err)
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode
 }
 
 // HandlePod to handle app deployment/delete using pod spec.
-func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodeselector string) bool {
+func HandlePod(operation string, apiserver string, UID string, pod *v1.Pod) bool {
 	var req *http.Request
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	switch operation {
-	case "POST":
-		body := newPodObj(UID, ImageUrl, nodeselector)
+	case http.MethodPost:
+		body := pod
 		respBytes, err := json.Marshal(body)
 		if err != nil {
 			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 	}
 	if err != nil {
@@ -346,21 +357,27 @@ func HandlePod(operation string, apiserver string, UID string, ImageUrl, nodesel
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
 
 // HandleDeployment to handle app deployment/delete deployment.
-func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageUrl, nodeselector, configmapname string, replica int) bool {
+func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, ImageURL, nodeselector, configmapname string, replica int) bool {
 	var req *http.Request
 	var err error
 	var body io.Reader
 
 	defer ginkgo.GinkgoRecover()
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
 	switch operation {
-	case "POST":
-		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageUrl, nodeselector, configmapname, replica)
+	case http.MethodPost:
+		depObj := newDeployment(IsCloudCore, IsEdgeCore, UID, ImageURL, nodeselector, configmapname, replica)
 		if err != nil {
 			Fatalf("GenerateDeploymentBody marshalling failed: %v", err)
 		}
@@ -369,7 +386,7 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 			Fatalf("Marshalling body failed: %v", err)
 		}
 		req, err = http.NewRequest(http.MethodPost, apiserver, bytes.NewBuffer(respBytes))
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 	}
 	if err != nil {
@@ -385,13 +402,13 @@ func HandleDeployment(IsCloudCore, IsEdgeCore bool, operation, apiserver, UID, I
 		Fatalf("HTTP request is failed :%v", err)
 		return false
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true
 }
 
 // DeleteDeployment to delete deployment
-func DeleteDeployment(DeploymentApi, deploymentname string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, DeploymentApi+"/"+deploymentname)
+func DeleteDeployment(DeploymentAPI, deploymentname string) int {
+	resp, err := SendHTTPRequest(http.MethodDelete, DeploymentAPI+"/"+deploymentname)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -408,7 +425,7 @@ func PrintCombinedOutput(cmd *exec.Cmd) error {
 	Infof("===========> Executing: %s\n", strings.Join(cmd.Args, " "))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		Fatalf("CombinedOutput failed %v", err)
+		Infof("CombinedOutput failed %v", err)
 		return err
 	}
 	if len(output) > 0 {
@@ -439,16 +456,14 @@ func ExposeCloudService(name, serviceHandler string) error {
 		Fatalf("HTTP request is failed :%v", err)
 		return err
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
-	Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	gomega.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusCreated))
 	return nil
 }
 
 // CreateServiceObject function to create a servcice object
 func CreateServiceObject(name string) *v1.Service {
-	var portInfo []v1.ServicePort
-
-	portInfo = []v1.ServicePort{
+	portInfo := []v1.ServicePort{
 		{
 			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000),
 		}, {
@@ -458,7 +473,7 @@ func CreateServiceObject(name string) *v1.Service {
 
 	Service := v1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": "kubeedge"}},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.KubeEdge}},
 
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,
@@ -473,7 +488,7 @@ func CreateServiceObject(name string) *v1.Service {
 func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 	var svc v1.ServiceList
 	var wssport, quicport int32
-	err, resp := SendHttpRequest(http.MethodGet, serviceHandler)
+	resp, err := SendHTTPRequest(http.MethodGet, serviceHandler)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -511,7 +526,7 @@ func GetServicePort(cloudName, serviceHandler string) (int32, int32) {
 
 // DeleteSvc function to delete service
 func DeleteSvc(svcname string) int {
-	err, resp := SendHttpRequest(http.MethodDelete, svcname)
+	resp, err := SendHTTPRequest(http.MethodDelete, svcname)
 	if err != nil {
 		// handle error
 		Fatalf("HTTP request is failed :%v", err)
@@ -529,9 +544,15 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		body := newDeviceModelObject(protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
@@ -547,7 +568,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -563,7 +584,7 @@ func HandleDeviceModel(operation string, apiserver string, UID string, protocolT
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
 
@@ -573,9 +594,14 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 	var err error
 	var body io.Reader
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	switch operation {
-	case "POST":
+	case http.MethodPost:
 		body := newDeviceInstanceObject(nodeSelector, protocolType, false)
 		respBytes, err := json.Marshal(body)
 		if err != nil {
@@ -591,7 +617,7 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		}
 		req, err = http.NewRequest(http.MethodPatch, apiserver+UID, bytes.NewBuffer(respBytes))
 		req.Header.Set("Content-Type", "application/merge-patch+json")
-	case "DELETE":
+	case http.MethodDelete:
 		req, err = http.NewRequest(http.MethodDelete, apiserver+UID, body)
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -607,33 +633,35 @@ func HandleDeviceInstance(operation string, apiserver string, nodeSelector strin
 		Fatalf("HTTP request is failed :%v", err)
 		return false, 0
 	}
-	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	return true, resp.StatusCode
 }
 
 // newDeviceInstanceObject creates a new device instance object
-func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha1.Device {
-	var deviceInstance v1alpha1.Device
-	if updated == false {
+func newDeviceInstanceObject(nodeSelector string, protocolType string, updated bool) *v1alpha2.Device {
+	var deviceInstance v1alpha2.Device
+	if !updated {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceInstance = NewBluetoothDeviceInstance(nodeSelector)
-		case "modbus":
+		case ModBus:
 			deviceInstance = NewModbusDeviceInstance(nodeSelector)
-		case "led":
+		case Led:
 			deviceInstance = NewLedDeviceInstance(nodeSelector)
-		case "incorrect-instance":
+		case Customized:
+			deviceInstance = NewCustomizedDeviceInstance(nodeSelector)
+		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	} else {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceInstance = UpdatedBluetoothDeviceInstance(nodeSelector)
-		case "modbus":
+		case ModBus:
 			deviceInstance = UpdatedModbusDeviceInstance(nodeSelector)
-		case "led":
+		case Led:
 			deviceInstance = UpdatedLedDeviceInstance(nodeSelector)
-		case "incorrect-instance":
+		case IncorrectInstance:
 			deviceInstance = IncorrectDeviceInstance()
 		}
 	}
@@ -641,26 +669,28 @@ func newDeviceInstanceObject(nodeSelector string, protocolType string, updated b
 }
 
 // newDeviceModelObject creates a new device model object
-func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceModel {
-	var deviceModel v1alpha1.DeviceModel
-	if updated == false {
+func newDeviceModelObject(protocolType string, updated bool) *v1alpha2.DeviceModel {
+	var deviceModel v1alpha2.DeviceModel
+	if !updated {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceModel = NewBluetoothDeviceModel()
-		case "modbus":
+		case ModBus:
 			deviceModel = NewModbusDeviceModel()
-		case "led":
+		case Led:
 			deviceModel = NewLedDeviceModel()
+		case Customized:
+			deviceModel = NewCustomizedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
 		}
 	} else {
 		switch protocolType {
-		case "bluetooth":
+		case BlueTooth:
 			deviceModel = UpdatedBluetoothDeviceModel()
-		case "modbus":
+		case ModBus:
 			deviceModel = UpdatedModbusDeviceModel()
-		case "led":
+		case Led:
 			deviceModel = UpdatedLedDeviceModel()
 		case "incorrect-model":
 			deviceModel = IncorrectDeviceModel()
@@ -670,8 +700,8 @@ func newDeviceModelObject(protocolType string, updated bool) *v1alpha1.DeviceMod
 }
 
 // GetDeviceModel to get the deviceModel list and verify whether the contents of the device model matches with what is expected
-func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, expectedDeviceModel *v1alpha1.DeviceModel) ([]v1alpha1.DeviceModel, error) {
-	err, resp := SendHttpRequest(http.MethodGet, getDeviceModelApi)
+func GetDeviceModel(list *v1alpha2.DeviceModelList, getDeviceModelAPI string, expectedDeviceModel *v1alpha2.DeviceModel) ([]v1alpha2.DeviceModel, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeviceModelAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -688,7 +718,9 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, ex
 		for _, deviceModel := range list.Items {
 			if expectedDeviceModel.ObjectMeta.Name == deviceModel.ObjectMeta.Name {
 				modelExists = true
-				if reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) == false || expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace || reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) == false {
+				if !reflect.DeepEqual(expectedDeviceModel.TypeMeta, deviceModel.TypeMeta) ||
+					expectedDeviceModel.ObjectMeta.Namespace != deviceModel.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedDeviceModel.Spec, deviceModel.Spec) {
 					return nil, errors.New("The device model is not matching with what was expected")
 				}
 			}
@@ -701,8 +733,8 @@ func GetDeviceModel(list *v1alpha1.DeviceModelList, getDeviceModelApi string, ex
 }
 
 // GetDevice to get the device list
-func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v1alpha1.Device) ([]v1alpha1.Device, error) {
-	err, resp := SendHttpRequest(http.MethodGet, getDeviceApi)
+func GetDevice(list *v1alpha2.DeviceList, getDeviceAPI string, expectedDevice *v1alpha2.Device) ([]v1alpha2.Device, error) {
+	resp, err := SendHTTPRequest(http.MethodGet, getDeviceAPI)
 	defer resp.Body.Close()
 	contents, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -719,7 +751,10 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v
 		for _, device := range list.Items {
 			if expectedDevice.ObjectMeta.Name == device.ObjectMeta.Name {
 				deviceExists = true
-				if reflect.DeepEqual(expectedDevice.TypeMeta, device.TypeMeta) == false || expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace || reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) == false || reflect.DeepEqual(expectedDevice.Spec, device.Spec) == false {
+				if !reflect.DeepEqual(expectedDevice.TypeMeta, device.TypeMeta) ||
+					expectedDevice.ObjectMeta.Namespace != device.ObjectMeta.Namespace ||
+					!reflect.DeepEqual(expectedDevice.ObjectMeta.Labels, device.ObjectMeta.Labels) ||
+					!reflect.DeepEqual(expectedDevice.Spec, device.Spec) {
 					return nil, errors.New("The device is not matching with what was expected")
 				}
 				twinExists := false
@@ -727,14 +762,14 @@ func GetDevice(list *v1alpha1.DeviceList, getDeviceApi string, expectedDevice *v
 					for _, twin := range device.Status.Twins {
 						if expectedTwin.PropertyName == twin.PropertyName {
 							twinExists = true
-							if reflect.DeepEqual(expectedTwin.Desired, twin.Desired) == false {
+							if !reflect.DeepEqual(expectedTwin.Desired, twin.Desired) {
 								return nil, errors.New("Status twin " + twin.PropertyName + " not as expected")
 							}
 						}
 					}
 				}
 				if !twinExists {
-					return nil, errors.New("Status twin(s) not found !!!!")
+					return nil, errors.New("status twin(s) not found")
 				}
 			}
 		}
@@ -828,11 +863,22 @@ func OnTwinMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 // CompareConfigMaps is used to compare 2 config maps
 func CompareConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
-	if reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) == false || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) == false {
+	Infof("expectedConfigMap.Data: %v", expectedConfigMap.Data)
+	Infof("configMap.Data %v", configMap.Data)
+	if !reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta) || expectedConfigMap.ObjectMeta.Namespace != configMap.ObjectMeta.Namespace || !reflect.DeepEqual(expectedConfigMap.Data, configMap.Data) {
 		return false
-
 	}
 	return true
+}
+
+// CompareConfigMaps is used to compare 2 device profile in config maps
+func CompareDeviceProfileInConfigMaps(configMap, expectedConfigMap v1.ConfigMap) bool {
+	deviceProfile := configMap.Data["deviceProfile.json"]
+	ExpectedDeviceProfile := expectedConfigMap.Data["deviceProfile.json"]
+	var deviceProfileMap, expectedDeviceProfileMap map[string]interface{}
+	_ = json.Unmarshal([]byte(deviceProfile), &deviceProfileMap)
+	_ = json.Unmarshal([]byte(ExpectedDeviceProfile), &expectedDeviceProfileMap)
+	return reflect.DeepEqual(expectedConfigMap.TypeMeta, configMap.TypeMeta)
 }
 
 // CompareTwin is used to compare 2 device Twins
@@ -847,4 +893,88 @@ func CompareTwin(deviceTwin map[string]*MsgTwin, expectedDeviceTwin map[string]*
 		}
 	}
 	return true
+}
+
+func SendMsg(url string, message []byte) (bool, int) {
+	var req *http.Request
+	var err error
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
+	req, err = http.NewRequest(http.MethodPost, url, bytes.NewBuffer(message))
+	if err != nil {
+		// handle error
+		Fatalf("Frame HTTP request failed, request: %s, reason: %v", req.URL.String(), err)
+		return false, 0
+	}
+	t := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		// handle error
+		Fatalf("HTTP request is failed: %v", err)
+		return false, 0
+	}
+	Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
+	return true, resp.StatusCode
+}
+
+func StartEchoServer() (string, error) {
+	r := make(chan string)
+	echo := func(response http.ResponseWriter, request *http.Request) {
+		b, _ := ioutil.ReadAll(request.Body)
+		r <- string(b)
+		if _, err := response.Write([]byte("Hello World")); err != nil {
+			Errorf("Echo server write failed. reason: %s", err.Error())
+		}
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/echo", echo)
+	server := &http.Server{Addr: "0.0.0.0:9000", Handler: mux}
+	go func() {
+		err := server.ListenAndServe()
+		Errorf("Echo server stop. reason: %s", err.Error())
+	}()
+	t := time.NewTimer(time.Second * 30)
+	select {
+	case resp := <-r:
+		err := server.Shutdown(context.TODO())
+		return resp, err
+	case <-t.C:
+		err := server.Shutdown(context.TODO())
+		close(r)
+		return "", err
+	}
+}
+
+// subscribe function subscribes  the device twin information through the MQTT broker
+func SubscribeMqtt(topic string) (string, error) {
+	r := make(chan string)
+	TokenClient = Client.Subscribe(topic, 0, func(client MQTT.Client, message MQTT.Message) {
+		r <- string(message.Payload())
+	})
+	if TokenClient.Wait() && TokenClient.Error() != nil {
+		return "", fmt.Errorf("subscribe() Error in topic %s. reason: %s", topic, TokenClient.Error().Error())
+	}
+	t := time.NewTimer(time.Second * 30)
+	select {
+	case result := <-r:
+		Infof("subscribe topic %s to get result: %s", topic, result)
+		return result, nil
+	case <-t.C:
+		close(r)
+		return "", errors.New("Wait for MQTT message time out. ")
+	}
+}
+
+func PublishMqtt(topic, message string) error {
+	TokenClient = Client.Publish(topic, 0, false, message)
+	if TokenClient.Wait() && TokenClient.Error() != nil {
+		return fmt.Errorf("client.publish() Error in topic %s. reason: %s. ", topic, TokenClient.Error().Error())
+	}
+	Infof("publish topic %s message %s", topic, message)
+	return nil
 }

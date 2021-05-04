@@ -14,31 +14,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 workdir=`pwd`
 cd $workdir
 
 curpath=$PWD
 echo $PWD
 
-if [ ! -d "/var/lib/edged" ]; then
-  sudo mkdir /var/lib/edged && sudo chown $USER:$USER /var/lib/edged
-fi
-bash ${curpath}/tests/e2e/scripts/cleanup.sh deployment
-bash ${curpath}/tests/e2e/scripts/cleanup.sh edgesite
-bash ${curpath}/tests/e2e/scripts/cleanup.sh device_crd
-#run the edgecore and cloudcore bin to run the E2E
-make #builds cloud and edgecore components
-sleep 2s
-PWD=${curpath}/tests/e2e
-sudo rm -rf $PWD/deployment/deployment.test
-sudo rm -rf $PWD/device_crd/device_crd.test
-go get github.com/onsi/ginkgo/ginkgo
-sudo cp $GOPATH/bin/ginkgo /usr/bin/
+which ginkgo &> /dev/null || (
+    go get github.com/onsi/ginkgo/ginkgo
+    sudo cp $GOPATH/bin/ginkgo /usr/local/bin/
+)
+
+cleanup() {
+    bash ${curpath}/tests/e2e/scripts/cleanup.sh
+}
+
+cleanup
+
+E2E_DIR=${curpath}/tests/e2e
+sudo rm -rf ${E2E_DIR}/deployment/deployment.test
+sudo rm -rf ${E2E_DIR}/device_crd/device_crd.test
+
 # Specify the module name to compile in below command
-bash -x $PWD/scripts/compile.sh $1
-export MASTER_IP=121.244.95.60
+bash -x ${E2E_DIR}/scripts/compile.sh $1
+
+ENABLE_DAEMON=true bash -x ${curpath}/hack/local-up-kubeedge.sh || {
+    echo "failed to start cluster !!!"
+    exit 1
+}
+
+kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
+
 :> /tmp/testcase.log
-bash -x ${PWD}/scripts/fast_test.sh $1
+
+bash -x ${E2E_DIR}/scripts/fast_test.sh $1
+
 #stop the edgecore after the test completion
 grep  -e "Running Suite" -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | sed -r 's/\x1B\[([0-9];)?([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g'
 echo "Integration Test Final Summary Report"
@@ -49,6 +61,8 @@ echo "Number of Test cases PASSED = $passed"
 fail=`grep -e "SUCCESS\!" -e "FAIL\!" /tmp/testcase.log | awk '{print $6}' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" | awk '{sum+=$1} END {print sum}'`
 echo "Number of Test cases FAILED = $fail"
 echo "==================Result Summary======================="
+
+trap cleanup EXIT
 
 if [ "$fail" != "0" ];then
     echo "Integration suite has failures, Please check !!"

@@ -42,7 +42,7 @@ docker_prepare(){
     if [ ! -d /etc/kubeedge/certs ] || [ ! -e /etc/kubeedge/certs/edge.crt ] || [ ! -e /etc/kubeedge/certs/edge.key ]; then
         mkdir -p /etc/kubeedge/certs
         echo "Certificate does not exist"
-        exit -1 
+        exit -1
     fi
 
     if [ ! -d /var/lib/kubeedge ]; then
@@ -64,31 +64,31 @@ docker_prepare(){
     if [ ! -d ${CERTPATH} ] || [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ]; then
         mkdir -p ${CERTPATH}
         echo "Certificate does not exist"
-        exit -1 
+        exit -1
     fi
 
     if [[ -z $(which docker-compose) ]]; then
         curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         chmod +x /usr/local/bin/docker-compose
-    fi 
+    fi
     echo "Container runtime environment check passed."
 }
 
 docker_set(){
     # This script accepts the following parameters:
-    # 
+    #
     # * cloudhub
     # * edgename
     # * edgecore_image
     # * arch
     # * qemu_arch
     # * certpath
-    # * certfile 
-    # * keyfile 
+    # * certfile
+    # * keyfile
     #
     # Example
-    # 
-    #  ./build.sh set \
+    #
+    #  ./run_daemon.sh set \
     #    cloudhub=0.0.0.0:10000 \
     #    edgename=edge-node \
     #    edgecore_image="kubeedge/edgecore:latest" \
@@ -96,7 +96,7 @@ docker_set(){
     #    qemu_arch=x86_64 \
     #    certpath=/etc/kubeedge/certs \
     #    certfile=/etc/kubeedge/certs/edge.crt \
-    #    keyfile=/etc/kubeedge/certs/edge.key 
+    #    keyfile=/etc/kubeedge/certs/edge.key
 
     ARGS=$@
 
@@ -108,7 +108,7 @@ docker_set(){
 
     [[ ! -z $cloudhub ]] &&  sed -i "/CLOUDHUB=/c\CLOUDHUB=${cloudhub}" .env && echo "set cloudhub success"
     [[ ! -z $edgename ]] &&  sed -i "/EDGENAME=/c\EDGENAME=${edgename}" .env && echo "set edgename success"
-    [[ ! -z $edge_code_image_tag ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=kubeedge/edgecore:${edgecore_image}" .env && echo "set edgecore_image success"
+    [[ ! -z $edgecore_image ]] &&  sed -i "/EDGECOREIMAGE=/c\EDGECOREIMAGE=${edgecore_image}" .env && echo "set edgecore_image success"
     [[ ! -z $arch ]] &&  sed -i "/\<ARCH\>/c\ARCH=${arch}" .env && echo "set arch success"
     [[ ! -z $qemu_arch ]] &&  sed -i "/QEMU_ARCH=/c\QEMU_ARCH=${qemu_arch}" .env && echo "set qemu_arch success"
     [[ ! -z $certpath ]] &&  sed -i "/CERTPATH=/c\CERTPATH=${certpath}" .env && echo "set certpath success"
@@ -135,19 +135,19 @@ docker_up(){
 }
 
 docker_down(){
-    docker-compose down 
+    docker-compose down
 }
 
 docker_only_run_edge(){
     # This script accepts the following parameters:
-    # 
+    #
     # * mqtt
     # * edgename
     # * cloudhub
     # * image
-    # 
+    #
     # Example
-    # 
+    #
     # ./run_daemon.sh only_run_edge mqtt=0.0.0.0:1883 cloudhub=0.0.0.0:10000 edgename=edge-node image="kubeedge/edgecore:latest"
 
     ARGS=$@
@@ -161,7 +161,7 @@ docker_only_run_edge(){
     mqtt=${mqtt:-"0.0.0.0:1883"}
     cloudhub=${cloudhub:-"0.0.0.0:10000"}
     edgename=${edgename:-$(hostname)}
-    edgehubWebsocketUrl=wss://${cloudhub}/e632aba927ea4ac2b575ec1603d56f10/${edgename}/events 
+    edgehubWebsocketUrl=wss://${cloudhub}/e632aba927ea4ac2b575ec1603d56f10/${edgename}/events
     image=${image:-"kubeedge/edgecore:latest"}
     containername=${containername:-"edgecore"}
 
@@ -188,7 +188,7 @@ prepare_qemu(){
 
     rm -rf tmp
     mkdir -p tmp
-    
+
     pushd tmp &&
     curl -L -o qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/$QEMU_VERSION/qemu-${QEMU_ARCH}-static.tar.gz && tar xzf qemu-${QEMU_ARCH}-static.tar.gz &&
     popd

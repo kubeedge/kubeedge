@@ -5,22 +5,23 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	"k8s.io/klog/v2"
+
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 )
 
 // StartModules starts modules that are registered
 func StartModules() {
-	coreContext := context.GetContext(context.MsgCtxTypeChannel)
+	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 
 	modules := GetModules()
 	for name, module := range modules {
-		//Init the module
-		coreContext.AddModule(name)
-		//Assemble typeChannels for send2Group
-		coreContext.AddModuleGroup(name, module.Group())
-		go module.Start(coreContext)
-		log.LOGGER.Info("starting module " + name)
+		// Init the module
+		beehiveContext.AddModule(name)
+		// Assemble typeChannels for sendToGroup
+		beehiveContext.AddModuleGroup(name, module.Group())
+		go module.Start()
+		klog.Infof("Starting module %v", name)
 	}
 }
 
@@ -29,21 +30,21 @@ func GracefulShutdown() {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
 		syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
-	select {
-	case s := <-c:
-		log.LOGGER.Info("got os signal " + s.String())
-		//Cleanup each modules
-		modules := GetModules()
-		for name, module := range modules {
-			log.LOGGER.Info("Cleanup module " + name)
-			module.Cleanup()
-		}
+	s := <-c
+	klog.Infof("Get os signal %v", s.String())
+
+	// Cleanup each modules
+	beehiveContext.Cancel()
+	modules := GetModules()
+	for name := range modules {
+		klog.Infof("Cleanup module %v", name)
+		beehiveContext.Cleanup(name)
 	}
 }
 
-//Run starts the modules and in the end does module cleanup
+// Run starts the modules and in the end does module cleanup
 func Run() {
-	//Address the module registration and start the core
+	// Address the module registration and start the core
 	StartModules()
 	// monitor system signal and shutdown gracefully
 	GracefulShutdown()

@@ -34,7 +34,7 @@ container and MQTT Broker, so make sure that docker engine listening on
           qemu_arch=x86_64 \
           certpath=/etc/kubeedge/certs \
           certfile=/etc/kubeedge/certs/edge.crt \
-          keyfile=/etc/kubeedge/certs/edge.key 
+          keyfile=/etc/kubeedge/certs/edge.key
   ```
 
 + Build image

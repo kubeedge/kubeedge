@@ -1,7 +1,7 @@
 package dtclient
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -69,7 +69,6 @@ func QueryDeviceAttr(key string, condition string) (*[]DeviceAttr, error) {
 		return nil, err
 	}
 	return attrs, nil
-
 }
 
 //DeviceDelete the struct for deleting device

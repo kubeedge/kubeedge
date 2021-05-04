@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/gorilla/websocket"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -114,8 +114,8 @@ func (conn *WSConnection) handleRawData() {
 }
 
 func (conn *WSConnection) handleMessage() {
-	msg := &model.Message{}
 	for {
+		msg := &model.Message{}
 		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
 		if err != nil {
 			if err != io.EOF {
@@ -176,7 +176,7 @@ func (conn *WSConnection) Write(raw []byte) (int, error) {
 
 func (conn *WSConnection) WriteMessageAsync(msg *model.Message) error {
 	lane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
-	lane.SetReadDeadline(conn.WriteDeadline)
+	lane.SetWriteDeadline(conn.WriteDeadline)
 	msg.Header.Sync = false
 	conn.locker.Lock()
 	defer conn.locker.Unlock()
@@ -195,7 +195,6 @@ func (conn *WSConnection) WriteMessageSync(msg *model.Message) (*model.Message, 
 		klog.Errorf("write message error(%+v)", err)
 		return nil, err
 	}
-	conn.locker.Unlock()
 	//receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.WriteDeadline)
 	return &response, err
@@ -214,6 +213,7 @@ func (conn *WSConnection) LocalAddr() net.Addr {
 }
 
 func (conn *WSConnection) Close() error {
+	conn.messageFifo.Close()
 	return conn.wsConn.Close()
 }
 

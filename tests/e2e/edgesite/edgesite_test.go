@@ -93,7 +93,7 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			podlist, err := utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, label)
 			Expect(err).To(BeNil())
 			Expect(len(podlist.Items)).Should(Equal(replica))
-			utils.WaitforPodsRunning(ctx.Cfg.K8SMasterForKubeEdge, podlist, 240*time.Second)
+			utils.WaitforPodsRunning(ctx.Cfg.KubeConfigPath, podlist, 240*time.Second)
 		})
 
 	})
@@ -121,12 +121,20 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			utils.PrintTestcaseNameandStatus()
 		})
 
-		It("E2E_ES_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correclty", func() {
-			CreatePodTest(nodeName, nodeSelector, ctx)
+		It("E2E_ES_POD_DEPLOYMENT_1: Create a pod and check the pod is coming up correctly", func() {
+			//Generate the random string and assign as podName
+			podName := "pod-app-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			CreatePodTest(nodeName, podName, ctx, pod)
 		})
 
 		It("E2E_ES_POD_DEPLOYMENT_2: Create the pod and delete pod happening successfully", func() {
-			podlist := CreatePodTest(nodeName, nodeSelector, ctx)
+			//Generate the random string and assign as podName
+			podName := "pod-app-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			podlist := CreatePodTest(nodeName, podName, ctx, pod)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -134,7 +142,11 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 			utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+constants.AppHandler, podlist)
 		})
 		It("E2E_ES_POD_DEPLOYMENT_3: Create pod and delete the pod successfully, and delete already deleted pod and check the behaviour", func() {
-			podlist := CreatePodTest(nodeName, nodeSelector, ctx)
+			//Generate the random string and assign as podName
+			podName := "pod-app-" + utils.GetRandomString(5)
+			pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+			podlist := CreatePodTest(nodeName, podName, ctx, pod)
 			for _, pod := range podlist.Items {
 				_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 				Expect(StatusCode).Should(Equal(http.StatusOK))
@@ -146,7 +158,11 @@ var _ = Describe("Application deployment test in E2E scenario using EdgeSite", f
 		It("E2E_ES_POD_DEPLOYMENT_4: Create and delete pod multiple times and check all the Pod created and deleted successfully", func() {
 			//Generate the random string and assign as a UID
 			for i := 0; i < 10; i++ {
-				podlist := CreatePodTest(nodeName, nodeSelector, ctx)
+				//Generate the random string and assign as podName
+				podName := "pod-app-" + utils.GetRandomString(5)
+				pod := utils.NewPodObj(podName, ctx.Cfg.AppImageURL[0], nodeSelector)
+
+				podlist := CreatePodTest(nodeName, podName, ctx, pod)
 				for _, pod := range podlist.Items {
 					_, StatusCode := utils.DeletePods(ctx.Cfg.K8SMasterForKubeEdge + constants.AppHandler + "/" + pod.Name)
 					Expect(StatusCode).Should(Equal(http.StatusOK))

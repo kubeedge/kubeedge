@@ -2,7 +2,7 @@
 
 - [Background](#Background)
     - [Integration test framework features](#Integration-test-framework-features)
-    - [Folder Structure](#Folder-structure-of-Integration-tests)    
+    - [Folder Structure](#Folder-structure-of-Integration-tests)
     - [Sample Testcase](#Sample-Testcase)
     - [Configurations](#Configurations)
     - [Run Tests](#Run-Tests)
@@ -11,7 +11,7 @@
     - [References](#References)
 
 ## Background
-Kubeedge integration tests are designed based on the **Gomega** and **Ginkgo** framework.
+KubeEdge integration tests are designed based on the **Gomega** and **Ginkgo** framework.
 Framework provides an environment for the automation test scripts to be executed. With the use of framework, users can efficiently work with the automation test scripts, including development, execution, logging and reporting.
 
 ## Integration test framework features
@@ -24,7 +24,7 @@ Framework provides an environment for the automation test scripts to be executed
 
 ## Folder structure of Integration tests
 
-<img src="./integration_folder_structure.png">
+<img src="./images/integration_folder_structure.png">
 
    - **appdeployment:** appdeployment folder consists of tests related to application deployment on kubeedge node.
    - **device:** device folder consists of tests related to Device which are binded on kubeedge node.
@@ -54,12 +54,12 @@ It("TC_TEST_EBUS_7: change the device status to unknown from eventbus", func() {
     return deviceState
     }, "60s", "2s").Should(Equal("unknown"), "Device state is not unknown within specified time")
     Client.Disconnect(1)
-})		
+})
 ```
 ## Configurations
 ##### Modify the test configurations accordingly in the below mentioned file
 ```bash
-PATH: $GOPATH/src/github.com/kubeedge/kubeedge/test/integration/scripts/fast_test
+PATH: $GOPATH/src/github.com/kubeedge/kubeedge/edge/test/integration/scripts/fast_test.sh
 cat >config.json<<END
 {
         "mqttEndpoint":"tcp://$MQTT_SERVER:1884",
@@ -70,7 +70,7 @@ cat >config.json<<END
 
 mqttEndpoint : Specify mqttEndpoint accordingly to Run the integration tests on internal or External MQTT server.
 testManager: testManager will listen and serve the request on http://127.0.0.1:12345
-edgedEndpoint: edgedEndpoint will listen and serve the request on http://127.0.0.1:10255  
+edgedEndpoint: edgedEndpoint will listen and serve the request on http://127.0.0.1:10255
 image_url: Specify the docker Image Name/Image URL's for application deployments on edge node.
 ```
 ## Run Tests
@@ -79,33 +79,33 @@ image_url: Specify the docker Image Name/Image URL's for application deployments
 * Integration test scripts are written in a way that user can run all test suites together or run individual test suites or only failed test case.
 
 **Run all test suites:**
-```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
-    
+```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+
     1. bash -x test/integration/scripts/compile.sh
-    2. bash test/integration/scripts/fast_test
-    
+    2. bash test/integration/scripts/fast_test.sh
+
     Above 2 commands will ensure you run all the tests.
 ```
 
 **Run Individual Test Suite:**
-```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
-    
+```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+
     Ex:
     1. bash -x test/integration/scripts/compile.sh <device>
-    2. bash test/integration/scripts/fast_test <device>    
-    #or     
+    2. bash test/integration/scripts/fast_test.sh <device>
+    #or
     1. bash -x test/integration/scripts/compile.sh <appdeployment>
-    2. bash test/integration/scripts/fast_test <appdeployment>           
+    2. bash test/integration/scripts/fast_test.sh <appdeployment>
 ```
 
 **Run Failed Test:**
-```shell 
-    cd $GOPATH/src/github.com/kubeedge/kubeedge
-    
-    Ex:   
-    bash test/integration/scripts/fast_test <device> -ginkgo.focus="Failed test case ID/Name"   
+```shell
+    cd $GOPATH/src/github.com/kubeedge/kubeedge/edge
+
+    Ex:
+    bash test/integration/scripts/fast_test.sh <device> -ginkgo.focus="Failed test case ID/Name"
 ```
 ## Test Logs
 ##### Integration test logs
@@ -113,7 +113,7 @@ image_url: Specify the docker Image Name/Image URL's for application deployments
 * Path : tmp/testcase.log
 
 ## Test Report
-<img src="./Integration_test_report.png">
+<img src="./images/Integration_test_report.png">
 
 ## References
 * See [Ginkgo](https://github.com/onsi/ginkgo) and [Gomega](https://github.com/onsi/gomega) for detailed info on framework usage.

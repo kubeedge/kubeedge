@@ -43,14 +43,14 @@ type TypeMeta struct {
 	// Servers may infer this from the endpoint the client submits requests to.
 	// Cannot be updated.
 	// In CamelCase.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	Kind string `json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
 
 	// APIVersion defines the versioned schema of this representation of an object.
 	// Servers should convert recognized schemas to the latest internal value, and
 	// may reject unrecognized values.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 	// +optional
 	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
 }
@@ -61,6 +61,10 @@ type ListMeta struct {
 	// selfLink is a URL representing this object.
 	// Populated by the system.
 	// Read-only.
+	//
+	// DEPRECATED
+	// Kubernetes will stop propagating this field in 1.20 release and the field is planned
+	// to be removed in 1.21 release.
 	// +optional
 	SelfLink string `json:"selfLink,omitempty" protobuf:"bytes,1,opt,name=selfLink"`
 
@@ -69,7 +73,7 @@ type ListMeta struct {
 	// Value must be treated as opaque by clients and passed unmodified back to the server.
 	// Populated by the system.
 	// Read-only.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 	// +optional
 	ResourceVersion string `json:"resourceVersion,omitempty" protobuf:"bytes,2,opt,name=resourceVersion"`
 
@@ -91,9 +95,6 @@ type ListMeta struct {
 	// Servers older than v1.15 do not set this field.
 	// The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
 	// should not rely on the remainingItemCount to be set or to be exact.
-	//
-	// This field is alpha and can be changed or removed without notice.
-	//
 	// +optional
 	RemainingItemCount *int64 `json:"remainingItemCount,omitempty" protobuf:"bytes,4,opt,name=remainingItemCount"`
 }
@@ -130,11 +131,11 @@ type ObjectMeta struct {
 	// should retry (optionally after the time indicated in the Retry-After header).
 	//
 	// Applied only if Name is not specified.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#idempotency
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency
 	// +optional
 	GenerateName string `json:"generateName,omitempty" protobuf:"bytes,2,opt,name=generateName"`
 
-	// Namespace defines the space within each name must be unique. An empty namespace is
+	// Namespace defines the space within which each name must be unique. An empty namespace is
 	// equivalent to the "default" namespace, but "default" is the canonical representation.
 	// Not all objects are required to be scoped to a namespace - the value of this field for
 	// those objects will be empty.
@@ -148,6 +149,10 @@ type ObjectMeta struct {
 	// SelfLink is a URL representing this object.
 	// Populated by the system.
 	// Read-only.
+	//
+	// DEPRECATED
+	// Kubernetes will stop propagating this field in 1.20 release and the field is planned
+	// to be removed in 1.21 release.
 	// +optional
 	SelfLink string `json:"selfLink,omitempty" protobuf:"bytes,4,opt,name=selfLink"`
 
@@ -170,7 +175,7 @@ type ObjectMeta struct {
 	// Populated by the system.
 	// Read-only.
 	// Value must be treated as opaque by clients and .
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
 	// +optional
 	ResourceVersion string `json:"resourceVersion,omitempty" protobuf:"bytes,6,opt,name=resourceVersion"`
 
@@ -186,7 +191,7 @@ type ObjectMeta struct {
 	// Populated by the system.
 	// Read-only.
 	// Null for lists.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	CreationTimestamp Time `json:"creationTimestamp,omitempty" protobuf:"bytes,8,opt,name=creationTimestamp"`
 
@@ -207,7 +212,7 @@ type ObjectMeta struct {
 	//
 	// Populated by the system when a graceful deletion is requested.
 	// Read-only.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	DeletionTimestamp *Time `json:"deletionTimestamp,omitempty" protobuf:"bytes,9,opt,name=deletionTimestamp"`
 
@@ -241,23 +246,19 @@ type ObjectMeta struct {
 	// +patchStrategy=merge
 	OwnerReferences []OwnerReference `json:"ownerReferences,omitempty" patchStrategy:"merge" patchMergeKey:"uid" protobuf:"bytes,13,rep,name=ownerReferences"`
 
-	// An initializer is a controller which enforces some system invariant at object creation time.
-	// This field is a list of initializers that have not yet acted on this object. If nil or empty,
-	// this object has been completely initialized. Otherwise, the object is considered uninitialized
-	// and is hidden (in list/watch and get calls) from clients that haven't explicitly asked to
-	// observe uninitialized objects.
-	//
-	// When an object is created, the system will populate this list with the current set of initializers.
-	// Only privileged users may set or modify this list. Once it is empty, it may not be modified further
-	// by any user.
-	//
-	// DEPRECATED - initializers are an alpha field and will be removed in v1.15.
-	Initializers *Initializers `json:"initializers,omitempty" protobuf:"bytes,16,opt,name=initializers"`
-
 	// Must be empty before the object is deleted from the registry. Each entry
 	// is an identifier for the responsible component that will remove the entry
 	// from the list. If the deletionTimestamp of the object is non-nil, entries
 	// in this list can only be removed.
+	// Finalizers may be processed and removed in any order.  Order is NOT enforced
+	// because it introduces significant risk of stuck finalizers.
+	// finalizers is a shared field, any actor with permission can reorder it.
+	// If the finalizer list is processed in order, then this can lead to a situation
+	// in which the component responsible for the first finalizer in the list is
+	// waiting for a signal (field value, external system, or other) produced by a
+	// component responsible for a finalizer later in the list, resulting in a deadlock.
+	// Without enforced ordering finalizers are free to order amongst themselves and
+	// are not vulnerable to ordering changes in the list.
 	// +optional
 	// +patchStrategy=merge
 	Finalizers []string `json:"finalizers,omitempty" patchStrategy:"merge" protobuf:"bytes,14,rep,name=finalizers"`
@@ -276,30 +277,8 @@ type ObjectMeta struct {
 	// "ci-cd". The set of fields is always in the version that the
 	// workflow used when modifying the object.
 	//
-	// This field is alpha and can be changed or removed without notice.
-	//
 	// +optional
 	ManagedFields []ManagedFieldsEntry `json:"managedFields,omitempty" protobuf:"bytes,17,rep,name=managedFields"`
-}
-
-// Initializers tracks the progress of initialization.
-type Initializers struct {
-	// Pending is a list of initializers that must execute in order before this object is visible.
-	// When the last pending initializer is removed, and no failing result is set, the initializers
-	// struct will be set to nil and the object is considered as initialized and visible to all
-	// clients.
-	// +patchMergeKey=name
-	// +patchStrategy=merge
-	Pending []Initializer `json:"pending" protobuf:"bytes,1,rep,name=pending" patchStrategy:"merge" patchMergeKey:"name"`
-	// If result is set with the Failure field, the object will be persisted to storage and then deleted,
-	// ensuring that other clients can observe the deletion.
-	Result *Status `json:"result,omitempty" protobuf:"bytes,2,opt,name=result"`
-}
-
-// Initializer is information about an initializer that has not yet completed.
-type Initializer struct {
-	// name of the process that is responsible for initializing this object.
-	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 }
 
 const (
@@ -322,7 +301,7 @@ type OwnerReference struct {
 	// API version of the referent.
 	APIVersion string `json:"apiVersion" protobuf:"bytes,5,opt,name=apiVersion"`
 	// Kind of the referent.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	Kind string `json:"kind" protobuf:"bytes,1,opt,name=kind"`
 	// Name of the referent.
 	// More info: http://kubernetes.io/docs/user-guide/identifiers#names
@@ -343,6 +322,7 @@ type OwnerReference struct {
 	BlockOwnerDeletion *bool `json:"blockOwnerDeletion,omitempty" protobuf:"varint,7,opt,name=blockOwnerDeletion"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ListOptions is the query options to a standard REST list call.
@@ -372,20 +352,26 @@ type ListOptions struct {
 	// If this is not a watch, this field is ignored.
 	// If the feature gate WatchBookmarks is not enabled in apiserver,
 	// this field is ignored.
-	//
-	// This field is alpha and can be changed or removed without notice.
-	//
 	// +optional
 	AllowWatchBookmarks bool `json:"allowWatchBookmarks,omitempty" protobuf:"varint,9,opt,name=allowWatchBookmarks"`
 
-	// When specified with a watch call, shows changes that occur after that particular version of a resource.
-	// Defaults to changes from the beginning of history.
-	// When specified for list:
-	// - if unset, then the result is returned from remote storage based on quorum-read flag;
-	// - if it's 0, then we simply return what we currently have in cache, no guarantee;
-	// - if set to non zero, then the result is at least as fresh as given rv.
+	// resourceVersion sets a constraint on what resource versions a request may be served from.
+	// See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for
+	// details.
+	//
+	// Defaults to unset
 	// +optional
 	ResourceVersion string `json:"resourceVersion,omitempty" protobuf:"bytes,4,opt,name=resourceVersion"`
+
+	// resourceVersionMatch determines how resourceVersion is applied to list calls.
+	// It is highly recommended that resourceVersionMatch be set for list calls where
+	// resourceVersion is set
+	// See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for
+	// details.
+	//
+	// Defaults to unset
+	// +optional
+	ResourceVersionMatch ResourceVersionMatch `json:"resourceVersionMatch,omitempty" protobuf:"bytes,10,opt,name=resourceVersionMatch,casttype=ResourceVersionMatch"`
 	// Timeout for the list/watch call.
 	// This limits the duration of the call, regardless of any activity or inactivity.
 	// +optional
@@ -425,6 +411,26 @@ type ListOptions struct {
 	Continue string `json:"continue,omitempty" protobuf:"bytes,8,opt,name=continue"`
 }
 
+// resourceVersionMatch specifies how the resourceVersion parameter is applied. resourceVersionMatch
+// may only be set if resourceVersion is also set.
+//
+// "NotOlderThan" matches data at least as new as the provided resourceVersion.
+// "Exact" matches data at the exact resourceVersion provided.
+//
+// See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for
+// details.
+type ResourceVersionMatch string
+
+const (
+	// ResourceVersionMatchNotOlderThan matches data at least as new as the provided
+	// resourceVersion.
+	ResourceVersionMatchNotOlderThan ResourceVersionMatch = "NotOlderThan"
+	// ResourceVersionMatchExact matches data at the exact resourceVersion
+	// provided.
+	ResourceVersionMatchExact ResourceVersionMatch = "Exact"
+)
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ExportOptions is the query options to the standard REST get call.
@@ -439,15 +445,18 @@ type ExportOptions struct {
 	Exact bool `json:"exact" protobuf:"varint,2,opt,name=exact"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GetOptions is the standard query options to the standard REST get call.
 type GetOptions struct {
 	TypeMeta `json:",inline"`
-	// When specified:
-	// - if unset, then the result is returned from remote storage based on quorum-read flag;
-	// - if it's 0, then we simply return what we currently have in cache, no guarantee;
-	// - if set to non zero, then the result is at least as fresh as given rv.
+	// resourceVersion sets a constraint on what resource versions a request may be served from.
+	// See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for
+	// details.
+	//
+	// Defaults to unset
+	// +optional
 	ResourceVersion string `json:"resourceVersion,omitempty" protobuf:"bytes,1,opt,name=resourceVersion"`
 	// +k8s:deprecated=includeUninitialized,protobuf=2
 }
@@ -476,6 +485,7 @@ const (
 	DryRunAll = "All"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // DeleteOptions may be provided when deleting an API object.
@@ -491,6 +501,7 @@ type DeleteOptions struct {
 
 	// Must be fulfilled before a deletion is carried out. If not possible, a 409 Conflict status will be
 	// returned.
+	// +k8s:conversion-gen=false
 	// +optional
 	Preconditions *Preconditions `json:"preconditions,omitempty" protobuf:"bytes,2,opt,name=preconditions"`
 
@@ -521,6 +532,7 @@ type DeleteOptions struct {
 	DryRun []string `json:"dryRun,omitempty" protobuf:"bytes,5,rep,name=dryRun"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CreateOptions may be provided when creating an API object.
@@ -544,6 +556,7 @@ type CreateOptions struct {
 	FieldManager string `json:"fieldManager,omitempty" protobuf:"bytes,3,name=fieldManager"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PatchOptions may be provided when patching an API object.
@@ -576,6 +589,7 @@ type PatchOptions struct {
 	FieldManager string `json:"fieldManager,omitempty" protobuf:"bytes,3,name=fieldManager"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // UpdateOptions may be provided when updating an API object.
@@ -615,13 +629,13 @@ type Preconditions struct {
 type Status struct {
 	TypeMeta `json:",inline"`
 	// Standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Status of the operation.
 	// One of: "Success" or "Failure".
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Status string `json:"status,omitempty" protobuf:"bytes,2,opt,name=status"`
 	// A human-readable description of the status of this operation.
@@ -660,7 +674,7 @@ type StatusDetails struct {
 	Group string `json:"group,omitempty" protobuf:"bytes,2,opt,name=group"`
 	// The kind attribute of the resource associated with the status StatusReason.
 	// On some operations may differ from the requested resource Kind.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	Kind string `json:"kind,omitempty" protobuf:"bytes,3,opt,name=kind"`
 	// UID of the resource.
@@ -792,11 +806,13 @@ const (
 	// doesn't make any sense, for example deleting a read-only object.  This is different than
 	// StatusReasonInvalid above which indicates that the API call could possibly succeed, but the
 	// data was invalid.  API calls that return BadRequest can never succeed.
+	// Status code 400
 	StatusReasonBadRequest StatusReason = "BadRequest"
 
 	// StatusReasonMethodNotAllowed means that the action the client attempted to perform on the
 	// resource was not supported by the code - for instance, attempting to delete a resource that
 	// can only be created. API calls that return MethodNotAllowed can never succeed.
+	// Status code 405
 	StatusReasonMethodNotAllowed StatusReason = "MethodNotAllowed"
 
 	// StatusReasonNotAcceptable means that the accept types indicated by the client were not acceptable
@@ -887,6 +903,9 @@ const (
 	// FieldManagerConflict is used to report when another client claims to manage this field,
 	// It should only be returned for a request using server-side apply.
 	CauseTypeFieldManagerConflict CauseType = "FieldManagerConflict"
+	// CauseTypeResourceVersionTooLarge is used to report that the requested resource version
+	// is newer than the data observed by the API server, so the request cannot be served.
+	CauseTypeResourceVersionTooLarge CauseType = "ResourceVersionTooLarge"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -895,7 +914,7 @@ const (
 type List struct {
 	TypeMeta `json:",inline"`
 	// Standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
@@ -1128,9 +1147,16 @@ type ManagedFieldsEntry struct {
 	// Time is timestamp of when these fields were set. It should always be empty if Operation is 'Apply'
 	// +optional
 	Time *Time `json:"time,omitempty" protobuf:"bytes,4,opt,name=time"`
-	// Fields identifies a set of fields.
+
+	// Fields is tombstoned to show why 5 is a reserved protobuf tag.
+	//Fields *Fields `json:"fields,omitempty" protobuf:"bytes,5,opt,name=fields,casttype=Fields"`
+
+	// FieldsType is the discriminator for the different fields format and version.
+	// There is currently only one possible value: "FieldsV1"
+	FieldsType string `json:"fieldsType,omitempty" protobuf:"bytes,6,opt,name=fieldsType"`
+	// FieldsV1 holds the first JSON version format as described in the "FieldsV1" type.
 	// +optional
-	Fields *Fields `json:"fields,omitempty" protobuf:"bytes,5,opt,name=fields,casttype=Fields"`
+	FieldsV1 *FieldsV1 `json:"fieldsV1,omitempty" protobuf:"bytes,7,opt,name=fieldsV1"`
 }
 
 // ManagedFieldsOperationType is the type of operation which lead to a ManagedFieldsEntry being created.
@@ -1141,21 +1167,25 @@ const (
 	ManagedFieldsOperationUpdate ManagedFieldsOperationType = "Update"
 )
 
-// Fields stores a set of fields in a data structure like a Trie.
-// To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff
-type Fields struct {
-	// Map stores a set of fields in a data structure like a Trie.
-	//
-	// Each key is either a '.' representing the field itself, and will always map to an empty set,
-	// or a string representing a sub-field or item. The string will follow one of these four formats:
-	// 'f:<name>', where <name> is the name of a field in a struct, or key in a map
-	// 'v:<value>', where <value> is the exact json formatted value of a list item
-	// 'i:<index>', where <index> is position of a item in a list
-	// 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values
-	// If a key maps to an empty Fields value, the field that key represents is part of the set.
-	//
-	// The exact format is defined in k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager/internal
-	Map map[string]Fields `json:",inline" protobuf:"bytes,1,rep,name=map"`
+// FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.
+//
+// Each key is either a '.' representing the field itself, and will always map to an empty set,
+// or a string representing a sub-field or item. The string will follow one of these four formats:
+// 'f:<name>', where <name> is the name of a field in a struct, or key in a map
+// 'v:<value>', where <value> is the exact json formatted value of a list item
+// 'i:<index>', where <index> is position of a item in a list
+// 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values
+// If a key maps to an empty Fields value, the field that key represents is part of the set.
+//
+// The exact format is defined in sigs.k8s.io/structured-merge-diff
+// +protobuf.options.(gogoproto.goproto_stringer)=false
+type FieldsV1 struct {
+	// Raw is the underlying serialization of this object.
+	Raw []byte `json:"-" protobuf:"bytes,1,opt,name=Raw"`
+}
+
+func (f FieldsV1) String() string {
+	return string(f.Raw)
 }
 
 // TODO: Table does not generate to protobuf because of the interface{} - fix protobuf
@@ -1170,7 +1200,7 @@ type Fields struct {
 type Table struct {
 	TypeMeta `json:",inline"`
 	// Standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	ListMeta `json:"metadata,omitempty"`
 
@@ -1280,6 +1310,7 @@ const (
 )
 
 // TableOptions are used when a Table is requested by the caller.
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type TableOptions struct {
 	TypeMeta `json:",inline"`
@@ -1301,7 +1332,7 @@ type TableOptions struct {
 type PartialObjectMetadata struct {
 	TypeMeta `json:",inline"`
 	// Standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 }
@@ -1311,10 +1342,72 @@ type PartialObjectMetadata struct {
 type PartialObjectMetadataList struct {
 	TypeMeta `json:",inline"`
 	// Standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 	// +optional
 	ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// items contains each of the included items.
 	Items []PartialObjectMetadata `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// Condition contains details for one aspect of the current state of this API Resource.
+// ---
+// This struct is intended for direct use as an array at the field path .status.conditions.  For example,
+// type FooStatus struct{
+//     // Represents the observations of a foo's current state.
+//     // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
+//     // +patchMergeKey=type
+//     // +patchStrategy=merge
+//     // +listType=map
+//     // +listMapKey=type
+//     Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+//
+//     // other fields
+// }
+type Condition struct {
+	// type of condition in CamelCase or in foo.example.com/CamelCase.
+	// ---
+	// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+	// useful (see .node.status.conditions), the ability to deconflict is important.
+	// The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
+	// +kubebuilder:validation:MaxLength=316
+	Type string `json:"type" protobuf:"bytes,1,opt,name=type"`
+	// status of the condition, one of True, False, Unknown.
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=True;False;Unknown
+	Status ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status"`
+	// observedGeneration represents the .metadata.generation that the condition was set based upon.
+	// For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+	// with respect to the current state of the instance.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	ObservedGeneration int64 `json:"observedGeneration,omitempty" protobuf:"varint,3,opt,name=observedGeneration"`
+	// lastTransitionTime is the last time the condition transitioned from one status to another.
+	// This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=date-time
+	LastTransitionTime Time `json:"lastTransitionTime" protobuf:"bytes,4,opt,name=lastTransitionTime"`
+	// reason contains a programmatic identifier indicating the reason for the condition's last transition.
+	// Producers of specific condition types may define expected values and meanings for this field,
+	// and whether the values are considered a guaranteed API.
+	// The value should be a CamelCase string.
+	// This field may not be empty.
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=1024
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$`
+	Reason string `json:"reason" protobuf:"bytes,5,opt,name=reason"`
+	// message is a human readable message indicating details about the transition.
+	// This may be an empty string.
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=32768
+	Message string `json:"message" protobuf:"bytes,6,opt,name=message"`
 }

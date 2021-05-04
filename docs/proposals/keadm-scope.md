@@ -51,7 +51,7 @@ For edge, commands shall be:
 
 ## Design of the commands
 
-**NOTE**: All the below steps are executed as root user, to execute as sudo user ,Please add sudo infront of all the commands
+**NOTE**: All the below steps are executed as root user, to execute as sudo user. Please add `sudo` infront of all the commands.
 
 ### kubeedge --help or kubeedge
 
@@ -63,7 +63,7 @@ For edge, commands shall be:
     │ Please give us feedback at:                              │
     │ https://github.com/kubeedge/kubeedge/issues              │
     └──────────────────────────────────────────────────────────┘
-	
+
     Create a two-machine cluster with one cloud node
     (which controls the edge node cluster), and one edge node
     (where native containerized application, in the form of
@@ -148,7 +148,7 @@ keadm reset --k8sserverip 10.20.30.40:8080
 Flags:
   -h, --help                 help for reset
   -k, --k8sserverip string   IP:Port address of cloud components host/VM
-  
+
 ```
 
 ### keadm join --help
@@ -159,8 +159,8 @@ Flags:
 It checks if the pre-requisites are installed already,
 If not installed, this command will help in download,
 install and execute on the host.
-It will also connect with cloud component to receieve 
-further instructions and forward telemetry data from 
+It will also connect with cloud component to receieve
+further instructions and forward telemetry data from
 devices to cloud
 
 Usage:
@@ -198,7 +198,7 @@ Flags:
 `keadm init`
   - What is it?
      * This command will be responsible to bring up KubeEdge cloud components like edge-controller and K8S (using kubeadm)
-   
+
   - What shall be its scope ?
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
@@ -220,7 +220,7 @@ Flags:
     7. start edge-controller
 
 `keadm reset`
-  - What is it? 
+  - What is it?
     * This command will be responsible to bring down KubeEdge cloud components edge-controller and call `kubeadm reset` (to stop K8S)
 
   - What shall be its scope ?
@@ -231,22 +231,22 @@ Flags:
 ### Worker Node (at the Edge) commands
 
 `keadm join`
-  - What is it? 
+  - What is it?
     * This command will be responsible to install pre-requisites and make modifications needed for KubeEdge edge component (edgecore) and start it
 
   - What shall be its scope ?
 
     1. Check version of OS and install subsequently the required pre-requisites using supported steps. Currently we will support **ONLY** (Ubuntu & CentOS)
     2. Check and install all the pre-requisites before executing edge-controller, which are
-        * Docker (currently 18.06.0ce3-0~ubuntu) and check is service is up.
+        * Docker (currently 18.06.0ce3-0~ubuntu) and check if service is up.
         * mosquitto (latest available in OS repos) and check if running.
-    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transfered from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
+    3. This command will take `--certPath` (string type) as mandatory option which shall be the certificates path; wherein the certs were transferred from cloud node and uncompressed. It will modify `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml` file against `edgehub.websocket.certfile` and `edgehub.websocket.keyfile` fields.
     4. Create `$GOPATH/src/github.com/kubeedge/kubeedge/build/node.json` and apply it using `curl` command to api-server
-    5. This command will take mandatory `-e` or `--cloudcoreip` flag to specify the address of Kubeedge cloudcore
+    5. This command will take mandatory `-e` or `--cloudcoreip` flag to specify the address of KubeEdge cloudcore
     6. Create `$GOPATH/src/github.com/kubeedge/kubeedge/edge/conf/edge.yaml`
         * Use `--cloudcoreip` flag to update the `websocket.url` field.
         * Use `--edgenodeid` flags value to update `controller.node-id`,`edged.hostname-override` field.
-    7. Register or add node to K8S cluster, Using Flag `-k` or `--k8sserverip` value to connect with the api-server. 
+    7. Register or add node to K8S cluster, Using Flag `-k` or `--k8sserverip` value to connect with the api-server.
         * Create `node.json` file and update it with `-i` or `--edgenodeid` flags value in `metadata.name` field.
         * Apply it using `curl` command to api-server
 

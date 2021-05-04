@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -24,11 +24,10 @@ type UnixDomainSocket struct {
 // NewUnixDomainSocket create new socket
 func NewUnixDomainSocket(filename string, buffersize ...int) *UnixDomainSocket {
 	size := DefaultBufferSize
-	if buffersize != nil {
+	if len(buffersize) != 0 {
 		size = buffersize[0]
 	}
-	us := UnixDomainSocket{filename: filename, buffersize: size}
-	return &us
+	return &UnixDomainSocket{filename: filename, buffersize: size}
 }
 
 // parseEndpoint parses endpoint

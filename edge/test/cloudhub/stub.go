@@ -8,17 +8,17 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"k8s.io/api/core/v1"
-	"k8s.io/klog"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 func init() {
-	core.Register(&stubCloudHub{})
+	core.Register(&stubCloudHub{enable: true})
 }
 
 type Attributes struct {
@@ -26,14 +26,9 @@ type Attributes struct {
 	ProjectID string `json:"project_id"`
 }
 
-type record struct {
-	Data         string `json:"data"`
-	PartitionKey string `json:"partition_key"`
-}
-
 type stubCloudHub struct {
-	context *context.Context
-	wsConn  *websocket.Conn
+	wsConn *websocket.Conn
+	enable bool
 }
 
 func (*stubCloudHub) Name() string {
@@ -43,6 +38,10 @@ func (*stubCloudHub) Name() string {
 func (*stubCloudHub) Group() string {
 	//return core.MetaGroup
 	return modules.MetaGroup
+}
+
+func (tm *stubCloudHub) Enable() bool {
+	return tm.enable
 }
 
 func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {
@@ -110,8 +109,7 @@ func (tm *stubCloudHub) podHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (tm *stubCloudHub) Start(c *context.Context) {
-	tm.context = c
+func (tm *stubCloudHub) Start() {
 	defer tm.Cleanup()
 
 	router := mux.NewRouter()
@@ -127,9 +125,8 @@ func (tm *stubCloudHub) Start(c *context.Context) {
 	if err != nil {
 		klog.Errorf("ListenAndServe: %v", err)
 	}
-
 }
 
 func (tm *stubCloudHub) Cleanup() {
-	tm.context.Cleanup(tm.Name())
+	beehiveContext.Cleanup(tm.Name())
 }

@@ -15,7 +15,7 @@
 - start server
 
 	./mirror --cmd-type=server --type=websocket --addr=localhost:9890
-	
+
 - start client
 
 	./mirror --cmd-type=client --type=websocket --addr=wss://localhost:9890/test

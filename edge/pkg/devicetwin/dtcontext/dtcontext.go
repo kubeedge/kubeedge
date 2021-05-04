@@ -1,30 +1,25 @@
 package dtcontext
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
-	"github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	deviceconfig "github.com/kubeedge/kubeedge/edge/pkg/devicetwin/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-)
-
-var (
-	//IsDetail deal detail lock
-	IsDetail = false
 )
 
 //DTContext context for devicetwin
 type DTContext struct {
 	GroupID        string
-	NodeID         string
+	NodeName       string
 	CommChan       map[string]chan interface{}
 	ConfirmChan    chan interface{}
 	ConfirmMap     *sync.Map
@@ -38,33 +33,18 @@ type DTContext struct {
 }
 
 //InitDTContext init dtcontext
-func InitDTContext(context *context.Context) (*DTContext, error) {
-	groupID := ""
-	nodeID, err := config.CONFIG.GetValue("edgehub.controller.node-id").ToString()
-	if err != nil {
-		klog.Warningf("failed to get node id  for web socket client")
-	}
-	commChan := make(map[string]chan interface{})
-	confirmChan := make(chan interface{}, 1000)
-	var modulesHealth sync.Map
-	var confirm sync.Map
-	var deviceList sync.Map
-	var deviceMutex sync.Map
-	var mutex sync.RWMutex
-	// var deviceVersionList sync.Map
-
+func InitDTContext() (*DTContext, error) {
 	return &DTContext{
-		GroupID:        groupID,
-		NodeID:         nodeID,
-		CommChan:       commChan,
-		ConfirmChan:    confirmChan,
-		ConfirmMap:     &confirm,
-		ModulesHealth:  &modulesHealth,
-		ModulesContext: context,
-		DeviceList:     &deviceList,
-		DeviceMutex:    &deviceMutex,
-		Mutex:          &mutex,
-		State:          dtcommon.Disconnected,
+		GroupID:       "",
+		NodeName:      deviceconfig.Get().NodeName,
+		CommChan:      make(map[string]chan interface{}),
+		ConfirmChan:   make(chan interface{}, 1000),
+		ConfirmMap:    &sync.Map{},
+		ModulesHealth: &sync.Map{},
+		DeviceList:    &sync.Map{},
+		DeviceMutex:   &sync.Map{},
+		Mutex:         &sync.RWMutex{},
+		State:         dtcommon.Disconnected,
 	}, nil
 }
 
@@ -81,8 +61,7 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 func (dtc *DTContext) HeartBeat(dtmName string, content interface{}) error {
 	if strings.Compare(content.(string), "ping") == 0 {
 		dtc.ModulesHealth.Store(dtmName, time.Now().Unix())
-		klog.Infof("%s is healthy %v", dtmName, time.Now().Unix())
-
+		klog.V(3).Infof("%s is healthy %v", dtmName, time.Now().Unix())
 	} else if strings.Compare(content.(string), "stop") == 0 {
 		klog.Infof("%s stop", dtmName)
 		return errors.New("stop")

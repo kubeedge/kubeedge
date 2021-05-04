@@ -64,16 +64,15 @@ var (
 
 //Function to run the Ginkgo Test
 func TestEdgecoreEventBus(t *testing.T) {
-
 	RegisterFailHandler(Fail)
 	var _ = BeforeSuite(func() {
-
 		MemDeviceUpdate = &MembershipUpdate{}
 		common.Infof("Before Suite execution")
 
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
-
+		//Expect(utils.CreateEdgeCoreConfigFile()).Should(BeNil())
+		//Expect(utils.StartEdgeCore()).Should(BeNil())
 	})
 	AfterSuite(func() {
 		By("After Suite Executing....!")

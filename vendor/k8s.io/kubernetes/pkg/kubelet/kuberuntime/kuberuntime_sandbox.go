@@ -22,14 +22,15 @@ import (
 	"net/url"
 	"sort"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubernetes/pkg/kubelet/util"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 )
 
@@ -96,11 +97,15 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxConfig(pod *v1.Pod, attemp
 
 	if !kubecontainer.IsHostNetworkPod(pod) {
 		// TODO: Add domain support in new runtime interface
-		hostname, _, err := m.runtimeHelper.GeneratePodHostNameAndDomain(pod)
+		podHostname, podDomain, err := m.runtimeHelper.GeneratePodHostNameAndDomain(pod)
 		if err != nil {
 			return nil, err
 		}
-		podSandboxConfig.Hostname = hostname
+		podHostname, err = util.GetNodenameForKernel(podHostname, podDomain, pod.Spec.SetHostnameAsFQDN)
+		if err != nil {
+			return nil, err
+		}
+		podSandboxConfig.Hostname = podHostname
 	}
 
 	logDir := BuildPodLogsDirectory(pod.Namespace, pod.Name, pod.UID)
@@ -143,8 +148,11 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxLinuxConfig(pod *v1.Pod) (
 	lc := &runtimeapi.LinuxPodSandboxConfig{
 		CgroupParent: cgroupParent,
 		SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
-			Privileged:         kubecontainer.HasPrivilegedContainer(pod),
-			SeccompProfilePath: m.getSeccompProfileFromAnnotations(pod.Annotations, ""),
+			Privileged: kubecontainer.HasPrivilegedContainer(pod),
+
+			// Forcing sandbox to run as `runtime/default` allow users to
+			// use least privileged seccomp profiles at pod level. Issue #84623
+			SeccompProfilePath: v1.SeccompProfileRuntimeDefault,
 		},
 	}
 
@@ -214,20 +222,36 @@ func (m *kubeGenericRuntimeManager) getKubeletSandboxes(all bool) ([]*runtimeapi
 	return resp, nil
 }
 
-// determinePodSandboxIP determines the IP address of the given pod sandbox.
-func (m *kubeGenericRuntimeManager) determinePodSandboxIP(podNamespace, podName string, podSandbox *runtimeapi.PodSandboxStatus) string {
+// determinePodSandboxIP determines the IP addresses of the given pod sandbox.
+func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName string, podSandbox *runtimeapi.PodSandboxStatus) []string {
+	podIPs := make([]string, 0)
 	if podSandbox.Network == nil {
-		klog.Warningf("Pod Sandbox status doesn't have network information, cannot report IP")
-		return ""
+		klog.Warningf("Pod Sandbox status doesn't have network information, cannot report IPs")
+		return podIPs
 	}
-	ip := podSandbox.Network.Ip
-	if len(ip) != 0 && net.ParseIP(ip) == nil {
-		// ip could be an empty string if runtime is not responsible for the
-		// IP (e.g., host networking).
-		klog.Warningf("Pod Sandbox reported an unparseable IP %v", ip)
-		return ""
+
+	// ip could be an empty string if runtime is not responsible for the
+	// IP (e.g., host networking).
+
+	// pick primary IP
+	if len(podSandbox.Network.Ip) != 0 {
+		if net.ParseIP(podSandbox.Network.Ip) == nil {
+			klog.Warningf("Pod Sandbox reported an unparseable IP (Primary) %v", podSandbox.Network.Ip)
+			return nil
+		}
+		podIPs = append(podIPs, podSandbox.Network.Ip)
 	}
-	return ip
+
+	// pick additional ips, if cri reported them
+	for _, podIP := range podSandbox.Network.AdditionalIps {
+		if nil == net.ParseIP(podIP.Ip) {
+			klog.Warningf("Pod Sandbox reported an unparseable IP (additional) %v", podIP.Ip)
+			return nil
+		}
+		podIPs = append(podIPs, podIP.Ip)
+	}
+
+	return podIPs
 }
 
 // getPodSandboxID gets the sandbox id by podUID and returns ([]sandboxID, error).

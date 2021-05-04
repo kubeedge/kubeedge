@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -42,9 +42,9 @@ func GetPods(apiserver, label string) (v1.PodList, error) {
 	var err error
 
 	if len(label) > 0 {
-		err, resp = SendHttpRequest(http.MethodGet, apiserver+podLabelSelector+label)
+		resp, err = SendHTTPRequest(http.MethodGet, apiserver+podLabelSelector+label)
 	} else {
-		err, resp = SendHttpRequest(http.MethodGet, apiserver)
+		resp, err = SendHTTPRequest(http.MethodGet, apiserver)
 	}
 	if err != nil {
 		Fatalf("Frame HTTP request failed: %v", err)
@@ -68,7 +68,7 @@ func GetPods(apiserver, label string) (v1.PodList, error) {
 func GetPodState(apiserver string) (string, int) {
 	var pod v1.Pod
 
-	err, resp := SendHttpRequest(http.MethodGet, apiserver)
+	resp, err := SendHTTPRequest(http.MethodGet, apiserver)
 	if err != nil {
 		Fatalf("GetPodState :SenHttpRequest failed: %v", err)
 	}
@@ -92,7 +92,7 @@ func GetPodState(apiserver string) (string, int) {
 //DeletePods function to get the pod status and response code
 func DeletePods(apiserver string) (string, int) {
 	var pod v1.Pod
-	err, resp := SendHttpRequest(http.MethodDelete, apiserver)
+	resp, err := SendHTTPRequest(http.MethodDelete, apiserver)
 	if err != nil {
 		Fatalf("GetPodState :SenHttpRequest failed: %v", err)
 	}
@@ -115,7 +115,7 @@ func DeletePods(apiserver string) (string, int) {
 
 //CheckPodRunningState function to check the Pod state
 func CheckPodRunningState(apiserver string, podlist v1.PodList) {
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
 			state, _ := GetPodState(apiserver + "/" + pod.Name)
@@ -125,8 +125,7 @@ func CheckPodRunningState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "600s", "2s").Should(Equal(len(podlist.Items)), "Application deployment is Unsuccessfull, Pod has not come to Running State")
-
+	}, "600s", "2s").Should(gomega.Equal(len(podlist.Items)), "Application deployment is Unsuccessful, Pod has not come to Running State")
 }
 
 //CheckPodDeleteState function to check the Pod state
@@ -139,7 +138,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 		}
 	}
 	podCount := len(podlist.Items) - count
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
 			status, statusCode := GetPodState(apiserver + "/" + pod.Name)
@@ -149,8 +148,7 @@ func CheckPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "600s", "4s").Should(Equal(podCount), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
-
+	}, "600s", "4s").Should(gomega.Equal(podCount), "Delete Application deployment is Unsuccessful, Pods are not deleted within the time")
 }
 
 //CheckDeploymentPodDeleteState function to check the Pod state
@@ -163,7 +161,7 @@ func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
 		}
 	}
 	//podCount := len(podlist.Items) - count
-	Eventually(func() int {
+	gomega.Eventually(func() int {
 		var count int
 		for _, pod := range podlist.Items {
 			status, statusCode := GetPodState(apiserver + "/" + pod.Name)
@@ -173,13 +171,12 @@ func CheckDeploymentPodDeleteState(apiserver string, podlist v1.PodList) {
 			}
 		}
 		return count
-	}, "240s", "4s").Should(Equal(count), "Delete Application deployment is Unsuccessfull, Pods are not deleted within the time")
-
+	}, "240s", "4s").Should(gomega.Equal(count), "Delete Application deployment is Unsuccessful, Pods are not deleted within the time")
 }
 
 // NewKubeClient creates kube client from config
-func NewKubeClient(apiserver string) *kubernetes.Clientset {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags(apiserver, "")
+func NewKubeClient(kubeConfigPath string) *kubernetes.Clientset {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		Fatalf("Get kube config failed with error: %v", err)
 		return nil
@@ -196,9 +193,24 @@ func NewKubeClient(apiserver string) *kubernetes.Clientset {
 }
 
 // WaitforPodsRunning waits util all pods are in running status or timeout
-func WaitforPodsRunning(apiserver string, podlist v1.PodList, timout time.Duration) {
+func WaitforPodsRunning(kubeConfigPath string, podlist v1.PodList, timout time.Duration) {
+	if len(podlist.Items) == 0 {
+		Fatalf("podlist should not be empty")
+	}
+
+	podRunningCount := 0
+	for _, pod := range podlist.Items {
+		if pod.Status.Phase == v1.PodRunning {
+			podRunningCount++
+		}
+	}
+	if podRunningCount == len(podlist.Items) {
+		Infof("All pods come into running status")
+		return
+	}
+
 	// new kube client
-	kubeClient := NewKubeClient(apiserver)
+	kubeClient := NewKubeClient(kubeConfigPath)
 	// define signal
 	signal := make(chan struct{})
 	// define list watcher

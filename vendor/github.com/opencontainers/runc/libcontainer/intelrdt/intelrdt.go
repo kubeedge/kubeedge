@@ -28,7 +28,8 @@ import (
  *
  * Memory Bandwidth Allocation (MBA) provides indirect and approximate throttle
  * over memory bandwidth for the software. A user controls the resource by
- * indicating the percentage of maximum memory bandwidth.
+ * indicating the percentage of maximum memory bandwidth or memory bandwidth
+ * limit in MBps unit if MBA Software Controller is enabled.
  *
  * More details about Intel RDT CAT and MBA can be found in the section 17.18
  * of Intel Software Developer Manual:
@@ -54,6 +55,10 @@ import (
  * |   |   |-- cbm_mask
  * |   |   |-- min_cbm_bits
  * |   |   |-- num_closids
+ * |   |-- L3_MON
+ * |   |   |-- max_threshold_occupancy
+ * |   |   |-- mon_features
+ * |   |   |-- num_rmids
  * |   |-- MB
  * |       |-- bandwidth_gran
  * |       |-- delay_linear
@@ -95,7 +100,7 @@ import (
  *
  * Memory bandwidth schema:
  * It has allocation values for memory bandwidth on each socket, which contains
- * L3 cache id and memory bandwidth percentage.
+ * L3 cache id and memory bandwidth.
  * 	Format: "MB:<cache_id0>=bandwidth0;<cache_id1>=bandwidth1;..."
  * For example, on a two-socket machine, the schema line could be "MB:0=20;1=70"
  *
@@ -105,6 +110,18 @@ import (
  * "info/MB/bandwidth_gran". The available bandwidth control steps are:
  * min_bw + N * bw_gran. Intermediate values are rounded to the next control
  * step available on the hardware.
+ *
+ * If MBA Software Controller is enabled through mount option "-o mba_MBps":
+ * mount -t resctrl resctrl -o mba_MBps /sys/fs/resctrl
+ * We could specify memory bandwidth in "MBps" (Mega Bytes per second) unit
+ * instead of "percentages". The kernel underneath would use a software feedback
+ * mechanism or a "Software Controller" which reads the actual bandwidth using
+ * MBM counters and adjust the memory bandwidth percentages to ensure:
+ * "actual memory bandwidth < user specified memory bandwidth".
+ *
+ * For example, on a two-socket machine, the schema line could be
+ * "MB:0=5000;1=7000" which means 5000 MBps memory bandwidth limit on socket 0
+ * and 7000 MBps memory bandwidth limit on socket 1.
  *
  * For more information about Intel RDT kernel interface:
  * https://www.kernel.org/doc/Documentation/x86/intel_rdt_ui.txt
@@ -165,6 +182,8 @@ var (
 	isCatEnabled bool
 	// The flag to indicate if Intel RDT/MBA is enabled
 	isMbaEnabled bool
+	// The flag to indicate if Intel RDT/MBA Software Controller is enabled
+	isMbaScEnabled bool
 )
 
 type intelRdtData struct {
@@ -176,8 +195,7 @@ type intelRdtData struct {
 // Check if Intel RDT sub-features are enabled in init()
 func init() {
 	// 1. Check if hardware and kernel support Intel RDT sub-features
-	// "cat_l3" flag for CAT and "mba" flag for MBA
-	isCatFlagSet, isMbaFlagSet, err := parseCpuInfoFile("/proc/cpuinfo")
+	flagsSet, err := parseCpuInfoFile("/proc/cpuinfo")
 	if err != nil {
 		return
 	}
@@ -192,14 +210,31 @@ func init() {
 	// "resource control" filesystem. Intel RDT sub-features can be
 	// selectively disabled or enabled by kernel command line
 	// (e.g., rdt=!l3cat,mba) in 4.14 and newer kernel
-	if isCatFlagSet {
+	if flagsSet.CAT {
 		if _, err := os.Stat(filepath.Join(intelRdtRoot, "info", "L3")); err == nil {
 			isCatEnabled = true
 		}
 	}
-	if isMbaFlagSet {
+	if isMbaScEnabled {
+		// We confirm MBA Software Controller is enabled in step 2,
+		// MBA should be enabled because MBA Software Controller
+		// depends on MBA
+		isMbaEnabled = true
+	} else if flagsSet.MBA {
 		if _, err := os.Stat(filepath.Join(intelRdtRoot, "info", "MB")); err == nil {
 			isMbaEnabled = true
+		}
+	}
+
+	if flagsSet.MBMTotal || flagsSet.MBMLocal {
+		if _, err := os.Stat(filepath.Join(intelRdtRoot, "info", "L3_MON")); err == nil {
+			mbmEnabled = true
+			cmtEnabled = true
+		}
+
+		enabledMonFeatures, err = getMonFeatures(intelRdtRoot)
+		if err != nil {
+			return
 		}
 	}
 }
@@ -230,6 +265,11 @@ func findIntelRdtMountpointDir() (string, error) {
 			// Check that the mount is properly formatted.
 			if numPostFields < 3 {
 				return "", fmt.Errorf("Error found less than 3 fields post '-' in %q", text)
+			}
+
+			// Check if MBA Software Controller is enabled through mount option "-o mba_MBps"
+			if strings.Contains(postSeparatorFields[2], "mba_MBps") {
+				isMbaScEnabled = true
 			}
 
 			return fields[4], nil
@@ -273,40 +313,52 @@ func isIntelRdtMounted() bool {
 	return true
 }
 
-func parseCpuInfoFile(path string) (bool, bool, error) {
-	isCatFlagSet := false
-	isMbaFlagSet := false
+type cpuInfoFlags struct {
+	CAT bool // Cache Allocation Technology
+	MBA bool // Memory Bandwidth Allocation
+
+	// Memory Bandwidth Monitoring related.
+	MBMTotal bool
+	MBMLocal bool
+}
+
+func parseCpuInfoFile(path string) (cpuInfoFlags, error) {
+	infoFlags := cpuInfoFlags{}
 
 	f, err := os.Open(path)
 	if err != nil {
-		return false, false, err
+		return infoFlags, err
 	}
 	defer f.Close()
 
 	s := bufio.NewScanner(f)
 	for s.Scan() {
-		if err := s.Err(); err != nil {
-			return false, false, err
-		}
-
 		line := s.Text()
 
 		// Search "cat_l3" and "mba" flags in first "flags" line
-		if strings.Contains(line, "flags") {
+		if strings.HasPrefix(line, "flags") {
 			flags := strings.Split(line, " ")
 			// "cat_l3" flag for CAT and "mba" flag for MBA
 			for _, flag := range flags {
 				switch flag {
 				case "cat_l3":
-					isCatFlagSet = true
+					infoFlags.CAT = true
 				case "mba":
-					isMbaFlagSet = true
+					infoFlags.MBA = true
+				case "cqm_mbm_total":
+					infoFlags.MBMTotal = true
+				case "cqm_mbm_local":
+					infoFlags.MBMLocal = true
 				}
 			}
-			return isCatFlagSet, isMbaFlagSet, nil
+			return infoFlags, nil
 		}
 	}
-	return isCatFlagSet, isMbaFlagSet, nil
+	if err := s.Err(); err != nil {
+		return infoFlags, err
+	}
+
+	return infoFlags, nil
 }
 
 func parseUint(s string, base, bitSize int) (uint64, error) {
@@ -461,7 +513,7 @@ func WriteIntelRdtTasks(dir string, pid int) error {
 		return fmt.Errorf("no such directory for %s", IntelRdtTasks)
 	}
 
-	// Dont attach any pid if -1 is specified as a pid
+	// Don't attach any pid if -1 is specified as a pid
 	if pid != -1 {
 		if err := ioutil.WriteFile(filepath.Join(dir, IntelRdtTasks), []byte(strconv.Itoa(pid)), 0700); err != nil {
 			return fmt.Errorf("failed to write %v to %v: %v", pid, IntelRdtTasks, err)
@@ -478,6 +530,11 @@ func IsCatEnabled() bool {
 // Check if Intel RDT/MBA is enabled
 func IsMbaEnabled() bool {
 	return isMbaEnabled
+}
+
+// Check if Intel RDT/MBA Software Controller is enabled
+func IsMbaScEnabled() bool {
+	return isMbaScEnabled
 }
 
 // Get the 'container_id' path in Intel RDT "resource control" filesystem
@@ -517,7 +574,7 @@ func (m *IntelRdtManager) Apply(pid int) (err error) {
 func (m *IntelRdtManager) Destroy() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if err := os.RemoveAll(m.Path); err != nil {
+	if err := os.RemoveAll(m.GetPath()); err != nil {
 		return err
 	}
 	m.Path = ""
@@ -556,7 +613,8 @@ func (m *IntelRdtManager) GetStats() (*Stats, error) {
 	schemaRootStrings := strings.Split(tmpRootStrings, "\n")
 
 	// The L3 cache and memory bandwidth schemata in 'container_id' group
-	tmpStrings, err := getIntelRdtParamString(m.GetPath(), "schemata")
+	containerPath := m.GetPath()
+	tmpStrings, err := getIntelRdtParamString(containerPath, "schemata")
 	if err != nil {
 		return nil, err
 	}
@@ -608,6 +666,11 @@ func (m *IntelRdtManager) GetStats() (*Stats, error) {
 		}
 	}
 
+	err = getMonitoringStats(containerPath, stats)
+	if err != nil {
+		return nil, err
+	}
+
 	return stats, nil
 }
 
@@ -633,7 +696,7 @@ func (m *IntelRdtManager) Set(container *configs.Config) error {
 	//
 	// About memory bandwidth schema:
 	// It has allocation values for memory bandwidth on each socket, which
-	// contains L3 cache id and memory bandwidth percentage.
+	// contains L3 cache id and memory bandwidth.
 	// 	Format: "MB:<cache_id0>=bandwidth0;<cache_id1>=bandwidth1;..."
 	// For example, on a two-socket machine, the schema line could be:
 	// 	"MB:0=20;1=70"
@@ -645,6 +708,19 @@ func (m *IntelRdtManager) Set(container *configs.Config) error {
 	// The available bandwidth control steps are: min_bw + N * bw_gran.
 	// Intermediate values are rounded to the next control step available
 	// on the hardware.
+	//
+	// If MBA Software Controller is enabled through mount option
+	// "-o mba_MBps": mount -t resctrl resctrl -o mba_MBps /sys/fs/resctrl
+	// We could specify memory bandwidth in "MBps" (Mega Bytes per second)
+	// unit instead of "percentages". The kernel underneath would use a
+	// software feedback mechanism or a "Software Controller" which reads
+	// the actual bandwidth using MBM counters and adjust the memory
+	// bandwidth percentages to ensure:
+	// "actual memory bandwidth < user specified memory bandwidth".
+	//
+	// For example, on a two-socket machine, the schema line could be
+	// "MB:0=5000;1=7000" which means 5000 MBps memory bandwidth limit on
+	// socket 0 and 7000 MBps memory bandwidth limit on socket 1.
 	if container.IntelRdt != nil {
 		path := m.GetPath()
 		l3CacheSchema := container.IntelRdt.L3CacheSchema
@@ -715,7 +791,7 @@ type LastCmdError struct {
 }
 
 func (e *LastCmdError) Error() string {
-	return fmt.Sprintf(e.Err.Error() + ", last_cmd_status: " + e.LastCmdStatus)
+	return e.Err.Error() + ", last_cmd_status: " + e.LastCmdStatus
 }
 
 func NewLastCmdError(err error) error {

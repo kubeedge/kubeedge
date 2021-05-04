@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
-	"k8s.io/klog"
+	"k8s.io/component-base/term"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
 	admissioncontroller "github.com/kubeedge/kubeedge/cloud/pkg/admissioncontroller"

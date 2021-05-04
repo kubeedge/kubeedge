@@ -23,30 +23,30 @@ import (
 	"time"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
-
 type vmSpec struct {
-	Ip       string `json:"ip"`
+	IP       string `json:"ip"`
 	Username string `json:"username"`
 	Passwd   string `json:"password"`
 }
 
 //config.json decode struct
 type Config struct {
-	AppImageUrl                    []string          `json:"image_url"`
+	AppImageURL                    []string          `json:"image_url"`
 	K8SMasterForKubeEdge           string            `json:"k8smasterforkubeedge"`
 	Nodes                          map[string]vmSpec `json:"k8snodes"`
 	NumOfNodes                     int               `json:"node_num"`
 	ImageRepo                      string            `json:"imagerepo"`
 	K8SMasterForProvisionEdgeNodes string            `json:"k8smasterforprovisionedgenodes"`
-	CloudImageUrl                  string            `json:"cloudimageurl"`
-	EdgeImageUrl                   string            `json:"edgeimageurl"`
+	CloudImageURL                  string            `json:"cloudimageurl"`
+	EdgeImageURL                   string            `json:"edgeimageurl"`
 	Namespace                      string            `json:"namespace"`
 	ControllerStubPort             int               `json:"controllerstubport"`
 	Protocol                       string            `json:"protocol"`
 	DockerHubUserName              string            `json:"dockerhubusername"`
 	DockerHubPassword              string            `json:"dockerhubpassword"`
 	MqttEndpoint                   string            `json:"mqttendpoint"`
+	KubeConfigPath                 string            `json:"kubeconfigpath"`
+	Token                          string            `json:"token"`
 }
 
 //config struct
@@ -55,13 +55,13 @@ var config *Config
 //get config.json path
 func LoadConfig() Config {
 	if config == nil {
-		config = loadConfigJsonFromPath()
+		config = loadConfigJSOMFromPath()
 	}
 	return *config
 }
 
-//loadConfigJsonFromPath reads the test configuration and builds a Config object.
-func loadConfigJsonFromPath() *Config {
+//loadConfigJSOMFromPath reads the test configuration and builds a Config object.
+func loadConfigJSOMFromPath() *Config {
 	path := getConfigPath()
 	_, err := filepath.Abs(filepath.Dir(path))
 	if err != nil {

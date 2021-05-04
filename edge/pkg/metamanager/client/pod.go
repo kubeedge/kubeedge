@@ -1,9 +1,13 @@
 package client
 
 import (
-	api "k8s.io/api/core/v1"
+	"fmt"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 //PodsGetter is interface to get pods
@@ -13,38 +17,39 @@ type PodsGetter interface {
 
 //PodsInterface is pod interface
 type PodsInterface interface {
-	Create(*api.Pod) (*api.Pod, error)
-	Update(*api.Pod) error
-	Delete(name string) error
-	Get(name string) (*api.Pod, error)
+	Create(*corev1.Pod) (*corev1.Pod, error)
+	Update(*corev1.Pod) error
+	Delete(name, options string) error
+	Get(name string) (*corev1.Pod, error)
 }
 
 type pods struct {
 	namespace string
-	context   *context.Context
 	send      SendInterface
 }
 
-func newPods(namespace string, c *context.Context, s SendInterface) *pods {
+func newPods(namespace string, s SendInterface) *pods {
 	return &pods{
-		context:   c,
 		send:      s,
 		namespace: namespace,
 	}
 }
 
-func (c *pods) Create(cm *api.Pod) (*api.Pod, error) {
+func (c *pods) Create(cm *corev1.Pod) (*corev1.Pod, error) {
 	return nil, nil
 }
 
-func (c *pods) Update(cm *api.Pod) error {
+func (c *pods) Update(cm *corev1.Pod) error {
 	return nil
 }
 
-func (c *pods) Delete(name string) error {
+func (c *pods) Delete(name, options string) error {
+	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, name)
+	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, options)
+	c.send.Send(podDeleteMsg)
 	return nil
 }
 
-func (c *pods) Get(name string) (*api.Pod, error) {
+func (c *pods) Get(name string) (*corev1.Pod, error) {
 	return nil, nil
 }

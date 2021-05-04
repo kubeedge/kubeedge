@@ -18,13 +18,14 @@ package httplog
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"runtime"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // StacktracePred returns true if a stacktrace should be logged for this status.
@@ -33,6 +34,11 @@ type StacktracePred func(httpStatus int) (logStacktrace bool)
 type logger interface {
 	Addf(format string, data ...interface{})
 }
+
+type respLoggerContextKeyType int
+
+// respLoggerContextKey is used to store the respLogger pointer in the request context.
+const respLoggerContextKey respLoggerContextKeyType = iota
 
 // Add a layer on top of ResponseWriter, so we can track latency and error
 // message sources.
@@ -69,47 +75,56 @@ func DefaultStacktracePred(status int) bool {
 	return (status < http.StatusOK || status >= http.StatusInternalServerError) && status != http.StatusSwitchingProtocols
 }
 
-// NewLogged turns a normal response writer into a logged response writer.
-//
-// Usage:
-//
-// defer NewLogged(req, &w).StacktraceWhen(StatusIsNot(200, 202)).Log()
-//
-// (Only the call to Log() is deferred, so you can set everything up in one line!)
-//
-// Note that this *changes* your writer, to route response writing actions
-// through the logger.
-//
-// Use LogOf(w).Addf(...) to log something along with the response result.
-func NewLogged(req *http.Request, w *http.ResponseWriter) *respLogger {
-	if _, ok := (*w).(*respLogger); ok {
-		// Don't double-wrap!
-		panic("multiple NewLogged calls!")
+// WithLogging wraps the handler with logging.
+func WithLogging(handler http.Handler, pred StacktracePred) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		if old := respLoggerFromContext(req); old != nil {
+			panic("multiple WithLogging calls!")
+		}
+		rl := newLogged(req, w).StacktraceWhen(pred)
+		req = req.WithContext(context.WithValue(ctx, respLoggerContextKey, rl))
+
+		if klog.V(3).Enabled() {
+			defer func() { klog.InfoS("HTTP", rl.LogArgs()...) }()
+		}
+		handler.ServeHTTP(rl, req)
+	})
+}
+
+// respLoggerFromContext returns the respLogger or nil.
+func respLoggerFromContext(req *http.Request) *respLogger {
+	ctx := req.Context()
+	val := ctx.Value(respLoggerContextKey)
+	if rl, ok := val.(*respLogger); ok {
+		return rl
 	}
-	rl := &respLogger{
+	return nil
+}
+
+// newLogged turns a normal response writer into a logged response writer.
+func newLogged(req *http.Request, w http.ResponseWriter) *respLogger {
+	return &respLogger{
 		startTime:         time.Now(),
 		req:               req,
-		w:                 *w,
+		w:                 w,
 		logStacktracePred: DefaultStacktracePred,
 	}
-	*w = rl // hijack caller's writer!
-	return rl
 }
 
 // LogOf returns the logger hiding in w. If there is not an existing logger
 // then a passthroughLogger will be created which will log to stdout immediately
 // when Addf is called.
 func LogOf(req *http.Request, w http.ResponseWriter) logger {
-	if rl, ok := w.(*respLogger); ok {
+	if rl := respLoggerFromContext(req); rl != nil {
 		return rl
 	}
-
 	return &passthroughLogger{}
 }
 
 // Unlogged returns the original ResponseWriter, or w if it is not our inserted logger.
-func Unlogged(w http.ResponseWriter) http.ResponseWriter {
-	if rl, ok := w.(*respLogger); ok {
+func Unlogged(req *http.Request, w http.ResponseWriter) http.ResponseWriter {
+	if rl := respLoggerFromContext(req); rl != nil {
 		return rl.w
 	}
 	return w
@@ -140,16 +155,34 @@ func (rl *respLogger) Addf(format string, data ...interface{}) {
 	rl.addedInfo += "\n" + fmt.Sprintf(format, data...)
 }
 
-// Log is intended to be called once at the end of your request handler, via defer
-func (rl *respLogger) Log() {
+func (rl *respLogger) LogArgs() []interface{} {
 	latency := time.Since(rl.startTime)
-	if klog.V(3) {
-		if !rl.hijacked {
-			klog.InfoDepth(1, fmt.Sprintf("%s %s: (%v) %v%v%v [%s %s]", rl.req.Method, rl.req.RequestURI, latency, rl.status, rl.statusStack, rl.addedInfo, rl.req.UserAgent(), rl.req.RemoteAddr))
-		} else {
-			klog.InfoDepth(1, fmt.Sprintf("%s %s: (%v) hijacked [%s %s]", rl.req.Method, rl.req.RequestURI, latency, rl.req.UserAgent(), rl.req.RemoteAddr))
+	if rl.hijacked {
+		return []interface{}{
+			"verb", rl.req.Method,
+			"URI", rl.req.RequestURI,
+			"latency", latency,
+			"userAgent", rl.req.UserAgent(),
+			"srcIP", rl.req.RemoteAddr,
+			"hijacked", true,
 		}
 	}
+	args := []interface{}{
+		"verb", rl.req.Method,
+		"URI", rl.req.RequestURI,
+		"latency", latency,
+		"userAgent", rl.req.UserAgent(),
+		"srcIP", rl.req.RemoteAddr,
+		"resp", rl.status,
+	}
+	if len(rl.statusStack) > 0 {
+		args = append(args, "statusStack", rl.statusStack)
+	}
+
+	if len(rl.addedInfo) > 0 {
+		args = append(args, "addedInfo", rl.addedInfo)
+	}
+	return args
 }
 
 // Header implements http.ResponseWriter.
@@ -173,7 +206,7 @@ func (rl *respLogger) Write(b []byte) (int, error) {
 func (rl *respLogger) Flush() {
 	if flusher, ok := rl.w.(http.Flusher); ok {
 		flusher.Flush()
-	} else if klog.V(2) {
+	} else if klog.V(2).Enabled() {
 		klog.InfoDepth(1, fmt.Sprintf("Unable to convert %+v into http.Flusher", rl.w))
 	}
 }

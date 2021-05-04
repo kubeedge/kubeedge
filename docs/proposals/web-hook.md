@@ -13,7 +13,7 @@ last-updated: 2019-09-11
 ---
 
 # Motivation
-As the evolving of the project, it is foreseeable more API and resouce will be added in the project. kubeedge so far lack of effective way of pre-processing for the object configuration, for example, whether the pod that is going to be created contains the unwanted label, should the specific configmap be protected from deletion etc.
+As the evolving of the project, it is foreseeable more API and resource will be added in the project. kubeedge so far lack of effective way of pre-processing for the object configuration, for example, whether the pod that is going to be created contains the unwanted label, should the specific configmap be protected from deletion etc.
 
 There is a concrete example on the github [issue 845](https://github.com/kubeedge/kubeedge/issues/845), the issue there cannot be addressed by [CRD validation](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#validation), so we need to explore other approach to achieve that purpose.
 
@@ -28,14 +28,14 @@ There is a concrete example on the github [issue 845](https://github.com/kubeedg
 * Start from `Device` and `DeviceModel` other kinds of resource will be evaluated later and will not be included in the first alpha version.
 
 # Proposal
-Propose using Kubernetes [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers) to determine whether to accept or deny the request, the decision is based on how is the policy is configured, this give us chance to validate the request before persisting the object.
+Propose using Kubernetes [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers) to determine whether to accept or deny the request, the decision is based on how is the policy is configured, this gives us chance to validate the request before persisting the object.
 
 
 # Design Details
 
 ## Admission service
 
-Admission webhook is managed as an independent service, it could be built as an docker image and run as a standalone process, the feature could
+Admission webhook is managed as an independent service, it could be built as a docker image and run as a standalone process, the feature could
 be opted in by creating a k8s service with the built docker image as the backed image.
 
 The entry point the service looks like this,

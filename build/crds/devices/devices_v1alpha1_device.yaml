@@ -167,6 +167,7 @@ spec:
               type: object
           required:
             - deviceModelRef
+            - nodeSelector
           type: object
         status:
           properties:

@@ -7,11 +7,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/kubeedge/beehive/pkg/common/log"
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
-//constants for channel context
+// constants for channel context
 const (
 	ChannelSizeDefault = 1024
 
@@ -56,11 +57,11 @@ func (ctx *ChannelContext) Cleanup(module string) {
 
 // Send send msg to a module. Todo: do not stuck
 func (ctx *ChannelContext) Send(module string, message model.Message) {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
-			log.LOGGER.Warnf("recover, exception: %+v", exception)
+			klog.Warningf("Recover when send message, exception: %+v", exception)
 		}
 	}()
 
@@ -68,7 +69,7 @@ func (ctx *ChannelContext) Send(module string, message model.Message) {
 		channel <- message
 		return
 	}
-	log.LOGGER.Warnf("bad module name (%s), do nothing", module)
+	klog.Warningf("Get bad module name :%s when send message, do nothing", module)
 }
 
 // Receive msg from channel of module
@@ -78,7 +79,7 @@ func (ctx *ChannelContext) Receive(module string) (model.Message, error) {
 		return content, nil
 	}
 
-	log.LOGGER.Warnf("failed to get channel for module(%s)", module)
+	klog.Warningf("Failed to get channel for module:%s when receive message", module)
 	return model.Message{}, fmt.Errorf("failed to get channel for module(%s)", module)
 }
 
@@ -88,11 +89,11 @@ func getAnonChannelName(msgID string) string {
 
 // SendSync sends message in a sync way
 func (ctx *ChannelContext) SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error) {
-	// avoid exception because of channel colsing
+	// avoid exception because of channel closing
 	// TODO: need reconstruction
 	defer func() {
 		if exception := recover(); exception != nil {
-			log.LOGGER.Warnf("recover, exception: %+v", exception)
+			klog.Warningf("Recover when sendsync message, exception: %+v", exception)
 		}
 	}()
 
@@ -154,27 +155,24 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 		return
 	}
 
-	log.LOGGER.Warnf("bad anonName(%s), do nothing", anonName)
+	klog.V(4).Infof("Get bad anonName:%s when sendresp message, do nothing", anonName)
 }
 
-// Send2Group send msg to modules. Todo: do not stuck
-func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) {
-	// avoid exception because of channel colsing
-	// TODO: need reconstruction
-	defer func() {
-		if exception := recover(); exception != nil {
-			log.LOGGER.Warnf("recover, exception: %+v", exception)
-		}
-	}()
-
+// SendToGroup send msg to modules. Todo: do not stuck
+func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
 	send := func(ch chan model.Message) {
+		// avoid exception because of channel closing
+		// TODO: need reconstruction
+		defer func() {
+			if exception := recover(); exception != nil {
+				klog.Warningf("Recover when sendToGroup message, exception: %+v", exception)
+			}
+		}()
 		select {
 		case ch <- message:
 		default:
-			log.LOGGER.Warnf("the message channel is full, message: %+v", message)
-			select {
-			case ch <- message:
-			}
+			klog.Warningf("the message channel is full, message: %+v", message)
+			ch <- message
 		}
 	}
 	if channelList := ctx.getTypeChannel(moduleType); channelList != nil {
@@ -183,20 +181,12 @@ func (ctx *ChannelContext) Send2Group(moduleType string, message model.Message) 
 		}
 		return
 	}
-	log.LOGGER.Warnf("bad module type (%s), do nothing", moduleType)
+	klog.Warningf("Get bad module type:%s when sendToGroup message, do nothing", moduleType)
 }
 
-// Send2GroupSync : broadcast the message to echo module channel, the module send response back anon channel
+// SendToGroupSync : broadcast the message to echo module channel, the module send response back anon channel
 // check timeout and the size of anon channel
-func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Message, timeout time.Duration) error {
-	// avoid exception because of channel colsing
-	// TODO: need reconstruction
-	defer func() {
-		if exception := recover(); exception != nil {
-			log.LOGGER.Warnf("recover, exception: %+v", exception)
-		}
-	}()
-
+func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Message, timeout time.Duration) error {
 	if timeout <= 0 {
 		timeout = MessageTimeoutDefault
 	}
@@ -230,7 +220,7 @@ func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Messa
 			}
 		}
 		if uninvitedGuests != 0 {
-			log.LOGGER.Errorf("got some unexpected(%d) resp", uninvitedGuests)
+			klog.Errorf("Get some unexpected:%d resp when sendToGroupsync message", uninvitedGuests)
 			return fmt.Errorf("got some unexpected(%d) resp", uninvitedGuests)
 		}
 		return nil
@@ -241,6 +231,13 @@ func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Messa
 
 	var timeoutCounter int32
 	send := func(ch chan model.Message) {
+		// avoid exception because of channel closing
+		// TODO: need reconstruction
+		defer func() {
+			if exception := recover(); exception != nil {
+				klog.Warningf("Recover when sendToGroupsync message, exception: %+v", exception)
+			}
+		}()
 		sendTimer := time.NewTimer(time.Until(deadline))
 		select {
 		case ch <- message:
@@ -265,13 +262,11 @@ func (ctx *ChannelContext) Send2GroupSync(moduleType string, message model.Messa
 		case <-sendTimer.C:
 			cleanup()
 			if timeoutCounter != 0 {
-				log.LOGGER.Errorf("timeout to send message, "+
-					"several(%d) timeout when send", timeoutCounter)
-				return fmt.Errorf("timeout to send message, "+
-					"several(%d) timeout when send", timeoutCounter)
+				errInfo := fmt.Sprintf("timeout to send message, several %d timeout when send", timeoutCounter)
+				return fmt.Errorf(errInfo)
 			}
-			log.LOGGER.Errorf("timeout to send message")
-			return fmt.Errorf("timeout to send message")
+			klog.Error("Timeout to sendToGroupsync message")
+			return fmt.Errorf("Timeout to send message")
 		}
 	}
 
@@ -293,7 +288,7 @@ func (ctx *ChannelContext) getChannel(module string) chan model.Message {
 		return ctx.channels[module]
 	}
 
-	log.LOGGER.Warnf("failed to get channel, type(%s)", module)
+	klog.Warningf("Failed to get channel, type:%s", module)
 	return nil
 }
 
@@ -309,13 +304,12 @@ func (ctx *ChannelContext) addChannel(module string, moduleCh chan model.Message
 func (ctx *ChannelContext) delChannel(module string) {
 	// delete module channel from channels map
 	ctx.chsLock.Lock()
-	_, exist := ctx.channels[module]
-	if !exist {
-		log.LOGGER.Warnf("failed to get channel, module(%s)", module)
+	if _, exist := ctx.channels[module]; !exist {
+		ctx.chsLock.Unlock()
+		klog.Warningf("Failed to get channel, module:%s", module)
 		return
 	}
 	delete(ctx.channels, module)
-
 	ctx.chsLock.Unlock()
 
 	// delete module channel from typechannels map
@@ -338,7 +332,7 @@ func (ctx *ChannelContext) getTypeChannel(moduleType string) map[string]chan mod
 		return ctx.typeChannels[moduleType]
 	}
 
-	log.LOGGER.Warnf("failed to get type channel, type(%s)", moduleType)
+	klog.Warningf("Failed to get type channel, type:%s", moduleType)
 	return nil
 }
 
@@ -352,7 +346,7 @@ func (ctx *ChannelContext) getModuleByChannel(ch chan model.Message) string {
 		}
 	}
 
-	log.LOGGER.Warnf("failed to get module by channel")
+	klog.Warning("Failed to get module by channel")
 	return ""
 }
 
@@ -367,17 +361,17 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 	ctx.typeChannels[group][module] = moduleCh
 }
 
-//AddModule adds module into module context
+// AddModule adds module into module context
 func (ctx *ChannelContext) AddModule(module string) {
 	channel := ctx.newChannel()
 	ctx.addChannel(module, channel)
 }
 
-//AddModuleGroup adds modules into module context group
+// AddModuleGroup adds modules into module context group
 func (ctx *ChannelContext) AddModuleGroup(module, group string) {
 	if channel := ctx.getChannel(module); channel != nil {
 		ctx.addTypeChannel(module, group, channel)
 		return
 	}
-	log.LOGGER.Warnf("bad module name(%s)", module)
+	klog.Warningf("Get bad module name %s when addmodulegroup", module)
 }

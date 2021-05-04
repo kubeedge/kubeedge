@@ -1,125 +1,95 @@
 package cloudhub
 
 import (
-	"io/ioutil"
 	"os"
 
-	"k8s.io/klog"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/common/config"
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/channelq"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/util"
-	chconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
+var DoneTLSTunnelCerts = make(chan bool, 1)
+
 type cloudHub struct {
-	context  *context.Context
-	stopChan chan bool
+	enable               bool
+	informersSyncedFuncs []cache.InformerSynced
+	messageq             *channelq.ChannelMessageQueue
 }
 
-func Register() {
-	core.Register(&cloudHub{})
+func newCloudHub(enable bool) *cloudHub {
+	crdFactory := informers.GetInformersManager().GetCRDInformerFactory()
+	// declare used informer
+	clusterObjectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
+	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister())
+	ch := &cloudHub{
+		enable:   enable,
+		messageq: messageq,
+	}
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, clusterObjectSyncInformer.Informer().HasSynced)
+	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, objectSyncInformer.Informer().HasSynced)
+	return ch
+}
+
+func Register(hub *v1alpha1.CloudHub) {
+	hubconfig.InitConfigure(hub)
+	core.Register(newCloudHub(hub.Enable))
 }
 
 func (a *cloudHub) Name() string {
-	return "cloudhub"
+	return modules.CloudHubModuleName
 }
 
 func (a *cloudHub) Group() string {
-	return "cloudhub"
+	return modules.CloudHubModuleGroup
 }
 
-func (a *cloudHub) Start(c *context.Context) {
-	a.context = c
-	a.stopChan = make(chan bool)
+// Enable indicates whether enable this module
+func (a *cloudHub) Enable() bool {
+	return a.enable
+}
 
-	initHubConfig()
-
-	eventq := channelq.NewChannelEventQueue(c)
+func (a *cloudHub) Start() {
+	if !cache.WaitForCacheSync(beehiveContext.Done(), a.informersSyncedFuncs...) {
+		klog.Errorf("unable to sync caches for objectSyncController")
+		os.Exit(1)
+	}
 
 	// start dispatch message from the cloud to edge node
-	go eventq.DispatchMessage()
+	go a.messageq.DispatchMessage()
 
-	// start the cloudhub server
-	if util.HubConfig.ProtocolWebsocket {
-		go servers.StartCloudHub(servers.ProtocolWebsocket, eventq, c)
+	// check whether the certificates exist in the local directory,
+	// and then check whether certificates exist in the secret, generate if they don't exist
+	if err := httpserver.PrepareAllCerts(); err != nil {
+		klog.Fatal(err)
+	}
+	// TODO: Will improve in the future
+	DoneTLSTunnelCerts <- true
+	close(DoneTLSTunnelCerts)
+
+	// generate Token
+	if err := httpserver.GenerateToken(); err != nil {
+		klog.Fatal(err)
 	}
 
-	if util.HubConfig.ProtocolQuic {
-		go servers.StartCloudHub(servers.ProtocolQuic, eventq, c)
-	}
+	// HttpServer mainly used to issue certificates for the edge
+	go httpserver.StartHTTPServer()
 
-	if util.HubConfig.ProtocolUDS {
+	servers.StartCloudHub(a.messageq)
+
+	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
 		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(util.HubConfig, c)
-	}
-
-	<-a.stopChan
-}
-
-func (a *cloudHub) Cleanup() {
-	a.stopChan <- true
-	a.context.Cleanup(a.Name())
-}
-
-func initHubConfig() {
-	cafile, err := config.CONFIG.GetValue("cloudhub.ca").ToString()
-	if err != nil {
-		klog.Infof("missing cloudhub.ca configuration key, loading default path and filename ./%s", chconfig.DefaultCAFile)
-		cafile = chconfig.DefaultCAFile
-	}
-
-	certfile, err := config.CONFIG.GetValue("cloudhub.cert").ToString()
-	if err != nil {
-		klog.Infof("missing cloudhub.cert configuration key, loading default path and filename ./%s", chconfig.DefaultCertFile)
-		certfile = chconfig.DefaultCertFile
-	}
-
-	keyfile, err := config.CONFIG.GetValue("cloudhub.key").ToString()
-	if err != nil {
-		klog.Infof("missing cloudhub.key configuration key, loading default path and filename ./%s", chconfig.DefaultKeyFile)
-		keyfile = chconfig.DefaultKeyFile
-	}
-
-	errs := make([]string, 0)
-
-	util.HubConfig = &util.Config{}
-	util.HubConfig.ProtocolWebsocket, _ = config.CONFIG.GetValue("cloudhub.protocol_websocket").ToBool()
-	util.HubConfig.ProtocolQuic, _ = config.CONFIG.GetValue("cloudhub.protocol_quic").ToBool()
-	if !util.HubConfig.ProtocolWebsocket && !util.HubConfig.ProtocolQuic {
-		util.HubConfig.ProtocolWebsocket = true
-	}
-	util.HubConfig.ProtocolUDS, _ = config.CONFIG.GetValue("cloudhub.enable_uds").ToBool()
-
-	util.HubConfig.Address, _ = config.CONFIG.GetValue("cloudhub.address").ToString()
-	util.HubConfig.Port, _ = config.CONFIG.GetValue("cloudhub.port").ToInt()
-	util.HubConfig.QuicPort, _ = config.CONFIG.GetValue("cloudhub.quic_port").ToInt()
-	util.HubConfig.MaxIncomingStreams, _ = config.CONFIG.GetValue("cloudhub.max_incomingstreams").ToInt()
-	util.HubConfig.UDSAddress, _ = config.CONFIG.GetValue("cloudhub.uds_address").ToString()
-	util.HubConfig.KeepaliveInterval, _ = config.CONFIG.GetValue("cloudhub.keepalive-interval").ToInt()
-	util.HubConfig.WriteTimeout, _ = config.CONFIG.GetValue("cloudhub.write-timeout").ToInt()
-	util.HubConfig.NodeLimit, _ = config.CONFIG.GetValue("cloudhub.node-limit").ToInt()
-
-	util.HubConfig.Ca, err = ioutil.ReadFile(cafile)
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
-	util.HubConfig.Cert, err = ioutil.ReadFile(certfile)
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
-	util.HubConfig.Key, err = ioutil.ReadFile(keyfile)
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
-
-	if len(errs) > 0 {
-		klog.Errorf("cloudhub failed with errors : %v", errs)
-		os.Exit(1)
+		go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
 	}
 }

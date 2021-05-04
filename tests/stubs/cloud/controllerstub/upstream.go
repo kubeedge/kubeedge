@@ -19,9 +19,9 @@ package controllerstub
 import (
 	"encoding/json"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/beehive/pkg/core/context"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
@@ -29,53 +29,40 @@ import (
 )
 
 // NewUpstreamController creates a upstream controller
-func NewUpstreamController(context *context.Context, pm *PodManager) (*UpstreamController, error) {
+func NewUpstreamController(pm *PodManager) (*UpstreamController, error) {
 	// New upstream controller
-	uc := &UpstreamController{context: context, podManager: pm}
+	uc := &UpstreamController{podManager: pm}
 	return uc, nil
 }
 
 // UpstreamController subscribe messages from edge
 type UpstreamController struct {
-	context             *context.Context
-	podManager          *PodManager
-	stopDispatch        chan struct{}
-	stopUpdatePodStatus chan struct{}
-	podStatusChan       chan model.Message
+	podManager    *PodManager
+	podStatusChan chan model.Message
 }
 
 // Start UpstreamController
 func (uc *UpstreamController) Start() error {
 	klog.Infof("Start upstream controller")
-	uc.stopDispatch = make(chan struct{})
-	uc.stopUpdatePodStatus = make(chan struct{})
 	uc.podStatusChan = make(chan model.Message, 1024)
 
-	go uc.WaitforMessage(uc.stopDispatch)
-	go uc.UpdatePodStatus(uc.stopUpdatePodStatus)
+	go uc.WaitforMessage()
+	go uc.UpdatePodStatus()
 
-	return nil
-}
-
-// Stop UpstreamController
-func (uc *UpstreamController) Stop() error {
-	klog.Infof("Stop upstream controller")
-	uc.stopDispatch <- struct{}{}
-	uc.stopUpdatePodStatus <- struct{}{}
 	return nil
 }
 
 // WaitforMessage from cloudhub
-func (uc *UpstreamController) WaitforMessage(stop chan struct{}) {
-	running := true
-	go func() {
-		<-stop
-		klog.Infof("Stop waiting for message")
-		running = false
-	}()
-	for running {
+func (uc *UpstreamController) WaitforMessage() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Infof("Stop waiting for message")
+			return
+		default:
+		}
 		// Receive message from cloudhub
-		msg, err := uc.context.Receive(constants.ControllerStub)
+		msg, err := beehiveContext.Receive(constants.ControllerStub)
 		if err != nil {
 			klog.Errorf("Receive message failed: %v", err)
 			continue
@@ -100,10 +87,12 @@ func (uc *UpstreamController) WaitforMessage(stop chan struct{}) {
 }
 
 // UpdatePodStatus is used to update pod status in cache map
-func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
-	running := true
-	for running {
+func (uc *UpstreamController) UpdatePodStatus() {
+	for {
 		select {
+		case <-beehiveContext.Done():
+			klog.Infof("Stop updatePodStatus")
+			return
 		case msg := <-uc.podStatusChan:
 			klog.Infof("Message: %s operation: %s resource: %s",
 				msg.GetID(), msg.GetOperation(), msg.GetResource())
@@ -126,7 +115,7 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 				// Get pod
 				var pod types.FakePod
 				if err := json.Unmarshal(data, &pod); err != nil {
-					klog.Errorf("Unmarshal content failed with error: %s", msg.GetID(), err)
+					klog.Errorf("Unmarshal content failed with error: %s, %v", msg.GetID(), err)
 					continue
 				}
 
@@ -139,9 +128,6 @@ func (uc *UpstreamController) UpdatePodStatus(stop chan struct{}) {
 				klog.V(4).Infof("Pod operation: %s unsupported", msg.GetOperation())
 			}
 			klog.V(4).Infof("Message: %s process successfully", msg.GetID())
-		case <-stop:
-			klog.Infof("Stop updatePodStatus")
-			running = false
 		}
 	}
 }

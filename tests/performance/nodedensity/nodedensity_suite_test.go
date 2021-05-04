@@ -16,6 +16,8 @@ limitations under the License.
 package nodedensity
 
 import (
+	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -62,7 +64,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		}
 		//Deploye cloudcore as a k8s resource to cluster-1
 		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageUrl, ctx.Cfg.NumOfNodes)
+			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
 		Expect(err).Should(BeNil())
 		time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP
@@ -71,8 +73,8 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		for _, pod := range podlist.Items {
 			if strings.Contains(pod.Name, "cloudcore-deployment") {
 				cloudCoreHostIP = pod.Status.HostIP
+				break
 			}
-			break
 		}
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(300 * time.Second)
@@ -83,9 +85,12 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		wsPort, quicPort := utils.GetServicePort(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		wsNodePort := strconv.FormatInt(int64(wsPort), 10)
 		quicNodePort := strconv.FormatInt(int64(quicPort), 10)
-		quiccloudHubURL = cloudCoreHostIP + ":" + quicNodePort
+		quiccloudHubURL = net.JoinHostPort(cloudCoreHostIP, quicNodePort)
 		cloudHubURL = quiccloudHubURL
-		wsscloudHubURL = "wss://" + cloudCoreHostIP + ":" + wsNodePort
+		wsscloudHubURL = (&url.URL{
+			Scheme: "wss",
+			Host:   net.JoinHostPort(cloudCoreHostIP, wsNodePort),
+		}).String()
 		cloudHubURL = wsscloudHubURL
 	})
 	AfterSuite(func() {
@@ -93,8 +98,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 
 		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-
 	})
 
-	RunSpecs(t, "kubeedge Performace Load test Suite")
+	RunSpecs(t, "kubeedge Performance Load test Suite")
 }

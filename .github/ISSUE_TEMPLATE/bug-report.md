@@ -15,19 +15,24 @@ labels: kind/bug
 **Anything else we need to know?**:
 
 **Environment**:
-- KubeEdge version(e.g. `cloudcore/edgecore --version`):  
+- Kubernetes version (use `kubectl version`):
+- KubeEdge version(e.g. `cloudcore --version` and `edgecore --version`):
+- <details><summary>Cloud nodes Environment:</summary>
 
-**CloudSide Environment**:
-- Hardware configuration (e.g. `lscpu`):
-- OS (e.g. `cat /etc/os-release`):
-- Kernel (e.g. `uname -a`):
-- Go version (e.g. `go version`): 
-- Others:
+  - Hardware configuration (e.g. `lscpu`):
+  - OS (e.g. `cat /etc/os-release`):
+  - Kernel (e.g. `uname -a`):
+  - Go version (e.g. `go version`):
+  - Others:
 
-**EdgeSide Environment**:
-- edgecore version (e.g. `edgecore --version`):
-- Hardware configuration (e.g. `lscpu`):
-- OS (e.g. `cat /etc/os-release`):
-- Kernel (e.g. `uname -a`):
-- Go version (e.g. `go version`): 
-- Others:
+  </details>
+- <details><summary>Edge nodes Environment:</summary>
+
+  - edgecore version (e.g. `edgecore --version`):
+  - Hardware configuration (e.g. `lscpu`):
+  - OS (e.g. `cat /etc/os-release`):
+  - Kernel (e.g. `uname -a`):
+  - Go version (e.g. `go version`):
+  - Others:
+
+  </details>

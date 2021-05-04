@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
@@ -81,9 +81,8 @@ func (pm *PodManager) GetPod(key string) types.FakePod {
 	v, ok := pm.pods.Load(key)
 	if ok {
 		return v.(types.FakePod)
-	} else {
-		return types.FakePod{}
 	}
+	return types.FakePod{}
 }
 
 // ListPods lists all pods in cache
@@ -105,8 +104,14 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pods := pm.ListPods()
 		klog.V(4).Infof("Current pods number: %v", len(pods))
 		rspBodyBytes := new(bytes.Buffer)
-		json.NewEncoder(rspBodyBytes).Encode(pods)
-		w.Write(rspBodyBytes.Bytes())
+		if err := json.NewEncoder(rspBodyBytes).Encode(pods); err != nil {
+			klog.Errorf("Encode to json file with error: %v", err)
+			return
+		}
+		if _, err := w.Write(rspBodyBytes.Bytes()); err != nil {
+			klog.Errorf("Write error: %v", err)
+			return
+		}
 		klog.V(4).Infof("Finish list pod request")
 	case http.MethodPost:
 		klog.V(4).Infof("Receive add pod request")
@@ -116,13 +121,17 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				klog.Errorf("Read body error %v", err)
-				w.Write([]byte("Read request body error"))
+				if _, err := w.Write([]byte("Read request body error")); err != nil {
+					klog.Errorf("Write error: %v", err)
+				}
 				return
 			}
 			klog.V(4).Infof("Request body is %s", string(body))
 			if err = json.Unmarshal(body, &p); err != nil {
 				klog.Errorf("Unmarshal request body error %v", err)
-				w.Write([]byte("Unmarshal request body error"))
+				if _, err := w.Write([]byte("Unmarshal request body error")); err != nil {
+					klog.Errorf("Wrire body error %v", err)
+				}
 				return
 			}
 		}
@@ -137,7 +146,9 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		resource, err := utils.BuildResource(p.NodeName, p.Namespace, model.ResourceTypePod, p.Name)
 		if err != nil {
 			klog.Errorf("Build message resource failed with error: %s", err)
-			w.Write([]byte("Build message resource failed with error"))
+			if _, err := w.Write([]byte("Build message resource failed with error")); err != nil {
+				klog.Errorf("Write body error %v", err)
+			}
 			return
 		}
 		msg.Content = p
@@ -148,10 +159,9 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pm.AddPod(ns+"/"+p.Name, p)
 
 		// Send msg
-		select {
-		case pm.event <- msg:
-			klog.V(4).Infof("Finish add pod request")
-		}
+		pm.event <- msg
+		klog.V(4).Infof("Finish add pod request")
+
 	case http.MethodDelete:
 		// Delete Pod
 		klog.V(4).Infof("Receive delete pod request")
@@ -169,7 +179,9 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		resource, err := utils.BuildResource(nodename, ns, model.ResourceTypePod, name)
 		if err != nil {
 			klog.Errorf("Build message resource failed with error: %s", err)
-			w.Write([]byte("Build message resource failed with error"))
+			if _, err := w.Write([]byte("Build message resource failed with error")); err != nil {
+				klog.Errorf("write error: %v", err)
+			}
 			return
 		}
 		msg.Content = pm.GetPod(ns + "/" + name)
@@ -179,10 +191,8 @@ func (pm *PodManager) PodHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		pm.DeletePod(ns + "/" + name)
 
 		// Send msg
-		select {
-		case pm.event <- msg:
-			klog.V(4).Infof("Finish delete pod request")
-		}
+		pm.event <- msg
+		klog.V(4).Infof("Finish delete pod request")
 
 	default:
 		klog.Errorf("Http type: %s unsupported", req.Method)

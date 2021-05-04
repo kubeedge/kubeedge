@@ -13,10 +13,10 @@ if [[ ! -x "$(command -v openssl)" ]]; then
     exit 1
 fi
 
-mkdir -p ${CERTDIR}
-echo "creating certs in dir ${CERTDIR} "
+function createCerts() {
+  echo "creating certs in dir ${CERTDIR} "
 
-cat <<EOF > ${CERTDIR}/csr.conf
+  cat <<EOF > ${CERTDIR}/csr.conf
 [req]
 req_extensions = v3_req
 distinguished_name = req_distinguished_name
@@ -32,24 +32,49 @@ DNS.2 = ${SERVICE}.${NAMESPACE}
 DNS.3 = ${SERVICE}.${NAMESPACE}.svc
 EOF
 
-openssl genrsa -out ${CERTDIR}/ca.key 2048
-openssl req -x509 -new -nodes -key ${CERTDIR}/ca.key -subj "/CN=${SERVICE}.${NAMESPACE}.svc" -out ${CERTDIR}/ca.crt
+  openssl genrsa -out ${CERTDIR}/ca.key 2048
+  openssl req -x509 -new -nodes -key ${CERTDIR}/ca.key -subj "/CN=${SERVICE}.${NAMESPACE}.svc" -out ${CERTDIR}/ca.crt
 
-openssl genrsa -out ${CERTDIR}/server.key 2048
-openssl req -new -key ${CERTDIR}/server.key -subj "/CN=${SERVICE}.${NAMESPACE}.svc" -out ${CERTDIR}/server.csr -config ${CERTDIR}/csr.conf
+  openssl genrsa -out ${CERTDIR}/server.key 2048
+  openssl req -new -key ${CERTDIR}/server.key -subj "/CN=${SERVICE}.${NAMESPACE}.svc" -out ${CERTDIR}/server.csr -config ${CERTDIR}/csr.conf
 
-openssl x509 -req -in  ${CERTDIR}/server.csr -CA  ${CERTDIR}/ca.crt -CAkey  ${CERTDIR}/ca.key \
--CAcreateserial -out  ${CERTDIR}/server.crt \
--extensions v3_req -extfile  ${CERTDIR}/csr.conf
+  openssl x509 -req -in  ${CERTDIR}/server.csr -CA  ${CERTDIR}/ca.crt -CAkey  ${CERTDIR}/ca.key \
+  -CAcreateserial -out  ${CERTDIR}/server.crt \
+  -extensions v3_req -extfile  ${CERTDIR}/csr.conf
+}
 
-if [[ "${ENABLE_CREATE_SECRET}" = true ]]; then
-    kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}
+function createObjects() {
+  # `ENABLE_CREATE_SECRET` should always be set to `true` unless it has been already created.
+  if [[ "${ENABLE_CREATE_SECRET}" = true ]]; then
+      kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}
 
-    # create the secret with CA cert and server cert/key
-    kubectl create secret generic ${SECRET} \
-        --from-file=tls.key=${CERTDIR}/server.key \
-        --from-file=tls.crt=${CERTDIR}/server.crt \
-        --from-file=ca.crt=${CERTDIR}/ca.crt \
-        --dry-run -o yaml |
-    kubectl -n ${NAMESPACE} apply -f -
-fi
+      # create the secret with CA cert and server cert/key
+      kubectl create secret generic ${SECRET} \
+          --from-file=tls.key=${CERTDIR}/server.key \
+          --from-file=tls.crt=${CERTDIR}/server.crt \
+          --from-file=ca.crt=${CERTDIR}/ca.crt \
+          -n ${NAMESPACE}
+  fi
+}
+
+function checkCertDir() {
+  if [[ -d ${CERTDIR} ]]; then
+    echo -n -e "certs dir already exits, do you want to overwrite the certs and generate them againi? [y/N]> "
+    read -r OVERWRITE
+    if [[ "${OVERWRITE}" =~ ^[nN]$ ]]; then
+      echo "certs is not generated, please remove the certs directory if you want to generate them again."
+      exit 0
+    elif [[ "${OVERWRITE}" =~ ^[yY]$ ]]; then
+      createCerts
+    else
+      echo -e "Invalid response, please try again."
+      checkCertDir
+    fi
+  else
+    mkdir -p ${CERTDIR}
+    createCerts
+  fi
+}
+
+checkCertDir
+createObjects

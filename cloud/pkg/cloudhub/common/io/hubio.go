@@ -1,7 +1,6 @@
 package io
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -12,8 +11,8 @@ import (
 type CloudHubIO interface {
 	SetReadDeadline(time.Time) error
 	SetWriteDeadline(time.Time) error
-	ReadData(interface{}) (int, error)
-	WriteData(interface{}) error
+	ReadData(*model.Message) (int, error)
+	WriteData(*model.Message) error
 	Close() error
 }
 
@@ -33,16 +32,12 @@ func (io *JSONIO) SetWriteDeadline(time time.Time) error {
 }
 
 // ReadData read data from connection
-func (io *JSONIO) ReadData(d interface{}) (int, error) {
-	return 0, io.Connection.ReadMessage(d.(*model.Message))
+func (io *JSONIO) ReadData(msg *model.Message) (int, error) {
+	return 0, io.Connection.ReadMessage(msg)
 }
 
 // WriteData write data to connection
-func (io *JSONIO) WriteData(d interface{}) error {
-	msg, ok := d.(*model.Message)
-	if !ok {
-		return fmt.Errorf("data is not model.Message type")
-	}
+func (io *JSONIO) WriteData(msg *model.Message) error {
 	err := io.Connection.WriteMessageAsync(msg)
 	if err != nil {
 		return err

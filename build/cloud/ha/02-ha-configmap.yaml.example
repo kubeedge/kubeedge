@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudcore
+  namespace: kubeedge
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+data:
+  cloudcore.yaml: |
+    apiVersion: cloudcore.config.kubeedge.io/v1alpha1
+    kind: CloudCore
+    kubeAPIConfig:
+      kubeConfig: ""
+      master: ""
+    leaderelection:
+      LeaderElect: true
+      LeaseDuration: 15s
+      RenewDeadline: 10s
+      ResourceLock: endpointsleases
+      ResourceName: cloudcorelease
+      ResourceNamespace: kubeedge
+      RetryPeriod: 2s
+    modules:
+      cloudHub:
+        advertiseAddress:
+         - YOUR CLOUDCORE VIP HERE !!!
+        nodeLimit: 10
+        tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCertFile: /etc/kubeedge/certs/server.crt
+        tlsPrivateKeyFile: /etc/kubeedge/certs/server.key
+        unixsocket:
+          address: unix:///var/lib/kubeedge/kubeedge.sock
+          enable: true
+        websocket:
+          address: 0.0.0.0
+          enable: true
+          port: 10000
+      cloudStream:
+         enable: false
+         streamPort: 10003
+         tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt
+         tlsStreamCertFile: /etc/kubeedge/certs/stream.crt
+         tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key
+         tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
+         tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+         tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
+         tunnelPort: 10004

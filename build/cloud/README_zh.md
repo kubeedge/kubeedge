@@ -11,21 +11,30 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge
 make cloudimage
 ```
 
-然后，需要生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
+(可选)然后，使用1.3.0以下版本时，需要手动生成 tls 证书。这步成功的话，会生成 `06-secret.yaml`。
 
 ```bash
 cd build/cloud
 ../tools/certgen.sh buildSecret | tee ./06-secret.yaml
 ```
 
+(可选)从KubeEdge 1.3.0开始，我们可以在`05-configmap.yaml`中配置暴露给边缘节点的所有CloudCore IP地址（例如浮动IP），并将其添加到Cloudcore证书中的SAN中。
+
+```
+modules:
+  cloudHub:
+    advertiseAddress:
+    - 10.1.11.85
+```
+
+最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service`08-service.yaml`，
+将 cloud hub 暴露到集群外，让 edge core 能够连到。
+
 接着，按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。
 
 ```bash
 for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
-
-最后，基于`08-service.yaml.example`，创建一个适用于你集群环境的 service，
-将 cloud hub 暴露到集群外，让 edge core 能够连到。
 
 ---
 > 以下仅针对网络环境不能正常下载相应镜像的说明:

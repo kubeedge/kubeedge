@@ -9,14 +9,14 @@
 
 ## Overview About testManager Module
 
-* testManager is a utility module to mimic the cloud and push messages for different kinds of actions that could happen from the cloud. Typical device , node and application lifecycle management functions are expected to be performed in the cloud and pushed to the edge node. These functions commonly encompass configurations related to 
-    
+* testManager is a utility module to mimic the cloud and push messages for different kinds of actions that could happen from the cloud. Typical device , node and application lifecycle management functions are expected to be performed in the cloud and pushed to the edge node. These functions commonly encompass configurations related to
+
      - Kubernetes Secrets and Configuration Maps.
      - Application deployment/sync
      - Binding devices to edge nodes via memberships.
      - Syncing of different resources between cloud and edge ( like app status, device status etc)
      - Node sync, etc..
-     
+
 Below info can help user how to use the testManager for testing the kubeedge.
 
 * testManager module starts http server on port 12345 to let users interact with kubeedge and perform operations which would be typically performed from cloud.
@@ -26,19 +26,19 @@ It exposes its API's to do the following
     - /devices      : Bind a Device to kubeedge node.
     - /secrets      : Configure secrets on kubeedge node.
     - /configmaps   : Configure configmaps on kubeedge node.
-    
-Using above API's user can perform the resource operations against running edge node.
-    
-testManager facilitates validating the capabilities of the edge platform by performing **curl** operations against a running edge node. 
 
-Following sections will explain the procedure to test the kubeedge with testManager. 
+Using above API's user can perform the resource operations against running edge node.
+
+testManager facilitates validating the capabilities of the edge platform by performing **curl** operations against a running edge node.
+
+Following sections will explain the procedure to test the kubeedge with testManager.
 
 ## Test with `TestManager` Module
 
 ### Compile
 
 ```shell
-# generate the `edgecore` binary 
+# generate the `edgecore` binary
 make
 # or
 make edgecore
@@ -49,7 +49,7 @@ make edgecore
 
 ##### in `modules.yaml` (add the `testManager`)
 
-Kubeedge uses [beehive](https://github.com/kubeedge/kubeedge/blob/master/docs/modules/beehive.md) framework as the inter-module communication, all modules in the kubeedge need to register with beehive.
+KubeEdge uses [beehive](../../docs/components/beehive.md) framework as the inter-module communication, all modules in the kubeedge need to register with beehive.
 `testManager` is a module like other KubeEdge modules. So, it has to be configured as shown below.
 
 ```yaml
@@ -147,9 +147,9 @@ curl -X PUT \
 		"state": "online"
 	}]
 }'
-``` 
+```
 
-#### Verify the DB 
+#### Verify the DB
 ```bash
 # Enter the database
 sqlite3 edge.db
@@ -171,7 +171,7 @@ curl -X DELETE \
 		"state": "online"
 	}]
 }'
-``` 
+```
 
 #### Add Pod
 ```bash
@@ -197,7 +197,7 @@ curl -i -v -X POST http://127.0.0.1:12345/pod -d '{
 ```
 #### Query Pods
 ```bash
-curl -i -v -X GET http://127.0.0.1:12345/pod 
+curl -i -v -X GET http://127.0.0.1:12345/pod
 
 #or (To display response in json format)
 
@@ -215,7 +215,7 @@ select * from meta;
 
 # or you can check the pod container using `docker ps`
 ```
-### Remove Pod 
+### Remove Pod
 ```bash
 curl -i -v -X DELETE http://127.0.0.1:12345/pod -d '{
   "apiVersion": "v1",

@@ -1,7 +1,7 @@
 package dtclient
 
 import (
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
@@ -55,7 +55,6 @@ func QueryDevice(key string, condition string) (*[]Device, error) {
 		return nil, err
 	}
 	return devices, nil
-
 }
 
 // QueryDeviceAll query twin
@@ -66,7 +65,6 @@ func QueryDeviceAll() (*[]Device, error) {
 		return nil, err
 	}
 	return devices, nil
-
 }
 
 //DeviceUpdate the struct for updating device
@@ -142,9 +140,7 @@ func DeleteDeviceTrans(deletes []string) error {
 			obm.Rollback()
 			return err
 		}
-
 	}
 	obm.Commit()
 	return nil
-
 }

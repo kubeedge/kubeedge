@@ -15,9 +15,9 @@
 # limitations under the License.
 
 # check if kubectl installed
-function check_prerequisites {
-  echo "checking prerequisites"
-  which kubectl >/dev/null 2>&1
+function check_kubectl {
+  echo "checking kubectl"
+  command -v kubectl >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "kubectl not installed, exiting."
     exit 1
@@ -29,13 +29,39 @@ function check_prerequisites {
 # check if kind installed
 function check_kind {
   echo "checking kind"
-  which kind >/dev/null 2>&1
+  command -v kind >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
     echo "installing kind ."
-    GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1
+    GO111MODULE="on" go get sigs.k8s.io/kind@v0.9.0
+    if [[ $? -ne 0 ]]; then
+      echo "kind installed failed, exiting."
+      exit 1
+    fi
+
+    # avoid modifing go.sum and go.mod when installing the kind
+    git checkout -- go.mod go.sum
+
     export PATH=$PATH:$GOPATH/bin
   else
     echo -n "found kind, version: " && kind version
+  fi
+}
+
+# check if golangci-lint installed
+function check_golangci-lint {
+  echo "checking golangci-lint"
+  command -v golangci-lint >/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    echo "installing golangci-lint ."
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0
+    if [[ $? -ne 0 ]]; then
+      echo "golangci-lint installed failed, exiting."
+      exit 1
+    fi
+
+    export PATH=$PATH:$GOPATH/bin
+  else
+    echo -n "found golangci-lint, version: " && golangci-lint version
   fi
 }
 

@@ -21,12 +21,20 @@ import (
 
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
+
+	"github.com/kubeedge/kubeedge/edge/mocks/beego"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
 // TestSaveDeviceTwin is function to test SaveDeviceTwin
 func TestSaveDeviceTwin(t *testing.T) {
-	//Initialize Global Variables (Mocks)
-	initMocks(t)
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	dbm.DBAccess = ormerMock
 
 	cases := []struct {
 		// name is name of the testcase
@@ -62,6 +70,17 @@ func TestSaveDeviceTwin(t *testing.T) {
 
 // TestDeleteDeviceTwinByDeviceID is function to test DeleteDeviceTwinByDeviceID
 func TestDeleteDeviceTwinByDeviceID(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -106,6 +125,17 @@ func TestDeleteDeviceTwinByDeviceID(t *testing.T) {
 
 // TestDeleteDeviceTwin is function to test DeleteDeviceTwin
 func TestDeleteDeviceTwin(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -150,6 +180,17 @@ func TestDeleteDeviceTwin(t *testing.T) {
 
 // TestUpdateDeviceTwinField is function to test UpdateDeviceTwinField
 func TestUpdateDeviceTwinField(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -194,6 +235,17 @@ func TestUpdateDeviceTwinField(t *testing.T) {
 
 // TestUpdateDeviceTwinFields is function to test UpdateDeviceTwinFields
 func TestUpdateDeviceTwinFields(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -238,6 +290,17 @@ func TestUpdateDeviceTwinFields(t *testing.T) {
 
 // TestQueryDeviceTwin is function to test QueryDeviceTwin
 func TestQueryDeviceTwin(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -294,6 +357,17 @@ func TestQueryDeviceTwin(t *testing.T) {
 
 // TestUpdateDeviceTwinMulti is function to test UpdateDeviceTwinMulti
 func TestUpdateDeviceTwinMulti(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -342,6 +416,17 @@ func TestUpdateDeviceTwinMulti(t *testing.T) {
 
 // TestDeviceTwinTrans is function to test DeviceTwinTrans
 func TestDeviceTwinTrans(t *testing.T) {
+	// ormerMock is mocked Ormer implementation
+	var ormerMock *beego.MockOrmer
+	// querySeterMock is mocked QuerySeter implementation
+	var querySeterMock *beego.MockQuerySeter
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ormerMock = beego.NewMockOrmer(mockCtrl)
+	querySeterMock = beego.NewMockQuerySeter(mockCtrl)
+	dbm.DBAccess = ormerMock
+
 	cases := []struct {
 		// name is name of the testcase
 		name string
@@ -446,7 +531,7 @@ func TestDeviceTwinTrans(t *testing.T) {
 		commitTimes:      1,
 		beginTimes:       1,
 		filterReturn:     querySeterMock,
-		filterTimes:      6,
+		filterTimes:      4,
 		insertReturnInt:  int64(1),
 		insertReturnErr:  nil,
 		insertTimes:      1,

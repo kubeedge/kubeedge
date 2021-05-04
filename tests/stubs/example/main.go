@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/tests/stubs/common/constants"
 	"github.com/kubeedge/kubeedge/tests/stubs/common/types"
@@ -68,7 +68,7 @@ func AddPod(pod types.FakePod) {
 		klog.Errorf("Unmarshal HTTP Response has failed: %v", err)
 	}
 
-	err, resp := SendHttpRequest(http.MethodPost,
+	resp, err := SendHTTPRequest(http.MethodPost,
 		ControllerHubURL+constants.PodResource,
 		bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -86,7 +86,7 @@ func AddPod(pod types.FakePod) {
 
 // DeletePod deletes a fake pod
 func DeletePod(pod types.FakePod) {
-	err, resp := SendHttpRequest(http.MethodDelete,
+	resp, err := SendHTTPRequest(http.MethodDelete,
 		ControllerHubURL+constants.PodResource+
 			"?name="+pod.Name+"&namespace="+pod.Namespace+"&nodename="+pod.NodeName,
 		nil)
@@ -105,7 +105,7 @@ func DeletePod(pod types.FakePod) {
 
 // ListPods lists all pods
 func ListPods() {
-	err, resp := SendHttpRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
+	resp, err := SendHTTPRequest(http.MethodGet, ControllerHubURL+constants.PodResource, nil)
 	if err != nil {
 		klog.Errorf("Frame HTTP request failed: %v", err)
 	}
@@ -125,22 +125,22 @@ func ListPods() {
 	klog.V(4).Infof("ListPods result: %v", pods)
 }
 
-// SendHttpRequest launches a http request
-func SendHttpRequest(method, reqApi string, body io.Reader) (error, *http.Response) {
+// SendHTTPRequest launches a http request
+func SendHTTPRequest(method, reqAPI string, body io.Reader) (*http.Response, error) {
 	var resp *http.Response
 	client := &http.Client{}
-	req, err := http.NewRequest(method, reqApi, body)
+	req, err := http.NewRequest(method, reqAPI, body)
 	if err != nil {
 		klog.Errorf("Frame HTTP request failed: %v", err)
-		return err, resp
+		return resp, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	t := time.Now()
 	resp, err = client.Do(req)
-	klog.V(4).Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Now().Sub(t))
+	klog.V(4).Infof("%s %s %v in %v", req.Method, req.URL, resp.Status, time.Since(t))
 	if err != nil {
 		klog.Errorf("HTTP request is failed :%v", err)
-		return err, resp
+		return resp, err
 	}
-	return nil, resp
+	return resp, nil
 }

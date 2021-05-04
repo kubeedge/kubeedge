@@ -1,126 +1,288 @@
+DESTDIR?=
+USR_DIR?=/usr/local
+INSTALL_DIR?=${DESTDIR}${USR_DIR}
+INSTALL_BIN_DIR?=${INSTALL_DIR}/bin
+GOPATH?=$(shell go env GOPATH)
+
 # make all builds both cloud and edge binaries
-.PHONY: all  
-ifeq ($(WHAT),)
-all:
-	cd cloud && $(MAKE)
-	cd edge && $(MAKE)
-	cd keadm && $(MAKE)
-	cd edgesite && $(MAKE)
-else ifeq ($(WHAT),cloudcore)
-# make all WHAT=cloudcore
-all:
-	cd cloud && $(MAKE) cloudcore
-else ifeq ($(WHAT),admission)
-# make all WHAT=admission
-all:
-	cd cloud && $(MAKE) admission
-else ifeq ($(WHAT),edgecore)
-all:
-# make all WHAT=edgecore
-	cd edge && $(MAKE)
-else ifeq ($(WHAT),edgesite)
-all:
-# make all WHAT=edgesite
-	$(MAKE) -C edgesite
-else ifeq ($(WHAT),keadm)
-all:
-# make all WHAT=keadm
-	cd keadm && $(MAKE)
+
+BINARIES=cloudcore \
+	admission \
+	edgecore \
+	edgesite \
+	keadm
+
+COMPONENTS=cloud \
+	edge
+
+.EXPORT_ALL_VARIABLES:
+OUT_DIR ?= _output/local
+
+define ALL_HELP_INFO
+# Build code.
+#
+# Args:
+#   WHAT: binary names to build. support: $(BINARIES)
+#         the build will produce executable files under $(OUT_DIR)
+#         If not specified, "everything" will be built.
+#
+# Example:
+#   make
+#   make all
+#   make all HELP=y
+#   make all WHAT=cloudcore
+#   make all WHAT=cloudcore GOLDFLAGS="" GOGCFLAGS="-N -l"
+#     Note: Specify GOLDFLAGS as an empty string for building unstripped binaries, specify GOGCFLAGS
+#     to "-N -l" to disable optimizations and inlining, this will be helpful when you want to
+#     use the debugging tools like delve. When GOLDFLAGS is unspecified, it defaults to "-s -w" which strips
+#     debug information, see https://golang.org/cmd/link for other flags.
+
+endef
+.PHONY: all
+ifeq ($(HELP),y)
+all: clean
+	@echo "$$ALL_HELP_INFO"
 else
-# invalid entry
-all:
-	@echo $S"invalid option please choose to build either cloudcore, admission, edgecore, keadm, edgesite or all together"
+all: verify-golang
+	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
-# unit tests
-.PHONY: edge_test
-edge_test:
-	cd edge && $(MAKE) test
 
-.PHONY: cloud_test
-cloud_test:
-	$(MAKE) -C cloud test
+define VERIFY_HELP_INFO
+# verify golang,vendor and codegen
+#
+# Example:
+# make verify
+endef
+.PHONY: verify
+ifeq ($(HELP),y)
+verify:
+	@echo "$$VERIFY_HELP_INFO"
+else
+verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses
+endif
 
-# lint
-.PHONY: edge_lint
-edge_lint:
-	cd edge && $(MAKE) lint
+.PHONY: verify-golang
+verify-golang:
+	hack/verify-golang.sh
 
-.PHONY: edge_integration_test
-edge_integration_test:
-	cd edge && $(MAKE) integration_test
+.PHONY: verify-vendor
+verify-vendor:
+	hack/verify-vendor.sh
+.PHONY: verify-codegen
+verify-codegen:
+	cloud/hack/verify-codegen.sh
+.PHONY: verify-vendor-licenses
+verify-vendor-licenses:
+	hack/verify-vendor-licenses.sh
 
-.PHONY: edge_cross_build
-edge_cross_build:
-	cd edge && $(MAKE) cross_build
+define TEST_HELP_INFO
+# run golang test case.
+#
+# Args:
+#   WHAT: Component names to be testd. support: $(COMPONENTS)
+#         If not specified, "everything" will be tested.
+#   PROFILE: Generate profile named as "coverage.out"
+#
+# Example:
+#   make test
+#   make test HELP=y
+#   make test PROFILE=y
+#   make test WHAT=cloud
+endef
+.PHONY: test
+ifeq ($(HELP),y)
+test:
+	@echo "$$TEST_HELP_INFO"
+else ifeq ($(PROFILE),y)
+test: clean
+	PROFILE=coverage.out hack/make-rules/test.sh $(WHAT)
+else
+test: clean
+	hack/make-rules/test.sh $(WHAT)
+endif
 
-.PHONY: edge_cross_build_v7
-edge_cross_build_v7:
-	$(MAKE) -C edge armv7
+define LINT_HELP_INFO
+# run golang lint check.
+#
+# Example:
+#   make lint
+#   make lint HELP=y
+endef
+.PHONY: lint
+ifeq ($(HELP),y)
+lint:
+	@echo "$$LINT_HELP_INFO"
+else
+lint:
+	hack/make-rules/lint.sh
+endif
 
-.PHONY: edge_cross_build_v8
-edge_cross_build_v8:
-	$(MAKE) -C edge armv8
 
-.PHONY: edgesite_cross_build
-edgesite_cross_build:
-	$(MAKE) -C edgesite cross_build
+INTEGRATION_TEST_COMPONENTS=edge
+define INTEGRATION_TEST_HELP_INFO
+# run integration test.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(INTEGRATION_TEST_COMPONENTS)
+#         If not specified, "everything" will be integration check.
+#
+# Example:
+#   make integrationtest
+#   make integrationtest HELP=y
+endef
 
-.PHONY: edge_small_build
-edge_small_build:
-	cd edge && $(MAKE) small_build
+.PHONY: integrationtest
+ifeq ($(HELP),y)
+integrationtest:
+	@echo "$$INTEGRATION_TEST_HELP_INFO"
+else
+integrationtest:
+	hack/make-rules/build.sh edgecore
+	edge/test/integration/scripts/execute.sh
+endif
 
-.PHONY: edgesite_cross_build_v7
-edgesite_cross_build_v7:
-	$(MAKE) -C edgesite armv7
+CROSSBUILD_COMPONENTS=edgecore\
+	edgesite
+GOARM_VALUES=GOARM7 \
+	GOARM8
 
-.PHONY: edgesite_cross_build_v8
-edgesite_cross_build_v8:
-	$(MAKE) -C edgesite armv8
+define CROSSBUILD_HELP_INFO
+# cross build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
+#         If not specified, "everything" will be cross build.
+#
+# GOARM: go arm value, now support:$(GOARM_VALUES)
+#        If not specified ,default use GOARM=GOARM8
+#
+#
+# Example:
+#   make crossbuild
+#   make crossbuild HELP=y
+#   make crossbuild WHAT=edgecore
+#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#
+endef
+.PHONY: crossbuild
+ifeq ($(HELP),y)
+crossbuild:
+	@echo "$$CROSSBUILD_HELP_INFO"
+else
+crossbuild: clean
+	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+endif
 
-.PHONY: cloud_lint
-cloud_lint:
-	cd cloud && $(MAKE) lint
 
-.PHONY: e2e_test
-e2e_test:
+
+SMALLBUILD_COMPONENTS=edgecore \
+	edgesite
+define SMALLBUILD_HELP_INFO
+# small build components.
+#
+# Args:
+#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS)
+#         If not specified, "everything" will be small build.
+#
+#
+# Example:
+#   make smallbuild
+#   make smallbuild HELP=y
+#   make smallbuild WHAT=edgecore
+#   make smallbuild WHAT=edgesite
+#
+endef
+.PHONY: smallbuild
+ifeq ($(HELP),y)
+smallbuild:
+	@echo "$$SMALLBUILD_HELP_INFO"
+else
+smallbuild: clean
+	hack/make-rules/smallbuild.sh $(WHAT)
+endif
+
+
+define E2E_HELP_INFO
+# e2e test.
+#
+# Example:
+#   make e2e
+#   make e2e HELP=y
+#
+endef
+.PHONY: e2e
+ifeq ($(HELP),y)
+e2e:
+	@echo "$$E2E_HELP_INFO"
+else
+e2e:
 #	bash tests/e2e/scripts/execute.sh device_crd
-#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallely
-	bash tests/e2e/scripts/execute.sh
+#	This has been commented temporarily since there is an issue of CI using same master for all PRs, which is causing failures when run parallelly
+	tests/e2e/scripts/execute.sh
+endif
 
-.PHONY: performance_test
-performance_test:
-	bash tests/performance/scripts/jenkins.sh
+define KEADM_E2E_HELP_INFO
+# keadm e2e test.
+#
+# Example:
+#   make keadm_e2e
+#   make keadm_e2e HELP=y
+#
+endef
+.PHONY: keadm_e2e
+ifeq ($(HELP),y)
+keadm_e2e:
+	@echo "KEADM_E2E_HELP_INFO"
+else
+keadm_e2e:
+	tests/e2e/scripts/keadm_e2e.sh
+endif
 
-.PHONY: keadm_lint
-keadm_lint:
-	make -C keadm lint
+define CLEAN_HELP_INFO
+# Clean up the output of make.
+#
+# Example:
+#   make clean
+#   make clean HELP=y
+#
+endef
+.PHONY: clean
+ifeq ($(HELP),y)
+clean:
+	@echo "$$CLEAN_HELP_INFO"
+else
+clean:
+	hack/make-rules/clean.sh
+endif
+
 
 QEMU_ARCH ?= x86_64
 ARCH ?= amd64
-
 IMAGE_TAG ?= $(shell git describe --tags)
+GO_LDFLAGS='$(shell hack/make-rules/version.sh)'
 
 .PHONY: cloudimage
 cloudimage:
-	docker build -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/cloudcore:${IMAGE_TAG} -f build/cloud/Dockerfile .
 
 .PHONY: admissionimage
 admissionimage:
-	docker build -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/admission:${IMAGE_TAG} -f build/admission/Dockerfile .
 
 .PHONY: csidriverimage
 csidriverimage:
-	docker build -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
+	docker build --build-arg GO_LDFLAGS=${GO_LDFLAGS} -t kubeedge/csidriver:${IMAGE_TAG} -f build/csidriver/Dockerfile .
 
 .PHONY: edgeimage
 edgeimage:
 	mkdir -p ./build/edge/tmp
 	rm -rf ./build/edge/tmp/*
-	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz 
-	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp 
+	curl -L -o ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
+	tar -xzf ./build/edge/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edge/tmp
 	docker build -t kubeedge/edgecore:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
@@ -131,21 +293,36 @@ edgesiteimage:
 	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
 	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
 	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.12-alpine3.9 \
+	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
+	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edgesite/Dockerfile .
 
-.PHONY: verify
-verify:
-	bash hack/verify-vendor.sh
-
-.PHONY: bluetoothdevice
-bluetoothdevice:
-	make -C mappers/bluetooth_mapper
-
-.PHONY: bluetoothdevice_image
-	make -C mappers/bluetooth_mapper_docker
-
-.PHONY: bluetoothdevice_lint
-bluetoothdevice_lint:
-	make -C mappers/bluetooth_mapper lint
+define INSTALL_HELP_INFO
+# install
+#
+# Args:
+#   WHAT: Component names to be installed to $${INSTALL_BIN_DIR} (${INSTALL_BIN_DIR})
+#         If not specified, "everything" will be installed
+#
+##
+# Example:
+#   make install
+#   make install WHAT=edgecore
+#
+endef
+.PHONY: help
+ifeq ($(HELP),y)
+install:
+	@echo "$$INSTALL_HELP_INFO"
+else
+install: _output/local/bin
+	install -d "${INSTALL_BIN_DIR}"
+	if [ "" != "${WHAT}" ]; then \
+          install "$</${WHAT}"  "${INSTALL_BIN_DIR}" ;\
+        else \
+          for file in ${BINARIES} ; do \
+            install "$</$${file}"  "${INSTALL_BIN_DIR}" ;\
+          done ; \
+        fi
+endif
