@@ -43,6 +43,7 @@ type JoinOptions struct {
 	Token                 string
 	CertPort              string
 	CGroupDriver          string
+	Labels                string
 }
 
 type CheckOptions struct {

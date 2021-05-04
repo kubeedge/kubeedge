@@ -73,6 +73,8 @@ const (
 
 	DomainName = "domainname"
 
+	Labels = "labels"
+
 	// CGroupDriver is type of edgecore Cgroup
 	CGroupDriver = "cgroupdriver"
 
