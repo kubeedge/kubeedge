@@ -31,8 +31,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/karrick/godirwalk v1.10.12 // indirect
-	github.com/kubeedge/beehive v0.0.0
-	github.com/kubeedge/viaduct v0.0.0
+	github.com/kubeedge/beehive v0.0.0-20201125122335-cd19bca6e436
+	github.com/kubeedge/viaduct v0.0.0-20201130063818-e33931917980
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
