@@ -60,4 +60,7 @@ issues:
       - path: edge
         linters:
           - errcheck
+      - path: cloud/pkg/cloudhub/handler/messagehandler.go
+        linters:
+          - errcheck
 

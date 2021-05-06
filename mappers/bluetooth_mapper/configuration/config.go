@@ -19,6 +19,7 @@ package configuration
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"reflect"
 	"strings"
@@ -188,7 +189,7 @@ func (b *BLEConfig) Load() error {
 						if property.AccessMode == READWRITE {
 							action.Operation.Action = "Write"
 							if strings.ToUpper(property.DataType) == "INT" {
-								value := string(int(property.DefaultValue.(float64)))
+								value := fmt.Sprint(int(property.DefaultValue.(float64)))
 								action.Operation.Value = []byte(value)
 							} else if strings.ToUpper(property.DataType) == "STRING" {
 								for _, converterAttribute := range b.Converter.DataWrite.Attributes {
