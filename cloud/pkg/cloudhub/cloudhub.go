@@ -19,6 +19,7 @@ import (
 )
 
 var DoneTLSTunnelCerts = make(chan bool, 1)
+var DoneTLSRouterCerts = make(chan bool, 1)
 
 type cloudHub struct {
 	enable               bool
@@ -76,6 +77,8 @@ func (a *cloudHub) Start() {
 	// TODO: Will improve in the future
 	DoneTLSTunnelCerts <- true
 	close(DoneTLSTunnelCerts)
+	DoneTLSRouterCerts <- true
+	close(DoneTLSRouterCerts)
 
 	// generate Token
 	if err := httpserver.GenerateToken(); err != nil {

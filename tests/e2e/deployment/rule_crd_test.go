@@ -99,7 +99,7 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			}()
 			time.Sleep(3 * time.Second)
 			// call rest api to send message to edge.
-			IsSend, statusCode := utils.SendMsg("http://127.0.0.1:9443/edge-node/default/ccc", []byte(msg), nil)
+			IsSend, statusCode := utils.SendMsg("http://127.0.0.1:10005/edge-node/default/ccc", []byte(msg), nil)
 			Expect(IsSend).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			Eventually(func() bool {
@@ -166,7 +166,83 @@ var _ = Describe("Rule Management test in E2E scenario", func() {
 			}()
 			time.Sleep(3 * time.Second)
 			// call rest api to send message to edge.
-			IsSend, statusCode := utils.SendMsg("http://127.0.0.1:9443/edge-node/default/ddd", []byte(msg), msgHeader)
+			IsSend, statusCode := utils.SendMsg("http://127.0.0.1:10005/edge-node/default/ddd", []byte(msg), msgHeader)
+			Expect(IsSend).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			Eventually(func() bool {
+				utils.Infof("receive: %s, sent msg: %s ", b.String(), msg)
+				newMsg := "Reply from server: " + msg + " Header of the message: [user]: " + msgHeader["user"] +
+					", [passwd]: " + msgHeader["passwd"]
+				return b.String() == newMsg
+			}, "30s", "2s").Should(Equal(true), "servicebus did not return any response.")
+		})
+		It("E2E_CREATE_RULE_4: Create rule: rest to eventbus,support tls.", func() {
+			var ruleList v1.RuleList
+			// create rest ruleendpoint
+			IsRestRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", utils.RestType)
+			Expect(IsRestRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create eventbus ruleendpoint
+			IsEventbusRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", utils.EventbusType)
+			Expect(IsEventbusRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create rule: rest to eventbus.
+			IsRuleCreated, statusCode := utils.HandleRule(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, "", utils.RestType, utils.EventbusType)
+			Expect(IsRuleCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			newRule := utils.NewRule(utils.RestType, utils.EventbusType)
+			_, err := utils.GetRuleList(&ruleList, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, newRule)
+			Expect(err).To(BeNil())
+			b := new(bytes.Buffer)
+			go func() {
+				recieveMsg, err := utils.SubscribeMqtt("topic-test")
+				if err != nil {
+					utils.Fatalf("subscribe topic-test fail. reason: %s. ", err.Error())
+				}
+				b.WriteString(recieveMsg)
+			}()
+			time.Sleep(3 * time.Second)
+			// call rest api to send message to edge.
+			IsSend, statusCode := utils.SendMsg("https://127.0.0.1:9443/edge-node/default/ccc", []byte(msg), nil)
+			Expect(IsSend).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusOK))
+			Eventually(func() bool {
+				utils.Infof("receive: %s, msg: %s ", b.String(), msg)
+				return b.String() == msg
+			}, "30s", "2s").Should(Equal(true), "eventbus not subscribe anything.")
+		})
+		It("E2E_CREATE_RULE_5: Create rule: rest to servicebus,support tls.", func() {
+			var ruleList v1.RuleList
+			// create rest ruleendpoint
+			IsRestRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", utils.RestType)
+			Expect(IsRestRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create servicebus ruleendpoint
+			IsServicebusRuleEndpointCreated, status := utils.HandleRuleEndpoint(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleEndpointHandler, "", utils.ServicebusType)
+			Expect(IsServicebusRuleEndpointCreated).Should(BeTrue())
+			Expect(status).Should(Equal(http.StatusCreated))
+			// create rule: rest to servicebus
+			IsRuleCreated, statusCode := utils.HandleRule(http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, "", utils.RestType, utils.ServicebusType)
+			Expect(IsRuleCreated).Should(BeTrue())
+			Expect(statusCode).Should(Equal(http.StatusCreated))
+			newRule := utils.NewRule(utils.RestType, utils.ServicebusType)
+			_, err := utils.GetRuleList(&ruleList, ctx.Cfg.K8SMasterForKubeEdge+RuleHandler, newRule)
+			Expect(err).To(BeNil())
+			msgHeader := map[string]string{
+				"user":   "I am user",
+				"passwd": "I am passwd",
+			}
+			b := new(bytes.Buffer)
+			go func() {
+				recieveMsg, err := utils.StartEchoServer()
+				if err != nil {
+					utils.Fatalf("fail to call edge-app's API. reason: %s. ", err.Error())
+				}
+				b.WriteString(recieveMsg)
+			}()
+			time.Sleep(3 * time.Second)
+			// call rest api to send message to edge.
+			IsSend, statusCode := utils.SendMsg("https://127.0.0.1:9443/edge-node/default/ddd", []byte(msg), msgHeader)
 			Expect(IsSend).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
 			Eventually(func() bool {
