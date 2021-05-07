@@ -1013,7 +1013,7 @@ func TestDealTwinCompare(t *testing.T) {
 				Metadata: &dttype.TypeMetadata{Type: typeInt},
 			},
 			dealType: RestDealType,
-			err:      errors.New("the value is not int"),
+			err:      errors.New("the value is not int or integer"),
 		},
 		{
 			name:         "TestDealTwinCompare(): Case 3: expectedOk is true; dealVersion() returns false",
@@ -1246,7 +1246,7 @@ func TestDealTwinAdd(t *testing.T) {
 				ActualVersion:   &dttype.TwinVersion{},
 			},
 			dealType: RestDealType,
-			err:      errors.New("the value is not int"),
+			err:      errors.New("the value is not int or integer"),
 		},
 		{
 			name: "TestDealTwinAdd(): Case 6: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=1",
@@ -1438,7 +1438,7 @@ func TestDealMsgTwin(t *testing.T) {
 				Result:     result,
 				SyncResult: syncResultDevice,
 				Document:   documentDevice,
-				Err:        errors.New("the value is not int"),
+				Err:        errors.New("the value is not int or integer"),
 			},
 		},
 		{
