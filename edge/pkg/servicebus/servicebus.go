@@ -140,7 +140,7 @@ func (sb *servicebus) Start() {
 
 			response := util.HTTPResponse{Header: resp.Header, StatusCode: resp.StatusCode, Body: resBody}
 			responseMsg := model.NewMessage(msg.GetID())
-			responseMsg.Content = response
+			responseMsg.FillBody(response)
 			responseMsg.SetRoute("servicebus", modules.UserGroup)
 			beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
 		}()
@@ -152,7 +152,7 @@ func buildErrorResponse(parentID string, content string, statusCode int) (model.
 	h := http.Header{}
 	h.Add("Server", "kubeedge-edgecore")
 	c := util.HTTPResponse{Header: h, StatusCode: statusCode, Body: []byte(content)}
-	responseMsg.Content = c
+	responseMsg.FillBody(c)
 	responseMsg.SetRoute("servicebus", modules.UserGroup)
 	return *responseMsg, nil
 }

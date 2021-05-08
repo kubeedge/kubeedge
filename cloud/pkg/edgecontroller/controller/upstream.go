@@ -261,7 +261,7 @@ func (uc *UpstreamController) updatePodStatus() {
 						}
 						pod := &v1.Pod{}
 						pod.Namespace, pod.Name = namespace, podStatus.Name
-						delMsg.Content = pod
+						delMsg.FillBody(pod)
 						delMsg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
 						if err := uc.messageLayer.Send(*delMsg); err != nil {
 							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, delMsg.GetOperation(), delMsg.GetResource())
@@ -468,7 +468,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				resMsg := model.NewMessage(msg.GetID())
 				resMsg.SetResourceVersion(node.ResourceVersion)
-				resMsg.Content = "OK"
+				resMsg.FillBody("OK")
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
 					klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
@@ -550,7 +550,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 		}
 		resMsg := model.NewMessage(msg.GetID())
 		resMsg.SetResourceVersion(object.GetResourceVersion())
-		resMsg.Content = object
+		resMsg.FillBody(object)
 		nodeID, err := messagelayer.GetNodeID(msg)
 		if err != nil {
 			klog.Warningf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
@@ -714,7 +714,7 @@ func (uc *UpstreamController) updateNode() {
 
 				resMsg := model.NewMessage(msg.GetID())
 				resMsg.SetResourceVersion(node.ResourceVersion)
-				resMsg.Content = "OK"
+				resMsg.FillBody("OK")
 				nodeID, err := messagelayer.GetNodeID(msg)
 				if err != nil {
 					klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
@@ -761,7 +761,7 @@ func (uc *UpstreamController) deletePod() {
 				continue
 			}
 
-			podUID, ok := msg.Content.(string)
+			podUID, ok := msg.GetContent().GetString()
 			if !ok {
 				klog.Warningf("Failed to get podUID from msg, pod namesapce: %s, pod name: %s", namespace, name)
 				continue
@@ -893,7 +893,7 @@ func (uc *UpstreamController) normalizePodStatus(pod *v1.Pod, status *v1.PodStat
 // nodeMsgResponse response message of ResourceTypeNode
 func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content string, msg model.Message) {
 	resMsg := model.NewMessage(msg.GetID())
-	resMsg.Content = content
+	resMsg.FillBody(content)
 	nodeID, err := messagelayer.GetNodeID(msg)
 	if err != nil {
 		klog.Warningf("Response message: %s failed, get node: %s id failed with error: %s", msg.GetID(), nodeName, err)

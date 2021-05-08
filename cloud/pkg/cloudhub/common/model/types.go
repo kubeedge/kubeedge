@@ -135,8 +135,3 @@ func IsToEdge(msg *model.Message) bool {
 	}
 	return true
 }
-
-// GetContent dumps the content to string
-func GetContent(msg *model.Message) string {
-	return fmt.Sprintf("%v", msg.Content)
-}

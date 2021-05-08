@@ -61,7 +61,7 @@ func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
 						Source: sendModuleName,
 						Group:  receiveModuleName,
 					},
-					Content: "Hello Kubeedge",
+					Content: model.NewContent("Hello Kubeedge"),
 				},
 			},
 			false,

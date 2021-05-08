@@ -29,12 +29,12 @@ func TestGetMessageAPIVerison(t *testing.T) {
 			name: "TestGetMessageAPIVerison(): Case 1: Content pod",
 			args: args{
 				msg: &beehiveModel.Message{
-					Content: &corev1.Pod{
+					Content: beehiveModel.NewContent(&corev1.Pod{
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "Pod",
 							APIVersion: "v1",
 						},
-					},
+					}),
 				}},
 			want: "v1",
 		},
@@ -42,7 +42,7 @@ func TestGetMessageAPIVerison(t *testing.T) {
 			name: "TestGetMessageAPIVerison(): Case 2: Content other",
 			args: args{
 				msg: &beehiveModel.Message{
-					Content: "content",
+					Content: beehiveModel.NewContent("content"),
 				}},
 			want: "",
 		},
@@ -69,12 +69,12 @@ func TestGetMessageResourceType(t *testing.T) {
 			name: "TestGetMessageResourceType(): Case 1: Content pod",
 			args: args{
 				msg: &beehiveModel.Message{
-					Content: &corev1.Pod{
+					Content: beehiveModel.NewContent(&corev1.Pod{
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "Pod",
 							APIVersion: "v1",
 						},
-					},
+					}),
 				}},
 			want: UnsafeKindToResource("Pod"),
 		},
@@ -82,7 +82,7 @@ func TestGetMessageResourceType(t *testing.T) {
 			name: "TestGetMessageResourceType(): Case 2: Content other",
 			args: args{
 				msg: &beehiveModel.Message{
-					Content: "content",
+					Content: beehiveModel.NewContent("content"),
 				}},
 			want: "",
 		},

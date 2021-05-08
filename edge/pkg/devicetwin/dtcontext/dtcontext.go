@@ -147,6 +147,6 @@ func (dtc *DTContext) Send(identity string, action string, module string, msg *m
 func (dtc *DTContext) BuildModelMessage(group string, parentID string, resource string, operation string, content interface{}) *model.Message {
 	msg := model.NewMessage(parentID)
 	msg.BuildRouter(modules.TwinGroup, group, resource, operation)
-	msg.Content = content
+	msg.FillBody(content)
 	return msg
 }

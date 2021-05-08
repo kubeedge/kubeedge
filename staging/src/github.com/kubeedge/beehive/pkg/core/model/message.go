@@ -32,7 +32,7 @@ const (
 type Message struct {
 	Header  MessageHeader `json:"header"`
 	Router  MessageRoute  `json:"route,omitempty"`
-	Content interface{}   `json:"content"`
+	Content Content       `json:"content"`
 }
 
 // MessageRoute contains structure of message
@@ -133,17 +133,23 @@ func (msg *Message) GetTimestamp() int64 {
 }
 
 // GetContent returns message content
-func (msg *Message) GetContent() interface{} {
+func (msg *Message) GetContent() Content {
+	if msg.Content == nil {
+		return rawContent{}
+	}
 	return msg.Content
 }
 
 // GetContentData returns message content data
 func (msg *Message) GetContentData() ([]byte, error) {
-	if data, ok := msg.Content.([]byte); ok {
+	content := msg.Content
+	if content == nil {
+		return []byte("null"), nil
+	}
+	if data, ok := content.GetBytes(); ok {
 		return data, nil
 	}
-
-	data, err := json.Marshal(msg.Content)
+	data, err := json.Marshal(content)
 	if err != nil {
 		return nil, fmt.Errorf("marshal message content failed: %s", err)
 	}
@@ -169,10 +175,51 @@ func (msg *Message) BuildHeader(ID, parentID string, timestamp int64) *Message {
 	return msg
 }
 
-//FillBody fills message  content that you want to send
-func (msg *Message) FillBody(content interface{}) *Message {
+// SetContent sets the message content
+func (msg *Message) SetContent(content Content) *Message {
 	msg.Content = content
 	return msg
+}
+
+//FillBody fills message content that you want to send
+func (msg *Message) FillBody(val interface{}) *Message {
+	if val == nil {
+		msg.SetContent(nil)
+	} else {
+		msg.SetContent(NewContent(val))
+	}
+	return msg
+}
+
+func (msg Message) MarshalJSON() ([]byte, error) {
+	tmp := struct {
+		Header  MessageHeader `json:"header"`
+		Router  MessageRoute  `json:"route,omitempty"`
+		Content interface{}   `json:"content"`
+	}{
+		Header:  msg.Header,
+		Router:  msg.Router,
+		Content: msg.Content,
+	}
+	return json.Marshal(tmp)
+}
+
+func (msg *Message) UnmarshalJSON(data []byte) error {
+	tmp := struct {
+		Header  MessageHeader `json:"header"`
+		Router  MessageRoute  `json:"route,omitempty"`
+		Content interface{}   `json:"content"`
+	}{}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	msg.Header = tmp.Header
+	msg.Router = tmp.Router
+	if tmp.Content != nil {
+		msg.Content = NewContent(tmp.Content)
+	}
+	return nil
 }
 
 // NewRawMessage returns a new raw message:
@@ -197,7 +244,7 @@ func (msg *Message) Clone(message *Message) *Message {
 	msgID := uuid.NewV4().String()
 	return NewRawMessage().BuildHeader(msgID, message.GetParentID(), message.GetTimestamp()).
 		BuildRouter(message.GetSource(), message.GetGroup(), message.GetResource(), message.GetOperation()).
-		FillBody(message.GetContent())
+		SetContent(message.Content)
 }
 
 // NewRespByMessage returns a new response message by a message received

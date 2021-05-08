@@ -62,7 +62,8 @@ func NewQuicConn(options *ConnectionOptions) *QuicConnection {
 // process header message
 func (conn *QuicConnection) headerMessage(msg *model.Message) error {
 	headers := make(http.Header)
-	err := json.Unmarshal(msg.GetContent().([]byte), &headers)
+	content, _ := msg.GetContent().GetBytes()
+	err := json.Unmarshal(content, &headers)
 	if err != nil {
 		klog.Errorf("failed to unmarshal header, error: %+v", err)
 		return err

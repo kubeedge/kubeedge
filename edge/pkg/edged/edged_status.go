@@ -396,9 +396,9 @@ func (e *edged) registerNode() error {
 		res, err = beehiveContext.SendSync(EdgeController, *nodeInfoMsg, syncMsgRespTimeout)
 	}
 
-	if err != nil || res.Content != "OK" {
+	if err != nil || res.GetContent().String() != "OK" {
 		klog.Errorf("register node failed, error: %v", err)
-		if res.Content != "OK" {
+		if res.GetContent().String() != "OK" {
 			klog.Errorf("response from cloud core: %v", res.Content)
 		}
 		return err

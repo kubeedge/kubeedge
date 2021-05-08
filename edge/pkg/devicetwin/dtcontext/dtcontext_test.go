@@ -344,7 +344,7 @@ func TestSend(t *testing.T) {
 	receiveCh := make(chan interface{}, 1)
 	commChan[dtcommon.TwinModule] = receiveCh
 	var msg = &model.Message{
-		Content: content,
+		Content: model.NewContent(content),
 	}
 	dtc := &DTContext{
 		CommChan: commChan,
@@ -405,7 +405,7 @@ func TestBuildModelMessage(t *testing.T) {
 		parentID  string
 		resource  string
 		operation string
-		content   interface{}
+		content   model.Content
 		want      *model.Message
 	}{
 		{
@@ -413,7 +413,7 @@ func TestBuildModelMessage(t *testing.T) {
 			group:     "resource",
 			resource:  "membership/detail",
 			operation: "get",
-			content:   content,
+			content:   model.NewContent(content),
 			want:      &model.Message{},
 		},
 	}

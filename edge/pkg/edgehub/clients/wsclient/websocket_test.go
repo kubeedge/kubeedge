@@ -173,7 +173,7 @@ func TestSend(t *testing.T) {
 			ParentID:  "1",
 			Timestamp: time.Now().UnixNano() / 1e6,
 		},
-		Content: "test",
+		Content: model.NewContent("test"),
 	}
 	tests := []struct {
 		name          string
@@ -211,7 +211,7 @@ func TestReceive(t *testing.T) {
 			ParentID:  "12",
 			Timestamp: time.Now().UnixNano() / 1e6,
 		},
-		Content: "test",
+		Content: model.NewContent("test"),
 	}
 	tests := []struct {
 		name          string
@@ -244,8 +244,8 @@ func TestReceive(t *testing.T) {
 				t.Errorf("WebSocketClient.Receive() error = %v, expectedError = %v", err, tt.expectedError)
 				return
 			}
-			if !reflect.DeepEqual(fmt.Sprintf("%s", got.GetContent()), fmt.Sprintf("%s", tt.want.GetContent())) {
-				t.Errorf("WebSocketClient.Receive() message content: got = %s, want = %s", got.GetContent(), tt.want.GetContent())
+			if !reflect.DeepEqual(got.GetContent().Raw(), tt.want.GetContent().Raw()) {
+				t.Errorf("WebSocketClient.Receive() message content: got = %s, want = %s", got.GetContent().Raw(), tt.want.GetContent().Raw())
 			}
 		})
 	}

@@ -48,7 +48,7 @@ func TestStartAction(t *testing.T) {
 			Header: model.MessageHeader{
 				ID: "message",
 			},
-			Content: "msg",
+			Content: model.NewContent("msg"),
 		},
 	}
 
@@ -57,7 +57,7 @@ func TestStartAction(t *testing.T) {
 		Action:   "action",
 		Identity: "identity",
 		Msg: &model.Message{
-			Content: "msg",
+			Content: model.NewContent("msg"),
 		},
 	}
 	tests := []struct {
@@ -249,13 +249,13 @@ func TestDealLifeCycle(t *testing.T) {
 		{
 			name:    "dealLifeCycleTest-CloudConnected",
 			context: dtContext,
-			msg:     &model.Message{Content: cloudconn.CloudConnected},
+			msg:     &model.Message{Content: model.NewContent(cloudconn.CloudConnected)},
 			wantErr: nil,
 		},
 		{
 			name:    "dealLifeCycleTest-CloudNotConnected",
 			context: dtContext,
-			msg:     &model.Message{Content: cloudconn.CloudDisconnected},
+			msg:     &model.Message{Content: model.NewContent(cloudconn.CloudDisconnected)},
 			wantErr: nil,
 		},
 	}

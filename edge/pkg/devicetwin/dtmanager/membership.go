@@ -90,7 +90,7 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 		return nil, errors.New("msg not Message type")
 	}
 
-	contentData, ok := message.Content.([]byte)
+	contentData, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("assertion failed")
 	}
@@ -123,7 +123,7 @@ func dealMembershipUpdate(context *dtcontext.DTContext, resource string, msg int
 		return nil, errors.New("msg not Message type")
 	}
 
-	contentData, ok := message.Content.([]byte)
+	contentData, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("assertion failed")
 	}
@@ -153,7 +153,7 @@ func dealMembershipGet(context *dtcontext.DTContext, resource string, msg interf
 		return nil, errors.New("msg not Message type")
 	}
 
-	contentData, ok := message.Content.([]byte)
+	contentData, ok := message.GetContent().GetBytes()
 	if !ok {
 		return nil, errors.New("assertion failed")
 	}

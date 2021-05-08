@@ -47,7 +47,7 @@ const (
 	// ModuleNameController is the name of the controller module
 	ModuleNameController = "edgecontroller"
 	// MarshalErroris common jsonMarshall error
-	MarshalError = "Error to marshal message content: json: unsupported type: chan int"
+	MarshalError = "Error to marshal message content: marshal message content failed: json: error calling MarshalJSON for type model.rawContent: json: unsupported type: chan int"
 	// OperationNodeConnection is message with operation publish
 	OperationNodeConnection = "publish"
 )
@@ -87,8 +87,8 @@ func TestProcessInsert(t *testing.T) {
 			return
 		}
 		want := "Error to save meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -103,8 +103,8 @@ func TestProcessInsert(t *testing.T) {
 			return
 		}
 		want := "Error to save meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -114,8 +114,8 @@ func TestProcessInsert(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -133,8 +133,8 @@ func TestProcessInsert(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("ResponseMessageToEdgeHub", func(t *testing.T) {
 		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 }
@@ -163,8 +163,8 @@ func TestProcessUpdate(t *testing.T) {
 	message, _ := beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -176,26 +176,26 @@ func TestProcessUpdate(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("DatabaseSaveError", func(t *testing.T) {
 		want := "Error to update meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
 	//resourceUnchanged true
 	fakeDao := new([]dao.Meta)
 	fakeDaoArray := make([]dao.Meta, 1)
-	fakeDaoArray[0] = dao.Meta{Key: "Test", Value: "\"test\""}
+	fakeDaoArray[0] = dao.Meta{Key: "Test", Value: "1"}
 	fakeDao = &fakeDaoArray
 	querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDao).Return(int64(1), nil).Times(1)
 	querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(querySeterMock).Times(1)
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypePodStatus, model.UpdateOperation).FillBody("test")
+	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, "test/"+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(1)
 	meta.processUpdate(*msg)
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("ResourceUnchangedTrue", func(t *testing.T) {
 		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Resource Unchanged Case Failed: Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Resource Unchanged Case Failed: Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -214,8 +214,8 @@ func TestProcessUpdate(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("SuccessSourceEdgedReceiveEdged", func(t *testing.T) {
 		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -234,8 +234,8 @@ func TestProcessUpdate(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("SuccessSendCloud[CloudController->EdgeHub]", func(t *testing.T) {
 		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -291,8 +291,8 @@ func TestProcessResponse(t *testing.T) {
 	message, _ := beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -304,8 +304,8 @@ func TestProcessResponse(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("DatabaseSaveError", func(t *testing.T) {
 		want := "Error to update meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -361,8 +361,8 @@ func TestProcessDelete(t *testing.T) {
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("DatabaseDeleteError", func(t *testing.T) {
 		want := "Error to delete meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -382,8 +382,8 @@ func TestProcessDelete(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("SuccessResponseOK", func(t *testing.T) {
 		want := OK
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 }
@@ -428,8 +428,8 @@ func TestProcessQuery(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("ProcessRemoteQueryMarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -448,8 +448,8 @@ func TestProcessQuery(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("ProcessRemoteQueryDbFail", func(t *testing.T) {
 		want := "TestMessage"
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -485,8 +485,8 @@ func TestProcessQuery(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("ResIDNilDatabaseError", func(t *testing.T) {
 		want := "Error to query meta in DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong message receive : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -500,8 +500,8 @@ func TestProcessQuery(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("ResIDNotNilDatabaseError", func(t *testing.T) {
 		want := "Error to query meta in DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong message receive : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -619,8 +619,8 @@ func TestProcessFunctionAction(t *testing.T) {
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("MarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -632,8 +632,8 @@ func TestProcessFunctionAction(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("DatabaseSaveError", func(t *testing.T) {
 		want := "Error to save meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -671,8 +671,8 @@ func TestProcessFunctionActionResult(t *testing.T) {
 	message, _ := beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("MarshallFail", func(t *testing.T) {
 		want := MarshalError
-		if message.GetContent() != want {
-			t.Errorf("Wrong Error message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong Error message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 
@@ -683,8 +683,8 @@ func TestProcessFunctionActionResult(t *testing.T) {
 	message, _ = beehiveContext.Receive(ModuleNameEdgeHub)
 	t.Run("DatabaseSaveError", func(t *testing.T) {
 		want := "Error to save meta to DB: " + FailedDBOperation
-		if message.GetContent() != want {
-			t.Errorf("Wrong message received : Wanted %v and Got %v", want, message.GetContent())
+		if message.GetContent().String() != want {
+			t.Errorf("Wrong message received : Wanted %q and Got %q", want, message.GetContent().String())
 		}
 	})
 

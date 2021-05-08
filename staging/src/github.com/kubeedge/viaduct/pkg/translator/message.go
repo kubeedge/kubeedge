@@ -1,7 +1,6 @@
 package translator
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"k8s.io/klog/v2"
@@ -38,21 +37,12 @@ func (t *MessageTranslator) modelToProto(src *model.Message, dst *message.Messag
 	dst.Router.Group = src.GetGroup()
 	dst.Router.Resouce = src.GetResource()
 	dst.Router.Operaion = src.GetOperation()
-	if content := src.GetContent(); content != nil {
-		switch content.(type) {
-		case []byte:
-			dst.Content = content.([]byte)
-		case string:
-			dst.Content = []byte(content.(string))
-		default:
-			bytes, err := json.Marshal(content)
-			if err != nil {
-				klog.Error("failed to marshal")
-				return err
-			}
-			dst.Content = bytes
-		}
+	bytes, err := src.GetContentData()
+	if err != nil {
+		klog.Errorf("failed to get content data %v", err)
+		return err
 	}
+	dst.Content = bytes
 	return nil
 }
 

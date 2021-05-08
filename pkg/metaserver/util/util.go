@@ -119,7 +119,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 
 // GetMessageUID returns the UID of the object in message
 func GetMessageAPIVerison(msg *beehiveModel.Message) string {
-	obj, ok := msg.Content.(runtime.Object)
+	obj, ok := msg.GetContent().Raw().(runtime.Object)
 	if ok {
 		return obj.GetObjectKind().GroupVersionKind().GroupVersion().String()
 	}
@@ -128,7 +128,7 @@ func GetMessageAPIVerison(msg *beehiveModel.Message) string {
 
 // GetMessageUID returns the UID of the object in message
 func GetMessageResourceType(msg *beehiveModel.Message) string {
-	obj, ok := msg.Content.(runtime.Object)
+	obj, ok := msg.GetContent().Raw().(runtime.Object)
 	if ok {
 		return UnsafeKindToResource(obj.GetObjectKind().GroupVersionKind().Kind)
 	}

@@ -112,11 +112,11 @@ func (m *Server) onSubscribe(msg *packet.Message) {
 		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic))
 		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
 		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
-			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload))
+			resource, messagepkg.OperationResponse).FillBody(msg.Payload)
 	} else {
 		target = modules.HubGroup
 		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
-			msg.Topic, "upload").FillBody(string(msg.Payload))
+			msg.Topic, "upload").FillBody(msg.Payload)
 	}
 	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
 	beehiveContext.SendToGroup(target, *message)

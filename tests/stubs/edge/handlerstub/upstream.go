@@ -60,7 +60,7 @@ func (dc *UpstreamController) SyncPods() {
 			// Periodic sync message
 			msg := model.NewMessage("")
 			resource := pod.Namespace + "/" + model.ResourceTypePodStatus + "/" + pod.Name
-			msg.Content = pod
+			msg.FillBody(pod)
 			msg.BuildRouter(constants.HandlerStub, constants.GroupResource, resource, model.UpdateOperation)
 
 			klog.V(4).Infof("Begin to sync message: %v", *msg)

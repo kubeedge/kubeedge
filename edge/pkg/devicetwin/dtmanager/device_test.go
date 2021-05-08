@@ -51,7 +51,7 @@ func TestDeviceStartAction(t *testing.T) {
 	dtContextStateConnected.State = dtcommon.Connected
 	content := dttype.DeviceUpdate{}
 	bytes, _ := json.Marshal(content)
-	msg := model.Message{Content: bytes}
+	msg := model.Message{Content: model.NewContent(bytes)}
 
 	receiveChanActionPresent := make(chan interface{}, 1)
 	receiveChanActionPresent <- &dttype.DTMessage{
@@ -65,7 +65,7 @@ func TestDeviceStartAction(t *testing.T) {
 		Action:   "action",
 		Identity: "identity",
 		Msg: &model.Message{
-			Content: "msg",
+			Content: model.NewContent("msg"),
 		},
 	}
 	tests := []struct {
@@ -211,7 +211,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-DeviceDoesNotExist",
 			context:  dtContexts,
 			resource: "DeviceB",
-			msg:      &model.Message{Content: bytesEmptyDevUpdate},
+			msg:      &model.Message{Content: model.NewContent(bytesEmptyDevUpdate)},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -219,7 +219,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-DeviceExist",
 			context:  dtContexts,
 			resource: "DeviceC",
-			msg:      &model.Message{Content: bytesEmptyDevUpdate},
+			msg:      &model.Message{Content: model.NewContent(bytesEmptyDevUpdate)},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -227,7 +227,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",
 			context:  dtContexts,
 			resource: "DeviceD",
-			msg:      &model.Message{Content: bytesEmptyDevUpdate},
+			msg:      &model.Message{Content: model.NewContent(bytesEmptyDevUpdate)},
 			want:     nil,
 			wantErr:  nil,
 		},
@@ -235,7 +235,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			name:             "dealDeviceStateUpdateTest-UpdatePresent",
 			context:          dtContexts,
 			resource:         "DeviceD",
-			msg:              &model.Message{Content: bytesDevUpdate},
+			msg:              &model.Message{Content: model.NewContent(bytesDevUpdate)},
 			want:             nil,
 			wantErr:          nil,
 			filterReturn:     querySeterMock,
@@ -271,7 +271,7 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 		t.Errorf("marshal error %v", err)
 		return
 	}
-	msg := model.Message{Content: bytes}
+	msg := model.Message{Content: model.NewContent(bytes)}
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext

@@ -50,7 +50,7 @@ func TestNewReader(t *testing.T) {
 func TestRead(t *testing.T) {
 	initMocks(t)
 	var ioreader io.Reader
-	var msg = model.Message{Content: "message"}
+	var msg = model.Message{Content: model.NewContent("message")}
 	bytesMsg, _ := translator.NewTran().Encode(&msg)
 	header := PackageHeader{Version: 0011, PayloadLen: (uint32(len(bytesMsg)))}
 	headerBuffer := make([]byte, 0)

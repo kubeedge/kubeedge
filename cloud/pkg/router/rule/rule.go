@@ -39,9 +39,9 @@ func handleRuleEndpoint(data interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("data type is %T", data)
 	}
 
-	ruleEndpoint, ok := message.Content.(*routerv1.RuleEndpoint)
+	ruleEndpoint, ok := message.GetContent().Raw().(*routerv1.RuleEndpoint)
 	if !ok {
-		klog.Warningf("object type: %T unsupported", message.Content)
+		klog.Warningf("object type: %T unsupported", message.GetContent().Raw())
 		return nil, fmt.Errorf("message content type should be ruleEndpoint type. operation: %s, resource: %s",
 			message.GetOperation(), message.GetResource())
 	}
@@ -65,9 +65,9 @@ func handleRule(data interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("data type is %T", data)
 	}
 
-	rule, ok := message.Content.(*routerv1.Rule)
+	rule, ok := message.GetContent().Raw().(*routerv1.Rule)
 	if !ok {
-		klog.Warningf("object type: %T unsupported", message.Content)
+		klog.Warningf("object type: %T unsupported", message.GetContent().Raw())
 		return nil, fmt.Errorf("message content type should be rule type. operation: %s, resource: %s",
 			message.GetOperation(), message.GetResource())
 	}

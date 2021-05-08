@@ -59,15 +59,10 @@ func (s *services) GetPods(name string) ([]v1.Pod, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get service podlist from metaManager failed, err: %v", err)
 	}
-	var content []byte
-	switch respMsg.Content.(type) {
-	case []byte:
-		content = respMsg.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(respMsg.Content)
-		if err != nil {
-			return nil, fmt.Errorf("marshal message to service podlist failed, err: %v", err)
-		}
+
+	content, err := respMsg.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("marshal message to service podlist failed, err: %v", err)
 	}
 
 	if respMsg.GetOperation() == model.ResponseOperation {
@@ -111,15 +106,9 @@ func (s *services) Get(name string) (*v1.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get service from metaManager failed, err: %v", err)
 	}
-	var content []byte
-	switch respMsg.Content.(type) {
-	case []byte:
-		content = respMsg.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(respMsg.Content)
-		if err != nil {
-			return nil, fmt.Errorf("marshal message to configmap failed, err: %v", err)
-		}
+	content, err := respMsg.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("marshal message to configmap failed, err: %v", err)
 	}
 
 	if respMsg.GetOperation() == model.ResponseOperation {
@@ -163,15 +152,9 @@ func (s *services) ListAll() ([]v1.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get service list from metaManager failed, err: %v", err)
 	}
-	var content []byte
-	switch respMsg.Content.(type) {
-	case []byte:
-		content = respMsg.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(respMsg.Content)
-		if err != nil {
-			return nil, fmt.Errorf("marshal message to service list failed, err: %v", err)
-		}
+	content, err := respMsg.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("marshal message to service list failed, err: %v", err)
 	}
 
 	if respMsg.GetOperation() == model.ResponseOperation {

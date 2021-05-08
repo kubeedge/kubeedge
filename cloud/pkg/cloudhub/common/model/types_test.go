@@ -39,7 +39,7 @@ func modelMessage(ID string, PID string, Timestamp int64, Source string, Group s
 			Operation: Operation,
 			Resource:  Resource,
 		},
-		Content: Content,
+		Content: model.NewContent(Content),
 	}
 }
 
@@ -239,7 +239,7 @@ func TestGetContent(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if result := GetContent(&test.msg); !reflect.DeepEqual(result, test.wanted) {
+			if result := test.msg.Content.String(); !reflect.DeepEqual(result, test.wanted) {
 				t.Errorf("Model.TestGetContent() case failed: got = %v, Want = %v", result, test.wanted)
 			}
 		})

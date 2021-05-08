@@ -64,15 +64,9 @@ func (c *Endpoints) Get(name string) (*api.Endpoints, error) {
 		return nil, fmt.Errorf("get endpointMsg from metaManager failed, err: %v", err)
 	}
 
-	var content []byte
-	switch msg.Content.(type) {
-	case []byte:
-		content = msg.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(msg.Content)
-		if err != nil {
-			return nil, fmt.Errorf("marshal message to endpointMsg failed, err: %v", err)
-		}
+	content, err := msg.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("marshal message to endpointMsg failed, err: %v", err)
 	}
 
 	if msg.GetOperation() == model.ResponseOperation {
