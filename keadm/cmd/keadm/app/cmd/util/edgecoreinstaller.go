@@ -41,7 +41,7 @@ type KubeEdgeInstTool struct {
 	CertPort              string
 	CGroupDriver          string
 	TarballPath           string
-	Labels                string
+	Labels                []string
 }
 
 // InstallTools downloads KubeEdge for the specified verssion
@@ -123,15 +123,11 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
 
-	if strings.TrimSpace(ku.Labels) != "" {
-		ku.Labels = strings.TrimSpace(ku.Labels)
+	if len(ku.Labels) >= 1 {
 		labelsMap := make(map[string]string)
-		s1 := strings.Replace(ku.Labels, "{", "", -1)
-		s2 := strings.Replace(s1, "}", "", -1)
-		labels := strings.Split(s2, ",")
-		for _, label := range labels {
-			key := strings.Split(label, ":")[0]
-			value := strings.Split(label, ":")[1]
+		for _, label := range ku.Labels {
+			key := strings.Split(label, "=")[0]
+			value := strings.Split(label, "=")[1]
 			labelsMap[key] = value
 		}
 		edgeCoreConfig.Modules.Edged.Labels = labelsMap
