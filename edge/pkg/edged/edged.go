@@ -1075,7 +1075,7 @@ func (e *edged) syncPod() {
 		}
 		klog.Infof("result content is %s", result.Content)
 		switch {
-		case strings.HasPrefix(resType, model.ResourceTypePod):
+		case resType == model.ResourceTypePod:
 			if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.MetaManagerModuleName {
 				err := e.handlePodListFromMetaManager(content)
 				if err != nil {
@@ -1097,7 +1097,7 @@ func (e *edged) syncPod() {
 					continue
 				}
 			}
-		case strings.HasPrefix(resType, model.ResourceTypeConfigmap):
+		case resType == model.ResourceTypeConfigmap:
 			if op != model.ResponseOperation {
 				err := e.handleConfigMap(op, content)
 				if err != nil {
@@ -1117,7 +1117,7 @@ func (e *edged) syncPod() {
 				klog.Infof("skip to handle secret with type response")
 				continue
 			}
-		case strings.HasPrefix(resType, constants.CSIResourceTypeVolume):
+		case resType == constants.CSIResourceTypeVolume:
 			klog.Infof("volume operation type: %s", op)
 			res, err := e.handleVolume(op, content)
 			if err != nil {
