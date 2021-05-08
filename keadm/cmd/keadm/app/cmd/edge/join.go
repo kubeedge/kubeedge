@@ -115,8 +115,8 @@ func addJoinOtherFlags(cmd *cobra.Command, joinOptions *types.JoinOptions) {
 	cmd.Flags().StringVar(&joinOptions.TarballPath, types.TarballPath, joinOptions.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
 
-	cmd.Flags().StringVarP(&joinOptions.Labels, types.Labels, "l", joinOptions.Labels,
-		`use this key to set the customized labels for node. you can input customized labels like {"key1":"value1", "key2":"value2"}`)
+	cmd.Flags().StringSliceVarP(&joinOptions.Labels, types.Labels, "l", joinOptions.Labels,
+		`use this key to set the customized labels for node. you can input customized labels like key1:value1,key2:value2`)
 }
 
 // newJoinOptions returns a struct ready for being used for creating cmd join flags.
