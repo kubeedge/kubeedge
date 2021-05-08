@@ -59,7 +59,7 @@ func (ks *K8SInstTool) InstallTools() error {
 
 	fmt.Println("Kubernetes version verification passed, KubeEdge installation will start...")
 
-	err = installCRDs(ks.KubeConfig, ks.Master)
+	err = installCRDs(ks)
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,8 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 	return nil
 }
 
-func installCRDs(kubeConfig, master string) error {
-	config, err := BuildConfig(kubeConfig, master)
+func installCRDs(ks *K8SInstTool) error {
+	config, err := BuildConfig(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return fmt.Errorf("Failed to build config, err: %v", err)
 	}
@@ -113,96 +113,46 @@ func installCRDs(kubeConfig, master string) error {
 		return err
 	}
 
-	// Todo: need to add the crds ro release package
-	// create the dir for kubeedge crd
-	deviceCrdPath := KubeEdgeCrdPath + "/devices"
-	err = os.MkdirAll(deviceCrdPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", deviceCrdPath)
+	crds := map[string][]string{"devices": {"devices/devices_v1alpha2_device.yaml",
+		"devices/devices_v1alpha2_devicemodel.yaml"}, "reliablesyncs": {"reliablesyncs/cluster_objectsync_v1alpha1.yaml",
+		"reliablesyncs/objectsync_v1alpha1.yaml"},
+		"router": {"router/router_v1_rule.yaml",
+			"router/router_v1_ruleEndpoint.yaml"},
 	}
-	for _, crdFile := range []string{"devices/devices_v1alpha2_device.yaml",
-		"devices/devices_v1alpha2_devicemodel.yaml"} {
-		//check it first, do not download when it exists
-		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
+	version := fmt.Sprintf("%d.%d", ks.ToolVersion.Major, ks.ToolVersion.Minor)
+	CRDDownloadURL := fmt.Sprintf(KubeEdgeCRDDownloadURL, version)
+	for dir := range crds {
+		crdPath := KubeEdgeCrdPath + "/" + dir
+		err = os.MkdirAll(crdPath, os.ModePerm)
 		if err != nil {
-			if os.IsNotExist(err) {
-				//Download the tar from repo
-				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/devices", KubeEdgeCRDDownloadURL, crdFile)
-				cmd := NewCommand(downloadURL)
-				if err := cmd.Exec(); err != nil {
+			return fmt.Errorf("not able to create %s folder path", crdPath)
+		}
+
+		for _, crdFile := range crds[dir] {
+			// check it first, do not download when it exists
+			_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
+			if err != nil {
+				if os.IsNotExist(err) {
+					// Download the tar from repo
+					downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/"+dir, CRDDownloadURL, crdFile)
+					cmd := NewCommand(downloadURL)
+					if err := cmd.Exec(); err != nil {
+						return err
+					}
+				} else {
 					return err
 				}
+			}
+
+			// not found err, create crd from crd file
+			if dir == "router" {
+				err = createKubeEdgeV1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
 			} else {
+				err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
+			}
+			if err != nil && !apierrors.IsAlreadyExists(err) {
 				return err
 			}
-		}
-
-		// not found err, create crd from crd file
-		err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return err
-		}
-	}
-
-	// Todo: need to add the crds ro release package
-	// create the dir for kubeedge crd
-	reliablesyncCrdPath := KubeEdgeCrdPath + "/reliablesyncs"
-	err = os.MkdirAll(reliablesyncCrdPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", reliablesyncCrdPath)
-	}
-	for _, crdFile := range []string{"reliablesyncs/cluster_objectsync_v1alpha1.yaml",
-		"reliablesyncs/objectsync_v1alpha1.yaml"} {
-		//check it first, do not download when it exists
-		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
-		if err != nil {
-			if os.IsNotExist(err) {
-				//Download the tar from repo
-				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/reliablesyncs", KubeEdgeCRDDownloadURL, crdFile)
-				cmd := NewCommand(downloadURL)
-				if err := cmd.Exec(); err != nil {
-					return err
-				}
-			} else {
-				return err
-			}
-		}
-
-		// not found err, create crd from crd file
-		err = createKubeEdgeV1beta1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return err
-		}
-	}
-
-	// Todo: need to add the crds ro release package
-	// create the dir for kubeedge crd
-	routerCrdPath := KubeEdgeCrdPath + "/router"
-	err = os.MkdirAll(routerCrdPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("not able to create %s folder path", routerCrdPath)
-	}
-	for _, crdFile := range []string{"router/router_v1_rule.yaml",
-		"router/router_v1_ruleEndpoint.yaml"} {
-		//check it first, do not download when it exists
-		_, err := os.Lstat(KubeEdgeCrdPath + "/" + crdFile)
-		if err != nil {
-			if os.IsNotExist(err) {
-				//Download the tar from repo
-				downloadURL := fmt.Sprintf("cd %s && wget -k --no-check-certificate --progress=bar:force %s/%s", KubeEdgeCrdPath+"/router", KubeEdgeCRDDownloadURL, crdFile)
-				cmd := NewCommand(downloadURL)
-				if err := cmd.Exec(); err != nil {
-					return err
-				}
-			} else {
-				return err
-			}
-		}
-
-		// not found err, create crd from crd file
-		err = createKubeEdgeV1CRD(crdClient, KubeEdgeCrdPath+"/"+crdFile)
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return err
 		}
 	}
 

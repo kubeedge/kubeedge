@@ -65,7 +65,7 @@ const (
 
 	SystemdBootPath = "/run/systemd/system"
 
-	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/master/build/crds"
+	KubeEdgeCRDDownloadURL = "https://raw.githubusercontent.com/kubeedge/kubeedge/release-%s/build/crds"
 
 	latestReleaseVersionURL = "https://kubeedge.io/latestversion"
 	RetryTimes              = 5
