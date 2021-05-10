@@ -309,7 +309,8 @@ type EdgeControllerLoad struct {
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
-
+	// UpdateRuleStatusWorkers indicates the load of update rule status
+	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
 }
 

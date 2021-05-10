@@ -52,17 +52,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
-	rule2 "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
+	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
 type SortedContainerStatuses []v1.ContainerStatus
-
-type RuleStatus struct {
-	Status rulesv1.RuleStatus `json:"status"`
-}
 
 func (s SortedContainerStatuses) Len() int      { return len(s) }
 func (s SortedContainerStatuses) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
@@ -271,7 +267,7 @@ func (uc *UpstreamController) updateRuleStatus() {
 				klog.Warningf("message: %s process failure, get rule with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, ruleID)
 				continue
 			}
-			content, ok := msg.Content.(rule2.ExecResult)
+			content, ok := msg.Content.(routerrule.ExecResult)
 			if !ok {
 				klog.Warningf("message: %s process failure, get rule content with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, ruleID)
 			}
@@ -283,7 +279,7 @@ func (uc *UpstreamController) updateRuleStatus() {
 				errSlice := make([]string, 0)
 				rule.Status.Errors = append(errSlice, content.Error.Detail)
 			}
-			newStatus := &RuleStatus{Status: rule.Status}
+			newStatus := &rulesv1.RuleStatus{}
 			body, err := json.Marshal(newStatus)
 			if err != nil {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)

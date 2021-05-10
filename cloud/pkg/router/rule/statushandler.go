@@ -29,10 +29,10 @@ var StopChan chan bool
 
 func init() {
 	StopChan = make(chan bool)
-	go do(StopChan)
+	go SendMessageToController(StopChan)
 }
 
-func do(stop chan bool) {
+func SendMessageToController(stop chan bool) {
 	ResultChannel = make(chan ExecResult, 1024)
 	for {
 		select {
