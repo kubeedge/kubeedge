@@ -213,6 +213,7 @@ type edged struct {
 	rootDirectory      string
 	gpuPluginEnabled   bool
 	version            string
+	labels             map[string]string
 	// podReady is structure with initPodReady flag and its lock
 	podReady
 	// cache for secret
@@ -319,6 +320,13 @@ func (e *edged) Start() {
 	// Start a goroutine responsible for killing pods (that are not properly
 	// handled by pod workers).
 	go utilwait.Until(e.podKiller.PerformPodKillingWork, 5*time.Second, utilwait.NeverStop)
+
+	// update node label
+	node, _ := e.GetNode()
+	node.Labels = e.labels
+	if err := e.metaClient.Nodes(e.namespace).Update(node); err != nil {
+		klog.Errorf("update node failed, error: %v", err)
+	}
 
 	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, record.NewEventRecorder())
 	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
