@@ -1209,33 +1209,6 @@ func TestDealTwinAdd(t *testing.T) {
 			err:      nil,
 		},
 		{
-<<<<<<< HEAD
-=======
-			name: "TestDealTwinAdd(): Case 5: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=0",
-			returnResult: &dttype.DealTwinResult{
-				Document:   doc,
-				SyncResult: sync,
-				Result:     result,
-			},
-			deviceID: deviceA,
-			key:      key1,
-			twins:    twinDelete,
-			msgTwin: &dttype.MsgTwin{
-				Actual: &dttype.TwinValue{
-					Value: &str,
-				},
-				Optional: &optionTrue,
-				Metadata: &dttype.TypeMetadata{
-					Type: typeInt,
-				},
-				ExpectedVersion: &dttype.TwinVersion{},
-				ActualVersion:   &dttype.TwinVersion{},
-			},
-			dealType: RestDealType,
-			err:      errors.New("the value is not int or integer"),
-		},
-		{
->>>>>>> upstream/master
 			name: "TestDealTwinAdd(): Case 6: msgTwin.Actual is not nil; ValidateValue() returns error; dealType=1",
 			returnResult: &dttype.DealTwinResult{
 				SyncResult: sync,
@@ -1392,25 +1365,6 @@ func TestDealMsgTwin(t *testing.T) {
 			},
 		},
 		{
-<<<<<<< HEAD
-=======
-			name:     "TestDealMsgTwin(): Case 2: dealTwinCompare error",
-			context:  &context,
-			deviceID: deviceA,
-			msgTwins: msgTwinDeviceTwin,
-			dealType: RestDealType,
-			want: dttype.DealTwinResult{
-				Add:        add,
-				Delete:     deletes,
-				Update:     update,
-				Result:     result,
-				SyncResult: syncResultDevice,
-				Document:   documentDevice,
-				Err:        errors.New("the value is not int or integer"),
-			},
-		},
-		{
->>>>>>> upstream/master
 			name:     "TestDealMsgTwin(): Case 3: Success case",
 			context:  &context,
 			deviceID: deviceA,

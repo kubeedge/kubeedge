@@ -458,7 +458,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, cacheTwin
 		return errors.New("The request body is wrong")
 	}
 
-	if reflect.DeepEqual(msgTwin.Desired, v1alpha2.TwinProperty{}) && reflect.DeepEqual(msgTwin.Desired, v1alpha2.TwinProperty{}) {
+	if reflect.DeepEqual(msgTwin.Desired, v1alpha2.TwinProperty{}) && reflect.DeepEqual(msgTwin.Reported, v1alpha2.TwinProperty{}) {
 		return nil
 	}
 
