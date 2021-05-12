@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proxy-server
+  namespace: default
+spec:
+  hostNetwork: true
+  containers:
+  - name: proxy-server
+    image: liufen90/proxy-server-amd64:v1.1
+    imagePullPolicy: IfNotPresent
+    command: [ "/proxy-server"]
+    args: [
+      "--cluster-ca-cert=/root/certs/agent/issued/ca.crt",
+      "--cluster-cert=/root/certs/agent/issued/proxy-master.crt",
+      "--cluster-key=/root/certs/agent/private/proxy-master.key",
+      "--mode=http-connect",
+      "--proxy-strategies=destHost",
+      "--server-ca-cert=/root/certs/master/issued/ca.crt",
+      "--server-cert=/root/certs/master/issued/proxy-master.crt",
+      "--server-key=/root/certs/master/private/proxy-master.key",
+      ]
+    ports:
+    - name: serverport
+      containerPort: 8090
+      hostPort: 8090
+    - name: agentport
+      containerPort: 8091
+      hostPort: 8091
+    - name: healthport
+      containerPort: 8092
+      hostPort: 8092
+    - name: adminport
+      containerPort: 8095
+      hostPort: 8095
+    volumeMounts:
+    # 容器内路径
+    - mountPath: /root/certs   
+      name: certs
+  volumes:
+  - name: certs
+    hostPath:
+      path: /root/certs
