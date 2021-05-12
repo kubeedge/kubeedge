@@ -66,7 +66,6 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	volumeID := uuid.New().String()
 
 	// Build message struct
-	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
 		DefaultNamespace,
 		constants.CSIResourceTypeVolume,
@@ -83,11 +82,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, err
 	}
 	klog.V(4).Infof("create volume marshal to string: %s", js)
-	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
-		resource,
-		constants.CSIOperationTypeCreateVolume)
+	msg := model.NewMessage("").
+		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, constants.CSIOperationTypeCreateVolume).
+		FillBody(js)
 
 	// Marshal message
 	reqData, err := json.Marshal(msg)
@@ -128,7 +125,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	err = json.Unmarshal([]byte(decodeBytes), response)
 	if err != nil {
 		klog.Errorf("create volume unmarshal with error: %v", err)
-		return nil, nil
+		return nil, err
 	}
 	klog.V(4).Infof("create volume response: %v", response)
 
@@ -153,7 +150,6 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 
 	// Build message struct
-	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
 		DefaultNamespace,
 		constants.CSIResourceTypeVolume,
@@ -170,11 +166,9 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return nil, err
 	}
 	klog.V(4).Infof("delete volume marshal to string: %s", js)
-	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
-		resource,
-		constants.CSIOperationTypeDeleteVolume)
+	msg := model.NewMessage("").
+		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, constants.CSIOperationTypeDeleteVolume).
+		FillBody(js)
 
 	// Marshal message
 	reqData, err := json.Marshal(msg)
@@ -215,7 +209,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	err = json.Unmarshal([]byte(decodeBytes), deleteVolumeResponse)
 	if err != nil {
 		klog.Errorf("delete volume unmarshal with error: %v", err)
-		return nil, nil
+		return nil, err
 	}
 	klog.V(4).Infof("delete volume response: %v", deleteVolumeResponse)
 	return deleteVolumeResponse, nil
@@ -235,7 +229,6 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	// Build message struct
-	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
 		DefaultNamespace,
 		constants.CSIResourceTypeVolume,
@@ -252,11 +245,9 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, err
 	}
 	klog.V(4).Infof("controller publish volume marshal to string: %s", js)
-	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
-		resource,
-		constants.CSIOperationTypeControllerPublishVolume)
+	msg := model.NewMessage("").
+		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, constants.CSIOperationTypeControllerPublishVolume).
+		FillBody(js)
 
 	// Marshal message
 	reqData, err := json.Marshal(msg)
@@ -297,7 +288,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	err = json.Unmarshal([]byte(decodeBytes), controllerPublishVolumeResponse)
 	if err != nil {
 		klog.Errorf("controller publish volume unmarshal with error: %v", err)
-		return nil, nil
+		return nil, err
 	}
 	klog.V(4).Infof("controller publish volume response: %v", controllerPublishVolumeResponse)
 	return controllerPublishVolumeResponse, nil
@@ -317,7 +308,6 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	// Build message struct
-	msg := model.NewMessage("")
 	resource, err := buildResource(cs.nodeID,
 		DefaultNamespace,
 		constants.CSIResourceTypeVolume,
@@ -334,11 +324,9 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, err
 	}
 	klog.V(4).Infof("controller Unpublish Volume marshal to string: %s", js)
-	msg.Content = js
-	msg.BuildRouter(DefaultReceiveModuleName,
-		GroupResource,
-		resource,
-		constants.CSIOperationTypeControllerUnpublishVolume)
+	msg := model.NewMessage("").
+		BuildRouter(DefaultReceiveModuleName, GroupResource, resource, constants.CSIOperationTypeControllerUnpublishVolume).
+		FillBody(js)
 
 	// Marshal message
 	reqData, err := json.Marshal(msg)
@@ -379,7 +367,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	err = json.Unmarshal([]byte(decodeBytes), controllerUnpublishVolumeResponse)
 	if err != nil {
 		klog.Errorf("controller Unpublish Volume unmarshal with error: %v", err)
-		return nil, nil
+		return nil, err
 	}
 	klog.V(4).Infof("controller Unpublish Volume response: %v", controllerUnpublishVolumeResponse)
 	return controllerUnpublishVolumeResponse, nil
