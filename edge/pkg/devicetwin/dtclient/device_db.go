@@ -3,16 +3,43 @@ package dtclient
 import (
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 )
 
 //Device the struct of device
 type Device struct {
-	ID          string `orm:"column(id); size(64); pk"`
-	Name        string `orm:"column(name); null; type(text)"`
-	Description string `orm:"column(description); null; type(text)"`
-	State       string `orm:"column(state); null; type(text)"`
-	LastOnline  string `orm:"column(last_online); null; type(text)"`
+	ID        int64  `orm:"column(id); size(64); auto; pk"`
+	Name      string `orm:"column(name); null; type(text); unique"`
+	Namespace string `orm:"column(namespace); null; type(text); unique"`
+}
+
+// TableUnique name + namespace as unique key
+func (u *Device) TableUnique() [][]string {
+	return [][]string{
+		{"name", "namespace"},
+	}
+}
+
+// DevicePrimaryKey table device composite key
+type DevicePrimaryKey struct {
+	Name      string
+	Namespace string
+}
+
+//DeviceUpdate the struct for updating device
+type DeviceUpdate struct {
+	Name      string
+	Namespace string
+	Cols      map[string]interface{}
+}
+
+func ConvertCloudDeviceToTableDevice(device v1alpha2.Device) Device {
+	result := Device{}
+
+	result.Name = device.Name
+	result.Namespace = device.Namespace
+	return result
 }
 
 //SaveDevice save device
@@ -22,9 +49,9 @@ func SaveDevice(doc *Device) error {
 	return err
 }
 
-//DeleteDeviceByID delete device by id
-func DeleteDeviceByID(id string) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", id).Delete()
+//DeleteDeviceByKey delete device by primary key
+func DeleteDeviceByKey(key DevicePrimaryKey) error {
+	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("name", key.Name).Filter("namespace", key.Namespace).Delete()
 	if err != nil {
 		klog.Errorf("Something wrong when deleting data: %v", err)
 		return err
@@ -34,23 +61,23 @@ func DeleteDeviceByID(id string) error {
 }
 
 // UpdateDeviceField update special field
-func UpdateDeviceField(deviceID string, col string, value interface{}) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", deviceID).Update(map[string]interface{}{col: value})
+func UpdateDeviceField(deviceKey DevicePrimaryKey, col string, value interface{}) error {
+	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("name", deviceKey.Name).Filter("namespace", deviceKey.Namespace).Update(map[string]interface{}{col: value})
 	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
 
 // UpdateDeviceFields update special fields
-func UpdateDeviceFields(deviceID string, cols map[string]interface{}) error {
-	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("id", deviceID).Update(cols)
+func UpdateDeviceFields(deviceKey DevicePrimaryKey, cols map[string]interface{}) error {
+	num, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("name", deviceKey.Name).Filter("namespace", deviceKey.Namespace).Update(cols)
 	klog.V(4).Infof("Update affected Num: %d, %s", num, err)
 	return err
 }
 
-// QueryDevice query Device
-func QueryDevice(key string, condition string) (*[]Device, error) {
+// QueryDeviceByKey query Device
+func QueryDeviceByKey(primaryKey DevicePrimaryKey) (*[]Device, error) {
 	devices := new([]Device)
-	_, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter(key, condition).All(devices)
+	_, err := dbm.DBAccess.QueryTable(DeviceTableName).Filter("name", primaryKey.Name).Filter("namespace", primaryKey.Namespace).All(devices)
 	if err != nil {
 		return nil, err
 	}
@@ -67,17 +94,15 @@ func QueryDeviceAll() (*[]Device, error) {
 	return devices, nil
 }
 
-//DeviceUpdate the struct for updating device
-type DeviceUpdate struct {
-	DeviceID string
-	Cols     map[string]interface{}
-}
-
 //UpdateDeviceMulti update device  multi
 func UpdateDeviceMulti(updates []DeviceUpdate) error {
 	var err error
 	for _, update := range updates {
-		err = UpdateDeviceFields(update.DeviceID, update.Cols)
+		primaryKey := DevicePrimaryKey{
+			Name:      update.Name,
+			Namespace: update.Namespace,
+		}
+		err = UpdateDeviceFields(primaryKey, update.Cols)
 		if err != nil {
 			return err
 		}
@@ -86,7 +111,7 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 }
 
 //AddDeviceTrans the transaction of add device
-func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
+func AddDeviceTrans(adds []Device, addTwins []DeviceTwin) error {
 	var err error
 	obm := dbm.DBAccess
 	obm.Begin()
@@ -94,15 +119,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 		err = SaveDevice(&add)
 
 		if err != nil {
-			klog.Errorf("save device failed: %v", err)
-			obm.Rollback()
-			return err
-		}
-	}
-
-	for _, attr := range addAttrs {
-		err = SaveDeviceAttr(&attr)
-		if err != nil {
+			klog.Errorf("save device %v failed: %v", add, err)
 			obm.Rollback()
 			return err
 		}
@@ -120,23 +137,21 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 }
 
 //DeleteDeviceTrans the transaction of delete device
-func DeleteDeviceTrans(deletes []string) error {
+func DeleteDeviceTrans(deletes []DevicePrimaryKey) error {
 	var err error
 	obm := dbm.DBAccess
 	obm.Begin()
 	for _, delete := range deletes {
-		err = DeleteDeviceByID(delete)
+		err = DeleteDeviceByKey(delete)
 		if err != nil {
 			obm.Rollback()
 			return err
 		}
-		err = DeleteDeviceAttrByDeviceID(delete)
+
+		klog.Infof("delete device twin from table, %v", delete)
+		err = DeleteDeviceTwinByDeviceID(&delete)
 		if err != nil {
-			obm.Rollback()
-			return err
-		}
-		err = DeleteDeviceTwinByDeviceID(delete)
-		if err != nil {
+			klog.Errorf("delete device twin from table, err is %v", err)
 			obm.Rollback()
 			return err
 		}

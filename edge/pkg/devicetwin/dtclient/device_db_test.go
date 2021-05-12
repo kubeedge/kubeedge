@@ -72,8 +72,8 @@ func TestSaveDevice(t *testing.T) {
 	}
 }
 
-// TestDeleteDeviceByID is function to test DeleteDeviceByID
-func TestDeleteDeviceByID(t *testing.T) {
+// TestDeleteDeviceByKey is function to test TestDeleteDeviceByKey
+func TestDeleteDeviceByKey(t *testing.T) {
 	// ormerMock is mocked Ormer implementation
 	var ormerMock *beego.MockOrmer
 	// querySeterMock is mocked QuerySeter implementation
@@ -116,10 +116,14 @@ func TestDeleteDeviceByID(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Delete().Return(test.deleteReturnInt, test.deleteReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := DeleteDeviceByID("test")
+			key := DevicePrimaryKey{
+				Name:      "test",
+				Namespace: "default",
+			}
+			err := DeleteDeviceByKey(key)
 			if test.deleteReturnErr != err {
 				t.Errorf("DeleteDeviceByID case failed: wanted %v and got %v", test.deleteReturnErr, err)
 			}
@@ -171,10 +175,14 @@ func TestUpdateDeviceField(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceField("test", "test", "test")
+			key := DevicePrimaryKey{
+				Namespace: "default",
+				Name:      "test",
+			}
+			err := UpdateDeviceField(key, "test", "test")
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceField case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -226,10 +234,14 @@ func TestUpdateDeviceFields(t *testing.T) {
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(2)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			err := UpdateDeviceFields("test", make(map[string]interface{}))
+			key := DevicePrimaryKey{
+				Namespace: "default",
+				Name:      "test",
+			}
+			err := UpdateDeviceFields(key, make(map[string]interface{}))
 			if test.updateReturnErr != err {
 				t.Errorf("UpdateDeviceFields case failed: wanted %v and got %v", test.updateReturnErr, err)
 			}
@@ -281,16 +293,20 @@ func TestQueryDevice(t *testing.T) {
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := new([]Device)
 	fakeDeviceArray := make([]Device, 1)
-	fakeDeviceArray[0] = Device{ID: "Test"}
+	fakeDeviceArray[0] = Device{Name: "Test", Namespace: "default"}
 	fakeDevice = &fakeDeviceArray
 
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().All(gomock.Any()).SetArg(0, *fakeDevice).Return(test.allReturnInt, test.allReturnErr).Times(1)
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).AnyTimes()
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
-			device, err := QueryDevice("test", "test")
+			key := DevicePrimaryKey{
+				Namespace: "default",
+				Name:      "test",
+			}
+			device, err := QueryDeviceByKey(key)
 			if test.allReturnErr != err {
 				t.Errorf("QueryDevice case failed: wanted error %v and got error %v", test.allReturnErr, err)
 				return
@@ -349,7 +365,7 @@ func TestQueryDeviceAll(t *testing.T) {
 	// fakeDevice is used to set the argument of All function
 	fakeDevice := new([]Device)
 	fakeDeviceArray := make([]Device, 1)
-	fakeDeviceArray[0] = Device{ID: "Test"}
+	fakeDeviceArray[0] = Device{Name: "Test", Namespace: "default"}
 	fakeDevice = &fakeDeviceArray
 
 	// run the test cases
@@ -415,12 +431,12 @@ func TestUpdateDeviceMulti(t *testing.T) {
 
 	// updateDevice is argument to UpdateDeviceMulti function
 	updateDevice := make([]DeviceUpdate, 0)
-	updateDevice = append(updateDevice, DeviceUpdate{DeviceID: "test"})
+	updateDevice = append(updateDevice, DeviceUpdate{Name: "test", Namespace: "default"})
 
 	// run the test cases
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(1)
+			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).AnyTimes()
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(1)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(1)
 			err := UpdateDeviceMulti(updateDevice)
@@ -477,57 +493,41 @@ func TestAddDeviceTrans(t *testing.T) {
 		failInsertReturnErr:    errFailedDBOperation,
 		failInsertTimes:        1,
 		wantErr:                errFailedDBOperation,
-	}, {
-		// Failure Case SaveDeviceAttr
-		name:                   "FailureCaseSaveDeviceAttr",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
-		successInsertReturnErr: nil,
-		successInsertTimes:     1,
-		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    errFailedDBOperation,
-		failInsertTimes:        1,
-		wantErr:                errFailedDBOperation,
-	}, {
-		// Failure Case SaveDeviceTwin
-		name:                   "FailureCaseSaveDeviceAttr",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
-		successInsertReturnErr: nil,
-		successInsertTimes:     2,
-		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    errFailedDBOperation,
-		failInsertTimes:        1,
-		wantErr:                errFailedDBOperation,
-	}, {
-		// Success Case SaveDeviceTwin
-		name:                   "SuccessCaseSaveDeviceAttr",
-		rollBackTimes:          0,
-		commitTimes:            1,
-		beginTimes:             1,
-		successInsertReturnInt: int64(1),
-		successInsertReturnErr: nil,
-		successInsertTimes:     3,
-		failInsertReturnInt:    int64(1),
-		failInsertReturnErr:    errFailedDBOperation,
-		failInsertTimes:        0,
-		wantErr:                nil,
 	},
+		{
+			// Failure Case SaveDeviceTwin
+			name:                   "FailureCaseSaveDeviceTwin",
+			rollBackTimes:          1,
+			commitTimes:            0,
+			beginTimes:             1,
+			successInsertReturnInt: int64(1),
+			successInsertReturnErr: nil,
+			successInsertTimes:     1,
+			failInsertReturnInt:    int64(1),
+			failInsertReturnErr:    errFailedDBOperation,
+			failInsertTimes:        1,
+			wantErr:                errFailedDBOperation,
+		}, {
+			// Success Case SaveDeviceTwin
+			name:                   "SuccessCaseSaveDeviceTwin",
+			rollBackTimes:          0,
+			commitTimes:            1,
+			beginTimes:             1,
+			successInsertReturnInt: int64(1),
+			successInsertReturnErr: nil,
+			successInsertTimes:     2,
+			failInsertReturnInt:    int64(1),
+			failInsertReturnErr:    errFailedDBOperation,
+			failInsertTimes:        0,
+			wantErr:                nil,
+		},
 	}
 
 	// adds is fake Device used as argument
 	adds := make([]Device, 0)
-	adds = append(adds, Device{ID: "test"})
-	// addAttrs is fake DeviceAttr used as argument
-	addAttrs := make([]DeviceAttr, 0)
-	addAttrs = append(addAttrs, DeviceAttr{DeviceID: "test"})
-	// addTwins is fake DeviceTwin used as argument
+	adds = append(adds, Device{Namespace: "default", Name: "test"})
 	addTwins := make([]DeviceTwin, 0)
-	addTwins = append(addTwins, DeviceTwin{DeviceID: "test"})
+	addTwins = append(addTwins, DeviceTwin{DeviceName: "test", DeviceNamespace: "default", PropertyName: "test"})
 
 	// run the test cases
 	for _, test := range cases {
@@ -539,7 +539,7 @@ func TestAddDeviceTrans(t *testing.T) {
 			ormerMock.EXPECT().Insert(gomock.Any()).Return(test.failInsertReturnInt, test.failInsertReturnErr).Times(test.failInsertTimes)
 			ormerMock.EXPECT().Commit().Return(nil).Times(test.commitTimes)
 			ormerMock.EXPECT().Rollback().Return(nil).Times(test.rollBackTimes)
-			err := AddDeviceTrans(adds, addAttrs, addTwins)
+			err := AddDeviceTrans(adds, addTwins)
 			if test.wantErr != err {
 				t.Errorf("AddDeviceTrans case failed: wanted error %v and got error %v", test.wantErr, err)
 			}
@@ -606,11 +606,11 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        1,
 		filterReturn:           querySeterMock,
-		filterTimes:            1,
+		filterTimes:            2,
 		wantErr:                errFailedDBOperation,
 	}, {
-		// Failure Case DeleteDeviceAttrByDeviceID
-		name:                   "FailureCaseDeleteDeviceAttrByDeviceID",
+		// Failure Case DeleteDeviceTwinByDeviceID
+		name:                   "FailureCaseDeleteDeviceTwinByDeviceID",
 		rollBackTimes:          1,
 		commitTimes:            0,
 		beginTimes:             1,
@@ -623,24 +623,7 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		queryTableReturn:       querySeterMock,
 		queryTableTimes:        2,
 		filterReturn:           querySeterMock,
-		filterTimes:            2,
-		wantErr:                errFailedDBOperation,
-	}, {
-		// Failure Case DeleteDeviceTwinByDeviceID
-		name:                   "FailureCaseDeleteDeviceTwinByDeviceID",
-		rollBackTimes:          1,
-		commitTimes:            0,
-		beginTimes:             1,
-		successDeleteReturnInt: int64(1),
-		successDeleteReturnErr: nil,
-		successDeleteTimes:     2,
-		failDeleteReturnInt:    int64(1),
-		failDeleteReturnErr:    errFailedDBOperation,
-		failDeleteTimes:        1,
-		queryTableReturn:       querySeterMock,
-		queryTableTimes:        3,
-		filterReturn:           querySeterMock,
-		filterTimes:            3,
+		filterTimes:            4,
 		wantErr:                errFailedDBOperation,
 	}, {
 		// Success Case
@@ -650,20 +633,20 @@ func TestDeleteDeviceTrans(t *testing.T) {
 		beginTimes:             1,
 		successDeleteReturnInt: int64(1),
 		successDeleteReturnErr: nil,
-		successDeleteTimes:     3,
+		successDeleteTimes:     2,
 		failDeleteReturnInt:    int64(1),
 		failDeleteReturnErr:    errFailedDBOperation,
 		failDeleteTimes:        0,
 		queryTableReturn:       querySeterMock,
-		queryTableTimes:        3,
+		queryTableTimes:        2,
 		filterReturn:           querySeterMock,
-		filterTimes:            3,
+		filterTimes:            4,
 		wantErr:                nil,
 	},
 	}
 
 	// deletes is argument to DeleteDeviceTrans function
-	deletes := []string{"test"}
+	deletes := []DevicePrimaryKey{{Namespace: "default", Name: "test"}}
 
 	// run the test cases
 	for _, test := range cases {

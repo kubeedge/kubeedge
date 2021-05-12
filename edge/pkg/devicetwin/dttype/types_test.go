@@ -20,10 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 )
 
 // TestSetEventID is function to test SetEventID().
@@ -65,108 +68,6 @@ func TestBuildBaseMessage(t *testing.T) {
 			}
 			if got.Timestamp == 0 {
 				t.Errorf("BuildBaseMessage() failed,Failed to get timestamp")
-			}
-		})
-	}
-}
-
-// createDevTwinMetaDeleted() is function to create a devicetwin with Metadata "deleted" and add it to map with given deviceID.
-func createDevTwinMetaDeleted(deviceID string) map[string]*MsgTwin {
-	value := "ON"
-	devTwin := map[string]*MsgTwin{}
-	metaData := TypeMetadata{
-		Type: "deleted",
-	}
-	msgTwin := MsgTwin{
-		Expected: &TwinValue{
-			Value: &value,
-		},
-		Metadata: &metaData,
-	}
-	devTwin[deviceID] = &msgTwin
-	return devTwin
-}
-
-// createMembershipUpdateAndBaseMessage() is function to create a base message and membershipupdate.
-func createMembershipUpdateAndBaseMessage() ([]byte, BaseMessage) {
-	addDevices := []Device{}
-	twinAddDevice := make(map[string]*MsgTwin)
-	twinAddDevice["DeviceA"] = nil
-	deviceA := Device{
-		ID:          "DeviceA",
-		Name:        "SensorTag",
-		Description: "Sensor",
-		State:       "ON",
-		Twin:        twinAddDevice,
-	}
-	addDevices = append(addDevices, deviceA)
-	removeDevices := []Device{}
-	twinRemDevice := make(map[string]*MsgTwin)
-	twinRemDevice["DeviceB"] = nil
-	deviceB := Device{
-		ID:          "DeviceB",
-		Name:        "SensorTag",
-		Description: "Sensor",
-		State:       "ON",
-		Twin:        twinRemDevice,
-	}
-	removeDevices = append(removeDevices, deviceB)
-	baseMessage := BuildBaseMessage()
-	want := MembershipUpdate{
-		BaseMessage:   baseMessage,
-		AddDevices:    addDevices,
-		RemoveDevices: removeDevices,
-	}
-	wantMembershipUpdate, _ := json.Marshal(want)
-	return wantMembershipUpdate, baseMessage
-}
-
-// TestMarshalMembershipUpdate is function to test MarshalMembershipUpdate().
-func TestMarshalMembershipUpdate(t *testing.T) {
-	// Creating membershipupdate and base message
-	wantMembershipUpdate, baseMessage := createMembershipUpdateAndBaseMessage()
-	tests := []struct {
-		name    string
-		result  MembershipUpdate
-		want    []byte
-		wantErr error
-	}{
-		{
-			name: "MarshalMembershipUpdateTest",
-			result: MembershipUpdate{
-				BaseMessage: baseMessage,
-				AddDevices: []Device{
-					{
-						ID:          "DeviceA",
-						Name:        "SensorTag",
-						Description: "Sensor",
-						State:       "ON",
-						Twin:        createDevTwinMetaDeleted("DeviceA"),
-					},
-				},
-				RemoveDevices: []Device{
-					{
-						ID:          "DeviceB",
-						Name:        "SensorTag",
-						Description: "Sensor",
-						State:       "ON",
-						Twin:        createDevTwinMetaDeleted("DeviceB"),
-					},
-				},
-			},
-			wantErr: nil,
-			want:    wantMembershipUpdate,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := MarshalMembershipUpdate(test.result)
-			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("MarshalMembershipUpdate() error = %v, wantErr %v", err, test.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("MarshalMembershipUpdate() got= %v, want %v", got, test.want)
 			}
 		})
 	}
@@ -464,128 +365,97 @@ func TestUnmarshalConnectedInfo(t *testing.T) {
 	}
 }
 
-// TestUnmarshalDeviceTwinDocument is function to test UnmarshalDeviceTwinDocument().
-func TestUnmarshalDeviceTwinDocument(t *testing.T) {
-	var devTwinDoc DeviceTwinDocument
-	byteDevTwinDoc, _ := json.Marshal(devTwinDoc)
-	tests := []struct {
-		name     string
-		argument []byte
-		want     *DeviceTwinDocument
-		wantErr  error
-	}{
-		{
-			// Success Case
-			name:     "UnmarshalDeviceTwinDocumentTest-CorrectInput",
-			argument: byteDevTwinDoc,
-			wantErr:  nil,
-			want:     &devTwinDoc,
-		},
-		{
-			// Failure Case
-			name:     "UnmarshalDeviceTwinDocumentTest-WrongInput",
-			argument: []byte(""),
-			want:     &DeviceTwinDocument{},
-			wantErr:  errors.New("unexpected end of JSON input"),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := UnmarshalDeviceTwinDocument(test.argument)
-			if err != nil && err.Error() != test.wantErr.Error() {
-				t.Errorf("UnmarshalDeviceTwinDocument() error = %v, wantErr %v", err, test.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("UnmarshalDeviceTwinDocument() = %v, want %v", got, test.want)
-			}
-		})
-	}
-}
-
 // createEmptyDeviceTwinUpdate() is function to create an empty twin update variable.
 func createEmptyDeviceTwinUpdate() []byte {
-	var emptyTwinUpdate DeviceTwinUpdate
+	var emptyTwinUpdate v1alpha2.Device
 	bytesTwin, _ := json.Marshal(emptyTwinUpdate)
 	return bytesTwin
 }
 
 // createTwinUpdateWrongKey() is function to create a DeviceTwinUpdate with wrong key.
-func createTwinUpdateWrongKey() (DeviceTwinUpdate, []byte) {
-	var keyErrorTwinUpdate DeviceTwinUpdate
-	twin := make(map[string]*MsgTwin)
-	twin["key~"] = &MsgTwin{}
-	keyErrorTwinUpdate.Twin = twin
+func createTwinUpdateWrongKey() (v1alpha2.Device, []byte) {
+	var keyErrorTwinUpdate v1alpha2.Device
+	twin := make([]v1alpha2.Twin, 1)
+	twin[0] = v1alpha2.Twin{
+		PropertyName: "key~",
+	}
+	keyErrorTwinUpdate.Status.Twins = twin
 	bytesTwinKeyError, _ := json.Marshal(keyErrorTwinUpdate)
 	return keyErrorTwinUpdate, bytesTwinKeyError
 }
 
 // createTwinUpdate() is function to create DeviceTwinUpdate with correct actual and expected values.
-func createTwinUpdate() (DeviceTwinUpdate, []byte) {
-	var keyTwinUpdate DeviceTwinUpdate
-	twinKey := make(map[string]*MsgTwin)
-	var expected TwinValue
-	var actual TwinValue
+func createTwinUpdate() (v1alpha2.Device, []byte) {
+	var keyTwinUpdate v1alpha2.Device
+	twinKey := make([]v1alpha2.Twin, 1)
+	var expected v1alpha2.TwinProperty
+	var actual v1alpha2.TwinProperty
 	value := "value"
-	valueMetaData := &ValueMetadata{
-		Timestamp: time.Now().UnixNano() / 1e6,
-	}
-	expected.Value = &value
+	valueMetaData := make(map[string]string)
+	valueMetaData["timestamp"] = strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+
+	expected.Value = value
 	expected.Metadata = valueMetaData
-	actual.Value = &value
+	actual.Value = value
 	actual.Metadata = valueMetaData
-	twinKey["key1"] = &MsgTwin{
-		Expected: &expected,
-		Actual:   &actual,
+	twinKey[0] = v1alpha2.Twin{
+		PropertyName: "key1",
+		Desired:      expected,
+		Reported:     actual,
 	}
-	keyTwinUpdate.Twin = twinKey
+
+	keyTwinUpdate.Status.Twins = twinKey
 	bytesTwinKey, _ := json.Marshal(keyTwinUpdate)
 	return keyTwinUpdate, bytesTwinKey
 }
 
 // createTwinUpdateWrongActual() is function to create  DeviceTwinUpdate having right key with wrong actual value.
-func createTwinUpdateWrongActual() (DeviceTwinUpdate, []byte) {
-	var keyTwinUpdateActualValueError DeviceTwinUpdate
-	twinKeyActualValueError := make(map[string]*MsgTwin)
-	var actualValueErrorExpected TwinValue
-	var actualValueErrorActual TwinValue
+func createTwinUpdateWrongActual() (v1alpha2.Device, []byte) {
+	var keyTwinUpdateActualValueError v1alpha2.Device
+	twinKeyActualValueError := make([]v1alpha2.Twin, 1)
+	var actualValueErrorExpected v1alpha2.TwinProperty
+	var actualValueErrorActual v1alpha2.TwinProperty
 	valueExpected := "value"
 	valueActual := "value~"
-	valueMetaDataActualValueError := &ValueMetadata{
-		Timestamp: time.Now().UnixNano() / 1e6,
-	}
-	actualValueErrorExpected.Value = &valueExpected
+	valueMetaDataActualValueError := make(map[string]string)
+	valueMetaDataActualValueError["timestamp"] = strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+
+	actualValueErrorExpected.Value = valueExpected
 	actualValueErrorExpected.Metadata = valueMetaDataActualValueError
-	actualValueErrorActual.Value = &valueActual
+	actualValueErrorActual.Value = valueActual
 	actualValueErrorActual.Metadata = valueMetaDataActualValueError
-	twinKeyActualValueError["key1"] = &MsgTwin{
-		Expected: &actualValueErrorExpected,
-		Actual:   &actualValueErrorActual,
+	twinKeyActualValueError[0] = v1alpha2.Twin{
+		PropertyName: "key1",
+		Desired:      actualValueErrorExpected,
+		Reported:     actualValueErrorActual,
 	}
-	keyTwinUpdateActualValueError.Twin = twinKeyActualValueError
+
+	keyTwinUpdateActualValueError.Status.Twins = twinKeyActualValueError
 	bytesTwinKeyActualValueError, _ := json.Marshal(keyTwinUpdateActualValueError)
 	return keyTwinUpdateActualValueError, bytesTwinKeyActualValueError
 }
 
 // createTwinUpdateWrongExpected() is function to create DeviceTwinUpdate having right key with wrong expected value.
-func createTwinUpdateWrongExpected() (DeviceTwinUpdate, []byte) {
-	var keyTwinUpdateExpectedValueError DeviceTwinUpdate
-	twinKeyExpectedValueError := make(map[string]*MsgTwin)
-	var expectedValueErrorExpected TwinValue
-	var expectedValueErrorActual TwinValue
+func createTwinUpdateWrongExpected() (v1alpha2.Device, []byte) {
+	var keyTwinUpdateExpectedValueError v1alpha2.Device
+	twinKeyExpectedValueError := make([]v1alpha2.Twin, 1)
+	var expectedValueErrorExpected v1alpha2.TwinProperty
+	var expectedValueErrorActual v1alpha2.TwinProperty
 	valueExpectedValueError := "value~"
-	valueMetaDataExpectedValueError := &ValueMetadata{
-		Timestamp: time.Now().UnixNano() / 1e6,
-	}
-	expectedValueErrorExpected.Value = &valueExpectedValueError
+	valueMetaDataExpectedValueError := make(map[string]string)
+	valueMetaDataExpectedValueError["timestamp"] = strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+
+	expectedValueErrorExpected.Value = valueExpectedValueError
 	expectedValueErrorExpected.Metadata = valueMetaDataExpectedValueError
-	expectedValueErrorActual.Value = &valueExpectedValueError
+	expectedValueErrorActual.Value = valueExpectedValueError
 	expectedValueErrorActual.Metadata = valueMetaDataExpectedValueError
-	twinKeyExpectedValueError["key1"] = &MsgTwin{
-		Expected: &expectedValueErrorExpected,
-		Actual:   &expectedValueErrorActual,
+	twinKeyExpectedValueError[0] = v1alpha2.Twin{
+		PropertyName: "key1",
+		Desired:      expectedValueErrorExpected,
+		Reported:     expectedValueErrorActual,
 	}
-	keyTwinUpdateExpectedValueError.Twin = twinKeyExpectedValueError
+
+	keyTwinUpdateExpectedValueError.Status.Twins = twinKeyExpectedValueError
 	bytesTwinKeyExpectedValueError, _ := json.Marshal(keyTwinUpdateExpectedValueError)
 	return keyTwinUpdateExpectedValueError, bytesTwinKeyExpectedValueError
 }
@@ -605,21 +475,21 @@ func TestUnmarshalDeviceTwinUpdate(t *testing.T) {
 	tests := []struct {
 		name    string
 		payload []byte
-		want    *DeviceTwinUpdate
+		want    *v1alpha2.Device
 		wantErr error
 	}{
 		{
 			// Failure Case - wrong input
 			name:    "UnmarshalDeviceTwinUpdateTest-WrongInput",
 			payload: []byte(""),
-			want:    &DeviceTwinUpdate{},
+			want:    &v1alpha2.Device{},
 			wantErr: ErrorUnmarshal,
 		},
 		{
 			// Failure Case - correct input with empty twin
 			name:    "UnmarshalDeviceTwinUpdateTest-EmptyTwin",
 			payload: bytesEmptyTwin,
-			want:    &DeviceTwinUpdate{},
+			want:    &v1alpha2.Device{},
 			wantErr: ErrorUpdate,
 		},
 		{

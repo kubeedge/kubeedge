@@ -27,7 +27,7 @@ func BuildResource(nodeID, resourceType, resourceID string) (resource string, er
 func GetDeviceID(resource string) (string, error) {
 	res := strings.Split(resource, "/")
 	if len(res) >= deviceconstants.ResourceDeviceIDIndex+1 && res[deviceconstants.ResourceDeviceIndex] == deviceconstants.ResourceDevice {
-		return res[deviceconstants.ResourceDeviceIDIndex], nil
+		return res[deviceconstants.ResourceNamespaceIndex] + "/" + res[deviceconstants.ResourceDeviceIDIndex], nil
 	}
 	return "", errors.New("failed to get device id")
 }

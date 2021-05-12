@@ -23,10 +23,12 @@ import (
 	"sync"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 )
 
 //TestCommTo is function to test CommTo().
@@ -55,8 +57,14 @@ func TestCommTo(t *testing.T) {
 			//Success Case
 			name:       "ModulePresent",
 			modulename: "ModuleB",
-			content:    dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}},
-			wantErr:    nil,
+			content: v1alpha2.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "DeviceA",
+				},
+			},
+			// content:    dttype.MembershipUpdate{AddDevices: []dttype.Device{{ID: "DeviceA", Name: "Router", State: "unknown"}}},
+			wantErr: nil,
 		},
 	}
 	for _, test := range tests {
@@ -279,13 +287,13 @@ func TestGetDevice(t *testing.T) {
 	dtc := &DTContext{
 		DeviceList: &sync.Map{},
 	}
-	var device dttype.Device
-	dtc.DeviceList.Store("DeviceA", "")
-	dtc.DeviceList.Store("DeviceB", &device)
+	var device v1alpha2.Device
+	dtc.DeviceList.Store("default/DeviceA", "")
+	dtc.DeviceList.Store("default/DeviceB", &device)
 	tests := []struct {
 		name     string
 		deviceID string
-		want     *dttype.Device
+		want     *v1alpha2.Device
 		wantBool bool
 	}{
 		{
@@ -298,15 +306,15 @@ func TestGetDevice(t *testing.T) {
 		{
 			//Failure Case-DeviceID present but unable to get device
 			name:     "DeviceError",
-			deviceID: "DeviceA",
+			deviceID: "default/DeviceA",
 			want:     nil,
 			wantBool: false,
 		},
 		{
 			//Success Case
 			name:     "KnownDevice",
-			deviceID: "DeviceB",
-			want:     &dttype.Device{},
+			deviceID: "default/DeviceB",
+			want:     &v1alpha2.Device{},
 			wantBool: true,
 		},
 	}
@@ -327,13 +335,10 @@ func TestGetDevice(t *testing.T) {
 
 //Function TestSend is function to test Send().
 func TestSend(t *testing.T) {
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
+	payload := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "DeviceA",
 		},
 	}
 	content, err := json.Marshal(payload)
@@ -386,13 +391,10 @@ func TestSend(t *testing.T) {
 //TestBuildModelMessage is to test BuildModelMessage().
 func TestBuildModelMessage(t *testing.T) {
 	dtc := &DTContext{}
-	payload := dttype.MembershipUpdate{
-		AddDevices: []dttype.Device{
-			{
-				ID:    "DeviceA",
-				Name:  "Router",
-				State: "unknown",
-			},
+	payload := v1alpha2.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "DeviceA",
 		},
 	}
 	content, err := json.Marshal(payload)

@@ -164,7 +164,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			deviceInstanceList, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nil)
 			Expect(err).To(BeNil())
 			for _, device := range deviceInstanceList {
-				IsDeviceDeleted, statusCode := utils.HandleDeviceInstance(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+device.Name, "")
+				IsDeviceDeleted, statusCode := utils.HandleDeviceInstance(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/default/"+device.Name, "")
 				Expect(IsDeviceDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
@@ -176,7 +176,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(IsDeviceModelDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			utils.TwinResult = utils.DeviceTwinResult{}
+			utils.TwinResult = v1alpha2.Device{}
 			// Get current test description
 			testDescription = CurrentGinkgoTestDescription()
 			// Start test timer
@@ -226,22 +226,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 			isEqual := utils.CompareConfigMaps(configMap, utils.NewConfigMapLED(nodeName))
 			Expect(isEqual).Should(Equal(true))
-			go utils.TwinSubscribe(utils.NewLedDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.NewLedDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			stringValue := "ON"
-			expectedTwin := map[string]*utils.MsgTwin{
-				"power-status": {
-					Expected: &utils.TwinValue{
-						Value: &stringValue,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "power-status",
+					Desired: v1alpha2.TwinProperty{
+						Value: stringValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "string",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual = utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual = utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_CREATE_DEVICE_2: Create device instance for bluetooth protocol", func() {
@@ -263,22 +267,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 			isEqual := utils.CompareConfigMaps(configMap, utils.NewConfigMapBluetooth(nodeName))
 			Expect(isEqual).Should(Equal(true))
-			go utils.TwinSubscribe(utils.NewBluetoothDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.NewBluetoothDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			ioData := "1"
-			expectedTwin := map[string]*utils.MsgTwin{
-				"io-data": {
-					Expected: &utils.TwinValue{
-						Value: &ioData,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "io-data",
+					Desired: v1alpha2.TwinProperty{
+						Value: ioData,
+						Metadata: map[string]string{
+							"type": "int",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "int",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual = utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual = utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_CREATE_DEVICE_3: Create device instance for modbus protocol", func() {
@@ -300,22 +308,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 			isEqual := utils.CompareConfigMaps(configMap, utils.NewConfigMapModbus(nodeName))
 			Expect(isEqual).Should(Equal(true))
-			go utils.TwinSubscribe(utils.NewModbusDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.NewModbusDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			stringValue := off
-			expectedTwin := map[string]*utils.MsgTwin{
-				"temperature-enable": {
-					Expected: &utils.TwinValue{
-						Value: &stringValue,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha2.TwinProperty{
+						Value: stringValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "string",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual = utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual = utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_CREATE_DEVICE_4: Create device instance for incorrect device instance", func() {
@@ -349,22 +361,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(err).To(BeNil())
 			isEqual := utils.CompareConfigMaps(configMap, utils.NewConfigMapCustomized(nodeName))
 			Expect(isEqual).Should(Equal(true))
-			go utils.TwinSubscribe(utils.NewCustomizedDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.NewCustomizedDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			stringValue := "OFF"
-			expectedTwin := map[string]*utils.MsgTwin{
-				"temperature-enable": {
-					Expected: &utils.TwinValue{
-						Value: &stringValue,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha2.TwinProperty{
+						Value: stringValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "string",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual = utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual = utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_UPDATE_DEVICE_1: Update device instance for LED device (No Protocol)", func() {
@@ -390,22 +406,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			time.Sleep(2 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedLedDevice)
 			Expect(err).To(BeNil())
-			go utils.TwinSubscribe(utils.UpdatedLedDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.UpdatedLedDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			stringValue := off
-			expectedTwin := map[string]*utils.MsgTwin{
-				"power-status": {
-					Expected: &utils.TwinValue{
-						Value: &stringValue,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "power-status",
+					Desired: v1alpha2.TwinProperty{
+						Value: stringValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "string",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual := utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual := utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_UPDATE_DEVICE_2: Update device instance for bluetooth protocol", func() {
@@ -431,22 +451,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			time.Sleep(2 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedBluetoothDevice)
 			Expect(err).To(BeNil())
-			go utils.TwinSubscribe(utils.UpdatedBluetoothDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.UpdatedBluetoothDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			ioData := "1"
-			expectedTwin := map[string]*utils.MsgTwin{
-				"io-data": {
-					Expected: &utils.TwinValue{
-						Value: &ioData,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "io-data",
+					Desired: v1alpha2.TwinProperty{
+						Value: ioData,
+						Metadata: map[string]string{
+							"type": "int",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "int",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual := utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual := utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_UPDATE_DEVICE_3: Update device instance for modbus protocol", func() {
@@ -472,22 +496,26 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			time.Sleep(2 * time.Second)
 			_, err := utils.GetDevice(&deviceList, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, &updatedModbusDevice)
 			Expect(err).To(BeNil())
-			go utils.TwinSubscribe(utils.UpdatedModbusDeviceInstance(nodeName).Name)
+			go utils.TwinSubscribe("default/" + utils.UpdatedModbusDeviceInstance(nodeName).Name)
 			Eventually(func() bool {
-				return utils.TwinResult.Twin != nil
+				return utils.TwinResult.Status.Twins != nil
 			}, "20s", "2s").Should(Equal(true), "Device information not reaching edge!!")
 			stringValue := "ON"
-			expectedTwin := map[string]*utils.MsgTwin{
-				"temperature-enable": {
-					Expected: &utils.TwinValue{
-						Value: &stringValue,
+			expectedTwin := []v1alpha2.Twin{
+				{
+					PropertyName: "temperature-enable",
+					Desired: v1alpha2.TwinProperty{
+						Value: stringValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
-					Metadata: &utils.TypeMetadata{
-						Type: "string",
+					Reported: v1alpha2.TwinProperty{
+						Value: "unknown",
 					},
 				},
 			}
-			isEqual := utils.CompareTwin(utils.TwinResult.Twin, expectedTwin)
+			isEqual := utils.CompareTwin(utils.TwinResult.Status.Twins, expectedTwin)
 			Expect(isEqual).Should(Equal(true))
 		})
 		It("E2E_UPDATE_DEVICE_4: Update device instance for incorrect device instance", func() {
@@ -544,8 +572,6 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(IsDeviceCreated).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusCreated))
 			time.Sleep(1 * time.Second)
-			statusCode, _ = utils.GetConfigmap(ctx.Cfg.K8SMasterForKubeEdge + ConfigmapHandler + "/" + "device-profile-config-" + nodeName)
-			Expect(statusCode).Should(Equal(http.StatusOK))
 			IsDeviceDeleted, statusCode := utils.HandleDeviceInstance(http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeviceInstanceHandler, nodeName, "/"+utils.NewLedDeviceInstance(nodeName).Name, "")
 			Expect(IsDeviceDeleted).Should(BeTrue())
 			Expect(statusCode).Should(Equal(http.StatusOK))
@@ -593,7 +619,7 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 				Expect(IsDeviceModelDeleted).Should(BeTrue())
 				Expect(statusCode).Should(Equal(http.StatusOK))
 			}
-			utils.TwinResult = utils.DeviceTwinResult{}
+			utils.TwinResult = v1alpha2.Device{}
 			// Get current test description
 			testDescription = CurrentGinkgoTestDescription()
 			// Start test timer
@@ -634,12 +660,20 @@ var _ = Describe("Device Management test in E2E scenario", func() {
 			Expect(statusCode).Should(Equal(http.StatusCreated))
 			newLedDevice := utils.NewLedDeviceInstance(nodeName)
 			time.Sleep(3 * time.Second)
-			var deviceTwinUpdateMessage utils.DeviceTwinUpdate
+			var deviceTwinUpdateMessage v1alpha2.Device
 			reportedValue := off
-			deviceTwinUpdateMessage.Twin = map[string]*utils.MsgTwin{
-				"power-status": {Actual: &utils.TwinValue{Value: &reportedValue}, Metadata: &utils.TypeMetadata{Type: "string"}},
+			deviceTwinUpdateMessage.Status.Twins = []v1alpha2.Twin{
+				{
+					PropertyName: "power-status",
+					Reported: v1alpha2.TwinProperty{
+						Value: reportedValue,
+						Metadata: map[string]string{
+							"type": "string",
+						},
+					},
+				},
 			}
-			err := utils.ChangeTwinValue(deviceTwinUpdateMessage, utils.NewLedDeviceInstance(nodeName).Name)
+			err := utils.ChangeTwinValue(deviceTwinUpdateMessage, "default/"+utils.NewLedDeviceInstance(nodeName).Name)
 			Expect(err).To(BeNil())
 			time.Sleep(3 * time.Second)
 			newLedDevice = utils.NewLedDeviceInstance(nodeName)

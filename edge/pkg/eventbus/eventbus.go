@@ -106,6 +106,7 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		}
 		operation := accessInfo.GetOperation()
 		resource := accessInfo.GetResource()
+		klog.Infof("||||||||||||||||||||||| event bus 收到了的 operation是%s, topic is %s", operation, resource)
 		switch operation {
 		case messagepkg.OperationSubscribe:
 			eb.subscribe(resource)

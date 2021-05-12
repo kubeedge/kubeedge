@@ -70,21 +70,6 @@ func TestDTModule_InitWorker(t *testing.T) {
 			},
 		},
 		{
-			name: dtcommon.DeviceModule,
-			fields: fields{
-				Name: dtcommon.DeviceModule,
-			},
-			want: DeviceWorker{
-				Worker: Worker{
-					ReceiverChan:  recvCh,
-					ConfirmChan:   confirmCh,
-					HeartBeatChan: heartBearCh,
-					DTContexts:    ctx,
-				},
-				Group: dtcommon.DeviceModule,
-			},
-		},
-		{
 			name: dtcommon.CommModule,
 			fields: fields{
 				Name: dtcommon.CommModule,

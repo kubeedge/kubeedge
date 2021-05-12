@@ -37,16 +37,16 @@ func (dm *DTModule) InitWorker(recv chan interface{}, confirm chan interface{}, 
 				DTContexts:    dtContext,
 			},
 		}
-	case dtcommon.DeviceModule:
-		dm.Worker = dtmanager.DeviceWorker{
-			Group: dtcommon.DeviceModule,
-			Worker: dtmanager.Worker{
-				ReceiverChan:  recv,
-				ConfirmChan:   confirm,
-				HeartBeatChan: heartBeat,
-				DTContexts:    dtContext,
-			},
-		}
+	//case dtcommon.DeviceModule:
+	//	dm.Worker = dtmanager.DeviceWorker{
+	//		Group: dtcommon.DeviceModule,
+	//		Worker: dtmanager.Worker{
+	//			ReceiverChan:  recv,
+	//			ConfirmChan:   confirm,
+	//			HeartBeatChan: heartBeat,
+	//			DTContexts:    dtContext,
+	//		},
+	//	}
 	case dtcommon.CommModule:
 		dm.Worker = dtmanager.CommWorker{
 			Group: dtcommon.CommModule,
