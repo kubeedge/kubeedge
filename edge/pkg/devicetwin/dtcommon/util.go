@@ -15,10 +15,10 @@ func ValidateValue(valueType string, value string) error {
 		return nil
 	case "string":
 		return nil
-	case "int":
+	case "int", "integer":
 		_, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return errors.New("the value is not int")
+			return errors.New("the value is not int or integer")
 		}
 		return nil
 	case "float":

@@ -49,7 +49,7 @@ func TestValidateValue(t *testing.T) {
 		name:      "ValidateValueIntErrorCase",
 		valueType: "int",
 		value:     "test",
-		wantErr:   errors.New("the value is not int"),
+		wantErr:   errors.New("the value is not int or integer"),
 	}, {
 		// float error
 		name:      "ValidateValueFloatErrorCase",
