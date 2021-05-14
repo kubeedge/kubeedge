@@ -624,7 +624,7 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomeInformer,
+func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomInformer,
 	crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 

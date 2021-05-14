@@ -35,7 +35,7 @@ import (
 
 type newInformer func() cache.SharedIndexInformer
 
-type KubeEdgeCustomeInformer interface {
+type KubeEdgeCustomInformer interface {
 	EdgeNode() cache.SharedIndexInformer
 }
 
@@ -43,7 +43,7 @@ type Manager interface {
 	GetK8sInformerFactory() k8sinformer.SharedInformerFactory
 	GetCRDInformerFactory() crdinformers.SharedInformerFactory
 	GetDynamicSharedInformerFactory() dynamicinformer.DynamicSharedInformerFactory
-	KubeEdgeCustomeInformer
+	KubeEdgeCustomInformer
 	Start(stopCh <-chan struct{})
 }
 
