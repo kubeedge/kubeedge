@@ -35,6 +35,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachineryType "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
@@ -698,6 +699,10 @@ func (uc *UpstreamController) updateNode() {
 					klog.Warningf("message: %s process failure with error: %s, name: %s", msg.GetID(), err, name)
 					continue
 				}
+				// update node labels
+				for key, value := range noderequest.Labels {
+					getNode.Labels[key] = value
+				}
 
 				if getNode.Annotations == nil {
 					klog.Warningf("node annotations is nil map, new a map for it. namespace: %s, name: %s", getNode.Namespace, getNode.Name)
@@ -706,7 +711,12 @@ func (uc *UpstreamController) updateNode() {
 				for k, v := range noderequest.Annotations {
 					getNode.Annotations[k] = v
 				}
-				node, err := uc.kubeClient.CoreV1().Nodes().Update(context.Background(), getNode, metaV1.UpdateOptions{})
+				byteNode, err := json.Marshal(getNode)
+				if err != nil {
+					klog.Warningf("marshal node data failed with err: %s", err)
+					continue
+				}
+				node, err := uc.kubeClient.CoreV1().Nodes().Patch(context.Background(), getNode.Name, apimachineryType.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
