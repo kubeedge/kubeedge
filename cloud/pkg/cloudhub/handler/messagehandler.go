@@ -446,10 +446,20 @@ func (mh *MessageHandle) MessageWriteLoop(info *model.HubInfo, stopServe chan Ex
 		copyMsg := deepcopy(msg)
 		trimMessage(copyMsg)
 
+		// initialize timer and retry count for sending message
+		var (
+			retry                       = 0
+			retryInterval time.Duration = 2
+		)
+
 		for {
 			conn, ok := mh.nodeConns.Load(info.NodeID)
 			if !ok {
-				time.Sleep(time.Second * 2)
+				if retry == 1 {
+					break
+				}
+				retry++
+				time.Sleep(time.Second * retryInterval)
 				continue
 			}
 			err := mh.sendMsg(conn.(hubio.CloudHubIO), info, copyMsg, msg, nodeStore)
