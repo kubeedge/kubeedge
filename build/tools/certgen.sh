@@ -36,8 +36,21 @@ genCsr() {
 
 genCert() {
     local name=$1
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
-    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    if  [ -z "$2" ] ;then
+        openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+        -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    else
+        index=1
+        SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
+        for ip in $2; do
+            SUBJECTALTNAME="${SUBJECTALTNAME},"
+            index=$(($index+1))
+            SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
+        done
+        echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
+        openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+        -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256 -extfile /tmp/server-extfile.cnf
+    fi
 }
 
 genCertAndKey() {
@@ -82,6 +95,26 @@ stream() {
     openssl x509 -req -in ${STREAM_CSR_FILE} -CA ${K8SCA_FILE} -CAkey ${K8SCA_KEY_FILE} -CAcreateserial -out ${STREAM_CRT_FILE} -days 5000 -sha256 -extfile /tmp/server-extfile.cnf
     #verify
     openssl x509 -in ${STREAM_CRT_FILE} -text -noout
+}
+
+proxyServer(){
+    if [ -z "$1" ] ;then
+        echo "proxy server IP does not exist"
+        exist -1
+    fi
+    ensureFolder
+    ensureCA
+    local name=proxy-server serverIPs=$1
+    genCsr $name
+    genCert $name $serverIPs
+}
+
+proxyAgent(){
+    ensureFolder
+    ensureCA
+    local name=proxy-agent
+    genCsr $name
+    genCert $name
 }
 
 buildSecret() {

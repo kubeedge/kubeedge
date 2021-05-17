@@ -1,31 +1,39 @@
 
 # EdgeSite: Cluster at edge
 
-## install proxy to access kube-apiserver in other subnet.
-### 1.generate certs for proxy, you need set the proxy server ip
-```console
-cd vendor/sigs.k8s.io/apiserver-network-proxy
-make certs PROXY_SERVER_IP=<your proxy server ip>
-```
+install proxy to access kube-apiserver in other subnet.
 
-### 2.copy the certs to your proxy-server and proxy-agent host. you need set the proxy server ip and proxy-agent ip.
-```bash
-scp -r ./certs <proxy_server_ip>:/root
-scp -r ./certs <proxy_agent_ip>:/root
-```
+## Install proxy-server
 
-### 3.start proxy-server and proxy-agent
-#### Start **proxy-server**
+1. generate certs for proxy and start proxy-server, you need set the proxy server ip
 
-- as a kubernetes pod with following configuration
-```bash
-kubectl apply -f {your kubeedge dir}/build/edgesite/proxy-server.yaml
-```
+   ```bash
+   cd vendor/sigs.k8s.io/apiserver-network-proxy; \
+   sh certgen.sh proxyServer <your proxy server ip>; \
+   kubectl apply -f ./examples/accessK8SByProxy/proxy-server.yaml
+   ```
 
-#### Start **proxy-agent**
+## Install proxy-agent
 
-- as a kubernetes pod with following configuration, you need set the proxy server ip and kube-apiserver ip.
-```bash
-cd build/edgesite
-PROXY_SERVER_IP=<your proxy server ip> KUBE_APISERVER_IP=<your kube-apiserver ip>  envsubst < ./proxy-agent.yaml | kubectl apply -f -
-```
+1. generate certs for proxy in the host installed proxy-server.  You need set the proxy server ip.
+
+   ```bash
+   cd vendor/sigs.k8s.io/apiserver-network-proxy; \
+   sh certgen.sh proxyAgent
+   ```
+
+2. copy **ca.crt**  file to the path **/etc/kubeedge/edgesite**  and  copy **proxy-agent.key**、**proxy-agent.crt** file to the path **/etc/kubeedge/cert** of your proxy-agent host . For example,
+
+   ```bash
+   scp ca.crt <proxy_agent_ip>:/etc/kubeedge/ca; \
+   scp proxy-agent.key proxy-agent.crt <proxy_agent_ip>:/etc/kubeedge/cert
+   ```
+
+3. start proxy-agent
+
+   ```bash
+   cd vendor/sigs.k8s.io/apiserver-network-proxy
+   PROXY_SERVER_IP=<your proxy server ip> KUBE_APISERVER_IP=<your kube-apiserver ip>  envsubst < ./examples/accessK8SByProxy/proxy-agent.yaml | kubectl apply -f -
+   ```
+
+   
