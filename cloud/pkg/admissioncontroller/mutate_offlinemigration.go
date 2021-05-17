@@ -9,15 +9,10 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const (
-	Exists    = "Exists"
-	NoExecute = "NoExecute"
-)
-
 type patchMapValue struct {
-	Op    string              `json:"op"`
-	Path  string              `json:"path"`
-	Value []map[string]string `json:"value,omitempty"`
+	Op    string        `json:"op"`
+	Path  string        `json:"path"`
+	Value []interface{} `json:"value,omitempty"`
 }
 
 func mutateOfflineMigration(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
@@ -49,28 +44,25 @@ func mutateOfflineMigration(review admissionv1beta1.AdmissionReview) *admissionv
 }
 
 func generatePatch(tolerations []corev1.Toleration) []patchMapValue {
-	patch := []patchMapValue{{
-		Op:   "add",
-		Path: "/spec/template/spec/tolerations",
-		Value: []map[string]string{{
-			"key":      corev1.TaintNodeUnreachable,
-			"operator": Exists,
-			"effect":   NoExecute,
-		}},
-	}}
-	if len(tolerations) > 0 {
-		for _, toleration := range tolerations {
-			if toleration.Key == corev1.TaintNodeUnreachable {
-				if toleration.Effect == "NoExecute" &&
-					toleration.Operator == "Exists" && toleration.TolerationSeconds == nil {
-					return nil
-				}
-				toleration.TolerationSeconds = nil
-				patch[0].Op = "replace"
-			}
+	currentTolerations := make([]interface{}, 0, len(tolerations)+1)
+	for _, v := range tolerations {
+		if v.Key == corev1.TaintNodeUnreachable {
+			continue
 		}
+		currentTolerations = append(currentTolerations, v)
 	}
-
+	currentTolerations = append(currentTolerations, corev1.Toleration{
+		Key:      corev1.TaintNodeUnreachable,
+		Operator: corev1.TolerationOpExists,
+		Effect:   corev1.TaintEffectNoExecute,
+	})
+	patch := []patchMapValue{
+		{
+			Op:    "replace",
+			Path:  "/spec/tolerations",
+			Value: currentTolerations,
+		},
+	}
 	return patch
 }
 
