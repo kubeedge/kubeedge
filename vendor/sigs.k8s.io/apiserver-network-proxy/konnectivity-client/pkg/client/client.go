@@ -160,7 +160,7 @@ func (t *grpcTunnel) Dial(protocol, address string) (net.Conn, error) {
 		return nil, errors.New("protocol not supported")
 	}
 
-	random := rand.Int63()
+	random := rand.Int63() /* #nosec G404 */
 	resCh := make(chan dialResult)
 	t.pendingDialLock.Lock()
 	t.pendingDial[random] = resCh

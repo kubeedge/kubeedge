@@ -42,6 +42,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.7.1
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -68,8 +69,9 @@ require (
 	k8s.io/kubelet v0.19.10
 	k8s.io/kubernetes v1.19.10
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	sigs.k8s.io/yaml v1.2.0
 	sigs.k8s.io/apiserver-network-proxy v0.0.16
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
