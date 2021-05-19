@@ -43,7 +43,7 @@ type KubeEdgeInstTool struct {
 	TarballPath           string
 }
 
-// InstallTools downloads KubeEdge for the specified verssion
+// InstallTools downloads KubeEdge for the specified version
 // and makes the required configuration changes and initiates edgecore.
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())

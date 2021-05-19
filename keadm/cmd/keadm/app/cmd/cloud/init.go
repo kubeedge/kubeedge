@@ -103,6 +103,9 @@ func addJoinOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.TarballPath, types.TarballPath, initOpts.TarballPath,
 		"Use this key to set the temp directory path for KubeEdge tarball, if not exist, download it")
+
+	cmd.Flags().StringVar(&initOpts.CloudCoreRunMode, types.CloudCoreRunMode, initOpts.CloudCoreRunMode,
+		"Use this key to run cloudcore in container mode")
 }
 
 //Add2ToolsList Reads the flagData (containing val and default val) and join options to fill the list of tools.
@@ -141,9 +144,11 @@ func Add2ToolsList(toolList map[string]types.ToolsInstaller, flagData map[string
 		AdvertiseAddress: initOptions.AdvertiseAddress,
 		DNSName:          initOptions.DNS,
 		TarballPath:      initOptions.TarballPath,
+		CloudCoreRunMode: initOptions.CloudCoreRunMode,
 	}
 	toolList["Kubernetes"] = &util.K8SInstTool{
-		Common: common,
+		Common:           common,
+		CloudCoreRunMode: initOptions.CloudCoreRunMode,
 	}
 	return nil
 }
