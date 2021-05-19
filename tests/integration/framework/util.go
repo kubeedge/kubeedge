@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"k8s.io/klog/v2"
+
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
@@ -23,7 +25,7 @@ import (
 // registerModules register all the modules
 func registerModules(i interface{}) {
 	switch c := i.(type) {
-	case cloudconfig.CloudCoreConfig:
+	case *cloudconfig.CloudCoreConfig:
 		cloudhub.Register(c.Modules.CloudHub)
 		edgecontroller.Register(c.Modules.EdgeController)
 		devicecontroller.Register(c.Modules.DeviceController)
@@ -31,7 +33,7 @@ func registerModules(i interface{}) {
 		cloudstream.Register(c.Modules.CloudStream)
 		router.Register(c.Modules.Router)
 		dynamiccontroller.Register(c.Modules.DynamicController)
-	case edgeconfig.EdgeCoreConfig:
+	case *edgeconfig.EdgeCoreConfig:
 		devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 		//edged.Register(c.Modules.Edged)
 		edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
@@ -43,19 +45,21 @@ func registerModules(i interface{}) {
 		test.Register(c.Modules.DBTest)
 		// Note: Need to put it to the end, and wait for all models to register before executing
 		dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
+	default:
+		klog.Error("unsupport config type!")
 	}
 }
 
 func DisableAllModules(i interface{}) {
 	switch config := i.(type) {
-	case cloudconfig.CloudCoreConfig:
+	case *cloudconfig.CloudCoreConfig:
 		config.Modules.EdgeController.Enable = false
 		config.Modules.Router.Enable = false
 		config.Modules.DynamicController.Enable = false
 		config.Modules.CloudHub.Enable = false
 		config.Modules.CloudStream.Enable = false
 		config.Modules.SyncController.Enable = false
-	case edgeconfig.EdgeCoreConfig:
+	case *edgeconfig.EdgeCoreConfig:
 		config.Modules.Edged.Enable = false
 		config.Modules.DBTest.Enable = false
 		config.Modules.DeviceTwin.Enable = false
@@ -66,5 +70,7 @@ func DisableAllModules(i interface{}) {
 		config.Modules.ServiceBus.Enable = false
 		config.Modules.MetaManager.MetaServer.Enable = false
 		config.Modules.EdgeMesh.Enable = false
+	default:
+		klog.Fatal("unsupport config type")
 	}
 }

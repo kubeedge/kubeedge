@@ -39,6 +39,7 @@ if [[ $# -eq 0 ]]; then
     export KUBEEDGE_ROOT=$KUBEEDGE_ROOT
     ./appdeployment/appdeployment.test $debugflag 2>&1 | tee -a /tmp/testcase.log
     ./device/device.test  $debugflag  2>&1 | tee -a /tmp/testcase.log
+    ./metaserver/metaserver.test $debugflag  2>&1 | tee -a /tmp/testcase.log
 else
     ./$compilemodule/$compilemodule.test $debugflag $runtest 2>&1 | tee -a /tmp/testcase.log
 fi
