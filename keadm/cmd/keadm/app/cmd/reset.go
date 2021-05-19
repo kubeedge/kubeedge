@@ -67,7 +67,7 @@ func NewKubeEdgeReset(out io.Writer, reset *common.ResetOptions) *cobra.Command 
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			whoRunning, err := util.RunningModule()
+			whoRunning, err := util.RunningModule(reset)
 			if err != nil {
 				return err
 			}
@@ -185,4 +185,6 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 	cmd.Flags().BoolVar(&resetOpts.Force, "force", resetOpts.Force,
 		"Reset the node without prompting for confirmation")
+	cmd.Flags().StringVar(&resetOpts.CloudCoreRunMode, common.CloudCoreRunMode, resetOpts.CloudCoreRunMode,
+		"User this key to determine cloudcore running mode, eg: container")
 }

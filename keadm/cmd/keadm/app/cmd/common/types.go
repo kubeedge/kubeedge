@@ -30,6 +30,7 @@ type InitOptions struct {
 	AdvertiseAddress string
 	DNS              string
 	TarballPath      string
+	CloudCoreRunMode string
 }
 
 //JoinOptions has the kubeedge cloud init information filled by CLI
@@ -72,8 +73,9 @@ type CollectOptions struct {
 }
 
 type ResetOptions struct {
-	Kubeconfig string
-	Force      bool
+	Kubeconfig       string
+	Force            bool
+	CloudCoreRunMode string
 }
 
 type GettokenOptions struct {

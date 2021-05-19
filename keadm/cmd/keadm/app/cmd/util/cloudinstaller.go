@@ -17,6 +17,7 @@ type KubeCloudInstTool struct {
 	AdvertiseAddress string
 	DNSName          string
 	TarballPath      string
+	CloudCoreRunMode string
 }
 
 // InstallTools downloads KubeEdge for the specified version
@@ -25,18 +26,20 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	opts := &types.InstallOptions{
-		TarballPath:   cu.TarballPath,
-		ComponentType: types.CloudCore,
-	}
+	if !cu.IsCloudCoreRunningAsContainer() {
+		opts := &types.InstallOptions{
+			TarballPath:   cu.TarballPath,
+			ComponentType: types.CloudCore,
+		}
 
-	err := cu.InstallKubeEdge(*opts)
-	if err != nil {
-		return err
+		err := cu.InstallKubeEdge(*opts)
+		if err != nil {
+			return err
+		}
 	}
 
 	//This makes sure the path is created, if it already exists also it is fine
-	err = os.MkdirAll(KubeEdgeConfigDir, os.ModePerm)
+	err := os.MkdirAll(KubeEdgeConfigDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("not able to create %s folder path", KubeEdgeConfigDir)
 	}
@@ -71,8 +74,21 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	return nil
 }
 
-// RunCloudCore starts cloudcore process
-func (cu *KubeCloudInstTool) RunCloudCore() error {
+func (cu *KubeCloudInstTool) RunCloudCoreContainer() error {
+	// start cloudcore image container
+	containerCommand := "for resource in $(ls *.yaml); do kubectl create -f $resource; done"
+	containerCmd := NewCommand(containerCommand)
+	if err := containerCmd.Exec(); err != nil {
+		// if run cloudcore failed, clean kubeedge namespace
+		if err := cu.cleanNameSpace(constants.SystemNamespace, cu.KubeConfig); err != nil {
+			return fmt.Errorf("fail to clean kubeedge namespace, err:%v", err)
+		}
+		return err
+	}
+	return nil
+}
+
+func (cu *KubeCloudInstTool) RunCloudCoreBinary() error {
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
@@ -106,15 +122,31 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 	return nil
 }
 
-// TearDown method will remove the edge node from api-server and stop cloudcore process
+//RunCloudCore starts cloudcore process
+func (cu *KubeCloudInstTool) RunCloudCore() error {
+	if cu.IsCloudCoreRunningAsContainer() {
+		return cu.RunCloudCoreContainer()
+	}
+	return cu.RunCloudCoreBinary()
+}
+
+// IsCloudCoreRunningAsContainer determine whether cloudcore running in the container mode
+func (cu *KubeCloudInstTool) IsCloudCoreRunningAsContainer() bool {
+	return cu.CloudCoreRunMode == types.CloudCoreContainerRunMode
+}
+
+//TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudInstTool) TearDown() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	// Kill cloudcore process
-	if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
-		return err
+	if !cu.IsCloudCoreRunningAsContainer() {
+		//Kill cloudcore process
+		if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
+			return err
+		}
 	}
+
 	// clean kubeedge namespace
 	err := cu.cleanNameSpace(constants.SystemNamespace, cu.KubeConfig)
 	if err != nil {

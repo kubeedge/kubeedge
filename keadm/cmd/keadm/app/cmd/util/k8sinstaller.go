@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
 //K8SInstTool embeds Common struct and contains the default K8S version and
@@ -39,6 +40,11 @@ import (
 //It implements ToolsInstaller interface
 type K8SInstTool struct {
 	Common
+	CloudCoreRunMode string
+}
+
+func (ks *K8SInstTool) IsCloudCoreRunningAsContainer() bool {
+	return ks.CloudCoreRunMode == types.CloudCoreContainerRunMode
 }
 
 //InstallTools sets the OS interface, checks if K8S installation is required or not.
@@ -46,15 +52,25 @@ type K8SInstTool struct {
 func (ks *K8SInstTool) InstallTools() error {
 	ks.SetOSInterface(GetOSInterface())
 
-	cloudCoreRunning, err := ks.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
-	if err != nil {
-		return err
-	}
-	if cloudCoreRunning {
-		return fmt.Errorf("CloudCore is already running on this node, please run reset to clean up first")
+	if ks.IsCloudCoreRunningAsContainer() {
+		cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.SystemNamespace, ks.KubeConfig)
+		if err != nil {
+			return err
+		}
+		if cloudCoreRunning {
+			return fmt.Errorf("CloudCore is already running on this node, please run reset to clean up first")
+		}
+	} else {
+		cloudCoreRunning, err := ks.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
+		if err != nil {
+			return err
+		}
+		if cloudCoreRunning {
+			return fmt.Errorf("CloudCore is already running on this node, please run reset to clean up first")
+		}
 	}
 
-	err = ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
+	err := ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
 	if err != nil {
 		return err
 	}

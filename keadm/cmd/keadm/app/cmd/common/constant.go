@@ -67,7 +67,9 @@ const (
 
 	AdvertiseAddress = "advertise-address"
 
-	TokenSecretName = "tokensecret"
+	CloudCoreRunMode          = "cloudcore-run-mode"
+	CloudCoreContainerRunMode = "container"
+	TokenSecretName           = "tokensecret"
 
 	TokenDataName = "tokendata"
 
