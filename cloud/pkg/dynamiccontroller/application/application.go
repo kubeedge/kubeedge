@@ -95,6 +95,7 @@ type Application struct {
 
 	count     uint64 // count the number of current citations
 	countLock sync.Mutex
+	tim       time.Time // record the last closing time of application, only make sense when count == 0
 	//TODO: add lock
 }
 
@@ -120,6 +121,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		cancel:    cancel,
 		count:     0,
 		countLock: sync.Mutex{},
+		tim:       time.Time{},
 	}
 	app.add()
 	return app
@@ -239,10 +241,20 @@ func (a *Application) Close() {
 		return
 	}
 
+	a.tim = time.Now()
 	a.count--
 	if a.count == 0 {
 		a.Status = Completed
 	}
+}
+
+func (a *Application) LastCloseTime() time.Time {
+	a.countLock.Lock()
+	defer a.countLock.Unlock()
+	if a.count == 0 && !a.tim.Equal(time.Time{}) {
+		return a.tim
+	}
+	return time.Time{}
 }
 
 // used for generating application and do apply
@@ -253,7 +265,9 @@ type Agent struct {
 
 // edged config.Config.HostnameOverride
 func NewApplicationAgent(nodeName string) *Agent {
-	return &Agent{nodeName: nodeName}
+	agent := Agent{nodeName: nodeName}
+	go agent.GC()
+	return &agent
 }
 
 func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
@@ -326,7 +340,16 @@ func (a *Agent) doApply(app *Application) {
 }
 
 func (a *Agent) GC() {
-
+	time.AfterFunc(time.Minute, func() {
+		a.Applications.Range(func(key, value interface{}) bool {
+			app := value.(*Application)
+			lastCloseTime := app.LastCloseTime()
+			if !lastCloseTime.Equal(time.Time{}) && time.Since(lastCloseTime) >= time.Minute*5 {
+				a.Applications.Delete(key)
+			}
+			return true
+		})
+	})
 }
 
 type Center struct {
