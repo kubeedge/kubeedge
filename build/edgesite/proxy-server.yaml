@@ -11,14 +11,14 @@ spec:
     imagePullPolicy: IfNotPresent
     command: [ "/proxy-server"]
     args: [
-      "--cluster-ca-cert=/root/certs/agent/issued/ca.crt",
-      "--cluster-cert=/root/certs/agent/issued/proxy-master.crt",
-      "--cluster-key=/root/certs/agent/private/proxy-master.key",
+      "--cluster-ca-cert=/root/ca/rootCA.crt",
+      "--cluster-cert=/root/certs/proxy-server.crt",
+      "--cluster-key=/root/certs/proxy-server.key",
       "--mode=http-connect",
       "--proxy-strategies=destHost",
-      "--server-ca-cert=/root/certs/master/issued/ca.crt",
-      "--server-cert=/root/certs/master/issued/proxy-master.crt",
-      "--server-key=/root/certs/master/private/proxy-master.key",
+      "--server-ca-cert=/root/ca/rootCA.crt",
+      "--server-cert=/root/certs/proxy.crt",
+      "--server-key=/root/certs/proxy.key",
       ]
     ports:
     - name: serverport
@@ -37,7 +37,12 @@ spec:
     # 容器内路径
     - mountPath: /root/certs   
       name: certs
+    - mountPath: /root/ca
+      name: ca
   volumes:
   - name: certs
     hostPath:
-      path: /root/certs
+      path: /etc/kubeedge/certs
+  - name: ca
+    hostPath:
+      path: /etc/kubeedge/ca

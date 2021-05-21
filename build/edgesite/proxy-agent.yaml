@@ -11,17 +11,22 @@ spec:
     imagePullPolicy: IfNotPresent
     command: [ "/proxy-agent"]
     args: [
-      "--ca-cert=/root/certs/agent/issued/ca.crt",
-      "--agent-cert=/root/certs/agent/issued/proxy-agent.crt",
-      "--agent-key=/root/certs/agent/private/proxy-agent.key",
+      "--ca-cert=/root/ca/rootCA.crt",
+      "--agent-cert=/root/certs/proxy-agent.crt",
+      "--agent-key=/root/certs/proxy-agent.key",
       "--proxy-server-host=${PROXY_SERVER_IP}",
       "--agent-identifiers=host=${KUBE_APISERVER_IP}",
       ]
     volumeMounts:
     # 容器内路径
-    - mountPath: /root/certs   
+    - mountPath: /root/certs
       name: certs
+    - mountPath: /root/ca
+      name: ca
   volumes:
   - name: certs
     hostPath:
-      path: /root/certs
+      path: /etc/kubeedge/certs
+  - name: ca
+    hostPath:
+      path: /etc/kubeedge/ca
