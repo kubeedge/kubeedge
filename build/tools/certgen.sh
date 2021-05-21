@@ -112,19 +112,6 @@ opts(){
   echo ${IPS[*]}
 }
 
-proxy(){
-    serverIPs="$(opts $*)"
-    if [[ $serverIPs == *"Usage:"* ]];then
-        echo $serverIPs
-        exit 1
-    fi
-    local name=proxy
-    ensureFolder
-    ensureCA
-    genCsr $name
-    genCert $name $serverIPs
-}
-
 proxyServer(){
     serverIPs="$(opts $*)"
     if [[ $serverIPs == *"Usage:"* ]];then
@@ -136,6 +123,8 @@ proxyServer(){
     ensureCA
     genCsr $name
     genCert $name $serverIPs
+    genCsr proxy
+    genCert proxy $serverIPs
 }
 
 
