@@ -48,11 +48,6 @@ mock_gen:
 	mockgen sigs.k8s.io/apiserver-network-proxy/proto/agent AgentService_ConnectServer > proto/agent/mocks/agent_mock.go
 	cat hack/go-license-header.txt proto/agent/mocks/agent_mock.go > proto/agent/mocks/agent_mock.licensed.go
 	mv proto/agent/mocks/agent_mock.licensed.go proto/agent/mocks/agent_mock.go
-
-.PHONY: test
-test:
-	GO111MODULE=on go test -race sigs.k8s.io/apiserver-network-proxy/...
-
 ## --------------------------------------
 ## Binaries
 ## --------------------------------------
@@ -68,23 +63,6 @@ bin/proxy-agent: proto/agent/agent.pb.go konnectivity-client/proto/client/client
 
 bin/proxy-server: proto/agent/agent.pb.go konnectivity-client/proto/client/client.pb.go bin cmd/server/main.go
 	GO111MODULE=on go build -o bin/proxy-server cmd/server/main.go
-
-## --------------------------------------
-## Linting
-## --------------------------------------
-
-.PHONY: lint
-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(INSTALL_LOCATION) v$(GOLANGCI_LINT_VERSION)
-	$(INSTALL_LOCATION)/golangci-lint run --no-config --disable-all --enable=gofmt,golint,gosec --fix --verbose --timeout 3m
-
-## --------------------------------------
-## Go
-## --------------------------------------
-
-.PHONY: mod-download
-mod-download:
-	go mod download
 
 ## --------------------------------------
 ## Proto
@@ -158,90 +136,6 @@ certs: easy-rsa-master cfssl cfssljson
 	cp -r easy-rsa-master/agent/pki/private certs/agent
 	cp -r easy-rsa-master/agent/pki/issued certs/agent
 	cp easy-rsa-master/agent/pki/ca.crt certs/agent/issued
-
-## --------------------------------------
-## Docker
-## --------------------------------------
-
-.PHONY: docker-build
-docker-build: docker-build/proxy-agent docker-build/proxy-server
-
-.PHONY: docker-push
-docker-push: docker-push/proxy-agent docker-push/proxy-server
-
-.PHONY: docker-build/proxy-agent
-docker-build/proxy-agent: cmd/agent/main.go proto/agent/agent.pb.go
-	@[ "${TAG}" ] || ( echo "TAG is not set"; exit 1 )
-	echo "Building proxy-agent for ${ARCH}"
-	${DOCKER_CMD} build . --build-arg ARCH=$(ARCH) -f artifacts/images/agent-build.Dockerfile -t ${AGENT_FULL_IMAGE}-$(ARCH):${TAG}
-
-.PHONY: docker-push/proxy-agent
-docker-push/proxy-agent: docker-build/proxy-agent
-	@[ "${DOCKER_CMD}" ] || ( echo "DOCKER_CMD is not set"; exit 1 )
-	${DOCKER_CMD} push ${AGENT_FULL_IMAGE}-$(ARCH):${TAG}
-
-.PHONY: docker-build/proxy-server
-docker-build/proxy-server: cmd/server/main.go proto/agent/agent.pb.go
-	@[ "${TAG}" ] || ( echo "TAG is not set"; exit 1 )
-	echo "Building proxy-server for ${ARCH}"
-	${DOCKER_CMD} build . --build-arg ARCH=$(ARCH) -f artifacts/images/server-build.Dockerfile -t ${SERVER_FULL_IMAGE}-$(ARCH):${TAG}
-
-.PHONY: docker-push/proxy-server
-docker-push/proxy-server: docker-build/proxy-server
-	@[ "${DOCKER_CMD}" ] || ( echo "DOCKER_CMD is not set"; exit 1 )
-	${DOCKER_CMD} push ${SERVER_FULL_IMAGE}-$(ARCH):${TAG}
-
-## --------------------------------------
-## Docker — All ARCH
-## --------------------------------------
-
-.PHONY: docker-build-all
-docker-build-all: $(addprefix docker-build/proxy-agent-,$(ALL_ARCH)) $(addprefix docker-build/proxy-server-,$(ALL_ARCH))
-
-.PHONY: docker-push-all
-docker-push-all: $(addprefix docker-push/proxy-agent-,$(ALL_ARCH)) $(addprefix docker-push/proxy-server-,$(ALL_ARCH))
-	$(MAKE) docker-push-manifest/proxy-agent
-	$(MAKE) docker-push-manifest/proxy-server
-
-docker-build/proxy-agent-%:
-	$(MAKE) ARCH=$* docker-build/proxy-agent
-
-docker-push/proxy-agent-%:
-	$(MAKE) ARCH=$* docker-push/proxy-agent
-
-docker-build/proxy-server-%:
-	$(MAKE) ARCH=$* docker-build/proxy-server
-
-docker-push/proxy-server-%:
-	$(MAKE) ARCH=$* docker-push/proxy-server
-
-
-.PHONY: docker-push-manifest/proxy-agent
-docker-push-manifest/proxy-agent: ## Push the fat manifest docker image.
-	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
-	${DOCKER_CMD} manifest create --amend $(AGENT_FULL_IMAGE):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(AGENT_FULL_IMAGE)\-&:$(TAG)~g")
-	@for arch in $(ALL_ARCH); do ${DOCKER_CMD} manifest annotate --arch $${arch} ${AGENT_FULL_IMAGE}:${TAG} ${AGENT_FULL_IMAGE}-$${arch}:${TAG}; done
-	${DOCKER_CMD} manifest push --purge $(AGENT_FULL_IMAGE):$(TAG)
-
-.PHONY: docker-push-manifest/proxy-server
-docker-push-manifest/proxy-server: ## Push the fat manifest docker image.
-	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
-	${DOCKER_CMD} manifest create --amend $(SERVER_FULL_IMAGE):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(SERVER_FULL_IMAGE)\-&:$(TAG)~g")
-	@for arch in $(ALL_ARCH); do ${DOCKER_CMD} manifest annotate --arch $${arch} ${SERVER_FULL_IMAGE}:${TAG} ${SERVER_FULL_IMAGE}-$${arch}:${TAG}; done
-	${DOCKER_CMD} manifest push --purge $(SERVER_FULL_IMAGE):$(TAG)
-
-## --------------------------------------
-## Release
-## --------------------------------------
-
-.PHONY: release-staging
-release-staging: ## Builds and push container images to the staging bucket.
-	REGISTRY=$(STAGING_REGISTRY) $(MAKE) docker-push-all release-alias-tag
-
-.PHONY: release-alias-tag
-release-alias-tag: # Adds the tag to the last build tag. BASE_REF comes from the cloudbuild.yaml
-	gcloud container images add-tag $(AGENT_FULL_IMAGE):$(TAG) $(AGENT_FULL_IMAGE):$(BASE_REF)
-	gcloud container images add-tag $(SERVER_FULL_IMAGE):$(TAG) $(SERVER_FULL_IMAGE):$(BASE_REF)
 
 ## --------------------------------------
 ## Cleanup / Verification
