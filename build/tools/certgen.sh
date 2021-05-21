@@ -35,14 +35,14 @@ genCsr() {
 }
 
 genCert() {
-    local name=$1
-    if  [ -z "$2" ] ;then
+    local name=$1 IPs=(${@:2})
+    if  [ -z "$IPs" ] ;then
         openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
         -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
     else
         index=1
         SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
-        for ip in $2; do
+        for ip in ${IPs[*]}; do
             SUBJECTALTNAME="${SUBJECTALTNAME},"
             index=$(($index+1))
             SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
@@ -97,17 +97,47 @@ stream() {
     openssl x509 -in ${STREAM_CRT_FILE} -text -noout
 }
 
-proxyServer(){
-    if [ -z "$1" ] ;then
-        echo "proxy server IP does not exist"
-        exist -1
+opts(){
+  usage() { echo "Usage: $0 [-i] ip1,ip2,..."; exit; }
+  local OPTIND
+  while getopts ':i:h' opt; do
+    case $opt in
+        i) IFS=','
+           IPS=($OPTARG)
+           ;;
+        h) usage;;
+        ?) usage;;
+    esac
+  done
+  echo ${IPS[*]}
+}
+
+proxy(){
+    serverIPs="$(opts $*)"
+    if [[ $serverIPs == *"Usage:"* ]];then
+        echo $serverIPs
+        exit 1
     fi
+    local name=proxy
     ensureFolder
     ensureCA
-    local name=proxy-server serverIPs=$1
     genCsr $name
     genCert $name $serverIPs
 }
+
+proxyServer(){
+    serverIPs="$(opts $*)"
+    if [[ $serverIPs == *"Usage:"* ]];then
+        echo $serverIPs
+        exit 1
+    fi
+    local name=proxy-server
+    ensureFolder
+    ensureCA
+    genCsr $name
+    genCert $name $serverIPs
+}
+
 
 proxyAgent(){
     ensureFolder
