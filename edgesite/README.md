@@ -5,10 +5,10 @@ install proxy to access kube-apiserver in other subnet.
 
 ## Install proxy-server
 
-1. generate certs for proxy and start proxy-server, you need set the proxy server ip
+1. generate certs for proxy and start proxy-server, you need set the proxy server ip. certs will 
 
    ```bash
-   sh build/tools/certgen.sh proxyServer -i <proxy_server_ip1>[,proxy_server_ip2,...]; \
+   bash build/tools/certgen.sh proxyServer -i <proxy_server_ip1>[,proxy_server_ip2,...]; \
    kubectl apply -f build/edgesite/proxy-server.yaml
    ```
 
@@ -17,14 +17,15 @@ install proxy to access kube-apiserver in other subnet.
 1. generate certs for proxy in the host installed proxy-server.  You need set the proxy server ip.
 
    ```bash
-   sh build/tools/certgen.sh proxyAgent
+   bash build/tools/certgen.sh proxyAgent
    ```
    
-2. copy **ca.crt**  file to the path **/etc/kubeedge/ca** and  copy **proxy-agent.key、proxy-agent.crt** file to the path **/etc/kubeedge/certs** of your proxy-agent host . For example,
+2. copy **rootCA.crt**  file to the path **/etc/kubeedge/ca** and  copy **proxy-agent.key、proxy-agent.crt** file to the path **/etc/kubeedge/certs** of your proxy-agent host . For example,
 
    ```bash
-   scp ca.crt <proxy_agent_ip>:/etc/kubeedge/ca; \
-   scp proxy-agent.key proxy-agent.crt <proxy_agent_ip>:/etc/kubeedge/certs
+   # create a folder /etc/kubeedge/ca and /etc/kubeedge/certs in advance
+   scp /etc/kubeedge/ca/rootCA.crt <account>@<proxy_agent_ip>:/etc/kubeedge/ca/; \
+   scp /etc/kubeedge/certs/proxy-agent.key /etc/kubeedge/certs/proxy-agent.crt <account>@<proxy_agent_ip>:/etc/kubeedge/certs/
    ```
 
 3. start proxy-agent
