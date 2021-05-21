@@ -159,4 +159,4 @@ $(pr -T -o 4 ${certPath}/${name}.key)
 EOF
 }
 
-$1 $2
+$@
