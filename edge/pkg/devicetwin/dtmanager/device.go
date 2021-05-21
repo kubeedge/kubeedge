@@ -86,7 +86,12 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if !ok {
 		return nil, nil
 	}
-	if strings.Compare("online", updatedDevice.State) != 0 && strings.Compare("offline", updatedDevice.State) != 0 && strings.Compare("unknown", updatedDevice.State) != 0 {
+
+	// state refers to definition in mappers-go/pkg/common/const.go
+	state := strings.ToLower(updatedDevice.State)
+	switch state {
+	case "online", "offline", "ok", "unknown", "disconnected":
+	default:
 		return nil, nil
 	}
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
@@ -113,7 +118,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 
-	msgResource := "device/" + device.ID + "/state"
+	msgResource := "device/" + device.ID + dtcommon.DeviceETStateUpdateSuffix
 	context.Send(deviceID,
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
