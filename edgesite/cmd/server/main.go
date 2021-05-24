@@ -53,6 +53,8 @@ import (
 
 var udsListenerLock sync.Mutex
 
+const grpcMode = "grpc"
+
 func main() {
 	// flag.CommandLine.Parse(os.Args[1:])
 	proxy := &Proxy{}
@@ -228,7 +230,7 @@ func (o *ProxyRunOptions) Validate() error {
 			return fmt.Errorf("error checking cluster CA cert %s, got %v", o.clusterCaCert, err)
 		}
 	}
-	if o.mode != "grpc" && o.mode != "http-connect" {
+	if o.mode != grpcMode && o.mode != "http-connect" {
 		return fmt.Errorf("mode must be set to either 'grpc' or 'http-connect' not %q", o.mode)
 	}
 	if o.udsName != "" {
@@ -322,7 +324,7 @@ func newProxyRunOptions() *ProxyRunOptions {
 		clusterCert:               "",
 		clusterKey:                "",
 		clusterCaCert:             "",
-		mode:                      "grpc",
+		mode:                      grpcMode,
 		udsName:                   "",
 		deleteUDSFile:             false,
 		serverPort:                8090,
@@ -470,7 +472,7 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *ProxyRunOptions, s *s
 		}
 	}
 	var stop StopFunc
-	if o.mode == "grpc" {
+	if o.mode == grpcMode {
 		grpcServer := grpc.NewServer()
 		client.RegisterProxyServiceServer(grpcServer, s)
 		lis, err := getUDSListener(ctx, o.udsName)
@@ -549,7 +551,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *ProxyRunOptions, s *
 
 	addr := fmt.Sprintf(":%d", o.serverPort)
 
-	if o.mode == "grpc" {
+	if o.mode == grpcMode {
 		serverOption := grpc.Creds(credentials.NewTLS(tlsConfig))
 		grpcServer := grpc.NewServer(serverOption)
 		client.RegisterProxyServiceServer(grpcServer, s)
