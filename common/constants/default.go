@@ -94,6 +94,7 @@ const (
 	DefaultQueryNodeWorkers                  = 4
 	DefaultUpdateNodeWorkers                 = 4
 	DefaultDeletePodWorkers                  = 4
+	DefaultUpdateRuleStatusWorkers           = 4
 
 	DefaultUpdatePodStatusBuffer            = 1024
 	DefaultUpdateNodeStatusBuffer           = 1024

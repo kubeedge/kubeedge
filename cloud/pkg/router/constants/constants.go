@@ -5,4 +5,5 @@ const (
 	RestEndpoint     string = "rest"
 	EventbusProvider string = "eventbus"
 	EventbusEndpoint string = "eventbus"
+	GroupResource    string = "resource"
 )
