@@ -22,11 +22,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Direction string
-
 const (
 	namespace = "konnectivity_network_proxy"
 	subsystem = "server"
+
+	// Proxy is the ProxyService method used to handle incoming streams.
+	Proxy = "Proxy"
+
+	// Connect is the AgentService method used to establish next hop.
+	Connect = "Connect"
 )
 
 var (
@@ -40,6 +44,7 @@ var (
 // ServerMetrics includes all the metrics of the proxy server.
 type ServerMetrics struct {
 	latencies *prometheus.HistogramVec
+	connections *prometheus.GaugeVec
 }
 
 // newServerMetrics create a new ServerMetrics, configured with default metric names.
@@ -54,8 +59,21 @@ func newServerMetrics() *ServerMetrics {
 		},
 		[]string{},
 	)
+	connections := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "grpc_connections",
+			Help:      "Number of current grpc connections, partitioned by service method.",
+		},
+		[]string{
+			"service_method",
+		},
+	)
+	
 	prometheus.MustRegister(latencies)
-	return &ServerMetrics{latencies: latencies}
+	prometheus.MustRegister(connections)
+	return &ServerMetrics{latencies: latencies, connections: connections}
 }
 
 // Reset resets the metrics.
@@ -66,4 +84,14 @@ func (a *ServerMetrics) Reset() {
 // ObserveDialLatency records the latency of dial to the remote endpoint.
 func (a *ServerMetrics) ObserveDialLatency(elapsed time.Duration) {
 	a.latencies.WithLabelValues().Observe(elapsed.Seconds())
+}
+
+// ConnectionInc increments a new grpc client connection.
+func (a *ServerMetrics) ConnectionInc(service_method string) {
+	a.connections.With(prometheus.Labels{"service_method": service_method}).Inc()
+}
+
+// ConnectionDec decrements a finished grpc client connection.
+func (a *ServerMetrics) ConnectionDec(service_method string) {
+	a.connections.With(prometheus.Labels{"service_method": service_method}).Dec()
 }

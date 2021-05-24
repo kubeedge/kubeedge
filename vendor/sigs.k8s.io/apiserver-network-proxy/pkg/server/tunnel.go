@@ -113,7 +113,7 @@ func (t *Tunnel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err = backend.Send(packet); err != nil {
-			klog.V(2).InfoS("failed to send close request packet", "host", r.Host, "agentID", connection.agentID, "connID", connection.connectID)
+			klog.V(2).InfoS("failed to send close request packet", "host", r.Host, "agentID", connection.agentID, "connectionID", connection.connectID)
 		}
 		conn.Close()
 	}()

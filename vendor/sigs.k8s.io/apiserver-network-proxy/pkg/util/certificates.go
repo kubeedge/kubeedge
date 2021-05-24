@@ -39,18 +39,21 @@ func getCACertPool(caFile string) (*x509.CertPool, error) {
 }
 
 // GetClientTLSConfig returns tlsConfig based on x509 certs
-func GetClientTLSConfig(caFile, certFile, keyFile, serverName string) (*tls.Config, error) {
+func GetClientTLSConfig(caFile, certFile, keyFile, serverName string, protos []string) (*tls.Config, error) {
 	certPool, err := getCACertPool(caFile)
 	if err != nil {
 		return nil, err
 	}
 
+	tlsConfig := &tls.Config{
+		RootCAs:    certPool,
+		MinVersion: tls.VersionTLS12,
+	}
+	if len(protos) != 0 {
+		tlsConfig.NextProtos = protos
+	}
 	if certFile == "" && keyFile == "" {
 		// return TLS config based on CA only
-		tlsConfig := &tls.Config{
-			RootCAs:    certPool,
-			MinVersion: tls.VersionTLS12,
-		}
 		return tlsConfig, nil
 	}
 
@@ -59,11 +62,7 @@ func GetClientTLSConfig(caFile, certFile, keyFile, serverName string) (*tls.Conf
 		return nil, fmt.Errorf("failed to load X509 key pair %s and %s: %v", certFile, keyFile, err)
 	}
 
-	tlsConfig := &tls.Config{
-		ServerName:   serverName,
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      certPool,
-		MinVersion:   tls.VersionTLS12,
-	}
+	tlsConfig.ServerName = serverName
+	tlsConfig.Certificates = []tls.Certificate{cert}
 	return tlsConfig, nil
 }

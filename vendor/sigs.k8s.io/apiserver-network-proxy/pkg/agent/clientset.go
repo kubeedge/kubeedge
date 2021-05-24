@@ -18,6 +18,7 @@ package agent
 
 import (
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -43,6 +44,9 @@ type ClientSet struct {
 	// proxy server.
 	probeInterval time.Duration // The interval by which the agent
 	// periodically checks if its connections to the proxy server is ready.
+	syncIntervalCap time.Duration // The maximum interval
+	// for the syncInterval to back off to when unable to connect to the proxy server
+
 	dialOptions []grpc.DialOption
 	// file path contains service account token
 	serviceAccountTokenPath string
@@ -114,6 +118,7 @@ type ClientSetConfig struct {
 	AgentIdentifiers        string
 	SyncInterval            time.Duration
 	ProbeInterval           time.Duration
+	SyncIntervalCap         time.Duration
 	DialOptions             []grpc.DialOption
 	ServiceAccountTokenPath string
 }
@@ -126,6 +131,7 @@ func (cc *ClientSetConfig) NewAgentClientSet(stopCh <-chan struct{}) *ClientSet 
 		address:                 cc.Address,
 		syncInterval:            cc.SyncInterval,
 		probeInterval:           cc.ProbeInterval,
+		syncIntervalCap:         cc.SyncIntervalCap,
 		dialOptions:             cc.DialOptions,
 		serviceAccountTokenPath: cc.ServiceAccountTokenPath,
 		stopCh:                  stopCh,
@@ -138,11 +144,11 @@ func (cs *ClientSet) newAgentClient() (*Client, int, error) {
 
 func (cs *ClientSet) resetBackoff() *wait.Backoff {
 	return &wait.Backoff{
-		Steps:    3,
+		Steps:    math.MaxInt32,
 		Jitter:   0.1,
 		Factor:   1.5,
 		Duration: cs.syncInterval,
-		Cap:      60 * time.Second,
+		Cap:      cs.syncIntervalCap,
 	}
 }
 

@@ -69,6 +69,7 @@ type GrpcProxyAgentOptions struct {
 	// Configuration for connecting to the proxy-server
 	proxyServerHost string
 	proxyServerPort int
+    alpnProtos      []string
 
 	// Ports for the health and admin server
 	healthServerPort int
@@ -102,6 +103,7 @@ func (o *GrpcProxyAgentOptions) Flags() *pflag.FlagSet {
 	flags.StringVar(&o.caCert, "ca-cert", o.caCert, "If non-empty the CAs we use to validate clients.")
 	flags.StringVar(&o.proxyServerHost, "proxy-server-host", o.proxyServerHost, "The hostname to use to connect to the proxy-server.")
 	flags.IntVar(&o.proxyServerPort, "proxy-server-port", o.proxyServerPort, "The port the proxy server is listening on.")
+	flags.StringSliceVar(&o.alpnProtos, "alpn-proto", o.alpnProtos, "Additional ALPN protocols to be presented when connecting to the server. Useful to distinguish between network proxy and apiserver connections that share the same destination address.")
 	flags.IntVar(&o.healthServerPort, "health-server-port", o.healthServerPort, "The port the health server is listening on.")
 	flags.IntVar(&o.adminServerPort, "admin-server-port", o.adminServerPort, "The port the admin server is listening on.")
 	flags.StringVar(&o.agentID, "agent-id", o.agentID, "The unique ID of this agent. Default to a generated uuid if not set.")
@@ -118,6 +120,7 @@ func (o *GrpcProxyAgentOptions) Print() {
 	klog.V(1).Infof("CACert set to %q.\n", o.caCert)
 	klog.V(1).Infof("ProxyServerHost set to %q.\n", o.proxyServerHost)
 	klog.V(1).Infof("ProxyServerPort set to %d.\n", o.proxyServerPort)
+	klog.V(1).Infof("ALPNProtos set to %+s.\n", o.alpnProtos)
 	klog.V(1).Infof("HealthServerPort set to %d.\n", o.healthServerPort)
 	klog.V(1).Infof("AdminServerPort set to %d.\n", o.adminServerPort)
 	klog.V(1).Infof("AgentID set to %s.\n", o.agentID)
@@ -248,7 +251,7 @@ func (a *Agent) run(o *GrpcProxyAgentOptions) error {
 func (a *Agent) runProxyConnection(o *GrpcProxyAgentOptions, stopCh <-chan struct{}) error {
 	var tlsConfig *tls.Config
 	var err error
-	if tlsConfig, err = util.GetClientTLSConfig(o.caCert, o.agentCert, o.agentKey, o.proxyServerHost); err != nil {
+	if tlsConfig, err = util.GetClientTLSConfig(o.caCert, o.agentCert, o.agentKey, o.proxyServerHost, o.alpnProtos); err != nil {
 		return err
 	}
 	dialOption := grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))

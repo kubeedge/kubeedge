@@ -29,6 +29,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 	authv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client"
@@ -37,7 +38,6 @@ import (
 	"sigs.k8s.io/apiserver-network-proxy/pkg/util"
 	"sigs.k8s.io/apiserver-network-proxy/proto/agent"
 	"sigs.k8s.io/apiserver-network-proxy/proto/header"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type key int
@@ -324,6 +324,9 @@ func NewProxyServer(serverID string, proxyStrategies []ProxyStrategy, serverCoun
 
 // Proxy handles incoming streams from gRPC frontend.
 func (s *ProxyServer) Proxy(stream client.ProxyService_ProxyServer) error {
+	metrics.Metrics.ConnectionInc(metrics.Proxy)
+	defer metrics.Metrics.ConnectionDec(metrics.Proxy)
+
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return fmt.Errorf("failed to get context")
@@ -568,7 +571,7 @@ func (s *ProxyServer) authenticateAgentViaToken(ctx context.Context) error {
 		return fmt.Errorf("received token does not have %q prefix", header.AuthenticationTokenContextSchemePrefix)
 	}
 
-	if err := s.validateAuthToken(ctx , strings.TrimPrefix(authContext[0], header.AuthenticationTokenContextSchemePrefix)); err != nil {
+	if err := s.validateAuthToken(ctx, strings.TrimPrefix(authContext[0], header.AuthenticationTokenContextSchemePrefix)); err != nil {
 		return fmt.Errorf("Failed to validate authentication token, err:%v", err)
 	}
 
@@ -578,6 +581,9 @@ func (s *ProxyServer) authenticateAgentViaToken(ctx context.Context) error {
 
 // Connect is for agent to connect to ProxyServer as next hop
 func (s *ProxyServer) Connect(stream agent.AgentService_ConnectServer) error {
+	metrics.Metrics.ConnectionInc(metrics.Connect)
+	defer metrics.Metrics.ConnectionDec(metrics.Connect)
+
 	agentID, err := agentID(stream)
 	if err != nil {
 		return err
@@ -688,7 +694,7 @@ func (s *ProxyServer) serveRecvBackend(backend Backend, stream agent.AgentServic
 			klog.V(5).InfoS("Received data from agent", "bytes", len(resp.Data), "agentID", agentID, "connectionID", resp.ConnectID)
 			frontend, err := s.getFrontend(agentID, resp.ConnectID)
 			if err != nil {
-				klog.ErrorS(err, "could not get frontent client")
+				klog.ErrorS(err, "could not get frontend client", "connectionID", resp.ConnectID)
 				break
 			}
 			if err := frontend.send(pkt); err != nil {
@@ -702,14 +708,14 @@ func (s *ProxyServer) serveRecvBackend(backend Backend, stream agent.AgentServic
 			klog.V(5).InfoS("Received CLOSE_RSP", "connectionID", resp.ConnectID)
 			frontend, err := s.getFrontend(agentID, resp.ConnectID)
 			if err != nil {
-				klog.ErrorS(err, "could not get frontent client")
+				klog.ErrorS(err, "could not get frontend client", "connectionID", resp.ConnectID)
 				break
 			}
 			if err := frontend.send(pkt); err != nil {
 				// Normal when frontend closes it.
-				klog.ErrorS(err, "CLOSE_RSP send to client stream error")
+				klog.ErrorS(err, "CLOSE_RSP send to client stream error", "connectionID", resp.ConnectID)
 			} else {
-				klog.V(5).Infoln("CLOSE_RSP sent to frontend")
+				klog.V(5).Infoln("CLOSE_RSP sent to frontend", "connectionID", resp.ConnectID)
 			}
 			s.removeFrontend(agentID, resp.ConnectID)
 			klog.V(5).InfoS("Close streaming", "agentID", agentID, "connectionID", resp.ConnectID)

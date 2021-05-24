@@ -255,7 +255,6 @@ func (a *Client) Recv() (*client.Packet, error) {
 	pkt, err := a.stream.Recv()
 	if err != nil && err != io.EOF {
 		metrics.Metrics.ObserveFailure(metrics.DirectionFromServer)
-		a.cs.RemoveClient(a.serverID)
 	}
 	return pkt, err
 }
@@ -314,6 +313,7 @@ func (a *Client) initializeAuthContext(ctx context.Context) (context.Context, er
 // The requests include things like opening a connection to a server,
 // streaming data and close the connection.
 func (a *Client) Serve() {
+	defer a.cs.RemoveClient(a.serverID)
 	defer func() {
 		// close all of conns with remote when Client exits
 		for _, connCtx := range a.connManager.List() {
@@ -427,6 +427,7 @@ func (a *Client) Serve() {
 			if ok {
 				ctx.cleanup()
 			} else {
+				klog.V(4).InfoS("Failed to find connection context for close", "connectionID", connID)
 				resp := &client.Packet{
 					Type:    client.PacketType_CLOSE_RSP,
 					Payload: &client.Packet_CloseResponse{CloseResponse: &client.CloseResponse{}},
@@ -455,7 +456,7 @@ func (a *Client) remoteToProxy(connID int64, ctx *connContext) {
 
 	for {
 		n, err := ctx.conn.Read(buf[:])
-		klog.V(4).InfoS("received data from remote", "bytes", n, "connID", connID)
+		klog.V(5).InfoS("received data from remote", "bytes", n, "connectionID", connID)
 
 		if err == io.EOF {
 			klog.V(2).Infoln("connection EOF")
@@ -484,13 +485,14 @@ func (a *Client) proxyToRemote(connID int64, ctx *connContext) {
 		for {
 			n, err := ctx.conn.Write(d[pos:])
 			if err == nil {
-				klog.V(4).InfoS("write to remote", "connID", connID, "lastData", n)
+				klog.V(4).InfoS("write to remote", "connectionID", connID, "lastData", n)
 				break
 			} else if n > 0 {
-				klog.ErrorS(err, "write to remote with failure", "connID", connID, "lastData", n)
+				// https://golang.org/pkg/io/#Writer specifies return non nil error if n < len(d)
+				klog.ErrorS(err, "write to remote with failure", "connectionID", connID, "lastData", n)
 				pos += n
 			} else {
-				klog.ErrorS(err, "conn write failure")
+				klog.ErrorS(err, "conn write failure", "connectionID", connID)
 				return
 			}
 		}
