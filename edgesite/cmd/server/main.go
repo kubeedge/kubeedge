@@ -562,7 +562,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *ProxyRunOptions, s *
 	} else {
 		// http-connect with no tls
 		httpServer := &http.Server{
-			Addr:      ":8088",
+			Addr: ":8088",
 			Handler: &server.Tunnel{
 				Server: s,
 			},
@@ -695,4 +695,3 @@ func (p *Proxy) runHealthServer(o *ProxyRunOptions, server *server.ProxyServer) 
 
 	return nil
 }
-

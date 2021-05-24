@@ -69,7 +69,7 @@ type GrpcProxyAgentOptions struct {
 	// Configuration for connecting to the proxy-server
 	proxyServerHost string
 	proxyServerPort int
-    alpnProtos      []string
+	alpnProtos      []string
 
 	// Ports for the health and admin server
 	healthServerPort int
