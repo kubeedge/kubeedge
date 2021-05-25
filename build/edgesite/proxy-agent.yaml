@@ -18,7 +18,6 @@ spec:
       "--agent-identifiers=host=${KUBE_APISERVER_IP}",
       ]
     volumeMounts:
-    # 容器内路径
     - mountPath: /root/certs
       name: certs
     - mountPath: /root/ca

@@ -34,7 +34,6 @@ spec:
       containerPort: 8095
       hostPort: 8095
     volumeMounts:
-    # 容器内路径
     - mountPath: /root/certs   
       name: certs
     - mountPath: /root/ca
