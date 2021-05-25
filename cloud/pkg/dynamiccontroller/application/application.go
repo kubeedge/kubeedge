@@ -251,7 +251,7 @@ func (a *Application) Close() {
 func (a *Application) LastCloseTime() time.Time {
 	a.countLock.Lock()
 	defer a.countLock.Unlock()
-	if a.count == 0 && !a.tim.Equal(time.Time{}) {
+	if a.count == 0 && !a.tim.IsZero() {
 		return a.tim
 	}
 	return time.Time{}
@@ -344,7 +344,7 @@ func (a *Agent) GC() {
 		a.Applications.Range(func(key, value interface{}) bool {
 			app := value.(*Application)
 			lastCloseTime := app.LastCloseTime()
-			if !lastCloseTime.Equal(time.Time{}) && time.Since(lastCloseTime) >= time.Minute*5 {
+			if !lastCloseTime.IsZero() && time.Since(lastCloseTime) >= time.Minute*5 {
 				a.Applications.Delete(key)
 			}
 			return true
