@@ -152,8 +152,8 @@ ALL_BINARIES_AND_TARGETS=(
   admission:cloud/cmd/admission
   keadm:keadm/cmd/keadm
   edgecore:edge/cmd/edgecore
-  proxy-agent:edgesite/cmd/agent
-  proxy-server:edgesite/cmd/server
+  edgesite-agent:edgesite/cmd/edgesite-agent
+  edgesite-server:edgesite/cmd/edgesite-server
 )
 
 kubeedge::golang::get_target_by_binary() {

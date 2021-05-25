@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: proxy-agent
+  name: edgesite-agent
   namespace: default
 spec:
   hostNetwork: true
   containers:
-  - name: proxy-agent
-    image: liufen90/proxy-agent-amd64:v1.0
+  - name: edgesite-agent
+    image: liufen90/edgesite-agent-amd64:v1.0
     imagePullPolicy: IfNotPresent
-    command: [ "/proxy-agent"]
+    command: [ "/edgesite-agent"]
     args: [
       "--ca-cert=/root/ca/rootCA.crt",
-      "--agent-cert=/root/certs/proxy-agent.crt",
-      "--agent-key=/root/certs/proxy-agent.key",
-      "--proxy-server-host=${PROXY_SERVER_IP}",
+      "--agent-cert=/root/certs/edgesite-agent.crt",
+      "--agent-key=/root/certs/edgesite-agent.key",
+      "--proxy-server-host=${EDGESITE_SERVER_IP}",
       "--agent-identifiers=host=${KUBE_APISERVER_IP}",
       ]
     volumeMounts:

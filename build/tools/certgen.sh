@@ -112,26 +112,26 @@ opts(){
   echo ${IPS[*]}
 }
 
-proxyServer(){
+edgesiteServer(){
     serverIPs="$(opts $*)"
     if [[ $serverIPs == *"Usage:"* ]];then
         echo $serverIPs
         exit 1
     fi
-    local name=proxy-server
+    local name=edgesite-server
     ensureFolder
     ensureCA
     genCsr $name
     genCert $name $serverIPs
-    genCsr proxy
-    genCert proxy $serverIPs
+    genCsr server
+    genCert server $serverIPs
 }
 
 
-proxyAgent(){
+edgesiteAgent(){
     ensureFolder
     ensureCA
-    local name=proxy-agent
+    local name=edgesite-agent
     genCsr $name
     genCert $name
 }

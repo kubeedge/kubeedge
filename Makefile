@@ -9,8 +9,8 @@ GOPATH?=$(shell go env GOPATH)
 BINARIES=cloudcore \
 	admission \
 	edgecore \
-	proxy-agent \
-	proxy-server \
+	edgesite-agent \
+	edgesite-server \
 	keadm
 
 COMPONENTS=cloud \
@@ -284,13 +284,13 @@ edgeimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
-.PHONY: edgesite-proxy-server-image
-edgesite-proxy-server-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t liufen90/proxy-server-${ARCH}:${IMAGE_TAG}
+.PHONY: edgesite-server-image
+edgesite-server-image:
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t liufen90/edgesite-server-${ARCH}:${IMAGE_TAG}
 
-.PHONY: edgesite-proxy-agent-image
-edgesite-proxy-agent-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t liufen90/proxy-agent-${ARCH}:${IMAGE_TAG}
+.PHONY: edgesite-agent-image
+edgesite-agent-image:
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t liufen90/edgesite-agent-${ARCH}:${IMAGE_TAG}
 
 define INSTALL_HELP_INFO
 # install

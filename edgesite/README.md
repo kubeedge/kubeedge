@@ -1,38 +1,38 @@
 
 # EdgeSite: Cluster at edge
 
-install proxy to access kube-apiserver in other subnet.
+install edgesite-server and edgesite-agent to access kube-apiserver in other subnet.
 
-## Install proxy-server
+## Install edgesite-server
 
-1. on proxy-server host, generate certs for proxy-server and start proxy-server, you need to set the proxy server ip.
+1. on edgesite-server host, generate certs for edgesite-server and start edgesite-server, you need to set the edgesite server ip.
 
    ```bash
-   bash build/tools/certgen.sh proxyServer -i <proxy_server_ip1>[,proxy_server_ip2,...]; \
-   kubectl apply -f build/edgesite/proxy-server.yaml
+   bash build/tools/certgen.sh edgesiteServer -i <edgesite_server_ip1>[,edgesite_server_ip2,...]; \
+   kubectl apply -f build/edgesite/edgesite-server.yaml
    ```
 
-## Install proxy-agent
+## Install edgesite-agent
 
-1. generate certs for proxy-agent on the host installed proxy-server.
+1. generate certs for edgesite-agent on the host installed edgesite-server.
 
    ```bash
-   bash build/tools/certgen.sh proxyAgent
+   bash build/tools/certgen.sh edgesiteAgent
    ```
    
-2. copy **rootCA.crt** file and **proxy-agent.key、proxy-agent.crt** files generated in step 1 to your proxy-agent host. 
-Make sure that the /etc/kubeedge/ca/ and /etc/kubeedge/certs directories exist on the proxy-agent host. For example,
+2. copy **rootCA.crt** file and **edgesite-agent.key、edgesite-agent.crt** files generated in step 1 to your edgesite-agent host. 
+Make sure that the /etc/kubeedge/ca/ and /etc/kubeedge/certs directories exist on the edgesite-agent host. For example,
 
    ```bash
-   # precondition: create /etc/kubeedge/ca directory and /etc/kubeedge/certs directory on the host which will install proxy-agent. 
-   scp /etc/kubeedge/ca/rootCA.crt <account>@<proxy_agent_ip>:/etc/kubeedge/ca/; \
-   scp /etc/kubeedge/certs/proxy-agent.key /etc/kubeedge/certs/proxy-agent.crt <account>@<proxy_agent_ip>:/etc/kubeedge/certs/
+   # precondition: create /etc/kubeedge/ca directory and /etc/kubeedge/certs directory on the host which will install edgesite-agent. 
+   scp /etc/kubeedge/ca/rootCA.crt <account>@<edgesite_agent_ip>:/etc/kubeedge/ca/; \
+   scp /etc/kubeedge/certs/edgesite-agent.key /etc/kubeedge/certs/edgesite-agent.crt <account>@<edgesite_agent_ip>:/etc/kubeedge/certs/
    ```
 
-3. start proxy-agent on proxy-agent host.
+3. start edgesite-agent on edgesite-agent host.
 
    ```bash
-   PROXY_SERVER_IP=<proxy_server_ip> KUBE_APISERVER_IP=<kube-apiserver_ip>  envsubst < build/edgesite/proxy-agent.yaml | kubectl apply -f -
+   EDGESITE_SERVER_IP=<edgesite_server_ip> KUBE_APISERVER_IP=<kube-apiserver_ip>  envsubst < build/edgesite/edgesite-agent.yaml | kubectl apply -f -
    ```
    
 

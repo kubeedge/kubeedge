@@ -1,24 +1,24 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: proxy-server
+  name: edgesite-server
   namespace: default
 spec:
   hostNetwork: true
   containers:
-  - name: proxy-server
-    image: liufen90/proxy-server-amd64:v1.1
+  - name: edgesite-server
+    image: liufen90/edgesite-server-amd64:v1.0
     imagePullPolicy: IfNotPresent
-    command: [ "/proxy-server"]
+    command: [ "/edgesite-server"]
     args: [
       "--cluster-ca-cert=/root/ca/rootCA.crt",
-      "--cluster-cert=/root/certs/proxy-server.crt",
-      "--cluster-key=/root/certs/proxy-server.key",
+      "--cluster-cert=/root/certs/edgesite-server.crt",
+      "--cluster-key=/root/certs/edgesite-server.key",
       "--mode=http-connect",
       "--proxy-strategies=destHost",
       "--server-ca-cert=/root/ca/rootCA.crt",
-      "--server-cert=/root/certs/proxy.crt",
-      "--server-key=/root/certs/proxy.key",
+      "--server-cert=/root/certs/server.crt",
+      "--server-key=/root/certs/server.key",
       ]
     ports:
     - name: serverport
