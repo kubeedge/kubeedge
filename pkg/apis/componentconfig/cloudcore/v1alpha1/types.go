@@ -85,7 +85,7 @@ type CloudHub struct {
 	// Enable indicates whether CloudHub is enabled, if set to false (for debugging etc.),
 	// skip checking other CloudHub configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// KeepaliveInterval indicates keep-alive interval (second)
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
@@ -133,7 +133,7 @@ type CloudHub struct {
 type CloudHubQUIC struct {
 	// Enable indicates whether enable quic protocol
 	// default false
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address set server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -149,7 +149,7 @@ type CloudHubQUIC struct {
 type CloudHubUnixSocket struct {
 	// Enable indicates whether enable unix domain socket protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates unix domain socket address
 	// default "unix:///var/lib/kubeedge/kubeedge.sock"
 	Address string `json:"address,omitempty"`
@@ -159,7 +159,7 @@ type CloudHubUnixSocket struct {
 type CloudHubWebSocket struct {
 	// Enable indicates whether enable websocket protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -172,7 +172,7 @@ type CloudHubWebSocket struct {
 type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -186,7 +186,7 @@ type EdgeController struct {
 	// Enable indicates whether EdgeController is enabled,
 	// if set to false (for debugging etc.), skip checking other EdgeController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// NodeUpdateFrequency indicates node update frequency (second)
 	// default 10
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
@@ -319,7 +319,7 @@ type DeviceController struct {
 	// Enable indicates whether deviceController is enabled,
 	// if set to false (for debugging etc.), skip checking other deviceController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Context indicates send,receive,response modules for deviceController module
 	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
@@ -353,7 +353,7 @@ type SyncController struct {
 	// Enable indicates whether syncController is enabled,
 	// if set to false (for debugging etc.), skip checking other syncController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 }
 
 // DynamicController indicates the dynamic controller
@@ -399,7 +399,7 @@ type CloudStream struct {
 
 type Router struct {
 	// default true
-	Enable      bool   `json:"enable,omitempty"`
+	Enable      bool   `json:"enable"`
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
