@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -263,11 +264,18 @@ type Agent struct {
 	nodeName     string
 }
 
+var defaultAgent *Agent
+var once sync.Once
+
 // edged config.Config.HostnameOverride
 func NewApplicationAgent(nodeName string) *Agent {
-	agent := Agent{nodeName: nodeName}
-	go agent.GC()
-	return &agent
+	once.Do(func() {
+		defaultAgent := Agent{nodeName: nodeName}
+		go wait.Until(func() {
+			defaultAgent.GC()
+		}, time.Minute*5, beehiveContext.Done())
+	})
+	return defaultAgent
 }
 
 func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
@@ -340,15 +348,13 @@ func (a *Agent) doApply(app *Application) {
 }
 
 func (a *Agent) GC() {
-	time.AfterFunc(time.Minute, func() {
-		a.Applications.Range(func(key, value interface{}) bool {
-			app := value.(*Application)
-			lastCloseTime := app.LastCloseTime()
-			if !lastCloseTime.IsZero() && time.Since(lastCloseTime) >= time.Minute*5 {
-				a.Applications.Delete(key)
-			}
-			return true
-		})
+	a.Applications.Range(func(key, value interface{}) bool {
+		app := value.(*Application)
+		lastCloseTime := app.LastCloseTime()
+		if !lastCloseTime.IsZero() && time.Since(lastCloseTime) >= time.Minute*5 {
+			a.Applications.Delete(key)
+		}
+		return true
 	})
 }
 
