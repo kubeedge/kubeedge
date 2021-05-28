@@ -94,7 +94,7 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// EncodeCertPEM returns PEM-endcoded certificate data
+// EncodeCertPEM returns PEM-encoded certificate data
 func EncodeCertPEM(cert *x509.Certificate) []byte {
 	block := pem.Block{
 		Type:  certutil.CertificateBlockType,

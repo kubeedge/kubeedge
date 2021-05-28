@@ -168,15 +168,16 @@ func sendToKubeEdge(context, kubeEdgeEndpoint string) (string, error) {
 // extractMessage extracts message
 func extractMessage(context string) (*model.Message, error) {
 	var msg *model.Message
-	if context != "" {
-		err := json.Unmarshal([]byte(context), &msg)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	if context == "" {
 		err := errors.New("failed to extract message with empty context")
 		klog.Errorf("%v", err)
 		return nil, err
 	}
+
+	err := json.Unmarshal([]byte(context), &msg)
+	if err != nil {
+		return nil, err
+	}
+
 	return msg, nil
 }

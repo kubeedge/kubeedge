@@ -92,6 +92,8 @@ func (e *edged) initialNode() (*v1.Node, error) {
 		node.Labels[k] = v
 	}
 
+	e.labels = node.Labels
+
 	if node.Annotations == nil {
 		node.Annotations = make(map[string]string)
 	}
