@@ -1,5 +1,5 @@
 # Build the proxy-agent binary
-FROM golang:1.13.4 as builder
+FROM golang:1.14-alpine3.11 as builder
 
 WORKDIR /go/src/sigs.k8s.io/apiserver-network-proxy
 COPY . /go/src/github.com/kubeedge/kubeedge
