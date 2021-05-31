@@ -286,11 +286,11 @@ edgeimage:
 
 .PHONY: edgesite-server-image
 edgesite-server-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t liufen90/edgesite-server-${ARCH}:${IMAGE_TAG}
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t kubeedge/edgesite-server-${ARCH}:${IMAGE_TAG}
 
 .PHONY: edgesite-agent-image
 edgesite-agent-image:
-	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t liufen90/edgesite-agent-${ARCH}:${IMAGE_TAG}
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
 
 define INSTALL_HELP_INFO
 # install

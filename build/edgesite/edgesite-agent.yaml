@@ -7,7 +7,7 @@ spec:
   hostNetwork: true
   containers:
   - name: edgesite-agent
-    image: liufen90/edgesite-agent-amd64:v1.0
+    image: kubeedge/edgesite-agent-amd64:[YOUR-VERSION]
     imagePullPolicy: IfNotPresent
     command: [ "/edgesite-agent"]
     args: [
