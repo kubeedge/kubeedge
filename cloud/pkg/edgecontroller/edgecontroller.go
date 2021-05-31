@@ -18,7 +18,7 @@ type EdgeController struct {
 	downstream *controller.DownstreamController
 }
 
-func newEdgeController(enable bool) *EdgeController {
+func newEdgeController(enable bool, tunnelPort int) *EdgeController {
 	ec := &EdgeController{enable: enable}
 	if !enable {
 		return ec
@@ -28,6 +28,8 @@ func newEdgeController(enable bool) *EdgeController {
 	if err != nil {
 		klog.Fatalf("new upstream controller failed with error: %s", err)
 	}
+	ec.upstream.TunnelPort = tunnelPort
+
 	ec.downstream, err = controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
 		klog.Fatalf("new downstream controller failed with error: %s", err)
@@ -35,10 +37,10 @@ func newEdgeController(enable bool) *EdgeController {
 	return ec
 }
 
-func Register(ec *v1alpha1.EdgeController) {
+func Register(ec *v1alpha1.EdgeController, commonConfig *v1alpha1.CommonConfig) {
 	// TODO move module config into EdgeController struct @kadisi
 	config.InitConfigure(ec)
-	core.Register(newEdgeController(ec.Enable))
+	core.Register(newEdgeController(ec.Enable, commonConfig.TunnelPort))
 }
 
 // Name of controller

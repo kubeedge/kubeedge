@@ -19,19 +19,29 @@ package v1alpha1
 import (
 	"time"
 
-	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
 type CloudCoreConfig struct {
 	metav1.TypeMeta
+	// CommonConfig indicates common config for all modules
+	// +Required
+	CommonConfig *CommonConfig `json:"commonConfig,omitempty"`
 	// KubeAPIConfig indicates the kubernetes cluster info which cloudCore will connected
 	// +Required
 	KubeAPIConfig *KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
+}
+
+// KubeAPIConfig indicates the configuration for interacting with k8s server
+type CommonConfig struct {
+	// TunnelPort indicates the port that the cloudcore tunnel listened
+	TunnelPort int `json:"tunnelPort,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server

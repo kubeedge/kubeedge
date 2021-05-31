@@ -1,10 +1,18 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"math/rand"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
+	apierror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
@@ -14,16 +22,17 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
-	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
 	"github.com/kubeedge/kubeedge/pkg/util"
@@ -63,7 +72,19 @@ kubernetes controller which manages devices so that the device metadata/status d
 			// To help debugging, immediately log version
 			klog.Infof("Version: %+v", version.Get())
 			client.InitKubeEdgeClient(config.KubeAPIConfig)
+
+			// Negotiate TunnelPort for multi cloudcore instances
+			waitTime := rand.Int31n(10)
+			time.Sleep(time.Duration(waitTime) * time.Second)
+			tunnelport, err := NegotiateTunnelPort()
+			if err != nil {
+				panic(err)
+			}
+
+			config.CommonConfig.TunnelPort = *tunnelport
+
 			gis := informers.GetInformersManager()
+
 			registerModules(config)
 
 			// Start all modules if disable leader election
@@ -99,10 +120,113 @@ kubernetes controller which manages devices so that the device metadata/status d
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudhub.Register(c.Modules.CloudHub)
-	edgecontroller.Register(c.Modules.EdgeController)
+	edgecontroller.Register(c.Modules.EdgeController, c.CommonConfig)
 	devicecontroller.Register(c.Modules.DeviceController)
 	synccontroller.Register(c.Modules.SyncController)
 	cloudstream.Register(c.Modules.CloudStream)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController)
+}
+
+func NegotiateTunnelPort() (*int, error) {
+	kubeClient := client.GetKubeClient()
+	err := httpserver.CreateNamespaceIfNeeded(kubeClient, modules.NamespaceSystem)
+	if err != nil {
+		return nil, errors.New("failed to create system namespace")
+	}
+
+	tunnelPort, err := kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Get(context.TODO(), modules.TunnelPort, metav1.GetOptions{})
+
+	if err != nil && !apierror.IsNotFound(err) {
+		return nil, err
+	}
+
+	localIP := getLocalIP()
+
+	var record options.TunnelPortRecord
+	if err == nil {
+		recordStr, found := tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey]
+		recordBytes := []byte(recordStr)
+		if !found {
+			return nil, errors.New("failed to get tunnel port record")
+		}
+
+		if err := json.Unmarshal(recordBytes, &record); err != nil {
+			return nil, err
+		}
+
+		_, found = record.IPTunnelPort[localIP]
+		if !found {
+			port := negotiatePort(record.Port)
+
+			record.IPTunnelPort[localIP] = port
+			record.Port[port] = true
+
+			recordBytes, err := json.Marshal(record)
+			if err != nil {
+				return nil, err
+			}
+
+			tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
+
+			_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
+			if err != nil {
+				return nil, err
+			}
+
+			return &port, nil
+		}
+	}
+
+	if apierror.IsNotFound(err) {
+		record := options.TunnelPortRecord{
+			IPTunnelPort: map[string]int{
+				localIP: constants.ServerPort,
+			},
+			Port: map[int]bool{
+				constants.ServerPort: true,
+			},
+		}
+		recordBytes, err := json.Marshal(record)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Create(context.TODO(), &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      modules.TunnelPort,
+				Namespace: modules.NamespaceSystem,
+				Annotations: map[string]string{
+					modules.TunnelPortRecordAnnotationKey: string(recordBytes),
+				},
+			},
+		}, metav1.CreateOptions{})
+
+		if err != nil {
+			return nil, err
+		}
+
+		port := constants.ServerPort
+		return &port, nil
+	}
+
+	return nil, nil
+}
+
+func negotiatePort(portRecord map[int]bool) int {
+	for port := constants.ServerPort; ; {
+		if _, found := portRecord[port]; !found {
+			return port
+		}
+		port++
+	}
+}
+
+func getLocalIP() string {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		hostnameOverride = constants.DefaultHostnameOverride
+	}
+	localIP, _ := util.GetLocalIP(hostnameOverride)
+	return localIP
 }
