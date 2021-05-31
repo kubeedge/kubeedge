@@ -41,7 +41,6 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleDeviceController(*c.Modules.DeviceController)...)
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	allErrs = append(allErrs, ValidateModuleDynamicController(*c.Modules.DynamicController)...)
-	allErrs = append(allErrs, ValidateLeaderElectionConfiguration(*c.LeaderElection)...)
 	allErrs = append(allErrs, ValidateModuleCloudStream(*c.Modules.CloudStream)...)
 	return allErrs
 }

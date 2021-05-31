@@ -18,11 +18,9 @@ package v1alpha1
 
 import (
 	"path"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	componentbaseconfig "k8s.io/component-base/config"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -36,6 +34,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
+		},
+		CommonConfig: &CommonConfig{
+			TunnelPort: constants.ServerPort,
 		},
 		KubeAPIConfig: &KubeAPIConfig{
 			Master:      "",
@@ -165,15 +166,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				RestTimeout: 60,
 			},
 		},
-		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect:       false,
-			LeaseDuration:     metav1.Duration{Duration: 15 * time.Second},
-			RenewDeadline:     metav1.Duration{Duration: 10 * time.Second},
-			RetryPeriod:       metav1.Duration{Duration: 2 * time.Second},
-			ResourceLock:      "endpointsleases",
-			ResourceNamespace: constants.KubeEdgeNameSpace,
-			ResourceName:      "cloudcorelease",
-		},
 	}
 	return c
 }
@@ -220,9 +212,6 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				Port:        9443,
 				RestTimeout: 60,
 			},
-		},
-		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect: false,
 		},
 	}
 }
