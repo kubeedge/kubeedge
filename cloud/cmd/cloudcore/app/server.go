@@ -66,14 +66,6 @@ kubernetes controller which manages devices so that the device metadata/status d
 			gis := informers.GetInformersManager()
 			registerModules(config)
 
-			// If leader election is enabled, runCommand via LeaderElector until done and exit.
-			if config.LeaderElection.LeaderElect {
-				electionChecker := kele.NewLeaderReadyzAdaptor(time.Second * 20)
-				hubconfig.Config.Checker = electionChecker
-				kele.Run(config, electionChecker)
-				return
-			}
-
 			// Start all modules if disable leader election
 			core.StartModules()
 			gis.Start(beehiveContext.Done())
