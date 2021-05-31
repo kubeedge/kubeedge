@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edgesite-agent
+  namespace: default
+  labels:
+    app: edgesite-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edgesite-agent
+  template:
+    metadata:
+      labels:
+        app: edgesite-agent
+    spec:
+      hostNetwork: true
+      containers:
+        - name: edgesite-agent
+          image: kubeedge/edgesite-agent-amd64:[YOUR-VERSION]
+          imagePullPolicy: IfNotPresent
+          command: [ "/edgesite-agent"]
+          args: [
+            "--ca-cert=/root/ca/rootCA.crt",
+            "--agent-cert=/root/certs/edgesite-agent.crt",
+            "--agent-key=/root/certs/edgesite-agent.key",
+            "--proxy-server-host=${EDGESITE_SERVER_IP}",
+            "--agent-identifiers=host=${KUBE_APISERVER_IP}",
+          ]
+          volumeMounts:
+            - mountPath: /root/certs
+              name: certs
+            - mountPath: /root/ca
+              name: ca
+      volumes:
+        - name: certs
+          hostPath:
+            path: /etc/kubeedge/certs
+        - name: ca
+          hostPath:
+            path: /etc/kubeedge/ca
