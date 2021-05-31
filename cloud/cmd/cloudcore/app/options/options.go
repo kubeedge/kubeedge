@@ -32,6 +32,11 @@ type CloudCoreOptions struct {
 	ConfigFile string
 }
 
+type TunnelPortRecord struct {
+	IPTunnelPort map[string]int `json:"ipTunnelPort"`
+	Port         map[int]bool   `json:"port"`
+}
+
 func NewCloudCoreOptions() *CloudCoreOptions {
 	return &CloudCoreOptions{
 		ConfigFile: path.Join(constants.DefaultConfigDir, "cloudcore.yaml"),

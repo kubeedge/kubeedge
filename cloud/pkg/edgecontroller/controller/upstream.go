@@ -88,6 +88,7 @@ type UpstreamController struct {
 	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
 	crdClient    crdClientset.Interface
+	TunnelPort   int
 
 	// message channel
 	nodeStatusChan            chan model.Message
@@ -402,6 +403,7 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
+	node.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
@@ -524,6 +526,9 @@ func (uc *UpstreamController) updateNodeStatus() {
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
 
 				getNode.Status = nodeStatusRequest.Status
+
+				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
+
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
