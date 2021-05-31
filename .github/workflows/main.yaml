@@ -69,8 +69,6 @@ jobs:
 
       - run: make smallbuild
 
-      - run: make crossbuild
-
       - run: make crossbuild GOARM=GOARM7
 
   basic_test:

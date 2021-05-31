@@ -23,4 +23,4 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 
-kubeedge::golang::cross_build_place_binaries "$@"
+kubeedge::golang::crossbuild_binaries "$@"

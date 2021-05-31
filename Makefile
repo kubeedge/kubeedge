@@ -40,7 +40,7 @@ define ALL_HELP_INFO
 endef
 .PHONY: all
 ifeq ($(HELP),y)
-all: clean
+all:
 	@echo "$$ALL_HELP_INFO"
 else
 all: verify-golang
@@ -142,27 +142,28 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-CROSSBUILD_COMPONENTS=edgecore\
-	edgesite
-GOARM_VALUES=GOARM7 \
-	GOARM8
+ARCH ?= amd64
+ARCH_VALUES=amd64 \
+     arm \
+     arm64
 
 define CROSSBUILD_HELP_INFO
-# cross build components.
+# Cross build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(CROSSBUILD_COMPONENTS)
-#         If not specified, "everything" will be cross build.
+#   WHAT: binary name to build. support: $(BINARIES)
+#         the build will produce executable files under $(OUT_DIR)/$$ARCH
+#         If not specified, "everything" will be built.
 #
-# GOARM: go arm value, now support:$(GOARM_VALUES)
-#        If not specified ,default use GOARM=GOARM8
+# ARCH: go arch value, now support: $(ARCH_VALUES)
+#       If not specified ,default use ARCH=amd64
 #
 #
 # Example:
 #   make crossbuild
 #   make crossbuild HELP=y
 #   make crossbuild WHAT=edgecore
-#   make crossbuild WHAT=edgecore GOARM=GOARM7
+#   make crossbuild WHAT=edgecore ARCH=amd64
 #
 endef
 .PHONY: crossbuild
@@ -171,26 +172,25 @@ crossbuild:
 	@echo "$$CROSSBUILD_HELP_INFO"
 else
 crossbuild: clean
-	hack/make-rules/crossbuild.sh $(WHAT) $(GOARM)
+	ARCH=$(ARCH) hack/make-rules/crossbuild.sh $(WHAT)
 endif
 
-
-
-SMALLBUILD_COMPONENTS=edgecore \
-	edgesite
 define SMALLBUILD_HELP_INFO
-# small build components.
+# Small build components.
 #
 # Args:
-#   WHAT: Component names to be lint check. support: $(SMALLBUILD_COMPONENTS)
-#         If not specified, "everything" will be small build.
+#   WHAT: binary name to build. support: $(BINARIES)
+#         the build will produce executable files under $(OUT_DIR)/$$ARCH
+#         If not specified, "everything" will be built.
 #
+# ARCH: go arch value, now support: $(ARCH_VALUES)
+#       If not specified ,default use ARCH=amd64
 #
 # Example:
 #   make smallbuild
 #   make smallbuild HELP=y
 #   make smallbuild WHAT=edgecore
-#   make smallbuild WHAT=edgesite
+#   make smallbuild WHAT=edgesite ARCH=amd64
 #
 endef
 .PHONY: smallbuild
@@ -199,7 +199,7 @@ smallbuild:
 	@echo "$$SMALLBUILD_HELP_INFO"
 else
 smallbuild: clean
-	hack/make-rules/smallbuild.sh $(WHAT)
+	ENABLE_SMALLBUILD=YES ARCH=$(ARCH) hack/make-rules/crossbuild.sh $(WHAT)
 endif
 
 

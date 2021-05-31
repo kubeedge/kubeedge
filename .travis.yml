@@ -34,7 +34,7 @@ install: skip
 jobs:
   include:
     - stage: "Test on arm64"
-      name: "build, smallbuild"
+      name: "build"
       arch: arm64
       before_script:
         - export GOFLAGS=-mod=vendor
@@ -42,7 +42,7 @@ jobs:
       script:
         - make
         - make smallbuild
-    - name: "unit test, integration test edge"
+    - name: "unit test"
       arch: arm64
       before_script:
         - export GOFLAGS=-mod=mod
