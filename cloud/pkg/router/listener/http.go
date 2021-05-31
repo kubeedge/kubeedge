@@ -12,9 +12,10 @@ import (
 	"k8s.io/klog/v2"
 
 	routerConfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
 )
+
+const MaxMessageBytes = 12 * (1 << 20)
 
 var (
 	RestHandlerInstance = &RestHandler{}
@@ -123,7 +124,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
 		return
 	}
-	aReaderCloser := http.MaxBytesReader(w, r.Body, constants.MaxmMessageBytes)
+	aReaderCloser := http.MaxBytesReader(w, r.Body, MaxMessageBytes)
 	b, err := ioutil.ReadAll(aReaderCloser)
 	if err != nil {
 		klog.Errorf("request error, write result: %v", err)
@@ -144,9 +145,7 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 
 		v, err := handle(params)
 		if err != nil {
-			//w.WriteHeader(http.StatusInternalServerError)
-			//_, err := w.Write([]byte(err.Error()))
-			//klog.Warningf("operation timeout, msg id: %s, write result: %v", msgID, err)
+			klog.Errorf("handle request error, msg id: %s, err: %v", msgID, err)
 			return
 		}
 		response, ok := v.(*http.Response)

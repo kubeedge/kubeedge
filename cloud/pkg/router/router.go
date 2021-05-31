@@ -14,6 +14,9 @@ import (
 	// init rest
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/rest"
 
+	// init servicebus
+	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/provider/servicebus"
+
 	// init rule
 	_ "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
