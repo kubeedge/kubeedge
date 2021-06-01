@@ -1,6 +1,7 @@
 | title        | authors     | approvers                  | creation-date | last-updated | status    |
 | ------------ | ----------- | -------------------------- | ------------- | ------------ | --------- |
-| Edge Cluster | @WintonChan@liufen90@MesaCrush | @kevin-wangzefeng@fisherxu | 2020-03-17    | 2020-04-14 | Implementing |
+| Edge Cluster | @WintonChan @liufen90 @MesaCrush | @kevin-wangzefeng @fisherxu | 2020-03-17    | 2020-04-14 | Implementing |
+
 
 # Edge cluster
 
@@ -73,27 +74,3 @@ Note:  Clients accessing the cluster on the cloud need to support HTTP proxy.
 - Alpha: v1.7
 - Beta: TBD
 - GA: TBD
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
