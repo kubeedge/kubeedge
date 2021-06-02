@@ -155,27 +155,29 @@ func NegotiateTunnelPort() (*int, error) {
 			return nil, err
 		}
 
-		_, found = record.IPTunnelPort[localIP]
-		if !found {
-			port := negotiatePort(record.Port)
-
-			record.IPTunnelPort[localIP] = port
-			record.Port[port] = true
-
-			recordBytes, err := json.Marshal(record)
-			if err != nil {
-				return nil, err
-			}
-
-			tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
-
-			_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
-			if err != nil {
-				return nil, err
-			}
-
+		port, found := record.IPTunnelPort[localIP]
+		if found {
 			return &port, nil
 		}
+
+		port = negotiatePort(record.Port)
+
+		record.IPTunnelPort[localIP] = port
+		record.Port[port] = true
+
+		recordBytes, err := json.Marshal(record)
+		if err != nil {
+			return nil, err
+		}
+
+		tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey] = string(recordBytes)
+
+		_, err = kubeClient.CoreV1().ConfigMaps(modules.NamespaceSystem).Update(context.TODO(), tunnelPort, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		return &port, nil
 	}
 
 	if apierror.IsNotFound(err) {
@@ -210,7 +212,7 @@ func NegotiateTunnelPort() (*int, error) {
 		return &port, nil
 	}
 
-	return nil, nil
+	return nil, errors.New("failed to negotiate the tunnel port")
 }
 
 func negotiatePort(portRecord map[int]bool) int {
