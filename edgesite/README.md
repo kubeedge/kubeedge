@@ -20,7 +20,7 @@ install edgesite-server and edgesite-agent to access kube-apiserver in other sub
    bash build/tools/certgen.sh edgesiteAgent
    ```
    
-2. copy **rootCA.crt** file and **edgesite-agent.key、edgesite-agent.crt** files generated in step 1 to your edgesite-agent host. 
+2. copy **rootCA.crt** file and **edgesite-agent.key, edgesite-agent.crt** files generated in step 1 to your edgesite-agent host. 
 Make sure that the /etc/kubeedge/ca/ and /etc/kubeedge/certs directories exist on the edgesite-agent host. For example,
 
    ```bash
