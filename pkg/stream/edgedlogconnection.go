@@ -73,10 +73,11 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	stop := make(chan struct{})
 
 	go func() {
+		defer close(stop)
+
 		for mess := range l.ReadChan {
 			if mess.MessageType == MessageTypeRemoveConnect {
 				klog.Infof("receive remove client id %v", mess.ConnectID)
-				close(stop)
 				return
 			}
 		}
@@ -85,7 +86,7 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
 			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
-			if err := msg.WriteTo(tunnel); err != nil {
+			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
 			} else {
 				break
@@ -93,34 +94,32 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	for {
-		select {
-		case <-stop:
-			klog.Infof("receive stop single, so stop logs scan ...")
-			return nil
-		default:
-		}
-		data := make([]byte, 256)
+	go func() {
+		defer close(l.ReadChan)
 
-		n, err := reader.Read(data)
-		if err != nil {
-			if err != io.EOF {
-				klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
+		var data [256]byte
+		for {
+			n, err := reader.Read(data[:])
+			if err != nil {
+				if err != io.EOF {
+					klog.Errorf("%v failed to write log data, err:%v", l.String(), err)
+				}
+				return
 			}
-			break
-		}
-		if n <= 0 {
-			continue
-		}
-		msg := NewMessage(l.MessID, MessageTypeData, data[:n])
 
-		err = msg.WriteTo(tunnel)
-		if err != nil {
-			klog.Errorf("write tunnel message %v error", msg)
-			return err
+			msg := NewMessage(l.MessID, MessageTypeData, data[:n])
+
+			err = tunnel.WriteMessage(msg)
+			if err != nil {
+				klog.Errorf("write tunnel message %v error", msg)
+				return
+			}
+			klog.V(4).Infof("%v write logs %v", l.String(), string(data[:n]))
 		}
-		klog.V(4).Infof("%v write logs %v", l.String(), string(data))
-	}
+	}()
+
+	<-stop
+	klog.Infof("receive stop single, so stop logs scan ...")
 	return nil
 }
 

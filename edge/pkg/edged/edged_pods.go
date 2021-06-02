@@ -41,11 +41,13 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
@@ -76,6 +78,11 @@ const (
 	systemdSuffix = ".slice"
 
 	windows = "windows"
+
+	// Capacity of the channel for storing pods to kill. A small number should
+	// suffice because a goroutine is dedicated to check the channel and does
+	// not block on anything else.
+	podKillingChannelCapacity = 50
 )
 
 // GetActivePods returns non-terminal pods
@@ -227,6 +234,27 @@ func (e *edged) podIsTerminated(pod *v1.Pod) bool {
 	}
 
 	return status.Phase == v1.PodFailed || status.Phase == v1.PodSucceeded || (pod.DeletionTimestamp != nil && notRunning(status.ContainerStatuses))
+}
+
+// One of the following arguments must be non-nil: runningPod, status.
+func (e *edged) killPod(pod *v1.Pod, runningPod *kubecontainer.Pod, status *kubecontainer.PodStatus, gracePeriodOverride *int64) error {
+	var p kubecontainer.Pod
+	if runningPod != nil {
+		p = *runningPod
+	} else if status != nil {
+		p = kubecontainer.ConvertPodStatusToRunningPod(e.containerRuntime.Type(), status)
+	} else {
+		return fmt.Errorf("one of the two arguments must be non-nil: runningPod, status")
+	}
+
+	// Call the container runtime KillPod method which stops all running containers of the pod
+	if err := e.containerRuntime.KillPod(pod, p, gracePeriodOverride); err != nil {
+		return err
+	}
+	if err := e.containerManager.UpdateQOSCgroups(); err != nil {
+		klog.V(2).Infof("Failed to update QoS cgroups while killing pod: %v", err)
+	}
+	return nil
 }
 
 // makePodDataDirs creates the dirs for the pod datas.
@@ -1340,4 +1368,77 @@ func (e *edged) PodResourcesAreReclaimed(pod *v1.Pod, status v1.PodStatus) bool 
 		}
 	}
 	return true
+}
+
+// PodKiller handles requests for killing pods
+type PodKiller interface {
+	// KillPod receives pod speficier representing the pod to kill
+	KillPod(pair *kubecontainer.PodPair)
+	// PerformPodKillingWork performs the actual pod killing work via calling CRI
+	// It returns after its Close() func is called and all outstanding pod killing requests are served
+	PerformPodKillingWork()
+	// After Close() is called, this pod killer wouldn't accept any more pod killing requests
+	Close()
+}
+
+// podKillerWithChannel is an implementation of PodKiller which receives pod killing requests via channel
+type podKillerWithChannel struct {
+	// Channel for getting pods to kill.
+	podKillingCh chan *kubecontainer.PodPair
+	// lock for synchronization between HandlePodCleanups and pod killer
+	podKillingLock *sync.Mutex
+	// killPod is the func which invokes runtime to kill the pod
+	killPod func(pod *v1.Pod, runningPod *kubecontainer.Pod, status *kubecontainer.PodStatus, gracePeriodOverride *int64) error
+}
+
+// NewPodKiller returns a functional PodKiller
+func NewPodKiller(e *edged) PodKiller {
+	podKiller := &podKillerWithChannel{
+		podKillingCh:   make(chan *kubecontainer.PodPair, podKillingChannelCapacity),
+		podKillingLock: &sync.Mutex{},
+		killPod:        e.killPod,
+	}
+	return podKiller
+}
+
+// Close closes the channel through which requests are delivered
+func (pk *podKillerWithChannel) Close() {
+	close(pk.podKillingCh)
+}
+
+// KillPod sends pod killing request to the killer
+func (pk *podKillerWithChannel) KillPod(pair *kubecontainer.PodPair) {
+	pk.podKillingCh <- pair
+}
+
+// PerformPodKillingWork launches a goroutine to kill a pod received from the channel if
+// another goroutine isn't already in action.
+func (pk *podKillerWithChannel) PerformPodKillingWork() {
+	killing := sets.NewString()
+	// guard for the killing set
+	lock := sync.Mutex{}
+	for podPair := range pk.podKillingCh {
+		runningPod := podPair.RunningPod
+		apiPod := podPair.APIPod
+
+		lock.Lock()
+		exists := killing.Has(string(runningPod.ID))
+		if !exists {
+			killing.Insert(string(runningPod.ID))
+		}
+		lock.Unlock()
+
+		if !exists {
+			go func(apiPod *v1.Pod, runningPod *kubecontainer.Pod) {
+				klog.V(2).Infof("Killing unwanted pod %q", runningPod.Name)
+				err := pk.killPod(apiPod, runningPod, nil, nil)
+				if err != nil {
+					klog.Errorf("Failed killing the pod %q: %v", runningPod.Name, err)
+				}
+				lock.Lock()
+				killing.Delete(string(runningPod.ID))
+				lock.Unlock()
+			}(apiPod, runningPod)
+		}
+	}
 }

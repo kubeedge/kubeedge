@@ -18,11 +18,9 @@ package v1alpha1
 
 import (
 	"path"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	componentbaseconfig "k8s.io/component-base/config"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
@@ -36,6 +34,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
+		},
+		CommonConfig: &CommonConfig{
+			TunnelPort: constants.ServerPort,
 		},
 		KubeAPIConfig: &KubeAPIConfig{
 			Master:      "",
@@ -57,6 +58,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				AdvertiseAddress:        []string{advertiseAddress.String()},
 				DNSNames:                []string{""},
 				EdgeCertSigningDuration: 365,
+				TokenRefreshDuration:    12,
 				Quic: &CloudHubQUIC{
 					Enable:             false,
 					Address:            "0.0.0.0",
@@ -93,6 +95,8 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					SecretEvent:                constants.DefaultSecretEventBuffer,
 					ServiceEvent:               constants.DefaultServiceEventBuffer,
 					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
+					RulesEvent:                 constants.DefaultRulesEventBuffer,
+					RuleEndpointsEvent:         constants.DefaultRuleEndpointsEventBuffer,
 					QueryPersistentVolume:      constants.DefaultQueryPersistentVolumeBuffer,
 					QueryPersistentVolumeClaim: constants.DefaultQueryPersistentVolumeClaimBuffer,
 					QueryVolumeAttachment:      constants.DefaultQueryVolumeAttachmentBuffer,
@@ -100,10 +104,11 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
 				},
-				Context: &EdgeControllerContext{
-					SendModule:     metaconfig.ModuleNameCloudHub,
-					ReceiveModule:  metaconfig.ModuleNameEdgeController,
-					ResponseModule: metaconfig.ModuleNameCloudHub,
+				Context: &ControllerContext{
+					SendModule:       metaconfig.ModuleNameCloudHub,
+					SendRouterModule: metaconfig.ModuleNameRouter,
+					ReceiveModule:    metaconfig.ModuleNameEdgeController,
+					ResponseModule:   metaconfig.ModuleNameCloudHub,
 				},
 				Load: &EdgeControllerLoad{
 					UpdatePodStatusWorkers:            constants.DefaultUpdatePodStatusWorkers,
@@ -118,11 +123,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNodeWorkers:                  constants.DefaultQueryNodeWorkers,
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
+					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
 				},
 			},
 			DeviceController: &DeviceController{
 				Enable: true,
-				Context: &DeviceControllerContext{
+				Context: &ControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameDeviceController,
 					ResponseModule: metaconfig.ModuleNameCloudHub,
@@ -139,6 +145,9 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			SyncController: &SyncController{
 				Enable: true,
 			},
+			DynamicController: &DynamicController{
+				Enable: false,
+			},
 			CloudStream: &CloudStream{
 				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
@@ -150,15 +159,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				TLSStreamPrivateKeyFile: constants.DefaultStreamKeyFile,
 				StreamPort:              10003,
 			},
-		},
-		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect:       false,
-			LeaseDuration:     metav1.Duration{Duration: 15 * time.Second},
-			RenewDeadline:     metav1.Duration{Duration: 10 * time.Second},
-			RetryPeriod:       metav1.Duration{Duration: 2 * time.Second},
-			ResourceLock:      "endpointsleases",
-			ResourceNamespace: constants.KubeEdgeNameSpace,
-			ResourceName:      "cloudcorelease",
+			Router: &Router{
+				Enable:      false,
+				Address:     "0.0.0.0",
+				Port:        9443,
+				RestTimeout: 60,
+			},
 		},
 	}
 	return c
@@ -200,9 +206,12 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Address: "0.0.0.0",
 				},
 			},
-		},
-		LeaderElection: &componentbaseconfig.LeaderElectionConfiguration{
-			LeaderElect: false,
+			Router: &Router{
+				Enable:      false,
+				Address:     "0.0.0.0",
+				Port:        9443,
+				RestTimeout: 60,
+			},
 		},
 	}
 }

@@ -10,6 +10,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
       GOPATH: /home/runner/work/${{ github.repository }}
@@ -43,6 +44,7 @@ jobs:
         working-directory: ./src/github.com/${{ github.repository }}
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Multiple build
     steps:
       - name: Install Go
@@ -65,8 +67,6 @@ jobs:
 
       - run: make
 
-      - run: make bluetoothdevice
-
       - run: make smallbuild
 
       - run: make crossbuild
@@ -75,6 +75,7 @@ jobs:
 
   basic_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Unit test, integration test edge
     env:
       GO111MODULE: on
@@ -104,6 +105,7 @@ jobs:
 
   e2e_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: E2e test
     env:
       GO111MODULE: on
@@ -121,7 +123,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go get github.com/onsi/ginkgo/ginkgo
-          command -v kind || go get sigs.k8s.io/kind@v0.9.0
+          go get sigs.k8s.io/kind@v0.9.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
@@ -133,6 +135,7 @@ jobs:
 
   keadm_e2e_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Keadm e2e test
     env:
       GO111MODULE: on
@@ -150,7 +153,7 @@ jobs:
       - name: Install dependences
         run: |
           command -v ginkgo || go get github.com/onsi/ginkgo/ginkgo
-          command -v kind || go get sigs.k8s.io/kind@v0.9.0
+          go get sigs.k8s.io/kind@v0.9.0
           curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
           export RELEASE_VERSION=$(wget -qO - https://kubeedge.io/latestversion | cat)
           sudo wget -qP /etc/kubeedge https://github.com/kubeedge/kubeedge/releases/download/${RELEASE_VERSION}/checksum_kubeedge-${RELEASE_VERSION}-linux-amd64.tar.gz.txt
@@ -166,6 +169,7 @@ jobs:
 
   docker_build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: Multiple docker image build
     steps:
       - name: Install Go
@@ -189,6 +193,6 @@ jobs:
 
       - run: make edgeimage ARCH="amd64"
 
-      - run: make edgesiteimage ARCH="amd64"
+      - run: make edgesite-agent-image ARCH="amd64"
 
-      - run: make bluetoothdevice_image
+      - run: make edgesite-server-image ARCH="amd64"

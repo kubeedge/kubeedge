@@ -9,7 +9,9 @@ onlyLabels: []
 exemptLabels:
   # This label is hardcoded on remind bot (https://probot.github.io/apps/reminders/) and is used by remind bot when
   # issue is being reminded.
-  - reminder
+  # - reminder
+  # This label is added by commenting with "/lifecycle frozen" by anyone
+  - lifecycle/frozen
 
 # Set to true to ignore issues in a project (defaults to false)
 exemptProjects: false

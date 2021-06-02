@@ -396,8 +396,6 @@ func modifyRspPrefix(que *dnsQuestion) (pre []byte) {
 func (h *dnsHeader) convertQueryRsp(isRsp bool) {
 	if isRsp {
 		h.flags |= dnsQR
-	} else {
-		h.flags |= dnsQR
 	}
 }
 
@@ -423,7 +421,7 @@ func (h *dnsHeader) getByteFromDNSHeader() (rspHead []byte) {
 
 	idxTransactionID := unsafe.Sizeof(h.id)
 	idxFlags := unsafe.Sizeof(h.flags) + idxTransactionID
-	idxQDCount := unsafe.Sizeof(h.anCount) + idxFlags
+	idxQDCount := unsafe.Sizeof(h.qdCount) + idxFlags
 	idxANCount := unsafe.Sizeof(h.anCount) + idxQDCount
 	idxNSCount := unsafe.Sizeof(h.nsCount) + idxANCount
 	idxARCount := unsafe.Sizeof(h.arCount) + idxNSCount

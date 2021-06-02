@@ -1,7 +1,7 @@
 ---
 name: Question
 about: Question relating to KubeEdge.
-labels: question
+labels: kind/question
 
 ---
 
@@ -13,29 +13,5 @@ labels: question
 **Anything else we need to know?**:
 
 **Environment**:
-<details><summary>Kubernets Version</summary>
-
-```console
-$ kubectl --version
-# paste output here
-```
-
-</details>
-
-<details><summary>CloudCore Version</summary>
-
-```console
-$ cloudcore --version
-# paste output here
-```
-
-</details>
-
-<details><summary>EdgeCore Version</summary>
-
-```
-$ edgecore --version
-# paste output here
-```
-
-</details>
+- Kubernetes version (use `kubectl version`):
+- KubeEdge version(e.g. `cloudcore --version` and `edgecore --version`):

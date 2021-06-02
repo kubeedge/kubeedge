@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -130,7 +129,10 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	printDetail("Data compressed successfully")
 
 	// delete tmp direction
-	os.RemoveAll(tmpName)
+	if err = os.RemoveAll(tmpName); err != nil {
+		return err
+	}
+
 	printDetail("Remove tmp data finish")
 
 	fmt.Printf("Data collected successfully, path: %s\n", zipName)
@@ -174,27 +176,49 @@ func collectSystemData(tmpPath string) error {
 	}
 
 	// arch info
-	ExecuteShell(common.CmdArchInfo, tmpPath)
+	if err = ExecuteShell(common.CmdArchInfo, tmpPath); err != nil {
+		return err
+	}
 	// cpu info
-	CopyFile(common.PathCpuinfo, tmpPath)
+	if err = CopyFile(common.PathCpuinfo, tmpPath); err != nil {
+		return err
+	}
 	// memory info
-	CopyFile(common.PathMemory, tmpPath)
+	if err = CopyFile(common.PathMemory, tmpPath); err != nil {
+		return err
+	}
 	// diskinfo info
-	ExecuteShell(common.CmdDiskInfo, tmpPath)
+	if err = ExecuteShell(common.CmdDiskInfo, tmpPath); err != nil {
+		return err
+	}
 	// hosts info
-	CopyFile(common.PathHosts, tmpPath)
+	if err = CopyFile(common.PathHosts, tmpPath); err != nil {
+		return err
+	}
 	// resolv info
-	CopyFile(common.PathDNSResolv, tmpPath)
+	if err = CopyFile(common.PathDNSResolv, tmpPath); err != nil {
+		return err
+	}
 	// process info
-	ExecuteShell(common.CmdProcessInfo, tmpPath)
+	if err = ExecuteShell(common.CmdProcessInfo, tmpPath); err != nil {
+		return err
+	}
 	// date info
-	ExecuteShell(common.CmdDateInfo, tmpPath)
+	if err = ExecuteShell(common.CmdDateInfo, tmpPath); err != nil {
+		return err
+	}
 	// uptime info
-	ExecuteShell(common.CmdUptimeInfo, tmpPath)
+	if err = ExecuteShell(common.CmdUptimeInfo, tmpPath); err != nil {
+		return err
+	}
 	// history info
-	ExecuteShell(common.CmdHistorynfo, tmpPath)
+	if err = ExecuteShell(common.CmdHistorynfo, tmpPath); err != nil {
+		return err
+	}
 	// network info
-	ExecuteShell(common.CmdNetworkInfo, tmpPath)
+	if err = ExecuteShell(common.CmdNetworkInfo, tmpPath); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -208,35 +232,59 @@ func collectEdgecoreData(tmpPath string, config *v1alpha1.EdgeCoreConfig, ops *c
 	}
 
 	if config.DataBase.DataSource != "" {
-		CopyFile(config.DataBase.DataSource, tmpPath)
+		if err = CopyFile(config.DataBase.DataSource, tmpPath); err != nil {
+			return err
+		}
 	} else {
-		CopyFile(v1alpha1.DataBaseDataSource, tmpPath)
+		if err = CopyFile(v1alpha1.DataBaseDataSource, tmpPath); err != nil {
+			return err
+		}
 	}
 	if ops.LogPath != "" {
-		CopyFile(ops.LogPath, tmpPath)
+		if err = CopyFile(ops.LogPath, tmpPath); err != nil {
+			return err
+		}
 	} else {
-		CopyFile(util.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath))
+		if err = CopyFile(util.KubeEdgeLogPath, fmt.Sprintf("%s/log", tmpPath)); err != nil {
+			return err
+		}
 	}
 
-	CopyFile(common.PathEdgecoreService, tmpPath)
-	CopyFile(constants.DefaultConfigDir, tmpPath)
+	if err = CopyFile(common.PathEdgecoreService, tmpPath); err != nil {
+		return err
+	}
+	if err = CopyFile(constants.DefaultConfigDir, tmpPath); err != nil {
+		return err
+	}
 
 	if config.Modules.EdgeHub.TLSCertFile != "" && config.Modules.EdgeHub.TLSPrivateKeyFile != "" {
-		CopyFile(config.Modules.EdgeHub.TLSCertFile, tmpPath)
-		CopyFile(config.Modules.EdgeHub.TLSPrivateKeyFile, tmpPath)
+		if err = CopyFile(config.Modules.EdgeHub.TLSCertFile, tmpPath); err != nil {
+			return err
+		}
+		if err = CopyFile(config.Modules.EdgeHub.TLSPrivateKeyFile, tmpPath); err != nil {
+			return err
+		}
 	} else {
 		printDetail(fmt.Sprintf("not found cert config, use default path: %s", tmpPath))
-		CopyFile(common.DefaultCertPath+"/", tmpPath)
+		if err = CopyFile(common.DefaultCertPath+"/", tmpPath); err != nil {
+			return err
+		}
 	}
 
 	if config.Modules.EdgeHub.TLSCAFile != "" {
-		CopyFile(config.Modules.EdgeHub.TLSCAFile, tmpPath)
+		if err = CopyFile(config.Modules.EdgeHub.TLSCAFile, tmpPath); err != nil {
+			return err
+		}
 	} else {
 		printDetail(fmt.Sprintf("not found ca config, use default path: %s", tmpPath))
-		CopyFile(constants.DefaultCAKeyFile, tmpPath)
+		if err = CopyFile(constants.DefaultCAKeyFile, tmpPath); err != nil {
+			return err
+		}
 	}
 
-	ExecuteShell(common.CmdEdgecoreVersion, tmpPath)
+	if err = ExecuteShell(common.CmdEdgecoreVersion, tmpPath); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -248,35 +296,36 @@ func collectRuntimeData(tmpPath string) error {
 		return err
 	}
 
-	CopyFile(common.PathDockerService, tmpPath)
-	ExecuteShell(common.CmdDockerVersion, tmpPath)
-	ExecuteShell(common.CmdDockerInfo, tmpPath)
-	ExecuteShell(common.CmdDockerImageInfo, tmpPath)
-	ExecuteShell(common.CmdContainerInfo, tmpPath)
-	ExecuteShell(common.CmdContainerLogInfo, tmpPath)
+	if err = CopyFile(common.PathDockerService, tmpPath); err != nil {
+		return err
+	}
+
+	cmdStrings := []string{common.CmdDockerVersion, common.CmdDockerInfo, common.CmdDockerImageInfo, common.CmdContainerInfo, common.CmdContainerLogInfo}
+	for _, cmd := range cmdStrings {
+		if err = ExecuteShell(cmd, tmpPath); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func CopyFile(pathSrc, tmpPath string) {
-	c := fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath)
-	printDetail(fmt.Sprintf("Copy File: %s", c))
-	cmd := exec.Command("sh", "-c", c)
-	_, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("fail to copy file:  %s", c)
-		fmt.Printf("Output: %s\n", err.Error())
+func CopyFile(pathSrc, tmpPath string) error {
+	cmd := util.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func ExecuteShell(cmdStr string, tmpPath string) {
-	c := fmt.Sprintf(cmdStr, tmpPath)
-	printDetail(fmt.Sprintf("Execute Shell: %s", c))
-	cmd := exec.Command("sh", "-c", c)
-	_, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("fail to execute Shell: %s\n", c)
-		fmt.Printf("Output: %s\n", err.Error())
+func ExecuteShell(cmdStr string, tmpPath string) error {
+	cmd := util.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
+	if err := cmd.Exec(); err != nil {
+		return err
 	}
+
+	return nil
 }
 
 func printDetail(msg string) {

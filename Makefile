@@ -9,14 +9,15 @@ GOPATH?=$(shell go env GOPATH)
 BINARIES=cloudcore \
 	admission \
 	edgecore \
-	edgesite \
+	edgesite-agent \
+	edgesite-server \
 	keadm
 
 COMPONENTS=cloud \
 	edge
 
 .EXPORT_ALL_VARIABLES:
-OUT_DIR ?= _output
+OUT_DIR ?= _output/local
 
 define ALL_HELP_INFO
 # Build code.
@@ -44,7 +45,7 @@ all: clean
 	@echo "$$ALL_HELP_INFO"
 else
 all: verify-golang
-	hack/make-rules/build.sh $(WHAT)
+	KUBEEDGE_OUTPUT_SUBPATH=$(OUT_DIR) hack/make-rules/build.sh $(WHAT)
 endif
 
 
@@ -82,16 +83,21 @@ define TEST_HELP_INFO
 # Args:
 #   WHAT: Component names to be testd. support: $(COMPONENTS)
 #         If not specified, "everything" will be tested.
+#   PROFILE: Generate profile named as "coverage.out"
 #
 # Example:
 #   make test
 #   make test HELP=y
+#   make test PROFILE=y
 #   make test WHAT=cloud
 endef
 .PHONY: test
 ifeq ($(HELP),y)
 test:
 	@echo "$$TEST_HELP_INFO"
+else ifeq ($(PROFILE),y)
+test: clean
+	PROFILE=coverage.out hack/make-rules/test.sh $(WHAT)
 else
 test: clean
 	hack/make-rules/test.sh $(WHAT)
@@ -137,8 +143,7 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
-CROSSBUILD_COMPONENTS=edgecore\
-	edgesite
+CROSSBUILD_COMPONENTS=edgecore
 GOARM_VALUES=GOARM7 \
 	GOARM8
 
@@ -171,8 +176,7 @@ endif
 
 
 
-SMALLBUILD_COMPONENTS=edgecore \
-	edgesite
+SMALLBUILD_COMPONENTS=edgecore
 define SMALLBUILD_HELP_INFO
 # small build components.
 #
@@ -185,7 +189,6 @@ define SMALLBUILD_HELP_INFO
 #   make smallbuild
 #   make smallbuild HELP=y
 #   make smallbuild WHAT=edgecore
-#   make smallbuild WHAT=edgesite
 #
 endef
 .PHONY: smallbuild
@@ -281,36 +284,13 @@ edgeimage:
 	--build-arg RUN_FROM=${ARCH}/docker:dind \
 	-f build/edge/Dockerfile .
 
-.PHONY: edgesiteimage
-edgesiteimage:
-	mkdir -p ./build/edgesite/tmp
-	rm -rf ./build/edgesite/tmp/*
-	curl -L -o ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-	tar -xzf ./build/edgesite/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ./build/edgesite/tmp
-	docker build -t kubeedge/edgesite:${IMAGE_TAG} \
-	--build-arg GO_LDFLAGS=${GO_LDFLAGS} \
-	--build-arg BUILD_FROM=${ARCH}/golang:1.14-alpine3.11 \
-	--build-arg RUN_FROM=${ARCH}/docker:dind \
-	-f build/edgesite/Dockerfile .
+.PHONY: edgesite-server-image
+edgesite-server-image:
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/server-build.Dockerfile -t kubeedge/edgesite-server-${ARCH}:${IMAGE_TAG}
 
-# Mappers
-.PHONY: bluetoothdevice
-bluetoothdevice: clean
-	hack/make-rules/bluetoothdevice.sh
-.PHONY: bluetoothdevice_image
-bluetoothdevice_image:bluetoothdevice
-	sudo docker build -t bluetooth_mapper:v1.0 ./mappers/bluetooth_mapper/
-
-.PHONY: modbusmapper
-modbusmapper: clean
-	hack/make-rules/modbusmapper.sh
-.PHONY: modbusmapper_image
-modbusmapper_image:modbusmapper
-	sudo docker build -t modbusmapper:v1.0 ./mappers/modbus-go
-
-.PHONY: mappers
-mappers:bluetoothdevice modbusmapper
-
+.PHONY: edgesite-agent-image
+edgesite-agent-image:
+	docker build . --build-arg ARCH=${ARCH} -f build/edgesite/agent-build.Dockerfile -t kubeedge/edgesite-agent-${ARCH}:${IMAGE_TAG}
 
 define INSTALL_HELP_INFO
 # install

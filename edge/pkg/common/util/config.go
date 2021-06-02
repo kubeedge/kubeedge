@@ -25,6 +25,8 @@ import (
 	"math/big"
 	"os"
 	"time"
+
+	certutil "k8s.io/client-go/util/cert"
 )
 
 //GenerateTestCertificate generates fake certificates and stores them at the path specified.
@@ -41,6 +43,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 			Country:      []string{"test"},
 			Organization: []string{"testor"},
 		},
+		DNSNames:    []string{"localhost"},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(5, 5, 5),
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
@@ -64,7 +67,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 	}
 	pKey := x509.MarshalPKCS1PrivateKey(privateKey)
 	certFilePEM := pem.Block{
-		Type:  "CERTIFICATE",
+		Type:  certutil.CertificateBlockType,
 		Bytes: cert}
 	err = createPEMfile(path+certFileName+".crt", certFilePEM)
 	if err != nil {

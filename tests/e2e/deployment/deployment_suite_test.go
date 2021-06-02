@@ -17,13 +17,11 @@ limitations under the License.
 package deployment
 
 import (
-	"net/http"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/kubeedge/kubeedge/tests/e2e/constants"
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 )
 
@@ -49,18 +47,6 @@ func TestEdgecoreAppDeployment(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("After Suite Execution....!")
-		//Deregister the edge node from master
-		Expect(utils.DeRegisterNodeFromMaster(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)).Should(BeNil())
-		Eventually(func() int {
-			statuscode := utils.CheckNodeDeleteStatus(ctx.Cfg.K8SMasterForKubeEdge+constants.NodeHandler, nodeName)
-			utils.Infof("Node Name: %v, Node Statuscode: %v", nodeName, statuscode)
-			return statuscode
-		}, "60s", "4s").Should(Equal(http.StatusNotFound), "Node register to the k8s master is unsuccessful !!")
-
-		//Run the Cleanup steps to kill edgecore and cloudcore binaries
-		Expect(utils.CleanUp("deployment")).Should(BeNil())
-		//time.Sleep(2 * time.Second)
-		utils.Infof("Cleanup is Successful !!")
 	})
 
 	RunSpecs(t, "kubeedge App Deploymet Suite")

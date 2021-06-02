@@ -58,7 +58,7 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return caDERBytes, err
+	return caDERBytes, nil
 }
 
 // NewCloudCoreCertDERandKey creates certificate and key for CloudCore
@@ -90,7 +90,7 @@ func NewCloudCoreCertDERandKey(cfg *certutil.Config) ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate a certificate using the given CA certificate and key, err: %v", err)
 	}
-	return certDER, keyDER, err
+	return certDER, keyDER, nil
 }
 
 // NewCertFromCa creates a signed certificate using the given CA certificate and key
@@ -123,5 +123,5 @@ func NewCertFromCa(cfg *certutil.Config, caCert *x509.Certificate, serverKey cry
 	if err != nil {
 		return nil, err
 	}
-	return certDERBytes, err
+	return certDERBytes, nil
 }

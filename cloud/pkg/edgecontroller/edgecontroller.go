@@ -1,11 +1,10 @@
 package edgecontroller
 
 import (
-	"os"
-
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
@@ -14,19 +13,34 @@ import (
 
 // EdgeController use beehive context message layer
 type EdgeController struct {
-	enable bool
+	enable     bool
+	upstream   *controller.UpstreamController
+	downstream *controller.DownstreamController
 }
 
-func newEdgeController(enable bool) *EdgeController {
-	return &EdgeController{
-		enable: enable,
+func newEdgeController(enable bool, tunnelPort int) *EdgeController {
+	ec := &EdgeController{enable: enable}
+	if !enable {
+		return ec
 	}
+	var err error
+	ec.upstream, err = controller.NewUpstreamController(informers.GetInformersManager().GetK8sInformerFactory())
+	if err != nil {
+		klog.Fatalf("new upstream controller failed with error: %s", err)
+	}
+	ec.upstream.TunnelPort = tunnelPort
+
+	ec.downstream, err = controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
+	if err != nil {
+		klog.Fatalf("new downstream controller failed with error: %s", err)
+	}
+	return ec
 }
 
-func Register(ec *v1alpha1.EdgeController, kubeAPIConfig *v1alpha1.KubeAPIConfig, nodeName string, edgesite bool) {
+func Register(ec *v1alpha1.EdgeController, commonConfig *v1alpha1.CommonConfig) {
 	// TODO move module config into EdgeController struct @kadisi
-	config.InitConfigure(ec, kubeAPIConfig, nodeName, edgesite)
-	core.Register(newEdgeController(ec.Enable))
+	config.InitConfigure(ec)
+	core.Register(newEdgeController(ec.Enable, commonConfig.TunnelPort))
 }
 
 // Name of controller
@@ -46,22 +60,11 @@ func (ec *EdgeController) Enable() bool {
 
 // Start controller
 func (ec *EdgeController) Start() {
-	upstream, err := controller.NewUpstreamController()
-	if err != nil {
-		klog.Errorf("new upstream controller failed with error: %s", err)
-		os.Exit(1)
-	}
-
-	if err := upstream.Start(); err != nil {
+	if err := ec.upstream.Start(); err != nil {
 		klog.Fatalf("start upstream failed with error: %s", err)
 	}
 
-	downstream, err := controller.NewDownstreamController()
-	if err != nil {
-		klog.Fatalf("new downstream controller failed with error: %s", err)
-	}
-
-	if err := downstream.Start(); err != nil {
+	if err := ec.downstream.Start(); err != nil {
 		klog.Fatalf("start downstream failed with error: %s", err)
 	}
 }

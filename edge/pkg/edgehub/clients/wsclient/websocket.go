@@ -105,6 +105,10 @@ func (wsc *WebSocketClient) UnInit() {
 
 //Send sends the message as JSON object through the connection
 func (wsc *WebSocketClient) Send(message model.Message) error {
+	err := wsc.connection.SetWriteDeadline(time.Now().Add(wsc.config.WriteDeadline))
+	if err != nil {
+		return err
+	}
 	return wsc.connection.WriteMessageAsync(&message)
 }
 

@@ -34,11 +34,8 @@ import (
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
-)
-
-const (
-	certificateBlockType = "CERTIFICATE"
 )
 
 // StartHTTPServer starts the http service
@@ -46,11 +43,10 @@ func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods("GET")
 	router.HandleFunc(constants.DefaultCAURL, getCA).Methods("GET")
-	router.HandleFunc(constants.DefaultCloudCoreReadyCheckURL, electionHandler).Methods("GET")
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
-	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
+	cert, err := tls.X509KeyPair(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Cert}), pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}))
 
 	if err != nil {
 		klog.Fatal(err)
@@ -75,33 +71,10 @@ func getCA(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//electionHandler returns the status whether the cloudcore is ready
-func electionHandler(w http.ResponseWriter, r *http.Request) {
-	checker := hubconfig.Config.Checker
-	if checker == nil {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready with no leaderelection")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-		return
-	}
-	if checker.Check(r) != nil {
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte("Cloudcore is not ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-	} else {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-	}
-}
-
-// EncodeCertPEM returns PEM-endcoded certificate data
+// EncodeCertPEM returns PEM-encoded certificate data
 func EncodeCertPEM(cert *x509.Certificate) []byte {
 	block := pem.Block{
-		Type:  certificateBlockType,
+		Type:  certutil.CertificateBlockType,
 		Bytes: cert.Raw,
 	}
 	return pem.EncodeToMemory(&block)
@@ -131,7 +104,7 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 // verifyCert verifies the edge certificate by CA certificate when edge certificates rotate.
 func verifyCert(cert *x509.Certificate) error {
 	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certificateBlockType, Bytes: hubconfig.Config.Ca}))
+	ok := roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca}))
 	if !ok {
 		return fmt.Errorf("failed to parse root certificate")
 	}
@@ -174,12 +147,13 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
 			if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-				klog.Errorf("Wrire body error %v", err)
+				klog.Errorf("Write body error %v", err)
 			}
+			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-			klog.Errorf("Wrire body error %v", err)
+			klog.Errorf("Write body error %v", err)
 		}
 
 		return false
@@ -187,7 +161,7 @@ func verifyAuthorization(w http.ResponseWriter, r *http.Request) bool {
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
 		if _, err := w.Write([]byte("Invalid authorization token")); err != nil {
-			klog.Errorf("Wrire body error %v", err)
+			klog.Errorf("Write body error %v", err)
 		}
 		return false
 	}
@@ -211,7 +185,7 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := w.Write(clientCertDER); err != nil {
-		klog.Errorf("wrire error %v", err)
+		klog.Errorf("write error %v", err)
 	}
 }
 
@@ -247,7 +221,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 
 // CheckCaExistsFromSecret checks ca from secret
 func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CaSecretName, modules.NamespaceSystem); err != nil {
 		return false
 	}
 	return true
@@ -255,7 +229,7 @@ func CheckCaExistsFromSecret() bool {
 
 // CheckCertExistsFromSecret checks CloudCore certificate from secret
 func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem); err != nil {
 		return false
 	}
 	return true
@@ -291,7 +265,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
-			s, err := GetSecret(CaSecretName, NamespaceSystem)
+			s, err := GetSecret(CaSecretName, modules.NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get CaSecret, error: %v", err)
 				return err
@@ -303,10 +277,7 @@ func PrepareAllCerts() error {
 		}
 	} else {
 		// HubConfig has been initialized
-		ca := hubconfig.Config.Ca
-		caKey := hubconfig.Config.CaKey
-		err := CreateCaSecret(ca, caKey)
-		if err != nil {
+		if err := CreateCaSecret(hubconfig.Config.Ca, hubconfig.Config.CaKey); err != nil {
 			klog.Errorf("failed to save ca and key to the secret, error: %v", err)
 			return err
 		}
@@ -333,7 +304,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
-			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
+			s, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get CloudCore secret, error: %v", err)
 				return err
@@ -345,10 +316,7 @@ func PrepareAllCerts() error {
 		}
 	} else {
 		// HubConfig has been initialized
-		cert := hubconfig.Config.Cert
-		key := hubconfig.Config.Key
-		err := CreateCloudCoreSecret(cert, key)
-		if err != nil {
+		if err := CreateCloudCoreSecret(hubconfig.Config.Cert, hubconfig.Config.Key); err != nil {
 			klog.Errorf("failed to save CloudCore cert to secret, error: %v", err)
 			return err
 		}

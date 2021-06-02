@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/astaxie/beego/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core"
@@ -13,6 +14,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -34,6 +36,7 @@ func newEventbus(enable bool) *eventbus {
 func Register(eventbus *v1alpha1.EventBus, nodeName string) {
 	eventconfig.InitConfigure(eventbus, nodeName)
 	core.Register(newEventbus(eventbus.Enable))
+	orm.RegisterModel(new(dao.SubTopics))
 }
 
 func (*eventbus) Name() string {
@@ -107,11 +110,14 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		case messagepkg.OperationSubscribe:
 			eb.subscribe(resource)
 			klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
+		case messagepkg.OperationUnsubscribe:
+			eb.unsubscribe(resource)
+			klog.Infof("Edge-hub-cli unsubscribe topic to %s", resource)
 		case messagepkg.OperationMessage:
 			body, ok := accessInfo.GetContent().(map[string]interface{})
 			if !ok {
 				klog.Errorf("Message is not map type")
-				return
+				continue
 			}
 			message := body["message"].(map[string]interface{})
 			topic := message["topic"].(string)
@@ -119,18 +125,21 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 			eb.publish(topic, payload)
 		case messagepkg.OperationPublish:
 			topic := resource
-			var ok bool
 			// cloud and edge will send different type of content, need to check
 			payload, ok := accessInfo.GetContent().([]byte)
 			if !ok {
-				content := accessInfo.GetContent().(string)
+				content, ok := accessInfo.GetContent().(string)
+				if !ok {
+					klog.Errorf("Message is not []byte or string")
+					continue
+				}
 				payload = []byte(content)
 			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationGetResult:
 			if resource != "auth_info" {
 				klog.Info("Skip none auth_info get_result message")
-				return
+				continue
 			}
 			topic := fmt.Sprintf("$hw/events/node/%s/authInfo/get/result", eventconfig.Config.NodeName)
 			payload, _ := json.Marshal(accessInfo.GetContent())
@@ -154,28 +163,41 @@ func (eb *eventbus) publish(topic string, payload []byte) {
 }
 
 func (eb *eventbus) subscribe(topic string) {
+	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
+		// set topic to internal mqtt broker.
+		mqttServer.SetTopic(topic)
+	}
+
 	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
 		// subscribe topic to external mqtt broker.
 		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
+			return
 		}
 	}
 
-	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
-		// set topic to internal mqtt broker.
-		mqttServer.SetTopic(topic)
+	err := dao.InsertTopics(topic)
+	if err != nil {
+		klog.Errorf("Insert topic %s failed, %v", topic, err)
 	}
 }
 
 func (eb *eventbus) unsubscribe(topic string) {
+	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
+		mqttServer.RemoveTopic(topic)
+	}
+
 	if eventconfig.Config.MqttMode >= v1alpha1.MqttModeBoth {
 		token := mqttBus.MQTTHub.SubCli.Unsubscribe(topic)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("Edge-hub-cli unsubscribe topic: %s, %v", topic, err)
+			return
 		}
 	}
-	if eventconfig.Config.MqttMode <= v1alpha1.MqttModeBoth {
-		mqttServer.RemoveTopic(topic)
+
+	err := dao.DeleteTopicsByKey(topic)
+	if err != nil {
+		klog.Errorf("Delete topic %s failed, %v", topic, err)
 	}
 }

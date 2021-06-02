@@ -1,1 +1,1 @@
-The documentation for the KubeEdge project resides at [https://docs.kubeedge.io](https://docs.kubeedge.io).
+All documentations for the KubeEdge is hosted at [kubeedge/website](https://github.com/kubeedge/website).

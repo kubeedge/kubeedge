@@ -34,26 +34,29 @@ import (
 func GetLocalIP(hostName string) (string, error) {
 	var ipAddr net.IP
 	var err error
+
+	// If looks up host failed, will use utilnet.ChooseHostInterface() below,
+	// So ignore the error here
 	addrs, _ := net.LookupIP(hostName)
 	for _, addr := range addrs {
-		if err := ValidateNodeIP(addr); err == nil {
-			if addr.To4() != nil {
-				ipAddr = addr
-				break
-			}
-			if addr.To16() != nil && ipAddr == nil {
-				ipAddr = addr
-			}
+		if err := ValidateNodeIP(addr); err != nil {
+			continue
+		}
+		if addr.To4() != nil {
+			ipAddr = addr
+			break
+		}
+		if ipAddr == nil && addr.To16() != nil {
+			ipAddr = addr
 		}
 	}
+
 	if ipAddr == nil {
 		ipAddr, err = utilnet.ChooseHostInterface()
+		if err != nil {
+			return "", err
+		}
 	}
-
-	if err != nil {
-		return "", err
-	}
-
 	return ipAddr.String(), nil
 }
 

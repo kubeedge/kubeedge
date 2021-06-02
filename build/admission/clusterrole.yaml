@@ -22,3 +22,6 @@ rules:
   - apiGroups: ["devices.kubeedge.io"]
     resources: ["devicemodels"]
     verbs: ["get", "list"]
+  - apiGroups: ["rules.kubeedge.io"]
+    resources: ["rules", "ruleendpoints"]
+    verbs: ["get", "list"]

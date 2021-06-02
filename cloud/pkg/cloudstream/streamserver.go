@@ -30,6 +30,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream/flushwriter"
 )
 
@@ -89,12 +90,15 @@ func (s *StreamServer) installDebugHandler() {
 		To(s.getMetrics))
 	ws.Route(ws.GET("/cadvisor").
 		To(s.getMetrics))
+	ws.Route(ws.GET("/probes").
+		To(s.getMetrics))
+	ws.Route(ws.GET("/resource").
+		To(s.getMetrics))
 	s.container.Add(ws)
 }
 
 func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -135,7 +139,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 		klog.Infof("Delete %s from %s", logConnection.String(), session.String())
 	}()
 
-	if err := logConnection.Serve(); err != nil {
+	if err = logConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			logConnection.String(), session.String(), err)
 		return
@@ -144,7 +148,6 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 
 func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -153,6 +156,14 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	}()
 
 	sessionKey := strings.Split(r.Request.Host, ":")[0]
+	if forwardedURI := r.Request.Header.Get("X-Forwarded-Uri"); forwardedURI != "" {
+		if t := strings.Split(forwardedURI, "/"); strings.HasPrefix(forwardedURI, "/api/v1/nodes/") && len(t) > 6 {
+			sessionKey = t[4]
+			if ip, ok := s.tunnel.getNodeIP(sessionKey); ok {
+				r.Request.Host = fmt.Sprintf("%s:%d", ip, constants.ServerPort)
+			}
+		}
+	}
 	session, ok := s.tunnel.getSession(sessionKey)
 	if !ok {
 		err = fmt.Errorf("Can not find %v session ", sessionKey)
@@ -178,7 +189,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
 	}()
 
-	if err := metricsConnection.Serve(); err != nil {
+	if err = metricsConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			metricsConnection.String(), session.String(), err)
 		return
@@ -187,7 +198,6 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 
 func (s *StreamServer) getExec(request *restful.Request, response *restful.Response) {
 	var err error
-
 	defer func() {
 		if err != nil {
 			response.WriteHeader(http.StatusInternalServerError)
@@ -240,7 +250,7 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 		klog.Infof("Delete %s from %s", execConnection.String(), session.String())
 	}()
 
-	if err := execConnection.Serve(); err != nil {
+	if err = execConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			execConnection.String(), session.String(), err)
 		return

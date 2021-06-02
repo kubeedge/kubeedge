@@ -15,6 +15,7 @@ import (
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 )
 
 const UploadTopic = "SYS/dis/upload_records"
@@ -51,6 +52,7 @@ var (
 		"$hw/events/device/+/twin/+",
 		"$hw/events/node/+/membership/get",
 		UploadTopic,
+		"+/user/#",
 	}
 )
 
@@ -88,29 +90,47 @@ func onSubConnect(client MQTT.Client) {
 		}
 		klog.Infof("edge-hub-cli subscribe topic to %s", t)
 	}
+	topics, err := dao.QueryAllTopics()
+	if err != nil {
+		klog.Errorf("list edge-hub-cli-topics failed: %v", err)
+		return
+	}
+	if len(*topics) <= 0 {
+		klog.Infof("list edge-hub-cli-topics status, no record, skip sync")
+		return
+	}
+	for _, t := range *topics {
+		token := client.Subscribe(t, 1, OnSubMessageReceived)
+		if rs, err := util.CheckClientToken(token); !rs {
+			klog.Errorf("edge-hub-cli subscribe topic: %s, %v", t, err)
+			return
+		}
+		klog.Infof("edge-hub-cli subscribe topic to %s", t)
+	}
 }
 
 // OnSubMessageReceived msg received callback
-func OnSubMessageReceived(client MQTT.Client, message MQTT.Message) {
-	klog.Infof("OnSubMessageReceived receive msg from topic: %s", message.Topic())
+func OnSubMessageReceived(client MQTT.Client, msg MQTT.Message) {
+	klog.Infof("OnSubMessageReceived receive msg from topic: %s", msg.Topic())
 	// for "$hw/events/device/+/twin/+", "$hw/events/node/+/membership/get", send to twin
 	// for other, send to hub
 	// for "SYS/dis/upload_records", no need to base64 topic
 	var target string
-	resource := base64.URLEncoding.EncodeToString([]byte(message.Topic()))
-	if strings.HasPrefix(message.Topic(), "$hw/events/device") || strings.HasPrefix(message.Topic(), "$hw/events/node") {
+	var message *model.Message
+	if strings.HasPrefix(msg.Topic(), "$hw/events/device") || strings.HasPrefix(msg.Topic(), "$hw/events/node") {
 		target = modules.TwinGroup
+		resource := base64.URLEncoding.EncodeToString([]byte(msg.Topic()))
+		// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+			resource, messagepkg.OperationResponse).FillBody(string(msg.Payload()))
 	} else {
 		target = modules.HubGroup
-		if message.Topic() == UploadTopic {
-			resource = UploadTopic
-		}
+		message = model.NewMessage("").BuildRouter(modules.BusGroup, modules.UserGroup,
+			msg.Topic(), "upload").FillBody(string(msg.Payload()))
 	}
-	// routing key will be $hw.<project_id>.events.user.bus.response.cluster.<cluster_id>.node.<node_id>.<base64_topic>
-	msg := model.NewMessage("").BuildRouter(modules.BusGroup, "user",
-		resource, messagepkg.OperationResponse).FillBody(string(message.Payload()))
-	klog.Info(fmt.Sprintf("received msg from mqttserver, deliver to %s with resource %s", target, resource))
-	beehiveContext.SendToGroup(target, *msg)
+
+	klog.Info(fmt.Sprintf("Received msg from mqttserver, deliver to %s with resource %s", target, message.GetResource()))
+	beehiveContext.SendToGroup(target, *message)
 }
 
 // InitSubClient init sub client

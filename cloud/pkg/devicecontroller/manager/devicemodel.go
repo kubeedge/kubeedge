@@ -3,12 +3,9 @@ package manager
 import (
 	"sync"
 
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/apis/devices/v1alpha2"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/config"
 )
 
@@ -27,17 +24,10 @@ func (dmm *DeviceModelManager) Events() chan watch.Event {
 }
 
 // NewDeviceModelManager create DeviceModelManager from config
-func NewDeviceModelManager(crdClient *rest.RESTClient, namespace string) (*DeviceModelManager, error) {
-	lw := cache.NewListWatchFromClient(crdClient, "devicemodels", namespace, fields.Everything())
+func NewDeviceModelManager(si cache.SharedIndexInformer) (*DeviceModelManager, error) {
 	events := make(chan watch.Event, config.Config.Buffer.DeviceModelEvent)
 	rh := NewCommonResourceEventHandler(events)
-	si := cache.NewSharedInformer(lw, &v1alpha2.DeviceModel{}, 0)
 	si.AddEventHandler(rh)
 
-	pm := &DeviceModelManager{events: events}
-
-	stopNever := make(chan struct{})
-	go si.Run(stopNever)
-
-	return pm, nil
+	return &DeviceModelManager{events: events}, nil
 }

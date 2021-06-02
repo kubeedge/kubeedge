@@ -15,111 +15,24 @@ labels: kind/bug
 **Anything else we need to know?**:
 
 **Environment**:
-<details><summary>Kubernets Version</summary>
+- Kubernetes version (use `kubectl version`):
+- KubeEdge version(e.g. `cloudcore --version` and `edgecore --version`):
+- <details><summary>Cloud nodes Environment:</summary>
 
-```console
-$ kubelet --version
-# paste output here
-$ kubectl version
-# paste output here
-```
+  - Hardware configuration (e.g. `lscpu`):
+  - OS (e.g. `cat /etc/os-release`):
+  - Kernel (e.g. `uname -a`):
+  - Go version (e.g. `go version`):
+  - Others:
 
-</details>
+  </details>
+- <details><summary>Edge nodes Environment:</summary>
 
-<details><summary>CloudCore Version</summary>
+  - edgecore version (e.g. `edgecore --version`):
+  - Hardware configuration (e.g. `lscpu`):
+  - OS (e.g. `cat /etc/os-release`):
+  - Kernel (e.g. `uname -a`):
+  - Go version (e.g. `go version`):
+  - Others:
 
-```console
-$ cloudcore --version
-# paste output here
-```
-
-</details>
-
-<details><summary>EdgeCore Version</summary>
-
-```console
-$ edgecore --version
-# paste output here
-```
-
-</details>
-
-**CloudSide Environment**:
-<details><summary>Hardware configuration</summary>
-
-```console
-$ lscpu
-# paste output here
-```
-
-</details>
-
-<details><summary>OS</summary>
-
-```console
-$ cat /etc/os-release
-# paste output here
-```
-
-</details>
-
-<details><summary>Kernel</summary>
-
-```console
-$ uname -a
-# paste output here
-```
-
-</details>
-
-<details><summary>Go version</summary>
-
-```console
-$ go version
-# paste output here
-```
-
-</details>
-
-<details><summary>Others</summary>
-</details>
-
-**EdgeSide Environment**:
-<details><summary>Hardware configuration</summary>
-
-```console
-$ lscpu
-# paste output here
-```
-
-</details>
-
-<details><summary>OS</summary>
-
-```console
-$ cat /etc/os-release
-# paste output here
-```
-
-</details>
-
-<details><summary>Kernel</summary>
-
-```console
-$ uname -a
-# paste output here
-```
-
-</details>
-
-<details><summary>Go version</summary>
-
-```console
-$ go version
-# paste output here
-```
-
-</details>
-
-<details><summary>Others</summary>
-</details>
+  </details>

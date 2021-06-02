@@ -51,12 +51,10 @@ const syncPeriod = 10 * time.Second
 
 func (m *manager) Start() {
 	klog.Info("Starting to sync pod status with apiserver")
-	syncTicker := time.Tick(syncPeriod)
 
 	go wait.Forever(func() {
-		<-syncTicker
 		m.updatePodStatus()
-	}, 0)
+	}, syncPeriod)
 }
 
 func (m *manager) updatePodStatus() {

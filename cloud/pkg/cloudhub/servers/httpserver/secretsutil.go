@@ -9,12 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
 
 const (
-	NamespaceSystem string = "kubeedge"
-
 	TokenSecretName      string = "tokensecret"
 	TokenDataName        string = "tokendata"
 	CaSecretName         string = "casecret"
@@ -26,19 +25,13 @@ const (
 )
 
 func GetSecret(secretName string, ns string) (*corev1.Secret, error) {
-	cli, err := utils.KubeClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create KubeClient, error: %s", err)
-	}
+	cli := client.GetKubeClient()
 	return cli.CoreV1().Secrets(ns).Get(context.Background(), secretName, metav1.GetOptions{})
 }
 
 // CreateSecret creates a secret
 func CreateSecret(secret *corev1.Secret, ns string) error {
-	cli, err := utils.KubeClient()
-	if err != nil {
-		return fmt.Errorf("failed to create KubeClient, error: %s", err)
-	}
+	cli := client.GetKubeClient()
 	if err := CreateNamespaceIfNeeded(cli, ns); err != nil {
 		return fmt.Errorf("failed to create Namespace kubeedge, error: %s", err)
 	}
@@ -59,7 +52,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TokenSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			TokenDataName: caHashAndToken,
@@ -67,7 +60,7 @@ func CreateTokenSecret(caHashAndToken []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(token, NamespaceSystem)
+	return CreateSecret(token, modules.NamespaceSystem)
 }
 
 func CreateCaSecret(certDER, key []byte) error {
@@ -75,7 +68,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CaSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			CaDataName:    certDER,
@@ -84,7 +77,7 @@ func CreateCaSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(caSecret, NamespaceSystem)
+	return CreateSecret(caSecret, modules.NamespaceSystem)
 }
 
 func CreateCloudCoreSecret(certDER, key []byte) error {
@@ -92,7 +85,7 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CloudCoreSecretName,
-			Namespace: NamespaceSystem,
+			Namespace: modules.NamespaceSystem,
 		},
 		Data: map[string][]byte{
 			CloudCoreCertName:    certDER,
@@ -101,10 +94,10 @@ func CreateCloudCoreSecret(certDER, key []byte) error {
 		StringData: map[string]string{},
 		Type:       "Opaque",
 	}
-	return CreateSecret(cloudCoreCert, NamespaceSystem)
+	return CreateSecret(cloudCoreCert, modules.NamespaceSystem)
 }
 
-func CreateNamespaceIfNeeded(cli *kubernetes.Clientset, ns string) error {
+func CreateNamespaceIfNeeded(cli kubernetes.Interface, ns string) error {
 	c := cli.CoreV1()
 	if _, err := c.Namespaces().Get(context.Background(), ns, metav1.GetOptions{}); err == nil {
 		return nil

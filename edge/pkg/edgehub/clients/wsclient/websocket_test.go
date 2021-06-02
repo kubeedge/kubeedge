@@ -18,28 +18,70 @@ package wsclient
 
 import (
 	"crypto/tls"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/viaduct/pkg/api"
 	"github.com/kubeedge/viaduct/pkg/conn"
 	"github.com/kubeedge/viaduct/pkg/mux"
 	"github.com/kubeedge/viaduct/pkg/server"
 )
 
-//init() starts the test server and generates test certificates for testing
-func init() {
-	err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
-	if err != nil {
-		panic("Error in creating fake certificates")
+func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
+	klog.Infof("receive message: %s", container.Message.GetContent())
+	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
+}
+
+func connNotify(conn conn.Connection) {
+	klog.Info("receive a connection")
+}
+
+// newTestServer() starts a fake server for testing
+func newTestServer() error {
+	if err := util.GenerateTestCertificate("/tmp/", "edge", "edge"); err != nil {
+		return err
 	}
 
-	newTestServer()
+	exOpts := api.WSServerOption{
+		Path: "/",
+	}
+
+	cert, err := tls.LoadX509KeyPair("/tmp/edge.crt", "/tmp/edge.key")
+	if err != nil {
+		return err
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	httpServer := server.Server{
+		Type:       "websocket",
+		Addr:       "localhost:9890",
+		TLSConfig:  tlsConfig,
+		AutoRoute:  true,
+		ConnNotify: connNotify,
+		ExOpts:     exOpts,
+	}
+
+	mux.Entry(mux.NewPattern("*").Op("*"), handleServer)
+
+	go func() {
+		err = httpServer.ListenAndServeTLS("", "")
+		if err != nil {
+			klog.Errorf("listen and serve tls failed, error: %+v", err)
+		}
+	}()
+
+	return nil
 }
 
 func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSocketClient {
@@ -57,54 +99,7 @@ func newTestWebSocketClient(api string, certPath string, keyPath string) *WebSoc
 	}
 }
 
-func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	klog.Infof("receive message: %s", container.Message.GetContent())
-	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
-}
-
-func initServerEntries() {
-	mux.Entry(mux.NewPattern("*").Op("*"), handleServer)
-}
-
-func connNotify(conn conn.Connection) {
-	klog.Info("receive a connection")
-}
-
-//newTestServer() starts a fake server for testing
-func newTestServer() {
-	exOpts := api.WSServerOption{
-		Path: "/",
-	}
-
-	cert, err := tls.LoadX509KeyPair("/tmp/edge.crt", "/tmp/edge.key")
-	if err != nil {
-		klog.Errorf("Failed to load x509 key pair: %v", err)
-		return
-	}
-
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
-
-	server := server.Server{
-		Type:       "websocket",
-		Addr:       "localhost:9890",
-		TLSConfig:  tlsConfig,
-		AutoRoute:  true,
-		ConnNotify: connNotify,
-		ExOpts:     exOpts,
-	}
-
-	initServerEntries()
-	go func() {
-		err = server.ListenAndServeTLS("", "")
-		if err != nil {
-			klog.Errorf("listen and serve tls failed, error: %+v", err)
-		}
-	}()
-}
-
-//TestNewWebSocketClient tests the NewWebSocketClient function that creates the WebSocketClient object
+// TestNewWebSocketClient tests the NewWebSocketClient function that creates the WebSocketClient object
 func TestNewWebSocketClient(t *testing.T) {
 	tests := []struct {
 		name string
@@ -125,6 +120,11 @@ func TestNewWebSocketClient(t *testing.T) {
 			newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
 		},
 	}
+
+	if err := newTestServer(); err != nil {
+		t.Errorf("failed to start server, err: %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := NewWebSocketClient(tt.conf); !reflect.DeepEqual(got, tt.want) {
@@ -134,20 +134,23 @@ func TestNewWebSocketClient(t *testing.T) {
 	}
 }
 
-/*
-//TestInit tests the procurement of the WebSocketClient
+// TestInit tests the procurement of the WebSocketClient
 func TestInit(t *testing.T) {
+	config.Config.TLSCAFile = "/tmp/edge.crt"
+
 	tests := []struct {
 		name          string
 		fields        *WebSocketClient
 		expectedError error
 	}{
-		{name: "TestInit: Success in connection ",
-			fields:        newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
+		{
+			name:          "TestInit: Success in connection",
+			fields:        newTestWebSocketClient("success", "/tmp/edge.crt", "/tmp/edge.key"),
 			expectedError: nil,
 		},
-		{name: "TestInit: If Certificate files not loaded properly",
-			fields:        newTestWebSocketClient("normal", "/wrong_path.crt", "/wrong_path.key"),
+		{
+			name:          "TestInit: If Certificate files not loaded properly",
+			fields:        newTestWebSocketClient("fail", "/wrong_path.crt", "/wrong_path.key"),
 			expectedError: fmt.Errorf("failed to load x509 key pair, error: open /wrong_path.crt: no such file or directory"),
 		},
 	}
@@ -162,36 +165,12 @@ func TestInit(t *testing.T) {
 	}
 }
 
-//TestUninit tests the Uninit function by trying to access the connection object
-func TestUninit(t *testing.T) {
-	tests := []struct {
-		name   string
-		fields *WebSocketClient
-	}{
-		{name: "TestUninit ",
-			fields: newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			wcc := tt.fields
-			wcc.Init()
-			wcc.Uninit()
-			err := wcc.connection.WriteMessageAsync(&model.Message{})
-			if err == nil {
-				t.Errorf("WebSocketClient.Uninit")
-			}
-		})
-	}
-}
-
-
-//TestSend checks send function by sending message to server
+// TestSend checks send function by sending message to server
 func TestSend(t *testing.T) {
 	var msg = model.Message{
 		Header: model.MessageHeader{
-			ID:        uuid.NewV4().String(),
-			ParentID:  "12",
+			ID:        uuid.New().String(),
+			ParentID:  "1",
 			Timestamp: time.Now().UnixNano() / 1e6,
 		},
 		Content: "test",
@@ -203,7 +182,7 @@ func TestSend(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Test sending small message: ",
+			name:          "Test sending small message",
 			fields:        newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key"),
 			message:       msg,
 			expectedError: nil,
@@ -212,8 +191,10 @@ func TestSend(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wcc := tt.fields
-			//First run init
-			wcc.Init()
+
+			if err := wcc.Init(); err != nil {
+				t.Errorf("failed to init, err: %v", err)
+			}
 
 			if err := wcc.Send(tt.message); !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("WebSocketClient.Send() error = %v, expectedError = %v", err, tt.expectedError)
@@ -222,11 +203,11 @@ func TestSend(t *testing.T) {
 	}
 }
 
-//TestReceive sends the message through send function then calls receive function to see same message is received or not
+// TestReceive sends the message through send function then calls receive function to see same message is received or not
 func TestReceive(t *testing.T) {
 	var msg = model.Message{
 		Header: model.MessageHeader{
-			ID:        uuid.NewV4().String(),
+			ID:        uuid.New().String(),
 			ParentID:  "12",
 			Timestamp: time.Now().UnixNano() / 1e6,
 		},
@@ -250,13 +231,12 @@ func TestReceive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wcc := tt.fields
-			//First run init
-			wcc.Init()
-			//Run send
-			err := wcc.Send(tt.sent)
+			if err := wcc.Init(); err != nil {
+				t.Errorf("failed to init, err: %v", err)
+			}
 
-			if err != nil {
-				t.Errorf("error = %v", err)
+			if err := wcc.Send(tt.sent); err != nil {
+				t.Errorf("failed to send, err: %v", err)
 			}
 
 			got, err := wcc.Receive()
@@ -267,8 +247,6 @@ func TestReceive(t *testing.T) {
 			if !reflect.DeepEqual(fmt.Sprintf("%s", got.GetContent()), fmt.Sprintf("%s", tt.want.GetContent())) {
 				t.Errorf("WebSocketClient.Receive() message content: got = %s, want = %s", got.GetContent(), tt.want.GetContent())
 			}
-			wcc.Uninit()
 		})
 	}
 }
-*/
