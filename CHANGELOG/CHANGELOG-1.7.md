@@ -70,10 +70,10 @@ list-watch connections on edge nodes keep available even when nodes are located 
 In this release, a bunch of corner case issues are fixed and the stability is improved. And the feature maturity is now Beta.
 
 
-**Send http request to application on the edge by Router module**
+**Custom HTTP Request Routing between Cloud and Edge for Applications [Alpha]**
 
-Router module provides a new endpoint type, servicebus. 
-It allows user call rest api of app on the edge from cloud by configuring the rule of rest to serviebus in Kubeedge.  ([#2588](https://github.com/kubeedge/kubeedge/pull/2588))
+A new RuleEndpointType `servicebus` is added to RuleEndpoint API, to support custom http request routing between cloud and edge for applications. This simplifies the rest api access with http server on the edge while client is in the cloud.
+ ([#2588](https://github.com/kubeedge/kubeedge/pull/2588))
 
 
 ### Important Steps before Upgrading
@@ -114,4 +114,3 @@ NA
 - Stop to create listener when application center serve list request ([#2781](https://github.com/kubeedge/kubeedge/pull/2781), [@GsssC](https://github.com/GsssC))
 - Fix: The server could not find the requested resource ([#2806](https://github.com/kubeedge/kubeedge/pull/2806), [@Rachel-Shao](https://github.com/Rachel-Shao))
 - Bump k8s to 1.19.10 to fix metrics issue ([#2823](https://github.com/kubeedge/kubeedge/pull/2823), [@fisherxu](https://github.com/fisherxu))
-
