@@ -11,7 +11,7 @@ Under scenarios of edge computing, there are multiple Kubernetes clusters deploy
     <img src="../images/proposals/edgecluster0.jpg">
 Currently, KubeEdge only supports management of edge nodes and does not support the management of edge clusters. In order to provide unified management and scheduling, and expand the cloud native capabilities of edge nodes, we plan to support edge cluster management.
 
-This design doc is to enable customers manage edge clusters on the cloud.
+This design doc is to enable users manage edge clusters on the cloud.
 
 ### Goals
 
