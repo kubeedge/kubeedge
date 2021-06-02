@@ -70,6 +70,11 @@ list-watch connections on edge nodes keep available even when nodes are located 
 In this release, a bunch of corner case issues are fixed and the stability is improved. And the feature maturity is now Beta.
 
 
+**Send http request to application on the edge by Router module**
+
+Router module provides a new endpoint type, servicebus. 
+It allows user call rest api of app on the edge from cloud by configuring the rule of rest to serviebus in Kubeedge.  ([#2588](https://github.com/kubeedge/kubeedge/pull/2588))
+
 
 ### Important Steps before Upgrading
 
@@ -91,7 +96,6 @@ NA
 - Add config of cloudcore token refresh frequence ([#2796](https://github.com/kubeedge/kubeedge/pull/2796), [@leofang94](https://github.com/leofang94))
 - keadm: install CRDs corresponding to specific version ([#2803](https://github.com/kubeedge/kubeedge/pull/2803), [@daixiang0](https://github.com/daixiang0))
 - make customsiz labels available when restart ([#2839](https://github.com/kubeedge/kubeedge/pull/2839), [@ttlv](https://github.com/ttlv))
-
 
 ### Bug Fixes
 
