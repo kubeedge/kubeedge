@@ -10,13 +10,12 @@ import (
 	"k8s.io/klog/v2"
 
 	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
-	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 )
 
 var (
-	sourceToTarget = [][2]string{{constants.RestEndpoint, constants.EventbusEndpoint},
-		{constants.RestEndpoint, constants.ServicebusEndpoint},
-		{constants.EventbusEndpoint, constants.RestEndpoint}}
+	sourceToTarget = [][2]rulesv1.RuleEndpointTypeDef{{rulesv1.RuleEndpointTypeRest, rulesv1.RuleEndpointTypeEventBus},
+		{rulesv1.RuleEndpointTypeRest, rulesv1.RuleEndpointTypeServiceBus},
+		{rulesv1.RuleEndpointTypeEventBus, rulesv1.RuleEndpointTypeRest}}
 )
 
 func admitRule(review admissionv1beta1.AdmissionReview) *admissionv1beta1.AdmissionResponse {
@@ -87,7 +86,7 @@ func validateRule(rule *rulesv1.Rule) error {
 }
 func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
-	case constants.RestEndpoint:
+	case rulesv1.RuleEndpointTypeRest:
 		_, exist := sourceResource["path"]
 		if !exist {
 			return fmt.Errorf("\"path\" property missed in sourceResource when ruleEndpoint is \"rest\"")
@@ -101,7 +100,7 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource["path"])
 			}
 		}
-	case constants.EventbusEndpoint:
+	case rulesv1.RuleEndpointTypeEventBus:
 		_, exist := sourceResource["topic"]
 		if !exist {
 			return fmt.Errorf("\"topic\" property missed in sourceResource when ruleEndpoint is \"eventbus\"")
@@ -125,17 +124,17 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 
 func validateTargetRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, targetResource map[string]string) error {
 	switch ruleEndpoint.Spec.RuleEndpointType {
-	case constants.RestEndpoint:
+	case rulesv1.RuleEndpointTypeRest:
 		_, exist := targetResource["resource"]
 		if !exist {
 			return fmt.Errorf("\"resource\" property missed in targetResource when ruleEndpoint is \"rest\"")
 		}
-	case constants.EventbusEndpoint:
+	case rulesv1.RuleEndpointTypeEventBus:
 		_, exist := targetResource["topic"]
 		if !exist {
 			return fmt.Errorf("\"topic\" property missed in targetResource when ruleEndpoint is \"eventbus\"")
 		}
-	case constants.ServicebusEndpoint:
+	case rulesv1.RuleEndpointTypeServiceBus:
 		_, exist := targetResource["path"]
 		if !exist {
 			return fmt.Errorf("\"path\" property missed in targetResource when ruleEndpoint is \"servicebus\"")
