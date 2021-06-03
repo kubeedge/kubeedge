@@ -104,7 +104,7 @@ function start_cloudcore {
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
     -e "s|/var/lib/kubeedge/|/tmp&|g" \
     -e "s|/etc/|/tmp/etc/|g" \
-    -e '/router:/a\    enable: true' ${CLOUD_CONFIGFILE}
+    -e '/router:/{n;N;N;N;N;s/false/true/}' ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
@@ -131,7 +131,8 @@ function start_edgecore {
       -e "s|hostnameOverride: .*|hostnameOverride: edge-node|g" \
       -e "s|/etc/|/tmp/etc/|g" \
       -e "s|/var/lib/kubeedge/|/tmp&|g" \
-      -e "s|mqttMode: .*|mqttMode: 0|g" ${EDGE_CONFIGFILE}
+      -e "s|mqttMode: .*|mqttMode: 0|g" \
+      -e '/serviceBus:/{n;s/false/true/;}' ${EDGE_CONFIGFILE}
 
   EDGECORE_LOG=${LOG_DIR}/edgecore.log
 

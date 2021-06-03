@@ -43,12 +43,16 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	rulesv1 "github.com/kubeedge/kubeedge/cloud/pkg/apis/rules/v1"
+	crdClientset "github.com/kubeedge/kubeedge/cloud/pkg/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
+	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
@@ -83,6 +87,8 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 type UpstreamController struct {
 	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
+	crdClient    crdClientset.Interface
+	TunnelPort   int
 
 	// message channel
 	nodeStatusChan            chan model.Message
@@ -97,6 +103,7 @@ type UpstreamController struct {
 	queryNodeChan             chan model.Message
 	updateNodeChan            chan model.Message
 	podDeleteChan             chan model.Message
+	ruleStatusChan            chan model.Message
 
 	// lister
 	podLister       corelisters.PodLister
@@ -123,6 +130,7 @@ func (uc *UpstreamController) Start() error {
 	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
 	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
 	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
+	uc.ruleStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
 
 	go uc.dispatchMessage()
 
@@ -161,6 +169,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(config.Config.Load.DeletePodWorkers); i++ {
 		go uc.deletePod()
+	}
+	for i := 0; i < int(config.Config.Load.UpdateRuleStatusWorkers); i++ {
+		go uc.updateRuleStatus()
 	}
 	return nil
 }
@@ -225,12 +236,65 @@ func (uc *UpstreamController) dispatchMessage() {
 			} else {
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
+		case model.ResourceTypeRuleStatus:
+			uc.ruleStatusChan <- msg
+
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
 	}
 }
-
+func (uc *UpstreamController) updateRuleStatus() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop updateRuleStatus")
+			return
+		case msg := <-uc.ruleStatusChan:
+			klog.V(5).Infof("message %s, operation is : %s , and resource is %s", msg.GetID(), msg.GetOperation(), msg.GetResource())
+			namespace, err := messagelayer.GetNamespace(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			ruleID, err := messagelayer.GetResourceName(msg)
+			if err != nil {
+				klog.Warningf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			var rule *rulesv1.Rule
+			rule, err = uc.crdClient.RulesV1().Rules(namespace).Get(context.Background(), ruleID, metaV1.GetOptions{})
+			if err != nil {
+				klog.Warningf("message: %s process failure, get rule with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, ruleID)
+				continue
+			}
+			content, ok := msg.Content.(routerrule.ExecResult)
+			if !ok {
+				klog.Warningf("message: %s process failure, get rule content with error: %s, namespaces: %s name: %s", msg.GetID(), err, namespace, ruleID)
+			}
+			if content.Status == "SUCCESS" {
+				rule.Status.SuccessMessages++
+			}
+			if content.Status == "FAIL" {
+				rule.Status.FailMessages++
+				errSlice := make([]string, 0)
+				rule.Status.Errors = append(errSlice, content.Error.Detail)
+			}
+			newStatus := &rulesv1.RuleStatus{}
+			body, err := json.Marshal(newStatus)
+			if err != nil {
+				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
+			}
+			var data []byte = []byte(body)
+			_, err = uc.crdClient.RulesV1().Rules(namespace).Patch(context.Background(), ruleID, controller.MergePatchType, data, metaV1.PatchOptions{})
+			if err != nil {
+				klog.Warningf("message: %s process failure, update ruleStatus failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, namespace, ruleID)
+			} else {
+				klog.Infof("UpdateRulestatus successfully!")
+			}
+		}
+	}
+}
 func (uc *UpstreamController) updatePodStatus() {
 	for {
 		select {
@@ -339,6 +403,7 @@ func (uc *UpstreamController) updatePodStatus() {
 // createNode create new edge node to kubernetes
 func (uc *UpstreamController) createNode(name string, node *v1.Node) (*v1.Node, error) {
 	node.Name = name
+	node.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
 	return uc.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metaV1.CreateOptions{})
 }
 
@@ -461,6 +526,9 @@ func (uc *UpstreamController) updateNodeStatus() {
 				nodeStatusRequest.Status.VolumesAttached = getNode.Status.VolumesAttached
 
 				getNode.Status = nodeStatusRequest.Status
+
+				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(uc.TunnelPort)
+
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
@@ -928,6 +996,7 @@ func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*Upstream
 	uc := &UpstreamController{
 		kubeClient:   client.GetKubeClient(),
 		messageLayer: messagelayer.NewContextMessageLayer(),
+		crdClient:    client.GetCRDClient(),
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
 	uc.endpointLister = factory.Core().V1().Endpoints().Lister()

@@ -34,6 +34,7 @@ import (
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -42,7 +43,6 @@ func StartHTTPServer() {
 	router := mux.NewRouter()
 	router.HandleFunc(constants.DefaultCertURL, edgeCoreClientCert).Methods("GET")
 	router.HandleFunc(constants.DefaultCAURL, getCA).Methods("GET")
-	router.HandleFunc(constants.DefaultCloudCoreReadyCheckURL, electionHandler).Methods("GET")
 
 	addr := fmt.Sprintf("%s:%d", hubconfig.Config.HTTPS.Address, hubconfig.Config.HTTPS.Port)
 
@@ -68,29 +68,6 @@ func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
 	if _, err := w.Write(caCertDER); err != nil {
 		klog.Errorf("failed to write caCertDER, err: %v", err)
-	}
-}
-
-//electionHandler returns the status whether the cloudcore is ready
-func electionHandler(w http.ResponseWriter, r *http.Request) {
-	checker := hubconfig.Config.Checker
-	if checker == nil {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready with no leaderelection")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-		return
-	}
-	if checker.Check(r) != nil {
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte("Cloudcore is not ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
-	} else {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("Cloudcore is ready")); err != nil {
-			klog.Errorf("failed to write http response, err: %v", err)
-		}
 	}
 }
 
@@ -244,7 +221,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 
 // CheckCaExistsFromSecret checks ca from secret
 func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CaSecretName, modules.NamespaceSystem); err != nil {
 		return false
 	}
 	return true
@@ -252,7 +229,7 @@ func CheckCaExistsFromSecret() bool {
 
 // CheckCertExistsFromSecret checks CloudCore certificate from secret
 func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, NamespaceSystem); err != nil {
+	if _, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem); err != nil {
 		return false
 	}
 	return true
@@ -288,7 +265,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
-			s, err := GetSecret(CaSecretName, NamespaceSystem)
+			s, err := GetSecret(CaSecretName, modules.NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get CaSecret, error: %v", err)
 				return err
@@ -327,7 +304,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
-			s, err := GetSecret(CloudCoreSecretName, NamespaceSystem)
+			s, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem)
 			if err != nil {
 				klog.Errorf("failed to get CloudCore secret, error: %v", err)
 				return err

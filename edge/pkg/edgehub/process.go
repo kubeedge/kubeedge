@@ -63,8 +63,13 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 		beehiveContext.SendResp(message)
 		return nil
 	}
-
-	beehiveContext.SendToGroup(md, message)
+	if group == messagepkg.UserGroupName && message.GetSource() == "router_eventbus" {
+		beehiveContext.Send(modules.EventBusModuleName, message)
+	} else if group == messagepkg.UserGroupName && message.GetSource() == "router_servicebus" {
+		beehiveContext.Send(modules.ServiceBusModuleName, message)
+	} else {
+		beehiveContext.SendToGroup(md, message)
+	}
 	return nil
 }
 

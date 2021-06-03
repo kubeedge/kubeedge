@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	RestType     = "rest"
-	EventbusType = "eventbus"
+	RestType       = "rest"
+	EventbusType   = "eventbus"
+	ServicebusType = "servicebus"
 )
 
 func NewRule(sourceType, targetType string) *rulesv1.Rule {
@@ -27,6 +28,8 @@ func NewRule(sourceType, targetType string) *rulesv1.Rule {
 		return NewRest2EventbusRule()
 	case sourceType == EventbusType && targetType == RestType:
 		return NewEventbus2RestRule()
+	case sourceType == RestType && targetType == ServicebusType:
+		return NewRest2ServicebusRule()
 	}
 	return nil
 }
@@ -86,12 +89,41 @@ func NewRest2EventbusRule() *rulesv1.Rule {
 	return &rule
 }
 
+func NewRest2ServicebusRule() *rulesv1.Rule {
+	rule := rulesv1.Rule{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Rule",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rule-rest-servicebus-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleSpec{
+			Source: "rest-test",
+			SourceResource: map[string]string{
+				"path": "/ddd",
+			},
+			Target: "servicebus-test",
+			TargetResource: map[string]string{
+				"path": "/url",
+			},
+		},
+		Status: rulesv1.RuleStatus{
+			Errors: []string{},
+		},
+	}
+	return &rule
+}
+
 func NewRuleEndpoint(endpointType string) *rulesv1.RuleEndpoint {
 	switch endpointType {
 	case RestType:
 		return newRestRuleEndpoint()
 	case EventbusType:
 		return newEventBusRuleEndpoint()
+	case ServicebusType:
+		return newServiceBusRuleEndpoint()
 	}
 	return newRestRuleEndpoint()
 }
@@ -128,6 +160,25 @@ func newEventBusRuleEndpoint() *rulesv1.RuleEndpoint {
 		},
 	}
 	return &eventbusRuleEndpoint
+}
+
+func newServiceBusRuleEndpoint() *rulesv1.RuleEndpoint {
+	servicebusRuleEndpoint := rulesv1.RuleEndpoint{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "RuleEndpoint",
+			APIVersion: "rules.kubeedge.io/v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "servicebus-test",
+			Namespace: Namespace,
+		},
+		Spec: rulesv1.RuleEndpointSpec{
+			RuleEndpointType: ServicebusType,
+			Properties: map[string]string{
+				"service_port": "9000"},
+		},
+	}
+	return &servicebusRuleEndpoint
 }
 
 // GetRuleList to get the rule list and verify whether the contents of the rule matches with what is expected

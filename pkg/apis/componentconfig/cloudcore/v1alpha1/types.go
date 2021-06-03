@@ -20,7 +20,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	componentbaseconfig "k8s.io/component-base/config"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
@@ -28,14 +27,21 @@ import (
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
 type CloudCoreConfig struct {
 	metav1.TypeMeta
+	// CommonConfig indicates common config for all modules
+	// +Required
+	CommonConfig *CommonConfig `json:"commonConfig,omitempty"`
 	// KubeAPIConfig indicates the kubernetes cluster info which cloudCore will connected
 	// +Required
 	KubeAPIConfig *KubeAPIConfig `json:"kubeAPIConfig,omitempty"`
 	// Modules indicates cloudCore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
-	// Configuration for LeaderElection
-	LeaderElection *componentbaseconfig.LeaderElectionConfiguration `json:"leaderelection,omitempty"`
+}
+
+// KubeAPIConfig indicates the configuration for interacting with k8s server
+type CommonConfig struct {
+	// TunnelPort indicates the port that the cloudcore tunnel listened
+	TunnelPort int `json:"tunnelPort,omitempty"`
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server
@@ -85,7 +91,7 @@ type CloudHub struct {
 	// Enable indicates whether CloudHub is enabled, if set to false (for debugging etc.),
 	// skip checking other CloudHub configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// KeepaliveInterval indicates keep-alive interval (second)
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
@@ -133,7 +139,7 @@ type CloudHub struct {
 type CloudHubQUIC struct {
 	// Enable indicates whether enable quic protocol
 	// default false
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address set server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -149,7 +155,7 @@ type CloudHubQUIC struct {
 type CloudHubUnixSocket struct {
 	// Enable indicates whether enable unix domain socket protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates unix domain socket address
 	// default "unix:///var/lib/kubeedge/kubeedge.sock"
 	Address string `json:"address,omitempty"`
@@ -159,7 +165,7 @@ type CloudHubUnixSocket struct {
 type CloudHubWebSocket struct {
 	// Enable indicates whether enable websocket protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -172,7 +178,7 @@ type CloudHubWebSocket struct {
 type CloudHubHTTPS struct {
 	// Enable indicates whether enable Https protocol
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Address indicates server ip address
 	// default 0.0.0.0
 	Address string `json:"address,omitempty"`
@@ -186,7 +192,7 @@ type EdgeController struct {
 	// Enable indicates whether EdgeController is enabled,
 	// if set to false (for debugging etc.), skip checking other EdgeController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// NodeUpdateFrequency indicates node update frequency (second)
 	// default 10
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
@@ -309,6 +315,9 @@ type EdgeControllerLoad struct {
 	// DeletePodWorkers indicates the load of delete pod workers
 	// default 4
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
+	// UpdateRuleStatusWorkers indicates the load of update rule status
+	// default 4
+	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller
@@ -316,7 +325,7 @@ type DeviceController struct {
 	// Enable indicates whether deviceController is enabled,
 	// if set to false (for debugging etc.), skip checking other deviceController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 	// Context indicates send,receive,response modules for deviceController module
 	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
@@ -350,7 +359,7 @@ type SyncController struct {
 	// Enable indicates whether syncController is enabled,
 	// if set to false (for debugging etc.), skip checking other syncController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 }
 
 // DynamicController indicates the dynamic controller
@@ -358,7 +367,7 @@ type DynamicController struct {
 	// Enable indicates whether dynamicController is enabled,
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
 	// default true
-	Enable bool `json:"enable,omitempty"`
+	Enable bool `json:"enable"`
 }
 
 // CloudSream indicates the stream controller
@@ -396,7 +405,7 @@ type CloudStream struct {
 
 type Router struct {
 	// default true
-	Enable      bool   `json:"enable,omitempty"`
+	Enable      bool   `json:"enable"`
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`

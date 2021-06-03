@@ -35,9 +35,22 @@ genCsr() {
 }
 
 genCert() {
-    local name=$1
-    openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
-    -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    local name=$1 IPs=(${@:2})
+    if  [ -z "$IPs" ] ;then
+        openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+        -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256
+    else
+        index=1
+        SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
+        for ip in ${IPs[*]}; do
+            SUBJECTALTNAME="${SUBJECTALTNAME},"
+            index=$(($index+1))
+            SUBJECTALTNAME="${SUBJECTALTNAME}IP.${index}:${ip}"
+        done
+        echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
+        openssl x509 -req -in ${certPath}/${name}.csr -CA ${caPath}/rootCA.crt -CAkey ${caPath}/rootCA.key \
+        -CAcreateserial -passin pass:kubeedge.io -out ${certPath}/${name}.crt -days 365 -sha256 -extfile /tmp/server-extfile.cnf
+    fi
 }
 
 genCertAndKey() {
@@ -84,6 +97,45 @@ stream() {
     openssl x509 -in ${STREAM_CRT_FILE} -text -noout
 }
 
+opts(){
+  usage() { echo "Usage: $0 [-i] ip1,ip2,..."; exit; }
+  local OPTIND
+  while getopts ':i:h' opt; do
+    case $opt in
+        i) IFS=','
+           IPS=($OPTARG)
+           ;;
+        h) usage;;
+        ?) usage;;
+    esac
+  done
+  echo ${IPS[*]}
+}
+
+edgesiteServer(){
+    serverIPs="$(opts $*)"
+    if [[ $serverIPs == *"Usage:"* ]];then
+        echo $serverIPs
+        exit 1
+    fi
+    local name=edgesite-server
+    ensureFolder
+    ensureCA
+    genCsr $name
+    genCert $name $serverIPs
+    genCsr server
+    genCert server $serverIPs
+}
+
+
+edgesiteAgent(){
+    ensureFolder
+    ensureCA
+    local name=edgesite-agent
+    genCsr $name
+    genCert $name
+}
+
 buildSecret() {
     local name="edge"
     genCertAndKey ${name} > /dev/null 2>&1
@@ -107,4 +159,4 @@ $(pr -T -o 4 ${certPath}/${name}.key)
 EOF
 }
 
-$1 $2
+$@

@@ -54,4 +54,3 @@ jobs:
         - make cloudimage
         - make admissionimage
         - make edgeimage ARCH="arm64v8"
-        - make edgesiteimage ARCH="arm64v8"
