@@ -70,6 +70,11 @@ list-watch connections on edge nodes keep available even when nodes are located 
 In this release, a bunch of corner case issues are fixed and the stability is improved. And the feature maturity is now Beta.
 
 
+**Custom HTTP Request Routing between Cloud and Edge for Applications [Alpha]**
+
+A new RuleEndpointType `servicebus` is added to RuleEndpoint API, to support custom http request routing between cloud and edge for applications. This simplifies the rest api access with http server on the edge while client is in the cloud.
+ ([#2588](https://github.com/kubeedge/kubeedge/pull/2588))
+
 
 ### Important Steps before Upgrading
 
@@ -92,7 +97,6 @@ NA
 - keadm: install CRDs corresponding to specific version ([#2803](https://github.com/kubeedge/kubeedge/pull/2803), [@daixiang0](https://github.com/daixiang0))
 - make customsiz labels available when restart ([#2839](https://github.com/kubeedge/kubeedge/pull/2839), [@ttlv](https://github.com/ttlv))
 
-
 ### Bug Fixes
 
 - fix keadm installation issue ([#2595](https://github.com/kubeedge/kubeedge/pull/2595), [@fisherxu](https://github.com/fisherxu))
@@ -110,4 +114,3 @@ NA
 - Stop to create listener when application center serve list request ([#2781](https://github.com/kubeedge/kubeedge/pull/2781), [@GsssC](https://github.com/GsssC))
 - Fix: The server could not find the requested resource ([#2806](https://github.com/kubeedge/kubeedge/pull/2806), [@Rachel-Shao](https://github.com/Rachel-Shao))
 - Bump k8s to 1.19.10 to fix metrics issue ([#2823](https://github.com/kubeedge/kubeedge/pull/2823), [@fisherxu](https://github.com/fisherxu))
-
