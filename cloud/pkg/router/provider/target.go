@@ -7,7 +7,7 @@ import (
 )
 
 type TargetFactory interface {
-	Type() string
+	Type() v1.RuleEndpointTypeDef
 	GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) Target
 }
 
@@ -18,11 +18,11 @@ type Target interface {
 
 var (
 	// Modules map
-	targets map[string]TargetFactory
+	targets map[v1.RuleEndpointTypeDef]TargetFactory
 )
 
 func init() {
-	targets = make(map[string]TargetFactory)
+	targets = make(map[v1.RuleEndpointTypeDef]TargetFactory)
 }
 
 // RegisterSource register module
@@ -32,7 +32,7 @@ func RegisterTarget(t TargetFactory) {
 }
 
 // get source map
-func GetTargetFactory(name string) (TargetFactory, bool) {
+func GetTargetFactory(name v1.RuleEndpointTypeDef) (TargetFactory, bool) {
 	target, exist := targets[name]
 	return target, exist
 }

@@ -39,8 +39,8 @@ func init() {
 	provider.RegisterTarget(factory)
 }
 
-func (factory *restFactory) Type() string {
-	return constants.RestEndpoint
+func (factory *restFactory) Type() v1.RuleEndpointTypeDef {
+	return v1.RuleEndpointTypeRest
 }
 
 func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {

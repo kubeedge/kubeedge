@@ -8,7 +8,7 @@ import (
 )
 
 type SourceFactory interface {
-	Type() string
+	Type() v1.RuleEndpointTypeDef
 	GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) Source
 }
 
@@ -21,11 +21,11 @@ type Source interface {
 
 var (
 	// Modules map
-	sources map[string]SourceFactory
+	sources map[v1.RuleEndpointTypeDef]SourceFactory
 )
 
 func init() {
-	sources = make(map[string]SourceFactory)
+	sources = make(map[v1.RuleEndpointTypeDef]SourceFactory)
 }
 
 // RegisterSource register module
@@ -35,7 +35,7 @@ func RegisterSource(s SourceFactory) {
 }
 
 // get source map
-func GetSourceFactory(name string) (SourceFactory, bool) {
+func GetSourceFactory(name v1.RuleEndpointTypeDef) (SourceFactory, bool) {
 	source, exist := sources[name]
 	return source, exist
 }
