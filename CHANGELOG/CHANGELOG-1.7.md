@@ -42,7 +42,7 @@ Refer to the links for more details.
 
 In some scenarios, uses may have full-size Kubernetes clusters deployed on the edge.
 With EdgeSite, users are now able to access clusters on edge (in private network, behind NATed gateway, etc) from center cloud.
-([#2650](https://github.com/kubeedge/kubeedge/pull/2650), [#2658](https://github.com/kubeedge/kubeedge/pull/2658))
+([#2650](https://github.com/kubeedge/kubeedge/pull/2650), [#2858](https://github.com/kubeedge/kubeedge/pull/2858))
 
 
 **Decoupled EdgeMesh from EdgeCore**
