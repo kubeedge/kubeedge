@@ -114,8 +114,8 @@ func (ms *ContainerMetricsConnection) Serve() error {
 			klog.Infof("%s send close message to edge successfully", ms.String())
 			return nil
 		case <-ms.EdgePeerDone():
-			klog.Infof("%s find edge peer done, so stop this connection", ms.String())
-			return nil
+			err := fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
+			return err
 		}
 	}
 }
