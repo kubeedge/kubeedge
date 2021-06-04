@@ -98,8 +98,8 @@ func (c *ContainerExecConnection) Serve() error {
 			klog.V(6).Infof("%s send close message to edge successfully", c.String())
 			return nil
 		case <-c.EdgePeerDone():
-			klog.V(6).Infof("%s find edge peer done, so stop this connection", c.String())
-			return nil
+			err = fmt.Errorf("%s find edge peer done, so stop this connection", c.String())
+			return err
 		default:
 		}
 		for {

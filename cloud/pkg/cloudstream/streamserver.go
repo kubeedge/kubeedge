@@ -135,8 +135,10 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	}
 
 	defer func() {
-		session.DeleteAPIServerConnection(logConnection)
-		klog.Infof("Delete %s from %s", logConnection.String(), session.String())
+		if err != nil {
+			session.DeleteAPIServerConnection(logConnection)
+			klog.Infof("Delete %s from %s", logConnection.String(), session.String())
+		}
 	}()
 
 	if err = logConnection.Serve(); err != nil {
@@ -185,8 +187,10 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	}
 
 	defer func() {
-		session.DeleteAPIServerConnection(metricsConnection)
-		klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
+		if err != nil {
+			session.DeleteAPIServerConnection(metricsConnection)
+			klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
+		}
 	}()
 
 	if err = metricsConnection.Serve(); err != nil {
@@ -246,8 +250,10 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	}
 
 	defer func() {
-		session.DeleteAPIServerConnection(execConnection)
-		klog.Infof("Delete %s from %s", execConnection.String(), session.String())
+		if err != nil {
+			session.DeleteAPIServerConnection(execConnection)
+			klog.Infof("Delete %s from %s", execConnection.String(), session.String())
+		}
 	}()
 
 	if err = execConnection.Serve(); err != nil {
