@@ -6,6 +6,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
@@ -25,6 +27,8 @@ func TestEdgecoreMetaServer(t *testing.T) {
 		c.Modules.Edged.HostnameOverride = cfg.NodeID
 		c.Modules.MetaManager.Enable = true
 		c.Modules.MetaManager.MetaServer.Enable = true
+		metamanager.Register(c.Modules.MetaManager)
+		dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 
 		Expect(utils.CfgToFile(c)).Should(BeNil())
 		Expect(utils.StartEdgeCore()).Should(BeNil())
