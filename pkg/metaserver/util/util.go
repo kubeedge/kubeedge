@@ -70,7 +70,7 @@ func UnsafeResourceToKind(r string) string {
 }
 
 func UnsafeKindToResource(k string) string {
-	if len(k) == 0 {
+	if len(k) == 0 || len(k) == 1 {
 		return k
 	}
 	unusualKindToResource := map[string]string{
@@ -84,6 +84,10 @@ func UnsafeKindToResource(k string) string {
 	case "s":
 		return r + "es"
 	case "y":
+		if string(r[len(r)-2]) == "a" || string(r[len(r)-2]) == "e" || string(r[len(r)-2]) == "i" ||
+			string(r[len(r)-2]) == "o" || string(r[len(r)-2]) == "u" {
+			return r + "s"
+		}
 		return strings.TrimSuffix(r, "y") + "ies"
 	}
 
