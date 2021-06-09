@@ -344,7 +344,6 @@ spec:
                         type: object
                     required:
                       - protocolName
-                      - configData
                     type: object
                   propertyName:
                     description: 'Required: The device property name to be accessed.
