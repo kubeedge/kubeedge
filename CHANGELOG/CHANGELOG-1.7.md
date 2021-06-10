@@ -1,4 +1,9 @@
-
+  * [v1.7.1](#v171)
+     * [Downloads for v1.7.1](#downloads-for-v171)
+        * [KubeEdge Binaries](#kubeedge-binaries)
+        * [Installer Binaries](#installer-binaries)
+     * [KubeEdge v1.7.1 Release Notes](#kubeedge-v171-release-notes)
+        * [Changelog since v1.7.0](#changelog-since-v170) 
   * [v1.7.0](#v170)
      * [Downloads for v1.7.0](#downloads-for-v170)
         * [KubeEdge Binaries](#kubeedge-binaries)
@@ -10,10 +15,9 @@
         * [Bug Fixes](#bug-fixes)
 
 
+# v1.7.1
 
-# v1.7.0
-
-## Downloads for v1.7.0
+## Downloads for v1.7.1
 
 ### KubeEdge Binaries
 | filename | Size | sha512 hash |
@@ -23,6 +27,33 @@
 ### Installer Binaries
 | filename | Size | sha512 hash |
 | -------- | ---- | ----------- |
+
+
+## KubeEdge v1.7.1 Release Notes
+
+### Changelog since v1.7.0
+
+- Fix nil pointer issue that caused cloudcore panic when restarting. ([#2876](https://github.com/kubeedge/kubeedge/pull/2876), [@muxuelan](https://github.com/muxuelan))
+
+
+# v1.7.0
+
+## Downloads for v1.7.0
+
+### KubeEdge Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [kubeedge-v1.7.0-linux-arm64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/kubeedge-v1.7.0-linux-arm64.tar.gz) |  61.4 MB | b40b3e8b6df54a8c00ee33dae66c2f515b7c76fb6850e0473a5697070a04559900903527936cdfbd913d5385251b9a979530d80c7bd033c05ef84a6f5219798f |
+| [kubeedge-v1.7.0-linux-arm.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/kubeedge-v1.7.0-linux-arm.tar.gz) | 60.7 MB | b6d769f613888c0e083162b4845292b0d7cd87289109bb40973549d87c743ee69f106466b76fe1a6b9dd7ea38856ac99774de44e1d3111259c7c3c7c61472d3d |
+| [kubeedge-v1.7.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/kubeedge-v1.7.0-linux-amd64.tar.gz) | 48 MB | 10fb1ad5950aae9802ed2e2368dfeb7924a6c4bfc4f52d159e22063d8264466a292845f84192eecd4e250abfed81d5597e644266a51eaf8a1f95d104ef38d1eb |
+
+
+### Installer Binaries
+| filename | Size | sha512 hash |
+| -------- | ---- | ----------- |
+| [keadm-v1.7.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/keadm-v1.7.0-linux-arm64.tar.gz) |  10.3 MB | 57fc98bbe6788418ee25d04a87592d90cdc61c7bfdeaa4e185d5735b71eeaead2f4a0608f195cd96bb5172284bfa72d081d5337b85b0f360d316a04183b3e3ba |
+| [keadm-v1.7.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/keadm-v1.7.0-linux-arm.tar.gz) |  10.4 MB | d14fc0faf4031c9d7af463a0030f935ba3832cecf5e17d7f81fee2cfbaf93298eec3f802e2f4ac65a88acd673a1fc525e3a2dfc35f46157dffb072e7dcbecf68 |
+| [keadm-v1.7.0-linux-amd64.tar.gz](https://github.com/kubeedge/kubeedge/releases/download/v1.7.0/keadm-v1.7.0-linux-amd64.tar.gz) |  11.6 MB | cfa1001159bc5a4c44c5e67508cecc9e31bc9986da5469333559b207448dee1800e65bb53fdc948e78a6606dd8ccaa885e3d07029ee4f6e84ca14df49664dac3 |
 
 
 ## KubeEdge v1.7 Release Notes
