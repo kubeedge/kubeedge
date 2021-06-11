@@ -416,7 +416,7 @@ func (dc *DownstreamController) syncEndpoints() {
 			if ok {
 				var (
 					pods       []*v1.Pod
-					hasService bool = false
+					hasService = false
 				)
 
 				namespace, name := eps.GetNamespace(), eps.GetName()
@@ -433,7 +433,7 @@ func (dc *DownstreamController) syncEndpoints() {
 				dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
 					nodeName, check := key.(string)
 					if !check {
-						klog.Warning("Failed to assert key to sting")
+						klog.Warning("Failed to assert key to string")
 						return true
 					}
 					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
