@@ -671,16 +671,17 @@ func (m *metaManager) runMetaManager() {
 		for {
 			select {
 			case <-beehiveContext.Done():
-				klog.Warning("MetaManager mainloop stop")
+				klog.Warning("MetaManager main loop stop")
 				return
 			default:
 			}
-			if msg, err := beehiveContext.Receive(m.Name()); err == nil {
-				klog.V(2).Infof("get a message %+v", msg)
-				m.process(msg)
-			} else {
+			msg, err := beehiveContext.Receive(m.Name())
+			if err != nil {
 				klog.Errorf("get a message %+v: %v", msg, err)
+				continue
 			}
+			klog.V(2).Infof("get a message %+v", msg)
+			m.process(msg)
 		}
 	}()
 }
