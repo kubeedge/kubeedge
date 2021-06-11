@@ -93,20 +93,22 @@ func newConnectionManager() *connectionManager {
 // Identifiers stores agent identifiers that will be used by the server when
 // choosing agents
 type Identifiers struct {
-	IPv4 []string
-	IPv6 []string
-	Host []string
-	CIDR []string
+	IPv4         []string
+	IPv6         []string
+	Host         []string
+	CIDR         []string
+	DefaultRoute bool
 }
 
 type IdentifierType string
 
 const (
-	IPv4 IdentifierType = "ipv4"
-	IPv6 IdentifierType = "ipv6"
-	Host IdentifierType = "host"
-	CIDR IdentifierType = "cidr"
-	UID  IdentifierType = "uid"
+	IPv4         IdentifierType = "ipv4"
+	IPv6         IdentifierType = "ipv6"
+	Host         IdentifierType = "host"
+	CIDR         IdentifierType = "cidr"
+	UID          IdentifierType = "uid"
+	DefaultRoute IdentifierType = "default-route"
 )
 
 // GenAgentIdentifiers generates an Identifiers based on the input string, the
@@ -128,6 +130,11 @@ func GenAgentIdentifiers(addrs string) (Identifiers, error) {
 			agentIDs.Host = append(agentIDs.Host, ids...)
 		case CIDR:
 			agentIDs.CIDR = append(agentIDs.CIDR, ids...)
+		case DefaultRoute:
+			defaultRouteIdentifier, err := strconv.ParseBool(ids[0])
+			if err == nil && defaultRouteIdentifier {
+				agentIDs.DefaultRoute = true
+			}
 		default:
 			return agentIDs, fmt.Errorf("Unknown address type: %s", idType)
 		}

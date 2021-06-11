@@ -69,7 +69,7 @@ require (
 	k8s.io/kubelet v0.19.10
 	k8s.io/kubernetes v1.19.10
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
-	sigs.k8s.io/apiserver-network-proxy v0.0.19
+	sigs.k8s.io/apiserver-network-proxy v0.0.20
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15
 	sigs.k8s.io/yaml v1.2.0
 )
@@ -111,5 +111,5 @@ replace (
 	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.19.10
 	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.19.10
 	k8s.io/utils v0.0.0 => k8s.io/utils v0.19.10
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.19
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.20
 )
