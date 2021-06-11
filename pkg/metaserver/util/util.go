@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,10 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 )
 
 const (
@@ -25,22 +24,12 @@ const (
 )
 
 var (
-	CRDResourceToKind map[string]string
-	CRDKindToResource map[string]string
-)
-
-func InitCrdMap() error {
 	CRDResourceToKind = make(map[string]string)
 	CRDKindToResource = make(map[string]string)
+)
 
-	config, err := clientcmd.BuildConfigFromFlags("127.0.0.1:10550", "")
-	if err != nil {
-		klog.Errorf("Failed to build config, err: %v", err)
-		return err
-	}
-	config.ContentType = runtime.ContentTypeJSON
-	apiExtensionClient, err := clientset.NewForConfig(config)
-	list, err := apiExtensionClient.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+func UpdateCrdMap() error {
+	list, err := client.GetCRDClient().ApiextensionsV1beta1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -50,7 +39,7 @@ func InitCrdMap() error {
 		CRDResourceToKind[plural] = kind
 		CRDKindToResource[kind] = plural
 	}
-	klog.Infof("CRD Resource-Kind map initialization finished.")
+	klog.Infof("CRD Resource-Kind map updated")
 	return nil
 }
 
@@ -109,7 +98,7 @@ func UnsafeResourceToKind(r string) string {
 }
 
 func UnsafeKindToResource(k string) string {
-	if len(k) == 0 {
+	if len(k) == 0 || len(k) == 1 {
 		return k
 	}
 	unusualKindToResource := map[string]string{
@@ -128,6 +117,10 @@ func UnsafeKindToResource(k string) string {
 	case "s":
 		return r + "es"
 	case "y":
+		if string(r[len(r)-2]) == "a" || string(r[len(r)-2]) == "e" || string(r[len(r)-2]) == "i" ||
+			string(r[len(r)-2]) == "o" || string(r[len(r)-2]) == "u" {
+			return r + "s"
+		}
 		return strings.TrimSuffix(r, "y") + "ies"
 	}
 

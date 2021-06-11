@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	utilwaitgroup "k8s.io/apimachinery/pkg/util/waitgroup"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
@@ -18,6 +19,7 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/handlerfactory"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/serializer"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -55,12 +57,17 @@ func (ls *MetaServer) Start(stopChan <-chan struct{}) {
 		Addr:    Httpaddr,
 		Handler: h,
 	}
+
+	client.InitKubeEdgeClient()
+	go wait.Until(func() {
+		err := util.UpdateCrdMap()
+		if err != nil {
+			klog.Warningf("CRD Resource-Kind Map update failed: %v", err)
+		}
+	}, time.Second*30, stopChan)
+
 	utilruntime.HandleError(s.ListenAndServe())
 	klog.Infof("[metaserver]start to listen and server at %v", Httpaddr)
-	err := util.InitCrdMap()
-	if err != nil {
-		klog.Warningf("CRD Resource-Kind Map initialization failed: %s", err)
-	}
 
 	<-stopChan
 }

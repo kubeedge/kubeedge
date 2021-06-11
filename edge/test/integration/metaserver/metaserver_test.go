@@ -1,60 +1,17 @@
 package metaserver
 
 import (
-	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
-	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
-)
-
-var (
-	gw = &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "apiextensions.k8s.io/v1beta1",
-			"kind":       "CustomResourceDefinition",
-			"metadata": map[string]interface{}{
-				"name": "gateways.networking.istio.io",
-			},
-			"spec": map[string]interface{}{
-				"group": "networking.istio.io",
-				"names": map[string]string{
-					"kind":     "Gateway",
-					"plural":   "gateways",
-					"singular": "gateway",
-				},
-				"scope":   "Namespaced",
-				"version": "v1alpha3",
-			},
-		},
-	}
-
-	se = &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "apiextensions.k8s.io/v1beta1",
-			"kind":       "CustomResourceDefinition",
-			"metadata": map[string]interface{}{
-				"name": "serviceentries.networking.istio.io",
-			},
-			"spec": map[string]interface{}{
-				"group": "networking.istio.io",
-				"names": map[string]string{
-					"kind":     "ServiceEntry",
-					"plural":   "serviceentries",
-					"singular": "serviceentry",
-				},
-				"scope":   "Namespaced",
-				"version": "v1alpha3",
-			},
-		},
-	}
 )
 
 var _ = Describe("Test MetaServer", func() {
@@ -106,34 +63,42 @@ var _ = Describe("Test MetaServer", func() {
 
 	Context("Test CRDMap in MetaServer", func() {
 		BeforeEach(func() {
-			err := imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), se)
-			if err != nil {
-				common.Fatalf("%s", err)
-				return
-			}
-			err = imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), gw)
-			if err != nil {
-				common.Fatalf("%s", err)
-				return
-			}
-			_ = util.InitCrdMap()
 		})
 		AfterEach(func() {
-			_ = imitator.DefaultV2Client.DeleteObj(context.TODO(), se)
-			_ = imitator.DefaultV2Client.DeleteObj(context.TODO(), gw)
 		})
 		It("Test CRD Map in MetaServer", func() {
 			type T struct {
-				kind     string
-				resource string
+				Method string
+				Path   string
+				Kind   string
+				Status int
 			}
 			cases := map[string]T{
-				"usual Case: ServiceEntry": {"ServiceEntry", "serviceentries"},
-				"Unusual Case: Gateway":    {"Gateway", "gateways"},
+				"Unusual Case: List ServiceEntry": {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/serviceentries", "ServiceEntryList", http.StatusOK},
+				"Unusual Case: List Gateway":      {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways", "GatewayList", http.StatusOK},
+				"Unusual Case: Get ServiceEntry":  {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/serviceentries/test-serviceentry", "ServiceEntry", http.StatusOK},
+				"Unusual Case: Get Gateway":       {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways/test-gateway", "Gateway", http.StatusOK},
 			}
+
+			time.Sleep(time.Second * 90)
+			client := http.Client{}
+			url := "http://127.0.0.1:10550"
 			for _, v := range cases {
-				Expect(strings.Compare(util.UnsafeResourceToKind(v.resource), v.kind)).Should(BeZero())
-				Expect(strings.Compare(util.UnsafeKindToResource(v.kind), v.resource)).Should(BeZero())
+				request, err := http.NewRequest(v.Method, url+v.Path, nil)
+				Expect(err).Should(BeNil())
+				response, err := client.Do(request)
+				Expect(err).Should(BeNil())
+				isEqual := v.Status == response.StatusCode
+				Expect(isEqual).Should(BeTrue(), "Expected response status %v, Got %v", v.Status, response.Status)
+
+				contents, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					common.Fatalf("HTTP Response reading has failed: %v", err)
+				}
+				var obj *unstructured.Unstructured
+				err = json.Unmarshal(contents, &obj)
+				isEqual = obj.GetKind() == v.Kind
+				Expect(isEqual).Should(BeTrue(), "Expected response kind %v, Got %v", v.Kind, obj.GetKind())
 			}
 		})
 	})
