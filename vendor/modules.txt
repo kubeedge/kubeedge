@@ -1695,8 +1695,11 @@ k8s.io/utils/path
 k8s.io/utils/pointer
 k8s.io/utils/strings
 k8s.io/utils/trace
-# sigs.k8s.io/apiserver-network-proxy v0.0.19
+# sigs.k8s.io/apiserver-network-proxy v0.0.20
 ## explicit
+sigs.k8s.io/apiserver-network-proxy/cmd/agent/app
+sigs.k8s.io/apiserver-network-proxy/cmd/agent/app/options
+sigs.k8s.io/apiserver-network-proxy/cmd/server/app/options
 sigs.k8s.io/apiserver-network-proxy/pkg/agent
 sigs.k8s.io/apiserver-network-proxy/pkg/agent/metrics
 sigs.k8s.io/apiserver-network-proxy/pkg/server
@@ -1704,7 +1707,7 @@ sigs.k8s.io/apiserver-network-proxy/pkg/server/metrics
 sigs.k8s.io/apiserver-network-proxy/pkg/util
 sigs.k8s.io/apiserver-network-proxy/proto/agent
 sigs.k8s.io/apiserver-network-proxy/proto/header
-# sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15 => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.19
+# sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15 => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.20
 ## explicit
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
@@ -1775,4 +1778,4 @@ sigs.k8s.io/yaml
 # k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.19.10
 # k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.19.10
 # k8s.io/utils v0.0.0 => k8s.io/utils v0.19.10
-# sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.19
+# sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.20

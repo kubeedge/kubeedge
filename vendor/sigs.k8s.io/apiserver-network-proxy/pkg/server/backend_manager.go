@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog/v2"
 	client "sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client"
 	pkgagent "sigs.k8s.io/apiserver-network-proxy/pkg/agent"
+	"sigs.k8s.io/apiserver-network-proxy/pkg/server/metrics"
 	"sigs.k8s.io/apiserver-network-proxy/proto/agent"
 )
 
@@ -40,6 +41,10 @@ const (
 	// With this strategy the Proxy Server will pick a backend that has the same
 	// associated host as the request.Host to establish the tunnel.
 	ProxyStrategyDestHost ProxyStrategy = "destHost"
+
+	// ProxyStrategyDefaultRoute will only forward traffic to agents that have explicity advertised
+	// they serve the default route through an agent identifier. Typically used in combination with destHost
+	ProxyStrategyDefaultRoute ProxyStrategy = "defaultRoute"
 )
 
 // GenProxyStrategiesFromStr generates the list of proxy strategies from the
@@ -53,6 +58,8 @@ func GenProxyStrategiesFromStr(proxyStrategies string) ([]ProxyStrategy, error) 
 			ps = append(ps, ProxyStrategyDestHost)
 		case string(ProxyStrategyDefault):
 			ps = append(ps, ProxyStrategyDefault)
+		case string(ProxyStrategyDefaultRoute):
+			ps = append(ps, ProxyStrategyDefaultRoute)
 		default:
 			return nil, fmt.Errorf("Unknown proxy strategy %s", s)
 		}
@@ -139,7 +146,9 @@ type DefaultBackendStorage struct {
 	// randomly pick a key from a map (in this case, the backends) in
 	// Golang.
 	agentIDs []string
-	random   *rand.Rand
+	// defaultRouteAgentIDs tracks the agents that have claimed the default route.
+	defaultRouteAgentIDs []string
+	random               *rand.Rand
 	// idTypes contains the valid identifier types for this
 	// DefaultBackendStorage. The DefaultBackendStorage may only tolerate certain
 	// types of identifiers when associating to a specific BackendManager,
@@ -195,7 +204,11 @@ func (s *DefaultBackendStorage) AddBackend(identifier string, idType pkgagent.Id
 		return addedBackend
 	}
 	s.backends[identifier] = []*backend{addedBackend}
+	metrics.Metrics.SetBackendCount(len(s.backends))
 	s.agentIDs = append(s.agentIDs, identifier)
+	if idType == pkgagent.DefaultRoute {
+		s.defaultRouteAgentIDs = append(s.defaultRouteAgentIDs, identifier)
+	}
 	return addedBackend
 }
 
@@ -232,10 +245,19 @@ func (s *DefaultBackendStorage) RemoveBackend(identifier string, idType pkgagent
 				break
 			}
 		}
+		if idType == pkgagent.DefaultRoute {
+			for i := range s.defaultRouteAgentIDs {
+				if s.defaultRouteAgentIDs[i] == identifier {
+					s.defaultRouteAgentIDs = append(s.defaultRouteAgentIDs[:i], s.defaultRouteAgentIDs[i+1:]...)
+					break
+				}
+			}
+		}
 	}
 	if !found {
 		klog.V(1).InfoS("Could not find connection matching identifier to remove", "connection", conn, "identifier", identifier)
 	}
+	metrics.Metrics.SetBackendCount(len(s.backends))
 }
 
 // NumBackends resturns the number of available backends
@@ -269,7 +291,7 @@ func ignoreNotFound(err error) error {
 	return err
 }
 
-// GetRandomBackend returns a random backend.
+// GetRandomBackend returns a random backend connection from all connected agents.
 func (s *DefaultBackendStorage) GetRandomBackend() (Backend, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
