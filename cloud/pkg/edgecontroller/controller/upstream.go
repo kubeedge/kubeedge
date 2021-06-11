@@ -343,10 +343,10 @@ func (uc *UpstreamController) updatePodStatus() {
 					status := podStatus.Status
 					oldStatus := getPod.Status
 					// Set ReadyCondition.LastTransitionTime
-					if _, readyCondition := uc.getPodCondition(&status, v1.PodReady); readyCondition != nil {
+					if readyCondition := uc.getPodCondition(&status, v1.PodReady); readyCondition != nil {
 						// Need to set LastTransitionTime.
 						lastTransitionTime := metaV1.Now()
-						_, oldReadyCondition := uc.getPodCondition(&oldStatus, v1.PodReady)
+						oldReadyCondition := uc.getPodCondition(&oldStatus, v1.PodReady)
 						if oldReadyCondition != nil && readyCondition.Status == oldReadyCondition.Status {
 							lastTransitionTime = oldReadyCondition.LastTransitionTime
 						}
@@ -354,10 +354,10 @@ func (uc *UpstreamController) updatePodStatus() {
 					}
 
 					// Set InitializedCondition.LastTransitionTime.
-					if _, initCondition := uc.getPodCondition(&status, v1.PodInitialized); initCondition != nil {
+					if initCondition := uc.getPodCondition(&status, v1.PodInitialized); initCondition != nil {
 						// Need to set LastTransitionTime.
 						lastTransitionTime := metaV1.Now()
-						_, oldInitCondition := uc.getPodCondition(&oldStatus, v1.PodInitialized)
+						oldInitCondition := uc.getPodCondition(&oldStatus, v1.PodInitialized)
 						if oldInitCondition != nil && initCondition.Status == oldInitCondition.Status {
 							lastTransitionTime = oldInitCondition.LastTransitionTime
 						}
@@ -899,17 +899,17 @@ func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns s
 }
 
 // GetPodCondition extracts the provided condition from the given status and returns that.
-// Returns nil and -1 if the condition is not present, and the index of the located condition.
-func (uc *UpstreamController) getPodCondition(status *v1.PodStatus, conditionType v1.PodConditionType) (int, *v1.PodCondition) {
+// Returns nil if the condition is not present, or return the located condition.
+func (uc *UpstreamController) getPodCondition(status *v1.PodStatus, conditionType v1.PodConditionType) *v1.PodCondition {
 	if status == nil {
-		return -1, nil
+		return nil
 	}
 	for i := range status.Conditions {
 		if status.Conditions[i].Type == conditionType {
-			return i, &status.Conditions[i]
+			return &status.Conditions[i]
 		}
 	}
-	return -1, nil
+	return nil
 }
 
 func (uc *UpstreamController) isPodNotRunning(statuses []v1.ContainerStatus) bool {
