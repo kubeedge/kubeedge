@@ -22,7 +22,10 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	metaManagerConfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 // metaModule is metamanager implementation of Module interface
@@ -58,7 +61,14 @@ func TestNameAndGroup(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	core.Register(&metaManager{enable: true})
+	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
+	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
+
+	meta := &metaManager{enable: true}
+	initDBTable(meta)
+	core.Register(meta)
+
+	dbm.InitDBConfig(cfg.DataBase.DriverName, cfg.DataBase.AliasName, cfg.DataBase.DataSource)
 	modules := core.GetModules()
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
