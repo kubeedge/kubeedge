@@ -30,8 +30,8 @@ func init() {
 	provider.RegisterTarget(factory)
 }
 
-func (factory *servicebusFactory) Type() string {
-	return constants.ServicebusEndpoint
+func (factory *servicebusFactory) Type() v1.RuleEndpointTypeDef {
+	return v1.RuleEndpointTypeServiceBus
 }
 
 func (factory *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {

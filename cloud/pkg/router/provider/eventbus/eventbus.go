@@ -35,8 +35,8 @@ func init() {
 	provider.RegisterTarget(factory)
 }
 
-func (factory *eventbusFactory) Type() string {
-	return constants.EventbusEndpoint
+func (factory *eventbusFactory) Type() v1.RuleEndpointTypeDef {
+	return v1.RuleEndpointTypeEventBus
 }
 
 func (factory *eventbusFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]string) provider.Source {
