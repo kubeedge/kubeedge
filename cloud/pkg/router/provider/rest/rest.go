@@ -109,7 +109,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	res := make(map[string]interface{})
 	messageID := d["messageID"].(string)
 	res["messageID"] = messageID
-	res["param"] = strings.TrimLeft(uri[3], r.Path)
+	res["param"] = strings.TrimPrefix(uri[3], r.Path)
 	res["data"] = d["data"]
 	res["nodeName"] = strings.Split(request.RequestURI, "/")[1]
 	res["header"] = request.Header
@@ -213,10 +213,10 @@ func (r *Rest) GoToTarget(data map[string]interface{}, stop chan struct{}) (inte
 func normalizeResource(resource string) string {
 	finalResource := resource
 	if strings.HasPrefix(finalResource, "/") {
-		finalResource = strings.TrimLeft(finalResource, "/")
+		finalResource = strings.TrimPrefix(finalResource, "/")
 	}
 	if strings.HasSuffix(finalResource, "/") {
-		finalResource = strings.TrimRight(finalResource, "/")
+		finalResource = strings.TrimSuffix(finalResource, "/")
 	}
 	return finalResource
 }
