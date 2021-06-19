@@ -364,7 +364,12 @@ func toBytes(i interface{}) (bytes []byte) {
 // extract application in message's Content
 func msgToApplication(msg model.Message) (*Application, error) {
 	var app = new(Application)
-	err := json.Unmarshal(toBytes(msg.Content), app)
+	contentData, err := msg.GetContentData()
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(contentData, app)
 	if err != nil {
 		return nil, err
 	}
