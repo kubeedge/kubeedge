@@ -488,68 +488,11 @@ func newEdged(enable bool) (*edged, error) {
 		MaxPerPodContainer: int(edgedconfig.Config.MaximumDeadContainersPerPod),
 	}
 
-	//create and start the docker shim running as a grpc server
-	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
-		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
-		streamingConfig := &streaming.Config{
-			StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
-			SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
-			SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
-		}
-
-		DockerClientConfig := &dockershim.ClientConfig{
-			DockerEndpoint:            edgedconfig.Config.DockerAddress,
-			ImagePullProgressDeadline: time.Duration(edgedconfig.Config.ImagePullProgressDeadline) * time.Second,
-			EnableSleep:               true,
-			WithTraceDisabled:         true,
-		}
-
-		pluginConfigs := dockershim.NetworkPluginSettings{
-			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
-			NonMasqueradeCIDR:  NonMasqueradeCIDR,
-			PluginName:         edgedconfig.Config.NetworkPluginName,
-			PluginBinDirString: edgedconfig.Config.CNIBinDir,
-			PluginConfDir:      edgedconfig.Config.CNIConfDir,
-			PluginCacheDir:     edgedconfig.Config.CNICacheDir,
-			MTU:                int(edgedconfig.Config.NetworkPluginMTU),
-		}
-
-		// TODO(daixiang0): Support RedirectContainerStreaming
-		// from k8s getStreamingConfig()
-		streamingConfig.Addr = net.JoinHostPort("localhost", "0")
-
-		cgroupDriver := ed.cgroupDriver
-
-		ds, err := dockershim.NewDockerService(DockerClientConfig,
-			edgedconfig.Config.PodSandboxImage,
-			streamingConfig,
-			&pluginConfigs,
-			cgroupName,
-			cgroupDriver,
-			DockershimRootDir,
-			true)
-
-		if err != nil {
-			return nil, err
-		}
-
-		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
-			edgedconfig.Config.RemoteRuntimeEndpoint, edgedconfig.Config.RemoteImageEndpoint)
-
-		klog.Info("Starting the GRPC server for the docker CRI shim.")
-		server := dockerremote.NewDockerServer(edgedconfig.Config.RemoteRuntimeEndpoint, ds)
-		if err := server.Start(); err != nil {
-			return nil, err
-		}
-		// Create dockerLegacyService when the logging driver is not supported.
-		supported, err := ds.IsCRISupportedLogDriver()
-		if err != nil {
-			return nil, err
-		}
-		if !supported {
-			ed.dockerLegacyService = ds
-		}
+	//create and start the docker shim running as a grpc server, and initialize dockerLegacyService
+	if err := ed.startDockerServer(); err != nil {
+		return nil, err
 	}
+
 	ed.clusterDNS = convertStrToIP(edgedconfig.Config.ClusterDNS)
 	ed.dnsConfigurer = kubedns.NewConfigurer(recorder,
 		nodeRef,
@@ -578,27 +521,13 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	useLegacyCadvisorStats := cadvisor.UsingLegacyCadvisorStats(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-	if edgedconfig.Config.EnableMetrics {
-		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
-		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, ed.rootDirectory, ed.cgroupRoots(), useLegacyCadvisorStats)
-		if err != nil {
-			return nil, err
-		}
-		ed.cadvisor = cadvisorInterface
-
-		machineInfo, err := ed.cadvisor.MachineInfo()
-		if err != nil {
-			return nil, err
-		}
-		ed.machineInfo = machineInfo
-	} else {
-		cadvisorInterface, _ := edgecadvisor.New("")
-		ed.cadvisor = cadvisorInterface
-
-		var machineInfo cadvisorapi.MachineInfo
-		machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
-		ed.machineInfo = &machineInfo
+	if ed.cadvisor, err = ed.newCadvisor(useLegacyCadvisorStats); err != nil {
+		return nil, err
 	}
+	if ed.machineInfo, err = ed.newMachineInfo(); err != nil {
+		return nil, err
+	}
+
 	// create a log manager
 	logManager, err := logs.NewContainerLogManager(runtimeService, ed.os, "10Mi", 5)
 	if err != nil {
@@ -675,25 +604,7 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed.statusManager = status.NewManager(ed.kubeClient, ed.podManager, ed, ed.metaClient)
 
-	if useLegacyCadvisorStats {
-		ed.StatsProvider = stats.NewCadvisorStatsProvider(
-			ed.cadvisor,
-			ed.resourceAnalyzer,
-			ed.podManager,
-			ed.runtimeCache,
-			ed.containerRuntime,
-			ed.statusManager)
-	} else {
-		ed.StatsProvider = stats.NewCRIStatsProvider(
-			ed.cadvisor,
-			ed.resourceAnalyzer,
-			ed.podManager,
-			ed.runtimeCache,
-			ed.runtimeService,
-			imageService,
-			stats.NewLogMetricsService(),
-			kubecontainer.RealOS{})
-	}
+	ed.StatsProvider = ed.newStatsProvider(useLegacyCadvisorStats, imageService)
 
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
@@ -721,6 +632,125 @@ func newEdged(enable bool) (*edged, error) {
 
 	ed.server = server.NewServer(ed.podManager)
 	return ed, nil
+}
+
+func (e *edged) startDockerServer() error {
+	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
+		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
+		streamingConfig := &streaming.Config{
+			StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
+			SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
+			SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
+		}
+
+		DockerClientConfig := &dockershim.ClientConfig{
+			DockerEndpoint:            edgedconfig.Config.DockerAddress,
+			ImagePullProgressDeadline: time.Duration(edgedconfig.Config.ImagePullProgressDeadline) * time.Second,
+			EnableSleep:               true,
+			WithTraceDisabled:         true,
+		}
+
+		pluginConfigs := dockershim.NetworkPluginSettings{
+			HairpinMode:        kubeletinternalconfig.HairpinMode(HairpinMode),
+			NonMasqueradeCIDR:  NonMasqueradeCIDR,
+			PluginName:         edgedconfig.Config.NetworkPluginName,
+			PluginBinDirString: edgedconfig.Config.CNIBinDir,
+			PluginConfDir:      edgedconfig.Config.CNIConfDir,
+			PluginCacheDir:     edgedconfig.Config.CNICacheDir,
+			MTU:                int(edgedconfig.Config.NetworkPluginMTU),
+		}
+
+		// TODO(daixiang0): Support RedirectContainerStreaming
+		// from k8s getStreamingConfig()
+		streamingConfig.Addr = net.JoinHostPort("localhost", "0")
+
+		cgroupDriver := e.cgroupDriver
+
+		ds, err := dockershim.NewDockerService(DockerClientConfig,
+			edgedconfig.Config.PodSandboxImage,
+			streamingConfig,
+			&pluginConfigs,
+			cgroupName,
+			cgroupDriver,
+			DockershimRootDir,
+			true)
+
+		if err != nil {
+			return err
+		}
+
+		klog.Infof("RemoteRuntimeEndpoint: %q, remoteImageEndpoint: %q",
+			edgedconfig.Config.RemoteRuntimeEndpoint, edgedconfig.Config.RemoteImageEndpoint)
+
+		klog.Info("Starting the GRPC server for the docker CRI shim.")
+		server := dockerremote.NewDockerServer(edgedconfig.Config.RemoteRuntimeEndpoint, ds)
+		if err := server.Start(); err != nil {
+			return err
+		}
+
+		// Create dockerLegacyService when the logging driver is not supported.
+		supported, err := ds.IsCRISupportedLogDriver()
+		if err != nil {
+			return err
+		}
+		if !supported {
+			e.dockerLegacyService = ds
+		}
+	}
+	return nil
+}
+
+func (e *edged) newCadvisor(useLegacyCadvisorStats bool) (cadvisor.Interface, error) {
+	if edgedconfig.Config.EnableMetrics {
+		imageFsInfoProvider := cadvisor.NewImageFsInfoProvider(edgedconfig.Config.RuntimeType, edgedconfig.Config.RemoteRuntimeEndpoint)
+		cadvisorInterface, err := cadvisor.New(imageFsInfoProvider, e.rootDirectory, e.cgroupRoots(), useLegacyCadvisorStats)
+		if err != nil {
+			return nil, err
+		}
+		return cadvisorInterface, nil
+	}
+
+	cadvisorInterface, err := edgecadvisor.New("")
+	if err != nil {
+		return nil, err
+	}
+	return cadvisorInterface, nil
+}
+
+func (e *edged) newMachineInfo() (*cadvisorapi.MachineInfo, error) {
+	if edgedconfig.Config.EnableMetrics {
+		machineInfo, err := e.cadvisor.MachineInfo()
+		if err != nil {
+			return nil, err
+		}
+		return machineInfo, nil
+	}
+
+	var machineInfo cadvisorapi.MachineInfo
+	machineInfo.MemoryCapacity = uint64(edgedconfig.Config.EdgedMemoryCapacity)
+	return &machineInfo, nil
+}
+
+func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService internalapi.ImageManagerService) *stats.StatsProvider {
+	if useLegacyCadvisorStats {
+		return stats.NewCadvisorStatsProvider(
+			e.cadvisor,
+			e.resourceAnalyzer,
+			e.podManager,
+			e.runtimeCache,
+			e.containerRuntime,
+			e.statusManager)
+	}
+
+	return stats.NewCRIStatsProvider(
+		e.cadvisor,
+		e.resourceAnalyzer,
+		e.podManager,
+		e.runtimeCache,
+		e.runtimeService,
+		imageService,
+		stats.NewLogMetricsService(),
+		kubecontainer.RealOS{})
 }
 
 func (e *edged) initializeModules() error {
