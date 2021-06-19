@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -447,15 +448,31 @@ func checkSum(filename, checksumFilename string, version semver.Version, tarball
 	}
 
 	fmt.Printf("%s content: \n", checksumFilename)
-	getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
-	if err := getDesiredCheckSum.Exec(); err != nil {
-		return false, err
+	checksumFilepath := fmt.Sprintf("%s/%s", tarballPath, checksumFilename)
+
+	if _, err := os.Stat(checksumFilepath); err == nil {
+		fmt.Printf("Expected or Default checksum file %s is already downloaded. \n", checksumFilename)
+		content, err := ioutil.ReadFile(checksumFilepath)
+		if err != nil {
+			return false, err
+		}
+		checksum := strings.Replace(string(content), "\n", "", -1)
+		if checksum != getActualCheckSum.GetStdOut() {
+			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+			return false, nil
+		}
+	} else {
+		getDesiredCheckSum := NewCommand(fmt.Sprintf("wget -qO- %s/v%s/%s", KubeEdgeDownloadURL, version, checksumFilename))
+		if err := getDesiredCheckSum.Exec(); err != nil {
+			return false, err
+		}
+
+		if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
+			fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
+			return false, nil
+		}
 	}
 
-	if getDesiredCheckSum.GetStdOut() != getActualCheckSum.GetStdOut() {
-		fmt.Printf("Failed to verify the checksum of %s ... \n\n", filename)
-		return false, nil
-	}
 	return true, nil
 }
 
