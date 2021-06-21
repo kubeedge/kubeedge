@@ -6,7 +6,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	k8sinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -23,7 +22,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
-	common "github.com/kubeedge/kubeedge/common/constants"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -232,76 +230,6 @@ func (dc *DownstreamController) syncEdgeNodes() {
 					if nsc.Status != v1.ConditionTrue || status == nstatus {
 						continue
 					}
-					// send all services to edge
-					msg := model.NewMessage("").SetRoute(modules.EdgeControllerModuleName, constants.GroupResource)
-
-					// TODO: what should in place of namespace and service when we are sending service list ?
-					resource, err := messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeServiceList, common.ResourceTypeService)
-					if err != nil {
-						klog.Warningf("Built message resource failed with error: %s", err)
-						break
-					}
-
-					svcs, err := dc.svcLister.Services(v1.NamespaceAll).List(labels.Everything())
-					if err != nil {
-						klog.Warningf("Send message failed with list service error: %s", err)
-						break
-					}
-					svcMsg := msg.Clone(msg).
-						SetResourceOperation(resource, model.UpdateOperation).
-						FillBody(svcs)
-					if err := dc.messageLayer.Send(*svcMsg); err != nil {
-						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, svcMsg.GetOperation(), svcMsg.GetResource())
-					} else {
-						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", svcMsg.GetOperation(), svcMsg.GetResource())
-					}
-
-					// send all pods to edge
-					for _, svc := range svcs {
-						namespace := svc.GetNamespace()
-						selector := labels.NewSelector()
-						for k, v := range svc.Spec.Selector {
-							r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
-							selector = selector.Add(*r)
-						}
-
-						pods, err := dc.podLister.Pods(namespace).List(selector)
-						if err != nil {
-							continue
-						}
-
-						resource, err := messagelayer.BuildResource(node.Name, svc.Namespace, model.ResourceTypePodlist, svc.Name)
-						if err != nil {
-							klog.Warningf("Built message resource failed with error: %v", err)
-							continue
-						}
-						podsMsg := msg.Clone(msg).
-							SetResourceOperation(resource, model.UpdateOperation).
-							FillBody(pods)
-						if err := dc.messageLayer.Send(*podsMsg); err != nil {
-							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, podsMsg.GetOperation(), podsMsg.GetResource())
-						} else {
-							klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", podsMsg.GetOperation(), podsMsg.GetResource())
-						}
-					}
-
-					// send all endpoints to edge
-					// TODO: what should in place of namespace and endpoints when we are sending endpoints list ?
-					resource, err = messagelayer.BuildResource(node.Name, "namespace", common.ResourceTypeEndpointsList, common.ResourceTypeEndpoints)
-					if err != nil {
-						klog.Warningf("Built message resource failed with error: %s", err)
-						break
-					}
-					endpoints := dc.lc.GetAllEndpoints()
-					epsMsg := msg.Clone(msg).
-						SetResourceOperation(resource, model.UpdateOperation).
-						FillBody(endpoints)
-					if err := dc.messageLayer.Send(*epsMsg); err != nil {
-						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, epsMsg.GetOperation(), epsMsg.GetResource())
-					} else {
-						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", epsMsg.GetOperation(), epsMsg.GetResource())
-					}
-					break
 				}
 			case watch.Deleted:
 				dc.lc.DeleteNode(node.ObjectMeta.Name)
@@ -322,152 +250,6 @@ func (dc *DownstreamController) syncEdgeNodes() {
 			default:
 				// unsupported operation, no need to send to any node
 				klog.Warningf("Node event type: %s unsupported", e.Type)
-			}
-		}
-	}
-}
-
-func (dc *DownstreamController) syncService() {
-	var operation string
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("Stop edgecontroller downstream syncService loop")
-			return
-		case e := <-dc.serviceManager.Events():
-			svc, ok := e.Object.(*v1.Service)
-			if !ok {
-				klog.Warningf("Object type: %T unsupported", e.Object)
-				continue
-			}
-			switch e.Type {
-			case watch.Added:
-				operation = model.InsertOperation
-			case watch.Modified:
-				operation = model.UpdateOperation
-			case watch.Deleted:
-				operation = model.DeleteOperation
-			default:
-				// unsupported operation, no need to send to any node
-				klog.Warningf("Service event type: %s unsupported", e.Type)
-				continue
-			}
-
-			// send to all nodes
-			dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
-				nodeName, ok := key.(string)
-				if !ok {
-					klog.Warning("Failed to assert key to sting")
-					return true
-				}
-
-				resource, err := messagelayer.BuildResource(nodeName, svc.Namespace, common.ResourceTypeService, svc.Name)
-				if err != nil {
-					klog.Warningf("Built message resource failed with error: %v", err)
-					return true
-				}
-				msg := model.NewMessage("").
-					SetResourceVersion(svc.ResourceVersion).
-					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation).
-					FillBody(svc)
-				if err := dc.messageLayer.Send(*msg); err != nil {
-					klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
-				} else {
-					klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
-				}
-				return true
-			})
-		}
-	}
-}
-
-func (dc *DownstreamController) syncEndpoints() {
-	var operation string
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("Stop edgecontroller downstream syncEndpoints loop")
-			return
-		case e := <-dc.endpointsManager.Events():
-			eps, ok := e.Object.(*v1.Endpoints)
-			if !ok {
-				klog.Warningf("Object type: %T unsupported", e.Object)
-				continue
-			}
-
-			ok = true
-			switch e.Type {
-			case watch.Added:
-				dc.lc.AddOrUpdateEndpoints(*eps)
-				operation = model.InsertOperation
-			case watch.Modified:
-				ok = dc.lc.IsEndpointsUpdated(*eps)
-				dc.lc.AddOrUpdateEndpoints(*eps)
-				operation = model.UpdateOperation
-			case watch.Deleted:
-				dc.lc.DeleteEndpoints(*eps)
-				operation = model.DeleteOperation
-			default:
-				// unsupported operation, no need to send to any node
-				klog.Warningf("endpoints event type: %s unsupported", e.Type)
-				continue
-			}
-			// send to all nodes
-			if ok {
-				var (
-					pods       []*v1.Pod
-					hasService = false
-				)
-
-				namespace, name := eps.GetNamespace(), eps.GetName()
-				if svc, err := dc.svcLister.Services(namespace).Get(name); err == nil {
-					hasService = true
-					selector := labels.NewSelector()
-					for k, v := range svc.Spec.Selector {
-						r, _ := labels.NewRequirement(k, selection.Equals, []string{v})
-						selector = selector.Add(*r)
-					}
-					pods, _ = dc.podLister.Pods(svc.GetNamespace()).List(selector)
-				}
-
-				dc.lc.EdgeNodes.Range(func(key interface{}, value interface{}) bool {
-					nodeName, check := key.(string)
-					if !check {
-						klog.Warning("Failed to assert key to string")
-						return true
-					}
-					resource, err := messagelayer.BuildResource(nodeName, eps.Namespace, common.ResourceTypeEndpoints, eps.Name)
-					if err != nil {
-						klog.Warningf("Built message resource failed with error: %s", err)
-						return true
-					}
-					msg := model.NewMessage("").
-						SetRoute(modules.EdgeControllerModuleName, constants.GroupResource)
-					epsMsg := msg.Clone(msg).SetResourceVersion(eps.ResourceVersion).
-						SetResourceOperation(resource, operation).
-						FillBody(eps)
-					if err := dc.messageLayer.Send(*epsMsg); err != nil {
-						klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, epsMsg.GetOperation(), epsMsg.GetResource())
-					} else {
-						klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", epsMsg.GetOperation(), epsMsg.GetResource())
-					}
-					if operation != model.DeleteOperation && hasService {
-						resource, err := messagelayer.BuildResource(nodeName, namespace, model.ResourceTypePodlist, name)
-						if err != nil {
-							klog.Warningf("Built message resource failed with error: %v", err)
-							return true
-						}
-						podsMsg := msg.Clone(msg).
-							SetResourceOperation(resource, model.UpdateOperation).
-							FillBody(pods)
-						if err := dc.messageLayer.Send(*podsMsg); err != nil {
-							klog.Warningf("Send message failed with error: %s, operation: %s, resource: %s", err, podsMsg.GetOperation(), podsMsg.GetResource())
-						} else {
-							klog.V(4).Infof("Send message successfully, operation: %s, resource: %s", podsMsg.GetOperation(), podsMsg.GetResource())
-						}
-					}
-					return true
-				})
 			}
 		}
 	}
@@ -575,12 +357,6 @@ func (dc *DownstreamController) Start() error {
 
 	// nodes
 	go dc.syncEdgeNodes()
-
-	// service
-	go dc.syncService()
-
-	// endpoints
-	go dc.syncEndpoints()
 
 	// rule
 	go dc.syncRule()

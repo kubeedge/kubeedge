@@ -26,7 +26,6 @@ func DisableAllModules(i interface{}) {
 		config.Modules.MetaManager.Enable = false
 		config.Modules.ServiceBus.Enable = false
 		config.Modules.MetaManager.MetaServer.Enable = false
-		config.Modules.EdgeMesh.Enable = false
 	default:
 		klog.Fatal("unsupport config type")
 	}

@@ -99,7 +99,6 @@ func WriteEdgeModulesYamlFile(path string) error {
 				"metaManager",
 				"edged",
 				"twin",
-				"edgemesh",
 			},
 		},
 	}

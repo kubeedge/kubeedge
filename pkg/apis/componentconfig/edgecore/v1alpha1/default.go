@@ -150,13 +150,6 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 			DBTest: &DBTest{
 				Enable: false,
 			},
-			EdgeMesh: &EdgeMesh{
-				Enable:          true,
-				LBStrategy:      EdgeMeshDefaultLoadBalanceStrategy,
-				ListenInterface: EdgeMeshDefaultInterface,
-				ListenPort:      EdgeMeshDefaultListenPort,
-				SubNet:          EdgeMeshDefaultSubNet,
-			},
 			EdgeStream: &EdgeStream{
 				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
