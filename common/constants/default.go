@@ -38,9 +38,6 @@ const (
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
-	// Election
-	DefaultCloudCoreReadyCheckURL = "/readyz"
-
 	// Edged
 	DefaultDockerAddress               = "unix:///var/run/docker.sock"
 	DefaultRuntimeType                 = "docker"
@@ -126,11 +123,8 @@ const (
 	// Resource sep
 	ResourceSep = "/"
 
-	ResourceTypeService       = "service"
-	ResourceTypeServiceList   = "servicelist"
-	ResourceTypeEndpoints     = "endpoints"
-	ResourceTypeEndpointsList = "endpointslist"
-	ResourceTypeListener      = "listener"
+	ResourceTypeService   = "service"
+	ResourceTypeEndpoints = "endpoints"
 
 	ResourceTypePersistentVolume      = "persistentvolume"
 	ResourceTypePersistentVolumeClaim = "persistentvolumeclaim"

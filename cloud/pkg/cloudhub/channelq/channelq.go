@@ -156,8 +156,6 @@ func getListMsgKey(obj interface{}) (string, error) {
 func isListResource(msg *beehiveModel.Message) bool {
 	msgResource := msg.GetResource()
 	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
-		strings.Contains(msgResource, commonconst.ResourceTypeServiceList) ||
-		strings.Contains(msgResource, commonconst.ResourceTypeEndpointsList) ||
 		strings.Contains(msgResource, "membership") ||
 		strings.Contains(msgResource, "twin/cloud_updated") {
 		return true

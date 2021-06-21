@@ -132,12 +132,6 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(config.Config.Load.QuerySecretWorkers); i++ {
 		go uc.querySecret()
 	}
-	for i := 0; i < int(config.Config.Load.QueryServiceWorkers); i++ {
-		go uc.queryService()
-	}
-	for i := 0; i < int(config.Config.Load.QueryEndpointsWorkers); i++ {
-		go uc.queryEndpoints()
-	}
 	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
 	}
@@ -197,10 +191,6 @@ func (uc *UpstreamController) dispatchMessage() {
 			uc.configMapChan <- msg
 		case model.ResourceTypeSecret:
 			uc.secretChan <- msg
-		case common.ResourceTypeService:
-			uc.serviceChan <- msg
-		case common.ResourceTypeEndpoints:
-			uc.endpointsChan <- msg
 		case common.ResourceTypePersistentVolume:
 			uc.persistentVolumeChan <- msg
 		case common.ResourceTypePersistentVolumeClaim:
@@ -564,10 +554,6 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.configMapLister.ConfigMaps(namespace).Get(name)
 	case model.ResourceTypeSecret:
 		obj, err = uc.secretLister.Secrets(namespace).Get(name)
-	case common.ResourceTypeService:
-		obj, err = uc.serviceLister.Services(namespace).Get(name)
-	case common.ResourceTypeEndpoints:
-		obj, err = uc.endpointLister.Endpoints(namespace).Get(name)
 	case common.ResourceTypePersistentVolume:
 		obj, err = uc.kubeClient.CoreV1().PersistentVolumes().Get(context.Background(), name, metaV1.GetOptions{})
 	case common.ResourceTypePersistentVolumeClaim:
@@ -655,30 +641,6 @@ func (uc *UpstreamController) querySecret() {
 			return
 		case msg := <-uc.secretChan:
 			queryInner(uc, msg, model.ResourceTypeSecret)
-		}
-	}
-}
-
-func (uc *UpstreamController) queryService() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("stop queryService")
-			return
-		case msg := <-uc.serviceChan:
-			queryInner(uc, msg, common.ResourceTypeService)
-		}
-	}
-}
-
-func (uc *UpstreamController) queryEndpoints() {
-	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("stop queryEndpoints")
-			return
-		case msg := <-uc.endpointsChan:
-			queryInner(uc, msg, common.ResourceTypeEndpoints)
 		}
 	}
 }

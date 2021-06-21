@@ -26,13 +26,6 @@ import (
 )
 
 const (
-	EdgeMeshDefaultLoadBalanceStrategy = "RoundRobin"
-	EdgeMeshDefaultInterface           = "docker0"
-	EdgeMeshDefaultSubNet              = "9.251.0.0/16"
-	EdgeMeshDefaultListenPort          = 40001
-)
-
-const (
 	MqttModeInternal MqttMode = 0
 	MqttModeBoth     MqttMode = 1
 	MqttModeExternal MqttMode = 2
@@ -99,9 +92,6 @@ type Modules struct {
 	DeviceTwin *DeviceTwin `json:"deviceTwin,omitempty"`
 	// DBTest indicates dbTest module config
 	DBTest *DBTest `json:"dbTest,omitempty"`
-	// EdgeMesh indicates edgeMesh module config
-	// +Required
-	EdgeMesh *EdgeMesh `json:"edgeMesh,omitempty"`
 	// EdgeStream indicates edgestream module config
 	// +Required
 	EdgeStream *EdgeStream `json:"edgeStream,omitempty"`
@@ -419,26 +409,6 @@ type DBTest struct {
 	// if set to false (for debugging etc.), skip checking other DBTest configs.
 	// default false
 	Enable bool `json:"enable"`
-}
-
-// EdgeMesh indicates the EdgeMesh module config
-type EdgeMesh struct {
-	// Enable indicates whether EdgeMesh is enabled,
-	// if set to false (for debugging etc.), skip checking other EdgeMesh configs.
-	// default true
-	Enable bool `json:"enable"`
-	// lbStrategy indicates load balance strategy name
-	// default "RoundRobin"
-	LBStrategy string `json:"lbStrategy,omitempty"`
-	// ListenInterface indicates the listen interface of EdgeMesh
-	// default "docker0"
-	ListenInterface string `json:"listenInterface,omitempty"`
-	// SubNet indicates the subnet of EdgeMesh
-	// default "9.251.0.0/16"
-	SubNet string `json:"subNet,omitempty"`
-	// ListenPort indicates the listen port of EdgeMesh
-	// default 40001
-	ListenPort int `json:"listenPort,omitempty"`
 }
 
 // EdgeSream indicates the stream controller
