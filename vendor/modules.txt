@@ -94,8 +94,6 @@ github.com/bifurcation/mint/syntax
 # github.com/blang/semver v3.5.1+incompatible
 ## explicit
 github.com/blang/semver
-# github.com/cenkalti/backoff v2.1.1+incompatible
-github.com/cenkalti/backoff
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
 # github.com/checkpoint-restore/go-criu/v4 v4.0.2
@@ -209,70 +207,8 @@ github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
-# github.com/go-chassis/foundation v0.0.0-20190621030543-c3b63f787f4c
-github.com/go-chassis/foundation/security
-# github.com/go-chassis/go-archaius v0.20.0
-## explicit
-github.com/go-chassis/go-archaius
-github.com/go-chassis/go-archaius/core
-github.com/go-chassis/go-archaius/core/cast
-github.com/go-chassis/go-archaius/core/config-manager
-github.com/go-chassis/go-archaius/core/event-system
-github.com/go-chassis/go-archaius/sources/commandline-source
-github.com/go-chassis/go-archaius/sources/configcenter
-github.com/go-chassis/go-archaius/sources/enviromentvariable-source
-github.com/go-chassis/go-archaius/sources/file-source
-github.com/go-chassis/go-archaius/sources/memory-source
-github.com/go-chassis/go-archaius/sources/utils
-# github.com/go-chassis/go-chassis v1.7.1
-## explicit
-github.com/go-chassis/go-chassis/client/rest
-github.com/go-chassis/go-chassis/control
-github.com/go-chassis/go-chassis/core/client
-github.com/go-chassis/go-chassis/core/common
-github.com/go-chassis/go-chassis/core/config
-github.com/go-chassis/go-chassis/core/config/model
-github.com/go-chassis/go-chassis/core/config/schema
-github.com/go-chassis/go-chassis/core/fault
-github.com/go-chassis/go-chassis/core/handler
-github.com/go-chassis/go-chassis/core/invocation
-github.com/go-chassis/go-chassis/core/loadbalancer
-github.com/go-chassis/go-chassis/core/metadata
-github.com/go-chassis/go-chassis/core/qpslimiter
-github.com/go-chassis/go-chassis/core/registry
-github.com/go-chassis/go-chassis/core/router
-github.com/go-chassis/go-chassis/core/router/weightpool
-github.com/go-chassis/go-chassis/core/tls
-github.com/go-chassis/go-chassis/core/tracing
-github.com/go-chassis/go-chassis/healthz/client
-github.com/go-chassis/go-chassis/pkg/backoff
-github.com/go-chassis/go-chassis/pkg/circuit
-github.com/go-chassis/go-chassis/pkg/goplugin
-github.com/go-chassis/go-chassis/pkg/runtime
-github.com/go-chassis/go-chassis/pkg/string
-github.com/go-chassis/go-chassis/pkg/util
-github.com/go-chassis/go-chassis/pkg/util/fileutil
-github.com/go-chassis/go-chassis/pkg/util/httputil
-github.com/go-chassis/go-chassis/pkg/util/iputil
-github.com/go-chassis/go-chassis/pkg/util/tags
-github.com/go-chassis/go-chassis/security
-github.com/go-chassis/go-chassis/security/common
-github.com/go-chassis/go-chassis/security/plugins/plain
-github.com/go-chassis/go-chassis/session
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/metric_collector
-github.com/go-chassis/go-chassis/third_party/forked/afex/hystrix-go/hystrix/rolling
-github.com/go-chassis/go-chassis/third_party/forked/k8s.io/apimachinery/pkg/util/sets
-# github.com/go-chassis/go-chassis-config v0.10.0
-github.com/go-chassis/go-chassis-config
-# github.com/go-chassis/go-restful-swagger20 v1.0.1
-github.com/go-chassis/go-restful-swagger20
-# github.com/go-chassis/paas-lager v1.1.1
-## explicit
 # github.com/go-logr/logr v0.2.0
 github.com/go-logr/logr
-# github.com/go-mesh/openlogging v1.0.1-0.20181205082104-3d418c478b2d
-github.com/go-mesh/openlogging
 # github.com/go-ole/go-ole v1.2.4
 ## explicit
 github.com/go-ole/go-ole
@@ -382,9 +318,6 @@ github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 github.com/grpc-ecosystem/go-grpc-prometheus
-# github.com/hashicorp/go-version v1.2.0
-## explicit
-github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.3
 ## explicit
 github.com/hashicorp/golang-lru
@@ -557,13 +490,6 @@ github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
 github.com/opencontainers/selinux/pkg/pwalk
-# github.com/opentracing/opentracing-go v1.1.0
-## explicit
-github.com/opentracing/opentracing-go
-github.com/opentracing/opentracing-go/ext
-github.com/opentracing/opentracing-go/log
-# github.com/patrickmn/go-cache v2.1.0+incompatible
-github.com/patrickmn/go-cache
 # github.com/paypal/gatt v0.0.0-20151011220935-4ae819d591cf
 ## explicit
 github.com/paypal/gatt
@@ -615,8 +541,6 @@ github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.3.0
-github.com/spf13/cast
 # github.com/spf13/cobra v1.0.0
 ## explicit
 github.com/spf13/cobra
@@ -632,7 +556,6 @@ github.com/stretchr/testify/mock
 # github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 github.com/syndtr/gocapability/capability
 # github.com/vishvananda/netlink v1.1.0
-## explicit
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
 # github.com/vishvananda/netns v0.0.0-20200520041808-52d707b772fe
@@ -670,9 +593,6 @@ go.opencensus.io/trace/tracestate
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
 go.uber.org/multierr
-# go.uber.org/ratelimit v0.1.0
-go.uber.org/ratelimit
-go.uber.org/ratelimit/internal/clock
 # go.uber.org/zap v1.10.0
 go.uber.org/zap
 go.uber.org/zap/buffer
