@@ -126,6 +126,8 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	switch use {
 	case common.ArgCheckAll:
 		err = CheckAll(ob)
+	case common.ArgCheckArch:
+		err = CheckArch()
 	case common.ArgCheckCPU:
 		err = CheckCPU()
 	case common.ArgCheckMemory:
@@ -151,6 +153,11 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 }
 
 func CheckAll(ob *common.CheckOptions) error {
+	err := CheckArch()
+	if err != nil {
+		return err
+	}
+
 	err := CheckCPU()
 	if err != nil {
 		return err
@@ -185,6 +192,18 @@ func CheckAll(ob *common.CheckOptions) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func CheckArch() error {
+	arch, err := util.ExecShellFilter(common.CmdGetArch)
+	if err != nil {
+		return err
+	}
+	if !IsContain(common.AllowedValueArch, arch) {
+		return fmt.Errorf("%s is not supported", arch)
+	}
+	fmt.Printf("%s is supported\n", arch)
 	return nil
 }
 

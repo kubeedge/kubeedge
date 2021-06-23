@@ -88,6 +88,7 @@ const (
 	CmdPing             = "ping %s -w %d |grep 'packets transmitted' |awk '{print $6}'"
 	CmdGetMaxProcessNum = "sysctl kernel.pid_max|awk '{print $3}'"
 	CmdGetProcessNum    = "ps -A|wc -l"
+	CmdGetArch          = "arch"
 
 	EdgecoreConfig = "config"
 
@@ -185,6 +186,10 @@ var (
 		{
 			Use:  ArgCheckAll,
 			Desc: DescAll,
+		},
+		{
+			Use:  ArgCheckArch,
+			Desc: DescArch,
 		},
 		{
 			Use:  ArgCheckCPU,
