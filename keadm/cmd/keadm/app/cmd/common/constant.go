@@ -179,8 +179,6 @@ const (
 )
 
 var (
-	AllowedValueArch = []string{"amd64", "arm64v8", "arm32v7", "i386", "s390x", "x86_64", "aarch64"}
-
 	CheckObjectMap = []CheckObject{
 		{
 			Use:  ArgCheckAll,
