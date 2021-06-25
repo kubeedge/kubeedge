@@ -30,9 +30,6 @@ and maintenance personnel to locate the problem`
         # Check all items .
         keadm debug check all
 
-        # Check whether the node arch is supported .
-        keadm debug check arch
-
         # Check whether the node CPU meets  requirements.
         keadm debug check cpu
 
