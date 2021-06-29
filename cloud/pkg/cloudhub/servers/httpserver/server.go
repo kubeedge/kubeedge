@@ -173,15 +173,18 @@ func signEdgeCert(w http.ResponseWriter, r *http.Request) {
 	csrContent, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		klog.Errorf("fail to read file when signing the cert for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 	csr, err := x509.ParseCertificateRequest(csrContent)
 	if err != nil {
 		klog.Errorf("fail to ParseCertificateRequest of edgenode: %s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 	subject := csr.Subject
 	clientCertDER, err := signCerts(subject, csr.PublicKey)
 	if err != nil {
 		klog.Errorf("fail to signCerts for edgenode:%s! error:%v", r.Header.Get(constants.NodeName), err)
+		return
 	}
 
 	if _, err := w.Write(clientCertDER); err != nil {
