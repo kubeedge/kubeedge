@@ -40,15 +40,15 @@ func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secret
 				secrets = append(secrets, ef.SecretRef.Name)
 			}
 		}
-		for _,e := range s.Env {
+		for _, e := range s.Env {
 			if e.ValueFrom == nil {
 				continue
 			}
 
 			if e.ValueFrom.ConfigMapKeyRef != nil {
 				configMaps = append(configMaps, e.ValueFrom.ConfigMapKeyRef.Name)
-			} else if  e.ValueFrom.SecretKeyRef != nil {
-				secrets = append(configMaps, e.ValueFrom.SecretKeyRef.Name)
+			} else if e.ValueFrom.SecretKeyRef != nil {
+				secrets = append(secrets, e.ValueFrom.SecretKeyRef.Name)
 			}
 		}
 	}
