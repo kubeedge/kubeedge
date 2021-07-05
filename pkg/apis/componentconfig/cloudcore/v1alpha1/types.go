@@ -233,6 +233,9 @@ type EdgeControllerBuffer struct {
 	// SecretEvent indicates the buffer of secret event
 	// default 1
 	SecretEvent int32 `json:"secretEvent,omitempty"`
+	// NodeEvent indicates the buffer of node event
+	// default 1
+	NodeEvent int32 `json:"nodeEvent,omitempty"`
 	// ServiceEvent indicates the buffer of service event
 	// default 1
 	ServiceEvent int32 `json:"serviceEvent,omitempty"`

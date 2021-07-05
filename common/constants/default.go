@@ -112,6 +112,7 @@ const (
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
 	DefaultSecretEventBuffer        = 1
+	DefaultNodeEventBuffer          = 1
 	DefaultServiceEventBuffer       = 1
 	DefaultEndpointsEventBuffer     = 1
 	DefaultRulesEventBuffer         = 1
