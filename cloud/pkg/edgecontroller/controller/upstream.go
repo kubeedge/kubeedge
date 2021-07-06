@@ -118,20 +118,6 @@ type UpstreamController struct {
 func (uc *UpstreamController) Start() error {
 	klog.Info("start upstream controller")
 
-	uc.nodeStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
-	uc.podStatusChan = make(chan model.Message, config.Config.Buffer.UpdatePodStatus)
-	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigMap)
-	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
-	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
-	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
-	uc.persistentVolumeChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolume)
-	uc.persistentVolumeClaimChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolumeClaim)
-	uc.volumeAttachmentChan = make(chan model.Message, config.Config.Buffer.QueryVolumeAttachment)
-	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
-	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
-	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
-	uc.ruleStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
-
 	go uc.dispatchMessage()
 
 	for i := 0; i < int(config.Config.Load.UpdateNodeStatusWorkers); i++ {
@@ -1018,5 +1004,19 @@ func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*Upstream
 	uc.podLister = factory.Core().V1().Pods().Lister()
 	uc.configMapLister = factory.Core().V1().ConfigMaps().Lister()
 	uc.secretLister = factory.Core().V1().Secrets().Lister()
+
+	uc.nodeStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
+	uc.podStatusChan = make(chan model.Message, config.Config.Buffer.UpdatePodStatus)
+	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigMap)
+	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
+	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
+	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
+	uc.persistentVolumeChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolume)
+	uc.persistentVolumeClaimChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolumeClaim)
+	uc.volumeAttachmentChan = make(chan model.Message, config.Config.Buffer.QueryVolumeAttachment)
+	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
+	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
+	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
+	uc.ruleStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
 	return uc, nil
 }
