@@ -42,7 +42,7 @@ func InitKubeEdgeClient() {
 
 	once.Do(func() {
 		keClient = &kubeEdgeClient{
-			kubeClient:    kubeClient, //clientset
+			kubeClient:    kubeClient,
 		}
 	})
 }

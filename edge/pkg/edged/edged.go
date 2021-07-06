@@ -319,7 +319,7 @@ func (e *edged) Start() {
 	// update node label
 	node, _ := e.GetNode()
 	node.Labels = e.labels
-	if err := e.metaClient.Nodes(e.namespace).Update(node); err != nil {
+	if _, err := client.GetKubeClient().CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
 		klog.Errorf("update node failed, error: %v", err)
 	}
 
