@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
@@ -27,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
@@ -95,6 +97,7 @@ type Application struct {
 
 	count     uint64 // count the number of current citations
 	countLock sync.Mutex
+	tim       time.Time // record the last closing time of application, only make sense when count == 0
 	//TODO: add lock
 }
 
@@ -120,6 +123,7 @@ func newApplication(ctx context.Context, key string, verb applicationVerb, noden
 		cancel:    cancel,
 		count:     0,
 		countLock: sync.Mutex{},
+		tim:       time.Time{},
 	}
 	app.add()
 	return app
@@ -239,10 +243,20 @@ func (a *Application) Close() {
 		return
 	}
 
+	a.tim = time.Now()
 	a.count--
 	if a.count == 0 {
 		a.Status = Completed
 	}
+}
+
+func (a *Application) LastCloseTime() time.Time {
+	a.countLock.Lock()
+	defer a.countLock.Unlock()
+	if a.count == 0 && !a.tim.IsZero() {
+		return a.tim
+	}
+	return time.Time{}
 }
 
 // used for generating application and do apply
@@ -251,9 +265,18 @@ type Agent struct {
 	nodeName     string
 }
 
+var defaultAgent *Agent
+var once sync.Once
+
 // edged config.Config.HostnameOverride
-func NewApplicationAgent(nodeName string) *Agent {
-	return &Agent{nodeName: nodeName}
+func NewApplicationAgent() *Agent {
+	defaultAgent := &Agent{nodeName: metaserverconfig.Config.NodeName}
+	once.Do(func() {
+		go wait.Until(func() {
+			defaultAgent.GC()
+		}, time.Minute*5, beehiveContext.Done())
+	})
+	return defaultAgent
 }
 
 func (a *Agent) Generate(ctx context.Context, verb applicationVerb, option interface{}, obj runtime.Object) *Application {
@@ -326,7 +349,14 @@ func (a *Agent) doApply(app *Application) {
 }
 
 func (a *Agent) GC() {
-
+	a.Applications.Range(func(key, value interface{}) bool {
+		app := value.(*Application)
+		lastCloseTime := app.LastCloseTime()
+		if !lastCloseTime.IsZero() && time.Since(lastCloseTime) >= time.Minute*5 {
+			a.Applications.Delete(key)
+		}
+		return true
+	})
 }
 
 type Center struct {
