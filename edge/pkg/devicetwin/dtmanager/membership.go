@@ -109,7 +109,7 @@ func dealMembershipDetail(context *dtcontext.DTContext, resource string, msg int
 	addDevice(context, devices.Devices, baseMessage, isDelta)
 	toRemove = getRemoveList(context, devices.Devices)
 
-	if toRemove != nil || len(toRemove) != 0 {
+	if len(toRemove) != 0 {
 		removeDevice(context, toRemove, baseMessage, isDelta)
 	}
 	klog.Info("Deal node detail info successful")
