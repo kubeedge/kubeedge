@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
 
@@ -72,6 +73,85 @@ func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("CGroupDriver"), e.CGroupDriver,
 			"CGroupDriver value error"))
 	}
+	if e.MaxPods <= 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("MaxPods"), e.MaxPods,
+			"MaxPods value error"))
+	}
+	if e.SystemReserved != nil {
+		var reservedValue resource.Quantity
+		var validateValue resource.Quantity
+		if e.SystemReserved["cpu"] != "" {
+			reservedValue = resource.MustParse(e.SystemReserved["cpu"])
+			validateValue = resource.MustParse("0m")
+			if reservedValue.Cmp(validateValue) < 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("SystemReserved[cpu]"), e.SystemReserved["cpu"],
+					"SystemReserved[cpu] value less than 0m"))
+			}
+		}
+
+		if e.SystemReserved["memory"] != "" {
+			reservedValue = resource.MustParse(e.SystemReserved["memory"])
+			validateValue = resource.MustParse("0Mi")
+			if reservedValue.Cmp(validateValue) < 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("SystemReserved[memory]"), e.SystemReserved["memory"],
+					"SystemReserved[memory] value less than 0Mi"))
+			}
+		}
+	}
+	if e.KubeReserved != nil {
+		var reservedValue resource.Quantity
+		var validateValue resource.Quantity
+
+		if e.KubeReserved["cpu"] != "" {
+			reservedValue = resource.MustParse(e.KubeReserved["cpu"])
+			validateValue = resource.MustParse("0m")
+			if reservedValue.Cmp(validateValue) < 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("KubeReserved[cpu]"), e.KubeReserved["cpu"],
+					"KubeReserved[cpu] value less than 0m"))
+			}
+		}
+		if e.KubeReserved["memory"] != "" {
+			reservedValue = resource.MustParse(e.KubeReserved["memory"])
+			validateValue = resource.MustParse("0Mi")
+			if reservedValue.Cmp(validateValue) < 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("KubeReserved[memory]"), e.KubeReserved["memory"],
+					"KubeReserved[memory] value less than 0Mi"))
+			}
+		}
+	}
+	if !e.CgroupsPerQOS && len(e.EnforceNodeAllocatable) > 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("CgroupsPerQOS"), e.CgroupsPerQOS,
+			"EnforceNodeAllocatable is not supported unless CgroupsPerQOS feature is turned on"))
+	}
+	if len(e.EnforceNodeAllocatable) > 0 {
+		for _, val := range e.EnforceNodeAllocatable {
+			switch val {
+			case v1alpha1.NodeAllocatableEnforcementKey:
+			case v1alpha1.SystemReservedEnforcementKey:
+				if e.SystemReservedCgroup == "" {
+					allErrs = append(allErrs,
+						field.Invalid(field.NewPath("EnforceNodeAllocatable"), e.EnforceNodeAllocatable,
+							"systemReservedCgroup must be specified when system-reserved contained in EnforceNodeAllocatable"))
+				}
+			case v1alpha1.KubeReservedEnforcementKey:
+				if e.KubeReservedCgroup == "" {
+					allErrs = append(allErrs,
+						field.Invalid(field.NewPath("EnforceNodeAllocatable"), e.EnforceNodeAllocatable,
+							"kubeReservedCgroup must be specified when kube-reserved contained in EnforceNodeAllocatable"))
+				}
+			case v1alpha1.NodeAllocatableNoneKey:
+				if len(e.EnforceNodeAllocatable) > 1 {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("EnforceNodeAllocatable"), e.EnforceNodeAllocatable,
+						fmt.Sprintf("EnforceNodeAllocatable may not contain additional enforcements when '%s' is specified", v1alpha1.NodeAllocatableNoneKey)))
+				}
+			default:
+				allErrs = append(allErrs, field.Invalid(field.NewPath("EnforceNodeAllocatable"), e.EnforceNodeAllocatable,
+					fmt.Sprintf(" option %q specified for EnforceNodeAllocatable. Valid options are %q, %q, %q, or %q",
+						val, v1alpha1.NodeAllocatableEnforcementKey, v1alpha1.SystemReservedEnforcementKey, v1alpha1.KubeReservedEnforcementKey, v1alpha1.NodeAllocatableNoneKey)))
+			}
+		}
+	}
+
 	return allErrs
 }
 

@@ -52,6 +52,14 @@ const (
 	DataBaseDataSource = "/var/lib/kubeedge/edgecore.db"
 )
 
+const (
+	// User visible keys for managing node allocatable enforcement on the node.
+	NodeAllocatableEnforcementKey = "pods"
+	SystemReservedEnforcementKey  = "system-reserved"
+	KubeReservedEnforcementKey    = "kube-reserved"
+	NodeAllocatableNoneKey        = "none"
+)
+
 type ProtocolName string
 type MqttMode int
 
@@ -244,6 +252,28 @@ type Edged struct {
 	// EnableMetrics indicates whether enable the metrics
 	// default true
 	EnableMetrics bool `json:"enableMetrics,omitempty"`
+	// MaxPods indicates max num pods that can run on this edged
+	// default 110
+	MaxPods int32 `json:"maxPods,omitempty"`
+	// A set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=100Mi) pairs
+	// that describe resources reserved for non-kubernetes components.
+	// default cpu=0m,memory=100Mi
+	SystemReserved map[string]string `json:"systemReserved,omitempty"`
+	// A set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=150G,pid=100) pairs
+	// that describe resources reserved for kubernetes system components.
+	// Currently cpu, memory and local ephemeral storage for root file system are supported.
+	// See http://kubernetes.io/docs/user-guide/compute-resources for more detail.
+	KubeReserved map[string]string `json:"kubeReserved,omitempty"`
+	// This flag helps kubelet identify absolute name of top level cgroup used to enforce `SystemReserved` compute resource reservation for OS system daemons.
+	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
+	SystemReservedCgroup string `json:"systemReservedCgroup,omitempty"`
+	// This flag helps kubelet identify absolute name of top level cgroup used to enforce `KubeReserved` compute resource reservation for Kubernetes node system daemons.
+	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
+	KubeReservedCgroup string `json:"kubeReservedCgroup,omitempty"`
+	// This flag specifies the various Node Allocatable enforcements that Kubelet needs to perform.
+	// This flag accepts a list of options. Acceptable options are `pods`, `system-reserved` & `kube-reserved`.
+	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node/node-allocatable.md) doc for more information.
+	EnforceNodeAllocatable []string `json:"enforceNodeAllocatable,omitempty"`
 }
 
 // EdgeHub indicates the EdgeHub module config
@@ -441,7 +471,7 @@ type EdgeMesh struct {
 	ListenPort int `json:"listenPort,omitempty"`
 }
 
-// EdgeSream indicates the stream controller
+// EdgeStream indicates the stream controller
 type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true

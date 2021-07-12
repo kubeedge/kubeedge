@@ -66,6 +66,9 @@ const (
 	DefaultCgroupRoot                  = ""
 	DefaultVolumeStatsAggPeriod        = time.Minute
 	DefaultTunnelPort                  = 10004
+	DefaultMaxPods                     = 110
+	DefaultSystemReservedCPU           = "0m"
+	DefaultSystemReservedMEM           = "100Mi"
 
 	CurrentSupportK8sVersion = "v1.19.3"
 
