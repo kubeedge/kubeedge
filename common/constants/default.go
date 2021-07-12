@@ -38,6 +38,10 @@ const (
 	DefaultMqttCertFile = "/etc/kubeedge/certs/server.crt"
 	DefaultMqttKeyFile  = "/etc/kubeedge/certs/server.key"
 
+	DefaultRouterCAFile   = "/etc/kubeedge/ca/routerCA.crt"
+	DefaultRouterCertFile = "/etc/kubeedge/certs/router.crt"
+	DefaultRouterKeyFile  = "/etc/kubeedge/certs/router.key"
+
 	// Election
 	DefaultCloudCoreReadyCheckURL = "/readyz"
 

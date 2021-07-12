@@ -409,4 +409,15 @@ type Router struct {
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
+	// default 0, if set to 0 , the secure port is closed,advertise: 9443
+	SecurePort uint32 `json:"securePort,omitempty"`
+	// TLSRouterCAFile indicates kube-apiserver ca file path
+	// default /etc/kubeedge/ca/routerCA.crt
+	TLSRouterCAFile string `json:"tlsRouterCAFile,omitempty"`
+	// TLSRouterCertFile indicates cert file path
+	// default /etc/kubeedge/certs/router.crt
+	TLSRouterCertFile string `json:"tlsRouterCertFile,omitempty"`
+	// TLSRouterPrivateKeyFile indicates key file path
+	// default /etc/kubeedge/certs/router.key
+	TLSRouterPrivateKeyFile string `json:"tlsRouterPrivateKeyFile,omitempty"`
 }
