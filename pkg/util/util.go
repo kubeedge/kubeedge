@@ -141,3 +141,12 @@ func GetPodSandboxImage() string {
 		return constants.DefaultPodSandboxImage
 	}
 }
+
+func IsExist(source []string, msgSource string) bool {
+	for _, s := range source {
+		if s == msgSource {
+			return true
+		}
+	}
+	return false
+}

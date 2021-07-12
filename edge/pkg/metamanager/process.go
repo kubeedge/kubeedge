@@ -145,7 +145,7 @@ func (m *metaManager) processInsert(message model.Message) {
 			return
 		}
 	}
-	imitator.DefaultV2Client.Inject(message)
+
 	resKey, resType, _ := parseResource(message.GetResource())
 	switch resType {
 	case constants.ResourceTypeServiceList:
@@ -219,7 +219,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 			return
 		}
 	}
-	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
 	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
@@ -328,7 +327,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
+	case cloudmodules.EdgeControllerModuleName:
 		if isEdgeMeshResource(resType) {
 			sendToEdgeMesh(&message, message.IsSync())
 		} else {
@@ -386,7 +385,6 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
-	imitator.DefaultV2Client.Inject(message)
 	err := dao.DeleteMetaByKey(message.GetResource())
 	if err != nil {
 		klog.Errorf("delete meta failed, %s", msgDebugInfo(&message))
@@ -637,7 +635,7 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 
-func (m *metaManager) process(message model.Message) {
+func (m *metaManager) processMeta(message model.Message) {
 	operation := message.GetOperation()
 	switch operation {
 	case model.InsertOperation:
@@ -666,6 +664,12 @@ func (m *metaManager) process(message model.Message) {
 	}
 }
 
+func (m *metaManager) processMetaV2(message model.Message) {
+	imitator.DefaultV2Client.Inject(message)
+	resp := message.NewRespByMessage(&message, OK)
+	sendToCloud(resp)
+}
+
 func (m *metaManager) runMetaManager() {
 	go func() {
 		for {
@@ -681,7 +685,11 @@ func (m *metaManager) runMetaManager() {
 				continue
 			}
 			klog.V(2).Infof("get a message %+v", msg)
-			m.process(msg)
+			if msg.GetSource() == cloudmodules.DynamicControllerModuleName {
+				m.processMetaV2(msg)
+			} else {
+				m.processMeta(msg)
+			}
 		}
 	}()
 }
