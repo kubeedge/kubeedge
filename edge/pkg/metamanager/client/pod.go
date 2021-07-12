@@ -28,10 +28,10 @@ type pods struct {
 	send      SendInterface
 }
 
-func newPods(namespace string, s SendInterface) *pods {
+func newPods(ns string, s SendInterface) *pods {
 	return &pods{
 		send:      s,
-		namespace: namespace,
+		namespace: ns,
 	}
 }
 

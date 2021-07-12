@@ -30,10 +30,10 @@ type secrets struct {
 	send      SendInterface
 }
 
-func newSecrets(namespace string, s SendInterface) *secrets {
+func newSecrets(ns string, s SendInterface) *secrets {
 	return &secrets{
 		send:      s,
-		namespace: namespace,
+		namespace: ns,
 	}
 }
 

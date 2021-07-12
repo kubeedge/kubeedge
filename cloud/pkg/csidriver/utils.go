@@ -32,6 +32,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	controller "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -142,7 +143,8 @@ func buildResource(nodeID, namespace, resourceType, resourceID string) (string, 
 	if nodeID == "" || namespace == "" || resourceType == "" {
 		return "", fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
 	}
-	resource := fmt.Sprintf("%s%s%s%s%s%s%s", "node", constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
+	resource := strings.Join([]string{controller.ResourceNode, nodeID, namespace, resourceType}, constants.ResourceSep)
+
 	if resourceID != "" {
 		resource += fmt.Sprintf("%s%s", constants.ResourceSep, resourceID)
 	}

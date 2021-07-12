@@ -520,7 +520,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(context.Background(), getNode, metaV1.UpdateOptions{})
 				if err != nil {
-					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
+					klog.Warningf("message: %s process failure, update node failed with error: %s, name: %s", msg.GetID(), err, getNode.Name)
 					continue
 				}
 
@@ -785,7 +785,7 @@ func (uc *UpstreamController) updateNode() {
 				}
 				node, err := uc.kubeClient.CoreV1().Nodes().Patch(context.Background(), getNode.Name, apimachineryType.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
 				if err != nil {
-					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
+					klog.Warningf("message: %s process failure, update node failed with error: %s, name: %s", msg.GetID(), err, getNode.Name)
 					continue
 				}
 

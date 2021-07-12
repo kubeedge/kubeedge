@@ -14,7 +14,7 @@ import (
 // the fakeIP of EdgeMesh into edge db. One fakeIP for
 // one service.
 const (
-	DefaultNamespace = "default"
+	DefaultNamespace = "_"
 )
 
 // ListenerGetter interface
