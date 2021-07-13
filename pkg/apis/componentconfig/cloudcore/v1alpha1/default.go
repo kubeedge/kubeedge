@@ -93,6 +93,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					PodEvent:                   constants.DefaultPodEventBuffer,
 					ConfigMapEvent:             constants.DefaultConfigMapEventBuffer,
 					SecretEvent:                constants.DefaultSecretEventBuffer,
+					NodeEvent:                  constants.DefaultNodeEventBuffer,
 					ServiceEvent:               constants.DefaultServiceEventBuffer,
 					EndpointsEvent:             constants.DefaultEndpointsEventBuffer,
 					RulesEvent:                 constants.DefaultRulesEventBuffer,
