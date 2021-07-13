@@ -37,6 +37,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
@@ -143,22 +144,34 @@ func GetOSInterface() types.OSTypeInstaller {
 }
 
 // RunningModule identifies cloudcore/edgecore running or not.
-func RunningModule() (types.ModuleRunning, error) {
+func RunningModule(reset *types.ResetOptions) (types.ModuleRunning, error) {
 	osType := GetOSInterface()
-	cloudCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
-
-	if cloudCoreRunning {
-		return types.KubeEdgeCloudRunning, nil
-	} else if err != nil {
+	// first need to determine whether edgecore is running
+	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
+	if err != nil {
 		return types.NoneRunning, err
 	}
-
-	edgeCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeEdgeBinaryName)
-
 	if edgeCoreRunning {
 		return types.KubeEdgeEdgeRunning, nil
-	} else if err != nil {
-		return types.NoneRunning, err
+	}
+
+	if reset.CloudCoreRunMode != types.CloudCoreContainerRunMode {
+		cloudCoreRunning, err := osType.IsKubeEdgeProcessRunning(KubeCloudBinaryName)
+		if err != nil {
+			return types.NoneRunning, err
+		}
+		if cloudCoreRunning {
+			return types.KubeEdgeCloudRunning, nil
+		}
+	} else {
+		// running as container: check whether pods exist to determine whether cloudcore is running
+		cloudCoreRunning, err := IsCloudcoreContainerRunning(constants.KubeEdgeNameSpace, reset.Kubeconfig)
+		if err != nil {
+			return types.NoneRunning, err
+		}
+		if cloudCoreRunning {
+			return types.KubeEdgeCloudRunning, nil
+		}
 	}
 
 	return types.NoneRunning, nil
