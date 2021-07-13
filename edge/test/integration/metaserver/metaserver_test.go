@@ -1,11 +1,17 @@
 package metaserver
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 )
 
 var _ = Describe("Test MetaServer", func() {
@@ -51,6 +57,48 @@ var _ = Describe("Test MetaServer", func() {
 				Expect(err).Should(BeNil())
 				isEqual := v.Status == response.StatusCode
 				Expect(isEqual).Should(BeTrue(), "Expected response status %v, Got %v", v.Status, response.Status)
+			}
+		})
+	})
+
+	Context("Test CRDMap in MetaServer", func() {
+		BeforeEach(func() {
+		})
+		AfterEach(func() {
+		})
+		It("Test CRD Map in MetaServer", func() {
+			type T struct {
+				Method string
+				Path   string
+				Kind   string
+				Status int
+			}
+			cases := map[string]T{
+				"Unusual Case: List ServiceEntry": {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/serviceentries", "ServiceEntryList", http.StatusOK},
+				"Unusual Case: List Gateway":      {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways", "GatewayList", http.StatusOK},
+				"Unusual Case: Get ServiceEntry":  {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/serviceentries/test-serviceentry", "ServiceEntry", http.StatusOK},
+				"Unusual Case: Get Gateway":       {"GET", "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways/test-gateway", "Gateway", http.StatusOK},
+			}
+
+			time.Sleep(time.Second * 90)
+			client := http.Client{}
+			url := "http://127.0.0.1:10550"
+			for _, v := range cases {
+				request, err := http.NewRequest(v.Method, url+v.Path, nil)
+				Expect(err).Should(BeNil())
+				response, err := client.Do(request)
+				Expect(err).Should(BeNil())
+				isEqual := v.Status == response.StatusCode
+				Expect(isEqual).Should(BeTrue(), "Expected response status %v, Got %v", v.Status, response.Status)
+
+				contents, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					common.Fatalf("HTTP Response reading has failed: %v", err)
+				}
+				var obj *unstructured.Unstructured
+				err = json.Unmarshal(contents, &obj)
+				isEqual = obj.GetKind() == v.Kind
+				Expect(isEqual).Should(BeTrue(), "Expected response kind %v, Got %v", v.Kind, obj.GetKind())
 			}
 		})
 	})

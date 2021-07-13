@@ -1,10 +1,12 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -14,11 +16,32 @@ import (
 	"k8s.io/klog/v2"
 
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 )
 
 const (
 	EmptyString = ""
 )
+
+var (
+	CRDResourceToKind = make(map[string]string)
+	CRDKindToResource = make(map[string]string)
+)
+
+func UpdateCrdMap() error {
+	list, err := client.GetCRDClient().ApiextensionsV1beta1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, crd := range list.Items {
+		kind := crd.Spec.Names.Kind
+		plural := crd.Spec.Names.Plural
+		CRDResourceToKind[plural] = kind
+		CRDKindToResource[kind] = plural
+	}
+	klog.Infof("CRD Resource-Kind map updated")
+	return nil
+}
 
 // MetaType is generally consisted of apiversion, kind like:
 // {
@@ -50,11 +73,16 @@ func UnsafeResourceToKind(r string) string {
 		return r
 	}
 	unusualResourceToKind := map[string]string{
-		"endpoints": "Endpoints",
-		"nodes":     "Node",
-		"services":  "Service",
+		"endpoints":                    "Endpoints",
+		"nodes":                        "Node",
+		"services":                     "Service",
+		"customresourcedefinitions":    "CustomResourceDefinition",
+		"customresourcedefinitionlist": "CustomResourceDefinitionList",
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
+		return v
+	}
+	if v, isCRD := CRDResourceToKind[r]; isCRD {
 		return v
 	}
 	k := strings.Title(r)
@@ -70,13 +98,18 @@ func UnsafeResourceToKind(r string) string {
 }
 
 func UnsafeKindToResource(k string) string {
-	if len(k) == 0 {
+	if len(k) == 0 || len(k) == 1 {
 		return k
 	}
 	unusualKindToResource := map[string]string{
-		"Endpoints": "endpoints",
+		"Endpoints":                    "endpoints",
+		"CustomResourceDefinition":     "customresourcedefinitions",
+		"CustomResourceDefinitionList": "customresourcedefinitionlist",
 	}
 	if v, isUnusual := unusualKindToResource[k]; isUnusual {
+		return v
+	}
+	if v, isCRD := CRDKindToResource[k]; isCRD {
 		return v
 	}
 	r := strings.ToLower(k)
@@ -84,6 +117,10 @@ func UnsafeKindToResource(k string) string {
 	case "s":
 		return r + "es"
 	case "y":
+		if string(r[len(r)-2]) == "a" || string(r[len(r)-2]) == "e" || string(r[len(r)-2]) == "i" ||
+			string(r[len(r)-2]) == "o" || string(r[len(r)-2]) == "u" {
+			return r + "s"
+		}
 		return strings.TrimSuffix(r, "y") + "ies"
 	}
 
