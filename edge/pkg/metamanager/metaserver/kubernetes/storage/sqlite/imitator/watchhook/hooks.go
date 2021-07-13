@@ -16,7 +16,8 @@ import (
 var (
 	hooksLock sync.Mutex
 	// hooks is a map from hook.id to hook
-	hooks = make(map[string]*WatchHook)
+	hooks        = make(map[string]*WatchHook)
+	accessorLock sync.Mutex
 )
 
 func AddHook(hook *WatchHook) error {
@@ -59,12 +60,17 @@ func Trigger(e watch.Event) {
 			compName = hook.GetName() == name
 		}
 		if hook.GetResourceVersion() != 0 {
-			accessor, err := meta.Accessor(e.Object)
+			accessorLock.Lock()
+			deepCopyEvent := e.DeepCopy()
+			accessor, err := meta.Accessor(deepCopyEvent.Object)
 			if err != nil {
 				klog.Errorf("failed to get accessor, %v", err)
 				return
 			}
-			rev, err := etcd3.Versioner.ParseResourceVersion(accessor.GetResourceVersion())
+			resourceVersion := accessor.GetResourceVersion()
+			klog.V(4).Infof("e EventType is %s, and resourceVersion is %s", e.Type, resourceVersion)
+			accessorLock.Unlock()
+			rev, err := etcd3.Versioner.ParseResourceVersion(resourceVersion)
 			if err != nil {
 				klog.Errorf("failed to parse resource version, %v", err)
 				return
