@@ -27,7 +27,6 @@ import (
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -66,8 +65,10 @@ func TestNewServiceManager(t *testing.T) {
 		informer cache.SharedIndexInformer
 	}
 
-	config.Config.Buffer = &v1alpha1.EdgeControllerBuffer{
-		ConfigMapEvent: 1024,
+	config := &v1alpha1.EdgeController{
+		Buffer: &v1alpha1.EdgeControllerBuffer{
+			ConfigMapEvent: 1024,
+		},
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kubeconfig")
@@ -98,7 +99,7 @@ func TestNewServiceManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			NewServiceManager(tt.args.informer)
+			NewServiceManager(config, tt.args.informer)
 		})
 	}
 }
