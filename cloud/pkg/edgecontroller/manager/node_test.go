@@ -27,7 +27,6 @@ import (
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
@@ -64,10 +63,6 @@ func TestNodesManager_Events(t *testing.T) {
 func TestNewNodesManager(t *testing.T) {
 	type args struct {
 		informer cache.SharedIndexInformer
-	}
-
-	config.Config.Buffer = &v1alpha1.EdgeControllerBuffer{
-		ConfigMapEvent: 1024,
 	}
 
 	tmpfile, err := ioutil.TempFile("", "kubeconfig")

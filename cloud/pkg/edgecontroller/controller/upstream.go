@@ -48,13 +48,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // SortedContainerStatuses define A type to help sort container statuses based on container names.
@@ -88,7 +88,10 @@ type UpstreamController struct {
 	kubeClient   kubernetes.Interface
 	messageLayer messagelayer.MessageLayer
 	crdClient    crdClientset.Interface
-	TunnelPort   int
+
+	config v1alpha1.EdgeController
+
+	TunnelPort int
 
 	// message channel
 	nodeStatusChan            chan model.Message
@@ -120,37 +123,37 @@ func (uc *UpstreamController) Start() error {
 
 	go uc.dispatchMessage()
 
-	for i := 0; i < int(config.Config.Load.UpdateNodeStatusWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.UpdateNodeStatusWorkers); i++ {
 		go uc.updateNodeStatus()
 	}
-	for i := 0; i < int(config.Config.Load.UpdatePodStatusWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.UpdatePodStatusWorkers); i++ {
 		go uc.updatePodStatus()
 	}
-	for i := 0; i < int(config.Config.Load.QueryConfigMapWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QueryConfigMapWorkers); i++ {
 		go uc.queryConfigMap()
 	}
-	for i := 0; i < int(config.Config.Load.QuerySecretWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QuerySecretWorkers); i++ {
 		go uc.querySecret()
 	}
-	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
 	}
-	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeClaimWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeClaimWorkers); i++ {
 		go uc.queryPersistentVolumeClaim()
 	}
-	for i := 0; i < int(config.Config.Load.QueryVolumeAttachmentWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QueryVolumeAttachmentWorkers); i++ {
 		go uc.queryVolumeAttachment()
 	}
-	for i := 0; i < int(config.Config.Load.QueryNodeWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.QueryNodeWorkers); i++ {
 		go uc.queryNode()
 	}
-	for i := 0; i < int(config.Config.Load.UpdateNodeWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.UpdateNodeWorkers); i++ {
 		go uc.updateNode()
 	}
-	for i := 0; i < int(config.Config.Load.DeletePodWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.DeletePodWorkers); i++ {
 		go uc.deletePod()
 	}
-	for i := 0; i < int(config.Config.Load.UpdateRuleStatusWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.UpdateRuleStatusWorkers); i++ {
 		go uc.updateRuleStatus()
 	}
 	return nil
@@ -468,11 +471,11 @@ func (uc *UpstreamController) updateNodeStatus() {
 				// TODO: comment below for test failure. Needs to decide whether to keep post troubleshoot
 				// In case the status stored at metadata service is outdated, update the heartbeat automatically
 				for i := range nodeStatusRequest.Status.Conditions {
-					if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
+					if time.Since(nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
 						nodeStatusRequest.Status.Conditions[i].LastHeartbeatTime = metaV1.NewTime(time.Now())
 					}
 
-					if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(config.Config.NodeUpdateFrequency)*time.Second {
+					if time.Since(nodeStatusRequest.Status.Conditions[i].LastTransitionTime.Time) > time.Duration(uc.config.NodeUpdateFrequency)*time.Second {
 						nodeStatusRequest.Status.Conditions[i].LastTransitionTime = metaV1.NewTime(time.Now())
 					}
 				}
@@ -954,11 +957,12 @@ func (uc *UpstreamController) nodeMsgResponse(nodeName, namespace, content strin
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
+func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
 	uc := &UpstreamController{
 		kubeClient:   client.GetKubeClient(),
-		messageLayer: messagelayer.NewContextMessageLayer(),
+		messageLayer: messagelayer.NewContextMessageLayer(config.Context),
 		crdClient:    client.GetCRDClient(),
+		config:       *config,
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
 	uc.endpointLister = factory.Core().V1().Endpoints().Lister()
@@ -967,18 +971,18 @@ func NewUpstreamController(factory k8sinformer.SharedInformerFactory) (*Upstream
 	uc.configMapLister = factory.Core().V1().ConfigMaps().Lister()
 	uc.secretLister = factory.Core().V1().Secrets().Lister()
 
-	uc.nodeStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
-	uc.podStatusChan = make(chan model.Message, config.Config.Buffer.UpdatePodStatus)
-	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigMap)
-	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
-	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
-	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
-	uc.persistentVolumeChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolume)
-	uc.persistentVolumeClaimChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolumeClaim)
-	uc.volumeAttachmentChan = make(chan model.Message, config.Config.Buffer.QueryVolumeAttachment)
-	uc.queryNodeChan = make(chan model.Message, config.Config.Buffer.QueryNode)
-	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
-	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
-	uc.ruleStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
+	uc.nodeStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
+	uc.podStatusChan = make(chan model.Message, config.Buffer.UpdatePodStatus)
+	uc.configMapChan = make(chan model.Message, config.Buffer.QueryConfigMap)
+	uc.secretChan = make(chan model.Message, config.Buffer.QuerySecret)
+	uc.serviceChan = make(chan model.Message, config.Buffer.QueryService)
+	uc.endpointsChan = make(chan model.Message, config.Buffer.QueryEndpoints)
+	uc.persistentVolumeChan = make(chan model.Message, config.Buffer.QueryPersistentVolume)
+	uc.persistentVolumeClaimChan = make(chan model.Message, config.Buffer.QueryPersistentVolumeClaim)
+	uc.volumeAttachmentChan = make(chan model.Message, config.Buffer.QueryVolumeAttachment)
+	uc.queryNodeChan = make(chan model.Message, config.Buffer.QueryNode)
+	uc.updateNodeChan = make(chan model.Message, config.Buffer.UpdateNode)
+	uc.podDeleteChan = make(chan model.Message, config.Buffer.DeletePod)
+	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	return uc, nil
 }

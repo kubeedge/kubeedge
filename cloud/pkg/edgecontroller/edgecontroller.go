@@ -6,31 +6,30 @@ import (
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/controller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // EdgeController use beehive context message layer
 type EdgeController struct {
-	enable     bool
+	config     v1alpha1.EdgeController
 	upstream   *controller.UpstreamController
 	downstream *controller.DownstreamController
 }
 
-func newEdgeController(enable bool, tunnelPort int) *EdgeController {
-	ec := &EdgeController{enable: enable}
-	if !enable {
+func newEdgeController(config *v1alpha1.EdgeController, tunnelPort int) *EdgeController {
+	ec := &EdgeController{config: *config}
+	if !ec.Enable() {
 		return ec
 	}
 	var err error
-	ec.upstream, err = controller.NewUpstreamController(informers.GetInformersManager().GetK8sInformerFactory())
+	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetK8sInformerFactory())
 	if err != nil {
 		klog.Fatalf("new upstream controller failed with error: %s", err)
 	}
 	ec.upstream.TunnelPort = tunnelPort
 
-	ec.downstream, err = controller.NewDownstreamController(informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
+	ec.downstream, err = controller.NewDownstreamController(config, informers.GetInformersManager().GetK8sInformerFactory(), informers.GetInformersManager(), informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
 		klog.Fatalf("new downstream controller failed with error: %s", err)
 	}
@@ -38,9 +37,7 @@ func newEdgeController(enable bool, tunnelPort int) *EdgeController {
 }
 
 func Register(ec *v1alpha1.EdgeController, commonConfig *v1alpha1.CommonConfig) {
-	// TODO move module config into EdgeController struct @kadisi
-	config.InitConfigure(ec)
-	core.Register(newEdgeController(ec.Enable, commonConfig.TunnelPort))
+	core.Register(newEdgeController(ec, commonConfig.TunnelPort))
 }
 
 // Name of controller
@@ -55,7 +52,7 @@ func (ec *EdgeController) Group() string {
 
 // Enable indicates whether enable this module
 func (ec *EdgeController) Enable() bool {
-	return ec.enable
+	return ec.config.Enable
 }
 
 // Start controller

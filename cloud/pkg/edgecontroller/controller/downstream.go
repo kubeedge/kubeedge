@@ -22,6 +22,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/messagelayer"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -400,26 +401,26 @@ func (dc *DownstreamController) initLocating() error {
 }
 
 // NewDownstreamController create a DownstreamController from config
-func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomInformer,
+func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory k8sinformers.SharedInformerFactory, keInformerFactory informers.KubeEdgeCustomInformer,
 	crdInformerFactory crdinformers.SharedInformerFactory) (*DownstreamController, error) {
 	lc := &manager.LocationCache{}
 
 	podInformer := k8sInformerFactory.Core().V1().Pods()
-	podManager, err := manager.NewPodManager(podInformer.Informer())
+	podManager, err := manager.NewPodManager(config, podInformer.Informer())
 	if err != nil {
 		klog.Warningf("create pod manager failed with error: %s", err)
 		return nil, err
 	}
 
 	configMapInformer := k8sInformerFactory.Core().V1().ConfigMaps()
-	configMapManager, err := manager.NewConfigMapManager(configMapInformer.Informer())
+	configMapManager, err := manager.NewConfigMapManager(config, configMapInformer.Informer())
 	if err != nil {
 		klog.Warningf("create configmap manager failed with error: %s", err)
 		return nil, err
 	}
 
 	secretInformer := k8sInformerFactory.Core().V1().Secrets()
-	secretManager, err := manager.NewSecretManager(secretInformer.Informer())
+	secretManager, err := manager.NewSecretManager(config, secretInformer.Informer())
 	if err != nil {
 		klog.Warningf("create secret manager failed with error: %s", err)
 		return nil, err
@@ -432,28 +433,28 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 	}
 
 	svcInformer := k8sInformerFactory.Core().V1().Services()
-	serviceManager, err := manager.NewServiceManager(svcInformer.Informer())
+	serviceManager, err := manager.NewServiceManager(config, svcInformer.Informer())
 	if err != nil {
 		klog.Warningf("Create service manager failed with error: %s", err)
 		return nil, err
 	}
 
 	endpointsInformer := k8sInformerFactory.Core().V1().Endpoints()
-	endpointsManager, err := manager.NewEndpointsManager(endpointsInformer.Informer())
+	endpointsManager, err := manager.NewEndpointsManager(config, endpointsInformer.Informer())
 	if err != nil {
 		klog.Warningf("Create endpoints manager failed with error: %s", err)
 		return nil, err
 	}
 
 	rulesInformer := crdInformerFactory.Rules().V1().Rules().Informer()
-	rulesManager, err := manager.NewRuleManager(rulesInformer)
+	rulesManager, err := manager.NewRuleManager(config, rulesInformer)
 	if err != nil {
 		klog.Warningf("Create rulesManager failed with error: %s", err)
 		return nil, err
 	}
 
 	ruleEndpointsInformer := crdInformerFactory.Rules().V1().RuleEndpoints().Informer()
-	ruleEndpointsManager, err := manager.NewRuleEndpointManager(ruleEndpointsInformer)
+	ruleEndpointsManager, err := manager.NewRuleEndpointManager(config, ruleEndpointsInformer)
 	if err != nil {
 		klog.Warningf("Create ruleEndpointsManager failed with error: %s", err)
 		return nil, err
@@ -467,7 +468,7 @@ func NewDownstreamController(k8sInformerFactory k8sinformers.SharedInformerFacto
 		nodeManager:          nodesManager,
 		serviceManager:       serviceManager,
 		endpointsManager:     endpointsManager,
-		messageLayer:         messagelayer.NewContextMessageLayer(),
+		messageLayer:         messagelayer.NewContextMessageLayer(config.Context),
 		lc:                   lc,
 		svcLister:            svcInformer.Lister(),
 		podLister:            podInformer.Lister(),

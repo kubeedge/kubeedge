@@ -5,8 +5,8 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
 	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // MessageLayer define all functions that message layer must implement
@@ -52,11 +52,11 @@ func (cml *ContextMessageLayer) Response(message model.Message) error {
 }
 
 // NewContextMessageLayer create a ContextMessageLayer
-func NewContextMessageLayer() MessageLayer {
+func NewContextMessageLayer(config *v1alpha1.ControllerContext) MessageLayer {
 	return &ContextMessageLayer{
-		SendModuleName:       string(config.Config.Context.SendModule),
-		SendRouterModuleName: string(config.Config.Context.SendRouterModule),
-		ReceiveModuleName:    string(config.Config.Context.ReceiveModule),
-		ResponseModuleName:   string(config.Config.Context.ResponseModule),
+		SendModuleName:       string(config.SendModule),
+		SendRouterModuleName: string(config.SendRouterModule),
+		ReceiveModuleName:    string(config.ReceiveModule),
+		ResponseModuleName:   string(config.ResponseModule),
 	}
 }

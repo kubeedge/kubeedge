@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // EndpointsManager manage all events of endpoints by SharedInformer
@@ -18,8 +18,8 @@ func (sm *EndpointsManager) Events() chan watch.Event {
 }
 
 // NewEndpointsManager create EndpointsManager by kube clientset and namespace
-func NewEndpointsManager(si cache.SharedIndexInformer) (*EndpointsManager, error) {
-	events := make(chan watch.Event, config.Config.Buffer.EndpointsEvent)
+func NewEndpointsManager(config *v1alpha1.EdgeController, si cache.SharedIndexInformer) (*EndpointsManager, error) {
+	events := make(chan watch.Event, config.Buffer.EndpointsEvent)
 	rh := NewCommonResourceEventHandler(events)
 	si.AddEventHandler(rh)
 
