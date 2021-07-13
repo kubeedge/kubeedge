@@ -22,8 +22,6 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/config"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 const (
@@ -37,11 +35,6 @@ func init() {
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(receiveModuleName)
 	beehiveContext.AddModuleGroup(receiveModuleName, receiveModuleName)
-	config.Config.Context = &v1alpha1.ControllerContext{
-		SendModule:     sendModuleName,
-		ReceiveModule:  receiveModuleName,
-		ResponseModule: responseModuleName,
-	}
 }
 
 func TestContextMessageLayer_Send_Receive_Response(t *testing.T) {
