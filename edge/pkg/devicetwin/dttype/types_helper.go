@@ -149,12 +149,6 @@ func MsgTwinToDeviceTwin(name string, msgTwin *MsgTwin) dtclient.DeviceTwin {
 		Optional: optional}
 }
 
-//DeviceMsg the struct of device statte msg
-type DeviceMsg struct {
-	BaseMessage
-	Device Device `json:"device"`
-}
-
 //BuildDeviceState build the msg
 func BuildDeviceState(baseMessage BaseMessage, device Device) ([]byte, error) {
 	result := DeviceMsg{

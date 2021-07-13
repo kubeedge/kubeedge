@@ -69,7 +69,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 	if !ok {
 		return nil, errors.New("msg not Message type")
 	}
-
+	klog.Infof("Deal device state update")
 	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
 	if err != nil {
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
@@ -87,14 +87,16 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return nil, nil
 	}
 
+	lastOnline := device.LastOnline
 	// state refers to definition in mappers-go/pkg/common/const.go
-	state := strings.ToLower(updatedDevice.State)
-	switch state {
-	case "online", "offline", "ok", "unknown", "disconnected":
+	switch strings.ToLower(updatedDevice.State) {
+	case "online", "unhealthy":
+		lastOnline = time.Now().Format("2006-01-02 15:04:05")
+	case "unknown", "offline":
 	default:
+		klog.Errorf("Error device state: %s", updatedDevice.State)
 		return nil, nil
 	}
-	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
 		err = dtclient.UpdateDeviceField(device.ID, "state", updatedDevice.State)
 		err = dtclient.UpdateDeviceField(device.ID, "last_online", lastOnline)
@@ -104,13 +106,13 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		time.Sleep(dtcommon.RetryInterval)
 	}
 	if err != nil {
-
+		klog.Errorf("Update device state failed: %v", err)
 	}
 	device.State = updatedDevice.State
 	device.LastOnline = lastOnline
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
-
+		klog.Errorf("Build device state failed: %v", err)
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
 	context.Send(device.ID,
@@ -123,6 +125,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
 		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload)))
+	klog.Info("Deal device state successed")
 	return nil, nil
 }
 

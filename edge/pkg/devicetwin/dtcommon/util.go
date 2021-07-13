@@ -2,6 +2,7 @@ package dtcommon
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ func ValidateValue(valueType string, value string) error {
 	case "":
 		valueType = "string"
 		return nil
-	case "string":
+	case "string", "bytes":
 		return nil
 	case "int", "integer":
 		_, err := strconv.ParseInt(value, 10, 64)
@@ -21,7 +22,7 @@ func ValidateValue(valueType string, value string) error {
 			return errors.New("the value is not int or integer")
 		}
 		return nil
-	case "float":
+	case "float", "double":
 		_, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return errors.New("the value is not float")
@@ -35,7 +36,7 @@ func ValidateValue(valueType string, value string) error {
 	case "deleted":
 		return nil
 	default:
-		return errors.New("the value type is not allowed")
+		return fmt.Errorf("the value type is not allowed: %s", valueType)
 	}
 }
 

@@ -161,6 +161,12 @@ type ProtocolConfigCustomized struct {
 
 // DeviceStatus reports the device state and the desired/reported values of twin attributes.
 type DeviceStatus struct {
+	// Device state
+	// Required
+	State string `json:"state,omitempty"`
+	// Last online timestamp
+	// +optional
+	LastOnline string `json:"lastOnline,omitempty"`
 	// A list of device twins containing desired/reported desired/reported values of twin properties..
 	// Optional: A passive device won't have twin properties and this list could be empty.
 	// +optional

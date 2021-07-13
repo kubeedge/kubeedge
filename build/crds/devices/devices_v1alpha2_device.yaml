@@ -344,7 +344,6 @@ spec:
                         type: object
                     required:
                       - protocolName
-                      - configData
                     type: object
                   propertyName:
                     description: 'Required: The device property name to be accessed.
@@ -396,6 +395,12 @@ spec:
           type: object
         status:
           properties:
+            state:
+              description: Device state.
+              type: string
+            lastOnline:
+              description: Last online timestamp.
+              type: string
             twins:
               description: A list of device twins containing desired/reported desired/reported
                 values of twin properties. A passive device won't have twin properties

@@ -73,7 +73,7 @@ func TestValidateValue(t *testing.T) {
 		name:      "ValidateValueNotSupportedErrorCase",
 		valueType: "test",
 		value:     "test",
-		wantErr:   errors.New("the value type is not allowed"),
+		wantErr:   errors.New("the value type is not allowed: test"),
 	}, {
 		// int success
 		name:      "ValidateValueIntSuccessCase",

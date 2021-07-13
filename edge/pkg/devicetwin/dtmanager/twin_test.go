@@ -19,6 +19,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -525,10 +526,11 @@ func TestDealDeviceTwinResult(t *testing.T) {
 	str := typeString
 	optionTrue := true
 	value := valueType
+	typeNil := "nil"
 	msgTwinValue := make(map[string]*dttype.MsgTwin)
 	msgTwinValue[deviceB] = &dttype.MsgTwin{
 		Expected: &dttype.TwinValue{Value: &value},
-		Metadata: &dttype.TypeMetadata{Type: "nil"},
+		Metadata: &dttype.TypeMetadata{Type: typeNil},
 	}
 	contextDeviceA := contextFunc(deviceB)
 	twinDeviceA := make(map[string]*dttype.MsgTwin)
@@ -560,7 +562,7 @@ func TestDealDeviceTwinResult(t *testing.T) {
 			deviceID:         deviceB,
 			msgTwin:          msgTwinValue,
 			dealType:         RestDealType,
-			err:              errors.New("the value type is not allowed"),
+			err:              fmt.Errorf("the value type is not allowed: %s", typeNil),
 			filterReturn:     mockQuerySeter,
 			allReturnInt:     int64(1),
 			allReturnErr:     nil,
