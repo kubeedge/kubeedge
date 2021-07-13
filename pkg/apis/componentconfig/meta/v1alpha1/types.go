@@ -37,7 +37,6 @@ const (
 	ModuleNameEdged       ModuleName = "edged"
 	ModuleNameTwin        ModuleName = "twin"
 	ModuleNameDBTest      ModuleName = "dbTest"
-	ModuleNameEdgeMesh    ModuleName = "edgemesh"
 )
 
 // Available modules group

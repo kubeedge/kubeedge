@@ -6,11 +6,9 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/common/util"
-	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -60,18 +58,6 @@ func sendToEdged(message *model.Message, sync bool) {
 	}
 }
 
-func sendToEdgeMesh(message *model.Message, sync bool) {
-	// if edgeMesh module disabled, then return
-	if _, ok := core.GetModules()[modules.EdgeMeshModuleName]; !ok {
-		return
-	}
-	if sync {
-		beehiveContext.SendResp(*message)
-	} else {
-		beehiveContext.Send(modules.EdgeMeshModuleName, *message)
-	}
-}
-
 func sendToCloud(message *model.Message) {
 	beehiveContext.SendToGroup(string(metaManagerConfig.Config.ContextSendGroup), *message)
 }
@@ -97,19 +83,10 @@ func parseResource(resource string) (string, string, string) {
 func requireRemoteQuery(resType string) bool {
 	return resType == model.ResourceTypeConfigmap ||
 		resType == model.ResourceTypeSecret ||
-		resType == constants.ResourceTypeEndpoints ||
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
 		resType == model.ResourceTypeNode
-}
-
-// if resource type is EdgeMesh related
-func isEdgeMeshResource(resType string) bool {
-	return resType == constants.ResourceTypeService ||
-		resType == constants.ResourceTypeServiceList ||
-		resType == constants.ResourceTypeEndpoints ||
-		resType == model.ResourceTypePodlist
 }
 
 func isConnected() bool {
@@ -147,59 +124,20 @@ func (m *metaManager) processInsert(message model.Message) {
 	}
 	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
-	switch resType {
-	case constants.ResourceTypeServiceList:
-		var svcList []v1.Service
-		err = json.Unmarshal(content, &svcList)
-		if err != nil {
-			klog.Errorf("Unmarshal insert message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to unmarshal", message)
-			return
-		}
-		for _, svc := range svcList {
-			data, err := json.Marshal(svc)
-			if err != nil {
-				klog.Errorf("Marshal service content failed, %v", svc)
-				continue
-			}
-			meta := &dao.Meta{
-				Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
-				Type:  constants.ResourceTypeService,
-				Value: string(data)}
-			err = dao.SaveMeta(meta)
-			if err != nil {
-				klog.Errorf("Save meta %s failed, svc: %v, err: %v", string(data), svc, err)
-				feedbackError(err, "Error to save meta to DB", message)
-				return
-			}
-		}
-	default:
-		meta := &dao.Meta{
-			Key:   resKey,
-			Type:  resType,
-			Value: string(content)}
-		err = dao.SaveMeta(meta)
-		if err != nil {
-			klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to save meta to DB", message)
-			return
-		}
-	}
 
-	if resType == constants.ResourceTypeListener {
-		// Notify edgemesh only
-		resp := message.NewRespByMessage(&message, nil)
-		sendToEdgeMesh(resp, true)
+	meta := &dao.Meta{
+		Key:   resKey,
+		Type:  resType,
+		Value: string(content)}
+	err = dao.SaveMeta(meta)
+	if err != nil {
+		klog.Errorf("save meta failed, %s: %v", msgDebugInfo(&message), err)
+		feedbackError(err, "Error to save meta to DB", message)
 		return
 	}
 
-	if isEdgeMeshResource(resType) {
-		// Notify edgemesh
-		sendToEdgeMesh(&message, false)
-	} else {
-		// Notify edged
-		sendToEdged(&message, false)
-	}
+	// Notify edged
+	sendToEdged(&message, false)
 
 	resp := message.NewRespByMessage(&message, OK)
 	sendToCloud(resp)
@@ -222,86 +160,6 @@ func (m *metaManager) processUpdate(message model.Message) {
 	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
-	if resType == constants.ResourceTypeServiceList || resType == constants.ResourceTypeEndpointsList || resType == model.ResourceTypePodlist {
-		switch resType {
-		case constants.ResourceTypeEndpointsList:
-			var epsList []v1.Endpoints
-			err = json.Unmarshal(content, &epsList)
-			if err != nil {
-				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to unmarshal", message)
-				return
-			}
-			for _, eps := range epsList {
-				data, err := json.Marshal(eps)
-				if err != nil {
-					klog.Errorf("Marshal endpoints content failed, %v", eps)
-					continue
-				}
-
-				meta := &dao.Meta{
-					Key:   fmt.Sprintf("%s/%s/%s", eps.Namespace, constants.ResourceTypeEndpoints, eps.Name),
-					Type:  constants.ResourceTypeEndpoints,
-					Value: string(data)}
-				err = dao.InsertOrUpdate(meta)
-				if err != nil {
-					klog.Errorf("Update meta failed, %v", eps)
-					continue
-				}
-			}
-			sendToEdgeMesh(&message, false)
-			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp)
-			return
-		case constants.ResourceTypeServiceList:
-			var svcList []v1.Service
-			err = json.Unmarshal(content, &svcList)
-			if err != nil {
-				klog.Errorf("Unmarshal update message content failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to unmarshal", message)
-				return
-			}
-			for _, svc := range svcList {
-				data, err := json.Marshal(svc)
-				if err != nil {
-					klog.Errorf("Marshal service content failed, %v", svc)
-					continue
-				}
-
-				meta := &dao.Meta{
-					Key:   fmt.Sprintf("%s/%s/%s", svc.Namespace, constants.ResourceTypeService, svc.Name),
-					Type:  constants.ResourceTypeService,
-					Value: string(data)}
-				err = dao.InsertOrUpdate(meta)
-				if err != nil {
-					klog.Errorf("Update meta failed, %v", svc)
-					continue
-				}
-			}
-			sendToEdgeMesh(&message, false)
-			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp)
-			return
-		case model.ResourceTypePodlist:
-			meta := &dao.Meta{
-				Key:   resKey,
-				Type:  resType,
-				Value: string(content)}
-			err = dao.InsertOrUpdate(meta)
-			if err != nil {
-				klog.Errorf("Update meta failed, %s", msgDebugInfo(&message))
-				feedbackError(err, "Error to update meta to DB", message)
-				return
-			}
-			sendToEdgeMesh(&message, false)
-			resp := message.NewRespByMessage(&message, OK)
-			sendToCloud(resp)
-			return
-		default:
-			klog.Warningf("Resource type %s unknown", resType)
-			return
-		}
-	}
 
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
@@ -329,11 +187,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
 	case cloudmodules.EdgeControllerModuleName, cloudmodules.DynamicControllerModuleName:
-		if isEdgeMeshResource(resType) {
-			sendToEdgeMesh(&message, message.IsSync())
-		} else {
-			sendToEdged(&message, message.IsSync())
-		}
+		sendToEdged(&message, message.IsSync())
 		resp := message.NewRespByMessage(&message, OK)
 		sendToCloud(resp)
 	case CloudFunctionModel:
@@ -372,13 +226,9 @@ func (m *metaManager) processResponse(message model.Message) {
 		return
 	}
 
-	// Notify edged or edgemesh if the data is coming from cloud
+	// Notify edged if the data is coming from cloud
 	if message.GetSource() == CloudControlerModel {
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			sendToEdgeMesh(&message, message.IsSync())
-		} else {
-			sendToEdged(&message, message.IsSync())
-		}
+		sendToEdged(&message, message.IsSync())
 	} else {
 		// Send to cloud if the update request is coming from edged
 		sendToCloud(&message)
@@ -395,20 +245,6 @@ func (m *metaManager) processDelete(message model.Message) {
 	}
 
 	_, resType, _ := parseResource(message.GetResource())
-	if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-		// Notify edgemesh
-		sendToEdgeMesh(&message, false)
-		resp := message.NewRespByMessage(&message, OK)
-		sendToCloud(resp)
-		return
-	}
-
-	if resType == constants.ResourceTypeListener {
-		// Notify edgemesh only
-		resp := message.NewRespByMessage(&message, OK)
-		sendToEdgeMesh(resp, true)
-		return
-	}
 
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		sendToCloud(&message)
@@ -449,11 +285,7 @@ func (m *metaManager) processQuery(message model.Message) {
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
 		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints || resType == constants.ResourceTypeListener {
-			sendToEdgeMesh(resp, message.IsSync())
-		} else {
-			sendToEdged(resp, message.IsSync())
-		}
+		sendToEdged(resp, message.IsSync())
 	}
 }
 
@@ -496,11 +328,8 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			klog.Errorf("update meta failed, %s", msgDebugInfo(&resp))
 		}
 		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
-		if resType == constants.ResourceTypeService || resType == constants.ResourceTypeEndpoints {
-			sendToEdgeMesh(&resp, message.IsSync())
-		} else {
-			sendToEdged(&resp, message.IsSync())
-		}
+
+		sendToEdged(&resp, message.IsSync())
 
 		respToCloud := message.NewRespByMessage(&resp, OK)
 		sendToCloud(respToCloud)
