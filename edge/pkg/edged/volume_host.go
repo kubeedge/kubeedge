@@ -135,9 +135,17 @@ func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*ap
 		return evh.edge.metaClient.ConfigMaps(namespace).Get(name)
 	}
 }
-func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface  { return nil }
-func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                    { return nil, nil }
-func (evh *edgedVolumeHost) GetNodeAllocatable() (api.ResourceList, error) { return nil, nil }
+func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface { return nil }
+func (evh *edgedVolumeHost) GetHostIP() (net.IP, error)                   { return nil, nil }
+
+func (evh *edgedVolumeHost) GetNodeAllocatable() (api.ResourceList, error) {
+	node, err := evh.edge.GetNode()
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving node: %v", err)
+	}
+	return node.Status.Allocatable, nil
+}
+
 func (evh *edgedVolumeHost) GetNodeLabels() (map[string]string, error) {
 	node, err := evh.edge.initialNode()
 	if err != nil {
