@@ -224,9 +224,7 @@ func (e *edged) GetPodByName(namespace, name string) (*v1.Pod, bool) {
 
 // GetNode returns the node info for the configured node name of this edged.
 func (e *edged) GetNode() (*v1.Node, error) {
-	node := &v1.Node{}
-	node.Name = e.nodeName
-	return node, nil
+	return e.metaClient.Nodes("default").Get(e.nodeName)
 }
 
 // GetNodeConfig returns the container manager node config.
