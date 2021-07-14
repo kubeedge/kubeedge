@@ -31,6 +31,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -695,7 +696,7 @@ func (e *edged) makeEnvironmentVariables(pod *v1.Pod, container *v1.Container, p
 				optional := cm.Optional != nil && *cm.Optional
 				configMap, ok := configMaps[name]
 				if !ok {
-					if e.kubeClient == nil {
+					if client.GetKubeClient() == nil {
 						return result, fmt.Errorf("Couldn't get configMap %v/%v, no kubeClient defined", pod.Namespace, name)
 					}
 					configMap, err = e.configMapManager.GetConfigMap(pod.Namespace, name)

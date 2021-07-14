@@ -25,7 +25,10 @@ Changes done are
 package edged
 
 import (
+	"context"
 	"fmt"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/client"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"os"
 
@@ -94,7 +97,7 @@ func (evh *edgedVolumeHost) GetPodPluginDir(podUID types.UID, pluginName string)
 func (evh *edgedVolumeHost) GetKubeClient() kubernetes.Interface {
 	// TODO: we need figure out a way to return metaClient
 	// return evh.edge.metaClient
-	return evh.edge.kubeClient
+	return client.GetKubeClient()
 }
 
 func (evh *edgedVolumeHost) NewWrapperMounter(
@@ -132,7 +135,7 @@ func (evh *edgedVolumeHost) GetHostName() string                          { retu
 func (evh *edgedVolumeHost) GetCloudProvider() cloudprovider.Interface    { return nil }
 func (evh *edgedVolumeHost) GetConfigMapFunc() func(namespace, name string) (*api.ConfigMap, error) {
 	return func(namespace, name string) (*api.ConfigMap, error) {
-		return evh.edge.metaClient.ConfigMaps(namespace).Get(name)
+		return client.GetKubeClient().CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metaV1.GetOptions{})
 	}
 }
 func (evh *edgedVolumeHost) GetExec(pluginName string) utilexec.Interface  { return nil }
@@ -151,7 +154,7 @@ func (evh *edgedVolumeHost) GetPodVolumeDeviceDir(podUID types.UID, pluginName s
 }
 func (evh *edgedVolumeHost) GetSecretFunc() func(namespace, name string) (*api.Secret, error) {
 	return func(namespace, name string) (*api.Secret, error) {
-		return evh.edge.metaClient.Secrets(namespace).Get(name)
+		return client.GetKubeClient().CoreV1().Secrets(namespace).Get(context.TODO(), name, metaV1.GetOptions{})
 	}
 }
 func (evh *edgedVolumeHost) GetVolumeDevicePluginDir(pluginName string) string { return "" }
@@ -189,7 +192,7 @@ func (evh *edgedVolumeHost) SetKubeletError(err error) {
 
 func (evh *edgedVolumeHost) GetInformerFactory() informers.SharedInformerFactory {
 	const resyncPeriod = 0
-	return informers.NewSharedInformerFactory(evh.edge.kubeClient, resyncPeriod)
+	return informers.NewSharedInformerFactory(client.GetKubeClient(), resyncPeriod)
 }
 
 func (evh *edgedVolumeHost) CSIDriverLister() storagelisters.CSIDriverLister {
