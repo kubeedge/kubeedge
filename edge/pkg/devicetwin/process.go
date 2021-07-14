@@ -278,7 +278,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 				return
 			default:
 			}
-			if msg, ok := beehiveContext.Receive("twin"); ok == nil {
+			if msg, ok := beehiveContext.Receive(dtcommon.DeviceTwinModule); ok == nil {
 				klog.Info("DeviceTwin receive msg")
 				err := dt.distributeMsg(msg)
 				if err != nil {

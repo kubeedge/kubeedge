@@ -65,7 +65,8 @@ func (uc *UpstreamController) Start() error {
 	uc.deviceStatusChan = make(chan model.Message, config.Config.Buffer.UpdateDeviceStatus)
 	go uc.dispatchMessage()
 
-	for i := 0; i < int(config.Config.Buffer.UpdateDeviceStatus); i++ {
+	// TODO: just run 10 Goroutines to update status temporarily
+	for i := 0; i < 10; i++ {
 		go uc.updateDeviceStatus()
 	}
 	return nil
