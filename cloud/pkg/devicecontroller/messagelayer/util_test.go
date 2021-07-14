@@ -164,7 +164,7 @@ func TestGetResourceType(t *testing.T) {
 				resource: "",
 			},
 			"",
-			fmt.Errorf("unknown resource"),
+			fmt.Errorf("unknown resource: %s", ""),
 		},
 	}
 	for _, tt := range tests {

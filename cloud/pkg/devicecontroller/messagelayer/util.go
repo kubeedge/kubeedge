@@ -37,7 +37,7 @@ func GetResourceType(resource string) (string, error) {
 	if strings.Contains(resource, deviceconstants.ResourceTypeTwinEdgeUpdated) {
 		return deviceconstants.ResourceTypeTwinEdgeUpdated, nil
 	}
-	return "", errors.New("unknown resource")
+	return "", fmt.Errorf("unknown resource: %s", resource)
 }
 
 // GetNodeID from "beehive/pkg/core/model".Message.Router.Resource

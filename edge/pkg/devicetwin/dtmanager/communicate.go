@@ -1,12 +1,10 @@
 package dtmanager
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -99,13 +97,6 @@ func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{
 	}
 	connectedInfo, _ := (message.Content.(string))
 	if strings.Compare(connectedInfo, connect.CloudConnected) == 0 {
-		if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
-			_, err := detailRequest(context, msg)
-			if err != nil {
-				klog.Errorf("detail request: %v", err)
-				return nil, err
-			}
-		}
 		context.State = dtcommon.Connected
 	} else if strings.Compare(connectedInfo, connect.CloudDisconnected) == 0 {
 		context.State = dtcommon.Disconnected
@@ -123,27 +114,6 @@ func dealConfirm(context *dtcontext.DTContext, resource string, msg interface{})
 	} else {
 		return nil, errors.New("CommModule deal confirm, type not correct")
 	}
-	return nil, nil
-}
-
-func detailRequest(context *dtcontext.DTContext, msg interface{}) (interface{}, error) {
-	getDetail := dttype.GetDetailNode{
-		EventType: "group_membership_event",
-		EventID:   uuid.New().String(),
-		Operation: "detail",
-		GroupID:   context.NodeName,
-		TimeStamp: time.Now().UnixNano() / 1000000}
-	getDetailJSON, marshalErr := json.Marshal(getDetail)
-	if marshalErr != nil {
-		klog.Errorf("Marshal request error while request detail, err: %#v", marshalErr)
-		return nil, marshalErr
-	}
-
-	message := context.BuildModelMessage("resource", "", "membership/detail", "get", string(getDetailJSON))
-	klog.V(2).Info("Request detail")
-	msgID := message.GetID()
-	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
-	beehiveContext.Send(dtcommon.HubModule, *message)
 	return nil, nil
 }
 
