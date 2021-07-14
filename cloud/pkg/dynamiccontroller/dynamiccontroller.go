@@ -68,6 +68,10 @@ func (dctl *DynamicController) Start() {
 	}
 
 	go dctl.receiveMessage()
+	// open 10 goroutines to process message parallelly
+	for worker := 0; worker < 10; worker++ {
+		go dctl.applicationCenter.Process()
+	}
 }
 
 func newDynamicController(enable bool) *DynamicController {
@@ -94,6 +98,6 @@ func (dctl *DynamicController) receiveMessage() {
 			klog.Warningf("receive message failed, %s", err)
 			continue
 		}
-		dctl.applicationCenter.Process(msg)
+		dctl.applicationCenter.DispatchMessage(msg)
 	}
 }

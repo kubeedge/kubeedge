@@ -364,6 +364,7 @@ type Center struct {
 	HandlerCenter
 	messageLayer messagelayer.MessageLayer
 	kubeclient   dynamic.Interface
+	messageChan  chan model.Message
 }
 
 func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory) *Center {
@@ -371,6 +372,7 @@ func NewApplicationCenter(dynamicSharedInformerFactory dynamicinformer.DynamicSh
 		HandlerCenter: NewHandlerCenter(dynamicSharedInformerFactory),
 		kubeclient:    client.GetDynamicClient(),
 		messageLayer:  messagelayer.NewContextMessageLayer(),
+		messageChan:   make(chan model.Message, 1000),
 	}
 	return a
 }
@@ -406,30 +408,41 @@ func msgToApplication(msg model.Message) (*Application, error) {
 	return app, nil
 }
 
-// Process translate msg to application , process and send resp to edge
-// TODO: upgrade to parallel process
-func (c *Center) Process(msg model.Message) {
-	app, err := msgToApplication(msg)
-	if err != nil {
-		klog.Errorf("failed to translate msg to Application: %v", err)
-		return
-	}
-	klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
+func (c *Center) DispatchMessage(msg model.Message) {
+	c.messageChan <- msg
+}
 
-	resp, err := c.ProcessApplication(app)
-	if err != nil {
-		c.Response(app, msg.GetID(), Rejected, err.Error(), nil)
-		klog.Errorf("[metaserver/applicationCenter]failed to process Application(%+v), %v", app, err)
-		return
+// Process translate msg to application , process and send resp to edge
+func (c *Center) Process() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Info("Dynamic controller application stop process")
+			return
+		case msg := <-c.messageChan:
+			app, err := msgToApplication(msg)
+			if err != nil {
+				klog.Errorf("failed to translate msg to Application: %v", err)
+				continue
+			}
+			klog.Infof("[metaserver/ApplicationCenter] get a Application %v", app.String())
+
+			resp, err := c.ProcessApplication(app)
+			if err != nil {
+				c.Response(app, msg.GetID(), Rejected, err.Error(), nil)
+				klog.Errorf("[metaserver/applicationCenter]failed to process Application(%+v), %v", app, err)
+				continue
+			}
+			c.Response(app, msg.GetID(), Approved, "", resp)
+			klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
+		}
 	}
-	c.Response(app, msg.GetID(), Approved, "", resp)
-	klog.Infof("[metaserver/applicationCenter]successfully to process Application(%+v)", app)
 }
 
 // ProcessApplication processes application by re-translating it to kube-api request with kube client,
-// which will be processed and responced by apiserver eventually.
+// which will be processed and responded by apiserver eventually.
 // Specially if app.verb == watch, it transform app to a listener and register it to HandlerCenter, rather
-// then requetes to apiserver directly. Listener will then continuously listen kube-api change events and
+// than request to apiserver directly. Listener will then continuously listen kube-api change events and
 // push them to edge node.
 func (c *Center) ProcessApplication(app *Application) (interface{}, error) {
 	app.Status = InProcessing
