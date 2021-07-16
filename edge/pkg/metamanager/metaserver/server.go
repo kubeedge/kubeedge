@@ -34,7 +34,7 @@ type MetaServer struct {
 	RequestTimeout        time.Duration
 	Handler               http.Handler
 	NegotiatedSerializer  runtime.NegotiatedSerializer
-	Factory               handlerfactory.Factory
+	Factory               *handlerfactory.Factory
 }
 
 func NewMetaServer() *MetaServer {

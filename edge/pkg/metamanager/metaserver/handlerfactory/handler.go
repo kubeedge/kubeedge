@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -33,9 +34,10 @@ type Factory struct {
 	scope             *handlers.RequestScope
 	MinRequestTimeout time.Duration
 	handlers          map[string]http.Handler
+	lock              sync.RWMutex
 }
 
-func NewFactory() Factory {
+func NewFactory() *Factory {
 	s, err := storage.NewREST()
 	utilruntime.Must(err)
 	f := Factory{
@@ -43,23 +45,28 @@ func NewFactory() Factory {
 		scope:             scope.NewRequestScope(),
 		MinRequestTimeout: 1800 * time.Second,
 		handlers:          make(map[string]http.Handler),
+		lock:              sync.RWMutex{},
 	}
-	return f
+	return &f
 }
 
 func (f *Factory) Get() http.Handler {
-	if h, ok := f.handlers["get"]; ok {
+	if h, ok := f.getHandler("get"); ok {
 		return h
 	}
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	h := handlers.GetResource(f.storage, f.storage, f.scope)
 	f.handlers["get"] = h
 	return h
 }
 
 func (f *Factory) List() http.Handler {
-	if h, ok := f.handlers["list"]; ok {
+	if h, ok := f.getHandler("list"); ok {
 		return h
 	}
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	h := handlers.ListResource(f.storage, f.storage, f.scope, false, f.MinRequestTimeout)
 	f.handlers["list"] = h
 	return h
@@ -77,12 +84,21 @@ func (f *Factory) Create(req *request.RequestInfo) http.Handler {
 }
 
 func (f *Factory) Delete() http.Handler {
-	if h, ok := f.handlers["delete"]; ok {
+	if h, ok := f.getHandler("delete"); ok {
 		return h
 	}
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	h := handlers.DeleteResource(f.storage, false, f.scope, fakers.NewAlwaysAdmit())
 	f.handlers["delete"] = h
 	return h
+}
+
+func (f *Factory) getHandler(key string) (http.Handler, bool) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+	h, ok := f.handlers[key]
+	return h, ok
 }
 
 func (f *Factory) Update(req *request.RequestInfo) http.Handler {
