@@ -177,7 +177,7 @@ func GetLatestVersion() (string, error) {
 	return string(latestReleaseData), nil
 }
 
-// build Config from flags
+// BuildConfig builds config from flags
 func BuildConfig(kubeConfig, master string) (conf *rest.Config, err error) {
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeConfig)
 	if err != nil {
@@ -503,7 +503,7 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 	return fmt.Errorf("failed to download %s", filename)
 }
 
-// Compressed folders or files
+// Compress compresses folders or files
 func Compress(tarName string, paths []string) (err error) {
 	tarFile, err := os.Create(tarName)
 	if err != nil {
@@ -614,7 +614,7 @@ func askForconfirm() (bool, error) {
 	}
 }
 
-// Execute shell script and filter
+// ExecShellFilter executes shell script and filter
 func ExecShellFilter(c string) (string, error) {
 	cmd := NewCommand(c)
 	if err := cmd.Exec(); err != nil {
@@ -640,7 +640,7 @@ func ParseEdgecoreConfig(edgecorePath string) (*v1alpha1.EdgeCoreConfig, error) 
 	return edgeCoreConfig, nil
 }
 
-// Determine if it is in the array
+// IsContain determines if it is in the array
 func IsContain(items []string, item string) bool {
 	for _, eachItem := range items {
 		if eachItem == item {
@@ -650,13 +650,13 @@ func IsContain(items []string, item string) bool {
 	return false
 }
 
-// print fail
+// PrintFail prints fail
 func PrintFail(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s failed|", s, cmd)
 	printResult(v)
 }
 
-//print success
+// PrintSucceed prints success
 func PrintSucceed(cmd string, s string) {
 	v := fmt.Sprintf("|%s %s succeed|", s, cmd)
 	printResult(v)

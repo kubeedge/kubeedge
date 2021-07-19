@@ -28,7 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-// KubeEdgeInstTool embedes Common struct and contains cloud node ip:port information
+// KubeEdgeInstTool embeds Common struct and contains cloud node ip:port information
 // It implements ToolsInstaller interface
 type KubeEdgeInstTool struct {
 	Common
@@ -43,7 +43,7 @@ type KubeEdgeInstTool struct {
 	TarballPath           string
 }
 
-// InstallTools downloads KubeEdge for the specified verssion
+// InstallTools downloads KubeEdge for the specified version
 // and makes the required configuration changes and initiates edgecore.
 func (ku *KubeEdgeInstTool) InstallTools() error {
 	ku.SetOSInterface(GetOSInterface())
@@ -128,7 +128,7 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	return nil
 }
 
-//TearDown method will remove the edge node from api-server and stop edgecore process
+// TearDown method will remove the edge node from api-server and stop edgecore process
 func (ku *KubeEdgeInstTool) TearDown() error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)

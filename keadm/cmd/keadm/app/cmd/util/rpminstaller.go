@@ -112,7 +112,7 @@ func (r *RpmOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
 
-// IsKubeEdgeProcessRunning checks if the given process is running or not
+// IsProcessRunning checks if the given process is running or not
 func (r *RpmOS) IsProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }

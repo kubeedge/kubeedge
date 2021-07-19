@@ -16,7 +16,7 @@ limitations under the License.
 
 package util
 
-//MQTTInstTool embedes Common struct and It implements ToolsInstaller interface
+//MQTTInstTool embeds Common struct and It implements ToolsInstaller interface
 type MQTTInstTool struct {
 	Common
 }
@@ -31,7 +31,7 @@ func (m *MQTTInstTool) InstallTools() error {
 	return nil
 }
 
-//TearDown shoud uninstall MQTT, but it is not required either for cloud or edge node.
+//TearDown should uninstall MQTT, but it is not required either for cloud or edge node.
 //It is defined so that MQTTInstTool implements ToolsInstaller interface
 func (m *MQTTInstTool) TearDown() error {
 	return nil
