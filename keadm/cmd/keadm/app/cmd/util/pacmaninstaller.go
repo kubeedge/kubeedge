@@ -90,7 +90,7 @@ func (o *PacmanOS) IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
 
-// IsKubeEdgeProcessRunning checks if the given process is running or not
+// IsProcessRunning checks if the given process is running or not
 func (o *PacmanOS) IsProcessRunning(proc string) (bool, error) {
 	return isKubeEdgeProcessRunning(proc)
 }
