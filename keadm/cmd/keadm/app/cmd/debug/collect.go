@@ -73,7 +73,7 @@ func newCollectOptions() *common.CollectOptions {
 	return opts
 }
 
-//Start to collect data
+// ExecuteCollect starts to collect data
 func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	//verification parameters
 	err := VerificationParameters(collectOptions)
@@ -139,7 +139,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	return nil
 }
 
-// verification parameters for debug collect
+// VerificationParameters verifies parameters for debug collect
 func VerificationParameters(collectOptions *common.CollectOptions) error {
 	if !util.FileExists(collectOptions.Config) {
 		return fmt.Errorf("edgecore config %s does not exist", collectOptions.Config)
