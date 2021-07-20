@@ -39,9 +39,9 @@ import (
 var called bool
 
 //testAction is a dummy function for testing Start
-func testAction(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func testAction(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	called = true
-	return called, errors.New("Called the dummy function for testing")
+	return errors.New("Called the dummy function for testing")
 }
 
 // TestDeviceStartAction is function to test Start() when value is passed in ReceiverChan.
@@ -187,7 +187,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 		context  *dtcontext.DTContext
 		resource string
 		msg      interface{}
-		want     interface{}
 		wantErr  error
 		// filterReturn is the return of mock interface querySeterMock's filter function
 		filterReturn orm.QuerySeter
@@ -204,7 +203,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			context:  dtContexts,
 			resource: "DeviceA",
 			msg:      "",
-			want:     nil,
 			wantErr:  errors.New("msg not Message type"),
 		},
 		{
@@ -212,7 +210,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			context:  dtContexts,
 			resource: "DeviceB",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			want:     nil,
 			wantErr:  nil,
 		},
 		{
@@ -220,7 +217,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			context:  dtContexts,
 			resource: "DeviceC",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			want:     nil,
 			wantErr:  nil,
 		},
 		{
@@ -228,7 +224,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			context:  dtContexts,
 			resource: "DeviceD",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			want:     nil,
 			wantErr:  nil,
 		},
 		{
@@ -236,7 +231,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			context:          dtContexts,
 			resource:         "DeviceD",
 			msg:              &model.Message{Content: bytesDevUpdate},
-			want:             nil,
 			wantErr:          nil,
 			filterReturn:     querySeterMock,
 			updateReturnInt:  int64(1),
@@ -250,13 +244,10 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.times)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.times)
 			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.times)
-			got, err := dealDeviceStateUpdate(test.context, test.resource, test.msg)
+			err := dealDeviceStateUpdate(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealDeviceStateUpdate() error = %v, wantErr %v", err, test.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("dealDeviceStateUpdate() = %v, want %v", got, test.want)
 			}
 		})
 	}
@@ -277,7 +268,6 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 		context  *dtcontext.DTContext
 		resource string
 		msg      interface{}
-		want     interface{}
 		wantErr  error
 	}{
 		{
@@ -285,7 +275,6 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 			context:  dtContexts,
 			resource: "Device",
 			msg:      "",
-			want:     nil,
 			wantErr:  errors.New("msg not Message type"),
 		},
 		{
@@ -293,19 +282,15 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 			context:  dtContexts,
 			resource: "DeviceA",
 			msg:      &msg,
-			want:     nil,
 			wantErr:  nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := dealDeviceAttrUpdate(test.context, test.resource, test.msg)
+			err := dealDeviceAttrUpdate(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("dealUpdateDeviceAttr() = %v, want %v", got, test.want)
 			}
 		})
 	}
