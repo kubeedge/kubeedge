@@ -72,9 +72,8 @@ func TestDealMembershipDetailInvalidEmptyMessage(t *testing.T) {
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
 	}
-	value, err := dealMembershipDetail(dtc, "t", "invalid")
+	err := dealMembershipDetail(dtc, "t", "invalid")
 	assert.Error(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipDetailInvalidMsg(t *testing.T) {
@@ -87,10 +86,9 @@ func TestDealMembershipDetailInvalidMsg(t *testing.T) {
 		Content: "invalidmsg",
 	}
 
-	value, err := dealMembershipDetail(dtc, "t", m)
+	err := dealMembershipDetail(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipDetailInvalidContent(t *testing.T) {
@@ -104,9 +102,8 @@ func TestDealMembershipDetailInvalidContent(t *testing.T) {
 		Content: cnt,
 	}
 
-	value, err := dealMembershipDetail(dtc, "t", m)
+	err := dealMembershipDetail(dtc, "t", m)
 	assert.Error(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipDetailValid(t *testing.T) {
@@ -122,9 +119,8 @@ func TestDealMembershipDetailValid(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipDetail(dtc, "t", m)
+	err := dealMembershipDetail(dtc, "t", m)
 	assert.NoError(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipUpdateEmptyMessage(t *testing.T) {
@@ -132,10 +128,9 @@ func TestDealMembershipUpdateEmptyMessage(t *testing.T) {
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
 	}
-	value, err := dealMembershipDetail(dtc, "t", "invalid")
+	err := dealMembershipDetail(dtc, "t", "invalid")
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("msg not Message type"), err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
@@ -148,10 +143,9 @@ func TestDealMembershipUpdateInvalidMsg(t *testing.T) {
 		Content: "invalidmessage",
 	}
 
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	err := dealMembershipUpdate(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
-	assert.Equal(t, nil, value)
 }
 func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 	dtc := &dtcontext.DTContext{
@@ -165,9 +159,8 @@ func TestDealMembershipUpdateInvalidContent(t *testing.T) {
 		Content: cnt,
 	}
 
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	err := dealMembershipUpdate(dtc, "t", m)
 	assert.Error(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
@@ -205,9 +198,8 @@ func TestDealMembershipUpdateValidAddedDevice(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
@@ -234,9 +226,8 @@ func TestDealMembershipUpdateValidRemovedDevice(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	value, err := dealMembershipUpdate(dtc, "t", m)
+	err := dealMembershipUpdate(dtc, "t", m)
 	assert.NoError(t, err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipGetEmptyMsg(t *testing.T) {
@@ -244,10 +235,9 @@ func TestDealMembershipGetEmptyMsg(t *testing.T) {
 		DeviceList: &sync.Map{},
 		GroupID:    "1",
 	}
-	value, err := dealMembershipGet(dtc, "t", "invalid")
+	err := dealMembershipGet(dtc, "t", "invalid")
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("msg not Message type"), err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipGetInvalidMsg(t *testing.T) {
@@ -260,10 +250,9 @@ func TestDealMembershipGetInvalidMsg(t *testing.T) {
 		Content: "hello",
 	}
 
-	value, err := dealMembershipGet(dtc, "t", m)
+	err := dealMembershipGet(dtc, "t", m)
 	assert.Error(t, err)
 	assert.Equal(t, errors.New("assertion failed"), err)
-	assert.Equal(t, nil, value)
 }
 
 func TestDealMembershipGetValid(t *testing.T) {
@@ -290,7 +279,7 @@ func TestDealMembershipGetValid(t *testing.T) {
 	var m = &model.Message{
 		Content: content,
 	}
-	_, err := dealMembershipGet(dtc, "t", m)
+	err := dealMembershipGet(dtc, "t", m)
 	assert.NoError(t, err)
 }
 

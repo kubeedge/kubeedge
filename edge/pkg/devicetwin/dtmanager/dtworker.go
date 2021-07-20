@@ -16,4 +16,4 @@ type Worker struct {
 }
 
 //CallBack for deal
-type CallBack func(*dtcontext.DTContext, string, interface{}) (interface{}, error)
+type CallBack func(*dtcontext.DTContext, string, interface{}) error

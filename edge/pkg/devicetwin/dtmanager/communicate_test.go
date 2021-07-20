@@ -209,7 +209,7 @@ func TestDealSendToCloud(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := dealSendToCloud(test.context, test.resource, test.msg)
+			err := dealSendToCloud(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealSendToCloud() error = %v, wantErr %v", err, test.wantErr)
 				return
@@ -261,7 +261,7 @@ func TestDealLifeCycle(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := dealLifeCycle(test.context, test.resource, test.msg)
+			err := dealLifeCycle(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealLifeCycle() error = %v, wantErr %v", err, test.wantErr)
 			}
@@ -295,7 +295,7 @@ func TestDealConfirm(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := dealConfirm(test.context, test.resource, test.msg)
+			err := dealConfirm(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealConfirm() error = %v, wantErr %v", err, test.wantErr)
 				return
