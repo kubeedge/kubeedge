@@ -59,7 +59,7 @@ func (tw TwinWorker) Start() {
 			}
 			if dtMsg, isDTMessage := msg.(*dttype.DTMessage); isDTMessage {
 				if fn, exist := twinActionCallBack[dtMsg.Action]; exist {
-					_, err := fn(tw.DTContexts, dtMsg.Identity, dtMsg.Msg)
+					err := fn(tw.DTContexts, dtMsg.Identity, dtMsg.Msg)
 					if err != nil {
 						klog.Errorf("TwinModule deal %s event failed", dtMsg.Action)
 					}
@@ -88,23 +88,23 @@ func initTwinActionCallBack() {
 	})
 }
 
-func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	klog.Infof("Twin Sync EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return errors.New("msg not Message type")
 	}
 	result := []byte("")
 	content, ok := message.Content.([]byte)
 	if !ok {
-		return nil, errors.New("invalid message content")
+		return errors.New("invalid message content")
 	}
 
 	msgTwin, err := dttype.UnmarshalDeviceTwinUpdate(content)
 	if err != nil {
 		klog.Errorf("Unmarshal update request body failed, err: %#v", err)
 		dealUpdateResult(context, "", "", dtcommon.BadRequestCode, errors.New("Unmarshal update request body failed, Please check the request"), result)
-		return nil, err
+		return err
 	}
 
 	klog.Infof("Begin to update twin of the device %s", resource)
@@ -113,41 +113,41 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 	DealDeviceTwin(context, resource, eventID, msgTwin.Twin, SyncDealType)
 	context.Unlock(resource)
 	//todo send ack
-	return nil, nil
+	return nil
 }
 
-func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealTwinGet(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	klog.Infof("Twin Get EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return errors.New("msg not Message type")
 	}
 
 	content, ok := message.Content.([]byte)
 	if !ok {
-		return nil, errors.New("invalid message content")
+		return errors.New("invalid message content")
 	}
 
 	DealGetTwin(context, resource, content)
-	return nil, nil
+	return nil
 }
 
-func dealTwinUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealTwinUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
 	klog.Infof("Twin Update EVENT")
 	message, ok := msg.(*model.Message)
 	if !ok {
-		return nil, errors.New("msg not Message type")
+		return errors.New("msg not Message type")
 	}
 
 	content, ok := message.Content.([]byte)
 	if !ok {
-		return nil, errors.New("invalid message content")
+		return errors.New("invalid message content")
 	}
 
 	context.Lock(resource)
 	Updated(context, resource, content)
 	context.Unlock(resource)
-	return nil, nil
+	return nil
 }
 
 // Updated update the snapshot
