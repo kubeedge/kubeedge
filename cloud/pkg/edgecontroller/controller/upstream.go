@@ -220,6 +220,11 @@ func (uc *UpstreamController) dispatchMessage() {
 		}
 	}
 }
+
+type RuleStatus struct {
+	Status rulesv1.RuleStatus `json:"status"`
+}
+
 func (uc *UpstreamController) updateRuleStatus() {
 	for {
 		select {
@@ -257,7 +262,8 @@ func (uc *UpstreamController) updateRuleStatus() {
 				errSlice := make([]string, 0)
 				rule.Status.Errors = append(errSlice, content.Error.Detail)
 			}
-			newStatus := &rulesv1.RuleStatus{}
+			newStatus := &RuleStatus{}
+			newStatus.Status = rule.Status
 			body, err := json.Marshal(newStatus)
 			if err != nil {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
