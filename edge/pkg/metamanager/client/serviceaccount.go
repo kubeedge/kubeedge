@@ -10,7 +10,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // ServiceAccountTokenGetter is interface to get client service account token
@@ -48,7 +47,7 @@ func (c *serviceAccountToken) GetServiceAccountToken(namespace string, name stri
 		return nil, fmt.Errorf("marshal message to serviceaccount token failed, err: %v", err)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
 		return handleServiceAccountTokenFromMetaDB(content)
 	}
 	return handleServiceAccountTokenFromMetaManager(content)

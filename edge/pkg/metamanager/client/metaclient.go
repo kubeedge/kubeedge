@@ -8,7 +8,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
 const (
@@ -62,17 +62,17 @@ func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
 	return newPodStatus(namespace, m.send)
 }
 
-// New PersistentVolumes metaClient
+// PersistentVolumes creates a PersistentVolumes metaClient
 func (m *metaClient) PersistentVolumes(namespace string) PersistentVolumesInterface {
 	return newPersistentVolumes(namespace, m.send)
 }
 
-// New PersistentVolumeClaims metaClient
+// PersistentVolumeClaims creates a PersistentVolumeClaims metaClient
 func (m *metaClient) PersistentVolumeClaims(namespace string) PersistentVolumeClaimsInterface {
 	return newPersistentVolumeClaims(namespace, m.send)
 }
 
-// New VolumeAttachments metaClient
+// VolumeAttachments creates a VolumeAttachments metaClient
 func (m *metaClient) VolumeAttachments(namespace string) VolumeAttachmentsInterface {
 	return newVolumeAttachments(namespace, m.send)
 }
@@ -102,7 +102,7 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 	var resp model.Message
 	retries := 0
 	err = wait.Poll(syncPeriod, syncMsgRespTimeout, func() (bool, error) {
-		resp, err = beehiveContext.SendSync(metamanager.MetaManagerModuleName, *message, syncMsgRespTimeout)
+		resp, err = beehiveContext.SendSync(modules.MetaManagerModuleName, *message, syncMsgRespTimeout)
 		retries++
 		if err == nil {
 			klog.V(2).Infof("send sync message %s successed and response: %v", message.GetResource(), resp)
@@ -118,5 +118,5 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 }
 
 func (s *send) Send(message *model.Message) {
-	beehiveContext.Send(metamanager.MetaManagerModuleName, *message)
+	beehiveContext.Send(modules.MetaManagerModuleName, *message)
 }

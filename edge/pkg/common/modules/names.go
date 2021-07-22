@@ -1,16 +1,18 @@
 package modules
 
 const (
-	// EdgedModuleName name
+	// EdgedModuleName is Edged module name
 	EdgedModuleName = "edged"
-	// EventBusModuleName name
+	// EventBusModuleName is EventBus module name
 	EventBusModuleName = "eventbus"
-	// ServiceBusModuleName name
+	// ServiceBusModuleName is ServiceBus module name
 	ServiceBusModuleName = "servicebus"
-	// EdgeStreamModuleName name
+	// EdgeStreamModuleName is EdgeStream module name
 	EdgeStreamModuleName = "edgestream"
-	// DeviceTwinModuleName name
+	// DeviceTwinModuleName is DeviceTwin module name
 	DeviceTwinModuleName = "twin"
-	// EdgeHubModuleName name
+	// EdgeHubModuleName is EdgeHub module name
 	EdgeHubModuleName = "websocket"
+	// MetaManagerModuleName is MetaManager module name
+	MetaManagerModuleName = "metaManager"
 )

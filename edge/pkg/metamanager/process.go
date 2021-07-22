@@ -42,7 +42,7 @@ func feedbackError(err error, info string, request model.Message) {
 	if err != nil {
 		errInfo = fmt.Sprintf(info+": %v", err)
 	}
-	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(MetaManagerModuleName, request.GetGroup())
+	errResponse := model.NewErrorMessage(&request, errInfo).SetRoute(modules.MetaManagerModuleName, request.GetGroup())
 	if request.GetSource() == modules.EdgedModuleName {
 		sendToEdged(errResponse, request.IsSync())
 	} else {
@@ -249,7 +249,7 @@ func (m *metaManager) processQuery(message model.Message) {
 			m.processRemoteQuery(message)
 		} else {
 			resp := message.NewRespByMessage(&message, *metas)
-			resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
+			resp.SetRoute(modules.MetaManagerModuleName, resp.GetGroup())
 			sendToEdged(resp, message.IsSync())
 		}
 		return
@@ -266,7 +266,7 @@ func (m *metaManager) processQuery(message model.Message) {
 		feedbackError(err, "Error to query meta in DB", message)
 	} else {
 		resp := message.NewRespByMessage(&message, *metas)
-		resp.SetRoute(MetaManagerModuleName, resp.GetGroup())
+		resp.SetRoute(modules.MetaManagerModuleName, resp.GetGroup())
 		sendToEdged(resp, message.IsSync())
 	}
 }
@@ -363,7 +363,7 @@ func (m *metaManager) syncPodStatus() {
 		contents[namespaceParsed] = append(contents[namespaceParsed], podStatus)
 	}
 	for namespace, content := range contents {
-		msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
+		msg := model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
 		sendToCloud(msg)
 		klog.V(3).Infof("sync pod status successfully for namespaces %s, %s", namespace, msgDebugInfo(msg))
 	}

@@ -1,20 +1,18 @@
 package modules
 
 const (
-	// BusGroup group
+	// BusGroup is EventBus group
 	BusGroup = "bus"
-	// HubGroup group
+	// HubGroup is EdgeHub group
 	HubGroup = "hub"
-	// TwinGroup group
+	// TwinGroup is DeviceTwin group
 	TwinGroup = "twin"
-	// MetaGroup group
+	// MetaGroup is MetaManager group
 	MetaGroup = "meta"
-	//EdgedGroup group
+	//EdgedGroup is Edged group
 	EdgedGroup = "edged"
 	// UserGroup is ServiceBus group
 	UserGroup = "user"
-	// MeshGroup group
-	MeshGroup = "mesh"
-	// StreamGroup group
+	// StreamGroup is EdgeStream group
 	StreamGroup = "edgestream"
 )
