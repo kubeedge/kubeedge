@@ -83,6 +83,11 @@ func SortInitContainerStatuses(p *v1.Pod, statuses []v1.ContainerStatus) {
 	}
 }
 
+// RuleStatus is structure to patch rule status
+type RuleStatus struct {
+	Status rulesv1.RuleStatus `json:"status"`
+}
+
 // UpstreamController subscribe messages from edge and sync to k8s api server
 type UpstreamController struct {
 	kubeClient   kubernetes.Interface
@@ -220,11 +225,6 @@ func (uc *UpstreamController) dispatchMessage() {
 		}
 	}
 }
-
-type RuleStatus struct {
-	Status rulesv1.RuleStatus `json:"status"`
-}
-
 func (uc *UpstreamController) updateRuleStatus() {
 	for {
 		select {
