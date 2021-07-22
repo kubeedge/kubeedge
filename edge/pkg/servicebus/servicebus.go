@@ -98,10 +98,10 @@ func processMessage(msg *beehiveModel.Message) {
 		}
 		return
 	}
-	content, err := json.Marshal(msg.GetContent())
+	content, err := msg.GetContentData()
 	if err != nil {
-		klog.Errorf("marshall message content failed %v", err)
-		m := "error to marshal request msg content"
+		klog.Errorf("get message content data failed %v", err)
+		m := "error to get request msg content data"
 		code := http.StatusBadRequest
 		if response, err := buildErrorResponse(msg.GetID(), m, code); err == nil {
 			beehiveContext.SendToGroup(modules.HubGroup, response)
@@ -149,18 +149,18 @@ func processMessage(msg *beehiveModel.Message) {
 	}
 
 	response := commonType.HTTPResponse{Header: resp.Header, StatusCode: resp.StatusCode, Body: resBody}
-	responseMsg := beehiveModel.NewMessage(msg.GetID())
-	responseMsg.Content = response
-	responseMsg.SetRoute("servicebus", modules.UserGroup).SetResourceOperation("", beehiveModel.UploadOperation)
+	responseMsg := beehiveModel.NewMessage(msg.GetID()).
+		FillBody(response).
+		SetRoute(modules.ServiceBusModuleName, modules.UserGroup).
+		SetResourceOperation("", beehiveModel.UploadOperation)
 	beehiveContext.SendToGroup(modules.HubGroup, *responseMsg)
 }
 
 func buildErrorResponse(parentID string, content string, statusCode int) (beehiveModel.Message, error) {
-	responseMsg := beehiveModel.NewMessage(parentID)
 	h := http.Header{}
 	h.Add("Server", "kubeedge-edgecore")
 	c := commonType.HTTPResponse{Header: h, StatusCode: statusCode, Body: []byte(content)}
-	responseMsg.Content = c
-	responseMsg.SetRoute("servicebus", modules.UserGroup)
+
+	responseMsg := beehiveModel.NewMessage(parentID).FillBody(c).SetRoute(modules.ServiceBusModuleName, modules.UserGroup)
 	return *responseMsg, nil
 }

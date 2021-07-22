@@ -398,22 +398,26 @@ func (dc *DownstreamController) deviceAdded(device *v1alpha2.Device) {
 	if len(device.Spec.NodeSelector.NodeSelectorTerms) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions) != 0 && len(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values) != 0 {
 		dc.addToConfigMap(device)
 		edgeDevice := createDevice(device)
-		msg := model.NewMessage("")
 
 		resource, err := messagelayer.BuildResource(device.Spec.NodeSelector.NodeSelectorTerms[0].MatchExpressions[0].Values[0], "membership", "")
 		if err != nil {
 			klog.Warningf("Built message resource failed with error: %s", err)
 			return
 		}
-		msg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation)
 
-		content := types.MembershipUpdate{AddDevices: []types.Device{
-			edgeDevice,
-		}}
-		content.EventID = uuid.New().String()
-		content.Timestamp = time.Now().UnixNano() / 1e6
-		msg.Content = content
+		content := types.MembershipUpdate{
+			BaseMessage: types.BaseMessage{
+				EventID:   uuid.New().String(),
+				Timestamp: time.Now().UnixNano() / 1e6,
+			},
+			AddDevices: []types.Device{
+				edgeDevice,
+			},
+		}
 
+		msg := model.NewMessage("").
+			BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.UpdateOperation).
+			FillBody(content)
 		err = dc.messageLayer.Send(*msg)
 		if err != nil {
 			klog.Errorf("Failed to send device addition message %v due to error %v", msg, err)
@@ -497,7 +501,7 @@ func isDeviceDataUpdated(oldData *v1alpha2.DeviceData, newData *v1alpha2.DeviceD
 	return !reflect.DeepEqual(oldData, newData)
 }
 
-// isDevicePropertyVisitorsUpdated checks if DeviceProperyVisitors is updated
+// isDevicePropertyVisitorsUpdated checks if DevicePropertyVisitors is updated
 func isDevicePropertyVisitorsUpdated(oldPropertyVisitors *[]v1alpha2.DevicePropertyVisitor, newPropertyVisitors *[]v1alpha2.DevicePropertyVisitor) bool {
 	return !reflect.DeepEqual(oldPropertyVisitors, newPropertyVisitors)
 }

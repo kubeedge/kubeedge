@@ -12,6 +12,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
@@ -278,7 +279,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 				return
 			default:
 			}
-			if msg, ok := beehiveContext.Receive("twin"); ok == nil {
+			if msg, ok := beehiveContext.Receive(modules.DeviceTwinModuleName); ok == nil {
 				klog.Info("DeviceTwin receive msg")
 				err := dt.distributeMsg(msg)
 				if err != nil {

@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/common"
 	"github.com/kubeedge/kubeedge/edge/test/integration/utils/edge"
@@ -53,7 +54,7 @@ var (
 	//device status update topic "$hw/events/device/+/state/update"
 	DevicestatusUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceETStateUpdateSuffix
 	//device twin update topic "$hw/events/device/+/twin/+"
-	DeviceTwinUpdate = dtcommon.DeviceETPrefix + "+" + dtcommon.DeviceTwinModule + "/+"
+	DeviceTwinUpdate = dtcommon.DeviceETPrefix + "+" + modules.DeviceTwinModuleName + "/+"
 	//device membership update topic "$hw/events/node/+/membership/get"
 	DeviceMembershipUpdate = dtcommon.MemETPrefix + "+" + dtcommon.MemETGetSuffix
 	//upload record to cloud topic

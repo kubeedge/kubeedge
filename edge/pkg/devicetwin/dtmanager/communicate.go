@@ -12,6 +12,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
@@ -74,7 +75,7 @@ func initActionCallBack() {
 }
 
 func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface{}) error {
-	beehiveContext.Send(dtcommon.EventHubModule, *msg.(*model.Message))
+	beehiveContext.Send(modules.EventBusModuleName, *msg.(*model.Message))
 	return nil
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) error {

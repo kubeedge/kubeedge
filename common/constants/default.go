@@ -121,7 +121,7 @@ const (
 	DefaultDeviceModelEventBuffer    = 1
 	DefaultUpdateDeviceStatusWorkers = 1
 
-	// Resource sep
+	// ResourceSep is the resource separator
 	ResourceSep = "/"
 
 	ResourceTypeService   = "service"
