@@ -158,6 +158,11 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 			klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
 			return
 		}
+		for key, values := range response.Header {
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
 		w.WriteHeader(response.StatusCode)
 		if _, err = w.Write(body); err != nil {
 			klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
