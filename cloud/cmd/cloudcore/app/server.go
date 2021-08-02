@@ -87,7 +87,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
-			// Start all modules if disable leader election
+			// Start all modules
 			core.StartModules()
 			gis.Start(beehiveContext.Done())
 			core.GracefulShutdown()
