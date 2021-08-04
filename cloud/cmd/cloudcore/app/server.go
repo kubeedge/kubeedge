@@ -24,6 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/iptables"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -87,6 +88,9 @@ kubernetes controller which manages devices so that the device metadata/status d
 
 			registerModules(config)
 
+			// IptablesManager manages tunnel port related iptables rules
+			go iptables.NewIptablesManager(config.Modules.CloudStream).Run()
+
 			// Start all modules
 			core.StartModules()
 			gis.Start(beehiveContext.Done())
@@ -143,7 +147,7 @@ func NegotiateTunnelPort() (*int, error) {
 
 	localIP := getLocalIP()
 
-	var record options.TunnelPortRecord
+	var record iptables.TunnelPortRecord
 	if err == nil {
 		recordStr, found := tunnelPort.Annotations[modules.TunnelPortRecordAnnotationKey]
 		recordBytes := []byte(recordStr)
@@ -181,12 +185,13 @@ func NegotiateTunnelPort() (*int, error) {
 	}
 
 	if apierror.IsNotFound(err) {
-		record := options.TunnelPortRecord{
+		port := negotiatePort(record.Port)
+		record := iptables.TunnelPortRecord{
 			IPTunnelPort: map[string]int{
-				localIP: constants.ServerPort,
+				localIP: port,
 			},
 			Port: map[int]bool{
-				constants.ServerPort: true,
+				port: true,
 			},
 		}
 		recordBytes, err := json.Marshal(record)
@@ -208,7 +213,6 @@ func NegotiateTunnelPort() (*int, error) {
 			return nil, err
 		}
 
-		port := constants.ServerPort
 		return &port, nil
 	}
 
@@ -217,10 +221,10 @@ func NegotiateTunnelPort() (*int, error) {
 
 func negotiatePort(portRecord map[int]bool) int {
 	for port := constants.ServerPort; ; {
+		port++
 		if _, found := portRecord[port]; !found {
 			return port
 		}
-		port++
 	}
 }
 

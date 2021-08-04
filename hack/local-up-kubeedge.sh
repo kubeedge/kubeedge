@@ -47,9 +47,6 @@ function uninstall_kubeedge {
 
   # delete data
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
-
-  # delete iptables rule
-  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003 || true
 }
 
 # clean up
@@ -109,8 +106,6 @@ function start_cloudcore {
   echo "start cloudcore..."
   nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
-
-  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
 
   # ensure tokensecret is generated
   while true; do
