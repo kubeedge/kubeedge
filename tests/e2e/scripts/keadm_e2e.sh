@@ -32,9 +32,10 @@ function build_keadm() {
 }
 
 function prepare_cluster() {
-  kind create cluster --name test
+  kind create cluster --name test --wait 60s
 
   echo "wait the control-plane ready..."
+  docker logs $(docker ps | grep kindest/node | awk '{print $1}')
   kubectl wait --for=condition=Ready node/test-control-plane --timeout=60s
 
   kubectl create clusterrolebinding system:anonymous --clusterrole=cluster-admin --user=system:anonymous
