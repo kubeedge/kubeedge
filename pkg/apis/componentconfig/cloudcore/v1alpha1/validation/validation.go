@@ -24,10 +24,8 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	componentbaseconfig "k8s.io/component-base/config"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
@@ -42,18 +40,6 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	allErrs = append(allErrs, ValidateModuleDynamicController(*c.Modules.DynamicController)...)
 	allErrs = append(allErrs, ValidateModuleCloudStream(*c.Modules.CloudStream)...)
-	return allErrs
-}
-
-//ValidateLeaderElectionConfiguration validates part `l` and returns an errorList if it is invalid, the rest will be validated at run time
-func ValidateLeaderElectionConfiguration(l componentbaseconfig.LeaderElectionConfiguration) field.ErrorList {
-	if !l.LeaderElect {
-		return field.ErrorList{}
-	}
-	allErrs := field.ErrorList{}
-	if l.ResourceNamespace != constants.KubeEdgeNameSpace {
-		allErrs = append(allErrs, field.Required(field.NewPath("ResourceNamespace"), "resourceLock's namesapce must be kubeedge"))
-	}
 	return allErrs
 }
 
