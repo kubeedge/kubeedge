@@ -31,6 +31,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
 	module "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 //TestIsSyncResponse() tests whether there exists a channel with the given message_id in the syncKeeper
@@ -112,7 +113,9 @@ func TestRouteToEdge(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	hub := newEdgeHub(true)
+	hub := newEdgeHub(&v1alpha1.EdgeHub{
+		Enable: true,
+	})
 	hub.chClient = mockAdapter
 
 	tests := []struct {
@@ -211,7 +214,7 @@ func TestRouteToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	hub := newEdgeHub(true)
+	hub := newEdgeHub(&v1alpha1.EdgeHub{Enable: true})
 	hub.chClient = mockAdapter
 
 	tests := []struct {

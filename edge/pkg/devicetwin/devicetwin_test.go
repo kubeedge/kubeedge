@@ -13,6 +13,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 const (
@@ -93,7 +94,9 @@ func TestStart(t *testing.T) {
 
 	core.Register(fakeModule)
 	beehiveContext.AddModule(TestModule)
-	dt := newDeviceTwin(true)
+	dt := newDeviceTwin(&v1alpha1.DeviceTwin{
+		Enable: true,
+	})
 	core.Register(dt)
 	beehiveContext.AddModule(dt.Name())
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())

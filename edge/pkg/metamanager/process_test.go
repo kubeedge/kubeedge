@@ -55,6 +55,8 @@ const (
 // errFailedDBOperation is common Database operation fail error
 var errFailedDBOperation = errors.New(FailedDBOperation)
 
+var metaCfg = &v1alpha1.MetaManager{Enable: true}
+
 func init() {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
 	metaManagerConfig.InitConfigure(cfg.Modules.MetaManager)
@@ -66,7 +68,7 @@ func TestProcessInsert(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -147,7 +149,7 @@ func TestProcessUpdate(t *testing.T) {
 	rawSeterMock := beego.NewMockRawSeter(mockCtrl)
 	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -274,7 +276,7 @@ func TestProcessResponse(t *testing.T) {
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	rawSeterMock := beego.NewMockRawSeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -343,7 +345,7 @@ func TestProcessDelete(t *testing.T) {
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -396,7 +398,7 @@ func TestProcessQuery(t *testing.T) {
 	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
 	rawSeterMock := beego.NewMockRawSeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -530,7 +532,7 @@ func TestProcessNodeConnection(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -568,7 +570,7 @@ func TestProcessSync(t *testing.T) {
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -603,7 +605,7 @@ func TestProcessFunctionAction(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())
@@ -657,7 +659,7 @@ func TestProcessFunctionActionResult(t *testing.T) {
 	defer mockCtrl.Finish()
 	ormerMock := beego.NewMockOrmer(mockCtrl)
 	dbm.DBAccess = ormerMock
-	meta := newMetaManager(true)
+	meta := newMetaManager(metaCfg)
 	core.Register(meta)
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 	beehiveContext.AddModule(meta.Name())

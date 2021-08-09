@@ -75,6 +75,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
 				Context: &cloudcoreconfig.ControllerContext{
 					SendModule:     metaconfig.ModuleNameMetaManager,
@@ -95,6 +96,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
+					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 				},
 			},
 			Edged: &edgecoreconfig.Edged{
