@@ -44,6 +44,10 @@ func (tm *stubCloudHub) Enable() bool {
 	return tm.enable
 }
 
+func (tm *stubCloudHub) Size() int {
+	return 0
+}
+
 func (tm *stubCloudHub) eventReadLoop(conn *websocket.Conn, stop chan bool) {
 	for {
 		var event interface{}

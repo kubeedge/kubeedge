@@ -33,6 +33,7 @@ import (
 // DynamicController use dynamicSharedInformer to dispatch messages
 type DynamicController struct {
 	enable                       bool
+	size                         int
 	messageLayer                 messagelayer.MessageLayer
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
 	applicationCenter            *application.Center
@@ -40,7 +41,7 @@ type DynamicController struct {
 
 func Register(dc *configv1alpha1.DynamicController) {
 	config.InitConfigure(dc)
-	core.Register(newDynamicController(dc.Enable))
+	core.Register(newDynamicController(dc))
 }
 
 // Name of controller
@@ -58,6 +59,10 @@ func (dctl *DynamicController) Enable() bool {
 	return dctl.enable
 }
 
+func (dctl *DynamicController) Size() int {
+	return dctl.size
+}
+
 // Start controller
 func (dctl *DynamicController) Start() {
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
@@ -70,9 +75,10 @@ func (dctl *DynamicController) Start() {
 	go dctl.receiveMessage()
 }
 
-func newDynamicController(enable bool) *DynamicController {
+func newDynamicController(cfg *configv1alpha1.DynamicController) *DynamicController {
 	var dctl = &DynamicController{
-		enable:                       enable,
+		enable:                       cfg.Enable,
+		size:                         cfg.Size,
 		messageLayer:                 messagelayer.NewContextMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
 	}

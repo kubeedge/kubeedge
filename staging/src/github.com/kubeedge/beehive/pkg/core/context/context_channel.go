@@ -21,6 +21,8 @@ const (
 	TickerTimeoutDefault = 20 * time.Millisecond
 )
 
+var _ MessageContext = (*ChannelContext)(nil)
+
 // ChannelContext is object for Context channel
 type ChannelContext struct {
 	//ConfigFactory goarchaius.ConfigurationFactory
@@ -273,12 +275,6 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 	return cleanup()
 }
 
-// New Channel
-func (ctx *ChannelContext) newChannel() chan model.Message {
-	channel := make(chan model.Message, ChannelSizeDefault)
-	return channel
-}
-
 // getChannel return chan
 func (ctx *ChannelContext) getChannel(module string) chan model.Message {
 	ctx.chsLock.RLock()
@@ -363,7 +359,15 @@ func (ctx *ChannelContext) addTypeChannel(module, group string, moduleCh chan mo
 
 // AddModule adds module into module context
 func (ctx *ChannelContext) AddModule(module string) {
-	channel := ctx.newChannel()
+	ctx.AddModuleWithSize(module, ChannelSizeDefault)
+}
+
+// AddModuleWithSize add a module with a specified buffer size into module context
+func (ctx *ChannelContext) AddModuleWithSize(module string, size int) {
+	if size < 1 {
+		size = ChannelSizeDefault
+	}
+	channel := make(chan model.Message, size)
 	ctx.addChannel(module, channel)
 }
 

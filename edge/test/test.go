@@ -46,6 +46,10 @@ func (tm *testManager) Enable() bool {
 	return tm.enable
 }
 
+func (tm *testManager) Size() int {
+	return 0
+}
+
 //Function to get the pods from Edged
 func GetPodListFromEdged(w http.ResponseWriter) error {
 	var pods v1.PodList

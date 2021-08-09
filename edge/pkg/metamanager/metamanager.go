@@ -12,7 +12,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
 	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
@@ -26,16 +26,17 @@ const (
 
 type metaManager struct {
 	enable bool
+	size   int
 }
 
-func newMetaManager(enable bool) *metaManager {
-	return &metaManager{enable: enable}
+func newMetaManager(cfg *v1alpha1.MetaManager) *metaManager {
+	return &metaManager{enable: cfg.Enable, size: cfg.Size}
 }
 
 // Register register metamanager
 func Register(metaManager *v1alpha1.MetaManager) {
 	metamanagerconfig.InitConfigure(metaManager)
-	meta := newMetaManager(metaManager.Enable)
+	meta := newMetaManager(metaManager)
 	initDBTable(meta)
 	core.Register(meta)
 }
@@ -61,6 +62,10 @@ func (*metaManager) Group() string {
 
 func (m *metaManager) Enable() bool {
 	return m.enable
+}
+
+func (m *metaManager) Size() int {
+	return m.size
 }
 
 func (m *metaManager) Start() {

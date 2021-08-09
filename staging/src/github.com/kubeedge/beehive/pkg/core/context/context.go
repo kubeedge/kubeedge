@@ -10,6 +10,7 @@ import (
 // ModuleContext is interface for context module management
 type ModuleContext interface {
 	AddModule(module string)
+	AddModuleWithSize(module string, size int)
 	AddModuleGroup(module, group string)
 	Cleanup(module string)
 }

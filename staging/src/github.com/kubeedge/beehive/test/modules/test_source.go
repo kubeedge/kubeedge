@@ -34,6 +34,10 @@ func (*testModuleSource) Group() string {
 	return SourceGroup
 }
 
+func (*testModuleSource) Size() int {
+	return 0
+}
+
 func (m *testModuleSource) Start() {
 	message := model.NewMessage("").SetRoute(SourceModule, "").
 		SetResourceOperation("test", model.InsertOperation).FillBody("hello")

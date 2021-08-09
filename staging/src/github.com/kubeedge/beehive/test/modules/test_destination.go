@@ -32,6 +32,10 @@ func (*testModuleDest) Group() string {
 	return DestinationGroup
 }
 
+func (*testModuleDest) Size() int {
+	return 0
+}
+
 func (m *testModuleDest) Start() {
 	message, err := beehiveContext.Receive(DestinationModule)
 	fmt.Printf("destination module receive message:%v error:%v\n", message, err)

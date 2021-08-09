@@ -24,17 +24,19 @@ import (
 
 type router struct {
 	enable bool
+	size   int
 }
 
-func newRouter(enable bool) *router {
+func newRouter(cfg *v1alpha1.Router) *router {
 	return &router{
-		enable: enable,
+		enable: cfg.Enable,
+		size:   cfg.Size,
 	}
 }
 
 func Register(router *v1alpha1.Router) {
 	routerconfig.InitConfigure(router)
-	core.Register(newRouter(router.Enable))
+	core.Register(newRouter(router))
 }
 
 func (r *router) Name() string {
@@ -47,6 +49,10 @@ func (r *router) Group() string {
 
 func (r *router) Enable() bool {
 	return r.enable
+}
+
+func (r *router) Size() int {
+	return r.size
 }
 
 func (r *router) Start() {

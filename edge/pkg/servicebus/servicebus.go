@@ -28,21 +28,23 @@ const (
 // servicebus struct
 type servicebus struct {
 	enable bool
+	size   int
 }
 
 var htc = new(http.Client)
 var uc = new(util.URLClient)
 
-func newServicebus(enable bool) *servicebus {
+func newServicebus(cfg *v1alpha1.ServiceBus) *servicebus {
 	return &servicebus{
-		enable: enable,
+		enable: cfg.Enable,
+		size:   cfg.Size,
 	}
 }
 
 // Register register servicebus
 func Register(s *v1alpha1.ServiceBus) {
 	serviceConfig.InitConfigure(s)
-	core.Register(newServicebus(s.Enable))
+	core.Register(newServicebus(s))
 }
 
 func (*servicebus) Name() string {
@@ -55,6 +57,10 @@ func (*servicebus) Group() string {
 
 func (sb *servicebus) Enable() bool {
 	return sb.enable
+}
+
+func (sb *servicebus) Size() int {
+	return sb.size
 }
 
 func (sb *servicebus) Start() {

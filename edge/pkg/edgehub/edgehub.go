@@ -29,19 +29,21 @@ type EdgeHub struct {
 	reconnectChan chan struct{}
 	keeperLock    sync.RWMutex
 	enable        bool
+	size          int
 }
 
-func newEdgeHub(enable bool) *EdgeHub {
+func newEdgeHub(cfg *v1alpha1.EdgeHub) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),
-		enable:        enable,
+		enable:        cfg.Enable,
+		size:          cfg.Size,
 	}
 }
 
 // Register register edgehub
 func Register(eh *v1alpha1.EdgeHub, nodeName string) {
 	config.InitConfigure(eh, nodeName)
-	core.Register(newEdgeHub(eh.Enable))
+	core.Register(newEdgeHub(eh))
 }
 
 //Name returns the name of EdgeHub module
@@ -57,6 +59,10 @@ func (eh *EdgeHub) Group() string {
 //Enable indicates whether this module is enabled
 func (eh *EdgeHub) Enable() bool {
 	return eh.enable
+}
+
+func (eh *EdgeHub) Size() int {
+	return eh.size
 }
 
 //Start sets context and starts the controller

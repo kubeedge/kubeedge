@@ -104,6 +104,8 @@ type Edged struct {
 	// if set to false (for debugging etc.), skip checking other edged configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// Labels indicates current node labels
 	Labels map[string]string `json:"labels,omitempty"`
 	// Annotations indicates current node annotations
@@ -242,6 +244,8 @@ type EdgeHub struct {
 	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// Heartbeat indicates heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
@@ -316,6 +320,8 @@ type EventBus struct {
 	// skip checking other EventBus configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// MqttQOS indicates mqtt qos
 	// 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce
 	// default 0
@@ -368,6 +374,8 @@ type MetaManager struct {
 	// if set to false (for debugging etc.), skip checking other MetaManager configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// ContextSendGroup indicates send group
 	ContextSendGroup metaconfig.GroupName `json:"contextSendGroup,omitempty"`
 	// ContextSendModule indicates send module
@@ -393,6 +401,8 @@ type ServiceBus struct {
 	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
 	// default false
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
@@ -401,6 +411,8 @@ type DeviceTwin struct {
 	// if set to false (for debugging etc.), skip checking other DeviceTwin configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 }
 
 // DBTest indicates the DBTest module config
@@ -416,6 +428,9 @@ type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true
 	Enable bool `json:"enable"`
+
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt

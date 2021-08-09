@@ -92,6 +92,8 @@ type CloudHub struct {
 	// skip checking other CloudHub configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// KeepaliveInterval indicates keep-alive interval (second)
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
@@ -193,6 +195,8 @@ type EdgeController struct {
 	// if set to false (for debugging etc.), skip checking other EdgeController configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// NodeUpdateFrequency indicates node update frequency (second)
 	// default 10
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
@@ -326,6 +330,8 @@ type DeviceController struct {
 	// if set to false (for debugging etc.), skip checking other deviceController configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// Context indicates send,receive,response modules for deviceController module
 	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
@@ -360,6 +366,8 @@ type SyncController struct {
 	// if set to false (for debugging etc.), skip checking other syncController configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 }
 
 // DynamicController indicates the dynamic controller
@@ -368,6 +376,8 @@ type DynamicController struct {
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
 	// default true
 	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 }
 
 // CloudSream indicates the stream controller
@@ -375,7 +385,8 @@ type CloudStream struct {
 	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
 	// default true
 	Enable bool `json:"enable"`
-
+	// Size indicates the buffer size of the message channel
+	Size int `json:"size,omitempty"`
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
@@ -405,7 +416,9 @@ type CloudStream struct {
 
 type Router struct {
 	// default true
-	Enable      bool   `json:"enable"`
+	Enable bool `json:"enable"`
+	// Size indicates the buffer size of the message channel
+	Size        int    `json:"size,omitempty"`
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`

@@ -18,20 +18,22 @@ type DeviceTwin struct {
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
 	enable            bool
+	size              int
 }
 
-func newDeviceTwin(enable bool) *DeviceTwin {
+func newDeviceTwin(cfg *v1alpha1.DeviceTwin) *DeviceTwin {
 	return &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTModules:         make(map[string]dtmodule.DTModule),
-		enable:            enable,
+		enable:            cfg.Enable,
+		size:              cfg.Size,
 	}
 }
 
 // Register register devicetwin
 func Register(deviceTwin *v1alpha1.DeviceTwin, nodeName string) {
 	deviceconfig.InitConfigure(deviceTwin, nodeName)
-	dt := newDeviceTwin(deviceTwin.Enable)
+	dt := newDeviceTwin(deviceTwin)
 	dtclient.InitDBTable(dt)
 	core.Register(dt)
 }
@@ -49,6 +51,10 @@ func (dt *DeviceTwin) Group() string {
 // Enable indicates whether this module is enabled
 func (dt *DeviceTwin) Enable() bool {
 	return dt.enable
+}
+
+func (dt *DeviceTwin) Size() int {
+	return dt.size
 }
 
 // Start run the module

@@ -26,17 +26,19 @@ import (
 
 type cloudStream struct {
 	enable bool
+	size   int
 }
 
-func newCloudStream(enable bool) *cloudStream {
+func newCloudStream(cfg *v1alpha1.CloudStream) *cloudStream {
 	return &cloudStream{
-		enable: enable,
+		enable: cfg.Enable,
+		size:   cfg.Size,
 	}
 }
 
 func Register(controller *v1alpha1.CloudStream) {
 	config.InitConfigure(controller)
-	core.Register(newCloudStream(controller.Enable))
+	core.Register(newCloudStream(controller))
 }
 
 func (s *cloudStream) Name() string {
@@ -45,6 +47,10 @@ func (s *cloudStream) Name() string {
 
 func (s *cloudStream) Group() string {
 	return modules.CloudStreamGroupName
+}
+
+func (s *cloudStream) Size() int {
+	return s.size
 }
 
 func (s *cloudStream) Start() {

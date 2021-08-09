@@ -18,11 +18,12 @@ type DeviceController struct {
 	downstream *controller.DownstreamController
 	upstream   *controller.UpstreamController
 	enable     bool
+	size       int
 }
 
-func newDeviceController(enable bool) *DeviceController {
-	if !enable {
-		return &DeviceController{enable: enable}
+func newDeviceController(cfg *v1alpha1.DeviceController) *DeviceController {
+	if !cfg.Enable {
+		return &DeviceController{enable: cfg.Enable}
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
@@ -35,13 +36,14 @@ func newDeviceController(enable bool) *DeviceController {
 	return &DeviceController{
 		downstream: downstream,
 		upstream:   upstream,
-		enable:     enable,
+		enable:     cfg.Enable,
+		size:       cfg.Size,
 	}
 }
 
 func Register(dc *v1alpha1.DeviceController) {
 	config.InitConfigure(dc)
-	core.Register(newDeviceController(dc.Enable))
+	core.Register(newDeviceController(dc))
 }
 
 // Name of controller
@@ -57,6 +59,10 @@ func (dc *DeviceController) Group() string {
 // Enable indicates whether enable this module
 func (dc *DeviceController) Enable() bool {
 	return dc.enable
+}
+
+func (dc *DeviceController) Size() int {
+	return dc.size
 }
 
 // Start controller

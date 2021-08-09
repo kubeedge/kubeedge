@@ -36,13 +36,15 @@ import (
 
 type edgestream struct {
 	enable          bool
+	size            int
 	hostnameOveride string
 	nodeIP          string
 }
 
-func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
+func newEdgeStream(cfg *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) *edgestream {
 	return &edgestream{
-		enable:          enable,
+		enable:          cfg.Enable,
+		size:            cfg.Size,
 		hostnameOveride: hostnameOverride,
 		nodeIP:          nodeIP,
 	}
@@ -51,7 +53,7 @@ func newEdgeStream(enable bool, hostnameOverride, nodeIP string) *edgestream {
 // Register register edgestream
 func Register(s *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) {
 	config.InitConfigure(s)
-	core.Register(newEdgeStream(s.Enable, hostnameOverride, nodeIP))
+	core.Register(newEdgeStream(s, hostnameOverride, nodeIP))
 }
 
 func (e *edgestream) Name() string {
@@ -64,6 +66,10 @@ func (e *edgestream) Group() string {
 
 func (e *edgestream) Enable() bool {
 	return e.enable
+}
+
+func (e *edgestream) Size() int {
+	return e.size
 }
 
 func (e *edgestream) Start() {

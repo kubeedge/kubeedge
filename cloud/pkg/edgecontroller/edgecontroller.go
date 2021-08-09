@@ -55,6 +55,10 @@ func (ec *EdgeController) Enable() bool {
 	return ec.config.Enable
 }
 
+func (ec *EdgeController) Size() int {
+	return ec.config.Size
+}
+
 // Start controller
 func (ec *EdgeController) Start() {
 	if err := ec.upstream.Start(); err != nil {

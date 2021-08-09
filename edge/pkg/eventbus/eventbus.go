@@ -24,18 +24,20 @@ var mqttServer *mqttBus.Server
 // eventbus struct
 type eventbus struct {
 	enable bool
+	size   int
 }
 
-func newEventbus(enable bool) *eventbus {
+func newEventbus(cfg *v1alpha1.EventBus) *eventbus {
 	return &eventbus{
-		enable: enable,
+		enable: cfg.Enable,
+		size:   cfg.Size,
 	}
 }
 
 // Register register eventbus
 func Register(eventbus *v1alpha1.EventBus, nodeName string) {
 	eventconfig.InitConfigure(eventbus, nodeName)
-	core.Register(newEventbus(eventbus.Enable))
+	core.Register(newEventbus(eventbus))
 	orm.RegisterModel(new(dao.SubTopics))
 }
 
@@ -50,6 +52,10 @@ func (*eventbus) Group() string {
 // Enable indicates whether this module is enabled
 func (eb *eventbus) Enable() bool {
 	return eb.enable
+}
+
+func (eb *eventbus) Size() int {
+	return eb.size
 }
 
 func (eb *eventbus) Start() {

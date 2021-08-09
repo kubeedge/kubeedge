@@ -47,6 +47,10 @@ func (*HandlerStub) Group() string {
 	return constants.MetaGroup
 }
 
+func (*HandlerStub) Size() int {
+	return 0
+}
+
 // Start handler hub
 func (hs *HandlerStub) Start() {
 	// New pod manager

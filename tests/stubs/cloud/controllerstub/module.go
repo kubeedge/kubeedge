@@ -48,6 +48,10 @@ func (*ControllerStub) Group() string {
 	return constants.ControllerGroup
 }
 
+func (*ControllerStub) Size() int {
+	return 0
+}
+
 // Start controller hub
 func (cs *ControllerStub) Start() {
 	// New pod manager

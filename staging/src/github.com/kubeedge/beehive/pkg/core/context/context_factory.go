@@ -52,6 +52,10 @@ func AddModule(module string) {
 	context.moduleContext.AddModule(module)
 }
 
+func AddModuleWithSize(module string, size int) {
+	context.moduleContext.AddModuleWithSize(module, size)
+}
+
 // AddModuleGroup adds module into module context group
 func AddModuleGroup(module, group string) {
 	context.moduleContext.AddModuleGroup(module, group)

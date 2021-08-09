@@ -240,6 +240,7 @@ type edged struct {
 
 	recorder recordtools.EventRecorder
 	enable   bool
+	size     int
 
 	configMapManager klconfigmap.Manager
 
@@ -260,7 +261,7 @@ type edged struct {
 // Register register edged
 func Register(e *v1alpha1.Edged) {
 	edgedconfig.InitConfigure(e)
-	edged, err := newEdged(e.Enable)
+	edged, err := newEdged(e)
 	if err != nil {
 		klog.Errorf("init new edged error, %v", err)
 		os.Exit(1)
@@ -280,6 +281,10 @@ func (e *edged) Group() string {
 //Enable indicates whether this module is enabled
 func (e *edged) Enable() bool {
 	return e.enable
+}
+
+func (e *edged) Size() int {
+	return e.size
 }
 
 func (e *edged) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
@@ -418,11 +423,11 @@ func (e *edged) cgroupRoots() []string {
 }
 
 //newEdged creates new edged object and initialises it
-func newEdged(enable bool) (*edged, error) {
+func newEdged(cfg *v1alpha1.Edged) (*edged, error) {
 	// skip init edged if disabled
-	if !enable {
+	if !cfg.Enable {
 		return &edged{
-			enable: enable,
+			enable: cfg.Enable,
 		}, nil
 	}
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
@@ -463,7 +468,8 @@ func newEdged(enable bool) (*edged, error) {
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(edgedconfig.Config.NodeIP),
 		recorder:                  recorder,
-		enable:                    enable,
+		enable:                    cfg.Enable,
+		size:                      cfg.Size,
 	}
 	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
 	err := ed.makePodDir()

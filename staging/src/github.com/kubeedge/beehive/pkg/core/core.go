@@ -17,7 +17,7 @@ func StartModules() {
 	modules := GetModules()
 	for name, module := range modules {
 		// Init the module
-		beehiveContext.AddModule(name)
+		beehiveContext.AddModuleWithSize(name, module.Size())
 		// Assemble typeChannels for sendToGroup
 		beehiveContext.AddModuleGroup(name, module.Group())
 		go module.Start()

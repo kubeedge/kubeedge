@@ -14,6 +14,7 @@ type Module interface {
 	Group() string
 	Start()
 	Enable() bool
+	Size() int
 }
 
 var (
