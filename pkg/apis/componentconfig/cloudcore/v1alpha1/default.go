@@ -103,6 +103,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
+					ServiceAccount:             constants.DefaultServiceAccountBuffer,
 				},
 				Context: &ControllerContext{
 					SendModule:       metaconfig.ModuleNameCloudHub,
@@ -124,6 +125,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					UpdateNodeWorkers:                 constants.DefaultUpdateNodeWorkers,
 					DeletePodWorkers:                  constants.DefaultDeletePodWorkers,
 					UpdateRuleStatusWorkers:           constants.DefaultUpdateRuleStatusWorkers,
+					ServiceAccountTokenWorkers:        constants.DefaultServiceAccountTokenWorkers,
 				},
 			},
 			DeviceController: &DeviceController{
