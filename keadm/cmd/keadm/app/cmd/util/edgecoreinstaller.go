@@ -18,10 +18,14 @@ package util
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -132,6 +136,11 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 		edgeCoreConfig.Modules.Edged.Labels = labelsMap
 	}
+
+	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
+		log.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+	}
+
 	if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
 		return err
 	}
