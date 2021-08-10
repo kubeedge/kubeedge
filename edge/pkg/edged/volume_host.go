@@ -169,8 +169,8 @@ func (evh *edgedVolumeHost) GetPodsDir() string {
 }
 
 func (evh *edgedVolumeHost) GetServiceAccountTokenFunc() func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	return func(_, _ string, _ *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-		return nil, fmt.Errorf("GetServiceAccountToken unsupported")
+	return func(namespace, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+		return evh.edge.metaClient.ServiceAccounts().GetServiceAccountToken(namespace, name, tr)
 	}
 }
 
