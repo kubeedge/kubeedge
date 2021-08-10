@@ -26,6 +26,7 @@ type CoreInterface interface {
 	SecretsGetter
 	EndpointsGetter
 	ServiceGetter
+	ServiceAccountsGetter
 	PersistentVolumesGetter
 	PersistentVolumeClaimsGetter
 	VolumeAttachmentsGetter
@@ -54,6 +55,10 @@ func (m *metaClient) NodeStatus(namespace string) NodeStatusInterface {
 
 func (m *metaClient) Secrets(namespace string) SecretsInterface {
 	return newSecrets(namespace, m.send)
+}
+
+func (m *metaClient) ServiceAccounts() ServiceAccountsInterface {
+	return newServiceAccounts(m.send)
 }
 
 func (m *metaClient) PodStatus(namespace string) PodStatusInterface {

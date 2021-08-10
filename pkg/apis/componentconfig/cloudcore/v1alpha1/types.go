@@ -263,6 +263,9 @@ type EdgeControllerBuffer struct {
 	// DeletePod indicates the buffer of delete pod message from edge
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
+	// ServiceAccount indicates the buffer of service account token
+	// default 1024
+	ServiceAccount int32 `json:"serviceaccount,omitempty"`
 }
 
 // ControllerContext indicates the message layer context for all controllers
@@ -318,6 +321,9 @@ type EdgeControllerLoad struct {
 	// UpdateRuleStatusWorkers indicates the load of update rule status
 	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
+	// ServiceAccountTokenWorkers indicates the load of service account token
+	// default 4
+	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
 }
 
 // DeviceController indicates the device controller

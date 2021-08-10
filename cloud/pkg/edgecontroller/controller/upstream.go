@@ -32,6 +32,7 @@ import (
 	"sort"
 	"time"
 
+	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,6 +95,7 @@ type UpstreamController struct {
 	nodeStatusChan            chan model.Message
 	podStatusChan             chan model.Message
 	secretChan                chan model.Message
+	serviceAccountChan        chan model.Message
 	configMapChan             chan model.Message
 	serviceChan               chan model.Message
 	endpointsChan             chan model.Message
@@ -123,6 +125,7 @@ func (uc *UpstreamController) Start() error {
 	uc.configMapChan = make(chan model.Message, config.Config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Config.Buffer.QuerySecret)
 	uc.serviceChan = make(chan model.Message, config.Config.Buffer.QueryService)
+	uc.serviceAccountChan = make(chan model.Message, config.Buffer.ServiceAccount)
 	uc.endpointsChan = make(chan model.Message, config.Config.Buffer.QueryEndpoints)
 	uc.persistentVolumeChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolume)
 	uc.persistentVolumeClaimChan = make(chan model.Message, config.Config.Buffer.QueryPersistentVolumeClaim)
@@ -152,7 +155,10 @@ func (uc *UpstreamController) Start() error {
 	for i := 0; i < int(config.Config.Load.QueryEndpointsWorkers); i++ {
 		go uc.queryEndpoints()
 	}
-	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeWorkers); i++ {
+	for i := 0; i < int(uc.config.Load.ServiceAccountTokenWorkers); i++ {
+		go uc.processServiceAccountToken()
+	}
+	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
 	}
 	for i := 0; i < int(config.Config.Load.QueryPersistentVolumeClaimWorkers); i++ {
@@ -215,6 +221,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			uc.serviceChan <- msg
 		case common.ResourceTypeEndpoints:
 			uc.endpointsChan <- msg
+		case common.ResourceTypeServiceAccount:
+			uc.serviceAccountChan <- msg
 		case common.ResourceTypePersistentVolume:
 			uc.persistentVolumeChan <- msg
 		case common.ResourceTypePersistentVolumeClaim:
@@ -676,6 +684,22 @@ func (uc *UpstreamController) queryService() {
 	}
 }
 
+func (uc *UpstreamController) processServiceAccountToken() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop process ServiceAccount token")
+			return
+		case msg := <-uc.serviceAccountChan:
+			if msg.GetOperation() == common.OperationTypeGetServiceAccount {
+				uc.GetServiceAccountToken(msg)
+			} else {
+				klog.Warningf("service account token not supported operation: %v", msg.GetOperation())
+			}
+		}
+	}
+}
+
 func (uc *UpstreamController) queryEndpoints() {
 	for {
 		select {
@@ -685,6 +709,63 @@ func (uc *UpstreamController) queryEndpoints() {
 		case msg := <-uc.endpointsChan:
 			queryInner(uc, msg, common.ResourceTypeEndpoints)
 		}
+	}
+}
+
+func (uc *UpstreamController) GetServiceAccountToken(msg model.Message) {
+	namespace, err := messagelayer.GetNamespace(msg)
+	if err != nil {
+		klog.Errorf("message: %s process failure, get namespace failed with error: %s", msg.GetID(), err)
+		return
+	}
+	name, err := messagelayer.GetResourceName(msg)
+	if err != nil {
+		klog.Errorf("message: %s process failure, get resource name failed with error: %s", msg.GetID(), err)
+		return
+	}
+
+	if msg.GetOperation() != common.OperationTypeGetServiceAccount {
+		klog.Errorf("message: %s process failure, get resource name failed with not support operation %v", msg.GetID(), msg.GetOperation())
+		return
+	}
+
+	data, err := msg.GetContentData()
+	if err != nil {
+		klog.Errorf("get message body failed err %v", err)
+		return
+	}
+
+	tr := authenticationv1.TokenRequest{}
+	if err := json.Unmarshal(data, &tr); err != nil {
+		klog.Errorf("unmarshal token request failed err %v", err)
+		return
+	}
+
+	tokenRequest, err := uc.kubeClient.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, &tr, metaV1.CreateOptions{})
+	if err != nil {
+		klog.Errorf("apiserver get serviceaccount token failed: err %v", err)
+		return
+	}
+
+	nodeID, err := messagelayer.GetNodeID(msg)
+	if err != nil {
+		klog.Errorf("message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+		return
+	}
+	resource, err := messagelayer.BuildResource(nodeID, namespace, common.ResourceTypeServiceAccount, name)
+	if err != nil {
+		klog.Errorf("message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+		return
+	}
+
+	resMsg := model.NewMessage(msg.GetID()).
+		SetResourceVersion(tokenRequest.GetResourceVersion()).
+		FillBody(tokenRequest).
+		BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.ResponseOperation)
+	err = uc.messageLayer.Response(*resMsg)
+	if err != nil {
+		klog.Warningf("message: %s process failure, response failed with error: %s", msg.GetID(), err)
+		return
 	}
 }
 
