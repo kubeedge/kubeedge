@@ -17,19 +17,18 @@ limitations under the License.
 package util
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
-	"github.com/kubeedge/kubeedge/pkg/util"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // KubeEdgeInstTool embeds Common struct and contains cloud node ip:port information
@@ -138,13 +137,9 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
-		log.Fatal(util.SpliceErrors(errs.ToAggregate().Errors()))
+		return errors.New(util.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-
-	if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
-		return err
-	}
-	return nil
+	return types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig)
 }
 
 // TearDown method will remove the edge node from api-server and stop edgecore process
