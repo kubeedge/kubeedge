@@ -75,7 +75,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 					QueryNode:                  constants.DefaultQueryNodeBuffer,
 					UpdateNode:                 constants.DefaultUpdateNodeBuffer,
 					DeletePod:                  constants.DefaultDeletePodBuffer,
-					ServiceAccount:             constants.DefaultServiceAccountBuffer,
+					ServiceAccountToken:        constants.DefaultServiceAccountTokenBuffer,
 				},
 				Context: &cloudcoreconfig.ControllerContext{
 					SendModule:     metaconfig.ModuleNameMetaManager,

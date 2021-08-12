@@ -106,7 +106,7 @@ const (
 	DefaultQueryNodeBuffer                  = 1024
 	DefaultUpdateNodeBuffer                 = 1024
 	DefaultDeletePodBuffer                  = 1024
-	DefaultServiceAccountBuffer             = 1024
+	DefaultServiceAccountTokenBuffer        = 1024
 
 	DefaultPodEventBuffer           = 1
 	DefaultConfigMapEventBuffer     = 1
@@ -142,7 +142,4 @@ const (
 	// ServerPort is the default port for the edgecore server on each host machine.
 	// May be overridden by a flag at startup in the future.
 	ServerPort = 10350
-
-	ResourceTypeServiceAccount     = "serviceaccount"
-	OperationTypeGetServiceAccount = "getserviceaccount"
 )

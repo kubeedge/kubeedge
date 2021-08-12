@@ -86,7 +86,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
-		resType == model.ResourceTypeNode
+		resType == model.ResourceTypeNode ||
+		resType == model.ResourceTypeServiceAccountToken
 }
 
 func isConnected() bool {
@@ -466,29 +467,6 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume send to cloud resp[%+v]", resp)
 }
 
-func (m *metaManager) processServiceAccount(message model.Message) {
-	opration := message.GetOperation()
-	switch opration {
-	case constants.OperationTypeGetServiceAccount:
-		originalID := message.GetID()
-		message.UpdateID()
-
-		// send model msg to cloud
-		resp, err := beehiveContext.SendSync(
-			string(metaManagerConfig.Config.ContextSendModule),
-			message,
-			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
-		if err != nil {
-			klog.Errorf("send request for service account to cloud failed, err is %v", err)
-			return
-		}
-		resp.BuildHeader(resp.GetID(), originalID, resp.GetTimestamp())
-		sendToEdged(&resp, message.IsSync())
-	default:
-		klog.Warningf("not supported serviceaccount token operation: %v", opration)
-	}
-}
-
 func (m *metaManager) process(message model.Message) {
 	operation := message.GetOperation()
 	switch operation {
@@ -515,8 +493,6 @@ func (m *metaManager) process(message model.Message) {
 		constants.CSIOperationTypeControllerPublishVolume,
 		constants.CSIOperationTypeControllerUnpublishVolume:
 		m.processVolume(message)
-	case constants.OperationTypeGetServiceAccount:
-		m.processServiceAccount(message)
 	default:
 		klog.Errorf("metamanager not supported operation: %v", operation)
 	}
