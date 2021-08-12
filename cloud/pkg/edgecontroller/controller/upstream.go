@@ -133,7 +133,8 @@ func (uc *UpstreamController) Start() error {
 	uc.updateNodeChan = make(chan model.Message, config.Config.Buffer.UpdateNode)
 	uc.podDeleteChan = make(chan model.Message, config.Config.Buffer.DeletePod)
 	uc.ruleStatusChan = make(chan model.Message, config.Config.Buffer.UpdateNodeStatus)
-        uc.serviceAccountTokenChan = make(chan model.Message, config.Config.Buffer.ServiceAccountToken)
+	uc.serviceAccountTokenChan = make(chan model.Message, config.Config.Buffer.ServiceAccountToken)
+
 	go uc.dispatchMessage()
 
 	for i := 0; i < int(config.Config.Load.UpdateNodeStatusWorkers); i++ {
@@ -681,9 +682,8 @@ func (uc *UpstreamController) queryService() {
 			return
 		case msg := <-uc.serviceChan:
 			queryInner(uc, msg, common.ResourceTypeService)
-
-                }
-        }
+		}
+	}
 }
 
 func (uc *UpstreamController) processServiceAccountToken() {
@@ -707,7 +707,7 @@ func (uc *UpstreamController) queryEndpoints() {
 		case msg := <-uc.endpointsChan:
 			queryInner(uc, msg, common.ResourceTypeEndpoints)
 		}
-        }
+	}
 }
 
 func (uc *UpstreamController) getServiceAccountToken(namespace string, name string, msg model.Message) (metaV1.Object, error) {
