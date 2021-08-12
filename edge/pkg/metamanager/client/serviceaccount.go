@@ -44,7 +44,7 @@ func (c *serviceAccountToken) GetServiceAccountToken(namespace string, name stri
 
 	content, err := msg.GetContentData()
 	if err != nil {
-		klog.Errorf("marshal message to serviceaccount token failed, err: %v", err)
+		klog.Errorf("parse message to serviceaccount token failed, err: %v", err)
 		return nil, fmt.Errorf("marshal message to serviceaccount token failed, err: %v", err)
 	}
 
