@@ -265,7 +265,7 @@ type EdgeControllerBuffer struct {
 	DeletePod int32 `json:"deletePod,omitempty"`
 	// ServiceAccount indicates the buffer of service account token
 	// default 1024
-	ServiceAccount int32 `json:"serviceaccount,omitempty"`
+	ServiceAccountToken int32 `json:"serviceAccountToken,omitempty"`
 }
 
 // ControllerContext indicates the message layer context for all controllers

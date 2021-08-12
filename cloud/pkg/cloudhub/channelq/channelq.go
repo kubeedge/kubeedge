@@ -158,7 +158,7 @@ func isListResource(msg *beehiveModel.Message) bool {
 	if strings.Contains(msgResource, beehiveModel.ResourceTypePodlist) ||
 		strings.Contains(msgResource, "membership") ||
 		strings.Contains(msgResource, "twin/cloud_updated") ||
-		strings.Contains(msgResource, commonconst.ResourceTypeServiceAccount) {
+		strings.Contains(msgResource, beehiveModel.ResourceTypeServiceAccountToken) {
 		return true
 	}
 
