@@ -1,3 +1,7 @@
+  * [v1.7.2](#v172)
+    * [Downloads for v1.7.2](#downloads-for-v172)
+    * [KubeEdge v1.7.2 Release Notes](#kubeedge-v172-release-notes)
+        * [Changelog since v1.7.1](#changelog-since-v170)
   * [v1.7.1](#v171)
      * [Downloads for v1.7.1](#downloads-for-v171)
         * [KubeEdge Binaries](#kubeedge-binaries)
@@ -14,20 +18,24 @@
         * [Other Notable Changes](#other-notable-changes)
         * [Bug Fixes](#bug-fixes)
 
+# v1.7.2
+
+## Downloads for v1.7.2
+
+Download v1.7.2 in the [v1.7.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.7.2).
+
+## KubeEdge v1.7.2 Release Notes
+
+### Changelog since v1.7.1
+
+- Fix the service account token can't be got at edge(Support K8s v1.20+,1.21+). ([#3027](https://github.com/kubeedge/kubeedge/pull/3027), [@gy95](https://github.com/gy95))
+
 
 # v1.7.1
 
 ## Downloads for v1.7.1
 
-### KubeEdge Binaries
-| filename | Size | sha512 hash |
-| -------- | ---- | ----------- |
-
-
-### Installer Binaries
-| filename | Size | sha512 hash |
-| -------- | ---- | ----------- |
-
+Download v1.7.1 in the [v1.7.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.7.1).
 
 ## KubeEdge v1.7.1 Release Notes
 
