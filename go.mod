@@ -9,24 +9,22 @@ require (
 	github.com/astaxie/beego v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/container-storage-interface/spec v1.2.0
+	github.com/container-storage-interface/spec v1.3.0
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/docker v1.4.2-0.20200309214505-aa6a9891b09c
-	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
+	github.com/docker/docker v20.10.2+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.4.2
-	github.com/google/cadvisor v0.37.5
-	github.com/google/uuid v1.1.1
-	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.0
+	github.com/golang/protobuf v1.4.3
+	github.com/google/cadvisor v0.39.0
+	github.com/google/uuid v1.1.2
+	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/karrick/godirwalk v1.10.12 // indirect
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubeedge/viaduct v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
@@ -39,12 +37,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/shirou/gopsutil v2.20.9+incompatible
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.4.0
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-	google.golang.org/grpc v1.27.0
-	gopkg.in/yaml.v2 v2.2.8
+	github.com/stretchr/testify v1.6.1
+	golang.org/x/net v0.0.0-20210224082022-3d97a244fca7
+	google.golang.org/grpc v1.27.1
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.21.4
 	k8s.io/apiextensions-apiserver v0.21.4
 	k8s.io/apimachinery v0.21.4
@@ -57,14 +55,14 @@ require (
 	k8s.io/component-base v0.21.4
 	k8s.io/cri-api v0.21.4
 	k8s.io/csi-translation-lib v0.21.4
-	k8s.io/klog/v2 v2.2.0
-	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
+	k8s.io/klog/v2 v2.8.0
+	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 	k8s.io/kube-scheduler v0.21.4 // indirect
 	k8s.io/kubelet v0.21.4
 	k8s.io/kubernetes v1.21.4
-	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 	sigs.k8s.io/apiserver-network-proxy v0.0.20
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -86,12 +84,14 @@ replace (
 	k8s.io/cluster-bootstrap v0.0.0 => k8s.io/cluster-bootstrap v0.21.4
 	k8s.io/code-generator v0.0.0 => k8s.io/code-generator v0.21.4
 	k8s.io/component-base v0.0.0 => k8s.io/component-base v0.21.4
+	k8s.io/component-helpers v0.0.0 => k8s.io/component-helpers v0.21.4
+	k8s.io/controller-manager v0.0.0 => k8s.io/controller-manager v0.21.4
 	k8s.io/cri-api v0.0.0 => k8s.io/cri-api v0.21.4
 	k8s.io/csi-api v0.0.0 => k8s.io/csi-api v0.21.4
 	k8s.io/csi-translation-lib v0.0.0 => k8s.io/csi-translation-lib v0.21.4
 	k8s.io/gengo v0.0.0 => k8s.io/gengo v0.21.4
 	k8s.io/heapster => k8s.io/heapster v1.2.0-beta.1 // indirect
-	k8s.io/klog/v2 => k8s.io/klog/v2 v2.2.0
+	k8s.io/klog/v2 => k8s.io/klog/v2 v2.8.0
 	k8s.io/kube-aggregator v0.0.0 => k8s.io/kube-aggregator v0.21.4
 	k8s.io/kube-controller-manager v0.0.0 => k8s.io/kube-controller-manager v0.21.4
 	k8s.io/kube-openapi v0.0.0 => k8s.io/kube-openapi v0.21.4
@@ -101,9 +101,10 @@ replace (
 	k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.21.4
 	k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.21.4
 	k8s.io/metrics v0.0.0 => k8s.io/metrics v0.21.4
+	k8s.io/mount-utils v0.0.0 => k8s.io/mount-utils v0.21.4
 	k8s.io/node-api v0.0.0 => k8s.io/node-api v0.21.4
 	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.21.4
 	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.21.4
 	k8s.io/utils v0.0.0 => k8s.io/utils v0.21.4
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.20
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
 )

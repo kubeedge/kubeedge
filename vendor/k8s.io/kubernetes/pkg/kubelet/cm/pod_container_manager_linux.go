@@ -26,10 +26,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/klog/v2"
 	v1qos "k8s.io/kubernetes/pkg/apis/core/v1/helper/qos"
-	kubefeatures "k8s.io/kubernetes/pkg/features"
 )
 
 const (
@@ -86,7 +84,7 @@ func (m *podContainerManagerImpl) EnsureExists(pod *v1.Pod) error {
 			Name:               podContainerName,
 			ResourceParameters: ResourceConfigForPod(pod, m.enforceCPULimits, m.cpuCFSQuotaPeriod),
 		}
-		if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.SupportPodPidsLimit) && m.podPidsLimit > 0 {
+		if m.podPidsLimit > 0 {
 			containerConfig.ResourceParameters.PidsLimit = &m.podPidsLimit
 		}
 		if err := m.cgroupManager.Create(containerConfig); err != nil {
@@ -137,7 +135,7 @@ func (m *podContainerManagerImpl) killOnePid(pid int) error {
 			// Hate parsing strings, but
 			// vendor/github.com/opencontainers/runc/libcontainer/
 			// also does this.
-			klog.V(3).Infof("process with pid %v no longer exists", pid)
+			klog.V(3).InfoS("Process no longer exists", "pid", pid)
 			return nil
 		}
 		return err
@@ -160,23 +158,23 @@ func (m *podContainerManagerImpl) tryKillingCgroupProcesses(podCgroup CgroupName
 	removed := map[int]bool{}
 	for i := 0; i < 5; i++ {
 		if i != 0 {
-			klog.V(3).Infof("Attempt %v failed to kill all unwanted process from cgroup: %v. Retyring", i, podCgroup)
+			klog.V(3).InfoS("Attempt failed to kill all unwanted process from cgroup, retrying", "attempt", i, "cgroupName", podCgroup)
 		}
 		errlist = []error{}
 		for _, pid := range pidsToKill {
 			if _, ok := removed[pid]; ok {
 				continue
 			}
-			klog.V(3).Infof("Attempt to kill process with pid: %v from cgroup: %v", pid, podCgroup)
+			klog.V(3).InfoS("Attempting to kill process from cgroup", "pid", pid, "cgroupName", podCgroup)
 			if err := m.killOnePid(pid); err != nil {
-				klog.V(3).Infof("failed to kill process with pid: %v from cgroup: %v", pid, podCgroup)
+				klog.V(3).InfoS("Failed to kill process from cgroup", "pid", pid, "cgroupName", podCgroup, "err", err)
 				errlist = append(errlist, err)
 			} else {
 				removed[pid] = true
 			}
 		}
 		if len(errlist) == 0 {
-			klog.V(3).Infof("successfully killed all unwanted processes from cgroup: %v", podCgroup)
+			klog.V(3).InfoS("Successfully killed all unwanted processes from cgroup", "cgroupName", podCgroup)
 			return nil
 		}
 	}
@@ -187,7 +185,7 @@ func (m *podContainerManagerImpl) tryKillingCgroupProcesses(podCgroup CgroupName
 func (m *podContainerManagerImpl) Destroy(podCgroup CgroupName) error {
 	// Try killing all the processes attached to the pod cgroup
 	if err := m.tryKillingCgroupProcesses(podCgroup); err != nil {
-		klog.Warningf("failed to kill all the processes attached to the %v cgroups", podCgroup)
+		klog.InfoS("Failed to kill all the processes attached to cgroup", "cgroupName", podCgroup, "err", err)
 		return fmt.Errorf("failed to kill all the processes attached to the %v cgroups : %v", podCgroup, err)
 	}
 
@@ -197,7 +195,7 @@ func (m *podContainerManagerImpl) Destroy(podCgroup CgroupName) error {
 		ResourceParameters: &ResourceConfig{},
 	}
 	if err := m.cgroupManager.Destroy(containerConfig); err != nil {
-		klog.Warningf("failed to delete cgroup paths for %v : %v", podCgroup, err)
+		klog.InfoS("Failed to delete cgroup paths", "cgroupName", podCgroup, "err", err)
 		return fmt.Errorf("failed to delete cgroup paths for %v : %v", podCgroup, err)
 	}
 	return nil
@@ -276,7 +274,7 @@ func (m *podContainerManagerImpl) GetAllPodsFromCgroups() (map[types.UID]CgroupN
 				parts := strings.Split(basePath, podCgroupNamePrefix)
 				// the uid is missing, so we log the unexpected cgroup not of form pod<uid>
 				if len(parts) != 2 {
-					klog.Errorf("pod cgroup manager ignoring unexpected cgroup %v because it is not a pod", cgroupfsPath)
+					klog.InfoS("Pod cgroup manager ignored unexpected cgroup because it is not a pod", "path", cgroupfsPath)
 					continue
 				}
 				podUID := parts[1]
