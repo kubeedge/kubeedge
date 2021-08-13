@@ -56,7 +56,7 @@ func (f *Factory) Get() http.Handler {
 	}
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	h := handlers.GetResource(f.storage, f.storage, f.scope)
+	h := handlers.GetResource(f.storage, f.scope)
 	f.handlers["get"] = h
 	return h
 }

@@ -39,11 +39,12 @@ import (
 	recordtools "k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
+	proxyutil "k8s.io/kubernetes/pkg/proxy/util"
 	"k8s.io/kubernetes/pkg/volume"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
 	"k8s.io/kubernetes/pkg/volume/util/subpath"
+	"k8s.io/mount-utils"
 	utilexec "k8s.io/utils/exec"
-	"k8s.io/utils/mount"
 )
 
 // NewInitializedVolumePluginMgr returns a new instance of volume.VolumePluginMgr
@@ -202,5 +203,9 @@ func (evh *edgedVolumeHost) CSIDriversSynced() cache.InformerSynced {
 
 // WaitForCacheSync is a helper function that waits for cache sync for CSIDriverLister
 func (evh *edgedVolumeHost) WaitForCacheSync() error {
+	return nil
+}
+
+func (evh *edgedVolumeHost) GetFilteredDialOptions() *proxyutil.FilteredDialOptions {
 	return nil
 }
