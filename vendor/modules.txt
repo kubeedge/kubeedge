@@ -1680,6 +1680,7 @@ k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/third_party/forked/golang/expansion
 # k8s.io/mount-utils v0.0.0 => k8s.io/mount-utils v0.21.4
+## explicit
 k8s.io/mount-utils
 # k8s.io/system-validators v1.4.0
 k8s.io/system-validators/validators

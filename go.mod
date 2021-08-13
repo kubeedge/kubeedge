@@ -60,6 +60,7 @@ require (
 	k8s.io/kube-scheduler v0.21.4 // indirect
 	k8s.io/kubelet v0.21.4
 	k8s.io/kubernetes v1.21.4
+	k8s.io/mount-utils v0.0.0
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 	sigs.k8s.io/apiserver-network-proxy v0.0.20
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22
