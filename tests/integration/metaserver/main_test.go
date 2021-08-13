@@ -16,13 +16,13 @@ func TestMain(m *testing.M) {
 
 func modifyCloudCoreConfig(config *cloudconfig.CloudCoreConfig) {
 	framework.DisableAllModules(config)
-	config.Modules.CloudHub.Enable = true
-	config.Modules.SyncController.Enable = true
+	config.Modules.CloudHub.Enabled = true
+	config.Modules.SyncController.Enabled = true
 }
 
 func modifyEdgeCoreConfig(config *edgeconfig.EdgeCoreConfig) {
 	framework.DisableAllModules(config)
-	config.Modules.EdgeHub.Enable = true
-	config.Modules.MetaManager.Enable = true
+	config.Modules.EdgeHub.Enabled = true
+	config.Modules.MetaManager.Enabled = true
 	config.Modules.MetaManager.MetaServer.Enable = true
 }

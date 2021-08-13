@@ -27,19 +27,18 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/application"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/messagelayer"
-	configv1alpha1 "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 // DynamicController use dynamicSharedInformer to dispatch messages
 type DynamicController struct {
-	enable                       bool
-	size                         int
+	v1alpha1.Common
 	messageLayer                 messagelayer.MessageLayer
 	dynamicSharedInformerFactory dynamicinformer.DynamicSharedInformerFactory
 	applicationCenter            *application.Center
 }
 
-func Register(dc *configv1alpha1.DynamicController) {
+func Register(dc *v1alpha1.DynamicController) {
 	config.InitConfigure(dc)
 	core.Register(newDynamicController(dc))
 }
@@ -54,15 +53,6 @@ func (dctl *DynamicController) Group() string {
 	return modules.DynamicControllerModuleGroup
 }
 
-// Enable of controller
-func (dctl *DynamicController) Enable() bool {
-	return dctl.enable
-}
-
-func (dctl *DynamicController) Size() int {
-	return dctl.size
-}
-
 // Start controller
 func (dctl *DynamicController) Start() {
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
@@ -75,10 +65,9 @@ func (dctl *DynamicController) Start() {
 	go dctl.receiveMessage()
 }
 
-func newDynamicController(cfg *configv1alpha1.DynamicController) *DynamicController {
+func newDynamicController(cfg *v1alpha1.DynamicController) *DynamicController {
 	var dctl = &DynamicController{
-		enable:                       cfg.Enable,
-		size:                         cfg.Size,
+		Common:                       cfg.Common,
 		messageLayer:                 messagelayer.NewContextMessageLayer(),
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicSharedInformerFactory(),
 	}

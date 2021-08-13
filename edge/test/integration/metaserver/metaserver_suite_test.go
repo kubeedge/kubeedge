@@ -23,7 +23,7 @@ func TestEdgecoreMetaServer(t *testing.T) {
 		c := edgeconfig.NewDefaultEdgeCoreConfig()
 		framework.DisableAllModules(c)
 		c.Modules.Edged.HostnameOverride = cfg.NodeID
-		c.Modules.MetaManager.Enable = true
+		c.Modules.MetaManager.Enabled = true
 		c.Modules.MetaManager.MetaServer.Enable = true
 
 		Expect(utils.CfgToFile(c)).Should(BeNil())

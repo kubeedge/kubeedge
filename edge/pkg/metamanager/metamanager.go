@@ -25,12 +25,13 @@ const (
 )
 
 type metaManager struct {
-	enable bool
-	size   int
+	v1alpha1.Common
 }
 
 func newMetaManager(cfg *v1alpha1.MetaManager) *metaManager {
-	return &metaManager{enable: cfg.Enable, size: cfg.Size}
+	return &metaManager{
+		Common: cfg.Common,
+	}
 }
 
 // Register register metamanager
@@ -58,14 +59,6 @@ func (*metaManager) Name() string {
 
 func (*metaManager) Group() string {
 	return modules.MetaGroup
-}
-
-func (m *metaManager) Enable() bool {
-	return m.enable
-}
-
-func (m *metaManager) Size() int {
-	return m.size
 }
 
 func (m *metaManager) Start() {

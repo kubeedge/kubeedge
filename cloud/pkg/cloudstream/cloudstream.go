@@ -25,14 +25,12 @@ import (
 )
 
 type cloudStream struct {
-	enable bool
-	size   int
+	v1alpha1.Common
 }
 
 func newCloudStream(cfg *v1alpha1.CloudStream) *cloudStream {
 	return &cloudStream{
-		enable: cfg.Enable,
-		size:   cfg.Size,
+		Common: cfg.Common,
 	}
 }
 
@@ -49,10 +47,6 @@ func (s *cloudStream) Group() string {
 	return modules.CloudStreamGroupName
 }
 
-func (s *cloudStream) Size() int {
-	return s.size
-}
-
 func (s *cloudStream) Start() {
 	// TODO: Will improve in the future
 	ok := <-cloudhub.DoneTLSTunnelCerts
@@ -66,8 +60,4 @@ func (s *cloudStream) Start() {
 		// start stream server to accept kube-apiserver connection
 		go server.Start()
 	}
-}
-
-func (s *cloudStream) Enable() bool {
-	return s.enable
 }

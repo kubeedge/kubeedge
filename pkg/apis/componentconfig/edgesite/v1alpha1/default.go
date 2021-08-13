@@ -55,7 +55,9 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 		},
 		Modules: &Modules{
 			EdgeController: &cloudcoreconfig.EdgeController{
-				Enable:              true,
+				Common: cloudcoreconfig.Common{
+					Enabled: true,
+				},
 				NodeUpdateFrequency: 10,
 				Buffer: &cloudcoreconfig.EdgeControllerBuffer{
 					UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
@@ -100,7 +102,9 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				},
 			},
 			Edged: &edgecoreconfig.Edged{
-				Enable:                      true,
+				Common: edgecoreconfig.Common{
+					Enabled: true,
+				},
 				NodeStatusUpdateFrequency:   constants.DefaultNodeStatusUpdateFrequency,
 				DockerAddress:               constants.DefaultDockerAddress,
 				RuntimeType:                 constants.DefaultRuntimeType,
@@ -125,7 +129,9 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 				CGroupDriver:                edgecoreconfig.CGroupDriverCGroupFS,
 			},
 			MetaManager: &edgecoreconfig.MetaManager{
-				Enable:                true,
+				Common: edgecoreconfig.Common{
+					Enabled: true,
+				},
 				ContextSendGroup:      metaconfig.GroupNameEdgeController,
 				ContextSendModule:     metaconfig.ModuleNameEdgeController,
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,

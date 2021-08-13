@@ -28,8 +28,7 @@ import (
 
 // SyncController use beehive context message layer
 type SyncController struct {
-	enable bool
-	size   int
+	configv1alpha1.Common
 	//client
 	crdclient crdClientset.Interface
 	// lister
@@ -44,8 +43,7 @@ type SyncController struct {
 
 func newSyncController(cfg *configv1alpha1.SyncController) *SyncController {
 	var sctl = &SyncController{
-		enable:     cfg.Enable,
-		size:       cfg.Size,
+		Common:     cfg.Common,
 		crdclient:  keclient.GetCRDClient(),
 		kubeclient: keclient.GetDynamicClient(),
 	}
@@ -87,15 +85,6 @@ func (sctl *SyncController) Name() string {
 // Group of controller
 func (sctl *SyncController) Group() string {
 	return modules.SyncControllerModuleGroup
-}
-
-// Group of controller
-func (sctl *SyncController) Enable() bool {
-	return sctl.enable
-}
-
-func (sctl *SyncController) Size() int {
-	return sctl.size
 }
 
 // Start controller

@@ -23,6 +23,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
 // metaModule is metamanager implementation of Module interface
@@ -35,7 +36,11 @@ func init() {
 
 func TestNameAndGroup(t *testing.T) {
 	modules := core.GetModules()
-	core.Register(&metaManager{enable: true})
+	core.Register(&metaManager{
+		Common: v1alpha1.Common{
+			Enabled: true,
+		},
+	})
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
 			metaModule = module
@@ -58,7 +63,11 @@ func TestNameAndGroup(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	core.Register(&metaManager{enable: true})
+	core.Register(&metaManager{
+		Common: v1alpha1.Common{
+			Enabled: true,
+		},
+	})
 	modules := core.GetModules()
 	for name, module := range modules {
 		if name == MetaManagerModuleName {

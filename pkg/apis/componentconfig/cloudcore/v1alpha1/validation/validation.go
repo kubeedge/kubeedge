@@ -45,7 +45,7 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 
 // ValidateModuleCloudHub validates `c` and returns an errorList if it is invalid
 func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
-	if !c.Enable {
+	if !c.Enable() {
 		return field.ErrorList{}
 	}
 
@@ -102,7 +102,7 @@ func ValidateModuleCloudHub(c v1alpha1.CloudHub) field.ErrorList {
 
 // ValidateModuleEdgeController validates `e` and returns an errorList if it is invalid
 func ValidateModuleEdgeController(e v1alpha1.EdgeController) field.ErrorList {
-	if !e.Enable {
+	if !e.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -114,7 +114,7 @@ func ValidateModuleEdgeController(e v1alpha1.EdgeController) field.ErrorList {
 
 // ValidateModuleDeviceController validates `d` and returns an errorList if it is invalid
 func ValidateModuleDeviceController(d v1alpha1.DeviceController) field.ErrorList {
-	if !d.Enable {
+	if !d.Enable() {
 		return field.ErrorList{}
 	}
 
@@ -124,7 +124,7 @@ func ValidateModuleDeviceController(d v1alpha1.DeviceController) field.ErrorList
 
 // ValidateModuleSyncController validates `d` and returns an errorList if it is invalid
 func ValidateModuleSyncController(d v1alpha1.SyncController) field.ErrorList {
-	if !d.Enable {
+	if !d.Enable() {
 		return field.ErrorList{}
 	}
 
@@ -134,7 +134,7 @@ func ValidateModuleSyncController(d v1alpha1.SyncController) field.ErrorList {
 
 // ValidateModuleDynamicController validates `d` and returns an errorList if it is invalid
 func ValidateModuleDynamicController(d v1alpha1.DynamicController) field.ErrorList {
-	if !d.Enable {
+	if !d.Enable() {
 		return field.ErrorList{}
 	}
 
@@ -144,7 +144,7 @@ func ValidateModuleDynamicController(d v1alpha1.DynamicController) field.ErrorLi
 
 // ValidateModuleCloudStream validates `d` and returns an errorList if it is invalid
 func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
-	if !d.Enable {
+	if !d.Enable() {
 		return field.ErrorList{}
 	}
 

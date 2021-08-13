@@ -35,16 +35,14 @@ import (
 )
 
 type edgestream struct {
-	enable          bool
-	size            int
+	v1alpha1.Common
 	hostnameOveride string
 	nodeIP          string
 }
 
 func newEdgeStream(cfg *v1alpha1.EdgeStream, hostnameOverride, nodeIP string) *edgestream {
 	return &edgestream{
-		enable:          cfg.Enable,
-		size:            cfg.Size,
+		Common:          cfg.Common,
 		hostnameOveride: hostnameOverride,
 		nodeIP:          nodeIP,
 	}
@@ -62,14 +60,6 @@ func (e *edgestream) Name() string {
 
 func (e *edgestream) Group() string {
 	return modules.StreamGroup
-}
-
-func (e *edgestream) Enable() bool {
-	return e.enable
-}
-
-func (e *edgestream) Size() int {
-	return e.size
 }
 
 func (e *edgestream) Start() {

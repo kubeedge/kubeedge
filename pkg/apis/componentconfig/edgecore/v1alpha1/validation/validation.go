@@ -59,7 +59,7 @@ func ValidateDataBase(db v1alpha1.DataBase) field.ErrorList {
 
 // ValidateModuleEdged validates `e` and returns an errorList if it is invalid
 func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
-	if !e.Enable {
+	if !e.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -81,7 +81,7 @@ func ValidateModuleEdged(e v1alpha1.Edged) field.ErrorList {
 
 // ValidateModuleEdgeHub validates `h` and returns an errorList if it is invalid
 func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
-	if !h.Enable {
+	if !h.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -96,7 +96,7 @@ func ValidateModuleEdgeHub(h v1alpha1.EdgeHub) field.ErrorList {
 
 // ValidateModuleEventBus validates `m` and returns an errorList if it is invalid
 func ValidateModuleEventBus(m v1alpha1.EventBus) field.ErrorList {
-	if !m.Enable {
+	if !m.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -110,7 +110,7 @@ func ValidateModuleEventBus(m v1alpha1.EventBus) field.ErrorList {
 
 // ValidateModuleMetaManager validates `m` and returns an errorList if it is invalid
 func ValidateModuleMetaManager(m v1alpha1.MetaManager) field.ErrorList {
-	if !m.Enable {
+	if !m.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -119,7 +119,7 @@ func ValidateModuleMetaManager(m v1alpha1.MetaManager) field.ErrorList {
 
 // ValidateModuleServiceBus validates `s` and returns an errorList if it is invalid
 func ValidateModuleServiceBus(s v1alpha1.ServiceBus) field.ErrorList {
-	if !s.Enable {
+	if !s.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -128,7 +128,7 @@ func ValidateModuleServiceBus(s v1alpha1.ServiceBus) field.ErrorList {
 
 // ValidateModuleDeviceTwin validates `d` and returns an errorList if it is invalid
 func ValidateModuleDeviceTwin(d v1alpha1.DeviceTwin) field.ErrorList {
-	if !d.Enable {
+	if !d.Enable() {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
@@ -147,7 +147,7 @@ func ValidateModuleDBTest(d v1alpha1.DBTest) field.ErrorList {
 // ValidateModuleEdgeStream validates `m` and returns an errorList if it is invalid
 func ValidateModuleEdgeStream(m v1alpha1.EdgeStream) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if !m.Enable {
+	if !m.Enable() {
 		return allErrs
 	}
 	return allErrs

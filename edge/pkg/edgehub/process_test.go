@@ -114,7 +114,9 @@ func TestRouteToEdge(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
 	hub := newEdgeHub(&v1alpha1.EdgeHub{
-		Enable: true,
+		Common: v1alpha1.Common{
+			Enabled: true,
+		},
 	})
 	hub.chClient = mockAdapter
 
@@ -214,7 +216,11 @@ func TestRouteToCloud(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
-	hub := newEdgeHub(&v1alpha1.EdgeHub{Enable: true})
+	hub := newEdgeHub(&v1alpha1.EdgeHub{
+		Common: v1alpha1.Common{
+			Enabled: true,
+		},
+	})
 	hub.chClient = mockAdapter
 
 	tests := []struct {

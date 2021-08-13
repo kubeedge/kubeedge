@@ -24,6 +24,22 @@ import (
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 )
 
+type Common struct {
+	// Enable dindicates whether the module is enabled
+	// default true
+	Enabled bool `json:"enable"`
+	// Sizes indicates the buffer size of the message channel
+	Sizes int `json:"size,omitempty"`
+}
+
+func (c *Common) Enable() bool {
+	return c.Enabled
+}
+
+func (c *Common) Size() int {
+	return c.Sizes
+}
+
 // CloudCoreConfig indicates the config of cloudCore which get from cloudCore config file
 type CloudCoreConfig struct {
 	metav1.TypeMeta
@@ -88,12 +104,7 @@ type Modules struct {
 // CloudHub is a web socket or quic server responsible for watching changes at the cloud side,
 // caching and sending messages to EdgeHub.
 type CloudHub struct {
-	// Enable indicates whether CloudHub is enabled, if set to false (for debugging etc.),
-	// skip checking other CloudHub configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// KeepaliveInterval indicates keep-alive interval (second)
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
@@ -191,12 +202,7 @@ type CloudHubHTTPS struct {
 
 // EdgeController indicates the config of EdgeController module
 type EdgeController struct {
-	// Enable indicates whether EdgeController is enabled,
-	// if set to false (for debugging etc.), skip checking other EdgeController configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// NodeUpdateFrequency indicates node update frequency (second)
 	// default 10
 	NodeUpdateFrequency int32 `json:"nodeUpdateFrequency,omitempty"`
@@ -332,12 +338,7 @@ type EdgeControllerLoad struct {
 
 // DeviceController indicates the device controller
 type DeviceController struct {
-	// Enable indicates whether deviceController is enabled,
-	// if set to false (for debugging etc.), skip checking other deviceController configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// Context indicates send,receive,response modules for deviceController module
 	Context *ControllerContext `json:"context,omitempty"`
 	// Buffer indicates Device controller buffer
@@ -368,31 +369,17 @@ type DeviceControllerLoad struct {
 
 // SyncController indicates the sync controller
 type SyncController struct {
-	// Enable indicates whether syncController is enabled,
-	// if set to false (for debugging etc.), skip checking other syncController configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 }
 
 // DynamicController indicates the dynamic controller
 type DynamicController struct {
-	// Enable indicates whether dynamicController is enabled,
-	// if set to false (for debugging etc.), skip checking other dynamicController configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 }
 
 // CloudSream indicates the stream controller
 type CloudStream struct {
-	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`
@@ -421,10 +408,7 @@ type CloudStream struct {
 }
 
 type Router struct {
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size        int    `json:"size,omitempty"`
+	Common
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`

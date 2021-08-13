@@ -29,7 +29,9 @@ import (
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 	advertiseAddress, _ := utilnet.ChooseHostInterface()
-
+	common := Common{
+		Enabled: true,
+	}
 	c := &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -47,7 +49,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 		},
 		Modules: &Modules{
 			CloudHub: &CloudHub{
-				Enable:                  true,
+				Common:                  common,
 				KeepaliveInterval:       30,
 				NodeLimit:               1000,
 				TLSCAFile:               constants.DefaultCAFile,
@@ -81,7 +83,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 			EdgeController: &EdgeController{
-				Enable:              true,
+				Common:              common,
 				NodeUpdateFrequency: 10,
 				Buffer: &EdgeControllerBuffer{
 					UpdatePodStatus:            constants.DefaultUpdatePodStatusBuffer,
@@ -129,7 +131,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 			DeviceController: &DeviceController{
-				Enable: true,
+				Common: common,
 				Context: &ControllerContext{
 					SendModule:     metaconfig.ModuleNameCloudHub,
 					ReceiveModule:  metaconfig.ModuleNameDeviceController,
@@ -145,13 +147,10 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 			SyncController: &SyncController{
-				Enable: true,
+				Common: common,
 			},
-			DynamicController: &DynamicController{
-				Enable: false,
-			},
+			DynamicController: &DynamicController{},
 			CloudStream: &CloudStream{
-				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
 				TLSTunnelCertFile:       constants.DefaultCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,
@@ -162,7 +161,6 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				StreamPort:              10003,
 			},
 			Router: &Router{
-				Enable:      false,
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,
@@ -209,7 +207,6 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 				},
 			},
 			Router: &Router{
-				Enable:      false,
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,

@@ -41,11 +41,11 @@ func CreateEdgeCoreConfigFile(nodeName string) error {
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
 	c.Modules.EdgeHub.TLSPrivateKeyFile = "/tmp/edgecore/kubeedge.key"
-	c.Modules.EventBus.Enable = true
+	c.Modules.EventBus.Enabled = true
 	c.Modules.EventBus.MqttMode = edgecore.MqttModeInternal
 	c.Modules.DBTest.Enable = true
 	c.DataBase.DataSource = DBFile
-	c.Modules.EdgeStream.Enable = false
+	c.Modules.EdgeStream.Enabled = false
 
 	data, err := yaml.Marshal(c)
 	if err != nil {

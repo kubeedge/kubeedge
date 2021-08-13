@@ -95,7 +95,9 @@ func TestStart(t *testing.T) {
 	core.Register(fakeModule)
 	beehiveContext.AddModule(TestModule)
 	dt := newDeviceTwin(&v1alpha1.DeviceTwin{
-		Enable: true,
+		Common: v1alpha1.Common{
+			Enabled: true,
+		},
 	})
 	core.Register(dt)
 	beehiveContext.AddModule(dt.Name())

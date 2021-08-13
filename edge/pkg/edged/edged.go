@@ -170,6 +170,7 @@ type podReady struct {
 
 // edged is the main edged implementation.
 type edged struct {
+	v1alpha1.Common
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
 	hostname                  string
@@ -239,8 +240,6 @@ type edged struct {
 	pluginManager pluginmanager.PluginManager
 
 	recorder recordtools.EventRecorder
-	enable   bool
-	size     int
 
 	configMapManager klconfigmap.Manager
 
@@ -276,15 +275,6 @@ func (e *edged) Name() string {
 
 func (e *edged) Group() string {
 	return modules.EdgedGroup
-}
-
-//Enable indicates whether this module is enabled
-func (e *edged) Enable() bool {
-	return e.enable
-}
-
-func (e *edged) Size() int {
-	return e.size
 }
 
 func (e *edged) GetRequestedContainersInfo(containerName string, options cadvisorapi2.RequestOptions) (map[string]*cadvisorapi.ContainerInfo, error) {
@@ -425,9 +415,9 @@ func (e *edged) cgroupRoots() []string {
 //newEdged creates new edged object and initialises it
 func newEdged(cfg *v1alpha1.Edged) (*edged, error) {
 	// skip init edged if disabled
-	if !cfg.Enable {
+	if !cfg.Enable() {
 		return &edged{
-			enable: cfg.Enable,
+			Common: cfg.Common,
 		}, nil
 	}
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
@@ -444,6 +434,7 @@ func newEdged(cfg *v1alpha1.Edged) (*edged, error) {
 	metaClient := client.New()
 
 	ed := &edged{
+		Common:                    cfg.Common,
 		nodeName:                  edgedconfig.Config.HostnameOverride,
 		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
@@ -468,8 +459,6 @@ func newEdged(cfg *v1alpha1.Edged) (*edged, error) {
 		workQueue:                 queue.NewBasicWorkQueue(clock.RealClock{}),
 		nodeIP:                    net.ParseIP(edgedconfig.Config.NodeIP),
 		recorder:                  recorder,
-		enable:                    cfg.Enable,
-		size:                      cfg.Size,
 	}
 	ed.runtimeClassManager = runtimeclass.NewManager(ed.kubeClient)
 	err := ed.makePodDir()

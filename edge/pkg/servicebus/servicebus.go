@@ -27,8 +27,7 @@ const (
 
 // servicebus struct
 type servicebus struct {
-	enable bool
-	size   int
+	v1alpha1.Common
 }
 
 var htc = new(http.Client)
@@ -36,8 +35,7 @@ var uc = new(util.URLClient)
 
 func newServicebus(cfg *v1alpha1.ServiceBus) *servicebus {
 	return &servicebus{
-		enable: cfg.Enable,
-		size:   cfg.Size,
+		Common: cfg.Common,
 	}
 }
 
@@ -53,14 +51,6 @@ func (*servicebus) Name() string {
 
 func (*servicebus) Group() string {
 	return modules.BusGroup
-}
-
-func (sb *servicebus) Enable() bool {
-	return sb.enable
-}
-
-func (sb *servicebus) Size() int {
-	return sb.size
 }
 
 func (sb *servicebus) Start() {

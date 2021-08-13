@@ -24,19 +24,17 @@ var HasTLSTunnelCerts = make(chan bool, 1)
 
 //EdgeHub defines edgehub object structure
 type EdgeHub struct {
+	v1alpha1.Common
 	certManager   certificate.CertManager
 	chClient      clients.Adapter
 	reconnectChan chan struct{}
 	keeperLock    sync.RWMutex
-	enable        bool
-	size          int
 }
 
 func newEdgeHub(cfg *v1alpha1.EdgeHub) *EdgeHub {
 	return &EdgeHub{
 		reconnectChan: make(chan struct{}),
-		enable:        cfg.Enable,
-		size:          cfg.Size,
+		Common:        cfg.Common,
 	}
 }
 
@@ -54,15 +52,6 @@ func (eh *EdgeHub) Name() string {
 //Group returns EdgeHub group
 func (eh *EdgeHub) Group() string {
 	return modules.HubGroup
-}
-
-//Enable indicates whether this module is enabled
-func (eh *EdgeHub) Enable() bool {
-	return eh.enable
-}
-
-func (eh *EdgeHub) Size() int {
-	return eh.size
 }
 
 //Start sets context and starts the controller

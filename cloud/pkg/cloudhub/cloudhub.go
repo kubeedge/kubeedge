@@ -21,8 +21,7 @@ import (
 var DoneTLSTunnelCerts = make(chan bool, 1)
 
 type cloudHub struct {
-	enable               bool
-	size                 int
+	v1alpha1.Common
 	informersSyncedFuncs []cache.InformerSynced
 	messageq             *channelq.ChannelMessageQueue
 }
@@ -34,8 +33,7 @@ func newCloudHub(cfg *v1alpha1.CloudHub) *cloudHub {
 	objectSyncInformer := crdFactory.Reliablesyncs().V1alpha1().ObjectSyncs()
 	messageq := channelq.NewChannelMessageQueue(objectSyncInformer.Lister(), clusterObjectSyncInformer.Lister())
 	ch := &cloudHub{
-		enable:   cfg.Enable,
-		size:     cfg.Size,
+		Common:   cfg.Common,
 		messageq: messageq,
 	}
 	ch.informersSyncedFuncs = append(ch.informersSyncedFuncs, clusterObjectSyncInformer.Informer().HasSynced)
@@ -54,15 +52,6 @@ func (a *cloudHub) Name() string {
 
 func (a *cloudHub) Group() string {
 	return modules.CloudHubModuleGroup
-}
-
-// Enable indicates whether enable this module
-func (a *cloudHub) Enable() bool {
-	return a.enable
-}
-
-func (a *cloudHub) Size() int {
-	return a.size
 }
 
 func (a *cloudHub) Start() {

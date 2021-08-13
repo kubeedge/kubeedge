@@ -23,14 +23,12 @@ var mqttServer *mqttBus.Server
 
 // eventbus struct
 type eventbus struct {
-	enable bool
-	size   int
+	v1alpha1.Common
 }
 
 func newEventbus(cfg *v1alpha1.EventBus) *eventbus {
 	return &eventbus{
-		enable: cfg.Enable,
-		size:   cfg.Size,
+		Common: cfg.Common,
 	}
 }
 
@@ -47,15 +45,6 @@ func (*eventbus) Name() string {
 
 func (*eventbus) Group() string {
 	return modules.BusGroup
-}
-
-// Enable indicates whether this module is enabled
-func (eb *eventbus) Enable() bool {
-	return eb.enable
-}
-
-func (eb *eventbus) Size() int {
-	return eb.size
 }
 
 func (eb *eventbus) Start() {

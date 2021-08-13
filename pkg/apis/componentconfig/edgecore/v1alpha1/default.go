@@ -38,7 +38,9 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		hostnameOverride = constants.DefaultHostnameOverride
 	}
 	localIP, _ := util.GetLocalIP(hostnameOverride)
-
+	common := Common{
+		Enabled: true,
+	}
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
@@ -51,7 +53,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 		},
 		Modules: &Modules{
 			Edged: &Edged{
-				Enable:                      true,
+				Common:                      common,
 				Labels:                      map[string]string{},
 				Annotations:                 map[string]string{},
 				Taints:                      []v1.Taint{},
@@ -88,7 +90,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				EnableMetrics:               true,
 			},
 			EdgeHub: &EdgeHub{
-				Enable:            true,
+				Common:            common,
 				Heartbeat:         15,
 				ProjectID:         "e632aba927ea4ac2b575ec1603d56f10",
 				TLSCAFile:         constants.DefaultCAFile,
@@ -116,7 +118,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				RotateCertificates: true,
 			},
 			EventBus: &EventBus{
-				Enable:               true,
+				Common:               common,
 				MqttQOS:              0,
 				MqttRetain:           false,
 				MqttSessionQueueSize: 100,
@@ -131,7 +133,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				},
 			},
 			MetaManager: &MetaManager{
-				Enable:                true,
+				Common:                common,
 				ContextSendGroup:      metaconfig.GroupNameHub,
 				ContextSendModule:     metaconfig.ModuleNameEdgeHub,
 				PodStatusSyncInterval: constants.DefaultPodStatusSyncInterval,
@@ -141,17 +143,14 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 					Debug:  false,
 				},
 			},
-			ServiceBus: &ServiceBus{
-				Enable: false,
-			},
+			ServiceBus: &ServiceBus{},
 			DeviceTwin: &DeviceTwin{
-				Enable: true,
+				Common: common,
 			},
 			DBTest: &DBTest{
 				Enable: false,
 			},
 			EdgeStream: &EdgeStream{
-				Enable:                  false,
 				TLSTunnelCAFile:         constants.DefaultCAFile,
 				TLSTunnelCertFile:       constants.DefaultCertFile,
 				TLSTunnelPrivateKeyFile: constants.DefaultKeyFile,

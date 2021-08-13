@@ -14,19 +14,17 @@ import (
 
 //DeviceTwin the module
 type DeviceTwin struct {
+	v1alpha1.Common
 	HeartBeatToModule map[string]chan interface{}
 	DTContexts        *dtcontext.DTContext
 	DTModules         map[string]dtmodule.DTModule
-	enable            bool
-	size              int
 }
 
 func newDeviceTwin(cfg *v1alpha1.DeviceTwin) *DeviceTwin {
 	return &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
 		DTModules:         make(map[string]dtmodule.DTModule),
-		enable:            cfg.Enable,
-		size:              cfg.Size,
+		Common:            cfg.Common,
 	}
 }
 
@@ -46,15 +44,6 @@ func (dt *DeviceTwin) Name() string {
 // Group get group of the module
 func (dt *DeviceTwin) Group() string {
 	return modules.TwinGroup
-}
-
-// Enable indicates whether this module is enabled
-func (dt *DeviceTwin) Enable() bool {
-	return dt.enable
-}
-
-func (dt *DeviceTwin) Size() int {
-	return dt.size
 }
 
 // Start run the module

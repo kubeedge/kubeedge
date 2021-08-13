@@ -15,15 +15,14 @@ import (
 
 // DeviceController use beehive context message layer
 type DeviceController struct {
+	v1alpha1.Common
 	downstream *controller.DownstreamController
 	upstream   *controller.UpstreamController
-	enable     bool
-	size       int
 }
 
 func newDeviceController(cfg *v1alpha1.DeviceController) *DeviceController {
-	if !cfg.Enable {
-		return &DeviceController{enable: cfg.Enable}
+	if !cfg.Enable() {
+		return &DeviceController{Common: cfg.Common}
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetCRDInformerFactory())
 	if err != nil {
@@ -36,8 +35,7 @@ func newDeviceController(cfg *v1alpha1.DeviceController) *DeviceController {
 	return &DeviceController{
 		downstream: downstream,
 		upstream:   upstream,
-		enable:     cfg.Enable,
-		size:       cfg.Size,
+		Common:     cfg.Common,
 	}
 }
 
@@ -54,15 +52,6 @@ func (dc *DeviceController) Name() string {
 // Group of controller
 func (dc *DeviceController) Group() string {
 	return modules.DeviceControllerModuleGroup
-}
-
-// Enable indicates whether enable this module
-func (dc *DeviceController) Enable() bool {
-	return dc.enable
-}
-
-func (dc *DeviceController) Size() int {
-	return dc.size
 }
 
 // Start controller

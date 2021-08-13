@@ -23,14 +23,12 @@ import (
 )
 
 type router struct {
-	enable bool
-	size   int
+	v1alpha1.Common
 }
 
 func newRouter(cfg *v1alpha1.Router) *router {
 	return &router{
-		enable: cfg.Enable,
-		size:   cfg.Size,
+		Common: cfg.Common,
 	}
 }
 
@@ -45,14 +43,6 @@ func (r *router) Name() string {
 
 func (r *router) Group() string {
 	return modules.RouterGroupName
-}
-
-func (r *router) Enable() bool {
-	return r.enable
-}
-
-func (r *router) Size() int {
-	return r.size
 }
 
 func (r *router) Start() {

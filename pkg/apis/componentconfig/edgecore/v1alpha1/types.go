@@ -48,6 +48,22 @@ const (
 type ProtocolName string
 type MqttMode int
 
+type Common struct {
+	// Enable dindicates whether the module is enabled
+	// default true
+	Enabled bool `json:"enable"`
+	// Sizes indicates the buffer size of the message channel
+	Sizes int `json:"size,omitempty"`
+}
+
+func (c *Common) Enable() bool {
+	return c.Enabled
+}
+
+func (c *Common) Size() int {
+	return c.Sizes
+}
+
 // EdgeCoreConfig indicates the EdgeCore config which read from EdgeCore config file
 type EdgeCoreConfig struct {
 	metav1.TypeMeta
@@ -100,12 +116,7 @@ type Modules struct {
 // Edged indicates the config fo edged module
 // edged is lighted-kubelet
 type Edged struct {
-	// Enable indicates whether edged is enabled,
-	// if set to false (for debugging etc.), skip checking other edged configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// Labels indicates current node labels
 	Labels map[string]string `json:"labels,omitempty"`
 	// Annotations indicates current node annotations
@@ -240,12 +251,7 @@ type Edged struct {
 
 // EdgeHub indicates the EdgeHub module config
 type EdgeHub struct {
-	// Enable indicates whether EdgeHub is enabled,
-	// if set to false (for debugging etc.), skip checking other EdgeHub configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// Heartbeat indicates heart beat (second)
 	// default 15
 	Heartbeat int32 `json:"heartbeat,omitempty"`
@@ -316,12 +322,7 @@ type EdgeHubWebSocket struct {
 
 // EventBus indicates the event bus module config
 type EventBus struct {
-	// Enable indicates whether EventBus is enabled, if set to false (for debugging etc.),
-	// skip checking other EventBus configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// MqttQOS indicates mqtt qos
 	// 0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce
 	// default 0
@@ -370,12 +371,7 @@ type EventBusTLS struct {
 
 // MetaManager indicates the MetaManager module config
 type MetaManager struct {
-	// Enable indicates whether MetaManager is enabled,
-	// if set to false (for debugging etc.), skip checking other MetaManager configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 	// ContextSendGroup indicates send group
 	ContextSendGroup metaconfig.GroupName `json:"contextSendGroup,omitempty"`
 	// ContextSendModule indicates send module
@@ -397,22 +393,12 @@ type MetaServer struct {
 
 // ServiceBus indicates the ServiceBus module config
 type ServiceBus struct {
-	// Enable indicates whether ServiceBus is enabled,
-	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
-	// default false
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 }
 
 // DeviceTwin indicates the DeviceTwin module config
 type DeviceTwin struct {
-	// Enable indicates whether DeviceTwin is enabled,
-	// if set to false (for debugging etc.), skip checking other DeviceTwin configs.
-	// default true
-	Enable bool `json:"enable"`
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
+	Common
 }
 
 // DBTest indicates the DBTest module config
@@ -425,13 +411,7 @@ type DBTest struct {
 
 // EdgeSream indicates the stream controller
 type EdgeStream struct {
-	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
-	// default true
-	Enable bool `json:"enable"`
-
-	// Size indicates the buffer size of the message channel
-	Size int `json:"size,omitempty"`
-
+	Common
 	// TLSTunnelCAFile indicates ca file path
 	// default /etc/kubeedge/ca/rootCA.crt
 	TLSTunnelCAFile string `json:"tlsTunnelCAFile,omitempty"`

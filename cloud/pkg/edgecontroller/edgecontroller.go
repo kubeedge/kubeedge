@@ -52,11 +52,11 @@ func (ec *EdgeController) Group() string {
 
 // Enable indicates whether enable this module
 func (ec *EdgeController) Enable() bool {
-	return ec.config.Enable
+	return ec.config.Enable()
 }
 
 func (ec *EdgeController) Size() int {
-	return ec.config.Size
+	return ec.config.Size()
 }
 
 // Start controller

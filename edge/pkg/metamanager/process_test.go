@@ -55,7 +55,11 @@ const (
 // errFailedDBOperation is common Database operation fail error
 var errFailedDBOperation = errors.New(FailedDBOperation)
 
-var metaCfg = &v1alpha1.MetaManager{Enable: true}
+var metaCfg = &v1alpha1.MetaManager{
+	Common: v1alpha1.Common{
+		Enabled: true,
+	},
+}
 
 func init() {
 	cfg := v1alpha1.NewDefaultEdgeCoreConfig()
