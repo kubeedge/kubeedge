@@ -101,7 +101,8 @@ func requireRemoteQuery(resType string) bool {
 		resType == constants.ResourceTypePersistentVolume ||
 		resType == constants.ResourceTypePersistentVolumeClaim ||
 		resType == constants.ResourceTypeVolumeAttachment ||
-		resType == model.ResourceTypeNode
+		resType == model.ResourceTypeNode ||
+		resType == model.ResourceTypeServiceAccountToken
 }
 
 // if resource type is EdgeMesh related
@@ -663,6 +664,8 @@ func (m *metaManager) process(message model.Message) {
 		constants.CSIOperationTypeControllerPublishVolume,
 		constants.CSIOperationTypeControllerUnpublishVolume:
 		m.processVolume(message)
+	default:
+		klog.Errorf("metamanager not supported operation: %v", operation)
 	}
 }
 
