@@ -32,6 +32,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -91,9 +93,10 @@ import (
 	"k8s.io/kubernetes/pkg/volume/nfs"
 	"k8s.io/kubernetes/pkg/volume/projected"
 	secretvolume "k8s.io/kubernetes/pkg/volume/secret"
+	volumeutil "k8s.io/kubernetes/pkg/volume/util"
 	"k8s.io/kubernetes/pkg/volume/util/hostutil"
 	"k8s.io/kubernetes/pkg/volume/util/volumepathhandler"
-	"k8s.io/utils/mount"
+	"k8s.io/mount-utils"
 
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -193,6 +196,7 @@ type edged struct {
 	statusManager      kubestatus.Manager
 	probeManager       prober.Manager
 	livenessManager    proberesults.Manager
+	readinessManager   proberesults.Manager
 	startupManager     proberesults.Manager
 	server             *server.Server
 	podAdditionQueue   *workqueue.Type
@@ -224,7 +228,7 @@ type edged struct {
 	nodeIP net.IP
 
 	// StatsProvider provides the node and the container stats.
-	*stats.StatsProvider
+	*stats.Provider
 
 	// cAdvisor used for container information.
 	cadvisor cadvisor.Interface
@@ -323,7 +327,7 @@ func (e *edged) Start() {
 		klog.Errorf("update node failed, error: %v", err)
 	}
 
-	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.startupManager, e.runner, record.NewEventRecorder())
+	e.probeManager = prober.NewManager(e.statusManager, e.livenessManager, e.readinessManager, e.startupManager, e.runner, record.NewEventRecorder())
 	e.pleg = pleg.NewGenericPLEG(e.containerRuntime, plegChannelCapacity, plegRelistPeriod, e.podCache, clock.RealClock{})
 	e.statusManager.Start()
 	e.pleg.Start()
@@ -333,7 +337,7 @@ func (e *edged) Start() {
 
 	housekeepingTicker := time.NewTicker(housekeepingPeriod)
 	syncWorkQueueCh := time.NewTicker(syncWorkQueuePeriod)
-	e.probeManager.Start()
+
 	go e.syncLoopIteration(e.pleg.Watch(), housekeepingTicker.C, syncWorkQueueCh.C)
 	go e.server.ListenAndServe(e, e.resourceAnalyzer, true)
 
@@ -464,6 +468,7 @@ func newEdged(enable bool) (*edged, error) {
 	}
 
 	ed.livenessManager = proberesults.NewManager()
+	ed.readinessManager = proberesults.NewManager()
 	ed.startupManager = proberesults.NewManager()
 
 	nodeRef := &v1.ObjectReference{
@@ -487,7 +492,7 @@ func newEdged(enable bool) (*edged, error) {
 	ed.clusterDNS = convertStrToIP(edgedconfig.Config.ClusterDNS)
 	ed.dnsConfigurer = kubedns.NewConfigurer(recorder,
 		nodeRef,
-		ed.nodeIP,
+		[]net.IP{ed.nodeIP},
 		ed.clusterDNS,
 		edgedconfig.Config.ClusterDomain,
 		ResolvConfDefault)
@@ -530,6 +535,7 @@ func newEdged(enable bool) (*edged, error) {
 	containerRuntime, err := kuberuntime.NewKubeGenericRuntimeManager(
 		recorder,
 		ed.livenessManager,
+		ed.readinessManager,
 		ed.startupManager,
 		"",
 		ed.machineInfo,
@@ -541,12 +547,14 @@ func newEdged(enable bool) (*edged, error) {
 		false,
 		0,
 		0,
+		"",
+		"",
 		true,
 		metav1.Duration{Duration: 100 * time.Millisecond},
 		runtimeService,
 		imageService,
 		ed.clcm.InternalContainerLifecycle(),
-		nil,
+		ed.dockerLegacyService,
 		ed.logManager,
 		ed.runtimeClassManager,
 	)
@@ -571,6 +579,7 @@ func newEdged(enable bool) (*edged, error) {
 			ExperimentalCPUManagerPolicy:      string(cpumanager.PolicyNone),
 			CgroupRoot:                        edgedconfig.Config.CgroupRoot,
 			ExperimentalTopologyManagerPolicy: "none",
+			ExperimentalTopologyManagerScope:  "container",
 		},
 		false,
 		edgedconfig.Config.DevicePluginEnabled,
@@ -591,15 +600,15 @@ func newEdged(enable bool) (*edged, error) {
 	}
 	ed.runtimeCache = runtimeCache
 
-	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod)
+	ed.resourceAnalyzer = serverstats.NewResourceAnalyzer(ed, edgedconfig.Config.VolumeStatsAggPeriod, ed.recorder)
 
 	ed.statusManager = status.NewManager(client.GetKubeClient(), ed.podManager, ed)
 
-	ed.StatsProvider = ed.newStatsProvider(useLegacyCadvisorStats, imageService)
+	ed.Provider = ed.newStatsProvider(useLegacyCadvisorStats, imageService)
 
 	imageGCManager, err := images.NewImageGCManager(
 		ed.containerRuntime,
-		ed.StatsProvider,
+		ed.Provider,
 		recorder,
 		nodeRef,
 		policy,
@@ -663,8 +672,7 @@ func (e *edged) startDockerServer() error {
 			&pluginConfigs,
 			cgroupName,
 			cgroupDriver,
-			DockershimRootDir,
-			true)
+			DockershimRootDir)
 
 		if err != nil {
 			return err
@@ -722,7 +730,12 @@ func (e *edged) newMachineInfo() (*cadvisorapi.MachineInfo, error) {
 	return &machineInfo, nil
 }
 
-func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService internalapi.ImageManagerService) *stats.StatsProvider {
+func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService internalapi.ImageManagerService) *stats.Provider {
+	// common provider to get host file system usage associated with a pod managed by kubelet
+	hostStatsProvider := stats.NewHostStatsProvider(kubecontainer.RealOS{}, func(podUID types.UID) (string, bool) {
+		return getEtcHostsPath(e.getPodDir(podUID)), e.containerRuntime.SupportsSingleFileMapping()
+	})
+
 	if useLegacyCadvisorStats {
 		return stats.NewCadvisorStatsProvider(
 			e.cadvisor,
@@ -730,7 +743,8 @@ func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService inter
 			e.podManager,
 			e.runtimeCache,
 			e.containerRuntime,
-			e.statusManager)
+			e.statusManager,
+			hostStatsProvider)
 	}
 
 	return stats.NewCRIStatsProvider(
@@ -740,8 +754,14 @@ func (e *edged) newStatsProvider(useLegacyCadvisorStats bool, imageService inter
 		e.runtimeCache,
 		e.runtimeService,
 		imageService,
-		stats.NewLogMetricsService(),
-		kubecontainer.RealOS{})
+		hostStatsProvider)
+}
+
+// getEtcHostsPath returns the full host-side path to a pod's generated /etc/hosts file
+func getEtcHostsPath(podDir string) string {
+	hostsFilePath := path.Join(podDir, "etc-hosts")
+	// Volume Mounts fail on Windows if it is not of the form C:/
+	return volumeutil.MakeAbsolutePath(runtime.GOOS, hostsFilePath)
 }
 
 func (e *edged) initializeModules() error {
@@ -757,7 +777,7 @@ func (e *edged) initializeModules() error {
 
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
 		// ignore any errors, since if stats collection is not successful, the container manager will fail to start below.
-		e.StatsProvider.GetCgroupStats("/", true)
+		e.Provider.GetCgroupStats("/", true)
 	}
 	// Start container manager.
 	node, err := e.initialNode()

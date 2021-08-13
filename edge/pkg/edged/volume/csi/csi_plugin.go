@@ -85,8 +85,7 @@ const ephemeralDriverMode driverMode = "ephemeral"
 // ProbeVolumePlugins returns implemented plugins
 func ProbeVolumePlugins() []volume.VolumePlugin {
 	p := &csiPlugin{
-		host:         nil,
-		blockEnabled: utilfeature.DefaultFeatureGate.Enabled(features.CSIBlockVolume),
+		host: nil,
 	}
 	return []volume.VolumePlugin{p}
 }
@@ -206,25 +205,23 @@ func (h *RegistrationHandler) DeRegisterPlugin(pluginName string) {
 func (p *csiPlugin) Init(host volume.VolumeHost) error {
 	p.host = host
 
-	if utilfeature.DefaultFeatureGate.Enabled(features.CSIDriverRegistry) {
-		csiClient := host.GetKubeClient()
-		if csiClient == nil {
-			klog.Warning(log("kubeclient not set, assuming standalone kubelet"))
-		} else {
-			// set CSIDriverLister
-			adcHost, ok := host.(volume.AttachDetachVolumeHost)
-			if ok {
-				p.csiDriverLister = adcHost.CSIDriverLister()
-				if p.csiDriverLister == nil {
-					klog.Error(log("CSIDriverLister not found on AttachDetachVolumeHost"))
-				}
+	csiClient := host.GetKubeClient()
+	if csiClient == nil {
+		klog.Warning(log("kubeclient not set, assuming standalone kubelet"))
+	} else {
+		// set CSIDriverLister
+		adcHost, ok := host.(volume.AttachDetachVolumeHost)
+		if ok {
+			p.csiDriverLister = adcHost.CSIDriverLister()
+			if p.csiDriverLister == nil {
+				klog.Error(log("CSIDriverLister not found on AttachDetachVolumeHost"))
 			}
-			kletHost, ok := host.(volume.KubeletVolumeHost)
-			if ok {
-				p.csiDriverLister = kletHost.CSIDriverLister()
-				if p.csiDriverLister == nil {
-					klog.Error(log("CSIDriverLister not found on KubeletVolumeHost"))
-				}
+		}
+		kletHost, ok := host.(volume.KubeletVolumeHost)
+		if ok {
+			p.csiDriverLister = kletHost.CSIDriverLister()
+			if p.csiDriverLister == nil {
+				klog.Error(log("CSIDriverLister not found on KubeletVolumeHost"))
 			}
 		}
 	}
@@ -343,7 +340,7 @@ func (p *csiPlugin) IsMigratedToCSI() bool {
 	return false
 }
 
-func (p *csiPlugin) RequiresRemount() bool {
+func (p *csiPlugin) RequiresRemount(*volume.Spec) bool {
 	return false
 }
 

@@ -23,12 +23,14 @@ package clcm
 import (
 	v1 "k8s.io/api/core/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
 )
 
 // InternalContainerLifecycle interface.
 type InternalContainerLifecycle interface {
+	PreCreateContainer(pod *v1.Pod, container *v1.Container, containerConfig *runtimeapi.ContainerConfig) error
 	PreStartContainer(pod *v1.Pod, container *v1.Container, containerID string) error
 	PreStopContainer(containerID string) error
 	PostStopContainer(containerID string) error
@@ -42,7 +44,7 @@ type internalContainerLifecycleImpl struct {
 // Implements PreStartContainer
 func (i *internalContainerLifecycleImpl) PreStartContainer(pod *v1.Pod, container *v1.Container, containerID string) error {
 	if utilfeature.DefaultFeatureGate.Enabled(kubefeatures.CPUManager) {
-		return i.cpuManager.AddContainer(pod, container, containerID)
+		i.cpuManager.AddContainer(pod, container, containerID)
 	}
 	return nil
 }
