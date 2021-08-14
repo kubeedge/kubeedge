@@ -1679,7 +1679,7 @@ k8s.io/kubernetes/pkg/volume/util/types
 k8s.io/kubernetes/pkg/volume/util/volumepathhandler
 k8s.io/kubernetes/pkg/volume/validation
 k8s.io/kubernetes/third_party/forked/golang/expansion
-# k8s.io/mount-utils v0.0.0 => k8s.io/mount-utils v0.21.4
+# k8s.io/mount-utils v0.21.4
 ## explicit
 k8s.io/mount-utils
 # k8s.io/system-validators v1.4.0
@@ -1833,6 +1833,7 @@ sigs.k8s.io/yaml
 # k8s.io/kubelet v0.0.0 => k8s.io/kubelet v0.21.4
 # k8s.io/legacy-cloud-providers v0.0.0 => k8s.io/legacy-cloud-providers v0.21.4
 # k8s.io/metrics v0.0.0 => k8s.io/metrics v0.21.4
+# k8s.io/mount-utils v0.0.0 => k8s.io/mount-utils v0.21.4
 # k8s.io/node-api v0.0.0 => k8s.io/node-api v0.21.4
 # k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.21.4
 # k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.21.4
