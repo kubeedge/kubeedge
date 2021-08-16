@@ -98,18 +98,11 @@ func (uc *UpstreamController) UpdatePodStatus() {
 				msg.GetID(), msg.GetOperation(), msg.GetResource())
 			switch msg.GetOperation() {
 			case model.UpdateOperation:
-				// Marshal message content
-				var data []byte
-				switch msg.Content.(type) {
-				case []byte:
-					data = msg.GetContent().([]byte)
-				default:
-					var err error
-					data, err = json.Marshal(msg.GetContent())
-					if err != nil {
-						klog.Warningf("message: %s process failure, marshal content failed with error: %s", msg.GetID(), err)
-						continue
-					}
+				// get message content data
+				data, err := msg.GetContentData()
+				if err != nil {
+					klog.Warningf("message: %s process failure, get content data failed: %s", msg.GetID(), err)
+					continue
 				}
 
 				// Get pod

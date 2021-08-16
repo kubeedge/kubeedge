@@ -58,15 +58,9 @@ func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.Pe
 		return nil, fmt.Errorf("get persistentvolume from metaManager failed, err: %v", err)
 	}
 
-	var content []byte
-	switch msg.Content.(type) {
-	case []byte:
-		content = msg.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(msg.GetContent())
-		if err != nil {
-			return nil, fmt.Errorf("marshal message to persistentvolume failed, err: %v", err)
-		}
+	content, err := msg.GetContentData()
+	if err != nil {
+		return nil, fmt.Errorf("parse message to persistentvolume failed, err: %v", err)
 	}
 
 	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
