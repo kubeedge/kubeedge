@@ -110,19 +110,13 @@ func resourceUnchanged(resType string, resKey string, content []byte) bool {
 }
 
 func (m *metaManager) processInsert(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get insert message content data failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to get insert message content data", message)
+		return
 	}
+
 	imitator.DefaultV2Client.Inject(message)
 	resKey, resType, _ := parseResource(message.GetResource())
 
@@ -145,19 +139,13 @@ func (m *metaManager) processInsert(message model.Message) {
 }
 
 func (m *metaManager) processUpdate(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal update message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get update message content data failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to get update message content data", message)
+		return
 	}
+
 	imitator.DefaultV2Client.Inject(message)
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -201,18 +189,11 @@ func (m *metaManager) processUpdate(message model.Message) {
 }
 
 func (m *metaManager) processResponse(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal response message content failed, %s", msgDebugInfo(&message))
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get response message content data failed, %s", msgDebugInfo(&message))
+		feedbackError(err, "Error to get response message content data", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -306,17 +287,11 @@ func (m *metaManager) processRemoteQuery(message model.Message) {
 			return
 		}
 
-		var content []byte
-		switch resp.GetContent().(type) {
-		case []uint8:
-			content = resp.GetContent().([]byte)
-		default:
-			content, err = json.Marshal(resp.GetContent())
-			if err != nil {
-				klog.Errorf("marshal remote query response content failed, %s", msgDebugInfo(&resp))
-				feedbackError(err, "Error to marshal message content", message)
-				return
-			}
+		content, err := resp.GetContentData()
+		if err != nil {
+			klog.Errorf("get remote query response content data failed, %s", msgDebugInfo(&resp))
+			feedbackError(err, "Error to get remote query response message content data", message)
+			return
 		}
 
 		resKey, resType, _ := parseResource(message.GetResource())
@@ -395,18 +370,11 @@ func (m *metaManager) syncPodStatus() {
 }
 
 func (m *metaManager) processFunctionAction(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get action message content data failed, %s: %v", msgDebugInfo(&message), err)
+		feedbackError(err, "Error to get action message content data", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
@@ -425,18 +393,11 @@ func (m *metaManager) processFunctionAction(message model.Message) {
 }
 
 func (m *metaManager) processFunctionActionResult(message model.Message) {
-	var err error
-	var content []byte
-	switch message.GetContent().(type) {
-	case []uint8:
-		content = message.GetContent().([]byte)
-	default:
-		content, err = json.Marshal(message.GetContent())
-		if err != nil {
-			klog.Errorf("marshal save message content failed, %s: %v", msgDebugInfo(&message), err)
-			feedbackError(err, "Error to marshal message content", message)
-			return
-		}
+	content, err := message.GetContentData()
+	if err != nil {
+		klog.Errorf("get action_result message content data failed, %s: %v", msgDebugInfo(&message), err)
+		feedbackError(err, "Error to get action_result message content data", message)
+		return
 	}
 
 	resKey, resType, _ := parseResource(message.GetResource())
