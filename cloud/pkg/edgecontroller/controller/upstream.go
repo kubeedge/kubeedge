@@ -32,6 +32,7 @@ import (
 	"sort"
 	"time"
 
+	authenticationv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -97,6 +98,7 @@ type UpstreamController struct {
 	nodeStatusChan            chan model.Message
 	podStatusChan             chan model.Message
 	secretChan                chan model.Message
+	serviceAccountTokenChan   chan model.Message
 	configMapChan             chan model.Message
 	serviceChan               chan model.Message
 	endpointsChan             chan model.Message
@@ -134,6 +136,9 @@ func (uc *UpstreamController) Start() error {
 	}
 	for i := 0; i < int(uc.config.Load.QuerySecretWorkers); i++ {
 		go uc.querySecret()
+	}
+	for i := 0; i < int(uc.config.Load.ServiceAccountTokenWorkers); i++ {
+		go uc.processServiceAccountToken()
 	}
 	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeWorkers); i++ {
 		go uc.queryPersistentVolume()
@@ -194,6 +199,8 @@ func (uc *UpstreamController) dispatchMessage() {
 			uc.configMapChan <- msg
 		case model.ResourceTypeSecret:
 			uc.secretChan <- msg
+		case model.ResourceTypeServiceAccountToken:
+			uc.serviceAccountTokenChan <- msg
 		case common.ResourceTypePersistentVolume:
 			uc.persistentVolumeChan <- msg
 		case common.ResourceTypePersistentVolumeClaim:
@@ -549,7 +556,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 	}
 }
 
-func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string) (metaV1.Object, error) {
+func kubeClientGet(uc *UpstreamController, namespace string, name string, queryType string, msg model.Message) (metaV1.Object, error) {
 	var obj metaV1.Object
 	var err error
 	switch queryType {
@@ -565,6 +572,8 @@ func kubeClientGet(uc *UpstreamController, namespace string, name string, queryT
 		obj, err = uc.kubeClient.StorageV1().VolumeAttachments().Get(context.Background(), name, metaV1.GetOptions{})
 	case model.ResourceTypeNode:
 		obj, err = uc.nodeLister.Get(name)
+	case model.ResourceTypeServiceAccountToken:
+		obj, err = uc.getServiceAccountToken(namespace, name, msg)
 	default:
 		err := stderrors.New("Wrong query type")
 		klog.Error(err)
@@ -588,7 +597,7 @@ func queryInner(uc *UpstreamController, msg model.Message, queryType string) {
 
 	switch msg.GetOperation() {
 	case model.QueryOperation:
-		object, err := kubeClientGet(uc, namespace, name, queryType)
+		object, err := kubeClientGet(uc, namespace, name, queryType, msg)
 		if errors.IsNotFound(err) {
 			klog.Warningf("message: %s process failure, resource not found, namespace: %s, name: %s", msg.GetID(), namespace, name)
 			return
@@ -646,6 +655,40 @@ func (uc *UpstreamController) querySecret() {
 			queryInner(uc, msg, model.ResourceTypeSecret)
 		}
 	}
+}
+
+func (uc *UpstreamController) processServiceAccountToken() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("stop process service account token")
+			return
+		case msg := <-uc.serviceAccountTokenChan:
+			queryInner(uc, msg, model.ResourceTypeServiceAccountToken)
+		}
+	}
+}
+
+func (uc *UpstreamController) getServiceAccountToken(namespace string, name string, msg model.Message) (metaV1.Object, error) {
+	data, err := msg.GetContentData()
+	if err != nil {
+		klog.Errorf("get message body failed err %v", err)
+		return nil, err
+	}
+
+	tr := authenticationv1.TokenRequest{}
+	if err := json.Unmarshal(data, &tr); err != nil {
+		klog.Errorf("unmarshal token request failed err %v", err)
+		return nil, err
+	}
+
+	tokenRequest, err := uc.kubeClient.CoreV1().ServiceAccounts(namespace).CreateToken(context.TODO(), name, &tr, metaV1.CreateOptions{})
+	if err != nil {
+		klog.Errorf("apiserver get service account token failed: err %v", err)
+		return nil, err
+	}
+
+	return tokenRequest, nil
 }
 
 func (uc *UpstreamController) queryPersistentVolume() {
@@ -975,6 +1018,7 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.podStatusChan = make(chan model.Message, config.Buffer.UpdatePodStatus)
 	uc.configMapChan = make(chan model.Message, config.Buffer.QueryConfigMap)
 	uc.secretChan = make(chan model.Message, config.Buffer.QuerySecret)
+	uc.serviceAccountTokenChan = make(chan model.Message, config.Buffer.ServiceAccountToken)
 	uc.serviceChan = make(chan model.Message, config.Buffer.QueryService)
 	uc.endpointsChan = make(chan model.Message, config.Buffer.QueryEndpoints)
 	uc.persistentVolumeChan = make(chan model.Message, config.Buffer.QueryPersistentVolume)

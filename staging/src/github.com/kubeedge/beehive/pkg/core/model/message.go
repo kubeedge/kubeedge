@@ -17,16 +17,17 @@ const (
 	ResponseOperation      = "response"
 	ResponseErrorOperation = "error"
 
-	ResourceTypePod          = "pod"
-	ResourceTypeConfigmap    = "configmap"
-	ResourceTypeSecret       = "secret"
-	ResourceTypeNode         = "node"
-	ResourceTypePodlist      = "podlist"
-	ResourceTypePodStatus    = "podstatus"
-	ResourceTypeNodeStatus   = "nodestatus"
-	ResourceTypeRule         = "rule"
-	ResourceTypeRuleEndpoint = "ruleendpoint"
-	ResourceTypeRuleStatus   = "rulestatus"
+	ResourceTypePod                 = "pod"
+	ResourceTypeConfigmap           = "configmap"
+	ResourceTypeServiceAccountToken = "serviceaccounttoken"
+	ResourceTypeSecret              = "secret"
+	ResourceTypeNode                = "node"
+	ResourceTypePodlist             = "podlist"
+	ResourceTypePodStatus           = "podstatus"
+	ResourceTypeNodeStatus          = "nodestatus"
+	ResourceTypeRule                = "rule"
+	ResourceTypeRuleEndpoint        = "ruleendpoint"
+	ResourceTypeRuleStatus          = "rulestatus"
 )
 
 // Message struct

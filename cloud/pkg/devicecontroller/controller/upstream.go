@@ -65,7 +65,7 @@ func (uc *UpstreamController) Start() error {
 	uc.deviceStatusChan = make(chan model.Message, config.Config.Buffer.UpdateDeviceStatus)
 	go uc.dispatchMessage()
 
-	for i := 0; i < int(config.Config.Buffer.UpdateDeviceStatus); i++ {
+	for i := 0; i < int(config.Config.Load.UpdateDeviceStatusWorkers); i++ {
 		go uc.updateDeviceStatus()
 	}
 	return nil
@@ -97,6 +97,7 @@ func (uc *UpstreamController) dispatchMessage() {
 		switch resourceType {
 		case constants.ResourceTypeTwinEdgeUpdated:
 			uc.deviceStatusChan <- msg
+		case constants.ResourceTypeMembershipDetail:
 		default:
 			klog.Warningf("Message: %s, with resource type: %s not intended for device controller", msg.GetID(), resourceType)
 		}
