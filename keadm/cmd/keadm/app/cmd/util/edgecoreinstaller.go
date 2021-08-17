@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -26,6 +27,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1/validation"
+	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
 // KubeEdgeInstTool embeds Common struct and contains cloud node ip:port information
@@ -132,10 +135,11 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 		}
 		edgeCoreConfig.Modules.Edged.Labels = labelsMap
 	}
-	if err := types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig); err != nil {
-		return err
+
+	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
+		return errors.New(util.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-	return nil
+	return types.Write2File(KubeEdgeEdgeCoreNewYaml, edgeCoreConfig)
 }
 
 // TearDown method will remove the edge node from api-server and stop edgecore process
