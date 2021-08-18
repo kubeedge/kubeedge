@@ -7,10 +7,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -34,38 +32,26 @@ func (sctl *SyncController) manageObject(sync *v1alpha1.ObjectSync) {
 
 	//ret, err := informers.GetInformersManager().GetDynamicSharedInformerFactory().ForResource(gvr).Lister().ByNamespace(sync.Namespace).Get(sync.Spec.ObjectName)
 	ret, err := sctl.kubeclient.Resource(gvr).Namespace(sync.Namespace).Get(context.TODO(), sync.Spec.ObjectName, metav1.GetOptions{})
-	if err != nil {
+	if err != nil || ret == nil {
 		klog.Errorf("failed to get obj(gvr:%v,namespace:%v,name:%v), %v", gvr, sync.Namespace, sync.Spec.ObjectName, err)
 		return
 	}
 
 	nodeName := getNodeName(sync.Name)
-	if ret != nil {
-		object, err = meta.Accessor(ret)
-		if err != nil {
-			return
-		}
 
-		syncObjUID := getObjectUID(sync.Name)
-		if syncObjUID != string(object.GetUID()) {
-			err = apierrors.NewNotFound(schema.GroupResource{
-				Group:    "",
-				Resource: sync.Spec.ObjectKind,
-			}, sync.Spec.ObjectName)
-		}
-	}
-
+	object, err = meta.Accessor(ret)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			obj := &unstructured.Unstructured{}
-			obj.SetName(sync.Spec.ObjectName)
-			obj.SetUID(types.UID(getObjectUID(sync.Name)))
-			obj.SetNamespace(sync.Namespace)
-		} else {
-			klog.Errorf("Failed to manage pod sync of %s in namespace %s: %v", sync.Name, sync.Namespace, err)
-			return
-		}
+		return
 	}
+
+	syncObjUID := getObjectUID(sync.Name)
+	if syncObjUID != string(object.GetUID()) {
+		err = apierrors.NewNotFound(schema.GroupResource{
+			Group:    "",
+			Resource: sync.Spec.ObjectKind,
+		}, sync.Spec.ObjectName)
+	}
+
 	sendEvents(err, nodeName, sync, sync.Spec.ObjectKind, object.GetResourceVersion(), object)
 }
 
@@ -97,17 +83,18 @@ func sendEvents(err error, nodeName string, sync *v1alpha1.ObjectSync, resourceT
 }
 
 func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
-	msg := model.NewMessage("")
 	resource, err := edgectrmessagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
 	if err != nil {
 		klog.Warningf("build message resource failed with error: %s", err)
 		return nil
 	}
-	msg.BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType)
-	msg.Content = obj
 
 	resourceVersion := GetObjectResourceVersion(obj)
-	msg.SetResourceVersion(resourceVersion)
+
+	msg := model.NewMessage("").
+		BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType).
+		FillBody(obj).
+		SetResourceVersion(resourceVersion)
 
 	return msg
 }
