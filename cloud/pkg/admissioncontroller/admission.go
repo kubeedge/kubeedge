@@ -65,7 +65,7 @@ func strPtr(s string) *string { return &s }
 
 // Run starts the webhook service
 func Run(opt *options.AdmissionOptions) {
-	klog.V(4).Infof("AdmissionOptions: %++v", *opt)
+	klog.V(4).Infof("AdmissionOptions: %+v", *opt)
 	restConfig, err := clientcmd.BuildConfigFromFlags(opt.Master, opt.Kubeconfig)
 	if err != nil {
 		klog.Fatal(err)
