@@ -100,9 +100,10 @@ func (q *ChannelMessageQueue) addMessageToQueue(nodeID string, msg *beehiveModel
 		return
 	}
 
-	item, exist, _ := nodeStore.GetByKey(messageKey)
-
-	if !isDeleteMessage(msg) {
+	//if the operation is delete, force to sync the resource message
+	//if the operation is response, force to sync the resource message, since the edgecore requests it
+	if !isDeleteMessage(msg) && msg.GetOperation() != beehiveModel.ResponseOperation {
+		item, exist, _ := nodeStore.GetByKey(messageKey)
 		// If the message doesn't exist in the store, then compare it with
 		// the version stored in the database
 		if !exist {
