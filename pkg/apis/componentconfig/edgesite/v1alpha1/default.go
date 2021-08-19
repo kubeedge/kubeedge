@@ -20,21 +20,18 @@ import (
 	"os"
 	"path"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kubeedge/kubeedge/common/constants"
 	cloudcoreconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	edgecoreconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kubernetes/pkg/apis/core/validation"
 )
 
 // NewDefaultEdgeSiteConfig returns a full EdgeSiteConfig object
 func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := getHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -137,10 +134,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 
 // NewMinEdgeSiteConfig returns a common EdgeSiteConfig object
 func NewMinEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := getHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -171,4 +165,17 @@ func NewMinEdgeSiteConfig() *EdgeSiteConfig {
 			},
 		},
 	}
+}
+
+// getHostname returns a reasonable Hostname
+func getHostname() string {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		return constants.DefaultHostnameOverride
+	}
+	messages := validation.ValidateNodeName(hostnameOverride, false)
+	if len(messages) > 0 {
+		return constants.DefaultHostnameOverride
+	}
+	return hostnameOverride
 }
