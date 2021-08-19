@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -145,7 +144,8 @@ func NegotiateTunnelPort() (*int, error) {
 		return nil, err
 	}
 
-	localIP := getLocalIP()
+	hostnameOverride := util.GetHostname()
+	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	var record iptables.TunnelPortRecord
 	if err == nil {
@@ -226,13 +226,4 @@ func negotiatePort(portRecord map[int]bool) int {
 			return port
 		}
 	}
-}
-
-func getLocalIP() string {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
-	localIP, _ := util.GetLocalIP(hostnameOverride)
-	return localIP
 }

@@ -27,6 +27,7 @@ import (
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/apis/core/validation"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
@@ -140,4 +141,17 @@ func GetPodSandboxImage() string {
 	default:
 		return constants.DefaultPodSandboxImage
 	}
+}
+
+// GetHostname returns a reasonable hostname
+func GetHostname() string {
+	hostnameOverride, err := os.Hostname()
+	if err != nil {
+		return constants.DefaultHostnameOverride
+	}
+	msgs := validation.ValidateNodeName(hostnameOverride, false)
+	if len(msgs) > 0 {
+		return constants.DefaultHostnameOverride
+	}
+	return hostnameOverride
 }

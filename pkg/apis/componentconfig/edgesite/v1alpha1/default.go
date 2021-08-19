@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"os"
 	"path"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,10 +30,7 @@ import (
 
 // NewDefaultEdgeSiteConfig returns a full EdgeSiteConfig object
 func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -137,10 +133,7 @@ func NewDefaultEdgeSiteConfig() *EdgeSiteConfig {
 
 // NewMinEdgeSiteConfig returns a common EdgeSiteConfig object
 func NewMinEdgeSiteConfig() *EdgeSiteConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeSiteConfig{
 		TypeMeta: metav1.TypeMeta{
