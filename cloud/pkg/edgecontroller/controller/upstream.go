@@ -179,7 +179,7 @@ func (uc *UpstreamController) dispatchMessage() {
 		}
 
 		klog.V(5).Infof("dispatch message ID: %s", msg.GetID())
-		klog.V(5).Infof("dispatch message content: %++v", msg)
+		klog.V(5).Infof("dispatch message content: %+v", msg)
 
 		resourceType, err := messagelayer.GetResourceType(msg)
 		if err != nil {
@@ -187,8 +187,7 @@ func (uc *UpstreamController) dispatchMessage() {
 			continue
 		}
 
-		operationType := msg.GetOperation()
-		klog.V(5).Infof("message: %s, operation type is: %s", msg.GetID(), operationType)
+		klog.V(5).Infof("message: %s, operation type is: %s", msg.GetID(), msg.GetOperation())
 
 		switch resourceType {
 		case model.ResourceTypeNodeStatus:
