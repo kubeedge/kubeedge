@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"net"
 	"net/url"
-	"os"
 	"path"
 	"strconv"
 
@@ -33,10 +32,7 @@ import (
 
 // NewDefaultEdgeCoreConfig returns a full EdgeCoreConfig object
 func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 
 	return &EdgeCoreConfig{
@@ -166,10 +162,7 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 
 // NewMinEdgeCoreConfig returns a common EdgeCoreConfig object
 func NewMinEdgeCoreConfig() *EdgeCoreConfig {
-	hostnameOverride, err := os.Hostname()
-	if err != nil {
-		hostnameOverride = constants.DefaultHostnameOverride
-	}
+	hostnameOverride := util.GetHostname()
 	localIP, _ := util.GetLocalIP(hostnameOverride)
 	return &EdgeCoreConfig{
 		TypeMeta: metav1.TypeMeta{
