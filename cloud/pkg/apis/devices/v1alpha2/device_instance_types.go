@@ -316,9 +316,9 @@ type VisitorConfigModbus struct {
 	// Required: Type of register
 	Register ModbusRegisterType `json:"register,omitempty"`
 	// Required: Offset indicates the starting register number to read/write data.
-	Offset int64 `json:"offset,omitempty"`
+	Offset *int64 `json:"offset,omitempty"`
 	// Required: Limit number of registers to read/write.
-	Limit int64 `json:"limit,omitempty"`
+	Limit *int64 `json:"limit,omitempty"`
 	// The scale to convert raw property data into final units.
 	// Defaults to 1.0
 	// +optional
