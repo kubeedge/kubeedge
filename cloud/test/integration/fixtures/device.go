@@ -268,13 +268,13 @@ func withRegister(register v1alpha2.ModbusRegisterType) DevicePropertyVisitorOpt
 
 func withOffset(offset int64) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Offset = offset
+		op.devicePropertyVisitor.VisitorConfig.Modbus.Offset = &offset
 	}
 }
 
 func withLimit(limit int64) DevicePropertyVisitorOption {
 	return func(op *DevicePropertyVisitorOp) {
-		op.devicePropertyVisitor.VisitorConfig.Modbus.Limit = limit
+		op.devicePropertyVisitor.VisitorConfig.Modbus.Limit = &limit
 	}
 }
 
