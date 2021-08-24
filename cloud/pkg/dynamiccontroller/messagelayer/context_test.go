@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
@@ -32,8 +33,12 @@ const (
 )
 
 func init() {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	beehiveContext.AddModule(receiveModuleName)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	add := common.ModuleInfo{
+		ModuleName: receiveModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(add)
 	beehiveContext.AddModuleGroup(receiveModuleName, receiveModuleName)
 }
 

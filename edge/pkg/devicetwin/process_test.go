@@ -26,6 +26,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/golang/mock/gomock"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
@@ -66,7 +67,7 @@ func createFakeDeviceTwin() *[]dtclient.DeviceTwin {
 
 //TestRegisterDTModule is function to test RegisterDTmodule().
 func TestRegisterDTModule(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContexts, _ := dtcontext.InitDTContext()
 	var moduleRegistered bool
 	dtc := &DeviceTwin{
@@ -114,7 +115,7 @@ func TestRegisterDTModule(t *testing.T) {
 
 //TestDTController_distributeMsg is function to test distributeMsg().
 func TestDTController_distributeMsg(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtc := &DeviceTwin{
 		HeartBeatToModule: make(map[string]chan interface{}),
@@ -203,7 +204,7 @@ func TestSyncSqlite(t *testing.T) {
 	var ormerMock *beego.MockOrmer
 	// querySeterMock is mocked QuerySeter implementation.
 	var querySeterMock *beego.MockQuerySeter
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)
@@ -295,7 +296,7 @@ func TestSyncDeviceFromSqlite(t *testing.T) {
 	// querySeterMock is mocked QuerySeter implementation.
 	var querySeterMock *beego.MockQuerySeter
 
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ormerMock = beego.NewMockOrmer(mockCtrl)

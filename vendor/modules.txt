@@ -343,9 +343,20 @@ github.com/json-iterator/go
 github.com/karrick/godirwalk
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit
+github.com/kubeedge/beehive/pkg/common
 github.com/kubeedge/beehive/pkg/core
+github.com/kubeedge/beehive/pkg/core/channel
 github.com/kubeedge/beehive/pkg/core/context
 github.com/kubeedge/beehive/pkg/core/model
+github.com/kubeedge/beehive/pkg/core/socket
+github.com/kubeedge/beehive/pkg/core/socket/broker
+github.com/kubeedge/beehive/pkg/core/socket/config
+github.com/kubeedge/beehive/pkg/core/socket/store
+github.com/kubeedge/beehive/pkg/core/socket/synckeeper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
+github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubeedge/viaduct v0.0.0 => ./staging/src/github.com/kubeedge/viaduct
 ## explicit
 github.com/kubeedge/viaduct/pkg/api
