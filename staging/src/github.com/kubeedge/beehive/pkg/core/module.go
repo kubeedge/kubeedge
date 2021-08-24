@@ -2,10 +2,9 @@ package core
 
 import (
 	"k8s.io/klog/v2"
-)
 
-const (
-	tryReadKeyTimes = 5
+	"github.com/kubeedge/beehive/pkg/common"
+	"github.com/kubeedge/beehive/pkg/core/socket"
 )
 
 // Module interface
@@ -18,27 +17,68 @@ type Module interface {
 
 var (
 	// Modules map
-	modules         map[string]Module
-	disabledModules map[string]Module
+	modules         map[string]moduleInfo
+	disabledModules map[string]moduleInfo
 )
 
 func init() {
-	modules = make(map[string]Module)
-	disabledModules = make(map[string]Module)
+	modules = make(map[string]moduleInfo)
+	disabledModules = make(map[string]moduleInfo)
+}
+
+// moduleInfo represent a module info
+type moduleInfo struct {
+	moduleType string
+	remote     bool
+	module     Module
 }
 
 // Register register module
-func Register(m Module) {
-	if m.Enable() {
-		modules[m.Name()] = m
-		klog.Infof("Module %v registered successfully", m.Name())
+// if not passed in parameter opts, default moduleType is "channel"
+func Register(m Module, opts ...string) {
+	var info moduleInfo
+	if len(opts) == 0 {
+		info = moduleInfo{
+			module:     m,
+			moduleType: common.MsgCtxTypeChannel,
+			remote:     false,
+		}
 	} else {
-		disabledModules[m.Name()] = m
+		info = moduleInfo{
+			module:     m,
+			moduleType: opts[0],
+			remote:     true,
+		}
+	}
+
+	if m.Enable() {
+		modules[m.Name()] = info
+		klog.Infof("Module %s registered successfully", m.Name())
+	} else {
+		disabledModules[m.Name()] = info
 		klog.Warningf("Module %v is disabled, do not register", m.Name())
 	}
 }
 
 // GetModules gets modules map
-func GetModules() map[string]Module {
+func GetModules() map[string]moduleInfo {
 	return modules
+}
+
+// GetModule gets module
+func (m *moduleInfo) GetModule() Module {
+	return m.module
+}
+
+// GetModuleExchange return module exchange
+func GetModuleExchange() *socket.ModuleExchange {
+	exchange := socket.ModuleExchange{
+		Groups: make(map[string][]string),
+	}
+	for name, moduleInfo := range modules {
+		exchange.Modules = append(exchange.Modules, name)
+		group := moduleInfo.module.Group()
+		exchange.Groups[group] = append(exchange.Groups[group], name)
+	}
+	return &exchange
 }

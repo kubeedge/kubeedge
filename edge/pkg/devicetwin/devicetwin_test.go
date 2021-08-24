@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -66,7 +67,7 @@ func TestGroup(t *testing.T) {
 
 // TestStart is function to test Start().
 func TestStart(t *testing.T) {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	//test is for sending test messages from devicetwin module.
 	var test model.Message
 	// ormerMock is mocked Ormer implementation.
@@ -90,12 +91,21 @@ func TestStart(t *testing.T) {
 
 	fakeModule.EXPECT().Enable().Return(true).Times(1)
 	fakeModule.EXPECT().Name().Return(TestModule).MaxTimes(5)
+	fakeModule.EXPECT().Group().Return(TestModule).MaxTimes(5)
 
 	core.Register(fakeModule)
-	beehiveContext.AddModule(TestModule)
+	add := common.ModuleInfo{
+		ModuleName: TestModule,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(add)
 	dt := newDeviceTwin(true)
 	core.Register(dt)
-	beehiveContext.AddModule(dt.Name())
+	addDt := common.ModuleInfo{
+		ModuleName: dt.Name(),
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(addDt)
 	beehiveContext.AddModuleGroup(dt.Name(), dt.Group())
 	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
 	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)

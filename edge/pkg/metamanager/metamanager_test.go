@@ -19,6 +19,7 @@ package metamanager
 import (
 	"testing"
 
+	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -29,8 +30,12 @@ import (
 var metaModule core.Module
 
 func init() {
-	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
-	beehiveContext.AddModule(MetaManagerModuleName)
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	add := common.ModuleInfo{
+		ModuleName: MetaManagerModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.AddModule(add)
 }
 
 func TestNameAndGroup(t *testing.T) {
@@ -38,7 +43,7 @@ func TestNameAndGroup(t *testing.T) {
 	core.Register(&metaManager{enable: true})
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
-			metaModule = module
+			metaModule = module.GetModule()
 			break
 		}
 	}
@@ -62,7 +67,7 @@ func TestStart(t *testing.T) {
 	modules := core.GetModules()
 	for name, module := range modules {
 		if name == MetaManagerModuleName {
-			metaModule = module
+			metaModule = module.GetModule()
 			break
 		}
 	}
