@@ -27,12 +27,3 @@ type GetDetailNode struct {
 	Operation string `json:"operation,omitempty"`
 	TimeStamp int64  `json:"timestamp,omitempty"`
 }
-
-//BuildDTMessage build devicetwin message
-func BuildDTMessage(identity string, action string, actionType string, msg *model.Message) *DTMessage {
-	return &DTMessage{
-		Msg:      msg,
-		Identity: identity,
-		Action:   action,
-		Type:     actionType}
-}
