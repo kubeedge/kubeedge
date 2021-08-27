@@ -1549,15 +1549,17 @@ func UpdatedConfigMapModbusForDataAndTwins(nodeSelector string) v12.ConfigMap {
 					},
 				},
 			},
-			DataProperties: []v1alpha2.DataProperty{
-				{
-					PropertyName: "temperature",
-					Metadata: map[string]string{
-						"type": "string",
+			Datas: v1alpha2.DeviceData{
+				DataProperties: []v1alpha2.DataProperty{
+					{
+						PropertyName: "temperature",
+						Metadata: map[string]string{
+							"type": "string",
+						},
 					},
 				},
+				DataTopic: "$ke/events/+/device/customized/update",
 			},
-			DataTopic:        "$ke/events/+/device/customized/update",
 			PropertyVisitors: propertyVisitors,
 		},
 	}
