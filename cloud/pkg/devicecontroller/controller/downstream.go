@@ -377,8 +377,8 @@ func addDeviceInstanceAndProtocol(device *v1alpha2.Device, deviceProfile *types.
 	}
 
 	deviceInstance.Twins = device.Status.Twins
-	deviceInstance.DataProperties = device.Spec.Data.DataProperties
-	deviceInstance.DataTopic = device.Spec.Data.DataTopic
+	deviceInstance.Datas.DataProperties = device.Spec.Data.DataProperties
+	deviceInstance.Datas.DataTopic = device.Spec.Data.DataTopic
 
 	addPropertyVisitorsToDeviceInstance(device, deviceInstance)
 
@@ -562,9 +562,9 @@ func (dc *DownstreamController) updateConfigMap(device *v1alpha2.Device) {
 				// update twins
 				devInst.Twins = device.Status.Twins
 				// update data
-				devInst.DataProperties = device.Spec.Data.DataProperties
+				devInst.Datas.DataProperties = device.Spec.Data.DataProperties
 				// update data topic
-				devInst.DataTopic = device.Spec.Data.DataTopic
+				devInst.Datas.DataTopic = device.Spec.Data.DataTopic
 				// update protocol
 				devInst.Protocol = deviceProtocol.Name
 				break
