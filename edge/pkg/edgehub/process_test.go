@@ -57,7 +57,7 @@ func TestIsSyncResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.hub.isSyncResponse(tt.msgID); got != tt.want {
+			if got := isSyncResponse(tt.msgID); got != tt.want {
 				t.Errorf("TestController_isSyncResponse() = %v, want %v", got, tt.want)
 			}
 		})
@@ -85,7 +85,7 @@ func TestDispatch(t *testing.T) {
 			name:          "Error Case in dispatch",
 			hub:           &EdgeHub{},
 			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""),
-			expectedError: fmt.Errorf("msg_group not found"),
+			expectedError: fmt.Errorf("failed to handle message, no handler found for the message, message group: edged"),
 			isResponse:    true,
 		},
 		{
