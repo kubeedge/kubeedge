@@ -9,7 +9,6 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 )
 
 // ConfigMapsGetter has a method to return a ConfigMapInterface.
@@ -63,7 +62,7 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		return nil, fmt.Errorf("parse message to configmap failed, err: %v", err)
 	}
 
-	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == metamanager.MetaManagerModuleName {
+	if msg.GetOperation() == model.ResponseOperation && msg.GetSource() == modules.MetaManagerModuleName {
 		return handleConfigMapFromMetaDB(content)
 	}
 	return handleConfigMapFromMetaManager(content)

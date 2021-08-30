@@ -19,11 +19,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-//constant metamanager module name
-const (
-	MetaManagerModuleName = "metaManager"
-)
-
 type metaManager struct {
 	enable bool
 }
@@ -52,7 +47,7 @@ func initDBTable(module core.Module) {
 }
 
 func (*metaManager) Name() string {
-	return MetaManagerModuleName
+	return modules.MetaManagerModuleName
 }
 
 func (*metaManager) Group() string {
@@ -78,8 +73,8 @@ func (m *metaManager) Start() {
 				return
 			case <-timer.C:
 				timer.Reset(period)
-				msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
-				beehiveContext.Send(MetaManagerModuleName, *msg)
+				msg := model.NewMessage("").BuildRouter(modules.MetaManagerModuleName, GroupResource, model.ResourceTypePodStatus, OperationMetaSync)
+				beehiveContext.Send(modules.MetaManagerModuleName, *msg)
 			}
 		}
 	}()

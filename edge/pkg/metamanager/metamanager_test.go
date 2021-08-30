@@ -32,7 +32,7 @@ var metaModule core.Module
 func init() {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 	add := &common.ModuleInfo{
-		ModuleName: MetaManagerModuleName,
+		ModuleName: commodule.MetaManagerModuleName,
 		ModuleType: common.MsgCtxTypeChannel,
 	}
 	beehiveContext.AddModule(add)
@@ -42,7 +42,7 @@ func TestNameAndGroup(t *testing.T) {
 	modules := core.GetModules()
 	core.Register(&metaManager{enable: true})
 	for name, module := range modules {
-		if name == MetaManagerModuleName {
+		if name == commodule.MetaManagerModuleName {
 			metaModule = module.GetModule()
 			break
 		}
@@ -52,8 +52,8 @@ func TestNameAndGroup(t *testing.T) {
 			t.Errorf("failed to register to beehive")
 			return
 		}
-		if MetaManagerModuleName != metaModule.Name() {
-			t.Errorf("Name of module is not correct wanted: %v and got: %v", MetaManagerModuleName, metaModule.Name())
+		if commodule.MetaManagerModuleName != metaModule.Name() {
+			t.Errorf("Name of module is not correct wanted: %v and got: %v", commodule.MetaManagerModuleName, metaModule.Name())
 			return
 		}
 		if commodule.MetaGroup != metaModule.Group() {
@@ -66,7 +66,7 @@ func TestStart(t *testing.T) {
 	core.Register(&metaManager{enable: true})
 	modules := core.GetModules()
 	for name, module := range modules {
-		if name == MetaManagerModuleName {
+		if name == commodule.MetaManagerModuleName {
 			metaModule = module.GetModule()
 			break
 		}
@@ -78,7 +78,7 @@ func TestStart(t *testing.T) {
 
 	go metaModule.Start()
 
-	msg, err := beehiveContext.Receive(MetaManagerModuleName)
+	msg, err := beehiveContext.Receive(commodule.MetaManagerModuleName)
 	if err != nil {
 		t.Errorf("failed to reveive message")
 	}
@@ -87,7 +87,7 @@ func TestStart(t *testing.T) {
 		t.Errorf("empty message")
 	}
 
-	if msg.GetSource() != MetaManagerModuleName ||
+	if msg.GetSource() != commodule.MetaManagerModuleName ||
 		msg.GetGroup() != GroupResource ||
 		msg.GetResource() != model.ResourceTypePodStatus ||
 		msg.GetOperation() != OperationMetaSync {
