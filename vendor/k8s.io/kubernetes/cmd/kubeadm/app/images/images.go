@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/klog/v2"
 	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	kubeadmapiv1beta2 "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 	kubeadmutil "k8s.io/kubernetes/cmd/kubeadm/app/util"
 )
@@ -44,14 +45,17 @@ func GetKubernetesImage(image string, cfg *kubeadmapi.ClusterConfiguration) stri
 	return GetGenericImage(repoPrefix, image, kubernetesImageTag)
 }
 
-// GetDNSImage generates and returns the image for the DNS, that can be CoreDNS or kube-dns.
-// Given that kube-dns uses 3 containers, an additional imageName parameter was added
-func GetDNSImage(cfg *kubeadmapi.ClusterConfiguration, imageName string) string {
+// GetDNSImage generates and returns the image for CoreDNS.
+func GetDNSImage(cfg *kubeadmapi.ClusterConfiguration) string {
 	// DNS uses default image repository by default
 	dnsImageRepository := cfg.ImageRepository
 	// unless an override is specified
 	if cfg.DNS.ImageRepository != "" {
 		dnsImageRepository = cfg.DNS.ImageRepository
+	}
+	// Handle the renaming of the official image from "k8s.gcr.io/coredns" to "k8s.gcr.io/coredns/coredns
+	if dnsImageRepository == kubeadmapiv1beta2.DefaultImageRepository {
+		dnsImageRepository = fmt.Sprintf("%s/coredns", dnsImageRepository)
 	}
 	// DNS uses an imageTag that corresponds to the DNS version matching the Kubernetes version
 	dnsImageTag := constants.GetDNSVersion(cfg.DNS.Type)
@@ -60,7 +64,7 @@ func GetDNSImage(cfg *kubeadmapi.ClusterConfiguration, imageName string) string 
 	if cfg.DNS.ImageTag != "" {
 		dnsImageTag = cfg.DNS.ImageTag
 	}
-	return GetGenericImage(dnsImageRepository, imageName, dnsImageTag)
+	return GetGenericImage(dnsImageRepository, constants.CoreDNSImageName, dnsImageTag)
 }
 
 // GetEtcdImage generates and returns the image for etcd
@@ -112,12 +116,13 @@ func GetControlPlaneImages(cfg *kubeadmapi.ClusterConfiguration) []string {
 
 	// Append the appropriate DNS images
 	if cfg.DNS.Type == kubeadmapi.CoreDNS {
-		imgs = append(imgs, GetDNSImage(cfg, constants.CoreDNSImageName))
-	} else {
-		imgs = append(imgs, GetDNSImage(cfg, constants.KubeDNSKubeDNSImageName))
-		imgs = append(imgs, GetDNSImage(cfg, constants.KubeDNSSidecarImageName))
-		imgs = append(imgs, GetDNSImage(cfg, constants.KubeDNSDnsMasqNannyImageName))
+		imgs = append(imgs, GetDNSImage(cfg))
 	}
 
 	return imgs
+}
+
+// GetPauseImage returns the image for the "pause" container
+func GetPauseImage(cfg *kubeadmapi.ClusterConfiguration) string {
+	return GetGenericImage(cfg.ImageRepository, "pause", constants.PauseVersion)
 }

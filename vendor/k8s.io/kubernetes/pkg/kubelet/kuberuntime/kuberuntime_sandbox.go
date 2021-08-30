@@ -20,14 +20,13 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"runtime"
 	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/features"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util"
@@ -38,35 +37,35 @@ import (
 func (m *kubeGenericRuntimeManager) createPodSandbox(pod *v1.Pod, attempt uint32) (string, string, error) {
 	podSandboxConfig, err := m.generatePodSandboxConfig(pod, attempt)
 	if err != nil {
-		message := fmt.Sprintf("GeneratePodSandboxConfig for pod %q failed: %v", format.Pod(pod), err)
-		klog.Error(message)
+		message := fmt.Sprintf("Failed to generate sandbox config for pod %q: %v", format.Pod(pod), err)
+		klog.ErrorS(err, "Failed to generate sandbox config for pod", "pod", klog.KObj(pod))
 		return "", message, err
 	}
 
 	// Create pod logs directory
 	err = m.osInterface.MkdirAll(podSandboxConfig.LogDirectory, 0755)
 	if err != nil {
-		message := fmt.Sprintf("Create pod log directory for pod %q failed: %v", format.Pod(pod), err)
-		klog.Errorf(message)
+		message := fmt.Sprintf("Failed to create log directory for pod %q: %v", format.Pod(pod), err)
+		klog.ErrorS(err, "Failed to create log directory for pod", "pod", klog.KObj(pod))
 		return "", message, err
 	}
 
 	runtimeHandler := ""
-	if utilfeature.DefaultFeatureGate.Enabled(features.RuntimeClass) && m.runtimeClassManager != nil {
+	if m.runtimeClassManager != nil {
 		runtimeHandler, err = m.runtimeClassManager.LookupRuntimeHandler(pod.Spec.RuntimeClassName)
 		if err != nil {
-			message := fmt.Sprintf("CreatePodSandbox for pod %q failed: %v", format.Pod(pod), err)
+			message := fmt.Sprintf("Failed to create sandbox for pod %q: %v", format.Pod(pod), err)
 			return "", message, err
 		}
 		if runtimeHandler != "" {
-			klog.V(2).Infof("Running pod %s with RuntimeHandler %q", format.Pod(pod), runtimeHandler)
+			klog.V(2).InfoS("Running pod with runtime handler", "pod", klog.KObj(pod), "runtimeHandler", runtimeHandler)
 		}
 	}
 
 	podSandBoxID, err := m.runtimeService.RunPodSandbox(podSandboxConfig, runtimeHandler)
 	if err != nil {
-		message := fmt.Sprintf("CreatePodSandbox for pod %q failed: %v", format.Pod(pod), err)
-		klog.Error(message)
+		message := fmt.Sprintf("Failed to create sandbox for pod %q: %v", format.Pod(pod), err)
+		klog.ErrorS(err, "Failed to create sandbox for pod", "pod", klog.KObj(pod))
 		return "", message, err
 	}
 
@@ -143,6 +142,9 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxConfig(pod *v1.Pod, attemp
 }
 
 // generatePodSandboxLinuxConfig generates LinuxPodSandboxConfig from v1.Pod.
+// We've to call PodSandboxLinuxConfig always irrespective of the underlying OS as securityContext is not part of
+// podSandboxConfig. It is currently part of LinuxPodSandboxConfig. In future, if we have securityContext pulled out
+// in podSandboxConfig we should be able to use it.
 func (m *kubeGenericRuntimeManager) generatePodSandboxLinuxConfig(pod *v1.Pod) (*runtimeapi.LinuxPodSandboxConfig, error) {
 	cgroupParent := m.runtimeHelper.GetPodCgroupParent(pod)
 	lc := &runtimeapi.LinuxPodSandboxConfig{
@@ -150,18 +152,21 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxLinuxConfig(pod *v1.Pod) (
 		SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 			Privileged: kubecontainer.HasPrivilegedContainer(pod),
 
+			// TODO: Deprecated, remove after we switch to Seccomp field
 			// Forcing sandbox to run as `runtime/default` allow users to
 			// use least privileged seccomp profiles at pod level. Issue #84623
 			SeccompProfilePath: v1.SeccompProfileRuntimeDefault,
+
+			Seccomp: &runtimeapi.SecurityProfile{
+				ProfileType: runtimeapi.SecurityProfile_RuntimeDefault,
+			},
 		},
 	}
 
 	sysctls := make(map[string]string)
-	if utilfeature.DefaultFeatureGate.Enabled(features.Sysctls) {
-		if pod.Spec.SecurityContext != nil {
-			for _, c := range pod.Spec.SecurityContext.Sysctls {
-				sysctls[c.Name] = c.Value
-			}
+	if pod.Spec.SecurityContext != nil {
+		for _, c := range pod.Spec.SecurityContext.Sysctls {
+			sysctls[c.Name] = c.Value
 		}
 	}
 
@@ -169,15 +174,15 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxLinuxConfig(pod *v1.Pod) (
 
 	if pod.Spec.SecurityContext != nil {
 		sc := pod.Spec.SecurityContext
-		if sc.RunAsUser != nil {
+		if sc.RunAsUser != nil && runtime.GOOS != "windows" {
 			lc.SecurityContext.RunAsUser = &runtimeapi.Int64Value{Value: int64(*sc.RunAsUser)}
 		}
-		if sc.RunAsGroup != nil {
+		if sc.RunAsGroup != nil && runtime.GOOS != "windows" {
 			lc.SecurityContext.RunAsGroup = &runtimeapi.Int64Value{Value: int64(*sc.RunAsGroup)}
 		}
 		lc.SecurityContext.NamespaceOptions = namespacesForPod(pod)
 
-		if sc.FSGroup != nil {
+		if sc.FSGroup != nil && runtime.GOOS != "windows" {
 			lc.SecurityContext.SupplementalGroups = append(lc.SecurityContext.SupplementalGroups, int64(*sc.FSGroup))
 		}
 		if groups := m.runtimeHelper.GetExtraSupplementalGroupsForPod(pod); len(groups) > 0 {
@@ -188,7 +193,7 @@ func (m *kubeGenericRuntimeManager) generatePodSandboxLinuxConfig(pod *v1.Pod) (
 				lc.SecurityContext.SupplementalGroups = append(lc.SecurityContext.SupplementalGroups, int64(sg))
 			}
 		}
-		if sc.SELinuxOptions != nil {
+		if sc.SELinuxOptions != nil && runtime.GOOS != "windows" {
 			lc.SecurityContext.SelinuxOptions = &runtimeapi.SELinuxOption{
 				User:  sc.SELinuxOptions.User,
 				Role:  sc.SELinuxOptions.Role,
@@ -215,7 +220,7 @@ func (m *kubeGenericRuntimeManager) getKubeletSandboxes(all bool) ([]*runtimeapi
 
 	resp, err := m.runtimeService.ListPodSandbox(filter)
 	if err != nil {
-		klog.Errorf("ListPodSandbox failed: %v", err)
+		klog.ErrorS(err, "Failed to list pod sandboxes")
 		return nil, err
 	}
 
@@ -226,7 +231,7 @@ func (m *kubeGenericRuntimeManager) getKubeletSandboxes(all bool) ([]*runtimeapi
 func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName string, podSandbox *runtimeapi.PodSandboxStatus) []string {
 	podIPs := make([]string, 0)
 	if podSandbox.Network == nil {
-		klog.Warningf("Pod Sandbox status doesn't have network information, cannot report IPs")
+		klog.InfoS("Pod Sandbox status doesn't have network information, cannot report IPs", "pod", klog.KRef(podNamespace, podName))
 		return podIPs
 	}
 
@@ -236,7 +241,7 @@ func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName
 	// pick primary IP
 	if len(podSandbox.Network.Ip) != 0 {
 		if net.ParseIP(podSandbox.Network.Ip) == nil {
-			klog.Warningf("Pod Sandbox reported an unparseable IP (Primary) %v", podSandbox.Network.Ip)
+			klog.InfoS("Pod Sandbox reported an unparseable primary IP", "pod", klog.KRef(podNamespace, podName), "IP", podSandbox.Network.Ip)
 			return nil
 		}
 		podIPs = append(podIPs, podSandbox.Network.Ip)
@@ -245,7 +250,7 @@ func (m *kubeGenericRuntimeManager) determinePodSandboxIPs(podNamespace, podName
 	// pick additional ips, if cri reported them
 	for _, podIP := range podSandbox.Network.AdditionalIps {
 		if nil == net.ParseIP(podIP.Ip) {
-			klog.Warningf("Pod Sandbox reported an unparseable IP (additional) %v", podIP.Ip)
+			klog.InfoS("Pod Sandbox reported an unparseable additional IP", "pod", klog.KRef(podNamespace, podName), "IP", podIP.Ip)
 			return nil
 		}
 		podIPs = append(podIPs, podIP.Ip)
@@ -267,7 +272,7 @@ func (m *kubeGenericRuntimeManager) getSandboxIDByPodUID(podUID kubetypes.UID, s
 	}
 	sandboxes, err := m.runtimeService.ListPodSandbox(filter)
 	if err != nil {
-		klog.Errorf("ListPodSandbox with pod UID %q failed: %v", podUID, err)
+		klog.ErrorS(err, "Failed to list sandboxes for pod", "podUID", podUID)
 		return nil, err
 	}
 

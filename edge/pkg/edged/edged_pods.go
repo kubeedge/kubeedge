@@ -608,17 +608,13 @@ func (e *edged) GenerateRunContainerOptions(pod *v1.Pod, container *v1.Container
 	opts.Hostname = hostname
 	podName := util.GetUniquePodName(pod)
 	volumes := e.volumeManager.GetMountedVolumesForPod(podName)
-	opts.PortMappings = kubecontainer.MakePortMappings(container)
 
-	// TODO: remove feature gate check after no longer needed
-	if utilfeature.DefaultFeatureGate.Enabled(features.BlockVolume) {
-		blkutil := volumepathhandler.NewBlockVolumePathHandler()
-		blkVolumes, err := e.makeBlockVolumes(pod, container, volumes, blkutil)
-		if err != nil {
-			return nil, nil, err
-		}
-		opts.Devices = append(opts.Devices, blkVolumes...)
+	blkutil := volumepathhandler.NewBlockVolumePathHandler()
+	blkVolumes, err := e.makeBlockVolumes(pod, container, volumes, blkutil)
+	if err != nil {
+		return nil, nil, err
 	}
+	opts.Devices = append(opts.Devices, blkVolumes...)
 
 	envs, err := e.makeEnvironmentVariables(pod, container, podIP, podIPs)
 	if err != nil {

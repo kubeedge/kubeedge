@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/kubelet/apis/config"
 	"k8s.io/kubernetes/pkg/kubelet/server"
 	"k8s.io/kubernetes/pkg/kubelet/server/stats"
 
@@ -33,7 +34,9 @@ func NewServer(podManager podmanager.Manager) *Server {
 // ListenAndServe starts a HTTP server and sets up a listener on the given host/port
 func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stats.ResourceAnalyzer, enableCAdvisorJSONEndpoints bool) {
 	klog.Infof("starting to listen read-only on %s:%v", ServerAddr, constants.ServerPort)
-	handler := server.NewServer(host, resourceAnalyzer, nil, enableCAdvisorJSONEndpoints, true, false, false, false, nil)
+
+	kubeCfg := &config.KubeletConfiguration{}
+	handler := server.NewServer(host, resourceAnalyzer, nil, kubeCfg)
 
 	server := &http.Server{
 		Addr:           net.JoinHostPort(ServerAddr, fmt.Sprintf("%d", constants.ServerPort)),

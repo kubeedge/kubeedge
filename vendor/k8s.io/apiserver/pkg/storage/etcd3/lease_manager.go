@@ -58,7 +58,7 @@ type leaseManager struct {
 	prevLeaseExpirationTime time.Time
 	// The period of time in seconds and percent of TTL that each lease is
 	// reused. The minimum of them is used to avoid unreasonably large
-	// numbers. We use var instead of const for testing purposes.
+	// numbers.
 	leaseReuseDurationSeconds   int64
 	leaseReuseDurationPercent   float64
 	leaseMaxAttachedObjectCount int64
