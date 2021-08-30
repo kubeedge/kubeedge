@@ -171,7 +171,7 @@ func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message)
 		select {
 		case ch <- message:
 		default:
-			klog.Warningf("the module %s message channel is full, message: %+v", module, message)
+			klog.Warningf("The module %s message channel is full, message: %+v", module, message)
 			ch <- message
 		}
 	}
@@ -262,11 +262,10 @@ func (ctx *ChannelContext) SendToGroupSync(moduleType string, message model.Mess
 		case <-sendTimer.C:
 			cleanup()
 			if timeoutCounter != 0 {
-				errInfo := fmt.Sprintf("timeout to send message, several %d timeout when send", timeoutCounter)
-				return fmt.Errorf(errInfo)
+				return  fmt.Errorf("timeout to send message, several %d timeout when send", timeoutCounter)
 			}
 			klog.Error("Timeout to sendToGroupsync message")
-			return fmt.Errorf("Timeout to send message")
+			return fmt.Errorf("timeout to send message")
 		}
 	}
 
