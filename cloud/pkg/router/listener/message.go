@@ -3,6 +3,7 @@ package listener
 import (
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"net/http"
 	"strings"
 	"sync"
@@ -83,7 +84,20 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 		klog.Errorf("No handler for message.msgID: %s, source: %s, resource %s can't find candidate", message.GetID(), message.GetSource(), message.GetResource())
 		return err
 	}
-	go func(message *model.Message) {
+	/*
+	   go func(message *model.Message) {
+	   		resp, err := handler(message)
+	   		if err != nil {
+	   			klog.Errorf("handle message occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
+	   		}
+	   		if resp != nil {
+	   			if err = resp.(*http.Response).Body.Close(); err != nil {
+	   				klog.Errorf("close response occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
+	   			}
+	   		}
+	   	}(message)
+	*/
+	fun := func(message *model.Message) {
 		resp, err := handler(message)
 		if err != nil {
 			klog.Errorf("handle message occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
@@ -93,7 +107,8 @@ func (mh *MessageHandler) HandleMessage(message *model.Message) error {
 				klog.Errorf("close response occur error, msgID: %s, reason: %s", message.GetID(), err.Error())
 			}
 		}
-	}(message)
+	}
+	goroutine.Goroutine(fun, message)
 
 	return nil
 }

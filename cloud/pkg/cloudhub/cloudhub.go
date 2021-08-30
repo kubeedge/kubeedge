@@ -1,6 +1,8 @@
 package cloudhub
 
 import (
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"os"
 
 	"k8s.io/client-go/tools/cache"
@@ -12,7 +14,6 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/httpserver"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/servers/udsserver"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
@@ -66,8 +67,8 @@ func (a *cloudHub) Start() {
 	}
 
 	// start dispatch message from the cloud to edge node
-	go a.messageq.DispatchMessage()
-
+	//go a.messageq.DispatchMessage()
+	goroutine.Goroutine(a.messageq.DispatchMessage)
 	// check whether the certificates exist in the local directory,
 	// and then check whether certificates exist in the secret, generate if they don't exist
 	if err := httpserver.PrepareAllCerts(); err != nil {
@@ -83,13 +84,15 @@ func (a *cloudHub) Start() {
 	}
 
 	// HttpServer mainly used to issue certificates for the edge
-	go httpserver.StartHTTPServer()
+	//go httpserver.StartHTTPServer()
+	goroutine.Goroutine(httpserver.StartHTTPServer)
 
 	servers.StartCloudHub(a.messageq)
 
 	if hubconfig.Config.UnixSocket.Enable {
 		// The uds server is only used to communicate with csi driver from kubeedge on cloud.
 		// It is not used to communicate between cloud and edge.
-		go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
+		//go udsserver.StartServer(hubconfig.Config.UnixSocket.Address)
+		goroutine.Goroutine(udsserver.StartServer, hubconfig.Config.UnixSocket.Address)
 	}
 }

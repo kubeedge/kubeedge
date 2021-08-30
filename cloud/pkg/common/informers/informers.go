@@ -17,6 +17,7 @@ limitations under the License.
 package informers
 
 import (
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"sync"
 	"time"
 
@@ -111,7 +112,8 @@ func (ifs *informers) Start(stopCh <-chan struct{}) {
 
 	for name, informer := range ifs.informers {
 		klog.V(5).Infof("start informer %s", name)
-		go informer.Run(stopCh)
+		//go informer.Run(stopCh)
+		goroutine.Goroutine(informer.Run, stopCh)
 	}
 	ifs.k8sSharedInformerFactory.Start(stopCh)
 	ifs.crdSharedInformerFactory.Start(stopCh)

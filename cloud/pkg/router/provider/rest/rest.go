@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -53,7 +54,8 @@ func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]str
 	if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 		listener.InitHandler()
 		// guarantee that it will be executed only once
-		go listener.RestHandlerInstance.Serve()
+		//go listener.RestHandlerInstance.Serve()
+		goroutine.Goroutine(listener.RestHandlerInstance.Serve)
 	}
 	return cli
 }
@@ -117,14 +119,25 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	stop := make(chan struct{})
 	respch := make(chan interface{})
 	errch := make(chan error)
-	go func() {
+	//go func() {
+	//	resp, err := target.GoToTarget(res, stop)
+	//	if err != nil {
+	//		errch <- err
+	//		return
+	//	}
+	//	respch <- resp
+	//}()
+
+	fun := func() {
 		resp, err := target.GoToTarget(res, stop)
 		if err != nil {
 			errch <- err
 			return
 		}
 		respch <- resp
-	}()
+	}
+	goroutine.Goroutine(fun)
+
 	timer := time.NewTimer(timeout)
 	var httpResponse = &http.Response{
 		Request: request,

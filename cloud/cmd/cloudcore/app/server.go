@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"math/rand"
 	"time"
 
@@ -88,7 +89,8 @@ kubernetes controller which manages devices so that the device metadata/status d
 			registerModules(config)
 
 			// IptablesManager manages tunnel port related iptables rules
-			go iptables.NewIptablesManager(config.Modules.CloudStream).Run()
+			//go iptables.NewIptablesManager(config.Modules.CloudStream).Run()
+			goroutine.Goroutine(iptables.NewIptablesManager(config.Modules.CloudStream).Run)
 
 			// Start all modules
 			core.StartModules()

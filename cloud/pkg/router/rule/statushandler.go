@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -29,7 +30,8 @@ var StopChan chan bool
 
 func init() {
 	StopChan = make(chan bool)
-	go SendMessageToController(StopChan)
+	//go SendMessageToController(StopChan)
+	goroutine.Goroutine(SendMessageToController, StopChan)
 }
 
 func SendMessageToController(stop chan bool) {
