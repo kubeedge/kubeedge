@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +23,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/model"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	deviceconst "github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/constants"
 	edgeconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
@@ -65,7 +65,6 @@ type MessageHandle struct {
 	nodeRegistered    sync.Map
 	MessageQueue      *channelq.ChannelMessageQueue
 	Handlers          []HandleFunc
-	NodeNumber        int32
 	NodeLimit         int32
 	KeepaliveChannel  sync.Map
 	MessageAcks       sync.Map
@@ -110,8 +109,9 @@ func (mh *MessageHandle) HandleServer(container *mux.MessageContainer, writer mu
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
-	// TODO(iceber): check node limits at registration
-	if atomic.LoadInt32(&mh.NodeNumber) >= mh.NodeLimit {
+	// check node limit
+	keys := informers.GetInformersManager().EdgeNode().GetStore().ListKeys()
+	if len(keys) >= int(mh.NodeLimit) {
 		klog.Errorf("Fail to serve node %s, reach node limit", nodeID)
 		return
 	}
@@ -322,7 +322,6 @@ func (mh *MessageHandle) RegisterNode(info *model.HubInfo) error {
 	mh.nodeLocks.Store(info.NodeID, &sync.Mutex{})
 	mh.Nodes.Store(info.NodeID, true)
 	mh.nodeRegistered.Store(info.NodeID, true)
-	atomic.AddInt32(&mh.NodeNumber, 1)
 	return nil
 }
 
@@ -350,7 +349,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	}
 
 	mh.Nodes.Delete(info.NodeID)
-	atomic.AddInt32(&mh.NodeNumber, -1)
 
 	if err != nil {
 		klog.Errorf("fail to close connection, reason: %s", err.Error())
