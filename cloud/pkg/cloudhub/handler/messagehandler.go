@@ -352,10 +352,6 @@ func (mh *MessageHandle) UnregisterNode(info *model.HubInfo, code ExitCode) {
 	mh.Nodes.Delete(info.NodeID)
 	atomic.AddInt32(&mh.NodeNumber, -1)
 
-	if err != nil {
-		klog.Errorf("fail to close connection, reason: %s", err.Error())
-	}
-
 	// delete the nodeQueue and nodeStore when node stopped
 	if code == nodeStop {
 		mh.MessageQueue.Close(info)
