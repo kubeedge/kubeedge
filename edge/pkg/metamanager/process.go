@@ -153,7 +153,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 	if resourceUnchanged(resType, resKey, content) {
 		resp := message.NewRespByMessage(&message, OK)
 		sendToEdged(resp, message.IsSync())
-		klog.Infof("resource[%s] unchanged, no notice", resKey)
+		klog.V(4).Infof("resource[%s] unchanged, no notice", resKey)
 		return
 	}
 
