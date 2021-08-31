@@ -19,7 +19,6 @@ limitations under the License.
 package externalversions
 
 import (
-	"github.com/kubeedge/kubeedge/common/goroutine"
 	reflect "reflect"
 	sync "sync"
 	time "time"
@@ -117,8 +116,7 @@ func (f *sharedInformerFactory) Start(stopCh <-chan struct{}) {
 
 	for informerType, informer := range f.informers {
 		if !f.startedInformers[informerType] {
-			//go informer.Run(stopCh)
-			goroutine.Goroutine(informer.Run, stopCh)
+			go informer.Run(stopCh)
 			f.startedInformers[informerType] = true
 		}
 	}
