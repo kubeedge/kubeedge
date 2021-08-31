@@ -268,7 +268,7 @@ func newDeployment(cloudcore, edgecore bool, name, imgURL, nodeselector, configm
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Labels:    map[string]string{"app": constants.KubeEdge},
+			Labels:    map[string]string{"app": constants.SystemName},
 			Namespace: namespace,
 		},
 		Spec: *depObj,
@@ -473,7 +473,7 @@ func CreateServiceObject(name string) *v1.Service {
 
 	Service := v1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.KubeEdge}},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.SystemName}},
 
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,

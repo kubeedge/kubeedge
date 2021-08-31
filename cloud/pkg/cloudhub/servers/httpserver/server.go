@@ -34,7 +34,6 @@ import (
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
-	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -224,7 +223,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 
 // CheckCaExistsFromSecret checks ca from secret
 func CheckCaExistsFromSecret() bool {
-	if _, err := GetSecret(CaSecretName, modules.NamespaceSystem); err != nil {
+	if _, err := GetSecret(CaSecretName, constants.SystemNamespace); err != nil {
 		return false
 	}
 	return true
@@ -232,7 +231,7 @@ func CheckCaExistsFromSecret() bool {
 
 // CheckCertExistsFromSecret checks CloudCore certificate from secret
 func CheckCertExistsFromSecret() bool {
-	if _, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem); err != nil {
+	if _, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace); err != nil {
 		return false
 	}
 	return true
@@ -268,7 +267,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(caDER, caKeyDER, nil, nil)
 		} else {
-			s, err := GetSecret(CaSecretName, modules.NamespaceSystem)
+			s, err := GetSecret(CaSecretName, constants.SystemNamespace)
 			if err != nil {
 				klog.Errorf("failed to get CaSecret, error: %v", err)
 				return err
@@ -307,7 +306,7 @@ func PrepareAllCerts() error {
 
 			UpdateConfig(nil, nil, certDER, keyDER)
 		} else {
-			s, err := GetSecret(CloudCoreSecretName, modules.NamespaceSystem)
+			s, err := GetSecret(CloudCoreSecretName, constants.SystemNamespace)
 			if err != nil {
 				klog.Errorf("failed to get CloudCore secret, error: %v", err)
 				return err
