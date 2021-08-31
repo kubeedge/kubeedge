@@ -160,7 +160,7 @@ func (ctx *ChannelContext) SendResp(message model.Message) {
 
 // SendToGroup send msg to modules. Todo: do not stuck
 func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message) {
-	send := func(ch chan model.Message) {
+	send := func(module string, ch chan model.Message) {
 		// avoid exception because of channel closing
 		// TODO: need reconstruction
 		defer func() {
@@ -171,13 +171,13 @@ func (ctx *ChannelContext) SendToGroup(moduleType string, message model.Message)
 		select {
 		case ch <- message:
 		default:
-			klog.Warningf("the message channel is full, message: %+v", message)
+			klog.Warningf("the module %s message channel is full, message: %+v", module, message)
 			ch <- message
 		}
 	}
 	if channelList := ctx.getTypeChannel(moduleType); channelList != nil {
-		for _, channel := range channelList {
-			go send(channel)
+		for module, channel := range channelList {
+			go send(module, channel)
 		}
 		return
 	}
