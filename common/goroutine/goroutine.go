@@ -12,13 +12,13 @@ func Goroutine(function interface{}, args ...interface{}) {
 
 	f := reflect.ValueOf(function)
 	if f.Kind() != reflect.Func {
-		log.Println("function 参数必须是个 function")
+		log.Println("function parameter must be a function")
 		return
 	}
 
 	go func() {
 		defer func() {
-			if pnc := recover(); pnc != nil { // recover 必须在 defer 函数中直接调用才能拦截异常
+			if pnc := recover(); pnc != nil { // recover must be called directly in the defer function to intercept the exception
 				log.Println("goroutine panic err:", pnc)
 			}
 		}()
