@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/kubeedge/kubeedge/common/goroutine"
 
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
@@ -21,7 +22,8 @@ func StartCloudHub(messageq *channelq.ChannelMessageQueue) {
 	handler.InitHandler(messageq)
 	// start websocket server
 	if hubconfig.Config.WebSocket.Enable {
-		go startWebsocketServer()
+		//go startWebsocketServer()
+		goroutine.Goroutine(startWebsocketServer)
 	}
 	// start quic server
 	if hubconfig.Config.Quic.Enable {
