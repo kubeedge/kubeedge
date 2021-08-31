@@ -9,7 +9,7 @@ KubeEdge is used by many companies. If you are using KubeEdge in your organizati
 <a href="http://xh-iot.net/" border="0" target="_blank"><img alt="XH-iot" src="docs/adopters/xh-iot.png" height="70"></a> &nbsp; &nbsp; &nbsp;
 <a href="http://www.jylink.com/" border="0" target="_blank"><img alt="jylink" src="docs/adopters/jylink.png" height="70"></a> &nbsp; &nbsp; &nbsp;<br/><br/>
 
-<a href="http://nwzimg.wezhan.cn/" border="0" target="_blank"><img alt="ictnj" src="http://nwzimg.wezhan.cn/contents/sitefiles2042/10211275/images/24793769.png " height="70"></a><br/>
+<a href="http://nwzimg.wezhan.cn/" border="0" target="_blank"><img alt="ictnj" src="docs/adopters/ictnj.png " height="70"></a><br/>
 
 <br/>
 
