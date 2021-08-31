@@ -15,11 +15,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
 )
 
-//define edgehub module name
-const (
-	ModuleNameEdgeHub = "websocket"
-)
-
 var HasTLSTunnelCerts = make(chan bool, 1)
 
 //EdgeHub defines edgehub object structure
@@ -46,7 +41,7 @@ func Register(eh *v1alpha1.EdgeHub, nodeName string) {
 
 //Name returns the name of EdgeHub module
 func (eh *EdgeHub) Name() string {
-	return ModuleNameEdgeHub
+	return modules.EdgeHubModuleName
 }
 
 //Group returns EdgeHub group

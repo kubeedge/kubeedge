@@ -117,7 +117,7 @@ func (eh *EdgeHub) routeToCloud() {
 			return
 		default:
 		}
-		message, err := beehiveContext.Receive(ModuleNameEdgeHub)
+		message, err := beehiveContext.Receive(modules.EdgeHubModuleName)
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
@@ -143,7 +143,7 @@ func (eh *EdgeHub) keepalive() {
 		default:
 		}
 		msg := model.NewMessage("").
-			BuildRouter(ModuleNameEdgeHub, "resource", "node", messagepkg.OperationKeepalive).
+			BuildRouter(modules.EdgeHubModuleName, "resource", "node", messagepkg.OperationKeepalive).
 			FillBody("ping")
 
 		// post message to cloud hub
