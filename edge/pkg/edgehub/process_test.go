@@ -77,21 +77,21 @@ func TestDispatch(t *testing.T) {
 		{
 			name:          "dispatch with valid input",
 			hub:           &EdgeHub{},
-			message:       model.NewMessage("").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			message:       model.NewMessage("").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
 			expectedError: nil,
 			isResponse:    false,
 		},
 		{
 			name:          "Error Case in dispatch",
 			hub:           &EdgeHub{},
-			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""),
+			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""),
 			expectedError: fmt.Errorf("msg_group not found"),
 			isResponse:    true,
 		},
 		{
 			name:          "Response Case in dispatch",
 			hub:           &EdgeHub{},
-			message:       model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""),
+			message:       model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""),
 			expectedError: nil,
 			isResponse:    true,
 		},
@@ -133,8 +133,8 @@ func TestRouteToEdge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
-			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(ModuleNameEdgeHub, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.EdgedGroup, "", ""), nil).Times(tt.receiveTimes)
+			mockAdapter.EXPECT().Receive().Return(*model.NewMessage("test").BuildRouter(module.EdgeHubModuleName, module.TwinGroup, "", ""), nil).Times(tt.receiveTimes)
 			mockAdapter.EXPECT().Receive().Return(*model.NewMessage(""), errors.New("Connection Refused")).Times(1)
 			go tt.hub.routeToEdge()
 			stop := <-tt.hub.reconnectChan
@@ -229,9 +229,9 @@ func TestRouteToCloud(t *testing.T) {
 			go tt.hub.routeToCloud()
 			time.Sleep(2 * time.Second)
 			core.Register(&EdgeHub{})
-			beehiveContext.AddModule(ModuleNameEdgeHub)
+			beehiveContext.AddModule(module.EdgeHubModuleName)
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
-			beehiveContext.Send(ModuleNameEdgeHub, *msg)
+			beehiveContext.Send(module.EdgeHubModuleName, *msg)
 			stopChan := <-tt.hub.reconnectChan
 			if stopChan != struct{}{} {
 				t.Errorf("Error in route to cloud")

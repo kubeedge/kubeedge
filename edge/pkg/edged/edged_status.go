@@ -47,7 +47,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/apis"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
 	"github.com/kubeedge/kubeedge/pkg/util"
 )
 
@@ -387,8 +386,8 @@ func (e *edged) registerNode() error {
 	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
 	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
 	var res model.Message
-	if _, ok := core.GetModules()[edgehub.ModuleNameEdgeHub]; ok {
-		res, err = beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
+	if _, ok := core.GetModules()[modules.EdgeHubModuleName]; ok {
+		res, err = beehiveContext.SendSync(modules.EdgeHubModuleName, *nodeInfoMsg, syncMsgRespTimeout)
 	} else {
 		res, err = beehiveContext.SendSync(EdgeController, *nodeInfoMsg, syncMsgRespTimeout)
 	}
