@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/kubeedge/kubeedge/common/goroutine"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,7 +21,8 @@ func StartModules() {
 		beehiveContext.AddModule(name)
 		// Assemble typeChannels for sendToGroup
 		beehiveContext.AddModuleGroup(name, module.Group())
-		go module.Start()
+		//go module.Start()
+		goroutine.Goroutine(module.Start)
 		klog.Infof("Starting module %v", name)
 	}
 }
