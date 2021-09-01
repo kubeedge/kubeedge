@@ -140,10 +140,7 @@ type Edged struct {
 	EdgedMemoryCapacity int64 `json:"edgedMemoryCapacity,omitempty"`
 	// PodSandboxImage is the image whose network/ipc namespaces containers in each pod will use.
 	// +Required
-	// kubeedge/pause:3.1 for x86 arch
-	// kubeedge/pause-arm:3.1 for arm arch
-	// kubeedge/pause-arm64 for arm64 arch
-	// default kubeedge/pause:3.1
+	// default k8s.gcr.io/pause:3.1
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 	// ImagePullProgressDeadline indicates image pull progress dead line (second)
 	// default 60
